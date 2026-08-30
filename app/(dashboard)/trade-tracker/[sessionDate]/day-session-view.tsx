@@ -2504,7 +2504,7 @@ export function DaySessionView({
     DAY_REVIEW_AUTOSAVED_UNSAVED_SOURCES,
   );
   const [openTradeKeysByTicker, setOpenTradeKeysByTicker] = useState<
-    Record<string, string>
+    Record<string, string | null>
   >(() => Object.fromEntries(data.tickers.flatMap((ticker) => {
     const openTradeKey = initialFocusTarget?.stableInstrumentKey === ticker.stableInstrumentKey
       ? initialFocusTradeKey
@@ -3225,11 +3225,18 @@ export function DaySessionView({
           const showDemoCandleDataInsufficientNotice = demoAccount &&
             ["FABC", "FAMI", "GCTK"].includes(ticker.symbol) && !readyTrade;
           const firstTradeKey = ticker.roundTrips[0]?.roundTripKey ?? null;
+          const hasConfiguredOpenTrade = Object.prototype.hasOwnProperty.call(
+            openTradeKeysByTicker,
+            ticker.stableInstrumentKey,
+          );
           const configuredOpenTradeKey = openTradeKeysByTicker[ticker.stableInstrumentKey];
-          const openTradeKey = ticker.roundTrips.some((roundTrip) =>
-            roundTrip.roundTripKey === configuredOpenTradeKey)
-            ? configuredOpenTradeKey
-            : firstTradeKey;
+          let openTradeKey: string | null = firstTradeKey;
+          if (hasConfiguredOpenTrade) {
+            openTradeKey = configuredOpenTradeKey && ticker.roundTrips.some((roundTrip) =>
+              roundTrip.roundTripKey === configuredOpenTradeKey)
+              ? configuredOpenTradeKey
+              : null;
+          }
           const openTrade = ticker.roundTrips.find((roundTrip) =>
             roundTrip.roundTripKey === openTradeKey,
           ) ?? null;
@@ -3240,7 +3247,10 @@ export function DaySessionView({
               : { ...current, [ticker.stableInstrumentKey]: roundTripKey });
           };
           const hideTrade = () => {
-            if (firstTradeKey) reviewTrade(firstTradeKey);
+            setOpenTradeKeysByTicker((current) => ({
+              ...current,
+              [ticker.stableInstrumentKey]: null,
+            }));
           };
           return (
           <Card
@@ -3359,7 +3369,7 @@ export function DaySessionView({
                       ? selectedInterval
                       : "1m"}
                     availableTags={availableTags}
-                    canHide={roundTrip.roundTripKey === openTradeKey && roundTrip.roundTripKey !== firstTradeKey}
+                    canHide={roundTrip.roundTripKey === openTradeKey}
                     currency={data.currency}
                     designPreview={designPreview || pendingExecutions}
                     expanded={roundTrip.roundTripKey === openTradeKey}
