@@ -73,7 +73,7 @@ export function NotificationCenter({
           }}
         >
           <Typography sx={{ fontWeight: 800 }}>Notifications</Typography>
-          <Typography color="primary" component={Link} href="/notifications" onClick={() => setAnchor(null)} sx={{ alignItems: "center", display: "inline-flex", fontSize: 14, fontWeight: 750, minHeight: 44, textDecoration: "none" }}>
+          <Typography color="primary" component={Link} href="/notifications" onClick={() => setAnchor(null)} prefetch={false} sx={{ alignItems: "center", display: "inline-flex", fontSize: 14, fontWeight: 750, minHeight: 44, textDecoration: "none" }}>
             View all notifications
           </Typography>
         </Box>

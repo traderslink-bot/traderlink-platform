@@ -98,6 +98,7 @@ export function AccountSettingsLayout({
                   component={Link}
                   href={section.href}
                   key={section.id}
+                  prefetch={false}
                   sx={{ alignItems: "flex-start", justifyContent: "flex-start", px: 1.25, py: 1, textAlign: "left" }}
                   variant={active ? "contained" : "text"}
                 >

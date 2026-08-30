@@ -129,6 +129,7 @@ export function NotificationList({
                 onClick={() => {
                   if (notification.readAtUtc === null) markRead(notification.notificationRef);
                 }}
+                prefetch={false}
                 sx={{ borderRadius: 0, color: "inherit", flex: 1, justifyContent: "stretch", p: 0, textAlign: "left", textTransform: "none" }}
               >
                 {content}

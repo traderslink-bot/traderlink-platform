@@ -756,6 +756,7 @@ export function DashboardShell({
             disabled={aiFeaturesEnabled && offline}
             href={aiFeaturesEnabled ? undefined : "/ai-chat"}
             onClick={aiFeaturesEnabled ? openAiChat : undefined}
+            prefetch={aiFeaturesEnabled ? undefined : false}
             startIcon={(
               <Box
                 component="span"
@@ -802,6 +803,7 @@ export function DashboardShell({
               aria-label={helpLabel}
               component={Link}
               href={helpDestination}
+              prefetch={false}
               sx={{
                 color: "primary.main",
                 "&:hover": { bgcolor: "rgba(1, 30, 86, 0.04)" },
@@ -834,11 +836,11 @@ export function DashboardShell({
             slotProps={{ paper: { sx: { minWidth: 220 } } }}
             transformOrigin={{ horizontal: "right", vertical: "top" }}
           >
-            <MenuItem component={Link} href="/account/trading" onClick={() => setAccountMenuAnchor(null)}>
+            <MenuItem component={Link} href="/account/trading" onClick={() => setAccountMenuAnchor(null)} prefetch={false}>
               <ListItemIcon><PersonRoundedIcon fontSize="small" /></ListItemIcon>
               Account settings
             </MenuItem>
-            <MenuItem component={Link} href="/account/security" onClick={() => setAccountMenuAnchor(null)}>
+            <MenuItem component={Link} href="/account/security" onClick={() => setAccountMenuAnchor(null)} prefetch={false}>
               <ListItemIcon><LockRoundedIcon fontSize="small" /></ListItemIcon>
               Security
             </MenuItem>

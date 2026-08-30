@@ -156,6 +156,7 @@ export function PushNotificationSetupBanner({
           <Button
             component={Link}
             href="/account/preferences#push-notifications"
+            prefetch={false}
             size="small"
             sx={{ alignSelf: { xs: "stretch", sm: "flex-start" } }}
             variant="contained"
