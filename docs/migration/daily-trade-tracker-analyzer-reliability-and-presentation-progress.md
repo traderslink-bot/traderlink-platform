@@ -99,12 +99,18 @@ delivery-configuration claim.
 
 ## Selected-day trade-card review — 2026-08-29
 
-- [x] Open the first rendered trade card by default, or the explicitly linked
-      trade when the route includes an Analyzer focus.
-- [x] Keep every other trade compact and use one selected-day expansion key so
-      opening another trade closes and unmounts the previous detail and chart.
-- [x] Replace the collapsed action with **Review trade** and provide **Hide
-      trade** at the bottom of the expanded body on desktop and mobile.
+- [x] Correct the rejected one-global-expansion staging draft: every ticker now
+      keeps its first trade visibly open, while an explicitly linked trade is
+      open in its own ticker instead.
+- [x] Keep additional trades compact with **Review trade**. Reviewing another
+      opens its non-chart detail while every ticker's first trade remains
+      visible, so a ticker can never end with every trade closed.
+- [x] Let additional expanded trades return to their compact state with a
+      plain **Hide trade** control. It is bottom-right on desktop and remains
+      bottom-left on mobile; the always-visible first trade has no hide action.
+- [x] Keep chart activation separate and global. Only the initial or explicitly
+      linked trade mounts a chart; other chart-eligible open details provide a
+      clear **Show chart** action that transfers the single mounted chart.
 - [x] Keep ordinary expansion free of programmatic scrolling. The existing
       intentional deep-link focus scroll now keys only to the linked trade, so
       a data refresh does not unexpectedly repeat it.
