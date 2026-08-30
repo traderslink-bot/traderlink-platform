@@ -32,6 +32,8 @@ export type DaySessionRoundTrip = {
 
 export type DaySessionTradeAnalyzer = {
   availableAtUtc?: string | null;
+  detailLoaded?: boolean;
+  detailVersionRef?: string | null;
   candles: Array<{
     close: string;
     high: string;

@@ -56,8 +56,13 @@ export class JournalExecutionReconciliationRepository {
   listEligibleManualExecutions(
     workspaceId: string,
     accountId: string,
+    executionIds?: readonly string[],
   ): readonly JournalManualExecutionCandidate[] {
-    return Object.freeze(this.database.prepare<[string, string], {
+    if (executionIds?.length === 0) return Object.freeze([]);
+    const executionFilter = executionIds
+      ? `\n  AND execution.execution_id IN (${executionIds.map(() => "?").join(", ")})`
+      : "";
+    return Object.freeze(this.database.prepare<[string, string, ...string[]], {
       execution_id: string;
       current_version_id: string;
       instrument_id: string;
@@ -92,6 +97,7 @@ JOIN journal_accounts account
  AND account.account_id = execution.account_id
 WHERE execution.workspace_id = ? AND execution.account_id = ?
   AND execution.current_state = 'accepted'
+  ${executionFilter}
   AND EXISTS (
     SELECT 1 FROM journal_execution_identity_aliases alias
     WHERE alias.workspace_id = execution.workspace_id
@@ -113,7 +119,7 @@ WHERE execution.workspace_id = ? AND execution.account_id = ?
       AND pending_set.state = 'pending'
   )
 ORDER BY version.executed_at_utc, version.source_order_key, execution.execution_id`)
-      .all(workspaceId, accountId)
+      .all(workspaceId, accountId, ...(executionIds ?? []))
       .map((row) => Object.freeze({
         executionId: row.execution_id,
         currentVersionId: row.current_version_id,

@@ -26,6 +26,7 @@ visual/product review pending
 
 **Analyzer reliability and presentation follow-on (implementation awaiting owner visual review):**
 [Daily Trade Tracker Analyzer Reliability And Presentation Plan](daily-trade-tracker-analyzer-reliability-and-presentation-plan.md)
+[Daily Trade Tracker Analyzer Reliability And Presentation Progress](daily-trade-tracker-analyzer-reliability-and-presentation-progress.md)
 
 **Quick-entry progress:**
 [Quick Trade Entry Progress](quick-trade-entry-progress.md)
@@ -869,6 +870,11 @@ current projection exists. Opaque refs are target- and account-bound.
   entry.”
 - Displayed trading decimals have at most two places; inputs remain lossless.
 - Empty/unavailable/conflict states are honest and contain no sample/V3 fallback.
+- The selected-day view keeps Analyzer status and complete mismatch details in
+  its initial payload, then loads saved candle/event/path detail and chart code
+  only for an opened or notification-focused current-version trade.
+- Editable execution lookup stays within the selected day and rule-event times
+  use the account trading timezone.
 - Manual-entry and Data Decisions copy uses ordinary trader language. Stable
   codes and implementation terms remain server-side or in developer evidence.
 
@@ -924,6 +930,10 @@ Stop the affected implementation if:
 - [x] Swing daily notes preserve real and retrospective timestamps.
 - [x] Completed swings retain notes; flat/reopen starts new history.
 - [x] Open Positions retains every factual classification and pending decisions.
+- [x] Selected-day Analyzer status is batched, heavy detail is deferred behind
+      account/version scope and mismatch actions remain immediately available.
+- [x] Selected-day editable reads and rule-event timezone formatting are
+      explicitly scoped.
 - [ ] Focused and integrated verification pass.
 - [ ] Owner reviews the complete real-data Day/Swing experience.
 

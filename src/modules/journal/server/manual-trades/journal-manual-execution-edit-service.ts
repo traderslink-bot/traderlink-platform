@@ -73,10 +73,14 @@ export class JournalManualExecutionEditService {
     ]));
   }
 
-  listEditable(scope: AccountScope): readonly JournalEditableManualExecution[] {
+  listEditable(
+    scope: AccountScope,
+    executionIds?: readonly string[],
+  ): readonly JournalEditableManualExecution[] {
     return Object.freeze(this.reconciliations.listEligibleManualExecutions(
       scope.workspaceId,
       scope.accountId,
+      executionIds,
     ).map((candidate) => {
       const local = localParts(candidate.sourceTimestampText);
       return Object.freeze({

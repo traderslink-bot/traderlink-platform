@@ -31,9 +31,10 @@ import {
   Typography,
 } from "@mui/material";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   DashboardPage,
@@ -78,11 +79,15 @@ import {
   useTradeTrackerUnsavedChanges,
 } from "../trade-tracker-unsaved-changes";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
-import {
-  DailyTradeAnalyzerChart,
-  type ChartRuleEvidence,
-  type DailyTradeChartInterval,
+import type {
+  ChartRuleEvidence,
+  DailyTradeChartInterval,
 } from "./daily-trade-analyzer-chart";
+
+const DailyTradeAnalyzerChart = dynamic(
+  () => import("./daily-trade-analyzer-chart").then((module) => module.DailyTradeAnalyzerChart),
+  { ssr: false },
+);
 
 const EMPTY_CHART_RULE_EVIDENCE: readonly ChartRuleEvidence[] = Object.freeze([]);
 const DAY_REVIEW_AUTOSAVED_UNSAVED_SOURCES = Object.freeze([
@@ -1400,11 +1405,16 @@ function statusPresentation(
   return { color: "default", icon: null, label: "Not selected" };
 }
 
-function ruleEventLabel(event: NonNullable<DaySessionRule["evidence"]>["violations"][number], currency: string): string {
+function ruleEventLabel(
+  event: NonNullable<DaySessionRule["evidence"]>["violations"][number],
+  currency: string,
+  timezone: string,
+): string {
   const at = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
     second: "2-digit",
+    timeZone: timezone,
   }).format(new Date(event.occurredAt));
   const pnl = event.netPnl === null
     ? "P/L unavailable"
@@ -1412,7 +1422,15 @@ function ruleEventLabel(event: NonNullable<DaySessionRule["evidence"]>["violatio
   return `${at} · ${pnl}`;
 }
 
-function PresetRuleRow({ currency, rule }: { currency: string; rule: DaySessionRule }) {
+function PresetRuleRow({
+  currency,
+  rule,
+  timezone,
+}: {
+  currency: string;
+  rule: DaySessionRule;
+  timezone: string;
+}) {
   const [open, setOpen] = useState(false);
   const presentation = statusPresentation(rule.status);
   const canOpen = rule.status === "broken" || rule.status === "n/a";
@@ -1438,7 +1456,7 @@ function PresetRuleRow({ currency, rule }: { currency: string; rule: DaySessionR
           {rule.evidence?.trigger ? (
             <Box>
               <Typography color="text.secondary" variant="caption">Trigger</Typography>
-              <Typography variant="body2">{ruleEventLabel(rule.evidence.trigger, currency)}</Typography>
+              <Typography variant="body2">{ruleEventLabel(rule.evidence.trigger, currency, timezone)}</Typography>
               {rule.evidence.trigger.valueBefore !== null || rule.evidence.trigger.valueAfter !== null ? (
                 <Typography color="text.secondary" variant="caption">
                   {rule.evidence.trigger.valueBefore ?? "Unavailable"} → {rule.evidence.trigger.valueAfter ?? "Unavailable"}
@@ -1449,7 +1467,7 @@ function PresetRuleRow({ currency, rule }: { currency: string; rule: DaySessionR
           {(rule.evidence?.violations.length ?? 0) > 0 ? (
             <Stack spacing={0.5} sx={{ mt: rule.evidence?.trigger ? 1 : 0 }}>
               <Typography color="text.secondary" variant="caption">Violating trade{rule.evidence!.violations.length === 1 ? "" : "s"}</Typography>
-              {rule.evidence!.violations.map((item) => <Typography key={`${item.roundTripKey}:${item.occurredAt}`} variant="body2">{ruleEventLabel(item, currency)}</Typography>)}
+              {rule.evidence!.violations.map((item) => <Typography key={`${item.roundTripKey}:${item.occurredAt}`} variant="body2">{ruleEventLabel(item, currency, timezone)}</Typography>)}
             </Stack>
           ) : null}
         </Box>
@@ -1460,6 +1478,7 @@ function PresetRuleRow({ currency, rule }: { currency: string; rule: DaySessionR
 
 function TradeReview({
   analyzer,
+  analyzerDetailState,
   analysisInterval,
   availableTags,
   canHide,
@@ -1490,6 +1509,7 @@ function TradeReview({
   tradeRules,
 }: {
   analyzer: DaySessionTradeAnalyzer | null;
+  analyzerDetailState: "idle" | "loading" | "error";
   analysisInterval: DailyTradeChartInterval;
   availableTags: DaySessionTradeTag[];
   canHide: boolean;
@@ -1665,7 +1685,7 @@ function TradeReview({
         </Typography>
         {presetRules.length > 0 ? (
           <Stack divider={<Divider flexItem />} spacing={0}>
-            {presetRules.map((rule) => <PresetRuleRow currency={currency} key={`${rule.ruleId}:${rule.ruleVersion}`} rule={rule} />)}
+            {presetRules.map((rule) => <PresetRuleRow currency={currency} key={`${rule.ruleId}:${rule.ruleVersion}`} rule={rule} timezone={roundTrip.timezone} />)}
           </Stack>
         ) : (
           <Button
@@ -2188,6 +2208,28 @@ function TradeReview({
             )}
           </Stack>
         </Alert>
+      ) : analyzer?.detailLoaded === false ? (
+        <Box
+          aria-live="polite"
+          role="status"
+          sx={{
+            bgcolor: "rgba(25, 118, 210, 0.06)",
+            borderLeft: 3,
+            borderColor: analyzerDetailState === "error" ? "error.main" : "info.main",
+            mt: 1.5,
+            px: 1.25,
+            py: 1,
+          }}
+        >
+          <Typography
+            color={analyzerDetailState === "error" ? "error.main" : "info.dark"}
+            variant="caption"
+          >
+            {analyzerDetailState === "error"
+              ? "Trade Analyzer details could not be loaded. Hide and review the trade again."
+              : "Loading Trade Analyzer details…"}
+          </Typography>
+        </Box>
       ) : analyzer ? (
         <Box
           sx={{
@@ -2515,6 +2557,70 @@ export function DaySessionView({
   >(() => initialFocusTarget && initialAnalyzerFocus
     ? { [initialFocusTarget.stableInstrumentKey]: initialAnalyzerFocus.interval }
     : {});
+  const [analyzerDetails, setAnalyzerDetails] = useState<
+    Record<string, DaySessionTradeAnalyzer>
+  >({});
+  const [analyzerDetailStates, setAnalyzerDetailStates] = useState<
+    Record<string, "idle" | "loading" | "error">
+  >({});
+  const analyzerDetailRequests = useRef(new Set<string>());
+  const loadAnalyzerDetail = useCallback(async (roundTrip: DaySessionRoundTrip) => {
+    const analyzer = roundTrip.analyzer;
+    const versionRef = analyzer?.detailVersionRef;
+    if (
+      analyzer?.detailLoaded !== false ||
+      !versionRef ||
+      analyzerDetails[roundTrip.roundTripKey] ||
+      analyzerDetailRequests.current.has(roundTrip.roundTripKey)
+    ) return;
+    analyzerDetailRequests.current.add(roundTrip.roundTripKey);
+    setAnalyzerDetailStates((current) => ({
+      ...current,
+      [roundTrip.roundTripKey]: "loading",
+    }));
+    try {
+      const query = new URLSearchParams({
+        direction: roundTrip.direction,
+        expectedAccountSelectionRef: data.expectedAccountSelectionRef,
+        roundTripId: roundTrip.roundTripKey,
+        roundTripVersionId: versionRef,
+      });
+      const response = await fetch(`/api/platform/trade-analyzer/trade?${query}`, {
+        cache: "no-store",
+      });
+      const payload = await response.json() as Readonly<{
+        analysis?: DaySessionTradeAnalyzer;
+        status?: string;
+      }>;
+      if (
+        !response.ok ||
+        payload.status !== "ready" ||
+        !payload.analysis ||
+        payload.analysis.detailVersionRef !== versionRef
+      ) throw new Error("analyzer_detail_unavailable");
+      setAnalyzerDetails((current) => ({
+        ...current,
+        [roundTrip.roundTripKey]: payload.analysis!,
+      }));
+      setAnalyzerDetailStates((current) => ({
+        ...current,
+        [roundTrip.roundTripKey]: "idle",
+      }));
+    } catch {
+      setAnalyzerDetailStates((current) => ({
+        ...current,
+        [roundTrip.roundTripKey]: "error",
+      }));
+    } finally {
+      analyzerDetailRequests.current.delete(roundTrip.roundTripKey);
+    }
+  }, [analyzerDetails, data.expectedAccountSelectionRef]);
+  useEffect(() => {
+    const initiallyExpandedTrade = data.tickers
+      .flatMap((ticker) => ticker.roundTrips)
+      .find((roundTrip) => roundTrip.roundTripKey === firstRenderedTradeKey);
+    if (initiallyExpandedTrade) void loadAnalyzerDetail(initiallyExpandedTrade);
+  }, [data.tickers, firstRenderedTradeKey, loadAnalyzerDetail]);
   useEffect(() => {
     if (!initialFocusTradeKey) return;
     const frame = window.requestAnimationFrame(() => {
@@ -3217,15 +3323,26 @@ export function DaySessionView({
       <Stack spacing={3}>
         {data.tickers.map((ticker) => {
           const readyTrade = ticker.roundTrips.find((roundTrip) =>
-            roundTrip.analyzer && hasVisibleAnalysis(roundTrip.analyzer),
+            roundTrip.analyzer?.status === "ready" ||
+            roundTrip.analyzer?.status === "provider_unavailable",
           ) ?? null;
           const showDemoCandleDataInsufficientNotice = demoAccount &&
             ["FABC", "FAMI", "GCTK"].includes(ticker.symbol) && !readyTrade;
-          const openTrade = ticker.roundTrips.find((roundTrip) =>
+          const openTradeSource = ticker.roundTrips.find((roundTrip) =>
             roundTrip.roundTripKey === expandedTradeKey,
           ) ?? null;
+          const openTrade = openTradeSource
+            ? {
+                ...openTradeSource,
+                analyzer: analyzerDetails[openTradeSource.roundTripKey] ??
+                  openTradeSource.analyzer,
+              }
+            : null;
           const selectedInterval = selectedAnalyzerIntervals[ticker.stableInstrumentKey] ?? "1m";
           const reviewTrade = (roundTripKey: string) => {
+            const roundTrip = ticker.roundTrips.find((candidate) =>
+              candidate.roundTripKey === roundTripKey);
+            if (roundTrip) void loadAnalyzerDetail(roundTrip);
             setExpandedTradeKey(roundTripKey);
           };
           const hideTrade = () => {
@@ -3341,9 +3458,12 @@ export function DaySessionView({
                 </Typography>
               </Box>
               <Stack divider={<Divider flexItem sx={{ borderBottomWidth: 2, borderColor: "rgba(1, 30, 86, 0.32)" }} />}>
-                {ticker.roundTrips.map((roundTrip, index) => (
+                {ticker.roundTrips.map((roundTrip, index) => {
+                  const analyzer = analyzerDetails[roundTrip.roundTripKey] ?? roundTrip.analyzer;
+                  return (
                   <TradeReview
-                    analyzer={roundTrip.analyzer}
+                    analyzer={analyzer}
+                    analyzerDetailState={analyzerDetailStates[roundTrip.roundTripKey] ?? "idle"}
                     analysisInterval={openTrade?.roundTripKey === roundTrip.roundTripKey
                       ? selectedInterval
                       : "1m"}
@@ -3411,7 +3531,8 @@ export function DaySessionView({
                         rule.targetRoundTripKey === roundTrip.roundTripKey,
                     )}
                   />
-                ))}
+                  );
+                })}
               </Stack>
             </Box>
           </Card>
@@ -3704,7 +3825,7 @@ export function DaySessionView({
                   Preset day rules
                 </Typography>
                 <Stack divider={<Divider flexItem />} spacing={0}>
-                  {dayPresetRules.map((rule) => <PresetRuleRow currency={data.currency} key={`${rule.ruleId}:${rule.ruleVersion}`} rule={rule} />)}
+                  {dayPresetRules.map((rule) => <PresetRuleRow currency={data.currency} key={`${rule.ruleId}:${rule.ruleVersion}`} rule={rule} timezone={data.timezone} />)}
                 </Stack>
               </>
             ) : dayPresetRules.length > 0 ? (
@@ -3821,7 +3942,12 @@ export function DaySessionView({
               {dayRuleTimeline.map(({ rule, at, kind }, index) => (
                 <Stack direction={{ xs: "column", sm: "row" }} key={`${rule.ruleId}:${at}:${kind}:${index}`} sx={{ gap: { xs: 0.25, sm: 1.5 }, py: 0.75 }}>
                   <Typography color="text.secondary" sx={{ minWidth: 92 }} variant="caption">
-                    {new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(at))}
+                    {new Intl.DateTimeFormat("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      timeZone: data.timezone,
+                    }).format(new Date(at))}
                   </Typography>
                   <Typography variant="body2">{rule.label} · {kind}</Typography>
                 </Stack>

@@ -177,6 +177,23 @@ that the card is silently refreshing forever.
 
 ## 5. Boundaries
 
+### Selected-day performance contract
+
+- The selected-day loader returns the page shell, batched per-trade Analyzer
+  status and complete execution-mismatch summaries. It does not serialize the
+  saved candle series, event snapshots, path materialization or chart module
+  for every trade on the day.
+- Opening a trade, selecting its chart or following a focused notification
+  loads that trade's saved Analyzer detail through the authenticated account
+  scope and the exact current round-trip version. A stale version returns no
+  detail instead of crossing revisions.
+- Editable manual-execution reads are limited to execution identities present
+  on the selected trading-day model. Rule-event clock text always uses the
+  account's explicit trading timezone.
+- Deferred detail uses only a restrained existing-style loading line. Pending,
+  terminal and execution-mismatch copy and actions remain available from the
+  initial summary.
+
 - Do not mutate manual executions, source evidence, stored Journal facts or
   Market Data connection records.
 - Do not replace a connected-account problem with hidden guidance; diagnose the
@@ -247,6 +264,11 @@ that the card is silently refreshing forever.
       requeues automatically after a corrected edit.
 - [ ] A broker-confirmed discrepancy preserves the execution and creates only
       a privacy-safe administrator/provider-data alert.
+- [ ] The selected day batches Analyzer status, preserves complete mismatch
+      presentation and defers candle/event/path detail until a trade is opened
+      or notification-focused under the current account and version.
+- [ ] Editable execution reads stay within the selected day and all rule-event
+      times use the account trading timezone.
 - [ ] Mobile collapsed and expanded cards match the approved labels, ordering
       and button placement.
 - [ ] Daily Trading Rules has the approved mobile spacing and guidance.

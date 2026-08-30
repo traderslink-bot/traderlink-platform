@@ -122,6 +122,21 @@ delivery-configuration claim.
       saved Analyzer presentation paths without changing calculations or data.
 - [ ] Complete owner desktop and mobile staging review.
 
+## Selected-day performance follow-up — 2026-08-30
+
+- [x] Replace per-trade Analyzer status reads with one account-scoped batch
+      query for the selected day.
+- [x] Keep pending and complete mismatch summaries in the initial payload while
+      deferring saved candles, events, paths and chart code.
+- [x] Load full detail for the one expanded trade or a focused notification,
+      guarded by the current account selection and round-trip version.
+- [x] Limit editable manual-execution lookup to the selected day's execution
+      identities and format rule-event clocks in the account trading timezone.
+- [ ] Complete owner desktop/mobile review of the restrained
+      `Loading Trade Analyzer details…` state.
+- [ ] Publish and measure the selected-day response through the coordinated
+      Railway lane.
+
 ## Verification boundary
 
 No local server, hosted database mutation, migration, publish, deployment or
@@ -131,4 +146,8 @@ unapplied. The 7 focused Analyzer/validation checks and 12 focused migration
 checks pass with one worker, scoped server and UI TypeScript checks pass, the
 exact changed-file ESLint check passes with zero warnings, and
 `git diff --check` passes. Broad suites and the local server remain outside
-this checkpoint.
+this checkpoint. The preserved performance repair carries focused route/source
+contracts and one selected-day editable-read integration case. Its production
+reconciliation uses focused source, TypeScript, ESLint and diff checks only;
+Vitest, broad tests, builds and local-server work remain outside this urgent
+checkpoint.

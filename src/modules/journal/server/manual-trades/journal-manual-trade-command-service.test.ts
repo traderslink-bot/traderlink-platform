@@ -328,6 +328,12 @@ FROM journal_round_trips WHERE lifecycle_state = 'active'`).get() as {
       const editable = context.manualExecutionEdits
         .listEditable(context.accountScope)
         .find((execution) => execution.localTime === "09:30:00")!;
+      expect(context.manualExecutionEdits.listEditable(
+        context.accountScope,
+        [editable.executionId],
+      ).map((execution) => execution.executionId)).toEqual([editable.executionId]);
+      expect(context.manualExecutionEdits.listEditable(context.accountScope, []))
+        .toEqual([]);
       const result = context.manualExecutionEdits.correct(
         context.accountScope,
         editable.editRef,

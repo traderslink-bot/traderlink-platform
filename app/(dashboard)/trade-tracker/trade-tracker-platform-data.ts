@@ -422,6 +422,7 @@ function withExecutionPatternContexts(
 function readDailyTradeAnalyzers(
   scope: WorkspaceAccessScope,
   roundTrips: readonly Readonly<{ direction: "long" | "short"; roundTripId: string }>[],
+  options: Readonly<{ includeDetails: boolean }> = { includeDetails: true },
 ): ReadonlyMap<string, DaySessionTradeAnalyzer> {
   const roundTripIds = roundTrips.map((roundTrip) => roundTrip.roundTripId);
   const directionByRoundTripId = new Map(roundTrips.map((roundTrip) =>
@@ -435,7 +436,8 @@ function readDailyTradeAnalyzers(
     const turnoverSelection = supportsExactTurnover
       ? "turnover_decimal"
       : "NULL AS turnover_decimal";
-    const analysisForRoundTrip = database.prepare<[string, string, string], AnalyzerRow>(`SELECT
+    const roundTripPlaceholders = roundTripIds.map(() => "?").join(", ");
+    const analysisForRoundTrips = database.prepare<[string, string, ...string[]], AnalyzerRow>(`SELECT
   round_trip.round_trip_id,
   round_trip.current_version_id AS current_round_trip_version_id,
   current_version.projection_fingerprint_sha256 AS current_projection_fingerprint_sha256,
@@ -491,7 +493,8 @@ LEFT JOIN journal_round_trip_daily_trade_execution_mismatch_sets mismatch_set
   AND mismatch_set.round_trip_id = round_trip.round_trip_id
   AND mismatch_set.round_trip_version_id = round_trip.current_version_id
 WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
-  AND round_trip.round_trip_id = ? AND round_trip.lifecycle_state = 'active'`);
+  AND round_trip.round_trip_id IN (${roundTripPlaceholders})
+  AND round_trip.lifecycle_state = 'active'`);
     const snapshots = database.prepare<[string], AnalyzerSnapshotRow>(`SELECT
   event_kind, candle_time_utc_seconds, snapshot_json
 FROM journal_round_trip_daily_trade_analysis_event_snapshots
@@ -525,13 +528,19 @@ FROM level_analysis_market_session_candles
 WHERE market_session_set_version_id = ?
 ORDER BY candle_time_utc_seconds`);
     const result = new Map<string, DaySessionTradeAnalyzer>();
+    const analysisByRoundTripId = new Map(
+      analysisForRoundTrips.all(scope.workspaceId, activeAccountId, ...roundTripIds)
+        .map((analysis) => [analysis.round_trip_id, analysis] as const),
+    );
     for (const roundTripId of roundTripIds) {
-      const analysis = analysisForRoundTrip.get(scope.workspaceId, activeAccountId, roundTripId);
+      const analysis = analysisByRoundTripId.get(roundTripId);
       if (!analysis) continue;
       if (analysis.execution_mismatch_set_id) {
         result.set(roundTripId, {
           availableAtUtc: null,
           candles: [],
+          detailLoaded: true,
+          detailVersionRef: analysis.current_round_trip_version_id,
           events: [],
           executionMismatchSetId: analysis.execution_mismatch_set_id,
           executionMismatches: mismatches.all(analysis.execution_mismatch_set_id).map((mismatch) => ({
@@ -562,6 +571,8 @@ ORDER BY candle_time_utc_seconds`);
         if (analysis.has_pending_job === 1) {
           result.set(roundTripId, {
             candles: [],
+            detailLoaded: true,
+            detailVersionRef: analysis.current_round_trip_version_id,
             events: [],
             executionMismatchSetId: null,
             executionMismatches: [],
@@ -572,6 +583,22 @@ ORDER BY candle_time_utc_seconds`);
             status: "pending",
           });
         }
+        continue;
+      }
+      if (!options.includeDetails) {
+        result.set(roundTripId, {
+          availableAtUtc: analysis.pending_ready_at_utc,
+          candles: [],
+          detailLoaded: false,
+          detailVersionRef: analysis.current_round_trip_version_id,
+          events: [],
+          executionMismatchSetId: null,
+          executionMismatches: [],
+          finalExitPaths: [],
+          greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS,
+          mismatchBrokerConfirmed: false,
+          status: analysis.status,
+        });
         continue;
       }
       const persistedEventViews = snapshots.all(analysis.daily_trade_analysis_version_id)
@@ -611,6 +638,8 @@ ORDER BY candle_time_utc_seconds`);
       result.set(roundTripId, {
         availableAtUtc: analysis.pending_ready_at_utc,
         candles: candleViews,
+        detailLoaded: true,
+        detailVersionRef: analysis.current_round_trip_version_id,
         events: eventViews,
         executionMismatchSetId: null,
         executionMismatches: [],
@@ -839,9 +868,13 @@ export function getReplacementDailyTradeAnalyzerReplay(
   input: Readonly<{
     direction: "long" | "short";
     roundTripId: string;
+    roundTripVersionId?: string;
   }>,
 ): DaySessionTradeAnalyzer | null {
-  return readDailyTradeAnalyzers(scope, [input]).get(input.roundTripId) ?? null;
+  const analyzer = readDailyTradeAnalyzers(scope, [input]).get(input.roundTripId) ?? null;
+  return input.roundTripVersionId && analyzer?.detailVersionRef !== input.roundTripVersionId
+    ? null
+    : analyzer;
 }
 
 function annotationSnapshot(
@@ -1187,7 +1220,10 @@ function buildReplacementDaySession(
       }] as const;
     }));
     const editableManualExecutions = new Map(
-      journal.manualExecutionEdits.listEditable(account).map((execution) => [
+      journal.manualExecutionEdits.listEditable(
+        account,
+        model.executionActivity.map((execution) => execution.executionId),
+      ).map((execution) => [
         execution.executionId,
         execution,
       ] as const),
@@ -1248,6 +1284,7 @@ function buildReplacementDaySession(
       direction: roundTrip.direction,
       roundTripId: roundTrip.roundTripId,
     }))),
+    { includeDetails: false },
   );
   const analyzers = reportingContext === null
     ? sourceAnalyzers

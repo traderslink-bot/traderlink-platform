@@ -4,7 +4,10 @@ import { withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { journalReportingCurrencyMultiplier } from
   "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
-import { requireTraderLinkPlatformRequestScope } from
+import {
+  requireExpectedJournalAccountSelection,
+  requireTraderLinkPlatformRequestScope,
+} from
   "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError, platformFailure } from
   "@/src/modules/platform/server/database/platform-migration-contract";
@@ -18,15 +21,30 @@ export async function GET(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url);
     const roundTripId = url.searchParams.get("roundTripId") ?? "";
+    const roundTripVersionId = url.searchParams.get("roundTripVersionId");
     const direction = url.searchParams.get("direction");
-    if (!UUID_PATTERN.test(roundTripId) || (direction !== "long" && direction !== "short")) {
+    if (
+      !UUID_PATTERN.test(roundTripId) ||
+      (roundTripVersionId !== null && !UUID_PATTERN.test(roundTripVersionId)) ||
+      (direction !== "long" && direction !== "short")
+    ) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "trade" });
     }
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    if (roundTripVersionId) {
+      requireExpectedJournalAccountSelection(
+        scope,
+        url.searchParams.get("expectedAccountSelectionRef"),
+      );
+    }
     const analysis = await withJournalAnalyticsReportingDashboardRuntime(
       scope,
       ({ reportingContext }) => {
-        const source = getReplacementDailyTradeAnalyzerReplay(scope, { direction, roundTripId });
+        const source = getReplacementDailyTradeAnalyzerReplay(scope, {
+          direction,
+          roundTripId,
+          roundTripVersionId: roundTripVersionId ?? undefined,
+        });
         if (!source) return null;
         const sourceCurrency = reportingContext.sourceCurrencyByRoundTrip.get(roundTripId);
         const sourceDate = reportingContext.sourceDateByRoundTrip.get(roundTripId);
@@ -36,7 +54,7 @@ export async function GET(request: Request): Promise<Response> {
         return scaleDaySessionTradeAnalyzer(source, multiplier);
       },
     );
-    if (!analysis || analysis.status !== "ready") {
+    if (!analysis || (!roundTripVersionId && analysis.status !== "ready")) {
       return Response.json({ status: "unavailable" }, {
         status: 404,
         headers: { "cache-control": "no-store" },
