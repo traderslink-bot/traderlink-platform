@@ -2503,14 +2503,11 @@ export function DaySessionView({
   const hasOtherUnsavedChanges = useTradeTrackerHasUnsavedChangesExcept(
     DAY_REVIEW_AUTOSAVED_UNSAVED_SOURCES,
   );
-  const [openTradeKeysByTicker, setOpenTradeKeysByTicker] = useState<
-    Record<string, string | null>
-  >(() => Object.fromEntries(data.tickers.flatMap((ticker) => {
-    const openTradeKey = initialFocusTarget?.stableInstrumentKey === ticker.stableInstrumentKey
-      ? initialFocusTradeKey
-      : ticker.roundTrips[0]?.roundTripKey ?? null;
-    return openTradeKey ? [[ticker.stableInstrumentKey, openTradeKey]] : [];
-  })));
+  const firstRenderedTradeKey = initialFocusTradeKey ??
+    data.tickers[0]?.roundTrips[0]?.roundTripKey ?? null;
+  const [expandedTradeKey, setExpandedTradeKey] = useState<string | null>(
+    () => firstRenderedTradeKey,
+  );
   const [selectedAnalysisEventIds, setSelectedAnalysisEventIds] = useState<Record<string, string | null>>(() =>
     initialFocusTarget ? { [initialFocusTarget.roundTrip.roundTripKey]: initialAnalyzerFocus?.eventId ?? null } : {});
   const [selectedAnalyzerIntervals, setSelectedAnalyzerIntervals] = useState<
@@ -3224,33 +3221,15 @@ export function DaySessionView({
           ) ?? null;
           const showDemoCandleDataInsufficientNotice = demoAccount &&
             ["FABC", "FAMI", "GCTK"].includes(ticker.symbol) && !readyTrade;
-          const firstTradeKey = ticker.roundTrips[0]?.roundTripKey ?? null;
-          const hasConfiguredOpenTrade = Object.prototype.hasOwnProperty.call(
-            openTradeKeysByTicker,
-            ticker.stableInstrumentKey,
-          );
-          const configuredOpenTradeKey = openTradeKeysByTicker[ticker.stableInstrumentKey];
-          let openTradeKey: string | null = firstTradeKey;
-          if (hasConfiguredOpenTrade) {
-            openTradeKey = configuredOpenTradeKey && ticker.roundTrips.some((roundTrip) =>
-              roundTrip.roundTripKey === configuredOpenTradeKey)
-              ? configuredOpenTradeKey
-              : null;
-          }
           const openTrade = ticker.roundTrips.find((roundTrip) =>
-            roundTrip.roundTripKey === openTradeKey,
+            roundTrip.roundTripKey === expandedTradeKey,
           ) ?? null;
           const selectedInterval = selectedAnalyzerIntervals[ticker.stableInstrumentKey] ?? "1m";
           const reviewTrade = (roundTripKey: string) => {
-            setOpenTradeKeysByTicker((current) => current[ticker.stableInstrumentKey] === roundTripKey
-              ? current
-              : { ...current, [ticker.stableInstrumentKey]: roundTripKey });
+            setExpandedTradeKey(roundTripKey);
           };
           const hideTrade = () => {
-            setOpenTradeKeysByTicker((current) => ({
-              ...current,
-              [ticker.stableInstrumentKey]: null,
-            }));
+            setExpandedTradeKey(null);
           };
           return (
           <Card
@@ -3369,10 +3348,10 @@ export function DaySessionView({
                       ? selectedInterval
                       : "1m"}
                     availableTags={availableTags}
-                    canHide={roundTrip.roundTripKey === openTradeKey}
+                    canHide={roundTrip.roundTripKey === expandedTradeKey}
                     currency={data.currency}
                     designPreview={designPreview || pendingExecutions}
-                    expanded={roundTrip.roundTripKey === openTradeKey}
+                    expanded={roundTrip.roundTripKey === expandedTradeKey}
                     executions={data.executionActivity.filter((execution) =>
                       execution.roundTripKeys.includes(roundTrip.roundTripKey),
                     )}

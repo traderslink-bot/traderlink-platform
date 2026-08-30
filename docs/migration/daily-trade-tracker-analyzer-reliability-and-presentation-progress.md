@@ -99,19 +99,19 @@ delivery-configuration claim.
 
 ## Selected-day trade-card review — 2026-08-29
 
-- [x] Replace the rejected global chart/expansion drafts with independent
-      per-ticker selection with at most one open trade in each ticker. Every
-      ticker opens Trade 1 initially and renders that trade's chart whenever
-      saved Analyzer detail is available.
-- [x] Keep additional trades compact with **Review trade**. Reviewing another
-      closes only that ticker's current trade, opens the selected trade and
-      swaps only that ticker's chart; every other ticker remains unchanged.
+- [x] Replace the rejected per-ticker expansion draft with one selected trade
+      across the entire selected-day page. The first rendered trade in the top
+      ticker opens initially and renders its saved Analyzer chart when present;
+      every other trade starts compact.
+- [x] Keep collapsed trades easy to open with **Review trade**. Reviewing any
+      trade closes and unmounts the prior expanded trade and chart before
+      opening only the selected trade and its chart.
 - [x] Let the currently open trade close with a plain **Hide trade** control,
       including Trade 1 and single-trade tickers. It is bottom-right on desktop
-      and bottom-left on mobile. Closing it unmounts that ticker's chart and
-      leaves that ticker with no open trade until **Review trade** is selected.
-- [x] Preserve deep-link targeting by opening the linked trade only inside its
-      ticker while every other ticker still defaults to Trade 1.
+      and bottom-left on mobile. Closing it leaves the page with no expanded
+      trade or mounted Analyzer chart until **Review trade** is selected.
+- [x] Preserve deep-link targeting by opening the linked trade instead of the
+      default first rendered trade.
 - [x] Make the root Demo Trade Tracker route resolve to the fixed accepted demo
       day, `/trade-tracker/2026-08-27`, while normal accounts retain their
       ordinary timezone-based root-date behavior.
