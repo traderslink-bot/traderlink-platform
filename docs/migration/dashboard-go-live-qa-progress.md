@@ -403,6 +403,9 @@ DNS/application cutover.
   fallback Primary Journal only when needed, then the existing automatic
   Workspace activation boundary materializes/selects the demo while the user
   sees the loading state. Cleared-demo lifecycle behavior remains unchanged.
+- The app-domain `/dashboard-entry` signed-in redirect now resolves against the
+  configured public Platform origin rather than Railway's internal
+  `0.0.0.0:8080` request address.
 
 - `266c3455` - approved feature-panel versus application-shell enforcement.
 - `3ac330e4` - primary dashboard route audit record.
