@@ -1,0 +1,19 @@
+FROM node:24-bookworm-slim AS base
+
+WORKDIR /app
+
+FROM base AS dependencies
+RUN apt-get update \
+  && apt-get install --yes --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+FROM base AS initializer
+ENV NODE_ENV=production
+
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY package.json package-lock.json tsconfig.json ./
+COPY src ./src
+
+CMD ["sh", "-c", "set -eu; database_path=${TRADERLINK_PLATFORM_DB_PATH:-}; if [ \"${RAILWAY_VOLUME_MOUNT_PATH:-}\" != \"/data\" ] || [ \"$database_path\" != \"/data/traderlink-platform.sqlite\" ]; then echo '{\"code\":\"TRADERLINK_STAGING_INITIALIZER_DATABASE_PATH_INVALID\"}' >&2; exit 64; fi; for existing_path in \"$database_path\" \"$database_path-wal\" \"$database_path-shm\" \"$database_path-journal\"; do if [ -e \"$existing_path\" ]; then echo '{\"code\":\"TRADERLINK_STAGING_INITIALIZER_DATABASE_ALREADY_EXISTS\"}' >&2; exit 65; fi; done; if [ ! -d /data ] || [ -n \"$(find /data -mindepth 1 -maxdepth 1 -print -quit)\" ]; then echo '{\"code\":\"TRADERLINK_STAGING_INITIALIZER_VOLUME_NOT_EMPTY\"}' >&2; exit 66; fi; umask 077; mkdir /data/evidence-vault /data/upload-staging /data/backups; exec /app/node_modules/.bin/tsx src/scripts/initialize-traderlink-platform-database.ts --initialize-empty"]
