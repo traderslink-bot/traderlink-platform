@@ -23,7 +23,10 @@ import {
   createPlatformWorkspaceOfflineViewModel,
   platformWorkspaceOfflineCoverage,
 } from "@/src/modules/platform/contracts/platform-workspace-offline-view-contracts";
-import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
+import {
+  readJournalFirstExecutionOnboardingStatus,
+  readJournalFirstExecutionOnboardingStatusFromDatabase,
+} from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 import {
   MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE,
   MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE,
@@ -58,32 +61,34 @@ export default async function WorkspacePage({
 }) {
   const queryParameters = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
-  const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
+  if (!scope.activeAccountId) {
+    // Preserve the existing read-before-redirect failure boundary.
+    readJournalFirstExecutionOnboardingStatus(scope);
+    await cookies();
+    redirect("/account/trading");
+  }
+  const query = buildJournalAnalyticsDashboardQuery(scope, {
+    metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
+  });
+  const { onboardingStatus, response, reviewSummary } = await withJournalAnalyticsReportingDashboardRuntime(
+    scope,
+    ({ database, dashboard, service }) => Object.freeze({
+      onboardingStatus: readJournalFirstExecutionOnboardingStatusFromDatabase(database, scope),
+      response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
+      reviewSummary: readWorkspaceReviewSummary(database, scope, new Date(), dashboard),
+    }),
+    { prefetchAllFactSet: true },
+  );
   const showFirstTimeOnboarding = !onboardingStatus.activeAccountIsDemo &&
     !onboardingStatus.hasRealAcceptedExecution;
   const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
     ? currentJournalAccountSelectionRef(scope)
     : undefined;
   const showDemoTradeTrackerInvitation = !onboardingStatus.activeAccountIsDemo &&
-    onboardingStatus.demoLifecycleState !== "cleared" &&
-    scope.activeAccountId !== null;
+    onboardingStatus.demoLifecycleState !== "cleared";
   const cookieStore = await cookies();
   const moomooConnectionPending = cookieStore.get(MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE)?.value
     === MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE;
-  if (!scope.activeAccountId) {
-    redirect("/account/trading");
-  }
-  const query = buildJournalAnalyticsDashboardQuery(scope, {
-    metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
-  });
-  const { response, reviewSummary } = await withJournalAnalyticsReportingDashboardRuntime(
-    scope,
-    ({ database, dashboard, service }) => Object.freeze({
-      response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
-      reviewSummary: readWorkspaceReviewSummary(database, scope, new Date(), dashboard),
-    }),
-    { prefetchAllFactSet: true },
-  );
   const analyticsMetrics = WORKSPACE_METRICS.map(([label, metricId, caption]) => {
     const metrics = findJournalAnalyticsMetric(response, metricId);
     const metric = metrics.length === 1 ? metrics[0] ?? null : null;
