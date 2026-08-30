@@ -13,8 +13,9 @@ Apply the owner's integrated dashboard review corrections while preserving the a
 ### Workspace and Calendar
 
 - Remove the Workspace **Performance over time** panel.
-- Replace the Workspace's compact Trading calendar panel with the same responsive Week calendar presentation used by `/calendar`.
-- Keep `/calendar` unchanged and reuse one shared Week component instead of maintaining two calendar implementations.
+- Superseded on 2026-08-30: remove the Workspace Trading Calendar card and its
+  Workspace-only Calendar read. Keep `/calendar` unchanged as the sole Calendar
+  surface.
 - Show Current Focuses, Focus rules and Previous trading-day review only when each card has trader-visible content.
 - Give Previous trading-day review its own full-width row; use its former top-row space for an **Add trades** card linking to imports and manual entry.
 
@@ -63,7 +64,7 @@ Apply the owner's integrated dashboard review corrections while preserving the a
 ## 4. Delivery sequence
 
 1. Record this plan and its progress tracker.
-2. Implement the shared presentation corrections across Workspace, Calendar, Tracker, Rules, navigation, charts, Notifications, and candle names.
+2. Implement the shared presentation corrections across Workspace, Calendar, Tracker, Rules, navigation, charts, Notifications, and candle names; the Workspace Calendar card is removed under the superseding owner decision.
 3. Correct Trade Explorer ticker/currency behavior and confirm the shared annotation contract.
 4. Add one reusable responsive exact-trade detail experience to Results and Trade Breakdown.
 5. Update affected Help Center guides and focused progress records.

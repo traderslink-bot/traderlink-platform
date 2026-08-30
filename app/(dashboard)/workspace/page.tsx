@@ -77,21 +77,10 @@ export default async function WorkspacePage({
   const query = buildJournalAnalyticsDashboardQuery(scope, {
     metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
   });
-  const { calendar, response, reviewSummary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { response, reviewSummary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope,
     ({ dashboard, service }) => Object.freeze({
       response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
-      calendar: dashboard.getCalendar(scope, {
-        currency: null,
-        startDate: null,
-        endDate: null,
-        symbol: null,
-        direction: null,
-        performance: null,
-        pnlBand: null,
-        tradeCountBand: null,
-        session: null,
-      }),
       reviewSummary: withReadonlyPlatformDatabase({}, (database) =>
         readWorkspaceReviewSummary(database, scope, new Date(), dashboard)),
     }),
@@ -107,24 +96,25 @@ export default async function WorkspacePage({
       valueColor: financialSummaryMetricColor(metricId, metric?.value),
     };
   });
+  const offlinePartition = response.partitions.length === 1
+    ? response.partitions[0] ?? null
+    : null;
   const offlineModel = createPlatformWorkspaceOfflineViewModel({
     analyticsMetrics,
-    calendarData: calendar,
     reviewSummary,
   });
   return (
     <>
       <WorkspaceOfflineViewCapture
-        accountTimezone={calendar.timezone}
+        accountTimezone={offlinePartition?.timezone ?? null}
         calculationVersion={`${response.resultVersion}:${response.registryVersion}`}
         coverage={platformWorkspaceOfflineCoverage(offlineModel)}
         generatedAtUtc={response.generatedAtUtc}
         model={offlineModel}
-        reportingCurrency={calendar.currency}
+        reportingCurrency={offlinePartition?.currency ?? null}
       />
       <WorkspaceDashboard
         analyticsMetrics={analyticsMetrics}
-        calendarData={calendar}
         demoAccountSelectionRef={demoAccountSelectionRef}
         showDemoTradeTrackerInvitation={showDemoTradeTrackerInvitation}
         hasRealAcceptedExecution={onboardingStatus.hasRealAcceptedExecution}

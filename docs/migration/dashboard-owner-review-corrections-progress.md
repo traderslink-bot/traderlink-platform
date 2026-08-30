@@ -46,6 +46,16 @@
 - Trade Explorer notes, tags and rule results continue through the existing
   shared Journal annotation service used by Daily Trade Tracker and AI Reviews.
 
+## Superseding Workspace calendar removal
+
+On 2026-08-30, the owner approved removing the weekly **Trading Calendar** card
+from Workspace. The Workspace server path no longer requests or passes the
+Calendar read model; `/calendar` remains the authoritative Calendar route. The
+saved Workspace view no longer serializes that now-unused calendar payload and
+uses a new route/model version so pre-removal saved views refresh safely on the
+next connected Workspace visit. This does not include the separately staged
+Workspace trade-management redesign.
+
 ## Runtime boundary
 
 - Port 3010 was already not listening when this correction set began.

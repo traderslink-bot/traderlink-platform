@@ -73,7 +73,6 @@ export function OfflineWorkspaceSurface({
     return (
       <WorkspaceDashboard
         analyticsMetrics={savedView.model.analyticsMetrics}
-        calendarData={savedView.model.calendarData}
         offlineSavedAtUtc={savedView.savedAtUtc}
         reviewSummary={savedView.model.reviewSummary}
       />

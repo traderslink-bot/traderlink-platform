@@ -1,9 +1,7 @@
-import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
-
 import type { PlatformOfflineCoverageFact } from "./platform-offline-saved-view-contracts";
 
 export const PLATFORM_WORKSPACE_OFFLINE_ROUTE_VIEW_VERSION =
-  "platform-workspace-v1" as const;
+  "platform-workspace-v2" as const;
 export const PLATFORM_WORKSPACE_OFFLINE_VIEW_KEY =
   "platform:workspace:all-available-history" as const;
 
@@ -45,40 +43,19 @@ export type PlatformWorkspaceOfflineReviewSummary = Readonly<{
 
 export type PlatformWorkspaceOfflineViewModel = Readonly<{
   analyticsMetrics: readonly PlatformWorkspaceOfflineMetric[];
-  calendarData: JournalCalendarReadModel;
   reviewSummary: PlatformWorkspaceOfflineReviewSummary;
-  version: 1;
+  version: 2;
 }>;
-
-function weekStart(date: string): string {
-  const value = new Date(`${date}T12:00:00.000Z`);
-  value.setUTCDate(value.getUTCDate() - ((value.getUTCDay() + 6) % 7));
-  return value.toISOString().slice(0, 10);
-}
-
-function currentWorkspaceWeek(calendar: JournalCalendarReadModel): JournalCalendarReadModel {
-  const startDate = weekStart(calendar.activeDate);
-  const end = new Date(`${startDate}T12:00:00.000Z`);
-  end.setUTCDate(end.getUTCDate() + 4);
-  const endDate = end.toISOString().slice(0, 10);
-  return Object.freeze({
-    ...calendar,
-    days: Object.freeze(calendar.days.filter((day) =>
-      day.date >= startDate && day.date <= endDate)),
-  });
-}
 
 export function createPlatformWorkspaceOfflineViewModel(input: Readonly<{
   analyticsMetrics: readonly PlatformWorkspaceOfflineMetric[];
-  calendarData: JournalCalendarReadModel;
   reviewSummary: PlatformWorkspaceOfflineReviewSummary;
 }>): PlatformWorkspaceOfflineViewModel {
   return Object.freeze({
     analyticsMetrics: Object.freeze(input.analyticsMetrics.map((metric) =>
       Object.freeze({ ...metric }))),
-    calendarData: currentWorkspaceWeek(input.calendarData),
     reviewSummary: input.reviewSummary,
-    version: 1,
+    version: 2,
   });
 }
 
@@ -87,7 +64,6 @@ export function platformWorkspaceOfflineCoverage(
 ): readonly PlatformOfflineCoverageFact[] {
   const metricsAvailable = model.analyticsMetrics.some((metric) =>
     metric.value !== "N/A" && metric.value !== "—");
-  const calendarAvailable = model.calendarData.state !== "unavailable";
   return Object.freeze([
     Object.freeze({
       key: "workspace_metrics",
@@ -96,14 +72,6 @@ export function platformWorkspaceOfflineCoverage(
         ? null
         : "Verified performance values were not available for the selected Trade Tracker account.",
       status: metricsAvailable ? "available" : "unavailable",
-    }),
-    Object.freeze({
-      key: "workspace_calendar",
-      label: "Trading Calendar",
-      reason: calendarAvailable
-        ? null
-        : "Verified trading-day information was not available for the selected Trade Tracker account.",
-      status: calendarAvailable ? "available" : "unavailable",
     }),
     Object.freeze({
       key: "workspace_review",
@@ -168,46 +136,11 @@ function isReviewSummary(value: unknown): value is PlatformWorkspaceOfflineRevie
       trade.ruleOutcomes.every(isRuleOutcome));
 }
 
-function isCalendarData(value: unknown): value is JournalCalendarReadModel {
-  if (
-    !isRecord(value) ||
-    (value.state !== "ready" && value.state !== "empty" &&
-      value.state !== "unavailable") ||
-    !isNullableString(value.currency) ||
-    !isNullableString(value.timezone) ||
-    typeof value.activeDate !== "string" ||
-    !Array.isArray(value.days) ||
-    value.days.length > 5
-  ) {
-    return false;
-  }
-  return value.days.every((day) => isRecord(day) &&
-    typeof day.date === "string" &&
-    isNullableString(day.pnlDecimal) &&
-    (day.pnlSign === -1 || day.pnlSign === 0 || day.pnlSign === 1 ||
-      day.pnlSign === null) &&
-    typeof day.tradeCount === "number" &&
-    Number.isSafeInteger(day.tradeCount) &&
-    day.tradeCount >= 0 &&
-    isNullableString(day.winRatePercentDecimal) &&
-    Array.isArray(day.tickers) &&
-    day.tickers.length <= 500 &&
-    day.tickers.every((ticker) => isRecord(ticker) &&
-      typeof ticker.instrumentId === "string" &&
-      typeof ticker.symbol === "string" &&
-      isNullableString(ticker.pnlDecimal) &&
-      (ticker.pnlSign === -1 || ticker.pnlSign === 0 || ticker.pnlSign === 1 ||
-        ticker.pnlSign === null) &&
-      typeof ticker.noteCount === "number" &&
-      typeof ticker.ruleReviewCount === "number" &&
-      typeof ticker.tagCount === "number"));
-}
-
 export function isPlatformWorkspaceOfflineViewModel(
   value: unknown,
 ): value is PlatformWorkspaceOfflineViewModel {
   return isRecord(value) &&
-    value.version === 1 &&
+    value.version === 2 &&
     Array.isArray(value.analyticsMetrics) &&
     value.analyticsMetrics.length > 0 &&
     value.analyticsMetrics.length <= 12 &&
@@ -215,6 +148,5 @@ export function isPlatformWorkspaceOfflineViewModel(
       typeof metric.caption === "string" &&
       typeof metric.label === "string" &&
       typeof metric.value === "string") &&
-    isCalendarData(value.calendarData) &&
     isReviewSummary(value.reviewSummary);
 }

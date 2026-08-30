@@ -1,13 +1,11 @@
 "use client";
 
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import {
   DashboardDataScopeChip,
@@ -15,15 +13,12 @@ import {
   DashboardPage,
   DashboardPanel,
   DashboardSecondaryAction,
-  DashboardUnavailableState,
 } from "../../dashboard-template";
 import { InstallTradersLinkPwaCard } from "@/app/pwa/install-traderslink-pwa-card";
 import { DemoDataCallout, DemoTradeTrackerInvitation } from "../demo-data-callout";
-import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import type { FinancialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
-import { CalendarWeekView } from "../calendar/calendar-client";
 import {
   WorkspaceFirstTimeOnboardingPanel,
   type WorkspaceFirstTimeOnboardingResult,
@@ -69,7 +64,7 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
   },
 ];
 
-function calendarMoney(value: string | null, currency: string | null): string {
+function reviewMoney(value: string | null, currency: string | null): string {
   if (value === null || currency === null) return "Unavailable";
   return formatJournalAnalyticsMoney(value, currency, { showPositiveSign: true });
 }
@@ -127,7 +122,6 @@ function ruleOutcomeLabel(input: Readonly<{
 
 export function WorkspaceDashboard({
   analyticsMetrics,
-  calendarData,
   demoAccountSelectionRef,
   showDemoTradeTrackerInvitation,
   firstTimeMoomooConnectionPending,
@@ -138,7 +132,6 @@ export function WorkspaceDashboard({
   reviewSummary,
 }: {
   analyticsMetrics?: readonly WorkspaceMetric[];
-  calendarData?: JournalCalendarReadModel;
   demoAccountSelectionRef?: string;
   firstTimeMoomooConnectionPending?: boolean;
   firstTimeMoomooConnected?: boolean;
@@ -148,7 +141,6 @@ export function WorkspaceDashboard({
   reviewSummary?: WorkspaceReviewSummary;
   showDemoTradeTrackerInvitation?: boolean;
 }) {
-  const router = useRouter();
   const metrics = analyticsMetrics ?? unavailableMetrics;
   const currentFocuses = reviewSummary?.currentFocuses?.trim() || null;
   const focusRules = reviewSummary?.focusRules.filter((rule) =>
@@ -158,10 +150,6 @@ export function WorkspaceDashboard({
   const hasPreviousReviewContent = previousReview !== null && (
     previousReview.trades.length > 0 || previousReview.dayRuleOutcomes.length > 0
   );
-  const workspaceCalendarDays = calendarData?.days.map((day) => ({
-    ...day,
-    hasDailyTracker: day.tradeCount > 0,
-  })) ?? [];
   if (showDemoTradeTrackerInvitation) {
     return (
       <DashboardPage>
@@ -171,13 +159,6 @@ export function WorkspaceDashboard({
       </DashboardPage>
     );
   }
-  const openWorkspacePath = (pathname: string) => {
-    if (offlineSavedAtUtc) {
-      window.location.assign(pathname);
-      return;
-    }
-    router.push(pathname);
-  };
   return (
     <DashboardPage>
       <Typography component="h1" variant="h1">Welcome to TradersLink Beta App.</Typography>
@@ -342,7 +323,7 @@ export function WorkspaceDashboard({
               <Typography sx={{ fontWeight: 850 }}>{previousReview.date}</Typography>
               <Typography color="text.secondary" variant="body2">
                 {previousReview.tradeCount} completed trade{previousReview.tradeCount === 1 ? "" : "s"}
-                {" · "}{calendarMoney(
+                {" · "}{reviewMoney(
                   previousReview.netPnlDecimal,
                   previousReview.currency,
                 )}
@@ -390,7 +371,7 @@ export function WorkspaceDashboard({
                     sx={{ fontWeight: 800 }}
                     variant="body2"
                   >
-                    {calendarMoney(trade.netPnlDecimal, previousReview.currency)}
+                    {reviewMoney(trade.netPnlDecimal, previousReview.currency)}
                   </Typography>
                 </Stack>
                 {trade.ruleOutcomes.length > 0 ? (
@@ -419,36 +400,6 @@ export function WorkspaceDashboard({
           </Stack>
         </DashboardPanel>
       ) : null}
-
-      <DashboardPanel
-        action={
-          <Button endIcon={<ArrowForwardRoundedIcon />} href="/calendar" size="small">
-            View full calendar
-          </Button>
-        }
-        eyebrow="Day sessions"
-        title="Trading Calendar"
-      >
-          {calendarData && workspaceCalendarDays.length > 0 ? (
-            <CalendarWeekView
-              activeDate={calendarData.activeDate}
-              currency={calendarData.currency}
-              days={workspaceCalendarDays}
-              onSelect={(day) => openWorkspacePath(`/trade-tracker/${day.date}`)}
-              onTickerClick={(day) => openWorkspacePath(`/calendar?view=week&week=${day.date}`)}
-              selectedDate={calendarData.activeDate}
-              showReviewStatus={false}
-            />
-          ) : (
-            <DashboardUnavailableState
-              actionHref="/imports"
-              actionLabel="Add trading history"
-              compact
-              description="Trading days appear here after the selected Trade Tracker account has a confirmed completed trade. Open positions and decisions remain visible in their own workflows."
-              title="No completed trading days available"
-            />
-          )}
-      </DashboardPanel>
     </DashboardPage>
   );
 }
