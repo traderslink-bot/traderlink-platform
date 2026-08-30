@@ -43,7 +43,11 @@ import {
   createJournalReportingCurrencyFactSetReader,
   type JournalReportingCurrencyContext,
 } from "./journal-reporting-currency-fact-set";
-import { journalAnalyticsLocalTimeFact } from "./normalize-journal-analytics-facts";
+import {
+  journalAnalyticsLocalTimeFact,
+  normalizeJournalAnalyticsFacts,
+  type NormalizedJournalAnalyticsSet,
+} from "./normalize-journal-analytics-facts";
 
 type ReportingCurrencyRoundTripSourceRow = Readonly<{
   round_trip_id: string;
@@ -115,6 +119,22 @@ class PrefetchedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSet
     this.cache.set(key, factSet);
     return factSet;
   }
+}
+
+function createJournalAnalyticsNormalizer(): (
+  factSet: JournalAnalyticsFactSet,
+) => NormalizedJournalAnalyticsSet {
+  const normalizedByFactSet = new WeakMap<
+    JournalAnalyticsFactSet,
+    NormalizedJournalAnalyticsSet
+  >();
+  return (factSet) => {
+    const cached = normalizedByFactSet.get(factSet);
+    if (cached) return cached;
+    const normalized = normalizeJournalAnalyticsFacts(factSet);
+    normalizedByFactSet.set(factSet, normalized);
+    return normalized;
+  };
 }
 
 export function requireActiveJournalAnalyticsAccountId(
@@ -205,10 +225,11 @@ export function withJournalAnalyticsDashboardRuntime<T>(
     const facts = new JournalAnalyticsFactSetService(
       new JournalAnalyticsFactSetRepository(database),
     );
+    const normalizeFacts = createJournalAnalyticsNormalizer();
     return operation(Object.freeze({
       facts,
-      dashboard: new JournalDashboardReadModelService(facts),
-      service: new JournalAnalyticsService(facts),
+      dashboard: new JournalDashboardReadModelService(facts, normalizeFacts),
+      service: new JournalAnalyticsService(facts, null, normalizeFacts),
     }));
   });
 }
@@ -296,12 +317,17 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
         : source,
       reportingContext,
     );
-    const dashboard = new JournalDashboardReadModelService(facts);
+    const normalizeFacts = createJournalAnalyticsNormalizer();
+    const dashboard = new JournalDashboardReadModelService(facts, normalizeFacts);
     return await operation(Object.freeze({
       dashboard: reportingDashboardReader(dashboard, snapshot.reportingCurrency),
       reportingCurrency: snapshot.reportingCurrency,
       reportingContext,
-      service: new JournalAnalyticsService(facts, snapshot.reportingCurrency),
+      service: new JournalAnalyticsService(
+        facts,
+        snapshot.reportingCurrency,
+        normalizeFacts,
+      ),
     }));
   } finally {
     database.close();

@@ -802,16 +802,36 @@ ORDER BY decision.account_id, decision.decision_id`).all(
       });
     }));
 
+    const projectionCountsByRebuild = new Map<string, {
+      legitimateOpenCount: number;
+      needsDecisionCount: number;
+      readyClosedCount: number;
+    }>();
+    for (const roundTrip of roundTrips) {
+      const counts = projectionCountsByRebuild.get(roundTrip.rebuild.rebuildId) ?? {
+        legitimateOpenCount: 0,
+        needsDecisionCount: 0,
+        readyClosedCount: 0,
+      };
+      if (roundTrip.projectionState === "ready_closed") {
+        counts.readyClosedCount += 1;
+      } else if (roundTrip.projectionState === "legitimate_open") {
+        counts.legitimateOpenCount += 1;
+      } else {
+        counts.needsDecisionCount += 1;
+      }
+      projectionCountsByRebuild.set(roundTrip.rebuild.rebuildId, counts);
+    }
     for (const rebuild of latestRebuildRows) {
-      const rows = roundTrips.filter((roundTrip) =>
-        roundTrip.rebuild.rebuildId === rebuild.rebuild_id);
+      const counts = projectionCountsByRebuild.get(rebuild.rebuild_id) ?? {
+        legitimateOpenCount: 0,
+        needsDecisionCount: 0,
+        readyClosedCount: 0,
+      };
       if (
-        rows.filter((row) => row.projectionState === "ready_closed").length !==
-          rebuild.ready_closed_count ||
-        rows.filter((row) => row.projectionState === "legitimate_open").length !==
-          rebuild.legitimate_open_count ||
-        rows.filter((row) => row.projectionState === "needs_decision").length !==
-          rebuild.needs_decision_count
+        counts.readyClosedCount !== rebuild.ready_closed_count ||
+        counts.legitimateOpenCount !== rebuild.legitimate_open_count ||
+        counts.needsDecisionCount !== rebuild.needs_decision_count
       ) {
         integrityFailure("analytics_rebuild_projection_counts");
       }

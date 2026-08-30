@@ -588,7 +588,11 @@ function tradingDayPositions(
 }
 
 export class JournalDashboardReadModelService {
-  constructor(private readonly facts: JournalAnalyticsFactSetReader) {}
+  constructor(
+    private readonly facts: JournalAnalyticsFactSetReader,
+    private readonly normalizeFacts: (factSet: JournalAnalyticsFactSet) =>
+      NormalizedJournalAnalyticsSet = normalizeJournalAnalyticsFacts,
+  ) {}
 
   private cachedRead: Readonly<{
     scopeKey: string;
@@ -611,7 +615,7 @@ export class JournalDashboardReadModelService {
     });
     const value = Object.freeze({
       factSet,
-      normalized: normalizeJournalAnalyticsFacts(factSet),
+      normalized: this.normalizeFacts(factSet),
     });
     this.cachedRead = Object.freeze({ scopeKey, value });
     return value;

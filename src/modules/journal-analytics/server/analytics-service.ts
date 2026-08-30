@@ -20,7 +20,10 @@ import { groupJournalAnalyticsPopulation } from "./analytics-grouping";
 import { journalAnalyticsMetricRegistry } from "./analytics-metric-registry";
 import { buildJournalAnalyticsPopulations } from "./analytics-population";
 import { buildJournalAnalyticsRoundTripTable } from "./analytics-table";
-import { normalizeJournalAnalyticsFacts } from "./normalize-journal-analytics-facts";
+import {
+  normalizeJournalAnalyticsFacts,
+  type NormalizedJournalAnalyticsSet,
+} from "./normalize-journal-analytics-facts";
 
 function selectedAccountSourceCoverage(
   factSet: JournalAnalyticsFactSet,
@@ -40,8 +43,8 @@ function selectedAccountSourceCoverage(
 export function calculateJournalAnalyticsResponse(
   factSet: JournalAnalyticsFactSet,
   query: JournalAnalyticsQuery,
+  normalized: NormalizedJournalAnalyticsSet = normalizeJournalAnalyticsFacts(factSet),
 ): JournalAnalyticsPartitionedResponse {
-  const normalized = normalizeJournalAnalyticsFacts(factSet);
   const populations = buildJournalAnalyticsPopulations(normalized, query);
   const partitions = Object.freeze(populations.map((population) => {
     const grouping = groupJournalAnalyticsPopulation(
@@ -138,6 +141,8 @@ export class JournalAnalyticsService {
   constructor(
     private readonly facts: JournalAnalyticsFactSetReader,
     private readonly reportingCurrency: PlatformReportingCurrency | null = null,
+    private readonly normalizeFacts: (factSet: JournalAnalyticsFactSet) =>
+      NormalizedJournalAnalyticsSet = normalizeJournalAnalyticsFacts,
   ) {}
 
   private reportingQuery(query: JournalAnalyticsQuery): JournalAnalyticsQuery {
@@ -161,7 +166,7 @@ export class JournalAnalyticsService {
             currency: query.currency,
           }),
     });
-    return calculateJournalAnalyticsResponse(factSet, query);
+    return calculateJournalAnalyticsResponse(factSet, query, this.normalizeFacts(factSet));
   }
 
   getPerformanceAnalytics(
