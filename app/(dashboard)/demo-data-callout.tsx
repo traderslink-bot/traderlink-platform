@@ -63,7 +63,7 @@ function ClearDemoDataAction({
           : "TradersLink could not clear demo data. Nothing was deleted. Try again.");
         return;
       }
-      window.location.assign("/workspace");
+      window.location.replace("/workspace");
     } catch {
       setError("TradersLink could not clear demo data. Nothing was deleted. Try again.");
     } finally {

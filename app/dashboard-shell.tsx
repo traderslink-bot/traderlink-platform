@@ -195,6 +195,7 @@ function NavigationLink({
       aria-current={isActive(pathname, item.href) ? "page" : undefined}
       component={Link}
       href={item.href}
+      prefetch={false}
       onClick={(event) => {
         if (offline) {
           event.preventDefault();
@@ -487,6 +488,7 @@ export function DashboardShell({
                 aria-label="TradersLink workspace"
                 href="/workspace"
                 onClick={closeMobile}
+                prefetch={false}
               >
                 <Image
                   alt="TradersLink"
@@ -715,7 +717,7 @@ export function DashboardShell({
             </IconButton>
           </Tooltip>
           <Box sx={{ display: { xs: "none", lg: "block" }, flexShrink: 0 }}>
-            <Link aria-label="TradersLink workspace" href="/workspace">
+            <Link aria-label="TradersLink workspace" href="/workspace" prefetch={false}>
               <Image
                 alt="TradersLink"
                 height={35}

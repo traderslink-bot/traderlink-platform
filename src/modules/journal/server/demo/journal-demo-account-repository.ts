@@ -125,6 +125,12 @@ WHERE execution.workspace_id = ? AND execution.current_state = 'accepted' AND de
   }
 
   createDemoAccount(input: JournalDemoAccountRecord): void {
+    if (this.findLifecycleForUser({
+      userId: input.createdForUserId,
+      workspaceId: input.workspaceId,
+    })?.state === "cleared") {
+      platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED", { reason: "demo_account_cleared" });
+    }
     this.database.prepare(`INSERT INTO journal_demo_accounts (workspace_id, account_id, demo_pack_version_id, created_for_user_id, created_at_utc) VALUES (?, ?, ?, ?, ?)`)
       .run(input.workspaceId, input.accountId, input.demoPackVersionId, input.createdForUserId, input.createdAtUtc);
   }
