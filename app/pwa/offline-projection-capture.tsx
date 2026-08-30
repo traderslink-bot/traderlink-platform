@@ -32,17 +32,11 @@ import {
   recordPlatformOfflineDeviceState,
   savePlatformOfflineProjection,
 } from "@/src/modules/platform/client/pwa/offline-projection-store";
-
-type ProjectionContextResponse = Readonly<{
-  accountSelectionRef?: string | null;
-  calculationVersion?: string;
-  contractVersion?: string;
-  generatedAtUtc?: string;
-  offlineScopeRef?: string;
-  pathname?: string;
-  routeMode?: string;
-  status?: string;
-}>;
+import {
+  OfflineProjectionRequestScopeProvider,
+  scheduleOfflineProjectionContextRead,
+  type OfflineProjectionContext,
+} from "./offline-projection-context";
 
 const CAPTURE_SELECTOR = "h1,h2,h3,h4,p,li,dt,dd,tr,svg text,[data-pwa-offline-text]";
 const EXCLUDED_SELECTOR = "button,a,input,select,textarea,form,script,style,[aria-hidden='true'],[data-pwa-offline-exclude]";
@@ -150,18 +144,6 @@ function projectionBlocks(root: HTMLElement): Readonly<{
   });
 }
 
-async function readContext(pathname: string): Promise<ProjectionContextResponse | null> {
-  try {
-    const response = await fetch(
-      `/api/platform/pwa/projection-context?path=${encodeURIComponent(pathname)}`,
-      { cache: "no-store", credentials: "same-origin" },
-    );
-    return response.ok ? await response.json() as ProjectionContextResponse : null;
-  } catch {
-    return null;
-  }
-}
-
 export function OfflineProjectionCapture({
   accountCurrency,
   accountSelectionRef,
@@ -182,6 +164,10 @@ export function OfflineProjectionCapture({
     () => platformOfflinePartitionKey(offlineScopeRef, accountSelectionRef),
     [accountSelectionRef, offlineScopeRef],
   );
+  const requestScope = useMemo(() => Object.freeze({
+    accountSelectionRef,
+    offlineScopeRef,
+  }), [accountSelectionRef, offlineScopeRef]);
 
   useEffect(() => {
     void recordPlatformOfflineDeviceState(Object.freeze({
@@ -197,10 +183,9 @@ export function OfflineProjectionCapture({
     }));
   }, [accountCurrency, accountSelectionRef, accountTimezone, navigationSnapshot, offlineScopeRef, partitionKey]);
 
-  const capture = useCallback(async () => {
+  const capture = useCallback((context: OfflineProjectionContext | null) => {
     const root = rootRef.current;
     if (!root || !navigator.onLine || !platformOfflineRouteCanStoreProjection(pathname)) return;
-    const context = await readContext(pathname);
     if (
       context?.status !== "ready" ||
       context.contractVersion !== PLATFORM_OFFLINE_PROJECTION_CONTRACT_VERSION ||
@@ -216,7 +201,7 @@ export function OfflineProjectionCapture({
     const content = projectionBlocks(root);
     if (content.blocks.length === 0) return;
     const lastSyncedAtUtc = new Date().toISOString();
-    await savePlatformOfflineProjection(Object.freeze({
+    void savePlatformOfflineProjection(Object.freeze({
       accountSelectionRef,
       blocks: content.blocks,
       calculationVersion: context.calculationVersion,
@@ -231,33 +216,42 @@ export function OfflineProjectionCapture({
       routeMode: context.routeMode,
       schemaVersion: PLATFORM_OFFLINE_PROJECTION_SCHEMA_VERSION,
       title: content.title,
-    }));
+    })).catch(() => undefined);
   }, [accountSelectionRef, offlineScopeRef, partitionKey, pathname]);
 
   useEffect(() => {
-    let timer = window.setTimeout(() => void capture(), 700);
+    let cancelCapture = scheduleOfflineProjectionContextRead({
+      onContext: capture,
+      pathname,
+      scope: requestScope,
+    });
+    const refreshCapture = () => {
+      cancelCapture();
+      cancelCapture = scheduleOfflineProjectionContextRead({
+        onContext: capture,
+        pathname,
+        scope: requestScope,
+      });
+    };
     const observer = new MutationObserver(() => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => void capture(), 700);
+      refreshCapture();
     });
     if (rootRef.current) observer.observe(rootRef.current, { childList: true, subtree: true });
-    const refresh = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => void capture(), 0);
-    };
-    window.addEventListener("online", refresh);
-    window.addEventListener("traderlink:pwa-refresh-projection", refresh);
+    window.addEventListener("online", refreshCapture);
+    window.addEventListener("traderlink:pwa-refresh-projection", refreshCapture);
     return () => {
-      window.clearTimeout(timer);
+      cancelCapture();
       observer.disconnect();
-      window.removeEventListener("online", refresh);
-      window.removeEventListener("traderlink:pwa-refresh-projection", refresh);
+      window.removeEventListener("online", refreshCapture);
+      window.removeEventListener("traderlink:pwa-refresh-projection", refreshCapture);
     };
-  }, [capture]);
+  }, [capture, pathname, requestScope]);
 
   return (
-    <div data-pwa-projection-source ref={rootRef} style={{ display: "contents" }}>
-      {children}
-    </div>
+    <OfflineProjectionRequestScopeProvider scope={requestScope}>
+      <div data-pwa-projection-source ref={rootRef} style={{ display: "contents" }}>
+        {children}
+      </div>
+    </OfflineProjectionRequestScopeProvider>
   );
 }

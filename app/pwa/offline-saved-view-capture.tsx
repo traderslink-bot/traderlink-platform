@@ -11,13 +11,11 @@ import {
   platformOfflineSavedViewRef,
   savePlatformOfflineView,
 } from "@/src/modules/platform/client/pwa/offline-projection-store";
-
-type OfflineSavedViewContext = Readonly<{
-  accountSelectionRef?: string | null;
-  offlineScopeRef?: string;
-  pathname?: string;
-  status?: string;
-}>;
+import {
+  scheduleOfflineProjectionContextRead,
+  useOfflineProjectionRequestScope,
+  type OfflineProjectionContext,
+} from "./offline-projection-context";
 
 export function OfflineSavedViewCapture<TModel>({
   accountTimezone,
@@ -42,26 +40,18 @@ export function OfflineSavedViewCapture<TModel>({
   routeViewVersion: string;
   viewKey: string;
 }) {
+  const requestScope = useOfflineProjectionRequestScope();
   useEffect(() => {
-    if (!navigator.onLine) return;
-    const controller = new AbortController();
-    const save = async () => {
-      const response = await fetch(
-        `/api/platform/pwa/projection-context?path=${encodeURIComponent(pathname)}`,
-        {
-          cache: "no-store",
-          credentials: "same-origin",
-          headers: { accept: "application/json" },
-          signal: controller.signal,
-        },
-      );
-      if (!response.ok) return;
-      const context = await response.json() as OfflineSavedViewContext;
+    if (!navigator.onLine || !requestScope) return;
+    const save = (context: OfflineProjectionContext | null) => {
       if (
+        !context ||
         context.status !== "ready" ||
         context.pathname !== pathname ||
         typeof context.offlineScopeRef !== "string" ||
-        typeof context.accountSelectionRef !== "string"
+        typeof context.accountSelectionRef !== "string" ||
+        context.offlineScopeRef !== requestScope.offlineScopeRef ||
+        context.accountSelectionRef !== requestScope.accountSelectionRef
       ) {
         return;
       }
@@ -70,7 +60,7 @@ export function OfflineSavedViewCapture<TModel>({
         context.accountSelectionRef,
       );
       const savedAtUtc = new Date().toISOString();
-      await savePlatformOfflineView<TModel>({
+      void savePlatformOfflineView<TModel>({
         accountSelectionRef: context.accountSelectionRef,
         accountTimezone,
         calculationVersion,
@@ -87,12 +77,13 @@ export function OfflineSavedViewCapture<TModel>({
         savedAtUtc,
         schemaVersion: PLATFORM_OFFLINE_SAVED_VIEW_SCHEMA_VERSION,
         viewKey,
-      });
+      }).catch(() => undefined);
     };
-    void save().catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === "AbortError") return;
+    return scheduleOfflineProjectionContextRead({
+      onContext: save,
+      pathname,
+      scope: requestScope,
     });
-    return () => controller.abort();
   }, [
     accountTimezone,
     calculationVersion,
@@ -103,6 +94,7 @@ export function OfflineSavedViewCapture<TModel>({
     queryIdentity,
     reportingCurrency,
     routeViewVersion,
+    requestScope,
     viewKey,
   ]);
 
