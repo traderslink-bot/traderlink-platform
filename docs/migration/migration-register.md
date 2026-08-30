@@ -44,6 +44,12 @@ or ticker, and owner records are discarded before storage. It is separate from
 the factual historical visit ledger; migration execution remains a separate
 Railway release boundary.
 
+**Watchlist visibility:** [Watchlist Visibility Admin Progress](watchlist-visibility-admin-progress.md)
+records Coordinator-allocated additive migration `0100_platform_watchlist_visibility`.
+It stores one default-visible global member setting and last-owner change
+metadata only. It is registered but unapplied; it neither changes Watchlist
+data/publisher state nor authorizes a release.
+
 **Moomoo OAuth reconnect reliability:** [Moomoo Direct Connection Plan](moomoo-direct-connection-plan.md), its [progress record](moomoo-direct-connection-progress.md), and the [Moomoo Import Reliability and Admin Errors Plan](moomoo-import-reliability-and-admin-errors-plan.md) register additive migration `0094_platform_moomoo_oauth_pending_attempts`. It stores only a SHA-256 digest of the OAuth state and the server-resolved initiating user/workspace/session binding, a short expiry and consumed marker; it never stores the state, verifier, authorization code or token. Old rows are boundedly cleaned during a later OAuth start. The additive table is safe to retain if application code is rolled back and does not change existing connection records. Migration execution remains a separate Railway release boundary.
 
 **Demo Trade Data:** [Demo Trade Data Plan](demo-trade-data-plan.md) and its

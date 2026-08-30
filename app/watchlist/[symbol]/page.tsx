@@ -40,6 +40,7 @@ export default async function LiveWatchlistSymbolPage({
   );
   const access = await authorizeWatchlistPageAccess();
   if (!access.ok) {
+    if (access.reason === "visibility_disabled") notFound();
     const returnTo = `/watchlist/${encodeURIComponent(symbol.toUpperCase())}`;
     if (access.reason === "login_required" && !authStatus && !isPreviewCrawler) {
       redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`);

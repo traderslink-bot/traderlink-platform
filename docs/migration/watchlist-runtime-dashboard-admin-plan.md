@@ -9,6 +9,8 @@ runtime. This is separate from the member-facing official Watchlist route.
 
 **Usage-panel progress:** [Watchlist Usage Admin Progress](watchlist-usage-admin-progress.md)
 
+**Visibility-control progress:** [Watchlist Visibility Admin Progress](watchlist-visibility-admin-progress.md)
+
 ## Owner-approved layout
 
 The page is `/admin/watchlist`. For now it remains inside the established
@@ -24,6 +26,17 @@ runtime app, including all global controls, the Top Regular/Main/Post-Market
 lists, every per-ticker action, the full Automatic Low-Float Selection form,
 all AI Read controls and audit details, Live Website controls, Provider Health,
 Runtime Config and Runtime Status.
+
+## Watchlist availability control
+
+The Platform-owned **Watchlist availability** panel sits above the retained
+runtime iframe. It is separate from the runtime document and uses the existing
+two-owner boundary. Its one persisted global setting defaults to visible for
+members. When hidden, ordinary members lose the official Watchlist Dashboard
+entry and all official Watchlist pages/member read APIs return the normal
+not-found boundary; owner access and this control remain available. A failed
+setting read fails closed for ordinary members. Publisher ingestion, EODHD,
+runtime controls, stored Watchlist data and owner runtime access are unchanged.
 
 The relayed document adds only an owner-approved injected section navigation.
 It moves existing runtime DOM blocks without cloning, renaming or replacing

@@ -36,6 +36,7 @@ export default async function LiveWatchlistArchiveDetailPage({
   const authStatus = normalizeSearchParam((await searchParams).auth);
   const access = await authorizeWatchlistPageAccess();
   if (!access.ok) {
+    if (access.reason === "visibility_disabled") notFound();
     const loginRequired = access.reason === "login_required";
     const returnTo = `/watchlist/archive/${encodeURIComponent(archiveId.toUpperCase())}`;
     if (loginRequired && !authStatus) {

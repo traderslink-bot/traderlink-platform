@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
@@ -33,6 +33,7 @@ export default async function LiveWatchlistArchivePage({
   const authStatus = normalizeSearchParam(resolvedSearchParams.auth);
   const access = await authorizeWatchlistPageAccess();
   if (!access.ok) {
+    if (access.reason === "visibility_disabled") notFound();
     const loginRequired = access.reason === "login_required";
     if (loginRequired && !authStatus) {
       redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist/archive")}`);

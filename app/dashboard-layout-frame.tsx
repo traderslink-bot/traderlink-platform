@@ -23,6 +23,7 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { readWatchlistVisibility } from "@/src/modules/watchlist/server/access/watchlist-visibility-service";
 
 function DashboardFrameFallback() {
   return (
@@ -80,6 +81,7 @@ async function TraderLinkPlatformDashboardFrameContent({
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const scannerEarlyAccess = hasScannerEarlyAccess(identity);
   const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
+  const watchlistVisibility = readWatchlistVisibility();
   const readAtUtc = createCanonicalUtcTimestamp();
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
     const activeAccount = scope.activeAccountId
@@ -121,7 +123,10 @@ async function TraderLinkPlatformDashboardFrameContent({
         offlineScopeRef={offlineScopeRef}
         pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
         scannerEarlyAccess={scannerEarlyAccess}
-        watchlistMemberNavigationAccess
+        watchlistMemberNavigationAccess={
+          watchlistAdminNavigationAccess ||
+          (watchlistVisibility.status === "available" && watchlistVisibility.memberVisible)
+        }
         watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
       >
         {children}

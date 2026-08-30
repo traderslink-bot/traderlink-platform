@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { SiteShell } from "@/src/components/site/site-shell";
 import { authorizeWatchlistPageAccess } from "@/src/modules/watchlist/server/access/watchlist-access-service";
@@ -66,6 +67,7 @@ const levelSources = [
 
 export default async function PotentialPathHowItWorksPage() {
   const access = await authorizeWatchlistPageAccess();
+  if (!access.ok && access.reason === "visibility_disabled") notFound();
   const content = (
     <main className="academy-container-narrow watchlist-guide-page">
         <section className="academy-hero watchlist-guide-hero">

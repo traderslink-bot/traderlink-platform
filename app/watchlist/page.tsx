@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
@@ -30,6 +30,7 @@ export default async function LiveWatchlistPage({
   );
   const access = await authorizeWatchlistPageAccess();
   if (!access.ok) {
+    if (access.reason === "visibility_disabled") notFound();
     if (access.reason === "login_required" && !authStatus && !isPreviewCrawler) {
       redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist")}`);
     }

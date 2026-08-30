@@ -6,6 +6,8 @@
 
 **Owner runtime dashboard:** [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md) and [progress](watchlist-runtime-dashboard-admin-progress.md)
 
+**Visibility-control progress:** [Watchlist Visibility Admin Progress](watchlist-visibility-admin-progress.md)
+
 ## Scope
 
 - [x] Render the official Watchlist route family in the signed-in Dashboard
@@ -26,6 +28,10 @@
 - [x] Record only authenticated active Watchlist index/detail page views for
   the owner-only Usage section; owner views, archive/help/Admin/API/background
   traffic remain excluded from the durable Platform ledger.
+- [x] Add one owner-only global visibility setting that defaults to visible,
+  hides the official Watchlist desktop/mobile navigation and route/API family
+  from ordinary members when off, retains owner Admin access and fails closed
+  when unavailable.
 
 ## Release configuration boundary
 
@@ -41,13 +47,23 @@ runtime-relay access.
 No matching public Help Center guide currently exists for the official
 Watchlist. The Dashboard page-level help icon therefore remains absent on the
 Watchlist routes rather than linking to an unrelated guide. The existing
-`/watchlist/how-it-works` content remains available; it uses the Dashboard
-shell for authorized Watchlist viewers and retains its public information page
-for everyone else.
+`/watchlist/how-it-works` content follows the official Watchlist visibility
+setting: it remains in the authorized Dashboard shell when visible and returns
+the normal not-found boundary to ordinary members when hidden. No public Help
+copy reveals whether an owner has hidden the Watchlist.
+
+## Visibility setting boundary
+
+The Coordinator allocated additive migration
+`0100_platform_watchlist_visibility` after `0099`. It is registered but has
+not been applied locally or hosted. It persists one default-visible global
+setting and last-owner change metadata only. It does not alter the three
+Watchlist data tables, usage ledger, publisher token, runtime relay, EODHD,
+Moomoo, Scanner, Discord membership policy or Community Watchlists.
 
 ## Exclusions
 
-No database migration, Watchlist publisher/runtime change, Levels change,
+No Watchlist publisher/runtime change, Levels change,
 EODHD setting, Community Watchlist change, Discord-link setting change, push,
 deployment, or service restart is part of this checkpoint. The member read API
 access correction is explicitly in scope.
@@ -68,5 +84,9 @@ access correction is explicitly in scope.
   allowlist.
 - The Discord callback and already-signed-in Watchlist return path no longer
   require a Premium role. Anonymous and non-member requests still fail closed.
-- Static verification: `git diff --check` passed. No Vitest, local server,
-  provider call, migration, configuration change, push or deployment was run.
+- Visibility static verification: `git diff --check` passed and source tracing
+  confirms owner bypass, member navigation hiding, the five route checks and
+  shared API gate. Node/Next tooling is absent in this checkout, so TypeScript,
+  lint, browser and migration checks did not run. No Vitest, local server,
+  provider call, migration application, configuration change, push or
+  deployment was run.
