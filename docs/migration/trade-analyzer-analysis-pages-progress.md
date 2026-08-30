@@ -2,6 +2,14 @@
 
 **Plan:** [Trade Analyzer Analysis Pages Plan](trade-analyzer-analysis-pages-plan.md)
 
+**Plain-language presentation:** [Trade Analyzer Plain-Language Insights Progress](trade-analyzer-plain-language-insights-progress.md)
+
+**Final-exit follow-through:** The plain-language evidence table now exposes
+only the persisted 30-minute final-exit observation per trade. Long trades say
+whether price rose after the sale and short trades say whether price fell after
+the cover; zero, adverse and unavailable observations remain explicit. A later
+60-minute reconciliation is not substituted for this first-review fact.
+
 ## Current checkpoint - 2026-08-09
 
 - [x] Owner approved separating Trade Analyzer from generic historical

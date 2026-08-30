@@ -4,6 +4,13 @@
 
 **Progress:** [Trade Analyzer Analysis Pages Progress](trade-analyzer-analysis-pages-progress.md)
 
+**Plain-language presentation:** [Trade Analyzer Plain-Language Insights Progress](trade-analyzer-plain-language-insights-progress.md)
+
+**Final-exit first review:** Per-trade evidence may state the saved
+30-minute final-exit movement in ordinary long/short language. It uses the
+persisted 30-minute observation only, retains exact unavailable/zero/adverse
+states, and does not substitute a later 60-minute reconciliation.
+
 **Evidence population correction:** [Trade Analyzer Candle-backed Population Progress](trade-analyzer-candle-backed-population-progress.md)
 
 **Related plans:**

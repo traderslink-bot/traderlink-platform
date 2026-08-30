@@ -25,7 +25,7 @@ import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { DashboardMetricCard, DashboardPrimaryAction } from "@/app/dashboard-template";
+import { DashboardMetricCard, DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
 import { financialOutcomeColor, financialThresholdColor } from
   "@/src/modules/journal-analytics/presentation/financial-outcome-color";
@@ -105,6 +105,29 @@ function greenToRedLabel(value: TradeAnalysisTradeRow["greenToRedStatus"]): stri
     case "green_to_red_ended_flat": return "Green to red, ended flat";
     case "unavailable": return "Unavailable";
   }
+}
+
+function postExitThirtyMinuteMessage(row: TradeAnalysisTradeRow, currency: string | null): string {
+  const move = row.postExitThirtyMinuteMoveDecimal === null ? null : Number(row.postExitThirtyMinuteMoveDecimal);
+  if (move === null || !Number.isFinite(move) || row.finalExitPriceDecimal === null || row.postExitThirtyMinutePriceDecimal === null) {
+    return "The 30-minute post-exit observation is unavailable for this trade.";
+  }
+  const exitPrice = money(row.finalExitPriceDecimal, currency);
+  const observedPrice = money(row.postExitThirtyMinutePriceDecimal, currency);
+  const moveLabel = `${move > 0 ? "+" : ""}${money(row.postExitThirtyMinuteMoveDecimal, currency)}/share`;
+  if (move > 0) {
+    return row.direction === "long"
+      ? `Price rose to ${observedPrice} after you sold at ${exitPrice} (${moveLabel}).`
+      : `Price fell to ${observedPrice} after you covered at ${exitPrice} (${moveLabel}).`;
+  }
+  if (move === 0) {
+    return row.direction === "long"
+      ? `Price did not rise above your ${exitPrice} sell price in the first 30 minutes after exit.`
+      : `Price did not fall below your ${exitPrice} cover price in the first 30 minutes after exit.`;
+  }
+  return row.direction === "long"
+    ? `Price stayed below your ${exitPrice} sell price; its highest price was ${observedPrice} (${moveLabel}) in the first 30 minutes after exit.`
+    : `Price stayed above your ${exitPrice} cover price; its lowest price was ${observedPrice} (${moveLabel}) in the first 30 minutes after exit.`;
 }
 
 function BreakdownTable({
@@ -268,13 +291,13 @@ function TradeTable({ model, offline = false }: { model: DailyTradeLongTermAnaly
         rowCount={rows.length}
       />
       {rows.length === 0 ? <Typography color="text.secondary">No analyzed trades match these filters.</Typography> : (
-          <HorizontalScrollRegion label="Green-to-red trades table" minTableWidth={1520} stickyFirstColumn>
+          <HorizontalScrollRegion label="Analyzed trades table" minTableWidth={1840} stickyFirstColumn>
             <Table size="small">
               <TableHead><TableRow>
                 <TableCell>{heading("symbol", "Ticker")}</TableCell><TableCell>Direction</TableCell><TableCell>{heading("closeDate", "Closed")}</TableCell>
                 <TableCell align="right">{heading("actual", `${model.moneyBasis === "gross" ? "Gross" : "Net"} P/L`)}</TableCell><TableCell align="right">{heading("return", "Return")}</TableCell><TableCell align="right">{heading("opportunity", "Sustained opportunity")}</TableCell>
                 <TableCell align="right">{heading("additional", "Additional opportunity")}</TableCell><TableCell align="right">{heading("capture", "Captured")}</TableCell>
-                <TableCell align="right">{heading("peakToExit", "Peak to exit")}</TableCell><TableCell>Outcome</TableCell><TableCell align="right">Executions</TableCell><TableCell />
+                <TableCell>First review: 30 minutes after final exit</TableCell><TableCell align="right">{heading("peakToExit", "Peak to exit")}</TableCell><TableCell>Outcome</TableCell><TableCell align="right">Executions</TableCell><TableCell />
               </TableRow></TableHead>
               <TableBody>{visibleRows.map((row) => (
                 <TableRow hover key={row.roundTripId}>
@@ -282,7 +305,7 @@ function TradeTable({ model, offline = false }: { model: DailyTradeLongTermAnaly
                   <TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 800 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell>
                   <TableCell align="right" sx={{ color: financialOutcomeColor(row.returnPercent) }}>{percent(row.returnPercent)}</TableCell>
                   <TableCell align="right" sx={{ color: financialOutcomeColor(row.sustainedOpportunityDecimal) }}>{money(row.sustainedOpportunityDecimal, model.currency)}</TableCell><TableCell align="right">{money(row.additionalOpportunityDecimal, model.currency)}</TableCell>
-                  <TableCell align="right">{percent(row.capturedPercent)}</TableCell><TableCell align="right">{row.peakToExitMinutes === null ? "Unavailable" : `${row.peakToExitMinutes} min`}</TableCell>
+                  <TableCell align="right">{percent(row.capturedPercent)}</TableCell><TableCell sx={{ maxWidth: 360, minWidth: 280, whiteSpace: "normal" }}>{postExitThirtyMinuteMessage(row, model.currency)}</TableCell><TableCell align="right">{row.peakToExitMinutes === null ? "Unavailable" : `${row.peakToExitMinutes} min`}</TableCell>
                   <TableCell>{greenToRedLabel(row.greenToRedStatus)}</TableCell><TableCell align="right">{row.executionCount}</TableCell>
                   <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={trackerHref(row)} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
                 </TableRow>
@@ -302,8 +325,8 @@ function ExcursionBreakdownTable({
   rows: readonly TradeAnalysisExcursionBreakdownRow[];
 }) {
   if (rows.length === 0) return <Typography color="text.secondary">No measured entries or adds are available for these comparisons.</Typography>;
-  return <HorizontalScrollRegion label="MFE and MAE comparison table" minTableWidth={760} stickyFirstColumn><Table size="small"><TableHead><TableRow>
-      <TableCell>Group</TableCell><TableCell align="right">Measured</TableCell><TableCell align="right">Avg MFE</TableCell><TableCell align="right">Avg MAE</TableCell><TableCell align="right">Avg MFE %</TableCell><TableCell align="right">Avg MAE %</TableCell>
+  return <HorizontalScrollRegion label="Room after entry comparison table" minTableWidth={760} stickyFirstColumn><Table size="small"><TableHead><TableRow>
+      <TableCell>Group</TableCell><TableCell align="right">Measured</TableCell><TableCell align="right">Avg move in your favor</TableCell><TableCell align="right">Avg move against you</TableCell><TableCell align="right">Avg move in your favor %</TableCell><TableCell align="right">Avg move against you %</TableCell>
     </TableRow></TableHead><TableBody>{rows.map((row) => <TableRow hover key={row.label}>
       <TableCell sx={{ fontWeight: 750 }}>{row.label}</TableCell><TableCell align="right">{row.measuredExecutionCount}</TableCell><TableCell align="right">{money(row.averageFavorableMoveDecimal, currency)}</TableCell><TableCell align="right">{money(row.averageAdverseMoveDecimal, currency)}</TableCell><TableCell align="right">{percent(row.averageFavorableMovePercent)}</TableCell><TableCell align="right">{percent(row.averageAdverseMovePercent)}</TableCell>
     </TableRow>)}</TableBody></Table></HorizontalScrollRegion>;
@@ -329,7 +352,7 @@ function MfeMaeTable({ model, offline = false }: { model: DailyTradeLongTermAnal
     <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(nextSize) => { setPageSize(nextSize); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
     {rows.length === 0 ? <Typography color="text.secondary">No measured entries or adds match these filters.</Typography> :
       <HorizontalScrollRegion label="Measured entries and adds table" minTableWidth={1420} stickyFirstColumn><Table size="small"><TableHead><TableRow>
-        <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Direction</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">MFE</TableCell><TableCell align="right">MAE</TableCell><TableCell align="right">MFE %</TableCell><TableCell align="right">MAE %</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
+        <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Direction</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">Move in your favor</TableCell><TableCell align="right">Move against you</TableCell><TableCell align="right">Move in your favor %</TableCell><TableCell align="right">Move against you %</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.executionSequence}`}>
         <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${row.trackerDate}` : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
       </TableRow>)}</TableBody></Table></HorizontalScrollRegion>}
@@ -358,12 +381,84 @@ function PatternRanking({ groups }: { groups: readonly PatternGroup[] }) {
 }
 
 const CAPABILITIES = Object.freeze([
-  Object.freeze({ href: "/analytics/trade-analyzer/day/mfe-mae", title: "MFE & MAE", description: "Study favorable and adverse movement after every measured entry or add." }),
-  Object.freeze({ href: "/analytics/trade-analyzer/day/entry-exit", title: "Entry & Exit", description: "Compare entry timing, favorable and adverse movement, market context and exit giveback." }),
-  Object.freeze({ href: "/analytics/trade-analyzer/day/green-to-red", title: "Green-to-Red", description: "Review profit capture, reversals below breakeven, recoveries and risk-management behavior." }),
-  Object.freeze({ href: "/analytics/trade-analyzer/day/candle-patterns", title: "Candle Patterns", description: "Compare saved one-minute and five-minute patterns observed on or before executions." }),
-  Object.freeze({ href: "/analytics/trade-analyzer/day/trades", title: "Analyzed Trades", description: "Inspect the exact trades behind every summary and return to each Daily Trade Tracker replay." }),
+  Object.freeze({ href: "/analytics/trade-analyzer/day/mfe-mae", title: "Room after entry", description: "See how far price usually moved in your favor and against you after entering." }),
+  Object.freeze({ href: "/analytics/trade-analyzer/day/entry-exit", title: "Entries and exits", description: "See what happened after you entered and how you left each trade." }),
+  Object.freeze({ href: "/analytics/trade-analyzer/day/green-to-red", title: "Giving back profit", description: "See when open profit fell below breakeven and how often it recovered." }),
+  Object.freeze({ href: "/analytics/trade-analyzer/day/candle-patterns", title: "Candle setups", description: "See which candle shapes appeared around your entries and exits." }),
+  Object.freeze({ href: "/analytics/trade-analyzer/day/trades", title: "Your analyzed trades", description: "Open the exact trades behind these results." }),
 ]);
+
+type PlainLanguageTakeaway = Readonly<{
+  detail: string;
+  message: string;
+  title: string;
+}>;
+
+function plainLanguageTakeaway(
+  model: DailyTradeLongTermAnalyticsModel,
+  view: TradeAnalysisView,
+): PlainLanguageTakeaway {
+  const tradeCount = `${model.analyzedTradeCount} analyzed ${model.analyzedTradeCount === 1 ? "trade" : "trades"}`;
+  switch (view) {
+    case "day":
+      if (model.analyzedTradeCount < 5) {
+        return {
+          detail: "The detailed records below are real, but this is too small a sample to call a repeatable pattern.",
+          message: `You have ${tradeCount}. Keep reviewing each trade as you build a larger sample.`,
+          title: "Your results so far",
+        };
+      }
+      return {
+        detail: "Recorded outcomes from your saved Analyzer evidence, not a prediction for the next trade.",
+        message: `Across ${tradeCount}, ${percent(model.winRatePercent)} finished above breakeven. Your average ${model.moneyBasis} result was ${money(model.averagePnlDecimal, model.currency)}.`,
+        title: "Your results in plain terms",
+      };
+    case "entry-exit":
+      if (model.entryOpportunityRisk.averageFavorableMoveDecimal !== null && model.entryOpportunityRisk.averageAdverseMoveDecimal !== null) {
+        return {
+          detail: `${model.analyzedTradeCount < 5 ? "This is an early sample; it is too small to call a repeatable pattern. " : ""}Based on ${model.entryOpportunityRisk.measuredExecutionCount} measured entries and adds. Amounts are per share.`,
+          message: `After you entered, price moved an average of ${money(model.entryOpportunityRisk.averageFavorableMoveDecimal, model.currency)} in your favor and ${money(model.entryOpportunityRisk.averageAdverseMoveDecimal, model.currency)} against you before the trade was closed.`,
+          title: "What happened after you entered",
+        };
+      }
+      return {
+        detail: `Based on ${model.entryOpportunityRisk.measuredExecutionCount} measured entries and adds.`,
+        message: "This page shows how far price moved in your favor and against you after each entry.",
+        title: "What happened after you entered",
+      };
+    case "mfe-mae":
+      return {
+        detail: `${model.analyzedTradeCount < 5 ? "This is an early sample; it is too small to call a repeatable pattern. " : ""}The detailed cards show the saved movement while each entry or add was still open.`,
+        message: "Review each trade's first 30 minutes after the final exit in Your analyzed trades.",
+        title: "Room after entry",
+      };
+    case "green-to-red":
+      if (model.profitCapture.averageCapturedPercent !== null) {
+        return {
+          detail: `${model.analyzedTradeCount < 5 ? "This is an early sample; it is too small to call a repeatable pattern. " : ""}This compares your recorded result with the best profit that remained available through completed candle closes.`,
+          message: `${model.greenToRedTradeCount} of ${model.analyzedTradeCount} trades first went above breakeven and later fell below it. On average, you kept ${percent(model.profitCapture.averageCapturedPercent)} of the best open profit.`,
+          title: "What happened to open profit",
+        };
+      }
+      return {
+        detail: "This looks only at recorded trades with the needed saved candle evidence.",
+        message: `${model.greenToRedTradeCount} of ${model.analyzedTradeCount} trades first went above breakeven and later fell below it.`,
+        title: "What happened to open profit",
+      };
+    case "candle-patterns":
+      return {
+        detail: "These are observations from completed candles around your recorded executions, not a signal for the next trade.",
+        message: `This page shows the candle shapes that appeared around ${model.analyzedExecutionCount} saved entries and exits.`,
+        title: "What these candle setups show",
+      };
+    case "trades":
+      return {
+        detail: "Open any row to review the exact recorded execution and chart behind it.",
+        message: `These ${tradeCount} are the records behind the results across Trade Analyzer.`,
+        title: "Your evidence",
+      };
+  }
+}
 
 export function TradeAnalysisClient({
   evidenceQuery,
@@ -412,10 +507,17 @@ export function TradeAnalysisClient({
       </Paper>
     );
   }
+  const takeaway = plainLanguageTakeaway(model, view);
   return (
     <Stack spacing={2.5}>
+      <DashboardPanel title={takeaway.title}>
+        <Stack spacing={0.75}>
+          <Typography sx={{ fontWeight: 700 }} variant="body1">{takeaway.message}</Typography>
+          <Typography color="text.secondary" variant="body2">{takeaway.detail}</Typography>
+        </Stack>
+      </DashboardPanel>
       {view === "day" ? <Stack spacing={1.25}>
-        <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Overall results</Typography>
+        <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Detailed numbers</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
         <DashboardMetricCard caption="Every saved buy and sell snapshot" label="Analyzed executions" value={String(model.analyzedExecutionCount)} />
         <DashboardMetricCard caption="Trades that finished above breakeven" label="Win rate" value={percent(model.winRatePercent)} valueColor={financialThresholdColor(model.winRatePercent, 50)} />
@@ -440,7 +542,7 @@ export function TradeAnalysisClient({
 
       {view === "day" ? (
         <Stack spacing={1.25}>
-          <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Explore your analysis</Typography>
+          <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Choose a question</Typography>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}>
           {CAPABILITIES.map((capability) => (
             <Card key={capability.href} variant="outlined">
@@ -508,17 +610,17 @@ export function TradeAnalysisClient({
         </Box>
       </Section> : null}
 
-      {view === "mfe-mae" ? <Section defaultExpanded description="Complete-population favorable and adverse movement after each measured entry or add, before the position became flat." helpHref="/help/trade-analyzer/mfe-mae#overview" title="MFE & MAE">
+      {view === "mfe-mae" ? <Section defaultExpanded description="How far price moved in your favor and against you after each measured entry or add." helpHref="/help/trade-analyzer/mfe-mae#overview" title="Room after entry">
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
           <DashboardMetricCard caption="Entries and adds with saved one-minute candle coverage" label="Measured executions" value={String(model.entryOpportunityRisk.measuredExecutionCount)} />
-          <DashboardMetricCard caption="Average price movement in the trade's favor per share" label="Average MFE" value={money(model.entryOpportunityRisk.averageFavorableMoveDecimal, model.currency)} valueColor={financialOutcomeColor(model.entryOpportunityRisk.averageFavorableMoveDecimal)} />
-          <DashboardMetricCard caption="Middle favorable price movement per share" label="Median MFE" value={money(model.entryOpportunityRisk.medianFavorableMoveDecimal, model.currency)} valueColor={financialOutcomeColor(model.entryOpportunityRisk.medianFavorableMoveDecimal)} />
-          <DashboardMetricCard caption="Average price movement against the trade per share" label="Average MAE" value={money(model.entryOpportunityRisk.averageAdverseMoveDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.entryOpportunityRisk.averageAdverseMoveDecimal)} />
-          <DashboardMetricCard caption="Middle adverse price movement per share" label="Median MAE" value={money(model.entryOpportunityRisk.medianAdverseMoveDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.entryOpportunityRisk.medianAdverseMoveDecimal)} />
-          <DashboardMetricCard caption="Average favorable movement relative to the entry price" label="Average MFE %" value={percent(model.mfeMae.averageFavorableMovePercent)} valueColor={financialOutcomeColor(model.mfeMae.averageFavorableMovePercent)} />
-          <DashboardMetricCard caption="Middle favorable movement relative to the entry price" label="Median MFE %" value={percent(model.mfeMae.medianFavorableMovePercent)} valueColor={financialOutcomeColor(model.mfeMae.medianFavorableMovePercent)} />
-          <DashboardMetricCard caption="Average adverse movement relative to the entry price" label="Average MAE %" value={percent(model.mfeMae.averageAdverseMovePercent)} valueColor={adverseMagnitudeColor(model.mfeMae.averageAdverseMovePercent)} />
-          <DashboardMetricCard caption="Middle adverse movement relative to the entry price" label="Median MAE %" value={percent(model.mfeMae.medianAdverseMovePercent)} valueColor={adverseMagnitudeColor(model.mfeMae.medianAdverseMovePercent)} />
+          <DashboardMetricCard caption="Average price movement per share" label="Move in your favor" value={money(model.entryOpportunityRisk.averageFavorableMoveDecimal, model.currency)} valueColor={financialOutcomeColor(model.entryOpportunityRisk.averageFavorableMoveDecimal)} />
+          <DashboardMetricCard caption="Middle price movement per share" label="Typical move in your favor" value={money(model.entryOpportunityRisk.medianFavorableMoveDecimal, model.currency)} valueColor={financialOutcomeColor(model.entryOpportunityRisk.medianFavorableMoveDecimal)} />
+          <DashboardMetricCard caption="Average price movement per share" label="Move against you" value={money(model.entryOpportunityRisk.averageAdverseMoveDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.entryOpportunityRisk.averageAdverseMoveDecimal)} />
+          <DashboardMetricCard caption="Middle price movement per share" label="Typical move against you" value={money(model.entryOpportunityRisk.medianAdverseMoveDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.entryOpportunityRisk.medianAdverseMoveDecimal)} />
+          <DashboardMetricCard caption="Average movement relative to entry price" label="Move in your favor %" value={percent(model.mfeMae.averageFavorableMovePercent)} valueColor={financialOutcomeColor(model.mfeMae.averageFavorableMovePercent)} />
+          <DashboardMetricCard caption="Middle movement relative to entry price" label="Typical move in your favor %" value={percent(model.mfeMae.medianFavorableMovePercent)} valueColor={financialOutcomeColor(model.mfeMae.medianFavorableMovePercent)} />
+          <DashboardMetricCard caption="Average movement relative to entry price" label="Move against you %" value={percent(model.mfeMae.averageAdverseMovePercent)} valueColor={adverseMagnitudeColor(model.mfeMae.averageAdverseMovePercent)} />
+          <DashboardMetricCard caption="Middle movement relative to entry price" label="Typical move against you %" value={percent(model.mfeMae.medianAdverseMovePercent)} valueColor={adverseMagnitudeColor(model.mfeMae.medianAdverseMovePercent)} />
         </Box>
       </Section> : null}
 
@@ -526,7 +628,7 @@ export function TradeAnalysisClient({
         <ExcursionBreakdownTable currency={model.currency} rows={model.mfeMae.breakdown} />
       </Section> : null}
 
-      {view === "mfe-mae" ? <Section description="The individual saved Moomoo-candle observations behind the long-term MFE and MAE results. Ticker and execution filters apply before pagination." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions">
+      {view === "mfe-mae" ? <Section description="The individual saved candle observations behind these results. Ticker and execution filters apply before pagination." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions">
         <MfeMaeTable model={model} offline={offline} />
       </Section> : null}
 

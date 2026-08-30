@@ -18,6 +18,10 @@ type SnapshotRow = Readonly<{
   snapshot_json: string;
 }>;
 
+type PostExitPathRow = Readonly<{
+  favorable_move_decimal: string | null;
+}>;
+
 type PatternFact = Readonly<{
   candlesBeforeExecution: 0 | 1 | 2;
   kind: string;
@@ -45,6 +49,7 @@ type AnalyzerFact = Readonly<{
   events: readonly EventFact[];
   malformedSnapshotCount: number;
   path: NonNullable<ReturnType<typeof readDailyTradePathMaterialization>>["path"];
+  postExitThirtyMinuteMoveDecimal: string | null;
   roundTripId: string;
 }>;
 
@@ -80,9 +85,12 @@ export type TradeAnalysisTradeRow = Readonly<{
   closeDate: string;
   direction: "long" | "short";
   executionCount: number;
+  finalExitPriceDecimal: string | null;
   greenToRedStatus: DailyTradeGreenToRedStatus;
   malformedSnapshotCount: number;
   peakToExitMinutes: number | null;
+  postExitThirtyMinuteMoveDecimal: string | null;
+  postExitThirtyMinutePriceDecimal: string | null;
   returnPercent: number | null;
   roundTripId: string;
   sustainedOpportunityDecimal: string | null;
@@ -318,16 +326,21 @@ ORDER BY analysis.round_trip_id`).all(scope.workspaceId, accountId);
 FROM journal_round_trip_daily_trade_analysis_event_snapshots
 WHERE daily_trade_analysis_version_id = ?
 ORDER BY COALESCE(json_extract(snapshot_json, '$.event.sequence'), candle_time_utc_seconds), candle_time_utc_seconds`);
+  const thirtyMinutePostExitPath = database.prepare<[string], PostExitPathRow>(`SELECT favorable_move_decimal
+FROM journal_round_trip_daily_trade_analysis_post_exit_paths
+WHERE daily_trade_analysis_version_id = ? AND minutes_after_exit = 30`);
   const result = new Map<string, AnalyzerFact>();
   for (const analysis of analyses) {
     const path = readDailyTradePathMaterialization(database, analysis.daily_trade_analysis_version_id);
     if (!path || path.roundTripVersionId !== analysis.round_trip_version_id) continue;
     const rows = snapshots.all(analysis.daily_trade_analysis_version_id);
     const parsed = rows.map(parseEvent);
+    const postExit = thirtyMinutePostExitPath.get(analysis.daily_trade_analysis_version_id);
     result.set(analysis.round_trip_id, Object.freeze({
       events: Object.freeze(parsed.filter((event): event is EventFact => event !== null)),
       malformedSnapshotCount: parsed.filter((event) => event === null).length,
       path: path.path,
+      postExitThirtyMinuteMoveDecimal: decimalString(postExit?.favorable_move_decimal),
       roundTripId: analysis.round_trip_id,
     }));
   }
@@ -411,6 +424,7 @@ function scaleAnalyzerFact(fact: AnalyzerFact, multiplier: string): AnalyzerFact
         peakToFinalReversalDecimal: scaledDecimal(opportunity.peakToFinalReversalDecimal, multiplier)!,
       }))),
     }),
+    postExitThirtyMinuteMoveDecimal: scaledDecimal(fact.postExitThirtyMinuteMoveDecimal, multiplier),
   });
 }
 
@@ -429,6 +443,23 @@ function finalExitSeconds(events: readonly EventFact[]): number | null {
     .map((event) => Math.floor(Date.parse(event.executedAtUtc) / 1000))
     .filter(Number.isFinite);
   return exits.length === 0 ? null : Math.max(...exits);
+}
+
+function finalExitEvent(events: readonly EventFact[]): EventFact | null {
+  const exits = events.filter((event) => event.eventKind === "final_exit");
+  return exits.length === 0 ? null : exits.reduce((latest, event) =>
+    Date.parse(event.executedAtUtc) > Date.parse(latest.executedAtUtc) ? event : latest);
+}
+
+function postExitPrice(
+  direction: "long" | "short",
+  exitPriceDecimal: string | null,
+  moveDecimal: string | null,
+): string | null {
+  if (exitPriceDecimal === null || moveDecimal === null) return null;
+  const exitPrice = new Decimal(exitPriceDecimal);
+  const move = new Decimal(moveDecimal);
+  return direction === "long" ? exitPrice.plus(move).toString() : exitPrice.minus(move).toString();
 }
 
 function peakToExitMinutes(fact: AnalyzerFact): number | null {
@@ -837,22 +868,34 @@ export function buildDailyTradeLongTermAnalytics(
       ),
     }),
     timezone,
-    trades: Object.freeze(joined.map((row): TradeAnalysisTradeRow => Object.freeze({
-      actualPnlDecimal: row.actualPnl,
-      additionalOpportunityDecimal: row.additional,
-      capturedPercent: capturedPercent(row.actualPnl, row.opportunity),
-      closeDate: row.journal.closeLocalDate,
-      direction: row.journal.direction,
-      executionCount: row.analyzer.events.length,
-      greenToRedStatus: row.analyzer.path.status,
-      malformedSnapshotCount: row.analyzer.malformedSnapshotCount,
-      peakToExitMinutes: row.peakToExit,
-      returnPercent: row.returnPercent,
-      roundTripId: row.journal.roundTripId,
-      sustainedOpportunityDecimal: row.opportunity,
-      symbol: row.journal.displayedSymbol,
-      trackerDate: row.journal.entryLocalDate,
-    })).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol))),
+    trades: Object.freeze(joined.map((row): TradeAnalysisTradeRow => {
+      const finalExit = finalExitEvent(row.analyzer.events);
+      const finalExitPriceDecimal = finalExit?.priceDecimal ?? null;
+      const postExitThirtyMinuteMoveDecimal = row.analyzer.postExitThirtyMinuteMoveDecimal;
+      return Object.freeze({
+        actualPnlDecimal: row.actualPnl,
+        additionalOpportunityDecimal: row.additional,
+        capturedPercent: capturedPercent(row.actualPnl, row.opportunity),
+        closeDate: row.journal.closeLocalDate,
+        direction: row.journal.direction,
+        executionCount: row.analyzer.events.length,
+        finalExitPriceDecimal,
+        greenToRedStatus: row.analyzer.path.status,
+        malformedSnapshotCount: row.analyzer.malformedSnapshotCount,
+        peakToExitMinutes: row.peakToExit,
+        postExitThirtyMinuteMoveDecimal,
+        postExitThirtyMinutePriceDecimal: postExitPrice(
+          row.journal.direction,
+          finalExitPriceDecimal,
+          postExitThirtyMinuteMoveDecimal,
+        ),
+        returnPercent: row.returnPercent,
+        roundTripId: row.journal.roundTripId,
+        sustainedOpportunityDecimal: row.opportunity,
+        symbol: row.journal.displayedSymbol,
+        trackerDate: row.journal.entryLocalDate,
+      });
+    }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol))),
     winRatePercent: percentage(joined.filter((row) => new Decimal(row.actualPnl).gt(0)).length, joined.length),
   });
 }
