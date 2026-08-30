@@ -19,9 +19,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { useTradeTrackerUnsavedChanges } from "./trade-tracker-unsaved-changes";
 
 export type EditableManualExecutionView = Readonly<{
+  deleteRef?: string | null;
   editRef: string;
   fees: string | null;
   localDate: string;
@@ -60,6 +62,14 @@ function draftsMatch(
       right[key as keyof ManualExecutionEditDraft]);
 }
 
+function displayTime(value: string): string {
+  const match = value.match(/^(\d{2}):(\d{2})/u);
+  if (!match) return value;
+  const hour = Number(match[1]);
+  const minute = match[2];
+  return `${hour % 12 || 12}:${minute} ${hour >= 12 ? "PM" : "AM"}`;
+}
+
 export function ManualExecutionEditDialog({
   execution,
   expectedAccountSelectionRef,
@@ -81,8 +91,10 @@ export function ManualExecutionEditDialog({
     tradeCurrency: editable?.tradeCurrency ?? "",
   });
   const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [draft, setDraft] = useState(initialDraft);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<string | null>(null);
   useTradeTrackerUnsavedChanges(
@@ -160,16 +172,58 @@ export function ManualExecutionEditDialog({
     }
   }
 
+  async function deleteExecution() {
+    const deleteRef = editable?.deleteRef;
+    if (!deleteRef) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/platform/journal/manual-executions/${deleteRef}`,
+        {
+          body: JSON.stringify({
+            expectedAccountSelectionRef,
+            idempotencyKey: crypto.randomUUID(),
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
+          },
+          method: "DELETE",
+        },
+      );
+      const packet = await response.json() as { code?: string; result?: { analysisRefresh?: { queuedTradeCount?: number } } };
+      if (!response.ok) {
+        if (packet.code === "TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION") {
+          throw new Error("This execution is being compared with broker data. Review that match in Data Decisions before deleting it here.");
+        }
+        if (packet.code === "TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT") {
+          throw new Error("This execution changed since the page opened. Refresh the page and try again.");
+        }
+        throw new Error("The execution could not be deleted. Refresh the page and try again.");
+      }
+      setConfirmation(
+        (packet.result?.analysisRefresh?.queuedTradeCount ?? 0) > 0
+          ? "Execution deleted. Trade Analyzer is updating the affected trade."
+          : "Execution deleted.",
+      );
+      setDeleteOpen(false);
+      window.setTimeout(() => router.refresh(), 1200);
+    } catch (cause) {
+      setError(cause instanceof Error
+        ? cause.message
+        : "The execution could not be deleted. Refresh the page and try again.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <>
-      <Button
-        onClick={openEditor}
-        size="small"
-        sx={{ lineHeight: 1.2, minHeight: { xs: 44, sm: 36 }, minWidth: 56, px: 1, py: 0.5 }}
-        variant="outlined"
-      >
-        Edit
-      </Button>
+      <Stack direction="row" spacing={0.75}>
+        <Button onClick={openEditor} size="small" sx={{ lineHeight: 1.2, minHeight: { xs: 44, sm: 36 }, minWidth: 56, px: 1, py: 0.5 }} variant="outlined">Edit</Button>
+        {editable.deleteRef ? <Button color="error" onClick={() => { setError(null); setDeleteOpen(true); }} size="small" sx={{ lineHeight: 1.2, minHeight: { xs: 44, sm: 36 }, minWidth: 64, px: 1, py: 0.5 }} variant="outlined">Delete</Button> : null}
+      </Stack>
       <Dialog fullWidth maxWidth="md" onClose={() => setOpen(false)} open={open}>
         <DialogTitle>Edit manual execution</DialogTitle>
         <DialogContent>
@@ -212,6 +266,20 @@ export function ManualExecutionEditDialog({
           <Button disabled={saving} onClick={() => void save()} variant="contained">
             {saving ? "Saving..." : "Save changes"}
           </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog fullWidth maxWidth="sm" onClose={() => { if (!deleting) setDeleteOpen(false); }} open={deleteOpen}>
+        <DialogTitle>Delete this execution?</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ pt: 1 }}>
+            <Typography variant="body2">Delete {execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantity)} {execution.symbol} at {displayTime(editable.localTime)}? This removes it from the active Trade Tracker history and recalculates the affected trade. The original Journal record is kept in history.</Typography>
+            <Typography color="text.secondary" variant="body2">This may change whether the position is open or closed.</Typography>
+            {error ? <Alert action={error.includes("Data Decisions") ? <Button color="inherit" component={Link} href="/data-decisions" size="small">Open Data Decisions</Button> : undefined} severity="error">{error}</Alert> : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={deleting} onClick={() => setDeleteOpen(false)}>Cancel</Button>
+          <Button color="error" disabled={deleting} onClick={() => void deleteExecution()} variant="contained">{deleting ? "Deleting..." : "Delete execution"}</Button>
         </DialogActions>
       </Dialog>
       <Snackbar

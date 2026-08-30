@@ -55,11 +55,13 @@ FX candidate `b3b59aa70bb1b260b531f8b45fa620c41d04c3af` is untouched.
 
 ## Delivery boundary
 
-This slice is UI composition and read wiring only. It does not change
-migrations, hosted configuration, Railway, existing Journal facts, account
-isolation, chart/candle loading, or execution delete authority. A Delete icon
-may not mutate data until the existing per-execution opaque authority is wired
-and revalidated at execution time.
+This slice does not change migrations, hosted configuration, Railway, account
+isolation, chart/candle loading, or Journal facts outside the existing audited
+manual-execution exclusion workflow. Delete remains execution-level only: the
+server emits an opaque `deleteRef` only after its current-account/current-version
+safe-eligibility predicate passes, and the existing mutation revalidates that
+ref before appending the historical exclusion and rebuilding affected trades.
+No trade-level identifier or browser-created eligibility is accepted.
 
 ## Review and acceptance
 

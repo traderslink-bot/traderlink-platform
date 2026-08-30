@@ -5,6 +5,7 @@ import type Database from "better-sqlite3";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
 import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
+import { withReadonlyJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
 import {
   journalAnalyticsLocalTimeFact,
   normalizeJournalAnalyticsFacts,
@@ -13,11 +14,25 @@ import {
 export type WorkspaceTradeLibraryRow = Readonly<{
   date: string;
   direction: "long" | "short";
+  editableExecutions: readonly WorkspaceEditableExecution[];
   executionCount: number;
   netPnlDecimal: string | null;
   roundTripId: string;
   status: "Open" | "Closed" | "Closed swing";
   symbol: string;
+  tradeCurrency: string;
+}>;
+
+export type WorkspaceEditableExecution = Readonly<{
+  deleteRef: string | null;
+  editRef: string;
+  fees: string | null;
+  localDate: string;
+  localTime: string;
+  price: string | null;
+  quantity: string;
+  side: "buy" | "sell";
+  sourceTimezone: string;
   tradeCurrency: string;
 }>;
 
@@ -63,9 +78,33 @@ WHERE workspace_id = ? AND account_id = ?`).all(
     accountId,
   ) as TradeStyleRow[]).map((row) => [row.round_trip_id, row.trade_style]));
   const normalized = normalizeJournalAnalyticsFacts(facts);
+  const executionIds = facts.roundTrips.flatMap((trade) =>
+    trade.allocations.map((allocation) => allocation.executionId));
+  const editableByExecution = new Map(withReadonlyJournalIntegrityRuntime(scope, (journal) =>
+    journal.manualExecutionEdits.listEditable(
+      journal.tradeStyles.accountScope(scope),
+      [...new Set(executionIds)],
+    ).map((execution) => [execution.executionId, execution] as const)));
+  const editableExecutions = (executionIdsForTrade: readonly string[]) => Object.freeze(
+    executionIdsForTrade.flatMap((executionId) => {
+      const execution = editableByExecution.get(executionId);
+      return execution ? [Object.freeze({
+        deleteRef: execution.deleteRef,
+        editRef: execution.editRef,
+        fees: execution.feesDecimal,
+        localDate: execution.localDate,
+        localTime: execution.localTime,
+        price: execution.priceDecimal,
+        quantity: execution.quantityDecimal,
+        side: execution.side,
+        sourceTimezone: execution.sourceTimezone,
+        tradeCurrency: execution.tradeCurrency,
+      })] : [];
+    }));
   const closed = normalized.realizedRows.map((trade) => Object.freeze({
     date: trade.closeLocal.localDate,
     direction: trade.direction,
+    editableExecutions: editableExecutions(trade.uniqueExecutionIds),
     executionCount: trade.uniqueExecutionCount,
     netPnlDecimal: trade.netPnlDecimal,
     roundTripId: trade.roundTripId,
@@ -79,6 +118,8 @@ WHERE workspace_id = ? AND account_id = ?`).all(
       facts.accounts[0]?.tradingTimezone ?? "UTC",
     ).localDate,
     direction: trade.direction,
+    editableExecutions: editableExecutions([...new Set(
+      trade.allocations.map((allocation) => allocation.executionId))]),
     executionCount: new Set(trade.allocations.map((allocation) => allocation.executionId)).size,
     netPnlDecimal: null,
     roundTripId: trade.roundTripId,

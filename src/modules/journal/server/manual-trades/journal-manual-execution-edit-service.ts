@@ -21,6 +21,7 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const TIME_PATTERN = /^\d{2}:\d{2}(?::\d{2})?$/u;
 
 export type JournalEditableManualExecution = Readonly<{
+  deleteRef: string | null;
   editRef: string;
   executionId: string;
   currentVersionId: string;
@@ -83,12 +84,19 @@ export class JournalManualExecutionEditService {
       executionIds,
     ).map((candidate) => {
       const local = localParts(candidate.sourceTimestampText);
+      const editRef = this.editRef(
+        scope,
+        candidate.executionId,
+        candidate.currentVersionId,
+      );
       return Object.freeze({
-        editRef: this.editRef(
-          scope,
+        deleteRef: this.reconciliations.isSafelyDeletableManualExecution(
+          scope.workspaceId,
+          scope.accountId,
           candidate.executionId,
           candidate.currentVersionId,
-        ),
+        ) ? editRef : null,
+        editRef,
         executionId: candidate.executionId,
         currentVersionId: candidate.currentVersionId,
         localDate: local.date,
@@ -216,6 +224,61 @@ export class JournalManualExecutionEditService {
       executionVersionId: correction.executionVersionId,
       openedFollowupDecisionIds: correction.openedFollowupDecisionIds,
       rebuildCount: correction.rebuildCount,
+      analysisRefresh: Object.freeze({
+        affectedTradeCount: affectedRoundTripIds.length,
+        queuedTradeCount: queuedRoundTripIds.length,
+      }),
+    });
+  }
+
+  remove(
+    scope: AccountScope,
+    executionRef: string,
+    input: Readonly<{
+      idempotencyKey: string;
+      now?: Date;
+    }>,
+  ) {
+    if (
+      !/^[0-9a-f]{64}$/u.test(executionRef) ||
+      input.idempotencyKey.length < 16 ||
+      input.idempotencyKey.length > 128
+    ) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_INVALID");
+    }
+    const candidate = this.listEditable(scope).find((item) =>
+      item.editRef === executionRef && item.deleteRef === executionRef);
+    if (!candidate) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
+    }
+    const exclusion = this.imports.immediate(() =>
+      this.decisions.excludeManualExecution(scope, {
+        executionId: candidate.executionId,
+        expectedCurrentVersionId: candidate.currentVersionId,
+        idempotencyKey: input.idempotencyKey,
+        now: input.now,
+      }));
+    const affectedRoundTripIds = Object.freeze([
+      ...new Set(
+        exclusion.rebuilds
+          .filter((rebuild) => rebuild.status === "rebuilt")
+          .flatMap((rebuild) => rebuild.roundTripIds),
+      ),
+    ]);
+    let queuedRoundTripIds: readonly string[] = Object.freeze([]);
+    try {
+      queuedRoundTripIds = this.dailyTradeAnalyzer?.queueAfterJournalRebuild(
+        scope,
+        affectedRoundTripIds,
+      ) ?? Object.freeze([]);
+    } catch {
+      // Journal exclusion is already committed; Analyzer availability cannot
+      // turn a successful fact correction into a reported failure.
+    }
+    return Object.freeze({
+      executionVersionId: exclusion.executionVersionId,
+      openedFollowupDecisionIds: exclusion.openedFollowupDecisionIds,
+      rebuildCount: exclusion.rebuildCount,
       analysisRefresh: Object.freeze({
         affectedTradeCount: affectedRoundTripIds.length,
         queuedTradeCount: queuedRoundTripIds.length,

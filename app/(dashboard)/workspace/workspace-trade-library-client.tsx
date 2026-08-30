@@ -24,6 +24,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { ManualExecutionEntry } from "../trade-tracker/manual-execution-entry";
+import { ManualExecutionEditDialog } from "../trade-tracker/manual-execution-edit-dialog";
 import {
   formatJournalAnalyticsDecimal,
   formatJournalAnalyticsMoney,
@@ -187,11 +188,13 @@ function AddTradeDrawer({
 }
 
 function SavedTradeDrawer({
+  expectedAccountSelectionRef,
   onClose,
   open,
   row,
   startingTab,
 }: Readonly<{
+  expectedAccountSelectionRef: string;
   onClose: () => void;
   open: boolean;
   row: WorkspaceTradeLibraryRow | null;
@@ -216,7 +219,7 @@ function SavedTradeDrawer({
           </Tabs>
         </Box>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
-          {tab === 0 ? <Stack spacing={1.25}><Typography color={financialOutcomeColor(row.netPnlDecimal)} sx={{ fontWeight: 850 }} variant="h5">{tradeMoney(row)}</Typography><Typography color="text.secondary" variant="body2">{row.executionCount} execution{row.executionCount === 1 ? "" : "s"}</Typography><ExecutionDisclosure row={row} /></Stack> : null}
+          {tab === 0 ? <Stack spacing={1.25}><Typography color={financialOutcomeColor(row.netPnlDecimal)} sx={{ fontWeight: 850 }} variant="h5">{tradeMoney(row)}</Typography><Typography color="text.secondary" variant="body2">{row.executionCount} execution{row.executionCount === 1 ? "" : "s"}</Typography><ExecutionDisclosure row={row} />{row.editableExecutions.length > 0 ? <Stack spacing={0.75}><Typography sx={{ fontWeight: 800 }} variant="body2">Execution actions</Typography>{row.editableExecutions.map((execution) => <Stack direction={{ xs: "column", sm: "row" }} key={execution.editRef} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Typography variant="body2">{execution.localDate} · {execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantity)} @ {execution.price ?? "Not recorded"}</Typography><ManualExecutionEditDialog execution={{ manualEdit: { deleteRef: execution.deleteRef, editRef: execution.editRef, fees: execution.fees, localDate: execution.localDate, localTime: execution.localTime, sourcePrice: execution.price, sourceTimezone: execution.sourceTimezone, tradeCurrency: execution.tradeCurrency }, price: execution.price, quantity: execution.quantity, side: execution.side, symbol: row.symbol }} expectedAccountSelectionRef={expectedAccountSelectionRef} /></Stack>)}</Stack> : null}</Stack> : null}
           {tab === 1 ? <Stack spacing={1.25}><Typography variant="body2">Notes, tags, and rules stay with the completed trade review.</Typography><Button onClick={() => router.push("/trades")} sx={{ alignSelf: "flex-start" }} variant="outlined">Open review</Button></Stack> : null}
           {tab === 2 ? <Stack spacing={1.25}><Typography variant="body2">Saved Analyzer detail is available from Trade Analyzer. Workspace does not load charts or candle data.</Typography><Button onClick={() => router.push("/analytics/trade-analyzer/day/trades")} sx={{ alignSelf: "flex-start" }} variant="outlined">Open Trade Analyzer</Button></Stack> : null}
         </Box>
@@ -309,6 +312,7 @@ export function WorkspaceTradeLibrary({
         open={addOpen}
       />
       <SavedTradeDrawer
+        expectedAccountSelectionRef={expectedAccountSelectionRef}
         onClose={() => setDetail(null)}
         open={detail !== null}
         row={detail}

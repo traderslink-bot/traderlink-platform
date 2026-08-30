@@ -806,6 +806,86 @@ export class JournalDataDecisionService {
     });
   }
 
+  excludeManualExecution(
+    scope: AccountScope,
+    input: Readonly<{
+      executionId: string;
+      expectedCurrentVersionId: string;
+      idempotencyKey: string;
+      now?: Date;
+    }>,
+  ): Readonly<{
+    executionVersionId: string;
+    openedFollowupDecisionIds: readonly string[];
+    rebuilds: readonly JournalChainRebuildResult[];
+    rebuildCount: number;
+  }> {
+    if (!this.reconciliations.isSafelyDeletableManualExecution(
+      scope.workspaceId,
+      scope.accountId,
+      input.executionId,
+      input.expectedCurrentVersionId,
+    )) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
+    }
+    const current = this.executionRepository.currentVersion(
+      input.executionId,
+      scope.workspaceId,
+      scope.accountId,
+    );
+    if (!current || current.executionVersionId !== input.expectedCurrentVersionId) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT");
+    }
+    const facts: JournalExecutionFacts = Object.freeze({
+      instrumentId: current.instrumentId,
+      tradeCurrency: current.tradeCurrency,
+      sourceTimestampText: current.sourceTimestampText,
+      sourceTimezone: current.sourceTimezone,
+      timeParserVersion: current.timeParserVersion,
+      executedAtUtc: current.executedAtUtc,
+      sourceOrderKey: current.sourceOrderKey,
+      side: current.side,
+      quantityDecimal: current.quantityDecimal,
+      priceDecimal: current.priceDecimal,
+      feesDecimal: current.feesDecimal,
+      feeCurrency: current.feeCurrency,
+      feeSignConvention: current.feeSignConvention,
+      factCompleteness: current.factCompleteness,
+    });
+    return this.decisions.immediate(() => {
+      const evidence = this.createExecutionCorrectionEvidence(scope, {
+        idempotencyKey: input.idempotencyKey,
+        sourceDisplayLabel: "Manual execution deletion",
+        executionId: input.executionId,
+        facts,
+        correctionKind: "execution_state_correction",
+        now: input.now,
+      });
+      const excluded = this.executionService.appendCorrection(scope, {
+        executionId: input.executionId,
+        expectedCurrentVersionId: input.expectedCurrentVersionId,
+        state: "excluded_by_trader",
+        facts,
+        changeReasonCode: "manual_execution_user_deletion",
+        importBatchId: evidence.importBatchId,
+        sourceRowId: evidence.sourceRowId,
+        now: input.now,
+      });
+      const rebuilds = this.roundTrips.rebuildAccount(scope, {
+        kind: "import_event",
+        triggerId: evidence.importEventId,
+        now: input.now,
+      });
+      const followups = this.openRoundTripDecisionFindings(scope, rebuilds, input.now);
+      return Object.freeze({
+        executionVersionId: excluded.executionVersionId,
+        openedFollowupDecisionIds: Object.freeze(followups.map((decision) => decision.decisionId)),
+        rebuilds,
+        rebuildCount: rebuilds.length,
+      });
+    });
+  }
+
   resolve(
     scope: AccountScope,
     input: JournalDecisionResolution,
@@ -1884,7 +1964,8 @@ export class JournalDataDecisionService {
       sourceDisplayLabel: string;
       executionId: string;
       facts: JournalExecutionFacts;
-      correctionKind: "execution_fact_correction" | "execution_order_correction";
+      correctionKind: "execution_fact_correction" | "execution_order_correction" |
+        "execution_state_correction";
       now?: Date;
     }>,
   ): Readonly<{

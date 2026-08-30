@@ -40,7 +40,23 @@
 
 ## Outstanding boundaries
 
-- Saved-trade Journal/Analyzer editing and any Delete mutation remain guarded
-  follow-up work; no trade-level delete authority is derived in this slice.
+- Saved-trade Journal/Analyzer editing remains guarded follow-up work. Delete
+  is available only for an execution whose current server-issued opaque ref
+  passes the audited manual-only predicate; it is never a trade-level action.
 - No owner review, integration, Railway staging, or production approval has
   occurred.
+
+## 2026-08-30 — Safe execution deletion follow-up
+
+- Restored the audited `c224bccb` deletion contract selectively, without
+  merging that non-ancestor checkpoint: the repository predicate permits only
+  accepted active `manual_entry` executions in the selected account and rejects
+  Demo, provider-backed, provenance-identified, reconciled, stale, protected,
+  or cross-account executions.
+- The edit service emits `deleteRef` only when that predicate passes and
+  re-resolves the same opaque ref against the current account and version at
+  delete time. The route retains mutation-header, request-scope, and expected
+  account-selection checks before using the established exclusion/rebuild path.
+- Workspace forwards only server-issued eligible refs to the saved-trade drawer.
+  It does not construct an execution id or ref; non-eligible executions render
+  no Delete control and the compact list remains non-mutating.

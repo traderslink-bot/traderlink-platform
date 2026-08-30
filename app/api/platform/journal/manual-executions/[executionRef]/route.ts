@@ -89,3 +89,41 @@ export async function POST(
     );
   }
 }
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ executionRef: string }> },
+): Promise<Response> {
+  try {
+    requireJournalMutationRequest(request);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const body = record(await request.json());
+    requireExpectedJournalAccountSelection(
+      scope,
+      body.expectedAccountSelectionRef,
+    );
+    const { executionRef } = await context.params;
+    const result = withWritableJournalIntegrityRuntime(scope, (journal) =>
+      journal.manualExecutionEdits.remove(
+        journal.tradeStyles.accountScope(scope),
+        executionRef,
+        { idempotencyKey: text(body, "idempotencyKey") },
+      ));
+    return Response.json({
+      status: "ready",
+      result: {
+        pendingDecisionCount: result.openedFollowupDecisionIds.length,
+        rebuildCount: result.rebuildCount,
+        analysisRefresh: result.analysisRefresh,
+      },
+    });
+  } catch (error) {
+    const code = isTraderLinkPlatformError(error)
+      ? error.code
+      : "TRADERLINK_MANUAL_EXECUTION_EDIT_INVALID";
+    return Response.json(
+      { status: "unavailable", code },
+      { status: responseStatus(code) },
+    );
+  }
+}
