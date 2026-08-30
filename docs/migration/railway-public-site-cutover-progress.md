@@ -1,6 +1,6 @@
 # Railway Public Site Cutover Progress
 
-**Status:** Proxy repair staging-proven; owner-authorized production sequence ready
+**Status:** Three-page static production surface live; Trade Analytics final QA complete and serialized publication authorized
 
 **Controlling plan:** [Railway Public Site Cutover Plan](railway-public-site-cutover-plan.md)
 
@@ -42,11 +42,42 @@
   fail closed; and an unchanged static service continued proxying after a
   separate Platform container replacement. The Watchlist stream returned its
   expected unauthenticated response rather than 502/504.
-- [ ] Publish and verify staging-proven proxy checkpoint `90098edb` before the
+- [x] Published and verified staging-proven proxy checkpoint `90098edb` before the
   three-page static expansion. The live gate includes proxied pages, favicon,
   robots, Watchlist, and the SSE route after a Platform container replacement;
   the static root must remain available throughout.
-- [ ] Publish the owner-approved three-page candidate parented to `90098edb`
+- [x] Published the owner-approved three-page candidate parented to `90098edb`
   only after that production proxy gate passes, then verify both canonical
   landing routes and redirects live. The owner's combined final-QA instruction
   explicitly authorizes this serialized production sequence when checks pass.
+
+## Final production evidence
+
+- Proxy checkpoint `90098edb` published successfully before the page release;
+  its startup hook launched cleanly and root, Platform proxy routes, discovery,
+  health, and the Watchlist stream boundary passed.
+- Landing checkpoint `4edf9303` published next. QA found the Trade Analyzer
+  directory missing from the image, so one-file child `e0188bb2` added its
+  Docker copy and restored `/trade-analyzer` to 200.
+- Raw redirect QA then found Railway's internal listener scheme/port in
+  absolute locations. One-file final child `f0e15a79` set server-level relative
+  redirects without changing route ownership.
+- Final production tip `f0e15a79` passed `/`, `/trading-journal`,
+  `/trade-analyzer`, representative assets, robots, landing sitemap, Privacy,
+  Terms, Help, News, Platform health, Watchlist auth, and unauthenticated SSE
+  checks. Slash redirects now return only `/trading-journal`,
+  `/trade-analyzer`, and `/landing-assets/` locations.
+
+## Trade Analytics release candidate
+
+- [x] Owner approved the complete desktop and mobile `/trade-analytics` page.
+- [x] Final QA passed for all four static pages at desktop and 390-pixel mobile
+  widths: one H1 and canonical per page, complete assets, valid structured data
+  and JavaScript, exact beta/login destinations, shared four-link navigation,
+  working mobile menus, and no horizontal page overflow or console errors.
+- [x] Added only the exact `/trade-analytics` static route, relative
+  trailing-slash redirect, Docker directory copy, and landing-sitemap entry;
+  the dynamic Railway-DNS proxy and all Platform route ownership are retained.
+- [ ] Publish the candidate through the Coordinator-owned static release lane
+  from exact production parent `f0e15a79`, then record the deployment and live
+  smoke evidence.

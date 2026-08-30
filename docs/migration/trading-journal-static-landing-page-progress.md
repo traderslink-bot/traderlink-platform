@@ -1,6 +1,6 @@
 # Trading Journal Static Landing Page Progress
 
-**Status:** Owner approved and final QA complete; awaiting serialized publication
+**Status:** Owner approved, final QA complete, and live in production
 
 **Controlling plan:** [Trading Journal Static Landing Page Plan](trading-journal-static-landing-page-plan.md)
 
@@ -44,9 +44,9 @@
 - [x] Completed and received owner approval for the responsive/mobile pass.
 - [x] Ran the focused final static and browser verification inventory across
   the homepage, Trading Journal, and Trade Analyzer together.
-- [ ] Preserve the accepted page in the narrow serialized release checkpoint.
-- [ ] Publish only through a Coordinator-owned static release lane after the
-  separate Railway runtime-DNS proxy repair is live and verified.
+- [x] Preserved the accepted page in the narrow serialized release checkpoint.
+- [x] Published through the Coordinator-owned static release lane after the
+  Railway runtime-DNS proxy repair passed staging and production verification.
 
 ## Verification record
 
@@ -138,3 +138,14 @@ checkpoint.
 - No external analytics script or optional tracking request is present before
   consent. `git diff --check` passes with only existing Windows line-ending
   notices for the static Dockerfile and Nginx template.
+
+### Production release
+
+- The staging-proven runtime-DNS proxy checkpoint was published first and
+  verified before any landing-page expansion.
+- The owner-approved homepage, `/trading-journal`, and `/trade-analyzer` are
+  live. Their representative assets, discovery files, legal links, Help,
+  News, Platform health, and authenticated Watchlist boundary passed the final
+  production smoke inventory.
+- Trailing-slash redirects remain relative to the public origin and contain no
+  Railway listener scheme or port.

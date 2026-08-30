@@ -1,6 +1,6 @@
 # Railway Public Site Cutover Plan
 
-**Status:** Production front door active; three-page expansion pending proxy repair gate
+**Status:** Production front door and three-page static expansion live; Trade Analytics final QA complete and production publication authorized
 
 **Progress record:** [Railway Public Site Cutover Progress](railway-public-site-cutover-progress.md)
 
@@ -8,6 +8,7 @@
 
 - [Trading Journal Static Landing Page Plan](trading-journal-static-landing-page-plan.md)
 - [Trade Analyzer Static Landing Page Plan](trade-analyzer-static-landing-page-plan.md)
+- [Trade Analytics Static Landing Page Plan](trade-analytics-static-landing-page-plan.md)
 
 ## Complete target inventory
 

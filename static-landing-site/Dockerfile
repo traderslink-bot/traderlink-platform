@@ -23,4 +23,5 @@ COPY robots.txt /usr/share/nginx/html/robots.txt
 COPY landing-pages-sitemap.xml /usr/share/nginx/html/landing-pages-sitemap.xml
 COPY trading-journal /usr/share/nginx/html/trading-journal
 COPY trade-analyzer /usr/share/nginx/html/trade-analyzer
+COPY trade-analytics /usr/share/nginx/html/trade-analytics
 COPY landing-assets /usr/share/nginx/html/landing-assets

@@ -1,6 +1,6 @@
 # Trading Journal Static Landing Page Plan
 
-**Status:** Owner approved release candidate; serialized publication pending
+**Status:** Owner approved and live in production
 
 **Progress record:** [Trading Journal Static Landing Page Progress](trading-journal-static-landing-page-progress.md)
 
@@ -55,7 +55,8 @@ approved footer, and `https://traderslink.pro/beta` for every signup CTA.
   Green-to-Red without replacing its future dedicated page.
 - The pre-session preparation chapter was removed from this page by owner
   direction. Its standalone HTML/CSS is preserved in the owner's Desktop
-  `traderslink-static-landing-pages` folder for a future Trading Tools page.
+  `traderslink-static-landing-pages` folder as reusable reference material;
+  no separate public Trading Tools landing page is planned.
 - Session Notes uses the full mobile notes view and the four individual note
   types in an editorial composition.
 - Decorative surfaces are CSS, not invented product imagery. Screenshots keep
