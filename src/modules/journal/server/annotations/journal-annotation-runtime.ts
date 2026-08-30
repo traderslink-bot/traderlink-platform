@@ -37,7 +37,18 @@ export function withReadonlyJournalAnnotations<T>(
   ) => T,
 ): T {
   return withReadonlyPlatformDatabase({}, (database) =>
-    operation(createJournalAnnotationService(database), accountScope(scope)));
+    withScopedJournalAnnotations(database, scope, operation));
+}
+
+export function withScopedJournalAnnotations<T>(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  operation: (
+    service: JournalAnnotationService,
+    account: ReturnType<typeof accountScope>,
+  ) => T,
+): T {
+  return operation(createJournalAnnotationService(database), accountScope(scope));
 }
 
 export function withWritableJournalAnnotations<T>(

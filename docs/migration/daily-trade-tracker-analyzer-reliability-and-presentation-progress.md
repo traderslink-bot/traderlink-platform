@@ -156,6 +156,16 @@ delivery-configuration claim.
       is a second transformed copy of the same day payload and is the next
       serialization boundary to measure only if server time is no longer the
       dominant remainder.
+- [x] After production improved to about 5.992 seconds, reuse the reporting
+      runtime's already verified read-only database handle for selected-day
+      Journal integrity, annotations and summary-only Analyzer reads. Existing
+      wrappers remain the fallback for every other caller, and the same active
+      account, narrowed annotation account and workspace/account Analyzer
+      predicates remain authoritative.
+- [ ] Re-measure production with the three redundant database opens removed.
+      Every actual database open still performs complete migration, schema,
+      foreign-key, quick-check and pragma verification; no verifier or fact-set
+      behavior changed.
 
 ## Verification boundary
 

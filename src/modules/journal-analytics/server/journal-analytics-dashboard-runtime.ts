@@ -1,5 +1,7 @@
 import "server-only";
 
+import type Database from "better-sqlite3";
+
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import {
@@ -260,6 +262,7 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
     reportingCurrency: PlatformReportingCurrency;
     reportingContext: JournalReportingCurrencyContext;
     service: JournalAnalyticsService;
+    verifiedReadonlyDatabase: Database.Database;
   }>) => T | Promise<T>,
   options: JournalAnalyticsReportingRuntimeOptions = {},
 ): Promise<T> {
@@ -330,6 +333,7 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
         snapshot.reportingCurrency,
         normalizeFacts,
       ),
+      verifiedReadonlyDatabase: database,
     }));
   } finally {
     database.close();

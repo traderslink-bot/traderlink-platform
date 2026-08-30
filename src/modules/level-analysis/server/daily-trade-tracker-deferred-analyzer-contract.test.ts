@@ -52,4 +52,30 @@ describe("Daily Trade Tracker deferred Analyzer contract", () => {
     expect(view).toContain("timeZone: data.timezone");
     expect(view).toContain("ruleEventLabel(item, currency, timezone)");
   });
+
+  it("reuses one verified reporting database for selected-day summary readers", () => {
+    const platformData = source(
+      "app/(dashboard)/trade-tracker/trade-tracker-platform-data.ts",
+    );
+    const reportingRuntime = source(
+      "src/modules/journal-analytics/server/journal-analytics-dashboard-runtime.ts",
+    );
+    const integrityRuntime = source(
+      "src/modules/journal/server/journal-integrity-runtime.ts",
+    );
+    const annotationRuntime = source(
+      "src/modules/journal/server/annotations/journal-annotation-runtime.ts",
+    );
+
+    expect(reportingRuntime).toContain("verifiedReadonlyDatabase: database");
+    expect(platformData).toContain("withScopedJournalIntegrityRuntime(");
+    expect(platformData).toContain("withScopedJournalAnnotations(");
+    expect(platformData).toMatch(
+      /\{ includeDetails: false \},\r?\n\s+verifiedReadonlyDatabase,/u,
+    );
+    expect(integrityRuntime).toContain("assertScope(runtime, scope)");
+    expect(integrityRuntime).toContain("withReadonlyPlatformDatabase({}, (database) =>");
+    expect(annotationRuntime).toContain("accountScope(scope)");
+    expect(annotationRuntime).toContain("withReadonlyPlatformDatabase({}, (database) =>");
+  });
 });

@@ -1,5 +1,6 @@
 import "server-only";
 
+import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
 
 import {
@@ -33,9 +34,16 @@ import type {
 } from "@/src/modules/journal/contracts/journal-annotation-contracts";
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalAccountService } from "@/src/modules/journal/server/accounts/journal-account-service";
-import { withReadonlyJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
+import {
+  type JournalIntegrityRuntime,
+  withReadonlyJournalIntegrityRuntime,
+  withScopedJournalIntegrityRuntime,
+} from "@/src/modules/journal/server/journal-integrity-runtime";
 import type { JournalAnnotationService } from "@/src/modules/journal/server/annotations/journal-annotation-service";
-import { withReadonlyJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
+import {
+  withReadonlyJournalAnnotations,
+  withScopedJournalAnnotations,
+} from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import { evaluateJournalPresetRules } from "@/src/modules/journal/server/annotations/journal-preset-rule-evaluator";
 import { currentJournalAccountSelectionRef } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -423,13 +431,14 @@ function readDailyTradeAnalyzers(
   scope: WorkspaceAccessScope,
   roundTrips: readonly Readonly<{ direction: "long" | "short"; roundTripId: string }>[],
   options: Readonly<{ includeDetails: boolean }> = { includeDetails: true },
+  verifiedReadonlyDatabase?: Database.Database,
 ): ReadonlyMap<string, DaySessionTradeAnalyzer> {
   const roundTripIds = roundTrips.map((roundTrip) => roundTrip.roundTripId);
   const directionByRoundTripId = new Map(roundTrips.map((roundTrip) =>
     [roundTrip.roundTripId, roundTrip.direction] as const));
   if (roundTripIds.length === 0 || !scope.activeAccountId) return new Map();
   const activeAccountId = scope.activeAccountId;
-  return withReadonlyPlatformDatabase({}, (database) => {
+  const read = (database: Database.Database): ReadonlyMap<string, DaySessionTradeAnalyzer> => {
     const supportsExactTurnover = database.prepare<[], { name: string }>(
       "PRAGMA table_info(level_analysis_market_session_candles)",
     ).all().some((column) => column.name === "turnover_decimal");
@@ -671,7 +680,10 @@ ORDER BY candle_time_utc_seconds`);
       });
     }
     return result;
-  });
+  };
+  return verifiedReadonlyDatabase
+    ? read(verifiedReadonlyDatabase)
+    : withReadonlyPlatformDatabase({}, read);
 }
 
 function scaleReportingDecimal(value: string | null, multiplier: string): string | null {
@@ -1208,9 +1220,10 @@ function buildReplacementDaySession(
   scope: WorkspaceAccessScope,
   model: JournalTradingDayReadModel,
   reportingContext: JournalReportingCurrencyContext | null,
+  verifiedReadonlyDatabase?: Database.Database,
 ): DaySessionData | null {
   if (model.currency === null) return null;
-  const trackerState = withReadonlyJournalIntegrityRuntime(scope, (journal) => {
+  const readTrackerState = (journal: JournalIntegrityRuntime) => {
     const account = journal.tradeStyles.accountScope(scope);
     const trackedPositions = new Map(journal.tradeStyles.listPositionRecords(account).map((position) => {
       return [position.row.roundTripId, {
@@ -1269,14 +1282,32 @@ function buildReplacementDaySession(
       }),
       trackedPositions,
     });
-  });
+  };
+  const trackerState = verifiedReadonlyDatabase
+    ? withScopedJournalIntegrityRuntime(
+        verifiedReadonlyDatabase,
+        scope,
+        readTrackerState,
+      )
+    : withReadonlyJournalIntegrityRuntime(scope, readTrackerState);
   const swingRoundTripIds = new Set(
     [...trackerState.trackedPositions.entries()]
       .filter(([, position]) => position.style?.tradeStyle === "swing")
       .map(([roundTripId]) => roundTripId),
   );
-  const annotations = withReadonlyJournalAnnotations(scope, (service, account) =>
-    annotationSnapshot(service, account, model, swingRoundTripIds));
+  const annotations = verifiedReadonlyDatabase
+    ? withScopedJournalAnnotations(
+        verifiedReadonlyDatabase,
+        scope,
+        (service, account) => annotationSnapshot(
+          service,
+          account,
+          model,
+          swingRoundTripIds,
+        ),
+      )
+    : withReadonlyJournalAnnotations(scope, (service, account) =>
+        annotationSnapshot(service, account, model, swingRoundTripIds));
   const sourceAnalyzers = readDailyTradeAnalyzers(
     scope,
     model.tickers.flatMap((ticker) => ticker.roundTrips.map((roundTrip) => ({
@@ -1284,6 +1315,7 @@ function buildReplacementDaySession(
       roundTripId: roundTrip.roundTripId,
     }))),
     { includeDetails: false },
+    verifiedReadonlyDatabase,
   );
   const analyzers = reportingContext === null
     ? sourceAnalyzers
@@ -1328,13 +1360,19 @@ export async function getReplacementReportingDaySession(
 ): Promise<DaySessionData | null> {
   return withJournalAnalyticsReportingDashboardRuntime(
     scope,
-    ({ dashboard, reportingContext, reportingCurrency }) => buildReplacementDaySession(
+    ({
+      dashboard,
+      reportingContext,
+      reportingCurrency,
+      verifiedReadonlyDatabase,
+    }) => buildReplacementDaySession(
       scope,
       dashboard.getTradingDay(scope, {
         requestedDate: input.date,
         currency: reportingCurrency,
       }),
       reportingContext,
+      verifiedReadonlyDatabase,
     ),
     { prefetchAllFactSet: true },
   );

@@ -167,11 +167,18 @@ export function withReadonlyJournalIntegrityRuntime<T>(
   scope: WorkspaceAccessScope,
   operation: (runtime: JournalIntegrityRuntime) => T,
 ): T {
-  return withReadonlyPlatformDatabase({}, (database) => {
-    const runtime = createJournalIntegrityRuntime(database);
-    assertScope(runtime, scope);
-    return operation(runtime);
-  });
+  return withReadonlyPlatformDatabase({}, (database) =>
+    withScopedJournalIntegrityRuntime(database, scope, operation));
+}
+
+export function withScopedJournalIntegrityRuntime<T>(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  operation: (runtime: JournalIntegrityRuntime) => T,
+): T {
+  const runtime = createJournalIntegrityRuntime(database);
+  assertScope(runtime, scope);
+  return operation(runtime);
 }
 
 export function withWritableJournalIntegrityRuntime<T>(
