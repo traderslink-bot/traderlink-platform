@@ -19,7 +19,6 @@ import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {
   createPlatformWorkspaceOfflineViewModel,
   platformWorkspaceOfflineCoverage,
@@ -79,10 +78,9 @@ export default async function WorkspacePage({
   });
   const { response, reviewSummary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope,
-    ({ dashboard, service }) => Object.freeze({
+    ({ database, dashboard, service }) => Object.freeze({
       response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
-      reviewSummary: withReadonlyPlatformDatabase({}, (database) =>
-        readWorkspaceReviewSummary(database, scope, new Date(), dashboard)),
+      reviewSummary: readWorkspaceReviewSummary(database, scope, new Date(), dashboard),
     }),
     { prefetchAllFactSet: true },
   );
