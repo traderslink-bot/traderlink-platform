@@ -84,7 +84,7 @@ function beginProjectionContextRead(
   });
 }
 
-type IdleCapableWindow = Window & Readonly<{
+type IdleCapableWindow = Readonly<{
   cancelIdleCallback?: (handle: number) => void;
   requestIdleCallback?: (callback: () => void) => number;
 }>;
@@ -99,7 +99,13 @@ export function scheduleOfflineProjectionContextRead(
   let cancelled = false;
   let idleHandle: number | null = null;
   let read: ProjectionContextReadLease | null = null;
-  const idleWindow = window as IdleCapableWindow;
+  const idleWindow = window as unknown as IdleCapableWindow;
+  const requestIdleCallback = typeof idleWindow.requestIdleCallback === "function"
+    ? idleWindow.requestIdleCallback.bind(idleWindow)
+    : null;
+  const cancelIdleCallback = typeof idleWindow.cancelIdleCallback === "function"
+    ? idleWindow.cancelIdleCallback.bind(idleWindow)
+    : null;
   const run = () => {
     if (cancelled || !navigator.onLine) return;
     read = beginProjectionContextRead(input.pathname, input.scope);
@@ -111,8 +117,8 @@ export function scheduleOfflineProjectionContextRead(
     });
   };
   const stableTimer = window.setTimeout(() => {
-    if (idleWindow.requestIdleCallback) {
-      idleHandle = idleWindow.requestIdleCallback(run);
+    if (requestIdleCallback && cancelIdleCallback) {
+      idleHandle = requestIdleCallback(run);
       return;
     }
     idleHandle = window.setTimeout(run, 800);
@@ -121,8 +127,8 @@ export function scheduleOfflineProjectionContextRead(
     cancelled = true;
     window.clearTimeout(stableTimer);
     if (idleHandle !== null) {
-      if (idleWindow.cancelIdleCallback && idleWindow.requestIdleCallback) {
-        idleWindow.cancelIdleCallback(idleHandle);
+      if (requestIdleCallback && cancelIdleCallback) {
+        cancelIdleCallback(idleHandle);
       } else {
         window.clearTimeout(idleHandle);
       }
