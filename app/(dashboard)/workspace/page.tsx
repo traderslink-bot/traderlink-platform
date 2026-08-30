@@ -95,6 +95,7 @@ export default async function WorkspacePage({
       reviewSummary: withReadonlyPlatformDatabase({}, (database) =>
         readWorkspaceReviewSummary(database, scope, new Date(), dashboard)),
     }),
+    { prefetchAllFactSet: true },
   );
   const analyticsMetrics = WORKSPACE_METRICS.map(([label, metricId, caption]) => {
     const metrics = findJournalAnalyticsMetric(response, metricId);

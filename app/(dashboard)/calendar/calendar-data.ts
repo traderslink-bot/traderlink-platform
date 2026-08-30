@@ -403,7 +403,7 @@ export async function withCalendarDataRuntime<T>(
       dashboard,
       annotationEvidenceByTimezone,
     ));
-  });
+  }, { prefetchAllFactSet: true });
 }
 
 export async function getCalendarData(input: CalendarFilterInput): Promise<CalendarData> {

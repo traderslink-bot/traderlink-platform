@@ -7,7 +7,7 @@ import {
   journalAnalyticsOfflineRouteCoverage,
   type JournalAnalyticsOverviewOfflineViewModel,
 } from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
-import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import { ANALYTICS_OVERVIEW_METRICS, AnalyticsOverviewView } from "./analytics-overview-view";
@@ -50,7 +50,11 @@ export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Re
     groupings: ["closing_month"],
     metricIds: ANALYTICS_OVERVIEW_METRICS.map((metric) => metric.id),
   });
-  const response = await withJournalAnalyticsReportingDashboardService(scope, (service) => service.getAnalyticsOverview(scope, query));
+  const response = await withJournalAnalyticsReportingDashboardRuntime(
+    scope,
+    ({ service }) => service.getAnalyticsOverview(scope, query),
+    { prefetchAllFactSet: dateRange.kind === "all" },
+  );
   const offlineModel: JournalAnalyticsOverviewOfflineViewModel = Object.freeze({
     dateRange: Object.freeze({ ...dateRange }),
     kind: "analytics-overview",

@@ -14,8 +14,15 @@ import {
 } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { loadUsdEffectiveReportingRates } from "@/src/modules/platform/server/reporting/bank-of-canada-fx-rate-service";
 import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
-import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
-import type { JournalAnalyticsClosingDateRange } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
+import {
+  JournalAnalyticsFactSetService,
+  type JournalAnalyticsFactSetReader,
+} from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
+import type {
+  JournalAnalyticsClosingDateRange,
+  JournalAnalyticsFactSet,
+  JournalAnalyticsFactSetRequest,
+} from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 import type {
   JournalCalendarFilterInput,
   JournalCalendarReadModel,
@@ -59,6 +66,56 @@ type JournalDashboardRuntimeReader = Readonly<{
     input: Readonly<{ requestedDate: string | null; currency: string | null; asOfUtc?: string }>,
   ): JournalTradingDayReadModel;
 }>;
+
+type JournalAnalyticsReportingRuntimeOptions = Readonly<{
+  prefetchAllFactSet?: boolean;
+}>;
+
+function factSetReaderKey(
+  scope: WorkspaceAccessScope,
+  request: JournalAnalyticsFactSetRequest,
+): string {
+  return JSON.stringify({
+    activeAccountId: scope.activeAccountId,
+    allowedAccountIds: scope.allowedAccountIds,
+    request: {
+      accountIds: request.accountIds,
+      closingDateRange: request.closingDateRange,
+      currencySelection: request.currencySelection,
+    },
+    userId: scope.userId,
+    workspaceId: scope.workspaceId,
+    workspaceRole: scope.workspaceRole,
+  });
+}
+
+class PrefetchedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSetReader {
+  private readonly cache = new Map<string, JournalAnalyticsFactSet>();
+
+  constructor(
+    private readonly source: JournalAnalyticsFactSetReader,
+    scope: WorkspaceAccessScope,
+    factSet: JournalAnalyticsFactSet,
+  ) {
+    this.cache.set(factSetReaderKey(scope, Object.freeze({
+      accountIds: factSet.requestedAccountIds,
+      closingDateRange: factSet.requestedClosingDateRange,
+      currencySelection: factSet.requestedCurrencySelection,
+    })), factSet);
+  }
+
+  getJournalAnalyticsFactSet(
+    scope: WorkspaceAccessScope,
+    request: JournalAnalyticsFactSetRequest,
+  ): JournalAnalyticsFactSet {
+    const key = factSetReaderKey(scope, request);
+    const cached = this.cache.get(key);
+    if (cached) return cached;
+    const factSet = this.source.getJournalAnalyticsFactSet(scope, request);
+    this.cache.set(key, factSet);
+    return factSet;
+  }
+}
 
 export function requireActiveJournalAnalyticsAccountId(
   scope: WorkspaceAccessScope,
@@ -182,11 +239,90 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
     reportingContext: JournalReportingCurrencyContext;
     service: JournalAnalyticsService;
   }>) => T | Promise<T>,
+  options: JournalAnalyticsReportingRuntimeOptions = {},
 ): Promise<T> {
   const requestedAtUtc = new Date().toISOString();
-  const snapshot = withReadonlyPlatformDatabase({}, (database) => {
+  const database = openReadonlyPlatformDatabase();
+  try {
     const accountId = requireActiveJournalAnalyticsAccountId(scope);
-    const rows = database.prepare<[string, string], ReportingCurrencyRoundTripSourceRow>(`SELECT
+    const source = new JournalAnalyticsFactSetService(
+      new JournalAnalyticsFactSetRepository(database),
+    );
+    const prefetchedFactSet = options.prefetchAllFactSet === true
+      ? source.getJournalAnalyticsFactSet(scope, Object.freeze({
+        accountIds: Object.freeze([accountId]),
+        closingDateRange: Object.freeze({ kind: "all_available" as const }),
+        currencySelection: Object.freeze({ kind: "all_partitions" as const }),
+      }))
+      : null;
+    const snapshot = prefetchedFactSet
+      ? reportingSnapshotFromFactSet(
+        database,
+        scope,
+        requestedAtUtc,
+        prefetchedFactSet,
+      )
+      : reportingSnapshotFromStorage(database, scope, requestedAtUtc, accountId);
+    const supportedCurrencies = new Set<string>(PLATFORM_REPORTING_CURRENCIES);
+    const rateCurrencies = [...new Set([
+      snapshot.reportingCurrency,
+      ...snapshot.sourceCurrencies,
+    ])].filter((currency): currency is PlatformReportingCurrency =>
+      currency !== "USD" && supportedCurrencies.has(currency));
+    const ratesByCurrency = new Map<string, ReadonlyMap<string, string>>();
+    if (rateCurrencies.length > 0 && snapshot.sourceDates.length > 0) {
+      const rateDatabase = openPlatformDatabase({ mode: "runtime" });
+      try {
+        for (const currency of rateCurrencies) {
+          ratesByCurrency.set(currency, await loadUsdEffectiveReportingRates(
+            rateDatabase,
+            { sourceDates: snapshot.sourceDates, targetCurrency: currency },
+          ));
+        }
+      } finally {
+        rateDatabase.close();
+      }
+    }
+    const reportingContext: JournalReportingCurrencyContext = Object.freeze({
+      ratesByCurrency,
+      reportingCurrency: snapshot.reportingCurrency,
+      requestedAtUtc,
+      sourceCurrencyByRoundTrip: snapshot.sourceCurrencyByRoundTrip,
+      sourceDateByRoundTrip: snapshot.sourceDateByRoundTrip,
+    });
+    const facts = createJournalReportingCurrencyFactSetReader(
+      prefetchedFactSet
+        ? new PrefetchedJournalAnalyticsFactSetReader(source, scope, prefetchedFactSet)
+        : source,
+      reportingContext,
+    );
+    const dashboard = new JournalDashboardReadModelService(facts);
+    return await operation(Object.freeze({
+      dashboard: reportingDashboardReader(dashboard, snapshot.reportingCurrency),
+      reportingCurrency: snapshot.reportingCurrency,
+      reportingContext,
+      service: new JournalAnalyticsService(facts, snapshot.reportingCurrency),
+    }));
+  } finally {
+    database.close();
+  }
+}
+
+type ReportingSnapshot = Readonly<{
+  reportingCurrency: PlatformReportingCurrency;
+  sourceCurrencies: ReadonlySet<string>;
+  sourceCurrencyByRoundTrip: ReadonlyMap<string, string>;
+  sourceDateByRoundTrip: ReadonlyMap<string, string>;
+  sourceDates: readonly string[];
+}>;
+
+function reportingSnapshotFromStorage(
+  database: ReturnType<typeof openReadonlyPlatformDatabase>,
+  scope: WorkspaceAccessScope,
+  requestedAtUtc: string,
+  accountId: string,
+): ReportingSnapshot {
+  const rows = database.prepare<[string, string], ReportingCurrencyRoundTripSourceRow>(`SELECT
  round_trip.round_trip_id, version.trade_currency, version.closed_at_utc,
  account.base_currency, account.trading_timezone
 FROM journal_round_trips round_trip
@@ -243,61 +379,56 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
       sourceDates.add(sourceDate);
     }
     for (const row of feeCurrencyRows) sourceCurrencies.add(row.fee_currency);
-    return Object.freeze({
-      reportingCurrency: new PlatformUserPreferenceRepository(database)
-        .getActiveUserReportingCurrency(scope.userId),
-      sourceCurrencies,
-      sourceCurrencyByRoundTrip,
-      sourceDateByRoundTrip,
-      sourceDates: Object.freeze([...sourceDates].sort()),
-    });
+  return Object.freeze({
+    reportingCurrency: new PlatformUserPreferenceRepository(database)
+      .getActiveUserReportingCurrency(scope.userId),
+    sourceCurrencies,
+    sourceCurrencyByRoundTrip,
+    sourceDateByRoundTrip,
+    sourceDates: Object.freeze([...sourceDates].sort()),
   });
-  const supportedCurrencies = new Set<string>(PLATFORM_REPORTING_CURRENCIES);
-  const rateCurrencies = [...new Set([
-    snapshot.reportingCurrency,
-    ...snapshot.sourceCurrencies,
-  ])].filter((currency): currency is PlatformReportingCurrency =>
-    currency !== "USD" && supportedCurrencies.has(currency));
-  const ratesByCurrency = new Map<string, ReadonlyMap<string, string>>();
-  if (rateCurrencies.length > 0 && snapshot.sourceDates.length > 0) {
-    const rateDatabase = openPlatformDatabase({ mode: "runtime" });
-    try {
-      for (const currency of rateCurrencies) {
-        ratesByCurrency.set(currency, await loadUsdEffectiveReportingRates(
-          rateDatabase,
-          { sourceDates: snapshot.sourceDates, targetCurrency: currency },
-        ));
-      }
-    } finally {
-      rateDatabase.close();
+}
+
+function reportingSnapshotFromFactSet(
+  database: ReturnType<typeof openReadonlyPlatformDatabase>,
+  scope: WorkspaceAccessScope,
+  requestedAtUtc: string,
+  factSet: JournalAnalyticsFactSet,
+): ReportingSnapshot {
+  const accountById = new Map(factSet.accounts.map((account) => [
+    account.accountId,
+    account,
+  ]));
+  const sourceCurrencies = new Set<string>();
+  const sourceCurrencyByRoundTrip = new Map<string, string>();
+  const sourceDateByRoundTrip = new Map<string, string>();
+  const sourceDates = new Set<string>([requestedAtUtc.slice(0, 10)]);
+  for (const roundTrip of factSet.roundTrips) {
+    const account = accountById.get(roundTrip.accountId);
+    if (!account) platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+      check: "reporting_fact_set_account",
+    });
+    sourceCurrencies.add(account.baseCurrency);
+    sourceCurrencies.add(roundTrip.tradeCurrency);
+    sourceCurrencyByRoundTrip.set(roundTrip.roundTripId, roundTrip.tradeCurrency);
+    const sourceDate = journalAnalyticsLocalTimeFact(
+      roundTrip.closedAtUtc ?? requestedAtUtc,
+      account.tradingTimezone,
+    ).localDate;
+    sourceDateByRoundTrip.set(roundTrip.roundTripId, sourceDate);
+    sourceDates.add(sourceDate);
+    for (const allocation of roundTrip.allocations) {
+      if (allocation.feeCurrency) sourceCurrencies.add(allocation.feeCurrency);
     }
   }
-  const reportingContext: JournalReportingCurrencyContext = Object.freeze({
-    ratesByCurrency,
-    reportingCurrency: snapshot.reportingCurrency,
-    requestedAtUtc,
-    sourceCurrencyByRoundTrip: snapshot.sourceCurrencyByRoundTrip,
-    sourceDateByRoundTrip: snapshot.sourceDateByRoundTrip,
+  return Object.freeze({
+    reportingCurrency: new PlatformUserPreferenceRepository(database)
+      .getActiveUserReportingCurrency(scope.userId),
+    sourceCurrencies,
+    sourceCurrencyByRoundTrip,
+    sourceDateByRoundTrip,
+    sourceDates: Object.freeze([...sourceDates].sort()),
   });
-  const database = openReadonlyPlatformDatabase();
-  try {
-    const source = new JournalAnalyticsFactSetService(
-      new JournalAnalyticsFactSetRepository(database),
-    );
-    const facts = createJournalReportingCurrencyFactSetReader(
-      source,
-      reportingContext,
-    );
-    const dashboard = new JournalDashboardReadModelService(facts);
-    return await operation(Object.freeze({
-      dashboard: reportingDashboardReader(dashboard, snapshot.reportingCurrency),
-      reportingCurrency: snapshot.reportingCurrency,
-      reportingContext,
-      service: new JournalAnalyticsService(facts, snapshot.reportingCurrency),
-    }));
-  } finally {
-    database.close();
-  }
 }
 
 export async function withJournalAnalyticsReportingDashboardService<T>(
