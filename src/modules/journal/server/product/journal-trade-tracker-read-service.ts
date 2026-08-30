@@ -165,6 +165,23 @@ ORDER BY allocation.allocation_sequence`).all(
     reviewDate: string,
   ): JournalTrackedPositionDetail {
     const position = this.styles.resolvePosition(scope, positionRef);
+    return this.positionDetailFromRow(scope, position, reviewDate);
+  }
+
+  positionDetailForRoundTrip(
+    scope: AccountScope,
+    roundTripId: string,
+    reviewDate: string,
+  ): JournalTrackedPositionDetail {
+    const position = this.styles.resolveRoundTripPosition(scope, roundTripId);
+    return this.positionDetailFromRow(scope, position, reviewDate);
+  }
+
+  private positionDetailFromRow(
+    scope: AccountScope,
+    position: JournalTrackedPositionRow,
+    reviewDate: string,
+  ): JournalTrackedPositionDetail {
     const summary = this.mapPosition(scope, position, reviewDate);
     const executions = this.database.prepare<[string, string, string], {
       execution_id: string;

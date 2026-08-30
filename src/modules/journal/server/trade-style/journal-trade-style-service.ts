@@ -49,6 +49,34 @@ function record(
   });
 }
 
+function recordFromPosition(
+  authority: JournalManualTradePreviewAuthority,
+  scope: AccountScope,
+  row: JournalTrackedPositionRow,
+): JournalTradeStyleRecord | null {
+  if (
+    row.styleRevision === null || row.tradeStyle === null || row.openStatus === null ||
+    row.plannedFromEntry === null || row.claimedEffectiveAtUtc === null ||
+    row.declaredAtUtc === null || row.styleLifecycleState === null ||
+    row.styleUpdatedAtUtc === null
+  ) return null;
+  return Object.freeze({
+    positionRef: authority.opaqueRef(
+      "position",
+      positionMaterial(scope, row.roundTripId),
+    ),
+    revision: row.styleRevision,
+    tradeStyle: row.tradeStyle,
+    openStatus: row.openStatus,
+    plannedFromEntry: row.plannedFromEntry,
+    claimedEffectiveAtUtc: row.claimedEffectiveAtUtc,
+    declaredAtUtc: row.declaredAtUtc,
+    lifecycleState: row.styleLifecycleState,
+    updatedAtUtc: row.styleUpdatedAtUtc,
+    swingPlan: row.swingPlan,
+  });
+}
+
 function validCombination(
   style: JournalTradeStyle,
   status: Exclude<JournalOpenPositionStatus, "closed">,
@@ -80,6 +108,18 @@ export class JournalTradeStyleService {
     return this.repository.listCurrentPositions(scope);
   }
 
+  listPositionRecords(scope: AccountScope): readonly Readonly<{
+    positionRef: string;
+    row: JournalTrackedPositionRow;
+    style: JournalTradeStyleRecord | null;
+  }>[] {
+    return Object.freeze(this.repository.listCurrentPositions(scope).map((row) => Object.freeze({
+      positionRef: this.positionRef(scope, row.roundTripId),
+      row,
+      style: recordFromPosition(this.authority, scope, row),
+    })));
+  }
+
   listSwingPositionRows(scope: AccountScope): readonly JournalTrackedPositionRow[] {
     return this.repository.listCurrentSwingPositions(scope);
   }
@@ -98,10 +138,18 @@ export class JournalTradeStyleService {
     return matches[0]!;
   }
 
+  resolveRoundTripPosition(
+    scope: AccountScope,
+    roundTripId: string,
+  ): JournalTrackedPositionRow {
+    const position = this.repository.findCurrentPosition(scope, roundTripId);
+    if (!position) platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+    return position;
+  }
+
   read(scope: AccountScope, positionRef: string): JournalTradeStyleRecord | null {
     const position = this.resolvePosition(scope, positionRef);
-    const plan = this.repository.findPlan(scope, position.roundTripId);
-    return plan ? record(this.authority, scope, plan) : null;
+    return recordFromPosition(this.authority, scope, position);
   }
 
   change(

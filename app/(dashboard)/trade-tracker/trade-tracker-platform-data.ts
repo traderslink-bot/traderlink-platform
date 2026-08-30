@@ -1212,11 +1212,10 @@ function buildReplacementDaySession(
   if (model.currency === null) return null;
   const trackerState = withReadonlyJournalIntegrityRuntime(scope, (journal) => {
     const account = journal.tradeStyles.accountScope(scope);
-    const trackedPositions = new Map(journal.tradeStyles.listPositionRows(account).map((position) => {
-      const positionRef = journal.tradeStyles.positionRef(account, position.roundTripId);
-      return [position.roundTripId, {
-        positionRef,
-        style: journal.tradeStyles.read(account, positionRef),
+    const trackedPositions = new Map(journal.tradeStyles.listPositionRecords(account).map((position) => {
+      return [position.row.roundTripId, {
+        positionRef: position.positionRef,
+        style: position.style,
       }] as const;
     }));
     const editableManualExecutions = new Map(
@@ -1231,9 +1230,9 @@ function buildReplacementDaySession(
     const openPositionDetails = new Map(model.openPositions.flatMap((position) => {
       const tracked = trackedPositions.get(position.roundTripId);
       if (!tracked) return [];
-      const detail = journal.tradeTrackerReads.positionDetail(
+      const detail = journal.tradeTrackerReads.positionDetailForRoundTrip(
         account,
-        tracked.positionRef,
+        position.roundTripId,
         model.date,
       );
       const sourceCurrency = reportingContext?.sourceCurrencyByRoundTrip

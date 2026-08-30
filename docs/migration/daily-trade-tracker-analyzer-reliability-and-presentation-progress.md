@@ -136,6 +136,15 @@ delivery-configuration claim.
       `Loading Trade Analyzer details…` state.
 - [ ] Publish and measure the selected-day response through the coordinated
       Railway lane.
+- [x] After the deferred-detail release still measured near 14.9 seconds,
+      remove the Tracker position-style N+1 path. One account-scoped position
+      query now supplies saved style records, and open-position detail resolves
+      by its account-scoped round-trip identity instead of repeatedly scanning
+      every position to match an opaque reference.
+- [ ] Re-measure the selected-day production response. The analytics dashboard
+      fact reader and reporting-currency snapshot still each make one
+      whole-account pass; those passes are no longer multiplied per tracked or
+      open position, but remain the next evidence-gated boundary if needed.
 
 ## Verification boundary
 
@@ -148,6 +157,6 @@ exact changed-file ESLint check passes with zero warnings, and
 `git diff --check` passes. Broad suites and the local server remain outside
 this checkpoint. The preserved performance repair carries focused route/source
 contracts and one selected-day editable-read integration case. Its production
-reconciliation uses focused source, TypeScript, ESLint and diff checks only;
-Vitest, broad tests, builds and local-server work remain outside this urgent
-checkpoint.
+reconciliation and N+1 follow-up use focused source, TypeScript, ESLint and
+diff checks only; Vitest, broad tests, builds and local-server work remain
+outside this urgent checkpoint.
