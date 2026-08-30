@@ -5,8 +5,9 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # The entrypoint writes the current container resolver before Nginx starts.
-    # A variable proxy target makes Nginx resolve the private service at request time.
+    # Resolve Railway private-service DNS at request time so a Platform
+    # container replacement does not leave this long-lived front door pinned
+    # to retired A or AAAA records.
     include /etc/nginx/runtime/railway-resolver.conf;
     set $platform_upstream "${PLATFORM_UPSTREAM}";
 
@@ -30,12 +31,34 @@ server {
         try_files /index.html =404;
     }
 
+    # The static front door owns discovery for independently published landing
+    # pages while the Platform sitemap continues to cover Help and Academy.
+    location = /robots.txt {
+        try_files /robots.txt =404;
+        default_type text/plain;
+        add_header Cache-Control "public, max-age=3600";
+    }
+
+    location = /landing-pages-sitemap.xml {
+        try_files /landing-pages-sitemap.xml =404;
+        default_type application/xml;
+        add_header Cache-Control "public, max-age=3600";
+    }
+
     location = /trading-journal {
         try_files /trading-journal/index.html =404;
     }
 
     location = /trading-journal/ {
         return 301 /trading-journal;
+    }
+
+    location = /trade-analyzer {
+        try_files /trade-analyzer/index.html =404;
+    }
+
+    location = /trade-analyzer/ {
+        return 301 /trade-analyzer;
     }
 
     location = /landing-assets {
@@ -50,7 +73,8 @@ server {
     # Keep every existing public Platform route on Railway: Help, Academy,
     # Watchlist, News, legal pages, APIs, and the Watchlist SSE stream.
     # PLATFORM_UPSTREAM must be a Railway private-network origin with no
-    # trailing slash, for example http://traderlink-platform-web.railway.internal.
+    # trailing slash, for example
+    # http://traderlink-platform-web.railway.internal:8080.
     location / {
         proxy_pass $platform_upstream;
         proxy_http_version 1.1;

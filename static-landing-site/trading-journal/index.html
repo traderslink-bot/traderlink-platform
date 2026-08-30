@@ -17,6 +17,9 @@
   <meta property="og:description" content="Journal the whole trading day with trades, automatic Rule Results, notes, tags, weekly calendar views, and session reviews." />
   <meta property="og:url" content="https://traderslink.pro/trading-journal" />
   <meta property="og:image" content="https://traderslink.pro/landing-assets/trading-journal/week-view-calander.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1577" />
+  <meta property="og:image:height" content="627" />
   <meta property="og:image:alt" content="TradersLink weekly trading journal calendar showing daily results, tickers, notes, rules, and tags." />
 
   <meta name="twitter:card" content="summary_large_image" />
@@ -32,12 +35,13 @@
     #traderslink-journal-v1 { background:#fff; color:#172033; font-family:Arial,Helvetica,sans-serif; line-height:1.55; overflow:hidden; }
     #traderslink-journal-v1 * { box-sizing:border-box; }
     #traderslink-journal-v1 a:focus-visible,
-    #traderslink-journal-v1 button:focus-visible { outline:3px solid #66a3ff; outline-offset:3px; }
+    #traderslink-journal-v1 button:focus-visible,
+    #traderslink-journal-v1 summary:focus-visible { outline:3px solid #2e6fbb; outline-offset:3px; }
     #traderslink-journal-v1 h1,
     #traderslink-journal-v1 h2,
     #traderslink-journal-v1 h3,
     #traderslink-journal-v1 p { margin-top:0; }
-    #traderslink-journal-v1 img { max-width:100%; }
+    #traderslink-journal-v1 img { height:auto; max-width:100%; }
 
     #traderslink-journal-v1 .tj-header { align-items:center; background:#fff; border-bottom:1px solid #dbe4ef; box-shadow:0 9px 25px rgba(14,47,93,.08); display:flex; justify-content:space-between; min-height:76px; padding:0 4.5%; position:relative; z-index:20; }
     #traderslink-journal-v1 .tj-logo { display:block; text-decoration:none; }
@@ -56,6 +60,12 @@
     #traderslink-journal-v1 .tj-button:hover { box-shadow:0 9px 20px rgba(6,38,99,.2); transform:translateY(-1px); }
     #traderslink-journal-v1 .tj-nav .tj-button { color:#fff; font-size:14px; margin-left:16px; padding:12px 17px; position:relative; }
     #traderslink-journal-v1 .tj-nav .tj-button::before { background:#dbe4ef; content:""; height:24px; left:-16px; position:absolute; top:50%; transform:translateY(-50%); width:1px; }
+    #traderslink-journal-v1 .tj-menu-toggle { align-items:center; background:#fff; border:1px solid #c9d6e5; border-radius:8px; cursor:pointer; display:none; height:40px; justify-content:center; padding:0; width:40px; }
+    #traderslink-journal-v1 .tj-menu-toggle-lines { display:grid; gap:4px; width:18px; }
+    #traderslink-journal-v1 .tj-menu-toggle-lines span { background:#173761; border-radius:2px; display:block; height:2px; transition:opacity .2s ease,transform .2s ease; }
+    #traderslink-journal-v1 .tj-header.is-menu-open .tj-menu-toggle-lines span:nth-child(1) { transform:translateY(6px) rotate(45deg); }
+    #traderslink-journal-v1 .tj-header.is-menu-open .tj-menu-toggle-lines span:nth-child(2) { opacity:0; }
+    #traderslink-journal-v1 .tj-header.is-menu-open .tj-menu-toggle-lines span:nth-child(3) { transform:translateY(-6px) rotate(-45deg); }
 
     #traderslink-journal-v1 .tj-eyebrow { color:#426594; font-size:12px; font-weight:800; letter-spacing:.14em; margin-bottom:14px; text-transform:uppercase; }
     #traderslink-journal-v1 .tj-hero { background:#07152f; color:#fff; min-height:760px; overflow:hidden; position:relative; }
@@ -71,10 +81,9 @@
     #traderslink-journal-v1 .tj-hero-art { height:620px; position:relative; }
     #traderslink-journal-v1 .tj-hero-art::before { background:radial-gradient(circle,rgba(68,126,211,.32),rgba(7,21,47,0) 68%); content:""; inset:4% 0 0 2%; position:absolute; }
     #traderslink-journal-v1 .tj-float { display:block; height:auto; position:absolute; }
-    #traderslink-journal-v1 .tj-float--week { border:1px solid rgba(182,207,244,.42); border-radius:15px; box-shadow:0 30px 70px rgba(0,0,0,.35); left:0; top:108px; transform:rotate(-1.1deg); width:76%; }
-    #traderslink-journal-v1 .tj-float--drawer { border:1px solid rgba(182,207,244,.5); border-radius:14px; box-shadow:0 25px 55px rgba(0,0,0,.38); right:1%; top:23px; transform:rotate(1.3deg); width:31%; }
-    #traderslink-journal-v1 .tj-float--week-row { border-radius:11px; bottom:47px; box-shadow:0 17px 42px rgba(0,0,0,.38); left:16%; transform:rotate(.6deg); width:56%; }
-    #traderslink-journal-v1 .tj-float--summary { border:1px solid rgba(182,207,244,.4); border-radius:13px; bottom:0; box-shadow:0 22px 50px rgba(0,0,0,.42); right:4%; transform:rotate(-1.4deg); width:29%; }
+    #traderslink-journal-v1 .tj-float--ticker-left { border:1px solid rgba(182,207,244,.48); border-radius:16px; box-shadow:0 25px 58px rgba(0,0,0,.33); left:1%; top:96px; transform:perspective(900px) rotateY(6deg) rotate(-5deg); width:34%; z-index:1; }
+    #traderslink-journal-v1 .tj-float--ticker-main { border:1px solid rgba(203,222,249,.62); border-radius:17px; box-shadow:0 38px 86px rgba(0,0,0,.48); left:31%; top:25px; transform:rotate(-.4deg); width:39%; z-index:3; }
+    #traderslink-journal-v1 .tj-float--ticker-right { border:1px solid rgba(182,207,244,.48); border-radius:16px; box-shadow:0 25px 58px rgba(0,0,0,.33); right:0; top:105px; transform:perspective(900px) rotateY(-6deg) rotate(5deg); width:34%; z-index:1; }
 
     #traderslink-journal-v1 .tj-section-head { margin:0 auto 52px; max-width:770px; text-align:center; }
     #traderslink-journal-v1 .tj-section-head h2 { color:#172033; font-size:clamp(38px,4.7vw,64px); letter-spacing:-.05em; line-height:1.04; margin-bottom:20px; }
@@ -165,6 +174,53 @@
     #traderslink-journal-v1 .tj-swing-image { border:1px solid #c8d7e8; border-radius:15px; box-shadow:0 24px 52px rgba(24,57,101,.17); position:absolute; right:5%; top:0; transform:rotate(-1.2deg); width:79%; }
     #traderslink-journal-v1 .tj-execution-image { border:1px solid #c8d7e8; border-radius:14px; box-shadow:0 23px 49px rgba(24,57,101,.16); left:2%; position:absolute; top:21%; transform:rotate(1.1deg); width:94%; }
 
+    #traderslink-journal-v1 .tj-tracker { background:#071b43; color:#fff; overflow:hidden; padding:130px 4.5% 138px; position:relative; }
+    #traderslink-journal-v1 .tj-tracker::before { background-image:linear-gradient(rgba(135,172,229,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(135,172,229,.07) 1px,transparent 1px); background-size:58px 58px; content:""; inset:0; mask-image:linear-gradient(90deg,transparent,#000 35%,#000 85%,transparent); position:absolute; }
+    #traderslink-journal-v1 .tj-tracker-inner,
+    #traderslink-journal-v1 .tj-analyzer-inner,
+    #traderslink-journal-v1 .tj-session-inner,
+    #traderslink-journal-v1 .tj-faq-inner { margin:0 auto; max-width:1590px; position:relative; z-index:1; }
+    #traderslink-journal-v1 .tj-tracker .tj-section-head { max-width:880px; }
+    #traderslink-journal-v1 .tj-tracker .tj-section-head h2 { color:#fff; }
+    #traderslink-journal-v1 .tj-tracker .tj-section-head > p:not(.tj-eyebrow) { color:#d4e2f7; max-width:790px; }
+    #traderslink-journal-v1 .tj-tracker .tj-section-head > p + p { margin-top:12px; }
+    #traderslink-journal-v1 .tj-tracker .tj-eyebrow { color:#94bdff; }
+    #traderslink-journal-v1 .tj-tracker-art { margin:54px auto 0; max-width:1500px; position:relative; }
+    #traderslink-journal-v1 .tj-tracker-art::before { background:radial-gradient(circle,rgba(68,126,211,.34),rgba(7,27,67,0) 70%); content:""; inset:-8% 5%; position:absolute; }
+    #traderslink-journal-v1 .tj-tracker-full { border:1px solid rgba(169,199,241,.54); border-radius:17px; box-shadow:0 36px 82px rgba(0,0,0,.42); display:block; height:auto; position:relative; width:100%; z-index:1; }
+    #traderslink-journal-v1 .tj-text-link { color:#174f91; display:inline-block; font-size:15px; font-weight:800; margin-top:8px; text-underline-offset:4px; }
+
+    #traderslink-journal-v1 .tj-analyzer { background:#fff; overflow:hidden; padding:130px 4.5% 138px; }
+    #traderslink-journal-v1 .tj-analyzer-grid { align-items:center; display:grid; gap:8%; grid-template-columns:minmax(620px,1.2fr) minmax(360px,.8fr); }
+    #traderslink-journal-v1 .tj-analyzer-art { min-height:790px; position:relative; }
+    #traderslink-journal-v1 .tj-analyzer-art::before { background:linear-gradient(145deg,#edf3fb,#f9fbfe); border-radius:42px; content:""; inset:4% 7% 2% 2%; position:absolute; transform:rotate(-1.2deg); }
+    #traderslink-journal-v1 .tj-analyzer-entry { border:1px solid #c7d5e5; border-radius:15px; box-shadow:0 29px 64px rgba(24,57,101,.19); left:9%; position:absolute; top:0; transform:rotate(-1.2deg); width:39%; }
+    #traderslink-journal-v1 .tj-analyzer-green { border:1px solid #c7d5e5; border-radius:15px; bottom:0; box-shadow:0 29px 64px rgba(24,57,101,.2); position:absolute; right:8%; transform:rotate(1deg); width:42%; }
+
+    #traderslink-journal-v1 .tj-session { background:#fbf6ec; overflow:hidden; padding:126px 4.5% 142px; position:relative; }
+    #traderslink-journal-v1 .tj-session::before { background-image:linear-gradient(rgba(116,93,58,.055) 1px,transparent 1px); background-size:100% 33px; content:""; inset:0; mask-image:linear-gradient(transparent,#000 24%,#000 80%,transparent); position:absolute; }
+    #traderslink-journal-v1 .tj-session .tj-section-head { max-width:860px; }
+    #traderslink-journal-v1 .tj-session-art { height:850px; margin:45px auto 0; max-width:1320px; position:relative; }
+    #traderslink-journal-v1 .tj-session-art::before { background:#f0e5d2; border-radius:48% 52% 45% 55%; content:""; inset:8% 16% 3%; position:absolute; transform:rotate(2deg); }
+    #traderslink-journal-v1 .tj-session-main { border:1px solid #dfd1bb; border-radius:15px; box-shadow:0 31px 69px rgba(78,57,29,.2); left:33%; position:absolute; top:0; transform:rotate(-.5deg); width:34%; z-index:2; }
+    #traderslink-journal-v1 .tj-session-worked { border:1px solid #dfd1bb; border-radius:12px; box-shadow:0 22px 48px rgba(78,57,29,.17); left:2%; position:absolute; top:12%; transform:rotate(-1.4deg); width:35%; }
+    #traderslink-journal-v1 .tj-session-needs { border:1px solid #dfd1bb; border-radius:12px; box-shadow:0 22px 48px rgba(78,57,29,.17); position:absolute; right:2%; top:17%; transform:rotate(1.2deg); width:35%; }
+    #traderslink-journal-v1 .tj-session-technical { border:1px solid #dfd1bb; border-radius:12px; bottom:18%; box-shadow:0 22px 48px rgba(78,57,29,.17); left:3%; position:absolute; transform:rotate(1deg); width:36%; }
+    #traderslink-journal-v1 .tj-session-focus { border:1px solid #dfd1bb; border-radius:12px; bottom:10%; box-shadow:0 22px 48px rgba(78,57,29,.17); position:absolute; right:2%; transform:rotate(-1.3deg); width:36%; }
+
+    #traderslink-journal-v1 .tj-faq { background:#eef4fb; padding:124px 4.5% 132px; }
+    #traderslink-journal-v1 .tj-faq-grid { align-items:start; display:grid; gap:8%; grid-template-columns:minmax(330px,.72fr) minmax(620px,1.28fr); }
+    #traderslink-journal-v1 .tj-faq-copy { max-width:470px; }
+    #traderslink-journal-v1 .tj-faq-copy h2 { font-size:clamp(42px,4.8vw,66px); letter-spacing:-.05em; line-height:1.03; margin-bottom:20px; }
+    #traderslink-journal-v1 .tj-faq-copy p { color:#526177; font-size:18px; }
+    #traderslink-journal-v1 .tj-faq-list { border-top:1px solid #bdcde0; }
+    #traderslink-journal-v1 .tj-faq-list details { border-bottom:1px solid #bdcde0; }
+    #traderslink-journal-v1 .tj-faq-list summary { color:#172033; cursor:pointer; font-size:19px; font-weight:800; list-style:none; padding:24px 48px 24px 0; position:relative; }
+    #traderslink-journal-v1 .tj-faq-list summary::-webkit-details-marker { display:none; }
+    #traderslink-journal-v1 .tj-faq-list summary::after { color:#174f91; content:"+"; font-size:27px; font-weight:400; line-height:1; position:absolute; right:9px; top:23px; }
+    #traderslink-journal-v1 .tj-faq-list details[open] summary::after { content:"−"; }
+    #traderslink-journal-v1 .tj-faq-list details p { color:#4c5b70; font-size:16px; margin:0; max-width:760px; padding:0 50px 24px 0; }
+
     #traderslink-journal-v1 .tj-checkpoint-cta { background:#062663; color:#fff; padding:72px 4.5%; text-align:center; }
     #traderslink-journal-v1 .tj-checkpoint-cta h2 { font-size:clamp(32px,4vw,50px); letter-spacing:-.045em; line-height:1.08; margin-bottom:13px; }
     #traderslink-journal-v1 .tj-checkpoint-cta p { color:#d8e4f8; margin:0 auto 25px; max-width:600px; }
@@ -216,31 +272,39 @@
       #traderslink-journal-v1 .tj-ways-secondary { gap:70px; grid-template-columns:1fr; }
       #traderslink-journal-v1 .tj-way-secondary { grid-template-columns:minmax(260px,.72fr) minmax(320px,1.28fr); }
       #traderslink-journal-v1 .tj-way-secondary:nth-child(2) { padding-top:0; }
+      #traderslink-journal-v1 .tj-analyzer-grid,
+      #traderslink-journal-v1 .tj-faq-grid { grid-template-columns:1fr; }
+      #traderslink-journal-v1 .tj-analyzer-art { margin-top:54px; }
+      #traderslink-journal-v1 .tj-analyzer-grid .tj-feature-copy { order:-1; }
+      #traderslink-journal-v1 .tj-faq-copy { margin-bottom:48px; max-width:720px; }
     }
     @media (max-width:680px) {
       html { scroll-behavior:auto; }
-      #traderslink-journal-v1 .tj-header { min-height:70px; padding:0 18px; }
+      #traderslink-journal-v1 .tj-header { min-height:68px; padding:0 18px; z-index:30; }
       #traderslink-journal-v1 .tj-logo img { height:27px; }
-      #traderslink-journal-v1 .tj-features,
-      #traderslink-journal-v1 .tj-nav > a[href="/help"] { display:none; }
-      #traderslink-journal-v1 .tj-nav { gap:14px; }
-      #traderslink-journal-v1 .tj-nav .tj-button { margin-left:0; padding:10px 13px; }
+      #traderslink-journal-v1 .tj-menu-toggle { display:flex; }
+      #traderslink-journal-v1 .tj-nav { align-items:stretch; background:#fff; border:1px solid #d6e1ed; border-radius:12px; box-shadow:0 18px 38px rgba(14,47,93,.18); display:none; flex-direction:column; gap:2px; left:12px; padding:10px; position:absolute; right:12px; top:calc(100% + 8px); }
+      #traderslink-journal-v1 .tj-header.is-menu-open .tj-nav { display:flex; }
+      #traderslink-journal-v1 .tj-nav > a:not(.tj-button) { border-radius:8px; padding:10px 12px; }
+      #traderslink-journal-v1 .tj-features { display:block; }
+      #traderslink-journal-v1 .tj-features-toggle { justify-content:space-between; padding:10px 12px; width:100%; }
+      #traderslink-journal-v1 .tj-features-links { box-shadow:none; left:auto; margin:2px 0 6px; min-width:0; position:static; top:auto; }
+      #traderslink-journal-v1 .tj-nav .tj-button { align-self:flex-start; font-size:13px; margin:6px 0 0 12px; padding:8px 12px; }
       #traderslink-journal-v1 .tj-nav .tj-button::before { display:none; }
       #traderslink-journal-v1 .tj-hero { min-height:0; }
       #traderslink-journal-v1 .tj-hero-inner { min-height:0; padding:56px 20px 50px; }
       #traderslink-journal-v1 .tj-hero h1 { font-size:45px; }
       #traderslink-journal-v1 .tj-hero-copy > p:not(.tj-eyebrow):not(.tj-cta-note) { font-size:17px; }
-      #traderslink-journal-v1 .tj-hero-art { height:510px; margin-top:8px; }
-      #traderslink-journal-v1 .tj-float--week { left:-5%; top:82px; width:92%; }
-      #traderslink-journal-v1 .tj-float--drawer { right:-1%; width:37%; }
-      #traderslink-journal-v1 .tj-float--week-row { bottom:58px; left:3%; width:69%; }
-      #traderslink-journal-v1 .tj-float--summary { bottom:0; right:1%; width:38%; }
+      #traderslink-journal-v1 .tj-hero-art { height:280px; margin-top:8px; }
+      #traderslink-journal-v1 .tj-float--ticker-left { left:-5%; top:100px; width:40%; }
+      #traderslink-journal-v1 .tj-float--ticker-main { left:28%; top:38px; width:46%; }
+      #traderslink-journal-v1 .tj-float--ticker-right { right:-5%; top:108px; width:40%; }
       #traderslink-journal-v1 .tj-calendar,
       #traderslink-journal-v1 .tj-rules { padding:78px 20px 88px; }
       #traderslink-journal-v1 .tj-section-head { margin-bottom:36px; text-align:left; }
       #traderslink-journal-v1 .tj-section-head h2 { font-size:40px; }
       #traderslink-journal-v1 .tj-section-head > p:not(.tj-eyebrow) { font-size:16px; }
-      #traderslink-journal-v1 .tj-calendar-stage { height:660px; }
+      #traderslink-journal-v1 .tj-calendar-stage { height:480px; }
       #traderslink-journal-v1 .tj-calendar-week { left:-24%; top:105px; width:126%; }
       #traderslink-journal-v1 .tj-calendar-drawer { right:-5%; top:18px; width:45%; }
       #traderslink-journal-v1 .tj-calendar-metrics { bottom:0; left:-2%; width:42%; }
@@ -249,34 +313,58 @@
       #traderslink-journal-v1 .tj-rule-steps { grid-template-columns:1fr; }
       #traderslink-journal-v1 .tj-rule-frame { height:auto; min-height:210px; }
       #traderslink-journal-v1 .tj-rule-results { gap:28px; margin-top:72px; }
-      #traderslink-journal-v1 .tj-rule-results-art { min-height:600px; }
+      #traderslink-journal-v1 .tj-rule-results-art { min-height:430px; }
       #traderslink-journal-v1 .tj-results-list { width:94%; }
       #traderslink-journal-v1 .tj-rule-status { right:-4%; top:205px; width:60%; }
       #traderslink-journal-v1 .tj-rule-detail { bottom:0; right:0; width:76%; }
       #traderslink-journal-v1 .tj-notes,
       #traderslink-journal-v1 .tj-tags,
       #traderslink-journal-v1 .tj-ways { padding:82px 20px 94px; }
+      #traderslink-journal-v1 .tj-feature-split,
+      #traderslink-journal-v1 .tj-tags .tj-feature-split { gap:0; }
       #traderslink-journal-v1 .tj-feature-copy h2 { font-size:40px; }
       #traderslink-journal-v1 .tj-feature-copy > p:not(.tj-eyebrow) { font-size:16px; }
-      #traderslink-journal-v1 .tj-note-art { min-height:560px; }
+      #traderslink-journal-v1 .tj-note-art { margin-top:24px; min-height:420px; }
       #traderslink-journal-v1 .tj-note-ticker { left:-2%; width:50%; }
       #traderslink-journal-v1 .tj-note-trade { right:-4%; width:44%; }
       #traderslink-journal-v1 .tj-note-anchor { bottom:4%; left:4%; width:75%; }
       #traderslink-journal-v1 .tj-note-marker { bottom:17%; right:0; }
-      #traderslink-journal-v1 .tj-tag-art { min-height:600px; }
+      #traderslink-journal-v1 .tj-tag-art { margin-top:0; min-height:430px; }
       #traderslink-journal-v1 .tj-tag-trade { left:5%; width:46%; }
       #traderslink-journal-v1 .tj-tag-ticker { width:43%; }
       #traderslink-journal-v1 .tj-tag-three { right:-4%; width:58%; }
       #traderslink-journal-v1 .tj-tag-ten { right:-5%; width:63%; }
+      #traderslink-journal-v1 .tj-tags .tj-feature-copy { margin-top:32px; }
       #traderslink-journal-v1 .tj-ways .tj-section-head { margin-bottom:54px; }
-      #traderslink-journal-v1 .tj-explorer-art { min-height:560px; }
+      #traderslink-journal-v1 .tj-explorer-art { min-height:340px; }
       #traderslink-journal-v1 .tj-explorer-list { top:28%; width:91%; }
       #traderslink-journal-v1 .tj-explorer-drawer { right:-3%; width:40%; }
-      #traderslink-journal-v1 .tj-ways-secondary { gap:82px; margin-top:54px; padding-top:70px; }
-      #traderslink-journal-v1 .tj-way-secondary { gap:28px; grid-template-columns:1fr; }
-      #traderslink-journal-v1 .tj-way-secondary-art { min-height:450px; }
+      #traderslink-journal-v1 .tj-ways-secondary { gap:54px; margin-top:44px; padding-top:58px; }
+      #traderslink-journal-v1 .tj-way-secondary { gap:22px; grid-template-columns:1fr; }
+      #traderslink-journal-v1 .tj-way-secondary-art { min-height:320px; }
       #traderslink-journal-v1 .tj-swing-image { left:10%; right:auto; width:73%; }
       #traderslink-journal-v1 .tj-execution-image { left:3%; top:17%; width:94%; }
+      #traderslink-journal-v1 .tj-tracker,
+      #traderslink-journal-v1 .tj-analyzer,
+      #traderslink-journal-v1 .tj-session,
+      #traderslink-journal-v1 .tj-faq { padding:82px 20px 94px; }
+      #traderslink-journal-v1 .tj-tracker-art { margin-top:40px; }
+      #traderslink-journal-v1 .tj-analyzer-grid,
+      #traderslink-journal-v1 .tj-faq-grid { gap:0; }
+      #traderslink-journal-v1 .tj-analyzer-art { margin-top:30px; min-height:590px; }
+      #traderslink-journal-v1 .tj-analyzer-entry { left:2%; width:48%; }
+      #traderslink-journal-v1 .tj-analyzer-green { right:1%; width:50%; }
+      #traderslink-journal-v1 .tj-session-art { height:390px; margin-top:30px; }
+      #traderslink-journal-v1 .tj-session-main { left:27%; width:46%; }
+      #traderslink-journal-v1 .tj-session-worked,
+      #traderslink-journal-v1 .tj-session-needs,
+      #traderslink-journal-v1 .tj-session-technical,
+      #traderslink-journal-v1 .tj-session-focus { width:48%; }
+      #traderslink-journal-v1 .tj-session-worked { left:-7%; top:9%; }
+      #traderslink-journal-v1 .tj-session-needs { right:-7%; top:23%; }
+      #traderslink-journal-v1 .tj-session-technical { bottom:18%; left:-7%; }
+      #traderslink-journal-v1 .tj-session-focus { bottom:6%; right:-7%; }
+      #traderslink-journal-v1 .tj-faq-list summary { font-size:17px; padding-right:40px; }
       #traderslink-journal-v1 .tj-checkpoint-cta { padding:62px 20px; }
       #traderslink-journal-v1 .tj-legal { align-items:flex-start; flex-direction:column; padding:24px 20px; }
       #traderslink-journal-v1 .tj-consent { bottom:12px; left:12px; right:12px; }
@@ -319,12 +407,51 @@
       ]
     }
   </script>
+  <script type="application/ld+json">
+    {
+      "@context":"https://schema.org",
+      "@type":"FAQPage",
+      "mainEntity":[
+        {
+          "@type":"Question",
+          "name":"What is a trading journal?",
+          "acceptedAnswer":{"@type":"Answer","text":"A trading journal is a record of your trades and the decisions around them. TradersLink connects executions, trades, tickers, notes, tags, trading rules, and session review so you can revisit both the result and how the trading day unfolded."}
+        },
+        {
+          "@type":"Question",
+          "name":"What can I record in the TradersLink trading journal?",
+          "acceptedAnswer":{"@type":"Answer","text":"You can record executions, completed trades, ticker-level details, daily results, trade notes, Trade Tags, Trading Rule Results, swing plans, and end-of-session notes. Calendar views keep those records organized by trading day and week."}
+        },
+        {
+          "@type":"Question",
+          "name":"Can I journal both day trades and swing trades?",
+          "acceptedAnswer":{"@type":"Answer","text":"Yes. TradersLink supports day and swing trades and is built with small cap trading in mind. Enter an execution (buy or sell) in the Daily Trade Tracker, and TradersLink will automatically detect whether it is an open trade and ask you to confirm it as an active swing trade."}
+        },
+        {
+          "@type":"Question",
+          "name":"Does TradersLink automatically check trading rules?",
+          "acceptedAnswer":{"@type":"Answer","text":"TradersLink automatically checks supported preset and custom session rules against the saved trading day. It shows whether each rule was followed or broken and keeps the result, trigger details, related trade, and available P&L context together."}
+        },
+        {
+          "@type":"Question",
+          "name":"Can I add trade notes and custom tags?",
+          "acceptedAnswer":{"@type":"Answer","text":"Yes. Notes stay attached to the trade they explain, and Trade Tags can cover setups, execution, exits, emotions, mistakes, or categories you create yourself. Those tags can later support filtering, comparison, and Analytics."}
+        },
+        {
+          "@type":"Question",
+          "name":"How can I enter or import trades?",
+          "acceptedAnswer":{"@type":"Answer","text":"You can enter day or swing executions manually, upload a broker statement, or map columns from another statement format. When a statement cannot be mapped directly, TradersLink can use AI-assisted mapping while keeping imported executions available for review."}
+        }
+      ]
+    }
+  </script>
 </head>
 <body>
 <div id="traderslink-journal-v1">
   <header class="tj-header">
-    <a aria-label="TradersLink home" class="tj-logo" href="/"><img alt="TradersLink" src="/landing-assets/logo-horizontal-light.png" /></a>
-    <nav aria-label="Primary" class="tj-nav">
+    <a aria-label="TradersLink home" class="tj-logo" href="/"><img alt="TradersLink" decoding="async" height="361" src="/landing-assets/logo-horizontal-light.png" width="1760" /></a>
+    <button aria-controls="tj-primary-nav" aria-expanded="false" aria-label="Open navigation menu" class="tj-menu-toggle" type="button"><span aria-hidden="true" class="tj-menu-toggle-lines"><span></span><span></span><span></span></span></button>
+    <nav aria-label="Primary" class="tj-nav" id="tj-primary-nav">
       <div class="tj-features">
         <button aria-controls="journal-feature-links" aria-expanded="false" class="tj-features-toggle" type="button"><span>Features</span><span aria-hidden="true" class="tj-chevron"></span></button>
         <div class="tj-features-links" id="journal-feature-links">
@@ -333,6 +460,9 @@
           <a href="#notes">Trade Notes</a>
           <a href="#tags">Trade Tags</a>
           <a href="#ways-to-journal">Ways to Journal</a>
+          <a href="#daily-trade-tracker">Daily Trade Tracker</a>
+          <a href="#trade-analyzer">Trade Analyzer</a>
+          <a href="#faq">FAQ</a>
         </div>
       </div>
       <a href="/help">Help</a>
@@ -352,11 +482,10 @@
           <a class="tj-button" href="https://traderslink.pro/beta">Sign up free</a>
           <p class="tj-cta-note">No credit card required.</p>
         </div>
-        <div aria-label="TradersLink trading journal views layered together" class="tj-hero-art">
-          <img alt="Weekly trading journal calendar with daily P and L, tickers, notes, rules, and tags" class="tj-float tj-float--week" src="/landing-assets/trading-journal/week-view-calander.png" />
-          <img alt="An opened trading day showing the ticker, trades, notes, tags, rules, and executions" class="tj-float tj-float--drawer" src="/landing-assets/trading-journal/calander-side-card.png" />
-          <img alt="This week summary with four saved trading days" class="tj-float tj-float--week-row" src="/landing-assets/trading-journal/daily-trade-tracker-this-week-card.png" />
-          <img alt="Trading-day summary showing P and L, trades, tickers, and broken rules" class="tj-float tj-float--summary" src="/landing-assets/trading-journal/trade-tracker-trading-day-pl-trades-tickers-rules-broken-cards-mobile-view.png" />
+        <div aria-label="Three closed ticker cards from one saved trading day arranged with depth" class="tj-hero-art">
+          <img alt="Closed FABC ticker card with four completed trades" class="tj-float tj-float--ticker-left" decoding="async" height="467" src="/landing-assets/trading-journal/fabc-ticker-card-closed.png" width="467" />
+          <img alt="Closed FAMI ticker card with five completed trades" class="tj-float tj-float--ticker-main" decoding="async" fetchpriority="high" height="536" src="/landing-assets/trading-journal/fami-ticker-card-closed.png" width="470" />
+          <img alt="Closed GCTK ticker card with four completed trades" class="tj-float tj-float--ticker-right" decoding="async" height="467" src="/landing-assets/trading-journal/gctk-ticker0card-closed.png" width="465" />
         </div>
       </div>
     </section>
@@ -369,10 +498,10 @@
           <p>The Calendar turns the days you traded into a week you can read. See P&amp;L, trade count, win rate, and the tickers behind each session—then open a day to revisit the trades, tags, notes, and Rule Results behind the total.</p>
         </div>
         <div aria-label="TradersLink Calendar views" class="tj-calendar-stage">
-          <img alt="Week-view trading calendar with each day's P and L and ticker details" class="tj-calendar-week" src="/landing-assets/trading-journal/week-view-calander.png" />
-          <img alt="Selected Calendar day drawer with its tickers, notes, tags, rules, and executions" class="tj-calendar-drawer" src="/landing-assets/trading-journal/calander-side-card.png" />
-          <img alt="Weekly summary cards for P and L, trades, and win rate" class="tj-calendar-metrics" src="/landing-assets/trading-journal/calander-week-view-pl-trades-win-rate-cards.png" />
-          <img alt="Four Daily Trade Tracker records in a This week row" class="tj-calendar-row" src="/landing-assets/trading-journal/daily-trade-tracker-this-week-card.png" />
+          <img alt="Week-view trading calendar with each day's P and L and ticker details" class="tj-calendar-week" decoding="async" height="627" loading="lazy" src="/landing-assets/trading-journal/week-view-calander.png" width="1577" />
+          <img alt="Selected Calendar day drawer with its tickers, notes, tags, rules, and executions" class="tj-calendar-drawer" decoding="async" height="922" loading="lazy" src="/landing-assets/trading-journal/calander-side-card.png" width="491" />
+          <img alt="Weekly summary cards for P and L, trades, and win rate" class="tj-calendar-metrics" decoding="async" height="487" loading="lazy" src="/landing-assets/trading-journal/calander-week-view-pl-trades-win-rate-cards.png" width="483" />
+          <img alt="Four Daily Trade Tracker records in a This week row" class="tj-calendar-row" decoding="async" height="187" loading="lazy" src="/landing-assets/trading-journal/daily-trade-tracker-this-week-card.png" width="677" />
           <span class="tj-callout">A week you can open, not just total.</span>
         </div>
       </div>
@@ -389,25 +518,25 @@
         <ol aria-label="Create and review a maximum trades per day rule" class="tj-rule-steps">
           <li class="tj-rule-step">
             <span class="tj-step-number">01</span>
-            <div class="tj-rule-frame"><img alt="Maximum completed trades per day preset with Add rule action" src="/landing-assets/trading-journal/add-customer-rule-max-trades-per-day.png" /></div>
+            <div class="tj-rule-frame"><img alt="Maximum completed trades per day preset with Add rule action" decoding="async" height="216" loading="lazy" src="/landing-assets/trading-journal/add-customer-rule-max-trades-per-day.png" width="537" /></div>
             <h3>Choose the rule</h3>
             <p>Start with a preset built around a decision you want to keep visible during the session.</p>
           </li>
           <li class="tj-rule-step">
             <span class="tj-step-number">02</span>
-            <div class="tj-rule-frame"><img alt="Configure the maximum completed trades per day limit" src="/landing-assets/trading-journal/configure-custom-rule-max-trades-per-day.png" /></div>
+            <div class="tj-rule-frame"><img alt="Configure the maximum completed trades per day limit" decoding="async" height="352" loading="lazy" src="/landing-assets/trading-journal/configure-custom-rule-max-trades-per-day.png" width="591" /></div>
             <h3>Set your limit</h3>
             <p>Make the rule specific to your trading instead of relying on a note you may not revisit.</p>
           </li>
           <li class="tj-rule-step">
             <span class="tj-step-number">03</span>
-            <div class="tj-rule-frame"><img alt="Active maximum completed trades per day preset rule" src="/landing-assets/trading-journal/preset-rule-create-max-trades-per-day.png" /></div>
+            <div class="tj-rule-frame"><img alt="Active maximum completed trades per day preset rule" decoding="async" height="272" loading="lazy" src="/landing-assets/trading-journal/preset-rule-create-max-trades-per-day.png" width="781" /></div>
             <h3>Keep it active</h3>
             <p>The selected rule stays part of the Daily Trade Tracker review from that point forward.</p>
           </li>
           <li class="tj-rule-step">
             <span class="tj-step-number">04</span>
-            <div class="tj-rule-frame"><img alt="Results for the maximum completed trades per day rule" src="/landing-assets/trading-journal/results-by-rule-max-trades-per-day.png" /></div>
+            <div class="tj-rule-frame"><img alt="Results for the maximum completed trades per day rule" decoding="async" height="188" loading="lazy" src="/landing-assets/trading-journal/results-by-rule-max-trades-per-day.png" width="778" /></div>
             <h3>See the result</h3>
             <p>Review followed and broken outcomes across trading days, including the P&amp;L connected to them.</p>
           </li>
@@ -422,9 +551,9 @@
             <div class="tj-rule-pills"><span>Preset rules</span><span>Session rules</span><span>Followed</span><span>Broken</span><span>Results over time</span></div>
           </div>
           <div aria-label="Trading Rule Results and broken-rule detail" class="tj-rule-results-art">
-            <img alt="Results by Rule for three trading rules" class="tj-results-list" src="/landing-assets/trading-journal/results-by-rule-3-results.png" />
-            <img alt="Trading Rule Results showing one broken and one followed rule" class="tj-rule-status" src="/landing-assets/trading-journal/rules-broken-followed-small-.png" />
-            <img alt="Expanded broken-rule detail showing its trigger and violating trade" class="tj-rule-detail" src="/landing-assets/trading-journal/trade-tracker-broken-rule-with-details-expanded.png" />
+            <img alt="Results by Rule for three trading rules" class="tj-results-list" decoding="async" height="437" loading="lazy" src="/landing-assets/trading-journal/results-by-rule-3-results.png" width="782" />
+            <img alt="Trading Rule Results showing one broken and one followed rule" class="tj-rule-status" decoding="async" height="97" loading="lazy" src="/landing-assets/trading-journal/rules-broken-followed-small-.png" width="472" />
+            <img alt="Expanded broken-rule detail showing its trigger and violating trade" class="tj-rule-detail" decoding="async" height="235" loading="lazy" src="/landing-assets/trading-journal/trade-tracker-broken-rule-with-details-expanded.png" width="435" />
           </div>
         </div>
       </div>
@@ -440,9 +569,9 @@
             <p>When you return to the ticker, its trades and executions are still beside the note. That makes it easier to remember the setup, review a decision in context, and carry a useful lesson into the next session.</p>
           </div>
           <div aria-label="Trade note shown with its ticker, trade, and executions" class="tj-note-art">
-            <img alt="Ticker card showing the trades, notes, tags, and rules attached to one ticker" class="tj-note-ticker" src="/landing-assets/trading-journal/daily-trade-tracker-ticker-card-mobile-view.png" />
-            <img alt="Expanded trade inside its ticker card with notes, tags, rules, and executions" class="tj-note-trade" src="/landing-assets/trading-journal/daily-trade-tracker-trade-in-ticker-card-mobile.png" />
-            <img alt="A written note attached to a completed trade" class="tj-note-anchor" src="/landing-assets/trading-journal/single-trade-note.png" />
+            <img alt="Ticker card showing the trades, notes, tags, and rules attached to one ticker" class="tj-note-ticker" decoding="async" height="477" loading="lazy" src="/landing-assets/trading-journal/daily-trade-tracker-ticker-card-mobile-view.png" width="472" />
+            <img alt="Expanded trade inside its ticker card with notes, tags, rules, and executions" class="tj-note-trade" decoding="async" height="628" loading="lazy" src="/landing-assets/trading-journal/daily-trade-tracker-trade-in-ticker-card-mobile.png" width="466" />
+            <img alt="A written note attached to a completed trade" class="tj-note-anchor" decoding="async" height="283" loading="lazy" src="/landing-assets/trading-journal/single-trade-note.png" width="531" />
             <span class="tj-note-marker">The note stays with the trade.</span>
           </div>
         </div>
@@ -453,10 +582,10 @@
       <div class="tj-tags-inner">
         <div class="tj-feature-split">
           <div aria-label="Trade tags layered around a saved trade and ticker" class="tj-tag-art">
-            <img alt="Expanded trade showing where tags are saved with the trade" class="tj-tag-trade" src="/landing-assets/trading-journal/daily-trade-tracker-trade-in-ticker-card-mobile.png" />
-            <img alt="Ticker card containing tagged trades" class="tj-tag-ticker" src="/landing-assets/trading-journal/daily-trade-tracker-ticker-card-mobile-view.png" />
-            <img alt="Three selected trade tags" class="tj-tag-three" src="/landing-assets/trading-journal/3-selected-tags-small.png" />
-            <img alt="Ten trade tags showing different tag categories" class="tj-tag-ten" src="/landing-assets/trading-journal/shows-variety-of-tags-10.png" />
+            <img alt="Expanded trade showing where tags are saved with the trade" class="tj-tag-trade" decoding="async" height="628" loading="lazy" src="/landing-assets/trading-journal/daily-trade-tracker-trade-in-ticker-card-mobile.png" width="466" />
+            <img alt="Ticker card containing tagged trades" class="tj-tag-ticker" decoding="async" height="477" loading="lazy" src="/landing-assets/trading-journal/daily-trade-tracker-ticker-card-mobile-view.png" width="472" />
+            <img alt="Three selected trade tags" class="tj-tag-three" decoding="async" height="148" loading="lazy" src="/landing-assets/trading-journal/3-selected-tags-small.png" width="527" />
+            <img alt="Ten trade tags showing different tag categories" class="tj-tag-ten" decoding="async" height="265" loading="lazy" src="/landing-assets/trading-journal/shows-variety-of-tags-10.png" width="522" />
           </div>
           <div class="tj-feature-copy">
             <p class="tj-eyebrow">Trade Tags</p>
@@ -480,8 +609,8 @@
       <div class="tj-ways-inner">
         <div class="tj-section-head">
           <p class="tj-eyebrow">Ways to Journal</p>
-          <h2>Journal the way the trade calls for.</h2>
-          <p>Open a compact review, keep a swing plan over several dates, or enter executions directly. Each workflow adds to the same trading record without forcing every trade through the same screen.</p>
+          <h2>Journal the day or quickly review a single trade</h2>
+          <p>Open a compact review, keep a swing trade plan over several dates, or enter executions directly. Each workflow adds to the same trading record without forcing every trade through the same screen.</p>
         </div>
 
         <div class="tj-way-quick">
@@ -491,8 +620,8 @@
             <p>Filter or sort the Trade Explorer, open the review drawer, and add context while the trade you selected is still visible. It is a compact way to journal when you already know which trade needs your attention.</p>
           </div>
           <div aria-label="Trade Explorer and its compact review drawer" class="tj-explorer-art">
-            <img alt="Trade Explorer list with completed trades and filtering controls" class="tj-explorer-list" src="/landing-assets/trading-journal/ways-to-enter-trades-trade-explorer.png" />
-            <img alt="Compact Trade Explorer review drawer showing one completed trade" class="tj-explorer-drawer" src="/landing-assets/trading-journal/ways-to-enter-trades-explorer-side-card.png" />
+            <img alt="Trade Explorer list with completed trades and filtering controls" class="tj-explorer-list" decoding="async" height="321" loading="lazy" src="/landing-assets/trading-journal/ways-to-enter-trades-trade-explorer.png" width="782" />
+            <img alt="Compact Trade Explorer review drawer showing one completed trade" class="tj-explorer-drawer" decoding="async" height="951" loading="lazy" src="/landing-assets/trading-journal/ways-to-enter-trades-explorer-side-card.png" width="550" />
           </div>
         </div>
 
@@ -501,10 +630,10 @@
             <div class="tj-way-copy">
               <p class="tj-way-number">02 · Swing trading</p>
               <h3>Keep the plan alive across trading days.</h3>
-              <p>Record the swing plan, expected holding period, catalyst, and dated notes as the position develops. The journal keeps the original idea and each later update with the same swing trade.</p>
+              <p>Record the swing trade plan, expected holding period, catalyst, and dated notes as the position develops. The journal keeps the original idea and each later update with the same swing trade.</p>
             </div>
             <div aria-label="Swing trade plan and dated notes" class="tj-way-secondary-art">
-              <img alt="Swing Trade Tracker card with a trade plan, catalyst, holding period, and dated notes" class="tj-swing-image" src="/landing-assets/trading-journal/ways-to-enter-trades-swing-tocker-card-notes.png" />
+              <img alt="Swing Trade Tracker card with a trade plan, catalyst, holding period, and dated notes" class="tj-swing-image" decoding="async" height="532" loading="lazy" src="/landing-assets/trading-journal/ways-to-enter-trades-swing-tocker-card-notes.png" width="458" />
             </div>
           </article>
 
@@ -512,12 +641,100 @@
             <div class="tj-way-copy">
               <p class="tj-way-number">03 · Execution entry</p>
               <h3>Enter the fills that make up the trade.</h3>
-              <p>Add a day or swing execution with the broker-shown date, ticker, side, time, quantity, price, and fees. Accurate fills give later trade matching and analysis the details they need.</p>
+              <p>Add a day trade or swing trade execution with the broker-shown date, ticker, side, time, quantity, price, and fees. Accurate fills give later trade matching and analysis the details they need.</p>
             </div>
             <div aria-label="Manual day or swing execution fields" class="tj-way-secondary-art">
-              <img alt="Manual execution fields for date, ticker, side, time, quantity, price, and fees" class="tj-execution-image" src="/landing-assets/trading-journal/one-execution-entry-mobile-view-small.png" />
+              <img alt="Manual execution fields for date, ticker, side, time, quantity, price, and fees" class="tj-execution-image" decoding="async" height="268" loading="lazy" src="/landing-assets/trading-journal/one-execution-entry-mobile-view-small.png" width="438" />
             </div>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="tj-tracker" id="daily-trade-tracker">
+      <div class="tj-tracker-inner">
+        <div class="tj-section-head">
+          <p class="tj-eyebrow">Daily Trade Tracker</p>
+          <h2>Bring the entire trading day together.</h2>
+          <p>The Daily Trade Tracker is the main full-day journaling workflow. It saves the session as one record, with its tickers, trades, notes, tags, Trading Rule Results, and daily totals connected.</p>
+          <p>From a trade inside the ticker card, open Trade Analyzer to study entries and exits, candle patterns, profit taking, and risk management while the details of that trading day are still close by.</p>
+        </div>
+        <div aria-label="A completed ticker card with executions, trades, rules, notes, and its Trade Analyzer chart" class="tj-tracker-art">
+          <img alt="Completed XPON ticker card with executions, trade details, Trading Rule Results, notes, and the Trade Analyzer chart" class="tj-tracker-full" decoding="async" height="927" loading="lazy" src="/landing-assets/trading-journal/execution-trades-ticker-analyzer-chart.png" width="1592" />
+        </div>
+      </div>
+    </section>
+
+    <section class="tj-analyzer" id="trade-analyzer">
+      <div class="tj-analyzer-inner">
+        <div class="tj-analyzer-grid">
+          <div aria-label="Entry and Exit Analysis with Green-to-Red Analysis" class="tj-analyzer-art">
+            <img alt="Trade Analyzer Entry and Exit Analysis with detailed execution review" class="tj-analyzer-entry" decoding="async" height="832" loading="lazy" src="/landing-assets/trading-journal/trade-tracker-trade-analysis-exit-entry.png" width="435" />
+            <img alt="Trade Analyzer Green-to-Red Analysis showing profit capture and giveback" class="tj-analyzer-green" decoding="async" height="615" loading="lazy" src="/landing-assets/trading-journal/trade-tracker-green-to-red-analysis.png" width="422" />
+          </div>
+          <div class="tj-feature-copy">
+            <p class="tj-eyebrow">Trade Analyzer</p>
+            <h2>Take the completed trade one step further.</h2>
+            <p>Open Entry and Exit Analysis to review where executions occurred inside the trade. Use Green-to-Red Analysis to see the profit that was available, the amount captured, and what was given back before the position closed.</p>
+            <p>That detail helps make profit taking, entry quality, and risk management easier to discuss with evidence from the trade itself.</p>
+            <a class="tj-text-link" href="/trade-analyzer">Explore the TradersLink Trade Analyzer <span aria-hidden="true">→</span></a>
+            <a class="tj-text-link" href="https://traderslink.pro/beta">Sign up free <span aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tj-session" id="session-notes">
+      <div class="tj-session-inner">
+        <div class="tj-section-head">
+          <p class="tj-eyebrow">Session Notes</p>
+          <h2>Finish the day with something useful to carry forward.</h2>
+          <p>Close the session by recording what worked, what needs work, a technical recap, and the current focuses you want visible when the next trading day begins.</p>
+        </div>
+        <div aria-label="Four focused Session Notes around the full daily notes view" class="tj-session-art">
+          <img alt="Full Session Notes view for one trading day" class="tj-session-main" decoding="async" height="666" loading="lazy" src="/landing-assets/trading-journal/session-notes-mobile-view.png" width="567" />
+          <img alt="What worked Session Note" class="tj-session-worked" decoding="async" height="152" loading="lazy" src="/landing-assets/trading-journal/single-session-note-what worked.png" width="536" />
+          <img alt="What needs work Session Note" class="tj-session-needs" decoding="async" height="168" loading="lazy" src="/landing-assets/trading-journal/sing-session-note-what-needs-work.png" width="537" />
+          <img alt="Technical recap Session Note" class="tj-session-technical" decoding="async" height="170" loading="lazy" src="/landing-assets/trading-journal/single-session-note-technical-recap.png" width="537" />
+          <img alt="Current focuses Session Note" class="tj-session-focus" decoding="async" height="172" loading="lazy" src="/landing-assets/trading-journal/single-session-note-current-focus.png" width="543" />
+        </div>
+      </div>
+    </section>
+
+    <section class="tj-faq" id="faq">
+      <div class="tj-faq-inner">
+        <div class="tj-faq-grid">
+          <div class="tj-faq-copy">
+            <p class="tj-eyebrow">Trading Journal FAQ</p>
+            <h2>Questions you may want answers to</h2>
+            <p>The best answers are inside the dashboard. Entry is free no credit card required.</p>
+          </div>
+          <div class="tj-faq-list">
+            <details>
+              <summary>What is a trading journal?</summary>
+              <p>A trading journal is a record of your trades and the decisions around them. TradersLink connects executions, trades, tickers, notes, tags, trading rules, and session review so you can revisit both the result and how the trading day unfolded.</p>
+            </details>
+            <details>
+              <summary>What can I record in the TradersLink trading journal?</summary>
+              <p>You can record executions, completed trades, ticker-level details, daily results, trade notes, Trade Tags, Trading Rule Results, swing plans, and end-of-session notes. Calendar views keep those records organized by trading day and week.</p>
+            </details>
+            <details>
+              <summary>Can I journal both day trades and swing trades?</summary>
+              <p>Yes. TradersLink supports day and swing trades and is built with small cap trading in mind. Enter an execution (buy or sell) in the Daily Trade Tracker, and TradersLink will automatically detect whether it is an open trade and ask you to confirm it as an active swing trade.</p>
+            </details>
+            <details>
+              <summary>Does TradersLink automatically check trading rules?</summary>
+              <p>TradersLink automatically checks supported preset and custom session rules against the saved trading day. It shows whether each rule was followed or broken and keeps the result, trigger details, related trade, and available P&amp;L context together.</p>
+            </details>
+            <details>
+              <summary>Can I add trade notes and custom tags?</summary>
+              <p>Yes. Notes stay attached to the trade they explain, and Trade Tags can cover setups, execution, exits, emotions, mistakes, or categories you create yourself. Those tags can later support filtering, comparison, and Analytics.</p>
+            </details>
+            <details>
+              <summary>How can I enter or import trades?</summary>
+              <p>You can enter day or swing executions manually, upload a broker statement, or map columns from another statement format. When a statement cannot be mapped directly, TradersLink can use AI-assisted mapping while keeping imported executions available for review.</p>
+            </details>
+          </div>
         </div>
       </div>
     </section>
@@ -568,8 +785,32 @@
     });
   }
 
+  const mobileHeader = document.querySelector('.tj-header');
+  const mobileMenuToggle = document.querySelector('.tj-menu-toggle');
+  const mobilePrimaryNav = document.querySelector('#tj-primary-nav');
+  if (mobileHeader && mobileMenuToggle && mobilePrimaryNav) {
+    const closeMobileMenu = () => {
+      mobileHeader.classList.remove('is-menu-open');
+      mobileMenuToggle.setAttribute('aria-expanded', 'false');
+      mobileMenuToggle.setAttribute('aria-label', 'Open navigation menu');
+    };
+    mobileMenuToggle.addEventListener('click', () => {
+      const isOpen = mobileHeader.classList.toggle('is-menu-open');
+      mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
+      mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+    });
+    mobilePrimaryNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
+    document.addEventListener('click', (event) => {
+      if (!mobileHeader.contains(event.target)) closeMobileMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeMobileMenu();
+    });
+    window.matchMedia('(min-width: 681px)').addEventListener('change', closeMobileMenu);
+  }
+
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const revealTargets = document.querySelectorAll('.tj-calendar, .tj-rules, .tj-notes, .tj-tags, .tj-ways');
+    const revealTargets = document.querySelectorAll('.tj-calendar, .tj-rules, .tj-notes, .tj-tags, .tj-ways, .tj-tracker, .tj-analyzer, .tj-session');
     const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;

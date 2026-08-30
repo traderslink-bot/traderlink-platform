@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /debug/
+Disallow: /*?auth=
+
+Sitemap: https://traderslink.pro/sitemap.xml
+Sitemap: https://traderslink.pro/landing-pages-sitemap.xml

@@ -1,6 +1,6 @@
 # Trading Journal Static Landing Page Plan
 
-**Status:** Owner approved for implementation
+**Status:** Owner approved release candidate; serialized publication pending
 
 **Progress record:** [Trading Journal Static Landing Page Progress](trading-journal-static-landing-page-progress.md)
 
@@ -22,18 +22,18 @@ approved footer, and `https://traderslink.pro/beta` for every signup CTA.
 3. Trading Rules: **Put your trading rules where the results can answer them.**
 4. Trade Notes: **Keep the reason, the decision, and the lesson with the trade.**
 5. Trade Tags: **Turn the details you notice into patterns you can study.**
-6. Ways to Journal: **Journal the way the trade calls for.**
+6. Ways to Journal: **Journal the day or quickly review a single trade**
 7. Daily Trade Tracker: **Bring the entire trading day together.**
-8. Prepare for the Trading Day: **Know what may matter before the session begins.**
-9. Trade Analyzer: **Take the completed trade one step further.**
-10. Session Notes: **Finish the day with something useful to carry forward.**
-11. FAQ with six accurate, visible questions and matching structured data.
-12. Final signup CTA and the approved legal footer.
+8. Trade Analyzer: **Take the completed trade one step further.**
+9. Session Notes: **Finish the day with something useful to carry forward.**
+10. FAQ with six accurate, visible questions and matching structured data.
+11. Final signup CTA and the approved legal footer.
 
 ## Visual and content contract
 
-- The hero layers the weekly calendar, Calendar day drawer, `This week` row,
-  and mobile trading-day summary on a deep-navy background.
+- The hero uses three new closed ticker-card screenshots arranged with depth on
+  a deep-navy background. Calendar screenshots are reserved for the Calendar
+  chapter and do not repeat in the hero.
 - Calendar uses a pale-blue grid surface and composes the full week, weekly
   metrics, day drawer, and week row without placing every image in an equal
   card.
@@ -44,13 +44,18 @@ approved footer, and `https://traderslink.pro/beta` for every signup CTA.
   within a trade and ticker.
 - Tags explains setup, execution, exit, emotion, mistake, and custom categories
   and connects them to later filtering and Analytics.
-- Ways to Journal covers the compact Trade Explorer drawer, Swing journaling,
-  and direct Day/Swing execution entry.
-- Daily Trade Tracker reconnects executions, trades, tickers, notes, tags,
-  rules, daily totals, broken-rule counts, and weekly navigation as one saved
-  trading-day record.
-- Preparation and Analyzer remain supporting chapters. Analyzer introduces
-  Entry/Exit and Green-to-Red without replacing its future dedicated page.
+- Ways to Journal covers the compact Trade Explorer drawer, swing trade
+  journaling, and direct day trade or swing trade execution entry.
+- Daily Trade Tracker uses the single wide
+  `execution-trades-ticker-analyzer-chart.png` product screenshot, which keeps
+  the chart, executions, trade, ticker, rules, and notes in one real view. Its
+  copy explains the saved full-day record and introduces Analyzer review of
+  entries, exits, candle patterns, profit taking, and risk management.
+- Analyzer remains a supporting chapter and introduces Entry/Exit and
+  Green-to-Red without replacing its future dedicated page.
+- The pre-session preparation chapter was removed from this page by owner
+  direction. Its standalone HTML/CSS is preserved in the owner's Desktop
+  `traderslink-static-landing-pages` folder for a future Trading Tools page.
 - Session Notes uses the full mobile notes view and the four individual note
   types in an editorial composition.
 - Decorative surfaces are CSS, not invented product imagery. Screenshots keep
@@ -79,6 +84,13 @@ approved footer, and `https://traderslink.pro/beta` for every signup CTA.
 - Include canonical, robots, Open Graph, X/Twitter metadata, descriptive image
   alternatives, one H1, semantic heading order, and `FAQPage` JSON-LD that
   exactly matches the visible FAQ.
+- The static front door owns `robots.txt` and a separate
+  `landing-pages-sitemap.xml`. Robots references both the existing proxied
+  Platform sitemap and the static landing-page sitemap so future landing pages
+  do not require a dashboard build.
+- Every screenshot declares its intrinsic dimensions. Below-the-fold images
+  use lazy loading and asynchronous decoding; only the central hero screenshot
+  receives high fetch priority.
 
 ## Accessibility and responsive contract
 
@@ -94,7 +106,7 @@ approved footer, and `https://traderslink.pro/beta` for every signup CTA.
 
 1. Hero, Calendar, and Rules composition.
 2. Notes, Tags, and Ways to Journal.
-3. Daily Tracker, Preparation, Analyzer, Session Notes, FAQ, and full desktop
+3. Daily Tracker, Analyzer, Session Notes, FAQ, and full desktop
    flow.
 4. Mobile layout and screenshot legibility.
 5. Focused static, route, SEO, structured-data, accessibility, and browser

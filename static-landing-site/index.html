@@ -29,6 +29,8 @@
     body { margin:0; }
     #traderslink-homepage-review-v2 { background:#f4f7fb; color:#172033; font-family:Arial,Helvetica,sans-serif; line-height:1.5; overflow:hidden; }
     #traderslink-homepage-review-v2 * { box-sizing:border-box; }
+    #traderslink-homepage-review-v2 a:focus-visible,
+    #traderslink-homepage-review-v2 button:focus-visible { outline:3px solid #2e6fbb; outline-offset:3px; }
     #traderslink-homepage-review-v2 .tl2-header { align-items:center; background:#fff; border-bottom:1px solid #dbe4ef; box-shadow:0 9px 25px rgba(14,47,93,.08); display:flex; justify-content:space-between; min-height:76px; padding:0 4.5%; position:relative; z-index:1; }
     #traderslink-homepage-review-v2 .tl2-logo { display:block; text-decoration:none; }
     #traderslink-homepage-review-v2 .tl2-logo img { display:block; height:32px; width:auto; }
@@ -45,6 +47,12 @@
     #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link { color:#fff; font-size:14px; margin-left:16px; padding:12px 17px; position:relative; transition:box-shadow .2s ease,transform .2s ease; }
     #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link::before { background:#dbe4ef; content:""; height:24px; left:-16px; position:absolute; top:50%; transform:translateY(-50%); width:1px; }
     #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link:hover { box-shadow:0 7px 15px rgba(6,38,99,.18); transform:translateY(-1px); }
+    #traderslink-homepage-review-v2 .tl2-menu-toggle { align-items:center; background:#fff; border:1px solid #c9d6e5; border-radius:8px; cursor:pointer; display:none; height:40px; justify-content:center; padding:0; width:40px; }
+    #traderslink-homepage-review-v2 .tl2-menu-toggle-lines { display:grid; gap:4px; width:18px; }
+    #traderslink-homepage-review-v2 .tl2-menu-toggle-lines span { background:#173761; border-radius:2px; display:block; height:2px; transition:opacity .2s ease,transform .2s ease; }
+    #traderslink-homepage-review-v2 .tl2-header.is-menu-open .tl2-menu-toggle-lines span:nth-child(1) { transform:translateY(6px) rotate(45deg); }
+    #traderslink-homepage-review-v2 .tl2-header.is-menu-open .tl2-menu-toggle-lines span:nth-child(2) { opacity:0; }
+    #traderslink-homepage-review-v2 .tl2-header.is-menu-open .tl2-menu-toggle-lines span:nth-child(3) { transform:translateY(-6px) rotate(-45deg); }
     #traderslink-homepage-review-v2 .tl2-account-link,
     #traderslink-homepage-review-v2 .tl2-section-link { background:#062663; border:1px solid #062663; border-radius:7px; color:#fff; display:inline-block; font-size:16px; font-weight:700; padding:14px 22px; text-decoration:none; }
     #traderslink-homepage-review-v2 .tl2-intro { margin:0 auto; max-width:1060px; padding:72px 4.5% 59px; text-align:center; }
@@ -66,6 +74,7 @@
     #traderslink-homepage-review-v2 .tl2-shot { background:#fff; border:1px solid #cad8e8; border-radius:12px; box-shadow:0 18px 43px rgba(20,53,99,.13); overflow:hidden; }
     #traderslink-homepage-review-v2 .tl2-shot picture { display:block; }
     #traderslink-homepage-review-v2 .tl2-shot img { display:block; height:auto; width:100%; }
+    #traderslink-homepage-review-v2 .tl2-mobile-image-stack { display:none; }
     #traderslink-homepage-review-v2 .tl2-tools { background:#eef5fb; display:flex; flex-direction:column; justify-content:center; min-height:clamp(640px,86vh,900px); padding:88px 4.5%; }
     #traderslink-homepage-review-v2 .tl2-tools-heading { margin:0; max-width:560px; }
     #traderslink-homepage-review-v2 .tl2-tools-heading h2 { font-size:clamp(29px,3.7vw,46px); letter-spacing:-.04em; line-height:1.08; margin-bottom:12px; }
@@ -128,13 +137,18 @@
     #traderslink-homepage-review-v2 .tl2-reveal { opacity:0; transform:translateY(32px); transition:opacity .72s cubic-bezier(.22,1,.36,1),transform .72s cubic-bezier(.22,1,.36,1); }
     #traderslink-homepage-review-v2 .tl2-reveal.is-revealed { opacity:1; transform:translateY(0); }
     @keyframes tl2-panel-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-    @media (prefers-reduced-motion:reduce) { #traderslink-homepage-review-v2 .tl2-tab,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link,#traderslink-homepage-review-v2 .tl2-features-chevron,#traderslink-homepage-review-v2 .tl2-reveal { transition:none; } #traderslink-homepage-review-v2 .tl2-tab:hover,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link:hover { transform:none; } #traderslink-homepage-review-v2 .tl2-product-panel.is-active { animation:none; } #traderslink-homepage-review-v2 .tl2-reveal { opacity:1; transform:none; } }
+    @media (prefers-reduced-motion:reduce) { #traderslink-homepage-review-v2 .tl2-tab,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link,#traderslink-homepage-review-v2 .tl2-features-chevron,#traderslink-homepage-review-v2 .tl2-menu-toggle-lines span,#traderslink-homepage-review-v2 .tl2-reveal { transition:none; } #traderslink-homepage-review-v2 .tl2-tab:hover,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link:hover { transform:none; } #traderslink-homepage-review-v2 .tl2-product-panel.is-active { animation:none; } #traderslink-homepage-review-v2 .tl2-reveal { opacity:1; transform:none; } }
     @media (max-width:760px) {
-      #traderslink-homepage-review-v2 .tl2-header { padding:0 20px; }
+      #traderslink-homepage-review-v2 .tl2-header { min-height:68px; padding:0 18px; z-index:30; }
       #traderslink-homepage-review-v2 .tl2-logo img { height:27px; }
-      #traderslink-homepage-review-v2 .tl2-nav > a[href="https://traderslink.pro/help"] { display:none; }
-      #traderslink-homepage-review-v2 .tl2-features-menu { display:none; }
-      #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link { margin-left:0; }
+      #traderslink-homepage-review-v2 .tl2-menu-toggle { display:flex; }
+      #traderslink-homepage-review-v2 .tl2-nav { align-items:stretch; background:#fff; border:1px solid #d6e1ed; border-radius:12px; box-shadow:0 18px 38px rgba(14,47,93,.18); display:none; flex-direction:column; gap:2px; left:12px; padding:10px; position:absolute; right:12px; top:calc(100% + 8px); }
+      #traderslink-homepage-review-v2 .tl2-header.is-menu-open .tl2-nav { display:flex; }
+      #traderslink-homepage-review-v2 .tl2-nav > a:not(.tl2-account-link) { border-radius:8px; padding:10px 12px; }
+      #traderslink-homepage-review-v2 .tl2-features-menu { display:block; }
+      #traderslink-homepage-review-v2 .tl2-features-toggle { justify-content:space-between; padding:10px 12px; width:100%; }
+      #traderslink-homepage-review-v2 .tl2-features-links { box-shadow:none; left:auto; margin:2px 0 6px; min-width:0; position:static; top:auto; }
+      #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link { align-self:flex-start; font-size:13px; margin:6px 0 0 12px; padding:8px 12px; }
       #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link::before { display:none; }
       #traderslink-homepage-review-v2 .tl2-feature-inner,#traderslink-homepage-review-v2 .tl2-feature-inner--reverse,#traderslink-homepage-review-v2 .tl2-tools-layout { gap:30px; grid-template-columns:1fr; }
       #traderslink-homepage-review-v2 .tl2-feature-inner--reverse .tl2-shot { grid-row:2; }
@@ -144,8 +158,13 @@
       #traderslink-homepage-review-v2 .tl2-detail-tabs { padding:58px 20px; }
       #traderslink-homepage-review-v2 .tl2-detail-panel { gap:28px; grid-template-columns:1fr; min-height:0; padding:20px; }
       #traderslink-homepage-review-v2 .tl2-product-shell--analytics { display:block; }
+      #traderslink-homepage-review-v2 .tl2-mobile-tab-image-group { display:grid; gap:20px; }
+      #traderslink-homepage-review-v2 .tl2-mobile-tab-image-group .tl2-product-tab-list { margin:0; }
       #traderslink-homepage-review-v2 .tl2-product-panel,#traderslink-homepage-review-v2 .tl2-product-panel--reverse { gap:30px; grid-template-columns:1fr; }
       #traderslink-homepage-review-v2 .tl2-product-panel--reverse .tl2-shot,#traderslink-homepage-review-v2 .tl2-product-panel--reverse .tl2-copy { grid-column:auto; }
+      #traderslink-homepage-review-v2 .tl2-shot > .tl2-desktop-image { display:none; }
+      #traderslink-homepage-review-v2 .tl2-mobile-image-stack { background:#f4f7fb; display:grid; gap:12px; padding:12px; }
+      #traderslink-homepage-review-v2 .tl2-mobile-image-stack img { border:1px solid #dbe4ef; border-radius:10px; }
       #traderslink-homepage-review-v2 .tl2-consent { bottom:12px; left:12px; right:12px; }
       #traderslink-homepage-review-v2 .tl2-consent-card { padding:18px; }
       #traderslink-homepage-review-v2 .tl2-consent-actions { justify-content:stretch; }
@@ -190,14 +209,15 @@
 <body>
 <div id="traderslink-homepage-review-v2">
   <header class="tl2-header">
-    <a aria-label="TradersLink home" class="tl2-logo" href="#home"><img alt="TradersLink" src="landing-assets/logo-horizontal-light.png" /></a>
-    <nav aria-label="Primary" class="tl2-nav">
+    <a aria-label="TradersLink home" class="tl2-logo" href="#home"><img alt="TradersLink" src="landing-assets/logo-horizontal-light.png" width="1760" height="361" decoding="async" /></a>
+    <button aria-controls="tl2-primary-nav" aria-expanded="false" aria-label="Open navigation menu" class="tl2-menu-toggle" type="button"><span aria-hidden="true" class="tl2-menu-toggle-lines"><span></span><span></span><span></span></span></button>
+    <nav aria-label="Primary" class="tl2-nav" id="tl2-primary-nav">
       <div class="tl2-features-menu">
         <button aria-controls="features-links" aria-expanded="false" class="tl2-features-toggle" type="button"><span>Features</span><span aria-hidden="true" class="tl2-features-chevron"></span></button>
         <div class="tl2-features-links" id="features-links">
           <a href="/trading-journal">Trading Journal</a>
           <a href="#journal">Daily Trade Tracker</a>
-          <a href="#analyzer">Trade Analyzer</a>
+          <a href="/trade-analyzer">Trade Analyzer</a>
           <a href="#analytics">Trade Analytics</a>
           <a href="#tools">Trading Tools</a>
         </div>
@@ -225,11 +245,10 @@
           <p>The Daily Trade Tracker is where a full trading day comes together. Keep the executions, chart context, notes, tags, and the rules you were following beside the trades themselves.</p>
           <p>Set your own trading rules, and TradersLink automatically checks recorded trades against them. Your daily review shows which rules were followed and which were broken alongside the trades and decisions behind them.</p>
           <p>The Daily Trade Tracker keeps a full trading day in one record, so you can review every trade, the decisions behind it, and whether you followed your rules in the context of the day—not as isolated trades.</p>
-          <a class="tl2-context-link" href="/trading-journal">Explore the TradersLink trading journal</a>
-          <a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a>
+          <a class="tl2-section-link" href="/trading-journal">Explore Trading Journal</a>
         </div>
         <div class="tl2-shot">
-          <picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/daily-trade-tracker-mobile.png" /><img alt="TradersLink Daily Trade Tracker showing a trading day, chart, completed trade, rules, and notes" src="landing-assets/full-dashboard-trade-tracker-with-analyzer.png" /></picture>
+          <picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/daily-trade-tracker-real-mobile.png" width="487" height="822" /><img alt="TradersLink Daily Trade Tracker showing a trading day, chart, completed trade, rules, and notes" src="landing-assets/full-dashboard-trade-tracker-with-analyzer.png" width="1868" height="928" decoding="async" loading="lazy" /></picture>
         </div>
       </div>
     </section>
@@ -244,24 +263,24 @@
           <button aria-controls="analyzer-green-red" aria-selected="false" class="tl2-tab" id="analyzer-green-red-tab" role="tab" type="button">Green to red</button>
         </div>
         <div class="tl2-product-panel tl2-product-panel--reverse is-active" id="analyzer-overview" role="tabpanel" tabindex="0">
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-overview-mobile.png" /><img alt="TradersLink Trade Analyzer full dashboard overview" src="landing-assets/trade-analyzer-trade-analysis-full-dasboard.png" /></picture></div>
-          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>See what happened inside a completed trade.</h2><p>Open Trade Analyzer from a completed day or use it separately. Study entries, exits, candle context, and the path a trade took between them.</p><p>See how hammer candles and other chart patterns appeared during the trade.</p><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/trade-analyzer-overview-real-mobile.png" width="487" height="930" /><img alt="TradersLink Trade Analyzer full dashboard overview" src="landing-assets/trade-analyzer-trade-analysis-full-dasboard.png" width="1897" height="901" decoding="async" loading="lazy" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>See what happened inside a completed trade.</h2><p>Open Trade Analyzer from a completed day or use it separately. Study entries, exits, candle context, and the path a trade took between them.</p><p>See how hammer candles and other chart patterns appeared during the trade.</p><a class="tl2-section-link" href="/trade-analyzer">Explore Trade Analyzer</a></div>
         </div>
         <div class="tl2-product-panel tl2-product-panel--reverse" hidden id="analyzer-entry-exit" role="tabpanel" tabindex="0">
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-entry-exit-mobile.png" /><img alt="TradersLink Trade Analyzer entries and exits in the full dashboard" src="landing-assets/trade analyzer/entry and exit/entry-exit-full-dashboard.png" /></picture></div>
-          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>Study how each entry and exit unfolded.</h2><p>Review execution context around the points where a trade began and ended. Use the completed trade to study timing, price action, and the choices made at each point.</p><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/trade-analyzer-entry-exit-real-mobile.png" width="487" height="635" /><img alt="TradersLink Trade Analyzer entries and exits in the full dashboard" src="landing-assets/trade analyzer/entry and exit/entry-exit-full-dashboard.png" width="1885" height="932" decoding="async" loading="lazy" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>Study how each entry and exit unfolded.</h2><p>Review execution context around the points where a trade began and ended. Use the completed trade to study timing, price action, and the choices made at each point.</p><a class="tl2-section-link" href="/trade-analyzer">Explore Trade Analyzer</a></div>
         </div>
         <div class="tl2-product-panel tl2-product-panel--reverse" hidden id="analyzer-patterns" role="tabpanel" tabindex="0">
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-candle-patterns-mobile.png" /><img alt="TradersLink candle patterns in the full Trade Analyzer dashboard" src="landing-assets/trade analyzer/candle-patterns/candle-patterns-full-dasboard.png" /></picture></div>
-          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>See candle patterns in the trades you actually took.</h2><p>Review detected candlestick patterns—including hammer candles—alongside entry and exit timing, price action, and the trade’s eventual result.</p><p>See how often a pattern appeared in your own completed trades, then open the supporting examples instead of relying on a generic chart setup.</p><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/trade-analyzer-candle-patterns-real-mobile.png" width="487" height="554" /><img alt="TradersLink candle patterns in the full Trade Analyzer dashboard" src="landing-assets/trade analyzer/candle-patterns/candle-patterns-full-dasboard.png" width="1886" height="937" decoding="async" loading="lazy" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>See candle patterns in the trades you actually took.</h2><p>Review detected candlestick patterns—including hammer candles—alongside entry and exit timing, price action, and the trade’s eventual result.</p><p>See how often a pattern appeared in your own completed trades, then open the supporting examples instead of relying on a generic chart setup.</p><a class="tl2-section-link" href="/trade-analyzer">Explore Trade Analyzer</a></div>
         </div>
         <div class="tl2-product-panel tl2-product-panel--reverse" hidden id="analyzer-mfe-mae" role="tabpanel" tabindex="0">
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-mfe-mae-mobile.png" /><img alt="TradersLink MFE and MAE Trade Analyzer full dashboard" src="landing-assets/trade analyzer/mfe-mae/mfe&mae-full-dashboard.png" /></picture></div>
-          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>Measure the opportunity and risk inside a trade.</h2><p>Use MFE and MAE to study favorable and adverse movement during a completed trade, then connect that data to later entry, exit, and risk-management decisions.</p><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/trade-analyzer-mfe-mae-real-mobile.png" width="487" height="1050" /><img alt="TradersLink MFE and MAE Trade Analyzer full dashboard" src="landing-assets/trade analyzer/mfe-mae/mfe&mae-full-dashboard.png" width="1890" height="932" decoding="async" loading="lazy" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>Measure the opportunity and risk inside a trade.</h2><p>Use MFE and MAE to study favorable and adverse movement during a completed trade, then connect that data to later entry, exit, and risk-management decisions.</p><a class="tl2-section-link" href="/trade-analyzer">Explore Trade Analyzer</a></div>
         </div>
         <div class="tl2-product-panel tl2-product-panel--reverse" hidden id="analyzer-green-red" role="tabpanel" tabindex="0">
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-green-to-red-mobile.png" /><img alt="TradersLink Green-to-Red analysis in the full Trade Analyzer dashboard" src="landing-assets/trade analyzer/green-to-red/green-to-red-full-dashboard.png" /></picture></div>
-          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>Make profit capture and giveback visible.</h2><p>Green-to-red analysis follows a trade after it first moves into profit. See the best sustained opportunity that remained available, how much profit you captured, and how much was given back before the exit.</p><p>Break results down by how long a trade stayed green after its profit peak, then spot whether profit taking, later exits, or risk-management decisions are improving or hurting your results. Use the data to make more informed adjustments to protecting gains, taking partial profits, and managing risk.</p><div class="tl2-subfeature-pills"><span>Profit taking</span><span>Risk management</span><span>Giveback</span></div><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/trade-analyzer-green-to-red-real-mobile.png" width="487" height="1050" /><img alt="TradersLink Green-to-Red analysis in the full Trade Analyzer dashboard" src="landing-assets/trade analyzer/green-to-red/green-to-red-full-dashboard.png" width="1882" height="925" decoding="async" loading="lazy" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>Make profit capture and giveback visible.</h2><p>Green-to-red analysis follows a trade after it first moves into profit. See the best sustained opportunity that remained available, how much profit you captured, and how much was given back before the exit.</p><p>Break results down by how long a trade stayed green after its profit peak, then spot whether profit taking, later exits, or risk-management decisions are improving or hurting your results. Use the data to make more informed adjustments to protecting gains, taking partial profits, and managing risk.</p><div class="tl2-subfeature-pills"><span>Profit taking</span><span>Risk management</span><span>Giveback</span></div><a class="tl2-section-link" href="/trade-analyzer">Explore Trade Analyzer</a></div>
         </div>
       </div>
     </section>
@@ -277,23 +296,29 @@
         </div>
         <div class="tl2-product-panel is-active" id="analytics-timing" role="tabpanel" tabindex="0">
           <div class="tl2-copy"><p class="tl2-label">Trade Analytics</p><h2>See when your trading has worked best.</h2><p>Review results across sessions and times to find the conditions that deserve more attention in your own trading history.</p><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analytics-timing-mobile.png" /><img alt="TradersLink trade analytics timing dashboard" src="landing-assets/trade-analytics-timing-full-dahboard.png" /></picture></div>
+          <div class="tl2-shot">
+            <img alt="TradersLink trade analytics timing dashboard" class="tl2-desktop-image" src="landing-assets/trade-analytics-timing-full-dahboard.png" width="1888" height="932" decoding="async" loading="lazy" />
+            <div class="tl2-mobile-image-stack">
+              <img alt="Trades by day of week in the responsive TradersLink dashboard" src="landing-assets/mobile-2/trade-analytics-day-of-week-real-mobile.png" width="487" height="444" decoding="async" loading="lazy" />
+              <img alt="Trades by trading session in the responsive TradersLink dashboard" src="landing-assets/mobile-2/trade-analytics-session-real-mobile.png" width="487" height="396" decoding="async" loading="lazy" />
+            </div>
+          </div>
         </div>
         <div class="tl2-product-panel" hidden id="analytics-breakdown" role="tabpanel" tabindex="0">
           <div class="tl2-copy"><p class="tl2-label">Trade Analytics</p><h2>Break down the patterns across your trades.</h2><p>Explore completed trades by ticker, entry price, position size, holding time, session, and more. See which stock price ranges have produced your most profitable trades—and which have not—rather than relying on one total result.</p><p>Find the small-cap price ranges and trade conditions that are working in your own recorded trading.</p><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analytics-breakdown-mobile.png" /><img alt="TradersLink Trade Breakdown analytics in the full dashboard" src="landing-assets/analytics-trade-breakdown-full-dashboard.png" /></picture></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/trade-breakdown-real-mobile.png" width="487" height="683" /><img alt="TradersLink Trade Breakdown analytics in the full dashboard" src="landing-assets/analytics-trade-breakdown-full-dashboard.png" width="1876" height="920" decoding="async" loading="lazy" /></picture></div>
         </div>
         <div class="tl2-product-panel" hidden id="analytics-ticker" role="tabpanel" tabindex="0">
           <div class="tl2-copy"><p class="tl2-label">Ticker Analytics</p><h2>See the results behind each ticker.</h2><p>Review the tickers you have traded by their results, win rate, and the individual trades behind them. See which stocks have been worth returning to and which ones have repeatedly worked against your trading.</p><p>Use the ticker view with price-range results to understand whether the issue is the stock, the price you traded it at, or the way the trade was managed.</p><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/ticker-analytics-mobile.png" /><img alt="TradersLink Ticker Analytics in the full dashboard" src="landing-assets/analytics/ticker-analytics-full-dashboard.png" /></picture></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/ticker-analytics-real-mobile.png" width="487" height="800" /><img alt="TradersLink Ticker Analytics in the full dashboard" src="landing-assets/analytics/ticker-analytics-full-dashboard.png" width="1887" height="937" decoding="async" loading="lazy" /></picture></div>
         </div>
         <div class="tl2-product-panel" hidden id="analytics-explorer" role="tabpanel" tabindex="0">
           <div class="tl2-copy"><p class="tl2-label">Trade Analytics</p><h2>Find the exact trades you want to study.</h2><p>Filter, sort, and move through a detailed view of your recorded results. Start with the trades, dates, tickers, direction, or result that needs attention.</p><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-explorer-mobile.png" /><img alt="TradersLink Trade Explorer full dashboard" src="landing-assets/trade-explorer-full-dash-boartd.png" /></picture></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/etrade-explorer-no-scroll-video.png" width="475" height="862" /><img alt="TradersLink Trade Explorer full dashboard" src="landing-assets/trade-explorer-full-dash-boartd.png" width="1890" height="906" decoding="async" loading="lazy" /></picture></div>
         </div>
         <div class="tl2-product-panel" hidden id="analytics-compare" role="tabpanel" tabindex="0">
           <div class="tl2-copy"><p class="tl2-label">Trade Analytics</p><h2>Compare trades that share a setup.</h2><p>Bring similar trades together to see how the entries, exits, and results differed. Move beyond a total result to the choices that separated stronger trades from weaker ones.</p><a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-comparison-mobile.png" /><img alt="TradersLink trade comparison analytics" src="landing-assets/analytics/trade-comparison.png" /></picture></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/trade-comparison-real-mobile.png" width="487" height="469" /><img alt="TradersLink trade comparison analytics" src="landing-assets/analytics/trade-comparison.png" width="1588" height="847" decoding="async" loading="lazy" /></picture></div>
         </div>
       </div>
     </section>
@@ -308,11 +333,15 @@
             <a class="tl2-section-link" href="https://traderslink.pro/beta">Sign up free</a>
           </div>
           <div class="tl2-shot">
-          <picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/stock-levels-mobile.png" /><img alt="TradersLink generated support and resistance levels" src="landing-assets/tools/gernerated-support-and-resistance-levels.png" /></picture>
+            <img alt="TradersLink generated support and resistance levels" class="tl2-desktop-image" src="landing-assets/tools/gernerated-support-and-resistance-levels.png" width="1390" height="557" decoding="async" loading="lazy" />
+            <div class="tl2-mobile-image-stack">
+              <img alt="Generated support levels in the responsive TradersLink dashboard" src="landing-assets/mobile-2/support.png" width="693" height="545" decoding="async" loading="lazy" />
+              <img alt="Generated resistance levels in the responsive TradersLink dashboard" src="landing-assets/mobile-2/resistance.png" width="700" height="494" decoding="async" loading="lazy" />
+            </div>
           </div>
         </div>
         <div class="tl2-shot">
-          <img alt="TradersLink press-release alert with an AI summary" src="landing-assets/tools/press-release-alerts.png" />
+          <picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/press-release-alerts-real-mobile.png" width="487" height="1000" /><img alt="TradersLink press-release alert with an AI summary" src="landing-assets/tools/press-release-alerts.png" width="1058" height="845" decoding="async" loading="lazy" /></picture>
         </div>
       </div>
     </section>
@@ -334,23 +363,23 @@
         </div>
         <div class="tl2-detail-panel is-active" id="journal-rules" role="tabpanel" tabindex="0">
           <div class="tl2-detail-copy"><h3>Trading rules are part of the day review.</h3><p>Set the rules that matter to your trading. TradersLink automatically checks the recorded trades, and Rule Results shows which rules were followed and which were broken inside the full-day review.</p><a class="tl2-account-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trading-rules-mobile.png" /><img alt="TradersLink Trading Rules in the dashboard" src="landing-assets/trading-rules-full-dashboard.png" /></picture></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/trading-rules-real-mobile.png" width="487" height="790" /><img alt="TradersLink Trading Rules in the dashboard" src="landing-assets/trading-rules-full-dashboard.png" width="1876" height="927" decoding="async" loading="lazy" /></picture></div>
         </div>
         <div class="tl2-detail-panel" hidden id="journal-notes" role="tabpanel" tabindex="0">
           <div class="tl2-detail-copy"><h3>Keep the thinking behind a trade.</h3><p>Write down what you saw, why you entered, what changed, and what you would handle differently. Trade notes stay attached to the ticker and its executions, rules, and tags.</p><a class="tl2-account-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-notes-mobile.png" /><img alt="TradersLink trade notes, tags, rules, and executions for one ticker" src="landing-assets/ticker-card-executions-tags-trade-note-rules.png" /></picture></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/ticker-trade-detail-real-mobile.png" width="487" height="1000" /><img alt="TradersLink trade notes, tags, rules, and executions for one ticker" src="landing-assets/ticker-card-executions-tags-trade-note-rules.png" width="1567" height="531" decoding="async" loading="lazy" /></picture></div>
         </div>
         <div class="tl2-detail-panel" hidden id="journal-session-notes" role="tabpanel" tabindex="0">
           <div class="tl2-detail-copy"><h3>Close the day with session notes.</h3><p>Capture what worked, what needs work, and the technical recap from the whole session. Keep current focuses visible from one Daily Trade Tracker review to the next, so the habits you are working on stay in view.</p><a class="tl2-account-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/session-notes-mobile.png" /><img alt="TradersLink daily session notes for what worked, what needs work, technical recap, and current focuses" src="landing-assets/daily-notes.png" /></picture></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/session-notes-real-mobile.png" width="487" height="1435" /><img alt="TradersLink daily session notes for what worked, what needs work, technical recap, and current focuses" src="landing-assets/daily-notes.png" width="1590" height="593" decoding="async" loading="lazy" /></picture></div>
         </div>
         <div class="tl2-detail-panel" hidden id="journal-tags" role="tabpanel" tabindex="0">
           <div class="tl2-detail-copy"><h3>Tag the setup, execution, and exit.</h3><p>Use preset tag categories for setups, entry and execution, exits, and emotions—or create your own tags for the patterns you want to study. Tags make it easier to filter, compare, and review the trades that have something in common.</p><a class="tl2-account-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot tl2-shot--trade-tags"><img alt="TradersLink tag selection for trading setups, execution, exits, and emotions" src="landing-assets/tags-selection-popup-card.png" /></div>
+          <div class="tl2-shot tl2-shot--trade-tags"><img alt="TradersLink tag selection for trading setups, execution, exits, and emotions" src="landing-assets/tags-selection-popup-card.png" width="588" height="601" decoding="async" loading="lazy" /></div>
         </div>
         <div class="tl2-detail-panel" hidden id="journal-calendar" role="tabpanel" tabindex="0">
           <div class="tl2-detail-copy"><h3>See the trading week, not only one day.</h3><p>Move from a single Daily Trade Tracker record to a weekly calendar view, then open a day drawer to see the trades, notes, rules, and tags behind it.</p><a class="tl2-account-link" href="https://traderslink.pro/beta">Sign up free</a></div>
-          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/weekly-calendar-mobile.png" /><img alt="TradersLink weekly trading calendar with an open daily review drawer" src="landing-assets/week-calander-view-with-side-drawer-showing.png" /></picture></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile-2/weekly-calendar-real-mobile.png" width="487" height="1100" /><img alt="TradersLink weekly trading calendar with an open daily review drawer" src="landing-assets/week-calander-view-with-side-drawer-showing.png" width="1603" height="932" decoding="async" loading="lazy" /></picture></div>
         </div>
         <div class="tl2-detail-panel" hidden id="journal-imports" role="tabpanel" tabindex="0">
           <div class="tl2-detail-copy"><h3>Bring in broker statement trades.</h3><p>Trade Imports uses import mapping to bring broker statements into TradersLink. When a statement cannot be mapped normally, it can be sent to AI-assisted mapping for review.</p><a class="tl2-account-link" href="https://traderslink.pro/beta">Sign up free</a></div>
@@ -386,6 +415,35 @@
   </section>
 </div>
 <script>
+  const analyticsShell = document.querySelector('.tl2-product-shell--analytics');
+  const analyticsTabs = document.querySelector('[data-tab-group="analytics"]');
+  const analyticsTabsAnchor = document.createComment('analytics-tabs-desktop-position');
+  const analyticsMobileMedia = document.createElement('div');
+  analyticsMobileMedia.className = 'tl2-mobile-tab-image-group';
+  if (analyticsShell && analyticsTabs) analyticsShell.insertBefore(analyticsTabsAnchor, analyticsTabs);
+  const positionAnalyticsTabs = () => {
+    if (!analyticsShell || !analyticsTabs) return;
+    if (window.matchMedia('(max-width: 760px)').matches) {
+      const activePanel = analyticsShell.querySelector('.tl2-product-panel.is-active');
+      const activeImage = activePanel?.querySelector('.tl2-shot');
+      if (!activePanel || !activeImage) return;
+      if (analyticsMobileMedia.parentElement && analyticsMobileMedia.parentElement !== activePanel) {
+        const previousPanel = analyticsMobileMedia.parentElement;
+        const previousImage = analyticsMobileMedia.querySelector('.tl2-shot');
+        if (previousImage) previousPanel.insertBefore(previousImage, analyticsMobileMedia);
+      }
+      activePanel.insertBefore(analyticsMobileMedia, activeImage);
+      analyticsMobileMedia.append(analyticsTabs, activeImage);
+      return;
+    }
+    if (analyticsMobileMedia.parentElement) {
+      const currentPanel = analyticsMobileMedia.parentElement;
+      const currentImage = analyticsMobileMedia.querySelector('.tl2-shot');
+      if (currentImage) currentPanel.insertBefore(currentImage, analyticsMobileMedia);
+      analyticsMobileMedia.remove();
+    }
+    analyticsShell.insertBefore(analyticsTabs, analyticsTabsAnchor.nextSibling);
+  };
   document.querySelectorAll('[data-tab-group]').forEach((tabList) => {
     const tabs = Array.from(tabList.querySelectorAll('[role="tab"]'));
     const activate = (tab) => {
@@ -398,6 +456,7 @@
           panel.hidden = !selected;
         }
       });
+      positionAnalyticsTabs();
     };
     tabs.forEach((tab, index) => {
       tab.addEventListener('click', () => activate(tab));
@@ -410,6 +469,8 @@
       });
     });
   });
+  positionAnalyticsTabs();
+  window.matchMedia('(max-width: 760px)').addEventListener('change', positionAnalyticsTabs);
   const featuresMenu = document.querySelector('.tl2-features-menu');
   if (featuresMenu) {
     const featuresToggle = featuresMenu.querySelector('.tl2-features-toggle');
@@ -428,6 +489,29 @@
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') closeFeaturesMenu();
     });
+  }
+  const mobileHeader = document.querySelector('.tl2-header');
+  const mobileMenuToggle = document.querySelector('.tl2-menu-toggle');
+  const mobilePrimaryNav = document.querySelector('#tl2-primary-nav');
+  if (mobileHeader && mobileMenuToggle && mobilePrimaryNav) {
+    const closeMobileMenu = () => {
+      mobileHeader.classList.remove('is-menu-open');
+      mobileMenuToggle.setAttribute('aria-expanded', 'false');
+      mobileMenuToggle.setAttribute('aria-label', 'Open navigation menu');
+    };
+    mobileMenuToggle.addEventListener('click', () => {
+      const isOpen = mobileHeader.classList.toggle('is-menu-open');
+      mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
+      mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+    });
+    mobilePrimaryNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
+    document.addEventListener('click', (event) => {
+      if (!mobileHeader.contains(event.target)) closeMobileMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeMobileMenu();
+    });
+    window.matchMedia('(min-width: 761px)').addEventListener('change', closeMobileMenu);
   }
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const revealTargets = document.querySelectorAll('.tl2-intro, .tl2-feature, .tl2-tools, .tl2-detail-tabs');

@@ -1,6 +1,6 @@
 # Railway Public Site Cutover Progress
 
-**Status:** In progress
+**Status:** Proxy repair staging-proven; owner-authorized production sequence ready
 
 **Controlling plan:** [Railway Public Site Cutover Plan](railway-public-site-cutover-plan.md)
 
@@ -19,10 +19,34 @@
   page bodies unchanged.
 - [x] Applied the owner-finalized static footer: final-section navy background,
   approved TradersLink text at left, and legal links at right.
-- [ ] Create the Railway static front-door service and set its private
-  `PLATFORM_UPSTREAM` only after the release lane is claimed.
-- [ ] Verify Academy and Watchlist public-host behavior from Railway.
-- [ ] Complete DNS/TLS, route, redirect, and health verification.
-- [ ] Retire Vercel production aliases after the complete Railway cutover is
-  accepted, then complete the owner-approved Vercel account audit before
-  disabling billing.
+- [x] Added the shared mobile navigation treatment across all three static
+  documents: the logo remains visible, while Features, Help, Login, and a
+  compact signup action collapse into an accessible hamburger menu.
+- [x] Published the Railway static front-door service and completed the root,
+  asset, TLS, proxied Help, Academy, News, legal, Watchlist, and Watchlist
+  stream cutover checks.
+- [x] Detached the retired Vercel root/www aliases, disabled Vercel Git
+  deployments, deleted only the unused failed preview project, and completed
+  the owner-directed Vercel plan downgrade separately from the Railway source.
+- [x] Completed the combined desktop and 390-pixel mobile QA inventory for the
+  homepage, Trading Journal, and Trade Analyzer release candidate.
+- [x] Rejected and rolled back the first sourced-hook proxy repair after its
+  Railway container restart gate failed; production returned to the exact
+  known-good static parent before any landing-page publication.
+- [x] Rebuilt the repair from that exact parent as isolated checkpoint
+  `90098edb`, using an independently launched runtime hook plus an Alpine
+  build-time execution proof. The candidate contains only Dockerfile, runtime
+  hook, and Nginx template changes.
+- [x] Completed the isolated Railway staging gate for `90098edb`: the container
+  stays running; health and proxied pages pass; invalid upstream/listen values
+  fail closed; and an unchanged static service continued proxying after a
+  separate Platform container replacement. The Watchlist stream returned its
+  expected unauthenticated response rather than 502/504.
+- [ ] Publish and verify staging-proven proxy checkpoint `90098edb` before the
+  three-page static expansion. The live gate includes proxied pages, favicon,
+  robots, Watchlist, and the SSE route after a Platform container replacement;
+  the static root must remain available throughout.
+- [ ] Publish the owner-approved three-page candidate parented to `90098edb`
+  only after that production proxy gate passes, then verify both canonical
+  landing routes and redirects live. The owner's combined final-QA instruction
+  explicitly authorizes this serialized production sequence when checks pass.

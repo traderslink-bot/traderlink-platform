@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trade Analyzer for Day Traders | TradersLink</title>
+  <meta name="description" content="Analyze completed trades and study entries, exits, MFE and MAE, profit giveback, risk management, and candle patterns with TradersLink Trade Analyzer." />
+  <link rel="canonical" href="https://traderslink.pro/trade-analyzer" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <meta name="theme-color" content="#07152f" />
+  <link rel="icon" href="/landing-assets/favicon.ico" sizes="any" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_CA" />
+  <meta property="og:site_name" content="TradersLink" />
+  <meta property="og:title" content="Trade Analyzer for Day Traders | TradersLink" />
+  <meta property="og:description" content="Analyze completed trades and study the entries, exits, candle context, profit capture, and risk evidence behind the result." />
+  <meta property="og:url" content="https://traderslink.pro/trade-analyzer" />
+  <meta property="og:image" content="https://traderslink.pro/landing-assets/trade%20analyzer/chart-with-trades.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1587" />
+  <meta property="og:image:height" content="632" />
+  <meta property="og:image:alt" content="TradersLink Trade Analyzer chart with buy and sell executions and the completed trades listed below it." />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Trade Analyzer for Day Traders | TradersLink" />
+  <meta name="twitter:description" content="Review the chart, executions, candle context, profit capture, and risk evidence behind a completed trade." />
+  <meta name="twitter:image" content="https://traderslink.pro/landing-assets/trade%20analyzer/chart-with-trades.png" />
+  <meta name="twitter:image:alt" content="TradersLink Trade Analyzer chart with buy and sell executions and the completed trades listed below it." />
+
+  <style>
+    :root { color-scheme:light; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; }
+    #traderslink-analyzer-v1 { background:#fff; color:#172033; font-family:Arial,Helvetica,sans-serif; line-height:1.55; overflow:hidden; }
+    #traderslink-analyzer-v1 * { box-sizing:border-box; }
+    #traderslink-analyzer-v1 a:focus-visible,
+    #traderslink-analyzer-v1 button:focus-visible { outline:3px solid #2e6fbb; outline-offset:3px; }
+    #traderslink-analyzer-v1 h1,
+    #traderslink-analyzer-v1 h2,
+    #traderslink-analyzer-v1 h3,
+    #traderslink-analyzer-v1 p,
+    #traderslink-analyzer-v1 figure { margin-top:0; }
+    #traderslink-analyzer-v1 img { height:auto; max-width:100%; }
+
+    #traderslink-analyzer-v1 .ta-header { align-items:center; background:#fff; border-bottom:1px solid #dbe4ef; box-shadow:0 9px 25px rgba(14,47,93,.08); display:flex; justify-content:space-between; min-height:76px; padding:0 4.5%; position:relative; z-index:20; }
+    #traderslink-analyzer-v1 .ta-logo { display:block; text-decoration:none; }
+    #traderslink-analyzer-v1 .ta-logo img { display:block; height:32px; width:auto; }
+    #traderslink-analyzer-v1 .ta-nav { align-items:center; display:flex; gap:24px; }
+    #traderslink-analyzer-v1 .ta-nav a { color:#385376; font-size:14px; font-weight:700; text-decoration:none; }
+    #traderslink-analyzer-v1 .ta-features { position:relative; }
+    #traderslink-analyzer-v1 .ta-features-toggle { align-items:center; background:transparent; border:0; color:#385376; cursor:pointer; display:flex; font:inherit; font-size:14px; font-weight:700; gap:6px; padding:8px 0; }
+    #traderslink-analyzer-v1 .ta-chevron { border:solid currentColor; border-width:0 1.5px 1.5px 0; display:inline-block; height:6px; transform:translateY(-2px) rotate(45deg); transition:transform .2s ease; width:6px; }
+    #traderslink-analyzer-v1 .ta-features.is-open .ta-chevron { transform:translateY(1px) rotate(225deg); }
+    #traderslink-analyzer-v1 .ta-features-links { background:#fff; border:1px solid #dbe4ef; border-radius:10px; box-shadow:0 14px 28px rgba(14,47,93,.14); display:none; left:-18px; min-width:210px; padding:8px; position:absolute; top:calc(100% + 11px); z-index:30; }
+    #traderslink-analyzer-v1 .ta-features.is-open .ta-features-links { display:grid; gap:2px; }
+    #traderslink-analyzer-v1 .ta-features-links a { border-radius:7px; padding:10px; }
+    #traderslink-analyzer-v1 .ta-features-links a:hover { background:#edf4fb; color:#062663; }
+    #traderslink-analyzer-v1 .ta-button { background:#062663; border:1px solid #062663; border-radius:8px; color:#fff; display:inline-block; font-size:16px; font-weight:800; padding:14px 22px; text-decoration:none; transition:box-shadow .2s ease,transform .2s ease; }
+    #traderslink-analyzer-v1 .ta-button:hover { box-shadow:0 9px 20px rgba(6,38,99,.2); transform:translateY(-1px); }
+    #traderslink-analyzer-v1 .ta-nav .ta-button { color:#fff; font-size:14px; margin-left:16px; padding:12px 17px; position:relative; }
+    #traderslink-analyzer-v1 .ta-nav .ta-button::before { background:#dbe4ef; content:""; height:24px; left:-16px; position:absolute; top:50%; transform:translateY(-50%); width:1px; }
+    #traderslink-analyzer-v1 .ta-menu-toggle { align-items:center; background:#fff; border:1px solid #c9d6e5; border-radius:8px; cursor:pointer; display:none; height:40px; justify-content:center; padding:0; width:40px; }
+    #traderslink-analyzer-v1 .ta-menu-toggle-lines { display:grid; gap:4px; width:18px; }
+    #traderslink-analyzer-v1 .ta-menu-toggle-lines span { background:#173761; border-radius:2px; display:block; height:2px; transition:opacity .2s ease,transform .2s ease; }
+    #traderslink-analyzer-v1 .ta-header.is-menu-open .ta-menu-toggle-lines span:nth-child(1) { transform:translateY(6px) rotate(45deg); }
+    #traderslink-analyzer-v1 .ta-header.is-menu-open .ta-menu-toggle-lines span:nth-child(2) { opacity:0; }
+    #traderslink-analyzer-v1 .ta-header.is-menu-open .ta-menu-toggle-lines span:nth-child(3) { transform:translateY(-6px) rotate(-45deg); }
+
+    #traderslink-analyzer-v1 .ta-eyebrow { color:#426594; font-size:12px; font-weight:800; letter-spacing:.14em; margin-bottom:14px; text-transform:uppercase; }
+    #traderslink-analyzer-v1 .ta-hero { background:#07152f; color:#fff; min-height:790px; overflow:hidden; position:relative; }
+    #traderslink-analyzer-v1 .ta-hero::before { background-image:linear-gradient(rgba(118,154,211,.075) 1px,transparent 1px),linear-gradient(90deg,rgba(118,154,211,.075) 1px,transparent 1px); background-size:52px 52px; content:""; inset:0; mask-image:linear-gradient(90deg,transparent 0,#000 47%); position:absolute; }
+    #traderslink-analyzer-v1 .ta-hero::after { border:1px solid rgba(117,154,220,.2); border-radius:50%; content:""; height:660px; position:absolute; right:-210px; top:-305px; transform:rotate(-17deg); width:930px; }
+    #traderslink-analyzer-v1 .ta-hero-inner { align-items:center; display:grid; gap:64px; grid-template-columns:minmax(370px,.78fr) minmax(650px,1.32fr); margin:0 auto; max-width:1780px; min-height:790px; padding:74px 4.5% 82px; position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-hero-copy { max-width:625px; }
+    #traderslink-analyzer-v1 .ta-hero .ta-eyebrow { color:#9cc5ff; }
+    #traderslink-analyzer-v1 .ta-hero h1 { font-size:clamp(50px,5.4vw,80px); letter-spacing:-.055em; line-height:1.01; margin-bottom:25px; }
+    #traderslink-analyzer-v1 .ta-hero-copy > p:not(.ta-eyebrow):not(.ta-cta-note) { color:#d9e5f7; font-size:19px; margin-bottom:17px; max-width:590px; }
+    #traderslink-analyzer-v1 .ta-hero .ta-button { background:#fff; border-color:#fff; color:#062663; margin-top:13px; }
+    #traderslink-analyzer-v1 .ta-cta-note { color:#aebfda; font-size:13px; margin:10px 0 0; }
+
+    #traderslink-analyzer-v1 .ta-hero-art { height:570px; margin:0; position:relative; }
+    #traderslink-analyzer-v1 .ta-hero-art::before { background:radial-gradient(circle,rgba(67,127,217,.34),rgba(7,21,47,0) 70%); content:""; inset:0 -4% -4% -5%; position:absolute; }
+    #traderslink-analyzer-v1 .ta-hero-chart { background:#eef3f8; border:1px solid rgba(198,220,249,.72); border-radius:17px; box-shadow:0 38px 88px rgba(0,0,0,.52); display:block; left:-1%; position:absolute; top:75px; transform:rotate(-.18deg); width:102%; z-index:1; }
+
+    #traderslink-analyzer-v1 .ta-chart-analysis { background:#eaf3fc; overflow:hidden; padding:118px 4.5% 130px; position:relative; }
+    #traderslink-analyzer-v1 .ta-chart-analysis::before { background-image:linear-gradient(rgba(51,94,150,.075) 1px,transparent 1px),linear-gradient(90deg,rgba(51,94,150,.075) 1px,transparent 1px); background-size:46px 46px; content:""; inset:0; mask-image:linear-gradient(90deg,#000,transparent 92%); position:absolute; }
+    #traderslink-analyzer-v1 .ta-chart-inner { align-items:center; display:grid; gap:86px; grid-template-columns:minmax(370px,.72fr) minmax(680px,1.28fr); margin:0 auto; max-width:1640px; position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-chart-copy { max-width:575px; }
+    #traderslink-analyzer-v1 .ta-chart-copy h2 { color:#172033; font-size:clamp(42px,4.8vw,67px); letter-spacing:-.052em; line-height:1.04; margin-bottom:23px; }
+    #traderslink-analyzer-v1 .ta-chart-lead { color:#43536a; font-size:18px; margin-bottom:32px; }
+    #traderslink-analyzer-v1 .ta-chart-facts { display:grid; gap:21px; list-style:none; margin:0; padding:0; }
+    #traderslink-analyzer-v1 .ta-chart-fact { border-top:1px solid #bed3e9; padding:18px 0 0 48px; position:relative; }
+    #traderslink-analyzer-v1 .ta-chart-fact::before { align-items:center; background:#062663; border-radius:50%; color:#fff; content:attr(data-number); display:flex; font-size:12px; font-weight:800; height:30px; justify-content:center; left:0; position:absolute; top:17px; width:30px; }
+    #traderslink-analyzer-v1 .ta-chart-fact h3 { color:#172033; font-size:18px; letter-spacing:-.02em; margin-bottom:5px; }
+    #traderslink-analyzer-v1 .ta-chart-fact p { color:#58677a; font-size:15px; margin-bottom:0; }
+
+    #traderslink-analyzer-v1 .ta-chart-art { height:620px; margin:0; position:relative; }
+    #traderslink-analyzer-v1 .ta-chart-art::before { background:#d3e6f8; border-radius:50%; content:""; height:430px; left:22%; opacity:.92; position:absolute; top:50px; width:430px; }
+    #traderslink-analyzer-v1 .ta-candle-detail { background:#fff; border:1px solid #aec7e2; border-radius:18px; box-shadow:0 32px 72px rgba(29,68,118,.24); left:6%; position:absolute; top:48px; transform:rotate(-.6deg); width:65%; z-index:2; }
+    #traderslink-analyzer-v1 .ta-candle-match { background:#fff; border:1px solid #aec7e2; border-radius:15px; box-shadow:0 26px 58px rgba(29,68,118,.21); position:absolute; right:6%; top:156px; transform:rotate(1.5deg); width:28%; z-index:3; }
+    #traderslink-analyzer-v1 .ta-ohlc-detail { background:#fff; border:1px solid #aec7e2; border-radius:15px; box-shadow:0 25px 56px rgba(29,68,118,.2); left:6%; position:absolute; top:430px; transform:rotate(-.4deg); width:56%; z-index:4; }
+
+    #traderslink-analyzer-v1 .ta-written { background:#fbf7ef; overflow:hidden; padding:120px 4.5% 138px; position:relative; }
+    #traderslink-analyzer-v1 .ta-written::before { background:radial-gradient(circle,rgba(222,195,147,.26),rgba(251,247,239,0) 68%); content:""; height:760px; position:absolute; right:-120px; top:210px; width:760px; }
+    #traderslink-analyzer-v1 .ta-written-inner { margin:0 auto; max-width:1580px; position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-written-head { margin:0 auto 54px; max-width:890px; text-align:center; }
+    #traderslink-analyzer-v1 .ta-written-head h2 { color:#172033; font-size:clamp(42px,4.9vw,68px); letter-spacing:-.052em; line-height:1.04; margin-bottom:22px; }
+    #traderslink-analyzer-v1 .ta-written-head > p:not(.ta-eyebrow) { color:#505b6b; font-size:18px; margin:0 auto; max-width:760px; }
+    #traderslink-analyzer-v1 .ta-written-proof { color:#6a5a40; display:block; font-size:13px; font-weight:800; letter-spacing:.02em; margin-top:18px; }
+    #traderslink-analyzer-v1 .ta-written-stage { height:1060px; margin:0 auto; max-width:1390px; position:relative; }
+    #traderslink-analyzer-v1 .ta-written-stage::before { background:linear-gradient(#d9c49f,#eadbc0 49%,#d9c49f); content:""; height:790px; left:50%; position:absolute; top:105px; transform:translateX(-50%); width:2px; }
+    #traderslink-analyzer-v1 .ta-analysis-sheet { position:absolute; }
+    #traderslink-analyzer-v1 .ta-analysis-sheet span { background:#062663; border-radius:999px; color:#fff; display:inline-block; font-size:12px; font-weight:800; margin:0 0 12px 18px; padding:8px 12px; }
+    #traderslink-analyzer-v1 .ta-analysis-sheet--five span { display:block; margin:0 0 12px auto; width:max-content; }
+    #traderslink-analyzer-v1 .ta-analysis-sheet img { background:#edf5fc; border:1px solid #d9c9ad; border-radius:15px; box-shadow:0 28px 64px rgba(80,60,30,.16); display:block; width:100%; }
+    #traderslink-analyzer-v1 .ta-analysis-sheet--one { left:9%; top:12px; transform:rotate(-.6deg); width:51%; }
+    #traderslink-analyzer-v1 .ta-analysis-sheet--five { right:1%; top:315px; transform:rotate(.65deg); width:53%; }
+    #traderslink-analyzer-v1 .ta-analysis-sheet--exit { left:9%; top:720px; transform:rotate(-.35deg); width:52%; }
+
+    #traderslink-analyzer-v1 .ta-entry-exit { background:#07152f; color:#fff; overflow:hidden; padding:124px 4.5% 142px; position:relative; }
+    #traderslink-analyzer-v1 .ta-entry-exit::before { background-image:linear-gradient(rgba(141,178,231,.075) 1px,transparent 1px),linear-gradient(90deg,rgba(141,178,231,.075) 1px,transparent 1px); background-size:48px 48px; content:""; inset:0; mask-image:linear-gradient(180deg,#000,transparent 76%); position:absolute; }
+    #traderslink-analyzer-v1 .ta-entry-exit::after { background:radial-gradient(circle,rgba(41,104,197,.3),rgba(7,21,47,0) 68%); content:""; height:900px; left:-310px; position:absolute; top:-240px; width:900px; }
+    #traderslink-analyzer-v1 .ta-entry-inner { margin:0 auto; max-width:1640px; position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-entry-head { align-items:end; display:grid; gap:70px; grid-template-columns:minmax(480px,1fr) minmax(430px,.72fr); margin-bottom:64px; }
+    #traderslink-analyzer-v1 .ta-entry-head .ta-eyebrow { color:#9cc5ff; }
+    #traderslink-analyzer-v1 .ta-entry-head h2 { font-size:clamp(44px,5vw,70px); letter-spacing:-.052em; line-height:1.03; margin-bottom:0; max-width:820px; }
+    #traderslink-analyzer-v1 .ta-entry-copy { color:#d7e3f5; font-size:18px; margin:0; max-width:620px; }
+    #traderslink-analyzer-v1 .ta-entry-copy + .ta-entry-copy { color:#aebfda; font-size:15px; margin-top:14px; }
+    #traderslink-analyzer-v1 .ta-entry-evidence { height:1070px; position:relative; }
+    #traderslink-analyzer-v1 .ta-entry-evidence::before { background:linear-gradient(90deg,rgba(90,191,133,.5),rgba(141,178,231,.16) 48%,rgba(231,111,104,.5)); content:""; height:1px; left:12%; position:absolute; right:12%; top:102px; }
+    #traderslink-analyzer-v1 .ta-entry-metric { margin:0; position:absolute; width:min(27%,386px); z-index:3; }
+    #traderslink-analyzer-v1 .ta-entry-metric img { background:#fff; border:1px solid rgba(193,214,239,.78); border-radius:14px; box-shadow:0 25px 54px rgba(0,0,0,.34); display:block; width:100%; }
+    #traderslink-analyzer-v1 .ta-entry-metric--avg-favorable { left:2%; top:4px; transform:rotate(-.7deg); }
+    #traderslink-analyzer-v1 .ta-entry-metric--median-favorable { left:25%; top:124px; transform:rotate(.55deg); }
+    #traderslink-analyzer-v1 .ta-entry-metric--avg-adverse { right:24%; top:104px; transform:rotate(-.45deg); }
+    #traderslink-analyzer-v1 .ta-entry-metric--median-adverse { right:1%; top:0; transform:rotate(.65deg); }
+    #traderslink-analyzer-v1 .ta-entry-table { background:#fff; border:1px solid rgba(180,205,237,.74); border-radius:18px; box-shadow:0 38px 90px rgba(0,0,0,.42); left:0; margin:0; overflow:hidden; position:absolute; top:330px; width:100%; z-index:2; }
+    #traderslink-analyzer-v1 .ta-entry-table img { display:block; width:100%; }
+    #traderslink-analyzer-v1 .ta-entry-table figcaption { background:#f2f6fb; border-top:1px solid #d8e3f0; color:#516078; font-size:13px; padding:14px 20px; }
+    #traderslink-analyzer-v1 .ta-entry-label { align-items:center; color:#b9cbe4; display:flex; font-size:12px; font-weight:800; gap:9px; letter-spacing:.1em; position:absolute; text-transform:uppercase; top:277px; }
+    #traderslink-analyzer-v1 .ta-entry-label::before { background:#5d99e6; border-radius:50%; content:""; height:8px; width:8px; }
+
+    #traderslink-analyzer-v1 .ta-mfe { background:#eaf6f0; color:#172033; overflow:hidden; padding:124px 4.5% 144px; position:relative; }
+    #traderslink-analyzer-v1 .ta-mfe::before { background:radial-gradient(circle,rgba(70,162,112,.17),rgba(234,246,240,0) 70%); content:""; height:880px; position:absolute; right:-260px; top:-230px; width:880px; }
+    #traderslink-analyzer-v1 .ta-mfe::after { border:1px solid rgba(56,132,93,.14); border-radius:50%; content:""; height:780px; left:-420px; position:absolute; top:330px; width:1120px; }
+    #traderslink-analyzer-v1 .ta-mfe-inner { margin:0 auto; max-width:1640px; position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-mfe-head { align-items:end; display:grid; gap:75px; grid-template-columns:minmax(470px,.9fr) minmax(600px,1.1fr); margin-bottom:78px; }
+    #traderslink-analyzer-v1 .ta-mfe-head h2 { font-size:clamp(44px,5vw,70px); letter-spacing:-.052em; line-height:1.03; margin-bottom:21px; max-width:760px; }
+    #traderslink-analyzer-v1 .ta-mfe-intro { color:#485b55; font-size:18px; margin-bottom:0; max-width:690px; }
+    #traderslink-analyzer-v1 .ta-mfe-definitions { display:grid; gap:28px; grid-template-columns:1fr 1fr; }
+    #traderslink-analyzer-v1 .ta-mfe-definition { border-left:3px solid #16804a; padding-left:19px; }
+    #traderslink-analyzer-v1 .ta-mfe-definition--mae { border-left-color:#c62a25; }
+    #traderslink-analyzer-v1 .ta-mfe-definition strong { color:#105e38; display:block; font-size:25px; letter-spacing:-.03em; margin-bottom:6px; }
+    #traderslink-analyzer-v1 .ta-mfe-definition--mae strong { color:#a92320; }
+    #traderslink-analyzer-v1 .ta-mfe-definition p { color:#55655f; font-size:15px; margin-bottom:0; }
+    #traderslink-analyzer-v1 .ta-mfe-evidence { height:1190px; position:relative; }
+    #traderslink-analyzer-v1 .ta-mfe-evidence::before { background:linear-gradient(100deg,rgba(31,134,79,.26),rgba(99,168,132,.08) 48%,rgba(196,55,49,.22)); border-radius:50%; content:""; height:240px; left:4%; position:absolute; right:4%; top:88px; transform:rotate(-2deg); }
+    #traderslink-analyzer-v1 .ta-mfe-card { margin:0; position:absolute; width:min(22%,386px); z-index:3; }
+    #traderslink-analyzer-v1 .ta-mfe-card img { background:#fff; border:1px solid #c6dbd1; border-radius:14px; box-shadow:0 23px 50px rgba(34,91,63,.17); display:block; width:100%; }
+    #traderslink-analyzer-v1 .ta-mfe-card--measured { left:0; top:90px; transform:rotate(-.7deg); }
+    #traderslink-analyzer-v1 .ta-mfe-card--avg-mfe { left:19.5%; top:2px; transform:rotate(.55deg); }
+    #traderslink-analyzer-v1 .ta-mfe-card--median-mfe { left:39%; top:132px; transform:rotate(-.5deg); }
+    #traderslink-analyzer-v1 .ta-mfe-card--avg-mfe-pct { left:58.5%; top:0; transform:rotate(.6deg); }
+    #traderslink-analyzer-v1 .ta-mfe-card--median-mfe-pct { right:0; top:92px; transform:rotate(-.55deg); }
+    #traderslink-analyzer-v1 .ta-mfe-card--avg-mae { left:8%; top:270px; transform:rotate(.6deg); }
+    #traderslink-analyzer-v1 .ta-mfe-card--median-mae { left:29%; top:360px; transform:rotate(-.55deg); }
+    #traderslink-analyzer-v1 .ta-mfe-card--avg-mae-pct { left:50%; top:282px; transform:rotate(.5deg); }
+    #traderslink-analyzer-v1 .ta-mfe-card--median-mae-pct { right:7%; top:372px; transform:rotate(-.65deg); }
+    #traderslink-analyzer-v1 .ta-mfe-table-label { color:#44665a; font-size:12px; font-weight:800; left:0; letter-spacing:.1em; position:absolute; text-transform:uppercase; top:535px; }
+    #traderslink-analyzer-v1 .ta-mfe-table { background:#fff; border:1px solid #bfd8cc; border-radius:18px; box-shadow:0 32px 76px rgba(34,91,63,.2); left:0; margin:0; overflow:hidden; position:absolute; top:575px; width:100%; z-index:2; }
+    #traderslink-analyzer-v1 .ta-mfe-table img { display:block; width:100%; }
+    #traderslink-analyzer-v1 .ta-mfe-table figcaption { background:#f4faf7; border-top:1px solid #d4e4dc; color:#53655e; font-size:13px; padding:14px 20px; }
+
+    #traderslink-analyzer-v1 .ta-gtr { background:#fff9f2; color:#172033; overflow:hidden; padding:126px 4.5% 146px; position:relative; }
+    #traderslink-analyzer-v1 .ta-gtr::before { background:radial-gradient(circle,rgba(39,148,88,.13),rgba(255,249,242,0) 70%); content:""; height:820px; left:-300px; position:absolute; top:-190px; width:820px; }
+    #traderslink-analyzer-v1 .ta-gtr::after { background:radial-gradient(circle,rgba(197,54,48,.11),rgba(255,249,242,0) 69%); content:""; height:900px; position:absolute; right:-360px; top:560px; width:900px; }
+    #traderslink-analyzer-v1 .ta-gtr-inner { margin:0 auto; max-width:1640px; position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-gtr-head { align-items:center; display:grid; gap:72px; grid-template-columns:minmax(410px,.76fr) minmax(670px,1.24fr); }
+    #traderslink-analyzer-v1 .ta-gtr-copy h2 { font-size:clamp(44px,5vw,70px); letter-spacing:-.052em; line-height:1.03; margin-bottom:24px; max-width:720px; }
+    #traderslink-analyzer-v1 .ta-gtr-copy > p:not(.ta-eyebrow) { color:#58605f; font-size:18px; margin-bottom:16px; max-width:620px; }
+    #traderslink-analyzer-v1 .ta-gtr-dashboard { margin:0; position:relative; }
+    #traderslink-analyzer-v1 .ta-gtr-dashboard::before { background:linear-gradient(90deg,rgba(44,156,94,.2),rgba(197,54,48,.18)); border-radius:50%; content:""; inset:13% -4% -10%; filter:blur(24px); position:absolute; }
+    #traderslink-analyzer-v1 .ta-gtr-dashboard img { background:#eef2f6; border:1px solid #decfc0; border-radius:18px; box-shadow:0 34px 74px rgba(84,62,42,.2); display:block; position:relative; transform:rotate(.35deg); width:100%; }
+    #traderslink-analyzer-v1 .ta-gtr-subhead { align-items:end; display:grid; gap:40px; grid-template-columns:minmax(300px,.62fr) minmax(520px,1.38fr); }
+    #traderslink-analyzer-v1 .ta-gtr-subhead h3 { font-size:clamp(33px,3.4vw,48px); letter-spacing:-.04em; line-height:1.08; margin-bottom:0; }
+    #traderslink-analyzer-v1 .ta-gtr-subhead p { color:#62615d; font-size:16px; margin-bottom:0; max-width:780px; }
+    #traderslink-analyzer-v1 .ta-gtr-profit { border-top:1px solid #e1d3c4; margin-top:104px; padding-top:58px; }
+    #traderslink-analyzer-v1 .ta-gtr-profit-grid { display:grid; gap:23px; grid-template-columns:repeat(3,1fr); margin-top:51px; padding:0 1.5%; }
+    #traderslink-analyzer-v1 .ta-gtr-card { margin:0; position:relative; }
+    #traderslink-analyzer-v1 .ta-gtr-card img { background:#fff; border:1px solid #dfd4c8; border-radius:14px; box-shadow:0 22px 48px rgba(91,66,42,.14); display:block; width:100%; }
+    #traderslink-analyzer-v1 .ta-gtr-profit-grid .ta-gtr-card:nth-child(2) { transform:translateY(-18px) rotate(.35deg); }
+    #traderslink-analyzer-v1 .ta-gtr-profit-grid .ta-gtr-card:nth-child(4) { transform:translateY(17px) rotate(-.35deg); }
+    #traderslink-analyzer-v1 .ta-gtr-profit-grid .ta-gtr-card:nth-child(6) { transform:translateY(10px) rotate(.3deg); }
+    #traderslink-analyzer-v1 .ta-gtr-outcomes { background:#f4ece7; border:1px solid #e4d2ca; border-radius:32px; margin:104px -1.6% 0; padding:68px 3% 78px; position:relative; }
+    #traderslink-analyzer-v1 .ta-gtr-outcomes::before { background:linear-gradient(90deg,rgba(40,150,89,.11),transparent 46%,rgba(194,55,49,.12)); border-radius:32px; content:""; inset:0; position:absolute; }
+    #traderslink-analyzer-v1 .ta-gtr-outcomes > * { position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-gtr-outcome-grid { align-items:stretch; display:grid; gap:20px; grid-template-columns:repeat(3,1fr); margin-top:52px; }
+    #traderslink-analyzer-v1 .ta-gtr-outcome-grid .ta-gtr-card,
+    #traderslink-analyzer-v1 .ta-gtr-outcome-grid .ta-gtr-card img { height:100%; transform:none; width:100%; }
+    #traderslink-analyzer-v1 .ta-gtr-outcome-grid .ta-gtr-card img { object-fit:contain; }
+    #traderslink-analyzer-v1 .ta-gtr-risk { margin-top:112px; }
+    #traderslink-analyzer-v1 .ta-gtr-risk-figure { background:#fff; border:1px solid #dfd4c8; border-radius:18px; box-shadow:0 30px 68px rgba(91,66,42,.17); margin:48px 0 0; overflow:hidden; }
+    #traderslink-analyzer-v1 .ta-gtr-risk-figure img { display:block; width:100%; }
+    #traderslink-analyzer-v1 .ta-gtr-risk-figure figcaption { background:#f9f4ee; border-top:1px solid #e5d9ce; color:#625e58; font-size:13px; padding:14px 20px; }
+
+    #traderslink-analyzer-v1 .ta-patterns { background:#0a1b36; color:#fff; overflow:hidden; padding:126px 4.5% 148px; position:relative; }
+    #traderslink-analyzer-v1 .ta-patterns::before { background-image:linear-gradient(rgba(124,166,224,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(124,166,224,.07) 1px,transparent 1px); background-size:50px 50px; content:""; inset:0; mask-image:linear-gradient(180deg,#000,transparent 58%); position:absolute; }
+    #traderslink-analyzer-v1 .ta-patterns::after { background:radial-gradient(circle,rgba(49,111,198,.3),rgba(10,27,54,0) 69%); content:""; height:980px; position:absolute; right:-320px; top:-250px; width:980px; }
+    #traderslink-analyzer-v1 .ta-patterns-inner { margin:0 auto; max-width:1640px; position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-patterns-head { align-items:center; display:grid; gap:74px; grid-template-columns:minmax(410px,.72fr) minmax(680px,1.28fr); }
+    #traderslink-analyzer-v1 .ta-patterns-copy .ta-eyebrow { color:#9cc5ff; }
+    #traderslink-analyzer-v1 .ta-patterns-copy h2 { font-size:clamp(44px,5vw,70px); letter-spacing:-.052em; line-height:1.03; margin-bottom:24px; max-width:700px; }
+    #traderslink-analyzer-v1 .ta-patterns-copy > p:not(.ta-eyebrow) { color:#d5e1f2; font-size:18px; margin-bottom:16px; max-width:620px; }
+    #traderslink-analyzer-v1 .ta-pattern-table { background:#f4f7fb; border:1px solid rgba(185,210,244,.74); border-radius:18px; box-shadow:0 36px 80px rgba(0,0,0,.42); margin:0; overflow:hidden; transform:rotate(.25deg); }
+    #traderslink-analyzer-v1 .ta-pattern-table img { display:block; width:100%; }
+    #traderslink-analyzer-v1 .ta-pattern-guide { background:rgba(255,255,255,.06); border:1px solid rgba(166,198,239,.19); border-radius:32px; margin-top:112px; padding:70px 4% 76px; }
+    #traderslink-analyzer-v1 .ta-pattern-guide-head { margin:0 auto 48px; max-width:920px; text-align:center; }
+    #traderslink-analyzer-v1 .ta-pattern-guide-head h3 { font-size:clamp(34px,3.8vw,52px); letter-spacing:-.04em; line-height:1.08; margin-bottom:17px; }
+    #traderslink-analyzer-v1 .ta-pattern-guide-head p { color:#bfd0e8; font-size:16px; margin:0 auto; max-width:760px; }
+    #traderslink-analyzer-v1 .ta-pattern-legend { margin:0 auto 54px; max-width:980px; }
+    #traderslink-analyzer-v1 .ta-pattern-legend img { background:#fff; border:1px solid #9fb9db; border-radius:16px; box-shadow:0 26px 60px rgba(0,0,0,.34); display:block; width:100%; }
+    #traderslink-analyzer-v1 .ta-pattern-groups { display:grid; gap:22px; grid-template-columns:repeat(2,1fr); }
+    #traderslink-analyzer-v1 .ta-pattern-group { border-top:1px solid rgba(166,198,239,.27); padding:24px 18px 4px 0; }
+    #traderslink-analyzer-v1 .ta-pattern-group h4 { color:#fff; font-size:20px; letter-spacing:-.02em; margin:0 0 9px; }
+    #traderslink-analyzer-v1 .ta-pattern-group p { color:#bfd0e8; font-size:15px; margin-bottom:0; }
+    #traderslink-analyzer-v1 .ta-pattern-list { display:flex; flex-wrap:wrap; gap:9px; list-style:none; margin:18px 0 0; padding:0; }
+    #traderslink-analyzer-v1 .ta-pattern-list li { background:rgba(156,197,255,.11); border:1px solid rgba(156,197,255,.25); border-radius:999px; color:#e5effc; font-size:13px; font-weight:800; line-height:1.25; padding:9px 12px; }
+    #traderslink-analyzer-v1 .ta-pattern-results { margin-top:112px; }
+    #traderslink-analyzer-v1 .ta-pattern-results-head { align-items:end; display:grid; gap:44px; grid-template-columns:minmax(350px,.72fr) minmax(520px,1.28fr); margin-bottom:44px; }
+    #traderslink-analyzer-v1 .ta-pattern-results-head h3 { font-size:clamp(34px,3.8vw,52px); letter-spacing:-.04em; line-height:1.08; margin-bottom:0; }
+    #traderslink-analyzer-v1 .ta-pattern-results-head p { color:#bfd0e8; font-size:16px; margin-bottom:0; max-width:760px; }
+    #traderslink-analyzer-v1 .ta-pattern-most { background:#fff; border:1px solid #9fb9db; border-radius:18px; box-shadow:0 32px 72px rgba(0,0,0,.38); margin:0; overflow:hidden; }
+    #traderslink-analyzer-v1 .ta-pattern-most picture,
+    #traderslink-analyzer-v1 .ta-results-dashboard picture { display:block; }
+    #traderslink-analyzer-v1 .ta-pattern-most img { display:block; width:100%; }
+
+    #traderslink-analyzer-v1 .ta-results { background:#edf4fb; overflow:hidden; padding:126px 4.5% 142px; position:relative; }
+    #traderslink-analyzer-v1 .ta-results::before { background-image:linear-gradient(rgba(45,94,155,.065) 1px,transparent 1px),linear-gradient(90deg,rgba(45,94,155,.065) 1px,transparent 1px); background-size:48px 48px; content:""; inset:0; mask-image:linear-gradient(90deg,#000,transparent 84%); position:absolute; }
+    #traderslink-analyzer-v1 .ta-results-inner { margin:0 auto; max-width:1640px; position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-results-head { align-items:end; display:grid; gap:72px; grid-template-columns:minmax(470px,.84fr) minmax(560px,1.16fr); margin-bottom:52px; }
+    #traderslink-analyzer-v1 .ta-results-head h2 { color:#172033; font-size:clamp(44px,5vw,70px); letter-spacing:-.052em; line-height:1.03; margin-bottom:0; max-width:810px; }
+    #traderslink-analyzer-v1 .ta-results-head > p { color:#4e5e73; font-size:18px; margin-bottom:0; max-width:690px; }
+    #traderslink-analyzer-v1 .ta-results-browser { background:#fff; border:1px solid #c5d6e8; border-radius:25px; box-shadow:0 34px 80px rgba(30,69,118,.19); overflow:hidden; }
+    #traderslink-analyzer-v1 .ta-results-tabs { background:#f8fbfe; border-bottom:1px solid #d8e3ef; display:flex; gap:7px; overflow-x:auto; padding:15px; }
+    #traderslink-analyzer-v1 .ta-results-tab { background:transparent; border:1px solid transparent; border-radius:8px; color:#436084; cursor:pointer; flex:0 0 auto; font:inherit; font-size:14px; font-weight:800; padding:11px 15px; }
+    #traderslink-analyzer-v1 .ta-results-tab[aria-selected="true"] { background:#062663; border-color:#062663; color:#fff; }
+    #traderslink-analyzer-v1 .ta-results-panel { padding:34px; }
+    #traderslink-analyzer-v1 .ta-results-panel[hidden] { display:none; }
+    #traderslink-analyzer-v1 .ta-results-panel-copy { align-items:end; display:flex; gap:32px; justify-content:space-between; margin:0 auto 25px; max-width:1340px; }
+    #traderslink-analyzer-v1 .ta-results-panel-copy h3 { color:#172033; font-size:27px; letter-spacing:-.03em; margin-bottom:0; }
+    #traderslink-analyzer-v1 .ta-results-panel-copy p { color:#59677a; font-size:15px; margin-bottom:0; max-width:720px; }
+    #traderslink-analyzer-v1 .ta-results-dashboard { background:#f2f5f9; border:1px solid #d3deea; border-radius:16px; margin:0; overflow:hidden; }
+    #traderslink-analyzer-v1 .ta-results-dashboard img { display:block; width:100%; }
+
+    #traderslink-analyzer-v1 .ta-faq { background:#fbf7ef; padding:122px 4.5% 134px; }
+    #traderslink-analyzer-v1 .ta-faq-inner { display:grid; gap:82px; grid-template-columns:minmax(360px,.65fr) minmax(620px,1.35fr); margin:0 auto; max-width:1500px; }
+    #traderslink-analyzer-v1 .ta-faq-copy { position:sticky; top:48px; }
+    #traderslink-analyzer-v1 .ta-faq-copy h2 { color:#172033; font-size:clamp(43px,4.8vw,66px); letter-spacing:-.052em; line-height:1.03; margin-bottom:22px; }
+    #traderslink-analyzer-v1 .ta-faq-copy > p:not(.ta-eyebrow) { color:#5f5a52; font-size:17px; max-width:520px; }
+    #traderslink-analyzer-v1 .ta-faq-list { border-top:1px solid #d8cdbb; }
+    #traderslink-analyzer-v1 .ta-faq-item { border-bottom:1px solid #d8cdbb; }
+    #traderslink-analyzer-v1 .ta-faq-item summary { color:#172033; cursor:pointer; font-size:19px; font-weight:800; list-style:none; padding:24px 48px 24px 0; position:relative; }
+    #traderslink-analyzer-v1 .ta-faq-item summary::-webkit-details-marker { display:none; }
+    #traderslink-analyzer-v1 .ta-faq-item summary::after { color:#2e6fbb; content:"+"; font-size:27px; font-weight:400; position:absolute; right:5px; top:17px; }
+    #traderslink-analyzer-v1 .ta-faq-item[open] summary::after { content:"−"; }
+    #traderslink-analyzer-v1 .ta-faq-item p { color:#596170; font-size:16px; margin-bottom:24px; max-width:790px; padding-right:40px; }
+
+    #traderslink-analyzer-v1 .ta-final-cta { background:#07152f; color:#fff; overflow:hidden; padding:112px 4.5% 104px; position:relative; text-align:center; }
+    #traderslink-analyzer-v1 .ta-final-cta::before { background:radial-gradient(circle,rgba(55,119,211,.35),rgba(7,21,47,0) 68%); content:""; height:760px; left:50%; position:absolute; top:-330px; transform:translateX(-50%); width:1050px; }
+    #traderslink-analyzer-v1 .ta-final-cta-inner { margin:0 auto; max-width:900px; position:relative; z-index:1; }
+    #traderslink-analyzer-v1 .ta-final-cta .ta-eyebrow { color:#9cc5ff; }
+    #traderslink-analyzer-v1 .ta-final-cta h2 { font-size:clamp(44px,5.2vw,72px); letter-spacing:-.052em; line-height:1.02; margin-bottom:24px; }
+    #traderslink-analyzer-v1 .ta-final-cta p:not(.ta-eyebrow):not(.ta-cta-note) { color:#d6e3f5; font-size:18px; margin:0 auto 25px; max-width:700px; }
+    #traderslink-analyzer-v1 .ta-final-cta .ta-button { background:#fff; border-color:#fff; color:#062663; }
+
+    #traderslink-analyzer-v1 .ta-legal { align-items:center; background:#07152f; color:#d9e5f7; display:flex; gap:28px; justify-content:space-between; padding:30px 4.5% 34px; }
+    #traderslink-analyzer-v1 .ta-legal p { font-size:14px; margin:0; }
+    #traderslink-analyzer-v1 .ta-legal-links { display:flex; flex-wrap:wrap; gap:22px; justify-content:flex-end; }
+    #traderslink-analyzer-v1 .ta-legal a { color:#fff; font-size:13px; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
+
+    #traderslink-analyzer-v1 .ta-consent { bottom:22px; left:20px; position:fixed; right:20px; z-index:50; }
+    #traderslink-analyzer-v1 .ta-consent[hidden] { display:none; }
+    #traderslink-analyzer-v1 .ta-consent-card { background:#fff; border:1px solid #cad8e8; border-radius:12px; box-shadow:0 18px 43px rgba(20,53,99,.2); margin:0 auto; max-width:720px; padding:22px; }
+    #traderslink-analyzer-v1 .ta-consent h2 { color:#172033; font-size:19px; letter-spacing:-.02em; margin-bottom:8px; }
+    #traderslink-analyzer-v1 .ta-consent p { color:#4b5563; font-size:14px; margin-bottom:0; }
+    #traderslink-analyzer-v1 .ta-consent-links { margin-top:9px; }
+    #traderslink-analyzer-v1 .ta-consent-links a { color:#062663; font-size:13px; font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+    #traderslink-analyzer-v1 .ta-consent-actions { display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-top:17px; }
+    #traderslink-analyzer-v1 .ta-consent-button { border:1px solid #062663; border-radius:7px; cursor:pointer; font:inherit; font-size:14px; font-weight:800; min-height:42px; padding:10px 16px; }
+    #traderslink-analyzer-v1 .ta-consent-essential { background:#fff; color:#062663; }
+    #traderslink-analyzer-v1 .ta-consent-accept { background:#062663; color:#fff; }
+
+    #traderslink-analyzer-v1 .ta-reveal { opacity:0; transform:translateY(38px); transition:opacity .72s ease,transform .72s cubic-bezier(.22,.7,.26,1); }
+    #traderslink-analyzer-v1 .ta-reveal.is-revealed { opacity:1; transform:none; }
+
+    @media (max-width:1280px) {
+      #traderslink-analyzer-v1 .ta-hero-inner { gap:38px; grid-template-columns:minmax(340px,.72fr) minmax(570px,1.28fr); }
+      #traderslink-analyzer-v1 .ta-chart-inner { gap:54px; grid-template-columns:minmax(350px,.74fr) minmax(560px,1.26fr); }
+      #traderslink-analyzer-v1 .ta-chart-art { height:620px; }
+      #traderslink-analyzer-v1 .ta-written-stage { height:990px; }
+      #traderslink-analyzer-v1 .ta-analysis-sheet--one { width:54%; }
+      #traderslink-analyzer-v1 .ta-analysis-sheet--five { top:300px; width:56%; }
+      #traderslink-analyzer-v1 .ta-analysis-sheet--exit { top:670px; width:55%; }
+      #traderslink-analyzer-v1 .ta-entry-evidence { height:970px; }
+      #traderslink-analyzer-v1 .ta-entry-table { top:300px; }
+      #traderslink-analyzer-v1 .ta-entry-label { top:250px; }
+      #traderslink-analyzer-v1 .ta-mfe-evidence { height:1110px; }
+    }
+
+    @media (max-width:1030px) {
+      #traderslink-analyzer-v1 .ta-hero-inner,
+      #traderslink-analyzer-v1 .ta-chart-inner { grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-hero-copy { max-width:720px; }
+      #traderslink-analyzer-v1 .ta-hero-art { height:620px; }
+      #traderslink-analyzer-v1 .ta-chart-copy { max-width:760px; }
+      #traderslink-analyzer-v1 .ta-chart-art { height:620px; margin:0 auto; max-width:850px; width:100%; }
+      #traderslink-analyzer-v1 .ta-written-stage { height:1020px; max-width:900px; }
+      #traderslink-analyzer-v1 .ta-entry-head { align-items:start; gap:28px; grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-entry-evidence { height:910px; }
+      #traderslink-analyzer-v1 .ta-entry-metric { width:32%; }
+      #traderslink-analyzer-v1 .ta-entry-metric--median-favorable { left:22%; }
+      #traderslink-analyzer-v1 .ta-entry-metric--avg-adverse { right:22%; }
+      #traderslink-analyzer-v1 .ta-entry-table { top:270px; }
+      #traderslink-analyzer-v1 .ta-entry-label { top:220px; }
+      #traderslink-analyzer-v1 .ta-mfe-head { align-items:start; gap:38px; grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-mfe-evidence { height:1050px; }
+      #traderslink-analyzer-v1 .ta-mfe-card { width:25%; }
+      #traderslink-analyzer-v1 .ta-gtr-head { align-items:start; gap:44px; grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-gtr-dashboard { margin:0 auto; max-width:900px; width:100%; }
+      #traderslink-analyzer-v1 .ta-gtr-outcome-grid { grid-template-columns:repeat(2,1fr); }
+      #traderslink-analyzer-v1 .ta-patterns-head { align-items:start; gap:48px; grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-pattern-table { margin:0 auto; max-width:920px; width:100%; }
+      #traderslink-analyzer-v1 .ta-results-head { align-items:start; gap:30px; grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-faq-inner { gap:52px; grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-faq-copy { position:static; }
+    }
+
+    @media (max-width:720px) {
+      html { scroll-behavior:auto; }
+      #traderslink-analyzer-v1 .ta-header { min-height:68px; padding:0 18px; z-index:30; }
+      #traderslink-analyzer-v1 .ta-logo img { height:25px; }
+      #traderslink-analyzer-v1 .ta-menu-toggle { display:flex; }
+      #traderslink-analyzer-v1 .ta-nav { align-items:stretch; background:#fff; border:1px solid #d6e1ed; border-radius:12px; box-shadow:0 18px 38px rgba(14,47,93,.18); display:none; flex-direction:column; gap:2px; left:12px; padding:10px; position:absolute; right:12px; top:calc(100% + 8px); }
+      #traderslink-analyzer-v1 .ta-header.is-menu-open .ta-nav { display:flex; }
+      #traderslink-analyzer-v1 .ta-nav > a:not(.ta-button) { border-radius:8px; padding:10px 12px; }
+      #traderslink-analyzer-v1 .ta-features { display:block; }
+      #traderslink-analyzer-v1 .ta-features-toggle { font-size:13px; justify-content:space-between; padding:10px 12px; width:100%; }
+      #traderslink-analyzer-v1 .ta-features-links { box-shadow:none; left:auto; margin:2px 0 6px; min-width:0; position:static; top:auto; }
+      #traderslink-analyzer-v1 .ta-nav .ta-button { align-self:flex-start; font-size:13px; margin:6px 0 0 12px; padding:8px 12px; }
+      #traderslink-analyzer-v1 .ta-nav .ta-button::before { display:none; }
+      #traderslink-analyzer-v1 .ta-hero { min-height:0; }
+      #traderslink-analyzer-v1 .ta-hero-inner { min-height:0; padding:56px 20px 58px; }
+      #traderslink-analyzer-v1 .ta-hero h1 { font-size:46px; }
+      #traderslink-analyzer-v1 .ta-hero-copy > p:not(.ta-eyebrow):not(.ta-cta-note) { font-size:17px; }
+      #traderslink-analyzer-v1 .ta-hero-art { height:830px; margin-top:12px; }
+      #traderslink-analyzer-v1 .ta-hero-chart { left:3%; top:20px; width:94%; }
+      #traderslink-analyzer-v1 .ta-chart-analysis { padding:91px 20px 98px; }
+      #traderslink-analyzer-v1 .ta-chart-copy h2 { font-size:43px; }
+      #traderslink-analyzer-v1 .ta-chart-art { height:455px; }
+      #traderslink-analyzer-v1 .ta-candle-detail { left:-2%; top:40px; width:82%; }
+      #traderslink-analyzer-v1 .ta-candle-match { right:1%; top:190px; width:34%; }
+      #traderslink-analyzer-v1 .ta-ohlc-detail { left:-2%; top:320px; width:74%; }
+      #traderslink-analyzer-v1 .ta-written { padding:90px 20px 100px; }
+      #traderslink-analyzer-v1 .ta-written-head { margin-bottom:55px; text-align:left; }
+      #traderslink-analyzer-v1 .ta-written-head h2 { font-size:43px; }
+      #traderslink-analyzer-v1 .ta-written-head > p:not(.ta-eyebrow) { font-size:17px; }
+      #traderslink-analyzer-v1 .ta-written-stage { display:grid; gap:34px; height:auto; }
+      #traderslink-analyzer-v1 .ta-written-stage::before { display:none; }
+      #traderslink-analyzer-v1 .ta-analysis-sheet,
+      #traderslink-analyzer-v1 .ta-analysis-sheet--one,
+      #traderslink-analyzer-v1 .ta-analysis-sheet--five,
+      #traderslink-analyzer-v1 .ta-analysis-sheet--exit { justify-self:center; left:auto; margin:0 auto; position:relative; right:auto; top:auto; transform:none; width:calc(100% - 12px); }
+      #traderslink-analyzer-v1 .ta-analysis-sheet img { margin-left:auto; margin-right:auto; }
+      #traderslink-analyzer-v1 .ta-analysis-sheet span { margin-left:8px; }
+      #traderslink-analyzer-v1 .ta-analysis-sheet--five span { margin-left:auto; margin-right:0; }
+      #traderslink-analyzer-v1 .ta-entry-exit { padding:91px 20px 104px; }
+      #traderslink-analyzer-v1 .ta-entry-head { margin-bottom:50px; }
+      #traderslink-analyzer-v1 .ta-entry-head h2 { font-size:43px; }
+      #traderslink-analyzer-v1 .ta-entry-copy { font-size:17px; }
+      #traderslink-analyzer-v1 .ta-entry-evidence { display:grid; gap:18px; height:auto; }
+      #traderslink-analyzer-v1 .ta-entry-evidence::before { display:none; }
+      #traderslink-analyzer-v1 .ta-entry-metric,
+      #traderslink-analyzer-v1 .ta-entry-metric--avg-favorable,
+      #traderslink-analyzer-v1 .ta-entry-metric--median-favorable,
+      #traderslink-analyzer-v1 .ta-entry-metric--avg-adverse,
+      #traderslink-analyzer-v1 .ta-entry-metric--median-adverse { left:auto; position:relative; right:auto; top:auto; transform:none; width:92%; }
+      #traderslink-analyzer-v1 .ta-entry-metric,
+      #traderslink-analyzer-v1 .ta-entry-metric:nth-of-type(even) { justify-self:center; }
+      #traderslink-analyzer-v1 .ta-entry-label { margin:20px 0 0; position:relative; top:auto; }
+      #traderslink-analyzer-v1 .ta-entry-table { margin-top:0; overflow-x:auto; position:relative; top:auto; width:100%; }
+      #traderslink-analyzer-v1 .ta-entry-table img { max-width:none; width:1040px; }
+      #traderslink-analyzer-v1 .ta-entry-table figcaption { max-width:1040px; }
+      #traderslink-analyzer-v1 .ta-mfe { padding:91px 20px 104px; }
+      #traderslink-analyzer-v1 .ta-mfe-head { margin-bottom:54px; }
+      #traderslink-analyzer-v1 .ta-mfe-head h2 { font-size:43px; }
+      #traderslink-analyzer-v1 .ta-mfe-intro { font-size:17px; }
+      #traderslink-analyzer-v1 .ta-mfe-definitions { gap:24px; grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-mfe-evidence { display:grid; gap:18px; height:auto; }
+      #traderslink-analyzer-v1 .ta-mfe-evidence::before { display:none; }
+      #traderslink-analyzer-v1 .ta-mfe-card,
+      #traderslink-analyzer-v1 .ta-mfe-card--measured,
+      #traderslink-analyzer-v1 .ta-mfe-card--avg-mfe,
+      #traderslink-analyzer-v1 .ta-mfe-card--median-mfe,
+      #traderslink-analyzer-v1 .ta-mfe-card--avg-mfe-pct,
+      #traderslink-analyzer-v1 .ta-mfe-card--median-mfe-pct,
+      #traderslink-analyzer-v1 .ta-mfe-card--avg-mae,
+      #traderslink-analyzer-v1 .ta-mfe-card--median-mae,
+      #traderslink-analyzer-v1 .ta-mfe-card--avg-mae-pct,
+      #traderslink-analyzer-v1 .ta-mfe-card--median-mae-pct { left:auto; position:relative; right:auto; top:auto; transform:none; width:92%; }
+      #traderslink-analyzer-v1 .ta-mfe-card,
+      #traderslink-analyzer-v1 .ta-mfe-card:nth-of-type(even) { justify-self:center; }
+      #traderslink-analyzer-v1 .ta-mfe-table-label { margin:22px 0 0; position:relative; top:auto; }
+      #traderslink-analyzer-v1 .ta-mfe-table { overflow-x:auto; position:relative; top:auto; width:100%; }
+      #traderslink-analyzer-v1 .ta-mfe-table img { max-width:none; width:1040px; }
+      #traderslink-analyzer-v1 .ta-mfe-table figcaption { max-width:1040px; }
+      #traderslink-analyzer-v1 .ta-gtr { padding:91px 20px 105px; }
+      #traderslink-analyzer-v1 .ta-gtr-copy h2 { font-size:43px; }
+      #traderslink-analyzer-v1 .ta-gtr-copy > p:not(.ta-eyebrow) { font-size:17px; }
+      #traderslink-analyzer-v1 .ta-gtr-subhead { align-items:start; gap:15px; grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-gtr-profit { margin-top:74px; padding-top:44px; }
+      #traderslink-analyzer-v1 .ta-gtr-profit-grid,
+      #traderslink-analyzer-v1 .ta-gtr-outcome-grid { gap:18px; grid-template-columns:1fr; margin-top:36px; padding:0; }
+      #traderslink-analyzer-v1 .ta-gtr-profit-grid .ta-gtr-card:nth-child(n),
+      #traderslink-analyzer-v1 .ta-gtr-outcome-grid .ta-gtr-card:nth-child(n) { transform:none; }
+      #traderslink-analyzer-v1 .ta-gtr-profit-grid .ta-gtr-card:nth-child(n),
+      #traderslink-analyzer-v1 .ta-gtr-outcome-grid .ta-gtr-card:nth-child(n) { justify-self:center; }
+      #traderslink-analyzer-v1 .ta-gtr-card { width:94%; }
+      #traderslink-analyzer-v1 .ta-gtr-outcomes { border-radius:22px; margin:76px -8px 0; padding:48px 16px 54px; }
+      #traderslink-analyzer-v1 .ta-gtr-risk { margin-top:76px; }
+      #traderslink-analyzer-v1 .ta-gtr-risk-figure { margin-top:34px; overflow-x:auto; }
+      #traderslink-analyzer-v1 .ta-gtr-risk-figure img { max-width:none; width:1060px; }
+      #traderslink-analyzer-v1 .ta-gtr-risk-figure figcaption { max-width:1060px; }
+      #traderslink-analyzer-v1 .ta-patterns { padding:91px 20px 106px; }
+      #traderslink-analyzer-v1 .ta-patterns-copy h2 { font-size:43px; }
+      #traderslink-analyzer-v1 .ta-patterns-copy > p:not(.ta-eyebrow) { font-size:17px; }
+      #traderslink-analyzer-v1 .ta-pattern-table { overflow-x:auto; transform:none; }
+      #traderslink-analyzer-v1 .ta-pattern-table img { max-width:none; width:900px; }
+      #traderslink-analyzer-v1 .ta-pattern-guide { border-radius:22px; margin-top:76px; padding:49px 16px 54px; }
+      #traderslink-analyzer-v1 .ta-pattern-guide-head { margin-bottom:28px; text-align:left; }
+      #traderslink-analyzer-v1 .ta-pattern-legend { display:none; margin:0; }
+      #traderslink-analyzer-v1 .ta-pattern-groups { grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-pattern-results { margin-top:76px; }
+      #traderslink-analyzer-v1 .ta-pattern-results-head { align-items:start; gap:15px; grid-template-columns:1fr; }
+      #traderslink-analyzer-v1 .ta-pattern-most { overflow:hidden; }
+      #traderslink-analyzer-v1 .ta-pattern-most img { max-width:100%; width:100%; }
+      #traderslink-analyzer-v1 .ta-results { padding:91px 20px 104px; }
+      #traderslink-analyzer-v1 .ta-results-head h2 { font-size:43px; }
+      #traderslink-analyzer-v1 .ta-results-head > p { font-size:17px; }
+      #traderslink-analyzer-v1 .ta-results-browser { border-radius:18px; }
+      #traderslink-analyzer-v1 .ta-results-tabs { padding:11px; }
+      #traderslink-analyzer-v1 .ta-results-panel { padding:22px 12px 12px; }
+      #traderslink-analyzer-v1 .ta-results-panel-copy { align-items:start; flex-direction:column; gap:9px; padding:0 7px; }
+      #traderslink-analyzer-v1 .ta-results-dashboard { overflow:hidden; }
+      #traderslink-analyzer-v1 .ta-results-dashboard img { max-width:100%; width:100%; }
+      #traderslink-analyzer-v1 .ta-faq { padding:91px 20px 101px; }
+      #traderslink-analyzer-v1 .ta-faq-copy h2 { font-size:43px; }
+      #traderslink-analyzer-v1 .ta-faq-item summary { font-size:18px; }
+      #traderslink-analyzer-v1 .ta-faq-item p { padding-right:0; }
+      #traderslink-analyzer-v1 .ta-final-cta { padding:90px 20px 28px; }
+      #traderslink-analyzer-v1 .ta-final-cta h2 { font-size:43px; }
+      #traderslink-analyzer-v1 .ta-legal { align-items:flex-start; flex-direction:column; gap:17px; padding:18px 20px 32px; }
+      #traderslink-analyzer-v1 .ta-legal-links { justify-content:flex-start; }
+      #traderslink-analyzer-v1 .ta-consent { bottom:12px; left:12px; right:12px; }
+      #traderslink-analyzer-v1 .ta-consent-card { padding:18px; }
+      #traderslink-analyzer-v1 .ta-consent-actions { justify-content:stretch; }
+      #traderslink-analyzer-v1 .ta-consent-button { flex:1 1 150px; }
+    }
+
+    @media (max-width:430px) {
+      #traderslink-analyzer-v1 .ta-nav { gap:10px; }
+      #traderslink-analyzer-v1 .ta-hero h1 { font-size:41px; }
+      #traderslink-analyzer-v1 .ta-hero-art { height:630px; }
+      #traderslink-analyzer-v1 .ta-chart-art { height:435px; }
+      #traderslink-analyzer-v1 .ta-ohlc-detail { top:305px; }
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      html { scroll-behavior:auto; }
+      #traderslink-analyzer-v1 .ta-button,
+      #traderslink-analyzer-v1 .ta-chevron,
+      #traderslink-analyzer-v1 .ta-menu-toggle-lines span,
+      #traderslink-analyzer-v1 .ta-reveal { transition:none; }
+      #traderslink-analyzer-v1 .ta-reveal { opacity:1; transform:none; }
+    }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@graph":[
+      {
+        "@type":"WebPage",
+        "@id":"https://traderslink.pro/trade-analyzer#webpage",
+        "url":"https://traderslink.pro/trade-analyzer",
+        "name":"Trade Analyzer for Day Traders | TradersLink",
+        "description":"Analyze completed trades and study entries, exits, MFE and MAE, profit giveback, risk management, and candle patterns with TradersLink Trade Analyzer.",
+        "isPartOf":{"@id":"https://traderslink.pro/#website"},
+        "about":{"@id":"https://traderslink.pro/trade-analyzer#software"}
+      },
+      {
+        "@type":"SoftwareApplication",
+        "@id":"https://traderslink.pro/trade-analyzer#software",
+        "name":"TradersLink Trade Analyzer",
+        "applicationCategory":"FinanceApplication",
+        "operatingSystem":"Web",
+        "url":"https://traderslink.pro/trade-analyzer",
+        "description":"A completed-trade review tool for chart analysis, execution analysis, profit capture, risk evidence, and candle-pattern observations.",
+        "offers":{"@type":"Offer","price":"0","priceCurrency":"USD","url":"https://traderslink.pro/beta"}
+      },
+      {
+        "@type":"BreadcrumbList",
+        "itemListElement":[
+          {"@type":"ListItem","position":1,"name":"TradersLink","item":"https://traderslink.pro/"},
+          {"@type":"ListItem","position":2,"name":"Trade Analyzer","item":"https://traderslink.pro/trade-analyzer"}
+        ]
+      },
+      {
+        "@type":"FAQPage",
+        "mainEntity":[
+          {"@type":"Question","name":"What is a trade analyzer?","acceptedAnswer":{"@type":"Answer","text":"A trade analyzer connects completed trades to the chart and market data around each execution. TradersLink turns entries, exits, candle observations, MFE and MAE, Green-to-Red measurements, and written analysis into results you can review across trades."}},
+          {"@type":"Question","name":"How does TradersLink analyze entries and exits?","acceptedAnswer":{"@type":"Answer","text":"TradersLink analyzes each saved buy and sell at the time it occurred, including distance from Session VWAP and EMA 9, relative volume, candle position, and favorable or adverse movement when supported market data is available."}},
+          {"@type":"Question","name":"What do MFE and MAE mean in trading?","acceptedAnswer":{"@type":"Answer","text":"Maximum Favorable Excursion shows how far price moved in your favor after entry. Maximum Adverse Excursion shows how far it moved against you. TradersLink reports both per share and as a percentage of entry price."}},
+          {"@type":"Question","name":"What does Green-to-Red analysis show?","acceptedAnswer":{"@type":"Answer","text":"Green-to-Red analysis reviews completed trades that moved into profit before falling through breakeven. It shows the strongest sustained opportunity, captured profit, giveback, time before turning red, recovery, and the final outcome."}},
+          {"@type":"Question","name":"Which candle patterns can TradersLink detect?","acceptedAnswer":{"@type":"Answer","text":"The current detector supports Compression; Bullish and Bearish compression breaks; Bullish and Bearish engulfing shifts; Bullish and Bearish expansion; Confirmed Hammer; Confirmed Shooting Star; Lower-wick and Upper-wick rejection; and Possible high-volume exhaustion."}},
+          {"@type":"Question","name":"Does Trade Analyzer tell me what trade to take?","acceptedAnswer":{"@type":"Answer","text":"Trade Analyzer reviews completed trades. It organizes saved executions and historical market observations so you can study your own results; it is not a live scanner or alert."}},
+          {"@type":"Question","name":"Can I open Trade Analyzer from the Daily Trade Tracker?","acceptedAnswer":{"@type":"Answer","text":"Yes. Open Trade Analyzer from a completed trading day to keep the chart and analysis connected to the ticker, trades, and session, or open the Analyzer separately for focused review."}}
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+<div id="traderslink-analyzer-v1">
+  <header class="ta-header">
+    <a aria-label="TradersLink home" class="ta-logo" href="/"><img alt="TradersLink" decoding="async" height="361" src="/landing-assets/logo-horizontal-light.png" width="1760" /></a>
+    <button aria-controls="ta-primary-nav" aria-expanded="false" aria-label="Open navigation menu" class="ta-menu-toggle" type="button"><span aria-hidden="true" class="ta-menu-toggle-lines"><span></span><span></span><span></span></span></button>
+    <nav aria-label="Primary" class="ta-nav" id="ta-primary-nav">
+      <div class="ta-features">
+        <button aria-controls="analyzer-feature-links" aria-expanded="false" class="ta-features-toggle" type="button"><span>Features</span><span aria-hidden="true" class="ta-chevron"></span></button>
+        <div class="ta-features-links" id="analyzer-feature-links">
+          <a href="/trading-journal">Trading Journal</a>
+          <a href="#chart-analysis">Trade Analysis</a>
+          <a href="#written-analysis">Written Analysis</a>
+          <a href="#entry-exit">Entry &amp; Exit</a>
+          <a href="#mfe-mae">MFE &amp; MAE</a>
+          <a href="#green-to-red">Green-to-Red</a>
+          <a href="#candle-patterns">Candle Patterns</a>
+          <a href="#results-across-trades">Results across trades</a>
+          <a href="/">Dashboard Overview</a>
+        </div>
+      </div>
+      <a href="/help">Help</a>
+      <a href="https://app.traderslink.pro/api/auth/discord/login?returnTo=%2Fworkspace">Log in</a>
+      <a class="ta-button" href="https://traderslink.pro/beta">Sign up free</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="ta-hero" id="trade-analyzer">
+      <div class="ta-hero-inner">
+        <div class="ta-hero-copy">
+          <p class="ta-eyebrow">Trade Analyzer</p>
+          <h1>A Trade Analyzer that shows what happened between entry and exit.</h1>
+          <p>Analyze the completed trade on the chart, then study the decisions and price movement around each fill.</p>
+          <p>TradersLink keeps entries, exits, candle context, profit capture, and risk evidence connected to the trade that produced them.</p>
+          <a class="ta-button" href="https://traderslink.pro/beta">Sign up free</a>
+          <p class="ta-cta-note">No credit card required.</p>
+        </div>
+
+        <figure aria-label="A completed TradersLink trade shown on the Analyzer chart with its individual trades listed below" class="ta-hero-art">
+          <picture>
+            <source height="881" media="(max-width: 720px)" srcset="/landing-assets/mobile-2/trade-analyzer-hero-celu-full-ticker-mobile.png" width="478" />
+            <img alt="TradersLink Analyzer chart showing numbered buy and sell executions, candle-pattern labels, Session VWAP, EMA 9, and the completed trades below" class="ta-hero-chart" decoding="async" fetchpriority="high" height="632" src="/landing-assets/trade analyzer/chart-with-trades.png" width="1587" />
+          </picture>
+        </figure>
+      </div>
+    </section>
+
+    <section class="ta-chart-analysis" id="chart-analysis">
+      <div class="ta-chart-inner">
+        <div class="ta-chart-copy">
+          <p class="ta-eyebrow">Trade analysis</p>
+          <h2>Trade Analyzer collects the data.</h2>
+          <p class="ta-chart-lead">The Trade Analyzer connects each execution to the market data around it—entries, exits, candle patterns, VWAP, and EMA 9—then uses that data across trades to surface patterns in how you trade.</p>
+          <ol class="ta-chart-facts">
+            <li class="ta-chart-fact" data-number="1">
+              <h3>See every entry and exit</h3>
+              <p>Every BUY and SELL is plotted directly on the chart and numbered in execution order, making it easy to follow entries, adds, partial exits, and the final exit.</p>
+            </li>
+            <li class="ta-chart-fact" data-number="2">
+              <h3>See detected candle patterns</h3>
+              <p>When the analyzer detects a supported candle pattern near an entry or exit, its name appears on the chart. Select the label to open details about the pattern and the candle where it occurred.</p>
+            </li>
+            <li class="ta-chart-fact" data-number="3">
+              <h3>Measure entries and exits</h3>
+              <p>The analyzer measures where executions occurred in relation to Session VWAP and EMA 9, along with other market observations surrounding the trade. Those measurements become data you can compare over time.</p>
+            </li>
+            <li class="ta-chart-fact" data-number="4">
+              <h3>Build your trading history</h3>
+              <p>One chart explains one trade. The analyzer turns what happened across many trades into usable data that can surface repeated behaviors, entry and exit tendencies, and patterns worth studying.</p>
+            </li>
+          </ol>
+        </div>
+
+        <figure aria-label="A Strong Bullish Candle on the chart, its matching detail panel, and another candle's OHLC values" class="ta-chart-art">
+          <img alt="Selected one-minute Strong Bullish Candle with OHLC, volume, turnover, and pattern details" class="ta-candle-detail" decoding="async" height="196" loading="lazy" src="/landing-assets/trade analyzer/strong-bull-candle.png" width="433" />
+          <img alt="The matching Strong Bullish Candle label beside the third buy execution" class="ta-candle-match" decoding="async" height="143" loading="lazy" src="/landing-assets/trade analyzer/strong-bull.png" width="147" />
+          <img alt="Selected one-minute candle showing open, high, low, close, volume, and candle turnover values" class="ta-ohlc-detail" decoding="async" height="127" loading="lazy" src="/landing-assets/trade analyzer/ohlc-value.png" width="370" />
+        </figure>
+      </div>
+    </section>
+
+    <section class="ta-written" id="written-analysis">
+      <div class="ta-written-inner">
+        <div class="ta-written-head">
+          <p class="ta-eyebrow">Written trade analysis</p>
+          <h2>See the trade clearly, one timeframe at a time.</h2>
+          <p>A fast trade can tell a different story when you zoom out. TradersLink turns the saved chart and executions into readable one-minute and five-minute analysis, then brings every fill together to explain the completed entry and exit.</p>
+          <span class="ta-written-proof">Built from saved executions and completed-candle data.</span>
+        </div>
+
+        <div aria-label="One-minute, five-minute, and combined-exit written trade analysis" class="ta-written-stage">
+          <figure class="ta-analysis-sheet ta-analysis-sheet--one">
+            <span>1-minute analysis</span>
+            <img alt="One-minute written analysis of combined entries, VWAP and EMA 9 distance, execution precision, volume, and turnover" decoding="async" height="225" loading="lazy" src="/landing-assets/trade analyzer/1m-trade-analysis-cropped.png" width="646" />
+          </figure>
+          <figure class="ta-analysis-sheet ta-analysis-sheet--five">
+            <span>5-minute analysis</span>
+            <img alt="Five-minute written analysis of combined entries, VWAP and EMA 9 distance, relative volume, favorable edge, and turnover" decoding="async" height="330" loading="lazy" src="/landing-assets/trade analyzer/5m-trade-analysis-cropped.png" width="637" />
+          </figure>
+          <figure class="ta-analysis-sheet ta-analysis-sheet--exit">
+            <span>Combined exit analysis</span>
+            <img alt="Combined exit analysis covering weighted exit price, VWAP and EMA 9 distance, relative volume, giveback, and favorable edge" decoding="async" height="302" loading="lazy" src="/landing-assets/trade analyzer/combineded-exit-5m-analysis.png" width="646" />
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="ta-entry-exit" id="entry-exit">
+      <div class="ta-entry-inner">
+        <div class="ta-entry-head">
+          <div>
+            <p class="ta-eyebrow">Entry &amp; Exit analysis</p>
+            <h2>Study every entry, add, partial exit, and final exit.</h2>
+          </div>
+          <div>
+            <p class="ta-entry-copy">Every entry and exit is analyzed where it happened—its distance from <strong>Session VWAP and EMA 9, relative volume, candle position, and the favorable or adverse move that followed</strong> when market data supports it.</p>
+            <p class="ta-entry-copy">Instead of judging a trade only by the final P/L, review what was happening around each execution and compare completed trades to find patterns in your entries, exits, and decision-making.</p>
+          </div>
+        </div>
+
+        <div aria-label="Entry opportunity, risk, and execution-context results" class="ta-entry-evidence">
+          <figure class="ta-entry-metric ta-entry-metric--avg-favorable">
+            <img alt="Average favorable move per share of 53 cents across 84 measured entry and add executions" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/entry and exit/average-favorable-move-per-share-card.png" width="386" />
+          </figure>
+          <figure class="ta-entry-metric ta-entry-metric--median-favorable">
+            <img alt="Median favorable move per share of 11 cents across measured executions" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/entry and exit/median-favorable-move-per-share-card.png" width="386" />
+          </figure>
+          <figure class="ta-entry-metric ta-entry-metric--avg-adverse">
+            <img alt="Average adverse move per share of 34 cents after a measured execution" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/entry and exit/average-adverse-move-per-share-card.png" width="386" />
+          </figure>
+          <figure class="ta-entry-metric ta-entry-metric--median-adverse">
+            <img alt="Median adverse move per share of 10 cents across measured executions" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/entry and exit/median-adverse-move-per-share-card.png" width="386" />
+          </figure>
+
+          <span class="ta-entry-label">Execution context across completed trades</span>
+          <figure class="ta-entry-table">
+            <img alt="Entry execution results grouped by distance from Session VWAP, distance from EMA 9, and relative volume" decoding="async" height="802" loading="lazy" src="/landing-assets/trade analyzer/entry and exit/entry-execution-context-colours-best-table.png" width="1570" />
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="ta-mfe" id="mfe-mae">
+      <div class="ta-mfe-inner">
+        <div class="ta-mfe-head">
+          <div>
+            <p class="ta-eyebrow">MFE &amp; MAE</p>
+            <h2>See how far price moved for you—and against you.</h2>
+            <p class="ta-mfe-intro">Track <strong>MFE and MAE</strong> to see how far each trade moved in your favor and against you after entry. Use it to spot poor entries, profit giveback, early exits, and whether you’re consistently taking more heat than your setups should require.</p>
+          </div>
+          <div class="ta-mfe-definitions">
+            <div class="ta-mfe-definition">
+              <strong>Maximum Favorable Excursion</strong>
+              <p>See how far price moved in your favor after each entry, measured per share and as a percentage of your entry price.</p>
+            </div>
+            <div class="ta-mfe-definition ta-mfe-definition--mae">
+              <strong>Maximum Adverse Excursion</strong>
+              <p>See how far price moved against you after each entry, helping you compare the opportunity in a trade with the risk you took along the way.</p>
+            </div>
+          </div>
+        </div>
+
+        <div aria-label="MFE and MAE measurements and the saved executions behind them" class="ta-mfe-evidence">
+          <figure class="ta-mfe-card ta-mfe-card--measured"><img alt="84 measured entry and add executions with saved one-minute candle coverage" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/measured-executions-card.png" width="386" /></figure>
+          <figure class="ta-mfe-card ta-mfe-card--avg-mfe"><img alt="Average maximum favorable excursion of 53 cents per share" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/average-mfe-card.png" width="386" /></figure>
+          <figure class="ta-mfe-card ta-mfe-card--median-mfe"><img alt="Median maximum favorable excursion of 11 cents per share" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/median-mfe-card.png" width="386" /></figure>
+          <figure class="ta-mfe-card ta-mfe-card--avg-mfe-pct"><img alt="Average maximum favorable excursion of 19.3 percent relative to entry price" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/average-mfe-percent-card.png" width="386" /></figure>
+          <figure class="ta-mfe-card ta-mfe-card--median-mfe-pct"><img alt="Median maximum favorable excursion of 8.4 percent relative to entry price" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/median-mfe-percent-card.png" width="386" /></figure>
+          <figure class="ta-mfe-card ta-mfe-card--avg-mae"><img alt="Average maximum adverse excursion of 34 cents per share" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/average-mae-card.png" width="386" /></figure>
+          <figure class="ta-mfe-card ta-mfe-card--median-mae"><img alt="Median maximum adverse excursion of 10 cents per share" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/median-mae-card.png" width="386" /></figure>
+          <figure class="ta-mfe-card ta-mfe-card--avg-mae-pct"><img alt="Average maximum adverse excursion of 9.1 percent relative to entry price" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/average-mae-percent-card.png" width="386" /></figure>
+          <figure class="ta-mfe-card ta-mfe-card--median-mae-pct"><img alt="Median maximum adverse excursion of 6.1 percent relative to entry price" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/median-mae-percent-card.png" width="386" /></figure>
+
+          <figure class="ta-mfe-table">
+            <img alt="Measured executions table with ticker, entry or add, direction, entry price, MFE, MAE, percentages, time until flat, and actual profit or loss" decoding="async" height="621" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/measured-executions-no-description.png" width="1598" />
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="ta-gtr" id="green-to-red">
+      <div class="ta-gtr-inner">
+        <div class="ta-gtr-head">
+          <div class="ta-gtr-copy">
+            <p class="ta-eyebrow">Green-to-Red analysis</p>
+            <h2>See where open profit became giveback.</h2>
+            <p>Green-to-Red analysis tracks completed trades that moved into profit before falling back through breakeven.</p>
+            <p>See how much upside the trade offered, how much of that move was captured or given back by the exit, how quickly the trade first turned red, and whether price later recovered after the loss.</p>
+          </div>
+          <figure class="ta-gtr-dashboard">
+            <img alt="Profit Capture results showing actual result, sustained opportunity, retained profit, giveback, and results grouped by time held after the profit peak" decoding="async" height="606" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/profit-capture-colour.png" width="1587" />
+          </figure>
+        </div>
+
+        <div class="ta-gtr-outcomes" id="green-to-red-outcomes">
+          <div class="ta-gtr-subhead">
+            <h3>When green turned red</h3>
+            <p>A trade that moves green and still finishes red can reveal a lot about exit discipline and profit protection. Separate trades that stayed green, recovered after turning red, or gave back the move entirely—and measure how long they held up, how quickly they recovered, and how much opportunity was lost before the final exit.</p>
+          </div>
+          <div aria-label="Green-to-Red outcome measurements" class="ta-gtr-outcome-grid">
+            <figure class="ta-gtr-card"><img alt="22 of 28 analyzed trades moved above breakeven and later fell below it" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/green-to-red-trades-card.png" width="516" /></figure>
+            <figure class="ta-gtr-card"><img alt="Average time of 4.8 minutes before a trade first turned red" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/time-before-turning-red-card.png" width="516" /></figure>
+            <figure class="ta-gtr-card"><img alt="Recovery rate of 77.3 percent after first turning red" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/recovery-rate-card.png" width="516" /></figure>
+            <figure class="ta-gtr-card"><img alt="Average recovery time of 6.2 minutes" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/recovery-time-card.png" width="516" /></figure>
+            <figure class="ta-gtr-card"><img alt="Average peak-to-red damage of 21 dollars and 60 cents" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/peak-to-red-damage-card.png" width="516" /></figure>
+            <figure class="ta-gtr-card"><img alt="Average peak-to-exit damage of 45 dollars and 59 cents" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/peak-to-exit-damage-card.png" width="516" /></figure>
+            <figure class="ta-gtr-card"><img alt="Ended-red actual result of negative 928 dollars and 60 cents" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/ended-red-actual-result-card.png" width="516" /></figure>
+            <figure class="ta-gtr-card"><img alt="Ended-red potential result of 461 dollars and 32 cents" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/ended-red-potential-result-card.png" width="516" /></figure>
+            <figure class="ta-gtr-card"><img alt="Ended-red missed opportunity of 1,389 dollars and 92 cents" decoding="async" height="126" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/ended-red-missed-opportunity-card.png" width="516" /></figure>
+          </div>
+        </div>
+
+        <div class="ta-gtr-risk" id="risk-management-behavior">
+          <div class="ta-gtr-subhead">
+            <h3>Risk-management behavior</h3>
+            <p>Risk management is often what separates a good trade from a bad result. Compare how adding after a trade has peaked or reducing size before it turns red lined up with the outcome, and identify habits that may be protecting profits—or putting them at risk.</p>
+          </div>
+          <figure class="ta-gtr-risk-figure">
+            <img alt="Risk-management results grouped by adding after the measured peak and scaling out before a green trade turned red" decoding="async" height="353" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/risk-management-behaviour-table-color.png" width="1577" />
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="ta-patterns" id="candle-patterns">
+      <div class="ta-patterns-inner">
+        <div class="ta-patterns-head">
+          <div class="ta-patterns-copy">
+            <p class="ta-eyebrow">Candle pattern analysis</p>
+            <h2>Connect candle patterns to real executions.</h2>
+            <p>Trade Analyzer records supported completed-candle patterns around entries and exits on one-minute and five-minute charts. Each observation stays tied to the execution, timeframe, and location where it appeared.</p>
+            <p>Across completed trades, see how often a pattern appeared before an entry or exit and compare the trades, win rate, average return, and average result connected to those observations.</p>
+          </div>
+          <figure class="ta-pattern-table">
+            <img alt="Candle-pattern results grouped by pattern, one-minute or five-minute timeframe, entry or exit, and execution location" decoding="async" height="852" loading="lazy" src="/landing-assets/trade analyzer/candle-patterns/candle-patterns-table-color.png" width="1583" />
+          </figure>
+        </div>
+
+        <div class="ta-pattern-guide">
+          <div class="ta-pattern-guide-head">
+            <h3>Patterns the analyzer can recognize</h3>
+            <p>The detector identifies supported candle patterns around entries and exits, then saves those observations with the trade so the data can be compared across trading history and used to surface recurring patterns over time.</p>
+          </div>
+          <figure class="ta-pattern-legend">
+            <img alt="Candle-pattern labels displayed on the Trade Analyzer chart" decoding="async" height="120" loading="lazy" src="/landing-assets/trade analyzer/various-candles-names-lengend-chart-small.png" width="710" />
+          </figure>
+          <div class="ta-pattern-groups">
+            <article class="ta-pattern-group">
+              <h4>Compression and breaks</h4>
+              <p>Compression records a tightening completed-candle structure. Bullish and Bearish compression breaks identify the direction when price expands out of that structure.</p>
+              <ul class="ta-pattern-list">
+                <li>Compression</li>
+                <li>Bullish compression break</li>
+                <li>Bearish compression break</li>
+              </ul>
+            </article>
+            <article class="ta-pattern-group">
+              <h4>Engulfing shifts and expansion</h4>
+              <p>Bullish and Bearish engulfing shifts record a completed change in candle-body control. Bullish and Bearish expansion identify a material increase in completed range and body.</p>
+              <ul class="ta-pattern-list">
+                <li>Bullish engulfing shift</li>
+                <li>Bearish engulfing shift</li>
+                <li>Bullish expansion</li>
+                <li>Bearish expansion</li>
+              </ul>
+            </article>
+            <article class="ta-pattern-group">
+              <h4>Confirmed reversals and wick rejection</h4>
+              <p>Confirmed Hammer, Confirmed Shooting Star, Lower-wick rejection, and Upper-wick rejection describe completed candles where the body and wick show a defined rejection structure.</p>
+              <ul class="ta-pattern-list">
+                <li>Confirmed Hammer</li>
+                <li>Confirmed Shooting Star</li>
+                <li>Lower-wick rejection</li>
+                <li>Upper-wick rejection</li>
+              </ul>
+            </article>
+            <article class="ta-pattern-group">
+              <h4>High-volume exhaustion</h4>
+              <p>Possible high-volume exhaustion records a completed candle where price movement and elevated volume meet the detector’s exhaustion conditions.</p>
+              <ul class="ta-pattern-list">
+                <li>Possible high-volume exhaustion</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <div class="ta-pattern-results">
+          <div class="ta-pattern-results-head">
+            <h3>See which patterns appear most often</h3>
+          </div>
+          <figure class="ta-pattern-most">
+            <picture>
+              <source height="554" media="(max-width: 720px)" srcset="/landing-assets/mobile-2/trade-analyzer-candle-patterns-real-mobile.png" width="487" />
+              <img alt="Most frequently observed candle patterns ranked by occurrence count" decoding="async" height="543" loading="lazy" src="/landing-assets/trade analyzer/candle-patterns/most-observed-candle-patterns.png" width="1601" />
+            </picture>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="ta-results" id="results-across-trades">
+      <div class="ta-results-inner">
+        <div class="ta-results-head">
+          <div>
+            <p class="ta-eyebrow">Results across trades</p>
+            <h2>Turn completed trade reviews into patterns you can study.</h2>
+          </div>
+          <p>Trade Analyzer saves comparable measurements from completed trades into dedicated results pages. Move from one chart to the larger picture, compare groups, and open the trades behind the numbers when something stands out.</p>
+        </div>
+
+        <div class="ta-results-browser">
+          <div aria-label="Trade Analyzer result pages" class="ta-results-tabs" role="tablist">
+            <button aria-controls="results-entry-exit" aria-selected="true" class="ta-results-tab" id="results-tab-entry-exit" role="tab" tabindex="0" type="button">Entry &amp; Exit</button>
+            <button aria-controls="results-mfe-mae" aria-selected="false" class="ta-results-tab" id="results-tab-mfe-mae" role="tab" tabindex="-1" type="button">MFE &amp; MAE</button>
+            <button aria-controls="results-green-to-red" aria-selected="false" class="ta-results-tab" id="results-tab-green-to-red" role="tab" tabindex="-1" type="button">Green-to-Red</button>
+            <button aria-controls="results-candle-patterns" aria-selected="false" class="ta-results-tab" id="results-tab-candle-patterns" role="tab" tabindex="-1" type="button">Candle Patterns</button>
+          </div>
+
+          <div aria-labelledby="results-tab-entry-exit" class="ta-results-panel" id="results-entry-exit" role="tabpanel" tabindex="0">
+            <div class="ta-results-panel-copy">
+              <h3>Entry &amp; Exit results</h3>
+              <p>Compare where entries and exits occurred around Session VWAP, EMA 9, relative volume, and candle position across completed trades.</p>
+            </div>
+            <figure class="ta-results-dashboard"><picture><source height="635" media="(max-width: 720px)" srcset="/landing-assets/mobile-2/trade-analyzer-entry-exit-real-mobile.png" width="487" /><img alt="Full TradersLink Entry and Exit results dashboard with summary cards and grouped execution results" decoding="async" height="932" loading="lazy" src="/landing-assets/trade analyzer/entry and exit/entry-exit-full-dashboard.png" width="1885" /></picture></figure>
+          </div>
+
+          <div aria-labelledby="results-tab-mfe-mae" class="ta-results-panel" hidden id="results-mfe-mae" role="tabpanel" tabindex="0">
+            <div class="ta-results-panel-copy">
+              <h3>MFE &amp; MAE results</h3>
+              <p>Compare the favorable and adverse movement that developed after measured entries and adds, in dollars per share and as a percentage of entry price.</p>
+            </div>
+            <figure class="ta-results-dashboard"><picture><source height="1050" media="(max-width: 720px)" srcset="/landing-assets/mobile-2/trade-analyzer-mfe-mae-real-mobile.png" width="487" /><img alt="Full TradersLink MFE and MAE dashboard with favorable and adverse movement results" decoding="async" height="932" loading="lazy" src="/landing-assets/trade analyzer/mfe-mae/mfe&amp;mae-full-dashboard.png" width="1890" /></picture></figure>
+          </div>
+
+          <div aria-labelledby="results-tab-green-to-red" class="ta-results-panel" hidden id="results-green-to-red" role="tabpanel" tabindex="0">
+            <div class="ta-results-panel-copy">
+              <h3>Green-to-Red results</h3>
+              <p>Study profit capture, giveback, recovery, and risk-management behavior across completed trades that moved into profit.</p>
+            </div>
+            <figure class="ta-results-dashboard"><picture><source height="1050" media="(max-width: 720px)" srcset="/landing-assets/mobile-2/trade-analyzer-green-to-red-real-mobile.png" width="487" /><img alt="Full TradersLink Green-to-Red dashboard with profit-capture cards and outcome results" decoding="async" height="925" loading="lazy" src="/landing-assets/trade analyzer/green-to-red/green-to-red-full-dashboard.png" width="1882" /></picture></figure>
+          </div>
+
+          <div aria-labelledby="results-tab-candle-patterns" class="ta-results-panel" hidden id="results-candle-patterns" role="tabpanel" tabindex="0">
+            <div class="ta-results-panel-copy">
+              <h3>Candle Pattern results</h3>
+              <p>See which supported patterns appeared around entries and exits, compare the recorded groups, and return to the underlying occurrences.</p>
+            </div>
+            <figure class="ta-results-dashboard"><picture><source height="554" media="(max-width: 720px)" srcset="/landing-assets/mobile-2/trade-analyzer-candle-patterns-real-mobile.png" width="487" /><img alt="Full TradersLink Candle Pattern results dashboard with observed pattern groups" decoding="async" height="937" loading="lazy" src="/landing-assets/trade analyzer/candle-patterns/candle-patterns-full-dasboard.png" width="1886" /></picture></figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ta-faq" id="trade-analyzer-faq">
+      <div class="ta-faq-inner">
+        <div class="ta-faq-copy">
+          <p class="ta-eyebrow">Trade Analyzer FAQ</p>
+          <h2>Questions you may want answers to</h2>
+          <p>The best answers are inside the dashboard. Entry is free no credit card required.</p>
+        </div>
+        <div class="ta-faq-list">
+          <details class="ta-faq-item" open>
+            <summary>What is a trade analyzer?</summary>
+            <p>A trade analyzer connects completed trades to the chart and market data around each execution. TradersLink turns entries, exits, candle observations, MFE and MAE, Green-to-Red measurements, and written analysis into results you can review across trades.</p>
+          </details>
+          <details class="ta-faq-item">
+            <summary>How does TradersLink analyze entries and exits?</summary>
+            <p>TradersLink analyzes each saved buy and sell at the time it occurred, including distance from Session VWAP and EMA 9, relative volume, candle position, and favorable or adverse movement when supported market data is available.</p>
+          </details>
+          <details class="ta-faq-item">
+            <summary>What do MFE and MAE mean in trading?</summary>
+            <p>Maximum Favorable Excursion shows how far price moved in your favor after entry. Maximum Adverse Excursion shows how far it moved against you. TradersLink reports both per share and as a percentage of entry price.</p>
+          </details>
+          <details class="ta-faq-item">
+            <summary>What does Green-to-Red analysis show?</summary>
+            <p>Green-to-Red analysis reviews completed trades that moved into profit before falling through breakeven. It shows the strongest sustained opportunity, captured profit, giveback, time before turning red, recovery, and the final outcome.</p>
+          </details>
+          <details class="ta-faq-item">
+            <summary>Which candle patterns can TradersLink detect?</summary>
+            <p>The current detector supports Compression; Bullish and Bearish compression breaks; Bullish and Bearish engulfing shifts; Bullish and Bearish expansion; Confirmed Hammer; Confirmed Shooting Star; Lower-wick and Upper-wick rejection; and Possible high-volume exhaustion.</p>
+          </details>
+          <details class="ta-faq-item">
+            <summary>Does Trade Analyzer tell me what trade to take?</summary>
+            <p>Trade Analyzer reviews completed trades. It organizes saved executions and historical market observations so you can study your own results; it is not a live scanner or alert.</p>
+          </details>
+          <details class="ta-faq-item">
+            <summary>Can I open Trade Analyzer from the Daily Trade Tracker?</summary>
+            <p>Yes. Open Trade Analyzer from a completed trading day to keep the chart and analysis connected to the ticker, trades, and session, or open the Analyzer separately for focused review.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="ta-final-cta">
+      <div class="ta-final-cta-inner">
+        <p class="ta-eyebrow">Trade review starts here</p>
+        <h2>Analyze your trades inside TradersLink.</h2>
+        <p>Connect the completed trade to its chart, executions, profit capture, risk, and the patterns that build across your trading history.</p>
+        <a class="ta-button" href="https://traderslink.pro/beta">Sign up free</a>
+        <p class="ta-cta-note">No credit card required.</p>
+      </div>
+    </section>
+
+    <footer aria-label="Legal links" class="ta-legal">
+      <p>TradersLink, living the small cap trading life!</p>
+      <div class="ta-legal-links"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms &amp; Conditions</a></div>
+    </footer>
+  </main>
+
+  <section aria-describedby="analyzer-analytics-consent-copy" aria-labelledby="analyzer-analytics-consent-title" aria-live="polite" class="ta-consent" hidden id="analyzer-analytics-consent" role="dialog">
+    <div class="ta-consent-card">
+      <h2 id="analyzer-analytics-consent-title">Analytics choices</h2>
+      <p id="analyzer-analytics-consent-copy">We use necessary storage to remember this choice. Optional analytics help us understand visits and improve TradersLink. They stay off unless you accept.</p>
+      <p class="ta-consent-links"><a href="/privacy">Privacy Policy</a> <span aria-hidden="true">·</span> <a href="/terms">Terms &amp; Conditions</a></p>
+      <div class="ta-consent-actions">
+        <button class="ta-consent-button ta-consent-essential" data-analytics-choice="denied" type="button">Essential only</button>
+        <button class="ta-consent-button ta-consent-accept" data-analytics-choice="granted" type="button">Accept analytics</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const featuresMenu = document.querySelector('.ta-features');
+  if (featuresMenu) {
+    const featuresToggle = featuresMenu.querySelector('.ta-features-toggle');
+    const closeFeaturesMenu = () => {
+      featuresMenu.classList.remove('is-open');
+      featuresToggle.setAttribute('aria-expanded', 'false');
+    };
+    featuresToggle.addEventListener('click', () => {
+      const isOpen = featuresMenu.classList.toggle('is-open');
+      featuresToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    featuresMenu.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeFeaturesMenu));
+    document.addEventListener('click', (event) => {
+      if (!featuresMenu.contains(event.target)) closeFeaturesMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeFeaturesMenu();
+    });
+  }
+
+  const mobileHeader = document.querySelector('.ta-header');
+  const mobileMenuToggle = document.querySelector('.ta-menu-toggle');
+  const mobilePrimaryNav = document.querySelector('#ta-primary-nav');
+  if (mobileHeader && mobileMenuToggle && mobilePrimaryNav) {
+    const closeMobileMenu = () => {
+      mobileHeader.classList.remove('is-menu-open');
+      mobileMenuToggle.setAttribute('aria-expanded', 'false');
+      mobileMenuToggle.setAttribute('aria-label', 'Open navigation menu');
+    };
+    mobileMenuToggle.addEventListener('click', () => {
+      const isOpen = mobileHeader.classList.toggle('is-menu-open');
+      mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
+      mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+    });
+    mobilePrimaryNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
+    document.addEventListener('click', (event) => {
+      if (!mobileHeader.contains(event.target)) closeMobileMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeMobileMenu();
+    });
+    window.matchMedia('(min-width: 721px)').addEventListener('change', closeMobileMenu);
+  }
+
+  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const revealTargets = document.querySelectorAll('.ta-chart-analysis, .ta-written, .ta-entry-exit, .ta-mfe, .ta-gtr, .ta-patterns, .ta-results, .ta-faq');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-revealed');
+        revealObserver.unobserve(entry.target);
+      });
+    }, { threshold:0.08 });
+    revealTargets.forEach((target) => {
+      target.classList.add('ta-reveal');
+      revealObserver.observe(target);
+    });
+  }
+
+  const resultTabs = Array.from(document.querySelectorAll('.ta-results-tab'));
+  const selectResultTab = (nextTab, moveFocus = false) => {
+    resultTabs.forEach((tabButton) => {
+      const isSelected = tabButton === nextTab;
+      const panel = document.getElementById(tabButton.getAttribute('aria-controls'));
+      tabButton.setAttribute('aria-selected', String(isSelected));
+      tabButton.tabIndex = isSelected ? 0 : -1;
+      if (panel) panel.hidden = !isSelected;
+    });
+    if (moveFocus) nextTab.focus();
+  };
+  resultTabs.forEach((tabButton, index) => {
+    tabButton.addEventListener('click', () => selectResultTab(tabButton));
+    tabButton.addEventListener('keydown', (event) => {
+      let nextIndex = index;
+      if (event.key === 'ArrowRight') nextIndex = (index + 1) % resultTabs.length;
+      else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + resultTabs.length) % resultTabs.length;
+      else if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = resultTabs.length - 1;
+      else return;
+      event.preventDefault();
+      selectResultTab(resultTabs[nextIndex], true);
+    });
+  });
+
+  const consentStorageKey = 'traderslink_analytics_consent_v1';
+  const consentDurationMs = 180 * 24 * 60 * 60 * 1000;
+  const consentBanner = document.getElementById('analyzer-analytics-consent');
+  const readAnalyticsChoice = () => {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(consentStorageKey) || 'null');
+      if (!stored || !['granted', 'denied'].includes(stored.choice) || typeof stored.expiresAt !== 'number' || stored.expiresAt <= Date.now()) {
+        window.localStorage.removeItem(consentStorageKey);
+        return null;
+      }
+      return stored.choice;
+    } catch {
+      return null;
+    }
+  };
+  if (consentBanner) {
+    if (!readAnalyticsChoice()) consentBanner.hidden = false;
+    consentBanner.querySelectorAll('[data-analytics-choice]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const choice = button.getAttribute('data-analytics-choice');
+        try {
+          window.localStorage.setItem(consentStorageKey, JSON.stringify({ choice, expiresAt:Date.now() + consentDurationMs }));
+        } catch {
+          // Preserve the current-page choice even when browser storage is unavailable.
+        }
+        consentBanner.hidden = true;
+      });
+    });
+  }
+</script>
+</body>
+</html>
