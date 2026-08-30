@@ -5,6 +5,11 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # The entrypoint writes the current container resolver before Nginx starts.
+    # A variable proxy target makes Nginx resolve the private service at request time.
+    include /etc/nginx/runtime/railway-resolver.conf;
+    set $platform_upstream "${PLATFORM_UPSTREAM}";
+
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -47,7 +52,7 @@ server {
     # PLATFORM_UPSTREAM must be a Railway private-network origin with no
     # trailing slash, for example http://traderlink-platform-web.railway.internal.
     location / {
-        proxy_pass ${PLATFORM_UPSTREAM};
+        proxy_pass $platform_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
