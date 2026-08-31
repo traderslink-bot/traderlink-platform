@@ -101,14 +101,18 @@ export function WorkspaceDashboard({
   const searchParams = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [addTradeOpen, setAddTradeOpen] = useState(false);
+  const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
+    Boolean(tradeLibraryProps.trades.query.searchTicker) || tradeLibraryProps.trades.query.filter !== "all" ||
+    Boolean(tradeLibraryProps.trades.query.startDate) || Boolean(tradeLibraryProps.trades.query.endDate) ||
+    tradeLibraryProps.trades.query.sort !== "newest" || tradeLibraryProps.trades.query.group !== "none"
+  );
   const metrics = analyticsMetrics ?? unavailableMetrics;
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
   }
   return (
     <DashboardPage>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
-          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setAddTradeOpen(true)} startIcon={<AddRoundedIcon />} variant="contained">Add trade</Button> : null}
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: "flex-start" }}>
           {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
             ([
               ["today", "Today"],
@@ -122,13 +126,15 @@ export function WorkspaceDashboard({
             ))
           ) : null}
           {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)}>More filters</Button> : null}
+          {hasActiveTableFilters ? <Button onClick={() => router.push("/workspace")}>Clear filter</Button> : null}
+          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setAddTradeOpen(true)} startIcon={<AddRoundedIcon />} variant="contained">Add trade</Button> : null}
           <InstallTradersLinkPwaMethods />
           <DashboardDataScopeChip />
           {offlineSavedAtUtc ? <Chip color="primary" label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`} size="small" variant="outlined" /> : null}
       </Stack>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
-      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
+      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (

@@ -10,6 +10,7 @@ import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/ana
 import {
   absoluteExactDecimal,
   addExactDecimals,
+  multiplyExactDecimals,
   subtractExactDecimals,
 } from "./exact-analytics-math";
 
@@ -67,10 +68,12 @@ WHERE type = 'table' AND name = 'journal_workspace_trade_library_projections'`).
 
 function executionFacts(roundTrip: JournalAnalyticsFactSet["roundTrips"][number]) {
   let buyQuantityDecimal = "0";
+  let buyValueDecimal: string | null = "0";
   let signedPositionDecimal = "0";
   for (const allocation of roundTrip.allocations) {
     if (allocation.side === "buy") {
       buyQuantityDecimal = addExactDecimals(buyQuantityDecimal, allocation.allocatedQuantityDecimal);
+      buyValueDecimal = buyValueDecimal === null || allocation.priceDecimal === null ? null : addExactDecimals(buyValueDecimal, multiplyExactDecimals(allocation.allocatedQuantityDecimal, allocation.priceDecimal));
       signedPositionDecimal = addExactDecimals(signedPositionDecimal, allocation.allocatedQuantityDecimal);
     } else {
       signedPositionDecimal = subtractExactDecimals(signedPositionDecimal, allocation.allocatedQuantityDecimal);
@@ -78,6 +81,7 @@ function executionFacts(roundTrip: JournalAnalyticsFactSet["roundTrips"][number]
   }
   return Object.freeze({
     buyQuantityDecimal,
+    buyValueDecimal,
     entryPriceDecimal: roundTrip.allocations.at(0)?.priceDecimal ?? null,
     exitPriceDecimal: roundTrip.projectionState === "ready_closed"
       ? roundTrip.allocations.at(-1)?.priceDecimal ?? null
@@ -116,8 +120,8 @@ export function refreshWorkspaceTradeLibraryProjection(
   unique_execution_count, refreshed_at_utc,
   buy_quantity_decimal, buy_quantity_sort_key, position_decimal, position_sort_key,
   entry_price_decimal, entry_price_sort_key, exit_price_decimal, exit_price_sort_key,
-  entry_value_sort_key, gross_pnl_sort_key
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  entry_value_sort_key, gross_pnl_sort_key, hold_duration_seconds, hold_duration_sort_key
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   database.prepare(`DELETE FROM journal_workspace_trade_library_projections
 WHERE workspace_id = ? AND account_id = ?`).run(scope.workspaceId, scope.activeAccountId);
   for (const row of normalized.realizedRows) {
@@ -130,12 +134,13 @@ WHERE workspace_id = ? AND account_id = ?`).run(scope.workspaceId, scope.activeA
       row.grossPnlDecimal, row.netPnlDecimal,
       row.netPnlDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(row.netPnlDecimal),
       row.enteredQuantityDecimal, row.exitQuantityDecimal, row.maximumPositionQuantityDecimal,
-      row.entryNotionalDecimal, row.exitNotionalDecimal, row.uniqueExecutionCount, refreshedAtUtc,
+      execution.buyValueDecimal, row.exitNotionalDecimal, row.uniqueExecutionCount, refreshedAtUtc,
       execution.buyQuantityDecimal, workspaceTradeLibraryDecimalSortKey(execution.buyQuantityDecimal),
       execution.positionDecimal, workspaceTradeLibraryDecimalSortKey(execution.positionDecimal),
       execution.entryPriceDecimal, execution.entryPriceDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.entryPriceDecimal),
       execution.exitPriceDecimal, execution.exitPriceDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.exitPriceDecimal),
-      workspaceTradeLibraryDecimalSortKey(row.entryNotionalDecimal), workspaceTradeLibraryDecimalSortKey(row.grossPnlDecimal),
+      execution.buyValueDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.buyValueDecimal), workspaceTradeLibraryDecimalSortKey(row.grossPnlDecimal),
+      Math.floor((Date.parse(row.closedAtUtc) - Date.parse(row.openedAtUtc)) / 1000), String(Math.floor((Date.parse(row.closedAtUtc) - Date.parse(row.openedAtUtc)) / 1000)).padStart(16, "0"),
     );
   }
   for (const row of normalized.legitimateOpenRoundTrips) {
@@ -155,7 +160,7 @@ WHERE workspace_id = ? AND account_id = ?`).run(scope.workspaceId, scope.activeA
       execution.buyQuantityDecimal, workspaceTradeLibraryDecimalSortKey(execution.buyQuantityDecimal),
       execution.positionDecimal, workspaceTradeLibraryDecimalSortKey(execution.positionDecimal),
       execution.entryPriceDecimal, execution.entryPriceDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.entryPriceDecimal),
-      null, null, null, null,
+      null, null, null, null, null, null,
     );
   }
   database.prepare(`INSERT INTO journal_workspace_trade_library_projection_revisions (

@@ -241,3 +241,15 @@ mutations.
   Day, and Ticker options.
 - This remains an uncommitted local owner-review preparation change. It is not
   staging, production, or Railway authorization.
+
+## 2026-08-31 correction batch — active
+
+- Workspace money display will retain canonical precision while rendering dollar
+  amounts to two decimal places. The table Entry and Exit prices must use the
+  same money formatter as P/L and Entry value.
+- Hold is a derived closed-trade duration from the current projection's opened
+  and closed UTC facts. Open rows retain the established unavailable mark. Its
+  cursor sort needs a new derived-only migration, a deterministic tie-breaker,
+  and the existing account/query/revision binding.
+- Exact tooltip text is deferred for owner approval. No new hover copy may be
+  added before the label-to-tooltip inventory is accepted.

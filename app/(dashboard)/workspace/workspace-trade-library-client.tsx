@@ -5,21 +5,21 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Drawer, IconButton, MenuItem, Stack, Tab, Tabs, TextField, Tooltip, Typography } from "@mui/material";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { TradeExplorerReviewEditor } from "../analytics/trade-explorer/trade-review-editor";
 import { financialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
-import { formatJournalAnalyticsDecimal, formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { formatJournalAnalyticsDecimal, formatJournalAnalyticsDuration, formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { JournalManualTradeEntry } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
-import { queueManualTradeSubmission, submitManualTradeOnline } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
+import { ManualTradeNeedsReviewError, queueManualTradeSubmission, submitManualTradeOnline } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
 import { loadWorkspaceTradeLibraryPage } from "./workspace-trade-library-actions";
 import type { WorkspaceTradeLibraryModel, WorkspaceTradeLibraryRow } from "./workspace-trade-library";
 
 type TradeStateFilter = "all" | "open" | "swing" | "closed";
-type TradeSort = "newest" | "oldest" | "position" | "buy_quantity" | "entry" | "exit" | "entry_value" | "pnl_high" | "pnl_low";
+type TradeSort = "newest" | "oldest" | "position" | "buy_quantity" | "entry" | "exit" | "entry_value" | "hold" | "pnl_high" | "pnl_low";
 type TradeGroup = "none" | "day" | "ticker";
 function tradeMoney(row: WorkspaceTradeLibraryRow): string {
   return row.gainLossDecimal === null ? "—" : formatJournalAnalyticsMoney(row.gainLossDecimal, row.tradeCurrency, { showPositiveSign: true });
@@ -33,31 +33,45 @@ function positiveDecimalInput(value: string): boolean {
   return /^(?:0|[1-9]\d*)(?:\.\d+)?$/u.test(value) && /[1-9]/u.test(value);
 }
 
+function workspaceDateInTimezone(timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "2-digit", timeZone: timezone, year: "numeric" }).formatToParts(new Date());
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function manualTradePreviewMessage(code: string | undefined): string {
+  if (code === "TRADERLINK_MANUAL_TRADE_SINGLE_DAY_REQUIRED") return "Date";
+  if (code === "TRADERLINK_MANUAL_TRADE_RECENT_ENTRY_REQUIRED") return "Date, Time";
+  if (code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT") return "The selected account changed. Refresh and try again.";
+  if (code === "TRADERLINK_MANUAL_TRADE_RELATIONSHIP_CONFLICT") return "Review the executions and try again.";
+  return "The trade could not be saved. Your entries are still here.";
+}
+
 function ActionButton({ children, desktopOnly = false, label, onClick }: Readonly<{ children: ReactNode; desktopOnly?: boolean; label: string; onClick: () => void }>) {
   return <Tooltip title={label}><IconButton aria-label={label} onClick={(event) => { event.stopPropagation(); onClick(); }} size="small" sx={{ color: "text.primary", display: desktopOnly ? { xs: "none", md: "inline-flex" } : "inline-flex" }}>{children}</IconButton></Tooltip>;
 }
 
-function AddTradeDrawer({ accountCurrency, accountTimezone, expectedAccountSelectionRef, offlineScopeRef, onClose, open }: Readonly<{ accountCurrency: string; accountTimezone: string; expectedAccountSelectionRef: string; offlineScopeRef: string; onClose: () => void; open: boolean }>) {
-  const today = new Intl.DateTimeFormat("en-CA", { day: "2-digit", month: "2-digit", timeZone: accountTimezone, year: "numeric" }).format(new Date()).replace(/\//gu, "-");
+function AddTradePanel({ accountCurrency, accountTimezone, expectedAccountSelectionRef, offlineScopeRef, onClose }: Readonly<{ accountCurrency: string; accountTimezone: string; expectedAccountSelectionRef: string; offlineScopeRef: string; onClose: () => void }>) {
+  const today = workspaceDateInTimezone(accountTimezone);
   const makeRow = (id: number) => ({ date: today, fees: "", id, price: "", quantity: "", side: "buy" as const, time: "" });
   const [symbol, setSymbol] = useState("");
   const [tracker, setTracker] = useState<"day" | "swing">("day");
   const [rows, setRows] = useState(() => [makeRow(1)]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const idempotencyKey = useRef<string | null>(null);
   const update = (id: number, key: "date" | "fees" | "price" | "quantity" | "side" | "time", value: string) => setRows((current) => current.map((row) => row.id === id ? { ...row, [key]: value } as typeof row : row));
   const save = async () => {
-    if (!symbol.trim() || rows.some((row) => !row.date || !row.time || !positiveDecimalInput(row.quantity) || !positiveDecimalInput(row.price))) { setError("Enter ticker, date, time, side, shares, and price for every execution."); return; }
+    const missing = new Set<string>(); if (!symbol.trim()) missing.add("Ticker"); for (const row of rows) { if (!row.date) missing.add("Date"); if (!row.time) missing.add("Time"); if (!row.side) missing.add("Buy/Sell"); if (!positiveDecimalInput(row.quantity)) missing.add("Shares"); if (!positiveDecimalInput(row.price)) missing.add("Price"); } if (missing.size > 0) { setError([...missing].join(", ")); return; }
     const entries = rows.map((row): JournalManualTradeEntry => Object.freeze({ clientRowRef: `workspace-${row.id}`, feesDecimal: row.fees.trim() || null, localDate: row.date, localTime: `${row.time}:00`, normalizedSymbol: symbol.trim().toUpperCase(), priceDecimal: row.price, quantityDecimal: row.quantity, side: row.side, sourceTimezone: "America/New_York", tradeCurrency: accountCurrency }));
     setSaving(true); setError(null);
     try {
-      const submission = Object.freeze({ entries, expectedAccountSelectionRef, idempotencyKey: crypto.randomUUID(), tracker });
+      const submission = Object.freeze({ entries, expectedAccountSelectionRef, idempotencyKey: idempotencyKey.current ?? crypto.randomUUID(), tracker }); idempotencyKey.current = submission.idempotencyKey;
       if (!navigator.onLine) await queueManualTradeSubmission({ offlineScopeRef, submission }); else await submitManualTradeOnline(submission);
       onClose();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "The trade could not be saved. Your entries are still here."); } finally { setSaving(false); }
+    } catch (cause) { setError(cause instanceof ManualTradeNeedsReviewError ? manualTradePreviewMessage(cause.code) : cause instanceof Error ? cause.message : "The trade could not be saved. Your entries are still here."); } finally { setSaving(false); }
   };
-  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}>
-    <Stack sx={{ height: "100dvh" }}>
+  return <Stack sx={{ height: "100%" }}>
       <Stack direction="row" sx={{ borderBottom: 1, borderColor: "divider", justifyContent: "space-between", p: 2 }}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Add trade</Typography>
         <Button onClick={onClose}>Close</Button>
@@ -84,8 +98,7 @@ function AddTradeDrawer({ accountCurrency, accountTimezone, expectedAccountSelec
         {error ? <Typography color="error.main" variant="body2">{error}</Typography> : null}
         <Button disabled={saving} onClick={() => void save()} sx={{ alignSelf: "flex-end", bottom: 0, position: "sticky" }} variant="contained">{saving ? "Saving…" : "Save"}</Button>
       </Stack>
-    </Stack>
-  </Drawer>;
+  </Stack>;
 }
 
 function WorkspaceExecutionEditForm({
@@ -178,12 +191,26 @@ function WorkspaceExecutionEditForm({
   </Box>;
 }
 
-function SavedTradeDrawer({ expectedAccountSelectionRef, onClose, open, row, startingTab, rows }: Readonly<{ expectedAccountSelectionRef: string; onClose: () => void; open: boolean; row: WorkspaceTradeLibraryRow | null; startingTab: number; rows: readonly WorkspaceTradeLibraryRow[] }>) {
+function SavedTradePanel({ expectedAccountSelectionRef, onClose, row, startingTab, rows }: Readonly<{ expectedAccountSelectionRef: string; onClose: () => void; row: WorkspaceTradeLibraryRow | null; startingTab: number; rows: readonly WorkspaceTradeLibraryRow[] }>) {
   const router = useRouter(); const [tab, setTab] = useState(startingTab);
   useEffect(() => setTab(startingTab), [row?.roundTripId, startingTab]);
   if (!row) return null;
   const targets = rows.map((trade) => ({ closeLocalDate: trade.date, closedAtUtc: `${trade.date}T00:00:00.000Z`, direction: trade.direction, displayedSymbol: trade.symbol, roundTripId: trade.roundTripId }));
-  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}><Stack sx={{ height: "100dvh" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography component="h2" variant="h6">{row.symbol}</Typography><Button onClick={onClose}>Close</Button></Stack><Tabs onChange={(_event, next) => setTab(next)} value={tab} variant="fullWidth"><Tab label="Trade" /><Tab label="Journal" /><Tab label="Analyzer" /></Tabs></Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: tab === 1 ? 0 : 2 }}>{tab === 0 ? <Stack spacing={1}><Typography color={financialOutcomeColor(row.gainLossDecimal)} variant="h5">{tradeMoney(row)}</Typography>{row.editableExecutions.map((execution) => <WorkspaceExecutionEditForm execution={execution} expectedAccountSelectionRef={expectedAccountSelectionRef} key={execution.editRef} symbol={row.symbol} />)}</Stack> : null}{tab === 1 ? <TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setTab(0)} onSelectTrade={() => undefined} open selectedRoundTripId={row.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={targets} /> : null}{tab === 2 ? <Button onClick={() => router.push("/analytics/trade-analyzer/day/trades")} variant="outlined">Open Trade Analyzer</Button> : null}</Box></Stack></Drawer>;
+  return <Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography component="h2" variant="h6">{row.symbol}</Typography><Button onClick={onClose}>Close</Button></Stack><Tabs onChange={(_event, next) => setTab(next)} value={tab} variant="fullWidth"><Tab label="Trade" /><Tab label="Journal" /><Tab label="Analyzer" /></Tabs></Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: tab === 1 ? 0 : 2 }}>{tab === 0 ? <Stack spacing={1}><Typography color={financialOutcomeColor(row.gainLossDecimal)} variant="h5">{tradeMoney(row)}</Typography>{row.editableExecutions.map((execution) => <WorkspaceExecutionEditForm execution={execution} expectedAccountSelectionRef={expectedAccountSelectionRef} key={execution.editRef} symbol={row.symbol} />)}</Stack> : null}{tab === 1 ? <TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setTab(0)} onSelectTrade={() => undefined} open selectedRoundTripId={row.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={targets} /> : null}{tab === 2 ? <Button onClick={() => router.push("/analytics/trade-analyzer/day/trades")} variant="outlined">Open Trade Analyzer</Button> : null}</Box></Stack>;
+}
+
+function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen, detail, expectedAccountSelectionRef, offlineScopeRef, onClose, startingTab, rows }: Readonly<{ accountCurrency: string; accountTimezone: string; addOpen: boolean; detail: WorkspaceTradeLibraryRow | null; expectedAccountSelectionRef: string; offlineScopeRef: string; onClose: () => void; startingTab: number; rows: readonly WorkspaceTradeLibraryRow[] }>) {
+  const open = addOpen || detail !== null;
+  if (!open) return null;
+  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}>{addOpen ? <AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} /> : <SavedTradePanel expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={onClose} row={detail} rows={rows} startingTab={startingTab} />}</Drawer>;
+}
+
+function AddTradeDrawer({ accountCurrency, accountTimezone, expectedAccountSelectionRef, offlineScopeRef, onClose, open }: Readonly<{ accountCurrency: string; accountTimezone: string; expectedAccountSelectionRef: string; offlineScopeRef: string; onClose: () => void; open: boolean }>) {
+  return <WorkspaceTradeDrawer accountCurrency={accountCurrency} accountTimezone={accountTimezone} addOpen={open} detail={null} expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} rows={[]} startingTab={0} />;
+}
+
+function SavedTradeDrawer({ expectedAccountSelectionRef, onClose, open, row, startingTab, rows }: Readonly<{ expectedAccountSelectionRef: string; onClose: () => void; open: boolean; row: WorkspaceTradeLibraryRow | null; startingTab: number; rows: readonly WorkspaceTradeLibraryRow[] }>) {
+  return <WorkspaceTradeDrawer accountCurrency="USD" accountTimezone="UTC" addOpen={false} detail={open ? row : null} expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef="" onClose={onClose} rows={rows} startingTab={startingTab} />;
 }
 
 export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTradeOpen, expectedAccountSelectionRef, offlineScopeRef, onAddTradeClose, trades }: Readonly<{ accountCurrency: string; accountTimezone: string; addTradeOpen: boolean; expectedAccountSelectionRef: string; offlineScopeRef: string; onAddTradeClose: () => void; trades: WorkspaceTradeLibraryModel }>) {
@@ -199,6 +226,6 @@ export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTra
     ? "Your existing trades are not available in Workspace yet."
     : activeFilterCount > 0 ? "No trades match these filters."
       : "No trades recorded yet.";
-  const desktopColumns = "112px 64px 48px 92px 72px 72px 72px 72px 92px 96px 132px";
-  return <><Typography component="h2" sx={{ fontWeight: 850 }} variant="h5">Trades</Typography>{error ? <Typography color="error.main" variant="body2">{error}</Typography> : null}<Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">{model.totalRowCount} trade{model.totalRowCount === 1 ? "" : "s"}</Typography><Box sx={{ border: 1, borderColor: "divider", borderRadius: 2, mt: 1, overflow: "hidden" }}><Box sx={{ display: { xs: "none", md: "grid" }, gridTemplateColumns: desktopColumns, gap: 0.75, px: 1, py: 0.75, bgcolor: "action.hover" }}>{["Date", "Ticker", "Side", "Status", "Buy QTY", "Position", "Entry", "Exit", "Entry value", "Gain/Loss", "Actions"].map((label) => <Typography key={label} variant="caption">{label}</Typography>)}</Box>{model.projectionState !== "ready" || model.rows.length === 0 ? <Typography color="text.secondary" sx={{ p: 2 }} variant="body2">{emptyState}</Typography> : grouped.map(({ row, heading }) => <Box key={row.roundTripId}>{heading ? <Typography sx={{ bgcolor: "action.hover", fontWeight: 800, px: 1.5, py: 0.5 }} variant="caption">{heading}</Typography> : null}<Box sx={{ borderTop: 1, borderColor: "divider" }}><Box sx={{ alignItems: "center", display: { xs: "none", md: "grid" }, gap: 0.75, gridTemplateColumns: desktopColumns, minHeight: 44, px: 1, py: 0.25 }}><Typography variant="body2">{shortDate(row.date)}</Typography><Typography sx={{ fontWeight: 800 }} variant="body2">{row.symbol}</Typography><Typography variant="body2">{row.direction === "long" ? "Long" : "Short"}</Typography><Typography variant="body2">{row.status}</Typography><Typography variant="body2">{formatJournalAnalyticsDecimal(row.buyQuantityDecimal)}</Typography><Typography variant="body2">{formatJournalAnalyticsDecimal(row.positionDecimal)}</Typography><Typography variant="body2">{row.entryPriceDecimal ? formatJournalAnalyticsDecimal(row.entryPriceDecimal) : "—"}</Typography><Typography variant="body2">{row.exitPriceDecimal ? formatJournalAnalyticsDecimal(row.exitPriceDecimal) : "—"}</Typography><Typography variant="body2">{row.entryValueDecimal ? formatJournalAnalyticsMoney(row.entryValueDecimal, row.tradeCurrency) : "—"}</Typography><Typography color={financialOutcomeColor(row.gainLossDecimal)} sx={{ fontWeight: 800 }} variant="body2">{tradeMoney(row)}</Typography>{actionButtons(row)}</Box><Box sx={{ display: { md: "none" }, p: 1.25 }}><Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}><Box><Typography sx={{ fontWeight: 800 }}>{row.symbol}</Typography><Typography variant="caption">{shortDate(row.date)} · {row.direction === "long" ? "Long" : "Short"} · {row.status}</Typography></Box><Typography color={financialOutcomeColor(row.gainLossDecimal)} sx={{ fontWeight: 800 }}>{tradeMoney(row)}</Typography></Stack><Typography variant="caption">{formatJournalAnalyticsDecimal(row.buyQuantityDecimal)} · {formatJournalAnalyticsDecimal(row.positionDecimal)} · {row.entryPriceDecimal ? formatJournalAnalyticsDecimal(row.entryPriceDecimal) : "—"} · {row.exitPriceDecimal ? formatJournalAnalyticsDecimal(row.exitPriceDecimal) : "—"}</Typography>{actionButtons(row)}</Box></Box></Box>)}</Box>{model.continuationCursor ? <Stack sx={{ alignItems: "center", mt: 1 }}><Button disabled={loading} onClick={() => void load(model.continuationCursor, true)} variant="outlined">{loading ? "Loading…" : "Load more"}</Button></Stack> : null}<AddTradeDrawer accountCurrency={accountCurrency} accountTimezone={accountTimezone} expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={() => { onAddTradeClose(); window.location.reload(); }} open={addTradeOpen} /><SavedTradeDrawer expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setDetail(null)} open={detail !== null} row={detail} rows={model.rows} startingTab={detailTab} /></>;
+  const desktopColumns = "minmax(96px, 1fr) minmax(64px, .75fr) minmax(52px, .6fr) minmax(82px, .8fr) minmax(58px, .65fr) minmax(62px, .7fr) minmax(76px, .8fr) minmax(76px, .8fr) minmax(92px, 1fr) minmax(64px, .7fr) minmax(88px, .9fr) 132px";
+  return <>{error ? <Typography color="error.main" variant="body2">{error}</Typography> : null}<Box sx={{ border: 1, borderColor: "divider", borderRadius: 2, mt: 1, overflow: "hidden" }}><Box sx={{ display: { xs: "none", md: "grid" }, gridTemplateColumns: desktopColumns, gap: 1, px: 1, py: 0.75, bgcolor: "action.hover" }}>{["Date", "Ticker", "Side", "Status", "QTY", "Position", "Entry", "Exit", "Entry value", "Hold", "Gain/Loss", "Actions"].map((label) => <Typography key={label} variant="caption">{label}</Typography>)}</Box>{model.projectionState !== "ready" || model.rows.length === 0 ? <Typography color="text.secondary" sx={{ p: 2 }} variant="body2">{emptyState}</Typography> : grouped.map(({ row, heading }) => <Box key={row.roundTripId}>{heading ? <Typography sx={{ bgcolor: "action.hover", fontWeight: 800, px: 1.5, py: 0.5 }} variant="caption">{heading}</Typography> : null}<Box sx={{ borderTop: 1, borderColor: "divider" }}><Box sx={{ alignItems: "center", display: { xs: "none", md: "grid" }, gap: 1, gridTemplateColumns: desktopColumns, minHeight: 44, px: 1, py: 0.25 }}><Typography variant="body2">{shortDate(row.date)}</Typography><Typography sx={{ fontWeight: 800 }} variant="body2">{row.symbol}</Typography><Typography variant="body2">{row.direction === "long" ? "Long" : "Short"}</Typography><Typography variant="body2">{row.status}</Typography><Typography variant="body2">{formatJournalAnalyticsDecimal(row.buyQuantityDecimal)}</Typography><Typography variant="body2">{formatJournalAnalyticsDecimal(row.positionDecimal)}</Typography><Typography variant="body2">{row.entryPriceDecimal ? formatJournalAnalyticsMoney(row.entryPriceDecimal, row.tradeCurrency) : "—"}</Typography><Typography variant="body2">{row.exitPriceDecimal ? formatJournalAnalyticsMoney(row.exitPriceDecimal, row.tradeCurrency) : "—"}</Typography><Typography variant="body2">{row.entryValueDecimal ? formatJournalAnalyticsMoney(row.entryValueDecimal, row.tradeCurrency) : "—"}</Typography><Typography variant="body2">{row.holdDurationSeconds === null ? "N/A" : formatJournalAnalyticsDuration(row.holdDurationSeconds * 1000)}</Typography><Typography color={financialOutcomeColor(row.gainLossDecimal)} sx={{ fontWeight: 800 }} variant="body2">{tradeMoney(row)}</Typography>{actionButtons(row)}</Box><Box sx={{ display: { md: "none" }, p: 1.25 }}><Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}><Box><Typography sx={{ fontWeight: 800 }}>{row.symbol}</Typography><Typography variant="caption">{shortDate(row.date)} · {row.direction === "long" ? "Long" : "Short"} · {row.status}</Typography></Box><Typography color={financialOutcomeColor(row.gainLossDecimal)} sx={{ fontWeight: 800 }}>{tradeMoney(row)}</Typography></Stack><Typography variant="caption">{formatJournalAnalyticsDecimal(row.buyQuantityDecimal)} · {formatJournalAnalyticsDecimal(row.positionDecimal)} · {row.entryPriceDecimal ? formatJournalAnalyticsMoney(row.entryPriceDecimal, row.tradeCurrency) : "—"} · {row.exitPriceDecimal ? formatJournalAnalyticsMoney(row.exitPriceDecimal, row.tradeCurrency) : "—"}</Typography>{actionButtons(row)}</Box></Box></Box>)}</Box>{model.continuationCursor ? <Stack sx={{ alignItems: "center", mt: 1 }}><Button disabled={loading} onClick={() => void load(model.continuationCursor, true)} variant="outlined">{loading ? "Loading…" : "Load more"}</Button></Stack> : null}<AddTradeDrawer accountCurrency={accountCurrency} accountTimezone={accountTimezone} expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={() => { onAddTradeClose(); window.location.reload(); }} open={addTradeOpen} /><SavedTradeDrawer expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setDetail(null)} open={detail !== null} row={detail} rows={model.rows} startingTab={detailTab} /></>;
 }

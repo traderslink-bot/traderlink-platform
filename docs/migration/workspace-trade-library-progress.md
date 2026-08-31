@@ -37,6 +37,51 @@
 - This is local-only preparation for owner visual review. No staging, push,
   deployment, migration, or data action was taken.
 
+## 2026-08-31 — Correction batch investigation
+
+- The Add trade drawer's initial Date uses locale output that can be invalid
+  for a native date field; the replacement will use an ISO date built from
+  timezone-aware parts. Client validation will identify missing visible field
+  labels without changing server validation.
+- Source review shows the generic saved-trade review message is a non-ready
+  preview/commit response, not a known successful commit response. The server
+  code is currently suppressed in Workspace, so staging evidence is required
+  to identify a particular rejection; a retained idempotency key avoids an
+  ambiguous retry creating a new submission.
+- Tooltip implementation is paused pending owner copy approval. No staging,
+  migration execution, server, broad test, push, or deployment occurred.
+- Sanitized staging evidence confirms the reported one-execution attempt ended
+  at preview with HTTP 400 and never sent a commit request. Workspace now keeps
+  that pre-commit distinction: it uses ISO date parts for the native Date
+  field, names missing visible fields, and maps safe preview outcomes without
+  exposing internal codes or treating the failed attempt as saved.
+
+## 2026-08-31 — Hold and exact Workspace values in progress
+
+- Added the derived-only 0102 Hold duration schema contract and manifest entry.
+  Closed rows derive elapsed seconds from their existing opened/closed UTC facts;
+  open rows retain no duration fact and render `N/A` in the desktop table.
+- Workspace now carries Hold through the account/query/revision-bound cursor
+  sort path. Entry value is derived as the exact sum of canonical buy quantity
+  multiplied by price, rather than using the earlier normalized entry basis.
+- Entry and Exit table prices use the existing money formatter, QTY replaces
+  Buy QTY, and five overview cards use one desktop row. Tooltip copy remains
+  intentionally excluded pending approval.
+- Clear filter is one URL-backed reset action and appears only while a table
+  filter, sort, group, or date constraint is active; it does not create a
+  separate client filter state.
+- Add Trade and saved Trade/Journal/Analyzer content now use the shared
+  Workspace drawer shell. Only the active drawer is mounted; Add and saved
+  content preserve their existing account refs and opaque edit/delete authority.
+
+## Local verification boundary
+
+- `git diff --check` passes. Focused source inspection confirms the desktop
+  table remains hidden below `md`, mobile retains compact cards, and tooltip
+  copy was not added. TypeScript, build, server, migration, browser, and
+  staging checks remain intentionally deferred by the owner’s low-resource and
+  owner-review boundaries.
+
 ## 2026-08-30 — Staged composition rejected; correction batch active
 
 - Audited the staged Workspace source against the superseding owner inventory.

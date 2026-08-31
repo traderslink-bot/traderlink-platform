@@ -89,7 +89,7 @@ export default async function WorkspacePage({
   const period = workspacePeriod(queryParameters.period);
   const filter: WorkspaceTradeLibraryFilter = queryParameters.filter === "open" || queryParameters.filter === "swing" || queryParameters.filter === "closed" ? queryParameters.filter : "all";
   const group: WorkspaceTradeLibraryGroup = queryParameters.group === "day" || queryParameters.group === "ticker" ? queryParameters.group : "none";
-  const allowedSorts: readonly WorkspaceTradeLibrarySort[] = ["newest", "oldest", "position", "buy_quantity", "entry", "exit", "entry_value", "pnl_high", "pnl_low"];
+  const allowedSorts: readonly WorkspaceTradeLibrarySort[] = ["newest", "oldest", "position", "buy_quantity", "entry", "exit", "entry_value", "hold", "pnl_high", "pnl_low"];
   const sort: WorkspaceTradeLibrarySort = allowedSorts.includes(queryParameters.sort as WorkspaceTradeLibrarySort) ? queryParameters.sort as WorkspaceTradeLibrarySort : "newest";
   const scope = await requireTraderLinkPlatformServerComponentPageScope();
   if (!scope.activeAccountId) {

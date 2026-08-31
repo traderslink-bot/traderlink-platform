@@ -26,6 +26,7 @@ export type WorkspaceTradeLibraryRow = Readonly<{
   exitTime: string | null;
   entryValueDecimal: string | null;
   gainLossDecimal: string | null;
+  holdDurationSeconds: number | null;
   positionDecimal: string;
   roundTripId: string;
   status: "Open" | "Open swing" | "Closed" | "Closed swing";
@@ -47,7 +48,7 @@ export type WorkspaceEditableExecution = Readonly<{
 }>;
 
 export type WorkspaceTradeLibraryFilter = "all" | "open" | "swing" | "closed";
-export type WorkspaceTradeLibrarySort = "newest" | "oldest" | "position" | "buy_quantity" | "entry" | "exit" | "entry_value" | "pnl_high" | "pnl_low";
+export type WorkspaceTradeLibrarySort = "newest" | "oldest" | "position" | "buy_quantity" | "entry" | "exit" | "entry_value" | "hold" | "pnl_high" | "pnl_low";
 export type WorkspaceTradeLibraryGroup = "none" | "day" | "ticker";
 
 export type WorkspaceTradeLibraryQuery = Readonly<{
@@ -96,6 +97,8 @@ type ProjectionRow = Readonly<{
   maximum_position_quantity_decimal: string | null;
   gross_pnl_decimal: string | null;
   gross_pnl_sort_key: string | null;
+  hold_duration_seconds: number | null;
+  hold_duration_sort_key: string | null;
   net_pnl_decimal: string | null;
   net_pnl_sort_key: string | null;
   projection_state: "ready_closed" | "legitimate_open";
@@ -154,7 +157,7 @@ function canonicalQuery(value: WorkspaceTradeLibraryQuery): WorkspaceTradeLibrar
     startDate: value.startDate || null,
   } as const;
   if (!(["all", "open", "swing", "closed"] as const).includes(query.filter) ||
-      !(["newest", "oldest", "position", "buy_quantity", "entry", "exit", "entry_value", "pnl_high", "pnl_low"] as const).includes(query.sort) ||
+      !(["newest", "oldest", "position", "buy_quantity", "entry", "exit", "entry_value", "hold", "pnl_high", "pnl_low"] as const).includes(query.sort) ||
       !(["none", "day", "ticker"] as const).includes(query.group) ||
       !TICKER.test(query.searchTicker) ||
       (query.startDate !== null && !DATE.test(query.startDate)) ||
@@ -192,6 +195,7 @@ function sortKey(row: ProjectionRow, sort: WorkspaceTradeLibrarySort): string | 
   if (sort === "entry") return row.entry_price_sort_key;
   if (sort === "exit") return row.exit_price_sort_key;
   if (sort === "entry_value") return row.entry_value_sort_key;
+  if (sort === "hold") return row.hold_duration_sort_key;
   if (sort === "pnl_high" || sort === "pnl_low") return row.gross_pnl_sort_key;
   return null;
 }
@@ -360,7 +364,8 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as
         : query.sort === "entry" ? "entry_price_sort_key"
           : query.sort === "exit" ? "exit_price_sort_key"
             : query.sort === "entry_value" ? "entry_value_sort_key"
-              : "gross_pnl_sort_key";
+              : query.sort === "hold" ? "hold_duration_sort_key"
+                : "gross_pnl_sort_key";
     if (cursor.netPnlSortKey === null) { parameters.push(cursor.roundTripId); return ` AND projection.${sortColumn} IS NULL AND projection.round_trip_id ${query.sort === "pnl_low" ? ">" : "<"} ?`; }
     parameters.push(cursor.netPnlSortKey, cursor.netPnlSortKey, cursor.roundTripId);
     return query.sort === "pnl_low"
@@ -372,7 +377,8 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as
       : query.sort === "entry" ? "entry_price_sort_key"
         : query.sort === "exit" ? "exit_price_sort_key"
           : query.sort === "entry_value" ? "entry_value_sort_key"
-            : "gross_pnl_sort_key";
+            : query.sort === "hold" ? "hold_duration_sort_key"
+              : "gross_pnl_sort_key";
   const order = query.sort === "newest" ? "projection.activity_at_utc DESC, projection.round_trip_id DESC"
     : query.sort === "oldest" ? "projection.activity_at_utc ASC, projection.round_trip_id ASC"
       : query.sort === "pnl_low" ? `projection.${selectedSortColumn} IS NULL ASC, projection.${selectedSortColumn} ASC, projection.round_trip_id ASC`
@@ -390,7 +396,7 @@ LEFT JOIN journal_trade_style_plans style ON style.workspace_id = projection.wor
   projection.closed_at_utc, version.direction, projection.entry_local_date, projection.entry_local_time,
   projection.entry_notional_decimal, projection.entered_quantity_decimal, projection.entry_price_decimal, projection.entry_price_sort_key, projection.entry_value_sort_key, projection.exit_local_date,
   projection.exit_local_time, projection.exit_notional_decimal, projection.exit_quantity_decimal,
-  projection.exit_price_decimal, projection.exit_price_sort_key, projection.maximum_position_quantity_decimal, projection.gross_pnl_decimal, projection.gross_pnl_sort_key, projection.net_pnl_decimal, projection.net_pnl_sort_key,
+  projection.exit_price_decimal, projection.exit_price_sort_key, projection.maximum_position_quantity_decimal, projection.gross_pnl_decimal, projection.gross_pnl_sort_key, projection.net_pnl_decimal, projection.net_pnl_sort_key, projection.hold_duration_seconds, projection.hold_duration_sort_key,
   projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
   projection.projection_state, projection.round_trip_id, projection.round_trip_version_id, instrument.normalized_symbol AS symbol,
   version.trade_currency, style.trade_style, projection.unique_execution_count
@@ -416,6 +422,7 @@ ${base} WHERE ${where}${keyset} ORDER BY ${order} LIMIT ?`).all(...pageParameter
       exitTime: row.exit_local_time,
       entryValueDecimal: row.entry_notional_decimal,
       gainLossDecimal: row.gross_pnl_decimal,
+      holdDurationSeconds: row.hold_duration_seconds,
       positionDecimal: facts.get(row.round_trip_version_id)?.positionDecimal ?? "0",
       roundTripId: row.round_trip_id,
       status: row.projection_state === "legitimate_open"
