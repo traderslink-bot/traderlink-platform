@@ -14,9 +14,10 @@ authorized, with no hosted action authorized
   `initialize-traderlink-platform-database.ts --initialize-empty` command.
   The regular runtime's missing/empty database rejection was not modified.
 - Added a separate initializer image that hard-codes the staging target path,
-  requires the Railway `/data` mount to be empty, refuses an existing SQLite
-  database or sidecar, creates the three required `/data` directories, and
-  exits after the existing initializer.
+  permits only Railway's empty direct non-link `lost+found` filesystem entry,
+  refuses every other `/data` entry and every SQLite database or sidecar,
+  creates the three required `/data` directories, and exits after the existing
+  initializer.
 - No product UI, Workspace source, normal Dockerfile, `railway.json`,
   authentication, schema, migration, database, local server, test suite,
   build, deployment, Railway configuration, staging action, or hosted action
@@ -28,3 +29,15 @@ authorized, with no hosted action authorized
   narrow local commit after static/source review and `git diff --check`.
 - No Vitest, broad tests, build, local server, database initialization,
   deployment, staging action, or hosted action is authorized.
+
+## 2026-08-30 — Railway empty-filesystem boundary correction
+
+- Coordinator-provided evidence from the isolated helper service showed that
+  its newly created staging volume contained the provider-created
+  `lost+found` directory and the initial image exited before any database write.
+- The guard now permits only that empty direct non-link directory. It still
+  rejects all other root entries, including hidden entries and links, before
+  creating the three required directories or invoking the existing initializer.
+- This correction changes no application behavior and does not authorize a
+  retry, deployment, migration, database initialization, or hosted action by
+  this worker.

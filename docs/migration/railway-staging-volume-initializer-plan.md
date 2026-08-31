@@ -36,7 +36,9 @@ context.
 3. Refuses to run if that database or any `-wal`, `-shm`, or `-journal` sidecar
    already exists.
 4. Requires Railway's supplied `RAILWAY_VOLUME_MOUNT_PATH` to be exactly
-   `/data` and rejects any pre-existing entry on that mounted volume.
+   `/data` and rejects every pre-existing entry on that mounted volume except
+   an empty, direct, non-link `lost+found` directory created by the empty
+   filesystem.
 5. Sets private default permissions and creates only `/data/evidence-vault`,
    `/data/upload-staging`, and `/data/backups` before invoking
    `src/scripts/initialize-traderlink-platform-database.ts --initialize-empty`.
@@ -59,7 +61,9 @@ a deployment instruction:
 2. Attach a newly created, confirmed-empty staging-only Railway volume at
    `/data`, with no production volume, database, data source, or live app
    mount attached or copied. Keep the service at one replica and ensure the
-   regular app is not attached to this volume while the initializer runs.
+   regular app is not attached to this volume while the initializer runs. A
+   provider-created empty direct `lost+found` directory is the only allowed
+   entry; every other entry remains a stop condition.
 3. Set only the initializer's required database path to
    `TRADERLINK_PLATFORM_DB_PATH=/data/traderlink-platform.sqlite`; Railway must
    supply `RAILWAY_VOLUME_MOUNT_PATH=/data`. Retain `RAILWAY_RUN_UID=0` only
