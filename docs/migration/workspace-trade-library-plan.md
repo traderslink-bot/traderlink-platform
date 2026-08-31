@@ -55,8 +55,8 @@ routes, provider imports, calendar reads, hosted configuration, or any data.
 - The hierarchy remains date scope, trading day, ticker, trade, and on-demand
   executions. Notes and rules remain in the trade/day experience.
 - Add Trade is a right drawer on desktop and full sheet on mobile. It starts
-  with one compact execution, makes additional executions explicit, and selects
-  Day or Swing once. Trade, Journal and Analyzer tabs are available for saved
+  with one compact execution, makes additional executions explicit, and shows
+  no Day/Swing selector. Trade, Journal and Analyzer tabs are available for saved
   trade detail; Journal separates preset rules from custom rules and a selected
   custom rule requires Followed or Broke.
 
@@ -86,8 +86,8 @@ elements must be removed or corrected together before another review checkpoint:
 - Keep all five metric cards and the compact PWA card, but remove redundant
   metric captions. Add compact selected-period Best trade/Worst trade facts
   immediately below the metrics.
-- The Add drawer must have one shared Day/Swing classification selector, one
-  Eastern-time note, and one compact execution-row workflow—not separate views.
+- The Add drawer must have one Eastern-time note and one compact execution-row
+  workflow—not separate Day/Swing views.
 - Replace the locally invented saved-trade Journal/Analyzer messaging with the
   authoritative Trade Explorer editor/drawer content and its existing save
   path. Keep Analyzer lazy and retain opaque manual edit/delete refs.
@@ -108,10 +108,10 @@ dashboard period controls. It keeps server-owned newest-first pagination and
 Load more. Best/Worst summaries remain compact; the PWA card remains small;
 mobile remains a compact summary with no horizontal table scrolling.
 
-The drawer uses one ticker and one Day/Swing classification for the trade. That
-classification is stored with the submission only: it does not alter timezone,
-screen, heading, instructions, or workflow. The drawer begins with exactly one
-content-sized execution row and explicit Add execution/Remove controls. It
+The drawer uses one ticker. Day/Swing selection is not shown in Workspace;
+entries use the established Day-trade submission path and the shared Eastern
+Time workflow. The drawer begins with exactly one content-sized execution row
+and explicit Add execution/Remove controls. It
 retains the Eastern Time and Trade Analyzer timing guidance, opens directly to
 Trade/Journal/Analyzer tabs, and reuses the Trade Explorer review editor and
 text without a redundant Journal card or review subtitle.

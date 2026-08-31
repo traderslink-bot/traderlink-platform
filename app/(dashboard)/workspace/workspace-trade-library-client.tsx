@@ -65,7 +65,6 @@ function ExecutionDisclosure({ row }: Readonly<{ row: WorkspaceTradeLibraryRow }
 function AddTradeDrawer({ accountCurrency, accountTimezone, expectedAccountSelectionRef, offlineScopeRef, onClose, open }: Readonly<{ accountCurrency: string; accountTimezone: string; expectedAccountSelectionRef: string; offlineScopeRef: string; onClose: () => void; open: boolean }>) {
   const today = new Intl.DateTimeFormat("en-CA", { day: "2-digit", month: "2-digit", timeZone: accountTimezone, year: "numeric" }).format(new Date()).replace(/\//gu, "-");
   const makeRow = (id: number) => ({ date: today, fees: "", id, price: "", quantity: "", side: "buy" as const, time: "" });
-  const [classification, setClassification] = useState<"day" | "swing">("day");
   const [symbol, setSymbol] = useState("");
   const [rows, setRows] = useState(() => [makeRow(1)]);
   const [saving, setSaving] = useState(false);
@@ -76,7 +75,7 @@ function AddTradeDrawer({ accountCurrency, accountTimezone, expectedAccountSelec
     const entries = rows.map((row): JournalManualTradeEntry => Object.freeze({ clientRowRef: `workspace-${row.id}`, feesDecimal: row.fees.trim() || null, localDate: row.date, localTime: `${row.time}:00`, normalizedSymbol: symbol.trim().toUpperCase(), priceDecimal: row.price, quantityDecimal: row.quantity, side: row.side, sourceTimezone: "America/New_York", tradeCurrency: accountCurrency }));
     setSaving(true); setError(null);
     try {
-      const submission = Object.freeze({ entries, expectedAccountSelectionRef, idempotencyKey: crypto.randomUUID(), tracker: classification });
+      const submission = Object.freeze({ entries, expectedAccountSelectionRef, idempotencyKey: crypto.randomUUID(), tracker: "day" as const });
       if (!navigator.onLine) await queueManualTradeSubmission({ offlineScopeRef, submission }); else await submitManualTradeOnline(submission);
       onClose();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "The trade could not be saved. Your entries are still here."); } finally { setSaving(false); }
@@ -88,13 +87,7 @@ function AddTradeDrawer({ accountCurrency, accountTimezone, expectedAccountSelec
         <Button onClick={onClose}>Close</Button>
       </Stack>
       <Stack spacing={1.25} sx={{ overflowY: "auto", p: 2 }}>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-          <TextField label="Ticker" onChange={(event) => setSymbol(event.target.value.toUpperCase())} size="small" value={symbol} />
-          <TextField label="Trade classification" onChange={(event) => setClassification(event.target.value as "day" | "swing")} select size="small" value={classification}>
-            <MenuItem value="day">Day</MenuItem>
-            <MenuItem value="swing">Swing</MenuItem>
-          </TextField>
-        </Stack>
+        <TextField label="Ticker" onChange={(event) => setSymbol(event.target.value.toUpperCase())} size="small" sx={{ alignSelf: "flex-start", width: { xs: "100%", sm: 180 } }} value={symbol} />
         <Typography color="text.secondary" variant="body2">Times use Eastern Time.</Typography>
         <Typography color="text.secondary" variant="body2">Entering the correct execution time keeps your trades in order. Trade Analyzer uses 1-minute candles, so you can enter the time from the matching chart candle when you do not have the broker timestamp.</Typography>
         {rows.map((row, index) => <Box key={row.id} sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2, p: 1.25 }}>

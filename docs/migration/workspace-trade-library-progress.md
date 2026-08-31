@@ -193,6 +193,13 @@
   grid. Entry values, add/remove behavior, Eastern Time guidance, validation,
   manual submission, and account scope remain unchanged.
 
+## 2026-08-31 — Owner drawer simplification
+
+- Removed the Day/Swing selector from Workspace Add trade. The drawer now
+  presents only the ticker and compact execution entry; it uses the established
+  Day-trade submission path with its shared Eastern Time workflow. No account,
+  execution, deletion, or analysis contract changed.
+
 ## 2026-08-30 — Workspace Journal navigation correction
 
 - Added an optional Trade Explorer review-editor presentation flag so the
