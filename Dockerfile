@@ -1,6 +1,5 @@
 FROM node:24-bookworm-slim AS base
 
-ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
 FROM base AS dependencies
@@ -10,24 +9,11 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
-FROM base AS builder
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY . .
-RUN npm run build
-
-FROM base AS runtime
+FROM base AS initializer
 ENV NODE_ENV=production
-ENV HOSTNAME=0.0.0.0
-ENV PORT=3000
 
-RUN groupadd --system --gid 1001 nodejs \
-  && useradd --system --uid 1001 --gid nodejs nextjs
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY package.json package-lock.json tsconfig.json ./
+COPY src ./src
 
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-EXPOSE 3000
-
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "set -eu; database_path=${TRADERLINK_PLATFORM_DB_PATH:-}; if [ \"${RAILWAY_VOLUME_MOUNT_PATH:-}\" != \"/data\" ] || [ \"$database_path\" != \"/data/traderlink-platform.sqlite\" ]; then echo '{\"code\":\"TRADERLINK_STAGING_INITIALIZER_DATABASE_PATH_INVALID\"}' >&2; exit 64; fi; for existing_path in \"$database_path\" \"$database_path-wal\" \"$database_path-shm\" \"$database_path-journal\"; do if [ -e \"$existing_path\" ] || [ -L \"$existing_path\" ]; then echo '{\"code\":\"TRADERLINK_STAGING_INITIALIZER_DATABASE_ALREADY_EXISTS\"}' >&2; exit 65; fi; done; if [ ! -d /data ]; then echo '{\"code\":\"TRADERLINK_STAGING_INITIALIZER_VOLUME_NOT_EMPTY\"}' >&2; exit 66; fi; for volume_entry in /data/* /data/.[!.]* /data/..?*; do if [ ! -e \"$volume_entry\" ] && [ ! -L \"$volume_entry\" ]; then continue; fi; if [ \"$volume_entry\" = \"/data/lost+found\" ] && [ -d \"$volume_entry\" ] && [ ! -L \"$volume_entry\" ]; then lost_found_entry=$(find \"$volume_entry\" -mindepth 1 -maxdepth 1 -print -quit) || { echo '{\"code\":\"TRADERLINK_STAGING_INITIALIZER_VOLUME_NOT_EMPTY\"}' >&2; exit 66; }; if [ -z \"$lost_found_entry\" ]; then continue; fi; fi; echo '{\"code\":\"TRADERLINK_STAGING_INITIALIZER_VOLUME_NOT_EMPTY\"}' >&2; exit 66; done; umask 077; mkdir /data/evidence-vault /data/upload-staging /data/backups; exec /app/node_modules/.bin/tsx src/scripts/initialize-traderlink-platform-database.ts --initialize-empty"]
