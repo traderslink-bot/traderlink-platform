@@ -116,6 +116,16 @@ retains the Eastern Time and Trade Analyzer timing guidance, opens directly to
 Trade/Journal/Analyzer tabs, and reuses the Trade Explorer review editor and
 text without a redundant Journal card or review subtitle.
 
+Workspace opens the Journal editor for one selected trade only. Its inherited
+Previous/Next controls and page-position label are hidden there; Trade Explorer
+retains its own navigation controls unchanged. The Workspace version also hides
+the inherited tag-selection count; the tag selection limit still applies.
+
+The execution form is a compact outlined execution block, not a compressed
+single horizontal strip. Each block has its numbered execution heading, a
+visible Remove action after a second execution exists, and two short rows of
+content-sized fields: Date, Time, Buy/Sell, Shares, Price, and Fee.
+
 ## Calendar review boundary
 
 The Workspace request does not authorize a new Calendar data reader or a

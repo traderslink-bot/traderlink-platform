@@ -184,3 +184,19 @@
   execution timezone or the shared Eastern Time workflow. No server contract,
   migration, account scope, deletion predicate, data, staging, or release
   behavior changed.
+
+## 2026-08-30 — Drawer execution-form visual correction
+
+- Replaced the cramped one-line execution controls with a compact outlined
+  execution block. Each entry has a numbered heading, visible Remove action
+  once there is more than one entry, and a calm two-row content-sized field
+  grid. Entry values, add/remove behavior, Eastern Time guidance, validation,
+  manual submission, and account scope remain unchanged.
+
+## 2026-08-30 — Workspace Journal navigation correction
+
+- Added an optional Trade Explorer review-editor presentation flag so the
+  Workspace Journal drawer hides inherited Previous/Next and page-position
+  controls and tag-selection count for its single selected trade. Trade Explorer
+  retains its normal multi-trade navigation; review data, notes, tags, rules,
+  and save behavior are unchanged.

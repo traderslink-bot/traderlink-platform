@@ -127,6 +127,8 @@ export function TradeExplorerReviewEditor({
   onSelectTrade,
   open,
   selectedRoundTripId,
+  showTagSelectionCount = true,
+  showTradeNavigation = true,
   trades,
 }: Readonly<{
   expectedAccountSelectionRef: string;
@@ -134,6 +136,8 @@ export function TradeExplorerReviewEditor({
   onSelectTrade: (roundTripId: string) => void;
   open: boolean;
   selectedRoundTripId: string | null;
+  showTagSelectionCount?: boolean;
+  showTradeNavigation?: boolean;
   trades: readonly TradeExplorerReviewTarget[];
 }>) {
   const [model, setModel] = useState<TradeExplorerReviewModel | null>(null);
@@ -356,7 +360,7 @@ export function TradeExplorerReviewEditor({
                 Close
               </Button>
             </Stack>
-            <Box
+            {showTradeNavigation ? <Box
               sx={{
                 display: "grid",
                 gap: 1,
@@ -395,7 +399,7 @@ export function TradeExplorerReviewEditor({
               >
                 Next
               </Button>
-            </Box>
+            </Box> : null}
           </Box>
 
           <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: { xs: 2, sm: 2.5 }, py: 2 }}>
@@ -463,7 +467,7 @@ export function TradeExplorerReviewEditor({
                       <TextField
                         {...params}
                         error={draft.selectedTagIds.length > TAG_LIMIT}
-                        helperText={`${draft.selectedTagIds.length} of ${TAG_LIMIT} selected`}
+                        helperText={showTagSelectionCount ? `${draft.selectedTagIds.length} of ${TAG_LIMIT} selected` : undefined}
                         label="Trade tags"
                         placeholder="Search tags"
                       />
