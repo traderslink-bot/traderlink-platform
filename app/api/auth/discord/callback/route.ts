@@ -216,7 +216,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return response;
     }
 
-    const response = authRedirect(request, "/workspace", "connected");
+    const response = authRedirect(request, returnTo, "connected");
 
     clearDiscordOAuthCookies(response, request);
     setPlatformAuthCookie(
