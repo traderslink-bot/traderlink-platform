@@ -317,6 +317,39 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
   return result;
 }
 
+function toWorkspaceTradeLibraryRows(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  rows: readonly ProjectionRow[],
+): readonly WorkspaceTradeLibraryRow[] {
+  const editable = editableExecutions(database, scope, rows);
+  const facts = executionFacts(database, scope, rows);
+  return Object.freeze(rows.map((row) => Object.freeze({
+    buyQuantityDecimal: facts.get(row.round_trip_version_id)?.buyQuantityDecimal ?? "0",
+    date: row.activity_local_date,
+    direction: row.direction,
+    editableExecutions: editable.get(row.round_trip_id) ?? Object.freeze([]),
+    entryDate: row.entry_local_date,
+    entryPriceDecimal: facts.get(row.round_trip_version_id)?.entryPriceDecimal ?? null,
+    entryTime: row.entry_local_time,
+    executionCount: row.unique_execution_count,
+    exitDate: row.exit_local_date,
+    exitPriceDecimal: facts.get(row.round_trip_version_id)?.exitPriceDecimal ?? null,
+    exitTime: row.exit_local_time,
+    entryValueDecimal: row.entry_notional_decimal,
+    gainLossDecimal: row.gross_pnl_decimal,
+    holdDurationSeconds: row.hold_duration_seconds,
+    positionDecimal: facts.get(row.round_trip_version_id)?.positionDecimal ?? "0",
+    roundTripId: row.round_trip_id,
+    status: row.projection_state === "legitimate_open"
+      ? row.trade_style === "swing" ? "Open swing" : "Open"
+      : row.trade_style === "swing" ? "Closed swing" : "Closed",
+    symbol: row.symbol,
+    tradeStyle: row.trade_style,
+    tradeCurrency: row.trade_currency,
+  })));
+}
+
 export function readWorkspaceTradeLibrary(
   database: Database.Database,
   scope: WorkspaceAccessScope,
@@ -403,36 +436,43 @@ LEFT JOIN journal_trade_style_plans style ON style.workspace_id = projection.wor
   version.trade_currency, style.trade_style, projection.unique_execution_count
 ${base} WHERE ${where}${keyset} ORDER BY ${order} LIMIT ?`).all(...pageParameters) as readonly ProjectionRow[];
   const selected = rows.slice(0, PAGE_SIZE);
-  const editable = editableExecutions(database, scope, selected);
-  const facts = executionFacts(database, scope, selected);
   return Object.freeze({
     continuationCursor: rows.length > PAGE_SIZE ? encodeCursor(selected.at(-1)!, revision.projection_revision_id, digest, query.sort) : null,
     projectionState: "ready",
     query,
-    rows: Object.freeze(selected.map((row) => Object.freeze({
-      buyQuantityDecimal: facts.get(row.round_trip_version_id)?.buyQuantityDecimal ?? "0",
-      date: row.activity_local_date,
-      direction: row.direction,
-      editableExecutions: editable.get(row.round_trip_id) ?? Object.freeze([]),
-      entryDate: row.entry_local_date,
-      entryPriceDecimal: facts.get(row.round_trip_version_id)?.entryPriceDecimal ?? null,
-      entryTime: row.entry_local_time,
-      executionCount: row.unique_execution_count,
-      exitDate: row.exit_local_date,
-      exitPriceDecimal: facts.get(row.round_trip_version_id)?.exitPriceDecimal ?? null,
-      exitTime: row.exit_local_time,
-      entryValueDecimal: row.entry_notional_decimal,
-      gainLossDecimal: row.gross_pnl_decimal,
-      holdDurationSeconds: row.hold_duration_seconds,
-      positionDecimal: facts.get(row.round_trip_version_id)?.positionDecimal ?? "0",
-      roundTripId: row.round_trip_id,
-      status: row.projection_state === "legitimate_open"
-        ? row.trade_style === "swing" ? "Open swing" : "Open"
-        : row.trade_style === "swing" ? "Closed swing" : "Closed",
-      symbol: row.symbol,
-      tradeStyle: row.trade_style,
-      tradeCurrency: row.trade_currency,
-    }))),
+    rows: toWorkspaceTradeLibraryRows(database, scope, selected),
     totalRowCount,
   });
+}
+
+export function readWorkspaceTradeLibrarySavedTrade(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  target: Readonly<{ roundTripId: string; roundTripVersionId: string }>,
+): WorkspaceTradeLibraryRow | null {
+  const accountId = activeAccountId(scope);
+  const rows = database.prepare(`SELECT projection.activity_at_utc, projection.activity_local_date,
+  projection.closed_at_utc, version.direction, projection.entry_local_date, projection.entry_local_time,
+  projection.entry_notional_decimal, projection.entered_quantity_decimal, projection.entry_price_decimal, projection.entry_price_sort_key, projection.entry_value_sort_key, projection.exit_local_date,
+  projection.exit_local_time, projection.exit_notional_decimal, projection.exit_quantity_decimal,
+  projection.exit_price_decimal, projection.exit_price_sort_key, projection.maximum_position_quantity_decimal, projection.gross_pnl_decimal, projection.gross_pnl_sort_key, projection.net_pnl_decimal, projection.net_pnl_sort_key, projection.hold_duration_seconds, projection.hold_duration_sort_key,
+  projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
+  projection.projection_state, projection.round_trip_id, projection.round_trip_version_id, instrument.normalized_symbol AS symbol,
+  version.trade_currency, style.trade_style, projection.unique_execution_count
+FROM journal_workspace_trade_library_projections projection
+JOIN journal_round_trip_versions version ON version.workspace_id = projection.workspace_id
+ AND version.account_id = projection.account_id AND version.round_trip_version_id = projection.round_trip_version_id
+JOIN journal_instruments instrument ON instrument.workspace_id = version.workspace_id
+ AND instrument.instrument_id = version.instrument_id
+LEFT JOIN journal_trade_style_plans style ON style.workspace_id = projection.workspace_id
+ AND style.account_id = projection.account_id AND style.round_trip_id = projection.round_trip_id
+WHERE projection.workspace_id = ? AND projection.account_id = ?
+  AND projection.round_trip_id = ? AND projection.round_trip_version_id = ?
+LIMIT 1`).all(
+    scope.workspaceId,
+    accountId,
+    target.roundTripId,
+    target.roundTripVersionId,
+  ) as readonly ProjectionRow[];
+  return toWorkspaceTradeLibraryRows(database, scope, rows)[0] ?? null;
 }

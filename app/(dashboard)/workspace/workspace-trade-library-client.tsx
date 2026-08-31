@@ -12,7 +12,7 @@ import { TradeExplorerReviewEditor } from "../analytics/trade-explorer/trade-rev
 import { financialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { formatJournalAnalyticsDecimal, formatJournalAnalyticsDuration, formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { JournalManualTradeEntry } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
-import { ManualTradeNeedsReviewError, queueManualTradeSubmission, submitManualTradeOnline } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
+import { ManualTradeNeedsReviewError, queueManualTradeSubmission, submitManualTradeOnline, type ManualTradeSubmitResult } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
 import { loadWorkspaceTradeLibraryPage } from "./workspace-trade-library-actions";
@@ -73,11 +73,21 @@ function deleteFailureMessage(code: unknown): string {
   return "The execution could not be deleted. Refresh the page and try again.";
 }
 
+function isWorkspaceTradeLibraryRow(value: unknown): value is WorkspaceTradeLibraryRow {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Partial<WorkspaceTradeLibraryRow>;
+  return typeof row.roundTripId === "string" &&
+    typeof row.symbol === "string" &&
+    typeof row.tradeCurrency === "string" &&
+    (row.direction === "long" || row.direction === "short") &&
+    Array.isArray(row.editableExecutions);
+}
+
 function ActionButton({ children, desktopOnly = false, label, onClick }: Readonly<{ children: ReactNode; desktopOnly?: boolean; label: string; onClick: () => void }>) {
   return <Tooltip title={label}><IconButton aria-label={label} onClick={(event) => { event.stopPropagation(); onClick(); }} size="small" sx={{ color: "text.primary", display: desktopOnly ? { xs: "none", md: "inline-flex" } : "inline-flex" }}>{children}</IconButton></Tooltip>;
 }
 
-function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, expectedAccountSelectionRef, fixedSymbol, initialWorkspaceStyle = "day_trade", offlineScopeRef, onClose, onSaved }: Readonly<{ accountCurrency: string; accountTimezone: string; embedded?: boolean; expectedAccountSelectionRef: string; fixedSymbol?: string; initialWorkspaceStyle?: "day_trade" | "swing"; offlineScopeRef: string; onClose: () => void; onSaved?: () => void }>) {
+function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, expectedAccountSelectionRef, fixedSymbol, initialWorkspaceStyle = "day_trade", offlineScopeRef, onClose, onSaved }: Readonly<{ accountCurrency: string; accountTimezone: string; embedded?: boolean; expectedAccountSelectionRef: string; fixedSymbol?: string; initialWorkspaceStyle?: "day_trade" | "swing"; offlineScopeRef: string; onClose: () => void; onSaved?: (result: ManualTradeSubmitResult | null) => void }>) {
   const today = workspaceDateInTimezone(accountTimezone);
   const makeRow = (id: number) => ({ date: today, fees: "", id, price: "", quantity: "", side: "buy" as const, time: "" });
   const [symbol, setSymbol] = useState(fixedSymbol ?? "");
@@ -93,9 +103,12 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
     setSaving(true); setError(null);
     try {
       const submission = Object.freeze({ entries, expectedAccountSelectionRef, idempotencyKey: idempotencyKey.current ?? crypto.randomUUID(), tracker: "workspace" as const, workspaceStyle }); idempotencyKey.current = submission.idempotencyKey;
-      if (!navigator.onLine) await queueManualTradeSubmission({ offlineScopeRef, submission }); else await submitManualTradeOnline(submission);
-      onSaved?.();
-      onClose();
+      if (!navigator.onLine) {
+        await queueManualTradeSubmission({ offlineScopeRef, submission });
+        onSaved?.(null);
+      } else {
+        onSaved?.(await submitManualTradeOnline(submission));
+      }
     } catch (cause) { setError(cause instanceof ManualTradeNeedsReviewError ? manualTradePreviewMessage(cause.code) : cause instanceof Error ? cause.message : "The trade could not be saved. Your entries are still here."); } finally { setSaving(false); }
   };
   return <Stack sx={{ height: "100%" }}>
@@ -221,18 +234,41 @@ function WorkspaceExecutionEditForm({
   </Box>;
 }
 
-function SavedTradePanel({ accountCurrency, accountTimezone, currentAccountStillMatches, expectedAccountSelectionRef, offlineScopeRef, onClose, row, startingTab }: Readonly<{ accountCurrency: string; accountTimezone: string; currentAccountStillMatches: () => Promise<boolean>; expectedAccountSelectionRef: string; offlineScopeRef: string; onClose: () => void; row: WorkspaceTradeLibraryRow | null; startingTab: number }>) {
-  const router = useRouter(); const [tab, setTab] = useState(startingTab); const [addingExecution, setAddingExecution] = useState(false);
-  useEffect(() => setTab(startingTab), [row?.roundTripId, startingTab]);
+function SavedTradePanel({ accountCurrency, accountTimezone, currentAccountStillMatches, expectedAccountSelectionRef, offlineScopeRef, onClose, onTabChange, row, tab }: Readonly<{ accountCurrency: string; accountTimezone: string; currentAccountStillMatches: () => Promise<boolean>; expectedAccountSelectionRef: string; offlineScopeRef: string; onClose: () => void; onTabChange: (nextTab: number) => void; row: WorkspaceTradeLibraryRow | null; tab: number }>) {
+  const router = useRouter(); const [addingExecution, setAddingExecution] = useState(false);
   if (!row) return null;
   const targets = [{ closeLocalDate: row.exitDate, closedAtUtc: null, direction: row.direction, displayedSymbol: row.symbol, roundTripId: row.roundTripId }];
-  return <Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography component="h2" variant="h6">{row.symbol}</Typography><Button onClick={onClose}>Close</Button></Stack><Tabs onChange={(_event, next) => setTab(next)} value={tab} variant="fullWidth"><Tab label="Trade" /><Tab label="Journal" /><Tab label="Analyzer" /></Tabs></Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: tab === 1 ? 0 : 2 }}>{tab === 0 ? <Stack spacing={1}><Typography color={financialOutcomeColor(row.gainLossDecimal)} variant="h5">{tradeMoney(row)}</Typography>{row.editableExecutions.map((execution) => <WorkspaceExecutionEditForm currentAccountStillMatches={currentAccountStillMatches} execution={execution} expectedAccountSelectionRef={expectedAccountSelectionRef} key={execution.editRef} symbol={row.symbol} />)}{addingExecution ? <AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} embedded expectedAccountSelectionRef={expectedAccountSelectionRef} fixedSymbol={row.symbol} initialWorkspaceStyle={row.tradeStyle === "swing" ? "swing" : "day_trade"} offlineScopeRef={offlineScopeRef} onClose={() => setAddingExecution(false)} onSaved={() => { router.refresh(); onClose(); }} /> : <Button onClick={() => setAddingExecution(true)} sx={{ alignSelf: "flex-start" }}>Add execution</Button>}</Stack> : null}{tab === 1 ? <TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setTab(0)} onSelectTrade={() => undefined} open selectedRoundTripId={row.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={targets} /> : null}{tab === 2 ? <Button onClick={() => router.push("/analytics/trade-analyzer/day/trades")} variant="outlined">Open Trade Analyzer</Button> : null}</Box></Stack>;
+  return <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: tab === 1 ? 0 : 2 }}>{tab === 0 ? <Stack spacing={1}><Typography color={financialOutcomeColor(row.gainLossDecimal)} variant="h5">{tradeMoney(row)}</Typography>{row.editableExecutions.map((execution) => <WorkspaceExecutionEditForm currentAccountStillMatches={currentAccountStillMatches} execution={execution} expectedAccountSelectionRef={expectedAccountSelectionRef} key={execution.editRef} symbol={row.symbol} />)}{addingExecution ? <AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} embedded expectedAccountSelectionRef={expectedAccountSelectionRef} fixedSymbol={row.symbol} initialWorkspaceStyle={row.tradeStyle === "swing" ? "swing" : "day_trade"} offlineScopeRef={offlineScopeRef} onClose={() => setAddingExecution(false)} onSaved={() => { router.refresh(); onClose(); }} /> : <Button onClick={() => setAddingExecution(true)} sx={{ alignSelf: "flex-start" }}>Add execution</Button>}</Stack> : null}{tab === 1 ? <TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => onTabChange(0)} onSelectTrade={() => undefined} open selectedRoundTripId={row.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={targets} /> : null}{tab === 2 ? <Button onClick={() => router.push("/analytics/trade-analyzer/day/trades")} variant="outlined">Open Trade Analyzer</Button> : null}</Box>;
 }
 
 export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen, currentAccountStillMatches, detail, expectedAccountSelectionRef, offlineScopeRef, onAddTradeSaved, onClose, startingTab }: Readonly<{ accountCurrency: string; accountTimezone: string; addOpen: boolean; currentAccountStillMatches: () => Promise<boolean>; detail: WorkspaceTradeLibraryRow | null; expectedAccountSelectionRef: string; offlineScopeRef: string; onAddTradeSaved?: () => void; onClose: () => void; startingTab: number }>) {
   const open = addOpen || detail !== null;
+  const router = useRouter(); const [savedTrade, setSavedTrade] = useState<WorkspaceTradeLibraryRow | null>(null); const [tab, setTab] = useState(startingTab);
+  useEffect(() => { setSavedTrade(null); setTab(addOpen ? 0 : startingTab); }, [addOpen, detail?.roundTripId, startingTab]);
   if (!open) return null;
-  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}>{addOpen ? <AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} onSaved={onAddTradeSaved} /> : <SavedTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} currentAccountStillMatches={currentAccountStillMatches} expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} row={detail} startingTab={startingTab} />}</Drawer>;
+  const activeTrade = savedTrade ?? detail;
+  const isNewTrade = addOpen && savedTrade === null;
+  const handleNewTradeSaved = (result: ManualTradeSubmitResult | null) => {
+    router.refresh();
+    if (result?.affectedTradeRefs.length === 1 && isWorkspaceTradeLibraryRow(result.savedTrade)) {
+      setSavedTrade(result.savedTrade);
+      setTab(0);
+      return;
+    }
+    if (result && result.affectedTradeRefs.length > 1) {
+      onClose();
+      router.push("/workspace?tradeSave=multiple");
+      return;
+    }
+    if (result) {
+      onClose();
+      router.push("/workspace");
+      return;
+    }
+    onAddTradeSaved?.();
+    onClose();
+  };
+  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}><Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography component="h2" variant="h6">{isNewTrade ? "Add trade" : activeTrade?.symbol}</Typography><Button onClick={onClose}>Close</Button></Stack><Tabs onChange={(_event, next) => setTab(next)} value={tab} variant="fullWidth"><Tab label="Trade" /><Tab disabled={isNewTrade} label="Journal" /><Tab disabled={isNewTrade} label="Analyzer" /></Tabs></Box>{isNewTrade ? <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}><AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} embedded expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} onSaved={handleNewTradeSaved} /></Box> : <SavedTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} currentAccountStillMatches={currentAccountStillMatches} expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} onTabChange={setTab} row={activeTrade} tab={tab} />}</Stack></Drawer>;
 }
 
 export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTradeOpen, customEndDate, customStartDate, expectedAccountSelectionRef, offlineScopeRef, onAddTradeClose, periodEndDate, periodStartDate, trades }: Readonly<{ accountCurrency: string; accountTimezone: string; addTradeOpen: boolean; customEndDate: string | null; customStartDate: string | null; expectedAccountSelectionRef: string; offlineScopeRef: string; onAddTradeClose: () => void; periodEndDate: string | null; periodStartDate: string | null; trades: WorkspaceTradeLibraryModel }>) {

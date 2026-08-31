@@ -38,6 +38,10 @@ import { JournalManualTradePreviewService } from "./journal-manual-trade-preview
 export type JournalManualTradeCommitResult = JournalImportCommitResult & Readonly<{
   affectedDates: readonly string[];
   affectedPositionRefs: readonly string[];
+  affectedTradeTargets: readonly Readonly<{
+    roundTripId: string;
+    roundTripVersionId: string;
+  }>[];
   analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null;
   relatedDecisionIds: readonly string[];
   rebuilds: readonly JournalChainRebuildResult[];
@@ -212,8 +216,12 @@ export class JournalManualTradeCommandService {
           committed.executionIds[index]!,
         ]),
       );
-      const resolveAffectedPositionRefs = (): readonly string[] => Object.freeze([
-        ...new Set(preview.groups.map((group) => {
+      const resolveAffectedTradeTargets = () => {
+        const targets = new Map<string, Readonly<{
+          roundTripId: string;
+          roundTripVersionId: string;
+        }>>();
+        for (const group of preview.groups) {
           const allocations: JournalManualAllocationTarget[] = group.allocations.map(
             (allocation) => Object.freeze({
               executionId: executionIdByClientRow.get(allocation.clientRowRef)!,
@@ -225,14 +233,21 @@ export class JournalManualTradeCommandService {
             accountScope,
             allocations,
           );
-          return this.previews.positionRefForTarget(scope, target);
-        })),
-      ].sort());
+          targets.set(`${target.roundTripId}\u001f${target.roundTripVersionId}`, Object.freeze(target));
+        }
+        return Object.freeze([...targets.values()].sort((left, right) =>
+          left.roundTripId.localeCompare(right.roundTripId) ||
+          left.roundTripVersionId.localeCompare(right.roundTripVersionId)));
+      };
       if (committed.status === "already_imported") {
+        const affectedTradeTargets = resolveAffectedTradeTargets();
+        const affectedPositionRefs = Object.freeze(affectedTradeTargets.map((target) =>
+          this.previews.positionRefForTarget(scope, target)).sort());
         return Object.freeze({
           ...committed,
           affectedDates,
-          affectedPositionRefs: resolveAffectedPositionRefs(),
+          affectedPositionRefs,
+          affectedTradeTargets,
           relatedDecisionIds: Object.freeze([]),
           rebuilds: Object.freeze([]),
           styledTradeCount: preview.groups.length,
@@ -346,10 +361,14 @@ export class JournalManualTradeCommandService {
           timestamp,
         });
       }
+      const affectedTradeTargets = resolveAffectedTradeTargets();
+      const affectedPositionRefs = Object.freeze(affectedTradeTargets.map((target) =>
+        this.previews.positionRefForTarget(scope, target)).sort());
       return Object.freeze({
         ...committed,
         affectedDates,
-        affectedPositionRefs: resolveAffectedPositionRefs(),
+        affectedPositionRefs,
+        affectedTradeTargets,
         relatedDecisionIds: Object.freeze([
           ...new Set([...sourceDecisions, ...chainDecisions]
             .map((decision: JournalDataDecisionRecord) => decision.decisionId)),

@@ -1,4 +1,5 @@
 import { withWritableJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { parseJournalManualTradeCommitRequest } from "@/src/modules/journal/server/manual-trades/journal-manual-trade-input";
 import { recordJournalManualEntryFailure } from "@/src/modules/journal/server/manual-trades/journal-manual-entry-failure-service";
 import type { JournalManualTradeCommitRequest } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
@@ -12,6 +13,7 @@ import {
   isTraderLinkPlatformError,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { readWorkspaceTradeLibrarySavedTrade } from "@/app/(dashboard)/workspace/workspace-trade-library";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,13 +36,24 @@ export async function POST(request: Request): Promise<Response> {
     );
     const result = withWritableJournalIntegrityRuntime(requestScope, (journal) =>
       journal.manualTrades.commit(requestScope, accountSelectionRef, parsed));
+    const affectedTradeRefs = result.affectedPositionRefs;
+    const savedTrade = result.affectedTradeTargets.length === 1
+      ? withReadonlyPlatformDatabase({}, (database) =>
+        readWorkspaceTradeLibrarySavedTrade(
+          database,
+          requestScope,
+          result.affectedTradeTargets[0]!,
+        ))
+      : null;
     return Response.json({
       status: "ready",
       result: {
         acceptedExecutionCount: result.executionIds.length,
         affectedDates: result.affectedDates,
+        affectedTradeRefs,
         analyzerQueueOutcome: result.analyzerQueueOutcome,
         pendingDecisionCount: result.relatedDecisionIds.length,
+        savedTrade,
       },
     });
   } catch (error) {

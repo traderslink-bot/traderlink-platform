@@ -73,8 +73,10 @@ export type ManualTradeOutboxRecord = Readonly<{
 export type ManualTradeSubmitResult = Readonly<{
   acceptedExecutionCount: number;
   affectedDates: readonly string[];
+  affectedTradeRefs: readonly string[];
   analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null;
   pendingDecisionCount: number;
+  savedTrade: unknown | null;
 }>;
 
 type PreviewResponse = Readonly<{
@@ -89,8 +91,10 @@ type CommitResponse = Readonly<{
   result?: Readonly<{
     acceptedExecutionCount?: number;
     affectedDates?: readonly string[];
+    affectedTradeRefs?: readonly string[];
     analyzerQueueOutcome?: DailyTradeAnalyzerQueueOutcome | null;
     pendingDecisionCount?: number;
+    savedTrade?: unknown | null;
   }>;
 }>;
 
@@ -281,8 +285,10 @@ export async function submitManualTradeOnline(
       return Object.freeze({
         acceptedExecutionCount: statusBody.result.acceptedExecutionCount,
         affectedDates: statusBody.result.affectedDates,
+        affectedTradeRefs: Object.freeze([]),
         analyzerQueueOutcome: null,
         pendingDecisionCount: statusBody.result.pendingDecisionCount,
+        savedTrade: null,
       });
     }
   }
@@ -360,8 +366,10 @@ export async function submitManualTradeOnline(
     acceptedExecutionCount:
       commitBody.result.acceptedExecutionCount ?? submission.entries.length,
     affectedDates: Object.freeze(commitBody.result.affectedDates ?? []),
+    affectedTradeRefs: Object.freeze(commitBody.result.affectedTradeRefs ?? []),
     analyzerQueueOutcome: commitBody.result.analyzerQueueOutcome ?? null,
     pendingDecisionCount: commitBody.result.pendingDecisionCount ?? 0,
+    savedTrade: commitBody.result.savedTrade ?? null,
   });
 }
 

@@ -243,6 +243,22 @@
 - No server, tests, install, build, migration, staging, deployment, data
   action, push, or release action ran for this local repair.
 
+## 2026-08-31 — Shared drawer and post-save target correction
+
+- Owner approved one shared Workspace Trade/Journal/Analyzer drawer. Unsaved
+  entry remains Trade-only: Journal and Analyzer are visible but disabled, with
+  no draft storage or unavailable-state copy.
+- The Workspace commit path returns only existing opaque affected-trade refs.
+  When one current affected target exists, it also returns one bounded
+  server-rendered Workspace row resolved under the same authenticated account
+  and current round-trip version. The browser does not choose a trade from list
+  order. Zero or multiple targets refresh and close instead.
+- A multiple-target outcome additionally shows the owner-approved Workspace
+  message and existing `Open Day Trade Tracker` link only; it does not alter
+  the single-target drawer path or add a draft workflow.
+- No server, tests, install, build, migration, staging, deployment, data
+  action, push, or release action ran for this local correction.
+
 ## Outstanding boundaries
 
 - Saved-trade Journal/Analyzer editing remains guarded follow-up work. Delete

@@ -2,7 +2,7 @@
 
 **Status:** Owner-approved composition in implementation
 
-**Progress record:** [Workspace Trade Library Progress](workspace-trade-library-progress.md)
+**Progress records:** [Workspace Trade Library Progress](workspace-trade-library-progress.md) and [Shared Drawer Correction Progress](workspace-trade-library-shared-drawer-progress.md)
 
 ## Scope
 

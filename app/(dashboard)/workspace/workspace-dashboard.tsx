@@ -1,10 +1,12 @@
 "use client";
 
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 
 import {
@@ -113,6 +115,7 @@ export function WorkspaceDashboard({
   const searchParams = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [tagCreationOpen, setTagCreationOpen] = useState(false);
+  const multipleTradeSave = searchParams.get("tradeSave") === "multiple";
   const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
     Boolean(tradeLibraryProps.trades.query.searchTicker) || tradeLibraryProps.trades.query.filter !== "all" ||
     Boolean(tradeLibraryProps.customStartDate) || Boolean(tradeLibraryProps.customEndDate) ||
@@ -151,6 +154,7 @@ export function WorkspaceDashboard({
         {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: { xs: "flex-end", md: "flex-start" } }}><Button onClick={openWorkspaceTradeDrawer} variant="contained">+ Trade</Button><Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button><Button onClick={() => setTagCreationOpen(true)} variant="outlined">+ Tags</Button></Stack> : null}
       </Stack>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
+      {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Link href="/trade-tracker">Open Day Trade Tracker</Link></Alert> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
