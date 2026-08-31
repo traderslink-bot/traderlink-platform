@@ -200,6 +200,16 @@
   Day-trade submission path with its shared Eastern Time workflow. No account,
   execution, deletion, or analysis contract changed.
 
+## 2026-08-31 — Empty Workspace state correction
+
+- Split the absent-projection response into an empty-account state and an
+  unavailable-existing-trades state with one account-scoped `EXISTS` check on
+  current Journal executions. Empty isolated staging and new accounts now say
+  **No trades recorded yet**; the reader does not imply a preparation or
+  backfill job is running. Accounts with current execution facts but no derived
+  projection keep a separate honest unavailable message. No facts are read into
+  the page, materialized, changed, or backfilled by this check.
+
 ## 2026-08-30 — Workspace Journal navigation correction
 
 - Added an optional Trade Explorer review-editor presentation flag so the

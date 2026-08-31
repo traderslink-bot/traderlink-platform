@@ -159,8 +159,11 @@ ref before appending the historical exclusion and rebuilding affected trades.
 No trade-level identifier or browser-created eligibility is accepted.
 
 Until that Coordinator-owned, derived-data-only backfill completes, an account
-without a projection revision renders an empty unavailable list state. It must
-not fall back to materializing full history, silently infer financial values, or
+without a projection revision is distinguished by a bounded current-execution
+existence check: an empty new account says **No trades recorded yet**; an
+account with current execution facts says its existing trades are not available
+in Workspace yet. Neither state claims that a process is running. It must not
+fall back to materializing full history, silently infer financial values, or
 rewrite any Journal fact during an ordinary Workspace read.
 
 ## Staging-only migration maintenance boundary

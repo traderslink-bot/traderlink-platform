@@ -57,7 +57,7 @@ export type WorkspaceTradeLibraryQuery = Readonly<{
 
 export type WorkspaceTradeLibraryModel = Readonly<{
   continuationCursor: string | null;
-  projectionReady: boolean;
+  projectionState: "ready" | "empty" | "unavailable";
   rows: readonly WorkspaceTradeLibraryRow[];
   totalRowCount: number;
 }>;
@@ -92,6 +92,7 @@ type ProjectionRow = Readonly<{
 }>;
 
 type RevisionRow = Readonly<{ projection_revision_id: string }>;
+type CurrentExecutionRow = Readonly<{ has_current_execution: number }>;
 type Cursor = Readonly<{
   activityAtUtc: string;
   netPnlSortKey: string | null;
@@ -238,7 +239,19 @@ export function readWorkspaceTradeLibrary(
   const revision = database.prepare(`SELECT projection_revision_id
 FROM journal_workspace_trade_library_projection_revisions
 WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as RevisionRow | undefined;
-  if (!revision) return Object.freeze({ continuationCursor: null, projectionReady: false, rows: Object.freeze([]), totalRowCount: 0 });
+  if (!revision) {
+    const currentExecutions = database.prepare(`SELECT EXISTS(
+  SELECT 1 FROM journal_executions
+  WHERE workspace_id = ? AND account_id = ?
+    AND current_state IN ('accepted', 'needs_decision')
+) AS has_current_execution`).get(scope.workspaceId, accountId) as CurrentExecutionRow;
+    return Object.freeze({
+      continuationCursor: null,
+      projectionState: currentExecutions.has_current_execution === 0 ? "empty" : "unavailable",
+      rows: Object.freeze([]),
+      totalRowCount: 0,
+    });
+  }
   const digest = queryDigest(query);
   const cursor = query.afterCursor === null ? null : decodeCursor(query.afterCursor, revision.projection_revision_id, digest, query.sort);
   const clauses = ["projection.workspace_id = ?", "projection.account_id = ?"];
@@ -286,7 +299,7 @@ ${base} WHERE ${where}${keyset} ORDER BY ${order} LIMIT ?`).all(...pageParameter
   const editable = editableExecutions(database, scope, selected);
   return Object.freeze({
     continuationCursor: rows.length > PAGE_SIZE ? encodeCursor(selected.at(-1)!, revision.projection_revision_id, digest, query.sort) : null,
-    projectionReady: true,
+    projectionState: "ready",
     rows: Object.freeze(selected.map((row) => Object.freeze({
       date: row.activity_local_date,
       direction: row.direction,
