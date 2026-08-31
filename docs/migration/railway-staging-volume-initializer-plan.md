@@ -42,10 +42,11 @@ context.
 5. Sets private default permissions and creates only `/data/evidence-vault`,
    `/data/upload-staging`, and `/data/backups` before invoking
    `src/scripts/initialize-traderlink-platform-database.ts --initialize-empty`.
-6. After that initializer succeeds, recursively assigns only
-   `/data/traderlink-platform.sqlite`, `/data/evidence-vault`,
-   `/data/upload-staging`, and `/data/backups` to `1001:1001`, so the normal
-   application image can open its own staging storage as `nextjs`.
+6. After that initializer succeeds, assigns the verified `/data` mount root
+   and recursively assigns only `/data/traderlink-platform.sqlite`,
+   `/data/evidence-vault`, `/data/upload-staging`, and `/data/backups` to
+   `1001:1001`, so the normal application image can access its staging storage
+   as `nextjs`.
 7. Exits after that command. Railway must not restart it after success or
    failure.
 
@@ -67,8 +68,9 @@ and authority inputs, requires a regular non-link database and exactly the
 three expected non-link directories, rejects SQLite sidecars, and rejects any
 other top-level entry except an empty direct non-link `lost+found` directory.
 It does not invoke the initializer, migrations, or application code, and does
-not read database content. It only recursively assigns the exact database and
-three directories to `1001:1001`, then exits. Remove the flag after the
+not read database content. It assigns the verified `/data` mount root and
+recursively assigns the exact database and three directories to `1001:1001`,
+then exits. Remove the flag after the
 one-time helper run; it is forbidden on ordinary application services.
 
 ## Required one-time Railway setup

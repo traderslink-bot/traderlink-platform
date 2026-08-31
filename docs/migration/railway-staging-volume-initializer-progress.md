@@ -68,3 +68,15 @@ authorized, with no hosted action authorized
   non-exact mount/path, then performs only the ownership repair.
 - Default behavior is unchanged: without that exact flag, the helper continues
   to require a new empty volume and runs the existing explicit initializer.
+
+## 2026-08-30 — Isolated staging mount-root ownership correction
+
+- Coordinator-provided readiness evidence showed that the normal application
+  verifies writable access to the exact `/data` mount root before opening the
+  database or subdirectories. Assigning only the initialized children can
+  therefore leave a root-owned mount inaccessible to the non-root app image.
+- After every existing mount, layout, sidecar, transfer-input, and empty-volume
+  guard has passed, the helper now assigns the exact `/data` mount root to
+  `1001:1001` as well as recursively assigning the previously allowlisted
+  SQLite file and three directories. It neither relaxes the layout checks nor
+  reads, initializes, migrates, or changes data during recovery.
