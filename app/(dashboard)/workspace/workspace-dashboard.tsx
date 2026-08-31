@@ -109,10 +109,18 @@ export function WorkspaceDashboard({
     <DashboardPage>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
           {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setAddTradeOpen(true)} startIcon={<AddRoundedIcon />} variant="contained">Add trade</Button> : null}
-          {hasLiveTradeLibraryProps(tradeLibraryProps) ? ([[
-            "today", "Today",
-          ], ["week", "This week"], ["month", "This month"], ["all", "All time"]] as const).map(([value, label]) => <Button key={value} onClick={() => { const next = new URLSearchParams(searchParams.toString()); if (value === "all") next.delete("period"); else next.set("period", value); next.delete("startDate"); next.delete("endDate"); router.push(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} variant={period === value ? "contained" : "text"}>{label}</Button>)}
-          : null}
+          {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
+            ([
+              ["today", "Today"],
+              ["week", "This week"],
+              ["month", "This month"],
+              ["all", "All time"],
+            ] as const).map(([value, label]) => (
+              <Button key={value} onClick={() => { const next = new URLSearchParams(searchParams.toString()); if (value === "all") next.delete("period"); else next.set("period", value); next.delete("startDate"); next.delete("endDate"); router.push(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} variant={period === value ? "contained" : "text"}>
+                {label}
+              </Button>
+            ))
+          ) : null}
           {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)}>More filters</Button> : null}
           <InstallTradersLinkPwaMethods />
           <DashboardDataScopeChip />
