@@ -271,6 +271,7 @@ mutations.
   `app/(dashboard)/workspace/workspace-trade-library-actions.ts`,
   `app/(dashboard)/workspace/workspace-trade-library.ts`,
   `app/(dashboard)/workspace/workspace-trade-library-client.tsx`,
+  `app/(dashboard)/trade-tracker/manual-execution-entry.tsx`,
   `app/(dashboard)/analytics/trade-explorer/trade-review-editor.tsx`,
   `app/(dashboard)/analytics/trade-explorer/trade-tag-creation-drawer.tsx`,
   `app/api/platform/journal/manual-executions/[executionRef]/route.ts`,

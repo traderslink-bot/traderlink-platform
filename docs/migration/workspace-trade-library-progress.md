@@ -364,6 +364,13 @@
 
 ## 2026-08-31 — Current local review candidate
 
+- Railway’s held build exposed a type-only compatibility gap: the shared
+  manual-entry caller can carry the new `workspace` tracker while its legacy
+  card accepts only Day, Swing, or Quick display modes. The caller maps the
+  otherwise-unreachable Workspace value to the existing Day display mode;
+  Workspace continues to use its dedicated drawer and signed preview/commit
+  routes. No Workflow, Journal fact, or authority behavior changes.
+
 - The latest owner direction sets the Workspace top-right controls, in order,
   to `+ Trade`, `+ Rules`, and `+ Tags`. `+ Trade` opens the shared Workspace
   drawer, `+ Rules` keeps the established Rules route, and `+ Tags` uses the

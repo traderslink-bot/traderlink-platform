@@ -218,7 +218,7 @@ export function ManualExecutionEntry({
       <ExecutionEntryCard
       collapsed={collapsed}
       allowMultipleTradingDates={tracker !== "day"}
-      entryMode={tracker}
+      entryMode={tracker === "workspace" ? "day" : tracker}
       initialExecutions={submittedExecutions}
       onCollapsedChange={setCollapsed}
       onDirtyChange={setDraftDirty}
