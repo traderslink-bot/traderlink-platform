@@ -16,3 +16,4 @@ COPY --chown=nextjs:nodejs . .
 
 USER nextjs
 ENTRYPOINT ["./node_modules/.bin/tsx", "src/scripts/run-staging-journal-admin-bootstrap.ts"]
+CMD ["link", "--preview"]
