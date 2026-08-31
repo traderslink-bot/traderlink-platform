@@ -223,11 +223,13 @@ function run(): void {
       idempotencyKey: "workspace-delete-position-changing-001",
       now: new Date("2026-08-31T16:01:00.000Z"),
     });
-    assert.equal(context.database.prepare(`SELECT current_state FROM journal_executions
-WHERE execution_id = ?`).get(closing.executionId)?.current_state, "excluded_by_trader");
-    assert.equal(context.database.prepare(`SELECT projection_state FROM journal_round_trip_versions
+    const excludedExecution = context.database.prepare(`SELECT current_state FROM journal_executions
+WHERE execution_id = ?`).get(closing.executionId) as Readonly<{ current_state: string }> | undefined;
+    assert.equal(excludedExecution?.current_state, "excluded_by_trader");
+    const activeRoundTrip = context.database.prepare(`SELECT projection_state FROM journal_round_trip_versions
 WHERE round_trip_version_id IN (SELECT current_version_id FROM journal_round_trips
-WHERE lifecycle_state = 'active')`).get()?.projection_state, "legitimate_open");
+WHERE lifecycle_state = 'active')`).get() as Readonly<{ projection_state: string }> | undefined;
+    assert.equal(activeRoundTrip?.projection_state, "legitimate_open");
     assert.equal(removalError(() => context.manualExecutionEdits.remove(
       context.accountScope,
       closing.deleteRef!,
