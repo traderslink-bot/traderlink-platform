@@ -98,10 +98,10 @@ function AddTradeDrawer({ accountCurrency, accountTimezone, expectedAccountSelec
         <Typography color="text.secondary" variant="body2">Times use Eastern Time.</Typography>
         <Typography color="text.secondary" variant="body2">Entering the correct execution time keeps your trades in order. Trade Analyzer uses 1-minute candles, so you can enter the time from the matching chart candle when you do not have the broker timestamp.</Typography>
         {rows.map((row, index) => <Box key={row.id} sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2, p: 1.25 }}>
-          <Stack alignItems="center" direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+          <Box sx={{ alignItems: "center", display: "flex", justifyContent: "space-between", mb: 1 }}>
             <Typography sx={{ fontWeight: 750 }} variant="body2">Execution {index + 1}</Typography>
             {rows.length > 1 ? <Button color="inherit" onClick={() => setRows((current) => current.filter((entry) => entry.id !== row.id))} size="small">Remove</Button> : null}
-          </Stack>
+          </Box>
           <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "132px 112px 110px" } }}>
             <TextField label="Date" onChange={(event) => update(row.id, "date", event.target.value)} size="small" slotProps={{ inputLabel: { shrink: true } }} type="date" value={row.date} />
             <TextField label="Time" onChange={(event) => update(row.id, "time", event.target.value)} size="small" slotProps={{ inputLabel: { shrink: true } }} type="time" value={row.time} />
