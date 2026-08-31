@@ -236,6 +236,9 @@ mutations.
   in that order. `+ Rules` retains the established `/rules` route. `+ Tags` uses
   the existing Trade Explorer tag authority in one reusable drawer; it does
   not add a tag endpoint or a parallel tag writer.
+- Each top action renders exactly one text plus sign at the same label font
+  size. `+ Trade` remains the blue contained action; `+ Rules` and `+ Tags`
+  remain secondary outlined actions.
 - The primary left navigation label is `Add/Edit Trade`. It opens the same
   shared Workspace drawer over an authenticated dashboard page without route
   navigation. `/quick-trade-entry` is retained only as a compatibility redirect
@@ -297,9 +300,13 @@ mutations.
   in that order. `+ Trade` opens the account-scoped entry drawer through the
   shared handler; it is removed from the Trades/table section, so there is no
   duplicate entry control or alternate entry path.
-- The owner-approved Workspace table presents entry and exit date, time, and
-  price together in compact cells. A row itself remains non-interactive; only
-  its explicit Review, Edit, Delete execution, and Analyzer actions open a
+- The owner-approved desktop table inventory is Date, Ticker, Side, Status,
+  Shares, POS, Entry, Exit, Entry value, Hold, Gain/Loss, and Actions. Shares
+  is total bought, POS is remaining shares, Entry is first-buy price, Exit is
+  the flattening sell price, Entry value is total buy value, and Hold is
+  opening-to-flat duration (N/A while open). Entry/Exit render price-only
+  dollars to two decimals; no execution-count column or date/time tooltip is
+  present. A row remains non-interactive; only its explicit actions open a
   saved-trade surface or mutation flow.
 - Follow dashboard period is not a Workspace control. The existing top period
   controls remain the only period control for the page and trade list.

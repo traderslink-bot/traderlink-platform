@@ -375,9 +375,10 @@
   to `+ Trade`, `+ Rules`, and `+ Tags`. `+ Trade` opens the shared Workspace
   drawer, `+ Rules` keeps the established Rules route, and `+ Tags` uses the
   existing account-scoped tag authority.
-- The desktop list is a neutral-date, 46px target-height trade row with Date,
-  Ticker, Side, plain-text State, Shares, entry and exit date/time/price,
-  execution count, P/L, and accessible dark actions. Rows remain
+- The desktop list is a neutral-date, 44–48px trade row with Date, Ticker,
+  Side, plain-text Status, Shares, POS, Entry, Exit, Entry value, Hold,
+  Gain/Loss, and accessible dark actions. Entry/Exit are two-decimal prices
+  only; no execution count or date/time tooltip is shown. Rows remain
   non-interactive; only their explicit actions open a saved-trade drawer.
   There is no date chevron. Mobile remains a compact non-table summary without
   horizontal scrolling.

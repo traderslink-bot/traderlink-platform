@@ -4,7 +4,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -137,7 +136,7 @@ export function WorkspaceDashboard({
           <DashboardDataScopeChip />
           {offlineSavedAtUtc ? <Chip color="primary" label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`} size="small" variant="outlined" /> : null}
         </Stack>
-        {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: { xs: "flex-end", md: "flex-start" } }}><Button onClick={openWorkspaceTradeDrawer} startIcon={<AddRoundedIcon />} variant="contained">+ Trade</Button><Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button><Button onClick={() => setTagCreationOpen(true)} variant="outlined">+ Tags</Button></Stack> : null}
+        {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: { xs: "flex-end", md: "flex-start" } }}><Button onClick={openWorkspaceTradeDrawer} variant="contained">+ Trade</Button><Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button><Button onClick={() => setTagCreationOpen(true)} variant="outlined">+ Tags</Button></Stack> : null}
       </Stack>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
