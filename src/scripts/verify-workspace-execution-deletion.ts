@@ -246,13 +246,14 @@ WHERE lifecycle_state = 'active')`).get() as Readonly<{ projection_state: string
       idempotencyKey: "workspace-delete-last-execution-001",
       now: new Date("2026-08-31T16:02:00.000Z"),
     });
-    assert.equal(context.database.prepare(`SELECT count(*) AS count FROM journal_round_trips
+    const remainingLastRoundTrips = context.database.prepare(`SELECT count(*) AS count FROM journal_round_trips
 WHERE lifecycle_state = 'active' AND current_version_id IN (
   SELECT round_trip_version_id FROM journal_round_trip_versions version
   JOIN journal_instruments instrument ON instrument.workspace_id = version.workspace_id
     AND instrument.instrument_id = version.instrument_id
   WHERE instrument.normalized_symbol = 'LAST'
-)`).get().count, 0);
+)`).get() as Readonly<{ count: number }>;
+    assert.equal(remainingLastRoundTrips.count, 0);
 
     const protectedExecution = context.manualExecutionEdits.listEditable(context.accountScope)
       .find((execution) => execution.normalizedSymbol === "OPEN");
