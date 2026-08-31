@@ -71,7 +71,7 @@ export function isDashboardNavigationItem(
 }
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "stockTools" | "tradeRecords";
+  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "stockTools";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationGroupItem[];
@@ -128,6 +128,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           href: "/analytics/trade-explorer/compare",
           label: "Compare Trades",
           icon: "compareArrows" as const,
+        }),
+        Object.freeze({
+          href: "/trades/open",
+          label: "Open Positions",
+          icon: "openPositions" as const,
         }),
       ]),
     }),
@@ -252,16 +257,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", icon: "newspaper" as const }),
       ]),
     }),
-    Object.freeze({
-      id: "tradeRecords" as const,
-      label: "Trade Records",
-      icon: "data" as const,
-      items: Object.freeze([
-        Object.freeze({ href: "/trades/open", label: "Open Positions", icon: "openPositions" as const }),
-        Object.freeze({ href: "/imports", label: "Import Trades", icon: "import" as const }),
-        Object.freeze({ href: "/data-decisions", label: "Data Decisions", icon: "data" as const }),
-      ]),
-    }),
   ]);
 
 // Kept for dashboard-template compatibility. Scanner and Market Charts now live
@@ -287,7 +282,6 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[6] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7] }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[8] }),
   ]);
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =

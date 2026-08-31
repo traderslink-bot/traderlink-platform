@@ -4,6 +4,23 @@
 
 **Controlling plan:** [Workspace Trade Library Plan](workspace-trade-library-plan.md)
 
+## 2026-08-31 — Owner-approved navigation correction
+
+- Shared sidebar authority is `app/dashboard-navigation.ts`; the `Trade
+  records` group is removed while the established Open Positions route moves to
+  `Trades`. Existing Imports and Data Decisions routes remain intact but leave
+  the sidebar.
+- Workspace owns the compact top-right action order `+ Trade`, `Imports`, `+
+  Rules`, `+ Tags`. Account General is the existing user Account surface and
+  receives a Data Decisions action without changing that route or authority.
+- Scope is limited to navigation presentation, the existing Account page, and
+  this plan/progress record. No shell/PWA footer, routes, data, account scope,
+  imports, decisions, server, migration, staging, push, or deployment behavior
+  changes.
+- Owner approved this exact five-file navigation batch for the next coordinated
+  staging lane. The local checkpoint remains separate from any push or Railway
+  action.
+
 ## 2026-08-31 — Owner completion batch in progress
 
 - Removed the visible Workspace heading, Expectancy card, Profit factor card,

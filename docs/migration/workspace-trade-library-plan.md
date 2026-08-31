@@ -232,13 +232,20 @@ mutations.
 
 ## 2026-08-31 active owner correction allowlist
 
-- The Workspace top-right actions are exactly `+ Trade`, `+ Rules`, and `+ Tags`
-  in that order. `+ Rules` retains the established `/rules` route. `+ Tags` uses
-  the existing Trade Explorer tag authority in one reusable drawer; it does
-  not add a tag endpoint or a parallel tag writer.
-- Each top action renders exactly one text plus sign at the same label font
-  size. `+ Trade` remains the blue contained action; `+ Rules` and `+ Tags`
-  remain secondary outlined actions.
+- The `Trade records` sidebar group is removed. Open Positions remains on its
+  existing route inside the `Trades` sidebar group. Import Trades and Data
+  Decisions are removed from the sidebar without changing their routes or
+  authorities. Workspace top-right actions are exactly `+ Trade`, `Imports`,
+  `+ Rules`, and `+ Tags`; Account General includes the existing Data Decisions
+  route as an action.
+- The Workspace top-right actions are exactly `+ Trade`, `Imports`, `+ Rules`,
+  and `+ Tags` in that order. Imports retains the established `/imports` route;
+  `+ Rules` retains `/rules`. `+ Tags` uses the existing Trade Explorer tag
+  authority in one reusable drawer; it does not add a tag endpoint or a
+  parallel tag writer.
+- Each plus-prefixed action renders exactly one text plus sign at the same label
+  font size. `+ Trade` remains the blue contained action; Imports, `+ Rules`,
+  and `+ Tags` remain compact secondary outlined actions.
 - The primary left navigation label is `Add/Edit Trade`. It opens the same
   shared Workspace drawer over an authenticated dashboard page without route
   navigation. `/quick-trade-entry` is retained only as a compatibility redirect
