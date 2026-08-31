@@ -11,6 +11,23 @@
 persisted 30-minute observation only, retains exact unavailable/zero/adverse
 states, and does not substitute a later 60-minute reconciliation.
 
+**Single-trade factual outcome presentation:**
+[plan](single-trade-factual-outcome-presentation-plan.md) and
+[progress](single-trade-factual-outcome-presentation-progress.md) define the
+separate owner-reviewable card that turns existing saved final-exit and
+green-to-red facts into direct individual-trade outcomes.
+
+**Profit-protection delivery order:**
+[plan](trade-analyzer-profit-protection-presentation-plan.md) and
+[progress](trade-analyzer-profit-protection-presentation-progress.md) control
+the next work: complete and owner-approve the Trade Tracker card first, then
+begin the broader Trade Analyzer results-page presentation.
+
+The saved `minutes_from_peak_to_red` fact remains available for the later
+long-term results page as a giveback-speed measure. It stays separate from the
+first-green-to-first-red and first-red-to-first-recovery intervals and is not a
+required main-card sentence.
+
 **Evidence population correction:** [Trade Analyzer Candle-backed Population Progress](trade-analyzer-candle-backed-population-progress.md)
 
 **Related plans:**
@@ -175,14 +192,22 @@ This page owns profit capture and profit-protection behavior:
   trades;
 - average and median peak profit retained;
 - peak-to-red and peak-to-final-exit reversal;
-- time from first green to first red;
-- recovery rate and average recovery time;
+- highest qualifying microcap profit threshold and its continuous duration;
+- realized profit secured before a later qualifying opportunity on the
+  remaining shares;
 - adding after the measured peak; and
 - partial exit before the first move below breakeven.
 
 The page reports correlation only. It never claims that adding, holding or
 scaling out caused an outcome. Fixed status and behavior cohorts do not
 paginate. A growing supporting-trades table does.
+
+Long-term profit-taking results use continuous stored facts rather than the
+single-trade card's fixed microcap feedback gates. Peak open dollars/return,
+profit duration, realized partial-exit profit, later open-position opportunity,
+final P/L and any exact avoided-loss counterfactual remain separate facts.
+Every comparison defines its own eligible population and shows its sample
+count.
 
 ## Candle Patterns page
 
