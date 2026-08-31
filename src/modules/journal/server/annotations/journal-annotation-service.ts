@@ -768,11 +768,12 @@ export class JournalAnnotationService {
     }>,
   ): void {
     assertCanonicalUuidV4(input.roundTripId, "roundTripId");
-    if (input.expectedRoundTripVersionId !== undefined) {
-      if (typeof input.expectedRoundTripVersionId !== "string") {
+    const expectedRoundTripVersionId = input.expectedRoundTripVersionId;
+    if (expectedRoundTripVersionId !== undefined) {
+      if (typeof expectedRoundTripVersionId !== "string") {
         invalid("expectedRoundTripVersionId");
       }
-      assertCanonicalUuidV4(input.expectedRoundTripVersionId, "expectedRoundTripVersionId");
+      assertCanonicalUuidV4(expectedRoundTripVersionId, "expectedRoundTripVersionId");
     }
     if (
       input.note === null &&
@@ -783,11 +784,11 @@ export class JournalAnnotationService {
     }
     this.annotations.immediate(() => {
       if (
-        input.expectedRoundTripVersionId !== undefined &&
+        expectedRoundTripVersionId !== undefined &&
         !this.annotations.roundTripCurrentVersionMatches(
           scope,
           input.roundTripId,
-          input.expectedRoundTripVersionId,
+          expectedRoundTripVersionId,
         )
       ) conflict();
       if (input.note !== null) {

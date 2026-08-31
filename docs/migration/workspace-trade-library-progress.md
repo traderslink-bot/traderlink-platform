@@ -229,6 +229,20 @@
   this worktree has no `node_modules`, and `npx eslint` attempted a registry
   download which the low-resource, no-install boundary blocks.
 
+## 2026-08-31 — Staging type-narrowing repair
+
+- Railway staging build `051c1aca-6723-4be2-919f-d12c39836dbf` stopped before
+  deployment because TypeScript did not retain the existing unknown-to-string
+  validation of `expectedRoundTripVersionId` across the annotation transaction
+  callback.
+- The current-version save path now captures that input in a local constant,
+  validates its type and canonical UUID shape before entering the transaction,
+  and passes only the narrowed string to the same account-scoped
+  `roundTripCurrentVersionMatches` check. Open/closed Review behavior,
+  account scope, and stale-version conflict behavior are unchanged.
+- No server, tests, install, build, migration, staging, deployment, data
+  action, push, or release action ran for this local repair.
+
 ## Outstanding boundaries
 
 - Saved-trade Journal/Analyzer editing remains guarded follow-up work. Delete
