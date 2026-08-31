@@ -92,6 +92,30 @@ elements must be removed or corrected together before another review checkpoint:
   authoritative Trade Explorer editor/drawer content and its existing save
   path. Keep Analyzer lazy and retain opaque manual edit/delete refs.
 
+## 2026-08-30 owner visual refinement — controlling inventory
+
+The following refinement replaces any ambiguous earlier visual wording. Desktop
+collapsed rows are 44–48px high, keep Date neutral (with no chevron), and
+reveal executions when the trader clicks the row once. They show Date, Ticker,
+Side, plain-text State, Shares, entry/exit dates, times and prices, execution
+count, colored P/L, and dark accessible Review, Edit, Delete execution, and
+Analyzer icons. Delete is absent—not disabled—unless an execution has the
+current server-issued opaque deletion ref.
+
+The list has visible ticker search, state and date-range filters, sorting,
+grouping, active-filter count, Clear filters, Return to newest, and Follow
+dashboard period controls. It keeps server-owned newest-first pagination and
+Load more. Best/Worst summaries remain compact; the PWA card remains small;
+mobile remains a compact summary with no horizontal table scrolling.
+
+The drawer uses one ticker and one Day/Swing classification for the trade. That
+classification is stored with the submission only: it does not alter timezone,
+screen, heading, instructions, or workflow. The drawer begins with exactly one
+content-sized execution row and explicit Add execution/Remove controls. It
+retains the Eastern Time and Trade Analyzer timing guidance, opens directly to
+Trade/Journal/Analyzer tabs, and reuses the Trade Explorer review editor and
+text without a redundant Journal card or review subtitle.
+
 ## Calendar review boundary
 
 The Workspace request does not authorize a new Calendar data reader or a

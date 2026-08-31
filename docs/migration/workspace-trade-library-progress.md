@@ -170,3 +170,17 @@
 - Workspace forwards only server-issued eligible refs to the saved-trade drawer.
   It does not construct an execution id or ref; non-eligible executions render
   no Delete control and the compact list remains non-mutating.
+
+## 2026-08-30 — Owner compact-list refinement
+
+- Applied the owner’s exact compact-list inventory to the existing Workspace
+  client composition: rows use a fixed 46px collapsed target, show entry/exit
+  prices alongside their dates/times and execution count, label factual State
+  as plain text, and retain red/green P/L and dark accessible action icons.
+- Added the visible active-filter count and Return to newest action while
+  retaining existing server-owned filters, grouping, dashboard-period control,
+  opaque continuation cursor, and Load more behavior.
+- Day/Swing remains the saved submission classification but no longer changes
+  execution timezone or the shared Eastern Time workflow. No server contract,
+  migration, account scope, deletion predicate, data, staging, or release
+  behavior changed.
