@@ -6,6 +6,7 @@ import type {
   JournalManualTradeOfflineSync,
   JournalManualTrackerKind,
   JournalManualTradeEntry,
+  JournalManualWorkspaceStyle,
 } from "../../contracts/journal-manual-trade-capture-contracts";
 import {
   assertCanonicalJournalDecimal,
@@ -40,9 +41,16 @@ function text(value: unknown, field: string): string {
 function canonicalDecimal(
   value: unknown,
   field: string,
-  options: Readonly<{ positive?: boolean; nonNegative?: boolean }> = {},
+  options: Readonly<{
+    allowLeadingDecimal?: boolean;
+    positive?: boolean;
+    nonNegative?: boolean;
+  }> = {},
 ): string {
-  const trimmed = text(value, field).trim();
+  const raw = text(value, field).trim();
+  const trimmed = options.allowLeadingDecimal && /^\.(\d+)$/u.test(raw)
+    ? `0${raw}`
+    : raw;
   const match = /^(-?)(\d+)(?:\.(\d+))?$/u.exec(trimmed);
   if (!match) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
@@ -60,9 +68,20 @@ function canonicalDecimal(
 export function parseJournalManualTrackerKind(
   value: unknown,
 ): JournalManualTrackerKind {
-  if (value !== "day" && value !== "quick" && value !== "swing") {
+  if (value !== "day" && value !== "quick" && value !== "swing" && value !== "workspace") {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "tracker",
+    });
+  }
+  return value;
+}
+
+export function parseJournalManualWorkspaceStyle(
+  value: unknown,
+): JournalManualWorkspaceStyle {
+  if (value !== "day_trade" && value !== "swing") {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      field: "workspaceStyle",
     });
   }
   return value;
@@ -109,12 +128,15 @@ export function parseJournalManualTradeEntry(
   const priceDecimal = canonicalDecimal(
     input.price ?? input.priceDecimal,
     "price",
-    { positive: true },
+    { allowLeadingDecimal: true, positive: true },
   );
   const feeText = text(input.fees ?? input.feesDecimal ?? "", "fees").trim();
   const feesDecimal = feeText === ""
     ? null
-    : canonicalDecimal(feeText, "fees", { nonNegative: true });
+    : canonicalDecimal(feeText, "fees", {
+        allowLeadingDecimal: true,
+        nonNegative: true,
+      });
 
   normalizeJournalExecutionLocalTime(
     `${localDate}, ${localTime}`,
@@ -271,14 +293,19 @@ export function parseJournalManualTradeCommitRequest(
       field: "manualTradeCommit",
     });
   }
+  const tracker = parseJournalManualTrackerKind(input.tracker);
+  const workspaceStyle = tracker === "workspace"
+    ? parseJournalManualWorkspaceStyle(input.workspaceStyle)
+    : undefined;
   return Object.freeze({
-    tracker: parseJournalManualTrackerKind(input.tracker),
+    tracker,
     entries: parseJournalManualTradeEntries(input.entries),
     previewRef,
     expectedAccountSelectionRef,
     idempotencyKey,
     confirmations: Object.freeze(input.confirmations.map(parseConfirmation)),
     ...(input.preparedBy === "ai_chat" ? { preparedBy: "ai_chat" as const } : {}),
+    ...(workspaceStyle === undefined ? {} : { workspaceStyle }),
     ...(input.offlineSync === undefined
       ? {}
       : { offlineSync: parseOfflineSync(input.offlineSync) }),
@@ -303,11 +330,16 @@ export function parseJournalManualTradeCommitStatusRequest(
       field: "manualTradeCommitStatus",
     });
   }
+  const tracker = parseJournalManualTrackerKind(input.tracker);
+  const workspaceStyle = tracker === "workspace"
+    ? parseJournalManualWorkspaceStyle(input.workspaceStyle)
+    : undefined;
   return Object.freeze({
-    tracker: parseJournalManualTrackerKind(input.tracker),
+    tracker,
     entries: parseJournalManualTradeEntries(input.entries),
     expectedAccountSelectionRef,
     idempotencyKey,
+    ...(workspaceStyle === undefined ? {} : { workspaceStyle }),
   });
 }
 

@@ -6,6 +6,7 @@ import type {
   JournalManualTradePreviewAllocation,
   JournalManualTradePreviewGroup,
   JournalManualTradeRelationship,
+  JournalManualWorkspaceStyle,
   JournalTradeStyle,
 } from "../../contracts/journal-manual-trade-capture-contracts";
 import { JOURNAL_MANUAL_ENTRY_RECENT_CALENDAR_DAYS } from "../../contracts/journal-manual-trade-capture-contracts";
@@ -182,6 +183,7 @@ function toPreviewGroup(input: Readonly<{
   symbol: string;
   currency: string;
   tracker: JournalManualTrackerKind;
+  workspaceStyle: JournalManualWorkspaceStyle | null;
   group: BuildingGroup;
 }>): JournalManualTradePreviewGroup {
   const isOpen = compareDecimal(input.group.finalPositionDecimal, "0") !== 0;
@@ -207,7 +209,9 @@ function toPreviewGroup(input: Readonly<{
       : null,
     allowedRelationships: relationships(input.group),
     allowedStyles: Object.freeze<JournalTradeStyle[]>(["day_trade", "swing", "other"]),
-    suggestedStyle: input.tracker === "swing"
+    suggestedStyle: input.tracker === "workspace"
+      ? input.workspaceStyle!
+      : input.tracker === "swing"
       ? "swing"
       : input.tracker === "quick"
         ? "other"
@@ -226,6 +230,7 @@ export class JournalManualTradePreviewService {
   preview(scope: WorkspaceAccessScope, input: Readonly<{
     accountSelectionRef: string;
     tracker: JournalManualTrackerKind;
+    workspaceStyle?: JournalManualWorkspaceStyle;
     entries: readonly JournalManualTradeEntry[];
   }>): JournalManualTradePreview {
     const accountId = scope.activeAccountId;
@@ -239,6 +244,9 @@ export class JournalManualTradePreviewService {
     );
     const affectedDates = [...new Set(input.entries.map((entry) => entry.localDate))]
       .sort();
+    if (input.tracker === "workspace" && input.workspaceStyle === undefined) {
+      platformFailure("TRADERLINK_MANUAL_TRADE_PREVIEW_INVALID");
+    }
     if (
       input.entries.some((entry) =>
         entry.sourceTimezone !== account.tradingTimezone || entry.localDate > today) ||
@@ -281,6 +289,7 @@ export class JournalManualTradePreviewService {
       scope,
       accountSelectionRef: input.accountSelectionRef,
       tracker: input.tracker,
+      workspaceStyle: input.workspaceStyle,
       entries: input.entries,
     });
     const payloadDigest = digestJournalManualTradePreviewPayload(payload);
@@ -324,6 +333,7 @@ export class JournalManualTradePreviewService {
           symbol,
           currency,
           tracker: input.tracker,
+          workspaceStyle: input.tracker === "workspace" ? input.workspaceStyle ?? null : null,
           group,
         }));
       }
@@ -336,6 +346,7 @@ export class JournalManualTradePreviewService {
       previewRef: issued.previewRef,
       expiresAtUtc: issued.expiresAtUtc,
       tracker: input.tracker,
+      workspaceStyle: input.tracker === "workspace" ? input.workspaceStyle ?? null : null,
       affectedDates: Object.freeze(affectedDates),
       executionCount: input.entries.length,
       groups: Object.freeze(groups),
@@ -345,6 +356,7 @@ export class JournalManualTradePreviewService {
   verify(scope: WorkspaceAccessScope, input: Readonly<{
     accountSelectionRef: string;
     tracker: JournalManualTrackerKind;
+    workspaceStyle?: JournalManualWorkspaceStyle;
     entries: readonly JournalManualTradeEntry[];
     previewRef: string;
   }>): boolean {
@@ -354,6 +366,7 @@ export class JournalManualTradePreviewService {
         scope,
         accountSelectionRef: input.accountSelectionRef,
         tracker: input.tracker,
+        workspaceStyle: input.workspaceStyle,
         entries: input.entries,
       }),
     );

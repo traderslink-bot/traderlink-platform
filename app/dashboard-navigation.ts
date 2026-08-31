@@ -104,7 +104,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         }),
         Object.freeze({
           href: "/quick-trade-entry",
-          label: "Quick Trade Entry",
+          label: "Add/Edit Trade",
           icon: "manualEntry" as const,
         }),
       ]),

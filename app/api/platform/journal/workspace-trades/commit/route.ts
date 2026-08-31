@@ -16,12 +16,6 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function responseStatus(code: string): number {
-  if (code === "TRADERLINK_WORKSPACE_ACCESS_DENIED") return 401;
-  if (code.includes("CONFLICT")) return 409;
-  return 400;
-}
-
 export async function POST(request: Request): Promise<Response> {
   let scope: WorkspaceAccessScope | null = null;
   let commitRequest: JournalManualTradeCommitRequest | null = null;
@@ -29,30 +23,24 @@ export async function POST(request: Request): Promise<Response> {
     requireJournalMutationRequest(request);
     const requestScope = requireTraderLinkPlatformRequestScope(request.headers);
     scope = requestScope;
-    const parsedCommitRequest = parseJournalManualTradeCommitRequest(await request.json());
-    if (parsedCommitRequest.tracker === "workspace") {
+    const parsed = parseJournalManualTradeCommitRequest(await request.json());
+    if (parsed.tracker !== "workspace" || parsed.workspaceStyle === undefined) {
       platformFailure("TRADERLINK_MANUAL_TRADE_PREVIEW_INVALID");
     }
-    commitRequest = parsedCommitRequest;
+    commitRequest = parsed;
     const accountSelectionRef = requireExpectedJournalAccountSelection(
       requestScope,
-      parsedCommitRequest.expectedAccountSelectionRef,
+      parsed.expectedAccountSelectionRef,
     );
     const result = withWritableJournalIntegrityRuntime(requestScope, (journal) =>
-      journal.manualTrades.commit(requestScope, accountSelectionRef, parsedCommitRequest));
+      journal.manualTrades.commit(requestScope, accountSelectionRef, parsed));
     return Response.json({
       status: "ready",
       result: {
-        importStatus: result.status,
         acceptedExecutionCount: result.executionIds.length,
-        createdExecutionCount: result.createdExecutionCount,
-        matchedExecutionCount: result.matchedExecutionCount,
-        pendingDecisionCount: result.relatedDecisionIds.length,
-        rebuildCount: result.rebuilds.length,
-        styledTradeCount: result.styledTradeCount,
         affectedDates: result.affectedDates,
-        affectedPositionRefs: result.affectedPositionRefs,
         analyzerQueueOutcome: result.analyzerQueueOutcome,
+        pendingDecisionCount: result.relatedDecisionIds.length,
       },
     });
   } catch (error) {
@@ -65,15 +53,12 @@ export async function POST(request: Request): Promise<Response> {
           tracker: commitRequest.tracker,
         });
       } catch {
-        // Preserve the original save response if private issue logging is unavailable.
+        // Keep the original failure response when private issue logging is unavailable.
       }
     }
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_MANUAL_TRADE_COMMIT_CONFLICT";
-    return Response.json(
-      { status: "unavailable", code },
-      { status: responseStatus(code) },
-    );
+    return Response.json({ status: "unavailable", code }, { status: 400 });
   }
 }

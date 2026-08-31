@@ -82,6 +82,17 @@
   staging checks remain intentionally deferred by the owner’s low-resource and
   owner-review boundaries.
 
+## 2026-08-31 — Follow-up entry validation diagnosis
+
+- Workspace now normalizes a leading decimal only for Price and Fee at the
+  client input boundary (`.06` to `0.06`); Shares remains unchanged and server
+  canonical validation still owns stored precision.
+- The coarse historical-entry preview rejection now identifies Date only in
+  Workspace. A true historical manual-entry authorization path remains a
+  server contract decision: the existing Day/Swing preview policy rejects older
+  dates before commit, so no client-only change can preserve the requested
+  actual historical timestamp without broadening an authoritative contract.
+
 ## 2026-08-30 — Staged composition rejected; correction batch active
 
 - Audited the staged Workspace source against the superseding owner inventory.
@@ -271,12 +282,12 @@
   grid. Entry values, add/remove behavior, Eastern Time guidance, validation,
   manual submission, and account scope remain unchanged.
 
-## 2026-08-31 — Owner drawer simplification
+## 2026-08-31 — Superseded owner drawer simplification
 
-- Removed the Day/Swing selector from Workspace Add trade. The drawer now
-  presents only the ticker and compact execution entry; it uses the established
-  Day-trade submission path with its shared Eastern Time workflow. No account,
-  execution, deletion, or analysis contract changed.
+- This interim simplification was superseded by the approved historical-entry
+  correction below. Workspace now presents one required Day Trade or Swing
+  classification that is retained through the dedicated signed Workspace
+  preview/commit path without changing the shared Eastern Time workflow.
 
 ## 2026-08-31 — Empty Workspace state correction
 
@@ -295,3 +306,85 @@
   controls and tag-selection count for its single selected trade. Trade Explorer
   retains its normal multi-trade navigation; review data, notes, tags, rules,
   and save behavior are unchanged.
+
+## 2026-08-31 — Active owner correction batch
+
+- The Workspace top-right actions are exactly `+ Trade`, `+ Rules`, and `+ Tags`
+  in that order. `+ Rules` retains `/rules`; `+ Tags` and the Journal use the
+  same account-scoped Trade Explorer tag-creation action through one reusable
+  right drawer.
+- The primary navigation now says `Add/Edit Trade` and opens this same shared
+  Workspace drawer in place over an authenticated dashboard page. The legacy
+  `/quick-trade-entry` route is only a compatibility redirect; it no longer
+  owns a separate form or drawer. Saved-trade editing remains available only
+  from existing authorized Workspace rows and their opaque server refs.
+- Removed the remaining Add/Saved drawer wrappers. Workspace now has one
+  `Drawer` component and one state path: `+ Trade` provides entry mode, while
+  Review, Edit, and Analyzer provide a saved trade with the selected tab.
+  Source verification is complete; visual staging verification remains pending.
+- Review now passes a closed trade's projection exit-local date to the existing
+  review reader and does not offer Review for an open projection. The reader
+  continues to load current account-scoped review revisions before a save, so
+  stale-version protection remains active rather than being suppressed.
+- The rejected `quick` workaround was replaced before review. Add Trade uses a
+  dedicated Workspace preview/status/commit route that accepts only the
+  `workspace` tracker plus a validated `day_trade` or `swing` style. That style
+  is included in the HMAC-signed preview and commit recomputation. The generic
+  manual-trade routes reject Workspace requests. Expected-account binding,
+  account timezone equality, future-date/time rejection, idempotency, ledger
+  reconciliation, and current account isolation remain in the server path; the
+  UI no longer sends a hard-coded timezone or a historical override.
+- The entry card explicitly selects Day Trade or Swing. A new entry persists
+  the selected canonical `day_trade` or `swing` classification through the
+  signed server path; an execution added to a saved trade starts with that
+  trade's existing classification.
+- Price and Fee normalize a leading decimal such as `.06` to `0.06` at the
+  Workspace field and at the narrow manual-entry/manual-correction parser.
+  Quantity is unchanged; no rounding or stored-decimal canonicalization was
+  weakened.
+- The existing install action moved from Workspace to the bottom left sidebar.
+  The obsolete `TradersLink v1` footer was removed; no navigation route or PWA
+  installation flow changed.
+- Saved Trade now reuses the shared compact execution form for **Add execution**
+  inside its Trade tab. It locks the selected ticker and currency, retains an
+  existing Swing classification when present, and submits only through the
+  signed Workspace preview/commit/reconciliation path. It never attaches a
+  record directly to a round trip; after save it closes and refreshes the
+  server-authoritative Workspace facts.
+- Before opening or confirming any Workspace Delete control, Workspace re-reads
+  the active server account-selection ref. A changed, absent, or unreadable
+  selection closes stale detail/dialog state and refreshes the page without a
+  DELETE request. The route now reports account-selection conflict as 409 and
+  missing account access as 401; the same account/version/eligible-manual
+  predicate remains unchanged.
+- Overview cards now render P/L, Win rate, Largest win, Largest loss, and
+  Trades in that exact responsive order.
+- No test suite, server, dependency installation, migration, data mutation,
+  staging, deployment, commit, or push has run in this active local batch.
+
+## 2026-08-31 — Current local review candidate
+
+- The latest owner direction sets the Workspace top-right controls, in order,
+  to `+ Trade`, `+ Rules`, and `+ Tags`. `+ Trade` opens the shared Workspace
+  drawer, `+ Rules` keeps the established Rules route, and `+ Tags` uses the
+  existing account-scoped tag authority.
+- The desktop list is a neutral-date, 46px target-height trade row with Date,
+  Ticker, Side, plain-text State, Shares, entry and exit date/time/price,
+  execution count, P/L, and accessible dark actions. Rows remain
+  non-interactive; only their explicit actions open a saved-trade drawer.
+  There is no date chevron. Mobile remains a compact non-table summary without
+  horizontal scrolling.
+- The saved-trade surface has only Trade, Journal, and Analyzer tabs. Its
+  embedded Journal editor hides inherited trade navigation and page-position
+  indicators while retaining the established notes, tags, custom rules, and
+  automatic rule-result authority for the selected trade.
+- The filter drawer exposes ticker search, state, date range, sort, grouping,
+  active count, Clear filters, and Return to newest. The top Workspace period
+  controls remain the only period control.
+  The list remains newest-first server pagination with Load more.
+- `git diff --check` passed. Source checks confirmed the requested labels,
+  no row-click disclosure, the explicit Day Trade/Swing selector, the
+  saved-trade Journal navigation suppression, and conditional opaque-ref
+  deletion flow.
+  No server, test, install, build, migration, staging, deployment, commit, or
+  push ran. Runtime and owner visual review remain outstanding.

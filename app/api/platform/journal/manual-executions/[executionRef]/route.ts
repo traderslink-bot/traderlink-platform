@@ -28,7 +28,11 @@ function text(body: Record<string, unknown>, field: string): string {
 }
 
 function responseStatus(code: string): number {
-  if (code === "TRADERLINK_WORKSPACE_ACCESS_DENIED") return 401;
+  if (
+    code === "TRADERLINK_WORKSPACE_ACCESS_DENIED" ||
+    code === "TRADERLINK_ACCOUNT_ACCESS_DENIED"
+  ) return 401;
+  if (code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT") return 409;
   if (code.includes("CONFLICT") || code.includes("REQUIRES_DECISION")) return 409;
   return 400;
 }

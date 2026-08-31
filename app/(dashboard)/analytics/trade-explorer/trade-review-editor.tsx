@@ -1,6 +1,5 @@
 "use client";
 
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
@@ -23,7 +22,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
 
 import {
   JOURNAL_TAG_PRESET_CATALOG,
@@ -35,10 +34,10 @@ import {
 } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 
 import {
-  createTradeExplorerTag,
   loadTradeExplorerReview,
   saveTradeExplorerReviewAction,
 } from "./trade-review-actions";
+import { TradeTagCreationDrawer } from "./trade-tag-creation-drawer";
 import type {
   TradeExplorerCustomRuleReview,
   TradeExplorerReviewModel,
@@ -145,7 +144,7 @@ export function TradeExplorerReviewEditor({
   const [model, setModel] = useState<TradeExplorerReviewModel | null>(null);
   const [draft, setDraft] = useState<ReviewDraft | null>(null);
   const [availableTags, setAvailableTags] = useState<readonly TradeExplorerReviewTag[]>(Object.freeze([]));
-  const [newTagName, setNewTagName] = useState("");
+  const [tagCreationOpen, setTagCreationOpen] = useState(false);
   const [state, setState] = useState<"idle" | "loading" | "ready" | "saving">("idle");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -156,8 +155,7 @@ export function TradeExplorerReviewEditor({
   const selectedIndex = trades.findIndex((trade) => trade.roundTripId === selectedRoundTripId);
   const selectedTrade = selectedIndex >= 0 ? trades[selectedIndex]! : null;
   const reviewDirty = hasChanges(model, draft);
-  const hasPendingTagName = newTagName.trim().length > 0;
-  const hasUnsavedWork = reviewDirty || hasPendingTagName;
+  const hasUnsavedWork = reviewDirty;
   const choices = useMemo(() => tagChoices(availableTags), [availableTags]);
   const selectedChoices = useMemo(() => {
     const selected = new Set(draft?.selectedTagIds ?? []);
@@ -181,7 +179,6 @@ export function TradeExplorerReviewEditor({
     setModel(null);
     setDraft(null);
     setAvailableTags(Object.freeze([]));
-    setNewTagName("");
     setError(null);
     setSuccess(null);
     void loadTradeExplorerReview({
@@ -226,46 +223,11 @@ export function TradeExplorerReviewEditor({
     runAfterDiscard(() => onSelectTrade(next.roundTripId));
   }
 
-  async function createTag(): Promise<void> {
-    if (!newTagName.trim() || state === "saving" || savingRef.current) return;
-    savingRef.current = true;
-    setState("saving");
-    setError(null);
-    setSuccess(null);
-    try {
-      const result = await createTradeExplorerTag({
-        expectedAccountSelectionRef,
-        name: newTagName,
-      });
-      if (!result.ok) {
-        if (result.refreshRequired) {
-          window.location.reload();
-          return;
-        }
-        setError(result.message);
-        return;
-      }
-      setAvailableTags((current) => Object.freeze([...current, result.data]));
-      setDraft((current) => current ? Object.freeze({
-        ...current,
-        selectedTagIds: Object.freeze([...current.selectedTagIds, result.data.tagId]),
-      }) : current);
-      setNewTagName("");
-      setSuccess("Tag created. Save the review to add it to this trade.");
-    } catch {
-      setError("That tag could not be created. Check the name and try again.");
-    } finally {
-      savingRef.current = false;
-      setState("ready");
-    }
-  }
-
   async function save(): Promise<void> {
     if (
       !model ||
       !draft ||
       !reviewDirty ||
-      hasPendingTagName ||
       savingRef.current ||
       draft.selectedTagIds.length > TAG_LIMIT
     ) return;
@@ -323,27 +285,35 @@ export function TradeExplorerReviewEditor({
     }
   }
 
-  return (
-    <>
-      <Drawer
-        anchor="right"
-        hideBackdrop={embedded}
-        onClose={() => runAfterDiscard(onClose)}
-        open={open}
-        variant={embedded ? "permanent" : "temporary"}
-        sx={embedded ? { height: "100%", position: "relative", width: "100%", "& .MuiDrawer-paper": { position: "relative" } } : undefined}
-        slotProps={{
+  const ReviewSurface: ElementType = embedded ? Box : Drawer;
+  const reviewSurfaceProps = embedded
+    ? {
+        sx: {
+          height: "100%",
+          position: "relative",
+          width: "100%",
+        },
+      }
+    : {
+        anchor: "right" as const,
+        onClose: () => runAfterDiscard(onClose),
+        open,
+        slotProps: {
           paper: {
             sx: {
               boxSizing: "border-box",
-              height: embedded ? "100%" : "100dvh",
-              maxWidth: embedded ? "none" : { xs: "100vw", md: 560 },
+              height: "100dvh",
+              maxWidth: { xs: "100vw", md: 560 },
               pt: { xs: "env(safe-area-inset-top)", md: 0 },
-              width: embedded ? "100%" : { xs: "100vw", md: 560 },
+              width: { xs: "100vw", md: 560 },
             },
           },
-        }}
-      >
+        },
+      };
+
+  return (
+    <>
+      <ReviewSurface {...reviewSurfaceProps}>
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
           <Box sx={{ borderBottom: 1, borderColor: "divider", display: embedded ? "none" : "block", px: { xs: 2, sm: 2.5 }, py: 1.5 }}>
             <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
@@ -489,29 +459,13 @@ export function TradeExplorerReviewEditor({
                     value={selectedChoices}
                   />
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 1.5 }}>
-                    <TextField
-                      fullWidth
-                      label="Create a reusable tag"
-                      onChange={(event) => {
-                        setNewTagName(event.target.value);
-                        setSuccess(null);
-                      }}
-                      size="small"
-                      slotProps={{ htmlInput: { maxLength: 40 } }}
-                      value={newTagName}
-                    />
                     <Button
-                      disabled={
-                        state === "saving" ||
-                        !newTagName.trim() ||
-                        draft.selectedTagIds.length >= TAG_LIMIT
-                      }
-                      onClick={() => void createTag()}
-                      startIcon={<AddRoundedIcon />}
+                      disabled={state === "saving"}
+                      onClick={() => setTagCreationOpen(true)}
                       sx={{ minHeight: 44, whiteSpace: "nowrap" }}
                       variant="outlined"
                     >
-                      Create tag
+                      Create a reusable tag
                     </Button>
                   </Stack>
                 </Box>
@@ -609,14 +563,11 @@ export function TradeExplorerReviewEditor({
             }}
           >
             {!embedded ? <Typography color="text.secondary" variant="body2">
-              {hasPendingTagName && !reviewDirty
-                ? "Create or clear the new tag name"
-                : reviewDirty ? "Unsaved changes" : "All changes saved"}
+              {reviewDirty ? "Unsaved changes" : "All changes saved"}
             </Typography> : <Box />}
             <Button
               disabled={
                 !reviewDirty ||
-                hasPendingTagName ||
                 state === "saving" ||
                 (draft?.selectedTagIds.length ?? 0) > TAG_LIMIT
               }
@@ -628,7 +579,21 @@ export function TradeExplorerReviewEditor({
             </Button>
           </Stack>
         </Box>
-      </Drawer>
+      </ReviewSurface>
+
+      <TradeTagCreationDrawer
+        expectedAccountSelectionRef={expectedAccountSelectionRef}
+        onClose={() => setTagCreationOpen(false)}
+        onCreated={(tag) => {
+          setAvailableTags((current) => Object.freeze([...current, tag]));
+          setDraft((current) => current ? Object.freeze({
+            ...current,
+            selectedTagIds: Object.freeze([...current.selectedTagIds, tag.tagId]),
+          }) : current);
+          setSuccess("Tag created. Save the review to add it to this trade.");
+        }}
+        open={tagCreationOpen}
+      />
 
       <Dialog onClose={() => setConfirmDiscardOpen(false)} open={confirmDiscardOpen}>
         <DialogTitle>Discard unsaved changes?</DialogTitle>

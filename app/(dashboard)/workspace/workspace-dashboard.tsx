@@ -13,7 +13,6 @@ import {
   DashboardMetricCard,
   DashboardPage,
 } from "../../dashboard-template";
-import { InstallTradersLinkPwaMethods } from "@/app/pwa/install-traderslink-pwa-card";
 import { DemoDataCallout, DemoTradeTrackerInvitation } from "../demo-data-callout";
 import type { FinancialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
@@ -22,6 +21,8 @@ import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
 import { WorkspaceTradeLibrary } from "./workspace-trade-library-client";
 import { WorkspaceMoreFiltersDrawer } from "./workspace-more-filters-drawer";
+import { TradeTagCreationDrawer } from "../analytics/trade-explorer/trade-tag-creation-drawer";
+import { openWorkspaceTradeDrawer } from "./workspace-trade-drawer-events";
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -62,9 +63,9 @@ type WorkspaceDashboardProps = Readonly<{
 const unavailableMetrics: readonly WorkspaceMetric[] = [
   { label: "P/L", value: "—", caption: "Completed trades" },
   { label: "Win rate", value: "—", caption: "Completed round trips" },
+  { label: "Best trade", value: "—", caption: "" },
+  { label: "Worst trade", value: "—", caption: "" },
   { label: "Trades", value: "—", caption: "All available history" },
-  { label: "Largest win", value: "—", caption: "" },
-  { label: "Largest loss", value: "—", caption: "" },
 ];
 
 function hasLiveTradeLibraryProps(
@@ -100,19 +101,25 @@ export function WorkspaceDashboard({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [addTradeOpen, setAddTradeOpen] = useState(false);
+  const [tagCreationOpen, setTagCreationOpen] = useState(false);
   const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
     Boolean(tradeLibraryProps.trades.query.searchTicker) || tradeLibraryProps.trades.query.filter !== "all" ||
     Boolean(tradeLibraryProps.trades.query.startDate) || Boolean(tradeLibraryProps.trades.query.endDate) ||
     tradeLibraryProps.trades.query.sort !== "newest" || tradeLibraryProps.trades.query.group !== "none"
   );
+  const activeFilterCount = hasLiveTradeLibraryProps(tradeLibraryProps)
+    ? Number(Boolean(tradeLibraryProps.trades.query.searchTicker)) + Number(tradeLibraryProps.trades.query.filter !== "all") +
+      Number(Boolean(tradeLibraryProps.trades.query.startDate)) + Number(Boolean(tradeLibraryProps.trades.query.endDate)) +
+      Number(tradeLibraryProps.trades.query.sort !== "newest") + Number(tradeLibraryProps.trades.query.group !== "none")
+    : 0;
   const metrics = analyticsMetrics ?? unavailableMetrics;
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
   }
   return (
     <DashboardPage>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: "flex-start" }}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { xs: "stretch", md: "center" }, justifyContent: "space-between" }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
           {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
             ([
               ["today", "Today"],
@@ -125,12 +132,12 @@ export function WorkspaceDashboard({
               </Button>
             ))
           ) : null}
-          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)}>More filters</Button> : null}
-          {hasActiveTableFilters ? <Button onClick={() => router.push("/workspace")}>Clear filter</Button> : null}
-          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setAddTradeOpen(true)} startIcon={<AddRoundedIcon />} variant="contained">Add trade</Button> : null}
-          <InstallTradersLinkPwaMethods />
+          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)}>Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button> : null}
+          {hasActiveTableFilters ? <Button onClick={() => router.push("/workspace")}>Clear filters</Button> : null}
           <DashboardDataScopeChip />
           {offlineSavedAtUtc ? <Chip color="primary" label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`} size="small" variant="outlined" /> : null}
+        </Stack>
+        {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: { xs: "flex-end", md: "flex-start" } }}><Button onClick={openWorkspaceTradeDrawer} startIcon={<AddRoundedIcon />} variant="contained">+ Trade</Button><Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button><Button onClick={() => setTagCreationOpen(true)} variant="outlined">+ Tags</Button></Stack> : null}
       </Stack>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
@@ -139,8 +146,9 @@ export function WorkspaceDashboard({
       </Box>
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
-          <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={addTradeOpen} onAddTradeClose={() => setAddTradeOpen(false)} />
+          <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} />
           <WorkspaceMoreFiltersDrawer onClose={() => setFiltersOpen(false)} open={filtersOpen} query={tradeLibraryProps.trades.query} />
+          <TradeTagCreationDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} onClose={() => setTagCreationOpen(false)} open={tagCreationOpen} />
         </>
       ) : null}
     </DashboardPage>

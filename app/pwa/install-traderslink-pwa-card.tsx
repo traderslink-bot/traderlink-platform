@@ -7,6 +7,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
@@ -32,8 +33,10 @@ type InstallState =
   | "installing";
 
 export function InstallTradersLinkPwaMethods({
+  compact = false,
   onInstalled,
 }: {
+  compact?: boolean;
   onInstalled?: () => void;
 }) {
   const [installState, setInstallState] = useState<InstallState>("checking");
@@ -83,7 +86,15 @@ export function InstallTradersLinkPwaMethods({
 
   return (
     <Box sx={{ display: "grid", gap: 1.25 }}>
-      {installState !== "installed" ? (
+      {installState !== "installed" ? compact ? (
+        <IconButton
+          aria-label="Install TradersLink app"
+          disabled={installState === "prompting"}
+          onClick={() => void requestInstallation()}
+        >
+          <DownloadRoundedIcon />
+        </IconButton>
+      ) : (
         <DashboardPrimaryAction
           disabled={installState === "prompting"}
           onClick={() => void requestInstallation()}

@@ -55,8 +55,8 @@ routes, provider imports, calendar reads, hosted configuration, or any data.
 - The hierarchy remains date scope, trading day, ticker, trade, and on-demand
   executions. Notes and rules remain in the trade/day experience.
 - Add Trade is a right drawer on desktop and full sheet on mobile. It starts
-  with one compact execution, makes additional executions explicit, and shows
-  no Day/Swing selector. Trade, Journal and Analyzer tabs are available for saved
+  with one compact execution, makes additional executions explicit, and uses a
+  Day Trade or Swing classification. Trade, Journal and Analyzer tabs are available for saved
   trade detail; Journal separates preset rules from custom rules and a selected
   custom rule requires Followed or Broke.
 
@@ -108,9 +108,8 @@ dashboard period controls. It keeps server-owned newest-first pagination and
 Load more. Best/Worst summaries remain compact; the PWA card remains small;
 mobile remains a compact summary with no horizontal table scrolling.
 
-The drawer uses one ticker. Day/Swing selection is not shown in Workspace;
-entries use the established Day-trade submission path and the shared Eastern
-Time workflow. The drawer begins with exactly one content-sized execution row
+The drawer uses one ticker and one Day Trade or Swing classification. That
+classification does not change the shared Eastern Time workflow. The drawer begins with exactly one content-sized execution row
 and explicit Add execution/Remove controls. It
 retains the Eastern Time and Trade Analyzer timing guidance, opens directly to
 Trade/Journal/Analyzer tabs, and reuses the Trade Explorer review editor and
@@ -206,7 +205,7 @@ mutations.
 ## 2026-08-31 owner-controlled Workspace completion
 
 - The page has no visible `Workspace` heading.
-- Overview cards are P/L, Win rate, Trades, Largest win, and Largest loss. They
+- Overview cards are P/L, Win rate, Largest win, Largest loss, and Trades. They
   have labels and values only. Expectancy and Profit factor are not shown.
 - Today, This week, This month, and All time filter the overview and trade list
   together; All time is the default.
@@ -218,23 +217,91 @@ mutations.
 - Sorts are Newest, Oldest, Position, Buy QTY, Entry, Exit, Entry value,
   Gain/Loss high, and Gain/Loss low. Every sort is storage-bounded and uses an
   account/query/revision-bound cursor with exact decimal sort keys.
-- The PWA card is removed and its existing install action remains at the top
-  right.
+- The PWA card is removed. Its existing install action belongs at the bottom of
+  the left navigation, and the obsolete `TradersLink v1` sidebar footer is not
+  shown.
 - One 880px desktop drawer (full-width mobile) owns Trade, Journal, and
   Analyzer tabs. Journal is embedded in that drawer and does not open the
   inherited Trade Explorer drawer. Workspace suppresses the inherited saved
   status line.
-- Add trade starts with one execution and one ticker plus Day/Swing
+- `+ Trade` opens the shared Workspace drawer in Trade-entry mode. The drawer
+  starts with one execution, one ticker, and one Day Trade or Swing
   classification. Edit shows authorized execution rows in the same compact
   Date, Time, Buy/Sell, Shares, Price, Fee layout. Delete remains conditional
   on the existing opaque server-issued authority.
 
+## 2026-08-31 active owner correction allowlist
+
+- The Workspace top-right actions are exactly `+ Trade`, `+ Rules`, and `+ Tags`
+  in that order. `+ Rules` retains the established `/rules` route. `+ Tags` uses
+  the existing Trade Explorer tag authority in one reusable drawer; it does
+  not add a tag endpoint or a parallel tag writer.
+- The primary left navigation label is `Add/Edit Trade`. It opens the same
+  shared Workspace drawer over an authenticated dashboard page without route
+  navigation. `/quick-trade-entry` is retained only as a compatibility redirect
+  to that action; saved-trade editing still begins only from an authorized
+  Workspace row and its server-issued opaque refs.
+- The Workspace client has one 880px desktop/full-width-mobile `Drawer`
+  instance. `+ Trade` enters its new-trade mode; Review, Edit, and Analyzer
+  enter its saved-trade tabs. No `AddTradeDrawer` component remains.
+- A Workspace review target is built only for a closed projection and uses its
+  authoritative exit-local date, not the list activity date. The existing
+  account-scoped review reader remains responsible for loading current note,
+  tag, and rule revisions before every save.
+- Historical Workspace entries use dedicated authenticated
+  `/api/platform/journal/workspace-trades` preview, status, and commit routes.
+  They accept only the `workspace` tracker with a validated signed
+  classification. The entry card explicitly selects Day Trade (`day_trade`) or
+  Swing (`swing`); an added execution begins from the saved trade's existing
+  classification. The generic manual-trade routes reject that tracker. The
+  Workspace UI supplies only the server-issued account timezone and no
+  browser-controlled historical override.
+- Leading decimals normalize only for Price and Fee, both in the Workspace UI
+  and in their manual-entry/manual-correction server parsers. Shares retain the
+  existing whole-or-leading-zero validation; canonical storage precision and
+  all account/version checks remain unchanged.
+- This active local correction allowlist is: `app/dashboard-shell.tsx`,
+  `app/dashboard-navigation.ts`,
+  `app/pwa/install-traderslink-pwa-card.tsx`,
+  `app/(dashboard)/quick-trade-entry/page.tsx`,
+  `app/(dashboard)/workspace/workspace-dashboard.tsx`,
+  `app/(dashboard)/workspace/workspace-trade-drawer-events.ts`,
+  `app/(dashboard)/workspace/workspace-more-filters-drawer.tsx`,
+  `app/(dashboard)/workspace/page.tsx`,
+  `app/(dashboard)/workspace/workspace-trade-library-actions.ts`,
+  `app/(dashboard)/workspace/workspace-trade-library.ts`,
+  `app/(dashboard)/workspace/workspace-trade-library-client.tsx`,
+  `app/(dashboard)/analytics/trade-explorer/trade-review-editor.tsx`,
+  `app/(dashboard)/analytics/trade-explorer/trade-tag-creation-drawer.tsx`,
+  `app/api/platform/journal/manual-executions/[executionRef]/route.ts`,
+  `app/api/platform/journal/manual-trades/preview/route.ts`,
+  `app/api/platform/journal/manual-trades/commit/route.ts`,
+  `app/api/platform/journal/manual-trades/status/route.ts`,
+  `app/api/platform/journal/workspace-trades/preview/route.ts`,
+  `app/api/platform/journal/workspace-trades/commit/route.ts`,
+  `app/api/platform/journal/workspace-trades/status/route.ts`,
+  `src/modules/platform/client/pwa/manual-trade-outbox.ts`,
+  `src/modules/journal/contracts/journal-manual-trade-capture-contracts.ts`,
+  `src/modules/journal/server/manual-trades/journal-manual-trade-preview-authority.ts`,
+  `src/modules/journal/server/manual-trades/journal-manual-trade-preview-service.ts`,
+  `src/modules/journal/server/manual-trades/journal-manual-trade-command-service.ts`,
+  `src/modules/journal/server/manual-trades/journal-manual-trade-input.ts`,
+  `src/modules/journal/server/manual-trades/journal-manual-execution-edit-service.ts`,
+  and this plan/progress record. No migration, configuration, data, staging,
+  or production file is included.
+
 ## 2026-08-31 local owner-review refinements
 
-- `Add trade` is the single top Workspace action. It opens the existing
-  account-scoped entry drawer through the same handler and is removed from the
-  Trades/table section; no duplicate control, helper text, or alternate entry
-  path is added.
+- The top-right Workspace actions are exactly `+ Trade`, `+ Rules`, and `+ Tags`
+  in that order. `+ Trade` opens the account-scoped entry drawer through the
+  shared handler; it is removed from the Trades/table section, so there is no
+  duplicate entry control or alternate entry path.
+- The owner-approved Workspace table presents entry and exit date, time, and
+  price together in compact cells. A row itself remains non-interactive; only
+  its explicit Review, Edit, Delete execution, and Analyzer actions open a
+  saved-trade surface or mutation flow.
+- Follow dashboard period is not a Workspace control. The existing top period
+  controls remain the only period control for the page and trade list.
 - The table-section filter control row and the parent CSS structural hiding
   workaround are removed in source. Period controls and More filters remain at
   the top of Workspace. More filters retains Group by with its existing None,

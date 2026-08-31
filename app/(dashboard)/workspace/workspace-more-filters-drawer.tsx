@@ -50,7 +50,7 @@ export function WorkspaceMoreFiltersDrawer({ onClose, open, query }: Readonly<{
       </TextField>
       <TextField label="Group" onChange={(event) => setDraft((value) => ({ ...value, group: event.target.value as typeof value.group }))} select size="small" value={draft.group}><MenuItem value="none">None</MenuItem><MenuItem value="day">Day</MenuItem><MenuItem value="ticker">Ticker</MenuItem></TextField>
       <Typography color="text.secondary" variant="body2">{active} active filter{active === 1 ? "" : "s"}</Typography>
-      <Stack direction="row" spacing={1}><Button onClick={clear}>Clear filters</Button><Button disabled={draft.sort === "newest"} onClick={() => setDraft((value) => ({ ...value, sort: "newest" }))}>Return to newest</Button></Stack>
+      <Stack direction="row" flexWrap="wrap" spacing={1}><Button onClick={clear}>Clear filters</Button><Button disabled={draft.sort === "newest"} onClick={() => setDraft((value) => ({ ...value, sort: "newest" }))}>Return to newest</Button></Stack>
     </Stack>
   </Drawer>;
 }

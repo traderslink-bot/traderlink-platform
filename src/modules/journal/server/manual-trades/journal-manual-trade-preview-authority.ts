@@ -6,6 +6,7 @@ import type { JournalPrivacyHmacConfiguration } from "../imports/journal-import-
 import type {
   JournalManualTrackerKind,
   JournalManualTradeEntry,
+  JournalManualWorkspaceStyle,
 } from "../../contracts/journal-manual-trade-capture-contracts";
 
 const TOKEN_VERSION = "manual-trade-preview-v1";
@@ -154,6 +155,7 @@ export function canonicalJournalManualTradePreviewPayload(input: Readonly<{
   scope: WorkspaceAccessScope;
   accountSelectionRef: string;
   tracker: JournalManualTrackerKind;
+  workspaceStyle?: JournalManualWorkspaceStyle;
   entries: readonly JournalManualTradeEntry[];
 }>): string {
   const entries = [...input.entries]
@@ -182,6 +184,7 @@ export function canonicalJournalManualTradePreviewPayload(input: Readonly<{
     input.scope.activeAccountId,
     input.accountSelectionRef,
     input.tracker,
+    input.workspaceStyle ?? null,
     entries,
   ]);
 }

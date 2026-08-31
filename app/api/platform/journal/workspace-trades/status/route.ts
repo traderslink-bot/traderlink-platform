@@ -13,20 +13,12 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function responseStatus(code: string): number {
-  if (code === "TRADERLINK_WORKSPACE_ACCESS_DENIED") return 401;
-  if (code.includes("CONFLICT")) return 409;
-  return 400;
-}
-
 export async function POST(request: Request): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const statusRequest = parseJournalManualTradeCommitStatusRequest(
-      await request.json(),
-    );
-    if (statusRequest.tracker === "workspace") {
+    const statusRequest = parseJournalManualTradeCommitStatusRequest(await request.json());
+    if (statusRequest.tracker !== "workspace" || statusRequest.workspaceStyle === undefined) {
       platformFailure("TRADERLINK_MANUAL_TRADE_PREVIEW_INVALID");
     }
     const accountSelectionRef = requireExpectedJournalAccountSelection(
@@ -34,25 +26,12 @@ export async function POST(request: Request): Promise<Response> {
       statusRequest.expectedAccountSelectionRef,
     );
     const result = withReadonlyJournalIntegrityRuntime(scope, (journal) =>
-      journal.manualTrades.committedStatus(
-        scope,
-        accountSelectionRef,
-        statusRequest,
-      ));
-    return Response.json(
-      { status: "ready", result },
-      { headers: { "cache-control": "private, no-store, max-age=0" } },
-    );
+      journal.manualTrades.committedStatus(scope, accountSelectionRef, statusRequest));
+    return Response.json({ status: "ready", result });
   } catch (error) {
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_MANUAL_TRADE_COMMIT_CONFLICT";
-    return Response.json(
-      { status: "unavailable", code },
-      {
-        headers: { "cache-control": "private, no-store, max-age=0" },
-        status: responseStatus(code),
-      },
-    );
+    return Response.json({ status: "unavailable", code }, { status: 400 });
   }
 }

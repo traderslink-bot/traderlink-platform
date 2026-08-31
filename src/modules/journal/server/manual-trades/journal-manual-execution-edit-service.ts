@@ -20,6 +20,11 @@ import type { JournalManualTradePreviewAuthority } from "./journal-manual-trade-
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const TIME_PATTERN = /^\d{2}:\d{2}(?::\d{2})?$/u;
 
+function normalizeLeadingDecimal(value: string): string {
+  const trimmed = value.trim();
+  return /^\.(\d+)$/u.test(trimmed) ? `0${trimmed}` : value;
+}
+
 export type JournalEditableManualExecution = Readonly<{
   deleteRef: string | null;
   editRef: string;
@@ -155,7 +160,10 @@ export class JournalManualExecutionEditService {
     const feesDecimal = input.feesDecimal === null ||
         input.feesDecimal.trim().length === 0
       ? null
-      : normalizeBrokerDecimal(input.feesDecimal, "feesDecimal");
+      : normalizeBrokerDecimal(
+          normalizeLeadingDecimal(input.feesDecimal),
+          "feesDecimal",
+        );
     const correction = this.imports.immediate(() => {
       const timestamp = createCanonicalUtcTimestamp(input.now);
       const instrumentId = this.imports.findOrCreateInstrument({
@@ -184,7 +192,7 @@ export class JournalManualExecutionEditService {
           { positive: true },
         ),
         priceDecimal: normalizeBrokerDecimal(
-          input.priceDecimal,
+          normalizeLeadingDecimal(input.priceDecimal),
           "priceDecimal",
           { positive: true },
         ),

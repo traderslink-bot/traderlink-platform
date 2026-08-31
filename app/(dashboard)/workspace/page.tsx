@@ -45,9 +45,9 @@ export const dynamic = "force-dynamic";
 const WORKSPACE_METRICS = [
   ["P/L", "gross_pnl", "Completed trades"],
   ["Win rate", "win_rate", "Completed round trips"],
+  ["Best trade", "best_trade", ""],
+  ["Worst trade", "worst_trade", ""],
   ["Trades", "included_count", "All available history"],
-  ["Largest win", "best_trade", ""],
-  ["Largest loss", "worst_trade", ""],
 ] as const;
 
 type WorkspacePeriod = "today" | "week" | "month" | "all";

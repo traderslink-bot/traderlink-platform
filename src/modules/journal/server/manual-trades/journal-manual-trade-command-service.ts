@@ -86,6 +86,7 @@ export class JournalManualTradeCommandService {
         scope,
         accountSelectionRef,
         tracker: request.tracker,
+        workspaceStyle: request.workspaceStyle,
         entries: request.entries,
       }),
     );
@@ -118,6 +119,7 @@ export class JournalManualTradeCommandService {
     if (!this.previews.verify(scope, {
       accountSelectionRef,
       tracker: request.tracker,
+      workspaceStyle: request.workspaceStyle,
       entries: request.entries,
       previewRef: request.previewRef,
     })) {
@@ -150,6 +152,7 @@ export class JournalManualTradeCommandService {
       const preview = this.previews.preview(scope, {
         accountSelectionRef,
         tracker: request.tracker,
+        workspaceStyle: request.workspaceStyle,
         entries: request.entries,
       });
       if (preview.groups.length !== request.confirmations.length) {
@@ -180,6 +183,8 @@ export class JournalManualTradeCommandService {
         idempotencyKey: request.idempotencyKey,
         sourceDisplayLabel: request.preparedBy === "ai_chat"
           ? "AI Chat manual executions"
+          : request.tracker === "workspace"
+          ? "Workspace manual executions"
           : request.tracker === "swing"
           ? "Swing Trade Tracker manual executions"
           : request.tracker === "quick"
@@ -235,7 +240,9 @@ export class JournalManualTradeCommandService {
       }
 
       const timestamp = createCanonicalUtcTimestamp(now);
-      const sourceUi = request.tracker === "swing"
+      const sourceUi = (request.tracker === "workspace"
+        ? request.workspaceStyle === "swing"
+        : request.tracker === "swing")
         ? "swing_trade_tracker" as const
         : "day_trade_tracker" as const;
       const payloadSha256 = digestJournalManualTradePreviewPayload(
@@ -243,6 +250,7 @@ export class JournalManualTradeCommandService {
           scope,
           accountSelectionRef,
           tracker: request.tracker,
+          workspaceStyle: request.workspaceStyle,
           entries: request.entries,
         }),
       );

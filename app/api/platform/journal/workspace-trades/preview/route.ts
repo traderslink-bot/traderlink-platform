@@ -1,7 +1,7 @@
 import {
-  assertJournalManualTrackerEntryDates,
-  parseJournalManualTrackerKind,
   parseJournalManualTradeEntries,
+  parseJournalManualTrackerKind,
+  parseJournalManualWorkspaceStyle,
   requireJsonRecord,
 } from "@/src/modules/journal/server/manual-trades/journal-manual-trade-input";
 import { withReadonlyJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
@@ -18,47 +18,33 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function responseStatus(code: string): number {
-  if (code === "TRADERLINK_WORKSPACE_ACCESS_DENIED") return 401;
-  if (
-    code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT" ||
-    code === "TRADERLINK_MANUAL_TRADE_RELATIONSHIP_CONFLICT"
-  ) return 409;
-  return 400;
-}
-
 export async function POST(request: Request): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const body = requireJsonRecord(await request.json(), "manualTradePreview");
+    const body = requireJsonRecord(await request.json(), "workspaceTradePreview");
     const accountSelectionRef = requireExpectedJournalAccountSelection(
       scope,
       body.expectedAccountSelectionRef,
     );
-    const tracker = parseJournalManualTrackerKind(body.tracker);
-    if (tracker === "workspace") {
+    if (parseJournalManualTrackerKind(body.tracker) !== "workspace") {
       platformFailure("TRADERLINK_MANUAL_TRADE_PREVIEW_INVALID");
     }
     const entries = parseJournalManualTradeEntries(body.entries);
-    assertJournalManualTrackerEntryDates(tracker, entries);
-    if (!scope.activeAccountId) {
-      platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-    }
+    const workspaceStyle = parseJournalManualWorkspaceStyle(body.workspaceStyle);
+    if (!scope.activeAccountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
     const preview = withReadonlyJournalIntegrityRuntime(scope, (journal) =>
       journal.manualTradePreviews.preview(scope, {
         accountSelectionRef,
-        tracker,
         entries,
+        tracker: "workspace",
+        workspaceStyle,
       }));
     return Response.json({ status: "ready", preview });
   } catch (error) {
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_MANUAL_TRADE_PREVIEW_INVALID";
-    return Response.json(
-      { status: "unavailable", code },
-      { status: responseStatus(code) },
-    );
+    return Response.json({ status: "unavailable", code }, { status: 400 });
   }
 }

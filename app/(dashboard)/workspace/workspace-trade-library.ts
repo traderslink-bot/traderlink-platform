@@ -31,6 +31,7 @@ export type WorkspaceTradeLibraryRow = Readonly<{
   roundTripId: string;
   status: "Open" | "Open swing" | "Closed" | "Closed swing";
   symbol: string;
+  tradeStyle: "day_trade" | "swing" | "other" | null;
   tradeCurrency: string;
 }>;
 
@@ -429,6 +430,7 @@ ${base} WHERE ${where}${keyset} ORDER BY ${order} LIMIT ?`).all(...pageParameter
         ? row.trade_style === "swing" ? "Open swing" : "Open"
         : row.trade_style === "swing" ? "Closed swing" : "Closed",
       symbol: row.symbol,
+      tradeStyle: row.trade_style,
       tradeCurrency: row.trade_currency,
     }))),
     totalRowCount,
