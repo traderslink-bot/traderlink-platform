@@ -30,7 +30,14 @@ function requireExactStagingRuntime(): void {
   ) fail();
 
   const volume = statSync(VOLUME_ROOT);
-  if (volume.uid !== process.getuid() || volume.gid !== process.getgid()) fail();
+  const processUserId = process.getuid?.();
+  const processGroupId = process.getgid?.();
+  if (
+    processUserId === undefined ||
+    processGroupId === undefined ||
+    volume.uid !== processUserId ||
+    volume.gid !== processGroupId
+  ) fail();
 
   if (
     !existsSync(DATABASE_PATH) ||
