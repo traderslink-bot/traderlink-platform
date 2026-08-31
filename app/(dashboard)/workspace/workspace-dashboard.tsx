@@ -20,7 +20,6 @@ import { WorkspaceFirstTimeOnboardingPanel } from "./workspace-first-time-onboar
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
 import { WorkspaceTradeLibrary } from "./workspace-trade-library-client";
-import { compareExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
 import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 export type WorkspaceMetric = Readonly<{
@@ -83,6 +82,24 @@ function savedViewTime(value: string): string {
   }).format(new Date(value));
 }
 
+/** Compares canonical Journal decimals without converting financial values to JS numbers. */
+function compareWorkspaceDecimals(left: string, right: string): number {
+  const leftNegative = left.startsWith("-");
+  const rightNegative = right.startsWith("-");
+  if (leftNegative !== rightNegative) return leftNegative ? -1 : 1;
+  const unsigned = (value: string) => value.startsWith("-") ? value.slice(1) : value;
+  const [leftWhole, leftFraction = ""] = unsigned(left).split(".");
+  const [rightWhole, rightFraction = ""] = unsigned(right).split(".");
+  let comparison = leftWhole.length === rightWhole.length
+    ? leftWhole.localeCompare(rightWhole)
+    : leftWhole.length - rightWhole.length;
+  if (comparison === 0) {
+    const width = Math.max(leftFraction.length, rightFraction.length);
+    comparison = leftFraction.padEnd(width, "0").localeCompare(rightFraction.padEnd(width, "0"));
+  }
+  return leftNegative ? -comparison : comparison;
+}
+
 export function WorkspaceDashboard({
   analyticsMetrics,
   demoAccountSelectionRef,
@@ -115,11 +132,11 @@ export function WorkspaceDashboard({
       </Box>
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (() => {
         const outcomes = tradeLibraryProps.trades.rows.filter((row) => row.netPnlDecimal !== null);
-        const best = [...outcomes].sort((left, right) => compareExactDecimals(
+        const best = [...outcomes].sort((left, right) => compareWorkspaceDecimals(
           right.netPnlDecimal!,
           left.netPnlDecimal!,
         ))[0] ?? null;
-        const worst = [...outcomes].sort((left, right) => compareExactDecimals(
+        const worst = [...outcomes].sort((left, right) => compareWorkspaceDecimals(
           left.netPnlDecimal!,
           right.netPnlDecimal!,
         ))[0] ?? null;
