@@ -262,9 +262,10 @@
 
 ## 2026-08-31 — Shared drawer and post-save target correction
 
-- Owner approved one shared Workspace Trade/Journal/Analyzer drawer. Unsaved
-  entry remains Trade-only: Journal and Analyzer are visible but disabled, with
-  no draft storage or unavailable-state copy.
+- Owner approved one shared Workspace Trade/Journal/Analyzer drawer. In
+  unsaved entry mode all three tabs remain selectable; Journal and Analyzer
+  show only their approved empty-state sentences while the mounted one-row
+  Trade form keeps its draft state. Saved-trade behavior remains unchanged.
 - The Workspace commit path returns only existing opaque affected-trade refs.
   When one current affected target exists, it also returns one bounded
   server-rendered Workspace row resolved under the same authenticated account

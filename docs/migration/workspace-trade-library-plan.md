@@ -254,6 +254,11 @@ mutations.
 - The Workspace client has one 880px desktop/full-width-mobile `Drawer`
   instance. `+ Trade` enters its new-trade mode; Review, Edit, and Analyzer
   enter its saved-trade tabs. No `AddTradeDrawer` component remains.
+- In new-trade mode, Trade, Journal, and Analyzer remain selectable in the
+  shared drawer. Journal renders only `Notes, tags and rules appear here when
+  you add and save a trade.` and Analyzer renders only `Analysis for qualifying
+  trades will appear here.` until the trade is saved. The mounted Trade form
+  keeps its one-row draft state while either empty tab is selected.
 - A Workspace review target is built only for a closed projection and uses its
   authoritative exit-local date, not the list activity date. The existing
   account-scoped review reader remains responsible for loading current note,
