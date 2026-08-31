@@ -145,11 +145,13 @@ function WorkspaceExecutionEditForm({
   currentAccountStillMatches,
   execution,
   expectedAccountSelectionRef,
+  onDeleted,
   symbol,
 }: Readonly<{
   currentAccountStillMatches: () => Promise<boolean>;
   execution: WorkspaceTradeLibraryRow["editableExecutions"][number];
   expectedAccountSelectionRef: string;
+  onDeleted: () => void;
   symbol: string;
 }>) {
   const router = useRouter();
@@ -206,6 +208,7 @@ function WorkspaceExecutionEditForm({
       const result = await response.json().catch(() => null) as Readonly<{ code?: unknown }> | null;
       if (!response.ok) { setError(deleteFailureMessage(result?.code)); return; }
       setDeleteOpen(false);
+      onDeleted();
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The execution could not be deleted. Refresh the page and try again.");
@@ -238,7 +241,7 @@ function SavedTradePanel({ accountCurrency, accountTimezone, currentAccountStill
   const router = useRouter(); const [addingExecution, setAddingExecution] = useState(false);
   if (!row) return null;
   const targets = [{ closeLocalDate: row.exitDate, closedAtUtc: null, direction: row.direction, displayedSymbol: row.symbol, roundTripId: row.roundTripId }];
-  return <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: tab === 1 ? 0 : 2 }}>{tab === 0 ? <Stack spacing={1}><Typography color={financialOutcomeColor(row.gainLossDecimal)} variant="h5">{tradeMoney(row)}</Typography>{row.editableExecutions.map((execution) => <WorkspaceExecutionEditForm currentAccountStillMatches={currentAccountStillMatches} execution={execution} expectedAccountSelectionRef={expectedAccountSelectionRef} key={execution.editRef} symbol={row.symbol} />)}{addingExecution ? <AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} embedded expectedAccountSelectionRef={expectedAccountSelectionRef} fixedSymbol={row.symbol} initialWorkspaceStyle={row.tradeStyle === "swing" ? "swing" : "day_trade"} offlineScopeRef={offlineScopeRef} onClose={() => setAddingExecution(false)} onSaved={() => { router.refresh(); onClose(); }} /> : <Button onClick={() => setAddingExecution(true)} sx={{ alignSelf: "flex-start" }}>Add execution</Button>}</Stack> : null}{tab === 1 ? <TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => onTabChange(0)} onSelectTrade={() => undefined} open selectedRoundTripId={row.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={targets} /> : null}{tab === 2 ? <Button onClick={() => router.push("/analytics/trade-analyzer/day/trades")} variant="outlined">Open Trade Analyzer</Button> : null}</Box>;
+  return <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: tab === 1 ? 0 : 2 }}>{tab === 0 ? <Stack spacing={1}><Typography color={financialOutcomeColor(row.gainLossDecimal)} variant="h5">{tradeMoney(row)}</Typography>{row.editableExecutions.map((execution) => <WorkspaceExecutionEditForm currentAccountStillMatches={currentAccountStillMatches} execution={execution} expectedAccountSelectionRef={expectedAccountSelectionRef} key={execution.editRef} onDeleted={onClose} symbol={row.symbol} />)}{addingExecution ? <AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} embedded expectedAccountSelectionRef={expectedAccountSelectionRef} fixedSymbol={row.symbol} initialWorkspaceStyle={row.tradeStyle === "swing" ? "swing" : "day_trade"} offlineScopeRef={offlineScopeRef} onClose={() => setAddingExecution(false)} onSaved={() => { router.refresh(); onClose(); }} /> : <Button onClick={() => setAddingExecution(true)} sx={{ alignSelf: "flex-start" }}>Add execution</Button>}</Stack> : null}{tab === 1 ? <TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => onTabChange(0)} onSelectTrade={() => undefined} open selectedRoundTripId={row.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={targets} /> : null}{tab === 2 ? <Button onClick={() => router.push("/analytics/trade-analyzer/day/trades")} variant="outlined">Open Trade Analyzer</Button> : null}</Box>;
 }
 
 export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen, currentAccountStillMatches, detail, expectedAccountSelectionRef, offlineScopeRef, onAddTradeSaved, onClose, startingTab }: Readonly<{ accountCurrency: string; accountTimezone: string; addOpen: boolean; currentAccountStillMatches: () => Promise<boolean>; detail: WorkspaceTradeLibraryRow | null; expectedAccountSelectionRef: string; offlineScopeRef: string; onAddTradeSaved?: () => void; onClose: () => void; startingTab: number }>) {

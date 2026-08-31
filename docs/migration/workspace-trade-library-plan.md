@@ -347,6 +347,26 @@ mutations.
 - This remains an uncommitted local owner-review preparation change. It is not
   staging, production, or Railway authorization.
 
+## 2026-08-31 execution deletion repair
+
+- Workspace retains execution-level deletion only. The server creates and
+  revalidates its opaque deletion reference against the selected account,
+  current version, and safe manual-execution predicate before appending the
+  historical exclusion and rebuilding Journal facts. Trade-level deletion,
+  browser-created eligibility, and removal of imported, reconciled, provider,
+  or demo executions remain out of scope.
+- Rebuilding after a final execution is excluded must retire every superseded
+  active round trip when the rebuilt chain has no retained IDs. Workspace
+  projection refresh happens after the complete affected rebuild, avoiding an
+  intermediate view with stale allocations.
+- On a successful confirmed delete, Saved Trade closes and the route refreshes
+  so the list and any later detail surface use server-authoritative facts. The
+  existing Add execution control stays available while editing.
+- Local proof uses a disposable-database verifier covering an eligible closing
+  execution, a final execution, stale references, protected/provider and demo
+  refusals, cross-account refusal, changed position state, and saved-drawer
+  close/refresh source handling.
+
 ## 2026-08-31 correction batch — active
 
 - Workspace money display will retain canonical precision while rendering dollar

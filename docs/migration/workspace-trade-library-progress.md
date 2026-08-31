@@ -460,3 +460,21 @@
   deletion flow.
   No server, test, install, build, migration, staging, deployment, commit, or
   push ran. Runtime and owner visual review remain outstanding.
+
+## 2026-08-31 — Execution deletion repair verified locally
+
+- Root cause: excluding a final execution rebuilt an empty retained-round-trip
+  set, but the repository rendered it as `NOT IN (NULL)`. SQL then retained
+  the obsolete active round trip and its non-current allocation, causing the
+  Workspace projection integrity guard to reject the otherwise safe delete.
+- The empty retained-ID case now supersedes every affected active round trip.
+  Projection refresh runs after the complete affected rebuild, so it sees a
+  consistent account state rather than a partial chain update.
+- Successful confirmed deletion closes Saved Trade and refreshes the route;
+  the existing Add execution form remains unchanged.
+- `src/scripts/verify-workspace-execution-deletion.ts` passed against a
+  disposable SQLite database. It verifies eligible deletion and rebuild,
+  final-execution retirement, stale/protected/demo/cross-account refusal, and
+  client close/refresh handling. `git diff --check` also passed. No server,
+  Vitest suite, build, real-data migration, staging, deployment, push, or
+  hosted action ran.
