@@ -27,7 +27,7 @@ Selective reuse is limited to the following behavior:
 
 | Concern | Selected source / current authority | Decision |
 | --- | --- | --- |
-| Trade facts and account scope | Current `JournalAnalyticsFactSetRepository` and active `WorkspaceAccessScope` | Reuse only server-derived active-account facts. Browser inputs never select an account. |
+| Trade facts and account scope | Current `JournalAnalyticsFactSetRepository`, `WorkspaceAccessScope`, and the Workspace current-version projection | Reuse only server-derived active-account facts. Browser inputs never select an account. |
 | Existing execution detail | Current `/api/platform/journal/calendar/ticker-details` endpoint | Request only after a row is expanded. |
 | Manual entry | Current `ManualExecutionEntry` preview/commit and PWA outbox path | Reuse without changing ledger validation or account-selection enforcement. |
 | Trade review, tags and rules | Existing Trade Explorer review editor/actions | Preserve as the authority for a later saved-trade Journal tab; do not duplicate persistence. |
@@ -37,6 +37,13 @@ The following reference behavior is deliberately excluded: paired Gross/Net
 columns, a Needs review filter/label, any client-selected scope, preloaded
 executions/Analyzer data, and historical global navigation changes. The frozen
 FX candidate `b3b59aa70bb1b260b531f8b45fa620c41d04c3af` is untouched.
+
+The exact correction-batch allowlist is limited to the Workspace table/client/
+server action/read model, the existing Workspace dashboard and metric-card
+presentation, the Calendar presentation, the one Journal current-version
+projection migration plus its manifest/rebuild materializer, and this plan/
+progress record. It does not include account contracts, execution mutation
+routes, provider imports, calendar reads, hosted configuration, or any data.
 
 ## Approved composition
 
@@ -70,9 +77,12 @@ elements must be removed or corrected together before another review checkpoint:
 - Restore visible ticker, state, date, sort, group, active-filter, reset, and
   dashboard-period controls. Newest-first is the default.
 - Replace the full-history Workspace fact-set list with a bounded,
-  server-authoritative table continuation. The cursor must remain bound to the
-  selected account and fact revision, and every continuation must retain the
-  canonical filters, sort, grouping, and period choice.
+  server-authoritative table continuation. The migration-backed projection
+  stores exact derived P/L and an exact-text sort key, never SQLite float
+  casts. The opaque cursor remains bound to the server-resolved account,
+  projection revision, canonical query digest, sort key, and round-trip tie
+  breaker; every continuation retains filters, sort, grouping, and period
+  choice and rejects stale or mismatched state.
 - Keep all five metric cards and the compact PWA card, but remove redundant
   metric captions. Add compact selected-period Best trade/Worst trade facts
   immediately below the metrics.
@@ -103,13 +113,21 @@ redirect, deletion, or data change.
 
 ## Delivery boundary
 
-This slice does not change migrations, hosted configuration, Railway, account
-isolation, chart/candle loading, or Journal facts outside the existing audited
-manual-execution exclusion workflow. Delete remains execution-level only: the
+This slice adds one local-only derived-projection migration; it does not run a
+migration, alter existing account facts, change hosted configuration, or take
+Railway action. The projection is regenerated from current Journal facts during
+the existing account rebuild transaction and needs a separately coordinated
+derived-data backfill for accounts not rebuilt after migration. Delete remains
+execution-level only: the
 server emits an opaque `deleteRef` only after its current-account/current-version
 safe-eligibility predicate passes, and the existing mutation revalidates that
 ref before appending the historical exclusion and rebuilding affected trades.
 No trade-level identifier or browser-created eligibility is accepted.
+
+Until that Coordinator-owned, derived-data-only backfill completes, an account
+without a projection revision renders an empty unavailable list state. It must
+not fall back to materializing full history, silently infer financial values, or
+rewrite any Journal fact during an ordinary Workspace read.
 
 The offline Workspace snapshot remains metrics/review-only. It intentionally
 does not persist account settings, account-selection or offline-scope refs, or

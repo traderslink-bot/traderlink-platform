@@ -19,6 +19,7 @@ import { journalDemoTradeDataMigration } from "@/src/modules/journal/server/data
 import { journalDemoPackApplicationsMigration } from "@/src/modules/journal/server/database/migrations/0096_journal_demo_pack_applications";
 import { journalDemoMaterializerProvenanceGuardMigration } from "@/src/modules/journal/server/database/migrations/0097_journal_demo_materializer_provenance_guard";
 import { journalDemoLifecycleMigration } from "@/src/modules/journal/server/database/migrations/0098_journal_demo_lifecycle";
+import { journalWorkspaceTradeLibraryProjectionMigration } from "@/src/modules/journal/server/database/migrations/0100_journal_workspace_trade_library_projection";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -501,6 +502,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/level-analysis/server/database/migrations/0099_daily_trade_execution_mismatches.ts",
       migration: dailyTradeExecutionMismatchesMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0100_journal_workspace_trade_library_projection.ts",
+      migration: journalWorkspaceTradeLibraryProjectionMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -880,6 +885,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0098_journal_demo_lifecycle": Object.freeze([
       "journal_demo_lifecycle",
+    ]),
+    "0100_journal_workspace_trade_library_projection": Object.freeze([
+      "journal_workspace_trade_library_projection_revisions",
+      "journal_workspace_trade_library_projections",
     ]),
     "0099_daily_trade_execution_mismatches": Object.freeze([
       "journal_round_trip_daily_trade_execution_mismatch_sets",

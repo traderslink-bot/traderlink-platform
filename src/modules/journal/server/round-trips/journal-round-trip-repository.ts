@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { refreshWorkspaceTradeLibraryProjection } from "@/src/modules/journal-analytics/server/workspace-trade-library-projection";
 
 import type {
   JournalAllocationRole,
@@ -75,6 +76,19 @@ export class JournalRoundTripRepository {
 
   immediate<T>(operation: () => T): T {
     return this.database.transaction(operation).immediate();
+  }
+
+  refreshWorkspaceTradeLibraryProjection(
+    scope: Readonly<{ userId: string; workspaceId: string; workspaceRole: "owner" | "admin" | "member"; accountId: string }>,
+    refreshedAtUtc: string,
+  ): void {
+    refreshWorkspaceTradeLibraryProjection(this.database, {
+      activeAccountId: scope.accountId,
+      allowedAccountIds: Object.freeze([scope.accountId]),
+      userId: scope.userId,
+      workspaceId: scope.workspaceId,
+      workspaceRole: scope.workspaceRole,
+    }, refreshedAtUtc);
   }
 
   accountTimezone(workspaceId: string, accountId: string): string | null {

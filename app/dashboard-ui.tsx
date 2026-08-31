@@ -42,11 +42,13 @@ export function DashboardSecondaryAction(props: DashboardActionProps) {
 
 export function DashboardMetricCard({
   caption,
+  hideCaption = false,
   label,
   value,
   valueColor = "text.primary",
 }: {
   caption: string;
+  hideCaption?: boolean;
   label: string;
   value: string;
   valueColor?: "success.main" | "error.main" | "text.primary";
@@ -64,14 +66,14 @@ export function DashboardMetricCard({
         >
           {value}
         </Typography>
-        <Typography
+        {!hideCaption ? <Typography
           color="text.secondary"
           noWrap
           sx={{ mt: 0.5 }}
           variant="caption"
         >
           {caption}
-        </Typography>
+        </Typography> : null}
       </CardContent>
     </Card>
   );

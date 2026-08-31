@@ -43,6 +43,51 @@
   navigation group. The retained `/trade-tracker/swings` route title and Help
   mapping, its page/source, Journal contracts, and offline model are untouched.
 
+## 2026-08-30 — Source correction checkpoint
+
+- Rebuilt the Workspace list presentation as a compact constrained table with
+  direct row disclosure, action-only icon controls, visible operational
+  controls, compact mobile summaries, and a drawer-specific execution form
+  that reuses the established manual-trade submission boundary.
+- The Calendar month presentation is now a compact seven-day grid in the
+  retained Calendar route; its account-scoped data, route, filters, and day
+  detail ownership remain unchanged.
+- The retained seven-day week view uses the same day facts and selection flow,
+  with cells reduced from 480px to 260px and reduced padding; no controls or
+  data behavior changed.
+- The existing fact-set service still materializes all eligible facts before
+  its current table cursor is built. That contract cannot honestly satisfy the
+  required storage-bounded continuation guarantee and remains a separate server
+  contract gap; this checkpoint does not represent client-side Load more as a
+  replacement for it.
+
+## 2026-08-30 — Server-bounded projection contract in progress
+
+- Coordinator authorized the local-only migration-backed replacement for the
+  eager fact-set table. Migration `0100_journal_workspace_trade_library_projection`
+  introduces a current-version derived projection and per-account projection
+  revision. It stores canonical exact financial values plus a deterministic
+  text sort key, so P/L ordering does not cast Journal decimals to SQLite
+  floating point.
+- The Workspace reader obtains its account only from `WorkspaceAccessScope`.
+  It queries the indexed projection with a fixed 25-row page, a validated
+  opaque continuation cursor, and canonical ticker/status/date/sort/group/
+  dashboard-period query state. The cursor carries its projection revision,
+  query digest, ordering key, and round-trip tie breaker; a changed account,
+  query, or projection revision is rejected rather than reused.
+- Existing Journal rebuilds refresh the derived projection only after their
+  current-version writes have completed, in the same account transaction. No
+  migration or backfill was run in this worktree. A release requires a
+  Coordinator-owned, derived-data backfill for accounts not otherwise rebuilt
+  after the new schema is applied; it must not rewrite Journal facts. Until
+  then, the Workspace reader returns only its explicit empty unavailable state;
+  it never falls back to a full-history read or writes facts during a normal
+  page request.
+- The client calls the server reader for initial filters and continuations.
+  It no longer slices a browser-resident historical trade array. Displayed
+  delete actions use the plain label `Delete execution` and remain absent when
+  no server-issued opaque deletion ref exists.
+
 ## 2026-08-30 — Reconciliation complete
 
 - Confirmed this worktree is clean on `codex/workspace-trade-library-85813d84`

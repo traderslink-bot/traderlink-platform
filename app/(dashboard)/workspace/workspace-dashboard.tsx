@@ -1,6 +1,8 @@
 "use client";
 
 import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -18,6 +20,8 @@ import { WorkspaceFirstTimeOnboardingPanel } from "./workspace-first-time-onboar
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
 import { WorkspaceTradeLibrary } from "./workspace-trade-library-client";
+import { compareExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
+import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -107,8 +111,23 @@ export function WorkspaceDashboard({
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))", xl: "repeat(5, minmax(0, 1fr))" } }}>
-        {metrics.map((metric) => <DashboardMetricCard key={metric.label} {...metric} />)}
+        {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
+      {hasLiveTradeLibraryProps(tradeLibraryProps) ? (() => {
+        const outcomes = tradeLibraryProps.trades.rows.filter((row) => row.netPnlDecimal !== null);
+        const best = [...outcomes].sort((left, right) => compareExactDecimals(
+          right.netPnlDecimal!,
+          left.netPnlDecimal!,
+        ))[0] ?? null;
+        const worst = [...outcomes].sort((left, right) => compareExactDecimals(
+          left.netPnlDecimal!,
+          right.netPnlDecimal!,
+        ))[0] ?? null;
+        return best || worst ? <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+          {best ? <Card variant="outlined"><CardContent sx={{ py: 1, "&:last-child": { pb: 1 } }}><Typography color="text.secondary" variant="caption">Best trade</Typography><Typography sx={{ color: "success.main", fontWeight: 800 }} variant="body2">{best.symbol} · {formatJournalAnalyticsMoney(best.netPnlDecimal!, best.tradeCurrency, { showPositiveSign: true })}</Typography></CardContent></Card> : null}
+          {worst ? <Card variant="outlined"><CardContent sx={{ py: 1, "&:last-child": { pb: 1 } }}><Typography color="text.secondary" variant="caption">Worst trade</Typography><Typography sx={{ color: "error.main", fontWeight: 800 }} variant="body2">{worst.symbol} · {formatJournalAnalyticsMoney(worst.netPnlDecimal!, worst.tradeCurrency, { showPositiveSign: true })}</Typography></CardContent></Card> : null}
+        </Stack> : null;
+      })() : null}
       <Box sx={{ maxWidth: 390 }}><InstallTradersLinkPwaCard /></Box>
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <WorkspaceTradeLibrary {...tradeLibraryProps} />
