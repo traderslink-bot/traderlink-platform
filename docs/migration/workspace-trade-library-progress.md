@@ -386,10 +386,22 @@
   categories to recovery guidance without displaying raw codes or identifiers.
   There is no date chevron. Mobile remains a compact non-table summary without
   horizontal scrolling.
+- Open trades now retain the same Review action and Journal tab as closed
+  trades. The server recognizes an open Journal target only when the selected
+  account’s current round trip is factually legitimate-open with a null close;
+  it derives the Journal date from the recorded opening time and rejects a
+  changed current version inside the annotation write transaction. This does
+  not infer a close, change the Open status, or create a separate persistence
+  path; closed-trade close-date validation remains in place.
 - The saved-trade surface has only Trade, Journal, and Analyzer tabs. Its
   embedded Journal editor hides inherited trade navigation and page-position
   indicators while retaining the established notes, tags, custom rules, and
   automatic rule-result authority for the selected trade.
+- Workspace now keeps selected top-period dates separate from optional More
+  filters dates. More filters counts only ticker, state, explicit From/To,
+  sort, and grouping. Both Clear filters controls retain the selected period,
+  while period selection clears an explicit custom date override. The server
+  query and client pagination continue to bind the same effective date range.
 - The filter drawer exposes ticker search, state, date range, sort, grouping,
   active count, Clear filters, and Return to newest. The top Workspace period
   controls remain the only period control.

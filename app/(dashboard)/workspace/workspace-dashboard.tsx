@@ -33,16 +33,24 @@ export type WorkspaceMetric = Readonly<{
 type WorkspaceLiveTradeLibraryProps = Readonly<{
   accountCurrency: string;
   accountTimezone: string;
+  customEndDate: string | null;
+  customStartDate: string | null;
   expectedAccountSelectionRef: string;
   offlineScopeRef: string;
+  periodEndDate: string | null;
+  periodStartDate: string | null;
   trades: WorkspaceTradeLibraryModel;
 }>;
 
 type WorkspaceOfflineTradeLibraryProps = Readonly<{
   accountCurrency?: never;
   accountTimezone?: never;
+  customEndDate?: never;
+  customStartDate?: never;
   expectedAccountSelectionRef?: never;
   offlineScopeRef?: never;
+  periodEndDate?: never;
+  periodStartDate?: never;
   trades?: never;
 }>;
 
@@ -72,8 +80,12 @@ function hasLiveTradeLibraryProps(
 ): value is WorkspaceLiveTradeLibraryProps {
   return typeof value.accountCurrency === "string" &&
     typeof value.accountTimezone === "string" &&
+    (typeof value.customEndDate === "string" || value.customEndDate === null) &&
+    (typeof value.customStartDate === "string" || value.customStartDate === null) &&
     typeof value.expectedAccountSelectionRef === "string" &&
     typeof value.offlineScopeRef === "string" &&
+    (typeof value.periodEndDate === "string" || value.periodEndDate === null) &&
+    (typeof value.periodStartDate === "string" || value.periodStartDate === null) &&
     value.trades !== undefined;
 }
 
@@ -103,12 +115,12 @@ export function WorkspaceDashboard({
   const [tagCreationOpen, setTagCreationOpen] = useState(false);
   const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
     Boolean(tradeLibraryProps.trades.query.searchTicker) || tradeLibraryProps.trades.query.filter !== "all" ||
-    Boolean(tradeLibraryProps.trades.query.startDate) || Boolean(tradeLibraryProps.trades.query.endDate) ||
+    Boolean(tradeLibraryProps.customStartDate) || Boolean(tradeLibraryProps.customEndDate) ||
     tradeLibraryProps.trades.query.sort !== "newest" || tradeLibraryProps.trades.query.group !== "none"
   );
   const activeFilterCount = hasLiveTradeLibraryProps(tradeLibraryProps)
     ? Number(Boolean(tradeLibraryProps.trades.query.searchTicker)) + Number(tradeLibraryProps.trades.query.filter !== "all") +
-      Number(Boolean(tradeLibraryProps.trades.query.startDate)) + Number(Boolean(tradeLibraryProps.trades.query.endDate)) +
+      Number(Boolean(tradeLibraryProps.customStartDate)) + Number(Boolean(tradeLibraryProps.customEndDate)) +
       Number(tradeLibraryProps.trades.query.sort !== "newest") + Number(tradeLibraryProps.trades.query.group !== "none")
     : 0;
   const metrics = analyticsMetrics ?? unavailableMetrics;
@@ -131,8 +143,8 @@ export function WorkspaceDashboard({
               </Button>
             ))
           ) : null}
-          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)}>Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button> : null}
-          {hasActiveTableFilters ? <Button onClick={() => router.push("/workspace")}>Clear filters</Button> : null}
+          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)}>More filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button> : null}
+          {hasActiveTableFilters ? <Button onClick={() => { const next = new URLSearchParams(searchParams.toString()); ["endDate", "filter", "group", "searchTicker", "sort", "startDate"].forEach((key) => next.delete(key)); router.push(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }}>Clear filters</Button> : null}
           <DashboardDataScopeChip />
           {offlineSavedAtUtc ? <Chip color="primary" label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`} size="small" variant="outlined" /> : null}
         </Stack>
@@ -146,7 +158,7 @@ export function WorkspaceDashboard({
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
           <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} />
-          <WorkspaceMoreFiltersDrawer onClose={() => setFiltersOpen(false)} open={filtersOpen} query={tradeLibraryProps.trades.query} />
+          <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} onClose={() => setFiltersOpen(false)} open={filtersOpen} query={tradeLibraryProps.trades.query} />
           <TradeTagCreationDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} onClose={() => setTagCreationOpen(false)} open={tagCreationOpen} />
         </>
       ) : null}

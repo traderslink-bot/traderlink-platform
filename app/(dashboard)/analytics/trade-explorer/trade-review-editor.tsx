@@ -250,6 +250,7 @@ export function TradeExplorerReviewEditor({
       const result = await saveTradeExplorerReviewAction({
         closeLocalDate: model.trade.closeLocalDate,
         expectedAccountSelectionRef,
+        expectedRoundTripVersionId: model.roundTripVersionId,
         note: noteChanged ? {
           expectedRevision: model.note.revision,
           tradeNote: draft.tradeNote,
@@ -321,7 +322,7 @@ export function TradeExplorerReviewEditor({
                 <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Trade review</Typography>
                 {selectedTrade ? (
                   <Typography color="text.secondary" noWrap variant="body2">
-                    {selectedTrade.displayedSymbol} · {selectedTrade.direction === "long" ? "Long" : "Short"} · {selectedTrade.closeLocalDate}
+                    {selectedTrade.displayedSymbol} · {selectedTrade.direction === "long" ? "Long" : "Short"} · {selectedTrade.closeLocalDate ?? "Open"}
                   </Typography>
                 ) : null}
               </Box>

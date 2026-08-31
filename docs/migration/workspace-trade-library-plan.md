@@ -312,8 +312,22 @@ mutations.
   route response and maps account, stale-eligibility, conflict, request, and
   storage-validation categories to distinct trader-facing recovery guidance.
   It does not display internal codes, identifiers, or predicates.
+- Review is available for both current open and closed Workspace trades. A
+  null close date requests only the authoritative current legitimate-open
+  round trip; its Journal date derives from the recorded opening timestamp in
+  the selected account timezone. Save carries the read current-version ID and
+  validates it again inside the account-scoped annotation transaction. No
+  exit date is invented, no trade is marked closed or reviewed, and notes,
+  tags, and rule results remain attached to the active stable round trip.
+  Closed review continues to require and validate its actual close date.
 - Follow dashboard period is not a Workspace control. The existing top period
   controls remain the only period control for the page and trade list.
+- Today, This week, This month, and All time are the selected page period, not
+  drawer filters. Their server-derived dates remain separate from explicit
+  From/To dates in the URL and never populate or increment More filters.
+  Clear filters removes only ticker, state, custom dates, sort, and grouping;
+  it retains the chosen period. Both the initial server query and later
+  pagination bind the effective period/custom range into their query revision.
 - The table-section filter control row and the parent CSS structural hiding
   workaround are removed in source. Period controls and More filters remain at
   the top of Workspace. More filters retains Group by with its existing None,

@@ -6,7 +6,9 @@ import { useEffect, useState } from "react";
 
 import type { WorkspaceTradeLibraryQuery } from "./workspace-trade-library";
 
-export function WorkspaceMoreFiltersDrawer({ onClose, open, query }: Readonly<{
+export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, onClose, open, query }: Readonly<{
+  customEndDate: string | null;
+  customStartDate: string | null;
   onClose: () => void;
   open: boolean;
   query: WorkspaceTradeLibraryQuery;
@@ -15,13 +17,13 @@ export function WorkspaceMoreFiltersDrawer({ onClose, open, query }: Readonly<{
   const searchParams = useSearchParams();
   const currentSearch = searchParams.toString();
   const [draft, setDraft] = useState(() => ({
-    endDate: query.endDate ?? "", filter: query.filter, group: query.group,
-    searchTicker: query.searchTicker, sort: query.sort, startDate: query.startDate ?? "",
+    endDate: customEndDate ?? "", filter: query.filter, group: query.group,
+    searchTicker: query.searchTicker, sort: query.sort, startDate: customStartDate ?? "",
   }));
   useEffect(() => {
     if (!open) return;
-    setDraft({ endDate: query.endDate ?? "", filter: query.filter, group: query.group, searchTicker: query.searchTicker, sort: query.sort, startDate: query.startDate ?? "" });
-  }, [open, query]);
+    setDraft({ endDate: customEndDate ?? "", filter: query.filter, group: query.group, searchTicker: query.searchTicker, sort: query.sort, startDate: customStartDate ?? "" });
+  }, [customEndDate, customStartDate, open, query]);
   useEffect(() => {
     if (!open) return;
     const handle = window.setTimeout(() => {

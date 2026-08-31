@@ -2,8 +2,8 @@ import type { JournalTagPresetCategory } from "@/src/modules/journal/contracts/j
 
 export type TradeExplorerReviewTarget = Readonly<{
   roundTripId: string;
-  closeLocalDate: string;
-  closedAtUtc: string;
+  closeLocalDate: string | null;
+  closedAtUtc: string | null;
   direction: "long" | "short";
   displayedSymbol: string;
 }>;
@@ -43,6 +43,7 @@ export type TradeExplorerReviewModel = Readonly<{
   presetRules: readonly TradeExplorerPresetRuleReview[];
   selectedTagIds: readonly string[];
   trade: TradeExplorerReviewTarget;
+  roundTripVersionId: string;
 }>;
 
 export type TradeExplorerReviewRuleChange = Readonly<{
@@ -53,8 +54,9 @@ export type TradeExplorerReviewRuleChange = Readonly<{
 }>;
 
 export type TradeExplorerReviewSaveInput = Readonly<{
-  closeLocalDate: string;
+  closeLocalDate: string | null;
   expectedAccountSelectionRef: string;
+  expectedRoundTripVersionId: string;
   note: Readonly<{
     expectedRevision: number | null;
     tradeNote: string;

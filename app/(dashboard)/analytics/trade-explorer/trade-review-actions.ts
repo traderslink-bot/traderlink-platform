@@ -41,6 +41,11 @@ function text(value: unknown, field: string): string {
   return value;
 }
 
+function nullableText(value: unknown, field: string): string | null {
+  if (value === null) return null;
+  return text(value, field);
+}
+
 function nullableRevision(value: unknown): number | null {
   if (value === null) return null;
   if (!Number.isSafeInteger(value) || Number(value) <= 0) {
@@ -94,10 +99,14 @@ function saveInput(value: unknown): TradeExplorerReviewSaveInput {
     });
   }));
   return Object.freeze({
-    closeLocalDate: text(input.closeLocalDate, "closeLocalDate"),
+    closeLocalDate: nullableText(input.closeLocalDate, "closeLocalDate"),
     expectedAccountSelectionRef: text(
       input.expectedAccountSelectionRef,
       "expectedAccountSelectionRef",
+    ),
+    expectedRoundTripVersionId: text(
+      input.expectedRoundTripVersionId,
+      "expectedRoundTripVersionId",
     ),
     note,
     roundTripId: text(input.roundTripId, "roundTripId"),

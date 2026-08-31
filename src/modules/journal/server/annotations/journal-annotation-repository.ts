@@ -194,6 +194,22 @@ WHERE workspace_id = ? AND account_id = ? AND round_trip_id = ?
     ));
   }
 
+  roundTripCurrentVersionMatches(
+    scope: AccountScope,
+    roundTripId: string,
+    roundTripVersionId: string,
+  ): boolean {
+    return Boolean(this.database.prepare(`SELECT 1 AS present
+FROM journal_round_trips
+WHERE workspace_id = ? AND account_id = ? AND round_trip_id = ?
+  AND current_version_id = ? AND lifecycle_state = 'active'`).get(
+      scope.workspaceId,
+      scope.accountId,
+      roundTripId,
+      roundTripVersionId,
+    ));
+  }
+
   listAssignmentRows(
     scope: AccountScope,
     roundTripId: string,

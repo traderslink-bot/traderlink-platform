@@ -98,7 +98,7 @@ export default async function WorkspacePage({
     await cookies();
     redirect("/account/trading");
   }
-  const { account, onboardingStatus, response, reviewSummary, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, response, reviewSummary, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, service }) => {
       const account = database.prepare(`
 SELECT base_currency, trading_timezone
@@ -125,7 +125,11 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
       });
       return Object.freeze({
         account,
+        customEndDate: queryParameters.endDate ?? null,
+        customStartDate: queryParameters.startDate ?? null,
         onboardingStatus: readJournalFirstExecutionOnboardingStatusFromDatabase(database, scope),
+        periodEndDate: periodDateRange.endDate,
+        periodStartDate: periodDateRange.startDate,
         response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
         reviewSummary: readWorkspaceReviewSummary(database, scope, new Date(), dashboard),
         tradeLibrary: readWorkspaceTradeLibrary(database, scope, {
@@ -189,6 +193,10 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         reviewSummary={reviewSummary}
         offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
         period={period}
+        customEndDate={customEndDate}
+        customStartDate={customStartDate}
+        periodEndDate={periodEndDate}
+        periodStartDate={periodStartDate}
         trades={tradeLibrary}
       />
     </>
