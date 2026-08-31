@@ -380,3 +380,25 @@ unchanged. Port 3010 remains active only for the owner's review.
   grant/toggle sequence. Current authorization does not yet enforce the
   documented five-minute ownership freshness; that remains a separate
   authorization correction.
+
+## 2026-08-31 — staging-only admin bootstrap helper source
+
+- Added a separate one-shot staging helper image instead of changing the normal
+  app Dockerfile or repurposing migration maintenance. The helper contains the
+  source and locked `tsx` dependency required by the existing closed commands;
+  it exposes no port and never starts the app server.
+- Its fixed entrypoint accepts only `link` or `grant` preview/execute forms.
+  It maps them only to the protected initial-owner link and the existing grant
+  with `--target=configured-initial-owner`. Direct subjects, target UUIDs,
+  arbitrary scripts, recovery/revoke operations, extra flags, and shell strings
+  are rejected before any child command starts.
+- The helper fails closed unless Railway identifies the environment as
+  `staging`, the configured database is exactly
+  `/data/traderlink-platform.sqlite`, and `/data` plus the database are real,
+  non-symlinked paths owned by the normal app UID/GID. It never changes volume
+  ownership. Control-plane confirmation of the isolated staging volume and the
+  one-writer freeze remains mandatory because image code cannot prove a Railway
+  attachment.
+- This is source-only staging support. No image was built, no helper service or
+  volume attachment was created, and no link, grant, database, deployment,
+  push, Railway configuration, or production action ran.

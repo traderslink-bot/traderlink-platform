@@ -1389,12 +1389,24 @@ enable the existing Dashboard member-access setting. The setting remains off
 until this final audited setting write, after which the existing membership gate
 admits verified configured-server members.
 
-The scripts cannot safely infer staging from `NODE_ENV`, because the hosted
-environments use the same production runtime mode. Railway project/volume
-selection, writer freeze, backup handling, command execution, owner sign-in,
-and the final setting write remain Coordinator-held external authority. No
-source slice executes any of them. The current admin authorizer records Discord
-owner state but does not enforce the documented five-minute freshness value;
-require an immediate fresh owner sign-in for this staging procedure. Freshness
-enforcement is a separate authorization correction and is not claimed by this
-slice.
+The standalone scripts cannot safely infer staging from `NODE_ENV`, because the
+hosted environments use the same production runtime mode. The dedicated
+`Dockerfile.staging-journal-admin-bootstrap` helper is a separate one-shot
+image, never the normal app image or the migration-maintenance image. Its fixed
+entrypoint accepts only the four closed link/grant preview/execute forms above,
+requires `RAILWAY_ENVIRONMENT_NAME=staging`, requires the exact
+`/data/traderlink-platform.sqlite` database path, and refuses a symlinked,
+missing, or incorrectly owned `/data` volume. It runs as the normal app UID/GID
+`1001`, never repairs ownership, exposes no port, and starts no Next server.
+
+Railway project/volume selection, writer freeze, helper attachment, backup
+handling, command execution, owner sign-in, and the final setting write remain
+Coordinator-held external authority. The Coordinator must verify the selected
+isolated staging environment and `/data` volume in the control plane before
+each use; source code cannot protect against a control-plane administrator
+attaching a helper to production while falsifying deployment inputs. No source
+slice executes any of those actions. The current admin authorizer records
+Discord owner state but does not enforce the documented five-minute freshness
+value; require an immediate fresh owner sign-in for this staging procedure.
+Freshness enforcement is a separate authorization correction and is not claimed
+by this slice.
