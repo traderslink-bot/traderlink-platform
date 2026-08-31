@@ -63,6 +63,12 @@ safe-eligibility predicate passes, and the existing mutation revalidates that
 ref before appending the historical exclusion and rebuilding affected trades.
 No trade-level identifier or browser-created eligibility is accepted.
 
+The offline Workspace snapshot remains metrics/review-only. It intentionally
+does not persist account settings, account-selection or offline-scope refs, or
+trade-library rows. The live Trade Library therefore renders only when the
+complete server-issued prop bundle is present; the offline surface must not
+substitute placeholders or expose its Add/Edit/Delete actions.
+
 ## Review and acceptance
 
 Owner review is required for the desktop table, compact mobile summary, and

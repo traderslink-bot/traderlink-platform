@@ -43,8 +43,16 @@
 - Saved-trade Journal/Analyzer editing remains guarded follow-up work. Delete
   is available only for an execution whose current server-issued opaque ref
   passes the audited manual-only predicate; it is never a trade-level action.
-- No owner review, integration, Railway staging, or production approval has
-  occurred.
+- No owner review, integration, or production approval has occurred.
+
+## 2026-08-30 — Offline staging compile repair
+
+- Railway staging identified the Offline Workspace caller as the only TypeScript
+  blocker after the live Trade Library became a required Workspace composition.
+- The saved offline model contains only verified metrics/review content. The
+  Workspace dashboard now accepts that metrics-only caller without fabricating
+  account currency/timezone, opaque account or offline refs, or trade rows; it
+  renders the Trade Library only for the complete live server-issued bundle.
 
 ## 2026-08-30 — Safe execution deletion follow-up
 

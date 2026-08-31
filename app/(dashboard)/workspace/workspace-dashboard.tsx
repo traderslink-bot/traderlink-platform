@@ -26,6 +26,34 @@ export type WorkspaceMetric = Readonly<{
   caption: string;
 }>;
 
+type WorkspaceLiveTradeLibraryProps = Readonly<{
+  accountCurrency: string;
+  accountTimezone: string;
+  expectedAccountSelectionRef: string;
+  offlineScopeRef: string;
+  trades: WorkspaceTradeLibraryModel;
+}>;
+
+type WorkspaceOfflineTradeLibraryProps = Readonly<{
+  accountCurrency?: never;
+  accountTimezone?: never;
+  expectedAccountSelectionRef?: never;
+  offlineScopeRef?: never;
+  trades?: never;
+}>;
+
+type WorkspaceDashboardProps = Readonly<{
+  analyticsMetrics?: readonly WorkspaceMetric[];
+  demoAccountSelectionRef?: string;
+  firstTimeMoomooConnectionPending?: boolean;
+  firstTimeMoomooConnected?: boolean;
+  firstTimeOnboardingResult?: WorkspaceFirstTimeOnboardingResult;
+  hasRealAcceptedExecution?: boolean;
+  offlineSavedAtUtc?: string;
+  reviewSummary?: WorkspaceReviewSummary;
+  showDemoTradeTrackerInvitation?: boolean;
+}> & (WorkspaceLiveTradeLibraryProps | WorkspaceOfflineTradeLibraryProps);
+
 const unavailableMetrics: readonly WorkspaceMetric[] = [
   { label: "P/L", value: "—", caption: "Completed trades" },
   { label: "Expectancy", value: "—", caption: "Per completed trade" },
@@ -33,6 +61,16 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
   { label: "Profit factor", value: "—", caption: "Gross wins divided by losses" },
   { label: "Trades", value: "—", caption: "All available history" },
 ];
+
+function hasLiveTradeLibraryProps(
+  value: WorkspaceLiveTradeLibraryProps | WorkspaceOfflineTradeLibraryProps,
+): value is WorkspaceLiveTradeLibraryProps {
+  return typeof value.accountCurrency === "string" &&
+    typeof value.accountTimezone === "string" &&
+    typeof value.expectedAccountSelectionRef === "string" &&
+    typeof value.offlineScopeRef === "string" &&
+    value.trades !== undefined;
+}
 
 function savedViewTime(value: string): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -42,36 +80,17 @@ function savedViewTime(value: string): string {
 }
 
 export function WorkspaceDashboard({
-  accountCurrency,
-  accountTimezone,
   analyticsMetrics,
   demoAccountSelectionRef,
-  expectedAccountSelectionRef,
   firstTimeMoomooConnectionPending,
   firstTimeMoomooConnected,
   firstTimeOnboardingResult,
   hasRealAcceptedExecution,
   offlineSavedAtUtc,
-  offlineScopeRef,
   reviewSummary: _reviewSummary,
   showDemoTradeTrackerInvitation,
-  trades,
-}: Readonly<{
-  accountCurrency: string;
-  accountTimezone: string;
-  analyticsMetrics?: readonly WorkspaceMetric[];
-  demoAccountSelectionRef?: string;
-  expectedAccountSelectionRef: string;
-  firstTimeMoomooConnectionPending?: boolean;
-  firstTimeMoomooConnected?: boolean;
-  firstTimeOnboardingResult?: WorkspaceFirstTimeOnboardingResult;
-  hasRealAcceptedExecution?: boolean;
-  offlineSavedAtUtc?: string;
-  offlineScopeRef: string;
-  reviewSummary?: WorkspaceReviewSummary;
-  showDemoTradeTrackerInvitation?: boolean;
-  trades: WorkspaceTradeLibraryModel;
-}>) {
+  ...tradeLibraryProps
+}: WorkspaceDashboardProps) {
   const metrics = analyticsMetrics ?? unavailableMetrics;
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
@@ -91,13 +110,9 @@ export function WorkspaceDashboard({
         {metrics.map((metric) => <DashboardMetricCard key={metric.label} {...metric} />)}
       </Box>
       <Box sx={{ maxWidth: 390 }}><InstallTradersLinkPwaCard /></Box>
-      <WorkspaceTradeLibrary
-        accountCurrency={accountCurrency}
-        accountTimezone={accountTimezone}
-        expectedAccountSelectionRef={expectedAccountSelectionRef}
-        offlineScopeRef={offlineScopeRef}
-        trades={trades}
-      />
+      {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
+        <WorkspaceTradeLibrary {...tradeLibraryProps} />
+      ) : null}
     </DashboardPage>
   );
 }
