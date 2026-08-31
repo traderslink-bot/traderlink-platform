@@ -88,6 +88,24 @@
   delete actions use the plain label `Delete execution` and remain absent when
   no server-issued opaque deletion ref exists.
 
+## 2026-08-30 — Staging-only migration helper prepared
+
+- Added a separate helper-only Dockerfile and direct executable wrapper for the
+  existing `runHostedPlatformMigrationMaintenance` contract. It is not the
+  normal application image, does not expose an app port, and changes neither
+  normal startup nor Railway configuration.
+- The wrapper fails when the contract reports no protected maintenance request
+  and prints only an applied/already-applied status, count, and migration id.
+  The underlying contract still requires the exact manifest-tail migration id,
+  reviewed confirmation, protected database path, account-identity recovery
+  configuration, exact predecessor, and a backup-root boundary before it can
+  take any write action.
+- Required hosted procedure: Coordinator creates a temporary helper service
+  against the isolated staging volume, supplies the protected variables without
+  printing values, runs it once while no app process uses that volume, records
+  the receipt plus app health, then removes the helper. No helper service,
+  migration, backfill, push, staging, or deployment was performed here.
+
 ## 2026-08-30 — Reconciliation complete
 
 - Confirmed this worktree is clean on `codex/workspace-trade-library-85813d84`

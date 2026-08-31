@@ -129,6 +129,29 @@ without a projection revision renders an empty unavailable list state. It must
 not fall back to materializing full history, silently infer financial values, or
 rewrite any Journal fact during an ordinary Workspace read.
 
+## Staging-only migration maintenance boundary
+
+The normal application image, `Dockerfile`, `railway.json`, runtime startup,
+and health process remain unchanged. The separate
+`Dockerfile.migration-maintenance` is an intentionally one-shot helper image
+for a Coordinator-created staging-only Railway service attached to the isolated
+staging volume. Its direct wrapper invokes only the existing protected hosted
+migration-maintenance contract.
+
+The helper fails closed unless the service is supplied the exact manifest-tail
+migration id `0100_journal_workspace_trade_library_projection`, the reviewed
+confirmation text, a valid staging database path, the required account-identity
+recovery variables, and an absolute backup root strictly below the database
+directory. The existing contract performs exact predecessor validation and
+backup/restore verification before it can apply one migration. Its receipt
+contains only status, count, and migration id—never paths, keys, or other
+secret values.
+
+The Coordinator alone creates this helper service against the isolated staging
+volume, runs it once while no app process uses that volume, records its receipt
+and subsequent health result, then removes the helper. This source slice does
+not create a service, run the helper, migrate, backfill, push, or deploy.
+
 The offline Workspace snapshot remains metrics/review-only. It intentionally
 does not persist account settings, account-selection or offline-scope refs, or
 trade-library rows. The live Trade Library therefore renders only when the
