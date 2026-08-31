@@ -41,3 +41,17 @@ authorized, with no hosted action authorized
 - This correction changes no application behavior and does not authorize a
   retry, deployment, migration, database initialization, or hosted action by
   this worker.
+
+## 2026-08-30 — Staging storage ownership correction
+
+- Coordinator-provided staging evidence showed the completed one-time
+  initializer left its SQLite file and three staging directories root-owned,
+  while the normal application image runs as `1001:1001`.
+- After a successful explicit empty initialization, the helper now recursively
+  assigns only the SQLite file and those three created directories to
+  `1001:1001`. The mount, empty-volume, and SQLite-sidecar fail-closed guards
+  are unchanged.
+- The helper-only root Dockerfile remains byte-identical to the named
+  initializer Dockerfile on this isolated branch. No normal application branch
+  Dockerfile, product source, schema, migration, authorization, or hosted
+  system was changed by this worker.

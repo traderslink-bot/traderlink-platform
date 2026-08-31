@@ -42,7 +42,11 @@ context.
 5. Sets private default permissions and creates only `/data/evidence-vault`,
    `/data/upload-staging`, and `/data/backups` before invoking
    `src/scripts/initialize-traderlink-platform-database.ts --initialize-empty`.
-6. Exits after that command. Railway must not restart it after success or
+6. After that initializer succeeds, recursively assigns only
+   `/data/traderlink-platform.sqlite`, `/data/evidence-vault`,
+   `/data/upload-staging`, and `/data/backups` to `1001:1001`, so the normal
+   application image can open its own staging storage as `nextjs`.
+7. Exits after that command. Railway must not restart it after success or
    failure.
 
 The existing initializer remains the only process that can create the SQLite
