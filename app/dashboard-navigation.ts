@@ -103,11 +103,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "tradingDay" as const,
         }),
         Object.freeze({
-          href: "/trade-tracker/swings",
-          label: "Swing Trade Tracker",
-          icon: "swing" as const,
-        }),
-        Object.freeze({
           href: "/quick-trade-entry",
           label: "Quick Trade Entry",
           icon: "manualEntry" as const,

@@ -4,6 +4,45 @@
 
 **Controlling plan:** [Workspace Trade Library Plan](workspace-trade-library-plan.md)
 
+## 2026-08-30 — Staged composition rejected; correction batch active
+
+- Audited the staged Workspace source against the superseding owner inventory.
+  It currently uses a button/chevron Date disclosure, broad desktop columns,
+  Side/Status chips, a disabled list-level Delete, full-history fact-set rows,
+  missing operational controls, and locally written saved-trade Journal and
+  Analyzer placeholder messaging. Each is recorded as rejected in the plan.
+- The metric/PWA composition remains, but metric captions need removal and the
+  selected-period Best/Worst facts need insertion directly beneath it.
+- Source audit found the current fact-set reader eager. The existing Analytics
+  table cursor validates the query digest, fact revision, order, and row cursor,
+  but its current implementation orders an already materialized population.
+  This correction therefore uses the existing server-scoped query and cursor
+  authority while keeping browser filters limited to its validated input shape;
+  it does not accept any browser-supplied account or trade identifier.
+- No test suite, dependency installation, server, browser automation, migration,
+  configuration, push, or deployment has run in this batch.
+
+## 2026-08-30 — Compact Calendar review checkpoint
+
+- Current Calendar is not embedded in Workspace. The dedicated `/calendar`
+  route owns its account-scoped data via `calendar-data.ts`, which delegates to
+  the Journal dashboard read model and preserves its filters and day detail
+  authority.
+- The current month renderer in `calendar-client.tsx` is presentation-only but
+  uses oversized 230px desktop cells and a horizontally scrolling 248px mobile
+  layout. The review candidate replaces only that renderer with a shorter
+  seven-day month grid retaining day-level P/L and trade-count cues.
+- Candidate implementation allowlist after owner visual approval:
+  `app/(dashboard)/calendar/calendar-client.tsx`, this plan, and this progress
+  record. No calendar data, route, filter, offline, account, or service file is
+  a candidate.
+
+## 2026-08-30 — Swing Tracker navigation visibility
+
+- Removed only the `Swing Trade Tracker` item from the dashboard Trade Tracker
+  navigation group. The retained `/trade-tracker/swings` route title and Help
+  mapping, its page/source, Journal contracts, and offline model are untouched.
+
 ## 2026-08-30 — Reconciliation complete
 
 - Confirmed this worktree is clean on `codex/workspace-trade-library-85813d84`

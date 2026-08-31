@@ -53,6 +53,54 @@ FX candidate `b3b59aa70bb1b260b531f8b45fa620c41d04c3af` is untouched.
   trade detail; Journal separates preset rules from custom rules and a selected
   custom rule requires Followed or Broke.
 
+## 2026-08-30 correction inventory — controlling for this implementation batch
+
+The staged composition is rejected. The following current implementation
+elements must be removed or corrected together before another review checkpoint:
+
+- Date is currently a button with a disclosure chevron; replace it with neutral
+  text and make the entire non-action trade row the single execution disclosure
+  target. Do not add a second expansion control.
+- The desktop grid is too loose and omits Shares and entry/exit facts. Replace
+  it with constrained, content-sized Date, Ticker, Side, factual State, Shares,
+  entry/exit plus execution count, P/L, and sticky action columns.
+- Current Status/Side chips and disabled Delete are rejected. Render factual
+  text; show the Delete action only for a row that actually contains a
+  server-issued eligible execution ref.
+- Restore visible ticker, state, date, sort, group, active-filter, reset, and
+  dashboard-period controls. Newest-first is the default.
+- Replace the full-history Workspace fact-set list with a bounded,
+  server-authoritative table continuation. The cursor must remain bound to the
+  selected account and fact revision, and every continuation must retain the
+  canonical filters, sort, grouping, and period choice.
+- Keep all five metric cards and the compact PWA card, but remove redundant
+  metric captions. Add compact selected-period Best trade/Worst trade facts
+  immediately below the metrics.
+- The Add drawer must have one shared Day/Swing classification selector, one
+  Eastern-time note, and one compact execution-row workflow—not separate views.
+- Replace the locally invented saved-trade Journal/Analyzer messaging with the
+  authoritative Trade Explorer editor/drawer content and its existing save
+  path. Keep Analyzer lazy and retain opaque manual edit/delete refs.
+
+## Calendar review boundary
+
+The Workspace request does not authorize a new Calendar data reader or a
+Calendar copy. The dedicated `/calendar` route owns the current account-scoped
+month data through `calendar-data.ts` and `JournalDashboardReadModelService`.
+Workspace uses only the existing lazy per-trade execution detail route; it does
+not currently embed Calendar. Any approved compact month presentation is
+therefore a presentation-only candidate in `app/(dashboard)/calendar/calendar-client.tsx`.
+It must retain that route, its month selection, day-level trade/P/L cues and
+mobile selection flow, without changing `calendar-data.ts`, the read-model
+service, or account/filter ownership.
+
+## Navigation visibility boundary
+
+Swing Trade Tracker is retained as a direct route and all of its source, data,
+offline, route-title, and Help mappings remain intact. Its only dashboard
+navigation-group item is removed, so this is visibility-only and creates no
+redirect, deletion, or data change.
+
 ## Delivery boundary
 
 This slice does not change migrations, hosted configuration, Railway, account
