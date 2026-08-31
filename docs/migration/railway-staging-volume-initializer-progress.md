@@ -55,3 +55,16 @@ authorized, with no hosted action authorized
   initializer Dockerfile on this isolated branch. No normal application branch
   Dockerfile, product source, schema, migration, authorization, or hosted
   system was changed by this worker.
+
+## 2026-08-30 — Isolated staging ownership recovery mode
+
+- Coordinator-provided evidence established that the isolated staging volume
+  cannot be wiped and the completed default initializer deliberately rejects
+  its existing database.
+- Added the one-time explicit flag
+  `TRADERLINK_ISOLATED_STAGING_VOLUME_OWNERSHIP_RECOVERY=confirm-not-production`.
+  In that mode the helper validates only the expected existing staging layout,
+  refuses transfer inputs, sidecars, links, unexpected root entries, and a
+  non-exact mount/path, then performs only the ownership repair.
+- Default behavior is unchanged: without that exact flag, the helper continues
+  to require a new empty volume and runs the existing explicit initializer.

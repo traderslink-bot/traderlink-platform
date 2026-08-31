@@ -53,6 +53,24 @@ The existing initializer remains the only process that can create the SQLite
 file and apply the current migration manifest. The shell guard does not accept
 an alternate target path and prevents reuse of an already-created database.
 
+## Isolated staging ownership recovery
+
+The default command remains the empty-volume initializer above. It has one
+explicit, helper-only recovery mode for an already initialized isolated staging
+volume: set
+`TRADERLINK_ISOLATED_STAGING_VOLUME_OWNERSHIP_RECOVERY=confirm-not-production`.
+Any other non-empty value fails closed.
+
+Recovery still requires the exact `/data` mount and
+`/data/traderlink-platform.sqlite` path. It rejects all hosted-transfer source
+and authority inputs, requires a regular non-link database and exactly the
+three expected non-link directories, rejects SQLite sidecars, and rejects any
+other top-level entry except an empty direct non-link `lost+found` directory.
+It does not invoke the initializer, migrations, or application code, and does
+not read database content. It only recursively assigns the exact database and
+three directories to `1001:1001`, then exits. Remove the flag after the
+one-time helper run; it is forbidden on ordinary application services.
+
 ## Required one-time Railway setup
 
 This is a Coordinator-operated staging procedure, not configuration-as-code or
