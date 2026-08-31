@@ -359,3 +359,24 @@ uploaded and no save, decision, import, preview or commit action was triggered.
 The final read-only database verifier again passed all 21 migrations, schema,
 foreign keys, quick check and full integrity check with every Journal count
 unchanged. Port 3010 remains active only for the owner's review.
+
+## 2026-08-31 — isolated staging member-access bootstrap source support
+
+- The isolated staging access block is an absent active
+  `journal_owner_admin` grant, not a missing member-access setting. The
+  existing system-page setting is data-backed and defaults to off; it remains
+  unavailable until the existing owner authorization succeeds.
+- Added source-only, reviewable console support for a protected initial-owner
+  Discord identity link and a closed `configured-initial-owner` grant selector.
+  Neither path accepts or prints the protected Discord subject or target user
+  id. They retain the existing preview, confirmation, fresh backup/restore,
+  singleton, manifest, transaction, and audit protections.
+- The required link, owner sign-in, grant, and member-setting change are a
+  separate Coordinator-authorized isolated Railway staging procedure and were
+  not performed here. No page, API, authorization policy, OAuth callback,
+  migration, manifest, configuration, database, staging, deployment, push, or
+  hosted-data action changed in this source slice.
+- Staging requires an immediate fresh Discord server-owner sign-in before the
+  grant/toggle sequence. Current authorization does not yet enforce the
+  documented five-minute ownership freshness; that remains a separate
+  authorization correction.

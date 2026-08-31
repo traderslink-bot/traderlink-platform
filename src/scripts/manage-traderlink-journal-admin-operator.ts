@@ -19,6 +19,8 @@ import {
   resolvePlatformDatabaseConfig,
 } from "@/src/modules/platform/server/database/platform-database-config";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { readProtectedInitialOwnerDiscordSubject } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
 const AUTHORITY_PATH_ENV = "TRADERLINK_PLATFORM_JOURNAL_AUTHORITY_PATH";
 
@@ -40,6 +42,20 @@ function argument(name: string): string {
   return value;
 }
 
+function optionalArgument(name: string): string | null {
+  const prefix = `--${name}=`;
+  const values = process.argv.slice(2).filter((value) => value.startsWith(prefix));
+  if (values.length > 1) {
+    platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
+  }
+  if (values.length === 0) return null;
+  const value = values[0]!.slice(prefix.length);
+  if (!value || value.trim() !== value) {
+    platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
+  }
+  return value;
+}
+
 function operation(): PlatformOperatorOperation {
   const value = argument("operation");
   if (value !== "grant" && value !== "recover" && value !== "revoke") {
@@ -51,10 +67,11 @@ function operation(): PlatformOperatorOperation {
 function requireExactArgumentSet(mode: "preview" | "execute"): void {
   const allowedFlags = new Set([`--${mode}`]);
   const allowedNames = mode === "preview"
-    ? ["operation", "target-user-id"]
+    ? ["operation", "target-user-id", "target"]
     : [
         "operation",
         "target-user-id",
+        "target",
         "expected-preview-digest",
         "confirm",
       ];
@@ -64,6 +81,44 @@ function requireExactArgumentSet(mode: "preview" | "execute"): void {
     !allowedPrefixes.some((prefix) => value.startsWith(prefix)))) {
     platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
   }
+}
+
+function configuredInitialOwnerUserId(databasePath: string): string {
+  const subject = readProtectedInitialOwnerDiscordSubject();
+  if (!subject) {
+    platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
+  }
+  return withReadonlyPlatformDatabase({ databasePath }, (database) => {
+    const rows = database.prepare<[string], Readonly<{ user_id: string }>>(`SELECT user.user_id
+FROM platform_users user
+JOIN platform_auth_identities identity
+  ON identity.user_id = user.user_id
+WHERE user.status = 'active'
+  AND identity.auth_provider = 'discord'
+  AND identity.auth_subject = ?
+  AND identity.status = 'active'
+ORDER BY user.user_id`).all(subject);
+    if (rows.length !== 1 || !rows[0]) {
+      platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
+    }
+    return rows[0].user_id;
+  });
+}
+
+function targetUserId(
+  databasePath: string,
+  requestedOperation: PlatformOperatorOperation,
+): string {
+  const direct = optionalArgument("target-user-id");
+  const target = optionalArgument("target");
+  if ((direct === null) === (target === null)) {
+    platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
+  }
+  if (direct !== null) return direct;
+  if (target !== "configured-initial-owner" || requestedOperation !== "grant") {
+    platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
+  }
+  return configuredInitialOwnerUserId(databasePath);
 }
 
 function authoritySection(value: unknown): AuthoritySection {
@@ -136,11 +191,11 @@ async function main(): Promise<void> {
   requireExactArgumentSet(previewMode ? "preview" : "execute");
   const databasePath = resolvePlatformDatabaseConfig().databasePath;
   const requestedOperation = operation();
-  const targetUserId = argument("target-user-id");
+  const resolvedTargetUserId = targetUserId(databasePath, requestedOperation);
   const preview = previewPlatformOperatorChange({
     databasePath,
     operation: requestedOperation,
-    targetUserId,
+    targetUserId: resolvedTargetUserId,
   });
   if (previewMode) {
     process.stdout.write(`${JSON.stringify(preview, null, 2)}\n`);
@@ -177,7 +232,7 @@ async function main(): Promise<void> {
   const result = executePlatformOperatorChange({
     databasePath,
     operation: requestedOperation,
-    targetUserId,
+    targetUserId: resolvedTargetUserId,
     expectedPreviewDigest: argument("expected-preview-digest"),
     confirmationText: argument("confirm"),
     backupEvidence: evidence,
