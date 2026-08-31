@@ -308,6 +308,10 @@ mutations.
   dollars to two decimals; no execution-count column or date/time tooltip is
   present. A row remains non-interactive; only its explicit actions open a
   saved-trade surface or mutation flow.
+- Delete keeps the existing server-provided privacy-safe error code in the
+  route response and maps account, stale-eligibility, conflict, request, and
+  storage-validation categories to distinct trader-facing recovery guidance.
+  It does not display internal codes, identifiers, or predicates.
 - Follow dashboard period is not a Workspace control. The existing top period
   controls remain the only period control for the page and trade list.
 - The table-section filter control row and the parent CSS structural hiding

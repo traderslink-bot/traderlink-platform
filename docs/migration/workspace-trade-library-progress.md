@@ -380,6 +380,10 @@
   Gain/Loss, and accessible dark actions. Entry/Exit are two-decimal prices
   only; no execution count or date/time tooltip is shown. Rows remain
   non-interactive; only their explicit actions open a saved-trade drawer.
+- The saved-trade Delete confirmation now consumes the route’s existing safe
+  error code instead of discarding it behind a generic failure. It maps known
+  account, stale-eligibility, conflict, request, and storage-validation
+  categories to recovery guidance without displaying raw codes or identifiers.
   There is no date chevron. Mobile remains a compact non-table summary without
   horizontal scrolling.
 - The saved-trade surface has only Trade, Journal, and Analyzer tabs. Its

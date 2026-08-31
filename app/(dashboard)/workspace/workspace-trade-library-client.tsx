@@ -58,8 +58,17 @@ function deleteFailureMessage(code: unknown): string {
   if (code === "TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION") {
     return "This execution is no longer available for deletion. Refresh to see its current status.";
   }
+  if (code === "TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT") {
+    return "This execution changed before it could be deleted. Refresh to see its current status.";
+  }
   if (code === "TRADERLINK_WORKSPACE_ACCESS_DENIED" || code === "TRADERLINK_ACCOUNT_ACCESS_DENIED") {
     return "Your access changed. Refresh and try again.";
+  }
+  if (code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED") {
+    return "The journal could not validate this deletion. Refresh and try again.";
+  }
+  if (code === "TRADERLINK_MANUAL_EXECUTION_EDIT_INVALID") {
+    return "The delete request could not be verified. Refresh and try again.";
   }
   return "The execution could not be deleted. Refresh the page and try again.";
 }
@@ -181,7 +190,8 @@ function WorkspaceExecutionEditForm({
         headers: { "Content-Type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
         method: "DELETE",
       });
-      if (!response.ok) throw new Error("The execution could not be deleted. Refresh the page and try again.");
+      const result = await response.json().catch(() => null) as Readonly<{ code?: unknown }> | null;
+      if (!response.ok) { setError(deleteFailureMessage(result?.code)); return; }
       setDeleteOpen(false);
       router.refresh();
     } catch (cause) {
