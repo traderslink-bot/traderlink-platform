@@ -3,9 +3,15 @@ import "server-only";
 import type Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import type { JournalAnalyticsFactSet } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
 import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
+import {
+  absoluteExactDecimal,
+  addExactDecimals,
+  subtractExactDecimals,
+} from "./exact-analytics-math";
 
 import {
   journalAnalyticsLocalTimeFact,
@@ -59,6 +65,27 @@ export function hasWorkspaceTradeLibraryProjectionSchema(database: Database.Data
 WHERE type = 'table' AND name = 'journal_workspace_trade_library_projections'`).get());
 }
 
+function executionFacts(roundTrip: JournalAnalyticsFactSet["roundTrips"][number]) {
+  let buyQuantityDecimal = "0";
+  let signedPositionDecimal = "0";
+  for (const allocation of roundTrip.allocations) {
+    if (allocation.side === "buy") {
+      buyQuantityDecimal = addExactDecimals(buyQuantityDecimal, allocation.allocatedQuantityDecimal);
+      signedPositionDecimal = addExactDecimals(signedPositionDecimal, allocation.allocatedQuantityDecimal);
+    } else {
+      signedPositionDecimal = subtractExactDecimals(signedPositionDecimal, allocation.allocatedQuantityDecimal);
+    }
+  }
+  return Object.freeze({
+    buyQuantityDecimal,
+    entryPriceDecimal: roundTrip.allocations.at(0)?.priceDecimal ?? null,
+    exitPriceDecimal: roundTrip.projectionState === "ready_closed"
+      ? roundTrip.allocations.at(-1)?.priceDecimal ?? null
+      : null,
+    positionDecimal: absoluteExactDecimal(signedPositionDecimal),
+  });
+}
+
 /**
  * Rebuilds a derived, current-version-only index from the canonical Journal
  * analytics facts. This contains no user-authored facts and runs in the same
@@ -78,6 +105,7 @@ export function refreshWorkspaceTradeLibraryProjection(
     currencySelection: { kind: "all_partitions" },
   });
   const normalized = normalizeJournalAnalyticsFacts(facts);
+  const roundTripById = new Map(facts.roundTrips.map((row) => [row.roundTripId, row] as const));
   const insert = database.prepare(`INSERT INTO journal_workspace_trade_library_projections (
   workspace_id, account_id, round_trip_id, round_trip_version_id, projection_state,
   opened_at_utc, closed_at_utc, activity_at_utc, activity_local_date,
@@ -85,11 +113,15 @@ export function refreshWorkspaceTradeLibraryProjection(
   gross_pnl_decimal, net_pnl_decimal,
   net_pnl_sort_key, entered_quantity_decimal, exit_quantity_decimal,
   maximum_position_quantity_decimal, entry_notional_decimal, exit_notional_decimal,
-  unique_execution_count, refreshed_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  unique_execution_count, refreshed_at_utc,
+  buy_quantity_decimal, buy_quantity_sort_key, position_decimal, position_sort_key,
+  entry_price_decimal, entry_price_sort_key, exit_price_decimal, exit_price_sort_key,
+  entry_value_sort_key, gross_pnl_sort_key
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   database.prepare(`DELETE FROM journal_workspace_trade_library_projections
 WHERE workspace_id = ? AND account_id = ?`).run(scope.workspaceId, scope.activeAccountId);
   for (const row of normalized.realizedRows) {
+    const execution = executionFacts(roundTripById.get(row.roundTripId)!);
     insert.run(
       scope.workspaceId, scope.activeAccountId, row.roundTripId, row.roundTripVersionId,
       "ready_closed", row.openedAtUtc, row.closedAtUtc, row.closedAtUtc, row.closeLocal.localDate,
@@ -99,9 +131,15 @@ WHERE workspace_id = ? AND account_id = ?`).run(scope.workspaceId, scope.activeA
       row.netPnlDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(row.netPnlDecimal),
       row.enteredQuantityDecimal, row.exitQuantityDecimal, row.maximumPositionQuantityDecimal,
       row.entryNotionalDecimal, row.exitNotionalDecimal, row.uniqueExecutionCount, refreshedAtUtc,
+      execution.buyQuantityDecimal, workspaceTradeLibraryDecimalSortKey(execution.buyQuantityDecimal),
+      execution.positionDecimal, workspaceTradeLibraryDecimalSortKey(execution.positionDecimal),
+      execution.entryPriceDecimal, execution.entryPriceDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.entryPriceDecimal),
+      execution.exitPriceDecimal, execution.exitPriceDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.exitPriceDecimal),
+      workspaceTradeLibraryDecimalSortKey(row.entryNotionalDecimal), workspaceTradeLibraryDecimalSortKey(row.grossPnlDecimal),
     );
   }
   for (const row of normalized.legitimateOpenRoundTrips) {
+    const execution = executionFacts(row);
     const local = journalAnalyticsLocalTimeFact(
       row.openedAtUtc,
       facts.accounts[0]!.tradingTimezone,
@@ -114,6 +152,10 @@ WHERE workspace_id = ? AND account_id = ?`).run(scope.workspaceId, scope.activeA
       null, null, null, null, null,
       null, null, null, null, null,
       new Set(row.allocations.map((allocation) => allocation.executionId)).size, refreshedAtUtc,
+      execution.buyQuantityDecimal, workspaceTradeLibraryDecimalSortKey(execution.buyQuantityDecimal),
+      execution.positionDecimal, workspaceTradeLibraryDecimalSortKey(execution.positionDecimal),
+      execution.entryPriceDecimal, execution.entryPriceDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.entryPriceDecimal),
+      null, null, null, null,
     );
   }
   database.prepare(`INSERT INTO journal_workspace_trade_library_projection_revisions (

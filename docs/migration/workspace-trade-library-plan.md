@@ -202,3 +202,42 @@ drawer composition before integration or release consideration. Help is not
 changed in this batch because no existing trade-entry, review, rule, or
 Analyzer workflow is changed; re-evaluate Help before enabling new saved-trade
 mutations.
+
+## 2026-08-31 owner-controlled Workspace completion
+
+- The page has no visible `Workspace` heading.
+- Overview cards are P/L, Win rate, Trades, Largest win, and Largest loss. They
+  have labels and values only. Expectancy and Profit factor are not shown.
+- Today, This week, This month, and All time filter the overview and trade list
+  together; All time is the default.
+- More filters opens a right drawer containing ticker, factual state, date,
+  grouping, reset, and server-backed sort controls. The visible table control
+  row is removed.
+- Desktop columns are Date, Ticker, Side, Status, Buy QTY, Position, Entry,
+  Exit, Entry value, Gain/Loss, and Actions. Rows do not expand.
+- Sorts are Newest, Oldest, Position, Buy QTY, Entry, Exit, Entry value,
+  Gain/Loss high, and Gain/Loss low. Every sort is storage-bounded and uses an
+  account/query/revision-bound cursor with exact decimal sort keys.
+- The PWA card is removed and its existing install action remains at the top
+  right.
+- One 880px desktop drawer (full-width mobile) owns Trade, Journal, and
+  Analyzer tabs. Journal is embedded in that drawer and does not open the
+  inherited Trade Explorer drawer. Workspace suppresses the inherited saved
+  status line.
+- Add trade starts with one execution and one ticker plus Day/Swing
+  classification. Edit shows authorized execution rows in the same compact
+  Date, Time, Buy/Sell, Shares, Price, Fee layout. Delete remains conditional
+  on the existing opaque server-issued authority.
+
+## 2026-08-31 local owner-review refinements
+
+- `Add trade` is the single top Workspace action. It opens the existing
+  account-scoped entry drawer through the same handler and is removed from the
+  Trades/table section; no duplicate control, helper text, or alternate entry
+  path is added.
+- The table-section filter control row and the parent CSS structural hiding
+  workaround are removed in source. Period controls and More filters remain at
+  the top of Workspace. More filters retains Group by with its existing None,
+  Day, and Ticker options.
+- This remains an uncommitted local owner-review preparation change. It is not
+  staging, production, or Railway authorization.

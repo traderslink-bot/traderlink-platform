@@ -122,6 +122,7 @@ function tagChoices(availableTags: readonly TradeExplorerReviewTag[]): readonly 
 }
 
 export function TradeExplorerReviewEditor({
+  embedded = false,
   expectedAccountSelectionRef,
   onClose,
   onSelectTrade,
@@ -131,6 +132,7 @@ export function TradeExplorerReviewEditor({
   showTradeNavigation = true,
   trades,
 }: Readonly<{
+  embedded?: boolean;
   expectedAccountSelectionRef: string;
   onClose: () => void;
   onSelectTrade: (roundTripId: string) => void;
@@ -325,22 +327,25 @@ export function TradeExplorerReviewEditor({
     <>
       <Drawer
         anchor="right"
+        hideBackdrop={embedded}
         onClose={() => runAfterDiscard(onClose)}
         open={open}
+        variant={embedded ? "permanent" : "temporary"}
+        sx={embedded ? { height: "100%", position: "relative", width: "100%", "& .MuiDrawer-paper": { position: "relative" } } : undefined}
         slotProps={{
           paper: {
             sx: {
               boxSizing: "border-box",
-              height: "100dvh",
-              maxWidth: { xs: "100vw", md: 560 },
+              height: embedded ? "100%" : "100dvh",
+              maxWidth: embedded ? "none" : { xs: "100vw", md: 560 },
               pt: { xs: "env(safe-area-inset-top)", md: 0 },
-              width: { xs: "100vw", md: 560 },
+              width: embedded ? "100%" : { xs: "100vw", md: 560 },
             },
           },
         }}
       >
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-          <Box sx={{ borderBottom: 1, borderColor: "divider", px: { xs: 2, sm: 2.5 }, py: 1.5 }}>
+          <Box sx={{ borderBottom: 1, borderColor: "divider", display: embedded ? "none" : "block", px: { xs: 2, sm: 2.5 }, py: 1.5 }}>
             <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
               <Box sx={{ minWidth: 0 }}>
                 <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Trade review</Typography>
@@ -603,11 +608,11 @@ export function TradeExplorerReviewEditor({
               pt: 1.5,
             }}
           >
-            <Typography color="text.secondary" variant="body2">
+            {!embedded ? <Typography color="text.secondary" variant="body2">
               {hasPendingTagName && !reviewDirty
                 ? "Create or clear the new tag name"
                 : reviewDirty ? "Unsaved changes" : "All changes saved"}
-            </Typography>
+            </Typography> : <Box />}
             <Button
               disabled={
                 !reviewDirty ||

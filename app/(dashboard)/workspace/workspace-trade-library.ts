@@ -6,11 +6,16 @@ import type Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { withReadonlyJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
-import { divideExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
+import {
+  absoluteExactDecimal,
+  addExactDecimals,
+  subtractExactDecimals,
+} from "@/src/modules/journal-analytics/server/exact-analytics-math";
 
 export type WorkspaceTradeLibraryRow = Readonly<{
   date: string;
   direction: "long" | "short";
+  buyQuantityDecimal: string;
   editableExecutions: readonly WorkspaceEditableExecution[];
   entryDate: string;
   entryPriceDecimal: string | null;
@@ -19,10 +24,11 @@ export type WorkspaceTradeLibraryRow = Readonly<{
   exitDate: string | null;
   exitPriceDecimal: string | null;
   exitTime: string | null;
-  netPnlDecimal: string | null;
+  entryValueDecimal: string | null;
+  gainLossDecimal: string | null;
+  positionDecimal: string;
   roundTripId: string;
-  sharesDecimal: string;
-  status: "Open" | "Closed" | "Closed swing";
+  status: "Open" | "Open swing" | "Closed" | "Closed swing";
   symbol: string;
   tradeCurrency: string;
 }>;
@@ -41,7 +47,7 @@ export type WorkspaceEditableExecution = Readonly<{
 }>;
 
 export type WorkspaceTradeLibraryFilter = "all" | "open" | "swing" | "closed";
-export type WorkspaceTradeLibrarySort = "newest" | "oldest" | "pnl_high" | "pnl_low";
+export type WorkspaceTradeLibrarySort = "newest" | "oldest" | "position" | "buy_quantity" | "entry" | "exit" | "entry_value" | "pnl_high" | "pnl_low";
 export type WorkspaceTradeLibraryGroup = "none" | "day" | "ticker";
 
 export type WorkspaceTradeLibraryQuery = Readonly<{
@@ -58,6 +64,7 @@ export type WorkspaceTradeLibraryQuery = Readonly<{
 export type WorkspaceTradeLibraryModel = Readonly<{
   continuationCursor: string | null;
   projectionState: "ready" | "empty" | "unavailable";
+  query: WorkspaceTradeLibraryQuery;
   rows: readonly WorkspaceTradeLibraryRow[];
   totalRowCount: number;
 }>;
@@ -69,26 +76,52 @@ const TICKER = /^[A-Z0-9.\-]{0,32}$/u;
 type ProjectionRow = Readonly<{
   activity_at_utc: string;
   activity_local_date: string;
+  buy_quantity_decimal: string | null;
+  buy_quantity_sort_key: string | null;
   closed_at_utc: string | null;
   direction: "long" | "short";
   entry_local_date: string;
   entry_local_time: string;
   entry_notional_decimal: string | null;
+  entry_price_decimal: string | null;
+  entry_price_sort_key: string | null;
+  entry_value_sort_key: string | null;
   entered_quantity_decimal: string | null;
   exit_local_date: string | null;
   exit_local_time: string | null;
   exit_notional_decimal: string | null;
+  exit_price_decimal: string | null;
+  exit_price_sort_key: string | null;
   exit_quantity_decimal: string | null;
   maximum_position_quantity_decimal: string | null;
+  gross_pnl_decimal: string | null;
+  gross_pnl_sort_key: string | null;
   net_pnl_decimal: string | null;
   net_pnl_sort_key: string | null;
   projection_state: "ready_closed" | "legitimate_open";
+  position_decimal: string | null;
+  position_sort_key: string | null;
   round_trip_id: string;
   round_trip_version_id: string;
   symbol: string;
   trade_currency: string;
   trade_style: "day_trade" | "swing" | "other" | null;
   unique_execution_count: number;
+}>;
+
+type TradeExecutionFact = Readonly<{
+  allocation_sequence: number;
+  price_decimal: string | null;
+  quantity_decimal: string;
+  round_trip_version_id: string;
+  side: "buy" | "sell";
+}>;
+
+type WorkspaceTradeExecutionFacts = Readonly<{
+  buyQuantityDecimal: string;
+  entryPriceDecimal: string | null;
+  exitPriceDecimal: string | null;
+  positionDecimal: string;
 }>;
 
 type RevisionRow = Readonly<{ projection_revision_id: string }>;
@@ -121,7 +154,7 @@ function canonicalQuery(value: WorkspaceTradeLibraryQuery): WorkspaceTradeLibrar
     startDate: value.startDate || null,
   } as const;
   if (!(["all", "open", "swing", "closed"] as const).includes(query.filter) ||
-      !(["newest", "oldest", "pnl_high", "pnl_low"] as const).includes(query.sort) ||
+      !(["newest", "oldest", "position", "buy_quantity", "entry", "exit", "entry_value", "pnl_high", "pnl_low"] as const).includes(query.sort) ||
       !(["none", "day", "ticker"] as const).includes(query.group) ||
       !TICKER.test(query.searchTicker) ||
       (query.startDate !== null && !DATE.test(query.startDate)) ||
@@ -153,23 +186,25 @@ function decodeCursor(value: string, revision: string, digest: string, sort: Wor
   }
 }
 
+function sortKey(row: ProjectionRow, sort: WorkspaceTradeLibrarySort): string | null {
+  if (sort === "position") return row.position_sort_key;
+  if (sort === "buy_quantity") return row.buy_quantity_sort_key;
+  if (sort === "entry") return row.entry_price_sort_key;
+  if (sort === "exit") return row.exit_price_sort_key;
+  if (sort === "entry_value") return row.entry_value_sort_key;
+  if (sort === "pnl_high" || sort === "pnl_low") return row.gross_pnl_sort_key;
+  return null;
+}
+
 function encodeCursor(row: ProjectionRow, revision: string, digest: string, sort: WorkspaceTradeLibrarySort): string {
   return Buffer.from(JSON.stringify({
     activityAtUtc: row.activity_at_utc,
-    netPnlSortKey: row.net_pnl_sort_key,
+    netPnlSortKey: sortKey(row, sort),
     projectionRevisionId: revision,
     queryDigest: digest,
     roundTripId: row.round_trip_id,
     sort,
   }), "utf8").toString("base64url");
-}
-
-function price(notional: string | null, quantity: string | null): string | null {
-  if (notional === null || quantity === null || quantity === "0") return null;
-  return divideExactDecimals(notional, quantity, {
-    decimalPlaces: 4,
-    roundingPolicy: "half_up_4dp",
-  }).roundedDecimal;
 }
 
 function editableExecutions(
@@ -226,6 +261,57 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
   return new Map([...result.entries()].map(([key, value]) => [key, Object.freeze(value)]));
 }
 
+function executionFacts(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  rows: readonly ProjectionRow[],
+): ReadonlyMap<string, WorkspaceTradeExecutionFacts> {
+  if (rows.length === 0) return new Map();
+  const accountId = activeAccountId(scope);
+  const facts = database.prepare(`SELECT allocation.round_trip_version_id,
+  allocation.allocation_sequence, allocation.quantity_decimal,
+  execution_version.side, execution_version.price_decimal
+FROM journal_round_trip_execution_allocations allocation
+JOIN journal_execution_versions execution_version
+  ON execution_version.workspace_id = allocation.workspace_id
+ AND execution_version.account_id = allocation.account_id
+ AND execution_version.execution_version_id = allocation.execution_version_id
+WHERE allocation.workspace_id = ? AND allocation.account_id = ?
+  AND allocation.round_trip_version_id IN (${rows.map(() => "?").join(", ")})
+ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
+    scope.workspaceId,
+    accountId,
+    ...rows.map((row) => row.round_trip_version_id),
+  ) as readonly TradeExecutionFact[];
+  const byVersion = new Map<string, TradeExecutionFact[]>();
+  for (const fact of facts) {
+    const entries = byVersion.get(fact.round_trip_version_id) ?? [];
+    entries.push(fact);
+    byVersion.set(fact.round_trip_version_id, entries);
+  }
+  const result = new Map<string, WorkspaceTradeExecutionFacts>();
+  for (const row of rows) {
+    const entries = byVersion.get(row.round_trip_version_id) ?? [];
+    let buyQuantityDecimal = "0";
+    let signedPositionDecimal = "0";
+    for (const entry of entries) {
+      if (entry.side === "buy") {
+        buyQuantityDecimal = addExactDecimals(buyQuantityDecimal, entry.quantity_decimal);
+        signedPositionDecimal = addExactDecimals(signedPositionDecimal, entry.quantity_decimal);
+      } else {
+        signedPositionDecimal = subtractExactDecimals(signedPositionDecimal, entry.quantity_decimal);
+      }
+    }
+    result.set(row.round_trip_version_id, Object.freeze({
+      buyQuantityDecimal,
+      entryPriceDecimal: entries.at(0)?.price_decimal ?? null,
+      exitPriceDecimal: row.projection_state === "ready_closed" ? entries.at(-1)?.price_decimal ?? null : null,
+      positionDecimal: absoluteExactDecimal(signedPositionDecimal),
+    }));
+  }
+  return result;
+}
+
 export function readWorkspaceTradeLibrary(
   database: Database.Database,
   scope: WorkspaceAccessScope,
@@ -248,6 +334,7 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as
     return Object.freeze({
       continuationCursor: null,
       projectionState: currentExecutions.has_current_execution === 0 ? "empty" : "unavailable",
+      query,
       rows: Object.freeze([]),
       totalRowCount: 0,
     });
@@ -261,23 +348,35 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as
   if (query.endDate) { clauses.push("projection.activity_local_date <= ?"); parameters.push(query.endDate); }
   if (query.filter === "open") clauses.push("projection.projection_state = 'legitimate_open'");
   if (query.filter === "closed") clauses.push("projection.projection_state = 'ready_closed' AND coalesce(style.trade_style, 'other') <> 'swing'");
-  if (query.filter === "swing") clauses.push("projection.projection_state = 'ready_closed' AND style.trade_style = 'swing'");
+  if (query.filter === "swing") clauses.push("style.trade_style = 'swing'");
   const where = clauses.join(" AND ");
   const filterParameters = [...parameters];
   const keyset = (() => {
     if (!cursor) return "";
     if (query.sort === "newest") { parameters.push(cursor.activityAtUtc, cursor.activityAtUtc, cursor.roundTripId); return " AND (projection.activity_at_utc < ? OR (projection.activity_at_utc = ? AND projection.round_trip_id < ?))"; }
     if (query.sort === "oldest") { parameters.push(cursor.activityAtUtc, cursor.activityAtUtc, cursor.roundTripId); return " AND (projection.activity_at_utc > ? OR (projection.activity_at_utc = ? AND projection.round_trip_id > ?))"; }
-    if (cursor.netPnlSortKey === null) { parameters.push(cursor.roundTripId); return " AND projection.net_pnl_sort_key IS NULL AND projection.round_trip_id < ?"; }
+    const sortColumn = query.sort === "position" ? "position_sort_key"
+      : query.sort === "buy_quantity" ? "buy_quantity_sort_key"
+        : query.sort === "entry" ? "entry_price_sort_key"
+          : query.sort === "exit" ? "exit_price_sort_key"
+            : query.sort === "entry_value" ? "entry_value_sort_key"
+              : "gross_pnl_sort_key";
+    if (cursor.netPnlSortKey === null) { parameters.push(cursor.roundTripId); return ` AND projection.${sortColumn} IS NULL AND projection.round_trip_id ${query.sort === "pnl_low" ? ">" : "<"} ?`; }
     parameters.push(cursor.netPnlSortKey, cursor.netPnlSortKey, cursor.roundTripId);
-    return query.sort === "pnl_high"
-      ? " AND (projection.net_pnl_sort_key IS NULL OR projection.net_pnl_sort_key < ? OR (projection.net_pnl_sort_key = ? AND projection.round_trip_id < ?))"
-      : " AND (projection.net_pnl_sort_key IS NULL OR projection.net_pnl_sort_key > ? OR (projection.net_pnl_sort_key = ? AND projection.round_trip_id > ?))";
+    return query.sort === "pnl_low"
+      ? ` AND (projection.${sortColumn} IS NULL OR projection.${sortColumn} > ? OR (projection.${sortColumn} = ? AND projection.round_trip_id > ?))`
+      : ` AND (projection.${sortColumn} IS NULL OR projection.${sortColumn} < ? OR (projection.${sortColumn} = ? AND projection.round_trip_id < ?))`;
   })();
+  const selectedSortColumn = query.sort === "position" ? "position_sort_key"
+    : query.sort === "buy_quantity" ? "buy_quantity_sort_key"
+      : query.sort === "entry" ? "entry_price_sort_key"
+        : query.sort === "exit" ? "exit_price_sort_key"
+          : query.sort === "entry_value" ? "entry_value_sort_key"
+            : "gross_pnl_sort_key";
   const order = query.sort === "newest" ? "projection.activity_at_utc DESC, projection.round_trip_id DESC"
     : query.sort === "oldest" ? "projection.activity_at_utc ASC, projection.round_trip_id ASC"
-      : query.sort === "pnl_high" ? "projection.net_pnl_sort_key IS NULL ASC, projection.net_pnl_sort_key DESC, projection.round_trip_id DESC"
-        : "projection.net_pnl_sort_key IS NULL ASC, projection.net_pnl_sort_key ASC, projection.round_trip_id ASC";
+      : query.sort === "pnl_low" ? `projection.${selectedSortColumn} IS NULL ASC, projection.${selectedSortColumn} ASC, projection.round_trip_id ASC`
+        : `projection.${selectedSortColumn} IS NULL ASC, projection.${selectedSortColumn} DESC, projection.round_trip_id DESC`;
   const base = `FROM journal_workspace_trade_library_projections projection
 JOIN journal_round_trip_versions version ON version.workspace_id = projection.workspace_id
  AND version.account_id = projection.account_id AND version.round_trip_version_id = projection.round_trip_version_id
@@ -289,32 +388,39 @@ LEFT JOIN journal_trade_style_plans style ON style.workspace_id = projection.wor
   const pageParameters = [...parameters, String(PAGE_SIZE + 1)];
   const rows = database.prepare(`SELECT projection.activity_at_utc, projection.activity_local_date,
   projection.closed_at_utc, version.direction, projection.entry_local_date, projection.entry_local_time,
-  projection.entry_notional_decimal, projection.entered_quantity_decimal, projection.exit_local_date,
+  projection.entry_notional_decimal, projection.entered_quantity_decimal, projection.entry_price_decimal, projection.entry_price_sort_key, projection.entry_value_sort_key, projection.exit_local_date,
   projection.exit_local_time, projection.exit_notional_decimal, projection.exit_quantity_decimal,
-  projection.maximum_position_quantity_decimal, projection.net_pnl_decimal, projection.net_pnl_sort_key,
+  projection.exit_price_decimal, projection.exit_price_sort_key, projection.maximum_position_quantity_decimal, projection.gross_pnl_decimal, projection.gross_pnl_sort_key, projection.net_pnl_decimal, projection.net_pnl_sort_key,
+  projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
   projection.projection_state, projection.round_trip_id, projection.round_trip_version_id, instrument.normalized_symbol AS symbol,
   version.trade_currency, style.trade_style, projection.unique_execution_count
 ${base} WHERE ${where}${keyset} ORDER BY ${order} LIMIT ?`).all(...pageParameters) as readonly ProjectionRow[];
   const selected = rows.slice(0, PAGE_SIZE);
   const editable = editableExecutions(database, scope, selected);
+  const facts = executionFacts(database, scope, selected);
   return Object.freeze({
     continuationCursor: rows.length > PAGE_SIZE ? encodeCursor(selected.at(-1)!, revision.projection_revision_id, digest, query.sort) : null,
     projectionState: "ready",
+    query,
     rows: Object.freeze(selected.map((row) => Object.freeze({
+      buyQuantityDecimal: facts.get(row.round_trip_version_id)?.buyQuantityDecimal ?? "0",
       date: row.activity_local_date,
       direction: row.direction,
       editableExecutions: editable.get(row.round_trip_id) ?? Object.freeze([]),
       entryDate: row.entry_local_date,
-      entryPriceDecimal: price(row.entry_notional_decimal, row.entered_quantity_decimal),
+      entryPriceDecimal: facts.get(row.round_trip_version_id)?.entryPriceDecimal ?? null,
       entryTime: row.entry_local_time,
       executionCount: row.unique_execution_count,
       exitDate: row.exit_local_date,
-      exitPriceDecimal: price(row.exit_notional_decimal, row.exit_quantity_decimal),
+      exitPriceDecimal: facts.get(row.round_trip_version_id)?.exitPriceDecimal ?? null,
       exitTime: row.exit_local_time,
-      netPnlDecimal: row.net_pnl_decimal,
+      entryValueDecimal: row.entry_notional_decimal,
+      gainLossDecimal: row.gross_pnl_decimal,
+      positionDecimal: facts.get(row.round_trip_version_id)?.positionDecimal ?? "0",
       roundTripId: row.round_trip_id,
-      sharesDecimal: row.maximum_position_quantity_decimal ?? "0",
-      status: row.projection_state === "legitimate_open" ? "Open" : row.trade_style === "swing" ? "Closed swing" : "Closed",
+      status: row.projection_state === "legitimate_open"
+        ? row.trade_style === "swing" ? "Open swing" : "Open"
+        : row.trade_style === "swing" ? "Closed swing" : "Closed",
       symbol: row.symbol,
       tradeCurrency: row.trade_currency,
     }))),

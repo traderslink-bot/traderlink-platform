@@ -4,6 +4,39 @@
 
 **Controlling plan:** [Workspace Trade Library Plan](workspace-trade-library-plan.md)
 
+## 2026-08-31 — Owner completion batch in progress
+
+- Removed the visible Workspace heading, Expectancy card, Profit factor card,
+  and PWA card. Added the existing Analytics Overview best/worst metrics as
+  label-only Largest win and Largest loss cards and retained the install action
+  at the top right.
+- Added Today, This week, This month, and All time as server-authoritative page
+  periods for both overview metrics and the bounded trade query.
+- Replaced row disclosure with the approved non-expanding desktop/mobile list
+  and added factual Buy QTY, current Position, first execution Entry, flat
+  execution Exit, Entry value, and fee-independent Gain/Loss facts.
+- Embedded the authoritative Trade Explorer Journal editor inside the retained
+  Trade/Journal/Analyzer drawer and suppressed its nested header and saved
+  status line in Workspace only.
+- Replaced per-execution edit dialogs with compact inline execution rows using
+  the existing opaque edit/delete routes and expected-account enforcement.
+- Added migration 0101 for exact derived Workspace sort facts. Position, Buy
+  QTY, Entry, Exit, Entry value, and Gain/Loss ordering use exact text sort keys;
+  no Journal fact or financial value is rewritten.
+- Added the More filters drawer and moved the additional filters/sorts there.
+  No migration, server, broad test, push, staging, or deployment has run.
+
+## 2026-08-31 — Local top-action and control-row cleanup
+
+- Moved the existing `Add trade` button to the top Workspace control area,
+  preserving its handler, styling, and account-scoped drawer behavior. The
+  Trades section no longer renders a duplicate action.
+- Structurally removed the legacy table control row and the parent
+  `nth-of-type` CSS hiding workaround. Existing period controls and the More
+  filters drawer remain intact, including Group by: None, Day, and Ticker.
+- This is local-only preparation for owner visual review. No staging, push,
+  deployment, migration, or data action was taken.
+
 ## 2026-08-30 — Staged composition rejected; correction batch active
 
 - Audited the staged Workspace source against the superseding owner inventory.
