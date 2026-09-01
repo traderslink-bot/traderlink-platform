@@ -1,6 +1,8 @@
 export const JOURNAL_MANUAL_ENTRY_RECENT_CALENDAR_DAYS = 7;
 
-export type JournalManualTrackerKind = "day" | "quick" | "swing";
+export type JournalManualTrackerKind = "day" | "quick" | "swing" | "workspace";
+
+export type JournalManualWorkspaceStyle = "day_trade" | "swing";
 
 export type JournalManualTradeRelationship =
   | "start_new_trade"
@@ -67,6 +69,7 @@ export type JournalManualTradePreview = Readonly<{
   previewRef: string;
   expiresAtUtc: string;
   tracker: JournalManualTrackerKind;
+  workspaceStyle: JournalManualWorkspaceStyle | null;
   affectedDates: readonly string[];
   executionCount: number;
   groups: readonly JournalManualTradePreviewGroup[];
@@ -90,6 +93,7 @@ export type JournalManualTradeOfflineSync = Readonly<{
 
 export type JournalManualTradeCommitRequest = Readonly<{
   tracker: JournalManualTrackerKind;
+  workspaceStyle?: JournalManualWorkspaceStyle;
   entries: readonly JournalManualTradeEntry[];
   previewRef: string;
   expectedAccountSelectionRef: string;
@@ -101,6 +105,7 @@ export type JournalManualTradeCommitRequest = Readonly<{
 
 export type JournalManualTradeCommitStatusRequest = Readonly<{
   tracker: JournalManualTrackerKind;
+  workspaceStyle?: JournalManualWorkspaceStyle;
   entries: readonly JournalManualTradeEntry[];
   expectedAccountSelectionRef: string;
   idempotencyKey: string;

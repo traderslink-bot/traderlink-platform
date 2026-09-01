@@ -6,6 +6,7 @@ import type {
   JournalManualTradeEntry,
   JournalManualTradePreview,
   JournalManualTrackerKind,
+  JournalManualWorkspaceStyle,
 } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
 import type { DailyTradeAnalyzerQueueOutcome } from "@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
@@ -39,6 +40,7 @@ export type ManualTradeOutboxIssue =
 
 export type ManualTradeSubmission = Readonly<{
   tracker: JournalManualTrackerKind;
+  workspaceStyle?: JournalManualWorkspaceStyle;
   entries: readonly JournalManualTradeEntry[];
   expectedAccountSelectionRef: string;
   idempotencyKey: string;
@@ -51,6 +53,7 @@ export type ManualTradeOutboxRecord = Readonly<{
   offlineScopeRef: string;
   accountSelectionRef: string;
   tracker: JournalManualTrackerKind;
+  workspaceStyle?: JournalManualWorkspaceStyle;
   entries: readonly JournalManualTradeEntry[] | null;
   idempotencyKey: string | null;
   createdAtUtc: string;
@@ -70,8 +73,10 @@ export type ManualTradeOutboxRecord = Readonly<{
 export type ManualTradeSubmitResult = Readonly<{
   acceptedExecutionCount: number;
   affectedDates: readonly string[];
+  affectedTradeRefs: readonly string[];
   analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null;
   pendingDecisionCount: number;
+  savedTrade: unknown | null;
 }>;
 
 type PreviewResponse = Readonly<{
@@ -86,8 +91,10 @@ type CommitResponse = Readonly<{
   result?: Readonly<{
     acceptedExecutionCount?: number;
     affectedDates?: readonly string[];
+    affectedTradeRefs?: readonly string[];
     analyzerQueueOutcome?: DailyTradeAnalyzerQueueOutcome | null;
     pendingDecisionCount?: number;
+    savedTrade?: unknown | null;
   }>;
 }>;
 
@@ -190,12 +197,8 @@ function notifyOutboxChanged(): void {
   window.dispatchEvent(new Event(MANUAL_TRADE_OUTBOX_CHANGED_EVENT));
 }
 
-function trackerStyle(tracker: JournalManualTrackerKind) {
-  return tracker === "swing"
-    ? "swing" as const
-    : tracker === "quick"
-      ? "other" as const
-      : "day_trade" as const;
+function trackerStyle(preview: JournalManualTradePreview) {
+  return preview.groups[0]?.suggestedStyle ?? "day_trade" as const;
 }
 
 function confirmations(preview: JournalManualTradePreview) {
@@ -204,7 +207,7 @@ function confirmations(preview: JournalManualTradePreview) {
     relationship: group.allowedRelationships.find(
       (value) => value !== "not_finished",
     ) ?? "not_finished",
-    style: trackerStyle(preview.tracker),
+    style: trackerStyle(preview),
     existingPositionRef: group.existingPosition?.positionRef ?? null,
     completeExecutionSetConfirmed: true,
   }));
@@ -256,10 +259,13 @@ export async function submitManualTradeOnline(
     "content-type": "application/json",
     [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
   };
+  const basePath = submission.tracker === "workspace"
+    ? "/api/platform/journal/workspace-trades"
+    : "/api/platform/journal/manual-trades";
   if (options.checkCommittedFirst) {
     const statusResponse = await requestWithNetworkBoundary(
       "status",
-      "/api/platform/journal/manual-trades/status",
+      `${basePath}/status`,
       {
         body: JSON.stringify(submission),
         credentials: "same-origin",
@@ -279,20 +285,25 @@ export async function submitManualTradeOnline(
       return Object.freeze({
         acceptedExecutionCount: statusBody.result.acceptedExecutionCount,
         affectedDates: statusBody.result.affectedDates,
+        affectedTradeRefs: Object.freeze([]),
         analyzerQueueOutcome: null,
         pendingDecisionCount: statusBody.result.pendingDecisionCount,
+        savedTrade: null,
       });
     }
   }
 
   const previewResponse = await requestWithNetworkBoundary(
     "preview",
-    "/api/platform/journal/manual-trades/preview",
+    `${basePath}/preview`,
     {
       body: JSON.stringify({
         entries: submission.entries,
         expectedAccountSelectionRef: submission.expectedAccountSelectionRef,
         tracker: submission.tracker,
+        ...(submission.workspaceStyle === undefined
+          ? {}
+          : { workspaceStyle: submission.workspaceStyle }),
       }),
       credentials: "same-origin",
       headers,
@@ -314,7 +325,7 @@ export async function submitManualTradeOnline(
 
   const commitResponse = await requestWithNetworkBoundary(
     "commit",
-    "/api/platform/journal/manual-trades/commit",
+    `${basePath}/commit`,
     {
       body: JSON.stringify({
         confirmations: confirmations(previewBody.preview),
@@ -330,6 +341,9 @@ export async function submitManualTradeOnline(
           : {}),
         previewRef: previewBody.preview.previewRef,
         tracker: submission.tracker,
+        ...(submission.workspaceStyle === undefined
+          ? {}
+          : { workspaceStyle: submission.workspaceStyle }),
       }),
       credentials: "same-origin",
       headers,
@@ -352,8 +366,10 @@ export async function submitManualTradeOnline(
     acceptedExecutionCount:
       commitBody.result.acceptedExecutionCount ?? submission.entries.length,
     affectedDates: Object.freeze(commitBody.result.affectedDates ?? []),
+    affectedTradeRefs: Object.freeze(commitBody.result.affectedTradeRefs ?? []),
     analyzerQueueOutcome: commitBody.result.analyzerQueueOutcome ?? null,
     pendingDecisionCount: commitBody.result.pendingDecisionCount ?? 0,
+    savedTrade: commitBody.result.savedTrade ?? null,
   });
 }
 
@@ -427,6 +443,9 @@ export async function queueManualTradeSubmission(input: Readonly<{
     offlineScopeRef: input.offlineScopeRef,
     accountSelectionRef: input.submission.expectedAccountSelectionRef,
     tracker: input.submission.tracker,
+    ...(input.submission.workspaceStyle === undefined
+      ? {}
+      : { workspaceStyle: input.submission.workspaceStyle }),
     entries: Object.freeze(input.submission.entries.map((entry) => Object.freeze({
       ...entry,
     }))),
@@ -527,6 +546,9 @@ export async function syncManualTradeOutboxRecord(
   if (!claimed || !claimed.entries || !claimed.idempotencyKey) return null;
   const submission = Object.freeze({
     tracker: claimed.tracker,
+    ...(claimed.workspaceStyle === undefined
+      ? {}
+      : { workspaceStyle: claimed.workspaceStyle }),
     entries: claimed.entries,
     expectedAccountSelectionRef: claimed.accountSelectionRef,
     idempotencyKey: claimed.idempotencyKey,
