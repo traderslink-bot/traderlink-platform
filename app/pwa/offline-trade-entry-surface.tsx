@@ -87,7 +87,9 @@ function serverPathnameSnapshot(): string {
   return "/offline";
 }
 
-function trackerForPathname(pathname: string): JournalManualTrackerKind | null {
+function trackerForPathname(
+  pathname: string,
+): Exclude<JournalManualTrackerKind, "workspace"> | null {
   if (pathname === "/quick-trade-entry") return "quick";
   if (pathname === "/trade-tracker/swings") return "swing";
   if (pathname === "/trade-tracker") return "day";
