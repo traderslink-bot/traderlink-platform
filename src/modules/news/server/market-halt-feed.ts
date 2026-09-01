@@ -1,5 +1,6 @@
 import "server-only";
 
+import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 
 export const NASDAQ_TRADE_HALTS_RSS_URL = "https://nasdaqtrader.com/rss.aspx?feed=tradehalts";
@@ -122,24 +123,37 @@ async function fetchNasdaqTradeHalts(): Promise<Readonly<{ halts: readonly Marke
 
 async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: string; url: string }>): Promise<Readonly<{ halts: readonly MarketHalt[]; status: MarketHaltSourceStatus }>> {
   try {
-    const response = await fetch(input.url, {
-      cache: "no-store",
-      headers: {
-        Accept: "application/rss+xml, application/xml, text/xml",
-        Authorization: `Bearer ${input.secret}`,
-        "User-Agent": "TradersLinkPlatform/1.0",
-      },
-      signal: AbortSignal.timeout(15_000),
+    const response = await new Promise<Readonly<{ body: string; statusCode: number }>>((resolve, reject) => {
+      const request = httpRequest(input.url, {
+        headers: {
+          Accept: "application/rss+xml, application/xml, text/xml",
+          Authorization: `Bearer ${input.secret}`,
+          "User-Agent": "TradersLinkPlatform/1.0",
+        },
+        method: "GET",
+        timeout: 30_000,
+      }, (incoming) => {
+        const chunks: Buffer[] = [];
+        incoming.on("data", (chunk: Buffer) => chunks.push(chunk));
+        incoming.once("error", reject);
+        incoming.once("end", () => resolve(Object.freeze({
+          body: Buffer.concat(chunks).toString("utf8"),
+          statusCode: incoming.statusCode ?? 0,
+        })));
+      });
+      request.once("error", reject);
+      request.once("timeout", () => request.destroy(new Error("Nasdaq halt relay request timed out.")));
+      request.end();
     });
-    if (!response.ok) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       return Object.freeze({
         halts: Object.freeze([]),
-        status: Object.freeze({ available: false, httpStatus: response.status, source: "nasdaq" }),
+        status: Object.freeze({ available: false, httpStatus: response.statusCode || null, source: "nasdaq" }),
       });
     }
     return Object.freeze({
-      halts: parseNasdaqTradeHalts(await response.text()),
-      status: Object.freeze({ available: true, httpStatus: response.status, source: "nasdaq" }),
+      halts: parseNasdaqTradeHalts(response.body),
+      status: Object.freeze({ available: true, httpStatus: response.statusCode, source: "nasdaq" }),
     });
   } catch (error) {
     return Object.freeze({
