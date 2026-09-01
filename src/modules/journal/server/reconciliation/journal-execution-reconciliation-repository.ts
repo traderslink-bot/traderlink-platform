@@ -170,7 +170,7 @@ ORDER BY execution.execution_id`).all(workspaceId, accountId, roundTripId)
       .map((row) => Object.freeze({
         currentVersionId: row.current_version_id,
         executionId: row.execution_id,
-      }))));
+      })));
   }
 
   isSafelyDeletableManualExecution(
