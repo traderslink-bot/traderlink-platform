@@ -133,6 +133,12 @@
   clear-demo label and workspace paragraph require no duplicate source edit.
 - [x] Make the rendered Demo callout explicit after live Dark-mode contrast
   feedback: the compact `Viewing demo data` label directly above Clear Demo,
-  the Workspace Demo heading and each explanatory paragraph now read the
-  active palette directly. Dark resolves these exact rendered elements to
+  the Workspace Demo heading and each explanatory paragraph now receive a
+  direct `sx.color` foreground from the active palette. Dark resolves these exact rendered elements to
   `text.primary`; Light retains the red heading and primary body hierarchy.
+- [x] Make the disabled AI Reviews and AI Chat page description explicit after
+  isolated-staging Dark-mode proof showed a non-white computed foreground:
+  `AiComingSoonPage` now reads the active theme locally and supplies a direct
+  `sx.color` foreground on the rendered Typography. Dark uses `text.primary`; Light preserves
+  `text.secondary`. The title, Coming soon chip, content and layout remain
+  unchanged.

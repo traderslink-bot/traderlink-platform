@@ -19,16 +19,16 @@ describe("Dark chart controls and dashboard description contract", () => {
     expect(chart).toContain("ChartZoomControls");
   });
 
-  it("uses a Dark-aware description leaf for AI Reviews and explicit palette values for Demo copy", () => {
+  it("uses direct palette values for AI Reviews and Demo copy", () => {
     const comingSoon = source("app/(dashboard)/ai-coming-soon.tsx");
     const demo = source("app/(dashboard)/demo-data-callout.tsx");
 
-    expect(comingSoon).toContain('lightColor="text.secondary"');
-    expect(comingSoon).toContain("<DashboardAppearanceText");
+    expect(comingSoon).toContain('const descriptionColor = theme.palette.mode === "dark"');
+    expect(comingSoon).toContain('sx={{ color: descriptionColor, maxWidth: 760 }}');
     expect(demo).toContain('const demoBodyColor = theme.palette.text.primary');
     expect(demo).toContain('const demoHeadingColor = theme.palette.mode === "dark"');
     expect(demo).toContain("Viewing demo data");
     expect(demo).toContain("Clear demo data and start fresh");
-    expect(demo).toContain('color={demoBodyColor} variant="body2"');
+    expect(demo).toContain('sx={{ color: demoBodyColor }} variant="body2"');
   });
 });
