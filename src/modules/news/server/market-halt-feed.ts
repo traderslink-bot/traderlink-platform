@@ -125,9 +125,11 @@ async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: strin
   try {
     const response = await new Promise<Readonly<{ body: string; statusCode: number }>>((resolve, reject) => {
       const request = httpRequest(input.url, {
+        agent: false,
         headers: {
           Accept: "application/rss+xml, application/xml, text/xml",
           Authorization: `Bearer ${input.secret}`,
+          Connection: "close",
           "User-Agent": "TradersLinkPlatform/1.0",
         },
         method: "GET",
@@ -156,6 +158,7 @@ async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: strin
       status: Object.freeze({ available: true, httpStatus: response.statusCode, source: "nasdaq" }),
     });
   } catch (error) {
+    console.warn("nasdaq_halt_relay_request_failed", { code: errorCode(error) });
     return Object.freeze({
       halts: Object.freeze([]),
       status: Object.freeze({ available: false, failureCode: networkFailureCode(error), httpStatus: null, source: "nasdaq" }),
