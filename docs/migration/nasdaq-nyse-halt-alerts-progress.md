@@ -13,6 +13,7 @@
 - [x] Add the detailed Halt Alerts guide under the Tools Help section, linked from Notifications and imports.
 - [x] Replace permanent settings-page ticker mutes with a **Mute for today** notification action and 8:00 PM Eastern expiry.
 - [x] Add the left-navigation Halt Alerts drawer with same-day ticker mutes and mobile close controls.
+- [x] Add the owner-approved delivery-readiness status below the toggle. See [Halt Alert Status Indicator Progress](halt-alert-status-indicator-progress.md).
 - [ ] Refresh the drawer layout with the owner-approved Halt alerts, Muted Tickers and device-install sections.
 - [ ] Complete focused verification and owner visual approval.
 - [ ] Deploy, activate the one-minute hosted schedule, and confirm real device Push.
@@ -23,8 +24,3 @@
 - [x] Isolated the two official-source reads. A healthy source now continues through the existing event, recipient, mute and encrypted Web Push flow when the other source is unavailable; both unavailable sources still return `503`.
 - [x] Added safe source-only observability to the protected cron response and warning log: exchange name plus HTTP status, or `null` for a network failure. No user, subscription, endpoint, credential or upstream response content is logged.
 - [ ] Verify the local checkpoint with focused static checks, then obtain Railway log/device-delivery confirmation before release.
-
-## AI launch-gate repair — local checkpoint 2026-09-01
-
-- [x] Removed only `/api/cron/market-halts` from the AI launch-state proxy matcher. The protected route now reaches its own unchanged `Authorization: Bearer CRON_SECRET` authentication when AI remains unavailable.
-- [ ] Publish this narrow correction, then activate the separate one-minute hosted Halt Alerts and Push-retry schedules.

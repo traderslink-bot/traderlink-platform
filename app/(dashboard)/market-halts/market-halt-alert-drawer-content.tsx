@@ -1,6 +1,9 @@
 "use client";
 
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import NotificationsOffRoundedIcon from "@mui/icons-material/NotificationsOffRounded";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -15,6 +18,11 @@ import { useEffect, useState, useTransition } from "react";
 
 import { InstallTradersLinkPwaMethods } from "@/app/pwa/install-traderslink-pwa-card";
 import {
+  PLATFORM_WEB_PUSH_STATE_CHANGED_EVENT,
+  readPlatformWebPushBrowserState,
+  type PlatformWebPushBrowserState,
+} from "@/src/modules/platform/client/pwa/platform-web-push";
+import {
   muteMarketHaltTicker,
   saveMarketHaltAlertsEnabled,
   unmuteMarketHaltTicker,
@@ -25,6 +33,69 @@ type DrawerMessage = Readonly<{
   severity: "error" | "success";
   text: string;
 }>;
+
+type HaltAlertServiceState = "checking" | "limited" | "ready" | "unavailable";
+
+type HaltAlertStatusResponse = Readonly<{ status?: string }>;
+
+function statusPresentation(input: Readonly<{
+  enabled: boolean;
+  pushState: PlatformWebPushBrowserState;
+  serviceState: HaltAlertServiceState;
+}>) {
+  if (input.serviceState === "checking" || input.pushState === "checking") {
+    return Object.freeze({
+      color: "#536273",
+      icon: <WarningAmberRoundedIcon fontSize="small" />,
+      label: "Checking alerts",
+      tone: "#f1f3f5",
+    });
+  }
+  if (!input.enabled || input.pushState !== "enabled") {
+    return Object.freeze({
+      color: "#9a5b00",
+      icon: <NotificationsOffRoundedIcon fontSize="small" />,
+      label: "Turn on notifications",
+      tone: "#fff4e5",
+    });
+  }
+  if (input.serviceState === "ready") {
+    return Object.freeze({
+      color: "#19733f",
+      icon: <CheckCircleRoundedIcon fontSize="small" />,
+      label: "Halt alerts are ready",
+      tone: "#e7f6ec",
+    });
+  }
+  if (input.serviceState === "limited") {
+    return Object.freeze({
+      color: "#9a5b00",
+      icon: <WarningAmberRoundedIcon fontSize="small" />,
+      label: "Some halt alerts unavailable",
+      tone: "#fff4e5",
+    });
+  }
+  return Object.freeze({
+    color: "#b42318",
+    icon: <WarningAmberRoundedIcon fontSize="small" />,
+    label: "Halt alerts are unavailable",
+    tone: "#fef0ef",
+  });
+}
+
+async function readHaltAlertServiceState(): Promise<Exclude<HaltAlertServiceState, "checking">> {
+  try {
+    const response = await fetch("/api/platform/market-halts/status", {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    const body = await response.json() as HaltAlertStatusResponse;
+    if (response.ok && (body.status === "ready" || body.status === "limited")) return body.status;
+  } catch {
+    // The visible state below reports the safe unavailable result.
+  }
+  return "unavailable";
+}
 
 export function MarketHaltAlertDrawerContent({
   enabled,
@@ -45,7 +116,33 @@ export function MarketHaltAlertDrawerContent({
 }) {
   const [ticker, setTicker] = useState("");
   const [message, setMessage] = useState<DrawerMessage | null>(null);
+  const [pushState, setPushState] = useState<PlatformWebPushBrowserState>("checking");
+  const [serviceState, setServiceState] = useState<HaltAlertServiceState>("checking");
   const [working, startTransition] = useTransition();
+
+  useEffect(() => {
+    let active = true;
+    function refresh(): void {
+      void Promise.all([
+        readPlatformWebPushBrowserState().catch(() => "off" as const),
+        readHaltAlertServiceState(),
+      ]).then(([nextPushState, nextServiceState]) => {
+        if (!active) return;
+        setPushState(nextPushState);
+        setServiceState(nextServiceState);
+      });
+    }
+    refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener(PLATFORM_WEB_PUSH_STATE_CHANGED_EVENT, refresh);
+    const interval = window.setInterval(refresh, 60_000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener(PLATFORM_WEB_PUSH_STATE_CHANGED_EVENT, refresh);
+    };
+  }, []);
 
   useEffect(() => {
     if (!notificationMuteTicker) return;
@@ -75,13 +172,10 @@ export function MarketHaltAlertDrawerContent({
         return;
       }
       onEnabledChange(result.enabled);
-      setMessage({
-        placement: "halt",
-        severity: "success",
-        text: result.enabled ? "Halt alerts are on." : "Halt alerts are off.",
-      });
     });
   }
+
+  const status = statusPresentation({ enabled, pushState, serviceState });
 
   function muteTicker(): void {
     const requestedTicker = ticker.trim().toUpperCase();
@@ -148,6 +242,27 @@ export function MarketHaltAlertDrawerContent({
           label="Halt alerts"
           sx={{ alignSelf: "start", ml: -0.5 }}
         />
+        <Box
+          aria-live="polite"
+          role="status"
+          sx={{
+            alignItems: "center",
+            bgcolor: status.tone,
+            borderRadius: 1,
+            color: status.color,
+            display: "flex",
+            fontSize: 13,
+            fontWeight: 800,
+            gap: 0.75,
+            lineHeight: 1.35,
+            px: 1,
+            py: 0.75,
+            width: "fit-content",
+          }}
+        >
+          {status.icon}
+          {status.label}
+        </Box>
         {message?.placement === "halt" ? <Alert aria-live="polite" role="status" severity={message.severity}>{message.text}</Alert> : null}
       </Box>
       <Divider />
