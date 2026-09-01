@@ -158,21 +158,14 @@ export function DashboardUnavailableState({
     >
       <InfoOutlinedIcon color="primary" />
       <Typography
-        sx={{
-          color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined,
-          fontWeight: 700,
-          mt: 1,
-        }}
+        color="text.primary"
+        sx={{ fontWeight: 700, mt: 1 }}
       >
         {title}
       </Typography>
       <Typography
         color="text.secondary"
-        sx={{
-          color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined,
-          maxWidth: 540,
-          mt: 0.75,
-        }}
+        sx={{ maxWidth: 540, mt: 0.75 }}
         variant="body2"
       >
         {description}

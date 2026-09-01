@@ -65,3 +65,8 @@
   each appearance. The 44px input, 44px by 22px visible track, focus treatment,
   and authorized preference action remain unchanged. This correction requires
   a fresh independent source QA pass before isolated staging.
+- [ ] Repair the isolated-staging server/client render boundary before
+  republishing: server-rendered unavailable states and AI coming-soon pages
+  must use serializable palette-token props rather than theme callbacks in
+  Material `sx` objects. Preserve the shared Dark text tokens and the existing
+  Light colors, then obtain fresh source QA before staging.
