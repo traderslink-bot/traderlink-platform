@@ -74,7 +74,7 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
   { label: "Win rate", value: "—", caption: "Completed round trips" },
   { label: "Best trade", value: "—", caption: "" },
   { label: "Worst trade", value: "—", caption: "" },
-  { label: "Trades", value: "—", caption: "All available history" },
+  { label: "Closed trades", value: "—", caption: "All available history" },
 ];
 
 function hasLiveTradeLibraryProps(

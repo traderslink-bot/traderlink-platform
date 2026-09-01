@@ -47,7 +47,7 @@ const WORKSPACE_METRICS = [
   ["Win rate", "win_rate", "Completed round trips"],
   ["Best trade", "best_trade", ""],
   ["Worst trade", "worst_trade", ""],
-  ["Trades", "included_count", "All available history"],
+  ["Closed trades", "included_count", "All available history"],
 ] as const;
 
 type WorkspacePeriod = "today" | "week" | "month" | "all";
