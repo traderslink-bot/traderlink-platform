@@ -69,6 +69,7 @@ const server = createServer(async (request, response) => {
     }
     response.writeHead(200, {
       "cache-control": "no-store",
+      "content-length": String(upstream.body.byteLength),
       "content-type": "application/rss+xml; charset=utf-8",
     });
     response.end(upstream.body);
