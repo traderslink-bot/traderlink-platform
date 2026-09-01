@@ -18,13 +18,13 @@ function responseStatus(code: string): number {
 
 export async function POST(
   request: Request,
-  context: { params: Promise<{ roundTripId: string }> },
+  context: { params: Promise<{ tradeDeleteRef: string }> },
 ): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     if (!scope.activeAccountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-    const { roundTripId } = await context.params;
+    const { tradeDeleteRef: roundTripId } = await context.params;
     const draft = parseJournalWorkspaceTradeEditDraft(await request.json());
     const preview = withReadonlyJournalIntegrityRuntime(scope, (journal) =>
       journal.workspaceTradeEdits.preview(scope, roundTripId, draft));

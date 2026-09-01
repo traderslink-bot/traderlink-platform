@@ -21,7 +21,7 @@ function responseStatus(code: string): number {
 
 export async function POST(
   request: Request,
-  context: { params: Promise<{ roundTripId: string }> },
+  context: { params: Promise<{ tradeDeleteRef: string }> },
 ): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
@@ -30,7 +30,7 @@ export async function POST(
     const body = await request.json();
     const draft = parseJournalWorkspaceTradeEditDraft(body);
     const commit = parseJournalWorkspaceTradeEditCommit(body);
-    const { roundTripId } = await context.params;
+    const { tradeDeleteRef: roundTripId } = await context.params;
     const result = withWritableJournalIntegrityRuntime(scope, (journal) =>
       journal.workspaceTradeEdits.commit(scope, roundTripId, draft, commit));
     return Response.json({ status: "committed", result });

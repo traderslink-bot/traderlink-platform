@@ -14,11 +14,11 @@ function responseStatus(code: string): number {
   return 400;
 }
 
-export async function GET(request: Request, context: { params: Promise<{ roundTripId: string }> }): Promise<Response> {
+export async function GET(request: Request, context: { params: Promise<{ tradeDeleteRef: string }> }): Promise<Response> {
   try {
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     if (!scope.activeAccountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-    const { roundTripId } = await context.params;
+    const { tradeDeleteRef: roundTripId } = await context.params;
     const snapshot = withReadonlyJournalIntegrityRuntime(scope, (journal) =>
       journal.workspaceTradeEdits.snapshot(journal.tradeStyles.accountScope(scope), roundTripId));
     return Response.json({ status: "ready", snapshot });
