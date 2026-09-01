@@ -82,7 +82,6 @@ export const config = {
     "/api/coach/latest/:path*",
     "/api/cron/ai-reviews/:path*",
     "/api/cron/ai-review-calendar/:path*",
-    "/api/cron/market-halts/:path*",
     "/api/billing/whop/:path*",
     "/api/webhooks/whop/:path*",
   ],
