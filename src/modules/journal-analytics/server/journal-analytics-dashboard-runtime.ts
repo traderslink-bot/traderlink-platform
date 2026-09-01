@@ -14,6 +14,7 @@ import {
 import {
   PLATFORM_REPORTING_CURRENCIES,
   PlatformUserPreferenceRepository,
+  type PlatformPnlReportingBasis,
   type PlatformReportingCurrency,
 } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { loadUsdEffectiveReportingRates } from "@/src/modules/platform/server/reporting/bank-of-canada-fx-rate-service";
@@ -345,6 +346,15 @@ export function buildJournalAnalyticsDashboardQuery(
   });
 }
 
+export function resolveJournalAnalyticsMoneyBasis(
+  explicitValue: unknown,
+  savedPreference: PlatformPnlReportingBasis,
+): JournalAnalyticsMoneyBasis {
+  return explicitValue === "gross" || explicitValue === "net"
+    ? explicitValue
+    : savedPreference;
+}
+
 export function withJournalAnalyticsDashboardService<T>(
   scope: WorkspaceAccessScope,
   operation: (service: JournalAnalyticsService) => T,
@@ -400,6 +410,7 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
   operation: (runtime: Readonly<{
     database: ReturnType<typeof openReadonlyPlatformDatabase>;
     dashboard: JournalDashboardRuntimeReader;
+    pnlReportingBasis: PlatformPnlReportingBasis;
     reportingCurrency: PlatformReportingCurrency;
     reportingContext: JournalReportingCurrencyContext;
     service: JournalAnalyticsService;
@@ -452,6 +463,7 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
         dashboard,
         preparation.snapshot.reportingCurrency,
       ),
+      pnlReportingBasis: preparation.snapshot.pnlReportingBasis,
       reportingCurrency: preparation.snapshot.reportingCurrency,
       reportingContext,
       service: new JournalAnalyticsService(
@@ -467,6 +479,7 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
 }
 
 type ReportingSnapshot = Readonly<{
+  pnlReportingBasis: PlatformPnlReportingBasis;
   reportingCurrency: PlatformReportingCurrency;
   sourceCurrencies: ReadonlySet<string>;
   sourceCurrencyByRoundTrip: ReadonlyMap<string, string>;
@@ -604,9 +617,10 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
       sourceDates.add(sourceDate);
     }
     for (const row of feeCurrencyRows) sourceCurrencies.add(row.fee_currency);
+  const preferences = new PlatformUserPreferenceRepository(database);
   return Object.freeze({
-    reportingCurrency: new PlatformUserPreferenceRepository(database)
-      .getActiveUserReportingCurrency(scope.userId),
+    pnlReportingBasis: preferences.getActiveUserPnlReportingBasis(scope.userId),
+    reportingCurrency: preferences.getActiveUserReportingCurrency(scope.userId),
     sourceCurrencies,
     sourceCurrencyByRoundTrip,
     sourceDateByRoundTrip,
@@ -646,9 +660,10 @@ function reportingSnapshotFromFactSet(
       if (allocation.feeCurrency) sourceCurrencies.add(allocation.feeCurrency);
     }
   }
+  const preferences = new PlatformUserPreferenceRepository(database);
   return Object.freeze({
-    reportingCurrency: new PlatformUserPreferenceRepository(database)
-      .getActiveUserReportingCurrency(scope.userId),
+    pnlReportingBasis: preferences.getActiveUserPnlReportingBasis(scope.userId),
+    reportingCurrency: preferences.getActiveUserReportingCurrency(scope.userId),
     sourceCurrencies,
     sourceCurrencyByRoundTrip,
     sourceDateByRoundTrip,

@@ -12,7 +12,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("what-analytics-shows", "What Analytics shows", "The Analytics pages summarize completed trades that have enough accepted facts for each result.", ["analytics", "analytics overview", "completed trades", "trade tracker", "results", "performance"], [
       paragraph("Analytics is the factual view of confirmed Trade Tracker results, including imported and manually entered trades. It includes Analytics Overview, Ticker, Timing and Trade Breakdown. It helps you compare recorded outcomes; it does not predict a future trade or recommend an action."),
       table(["Page", "Use it for"], [
-        ["Overview", "Read key completed-trade measures and their monthly Net P/L history."],
+        ["Overview", "Read key completed-trade measures and their monthly P/L history using the selected basis."],
         ["Ticker", "Compare completed-trade results by ticker."],
         ["Timing", "Compare completed-trade results by entry time, exit time, day of week and trading session."],
         ["Trade Breakdown", "Compare completed trades by entry price, entry size, maximum position and holding time, then open exact executions."],
@@ -23,7 +23,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       link("/help/daily-trade-tracker/getting-started", "Read Daily Trade Tracker help", "Open the Daily Tracker when you want to review one trading date or work with its supporting tools."),
     ]),
   ]),
-  guide("overview-and-date-range", "Read the overview and date range", "Choose a completed-trade date range, then read the key results and monthly Net P/L without mixing currencies.", [
+  guide("overview-and-date-range", "Read the overview and date range", "Choose a completed-trade date range, then read the key results and monthly P/L without mixing currencies.", [
     section("set-a-date-range", "Set a date range", "Analytics Overview, Ticker and Trade Breakdown use the selected completed-trade date range.", ["date range", "all time", "last 3 months", "custom date", "update analytics"], [
       bullets([
         "Choose All time, Last 3 months, Last 6 months, Last 12 months, This year or Custom range.",
@@ -32,9 +32,9 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       ]),
       paragraph("Timing currently shows the available completed-trade population without this date-range control. Its time labels identify the displayed timezone."),
     ]),
-    section("read-the-overview", "Read the Overview cards", "Overview shows the selected period's completed-trade measures and a monthly Net P/L chart when available.", ["net p/l", "win rate", "profit factor", "expectancy", "monthly p/l"], [
+    section("read-the-overview", "Read the Overview cards", "Overview shows the selected period's completed-trade measures and a monthly P/L chart when available.", ["gross p/l", "net p/l", "win rate", "profit factor", "expectancy", "monthly p/l"], [
       table(["Measure", "Meaning"], [
-        ["Net P/L", "The selected completed-trade profit or loss after the covered trade charges."],
+        ["P/L", "The selected completed-trade profit or loss. Gross is before fees; Net includes covered trade charges."],
         ["Win rate", "The share of included completed trades with a positive result."],
         ["Profit factor", "Gross winning results divided by the absolute gross losing results when both are available."],
         ["Expectancy", "The average result per included completed trade."],

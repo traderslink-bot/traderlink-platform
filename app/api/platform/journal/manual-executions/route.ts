@@ -72,7 +72,6 @@ function manualEntry(value: unknown): Readonly<{
       field: "fees",
     });
   }
-  const feeCost = canonicalFee === "0" ? null : canonicalFee;
   return Object.freeze({
     date,
     execution: Object.freeze({
@@ -83,9 +82,11 @@ function manualEntry(value: unknown): Readonly<{
       side: side as "buy" | "sell",
       quantityDecimal: canonicalDecimal(string(value, "quantity"), "quantity", true),
       priceDecimal: canonicalDecimal(string(value, "price"), "price", true),
-      feesDecimal: feeCost === null ? null : `-${feeCost}`,
-      feeCurrency: feeCost === null ? null : currency,
-      feeSignConvention: feeCost === null ? "not_reported" : "cash_effect",
+      feesDecimal: canonicalFee === null
+        ? null
+        : canonicalFee === "0" ? "0" : `-${canonicalFee}`,
+      feeCurrency: canonicalFee === null ? null : currency,
+      feeSignConvention: canonicalFee === null ? "not_reported" : "cash_effect",
       tradeIntent: tradeIntent as "not_set" | "day_trade" | "swing",
     }),
   });

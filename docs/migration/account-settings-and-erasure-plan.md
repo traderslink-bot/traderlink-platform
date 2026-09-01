@@ -54,6 +54,10 @@ sessions remain unlabeled and show their real created/last-active dates.
 - Keep the existing reporting-currency, notification, AI Review, subscription,
   broker and Trade Tracker account controls. Their ownership and data scopes do
   not change.
+- A user-level P/L preference selects the default basis for summary analytics.
+  The two choices are exactly **I enter fees** (Net) and **I don’t enter fees**
+  (Gross). It never rewrites factual Gross/Net fields, and an execution with a
+  blank fee remains unavailable for Net while an explicit zero fee is Net-eligible.
 - Do not make the Discord identity disconnectable inside TraderLink. Discord
   owns the login identity; disconnecting the only public sign-in method would
   strand the user. A future multiple-login identity contract may add safe
