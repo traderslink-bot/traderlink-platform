@@ -86,7 +86,7 @@ export function ManualExecutionEntry({
   initialSymbol?: string;
   onboarding?: boolean;
   offlineScopeRef: string;
-  tracker?: JournalManualTrackerKind;
+  tracker?: Exclude<JournalManualTrackerKind, "workspace">;
 }) {
   const router = useRouter();
   const pathname = usePathname();
