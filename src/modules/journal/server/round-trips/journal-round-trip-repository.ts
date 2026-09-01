@@ -655,7 +655,7 @@ WHERE workspace_id = ? AND account_id = ? AND lifecycle_state = 'active'
 
   supersedeMissingRoundTrips(workspaceId: string, accountId: string, instrumentId: string, currency: string, retainedIds: readonly string[], timestamp: string): void {
     const retainedClause = retainedIds.length > 0
-      ? ` AND round_trip_id NOT IN (${retainedIds.map(() => "?").join(", ")})`
+      ? `AND round_trip_id NOT IN (${retainedIds.map(() => "?").join(", ")})`
       : "";
     this.database.prepare(`UPDATE journal_round_trips
 SET lifecycle_state = 'superseded',
@@ -664,7 +664,7 @@ WHERE workspace_id = ? AND account_id = ? AND lifecycle_state = 'active'
   AND current_version_id IN (
     SELECT round_trip_version_id FROM journal_round_trip_versions
     WHERE instrument_id = ? AND trade_currency = ?
-  )${retainedClause}`)
+  ) ${retainedClause}`)
       .run(timestamp, timestamp, workspaceId, accountId, instrumentId, currency, ...retainedIds);
   }
 

@@ -461,20 +461,26 @@
   No server, test, install, build, migration, staging, deployment, commit, or
   push ran. Runtime and owner visual review remain outstanding.
 
-## 2026-08-31 — Execution deletion repair verified locally
+## 2026-08-31 — Execution deletion last-row repair
 
-- Root cause: excluding a final execution rebuilt an empty retained-round-trip
-  set, but the repository rendered it as `NOT IN (NULL)`. SQL then retained
-  the obsolete active round trip and its non-current allocation, causing the
-  Workspace projection integrity guard to reject the otherwise safe delete.
-- The empty retained-ID case now supersedes every affected active round trip.
-  Projection refresh runs after the complete affected rebuild, so it sees a
-  consistent account state rather than a partial chain update.
-- Successful confirmed deletion closes Saved Trade and refreshes the route;
-  the existing Add execution form remains unchanged.
-- `src/scripts/verify-workspace-execution-deletion.ts` passed against a
-  disposable SQLite database. It verifies eligible deletion and rebuild,
-  final-execution retirement, stale/protected/demo/cross-account refusal, and
-  client close/refresh handling. `git diff --check` also passed. No server,
-  Vitest suite, build, real-data migration, staging, deployment, push, or
-  hosted action ran.
+- Diagnosed the reported Workspace execution-delete failure with a disposable
+  initialized Journal database. Deleting an eligible execution and rebuilding
+  its trade works; the failure occurred only when deletion left a chain with no
+  retained round trips.
+- `supersedeMissingRoundTrips` previously emitted `round_trip_id NOT IN (NULL)`
+  for that empty retained set. SQLite treats that predicate as unknown, so the
+  obsolete round trip stayed active and its allocation no longer matched the
+  execution's current excluded version. The derived Workspace projection then
+  failed closed before the route could return success.
+- The narrow repository repair omits the `NOT IN` predicate only for an empty
+  retained set, so every active round trip in that exact account/instrument/
+  currency chain is explicitly superseded. Non-empty retained sets keep their
+  existing bound exclusion predicate. The opaque current-account/current-version
+  manual-only deletion authority is unchanged.
+- A focused local fixture verified eligible deletion and rebuild, final-execution
+  deletion, stale and cross-account refs, protected records, provider-backed
+  records, demo records, and the existing client stale-error/refresh paths. It
+  used only a temporary database; no server, real data, migration, hosted
+  action, build, test suite, commit, or push ran.
+- The Workspace correction allowlist now explicitly includes the narrow
+  round-trip repository repair. No owner-visible UI behavior changed.
