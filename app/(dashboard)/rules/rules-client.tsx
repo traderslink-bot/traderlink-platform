@@ -638,7 +638,14 @@ export function RulesClient({
           </Typography>
           <FeatureHelpLink href="/help/trading-rules" label="Trading Rules" size="medium" />
         </Stack>
-        <Box sx={{ maxWidth: 960 }}>
+        <Box
+          sx={{
+            color: (theme) => theme.palette.mode === "dark"
+              ? theme.palette.text.primary
+              : undefined,
+            maxWidth: 960,
+          }}
+        >
           <Typography>
             TradersLink has 2 rule type.
           </Typography>

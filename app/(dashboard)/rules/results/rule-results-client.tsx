@@ -70,7 +70,17 @@ export function RuleResultsClient({
         <Box>
           <Typography color="primary.main" sx={{ fontWeight: 700 }} variant="caption">TRADING RULES</Typography>
           <Typography component="h1" variant="h1">Rule Results</Typography>
-          <Typography color="text.secondary" sx={{ mt: 0.5 }}>Facts from automatic preset checks and saved manual selections. The app does not judge whether a rule should be kept or changed.</Typography>
+          <Typography
+            color="text.secondary"
+            sx={{
+              color: (theme) => theme.palette.mode === "dark"
+                ? theme.palette.text.primary
+                : undefined,
+              mt: 0.5,
+            }}
+          >
+            Facts from automatic preset checks and saved manual selections. The app does not judge whether a rule should be kept or changed.
+          </Typography>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}><FeatureHelpLink href="/help/trading-rules/results-history" label="Rule Results" size="medium" /><Button component={Link} href="/rules" startIcon={<ArrowBackRoundedIcon />} variant="outlined">Trading Rules</Button></Stack>
       </Stack>
