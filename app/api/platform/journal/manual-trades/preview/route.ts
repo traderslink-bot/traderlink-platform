@@ -37,6 +37,9 @@ export async function POST(request: Request): Promise<Response> {
       body.expectedAccountSelectionRef,
     );
     const tracker = parseJournalManualTrackerKind(body.tracker);
+    if (tracker === "workspace") {
+      platformFailure("TRADERLINK_MANUAL_TRADE_PREVIEW_INVALID");
+    }
     const entries = parseJournalManualTradeEntries(body.entries);
     assertJournalManualTrackerEntryDates(tracker, entries);
     if (!scope.activeAccountId) {

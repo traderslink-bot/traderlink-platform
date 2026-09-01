@@ -747,6 +747,7 @@ export class JournalAnnotationService {
   saveTradeReview(
     scope: AccountScope,
     input: Readonly<{
+      expectedRoundTripVersionId?: unknown;
       roundTripId: string;
       note: Readonly<{
         expectedRevision: unknown;
@@ -767,6 +768,13 @@ export class JournalAnnotationService {
     }>,
   ): void {
     assertCanonicalUuidV4(input.roundTripId, "roundTripId");
+    const expectedRoundTripVersionId = input.expectedRoundTripVersionId;
+    if (expectedRoundTripVersionId !== undefined) {
+      if (typeof expectedRoundTripVersionId !== "string") {
+        invalid("expectedRoundTripVersionId");
+      }
+      assertCanonicalUuidV4(expectedRoundTripVersionId, "expectedRoundTripVersionId");
+    }
     if (
       input.note === null &&
       input.tags === null &&
@@ -775,6 +783,14 @@ export class JournalAnnotationService {
       invalid("tradeReview");
     }
     this.annotations.immediate(() => {
+      if (
+        expectedRoundTripVersionId !== undefined &&
+        !this.annotations.roundTripCurrentVersionMatches(
+          scope,
+          input.roundTripId,
+          expectedRoundTripVersionId,
+        )
+      ) conflict();
       if (input.note !== null) {
         const currentNote = this.readRoundTripNotes(scope, [input.roundTripId])[
           input.roundTripId

@@ -38,6 +38,10 @@ import { JournalManualTradePreviewService } from "./journal-manual-trade-preview
 export type JournalManualTradeCommitResult = JournalImportCommitResult & Readonly<{
   affectedDates: readonly string[];
   affectedPositionRefs: readonly string[];
+  affectedTradeTargets: readonly Readonly<{
+    roundTripId: string;
+    roundTripVersionId: string;
+  }>[];
   analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null;
   relatedDecisionIds: readonly string[];
   rebuilds: readonly JournalChainRebuildResult[];
@@ -86,6 +90,7 @@ export class JournalManualTradeCommandService {
         scope,
         accountSelectionRef,
         tracker: request.tracker,
+        workspaceStyle: request.workspaceStyle,
         entries: request.entries,
       }),
     );
@@ -118,6 +123,7 @@ export class JournalManualTradeCommandService {
     if (!this.previews.verify(scope, {
       accountSelectionRef,
       tracker: request.tracker,
+      workspaceStyle: request.workspaceStyle,
       entries: request.entries,
       previewRef: request.previewRef,
     })) {
@@ -150,6 +156,7 @@ export class JournalManualTradeCommandService {
       const preview = this.previews.preview(scope, {
         accountSelectionRef,
         tracker: request.tracker,
+        workspaceStyle: request.workspaceStyle,
         entries: request.entries,
       });
       if (preview.groups.length !== request.confirmations.length) {
@@ -180,6 +187,8 @@ export class JournalManualTradeCommandService {
         idempotencyKey: request.idempotencyKey,
         sourceDisplayLabel: request.preparedBy === "ai_chat"
           ? "AI Chat manual executions"
+          : request.tracker === "workspace"
+          ? "Workspace manual executions"
           : request.tracker === "swing"
           ? "Swing Trade Tracker manual executions"
           : request.tracker === "quick"
@@ -207,8 +216,12 @@ export class JournalManualTradeCommandService {
           committed.executionIds[index]!,
         ]),
       );
-      const resolveAffectedPositionRefs = (): readonly string[] => Object.freeze([
-        ...new Set(preview.groups.map((group) => {
+      const resolveAffectedTradeTargets = () => {
+        const targets = new Map<string, Readonly<{
+          roundTripId: string;
+          roundTripVersionId: string;
+        }>>();
+        for (const group of preview.groups) {
           const allocations: JournalManualAllocationTarget[] = group.allocations.map(
             (allocation) => Object.freeze({
               executionId: executionIdByClientRow.get(allocation.clientRowRef)!,
@@ -220,14 +233,21 @@ export class JournalManualTradeCommandService {
             accountScope,
             allocations,
           );
-          return this.previews.positionRefForTarget(scope, target);
-        })),
-      ].sort());
+          targets.set(`${target.roundTripId}\u001f${target.roundTripVersionId}`, Object.freeze(target));
+        }
+        return Object.freeze([...targets.values()].sort((left, right) =>
+          left.roundTripId.localeCompare(right.roundTripId) ||
+          left.roundTripVersionId.localeCompare(right.roundTripVersionId)));
+      };
       if (committed.status === "already_imported") {
+        const affectedTradeTargets = resolveAffectedTradeTargets();
+        const affectedPositionRefs = Object.freeze(affectedTradeTargets.map((target) =>
+          this.previews.positionRefForTarget(scope, target)).sort());
         return Object.freeze({
           ...committed,
           affectedDates,
-          affectedPositionRefs: resolveAffectedPositionRefs(),
+          affectedPositionRefs,
+          affectedTradeTargets,
           relatedDecisionIds: Object.freeze([]),
           rebuilds: Object.freeze([]),
           styledTradeCount: preview.groups.length,
@@ -235,7 +255,9 @@ export class JournalManualTradeCommandService {
       }
 
       const timestamp = createCanonicalUtcTimestamp(now);
-      const sourceUi = request.tracker === "swing"
+      const sourceUi = (request.tracker === "workspace"
+        ? request.workspaceStyle === "swing"
+        : request.tracker === "swing")
         ? "swing_trade_tracker" as const
         : "day_trade_tracker" as const;
       const payloadSha256 = digestJournalManualTradePreviewPayload(
@@ -243,6 +265,7 @@ export class JournalManualTradeCommandService {
           scope,
           accountSelectionRef,
           tracker: request.tracker,
+          workspaceStyle: request.workspaceStyle,
           entries: request.entries,
         }),
       );
@@ -338,10 +361,14 @@ export class JournalManualTradeCommandService {
           timestamp,
         });
       }
+      const affectedTradeTargets = resolveAffectedTradeTargets();
+      const affectedPositionRefs = Object.freeze(affectedTradeTargets.map((target) =>
+        this.previews.positionRefForTarget(scope, target)).sort());
       return Object.freeze({
         ...committed,
         affectedDates,
-        affectedPositionRefs: resolveAffectedPositionRefs(),
+        affectedPositionRefs,
+        affectedTradeTargets,
         relatedDecisionIds: Object.freeze([
           ...new Set([...sourceDecisions, ...chainDecisions]
             .map((decision: JournalDataDecisionRecord) => decision.decisionId)),
