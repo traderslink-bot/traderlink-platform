@@ -85,3 +85,7 @@
   introductory text beneath dashboard page titles (such as Rule Results) while
   preserving the existing Light-mode secondary-text hierarchy and all page
   behavior and copy.
+- [x] Apply the deployed Dark-mode correction to the two Rules route-specific
+  introductions: the `/rules` explanatory block and `/rules/results` facts
+  sentence now inherit `text.primary` only in Dark mode. Their Light-mode
+  foregrounds, copy and Rules behavior remain unchanged.
