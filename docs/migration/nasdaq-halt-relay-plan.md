@@ -17,7 +17,7 @@ Use a private, stateless Railway relay in US East only if it can retrieve the ex
 
 ## Checkpoints
 
-1. Deploy the relay without a public domain in US East and confirm its startup probe reaches Nasdaq.
+1. Deploy the relay without a public domain in one US East replica and confirm its startup probe reaches Nasdaq.
 2. Confirm the protected internal endpoint rejects missing/invalid callers and returns only the official RSS body to an authorized internal caller.
 3. Only after both checks, add the main scheduler's signed private relay read and confirm a fresh run marks both sources ready.
 4. Keep the relay only while Railway-US-West cannot reach the official source directly; remove it deliberately after a direct path is verified.

@@ -35,6 +35,11 @@ function networkFailureCode(error: unknown): MarketHaltSourceFailureCode {
   if (/CERT|SIGNATURE|TLS/iu.test(code)) return "tls";
   return "connection";
 }
+function nasdaqHaltRelayConfiguration(): Readonly<{ secret: string; url: string }> | null {
+  const url = process.env.NASDAQ_HALT_RELAY_URL?.trim();
+  const secret = process.env.NASDAQ_HALT_RELAY_SECRET?.trim();
+  return url && secret ? Object.freeze({ secret, url }) : null;
+}
 export function parseNasdaqTradeHalts(xml: string): readonly MarketHalt[] { return Object.freeze((xml.match(/<item(?:\s[^>]*)?>[\s\S]*?<\/item>/giu) ?? []).flatMap((item) => { const ticker = xmlTag(item, "ndaq:IssueSymbol"); const haltDateEt = xmlTag(item, "ndaq:HaltDate"); const haltTimeEt = xmlTag(item, "ndaq:HaltTime"); const reasonCode = xmlTag(item, "ndaq:ReasonCode"); const description = reasonCode ? nasdaqReasons[reasonCode] : null; if (!validTicker(ticker) || !haltDateEt || !haltTimeEt || !reasonCode || !description || (reasonCode === "T1" && /^07:50:00(?:\.\d+)?$/u.test(haltTimeEt))) return []; return [Object.freeze({ haltDateEt, haltTimeEt, issueName: xmlTag(item, "ndaq:IssueName") ?? ticker, market: xmlTag(item, "ndaq:Market") ?? "NASDAQ", reasonCode, reasonDescription: description, resumptionQuoteTimeEt: xmlTag(item, "ndaq:ResumptionQuoteTime"), resumptionTradeTimeEt: xmlTag(item, "ndaq:ResumptionTradeTime"), source: "nasdaq" as const, ticker })]; })); }
 function csvRows(value: string): readonly string[][] { const rows: string[][] = []; let row: string[] = []; let cell = ""; let quoted = false; for (let index = 0; index < value.length; index++) { const char = value[index]; if (char === '"') { if (quoted && value[index + 1] === '"') { cell += char; index++; } else quoted = !quoted; } else if (char === "," && !quoted) { row.push(clean(cell)); cell = ""; } else if ((char === "\n" || char === "\r") && !quoted) { if (char === "\r" && value[index + 1] === "\n") index++; row.push(clean(cell)); if (row.some(Boolean)) rows.push(row); row = []; cell = ""; } else cell += char; } row.push(clean(cell)); if (row.some(Boolean)) rows.push(row); return Object.freeze(rows); }
 function splitEasternDateTime(value: string): Readonly<{ date: string; time: string }> | null { const match = value.match(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2}(?::\d{2})?)/u); if (!match) return null; const [month, day, year] = match[1].includes("/") ? match[1].split("/") : [match[1].slice(5, 7), match[1].slice(8, 10), match[1].slice(0, 4)]; return Object.freeze({ date: `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`, time: match[2].padStart(8, "0") }); }
@@ -72,6 +77,8 @@ async function fetchMarketHaltSource(input: Readonly<{
 }
 
 async function fetchNasdaqTradeHalts(): Promise<Readonly<{ halts: readonly MarketHalt[]; status: MarketHaltSourceStatus }>> {
+  const relay = nasdaqHaltRelayConfiguration();
+  if (relay) return fetchNasdaqTradeHaltsThroughRelay(relay);
   try {
     const response = await new Promise<Readonly<{ body: string; statusCode: number }>>((resolve, reject) => {
       const request = httpsRequest(NASDAQ_TRADE_HALTS_RSS_URL, {
@@ -104,6 +111,35 @@ async function fetchNasdaqTradeHalts(): Promise<Readonly<{ halts: readonly Marke
     return Object.freeze({
       halts: parseNasdaqTradeHalts(response.body),
       status: Object.freeze({ available: true, httpStatus: response.statusCode, source: "nasdaq" }),
+    });
+  } catch (error) {
+    return Object.freeze({
+      halts: Object.freeze([]),
+      status: Object.freeze({ available: false, failureCode: networkFailureCode(error), httpStatus: null, source: "nasdaq" }),
+    });
+  }
+}
+
+async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: string; url: string }>): Promise<Readonly<{ halts: readonly MarketHalt[]; status: MarketHaltSourceStatus }>> {
+  try {
+    const response = await fetch(input.url, {
+      cache: "no-store",
+      headers: {
+        Accept: "application/rss+xml, application/xml, text/xml",
+        Authorization: `Bearer ${input.secret}`,
+        "User-Agent": "TradersLinkPlatform/1.0",
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) {
+      return Object.freeze({
+        halts: Object.freeze([]),
+        status: Object.freeze({ available: false, httpStatus: response.status, source: "nasdaq" }),
+      });
+    }
+    return Object.freeze({
+      halts: parseNasdaqTradeHalts(await response.text()),
+      status: Object.freeze({ available: true, httpStatus: response.status, source: "nasdaq" }),
     });
   } catch (error) {
     return Object.freeze({
