@@ -22,6 +22,7 @@ import { journalDemoLifecycleMigration } from "@/src/modules/journal/server/data
 import { journalWorkspaceTradeLibraryProjectionMigration } from "@/src/modules/journal/server/database/migrations/0100_journal_workspace_trade_library_projection";
 import { workspaceTradeLibrarySortFactsMigration } from "@/src/modules/journal/server/database/migrations/0101_workspace_trade_library_sort_facts";
 import { workspaceTradeLibraryHoldDurationMigration } from "@/src/modules/journal/server/database/migrations/0102_workspace_trade_library_hold_duration";
+import { journalWorkspaceTradeStyleSourceMigration } from "@/src/modules/journal/server/database/migrations/0108_journal_workspace_trade_style_source";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -525,6 +526,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0102_workspace_trade_library_hold_duration.ts",
       migration: workspaceTradeLibraryHoldDurationMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0108_journal_workspace_trade_style_source.ts",
+      migration: journalWorkspaceTradeStyleSourceMigration,
     }),
   ]);
 
