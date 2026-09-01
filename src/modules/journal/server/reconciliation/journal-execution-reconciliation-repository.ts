@@ -136,7 +136,97 @@ ORDER BY version.executed_at_utc, version.source_order_key, execution.execution_
         feesDecimal: row.fees_decimal,
         feeCurrency: row.fee_currency,
         accountTimezone: row.account_timezone,
+    })));
+  }
+
+  listCurrentRoundTripExecutions(
+    workspaceId: string,
+    accountId: string,
+    roundTripId: string,
+  ): readonly Readonly<{ currentVersionId: string; executionId: string }>[] {
+    return Object.freeze(this.database.prepare<[string, string, string], {
+      current_version_id: string;
+      execution_id: string;
+    }>(`SELECT DISTINCT execution.execution_id, execution.current_version_id
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_execution_allocations allocation
+  ON allocation.workspace_id = round_trip.workspace_id
+ AND allocation.account_id = round_trip.account_id
+ AND allocation.round_trip_version_id = round_trip.current_version_id
+JOIN journal_execution_versions allocation_version
+  ON allocation_version.workspace_id = allocation.workspace_id
+ AND allocation_version.account_id = allocation.account_id
+ AND allocation_version.execution_version_id = allocation.execution_version_id
+JOIN journal_executions execution
+  ON execution.workspace_id = allocation_version.workspace_id
+ AND execution.account_id = allocation_version.account_id
+ AND execution.execution_id = allocation_version.execution_id
+ AND execution.current_version_id = allocation.execution_version_id
+WHERE round_trip.workspace_id = ?
+  AND round_trip.account_id = ?
+  AND round_trip.round_trip_id = ?
+  AND round_trip.lifecycle_state = 'active'
+ORDER BY execution.execution_id`).all(workspaceId, accountId, roundTripId)
+      .map((row) => Object.freeze({
+        currentVersionId: row.current_version_id,
+        executionId: row.execution_id,
       })));
+  }
+
+  isSafelyDeletableManualExecution(
+    workspaceId: string,
+    accountId: string,
+    executionId: string,
+    expectedCurrentVersionId: string,
+  ): boolean {
+    return Boolean(this.database.prepare<[string, string, string, string], { found: number }>(`
+SELECT 1 AS found
+FROM journal_executions execution
+WHERE execution.workspace_id = ? AND execution.account_id = ?
+  AND execution.execution_id = ?
+  AND execution.current_version_id = ?
+  AND execution.current_state = 'accepted'
+  AND EXISTS (
+    SELECT 1 FROM journal_execution_identity_aliases alias
+    WHERE alias.workspace_id = execution.workspace_id
+      AND alias.account_id = execution.account_id
+      AND alias.execution_id = execution.execution_id
+      AND alias.alias_type = 'manual_entry' AND alias.status = 'active'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM journal_demo_accounts demo
+    WHERE demo.workspace_id = execution.workspace_id
+      AND demo.account_id = execution.account_id
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM journal_execution_identity_aliases provider_alias
+    WHERE provider_alias.workspace_id = execution.workspace_id
+      AND provider_alias.account_id = execution.account_id
+      AND provider_alias.execution_id = execution.execution_id
+      AND provider_alias.alias_type IN ('broker_fill', 'broker_order_fill')
+      AND provider_alias.status = 'active'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM journal_execution_provenance provenance
+    WHERE provenance.workspace_id = execution.workspace_id
+      AND provenance.account_id = execution.account_id
+      AND provenance.execution_id = execution.execution_id
+      AND (provenance.provider_identity_scheme_version IS NOT NULL
+        OR provenance.provider_identity_sha256 IS NOT NULL)
+  )
+  AND NOT EXISTS (
+    SELECT 1
+    FROM journal_execution_reconciliation_members member
+    JOIN journal_execution_reconciliation_sets reconciliation
+      ON reconciliation.workspace_id = member.workspace_id
+     AND reconciliation.account_id = member.account_id
+     AND reconciliation.reconciliation_set_id = member.reconciliation_set_id
+    WHERE member.workspace_id = execution.workspace_id
+      AND member.account_id = execution.account_id
+      AND member.execution_id = execution.execution_id
+      AND member.member_role = 'manual_execution'
+  )
+LIMIT 1`).get(workspaceId, accountId, executionId, expectedCurrentVersionId));
   }
 
   findByOverlapKey(

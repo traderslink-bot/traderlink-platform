@@ -6,6 +6,7 @@ import type { JournalPrivacyHmacConfiguration } from "../imports/journal-import-
 import type {
   JournalManualTrackerKind,
   JournalManualTradeEntry,
+  JournalManualWorkspaceStyle,
 } from "../../contracts/journal-manual-trade-capture-contracts";
 
 const TOKEN_VERSION = "manual-trade-preview-v1";
@@ -22,7 +23,10 @@ type Keyring = Readonly<{
 export type JournalManualTradePreviewAuthority = Readonly<{
   issue(payload: string): Readonly<{ previewRef: string; expiresAtUtc: string }>;
   verify(previewRef: string, payload: string): boolean;
-  opaqueRef(purpose: "execution" | "group" | "position", material: string): string;
+  opaqueRef(
+    purpose: "execution" | "group" | "position" | "workspace_trade_edit_snapshot",
+    material: string,
+  ): string;
 }>;
 
 function keyring(configuration: JournalPrivacyHmacConfiguration): Keyring {
@@ -154,6 +158,7 @@ export function canonicalJournalManualTradePreviewPayload(input: Readonly<{
   scope: WorkspaceAccessScope;
   accountSelectionRef: string;
   tracker: JournalManualTrackerKind;
+  workspaceStyle?: JournalManualWorkspaceStyle;
   entries: readonly JournalManualTradeEntry[];
 }>): string {
   const entries = [...input.entries]
@@ -182,6 +187,7 @@ export function canonicalJournalManualTradePreviewPayload(input: Readonly<{
     input.scope.activeAccountId,
     input.accountSelectionRef,
     input.tracker,
+    input.workspaceStyle ?? null,
     entries,
   ]);
 }

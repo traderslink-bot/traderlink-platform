@@ -20,7 +20,13 @@ import type { JournalManualTradePreviewAuthority } from "./journal-manual-trade-
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const TIME_PATTERN = /^\d{2}:\d{2}(?::\d{2})?$/u;
 
+function normalizeLeadingDecimal(value: string): string {
+  const trimmed = value.trim();
+  return /^\.(\d+)$/u.test(trimmed) ? `0${trimmed}` : value;
+}
+
 export type JournalEditableManualExecution = Readonly<{
+  deleteRef: string | null;
   editRef: string;
   executionId: string;
   currentVersionId: string;
@@ -33,6 +39,14 @@ export type JournalEditableManualExecution = Readonly<{
   quantityDecimal: string;
   priceDecimal: string | null;
   feesDecimal: string | null;
+}>;
+
+type JournalTradeDeletionCandidate = Readonly<{
+  deleteRef: string;
+  executions: readonly Readonly<{
+    currentVersionId: string;
+    executionId: string;
+  }>[];
 }>;
 
 function localParts(sourceTimestampText: string): Readonly<{
@@ -73,6 +87,54 @@ export class JournalManualExecutionEditService {
     ]));
   }
 
+  private tradeDeletionCandidate(
+    scope: AccountScope,
+    roundTripId: string,
+  ): JournalTradeDeletionCandidate | null {
+    const executions = this.reconciliations.listCurrentRoundTripExecutions(
+      scope.workspaceId,
+      scope.accountId,
+      roundTripId,
+    );
+    if (
+      executions.length === 0 ||
+      executions.some((execution) => !this.reconciliations
+        .isSafelyDeletableManualExecution(
+          scope.workspaceId,
+          scope.accountId,
+          execution.executionId,
+          execution.currentVersionId,
+        ))
+    ) {
+      return null;
+    }
+    return Object.freeze({
+      deleteRef: this.authority.opaqueRef("group", JSON.stringify([
+        "workspace-trade-delete-v1",
+        scope.workspaceId,
+        scope.accountId,
+        roundTripId,
+        executions.map((execution) => [
+          execution.executionId,
+          execution.currentVersionId,
+        ]),
+      ])),
+      executions,
+    });
+  }
+
+  listTradeDeleteRefs(
+    scope: AccountScope,
+    roundTripIds: readonly string[],
+  ): ReadonlyMap<string, string> {
+    const refs = new Map<string, string>();
+    for (const roundTripId of [...new Set(roundTripIds)]) {
+      const candidate = this.tradeDeletionCandidate(scope, roundTripId);
+      if (candidate) refs.set(roundTripId, candidate.deleteRef);
+    }
+    return refs;
+  }
+
   listEditable(
     scope: AccountScope,
     executionIds?: readonly string[],
@@ -83,12 +145,19 @@ export class JournalManualExecutionEditService {
       executionIds,
     ).map((candidate) => {
       const local = localParts(candidate.sourceTimestampText);
+      const editRef = this.editRef(
+        scope,
+        candidate.executionId,
+        candidate.currentVersionId,
+      );
       return Object.freeze({
-        editRef: this.editRef(
-          scope,
+        deleteRef: this.reconciliations.isSafelyDeletableManualExecution(
+          scope.workspaceId,
+          scope.accountId,
           candidate.executionId,
           candidate.currentVersionId,
-        ),
+        ) ? editRef : null,
+        editRef,
         executionId: candidate.executionId,
         currentVersionId: candidate.currentVersionId,
         localDate: local.date,
@@ -147,7 +216,10 @@ export class JournalManualExecutionEditService {
     const feesDecimal = input.feesDecimal === null ||
         input.feesDecimal.trim().length === 0
       ? null
-      : normalizeBrokerDecimal(input.feesDecimal, "feesDecimal");
+      : normalizeBrokerDecimal(
+          normalizeLeadingDecimal(input.feesDecimal),
+          "feesDecimal",
+        );
     const correction = this.imports.immediate(() => {
       const timestamp = createCanonicalUtcTimestamp(input.now);
       const instrumentId = this.imports.findOrCreateInstrument({
@@ -176,7 +248,7 @@ export class JournalManualExecutionEditService {
           { positive: true },
         ),
         priceDecimal: normalizeBrokerDecimal(
-          input.priceDecimal,
+          normalizeLeadingDecimal(input.priceDecimal),
           "priceDecimal",
           { positive: true },
         ),
@@ -216,6 +288,117 @@ export class JournalManualExecutionEditService {
       executionVersionId: correction.executionVersionId,
       openedFollowupDecisionIds: correction.openedFollowupDecisionIds,
       rebuildCount: correction.rebuildCount,
+      analysisRefresh: Object.freeze({
+        affectedTradeCount: affectedRoundTripIds.length,
+        queuedTradeCount: queuedRoundTripIds.length,
+      }),
+    });
+  }
+
+  remove(
+    scope: AccountScope,
+    executionRef: string,
+    input: Readonly<{
+      idempotencyKey: string;
+      now?: Date;
+    }>,
+  ) {
+    if (
+      !/^[0-9a-f]{64}$/u.test(executionRef) ||
+      input.idempotencyKey.length < 16 ||
+      input.idempotencyKey.length > 128
+    ) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_INVALID");
+    }
+    const candidate = this.listEditable(scope).find((item) =>
+      item.editRef === executionRef && item.deleteRef === executionRef);
+    if (!candidate) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
+    }
+    const exclusion = this.imports.immediate(() =>
+      this.decisions.excludeManualExecution(scope, {
+        executionId: candidate.executionId,
+        expectedCurrentVersionId: candidate.currentVersionId,
+        idempotencyKey: input.idempotencyKey,
+        now: input.now,
+      }));
+    const affectedRoundTripIds = Object.freeze([
+      ...new Set(
+        exclusion.rebuilds
+          .filter((rebuild) => rebuild.status === "rebuilt")
+          .flatMap((rebuild) => rebuild.roundTripIds),
+      ),
+    ]);
+    let queuedRoundTripIds: readonly string[] = Object.freeze([]);
+    try {
+      queuedRoundTripIds = this.dailyTradeAnalyzer?.queueAfterJournalRebuild(
+        scope,
+        affectedRoundTripIds,
+      ) ?? Object.freeze([]);
+    } catch {
+      // Journal exclusion is already committed; Analyzer availability cannot
+      // turn a successful fact correction into a reported failure.
+    }
+    return Object.freeze({
+      executionVersionId: exclusion.executionVersionId,
+      openedFollowupDecisionIds: exclusion.openedFollowupDecisionIds,
+      rebuildCount: exclusion.rebuildCount,
+      analysisRefresh: Object.freeze({
+        affectedTradeCount: affectedRoundTripIds.length,
+        queuedTradeCount: queuedRoundTripIds.length,
+      }),
+    });
+  }
+
+  removeTrade(
+    scope: AccountScope,
+    roundTripId: string,
+    tradeDeleteRef: string,
+    input: Readonly<{
+      idempotencyKey: string;
+      now?: Date;
+    }>,
+  ) {
+    if (
+      !/^[0-9a-f]{64}$/u.test(tradeDeleteRef) ||
+      input.idempotencyKey.length < 16 ||
+      input.idempotencyKey.length > 128
+    ) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_INVALID");
+    }
+    const candidate = this.tradeDeletionCandidate(scope, roundTripId);
+    if (!candidate || candidate.deleteRef !== tradeDeleteRef) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
+    }
+    const exclusion = this.decisions.excludeManualExecutions(scope, {
+      executions: candidate.executions.map((execution) => Object.freeze({
+        executionId: execution.executionId,
+        expectedCurrentVersionId: execution.currentVersionId,
+      })),
+      idempotencyKey: input.idempotencyKey,
+      now: input.now,
+    });
+    const affectedRoundTripIds = Object.freeze([
+      ...new Set(
+        exclusion.rebuilds
+          .filter((rebuild) => rebuild.status === "rebuilt")
+          .flatMap((rebuild) => rebuild.roundTripIds),
+      ),
+    ]);
+    let queuedRoundTripIds: readonly string[] = Object.freeze([]);
+    try {
+      queuedRoundTripIds = this.dailyTradeAnalyzer?.queueAfterJournalRebuild(
+        scope,
+        affectedRoundTripIds,
+      ) ?? Object.freeze([]);
+    } catch {
+      // Journal exclusion is already committed; Analyzer availability cannot
+      // turn that successful fact correction into a reported failure.
+    }
+    return Object.freeze({
+      deletedExecutionCount: exclusion.removedExecutionCount,
+      openedFollowupDecisionIds: exclusion.openedFollowupDecisionIds,
+      rebuildCount: exclusion.rebuildCount,
       analysisRefresh: Object.freeze({
         affectedTradeCount: affectedRoundTripIds.length,
         queuedTradeCount: queuedRoundTripIds.length,

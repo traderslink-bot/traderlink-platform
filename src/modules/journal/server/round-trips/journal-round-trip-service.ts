@@ -701,10 +701,15 @@ export class JournalRoundTripService {
         scope.accountId,
         createCanonicalUtcTimestamp(trigger.now),
       );
-      return Object.freeze(
+      const rebuilds = Object.freeze(
         this.repository.listChains(scope.workspaceId, scope.accountId)
-          .map((chain) => this.rebuildChain(scope, chain, trigger)),
+          .map((chain) => this.rebuildChainUnderLock(scope, chain, trigger)),
       );
+      this.repository.refreshWorkspaceTradeLibraryProjection(
+        scope,
+        createCanonicalUtcTimestamp(trigger.now),
+      );
+      return rebuilds;
     });
   }
 
@@ -714,13 +719,18 @@ export class JournalRoundTripService {
     trigger: JournalRebuildTrigger,
   ): readonly JournalChainRebuildResult[] {
     if (executionIds.length === 0) return Object.freeze([]);
-    return this.repository.immediate(() => Object.freeze(
-      this.repository.listChainsForExecutionIds(
+    return this.repository.immediate(() => {
+      const rebuilds = Object.freeze(this.repository.listChainsForExecutionIds(
         scope.workspaceId,
         scope.accountId,
         executionIds,
-      ).map((chain) => this.rebuildChainUnderLock(scope, chain, trigger)),
-    ));
+      ).map((chain) => this.rebuildChainUnderLock(scope, chain, trigger)));
+      this.repository.refreshWorkspaceTradeLibraryProjection(
+        scope,
+        createCanonicalUtcTimestamp(trigger.now),
+      );
+      return rebuilds;
+    });
   }
 
   verifyAccountRebuildsCurrent(scope: AccountScope): Readonly<{
@@ -746,8 +756,14 @@ export class JournalRoundTripService {
     chain: JournalChainDescriptor,
     trigger: JournalRebuildTrigger,
   ): JournalChainRebuildResult {
-    return this.repository.immediate(() =>
-      this.rebuildChainUnderLock(scope, chain, trigger));
+    return this.repository.immediate(() => {
+      const rebuild = this.rebuildChainUnderLock(scope, chain, trigger);
+      this.repository.refreshWorkspaceTradeLibraryProjection(
+        scope,
+        createCanonicalUtcTimestamp(trigger.now),
+      );
+      return rebuild;
+    });
   }
 
   private rebuildChainUnderLock(
