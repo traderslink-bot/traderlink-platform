@@ -101,6 +101,7 @@ import { platformWatchlistUsageMigration } from "./migrations/0092_platform_watc
 import { platformWatchlistUsagePresenceSignalsMigration } from "./migrations/0093_platform_watchlist_usage_presence_signals";
 import { platformMoomooOAuthPendingAttemptsMigration } from "./migrations/0094_platform_moomoo_oauth_pending_attempts";
 import { platformAppearancePreferencesMigration } from "./migrations/0103_platform_appearance_preferences";
+import { platformPnlReportingPreferenceMigration } from "./migrations/0109_platform_pnl_reporting_preference";
 import { platformDefaultDarkAppearanceMigration } from "./migrations/0110_platform_default_dark_appearance";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
@@ -535,6 +536,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0108_journal_workspace_trade_style_source.ts",
       migration: journalWorkspaceTradeStyleSourceMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0109_platform_pnl_reporting_preference.ts",
+      migration: platformPnlReportingPreferenceMigration,
     }),
     Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0110_platform_default_dark_appearance.ts",
