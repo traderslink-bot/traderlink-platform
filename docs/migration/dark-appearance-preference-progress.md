@@ -63,6 +63,11 @@
   the owner-requested default MUI Switch after staging review. The replacement
   has a visible current-mode label, no icons, no custom travel geometry, and
   retains the authorized preference action and direct save/revert behavior.
+- [x] Replace the legacy unavailable-state surface on disabled AI routes with
+  the shared plain Coming soon message. `/account/ai`, `/ai-chat`, and
+  `/ai-reviews` now use the same serializable `text.primary` presentation in
+  Dark mode while retaining their normal Light text; unrelated unavailable
+  states remain unchanged.
 - [x] Repair the isolated-staging server/client render boundary: the shared
   unavailable state and AI coming-soon page now use serializable palette-token
   props rather than theme callbacks in Material `sx` objects. The repair covers
@@ -75,3 +80,8 @@
   transparent `logo-horizontal-dark.png`, mechanically derived from the
   official Light geometry. Desktop and mobile navigation select it only in
   Dark mode; Light retains the accepted official blue wordmark asset.
+- [x] Enforce the Dark-only white foreground for every shared
+  `Typography color="text.secondary"` surface. This includes the top-left
+  introductory text beneath dashboard page titles (such as Rule Results) while
+  preserving the existing Light-mode secondary-text hierarchy and all page
+  behavior and copy.

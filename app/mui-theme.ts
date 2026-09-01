@@ -227,6 +227,13 @@ export function createTraderMaterialTheme(appearance: PlatformAppearance) {
         },
       },
       MuiTooltip: { styleOverrides: { tooltip: { borderRadius: 8, fontSize: "0.75rem" } } },
+      MuiTypography: {
+        styleOverrides: {
+          root: dark ? {
+            "&.MuiTypography-colorTextSecondary": { color: "#ffffff" },
+          } : undefined,
+        },
+      },
     },
   });
 }
