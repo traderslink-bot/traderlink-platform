@@ -29,8 +29,9 @@ export async function GET(request: Request): Promise<Response> {
   let schedulerRunId: string | null = null;
   let sources: Awaited<ReturnType<typeof fetchOfficialMarketHalts>>["sources"] | undefined;
   try {
-    database = openPlatformDatabase({ mode: "runtime" });
-    const health = new MarketHaltSchedulerHealthRepository(database);
+    const runtimeDatabase = openPlatformDatabase({ mode: "runtime" });
+    database = runtimeDatabase;
+    const health = new MarketHaltSchedulerHealthRepository(runtimeDatabase);
     const runId = health.begin();
     schedulerHealth = health;
     schedulerRunId = runId;
@@ -50,8 +51,8 @@ export async function GET(request: Request): Promise<Response> {
     const observedAtUtc = createCanonicalUtcTimestamp();
     let created = 0;
     let queued = 0;
-    database.transaction(() => {
-      const repository = new MarketHaltAlertRepository(database);
+    runtimeDatabase.transaction(() => {
+      const repository = new MarketHaltAlertRepository(runtimeDatabase);
       for (const halt of fetched.halts) {
         const result = repository.upsert({
           halt,
@@ -65,7 +66,7 @@ export async function GET(request: Request): Promise<Response> {
     }).immediate();
     const configuration = loadPlatformWebPushConfiguration();
     const delivered = await new PlatformWebPushDeliveryService(
-      new MarketHaltWebPushRepository(database, configuration.encryption),
+      new MarketHaltWebPushRepository(runtimeDatabase, configuration.encryption),
       configuration,
     ).runAvailable(100);
     health.complete({ runId, sources: fetched.sources });
