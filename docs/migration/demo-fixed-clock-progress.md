@@ -6,18 +6,18 @@
 
 ## Owner-approved scope
 
-- [x] Only an active Demo account uses the fixed current date `2026-08-17`.
+- [x] Only an active Demo account uses the fixed current date `2026-08-21`.
 - [x] Today, this week, and this month use the existing date boundaries from
       that fixed date. Real accounts continue to use the real current date.
 - [x] Stored executions, timestamps, candles, Analyzer facts, imports, news,
       account selection, pagination, cursors, and Demo lifecycle behavior stay
       unchanged.
 - [x] The existing Demo explanation contains exactly: `Demo account is
-      permanently set to Aug 17th`.
+      permanently set to Aug 21st`.
 
 ## Source coverage check
 
-- [x] Source/fixture inspection found an Aug. 17 entry in the existing
+- [x] Source/fixture inspection found Aug. 21 entries in the existing
       journal-only Demo source.
 - [x] The active financial Daily Tracker inventory remains two later August
       sessions (24 closed trades and 86 executions in aggregate). No facts are
@@ -33,8 +33,9 @@
 - [x] Keep Quick Trade Entry out of this slice because it now redirects to the
       Workspace trade drawer and does not render a date field.
 - [x] Preserve the Workspace default period of All time. The fixed Demo Today
-      and This week are Aug. 17, while its initial All time view may include
-      the later August source facts already in the selected Demo account.
+      is Aug. 21 and its week begins Aug. 17, while the initial All time view
+      may include the later August source facts already in the selected Demo
+      account.
 - [x] Preserve the separate offline projection contract; the saved Calendar
       view supplies its captured selected week without changing projection
       schema or persistence behavior.

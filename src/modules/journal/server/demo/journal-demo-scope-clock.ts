@@ -6,11 +6,11 @@ import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/work
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { JournalDemoAccountRepository } from "./journal-demo-account-repository";
 
-const DEMO_TODAY = "2026-08-17";
+const DEMO_TODAY = "2026-08-21";
 
 export type JournalDemoScopeClock = Readonly<{
   month: "2026-08";
-  today: "2026-08-17";
+  today: "2026-08-21";
   weekStart: "2026-08-17";
 }>;
 
