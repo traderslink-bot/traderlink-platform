@@ -96,6 +96,7 @@ import {
 } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { areTraderLinkPlatformAiFeaturesEnabled } from
   "@/src/modules/platform/contracts/platform-ai-launch-state";
+import { DashboardAppearanceSwitch } from "./dashboard-appearance-switch";
 import { InstallTradersLinkPwaMethods } from "./pwa/install-traderslink-pwa-card";
 import {
   loadWorkspaceTradeEntryContext,
@@ -696,9 +697,17 @@ export function DashboardShell({
             })}
           </List>
         </Box>
-        <Box sx={{ px: compact ? 1 : 2, py: 1.5 }}>
+        <Stack spacing={0.5} sx={{ px: compact ? 1 : 2, py: 1 }}>
           <InstallTradersLinkPwaMethods compact={compact} />
-        </Box>
+          <DashboardAppearanceSwitch compact={compact} />
+        </Stack>
+        {compact ? null : (
+          <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography color="text.secondary" variant="caption">
+              TradersLink v1
+            </Typography>
+          </Box>
+        )}
       </Stack>
     );
   };
