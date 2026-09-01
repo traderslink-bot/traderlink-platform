@@ -68,9 +68,9 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Turn on alerts only when you want them on this device.",
         keywords: Object.freeze(["push alerts", "notifications", "permission", "phone alerts", "turn off notifications"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Installing TradersLink does not turn on notifications by itself. In the installed app, open Account Notifications and choose Enable push notifications. Your browser asks for permission only after you select that action." }),
+          Object.freeze({ kind: "paragraph", text: "Installing TradersLink does not turn on notifications by itself. In the installed app, open Account Preferences and choose Enable push notifications. Your browser asks for permission only after you select that action." }),
           Object.freeze({ kind: "paragraph", text: "You can choose alert categories for this device and turn them off later without changing your in-app updates or Discord choices. Lock-screen messages for account and trading updates stay generic and do not show trade or account details." }),
-          Object.freeze({ kind: "link", href: "/account/preferences#push-notifications", label: "Open Push notifications", text: "Use Account Notifications to turn alerts on or off and choose the categories this device may receive." }),
+          Object.freeze({ kind: "link", href: "/account/preferences#push-notifications", label: "Open Push notifications", text: "Use Account Preferences to turn alerts on or off and choose the categories this device may receive." }),
         ]),
       }),
     ]),

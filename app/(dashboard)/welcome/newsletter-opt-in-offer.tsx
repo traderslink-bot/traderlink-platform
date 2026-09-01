@@ -70,7 +70,7 @@ export function NewsletterOptInOffer({ canSubscribe, formAction, preview = false
       >
         <Box
           sx={{
-            bgcolor: "#fff",
+            bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.background.paper : "#fff",
             border: "1px solid rgba(1, 30, 86, 0.1)",
             borderRadius: { xs: 2.25, sm: 3 },
             boxShadow: "0 1rem 3rem rgba(0, 0, 0, 0.175)",
@@ -121,7 +121,7 @@ export function NewsletterOptInOffer({ canSubscribe, formAction, preview = false
                     key={benefit.title}
                     sx={{
                       alignItems: "flex-start",
-                      bgcolor: "#fff",
+                      bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#fff",
                       border: "1px solid rgba(1, 30, 86, 0.12)",
                       borderRadius: 1.5,
                       boxShadow: "0 3px 7px rgba(0, 11, 39, 0.2)",
@@ -158,7 +158,7 @@ export function NewsletterOptInOffer({ canSubscribe, formAction, preview = false
 
               <Box
                 sx={{
-                  bgcolor: "#fff",
+                  bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.background.paper : "#fff",
                   borderRadius: 1.5,
                   color: "text.primary",
                   p: { xs: 2, sm: 2.5 },

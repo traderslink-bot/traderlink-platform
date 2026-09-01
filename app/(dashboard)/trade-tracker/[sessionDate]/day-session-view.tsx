@@ -33,6 +33,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { alpha, type Theme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -1057,6 +1058,18 @@ function TradeAnalysisSectionBlock({ section }: { section: TradeAnalysisSection 
   );
 }
 
+function softNavySurface(lightValue: string): (theme: Theme) => string {
+  return (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : lightValue;
+}
+
+function informationSurface(lightValue: string): (theme: Theme) => string {
+  return (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.info.main, 0.18) : lightValue;
+}
+
+function warningSurface(lightValue: string): (theme: Theme) => string {
+  return (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.warning.main, 0.18) : lightValue;
+}
+
 function AnalysisBulletList({
   color,
   lines,
@@ -1075,7 +1088,7 @@ function AnalysisBulletList({
         listStyleType: "disc",
         m: 0,
         pl: 2.5,
-        "& li::marker": { color: "#000", fontSize: "0.9em" },
+        "& li::marker": { color: "text.primary", fontSize: "0.9em" },
       }}
     >
       {lines.map((line, index) => (
@@ -1790,13 +1803,13 @@ function pnlColor(value: string | null): "success.main" | "error.main" | "text.p
   return "success.main";
 }
 
-function pnlBackground(value: string | null): string {
-  if (value === null) return "rgba(1, 30, 86, 0.05)";
+function pnlBackground(value: string | null): (theme: Theme) => string {
+  if (value === null) return softNavySurface("rgba(1, 30, 86, 0.05)");
   if (/^-/.test(value) && !/^-0(?:\.0+)?$/.test(value)) {
-    return "rgba(211, 47, 47, 0.10)";
+    return (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.error.main, 0.18) : "rgba(211, 47, 47, 0.10)";
   }
-  if (/^0(?:\.0+)?$/.test(value)) return "rgba(1, 30, 86, 0.05)";
-  return "rgba(46, 125, 50, 0.11)";
+  if (/^0(?:\.0+)?$/.test(value)) return softNavySurface("rgba(1, 30, 86, 0.05)");
+  return (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.success.main, 0.18) : "rgba(46, 125, 50, 0.11)";
 }
 
 function statusPresentation(
@@ -1873,7 +1886,7 @@ function PresetRuleRow({
         </Stack>
       </Stack>
       <Collapse in={open}>
-        <Box sx={{ bgcolor: "rgba(154, 103, 0, 0.06)", borderLeft: "3px solid #9A6700", mt: 0.75, p: 1.25 }}>
+        <Box sx={{ bgcolor: warningSurface("rgba(154, 103, 0, 0.06)"), borderLeft: (theme) => `3px solid ${theme.palette.mode === "dark" ? theme.palette.warning.main : "#9A6700"}`, mt: 0.75, p: 1.25 }}>
           <Typography color="text.secondary" sx={{ display: "block", mb: 0.75 }} variant="caption">
             Fee coverage: {rule.evidence?.feeCoverage ?? "unavailable"}
           </Typography>
@@ -2007,7 +2020,7 @@ function TradeReview({
       role="status"
       sx={{
         alignItems: "center",
-        bgcolor: "rgba(25, 118, 210, 0.07)",
+        bgcolor: informationSurface("rgba(25, 118, 210, 0.07)"),
         borderLeft: 3,
         borderColor: "info.main",
         display: "flex",
@@ -2021,7 +2034,7 @@ function TradeReview({
         aria-hidden="true"
         sx={{ bgcolor: "info.main", borderRadius: "50%", flex: "0 0 auto", height: 7, width: 7 }}
       />
-      <Typography color="info.dark" sx={{ fontWeight: 750 }} variant="caption">
+      <Typography color="info.dark" sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.info.main : undefined, fontWeight: 750 }} variant="caption">
         Trade Analyzer is analyzing this trade.
       </Typography>
     </Box>
@@ -2223,7 +2236,7 @@ function TradeReview({
     <Box id={`trade-${roundTrip.roundTripKey}`} sx={{ scrollMarginTop: 16 }}>
       <Box
         sx={{
-          bgcolor: "rgba(1, 30, 86, 0.02)",
+          bgcolor: softNavySurface("rgba(1, 30, 86, 0.02)"),
           display: expanded ? "none" : "block",
           px: { xs: 1, md: 1.5 },
           py: 0.75,
@@ -2461,7 +2474,7 @@ function TradeReview({
           <Box
             sx={{
               alignSelf: "start",
-              bgcolor: "rgba(1, 30, 86, 0.035)",
+              bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"),
               borderRadius: 1.5,
               display: { xs: "none", md: "block" },
               p: 1.25,
@@ -2488,7 +2501,7 @@ function TradeReview({
               </Typography>
             </Button>
             {mobileRulesOpen ? (
-              <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, mt: 0.75, p: 1.25 }}>
+              <Box sx={{ bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"), borderRadius: 1.5, mt: 0.75, p: 1.25 }}>
                 {renderRuleDetails()}
               </Box>
             ) : null}
@@ -2498,7 +2511,7 @@ function TradeReview({
         <>
           <Box
             sx={{
-              bgcolor: "rgba(1, 30, 86, 0.035)",
+              bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"),
               borderRadius: 1.5,
               display: { xs: "none", md: "block" },
               mt: 0.5,
@@ -2523,7 +2536,7 @@ function TradeReview({
               Executions ({executions.length})
             </Button>
             {mobileExecutionsOpen ? (
-              <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, mt: 0.75, p: 1.5 }}>
+              <Box sx={{ bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"), borderRadius: 1.5, mt: 0.75, p: 1.5 }}>
                 {renderExecutionDetails()}
               </Box>
             ) : null}
@@ -2534,7 +2547,7 @@ function TradeReview({
         </Box>
       <Box
         sx={{
-          bgcolor: "rgba(1, 30, 86, 0.035)",
+          bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"),
           borderRadius: 1.5,
           minHeight: { md: 330 },
           p: 1.5,
@@ -2639,7 +2652,7 @@ function TradeReview({
           aria-live="polite"
           role="status"
           sx={{
-            bgcolor: "rgba(25, 118, 210, 0.06)",
+            bgcolor: informationSurface("rgba(25, 118, 210, 0.06)"),
             borderLeft: 3,
             borderColor: analyzerDetailState === "error" ? "error.main" : "info.main",
             mt: 1.5,
@@ -2659,7 +2672,7 @@ function TradeReview({
       ) : analyzer ? (
         <Box
           sx={{
-            bgcolor: "rgba(25, 118, 210, 0.08)",
+            bgcolor: informationSurface("rgba(25, 118, 210, 0.08)"),
             borderRadius: 1.5,
             mt: 1.5,
             p: 1.5,
@@ -2677,7 +2690,7 @@ function TradeReview({
                 />
               ) : null}
               {analyzer.status === "pending" ? (
-                <Typography color="info.dark" sx={{ fontWeight: 800 }} variant="body2">
+                <Typography color="info.dark" sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.info.main : undefined, fontWeight: 800 }} variant="body2">
                   Trade Analyzer is analyzing this trade.
                 </Typography>
               ) : null}
@@ -2782,7 +2795,7 @@ function TradeReview({
         <Box
           sx={{
             alignItems: { xs: "flex-start", sm: "center" },
-            bgcolor: "rgba(25, 118, 210, 0.06)",
+            bgcolor: informationSurface("rgba(25, 118, 210, 0.06)"),
             borderRadius: 1.5,
             display: "flex",
             flexDirection: { xs: "column", sm: "row" },
@@ -2792,7 +2805,7 @@ function TradeReview({
             p: 1.5,
           }}
         >
-          <Typography color="info.dark" sx={{ fontWeight: 750 }} variant="body2">
+          <Typography color="info.dark" sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.info.main : undefined, fontWeight: 750 }} variant="body2">
             Connect Moomoo to analyze this trade.
           </Typography>
           <DashboardSecondaryAction href="/account/trading" size="small">
@@ -3619,7 +3632,7 @@ export function DaySessionView({
           aria-live="polite"
           role="status"
           sx={{
-            bgcolor: "rgba(25, 118, 210, 0.12)",
+            bgcolor: informationSurface("rgba(25, 118, 210, 0.12)"),
             border: 1,
             borderColor: "info.main",
             borderRadius: 1.5,
@@ -3627,7 +3640,7 @@ export function DaySessionView({
             py: 1.5,
           }}
         >
-          <Typography color="info.dark" sx={{ fontWeight: 850 }} variant="body2">
+          <Typography color="info.dark" sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.info.main : undefined, fontWeight: 850 }} variant="body2">
             Trade Analyzer is analyzing your submitted {pendingAnalysisCount === 1 ? "trade" : "trades"}.
           </Typography>
           <Typography color="text.secondary" sx={{ display: "block", mt: 0.4 }} variant="caption">
@@ -3759,7 +3772,7 @@ export function DaySessionView({
             <Box
               key={label}
               sx={{
-                bgcolor: "rgba(1, 30, 86, 0.035)",
+                bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"),
                 borderRadius: 1.5,
                 p: 2,
               }}
@@ -3810,7 +3823,7 @@ export function DaySessionView({
           return (
           <Card
             key={ticker.stableInstrumentKey}
-            sx={{ border: "2px solid #000", overflow: "hidden" }}
+            sx={{ border: (theme) => `2px solid ${theme.palette.mode === "dark" ? theme.palette.divider : "#000"}`, overflow: "hidden" }}
             variant="outlined"
           >
             {showDemoMarketDataConnectionNotice && !readyTrade ? (
@@ -3916,7 +3929,7 @@ export function DaySessionView({
                   {percentage(ticker.gainLossPercent)}
                 </Typography>
               </Box>
-              <Stack divider={<Divider flexItem sx={{ borderBottomWidth: 2, borderColor: "rgba(1, 30, 86, 0.32)" }} />}>
+              <Stack divider={<Divider flexItem sx={{ borderBottomWidth: 2, borderColor: (theme) => theme.palette.mode === "dark" ? theme.palette.divider : "rgba(1, 30, 86, 0.32)" }} />}>
                 {ticker.roundTrips.map((roundTrip, index) => {
                   const analyzer = analyzerDetails[roundTrip.roundTripKey] ?? roundTrip.analyzer;
                   return (
@@ -4020,7 +4033,7 @@ export function DaySessionView({
               >
                 <Box
                   sx={{
-                    bgcolor: "rgba(237, 108, 2, 0.09)",
+                    bgcolor: warningSurface("rgba(237, 108, 2, 0.09)"),
                     borderBottom: { xs: 1, md: 0 },
                     borderColor: "divider",
                     borderRight: { md: 1 },
@@ -4107,7 +4120,7 @@ export function DaySessionView({
                       )}
 
                       {position.executions.length > 0 ? (
-                        <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
+                        <Box sx={{ bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"), borderRadius: 1.5, p: 1.5 }}>
                           <Typography color="text.secondary" sx={{ display: "block", mb: 0.5 }} variant="caption">
                             Executions
                           </Typography>
@@ -4144,7 +4157,7 @@ export function DaySessionView({
                       ) : null}
 
                       {!activeSwing && position.style?.openStatus === "unplanned_hold" ? (
-                        <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
+                        <Box sx={{ bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"), borderRadius: 1.5, p: 1.5 }}>
                           <Typography color="text.secondary" variant="caption">Trade rules</Typography>
                           {rules.filter((rule) => rule.applicability === "trade" && rule.targetRoundTripKey === position.positionKey).length === 0 ? (
                             <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">No active trade rules.</Typography>
@@ -4183,7 +4196,7 @@ export function DaySessionView({
                     </Stack>
 
                     {activeSwing && position.positionRef && position.style ? (
-                      <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, minHeight: { md: 280 }, p: 1.5 }}>
+                      <Box sx={{ bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"), borderRadius: 1.5, minHeight: { md: 280 }, p: 1.5 }}>
                         <Typography color="text.secondary" variant="caption">Swing plan</Typography>
                         <Box sx={{ mt: 0.75 }}>
                           <SwingPositionPlanEditor
@@ -4195,7 +4208,7 @@ export function DaySessionView({
                           />
                         </Box>
                       </Box>
-                    ) : <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, minHeight: { md: 280 }, p: 1.5 }}>
+                    ) : <Box sx={{ bgcolor: softNavySurface("rgba(1, 30, 86, 0.035)"), borderRadius: 1.5, minHeight: { md: 280 }, p: 1.5 }}>
                       <Typography color="text.secondary" variant="caption">Trade notes</Typography>
                       {readOnly ? (
                         <Typography sx={{ mt: 0.5, whiteSpace: "pre-wrap" }} variant="body2">

@@ -5,6 +5,7 @@ import type { PlatformNotification } from "@/src/modules/platform/contracts/plat
 import { OfflineProjectionCapture } from "./pwa/offline-projection-capture";
 import type { PressReleaseUnreadCounts } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { DemoDataAccountIndicator } from "./(dashboard)/demo-data-callout";
+import type { PlatformAppearance } from "@/src/modules/platform/contracts/platform-appearance";
 
 export {
   DashboardDataScopeChip,
@@ -27,6 +28,7 @@ export function TraderLinkPlatformDashboardTemplate({
   accountCurrency,
   accountSelectionRef,
   accountTimezone,
+  appearance,
   children,
   demoAccountSelectionRef,
   initialMarketHaltAlertsEnabled = false,
@@ -41,6 +43,7 @@ export function TraderLinkPlatformDashboardTemplate({
   accountCurrency: string | null;
   accountSelectionRef: string | null;
   accountTimezone: string | null;
+  appearance: PlatformAppearance;
   children: ReactNode;
   demoAccountSelectionRef: string | null;
   initialMarketHaltAlertsEnabled?: boolean;
@@ -69,6 +72,7 @@ export function TraderLinkPlatformDashboardTemplate({
         accountCurrency={accountCurrency}
         accountSelectionRef={accountSelectionRef}
         accountTimezone={accountTimezone}
+        appearance={appearance}
         offlineScopeRef={offlineScopeRef}
       >
         {children}

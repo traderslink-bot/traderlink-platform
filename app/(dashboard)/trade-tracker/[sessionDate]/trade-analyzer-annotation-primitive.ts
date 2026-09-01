@@ -20,6 +20,14 @@ export type TradeAnalyzerAnnotation = Readonly<{
   time: number;
 }>;
 
+export type TradeAnalyzerAnnotationAppearance = Readonly<{
+  executionFill: string;
+  patternOutline: string;
+  ruleText: string;
+  selectedExecutionFill: string;
+  selectionShadow: string;
+}>;
+
 type RenderedAnnotation = TradeAnalyzerAnnotation & Readonly<{
   anchorX: number;
   anchorY: number;
@@ -70,18 +78,18 @@ class AnnotationRenderer implements IPrimitivePaneRenderer {
           context.lineTo(lineEndX, lineEndY);
           context.stroke();
 
-          context.fillStyle = item.kind === "rule" ? item.color : selected ? "#fff7d6" : "#ffffff";
+          context.fillStyle = item.kind === "rule" ? item.color : selected ? this.source.appearance.selectedExecutionFill : this.source.appearance.executionFill;
           context.strokeStyle = item.color;
           context.lineWidth = selected ? 3 : 2;
           if (selected) {
-            context.shadowColor = "rgba(1,30,86,0.28)";
+            context.shadowColor = this.source.appearance.selectionShadow;
             context.shadowBlur = 8;
           }
           context.beginPath();
           context.roundRect(item.x, item.y, item.width, item.height, 4);
           context.fill();
           context.stroke();
-          context.fillStyle = item.kind === "rule" ? "#ffffff" : item.color;
+          context.fillStyle = item.kind === "rule" ? this.source.appearance.ruleText : item.color;
           context.font = "900 11px Arial, sans-serif";
           context.fillText(item.label, textX, textY);
         } else {
@@ -106,7 +114,7 @@ class AnnotationRenderer implements IPrimitivePaneRenderer {
 
           context.lineJoin = "round";
           context.lineWidth = 3.5;
-          context.strokeStyle = "rgba(255,255,255,0.98)";
+          context.strokeStyle = this.source.appearance.patternOutline;
           context.strokeText(item.label, textX, textY);
           context.fillStyle = item.color;
           context.fillText(item.label, textX, textY);
@@ -141,7 +149,10 @@ export class TradeAnalyzerAnnotationPrimitive implements ISeriesPrimitive<Time> 
   private rendered: RenderedAnnotation[] = [];
   private selectedId: string | null = null;
 
-  constructor(private readonly annotations: readonly TradeAnalyzerAnnotation[]) {
+  constructor(
+    private readonly annotations: readonly TradeAnalyzerAnnotation[],
+    readonly appearance: TradeAnalyzerAnnotationAppearance,
+  ) {
     this.paneView = new AnnotationPaneView(this);
   }
 

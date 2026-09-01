@@ -7,12 +7,14 @@ import { PlatformNotificationRepository } from "@/src/modules/platform/server/no
 import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
 import { PlatformNotificationEmailAddressRepository } from "@/src/modules/platform/server/notifications/platform-notification-email-address-repository";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
+import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { AccountSettingsLayout } from "../account-settings-layout";
+import { AppearanceSettings } from "../appearance-settings";
 import { NotificationPreferences } from "../notification-preferences";
 
 export const metadata: Metadata = {
-  description: "Choose TradersLink push notifications and Discord messages.",
-  title: "Notifications | TradersLink Platform",
+  description: "Choose TradersLink appearance, push notifications and Discord messages.",
+  title: "Preferences | TradersLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -20,8 +22,9 @@ export const revalidate = 0;
 
 export default async function AccountPreferencesPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { notificationPreferences, notificationEmailStatus, pressReleasePushChannels } = withReadonlyPlatformDatabase({}, (database) =>
+  const { appearance, notificationPreferences, notificationEmailStatus, pressReleasePushChannels } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
+      appearance: new PlatformUserPreferenceRepository(database).getActiveWorkspaceAppearance(scope),
       notificationPreferences: new PlatformNotificationRepository(database).readPreferences(scope),
       notificationEmailStatus: (() => {
         try {
@@ -50,9 +53,12 @@ export default async function AccountPreferencesPage() {
   return (
     <AccountSettingsLayout
       activeSection="preferences"
-      description="Choose which updates TradersLink may send to your devices or through Discord."
-      title="Notifications"
+      description="Choose your dashboard appearance and which updates TradersLink may send to your devices or through Discord."
+      title="Preferences"
     >
+      <DashboardPanel title="Appearance">
+        <AppearanceSettings appearance={appearance} />
+      </DashboardPanel>
       <DashboardPanel title="Notifications">
         <NotificationPreferences
           key={preferencesKey}

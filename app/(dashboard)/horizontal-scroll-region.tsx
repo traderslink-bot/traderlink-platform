@@ -18,7 +18,7 @@ export function HorizontalScrollHint({
     <Box
       sx={{
         alignItems: "center",
-        bgcolor: "rgba(1, 30, 86, 0.055)",
+        bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.055)",
         color: "primary.main",
         display: showOnDesktop ? "flex" : { xs: "flex", md: "none" },
         gap: 0.75,
@@ -86,7 +86,7 @@ export function HorizontalScrollRegion({
           },
           ...(stickyFirstColumn ? {
             "& .MuiTableHead-root .MuiTableCell-root:first-of-type": {
-              bgcolor: "#f7f9fc",
+              bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.background.paper : "#f7f9fc",
               boxShadow: { xs: "3px 0 8px rgba(1, 30, 86, 0.08)", md: "none" },
               left: 0,
               position: { xs: "sticky", md: "static" },

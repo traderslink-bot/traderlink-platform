@@ -37,6 +37,7 @@ import {
   scheduleOfflineProjectionContextRead,
   type OfflineProjectionContext,
 } from "./offline-projection-context";
+import type { PlatformAppearance } from "@/src/modules/platform/contracts/platform-appearance";
 
 const CAPTURE_SELECTOR = "h1,h2,h3,h4,p,li,dt,dd,tr,svg text,[data-pwa-offline-text]";
 const EXCLUDED_SELECTOR = "button,a,input,select,textarea,form,script,style,[aria-hidden='true'],[data-pwa-offline-exclude]";
@@ -148,12 +149,14 @@ export function OfflineProjectionCapture({
   accountCurrency,
   accountSelectionRef,
   accountTimezone,
+  appearance,
   children,
   offlineScopeRef,
 }: {
   accountCurrency: string | null;
   accountSelectionRef: string | null;
   accountTimezone: string | null;
+  appearance: PlatformAppearance;
   children: ReactNode;
   offlineScopeRef: string;
 }) {
@@ -174,6 +177,7 @@ export function OfflineProjectionCapture({
       accountCurrency,
       accountSelectionRef,
       accountTimezone,
+      appearance,
       key: "current" as const,
       navigation: navigationSnapshot,
       offlineScopeRef,
@@ -181,7 +185,7 @@ export function OfflineProjectionCapture({
       updatedAtUtc: new Date().toISOString(),
       version: 2 as const,
     }));
-  }, [accountCurrency, accountSelectionRef, accountTimezone, navigationSnapshot, offlineScopeRef, partitionKey]);
+  }, [accountCurrency, accountSelectionRef, accountTimezone, appearance, navigationSnapshot, offlineScopeRef, partitionKey]);
 
   const capture = useCallback((context: OfflineProjectionContext | null) => {
     const root = rootRef.current;

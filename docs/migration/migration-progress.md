@@ -1,5 +1,13 @@
 # TraderLink Platform Migration Progress
 
+## Dark appearance preference
+
+The owner-approved Navy dark appearance is tracked in the
+[Dark Appearance Preference Plan](dark-appearance-preference-plan.md) and
+[Progress](dark-appearance-preference-progress.md). This is a source-only,
+authenticated Platform-preference slice; it does not authorize applying its
+future migration, changing Railway, or altering Journal data.
+
 ## Reserved 0095 demo trade-data contract
 
 - `0095_journal_demo_trade_data` is registered but unapplied. It adds only

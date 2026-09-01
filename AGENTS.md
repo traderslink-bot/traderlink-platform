@@ -28,6 +28,16 @@ tree organized so it does not become an untraceable collection of local work.
 - AGENTS.md belongs at this repository root. Do not move it into a feature
   folder or duplicate it elsewhere.
 
+## Dashboard Appearance — Required
+
+- Every new or changed dashboard UI supports the approved Light and Navy Dark
+  appearances through shared theme tokens. Preserve the exact approved Light
+  appearance; do not introduce page-local dark CSS when a shared token can
+  express the surface.
+- Explicitly theme SVG, canvas, charts and third-party renderers. Verify
+  desktop/mobile plus hover, focus, disabled, error, success, gain and loss
+  states; report any surface that cannot inherit the shared theme automatically.
+
 ## Shared Railway Release Coordination — Required
 
 `app.traderslink.pro` is the private TraderLink Platform dashboard on Railway.

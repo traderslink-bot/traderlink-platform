@@ -34,10 +34,10 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
     label: "General",
   }),
   Object.freeze({
-    description: "Push notifications and Discord messages",
+    description: "Appearance, push notifications and Discord messages",
     href: "/account/preferences",
     id: "preferences",
-    label: "Notifications",
+    label: "Preferences",
   }),
   Object.freeze({
     description: aiFeaturesEnabled ? "AI Reviews and your plan" : "AI features are coming soon",

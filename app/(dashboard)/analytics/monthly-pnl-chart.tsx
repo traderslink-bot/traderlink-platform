@@ -6,6 +6,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 
 import { HorizontalScrollHint } from "../horizontal-scroll-region";
@@ -20,6 +21,10 @@ function rangeFor(rows: readonly MonthlyPnlChartRow[]) {
 }
 
 function Graph({ rows }: { rows: readonly MonthlyPnlChartRow[] }) {
+  const theme = useTheme();
+  const chart = theme.palette.traderLink.chart;
+  const gridColor = theme.palette.mode === "dark" ? chart.grid : "#d9e1ec";
+  const labelColor = theme.palette.mode === "dark" ? theme.palette.text.secondary : "#627083";
   if (rows.length === 0) return <Typography color="text.secondary" sx={{ py: 7 }}>No monthly results are available yet.</Typography>;
   const range = rangeFor(rows);
   const width = Math.max(720, rows.length * 72);
@@ -28,7 +33,7 @@ function Graph({ rows }: { rows: readonly MonthlyPnlChartRow[] }) {
   const baseline = y(0);
   const step = (width - 58) / rows.length;
   const barWidth = Math.min(46, Math.max(26, step - 12));
-  return <><HorizontalScrollHint label="Swipe sideways to see the full chart" /><Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}><Box component="svg" sx={{ display: "block", height: 264, minWidth: width, width: "100%" }} viewBox={`0 0 ${width} 264`}><line stroke="#d9e1ec" strokeWidth="1" x1="32" x2={width - 18} y1={baseline} y2={baseline} />{rows.map((row, index) => { const barX = 34 + index * step + (step - barWidth) / 2; const valueY = y(row.value); return <g key={row.key}><title>{`${row.label}: ${row.display}`}</title><rect fill={row.value < 0 ? "#c62828" : "#00796b"} height={Math.max(3, Math.abs(valueY - baseline))} rx="4" width={barWidth} x={barX} y={row.value >= 0 ? valueY : baseline} /><text fill="#627083" fontSize="11" textAnchor="middle" x={barX + barWidth / 2} y="238">{row.label}</text><text fill={row.value < 0 ? "#c62828" : "#00796b"} fontSize="11" fontWeight="700" textAnchor="middle" x={barX + barWidth / 2} y={row.value >= 0 ? Math.max(14, valueY - 7) : Math.min(219, valueY + 16)}>{row.display}</text></g>; })}</Box></Box></>;
+  return <><HorizontalScrollHint label="Swipe sideways to see the full chart" /><Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}><Box component="svg" sx={{ display: "block", height: 264, minWidth: width, width: "100%" }} viewBox={`0 0 ${width} 264`}><line stroke={gridColor} strokeWidth="1" x1="32" x2={width - 18} y1={baseline} y2={baseline} />{rows.map((row, index) => { const barX = 34 + index * step + (step - barWidth) / 2; const valueY = y(row.value); const valueColor = row.value < 0 ? chart.loss : chart.win; return <g key={row.key}><title>{`${row.label}: ${row.display}`}</title><rect fill={valueColor} height={Math.max(3, Math.abs(valueY - baseline))} rx="4" width={barWidth} x={barX} y={row.value >= 0 ? valueY : baseline} /><text fill={labelColor} fontSize="11" textAnchor="middle" x={barX + barWidth / 2} y="238">{row.label}</text><text fill={valueColor} fontSize="11" fontWeight="700" textAnchor="middle" x={barX + barWidth / 2} y={row.value >= 0 ? Math.max(14, valueY - 7) : Math.min(219, valueY + 16)}>{row.display}</text></g>; })}</Box></Box></>;
 }
 
 export function MonthlyPnlChart({ rows }: { rows: readonly MonthlyPnlChartRow[] }) {

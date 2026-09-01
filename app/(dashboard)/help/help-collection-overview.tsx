@@ -84,7 +84,7 @@ export function HelpCollectionOverview({
                 <CardActionArea component="div" sx={{ height: "100%" }}>
                   <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                     <Stack direction="row" spacing={1.25} sx={{ alignItems: "flex-start" }}>
-                      <Box sx={{ alignItems: "center", bgcolor: "rgba(1, 30, 86, 0.08)", borderRadius: "50%", color: "primary.main", display: "flex", flexShrink: 0, fontSize: 13, fontWeight: 900, height: 30, justifyContent: "center", width: 30 }}>
+                      <Box sx={{ alignItems: "center", bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.08)", borderRadius: "50%", color: "primary.main", display: "flex", flexShrink: 0, fontSize: 13, fontWeight: 900, height: 30, justifyContent: "center", width: 30 }}>
                         {index + 1}
                       </Box>
                       <Box sx={{ minWidth: 0 }}>

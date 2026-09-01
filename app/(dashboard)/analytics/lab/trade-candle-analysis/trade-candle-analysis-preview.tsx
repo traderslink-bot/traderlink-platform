@@ -7,6 +7,7 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -234,6 +235,9 @@ function formatEasternTime(time: number): string {
 }
 
 function TradeCandleChart({ scenario }: { scenario: SimulationCase }) {
+  const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
+  const chartPalette = theme.palette.traderLink.chart;
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -249,32 +253,32 @@ function TradeCandleChart({ scenario }: { scenario: SimulationCase }) {
           attributionLogo: true,
           autoSize: true,
           grid: {
-            horzLines: { color: "#e7ebf2" },
-            vertLines: { color: "#f1f3f7" },
+            horzLines: { color: dark ? chartPalette.grid : "#e7ebf2" },
+            vertLines: { color: dark ? chartPalette.grid : "#f1f3f7" },
           },
           handleScroll: { mouseWheel: true, pressedMouseMove: true, vertTouchDrag: true },
           handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
           layout: {
             attributionLogo: true,
-            background: { type: library.ColorType.Solid, color: "#ffffff" },
-            textColor: "#526176",
+            background: { type: library.ColorType.Solid, color: dark ? chartPalette.background : "#ffffff" },
+            textColor: dark ? chartPalette.text : "#526176",
           },
           localization: { priceFormatter: formatPrice },
-          rightPriceScale: { borderColor: "#dfe5ef" },
-          timeScale: { borderColor: "#dfe5ef", timeVisible: true },
+          rightPriceScale: { borderColor: dark ? chartPalette.grid : "#dfe5ef" },
+          timeScale: { borderColor: dark ? chartPalette.grid : "#dfe5ef", timeVisible: true },
         });
         const candles = chart.addSeries(library.CandlestickSeries, {
-          borderDownColor: "#ca4b5b",
-          borderUpColor: "#15825a",
-          downColor: "#ca4b5b",
-          upColor: "#15825a",
-          wickDownColor: "#ca4b5b",
-          wickUpColor: "#15825a",
+          borderDownColor: dark ? chartPalette.candleLoss : "#ca4b5b",
+          borderUpColor: dark ? chartPalette.candleWin : "#15825a",
+          downColor: dark ? chartPalette.candleLoss : "#ca4b5b",
+          upColor: dark ? chartPalette.candleWin : "#15825a",
+          wickDownColor: dark ? chartPalette.candleLoss : "#ca4b5b",
+          wickUpColor: dark ? chartPalette.candleWin : "#15825a",
         });
         candles.setData(scenario.candles);
         candles.createPriceLine({
           axisLabelVisible: true,
-          color: "#137333",
+          color: dark ? theme.palette.success.main : "#137333",
           lineStyle: library.LineStyle.Dashed,
           lineWidth: 2,
           price: scenario.entryPrice,
@@ -283,7 +287,7 @@ function TradeCandleChart({ scenario }: { scenario: SimulationCase }) {
         if (scenario.exitPrice) {
           candles.createPriceLine({
             axisLabelVisible: true,
-            color: "#b3261e",
+            color: dark ? theme.palette.error.main : "#b3261e",
             lineStyle: library.LineStyle.Dashed,
             lineWidth: 2,
             price: scenario.exitPrice,
@@ -293,7 +297,7 @@ function TradeCandleChart({ scenario }: { scenario: SimulationCase }) {
         if (scenario.primaryHigh) {
           candles.createPriceLine({
             axisLabelVisible: true,
-            color: "#00639b",
+            color: dark ? theme.palette.primary.light : "#00639b",
             lineStyle: library.LineStyle.Dotted,
             lineWidth: 1,
             price: scenario.primaryHigh.price,
@@ -308,7 +312,7 @@ function TradeCandleChart({ scenario }: { scenario: SimulationCase }) {
       active = false;
       chart?.remove();
     };
-  }, [scenario]);
+  }, [chartPalette, dark, scenario, theme.palette.error.main, theme.palette.primary.light, theme.palette.success.main]);
 
   return (
     <Box

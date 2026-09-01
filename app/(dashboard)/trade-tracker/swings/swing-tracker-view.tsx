@@ -9,6 +9,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import dynamic from "next/dynamic";
 import { useState, type ReactNode } from "react";
 
@@ -119,7 +120,7 @@ function SwingCard({
       >
         <Box
           sx={{
-            bgcolor: "rgba(237, 108, 2, 0.09)",
+            bgcolor: (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.warning.main, 0.18) : "rgba(237, 108, 2, 0.09)",
             borderBottom: { xs: 1, md: 0 },
             borderColor: "divider",
             borderRight: { md: 1 },
@@ -195,7 +196,7 @@ function SwingCard({
                 )}
               </Box>
 
-              <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
+              <Box sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
                 <Typography color="text.secondary" sx={{ display: "block", mb: 0.5 }} variant="caption">
                   Executions
                 </Typography>
@@ -249,7 +250,7 @@ function SwingCard({
             </Stack>
 
             <Stack spacing={2}>
-              <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
+              <Box sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
                 <Typography color="text.secondary" variant="caption">Days held</Typography>
                 <Typography sx={{ fontWeight: 850, mt: 0.25 }} variant="h6">{held}</Typography>
                 {active && position.style ? (
@@ -269,7 +270,7 @@ function SwingCard({
                 ) : null}
               </Box>
 
-              <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
+              <Box sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
                   <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Saved notes</Typography>
                   {active && !offline ? (

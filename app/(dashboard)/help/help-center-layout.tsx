@@ -129,9 +129,9 @@ function HelpNavigation({
                     pl: 1,
                     pr: expandable ? 0.5 : 1,
                     "&.Mui-selected": {
-                      bgcolor: "rgba(1, 30, 86, 0.08)",
+                      bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.08)",
                       color: "primary.main",
-                      "&:hover": { bgcolor: "rgba(1, 30, 86, 0.11)" },
+                      "&:hover": { bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.hover : "rgba(1, 30, 86, 0.11)" },
                       "& .MuiListItemIcon-root": { color: "primary.main" },
                     },
                   }}
@@ -178,9 +178,9 @@ function HelpNavigation({
                             pl: 2.25,
                             pr: 1,
                             "&.Mui-selected": {
-                              bgcolor: "rgba(1, 30, 86, 0.08)",
+                              bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.08)",
                               color: "primary.main",
-                              "&:hover": { bgcolor: "rgba(1, 30, 86, 0.11)" },
+                              "&:hover": { bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.hover : "rgba(1, 30, 86, 0.11)" },
                               "& .MuiListItemIcon-root": { color: "primary.main" },
                             },
                           }}

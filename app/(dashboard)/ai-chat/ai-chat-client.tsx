@@ -666,7 +666,7 @@ function MeetLinksFlow({
         <LinksAvatar size={76} />
         <Typography sx={{ fontWeight: 850 }} variant="h3">Hey, I’m Links. Let’s get to know each other.</Typography>
         <Typography color="text.secondary">Tell me a little about how you trade and what you want to work on. You can skip anything, and I’ll show you exactly what I’m going to remember before anything is saved.</Typography>
-        <Paper sx={{ bgcolor: "#EEF4FF", p: 2, textAlign: "left" }} variant="outlined">
+        <Paper sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#EEF4FF", p: 2, textAlign: "left" }} variant="outlined">
           <Typography sx={{ fontWeight: 800 }} variant="body2">One useful thing about Links</Typography>
           <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">When something matters for future conversations, just say “remember this.” I’ll carry it forward so we can build on it next time.</Typography>
         </Paper>
@@ -777,7 +777,7 @@ function EvidenceCards({ cards }: Readonly<{ cards: readonly CoachAiChatEvidence
       {cards.map((card, index) => (
         <Paper
           key={`${card.title}-${index}`}
-          sx={{ bgcolor: "background.paper", borderColor: "#C8DAF7", p: 1.25 }}
+          sx={{ bgcolor: "background.paper", borderColor: (theme) => theme.palette.mode === "dark" ? theme.palette.divider : "#C8DAF7", p: 1.25 }}
           variant="outlined"
         >
           <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} sx={{ alignItems: { sm: "center" } }}>
@@ -1549,9 +1549,9 @@ export function AiChatClient({
             spacing={1}
             sx={{
               alignItems: "center",
-              bgcolor: "#EAF2FF",
+              bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#EAF2FF",
               borderBottom: 1,
-              borderColor: "#C8DAF7",
+              borderColor: (theme) => theme.palette.mode === "dark" ? theme.palette.divider : "#C8DAF7",
               px: { xs: 1.5, sm: 2 },
               py: 1,
             }}
@@ -1690,7 +1690,7 @@ export function AiChatClient({
               if (!text && message.generationState !== "pending" && message.generationState !== "failed") return null;
               return (
                 <Stack key={message.messageId} sx={{ alignSelf: user ? "flex-end" : "flex-start", maxWidth: { xs: "92%", sm: "78%" }, width: "100%" }}>
-                  <Box sx={{ alignSelf: user ? "flex-end" : "flex-start", bgcolor: user ? "primary.main" : "#EEF4FF", borderRadius: 2, color: user ? "primary.contrastText" : "text.primary", px: 2, py: 1.5 }}>
+                  <Box sx={{ alignSelf: user ? "flex-end" : "flex-start", bgcolor: user ? "primary.main" : (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#EEF4FF", borderRadius: 2, color: user ? "primary.contrastText" : "text.primary", px: 2, py: 1.5 }}>
                     {!user ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: message.generationState === "completed" ? 0.75 : 0 }}><LinksAvatar size={24} /><Typography sx={{ fontWeight: 800 }} variant="caption">Links</Typography></Stack> : null}
                     {message.generationState === "pending" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><CircularProgress size={16} /><Typography variant="body2">Links is thinking…</Typography></Stack>
                       : message.generationState === "failed" ? <Typography variant="body2">{message.failureCode === "TRADERLINK_COACH_CHAT_DAILY_CAP_REACHED"
@@ -1771,7 +1771,7 @@ export function AiChatClient({
                   ])}
                 />
               ))}
-            {sending ? <Box sx={{ alignSelf: "flex-start", bgcolor: "#EEF4FF", borderRadius: 2, px: 2, py: 1.5 }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><LinksAvatar size={24} /><CircularProgress size={16} /><Typography variant="body2">Links is thinking…</Typography></Stack></Box> : null}
+            {sending ? <Box sx={{ alignSelf: "flex-start", bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#EEF4FF", borderRadius: 2, px: 2, py: 1.5 }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><LinksAvatar size={24} /><CircularProgress size={16} /><Typography variant="body2">Links is thinking…</Typography></Stack></Box> : null}
             <div ref={endRef} />
           </Stack>
         </Box>

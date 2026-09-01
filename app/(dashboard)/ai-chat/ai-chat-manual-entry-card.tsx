@@ -251,7 +251,7 @@ export function AiChatManualEntryCard({
   }
 
   return (
-    <Paper sx={{ bgcolor: "#F7FAFF", borderColor: "#B9CFF1", p: { xs: 1.5, sm: 2 } }} variant="outlined">
+    <Paper sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#F7FAFF", borderColor: (theme) => theme.palette.mode === "dark" ? theme.palette.divider : "#B9CFF1", p: { xs: 1.5, sm: 2 } }} variant="outlined">
       <Stack spacing={0.5}>
         <Typography sx={{ fontWeight: 850 }} variant="h3">Execution draft</Typography>
         <Typography color="text.secondary" variant="body2">

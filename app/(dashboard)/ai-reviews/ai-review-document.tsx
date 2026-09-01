@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { alpha, type Theme } from "@mui/material/styles";
 
 import { formatCoachAiMoneyForDisplay } from "@/src/modules/coach/presentation/coach-ai-money-formatters";
 
@@ -26,9 +27,15 @@ function ReviewSection({
   tone?: "neutral" | "positive" | "caution";
 }>) {
   const colors = tone === "positive"
-    ? { background: "rgba(35, 109, 74, 0.05)", border: "rgba(35, 109, 74, 0.22)" }
+    ? {
+      background: (theme: Theme) => theme.palette.mode === "dark" ? alpha(theme.palette.success.main, 0.14) : "rgba(35, 109, 74, 0.05)",
+      border: (theme: Theme) => theme.palette.mode === "dark" ? alpha(theme.palette.success.main, 0.5) : "rgba(35, 109, 74, 0.22)",
+    }
     : tone === "caution"
-      ? { background: "rgba(180, 109, 17, 0.05)", border: "rgba(180, 109, 17, 0.22)" }
+      ? {
+        background: (theme: Theme) => theme.palette.mode === "dark" ? alpha(theme.palette.warning.main, 0.14) : "rgba(180, 109, 17, 0.05)",
+        border: (theme: Theme) => theme.palette.mode === "dark" ? alpha(theme.palette.warning.main, 0.5) : "rgba(180, 109, 17, 0.22)",
+      }
       : { background: "background.paper", border: "divider" };
   return (
     <Box
@@ -55,9 +62,11 @@ export function AiReviewDocument({ view }: Readonly<{ view: AiReviewDocumentView
       <Box
         component="header"
         sx={{
-          background: "linear-gradient(135deg, rgba(1, 30, 86, 0.08), rgba(1, 30, 86, 0.025))",
+          background: (theme) => theme.palette.mode === "dark"
+            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.18)}, ${alpha(theme.palette.background.paper, 0.42)})`
+            : "linear-gradient(135deg, rgba(1, 30, 86, 0.08), rgba(1, 30, 86, 0.025))",
           border: 1,
-          borderColor: "rgba(1, 30, 86, 0.16)",
+          borderColor: (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.primary.light, 0.48) : "rgba(1, 30, 86, 0.16)",
           borderRadius: 2.5,
           p: { xs: 2.25, sm: 3 },
         }}
