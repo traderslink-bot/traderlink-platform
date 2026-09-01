@@ -96,6 +96,7 @@ import {
 } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { areTraderLinkPlatformAiFeaturesEnabled } from
   "@/src/modules/platform/contracts/platform-ai-launch-state";
+import { DashboardAppearanceSwitch } from "./dashboard-appearance-switch";
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
@@ -657,6 +658,9 @@ export function DashboardShell({
             })}
           </List>
         </Box>
+        <Stack spacing={0.5} sx={{ px: compact ? 1 : 2, py: 1 }}>
+          <DashboardAppearanceSwitch compact={compact} />
+        </Stack>
         {compact ? null : (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Typography color="text.secondary" variant="caption">

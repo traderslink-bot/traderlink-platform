@@ -22,8 +22,8 @@ the shared Material theme rather than page-specific dark CSS.
 | App bar | `traderLink.appBar` | `#121d2b` |
 | Navigation drawer | `traderLink.navigation` | `#121a26` |
 | Border and divider | `divider` | `#314158` |
-| Primary text | `text.primary` | `#e8edf7` |
-| Secondary text | `text.secondary` | `#aeb9c9` |
+| Primary text | `text.primary` | `#ffffff` |
+| Secondary text | `text.secondary` | `#ffffff` |
 | Disabled text | `text.disabled` | `#707d90` |
 | Selected navigation | `action.selected` | `#24344a` |
 | Primary action | `primary.main` | `#285a9f` |
@@ -44,7 +44,10 @@ the shared Material theme rather than page-specific dark CSS.
    supplies a user or workspace identity.
 3. Dashboard shell, cards, controls, drawers, dialogs, tables and Material
    component overrides consume shared palette tokens. The shell gets its app
-   bar and navigation tokens from the same theme.
+   bar and navigation tokens from the same theme. The persistent desktop
+   sidebar and mobile navigation drawer each include the same keyboard-accessible
+   Light/Dark control at the bottom; it calls the authorized preference action
+   already used by Account Settings, where the Appearance control remains.
 4. The existing opaque, partitioned PWA device state carries the resolved mode
    for the currently authorized offline partition. It is not a global browser
    preference and is removed with that partition.

@@ -94,7 +94,7 @@ export function createTraderMaterialTheme(appearance: PlatformAppearance) {
       primary: { contrastText: "#ffffff", dark: "#285a9f", light: "#79aaf1", main: "#285a9f" },
       secondary: { contrastText: "#e8edf7", main: "#52647d" },
       success: { contrastText: "#071d11", main: "#56d487" },
-      text: { disabled: "#707d90", primary: "#e8edf7", secondary: "#aeb9c9" },
+      text: { disabled: "#707d90", primary: "#ffffff", secondary: "#ffffff" },
       traderLink: darkPalette,
       warning: { contrastText: "#201400", main: "#ffc76b" },
     }
@@ -213,7 +213,7 @@ export function createTraderMaterialTheme(appearance: PlatformAppearance) {
         styleOverrides: {
           head: {
             backgroundColor: dark ? "#151f2d" : "#f7f9fc",
-            color: dark ? "#aeb9c9" : "#4f5d73",
+            color: dark ? "#ffffff" : "#4f5d73",
             fontSize: "0.75rem",
             fontWeight: 700,
             letterSpacing: "0.04em",

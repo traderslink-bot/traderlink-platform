@@ -3136,7 +3136,15 @@ export function DaySessionView({
         }}
       >
         <Box>
-          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+          <Typography
+            sx={{
+              color: (theme) => theme.palette.mode === "dark"
+                ? theme.palette.text.primary
+                : theme.palette.primary.main,
+              fontWeight: 800,
+            }}
+            variant="caption"
+          >
             Trade Tracker
           </Typography>
           <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
