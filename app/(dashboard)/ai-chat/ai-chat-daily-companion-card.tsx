@@ -105,9 +105,9 @@ export function AiChatDailyCompanionCard({
       elevation={0}
       sx={{
         alignSelf: "flex-start",
-        bgcolor: "#F4F8FF",
+        bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#F4F8FF",
         border: 1,
-        borderColor: "#BFD2F2",
+        borderColor: (theme) => theme.palette.mode === "dark" ? theme.palette.divider : "#BFD2F2",
         borderRadius: 2,
         maxWidth: { xs: "100%", md: 680 },
         p: { xs: 1.5, sm: 2 },

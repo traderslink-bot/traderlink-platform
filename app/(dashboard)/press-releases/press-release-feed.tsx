@@ -277,7 +277,7 @@ export function PressReleaseFeed({
               sx={{
                 alignItems: { md: "center" },
                 appearance: "none",
-                background: article.isRead ? "transparent" : "rgba(1, 30, 86, 0.035)",
+                background: (theme) => article.isRead ? "transparent" : theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.035)",
                 border: 0,
                 borderBottom: 1,
                 borderColor: "divider",

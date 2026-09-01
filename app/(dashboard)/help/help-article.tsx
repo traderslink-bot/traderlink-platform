@@ -18,6 +18,7 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
 import Link from "next/link";
 
 import { DashboardPage } from "../../dashboard-template";
@@ -63,9 +64,13 @@ function ArticleBlock({ block }: { block: HelpArticleBlock }) {
     return (
       <Box
         sx={{
-          bgcolor: warning ? "rgba(237, 108, 2, 0.07)" : "rgba(25, 118, 210, 0.06)",
+          bgcolor: warning
+            ? (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.warning.main, 0.18) : "rgba(237, 108, 2, 0.07)"
+            : (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.info.main, 0.18) : "rgba(25, 118, 210, 0.06)",
           border: 1,
-          borderColor: warning ? "rgba(237, 108, 2, 0.28)" : "rgba(25, 118, 210, 0.22)",
+          borderColor: warning
+            ? (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.warning.main, 0.52) : "rgba(237, 108, 2, 0.28)"
+            : (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.info.main, 0.52) : "rgba(25, 118, 210, 0.22)",
           borderRadius: 1.5,
           p: 1.75,
         }}
@@ -101,7 +106,7 @@ function ArticleBlock({ block }: { block: HelpArticleBlock }) {
           <TableHead>
             <TableRow>
               {block.columns.map((column) => (
-                <TableCell key={column} sx={{ bgcolor: "rgba(1, 30, 86, 0.045)", fontSize: 14, fontWeight: 850 }}>
+                <TableCell key={column} sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.045)", fontSize: 14, fontWeight: 850 }}>
                   {column}
                 </TableCell>
               ))}

@@ -5,7 +5,8 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import type { ReactNode } from "react";
 
-import { traderMaterialTheme } from "./mui-theme";
+import type { PlatformAppearance } from "@/src/modules/platform/contracts/platform-appearance";
+import { createTraderMaterialTheme, traderMaterialTheme } from "./mui-theme";
 
 export function MuiProviders({ children }: { children: ReactNode }) {
   return (
@@ -15,5 +16,20 @@ export function MuiProviders({ children }: { children: ReactNode }) {
         {children}
       </ThemeProvider>
     </AppRouterCacheProvider>
+  );
+}
+
+export function DashboardMuiProviders({
+  appearance,
+  children,
+}: {
+  appearance: PlatformAppearance;
+  children: ReactNode;
+}) {
+  return (
+    <ThemeProvider theme={createTraderMaterialTheme(appearance)}>
+      <CssBaseline enableColorScheme />
+      {children}
+    </ThemeProvider>
   );
 }

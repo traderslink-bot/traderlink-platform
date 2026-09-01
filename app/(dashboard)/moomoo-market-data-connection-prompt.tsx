@@ -51,7 +51,7 @@ export function MoomooMarketDataConnectionPrompt({
     <Box
       component="section"
       sx={{
-        bgcolor: "rgba(1, 30, 86, 0.045)",
+        bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.045)",
         border: 1,
         borderColor: "primary.light",
         borderRadius: 1.5,

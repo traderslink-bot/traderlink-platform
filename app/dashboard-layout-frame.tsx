@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
 import { TraderLinkPlatformDashboardTemplate } from "./dashboard-template";
@@ -23,35 +23,8 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
-
-function DashboardFrameFallback() {
-  return (
-    <div
-      style={{
-        background: "#f5f7fb",
-        minHeight: "100vh",
-        padding: 24,
-      }}
-    >
-      <div
-        aria-live="polite"
-        role="status"
-        style={{
-          alignItems: "center",
-          color: "#5d6b82",
-          display: "flex",
-          fontFamily: "Arial, sans-serif",
-          fontSize: 14,
-          fontWeight: 700,
-          justifyContent: "center",
-          minHeight: "55vh",
-        }}
-      >
-        Loading…
-      </div>
-    </div>
-  );
-}
+import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
+import { DashboardMuiProviders } from "./mui-provider";
 
 async function TraderLinkPlatformDashboardFrameContent({
   children,
@@ -98,6 +71,7 @@ async function TraderLinkPlatformDashboardFrameContent({
     return Object.freeze({
       activeAccount,
       activeDemoAccount: new JournalDemoAccountRepository(database).findActiveAccount(scope),
+      appearance: new PlatformUserPreferenceRepository(database).getActiveWorkspaceAppearance(scope),
       marketHaltAlerts: marketHaltAlerts.read(scope),
       mutedMarketHaltTickers: marketHaltAlerts.listMutedTickers({
         readAtUtc,
@@ -117,28 +91,31 @@ async function TraderLinkPlatformDashboardFrameContent({
     : null;
   const offlineScopeRef = currentPlatformOfflineScopeRef(scope);
   return (
-    <>
-      <TraderLinkPlatformDashboardTemplate
-        accountCurrency={dashboardContext.activeAccount?.baseCurrency ?? null}
-        accountSelectionRef={accountSelectionRef}
-        accountTimezone={dashboardContext.activeAccount?.tradingTimezone ?? null}
-        demoAccountSelectionRef={demoAccountSelectionRef}
-        initialMarketHaltAlertsEnabled={dashboardContext.marketHaltAlerts.enabled}
-        initialMutedMarketHaltTickers={dashboardContext.mutedMarketHaltTickers}
-        notifications={dashboardContext.notifications}
-        offlineScopeRef={offlineScopeRef}
-        pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
-        scannerEarlyAccess={scannerEarlyAccess}
-        watchlistMemberNavigationAccess
-        watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
-      >
-        {children}
-      </TraderLinkPlatformDashboardTemplate>
-      <PwaLifecycle
-        accountSelectionRef={accountSelectionRef}
-        offlineScopeRef={offlineScopeRef}
-      />
-    </>
+    <DashboardMuiProviders appearance={dashboardContext.appearance}>
+      <>
+        <TraderLinkPlatformDashboardTemplate
+          accountCurrency={dashboardContext.activeAccount?.baseCurrency ?? null}
+          accountSelectionRef={accountSelectionRef}
+          accountTimezone={dashboardContext.activeAccount?.tradingTimezone ?? null}
+          appearance={dashboardContext.appearance}
+          demoAccountSelectionRef={demoAccountSelectionRef}
+          initialMarketHaltAlertsEnabled={dashboardContext.marketHaltAlerts.enabled}
+          initialMutedMarketHaltTickers={dashboardContext.mutedMarketHaltTickers}
+          notifications={dashboardContext.notifications}
+          offlineScopeRef={offlineScopeRef}
+          pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
+          scannerEarlyAccess={scannerEarlyAccess}
+          watchlistMemberNavigationAccess
+          watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
+        >
+          {children}
+        </TraderLinkPlatformDashboardTemplate>
+        <PwaLifecycle
+          accountSelectionRef={accountSelectionRef}
+          offlineScopeRef={offlineScopeRef}
+        />
+      </>
+    </DashboardMuiProviders>
   );
 }
 
@@ -152,13 +129,11 @@ export function TraderLinkPlatformDashboardFrame({
   watchlistMemberAccess?: boolean;
 }) {
   return (
-    <Suspense fallback={<DashboardFrameFallback />}>
-      <TraderLinkPlatformDashboardFrameContent
-        loginReturnTo={loginReturnTo}
-        watchlistMemberAccess={watchlistMemberAccess}
-      >
-        {children}
-      </TraderLinkPlatformDashboardFrameContent>
-    </Suspense>
+    <TraderLinkPlatformDashboardFrameContent
+      loginReturnTo={loginReturnTo}
+      watchlistMemberAccess={watchlistMemberAccess}
+    >
+      {children}
+    </TraderLinkPlatformDashboardFrameContent>
   );
 }

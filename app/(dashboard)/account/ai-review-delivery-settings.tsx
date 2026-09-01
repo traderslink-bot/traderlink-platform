@@ -176,7 +176,7 @@ export function AiReviewFrequencySettings({
                 minHeight: 150,
                 p: 2,
                 transition: "border-color 120ms ease, background-color 120ms ease",
-                bgcolor: selected ? "rgba(1, 30, 86, 0.035)" : "background.paper",
+                bgcolor: selected ? (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.035)" : "background.paper",
                 "&:has(input:focus-visible)": {
                   outline: "3px solid",
                   outlineColor: "primary.light",
@@ -225,7 +225,7 @@ export function AiReviewFrequencySettings({
                   component="label"
                   key={mode.value}
                   sx={{
-                    bgcolor: selected ? "rgba(1, 30, 86, 0.035)" : "background.paper",
+                    bgcolor: selected ? (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.035)" : "background.paper",
                     border: 1,
                     borderColor: selected ? "primary.main" : "divider",
                     borderRadius: 2,

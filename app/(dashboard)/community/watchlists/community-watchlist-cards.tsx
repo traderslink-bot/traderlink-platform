@@ -10,6 +10,7 @@ import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type KeyboardEvent, type MouseEvent, useState } from "react";
@@ -116,7 +117,7 @@ export function CommunityWatchlistCard({
         <Box sx={{ minWidth: 0 }}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 0.75 }}>
             <Typography component="h1" variant="h1">{detail.title}</Typography>
-            <Chip label={`${detail.symbolCount} ${detail.symbolCount === 1 ? "symbol" : "symbols"}`} size="small" sx={{ bgcolor: "#edf3ff", color: "#082b73", fontWeight: 800 }} />
+            <Chip label={`${detail.symbolCount} ${detail.symbolCount === 1 ? "symbol" : "symbols"}`} size="small" sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#edf3ff", color: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.light : "#082b73", fontWeight: 800 }} />
             <Button disabled={savingFollow} onClick={async () => {
               const nextFollowing = !following;
               setSavingFollow(true);
@@ -129,23 +130,23 @@ export function CommunityWatchlistCard({
               setSavingFollow(false);
               if (result.ok) setFollowing(nextFollowing);
               else setFollowMessage(result.message);
-            }} size="small" sx={{ borderColor: "#082b73", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 800, lineHeight: 1.1, minHeight: 28, px: 1, py: 0.3, textTransform: "none", whiteSpace: "nowrap" }} variant="outlined">{savingFollow ? "Saving..." : following ? "Unfollow Watchlist" : "Follow Watchlist"}</Button>
+            }} size="small" sx={{ borderColor: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.light : "#082b73", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 800, lineHeight: 1.1, minHeight: 28, px: 1, py: 0.3, textTransform: "none", whiteSpace: "nowrap" }} variant="outlined">{savingFollow ? "Saving..." : following ? "Unfollow Watchlist" : "Follow Watchlist"}</Button>
           </Stack>
           {detail.description ? <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">{detail.description}</Typography> : null}
           {followMessage ? <Typography color="error" role="status" sx={{ display: "block", mt: 0.6 }} variant="caption">{followMessage}</Typography> : null}
         </Box>
-        {detail.tags.length ? <Stack direction="row" spacing={0.65} sx={{ alignItems: "flex-start", flexWrap: "wrap", rowGap: 0.65 }}>{detail.tags.map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: index % 2 ? "#e9f7ef" : "#edf3ff", color: index % 2 ? "#14663c" : "#082b73", fontWeight: 700 }} />)}</Stack> : null}
+        {detail.tags.length ? <Stack direction="row" spacing={0.65} sx={{ alignItems: "flex-start", flexWrap: "wrap", rowGap: 0.65 }}>{detail.tags.map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : index % 2 ? "#e9f7ef" : "#edf3ff", color: (theme) => theme.palette.mode === "dark" ? index % 2 ? theme.palette.success.main : theme.palette.primary.light : index % 2 ? "#14663c" : "#082b73", fontWeight: 700 }} />)}</Stack> : null}
         <Stack direction="row" spacing={0.65} sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 0.65 }}>
-          {visibleTickerSymbols.map((ticker) => <Chip key={ticker.symbol} label={ticker.symbol} size="small" sx={{ bgcolor: "#edf4ff", color: "#082b73", fontWeight: 850 }} />)}
+          {visibleTickerSymbols.map((ticker) => <Chip key={ticker.symbol} label={ticker.symbol} size="small" sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#edf4ff", color: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.light : "#082b73", fontWeight: 850 }} />)}
           {hiddenTickerCount > 0 ? <Typography color="text.secondary" sx={{ fontSize: "0.74rem", fontWeight: 800 }}>+{hiddenTickerCount}</Typography> : null}
           <Button endIcon={<KeyboardArrowDownRoundedIcon sx={{ fontSize: 20, transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />} onClick={toggle} size="small" sx={{ fontSize: "0.74rem", fontWeight: 800, minHeight: 28, px: 0.6, textTransform: "none" }} variant="text">View watchlist details</Button>
         </Stack>
         <Typography color="text.secondary" sx={{ fontSize: "0.72rem", fontWeight: 750 }} variant="caption">{watchlistUpdateText(detail.updatedAtUtc)}</Typography>
       </Stack>
-      <Stack spacing={0.65} sx={{ alignItems: "center", alignSelf: { xs: "stretch", lg: "start" }, boxShadow: "inset 3px 0 0 #082b73", minWidth: 0, p: { xs: 1.25, sm: 1.5 }, textAlign: "center" }}>
-        <Avatar sx={{ bgcolor: "#102b69", fontWeight: 850, height: 48, width: 48 }}>{avatarLetters(detail.authorHandle)}</Avatar>
+      <Stack spacing={0.65} sx={{ alignItems: "center", alignSelf: { xs: "stretch", lg: "start" }, boxShadow: (theme) => theme.palette.mode === "dark" ? `inset 3px 0 0 ${theme.palette.primary.main}` : "inset 3px 0 0 #082b73", minWidth: 0, p: { xs: 1.25, sm: 1.5 }, textAlign: "center" }}>
+        <Avatar sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.main : "#102b69", fontWeight: 850, height: 48, width: 48 }}>{avatarLetters(detail.authorHandle)}</Avatar>
         <Typography noWrap sx={{ fontSize: "0.78rem", fontWeight: 850, maxWidth: "100%" }}>@{detail.authorHandle}</Typography>
-        <Link href={`/community/${detail.authorHandle}`} style={{ color: "#082b73", fontSize: "0.75rem", fontWeight: 800, textDecoration: "none" }}>View profile</Link>
+        <Box component={Link} href={`/community/${detail.authorHandle}`} sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.light : "#082b73", fontSize: "0.75rem", fontWeight: 800, textDecoration: "none" }}>View profile</Box>
       </Stack>
     </Box>
     {expanded ? <Box sx={{ p: { xs: 1.75, sm: 2.25 } }}><CommunityWatchlistTickerBoard detail={detail} editable={editable} tickerFacts={tickerFacts} watchlistSlug={watchlistSlug} /></Box> : null}
@@ -165,6 +166,8 @@ export function CommunityWatchlistTickerBoard({
   showFactLabels?: boolean;
   watchlistSlug: string;
 }) {
+  const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
   const [selectedSymbol, setSelectedSymbol] = useState(detail.tickers[0]?.symbol ?? "");
   const [tickerEdit, setTickerEdit] = useState("");
   const [pendingTickerTags, setPendingTickerTags] = useState<Readonly<Record<string, readonly string[]>>>({});
@@ -204,11 +207,11 @@ export function CommunityWatchlistTickerBoard({
           { label: "Catalyst", value: [ticker.catalyst, ticker.catalystDate].filter(Boolean).join(ticker.catalyst && ticker.catalystDate ? " · " : "") },
         ].filter((fact) => Boolean(fact.value));
         return <Box key={ticker.symbol}>
-          <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ alignItems: "center", bgcolor: "#edf4ff", border: 1, borderColor: active ? "#9fbee9" : "#d5e3fb", borderRadius: 1.75, boxShadow: "inset 3px 0 0 #082b73", boxSizing: "border-box", color: "text.primary", columnGap: { xs: 0.75, sm: 0.65 }, display: "grid", gridTemplateColumns: communityWatchlistFactColumns, justifyItems: "start", minHeight: { xs: 78, sm: 58 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#e7f0ff" } }} variant="text">
+          <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ alignItems: "center", bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#edf4ff", border: 1, borderColor: (theme) => theme.palette.mode === "dark" ? active ? theme.palette.primary.light : theme.palette.divider : active ? "#9fbee9" : "#d5e3fb", borderRadius: 1.75, boxShadow: (theme) => theme.palette.mode === "dark" ? `inset 3px 0 0 ${theme.palette.primary.main}` : "inset 3px 0 0 #082b73", boxSizing: "border-box", color: "text.primary", columnGap: { xs: 0.75, sm: 0.65 }, display: "grid", gridTemplateColumns: communityWatchlistFactColumns, justifyItems: "start", minHeight: { xs: 78, sm: 58 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.hover : "#e7f0ff" } }} variant="text">
             <Stack spacing={0.45} sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, minWidth: 0 }}>
               <Stack direction="row" spacing={0.55} sx={{ alignItems: "center" }}>
-                <Typography sx={{ color: "#082b73", fontSize: "1rem", fontWeight: 900, letterSpacing: ".01em", lineHeight: 1.1 }}>{ticker.symbol}</Typography>
-                <KeyboardArrowDownRoundedIcon sx={{ color: "#082b73", display: { xs: "block", sm: "none" }, fontSize: 19, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} />
+                <Typography sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.light : "#082b73", fontSize: "1rem", fontWeight: 900, letterSpacing: ".01em", lineHeight: 1.1 }}>{ticker.symbol}</Typography>
+                <KeyboardArrowDownRoundedIcon sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.light : "#082b73", display: { xs: "block", sm: "none" }, fontSize: 19, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} />
               </Stack>
             </Stack>
             {facts.length ? facts.map((fact) => <Box key={fact.label} sx={{ minWidth: 0, overflow: "hidden", width: "100%" }}>
@@ -216,17 +219,17 @@ export function CommunityWatchlistTickerBoard({
               <Typography noWrap sx={{ display: "block", fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.3, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>{fact.value ?? "—"}</Typography>
             </Box>) : <Typography color="text.secondary" sx={{ fontSize: "0.73rem", gridColumn: { xs: "1 / -1", sm: "2 / span 4" } }}>Company facts not reported</Typography>}
             <Stack aria-hidden="true" direction="row" spacing={0.2} sx={{ alignItems: "center", display: { xs: "none", sm: "flex" }, justifySelf: "end", whiteSpace: "nowrap" }}>
-              <Typography sx={{ color: "#082b73", fontSize: "0.7rem", fontWeight: 800 }}>Trader&apos;s take</Typography>
-              <KeyboardArrowDownRoundedIcon sx={{ color: "#082b73", fontSize: 22, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} />
+              <Typography sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.light : "#082b73", fontSize: "0.7rem", fontWeight: 800 }}>Trader&apos;s take</Typography>
+              <KeyboardArrowDownRoundedIcon sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.light : "#082b73", fontSize: 22, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} />
             </Stack>
           </Button>
-          {active ? <Box sx={{ bgcolor: "#fbfcff", border: 1, borderColor: "#c9daf7", borderRadius: "0 0 10px 10px", borderTop: 0, boxShadow: "inset 3px 0 0 #082b73", mt: -0.85, p: { xs: 1.5, sm: 1.75 }, pt: { xs: 2.2, sm: 2.35 } }}>
+          {active ? <Box sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.background.paper : "#fbfcff", border: 1, borderColor: (theme) => theme.palette.mode === "dark" ? theme.palette.divider : "#c9daf7", borderRadius: "0 0 10px 10px", borderTop: 0, boxShadow: (theme) => theme.palette.mode === "dark" ? `inset 3px 0 0 ${theme.palette.primary.main}` : "inset 3px 0 0 #082b73", mt: -0.85, p: { xs: 1.5, sm: 1.75 }, pt: { xs: 2.2, sm: 2.35 } }}>
             <Box sx={{ display: "grid", gap: { xs: 1.5, md: 2 }, gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.55fr) minmax(190px, .65fr)" } }}>
               <Box sx={{ minWidth: 0 }}>
                 <Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">Trader&apos;s take</Typography>
                 <Typography sx={{ fontSize: "0.9rem", lineHeight: 1.65, mt: 0.55, whiteSpace: "pre-wrap" }} variant="body2">{note || "No trader&apos;s take was added for this ticker yet."}</Typography>
                 {editable ? <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} sx={{ alignItems: { sm: "center" }, mt: 1.5 }}>
-                  <input aria-label={`Replace ${ticker.symbol} with a ticker`} onChange={(event) => setTickerEdit(event.target.value.toUpperCase())} placeholder="New ticker" style={{ border: "1px solid #bac8e0", borderRadius: 6, font: "inherit", minHeight: 34, padding: "6px 9px", textTransform: "uppercase", width: 130 }} value={tickerEdit} />
+                  <input aria-label={`Replace ${ticker.symbol} with a ticker`} onChange={(event) => setTickerEdit(event.target.value.toUpperCase())} placeholder="New ticker" style={{ backgroundColor: dark ? theme.palette.background.default : undefined, border: dark ? `1px solid ${theme.palette.divider}` : "1px solid #bac8e0", borderRadius: dark ? theme.shape.borderRadius : 6, color: dark ? theme.palette.text.primary : undefined, font: "inherit", minHeight: 34, padding: "6px 9px", textTransform: "uppercase", width: 130 }} value={tickerEdit} />
                   <Button disabled={savingTicker || !tickerEdit.trim()} onClick={async () => { setSavingTicker(true); setTickerMessage(null); const result = await replaceCommunityWatchlistTicker({ handle: detail.authorHandle, watchlistSlug, currentSymbol: ticker.symbol, nextSymbol: tickerEdit }); setSavingTicker(false); setTickerMessage(result.message); if (result.ok) { setTickerEdit(""); router.refresh(); } }} size="small" variant="outlined">{savingTicker ? "Saving..." : "Change ticker"}</Button>
                 </Stack> : null}
               </Box>

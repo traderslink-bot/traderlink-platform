@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import {
   CandlestickSeries,
   ColorType,
@@ -49,6 +50,9 @@ function easternTime(value: string | number): string {
 }
 
 function CandleChart({ currency, review }: { currency: string; review: CandleReviewRecord }) {
+  const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
+  const chart = theme.palette.traderLink.chart;
   const container = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!container.current || review.candles.length === 0) return;
@@ -56,23 +60,23 @@ function CandleChart({ currency, review }: { currency: string; review: CandleRev
       autoSize: true,
       height: 420,
       layout: {
-        background: { color: "#ffffff", type: ColorType.Solid },
-        textColor: "#334155",
+        background: { color: dark ? chart.background : "#ffffff", type: ColorType.Solid },
+        textColor: dark ? chart.text : "#334155",
       },
       grid: {
-        horzLines: { color: "#e2e8f0" },
-        vertLines: { color: "#e2e8f0" },
+        horzLines: { color: dark ? chart.grid : "#e2e8f0" },
+        vertLines: { color: dark ? chart.grid : "#e2e8f0" },
       },
-      rightPriceScale: { borderColor: "#cbd5e1" },
-      timeScale: { borderColor: "#cbd5e1", timeVisible: true, secondsVisible: false },
+      rightPriceScale: { borderColor: dark ? chart.grid : "#cbd5e1" },
+      timeScale: { borderColor: dark ? chart.grid : "#cbd5e1", timeVisible: true, secondsVisible: false },
     });
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: "#16845b",
-      downColor: "#c43d4b",
-      borderUpColor: "#16845b",
-      borderDownColor: "#c43d4b",
-      wickUpColor: "#16845b",
-      wickDownColor: "#c43d4b",
+      upColor: dark ? chart.candleWin : "#16845b",
+      downColor: dark ? chart.candleLoss : "#c43d4b",
+      borderUpColor: dark ? chart.candleWin : "#16845b",
+      borderDownColor: dark ? chart.candleLoss : "#c43d4b",
+      wickUpColor: dark ? chart.candleWin : "#16845b",
+      wickDownColor: dark ? chart.candleLoss : "#c43d4b",
       priceFormat: { type: "price", precision: 2, minMove: 0.01 },
     });
     series.setData(review.candles.map((candle) => ({
@@ -86,21 +90,21 @@ function CandleChart({ currency, review }: { currency: string; review: CandleRev
       {
         time: Math.floor(Date.parse(review.target.openedAtUtc) / 1000) as UTCTimestamp,
         position: review.target.direction === "long" ? "belowBar" : "aboveBar",
-        color: "#011E56",
+        color: dark ? theme.palette.primary.main : "#011E56",
         shape: review.target.direction === "long" ? "arrowUp" : "arrowDown",
         text: `Entry ${formatJournalAnalyticsMoney(review.target.entryPriceDecimal, currency)}`,
       },
       {
         time: Math.floor(Date.parse(review.target.closedAtUtc) / 1000) as UTCTimestamp,
         position: review.target.direction === "long" ? "aboveBar" : "belowBar",
-        color: "#7c3aed",
+        color: dark ? theme.palette.warning.main : "#7c3aed",
         shape: review.target.direction === "long" ? "arrowDown" : "arrowUp",
         text: `Exit ${formatJournalAnalyticsMoney(review.target.exitPriceDecimal, currency)}`,
       },
     ]);
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [currency, review]);
+  }, [chart, currency, dark, review, theme.palette.primary.main, theme.palette.warning.main]);
   return <Box ref={container} sx={{ height: 420, width: "100%" }} />;
 }
 

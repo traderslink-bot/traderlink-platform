@@ -6,6 +6,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 
 import { FeatureHelpLink } from "../../feature-help-link";
@@ -202,6 +203,9 @@ function MobileChartScrollHint() {
 }
 
 function TrendChart({ chartId, points, metricId }: { chartId: TimingChartId; points: readonly TimingPoint[]; metricId: TimingMetricId }) {
+  const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
+  const chart = theme.palette.traderLink.chart;
   if (!points.length) return <EmptyChart />;
   const values = valuesFor(points, metricId);
   const range = chartRange(values);
@@ -215,16 +219,16 @@ function TrendChart({ chartId, points, metricId }: { chartId: TimingChartId; poi
       <MobileChartScrollHint />
       <Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}>
         <Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox="0 0 640 230">
-        <line stroke="#d9e1ec" strokeWidth="1" x1="30" x2="610" y1={baseline} y2={baseline} />
-        <polyline fill="none" points={line} stroke="#00796b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+        <line stroke={dark ? chart.grid : "#d9e1ec"} strokeWidth="1" x1="30" x2="610" y1={baseline} y2={baseline} />
+        <polyline fill="none" points={line} stroke={chart.win} strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
         {points.map((point, index) => {
           const value = point.metrics[metricId].value ?? 0;
           const x = pointX(index);
           const y = yFor(value, range);
           return <g key={point.key}>
             <title>{`${labelFor(chartId, point)}: ${point.metrics[metricId].display}`}</title>
-            <circle cx={x} cy={y} fill={value < 0 ? "#c62828" : "#00796b"} r="4" />
-            {labelIndexes.has(index) ? <text fill="#627083" fontSize="11" textAnchor="middle" x={x} y="211">{labelFor(chartId, point)}</text> : null}
+            <circle cx={x} cy={y} fill={value < 0 ? chart.loss : chart.win} r="4" />
+            {labelIndexes.has(index) ? <text fill={dark ? theme.palette.text.secondary : "#627083"} fontSize="11" textAnchor="middle" x={x} y="211">{labelFor(chartId, point)}</text> : null}
           </g>;
         })}
         </Box>
@@ -234,6 +238,9 @@ function TrendChart({ chartId, points, metricId }: { chartId: TimingChartId; poi
 }
 
 function ColumnChart({ points, metricId }: { points: readonly TimingPoint[]; metricId: TimingMetricId }) {
+  const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
+  const chart = theme.palette.traderLink.chart;
   if (!points.length) return <EmptyChart />;
   const values = valuesFor(points, metricId);
   const range = chartRange(values);
@@ -243,7 +250,7 @@ function ColumnChart({ points, metricId }: { points: readonly TimingPoint[]; met
       <MobileChartScrollHint />
       <Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}>
         <Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox="0 0 640 230">
-        <line stroke="#d9e1ec" strokeWidth="1" x1="20" x2="620" y1={baseline} y2={baseline} />
+        <line stroke={dark ? chart.grid : "#d9e1ec"} strokeWidth="1" x1="20" x2="620" y1={baseline} y2={baseline} />
         {points.map((point, index) => {
           const value = point.metrics[metricId].value ?? 0;
           const x = 38 + index * (560 / points.length);
@@ -251,8 +258,8 @@ function ColumnChart({ points, metricId }: { points: readonly TimingPoint[]; met
           const height = Math.abs(y - baseline);
           return <g key={point.key}>
             <title>{`${point.label}: ${point.metrics[metricId].display}`}</title>
-            <rect fill={value < 0 ? "#c62828" : "#00796b"} height={Math.max(2, height)} rx="4" width={Math.max(28, 430 / points.length)} x={x} y={value >= 0 ? y : baseline} />
-            <text fill="#627083" fontSize="11" textAnchor="middle" x={x + Math.max(28, 430 / points.length) / 2} y="211">{point.label.slice(0, 3)}</text>
+            <rect fill={value < 0 ? chart.loss : chart.win} height={Math.max(2, height)} rx="4" width={Math.max(28, 430 / points.length)} x={x} y={value >= 0 ? y : baseline} />
+            <text fill={dark ? theme.palette.text.secondary : "#627083"} fontSize="11" textAnchor="middle" x={x + Math.max(28, 430 / points.length) / 2} y="211">{point.label.slice(0, 3)}</text>
           </g>;
         })}
         </Box>
@@ -262,6 +269,7 @@ function ColumnChart({ points, metricId }: { points: readonly TimingPoint[]; met
 }
 
 function HorizontalBarChart({ points, metricId }: { points: readonly TimingPoint[]; metricId: TimingMetricId }) {
+  const dark = useTheme().palette.mode === "dark";
   if (!points.length) return <EmptyChart />;
   const values = valuesFor(points, metricId);
   const max = Math.max(1, ...values.map((value) => Math.abs(value)));
@@ -272,7 +280,7 @@ function HorizontalBarChart({ points, metricId }: { points: readonly TimingPoint
         return (
           <Stack direction="row" key={point.key} spacing={1} sx={{ alignItems: "center" }} title={`${point.label}: ${point.metrics[metricId].display}`}>
             <Typography color="text.secondary" sx={{ flex: "0 0 150px", fontSize: 11, lineHeight: 1.2, whiteSpace: "normal" }}>{labelFor("entry_time_bucket", point)}</Typography>
-            <Box sx={{ bgcolor: "#edf1f6", borderRadius: 99, flex: 1, height: 14, overflow: "hidden" }}>
+            <Box sx={{ bgcolor: dark ? "action.selected" : "#edf1f6", borderRadius: 99, flex: 1, height: 14, overflow: "hidden" }}>
               <Box sx={{ bgcolor: value < 0 ? "error.main" : "success.main", borderRadius: 99, height: "100%", width: `${Math.max(3, (Math.abs(value) / max) * 100)}%` }} />
             </Box>
             <Typography sx={{ flex: "0 0 68px", fontSize: 12, fontWeight: 800, textAlign: "right", whiteSpace: "nowrap" }}>{point.metrics[metricId].display}</Typography>
@@ -284,11 +292,15 @@ function HorizontalBarChart({ points, metricId }: { points: readonly TimingPoint
 }
 
 function PieChart({ points, donut }: { points: readonly TimingPoint[]; donut: boolean }) {
+  const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
   const values = points.map((point) => Math.max(0, point.metrics.included_count.value ?? 0));
   const total = values.reduce((sum, value) => sum + value, 0);
   if (!total) return <EmptyChart />;
   const circumference = 2 * Math.PI * 76;
-  const colors = ["#00796b", "#1565c0", "#7b1fa2", "#ef6c00", "#c62828", "#455a64", "#6d4c41"];
+  const colors = dark
+    ? [theme.palette.primary.light, theme.palette.success.main, theme.palette.warning.main, theme.palette.error.main, theme.palette.primary.main, theme.palette.text.secondary, theme.palette.divider]
+    : ["#00796b", "#1565c0", "#7b1fa2", "#ef6c00", "#c62828", "#455a64", "#6d4c41"];
   const lengths = values.map((value) => (value / total) * circumference);
   const offsets = lengths.map((_length, index) =>
     lengths.slice(0, index).reduce((sum, length) => sum + length, 0));
@@ -299,7 +311,7 @@ function PieChart({ points, donut }: { points: readonly TimingPoint[]; donut: bo
           const length = lengths[index]!;
           return <circle cx="105" cy="105" fill="none" key={point.key} r="76" stroke={colors[index % colors.length]} strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={-offsets[index]!} strokeWidth={donut ? 42 : 152} transform="rotate(-90 105 105)"><title>{`${point.label}: ${values[index]} trades`}</title></circle>;
         })}
-        {donut ? <><circle cx="105" cy="105" fill="white" r="48" /><text fill="#1c2736" fontSize="13" fontWeight="700" textAnchor="middle" x="105" y="101">Trade count</text><text fill="#1c2736" fontSize="22" fontWeight="800" textAnchor="middle" x="105" y="126">{total}</text></> : null}
+        {donut ? <><circle cx="105" cy="105" fill={dark ? theme.palette.background.paper : "white"} r="48" /><text fill={dark ? theme.palette.text.primary : "#1c2736"} fontSize="13" fontWeight="700" textAnchor="middle" x="105" y="101">Trade count</text><text fill={dark ? theme.palette.text.primary : "#1c2736"} fontSize="22" fontWeight="800" textAnchor="middle" x="105" y="126">{total}</text></> : null}
       </Box>
       <Stack spacing={0.75} sx={{ minWidth: 0, width: "100%" }}>
         {points.map((point, index) => <Stack direction="row" key={point.key} spacing={0.75} sx={{ alignItems: "center", justifyContent: "space-between" }}>

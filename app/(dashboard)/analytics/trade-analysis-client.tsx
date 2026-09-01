@@ -348,7 +348,7 @@ function PatternRanking({ groups }: { groups: readonly PatternGroup[] }) {
             <Typography sx={{ fontWeight: 750 }} variant="body2">{friendlyPattern(row.pattern)}</Typography>
             <Typography color="text.secondary" variant="caption">{row.occurrenceCount} occurrence{row.occurrenceCount === 1 ? "" : "s"}</Typography>
           </Stack>
-          <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.08)", borderRadius: 999, height: 8, mt: 0.5, overflow: "hidden" }}>
+          <Box sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.08)", borderRadius: 999, height: 8, mt: 0.5, overflow: "hidden" }}>
             <Box sx={{ bgcolor: "primary.main", borderRadius: 999, height: "100%", width: `${Math.max(4, row.occurrenceCount / maximum * 100)}%` }} />
           </Box>
         </Box>
@@ -565,7 +565,7 @@ export function TradeAnalysisClient({
           <Stack spacing={1.5} sx={{ mt: patternGroups.length > 10 ? 1.5 : 0 }}>
             {visiblePatternGroups.map((group) => (
               <Paper key={group.pattern} sx={{ overflow: "hidden" }} variant="outlined">
-                <Box sx={{ alignItems: { sm: "center" }, bgcolor: "rgba(1, 30, 86, 0.04)", display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1, justifyContent: "space-between", px: { xs: 1.5, sm: 2 }, py: 1.25 }}>
+                <Box sx={{ alignItems: { sm: "center" }, bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.04)", display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1, justifyContent: "space-between", px: { xs: 1.5, sm: 2 }, py: 1.25 }}>
                   <Box>
                     <Typography component="h3" sx={{ fontWeight: 850 }} variant="subtitle1">{friendlyPattern(group.pattern)}</Typography>
                     <Typography color="text.secondary" variant="body2">{group.occurrenceCount} total occurrence{group.occurrenceCount === 1 ? "" : "s"}</Typography>

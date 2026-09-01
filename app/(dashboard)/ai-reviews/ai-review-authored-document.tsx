@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
 
 import { formatCoachAiMoneyForDisplay } from
   "@/src/modules/coach/presentation/coach-ai-money-formatters";
@@ -55,9 +56,11 @@ export function AiReviewAuthoredDocument({ view }: Readonly<{ view: AiReviewAuth
       <Box
         component="header"
         sx={{
-          background: "linear-gradient(135deg, rgba(1, 30, 86, 0.08), rgba(1, 30, 86, 0.025))",
+          background: (theme) => theme.palette.mode === "dark"
+            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.18)}, ${alpha(theme.palette.background.paper, 0.42)})`
+            : "linear-gradient(135deg, rgba(1, 30, 86, 0.08), rgba(1, 30, 86, 0.025))",
           border: 1,
-          borderColor: "rgba(1, 30, 86, 0.16)",
+          borderColor: (theme) => theme.palette.mode === "dark" ? alpha(theme.palette.primary.light, 0.48) : "rgba(1, 30, 86, 0.16)",
           borderRadius: 2.5,
           p: { xs: 2.25, sm: 3 },
         }}

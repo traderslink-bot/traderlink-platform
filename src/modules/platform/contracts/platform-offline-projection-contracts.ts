@@ -127,6 +127,7 @@ export type PlatformOfflineDeviceState = Readonly<{
   accountCurrency: string | null;
   accountSelectionRef: string | null;
   accountTimezone: string | null;
+  appearance?: "light" | "dark";
   key: "current";
   navigation: readonly PlatformOfflineNavigationGroup[];
   offlineScopeRef: string;

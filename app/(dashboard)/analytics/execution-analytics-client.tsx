@@ -13,6 +13,7 @@ import TablePagination from "@mui/material/TablePagination";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 
 import { FeatureHelpLink } from "../feature-help-link";
@@ -72,13 +73,16 @@ function sortValue(row: ExecutionTradeRow, column: SortColumn): string | number 
 }
 
 function Chart({ points, metricId, style }: { points: readonly Point[]; metricId: ExecutionMetricId; style: ChartStyle }) {
+  const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
+  const chart = theme.palette.traderLink.chart;
   if (points.length === 0) return <Typography color="text.secondary" sx={{ py: 8 }} variant="body2">No completed trades are available for this view.</Typography>;
   const values = points.map((point) => point.metrics[metricId].value ?? 0);
   const max = Math.max(1, ...values.map((value) => Math.abs(value)));
-  if (style === "horizontal_bars") return <Stack spacing={1.15} sx={{ mt: 2.25 }}>{points.map((point) => { const value = point.metrics[metricId].value ?? 0; return <Stack direction="row" key={point.key} spacing={1} sx={{ alignItems: "center" }} title={`${point.label}: ${point.metrics[metricId].display}`}><Typography color="text.secondary" sx={{ flex: "0 0 96px", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{point.label}</Typography><Box sx={{ bgcolor: "#edf1f6", borderRadius: 99, flex: 1, height: 14, overflow: "hidden" }}><Box sx={{ bgcolor: value < 0 ? "error.main" : "success.main", borderRadius: 99, height: "100%", width: `${Math.max(3, Math.abs(value) / max * 100)}%` }} /></Box><Typography sx={{ flex: "0 0 72px", fontSize: 12, fontWeight: 800, textAlign: "right", whiteSpace: "nowrap" }}>{point.metrics[metricId].display}</Typography></Stack>; })}</Stack>;
+  if (style === "horizontal_bars") return <Stack spacing={1.15} sx={{ mt: 2.25 }}>{points.map((point) => { const value = point.metrics[metricId].value ?? 0; return <Stack direction="row" key={point.key} spacing={1} sx={{ alignItems: "center" }} title={`${point.label}: ${point.metrics[metricId].display}`}><Typography color="text.secondary" sx={{ flex: "0 0 96px", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{point.label}</Typography><Box sx={{ bgcolor: dark ? "action.selected" : "#edf1f6", borderRadius: 99, flex: 1, height: 14, overflow: "hidden" }}><Box sx={{ bgcolor: value < 0 ? "error.main" : "success.main", borderRadius: 99, height: "100%", width: `${Math.max(3, Math.abs(value) / max * 100)}%` }} /></Box><Typography sx={{ flex: "0 0 72px", fontSize: 12, fontWeight: 800, textAlign: "right", whiteSpace: "nowrap" }}>{point.metrics[metricId].display}</Typography></Stack>; })}</Stack>;
   const width = 640;
   const baseline = 112;
-  return <><HorizontalScrollHint label="Swipe sideways to see the full chart" /><Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}><Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox={`0 0 ${width} 230`}><line stroke="#d9e1ec" strokeWidth="1" x1="20" x2="620" y1={baseline} y2={baseline} />{points.map((point, index) => { const value = point.metrics[metricId].value ?? 0; const barHeight = Math.max(2, Math.abs(value) / max * 88); const barWidth = Math.max(24, 440 / points.length); const x = 42 + index * (560 / points.length); return <g key={point.key}><title>{`${point.label}: ${point.metrics[metricId].display}`}</title><rect fill={value < 0 ? "#c62828" : "#00796b"} height={barHeight} rx="4" width={barWidth} x={x} y={value < 0 ? baseline : baseline - barHeight} /><text fill="#627083" fontSize="11" textAnchor="middle" x={x + barWidth / 2} y="211">{point.label.slice(0, 9)}</text></g>; })}</Box></Box></>;
+  return <><HorizontalScrollHint label="Swipe sideways to see the full chart" /><Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}><Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox={`0 0 ${width} 230`}><line stroke={dark ? chart.grid : "#d9e1ec"} strokeWidth="1" x1="20" x2="620" y1={baseline} y2={baseline} />{points.map((point, index) => { const value = point.metrics[metricId].value ?? 0; const barHeight = Math.max(2, Math.abs(value) / max * 88); const barWidth = Math.max(24, 440 / points.length); const x = 42 + index * (560 / points.length); return <g key={point.key}><title>{`${point.label}: ${point.metrics[metricId].display}`}</title><rect fill={value < 0 ? chart.loss : chart.win} height={barHeight} rx="4" width={barWidth} x={x} y={value < 0 ? baseline : baseline - barHeight} /><text fill={dark ? theme.palette.text.secondary : "#627083"} fontSize="11" textAnchor="middle" x={x + barWidth / 2} y="211">{point.label.slice(0, 9)}</text></g>; })}</Box></Box></>;
 }
 
 function ChartPanel({ chart, points, metricId }: { chart: (typeof CHARTS)[number]; points: readonly Point[]; metricId: ExecutionMetricId }) {

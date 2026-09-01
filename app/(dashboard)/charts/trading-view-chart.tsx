@@ -5,12 +5,15 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import { useEffect, useRef, useState } from "react";
 
 const TRADING_VIEW_WIDGET_URL =
   "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
 
 export function TradingViewChart() {
+  const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasLoadError, setHasLoadError] = useState(false);
@@ -33,10 +36,10 @@ export function TradingViewChart() {
     script.text = JSON.stringify({
       allow_symbol_change: true,
       autosize: true,
-      backgroundColor: "#FFFFFF",
+      backgroundColor: dark ? "#0e1520" : "#FFFFFF",
       calendar: false,
       details: false,
-      gridColor: "rgba(1, 30, 86, 0.08)",
+      gridColor: dark ? "#314158" : "rgba(1, 30, 86, 0.08)",
       hide_legend: false,
       hide_side_toolbar: false,
       hide_top_toolbar: false,
@@ -46,7 +49,7 @@ export function TradingViewChart() {
       save_image: true,
       style: "1",
       symbol: "NASDAQ:AAPL",
-      theme: "light",
+      theme: dark ? "dark" : "light",
       timezone: "America/New_York",
       withdateranges: true,
     });
@@ -57,7 +60,7 @@ export function TradingViewChart() {
     return () => {
       chartContainer.replaceChildren();
     };
-  }, [loadAttempt]);
+  }, [dark, loadAttempt]);
 
   return (
     <Box
@@ -79,7 +82,7 @@ export function TradingViewChart() {
           spacing={1.5}
           sx={{
             alignItems: "center",
-            bgcolor: "rgba(1, 30, 86, 0.035)",
+            bgcolor: dark ? "action.selected" : "rgba(1, 30, 86, 0.035)",
             borderRadius: 2,
             inset: 0,
             justifyContent: "center",
@@ -99,7 +102,7 @@ export function TradingViewChart() {
           spacing={0.75}
           sx={{
             alignItems: "center",
-            bgcolor: "rgba(1, 30, 86, 0.035)",
+            bgcolor: dark ? "action.selected" : "rgba(1, 30, 86, 0.035)",
             borderRadius: 2,
             inset: 0,
             justifyContent: "center",

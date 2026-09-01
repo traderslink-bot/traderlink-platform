@@ -77,7 +77,7 @@ export function AiChatReviewDeliveryChangeCard({
   }
 
   return (
-    <Paper elevation={0} sx={{ alignSelf: "flex-start", bgcolor: "#F4F8FF", border: 1, borderColor: "#BFD2F2", borderRadius: 2, maxWidth: 680, p: { xs: 1.5, sm: 2 }, width: "100%" }}>
+    <Paper elevation={0} sx={{ alignSelf: "flex-start", bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "#F4F8FF", border: 1, borderColor: (theme) => theme.palette.mode === "dark" ? theme.palette.divider : "#BFD2F2", borderRadius: 2, maxWidth: 680, p: { xs: 1.5, sm: 2 }, width: "100%" }}>
       <Stack spacing={1.5}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <AccessTimeRoundedIcon color="primary" />

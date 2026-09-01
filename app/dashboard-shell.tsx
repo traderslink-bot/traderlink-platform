@@ -63,6 +63,7 @@ import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -220,9 +221,9 @@ function NavigationLink({
         pr: collapsed ? 1.25 : 1.5,
         justifyContent: collapsed ? "center" : "initial",
         "&.Mui-selected": {
-          bgcolor: "primary.main",
-          color: "primary.contrastText",
-          "&:hover": { bgcolor: "primary.dark" },
+          bgcolor: (theme) => theme.palette.traderLink.navigationSelected,
+          color: (theme) => theme.palette.traderLink.navigationSelectedText,
+          "&:hover": { bgcolor: (theme) => theme.palette.traderLink.navigationSelected },
           "& .MuiListItemIcon-root": { color: "inherit" },
         },
       }}
@@ -370,6 +371,7 @@ export function DashboardShell({
   watchlistMemberNavigationAccess?: boolean;
   watchlistAdminNavigationAccess?: boolean;
 }) {
+  const theme = useTheme();
   const pathname = usePathname();
   const helpDestination = offline ? "/help" : "https://traderslink.pro/help";
   const helpLabel = "Open Help Center";
@@ -611,7 +613,7 @@ export function DashboardShell({
                     <List
                       disablePadding
                       sx={compact ? undefined : {
-                        borderLeft: "2px solid #d4dae3",
+                        borderLeft: (theme) => `2px solid ${theme.palette.mode === "dark" ? theme.palette.divider : "#d4dae3"}`,
                         ml: 2.5,
                         mr: 0.5,
                       }}
@@ -671,7 +673,7 @@ export function DashboardShell({
       <Box
         component="header"
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: (theme) => theme.palette.traderLink.appBar,
           borderBottom: 1,
           borderColor: "divider",
           left: 0,
@@ -722,7 +724,7 @@ export function DashboardShell({
                 alt="TradersLink"
                 height={35}
                 priority
-                src="/logo-horizontal-light.png"
+                src={theme.palette.mode === "dark" ? "/logo-horizontal-main.png" : "/logo-horizontal-light.png"}
                 style={{
                   display: "block",
                   height: 35,
@@ -789,7 +791,7 @@ export function DashboardShell({
                 mr: 0.25,
               },
               "&:hover": {
-                bgcolor: "rgba(1, 30, 86, 0.04)",
+                bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.hover : "rgba(1, 30, 86, 0.04)",
                 borderColor: "primary.dark",
               },
             }}
@@ -806,7 +808,7 @@ export function DashboardShell({
               prefetch={false}
               sx={{
                 color: "primary.main",
-                "&:hover": { bgcolor: "rgba(1, 30, 86, 0.04)" },
+                "&:hover": { bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.hover : "rgba(1, 30, 86, 0.04)" },
               }}
             >
               <HelpOutlineRoundedIcon />
@@ -821,7 +823,7 @@ export function DashboardShell({
               onClick={(event) => setAccountMenuAnchor(event.currentTarget)}
               sx={{
                 color: "primary.main",
-                "&:hover": { bgcolor: "rgba(1, 30, 86, 0.04)" },
+                "&:hover": { bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.hover : "rgba(1, 30, 86, 0.04)" },
               }}
             >
               <PersonRoundedIcon />
@@ -860,6 +862,7 @@ export function DashboardShell({
         sx={{
           display: { xs: "block", lg: "none" },
           "& .MuiDrawer-paper": {
+            bgcolor: (theme) => theme.palette.traderLink.navigation,
             boxSizing: "border-box",
             pb: "env(safe-area-inset-bottom)",
             pt: "env(safe-area-inset-top)",
@@ -877,6 +880,7 @@ export function DashboardShell({
           width: desktopWidth,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
+            bgcolor: (theme) => theme.palette.traderLink.navigation,
             borderRightColor: "divider",
             boxSizing: "border-box",
             height: "calc(100% - 64px)",
