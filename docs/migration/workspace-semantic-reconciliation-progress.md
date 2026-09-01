@@ -57,6 +57,20 @@ not be split into or staged as interim navigation, drawer, or tracker changes.
 
 No migration, projection/backfill, data mutation, configuration, hosted action, staging, push, deployment, restart, local server, Vitest, broad test, or build has run. Targeted static diff checks pass; local package dependencies are absent, so targeted lint cannot run without an unauthorized install. The existing historical Workspace plan/progress records remain reference-only and unchanged.
 
+## Legacy Demo trade-library projection recovery (in progress)
+
+- [x] Identified the legacy-only gap: the projection migrations create empty
+      derived tables, so an already-populated Demo account with no later
+      round-trip rebuild has canonical trades but no trade-library revision.
+- [x] Added a selected-Demo, missing-revision recovery before the Workspace
+      read. It checks the authenticated active Demo account and current
+      canonical executions, then uses the established account-scoped projection
+      authority inside one immediate transaction. It does not rebuild or alter
+      Journal executions, versions, allocations, round trips, or source facts.
+- [x] Added focused proof for legacy Demo recovery, already-projected Demo
+      idempotence, cleared Demo lifecycle, real-account isolation, and unchanged
+      filter/cursor semantics. No test runner is authorized during construction.
+
 ## Bounded library dependency audit
 
 The production-base library remains blocked on the required derived projection

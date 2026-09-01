@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
+import { recoverLegacyDemoWorkspaceTradeLibraryProjection } from "@/src/modules/journal-analytics/server/workspace-trade-library-demo-projection-recovery";
 import { WorkspaceDashboard } from "./workspace-dashboard";
 import { readWorkspaceTradeLibrary } from "./workspace-trade-library";
 import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, WorkspaceTradeLibrarySort } from "./workspace-trade-library";
@@ -98,6 +99,7 @@ export default async function WorkspacePage({
     await cookies();
     redirect("/account/trading");
   }
+  recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
   const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, response, reviewSummary, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, service }) => {
       const account = database.prepare(`
