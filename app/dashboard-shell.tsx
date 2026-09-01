@@ -728,7 +728,7 @@ export function DashboardShell({
                 alt="TradersLink"
                 height={35}
                 priority
-                src={theme.palette.mode === "dark" ? "/logo-horizontal-main.png" : "/logo-horizontal-light.png"}
+                src={theme.palette.mode === "dark" ? "/logo-horizontal-dark.png" : "/logo-horizontal-light.png"}
                 style={{
                   display: "block",
                   height: 35,

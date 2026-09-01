@@ -28,7 +28,7 @@
 - [x] Repair the final static-QA P1 findings on parent `df7c596696cca42598a19113a8d621aa18a1a615`: the Swing Tracker status panel now branches to the approved Dark warning alpha surface, and the Daily Analyzer uses one contrast-safe Dark pattern palette for canvas indicators and both legend layouts while retaining every Light pattern literal. The corresponding local child SHA is reported in the Coordinator and QA handoff because a Git commit cannot self-record its final object SHA in its own contents. It has not been pushed, merged, deployed or applied.
 - [x] Repair the final static-QA P2 findings on parent `01943e62054ffb673e5fa890cfd200fb2c55ab42`: generic Help callouts now use Dark warning/info token-alpha surfaces and borders, and expanded navigation groups use the shared Dark divider while preserving `#d4dae3` in Light. The corresponding local child SHA is reported in the Coordinator and QA handoff because a Git commit cannot self-record its final object SHA in its own contents. It has not been pushed, merged, deployed or applied.
 - [x] Correct the owner-reported Dark text contrast at the shared source: the Dark primary and secondary text tokens and table-header override are white; the shared Account Settings and Daily Trade Tracker eyebrow preserve their approved Light primary color while resolving to white in Dark; and the desktop navigation uses the same logo asset as Light with no blue background.
-- [x] Add the owner-approved bottom-navigation appearance switch: desktop sidebar and mobile navigation drawer use the compact 44px hit-area sun/moon toggle with a 44px by 22px visible track directly above the existing Install TradersLink app action. It reuses the authorized Account Preferences action, has token-based keyboard focus in both appearances and a 44px mobile target, while Account Preferences remains available. The scoped Workspace trade-library foreground plus shared Dark text/header tokens cover its grid labels and rows without changing Light or white action icons.
+- [x] Add the owner-approved bottom-navigation appearance switch: desktop sidebar and mobile navigation drawer use the compact standard MUI Switch directly above the existing Install TradersLink app action. Its visible track is smaller than the default while the interactive target stays 44px; it has no visible Light/Dark label or sun/moon glyphs. It reuses the authorized Account Preferences action, has token-based keyboard focus in both appearances and a 44px mobile target, while Account Preferences remains available. The scoped Workspace trade-library foreground plus shared Dark text/header tokens cover its grid labels and rows without changing Light or white action icons.
 
 ## Guardrails
 
@@ -59,14 +59,20 @@
   Confirm the compact navigation toggle persists the selected mode, remains
   keyboard-focusable and leaves Account Preferences available. Do not mark this
   gate complete from source inspection alone.
-- [x] Correct the independent source-QA selected-icon contrast finding: the
-  selected sun or moon now uses the primary contrast text color over the active
-  thumb, while its inactive counterpart remains contrasted against the track in
-  each appearance. The 44px input, 44px by 22px visible track, focus treatment,
-  and authorized preference action remain unchanged. This correction requires
-  a fresh independent source QA pass before isolated staging.
-- [ ] Repair the isolated-staging server/client render boundary before
-  republishing: server-rendered unavailable states and AI coming-soon pages
-  must use serializable palette-token props rather than theme callbacks in
-  Material `sx` objects. Preserve the shared Dark text tokens and the existing
-  Light colors, then obtain fresh source QA before staging.
+- [x] The selected-icon contrast repair was superseded by the owner-requested
+  standard compact MUI Switch after rendered review. The replacement has no
+  icons in its thumb or track, retains the 44px input, direct save/revert
+  behavior, focus treatment and authorized preference action, and requires
+  fresh independent source QA before isolated staging.
+- [x] Repair the isolated-staging server/client render boundary: the shared
+  unavailable state and AI coming-soon page now use serializable palette-token
+  props rather than theme callbacks in Material `sx` objects. The repair covers
+  `/account/ai`, `/ai-chat`, and `/ai-reviews` without changing their approved
+  Light colors; fresh source QA and isolated-staging verification remain
+  required.
+- [x] Keep `/ai-chat` as the canonical AI route. The owner did not authorize a
+  new `/ai` alias, so no route or redirect is added for that unowned path.
+- [x] Replace the opaque Dark navigation logo candidate with the owner-approved
+  transparent `logo-horizontal-dark.png`, mechanically derived from the
+  official Light geometry. Desktop and mobile navigation select it only in
+  Dark mode; Light retains the accepted official blue wordmark asset.
