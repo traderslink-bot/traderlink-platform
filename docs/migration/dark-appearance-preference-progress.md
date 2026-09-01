@@ -131,3 +131,8 @@
   description reuses the shared appearance text leaf. The existing parent
   already routed Demo labels and body copy through that same leaf, so its
   clear-demo label and workspace paragraph require no duplicate source edit.
+- [x] Make the rendered Demo callout explicit after live Dark-mode contrast
+  feedback: the compact `Viewing demo data` label directly above Clear Demo,
+  the Workspace Demo heading and each explanatory paragraph now read the
+  active palette directly. Dark resolves these exact rendered elements to
+  `text.primary`; Light retains the red heading and primary body hierarchy.
