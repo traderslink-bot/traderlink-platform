@@ -14,6 +14,7 @@
     "start:legacy-v3": "tsx src/scripts/run-trader-intelligence-local-server.ts --hostname 127.0.0.1",
     "transfer:hosted:preview": "tsx src/scripts/transfer-traderlink-platform-hosted-sources.ts --preview",
     "transfer:hosted:execute": "tsx src/scripts/transfer-traderlink-platform-hosted-sources.ts --execute",
+    "admin:journal:initial-owner-discord-link": "tsx src/scripts/manage-traderlink-initial-owner-discord-link.ts",
     "admin:journal:operator": "tsx src/scripts/manage-traderlink-journal-admin-operator.ts",
     "verify:journal-admin": "tsx src/scripts/verify-traderlink-platform-journal-admin-files.ts",
     "lint": "eslint",

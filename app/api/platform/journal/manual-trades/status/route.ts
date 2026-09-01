@@ -5,7 +5,10 @@ import {
   requireTraderLinkPlatformRequestScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
-import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  isTraderLinkPlatformError,
+  platformFailure,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,6 +26,9 @@ export async function POST(request: Request): Promise<Response> {
     const statusRequest = parseJournalManualTradeCommitStatusRequest(
       await request.json(),
     );
+    if (statusRequest.tracker === "workspace") {
+      platformFailure("TRADERLINK_MANUAL_TRADE_PREVIEW_INVALID");
+    }
     const accountSelectionRef = requireExpectedJournalAccountSelection(
       scope,
       statusRequest.expectedAccountSelectionRef,

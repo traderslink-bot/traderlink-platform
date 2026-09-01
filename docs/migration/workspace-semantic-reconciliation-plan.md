@@ -1,6 +1,6 @@
 # Workspace semantic reconciliation plan
 
-**Status:** Owner-approved Workspace bundle in guarded production integration; the Release Coordinator owns the single production lane.
+**Status:** Owner-approved Workspace bundle in local reconciliation on the current production parent; staging remains Release Coordinator-owned.
 
 **Progress record:** [Workspace Semantic Reconciliation Progress](workspace-semantic-reconciliation-progress.md)
 
@@ -20,13 +20,6 @@ The historical chain `1329fc0b` through `a9bd633f` is reference-only. It is not 
 - the existing Analyzer outcome and offline period/basis identity.
 
 Do not copy the historical deletion ancestry, hosted configuration, data, account authority, or unrelated dark-appearance work. The derived projection source is manually reconciled as its exact 0100–0102 bundle and the current production implementation's Dark behavior is retained.
-
-Production already applied the unrelated `0103` and `0104` migrations before
-this Workspace bundle. To retain the verified prefix contract, the identical
-Workspace migration statements retain their IDs but are carried as the guarded
-production tail with execution orders 105 (`0100`), 106 (`0101`), 107 (`0102`),
-and 108 (`0108`). This is a release-order compatibility record only; it does
-not alter Journal facts or migration SQL.
 
 ## Atomic existing-trade edit contract
 

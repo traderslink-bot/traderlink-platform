@@ -121,6 +121,38 @@ export type DailyTradeAnalyzerPostExitPath = Readonly<{
   observedAtCandleTime: number | null;
 }>;
 
+export type DailyTradeProfitProtectionOutcome =
+  | Readonly<{
+      actualGrossResultDecimal: string;
+      avoidedAdditionalLossDecimal: string;
+      counterfactualGrossResultDecimal: string;
+      moneyBasis: "gross";
+      reductionPercentDecimal: string;
+      status: "avoided_additional_loss";
+    }>
+  | Readonly<{
+      actualGrossResultDecimal: string;
+      counterfactualGrossResultDecimal: string;
+      additionalProfitGivenUpDecimal: string;
+      moneyBasis: "gross";
+      reductionPercentDecimal: string;
+      status: "gave_up_additional_profit";
+    }>
+  | Readonly<{
+      actualGrossResultDecimal: string;
+      counterfactualGrossResultDecimal: string;
+      moneyBasis: "gross";
+      reductionPercentDecimal: string;
+      status: "no_difference";
+    }>
+  | Readonly<{
+      reductionPercentDecimal: string | null;
+      status: "comparison_unavailable";
+    }>
+  | Readonly<{
+      status: "not_applicable";
+    }>;
+
 export type DailyTradeGreenToRedStatus =
   | "unavailable"
   | "never_green"

@@ -29,6 +29,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
+import { alpha, type Theme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
 
 import { OfflineSavedViewStatus } from "@/app/pwa/offline-saved-view-status";
@@ -192,16 +193,19 @@ function buildWeek(selectedDate: string, days: readonly CalendarDay[]): Calendar
 }
 
 function daySurface(day: CalendarDay, selected: boolean) {
-  if (selected) return { backgroundColor: "rgba(1, 30, 86, 0.055)", boxShadow: "inset 0 0 0 2px #073b78" };
-  if (day.pnlSign === 1) return { backgroundColor: "rgba(67, 184, 131, 0.075)" };
-  if (day.pnlSign === -1) return { backgroundColor: "rgba(216, 91, 106, 0.07)" };
+  if (selected) return {
+    backgroundColor: (theme: Theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.055)",
+    boxShadow: (theme: Theme) => theme.palette.mode === "dark" ? `inset 0 0 0 2px ${theme.palette.primary.light}` : "inset 0 0 0 2px #073b78",
+  };
+  if (day.pnlSign === 1) return { backgroundColor: (theme: Theme) => theme.palette.mode === "dark" ? alpha(theme.palette.success.main, 0.14) : "rgba(67, 184, 131, 0.075)" };
+  if (day.pnlSign === -1) return { backgroundColor: (theme: Theme) => theme.palette.mode === "dark" ? alpha(theme.palette.error.main, 0.14) : "rgba(216, 91, 106, 0.07)" };
   return { backgroundColor: "background.paper" };
 }
 
 function pnlTone(sign: -1 | 0 | 1 | null) {
-  if (sign === -1) return { backgroundColor: "rgba(211, 47, 47, 0.10)", color: "error.main" };
-  if (sign === 1) return { backgroundColor: "rgba(46, 125, 50, 0.11)", color: "success.main" };
-  return { backgroundColor: "rgba(1, 30, 86, 0.05)", color: "text.primary" };
+  if (sign === -1) return { backgroundColor: (theme: Theme) => theme.palette.mode === "dark" ? alpha(theme.palette.error.main, 0.18) : "rgba(211, 47, 47, 0.10)", color: "error.main" };
+  if (sign === 1) return { backgroundColor: (theme: Theme) => theme.palette.mode === "dark" ? alpha(theme.palette.success.main, 0.18) : "rgba(46, 125, 50, 0.11)", color: "success.main" };
+  return { backgroundColor: (theme: Theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : "rgba(1, 30, 86, 0.05)", color: "text.primary" };
 }
 
 function TickerAnnotationChips({
@@ -260,7 +264,7 @@ function DayCell({
   return (
     <Box
       onClick={isEmpty ? undefined : onSelect}
-      sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, cursor: isEmpty ? "default" : "pointer", display: "flex", flexDirection: "column", height: mode === "week" ? 480 : undefined, minHeight: mode === "week" ? 480 : 230, minWidth: 0, overflowY: mode === "week" ? "auto" : undefined, p: mode === "week" ? 2 : 1.5, width: "100%", ...daySurface(day, selected) }}
+      sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, cursor: isEmpty ? "default" : "pointer", display: "flex", flexDirection: "column", height: mode === "week" ? 260 : undefined, minHeight: mode === "week" ? 260 : 96, minWidth: 0, overflowY: mode === "week" ? "auto" : undefined, p: mode === "week" ? 1 : 0.75, width: "100%", ...daySurface(day, selected) }}
     >
         <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between" }}>
           <Typography sx={{ fontWeight: 850 }} variant={mode === "week" ? "h5" : "subtitle1"}>
@@ -279,13 +283,13 @@ function DayCell({
                 ? `${day.tradeCount} trades · ${percent(day.winRatePercentDecimal)} win rate`
                 : "Swing Trade Tracker activity"}
             </Typography>
-            <Stack spacing={0.65} sx={{ flexGrow: 1, mt: mode === "week" ? 3 : 1.5 }}>
+            <Stack spacing={0.65} sx={{ display: mode === "week" ? "flex" : "none", flexGrow: 1, mt: mode === "week" ? 3 : 1.5 }}>
               {(mode === "week" ? day.tickers : day.tickers.slice(0, 4)).map((ticker) => (
                 <Stack key={ticker.symbol}>
                   <ButtonBase
                     aria-label={`View ${ticker.symbol} trades`}
                     onClick={(event) => { event.stopPropagation(); onTickerClick(ticker); }}
-                    sx={{ borderRadius: 1, display: "block", textAlign: "left", width: "100%", "&:focus-visible": { outline: "2px solid #073b78", outlineOffset: 2 } }}
+                    sx={{ borderRadius: 1, display: "block", textAlign: "left", width: "100%", "&:focus-visible": { outline: (theme) => `2px solid ${theme.palette.mode === "dark" ? theme.palette.primary.light : "#073b78"}`, outlineOffset: 2 } }}
                   >
                     <Stack direction="row" sx={{ justifyContent: "space-between", width: "100%" }}>
                       <Typography noWrap sx={{ fontWeight: 750 }} variant={mode === "week" ? "body2" : "caption"}>{ticker.symbol}</Typography>
@@ -369,7 +373,7 @@ function MobileMonthCell({
         borderRight: 1,
         display: "flex",
         flexDirection: "column",
-        minHeight: 248,
+        minHeight: 78,
         minWidth: 0,
         p: 1,
         scrollSnapAlign: "start",
@@ -402,7 +406,7 @@ function MobileMonthCell({
           </Typography>
         ) : null}
       </ButtonBase>
-      {day.tickers.length > 0 ? (
+      {false && day.tickers.length > 0 ? (
         <Stack spacing={0.25} sx={{ borderTop: 1, borderColor: "divider", mt: 0.75, pt: 0.5 }}>
           {day.tickers.slice(0, 4).map((ticker) => (
             <ButtonBase
@@ -850,18 +854,7 @@ export function CalendarClient({
           <>
             <Box sx={{ display: { xs: "block", md: "none" }, mx: { xs: -1, sm: 0 } }}>
               <HorizontalScrollHint label="Swipe sideways to see more days" />
-              <Box
-                sx={{
-                  WebkitOverflowScrolling: "touch",
-                  "&::-webkit-scrollbar": { display: "none" },
-                  overflowX: "auto",
-                  overscrollBehaviorX: "contain",
-                  pb: 1,
-                  px: { xs: 1, sm: 0 },
-                  scrollbarWidth: "none",
-                  scrollSnapType: "x mandatory",
-                }}
-              >
+              <Box sx={{ pb: 1, px: { xs: 0, sm: 0 } }}>
                 <Box
                   sx={{
                     borderColor: "divider",
@@ -869,24 +862,24 @@ export function CalendarClient({
                     borderTop: 1,
                     display: "grid",
                     gridTemplateColumns: {
-                      xs: "repeat(5, calc(100vw - 88px))",
-                      sm: "repeat(5, minmax(220px, 1fr))",
+                      xs: "repeat(7, minmax(0, 1fr))",
+                      sm: "repeat(7, minmax(0, 1fr))",
                     },
-                    minWidth: { xs: "calc(500vw - 440px)", sm: 1100 },
+                    minWidth: 0,
                   }}
                 >
                   {weekdayLabels.map((label) => <Box key={label} sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, py: 0.75, textAlign: "center" }}><Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 850 }}>{label}</Typography></Box>)}
                   {monthGrid.map((day, index) => day === null
-                    ? <Box key={`mobile-blank-${index}`} sx={{ bgcolor: "rgba(246, 248, 252, 0.7)", borderBottom: 1, borderColor: "divider", borderRight: 1, minHeight: 248, scrollSnapAlign: "start" }} />
+                    ? <Box key={`mobile-blank-${index}`} sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.background.default : "rgba(246, 248, 252, 0.7)", borderBottom: 1, borderColor: "divider", borderRight: 1, minHeight: 78 }} />
                     : <MobileMonthCell currency={initialData.currency} day={day} key={day.date} onSelect={() => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }} onTickerClick={(ticker) => { setSelectedDate(day.date); setExpandedTickerId(ticker.instrumentId); setDetailsOpen(true); }} selected={selectedDate === day.date} />)}
                 </Box>
               </Box>
             </Box>
-            <Box sx={{ display: { xs: "none", md: "block" }, overflowX: "auto" }}>
-              <Box sx={{ minWidth: 900 }}>
-                <Box sx={{ borderColor: "divider", borderLeft: 1, display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
+            <Box sx={{ display: { xs: "none", md: "block" }, overflowX: "hidden" }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Box sx={{ borderColor: "divider", borderLeft: 1, display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
                   {weekdayLabels.map((label) => <Box key={label} sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, px: 1.5, py: 1 }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">{label}</Typography></Box>)}
-                  {monthGrid.map((day, index) => day === null ? <Box key={`blank-${index}`} sx={{ bgcolor: "rgba(246, 248, 252, 0.7)", borderBottom: 1, borderColor: "divider", borderRight: 1, minHeight: 230 }} /> : <DayCell currency={initialData.currency} day={day} key={day.date} mode="month" onSelect={() => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }} onTickerClick={(ticker) => { setSelectedDate(day.date); setExpandedTickerId(ticker.instrumentId); setDetailsOpen(true); }} selected={selectedDate === day.date} showReviewStatus={false} />)}
+                  {monthGrid.map((day, index) => day === null ? <Box key={`blank-${index}`} sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.background.default : "rgba(246, 248, 252, 0.7)", borderBottom: 1, borderColor: "divider", borderRight: 1, minHeight: 96 }} /> : <DayCell currency={initialData.currency} day={day} key={day.date} mode="month" onSelect={() => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }} onTickerClick={(ticker) => { setSelectedDate(day.date); setExpandedTickerId(ticker.instrumentId); setDetailsOpen(true); }} selected={selectedDate === day.date} showReviewStatus={false} />)}
                 </Box>
               </Box>
             </Box>

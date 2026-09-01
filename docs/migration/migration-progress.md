@@ -250,6 +250,14 @@ Eastern delivery settings, calendar-month eligibility records and private
 provider/cost-receipt storage. AI Reviews replaces the retired Reflection Loop
 **Workspace first-time onboarding:** The owner-approved product flow and its [design plan](workspace-first-time-onboarding-design-plan.md) and [progress record](workspace-first-time-onboarding-progress.md) are implemented. Clean release integration and live verification remain pending.
 
+**Workspace semantic reconciliation:** The owner-approved bounded Workspace
+library and atomic existing-trade drawer are tracked in the
+[plan](workspace-semantic-reconciliation-plan.md) and
+[progress record](workspace-semantic-reconciliation-progress.md). The local
+candidate is reconciled on the current production parent; it has no hosted
+migration, staging, push, or deployment. Release Coordinator staging and
+rendered owner verification remain required gates.
+
 page; the next work
 is the issued-review service, automatic runner and saved review list/detail.
 The complete AI product is now under active implementation through the

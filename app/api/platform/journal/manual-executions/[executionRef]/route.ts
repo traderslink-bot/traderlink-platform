@@ -28,7 +28,11 @@ function text(body: Record<string, unknown>, field: string): string {
 }
 
 function responseStatus(code: string): number {
-  if (code === "TRADERLINK_WORKSPACE_ACCESS_DENIED") return 401;
+  if (
+    code === "TRADERLINK_WORKSPACE_ACCESS_DENIED" ||
+    code === "TRADERLINK_ACCOUNT_ACCESS_DENIED"
+  ) return 401;
+  if (code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT") return 409;
   if (code.includes("CONFLICT") || code.includes("REQUIRES_DECISION")) return 409;
   return 400;
 }
@@ -70,6 +74,44 @@ export async function POST(
           priceDecimal: text(body, "priceDecimal"),
           feesDecimal: feesValue as string | null,
         },
+      ));
+    return Response.json({
+      status: "ready",
+      result: {
+        pendingDecisionCount: result.openedFollowupDecisionIds.length,
+        rebuildCount: result.rebuildCount,
+        analysisRefresh: result.analysisRefresh,
+      },
+    });
+  } catch (error) {
+    const code = isTraderLinkPlatformError(error)
+      ? error.code
+      : "TRADERLINK_MANUAL_EXECUTION_EDIT_INVALID";
+    return Response.json(
+      { status: "unavailable", code },
+      { status: responseStatus(code) },
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ executionRef: string }> },
+): Promise<Response> {
+  try {
+    requireJournalMutationRequest(request);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const body = record(await request.json());
+    requireExpectedJournalAccountSelection(
+      scope,
+      body.expectedAccountSelectionRef,
+    );
+    const { executionRef } = await context.params;
+    const result = withWritableJournalIntegrityRuntime(scope, (journal) =>
+      journal.manualExecutionEdits.remove(
+        journal.tradeStyles.accountScope(scope),
+        executionRef,
+        { idempotencyKey: text(body, "idempotencyKey") },
       ));
     return Response.json({
       status: "ready",

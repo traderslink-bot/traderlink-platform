@@ -129,8 +129,8 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   },
   {
     slug: "entry-exit-analysis",
-    title: "Entry & exit analysis",
-    description: "Understand individual fills, combined trade results and long-term entry and exit comparisons.",
+    title: "Entries and exits",
+    description: "See what happened after you entered and how you left your recorded trades.",
     sections: [
       {
         id: "individual-executions",
@@ -216,20 +216,20 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   },
   {
     slug: "mfe-mae",
-    title: "MFE & MAE",
-    description: "Study long-term favorable and adverse movement after measured entries and adds.",
+    title: "Room after entry",
+    description: "See how far price moved in your favor and against you after measured entries and adds.",
     sections: [
       {
         id: "overview",
-        title: "MFE & MAE",
-        summary: "Compare the largest observed favorable and adverse move after each measured entry or add.",
+        title: "Room after entry",
+        summary: "Compare the largest measured move in your favor and against you after each entry or add.",
         keywords: ["mfe", "mae", "favorable movement", "adverse movement", "one-minute candles"],
         blocks: [
           { kind: "paragraph", text: "Maximum favorable excursion (MFE) is the largest measured price movement in the trade's favor after an entry or add and before the position becomes flat. Maximum adverse excursion (MAE) is the largest measured movement against it over that same interval." },
           { kind: "table", columns: ["Card", "Meaning"], rows: [
-            ["Average / Median MFE", "Mean and middle favorable price movement per share across the complete measured population."],
-            ["Average / Median MAE", "Mean and middle adverse price movement per share across the complete measured population."],
-            ["MFE % / MAE %", "The same movement relative to that execution's price, making differently priced tickers easier to compare."],
+            ["Move in your favor", "The average and typical price movement per share in the trade's favor across the complete measured population."],
+            ["Move against you", "The average and typical price movement per share against the trade across the complete measured population."],
+            ["Percentage movement", "The same movement relative to that execution's price, making differently priced tickers easier to compare."],
           ] },
           { kind: "callout", title: "Measured candle range", text: "The page uses saved Moomoo one-minute candle evidence. A candle that shares a fill does not prove whether its high or low occurred before the fill, so the Analyzer does not claim that unknown sequence." },
         ],
@@ -240,7 +240,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Separate original entries, adds, longs and shorts without turning observation into a trading rule.",
         keywords: ["entries", "adds", "long", "short", "comparison"],
         blocks: [
-          { kind: "paragraph", text: "The four comparison rows reuse the same measured execution facts. They show count plus average MFE/MAE in price and percentage terms. They describe the observed sample and do not prescribe a stop, target or adding strategy." },
+          { kind: "paragraph", text: "The four comparison rows reuse the same measured execution facts. They show the count plus average movement in your favor and against you in price and percentage terms. They describe the observed sample and do not prescribe a stop, target or adding strategy." },
         ],
       },
       {
@@ -249,7 +249,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Audit the entry and add observations behind the long-term statistics.",
         keywords: ["ticker", "entries", "adds", "pagination", "view full analysis", "mobile table", "swipe"],
         blocks: [
-          { kind: "paragraph", text: "Ticker and execution filters apply before pagination. On a phone, the complete evidence table keeps readable column widths and moves sideways inside its card; use the visible swipe cue and pinned Ticker column to compare entry price, MFE, MAE, percentage movement, time until flat and the actual trade result. View full analysis opens the exact trade in Daily Trade Tracker without changing the Analyzer population." },
+          { kind: "paragraph", text: "Ticker and execution filters apply before pagination. On a phone, the complete evidence table keeps readable column widths and moves sideways inside its card; use the visible swipe cue and pinned Ticker column to compare entry price, movement in your favor, movement against you, percentage movement, time until flat and the actual trade result. View full analysis opens the exact trade in Daily Trade Tracker without changing the Analyzer population." },
           { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Paging changes only the visible evidence rows; every card and comparison remains calculated from the complete selected date range, Account reporting currency and gross/net population." },
         ],
       },
@@ -257,8 +257,8 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   },
   {
     slug: "green-to-red-analysis",
-    title: "Green-to-red analysis",
-    description: "Understand profit capture, reversals below breakeven, recoveries and observed risk-management behavior.",
+    title: "Giving back profit",
+    description: "See when open profit fell below breakeven, whether it recovered and what happened next.",
     sections: [
       {
         id: "profit-capture",
@@ -306,7 +306,13 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Compare observed adds after a peak and partial exits before red without claiming causation.",
         keywords: ["adding after peak", "scaling out", "partial exit", "risk management", "causation"],
         blocks: [
-          { kind: "paragraph", text: "Adding after the peak compares peak-eligible trades with and without a later add. Scaling out before red compares Green-to-red trades with and without a partial exit before the first move below breakeven." },
+          { kind: "paragraph", text: "Adding after the peak compares peak-eligible trades with and without a later add. On one completed trade, the Trade outcome card reports one profit-taking or risk-management sequence rather than repeating every green/red crossing. It describes an add after the saved unrealized-profit high as increased remaining exposure before a losing finish, without calling the action good or bad or claiming it caused the result." },
+          { kind: "paragraph", text: "Brief microcap price changes remain in View more but do not automatically create a conclusion. An open-position opportunity qualifies only when completed one-minute closes hold at least 50% for 3 minutes, 30% for 5 minutes, 20% for 10 minutes, or 15% for 15 minutes. The card shows only the highest qualifying tier. A 20% move lasting 15 seconds or an isolated one-minute move does not qualify." },
+          { kind: "paragraph", text: "A losing or flat finish can qualify after a sustained window. A trade that remains profitable produces this giveback statement only when its final return is no more than half of the qualifying tier. For example, a 30% window followed by a 27% finish stays silent, while a 30% window followed by a 7% finish can be stated factually without calling either decision good or bad." },
+          { kind: "paragraph", text: "After a partial exit or add, the continuous window restarts for the changed position. If a profitable partial exit occurred before a later qualifying window, the card states the realized profit separately from the unrealized opportunity on the open position. The actual final result stays separate from both amounts." },
+          { kind: "paragraph", text: "A completed trade can also state the largest recorded favorable and adverse per-share movement from the first entry until the position was fully closed. For a long it says how far price moved up and down; for a short it makes favorable down movement and adverse up movement explicit. This is an observed price path, not an exit recommendation." },
+          { kind: "paragraph", text: "For one completed trade, the Trade Tracker outcome card may compare one saved reduction with the trade's actual later exit prices. It shows an avoided additional loss only when the exact reduced shares can be carried through every later recorded exit without an intervening add or ambiguous allocation. The comparison is gross, before fees: TradersLink does not invent the fee that a larger later fill might have had. When that allocation cannot be proved, the card says the exact later-exit comparison is unavailable." },
+          { kind: "paragraph", text: "If neither the sustained profit/risk sequence nor the saved 30-minute final-exit review supports a meaningful conclusion, the card says so and keeps the collected trade data available under View more. It does not manufacture feedback from ordinary volatility." },
           { kind: "callout", title: "Comparison, not proof", text: "The rows show what happened in the saved samples. They do not prove the add or partial exit caused the result and do not prescribe an exit strategy." },
         ],
       },
@@ -324,8 +330,8 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   },
   {
     slug: "candle-patterns",
-    title: "Candle patterns",
-    description: "Learn every supported pattern, its confirmation rule and how long-term pattern comparisons are counted.",
+    title: "Candle setups",
+    description: "See the completed candle shapes that appeared around your recorded entries and exits.",
     sections: [
       {
         id: "pattern-summary",
@@ -473,8 +479,8 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   },
   {
     slug: "analyzed-trades",
-    title: "Analyzed trades",
-    description: "Find every current candle-backed trade analysis and open its exact Daily Trade Tracker review.",
+    title: "Your analyzed trades",
+    description: "Find the recorded trades behind these results and open each exact Daily Trade Tracker review.",
     sections: [
       {
         id: "filters",
@@ -496,9 +502,11 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Entry time / Exit time", "First entry and final exit in the selected account's trading timezone."],
             ["Gross or Net result", "Actual saved trade result under the selected basis."],
             ["Return", "Percentage result when a supported denominator is available."],
+            ["First review: 30 minutes after final exit", "For a long trade, shows whether price rose after the sale; for a short trade, whether price fell after the cover. The row uses the saved 30-minute post-exit observation only. It says unavailable when that observation is not saved and does not substitute a later 60-minute update."],
             ["Executions", "Number of saved entry, add, partial-exit and final-exit snapshots."],
             ["View full analysis", "Opens the exact Daily Trade Tracker trade and focuses its saved analysis."],
           ] },
+          { kind: "paragraph", text: "A positive per-share amount is the favorable movement recorded after the final exit. A zero result means price did not move beyond the final-exit price in that favorable direction. A negative result means the saved 30-minute high for a long sale remained below the sell price, or the saved 30-minute low for a short cover remained above the cover price." },
           { kind: "paragraph", text: "The directory intentionally keeps Green-to-red opportunity, capture and reversal columns off this page. Open the full analysis for entry, exit, pattern and Green-to-red context, or use the Green-to-red page for those cross-trade comparisons." },
           { kind: "paragraph", text: "On a phone, swipe the contained table sideways to read every column without shrinking it into unreadable text." },
         ],

@@ -97,6 +97,14 @@ import {
 import { areTraderLinkPlatformAiFeaturesEnabled } from
   "@/src/modules/platform/contracts/platform-ai-launch-state";
 import { DashboardAppearanceSwitch } from "./dashboard-appearance-switch";
+import { InstallTradersLinkPwaMethods } from "./pwa/install-traderslink-pwa-card";
+import {
+  loadWorkspaceTradeEntryContext,
+} from "./(dashboard)/workspace/workspace-trade-library-actions";
+import { WorkspaceTradeDrawer } from "./(dashboard)/workspace/workspace-trade-library-client";
+import {
+  TRADERLINK_OPEN_WORKSPACE_TRADE_DRAWER_EVENT,
+} from "./(dashboard)/workspace/workspace-trade-drawer-events";
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
@@ -178,6 +186,7 @@ function NavigationLink({
   offline,
   item,
   onNavigate,
+  onOpenTradeDrawer,
   onOpenAiChat,
   pathname,
   unreadCount = 0,
@@ -187,11 +196,13 @@ function NavigationLink({
   offline: boolean;
   item: DashboardNavigationItem;
   onNavigate: () => void;
+  onOpenTradeDrawer: () => void;
   onOpenAiChat: () => void;
   pathname: string;
   unreadCount?: number;
 }) {
   const opensAiChat = aiFeaturesEnabled && !offline && item.href === "/ai-chat";
+  const opensTradeDrawer = !offline && item.href === "/quick-trade-entry";
   const link = (
     <ListItemButton
       aria-current={isActive(pathname, item.href) ? "page" : undefined}
@@ -208,6 +219,11 @@ function NavigationLink({
         if (opensAiChat) {
           event.preventDefault();
           onOpenAiChat();
+          return;
+        }
+        if (opensTradeDrawer) {
+          event.preventDefault();
+          onOpenTradeDrawer();
           return;
         }
         onNavigate();
@@ -386,6 +402,7 @@ export function DashboardShell({
   const [aiChatContext, setAiChatContext] = useState<CoachAiDailyCompanionContextSelector | null>(null);
   const [aiChatSuggestedQuestion, setAiChatSuggestedQuestion] = useState<string | null>(null);
   const [aiChatContextRequestId, setAiChatContextRequestId] = useState(0);
+  const [workspaceTradeContext, setWorkspaceTradeContext] = useState<Awaited<ReturnType<typeof loadWorkspaceTradeEntryContext>> | null>(null);
   const [accountMenuAnchor, setAccountMenuAnchor] = useState<HTMLElement | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<
     Readonly<Partial<Record<DashboardNavigationGroup["id"], boolean>>>
@@ -433,6 +450,12 @@ export function DashboardShell({
     if (offline) return;
     setMarketHaltAlertsOpen(true);
   };
+  const openWorkspaceTradeDrawer = async () => {
+    closeMobile();
+    if (offline) return;
+    const context = await loadWorkspaceTradeEntryContext();
+    if (context.ok) setWorkspaceTradeContext(context);
+  };
 
   useEffect(() => {
     let restoreFrame: number | undefined;
@@ -451,6 +474,12 @@ export function DashboardShell({
   }, []);
 
   useEffect(() => {
+    const openFromDashboard = () => { void openWorkspaceTradeDrawer(); };
+    window.addEventListener(TRADERLINK_OPEN_WORKSPACE_TRADE_DRAWER_EVENT, openFromDashboard);
+    return () => window.removeEventListener(TRADERLINK_OPEN_WORKSPACE_TRADE_DRAWER_EVENT, openFromDashboard);
+  }, [offline]);
+
+  useEffect(() => {
     const url = new URL(window.location.href);
     const ticker = url.searchParams.get("muteHaltTicker");
     if (!ticker || offline) return;
@@ -459,6 +488,14 @@ export function DashboardShell({
     setNotificationMuteHaltTicker(ticker);
     setMarketHaltAlertsOpen(true);
   }, [offline]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (pathname !== "/workspace" || url.searchParams.get("tradeDrawer") !== "add") return;
+    url.searchParams.delete("tradeDrawer");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    void openWorkspaceTradeDrawer();
+  }, [pathname, offline]);
 
   useEffect(() => {
     const openFromDashboard = (event: Event) => {
@@ -497,7 +534,7 @@ export function DashboardShell({
                   alt="TradersLink"
                   height={35}
                   priority
-                  src="/logo-horizontal-light.png"
+                  src={theme.palette.mode === "dark" ? "/logo-horizontal-dark.png" : "/logo-horizontal-light.png"}
                   style={{
                     display: "block",
                     height: 35,
@@ -534,6 +571,7 @@ export function DashboardShell({
               offline={offline}
               item={DASHBOARD_HOME_ITEM}
               onNavigate={closeMobile}
+              onOpenTradeDrawer={openWorkspaceTradeDrawer}
               onOpenAiChat={openAiChat}
               pathname={pathname}
             />
@@ -634,6 +672,7 @@ export function DashboardShell({
                           offline={offline}
                           item={item}
                           onNavigate={closeMobile}
+                          onOpenTradeDrawer={openWorkspaceTradeDrawer}
                           onOpenAiChat={openAiChat}
                           pathname={pathname}
                           unreadCount={pressReleaseUnreadCount(
@@ -660,14 +699,8 @@ export function DashboardShell({
         </Box>
         <Stack spacing={0.5} sx={{ px: compact ? 1 : 2, py: 1 }}>
           <DashboardAppearanceSwitch compact={compact} />
+          <InstallTradersLinkPwaMethods compact={compact} />
         </Stack>
-        {compact ? null : (
-          <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography color="text.secondary" variant="caption">
-              TradersLink v1
-            </Typography>
-          </Box>
-        )}
       </Stack>
     );
   };
@@ -933,6 +966,20 @@ export function DashboardShell({
           {children}
         </Box>
       </Box>
+      {workspaceTradeContext?.ok ? (
+        <WorkspaceTradeDrawer
+          accountCurrency={workspaceTradeContext.accountCurrency}
+          accountTimezone={workspaceTradeContext.accountTimezone}
+          addOpen
+          currentAccountStillMatches={async () => true}
+          detail={null}
+          expectedAccountSelectionRef={workspaceTradeContext.expectedAccountSelectionRef}
+          offlineScopeRef={workspaceTradeContext.offlineScopeRef}
+          onAddTradeSaved={() => window.location.reload()}
+          onClose={() => setWorkspaceTradeContext(null)}
+          startingTab={0}
+        />
+      ) : null}
       {offline ? null : (
         <Drawer
           anchor="right"

@@ -1355,3 +1355,58 @@ Stop the affected implementation or operation if:
 - Automatic global promotion of user mappings.
 - Automatic reprocessing after a new format release.
 - Physical legacy cleanup, Git publication, deployment or DNS changes.
+
+## 2026-08-31 — isolated staging member-access bootstrap
+
+The existing Dashboard member-access setting remains the sole member-access
+control. Its migration seeds the setting **off** and this slice does not change
+that default, its page, action, repository, authorization policy, OAuth
+callback, schema, migration manifest, or any hosted configuration.
+
+An isolated staging database can legitimately have no active
+`journal_owner_admin` grant. In that state `/admin/journal/system` correctly
+fails before the existing setting can render. The approved staging-only source
+support is therefore two closed console paths, not a web or identity bypass:
+
+- `admin:journal:initial-owner-discord-link` accepts only `--preview`, or
+  `--execute` with the prior preview digest and the exact confirmation text. It
+  resolves the protected configured initial-owner Discord subject internally,
+  prints neither that subject nor a Platform user id, and requires fresh
+  backup/restore evidence before it can link the one seeded owner identity.
+- `admin:journal:operator` retains its existing explicit-user mode and adds
+  only `--target=configured-initial-owner` for a **grant**. That closed selector
+  resolves the already-linked protected configured subject internally; it never
+  accepts or prints a target UUID. The existing active-user, one-active-Discord
+  identity, singleton-grant, schema/manifest, preview-digest, confirmation,
+  backup/restore, transaction, and audit checks remain the grant authority.
+
+The separately authorized one-time Railway staging procedure is: freeze the
+isolated staging writer and take a fresh verified backup/restore; preview then
+execute the initial link; restart and perform a fresh exact Discord server-owner
+sign-in; freeze again and take a new verified backup/restore; preview then
+execute the closed-selector grant; restart; then let that owner explicitly
+enable the existing Dashboard member-access setting. The setting remains off
+until this final audited setting write, after which the existing membership gate
+admits verified configured-server members.
+
+The standalone scripts cannot safely infer staging from `NODE_ENV`, because the
+hosted environments use the same production runtime mode. The dedicated
+`Dockerfile.staging-journal-admin-bootstrap` helper is a separate one-shot
+image, never the normal app image or the migration-maintenance image. Its fixed
+entrypoint accepts only the four closed link/grant preview/execute forms above,
+requires `RAILWAY_ENVIRONMENT_NAME=staging`, requires the exact
+`/data/traderlink-platform.sqlite` database path, and refuses a symlinked,
+missing, or incorrectly owned `/data` volume. It runs as the normal app UID/GID
+`1001`, never repairs ownership, exposes no port, and starts no Next server.
+
+Railway project/volume selection, writer freeze, helper attachment, backup
+handling, command execution, owner sign-in, and the final setting write remain
+Coordinator-held external authority. The Coordinator must verify the selected
+isolated staging environment and `/data` volume in the control plane before
+each use; source code cannot protect against a control-plane administrator
+attaching a helper to production while falsifying deployment inputs. No source
+slice executes any of those actions. The current admin authorizer records
+Discord owner state but does not enforce the documented five-minute freshness
+value; require an immediate fresh owner sign-in for this staging procedure.
+Freshness enforcement is a separate authorization correction and is not claimed
+by this slice.

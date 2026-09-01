@@ -1,24 +1,8 @@
 # Workspace semantic reconciliation progress
 
-**Status:** Owner-accepted staging source in guarded production integration; shared drawer composition approved.
+**Status:** Local implementation in progress on the current production parent; shared drawer composition approved.
 
 **Controlling plan:** [Workspace Semantic Reconciliation Plan](workspace-semantic-reconciliation-plan.md)
-
-## 2026-09-01 — Production integration
-
-- [x] Owner verified the staging table Delete removes the eligible closed trade
-  and shows the factual merge/delete notices.
-- [x] Preserved the staging-approved `Closed trades` metric label and the
-  cents-only drawer correction, which reopens `3.44` as `3.44`.
-- [x] Excluded the superseded `Confirm update` label; Add Trade success-flow
-  redesign remains a separate owner-directed slice.
-- [x] Excluded unrelated Analyzer, Dark, Halt, Admin, authentication, and
-  other historical staging work from the production integration.
-- [x] Created the four guarded production migration carriers. Existing
-  production history ends in `0103`/`0104`, so the Workspace schema entries
-  are appended as orders 105–108 with unchanged migration IDs and SQL.
-- [ ] Apply each carrier through the backup/restore-verified maintenance path,
-  then publish the final Workspace runtime and verify production health.
 
 ## Approved legacy-slice reconciliation (in progress)
 

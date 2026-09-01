@@ -161,6 +161,7 @@ export type DaySessionTradeAnalyzer = {
     observedAt: number | null;
   }>;
   greenToRed: import("@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts").DailyTradeGreenToRedAnalysis;
+  profitProtection?: import("@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts").DailyTradeProfitProtectionOutcome;
   status: "ready" | "no_coverage" | "provider_unavailable" | "expired" | "pending" | "execution_mismatch";
 };
 

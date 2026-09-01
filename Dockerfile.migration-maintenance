@@ -1,0 +1,15 @@
+FROM node:24-bookworm-slim
+
+ENV NEXT_TELEMETRY_DISABLED=1
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install --yes --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+COPY . .
+
+CMD ["./node_modules/.bin/tsx", "src/scripts/run-hosted-platform-migration-maintenance.ts"]

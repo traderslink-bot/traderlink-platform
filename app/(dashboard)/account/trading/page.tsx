@@ -1,5 +1,6 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
@@ -90,7 +91,7 @@ export default async function AccountTradingPage({
       title="General"
     >
       <DashboardPanel
-        action={<DashboardAccountSwitcher accounts={profile.journalAccounts} />}
+        action={<Stack direction={{ xs: "column", sm: "row" }} spacing={1}><Button href="/data-decisions" variant="outlined">Data Decisions</Button><DashboardAccountSwitcher accounts={profile.journalAccounts} /></Stack>}
         title="Trade Tracker accounts"
       >
         <Stack spacing={1.5}>

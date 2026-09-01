@@ -2,6 +2,34 @@
 
 **Plan:** [Trade Analyzer Analysis Pages Plan](trade-analyzer-analysis-pages-plan.md)
 
+**Plain-language presentation:** [Trade Analyzer Plain-Language Insights Progress](trade-analyzer-plain-language-insights-progress.md)
+
+**Final-exit follow-through:** The plain-language evidence table now exposes
+only the persisted 30-minute final-exit observation per trade. Long trades say
+whether price rose after the sale and short trades say whether price fell after
+the cover; zero, adverse and unavailable observations remain explicit. A later
+60-minute reconciliation is not substituted for this first-review fact.
+
+**Single-trade factual outcome review:** [Single-Trade Factual Outcome
+Presentation Plan](single-trade-factual-outcome-presentation-plan.md) and its
+[progress record](single-trade-factual-outcome-presentation-progress.md) now
+hold the owner-reviewable direct-copy contract. No application source is part
+of that review checkpoint.
+
+**Profit-protection card-first review:** [Trade Analyzer Profit-Protection
+Presentation Plan](trade-analyzer-profit-protection-presentation-plan.md) and
+its [progress record](trade-analyzer-profit-protection-presentation-progress.md)
+make the Trade Tracker card a hard owner-approval gate before any further
+Trade Analyzer results-page implementation.
+
+Raw first-green, first-red and recovery timestamps remain detailed historical
+evidence, but repeated microcap crossings no longer create main-card sentences.
+
+The fixed microcap gates apply only to the single-trade feedback sentence.
+Future long-term analysis uses continuous stored peak, duration,
+realized/open-position, final-result and exact avoided-loss facts, with a
+separately defined population and visible sample count for every aggregate.
+
 ## Current checkpoint - 2026-08-09
 
 - [x] Owner approved separating Trade Analyzer from generic historical

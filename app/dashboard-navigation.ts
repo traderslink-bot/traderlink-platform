@@ -71,7 +71,7 @@ export function isDashboardNavigationItem(
 }
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "stockTools" | "tradeRecords";
+  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "stockTools";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationGroupItem[];
@@ -103,13 +103,8 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "tradingDay" as const,
         }),
         Object.freeze({
-          href: "/trade-tracker/swings",
-          label: "Swing Trade Tracker",
-          icon: "swing" as const,
-        }),
-        Object.freeze({
           href: "/quick-trade-entry",
-          label: "Quick Trade Entry",
+          label: "Add/Edit Trade",
           icon: "manualEntry" as const,
         }),
       ]),
@@ -133,6 +128,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           href: "/analytics/trade-explorer/compare",
           label: "Compare Trades",
           icon: "compareArrows" as const,
+        }),
+        Object.freeze({
+          href: "/trades/open",
+          label: "Open Positions",
+          icon: "openPositions" as const,
         }),
       ]),
     }),
@@ -166,31 +166,31 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/entry-exit",
-          label: "Entry & Exit",
+          label: "Entries and exits",
           icon: "entryExit" as const,
           depth: 2 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/mfe-mae",
-          label: "MFE & MAE",
+          label: "Room after entry",
           icon: "mfeMae" as const,
           depth: 2 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/green-to-red",
-          label: "Green-to-Red",
+          label: "Giving back profit",
           icon: "greenToRed" as const,
           depth: 2 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/candle-patterns",
-          label: "Candle Patterns",
+          label: "Candle setups",
           icon: "marketCharts" as const,
           depth: 2 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/trades",
-          label: "Analyzed Trades",
+          label: "Your analyzed trades",
           icon: "trades" as const,
           depth: 2 as const,
         }),
@@ -257,16 +257,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", icon: "newspaper" as const }),
       ]),
     }),
-    Object.freeze({
-      id: "tradeRecords" as const,
-      label: "Trade Records",
-      icon: "data" as const,
-      items: Object.freeze([
-        Object.freeze({ href: "/trades/open", label: "Open Positions", icon: "openPositions" as const }),
-        Object.freeze({ href: "/imports", label: "Import Trades", icon: "import" as const }),
-        Object.freeze({ href: "/data-decisions", label: "Data Decisions", icon: "data" as const }),
-      ]),
-    }),
   ]);
 
 // Kept for dashboard-template compatibility. Scanner and Market Charts now live
@@ -292,7 +282,6 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[6] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7] }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[8] }),
   ]);
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
@@ -314,11 +303,11 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/execution": "Trade Breakdown",
     "/analytics/trade-analysis": "Day Trade Analysis",
     "/analytics/trade-analyzer/day": "Day Trade Analysis",
-    "/analytics/trade-analyzer/day/entry-exit": "Entry & Exit",
-    "/analytics/trade-analyzer/day/mfe-mae": "MFE & MAE",
-    "/analytics/trade-analyzer/day/green-to-red": "Green-to-Red",
-    "/analytics/trade-analyzer/day/candle-patterns": "Candle Patterns",
-    "/analytics/trade-analyzer/day/trades": "Analyzed Trades",
+    "/analytics/trade-analyzer/day/entry-exit": "Entries and exits",
+    "/analytics/trade-analyzer/day/mfe-mae": "Room after entry",
+    "/analytics/trade-analyzer/day/green-to-red": "Giving back profit",
+    "/analytics/trade-analyzer/day/candle-patterns": "Candle setups",
+    "/analytics/trade-analyzer/day/trades": "Your analyzed trades",
     "/analytics/trade-explorer": "Trade Explorer",
     "/analytics/trade-explorer/compare": "Compare Trades",
     "/charts": "Market Charts",
@@ -355,11 +344,11 @@ export type DashboardHelpTarget = Readonly<{
 
 const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: string }>[] =
   Object.freeze([
-    Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle Patterns" }),
-    Object.freeze({ route: "/analytics/trade-analyzer/day/green-to-red", href: "/help/trade-analyzer/green-to-red-analysis", label: "Green-to-Red" }),
-    Object.freeze({ route: "/analytics/trade-analyzer/day/entry-exit", href: "/help/trade-analyzer/entry-exit-analysis", label: "Entry & Exit" }),
-    Object.freeze({ route: "/analytics/trade-analyzer/day/mfe-mae", href: "/help/trade-analyzer/mfe-mae", label: "MFE & MAE" }),
-    Object.freeze({ route: "/analytics/trade-analyzer/day/trades", href: "/help/trade-analyzer/analyzed-trades", label: "Analyzed Trades" }),
+    Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle setups" }),
+    Object.freeze({ route: "/analytics/trade-analyzer/day/green-to-red", href: "/help/trade-analyzer/green-to-red-analysis", label: "Giving back profit" }),
+    Object.freeze({ route: "/analytics/trade-analyzer/day/entry-exit", href: "/help/trade-analyzer/entry-exit-analysis", label: "Entries and exits" }),
+    Object.freeze({ route: "/analytics/trade-analyzer/day/mfe-mae", href: "/help/trade-analyzer/mfe-mae", label: "Room after entry" }),
+    Object.freeze({ route: "/analytics/trade-analyzer/day/trades", href: "/help/trade-analyzer/analyzed-trades", label: "Your analyzed trades" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day", href: "/help/trade-analyzer/day-trade-analysis", label: "Day Trade Analysis" }),
     Object.freeze({ route: "/analytics/trade-analysis", href: "/help/trade-analyzer/day-trade-analysis", label: "Day Trade Analysis" }),
     Object.freeze({ route: "/analytics/trade-explorer/compare", href: "/help/trade-explorer", label: "Compare Trades" }),
