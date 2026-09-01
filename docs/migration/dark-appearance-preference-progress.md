@@ -123,3 +123,11 @@
   Press Release / News Scanner page description now preserve their exact Light
   semantic colors and resolve to `text.primary` in Dark. The Week Ahead has no
   title-adjacent page description, so its existing content is unchanged.
+- [x] Correct the Daily Trade Analyzer's control layer without changing its
+  intentionally Light plotting surface: timeframe/range controls, both zoom
+  groups, the mobile Candle patterns control, Display and Fullscreen now use a
+  deliberate Dark secondary surface with readable text, hover, selected and
+  disabled states in Dark only. The disabled AI Reviews and AI Chat coming-soon
+  description reuses the shared appearance text leaf. The existing parent
+  already routed Demo labels and body copy through that same leaf, so its
+  clear-demo label and workspace paragraph require no duplicate source edit.

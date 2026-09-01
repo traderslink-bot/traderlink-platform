@@ -413,6 +413,7 @@ export function DailyTradeAnalyzerChart({
   const chartTheme = theme.palette.mode === "dark"
     ? DARK_ANALYZER_LIGHT_CHART_THEME
     : theme.palette.traderLink.chart;
+  const usesDarkChartControls = theme.palette.mode === "dark";
   const annotationAppearance = LIGHT_ANALYZER_ANNOTATION_APPEARANCE;
   const chartSemanticColors = LIGHT_ANALYZER_SEMANTIC_COLORS;
   const chartPatternColors = LIGHT_PATTERN_COLORS;
@@ -865,21 +866,32 @@ export function DailyTradeAnalyzerChart({
           }}
           size="small"
           sx={{
-            bgcolor: "rgba(255,255,255,0.96)",
+            bgcolor: usesDarkChartControls ? theme.palette.secondary.main : "rgba(255,255,255,0.96)",
+            border: usesDarkChartControls ? 1 : 0,
+            borderColor: usesDarkChartControls ? theme.palette.secondary.main : undefined,
             height: { xs: 44, md: 28 },
             pointerEvents: "auto",
             "& .MuiToggleButton-root": {
-              borderColor: chartTheme.controlBorder,
-              color: chartTheme.controlText,
+              borderColor: usesDarkChartControls ? theme.palette.secondary.main : chartTheme.controlBorder,
+              color: usesDarkChartControls ? theme.palette.text.primary : chartTheme.controlText,
               fontSize: { xs: 12, md: "0.66rem" },
               fontWeight: 850,
               minWidth: { xs: 40, md: 34 },
               px: 0.65,
               py: 0.25,
+              "&:hover": usesDarkChartControls ? {
+                bgcolor: theme.palette.action.hover,
+                borderColor: theme.palette.secondary.main,
+              } : undefined,
+              "&.Mui-disabled": usesDarkChartControls ? {
+                bgcolor: theme.palette.action.disabledBackground,
+                borderColor: theme.palette.action.disabledBackground,
+                color: theme.palette.action.disabled,
+              } : undefined,
             },
             "& .Mui-selected": {
-              bgcolor: "primary.main !important",
-              color: "primary.contrastText !important",
+              bgcolor: usesDarkChartControls ? `${theme.palette.primary.main} !important` : "primary.main !important",
+              color: usesDarkChartControls ? `${theme.palette.primary.contrastText} !important` : "primary.contrastText !important",
             },
           }}
           value={chartInterval}
@@ -889,8 +901,8 @@ export function DailyTradeAnalyzerChart({
           ))}
         </ToggleButtonGroup>
         <ChartZoomControls
-          actionColor={theme.palette.primary.main}
-          actionHoverColor={chartTheme.actionHover}
+          actionColor={usesDarkChartControls ? theme.palette.secondary.main : theme.palette.primary.main}
+          actionHoverColor={usesDarkChartControls ? theme.palette.action.hover : chartTheme.actionHover}
           mobile={false}
           onZoomIn={() => zoomFromControl(CHART_ZOOM_IN_FACTOR)}
           onZoomOut={() => zoomFromControl(CHART_ZOOM_OUT_FACTOR)}
@@ -957,10 +969,11 @@ export function DailyTradeAnalyzerChart({
             onClick={() => setMobilePatternKeyOpen((open) => !open)}
             sx={{
               alignItems: "center",
-              bgcolor: "rgba(255,255,255,0.96)",
+              bgcolor: usesDarkChartControls ? theme.palette.secondary.main : "rgba(255,255,255,0.96)",
               border: 1,
-              borderColor: chartTheme.controlBorder,
+              borderColor: usesDarkChartControls ? theme.palette.secondary.main : chartTheme.controlBorder,
               borderRadius: 1,
+              color: usesDarkChartControls ? theme.palette.text.primary : chartTheme.text,
               display: { xs: "flex", md: "none" },
               fontSize: 12,
               fontWeight: 850,
@@ -972,6 +985,8 @@ export function DailyTradeAnalyzerChart({
               right: 8,
               top: 52,
               zIndex: 5,
+              "&:hover": usesDarkChartControls ? { bgcolor: theme.palette.action.hover } : undefined,
+              "&:focus-visible": usesDarkChartControls ? { outline: `2px solid ${theme.palette.primary.light}`, outlineOffset: 2 } : undefined,
             }}
             type="button"
           >
@@ -1012,8 +1027,8 @@ export function DailyTradeAnalyzerChart({
         </>
       ) : null}
       <ChartZoomControls
-        actionColor={theme.palette.primary.main}
-        actionHoverColor={chartTheme.actionHover}
+        actionColor={usesDarkChartControls ? theme.palette.secondary.main : theme.palette.primary.main}
+        actionHoverColor={usesDarkChartControls ? theme.palette.action.hover : chartTheme.actionHover}
         mobile
         onZoomIn={() => zoomFromControl(CHART_ZOOM_IN_FACTOR)}
         onZoomOut={() => zoomFromControl(CHART_ZOOM_OUT_FACTOR)}
@@ -1137,7 +1152,29 @@ export function DailyTradeAnalyzerChart({
           size="small"
           sx={{
             width: { xs: "100%", md: "auto" },
+            ...(usesDarkChartControls ? {
+              bgcolor: theme.palette.secondary.main,
+              border: 1,
+              borderColor: theme.palette.secondary.main,
+            } : {}),
             "& .MuiToggleButton-root": {
+              ...(usesDarkChartControls ? {
+                borderColor: theme.palette.secondary.main,
+                color: theme.palette.text.primary,
+                "&:hover": {
+                  bgcolor: theme.palette.action.hover,
+                  borderColor: theme.palette.secondary.main,
+                },
+                "&.Mui-selected": {
+                  bgcolor: `${theme.palette.primary.main} !important`,
+                  color: `${theme.palette.primary.contrastText} !important`,
+                },
+                "&.Mui-disabled": {
+                  bgcolor: theme.palette.action.disabledBackground,
+                  borderColor: theme.palette.action.disabledBackground,
+                  color: theme.palette.action.disabled,
+                },
+              } : {}),
               flex: { xs: 1, md: "initial" },
               fontWeight: 800,
               minHeight: { xs: 44, md: 32 },
@@ -1155,7 +1192,16 @@ export function DailyTradeAnalyzerChart({
           aria-haspopup="menu"
           onClick={(event) => setDisplayMenuAnchor(event.currentTarget)}
           size="small"
-          sx={{ minHeight: { xs: 44, md: 32 } }}
+          sx={{
+            minHeight: { xs: 44, md: 32 },
+            ...(usesDarkChartControls ? {
+              bgcolor: theme.palette.secondary.main,
+              borderColor: theme.palette.secondary.main,
+              color: theme.palette.text.primary,
+              "&:hover": { bgcolor: theme.palette.action.hover, borderColor: theme.palette.secondary.main },
+              "&.Mui-disabled": { bgcolor: theme.palette.action.disabledBackground, borderColor: theme.palette.action.disabledBackground, color: theme.palette.action.disabled },
+            } : {}),
+          }}
           variant="outlined"
         >
           Display
@@ -1163,7 +1209,16 @@ export function DailyTradeAnalyzerChart({
         <Button
           onClick={toggleFullscreen}
           size="small"
-          sx={{ minHeight: { xs: 44, md: 32 } }}
+          sx={{
+            minHeight: { xs: 44, md: 32 },
+            ...(usesDarkChartControls ? {
+              bgcolor: theme.palette.secondary.main,
+              borderColor: theme.palette.secondary.main,
+              color: theme.palette.text.primary,
+              "&:hover": { bgcolor: theme.palette.action.hover, borderColor: theme.palette.secondary.main },
+              "&.Mui-disabled": { bgcolor: theme.palette.action.disabledBackground, borderColor: theme.palette.action.disabledBackground, color: theme.palette.action.disabled },
+            } : {}),
+          }}
           variant="outlined"
         >
           {isFullscreen ? "Exit fullscreen" : "Fullscreen"}

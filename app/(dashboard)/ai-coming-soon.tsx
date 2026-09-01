@@ -3,6 +3,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { AiComingSoonMessage } from "./ai-coming-soon-message";
+import { DashboardAppearanceText } from "./dashboard-appearance-text";
 import {
   DashboardPage,
 } from "../dashboard-template";
@@ -27,13 +28,13 @@ export function AiComingSoonPage({
           </Typography>
           <Chip color="primary" label="Coming soon" size="small" variant="outlined" />
         </Stack>
-        <Typography
-          color="text.secondary"
+        <DashboardAppearanceText
+          lightColor="text.secondary"
           sx={{ maxWidth: 760 }}
           variant="body2"
         >
           {description}
-        </Typography>
+        </DashboardAppearanceText>
       </Stack>
       <AiComingSoonMessage />
     </DashboardPage>
