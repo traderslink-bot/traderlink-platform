@@ -7,7 +7,7 @@ import { readWhopAiReviewConfigurationHealth, readWhopAiReviewCustomerUrls } fro
 import { isWhopAiReviewEntitlementSchemaAvailable, WhopAiReviewEntitlementRepository } from "@/src/modules/platform/server/billing/whop-ai-review-entitlement-repository";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { AccountSettingsLayout } from "../account-settings-layout";
-import { AiComingSoonMessage } from "../../ai-coming-soon";
+import { AiComingSoonMessage } from "../../ai-coming-soon-message";
 import { AiReviewFrequencySettings } from "../ai-review-delivery-settings";
 import { AiReviewSubscriptionStatus } from "../ai-review-subscription-status";
 import { areTraderLinkPlatformAiFeaturesEnabled } from

@@ -89,3 +89,8 @@
   introductions: the `/rules` explanatory block and `/rules/results` facts
   sentence now inherit `text.primary` only in Dark mode. Their Light-mode
   foregrounds, copy and Rules behavior remain unchanged.
+- [x] Keep the disabled `/account/ai` Coming soon block as a client theme-token
+  leaf, so its exact title and free-beta message resolve to the active
+  `text.primary` foreground in both appearances. This preserves the approved
+  Light output while making the isolated-staging Dark foreground white without
+  changing the accepted toggle, logo or Rules surfaces.

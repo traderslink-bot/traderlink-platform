@@ -2,24 +2,10 @@ import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import { AiComingSoonMessage } from "./ai-coming-soon-message";
 import {
   DashboardPage,
 } from "../dashboard-template";
-
-export const AI_COMING_SOON_MESSAGE = "This feature is not part of the free beta yet. You can use Trade Tracker, your Journal, Calendar, Trading Rules and Analytics now.";
-
-export function AiComingSoonMessage() {
-  return (
-    <Stack spacing={0.75}>
-      <Typography color="text.primary" sx={{ fontWeight: 700 }}>
-        Coming soon
-      </Typography>
-      <Typography color="text.primary" variant="body2">
-        {AI_COMING_SOON_MESSAGE}
-      </Typography>
-    </Stack>
-  );
-}
 
 export function AiComingSoonPage({
   description,
