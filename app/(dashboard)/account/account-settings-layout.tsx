@@ -90,8 +90,25 @@ export function AccountSettingsLayout({
         >
           Account Settings
         </Typography>
-        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">{title}</Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 760, mt: 1 }} variant="body2">
+        <Typography
+          component="h1"
+          sx={{
+            color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined,
+            mt: 0.5,
+          }}
+          variant="h1"
+        >
+          {title}
+        </Typography>
+        <Typography
+          color="text.secondary"
+          sx={{
+            color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined,
+            maxWidth: 760,
+            mt: 1,
+          }}
+          variant="body2"
+        >
           {description}
         </Typography>
       </Box>

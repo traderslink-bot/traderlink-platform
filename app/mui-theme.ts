@@ -122,7 +122,12 @@ export function createTraderMaterialTheme(appearance: PlatformAppearance) {
     shape: { borderRadius: 12 },
     typography: {
       fontFamily: "var(--font-geist-sans), Arial, Helvetica, sans-serif",
-      h1: { fontSize: "1.75rem", fontWeight: 720, letterSpacing: "-0.025em" },
+      h1: {
+        color: dark ? "#ffffff" : undefined,
+        fontSize: "1.75rem",
+        fontWeight: 720,
+        letterSpacing: "-0.025em",
+      },
       h2: { fontSize: "1.25rem", fontWeight: 700, letterSpacing: "-0.015em" },
       h3: { fontSize: "1rem", fontWeight: 700 },
       subtitle1: { fontWeight: 650 },

@@ -45,9 +45,11 @@ the shared Material theme rather than page-specific dark CSS.
 3. Dashboard shell, cards, controls, drawers, dialogs, tables and Material
    component overrides consume shared palette tokens. The shell gets its app
    bar and navigation tokens from the same theme. The persistent desktop
-   sidebar and mobile navigation drawer each include the same keyboard-accessible
-   Light/Dark control at the bottom; it calls the authorized preference action
-   already used by Account Settings, where the Appearance control remains.
+   sidebar and mobile navigation drawer each include the same compact 44px
+   hit-area sun/moon two-state toggle with a 44px by 22px visible track directly
+   above the existing Install TradersLink app action.
+   It visibly indicates the active mode, calls the authorized preference action
+   already used by Account Settings, and keeps that Appearance control available.
 4. The existing opaque, partitioned PWA device state carries the resolved mode
    for the currently authorized offline partition. It is not a global browser
    preference and is removed with that partition.
@@ -60,8 +62,10 @@ the shared Material theme rather than page-specific dark CSS.
   configuration, Railway action, applied migration, or Journal fact change.
 - No page-local dark-mode stylesheet where a shared Material token can express
   the approved result.
-- No server, browser, full build, Vitest, broad test suite, dependency install,
-  push, deployment, or release claim in this source-only task.
+- No local server, full build, Vitest, broad test suite, dependency install,
+  push, deployment, or release claim in this source-only task. Browser
+  verification occurs only against a Coordinator-deployed isolated staging
+  candidate.
 
 ## Acceptance record
 
