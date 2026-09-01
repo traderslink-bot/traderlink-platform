@@ -484,3 +484,21 @@
   action, build, test suite, commit, or push ran.
 - The Workspace correction allowlist now explicitly includes the narrow
   round-trip repository repair. No owner-visible UI behavior changed.
+
+## 2026-08-31 — whole-trade Delete action
+
+- The Workspace table now receives a server-issued trade delete reference only
+  when every current allocated execution of that active round trip remains
+  safely deletable under the existing manual-only rules. Mixed, provider,
+  imported, demo, reconciled, stale, cross-account and protected trades expose
+  no table Delete action.
+- The table confirmation names the whole trade and its execution count. Its one
+  request revalidates the selection, opaque reference, complete allocation set
+  and every current version before excluding all eligible executions in one
+  transaction. Any failed member rolls back the complete deletion.
+- The saved-trade detail keeps its existing per-execution Delete control. No
+  entry form, import/provider path, reconciliation policy, migration, schema,
+  hosted configuration or data action changed.
+- Focused source coverage was added for the all-or-nothing server contract;
+  no test command, server, build, migration, staging, deployment, push or data
+  operation was run in this implementation checkpoint.

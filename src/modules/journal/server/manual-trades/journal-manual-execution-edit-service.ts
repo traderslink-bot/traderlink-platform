@@ -41,6 +41,14 @@ export type JournalEditableManualExecution = Readonly<{
   feesDecimal: string | null;
 }>;
 
+type JournalTradeDeletionCandidate = Readonly<{
+  deleteRef: string;
+  executions: readonly Readonly<{
+    currentVersionId: string;
+    executionId: string;
+  }>[];
+}>;
+
 function localParts(sourceTimestampText: string): Readonly<{
   date: string;
   time: string;
@@ -77,6 +85,54 @@ export class JournalManualExecutionEditService {
       executionId,
       currentVersionId,
     ]));
+  }
+
+  private tradeDeletionCandidate(
+    scope: AccountScope,
+    roundTripId: string,
+  ): JournalTradeDeletionCandidate | null {
+    const executions = this.reconciliations.listCurrentRoundTripExecutions(
+      scope.workspaceId,
+      scope.accountId,
+      roundTripId,
+    );
+    if (
+      executions.length === 0 ||
+      executions.some((execution) => !this.reconciliations
+        .isSafelyDeletableManualExecution(
+          scope.workspaceId,
+          scope.accountId,
+          execution.executionId,
+          execution.currentVersionId,
+        ))
+    ) {
+      return null;
+    }
+    return Object.freeze({
+      deleteRef: this.authority.opaqueRef("group", JSON.stringify([
+        "workspace-trade-delete-v1",
+        scope.workspaceId,
+        scope.accountId,
+        roundTripId,
+        executions.map((execution) => [
+          execution.executionId,
+          execution.currentVersionId,
+        ]),
+      ])),
+      executions,
+    });
+  }
+
+  listTradeDeleteRefs(
+    scope: AccountScope,
+    roundTripIds: readonly string[],
+  ): ReadonlyMap<string, string> {
+    const refs = new Map<string, string>();
+    for (const roundTripId of [...new Set(roundTripIds)]) {
+      const candidate = this.tradeDeletionCandidate(scope, roundTripId);
+      if (candidate) refs.set(roundTripId, candidate.deleteRef);
+    }
+    return refs;
   }
 
   listEditable(
@@ -285,6 +341,59 @@ export class JournalManualExecutionEditService {
     }
     return Object.freeze({
       executionVersionId: exclusion.executionVersionId,
+      openedFollowupDecisionIds: exclusion.openedFollowupDecisionIds,
+      rebuildCount: exclusion.rebuildCount,
+      analysisRefresh: Object.freeze({
+        affectedTradeCount: affectedRoundTripIds.length,
+        queuedTradeCount: queuedRoundTripIds.length,
+      }),
+    });
+  }
+
+  removeTrade(
+    scope: AccountScope,
+    roundTripId: string,
+    tradeDeleteRef: string,
+    input: Readonly<{
+      idempotencyKey: string;
+      now?: Date;
+    }>,
+  ) {
+    if (
+      !/^[0-9a-f]{64}$/u.test(tradeDeleteRef) ||
+      input.idempotencyKey.length < 16 ||
+      input.idempotencyKey.length > 128
+    ) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_INVALID");
+    }
+    const candidate = this.tradeDeletionCandidate(scope, roundTripId);
+    if (!candidate || candidate.deleteRef !== tradeDeleteRef) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
+    }
+    const exclusion = this.decisions.excludeManualExecutions(scope, {
+      executions: candidate.executions,
+      idempotencyKey: input.idempotencyKey,
+      now: input.now,
+    });
+    const affectedRoundTripIds = Object.freeze([
+      ...new Set(
+        exclusion.rebuilds
+          .filter((rebuild) => rebuild.status === "rebuilt")
+          .flatMap((rebuild) => rebuild.roundTripIds),
+      ),
+    ]);
+    let queuedRoundTripIds: readonly string[] = Object.freeze([]);
+    try {
+      queuedRoundTripIds = this.dailyTradeAnalyzer?.queueAfterJournalRebuild(
+        scope,
+        affectedRoundTripIds,
+      ) ?? Object.freeze([]);
+    } catch {
+      // Journal exclusion is already committed; Analyzer availability cannot
+      // turn that successful fact correction into a reported failure.
+    }
+    return Object.freeze({
+      deletedExecutionCount: exclusion.removedExecutionCount,
       openedFollowupDecisionIds: exclusion.openedFollowupDecisionIds,
       rebuildCount: exclusion.rebuildCount,
       analysisRefresh: Object.freeze({

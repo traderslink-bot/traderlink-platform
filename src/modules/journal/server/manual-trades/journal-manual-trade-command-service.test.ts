@@ -421,6 +421,34 @@ FROM journal_round_trips WHERE lifecycle_state = 'active'`).get()).toEqual({
       )).toThrow();
       expect(context.database.prepare(`SELECT COUNT(*) AS count
 FROM journal_execution_versions`).get()).toEqual({ count: 3 });
+      const tradeDeleteRef = context.manualExecutionEdits.listTradeDeleteRefs(
+        context.accountScope,
+        [roundTrip.round_trip_id],
+      ).get(roundTrip.round_trip_id);
+      expect(tradeDeleteRef).toMatch(/^[0-9a-f]{64}$/u);
+      expect(() => context.manualExecutionEdits.removeTrade(
+        context.otherAccountScope,
+        roundTrip.round_trip_id,
+        tradeDeleteRef!,
+        { idempotencyKey: "manual-trade-delete-other-account-01" },
+      )).toThrow();
+      const deletion = context.manualExecutionEdits.removeTrade(
+        context.accountScope,
+        roundTrip.round_trip_id,
+        tradeDeleteRef!,
+        { idempotencyKey: "manual-trade-delete-all-executions-01" },
+      );
+      expect(deletion.deletedExecutionCount).toBe(2);
+      expect(context.database.prepare(`SELECT COUNT(*) AS count
+FROM journal_round_trips WHERE lifecycle_state = 'active'`).get()).toEqual({
+        count: 0,
+      });
+      expect(context.database.prepare(`SELECT current_state, COUNT(*) AS count
+FROM journal_executions
+GROUP BY current_state
+ORDER BY current_state`).all()).toEqual([
+        { count: 2, current_state: "excluded_by_trader" },
+      ]);
     } finally {
       context.database.close();
     }

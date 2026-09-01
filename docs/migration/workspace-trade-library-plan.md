@@ -359,3 +359,22 @@ mutations.
   and the existing account/query/revision binding.
 - Exact tooltip text is deferred for owner approval. No new hover copy may be
   added before the label-to-tooltip inventory is accepted.
+
+## 2026-08-31 — whole-trade deletion
+
+The Workspace table Delete action is a whole-trade action. It is rendered only
+when the server reads a non-empty current allocation set for that exact active
+round trip and every underlying execution is currently eligible for the
+existing safe manual-execution deletion contract. The server issues one opaque
+trade delete reference bound to the workspace, account, round trip and every
+current execution/version pair. A rendered row identifier is only a lookup;
+the opaque reference plus fresh server-side account, allocation, version and
+eligibility checks remain the authority.
+
+One DELETE request must remove every verified execution in one immediate
+transaction. Any stale, imported, provider-backed, demo, reconciled,
+cross-account, unresolved or otherwise protected execution rejects the full
+request and rolls back the whole trade deletion. The ledger rebuilds within
+that transaction and the affected Analyzer work queues only after it succeeds.
+The existing per-execution edit/delete controls inside the saved-trade detail
+remain unchanged.

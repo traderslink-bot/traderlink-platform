@@ -886,6 +886,59 @@ export class JournalDataDecisionService {
     });
   }
 
+  excludeManualExecutions(
+    scope: AccountScope,
+    input: Readonly<{
+      executions: readonly Readonly<{
+        executionId: string;
+        expectedCurrentVersionId: string;
+      }>[];
+      idempotencyKey: string;
+      now?: Date;
+    }>,
+  ): Readonly<{
+    openedFollowupDecisionIds: readonly string[];
+    rebuilds: readonly JournalChainRebuildResult[];
+    rebuildCount: number;
+    removedExecutionCount: number;
+  }> {
+    if (
+      input.idempotencyKey.length < 16 ||
+      input.idempotencyKey.length > 128 ||
+      input.executions.length === 0 ||
+      new Set(input.executions.map((execution) => execution.executionId)).size !==
+        input.executions.length
+    ) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_INVALID");
+    }
+    const executions = [...input.executions].sort((left, right) =>
+      left.executionId.localeCompare(right.executionId));
+    return this.decisions.immediate(() => {
+      const results = executions.map((execution) => this.excludeManualExecution(
+        scope,
+        {
+          executionId: execution.executionId,
+          expectedCurrentVersionId: execution.expectedCurrentVersionId,
+          idempotencyKey: sha256(JSON.stringify([
+            "workspace-trade-delete-v1",
+            input.idempotencyKey,
+            execution.executionId,
+            execution.expectedCurrentVersionId,
+          ])),
+          now: input.now,
+        },
+      ));
+      return Object.freeze({
+        openedFollowupDecisionIds: Object.freeze([
+          ...new Set(results.flatMap((result) => result.openedFollowupDecisionIds)),
+        ]),
+        rebuilds: Object.freeze(results.flatMap((result) => result.rebuilds)),
+        rebuildCount: results.reduce((count, result) => count + result.rebuildCount, 0),
+        removedExecutionCount: results.length,
+      });
+    });
+  }
+
   resolve(
     scope: AccountScope,
     input: JournalDecisionResolution,

@@ -31,6 +31,7 @@ export type WorkspaceTradeLibraryRow = Readonly<{
   roundTripId: string;
   status: "Open" | "Open swing" | "Closed" | "Closed swing";
   symbol: string;
+  tradeDeleteRef: string | null;
   tradeStyle: "day_trade" | "swing" | "other" | null;
   tradeCurrency: string;
 }>;
@@ -266,6 +267,18 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
   return new Map([...result.entries()].map(([key, value]) => [key, Object.freeze(value)]));
 }
 
+function tradeDeleteRefs(
+  scope: WorkspaceAccessScope,
+  rows: readonly ProjectionRow[],
+): ReadonlyMap<string, string> {
+  if (rows.length === 0) return new Map();
+  return withReadonlyJournalIntegrityRuntime(scope, (journal) =>
+    journal.manualExecutionEdits.listTradeDeleteRefs(
+      journal.tradeStyles.accountScope(scope),
+      rows.map((row) => row.round_trip_id),
+    ));
+}
+
 function executionFacts(
   database: Database.Database,
   scope: WorkspaceAccessScope,
@@ -324,6 +337,7 @@ function toWorkspaceTradeLibraryRows(
 ): readonly WorkspaceTradeLibraryRow[] {
   const editable = editableExecutions(database, scope, rows);
   const facts = executionFacts(database, scope, rows);
+  const deletes = tradeDeleteRefs(scope, rows);
   return Object.freeze(rows.map((row) => Object.freeze({
     buyQuantityDecimal: facts.get(row.round_trip_version_id)?.buyQuantityDecimal ?? "0",
     date: row.activity_local_date,
@@ -345,6 +359,7 @@ function toWorkspaceTradeLibraryRows(
       ? row.trade_style === "swing" ? "Open swing" : "Open"
       : row.trade_style === "swing" ? "Closed swing" : "Closed",
     symbol: row.symbol,
+    tradeDeleteRef: deletes.get(row.round_trip_id) ?? null,
     tradeStyle: row.trade_style,
     tradeCurrency: row.trade_currency,
   })));
