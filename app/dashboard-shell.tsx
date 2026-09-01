@@ -698,7 +698,7 @@ export function DashboardShell({
           </List>
         </Box>
         <Stack spacing={0.5} sx={{ px: compact ? 1 : 2, py: 1 }}>
-          <DashboardAppearanceSwitch />
+          <DashboardAppearanceSwitch compact={compact} />
           <InstallTradersLinkPwaMethods compact={compact} />
         </Stack>
         {compact ? null : (
