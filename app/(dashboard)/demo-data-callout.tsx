@@ -238,7 +238,7 @@ export function DemoDataCallout({
   if (variant === "compact") {
     return (
       <Stack spacing={0.75} sx={{ alignItems: "flex-start" }}>
-        <Typography sx={{ color: demoHeadingColor, fontWeight: 800 }} variant="body2">
+        <Typography color={demoHeadingColor} sx={{ fontWeight: 800 }} variant="body2">
           Viewing demo data
         </Typography>
         <ClearDemoDataAction expectedAccountSelectionRef={expectedAccountSelectionRef} />
@@ -257,16 +257,16 @@ export function DemoDataCallout({
       }}
     >
       <Stack spacing={1.25} sx={{ alignItems: "flex-start" }}>
-        <Typography component="h2" sx={{ color: demoHeadingColor, fontWeight: 850 }} variant="h5">
+        <Typography color={demoHeadingColor} component="h2" sx={{ fontWeight: 850 }} variant="h5">
           Viewing Demo Data
         </Typography>
-        <Typography sx={{ color: demoBodyColor }} variant="body2">
+        <Typography color={demoBodyColor} variant="body2">
           Your account has been preloaded with demo data so you can explore the dashboard and see how everything looks with real trading activity.
         </Typography>
-        <Typography sx={{ color: demoBodyColor }} variant="body2">
+        <Typography color={demoBodyColor} variant="body2">
           Take a tour, explore the features, and get familiar with the platform. When you&apos;re ready, you can start adding your own trades.
         </Typography>
-        <Typography sx={{ color: demoBodyColor }} variant="body2">
+        <Typography color={demoBodyColor} variant="body2">
           Ready to start tracking your own journey? Use the Daily Trade Tracker to record trades, review your performance, and learn from every decision.
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
