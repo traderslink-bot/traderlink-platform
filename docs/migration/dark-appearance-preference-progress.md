@@ -136,3 +136,11 @@
   the Workspace Demo heading and each explanatory paragraph now read the
   active palette directly. Dark resolves these exact rendered elements to
   `text.primary`; Light retains the red heading and primary body hierarchy.
+- [x] Replace the disabled AI routes' fragile foreground indirection with
+  server-safe direct `sx.color` rendering from the healthy production base.
+  `/ai-reviews` and `/ai-chat` retain their existing title and free-beta
+  message without a client hook in the shared server composition. The existing
+  client Demo callout now applies direct `sx.color` to its compact label,
+  Workspace heading and three explanatory paragraphs. `/account/ai` retains
+  its already client-safe Account Settings composition. The AI sidebar group
+  and header action are removed while all three routes remain available.

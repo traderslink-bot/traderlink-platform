@@ -1,6 +1,3 @@
-import { areTraderLinkPlatformAiFeaturesEnabled } from
-  "@/src/modules/platform/contracts/platform-ai-launch-state";
-
 export type DashboardNavigationIconKey =
   | "admin"
   | "account"
@@ -50,10 +47,6 @@ export type DashboardNavigationItem = Readonly<{
   statusLabel?: "Coming soon";
 }>;
 
-const aiStatusLabel = areTraderLinkPlatformAiFeaturesEnabled()
-  ? undefined
-  : "Coming soon" as const;
-
 export type DashboardNavigationDrawerItem = Readonly<{
   id: "marketHaltAlerts";
   label: string;
@@ -71,7 +64,7 @@ export function isDashboardNavigationItem(
 }
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "stockTools";
+  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "stockTools";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationGroupItem[];
@@ -224,15 +217,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       ]),
     }),
     Object.freeze({
-      id: "ai" as const,
-      label: "AI",
-      icon: "aiChat" as const,
-      items: Object.freeze([
-        Object.freeze({ href: "/ai-chat", label: "Links AI Chat", icon: "aiChat" as const, statusLabel: aiStatusLabel }),
-        Object.freeze({ href: "/ai-reviews", label: "AI Reviews", icon: "aiReviews" as const, statusLabel: aiStatusLabel }),
-      ]),
-    }),
-    Object.freeze({
       id: "stockTools" as const,
       label: "Stock Tools",
       icon: "marketCharts" as const,
@@ -281,7 +265,6 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[4] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[6] }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7] }),
   ]);
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =

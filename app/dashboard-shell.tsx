@@ -784,58 +784,6 @@ export function DashboardShell({
           ) : null}
           <Box sx={{ flexGrow: 1 }} />
           <CrispDashboardSupportChat />
-          <Button
-            aria-controls={aiFeaturesEnabled && aiChatOpen ? "ai-chat-drawer" : undefined}
-            aria-expanded={aiFeaturesEnabled ? aiChatOpen : undefined}
-            aria-haspopup={aiFeaturesEnabled ? "dialog" : undefined}
-            aria-label={aiFeaturesEnabled
-              ? offline ? "Links AI Chat requires an internet connection" : "Open Links AI Chat"
-              : "AI features coming soon"}
-            component={aiFeaturesEnabled ? "button" : Link}
-            disabled={aiFeaturesEnabled && offline}
-            href={aiFeaturesEnabled ? undefined : "/ai-chat"}
-            onClick={aiFeaturesEnabled ? openAiChat : undefined}
-            prefetch={aiFeaturesEnabled ? undefined : false}
-            startIcon={(
-              <Box
-                component="span"
-                sx={{
-                  alignItems: "center",
-                  bgcolor: "primary.main",
-                  borderRadius: 1,
-                  color: "primary.contrastText",
-                  display: "inline-flex",
-                  height: 24,
-                  justifyContent: "center",
-                  width: 24,
-                }}
-              >
-                <SmartToyOutlinedIcon sx={{ fontSize: 18 }} />
-              </Box>
-            )}
-            sx={{
-              bgcolor: "background.paper",
-              borderColor: "primary.main",
-              color: "primary.main",
-              flexShrink: 0,
-              fontWeight: 800,
-              minHeight: 44,
-              minWidth: 56,
-              px: 0.5,
-              whiteSpace: "nowrap",
-              "& .MuiButton-startIcon": {
-                ml: 0,
-                mr: 0.25,
-              },
-              "&:hover": {
-                bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.hover : "rgba(1, 30, 86, 0.04)",
-                borderColor: "primary.dark",
-              },
-            }}
-            variant="outlined"
-          >
-            AI
-          </Button>
           <NotificationCenter notifications={notifications} />
           <Tooltip title={helpLabel}>
             <IconButton
