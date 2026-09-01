@@ -45,10 +45,10 @@ the shared Material theme rather than page-specific dark CSS.
 3. Dashboard shell, cards, controls, drawers, dialogs, tables and Material
    component overrides consume shared palette tokens. The shell gets its app
    bar and navigation tokens from the same theme. The persistent desktop
-   sidebar and mobile navigation drawer each include the same compact standard
-   MUI Switch directly above the existing Install TradersLink app action. Its
-   visible track is smaller than the default while the interactive target stays
-   44px, and it has no visible Light/Dark label or sun/moon glyphs.
+   sidebar and mobile navigation drawer each include the normal MUI Switch
+   directly above the existing Install TradersLink app action. A visible
+   `Light mode` or `Dark mode` label states the current result; the control has
+   no icon glyphs or custom track/thumb travel geometry.
    It visibly indicates the active mode, calls the authorized preference action
    already used by Account Settings, and keeps that Appearance control available.
 4. The existing opaque, partitioned PWA device state carries the resolved mode
