@@ -108,10 +108,10 @@
   behavior remain unchanged.
 - [x] Keep the Daily Trade Analyzer canvas intentionally Light inside the
   otherwise Dark dashboard: its Dark-mode rendering uses a white surface,
-  restrained light-gray grid, dark axis and overlay text, Light-equivalent
-  candle/indicator/pattern/annotation colors and focused static contract
-  proof. The surrounding page, cards, drawer and every other chart remain
-  Dark-mode surfaces.
+  no horizontal or vertical plotting grid, dark axis and overlay text,
+  Light-equivalent candle/indicator/pattern/annotation colors and focused
+  static contract proof. The surrounding page, cards, drawer and every other
+  chart remain Dark-mode surfaces.
 - [x] Use one Dark-aware heading token in the shared Demo data callout. The
   compact selected-Demo-account indicator is therefore white on every
   dashboard route, and the Workspace callout title is white with its existing

@@ -447,10 +447,10 @@ export function DailyTradeAnalyzerChart({
       },
       height: 420,
       layout: { background: { color: chartTheme.background }, textColor: chartTheme.text },
-      grid: {
-        horzLines: { color: chartTheme.grid },
-        vertLines: { color: chartTheme.grid },
-      },
+      grid: theme.palette.mode === "dark" ? {
+        horzLines: { visible: false },
+        vertLines: { visible: false },
+      } : undefined,
       rightPriceScale: { borderColor: chartTheme.grid },
       timeScale: {
         borderColor: chartTheme.grid,
