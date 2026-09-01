@@ -17,6 +17,10 @@ import {
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
+import {
+  journalScopeCurrentDate,
+  readJournalDemoScopeClock,
+} from "@/src/modules/journal/server/demo/journal-demo-scope-clock";
 import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 
 import {
@@ -37,19 +41,6 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const DESIGN_PREVIEW_SESSION_DATE = "2026-07-28";
-const DEMO_TRADE_TRACKER_LAST_DAY = "2026-08-27";
-
-function currentDateInTimezone(timezone: string): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: timezone,
-    year: "numeric",
-  }).formatToParts(new Date());
-  const part = (type: "day" | "month" | "year") =>
-    parts.find((candidate) => candidate.type === type)?.value ?? "";
-  return `${part("year")}-${part("month")}-${part("day")}`;
-}
 
 export default async function TradeTrackerPage({
   searchParams,
@@ -70,8 +61,10 @@ export default async function TradeTrackerPage({
 
   const scope = await requireTraderLinkPlatformPageScope();
   const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
+  const demoClock = readJournalDemoScopeClock(scope);
   if (onboardingStatus.activeAccountIsDemo) {
-    redirect(`/trade-tracker/${DEMO_TRADE_TRACKER_LAST_DAY}`);
+    if (!demoClock) throw new Error("TRADERLINK_DEMO_CLOCK_UNAVAILABLE");
+    redirect(`/trade-tracker/${demoClock.today}`);
   }
   const showFirstExecutionCallout = query.gettingStarted === "daily-entry" &&
     !onboardingStatus.activeAccountIsDemo &&
@@ -84,13 +77,12 @@ export default async function TradeTrackerPage({
   const account = getReplacementTradeTrackerAccount(scope);
   const moomooMarketDataAccess = withReadonlyPlatformDatabase({}, (database) =>
     readMoomooMarketDataAccess(database, scope));
-  const utcDate = new Date().toISOString().slice(0, 10);
-  const reportingDate = demoAccountSelectionRef ? DEMO_TRADE_TRACKER_LAST_DAY : utcDate;
+  const reportingDate = journalScopeCurrentDate(demoClock, "UTC");
   const initialData = await getReplacementReportingDaySession(scope, {
     date: reportingDate,
   });
   const accountTimezone = account?.tradingTimezone ?? initialData?.timezone ?? "UTC";
-  const currentDate = demoAccountSelectionRef ? DEMO_TRADE_TRACKER_LAST_DAY : currentDateInTimezone(accountTimezone);
+  const currentDate = journalScopeCurrentDate(demoClock, accountTimezone);
   const data = currentDate === reportingDate
     ? initialData
     : await getReplacementReportingDaySession(scope, {

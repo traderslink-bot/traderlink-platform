@@ -12,6 +12,10 @@ import { emptyCalendarData, withCalendarDataRuntime } from "./calendar-data";
 import {
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {
+  journalScopeCurrentWeek,
+  readJournalDemoScopeClock,
+} from "@/src/modules/journal/server/demo/journal-demo-scope-clock";
 import type {
   CalendarDirectionFilter,
   CalendarData,
@@ -60,17 +64,6 @@ function weekStart(date: string): string {
   return value.toISOString().slice(0, 10);
 }
 
-function currentWeekInTimezone(timezone: string | null): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: timezone ?? "America/New_York",
-    year: "numeric",
-  }).formatToParts(new Date());
-  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return weekStart(`${byType.year}-${byType.month}-${byType.day}`);
-}
-
 function weekEnd(week: string): string {
   const value = new Date(`${week}T12:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + 4);
@@ -99,10 +92,12 @@ function filters(search: Record<string, string | string[] | undefined>): Calenda
 function calendarNavigationOptions(
   catalogData: CalendarData,
   query: Record<string, string | string[] | undefined>,
+  currentWeek: string,
 ): Readonly<{
   availableMonths: readonly string[];
   availableWeekOptions: readonly CalendarWeekOption[];
   availableWeeks: readonly string[];
+  currentWeek: string;
   selectedMonth: string;
   selectedWeek: string;
 }> {
@@ -110,7 +105,6 @@ function calendarNavigationOptions(
     .filter((day) => day.tradeCount > 0)
     .map((day) => day.date);
   const activityMonths = [...new Set(activityDates.map((date) => date.slice(0, 7)))];
-  const currentWeek = currentWeekInTimezone(catalogData.timezone);
   const availableMonths = [...new Set([...activityMonths, currentWeek.slice(0, 7)])].sort();
   const availableWeeks = [...new Set([...activityDates.map(weekStart), currentWeek])].sort();
   const availableWeekOptions: readonly CalendarWeekOption[] = availableWeeks.map((week) => Object.freeze({
@@ -128,6 +122,7 @@ function calendarNavigationOptions(
     availableMonths,
     availableWeekOptions,
     availableWeeks,
+    currentWeek,
     selectedMonth: requestedMonth && availableMonths.includes(requestedMonth)
       ? requestedMonth
       : activityMonths.at(-1) ?? currentWeek.slice(0, 7),
@@ -147,20 +142,30 @@ export default async function CalendarPage({
   const reviewLayout = process.env.NODE_ENV !== "production" && value(query.review) === "layout";
   const initialView: CalendarView = value(query.view) === "week" ? "week" : "month";
   const scope = await requireTraderLinkPlatformPageScope();
+  const demoClock = readJournalDemoScopeClock(scope);
   const calendar = reviewLayout
     ? (() => {
-      const navigation = calendarNavigationOptions(emptyCalendarData(), query);
+      const navigation = calendarNavigationOptions(
+        emptyCalendarData(),
+        query,
+        journalScopeCurrentWeek(demoClock, "America/New_York"),
+      );
       return Object.freeze({
         ...navigation,
         initialData: emptyCalendarData(),
       });
     })()
     : await withCalendarDataRuntime(scope, (read) => {
-      const navigation = calendarNavigationOptions(read({
+      const catalog = read({
         ...selectedFilters,
         endDate: "",
         startDate: "",
-      }), query);
+      });
+      const navigation = calendarNavigationOptions(
+        catalog,
+        query,
+        journalScopeCurrentWeek(demoClock, catalog.timezone ?? "America/New_York"),
+      );
       return Object.freeze({
         ...navigation,
         initialData: read(initialView === "month"
@@ -180,6 +185,7 @@ export default async function CalendarPage({
     availableMonths,
     availableWeekOptions,
     availableWeeks,
+    currentWeek,
     initialData,
     selectedMonth,
     selectedWeek,
@@ -224,6 +230,7 @@ export default async function CalendarPage({
       availableMonths={availableMonths}
       availableWeeks={availableWeeks}
       availableWeekOptions={availableWeekOptions}
+      currentWeek={currentWeek}
       initialData={initialData}
       initialFilters={initialFilters}
       initialView={initialView}

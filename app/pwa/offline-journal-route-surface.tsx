@@ -112,6 +112,7 @@ export function OfflineJournalRouteSurface({
         availableMonths={model.availableMonths}
         availableWeekOptions={model.availableWeekOptions}
         availableWeeks={model.availableWeeks}
+        currentWeek={model.selectedWeek}
         initialData={model.initialData}
         initialFilters={model.initialFilters}
         initialView={model.initialView}

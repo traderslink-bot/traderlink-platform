@@ -4,6 +4,8 @@
 
 **Controlling plan:** [Demo Trade Data Plan](demo-trade-data-plan.md)
 
+**Fixed Demo clock:** [Demo Fixed Clock Progress](demo-fixed-clock-progress.md)
+
 ## Accepted product decisions
 
 - [x] A genuinely new empty workspace receives one isolated Demo Trade Tracker.

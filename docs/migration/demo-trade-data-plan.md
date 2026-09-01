@@ -4,6 +4,8 @@
 
 **Progress:** [Demo Trade Data Progress](demo-trade-data-progress.md)
 
+**Fixed Demo clock progress:** [Demo Fixed Clock Progress](demo-fixed-clock-progress.md)
+
 ## Outcome
 
 A genuinely new TraderLink user receives one isolated **Demo Trade Tracker**

@@ -14,6 +14,10 @@ import {
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
+import {
+  journalScopeCurrentDate,
+  readJournalDemoScopeClock,
+} from "@/src/modules/journal/server/demo/journal-demo-scope-clock";
 import { DashboardPage, DashboardUnavailableState } from "../../../dashboard-template";
 import { ManualExecutionEntry } from "../manual-execution-entry";
 import {
@@ -30,18 +34,6 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-function currentDateInTimezone(timezone: string): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: timezone,
-    year: "numeric",
-  }).formatToParts(new Date());
-  const part = (type: "day" | "month" | "year") =>
-    parts.find((candidate) => candidate.type === type)?.value ?? "";
-  return `${part("year")}-${part("month")}-${part("day")}`;
-}
 
 function initialSymbol(value: string | undefined): string {
   const normalized = value?.trim().toUpperCase() ?? "";
@@ -72,7 +64,10 @@ export default async function SwingTradeTrackerPage({
     );
   }
   const query = await searchParams;
-  const reviewDate = currentDateInTimezone(account.tradingTimezone);
+  const reviewDate = journalScopeCurrentDate(
+    readJournalDemoScopeClock(scope),
+    account.tradingTimezone,
+  );
   const positions = getReplacementSwingTrackerPositions(scope, reviewDate);
   const detail = (positionRef: string) =>
     getReplacementSwingPositionDetail(scope, positionRef, reviewDate);

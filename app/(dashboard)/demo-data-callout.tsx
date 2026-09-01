@@ -261,7 +261,7 @@ export function DemoDataCallout({
           Viewing Demo Data
         </Typography>
         <Typography sx={{ color: demoBodyColor }} variant="body2">
-          Your account has been preloaded with demo data so you can explore the dashboard and see how everything looks with real trading activity.
+          Your account has been preloaded with demo data so you can explore the dashboard and see how everything looks with real trading activity. Demo account is permanently set to Aug 17th
         </Typography>
         <Typography sx={{ color: demoBodyColor }} variant="body2">
           Take a tour, explore the features, and get familiar with the platform. When you&apos;re ready, you can start adding your own trades.

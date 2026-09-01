@@ -137,17 +137,6 @@ function weekLabel(weekKey: string): string {
   return `${format.format(start)} - ${format.format(end)}`;
 }
 
-function currentWeekInTimezone(timezone: string | null): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: timezone ?? "America/New_York",
-    year: "numeric",
-  }).formatToParts(new Date());
-  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return weekStart(`${byType.year}-${byType.month}-${byType.day}`);
-}
-
 function emptyDay(date: string): CalendarDay {
   return {
     date,
@@ -667,6 +656,7 @@ export function CalendarClient({
   availableMonths,
   availableWeeks,
   availableWeekOptions = [],
+  currentWeek,
   initialData,
   initialFilters,
   initialView,
@@ -677,6 +667,7 @@ export function CalendarClient({
   availableMonths: readonly string[];
   availableWeeks: readonly string[];
   availableWeekOptions: readonly CalendarWeekOption[];
+  currentWeek: string;
   initialData: CalendarData;
   initialFilters: CalendarFilterInput;
   initialView: CalendarView;
@@ -740,7 +731,7 @@ export function CalendarClient({
   ]));
   const monthGrid = buildMonthGrid(activeMonth, initialData.days);
   const weekDays = buildWeek(selectedWeek, initialData.days);
-  const showingCurrentWeek = selectedWeek === currentWeekInTimezone(initialData.timezone);
+  const showingCurrentWeek = selectedWeek === currentWeek;
   const activeFilterCount = [
     filters.direction,
     filters.performance,

@@ -75,6 +75,7 @@ export function readWorkspaceReviewSummary(
   scope: WorkspaceAccessScope,
   now = new Date(),
   dashboard?: Pick<JournalDashboardReadModelService, "getTradingDay">,
+  currentDateOverride?: string,
 ): WorkspaceReviewSummary {
   const accountId = scope.activeAccountId;
   if (!accountId || !scope.allowedAccountIds.includes(accountId)) {
@@ -87,7 +88,7 @@ export function readWorkspaceReviewSummary(
   );
   const rules = annotations.listRules(account);
   const ruleNames = new Map(rules.map((rule) => [rule.ruleId, rule.title]));
-  const currentDate = easternTradingDate(now);
+  const currentDate = currentDateOverride ?? easternTradingDate(now);
   const currentFocuses = annotations.readCurrentFocus(account, currentDate).trim() || null;
   const focusRules = Object.freeze(rules
     .filter((rule) => rule.lifecycleState === "active" && rule.isFocus)

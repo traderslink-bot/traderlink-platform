@@ -31,6 +31,7 @@ import {
   readJournalFirstExecutionOnboardingStatus,
   readJournalFirstExecutionOnboardingStatusFromDatabase,
 } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
+import { readJournalDemoScopeClockFromDatabase } from "@/src/modules/journal/server/demo/journal-demo-scope-clock";
 import {
   MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE,
   MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE,
@@ -63,9 +64,13 @@ function localDate(timeZone: string): string {
   return `${read("year")}-${read("month")}-${read("day")}`;
 }
 
-function periodDates(period: WorkspacePeriod, timeZone: string): Readonly<{ endDate: string | null; startDate: string | null }> {
+function periodDates(
+  period: WorkspacePeriod,
+  timeZone: string,
+  currentDate?: string,
+): Readonly<{ endDate: string | null; startDate: string | null }> {
   if (period === "all") return Object.freeze({ endDate: null, startDate: null });
-  const endDate = localDate(timeZone);
+  const endDate = currentDate ?? localDate(timeZone);
   if (period === "today") return Object.freeze({ endDate, startDate: endDate });
   if (period === "month") return Object.freeze({ endDate, startDate: `${endDate.slice(0, 8)}01` });
   const date = new Date(`${endDate}T12:00:00Z`);
@@ -102,6 +107,7 @@ export default async function WorkspacePage({
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
   const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, response, reviewSummary, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, service }) => {
+      const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
 SELECT base_currency, trading_timezone
 FROM journal_accounts
@@ -109,7 +115,11 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
           scope.workspaceId,
           scope.activeAccountId,
         ) as Readonly<{ base_currency: string; trading_timezone: string }> | undefined;
-      const periodDateRange = periodDates(period, account?.trading_timezone ?? "UTC");
+      const periodDateRange = periodDates(
+        period,
+        account?.trading_timezone ?? "UTC",
+        demoClock?.today,
+      );
       const customRangeValid = Boolean(
         queryParameters.startDate && queryParameters.endDate &&
         /^\d{4}-\d{2}-\d{2}$/u.test(queryParameters.startDate) &&
@@ -134,7 +144,13 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         periodEndDate: periodDateRange.endDate,
         periodStartDate: periodDateRange.startDate,
         response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
-        reviewSummary: readWorkspaceReviewSummary(database, scope, new Date(), dashboard),
+        reviewSummary: readWorkspaceReviewSummary(
+          database,
+          scope,
+          new Date(),
+          dashboard,
+          demoClock?.today,
+        ),
         tradeLibrary: readWorkspaceTradeLibrary(database, scope, {
           afterCursor: null, endDate: dates.endDate, filter, followDashboardPeriod: false,
           group, searchTicker: queryParameters.searchTicker ?? "", sort, startDate: dates.startDate,
