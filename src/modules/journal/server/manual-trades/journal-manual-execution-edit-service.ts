@@ -371,7 +371,10 @@ export class JournalManualExecutionEditService {
       platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
     }
     const exclusion = this.decisions.excludeManualExecutions(scope, {
-      executions: candidate.executions,
+      executions: candidate.executions.map((execution) => Object.freeze({
+        executionId: execution.executionId,
+        expectedCurrentVersionId: execution.currentVersionId,
+      })),
       idempotencyKey: input.idempotencyKey,
       now: input.now,
     });
