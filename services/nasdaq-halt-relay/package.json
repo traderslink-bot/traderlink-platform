@@ -1,0 +1,8 @@
+{
+  "name": "traderlink-nasdaq-halt-relay",
+  "private": true,
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "type": "module"
+}
