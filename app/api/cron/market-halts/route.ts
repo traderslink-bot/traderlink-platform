@@ -40,6 +40,7 @@ export async function GET(request: Request): Promise<Response> {
     const unavailableSources = fetched.sources.filter((source) => !source.available);
     for (const source of unavailableSources) {
       console.warn("market_halt_source_unavailable", {
+        failureCode: source.failureCode ?? null,
         httpStatus: source.httpStatus,
         source: source.source,
       });

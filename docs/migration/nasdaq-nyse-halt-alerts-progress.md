@@ -25,4 +25,5 @@
 - [x] Added safe source-only observability to the protected cron response and warning log: exchange name plus HTTP status, or `null` for a network failure. No user, subscription, endpoint, credential or upstream response content is logged.
 - [x] Use Nasdaq's primary official host for the same Trade Halt RSS feed and bound each official-source connection to 15 seconds, after production showed repeated transport failures to the `www` host.
 - [x] Replace the Nasdaq RSS browser-style fetch with one direct IPv4 HTTPS request to the same official feed after the host repair still failed in Railway; NYSE retains its independent existing request.
+- [x] Add privacy-safe connection failure categories (DNS, timeout, TLS or other connection) to the existing source-only scheduler warning so the Railway-side Nasdaq fault can be repaired without logging users, endpoints, credentials or upstream content.
 - [ ] Verify the local checkpoint with focused static checks, then obtain Railway log/device-delivery confirmation before release.
