@@ -54,6 +54,7 @@ export type JournalTradeStyleChange = Readonly<{
     | "day_trade_tracker"
     | "swing_trade_tracker"
     | "open_positions"
-    | "ai_chat";
+    | "ai_chat"
+    | "workspace";
   idempotencyKey: string;
 }>;

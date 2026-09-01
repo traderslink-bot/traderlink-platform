@@ -571,8 +571,8 @@ export function DashboardShell({
               offline={offline}
               item={DASHBOARD_HOME_ITEM}
               onNavigate={closeMobile}
-              onOpenAiChat={openAiChat}
               onOpenTradeDrawer={openWorkspaceTradeDrawer}
+              onOpenAiChat={openAiChat}
               pathname={pathname}
             />
             {sidebarNavigationSections.map((section, sectionIndex) => {
@@ -672,8 +672,8 @@ export function DashboardShell({
                           offline={offline}
                           item={item}
                           onNavigate={closeMobile}
-                          onOpenAiChat={openAiChat}
                           onOpenTradeDrawer={openWorkspaceTradeDrawer}
+                          onOpenAiChat={openAiChat}
                           pathname={pathname}
                           unreadCount={pressReleaseUnreadCount(
                             item.href,
@@ -701,13 +701,6 @@ export function DashboardShell({
           <DashboardAppearanceSwitch compact={compact} />
           <InstallTradersLinkPwaMethods compact={compact} />
         </Stack>
-        {compact ? null : (
-          <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography color="text.secondary" variant="caption">
-              TradersLink v1
-            </Typography>
-          </Box>
-        )}
       </Stack>
     );
   };

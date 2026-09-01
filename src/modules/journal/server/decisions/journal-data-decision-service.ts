@@ -806,6 +806,10 @@ export class JournalDataDecisionService {
     });
   }
 
+  /**
+   * A Workspace removal preserves the execution and its provenance. It is a
+   * resolved trader decision, never a physical delete.
+   */
   excludeManualExecution(
     scope: AccountScope,
     input: Readonly<{

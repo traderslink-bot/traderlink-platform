@@ -977,6 +977,7 @@ export class JournalRoundTripService {
           tradingTimezone, timestamp,
         });
       }
+      this.repository.refreshWorkspaceTradeLibraryProjection(scope, timestamp);
     });
     return Object.freeze({
       status: "rebuilt", rebuildId, chainKeySha256, orderedInputSha256,

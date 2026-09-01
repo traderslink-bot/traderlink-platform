@@ -122,6 +122,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
           ? { endDate: dates.endDate, kind: "inclusive_closing_date", startDate: dates.startDate }
           : { kind: "all_available" },
         metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
+        moneyBasis: "gross",
       });
       return Object.freeze({
         account,

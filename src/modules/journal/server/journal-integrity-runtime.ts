@@ -30,6 +30,7 @@ import { JournalManualTradePreviewService } from "./manual-trades/journal-manual
 import { JournalManualTradeCommandRepository } from "./manual-trades/journal-manual-trade-command-repository";
 import { JournalManualTradeCommandService } from "./manual-trades/journal-manual-trade-command-service";
 import { JournalManualExecutionEditService } from "./manual-trades/journal-manual-execution-edit-service";
+import { JournalWorkspaceTradeEditService } from "./manual-trades/journal-workspace-trade-edit-service";
 import { JournalProductReadService } from "./product/journal-product-read-service";
 import { JournalTradeTrackerReadService } from "./product/journal-trade-tracker-read-service";
 import { JournalExecutionReconciliationRepository } from "./reconciliation/journal-execution-reconciliation-repository";
@@ -52,6 +53,7 @@ export type JournalIntegrityRuntime = Readonly<{
   imports: JournalImportService;
   manualTrades: JournalManualTradeCommandService;
   manualExecutionEdits: JournalManualExecutionEditService;
+  workspaceTradeEdits: JournalWorkspaceTradeEditService;
   manualTradePreviews: JournalManualTradePreviewService;
   reads: JournalProductReadService;
   swingNotes: JournalSwingNoteService;
@@ -116,6 +118,13 @@ export function createJournalIntegrityRuntime(
     new DailyTradeAnalyzerRepository(database),
     new MoomooConnectionRepository(database),
   );
+  const manualExecutionEdits = new JournalManualExecutionEditService(
+    new JournalExecutionReconciliationRepository(database),
+    importRepository,
+    decisions,
+    manualTradeAuthority,
+    dailyTradeAnalyzer,
+  );
   return Object.freeze({
     accounts,
     command: new JournalIntegrityCommandService(
@@ -126,13 +135,7 @@ export function createJournalIntegrityRuntime(
     ),
     decisions,
     imports,
-    manualExecutionEdits: new JournalManualExecutionEditService(
-      new JournalExecutionReconciliationRepository(database),
-      importRepository,
-      decisions,
-      manualTradeAuthority,
-      dailyTradeAnalyzer,
-    ),
+    manualExecutionEdits,
     manualTrades: new JournalManualTradeCommandService(
       new JournalManualTradeCommandRepository(database),
       imports,
@@ -143,6 +146,15 @@ export function createJournalIntegrityRuntime(
       new PlatformNotificationRepository(database),
     ),
     manualTradePreviews,
+    workspaceTradeEdits: new JournalWorkspaceTradeEditService(
+      database,
+      manualExecutionEdits,
+      decisions,
+      imports,
+      roundTrips,
+      tradeStyles,
+      manualTradeAuthority,
+    ),
     reads: new JournalProductReadService(database),
     swingNotes,
     tradeStyles,
