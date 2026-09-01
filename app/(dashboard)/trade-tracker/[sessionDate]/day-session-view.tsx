@@ -8,7 +8,6 @@ import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineR
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
-import Decimal from "decimal.js";
 import {
   Alert,
   Box,
@@ -44,6 +43,7 @@ import {
   DashboardPrimaryAction,
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
+import { DashboardPageDescription } from "../../dashboard-page-description";
 import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
@@ -755,10 +755,6 @@ function percentage(value: string | null): string {
   return `${formatted.startsWith("-") ? "" : "+"}${formatted}%`;
 }
 
-function plainPercentage(value: string): string {
-  return `${formatJournalAnalyticsDecimal(value)}%`;
-}
-
 function shortDayLabel(date: string): string {
   return new Date(`${date}T12:00:00.000Z`).toLocaleDateString("en-US", {
     day: "numeric",
@@ -1359,422 +1355,6 @@ function GreenToRedAnalysis({
   );
 }
 
-function finalExitOutcome(
-  analyzer: DaySessionTradeAnalyzer,
-  currency: string,
-  direction: DaySessionRoundTrip["direction"],
-): string | null {
-  const finalExit = [...analyzer.events].reverse().find((event) => event.kind === "final_exit") ?? null;
-  const firstReview = analyzer.finalExitPaths.find((path) => path.minutesAfterExit === 30) ?? null;
-  if (!finalExit) return null;
-  if (!firstReview || firstReview.favorableMove === null) {
-    return "The 30-minute post-exit observation is unavailable for this trade.";
-  }
-  try {
-    const move = new Decimal(firstReview.favorableMove);
-    const exitPrice = new Decimal(finalExit.price);
-    if (!move.isFinite() || !exitPrice.isFinite()) return null;
-    if (move.isPositive()) {
-      const priceAfterExit = direction === "long" ? exitPrice.plus(move) : exitPrice.minus(move);
-      return direction === "long"
-        ? `You fully exited at ${price(finalExit.price, currency)}. Price reached ${price(priceAfterExit.toFixed(), currency)} within 30 minutes. You left ${price(move.toFixed(), currency)}/share on the table.`
-        : `You fully covered at ${price(finalExit.price, currency)}. Price fell to ${price(priceAfterExit.toFixed(), currency)} within 30 minutes. You left ${price(move.toFixed(), currency)}/share on the table.`;
-    }
-    if (move.isZero()) {
-      return direction === "long"
-        ? `You fully exited at ${price(finalExit.price, currency)}. Price did not trade above your exit price within 30 minutes.`
-        : `You fully covered at ${price(finalExit.price, currency)}. Price did not trade below your cover price within 30 minutes.`;
-    }
-    const priceAfterExit = direction === "long" ? exitPrice.plus(move) : exitPrice.minus(move);
-    return direction === "long"
-      ? `You fully exited at ${price(finalExit.price, currency)}. The highest price within 30 minutes was ${price(priceAfterExit.toFixed(), currency)}, ${price(move.abs().toFixed(), currency)}/share below your exit.`
-      : `You fully covered at ${price(finalExit.price, currency)}. The lowest price within 30 minutes was ${price(priceAfterExit.toFixed(), currency)}, ${price(move.abs().toFixed(), currency)}/share above your cover.`;
-  } catch {
-    return "The 30-minute post-exit observation is unavailable for this trade.";
-  }
-}
-
-type UnrealizedProfitPathSummary = Readonly<{
-  peak: Readonly<{
-    pnlDecimal: string;
-    returnPercentDecimal: string;
-    timeUtcSeconds: number;
-  }> | null;
-  profitOpportunity: Readonly<{
-    continuousMinutes: number;
-    realizedPnlBeforeWindowDecimal: string;
-    thresholdPercent: number;
-  }> | null;
-}>;
-
-const PROFIT_OPPORTUNITY_RULES = Object.freeze([
-  Object.freeze({ minimumMinutes: 3, thresholdPercent: 50 }),
-  Object.freeze({ minimumMinutes: 5, thresholdPercent: 30 }),
-  Object.freeze({ minimumMinutes: 10, thresholdPercent: 20 }),
-  Object.freeze({ minimumMinutes: 15, thresholdPercent: 15 }),
-]);
-
-function unrealizedPnl(
-  averageEntryPrice: Decimal,
-  direction: DaySessionRoundTrip["direction"],
-  markPrice: Decimal,
-  positionQuantity: Decimal,
-): Decimal {
-  const perShare = direction === "long"
-    ? markPrice.minus(averageEntryPrice)
-    : averageEntryPrice.minus(markPrice);
-  return perShare.times(positionQuantity);
-}
-
-function unrealizedProfitPathSummary(
-  analyzer: DaySessionTradeAnalyzer,
-  direction: DaySessionRoundTrip["direction"],
-): UnrealizedProfitPathSummary {
-  const events = [...analyzer.events].sort((left, right) => {
-    const timeDifference = Date.parse(left.executedAt) - Date.parse(right.executedAt);
-    return timeDifference === 0 ? left.sequence - right.sequence : timeDifference;
-  });
-  const candles = [...analyzer.candles].sort((left, right) => left.time - right.time);
-  let candleIndex = 0;
-  let averageEntryPrice: Decimal | null = null;
-  let positionQuantity = new Decimal(0);
-  let realizedPartialPnl = new Decimal(0);
-  let peak: UnrealizedProfitPathSummary["peak"] = null;
-  const currentProfitRuns = PROFIT_OPPORTUNITY_RULES.map(() => 0);
-  const longestProfitRuns = PROFIT_OPPORTUNITY_RULES.map(() => 0);
-  const longestPostScaleProfitRuns = PROFIT_OPPORTUNITY_RULES.map(() => 0);
-  const currentRunRealizedPnl = PROFIT_OPPORTUNITY_RULES.map(() => "0");
-  const bestRunRealizedPnl = PROFIT_OPPORTUNITY_RULES.map(() => "0");
-  const bestPostScaleRunRealizedPnl = PROFIT_OPPORTUNITY_RULES.map(() => "0");
-  let priorCompletedCloseTime: number | null = null;
-
-  const consider = (markPrice: string, timeUtcSeconds: number, completedClose: boolean) => {
-    if (!averageEntryPrice || !positionQuantity.isPositive()) {
-      if (completedClose) {
-        currentProfitRuns.fill(0);
-        priorCompletedCloseTime = timeUtcSeconds;
-      }
-      return;
-    }
-    try {
-      const pnl = unrealizedPnl(
-        averageEntryPrice,
-        direction,
-        new Decimal(markPrice),
-        positionQuantity,
-      );
-      const costBasis = averageEntryPrice.times(positionQuantity);
-      if (!pnl.isFinite() || !costBasis.isPositive()) return;
-      const returnPercent = pnl.dividedBy(costBasis).times(100);
-      if (completedClose) {
-        const consecutive = priorCompletedCloseTime !== null &&
-          timeUtcSeconds - priorCompletedCloseTime === 60;
-        PROFIT_OPPORTUNITY_RULES.forEach((rule, index) => {
-          if (returnPercent.greaterThanOrEqualTo(rule.thresholdPercent)) {
-            if (consecutive && currentProfitRuns[index]! > 0) {
-              currentProfitRuns[index] = currentProfitRuns[index]! + 1;
-            } else {
-              currentProfitRuns[index] = 1;
-              currentRunRealizedPnl[index] = realizedPartialPnl.toFixed();
-            }
-            const priorBestRealized = new Decimal(bestRunRealizedPnl[index]!);
-            const replacesBest = currentProfitRuns[index]! > longestProfitRuns[index]! ||
-              currentProfitRuns[index] === longestProfitRuns[index] &&
-                realizedPartialPnl.isPositive() && !priorBestRealized.isPositive();
-            if (replacesBest) {
-              longestProfitRuns[index] = currentProfitRuns[index]!;
-              bestRunRealizedPnl[index] = currentRunRealizedPnl[index]!;
-            }
-            if (
-              new Decimal(currentRunRealizedPnl[index]!).isPositive() &&
-              currentProfitRuns[index]! > longestPostScaleProfitRuns[index]!
-            ) {
-              longestPostScaleProfitRuns[index] = currentProfitRuns[index]!;
-              bestPostScaleRunRealizedPnl[index] = currentRunRealizedPnl[index]!;
-            }
-          } else {
-            currentProfitRuns[index] = 0;
-          }
-        });
-        priorCompletedCloseTime = timeUtcSeconds;
-      }
-      if (!pnl.toDecimalPlaces(2).isPositive()) return;
-      if (peak === null || pnl.greaterThan(peak.pnlDecimal)) {
-        peak = Object.freeze({
-          pnlDecimal: pnl.toFixed(),
-          returnPercentDecimal: returnPercent.toFixed(),
-          timeUtcSeconds,
-        });
-      }
-    } catch {
-      return;
-    }
-  };
-
-  for (const event of events) {
-    const eventTimeMilliseconds = Date.parse(event.executedAt);
-    if (!Number.isFinite(eventTimeMilliseconds)) continue;
-    const eventTimeSeconds = eventTimeMilliseconds / 1_000;
-    while (candleIndex < candles.length) {
-      const candle = candles[candleIndex]!;
-      const closeTime = candle.time + 60;
-      if (closeTime > eventTimeSeconds) break;
-      consider(candle.close, closeTime, true);
-      candleIndex += 1;
-    }
-    try {
-      if (event.kind === "partial_exit" && averageEntryPrice !== null) {
-        const realizedAtExit = unrealizedPnl(
-          averageEntryPrice,
-          direction,
-          new Decimal(event.price),
-          new Decimal(event.quantity),
-        );
-        if (realizedAtExit.isFinite()) {
-          realizedPartialPnl = realizedPartialPnl.plus(realizedAtExit);
-        }
-      }
-      if (event.kind === "partial_exit" || event.kind === "add") {
-        currentProfitRuns.fill(0);
-        priorCompletedCloseTime = null;
-      }
-      averageEntryPrice = event.metrics.averageEntryPriceAfter === null
-        ? null
-        : new Decimal(event.metrics.averageEntryPriceAfter);
-      positionQuantity = new Decimal(event.metrics.positionQuantityAfter);
-      consider(event.price, eventTimeSeconds, false);
-    } catch {
-      averageEntryPrice = null;
-      positionQuantity = new Decimal(0);
-    }
-  }
-  const postScaleQualifyingRuleIndex = PROFIT_OPPORTUNITY_RULES.findIndex(
-    (rule, index) => longestPostScaleProfitRuns[index]! >= rule.minimumMinutes,
-  );
-  const qualifyingRuleIndex = postScaleQualifyingRuleIndex >= 0
-    ? postScaleQualifyingRuleIndex
-    : PROFIT_OPPORTUNITY_RULES.findIndex(
-    (rule, index) => longestProfitRuns[index]! >= rule.minimumMinutes,
-  );
-  const qualifyingMinutes = postScaleQualifyingRuleIndex >= 0
-    ? longestPostScaleProfitRuns[qualifyingRuleIndex]!
-    : longestProfitRuns[qualifyingRuleIndex]!;
-  const profitOpportunity = qualifyingRuleIndex < 0
-    ? null
-    : Object.freeze({
-        continuousMinutes: qualifyingMinutes,
-        realizedPnlBeforeWindowDecimal: postScaleQualifyingRuleIndex >= 0
-          ? bestPostScaleRunRealizedPnl[qualifyingRuleIndex]!
-          : bestRunRealizedPnl[qualifyingRuleIndex]!,
-        thresholdPercent: PROFIT_OPPORTUNITY_RULES[qualifyingRuleIndex]!.thresholdPercent,
-      });
-  return Object.freeze({ peak, profitOpportunity });
-}
-
-function addAfterUnrealizedPeakBeforeLosingFinish(
-  analyzer: DaySessionTradeAnalyzer,
-  peak: UnrealizedProfitPathSummary["peak"],
-  finalResult: string | null,
-): string | null {
-  if (!peak || finalResult === null) return null;
-  try {
-    if (!new Decimal(finalResult).isNegative()) return null;
-  } catch {
-    return null;
-  }
-  const finalExit = [...analyzer.events].reverse().find((event) => event.kind === "final_exit") ?? null;
-  const finalExitMilliseconds = finalExit ? Date.parse(finalExit.executedAt) : Number.NaN;
-  if (!Number.isFinite(finalExitMilliseconds)) return null;
-  const addedInSequence = analyzer.events.some((event) => {
-    const executedAtMilliseconds = Date.parse(event.executedAt);
-    return event.kind === "add" && Number.isFinite(executedAtMilliseconds) &&
-      executedAtMilliseconds > peak.timeUtcSeconds * 1_000 &&
-      executedAtMilliseconds < finalExitMilliseconds;
-  });
-  return addedInSequence
-    ? "You added after the trade reached its unrealized-profit high, increasing the shares still exposed before the losing finish."
-    : null;
-}
-
-function profitSecuredByScalingOnWayDown(
-  analyzer: DaySessionTradeAnalyzer,
-  direction: DaySessionRoundTrip["direction"],
-  peak: UnrealizedProfitPathSummary["peak"],
-): string | null {
-  if (!peak) return null;
-  let securedProfit = new Decimal(0);
-  for (const event of analyzer.events) {
-    if (event.kind !== "partial_exit") continue;
-    const executedAtMilliseconds = Date.parse(event.executedAt);
-    if (!Number.isFinite(executedAtMilliseconds) || executedAtMilliseconds <= peak.timeUtcSeconds * 1_000) {
-      continue;
-    }
-    try {
-      const averageEntry = event.metrics.averageEntryPriceAfter === null
-        ? null
-        : new Decimal(event.metrics.averageEntryPriceAfter);
-      const executionPrice = new Decimal(event.price);
-      const executionQuantity = new Decimal(event.quantity);
-      const positionBefore = new Decimal(event.metrics.positionQuantityBefore);
-      if (
-        averageEntry === null || !averageEntry.isFinite() || !executionPrice.isFinite() ||
-        !executionQuantity.isPositive() || !positionBefore.isPositive()
-      ) continue;
-      const unrealizedBeforeReduction = unrealizedPnl(
-        averageEntry,
-        direction,
-        executionPrice,
-        positionBefore,
-      );
-      const realizedByReduction = unrealizedPnl(
-        averageEntry,
-        direction,
-        executionPrice,
-        executionQuantity,
-      );
-      if (
-        unrealizedBeforeReduction.lessThan(peak.pnlDecimal) &&
-        realizedByReduction.isPositive()
-      ) {
-        securedProfit = securedProfit.plus(realizedByReduction);
-      }
-    } catch {
-      continue;
-    }
-  }
-  return securedProfit.isPositive() ? securedProfit.toFixed() : null;
-}
-
-function TradeOutcomeSummary({
-  actualNetPnl,
-  analyzer,
-  currency,
-  direction,
-  finalReturnPercent,
-}: {
-  actualNetPnl: string | null;
-  analyzer: DaySessionTradeAnalyzer;
-  currency: string;
-  direction: DaySessionRoundTrip["direction"];
-  finalReturnPercent: string | null;
-}) {
-  const protection = analyzer.profitProtection;
-  const path = unrealizedProfitPathSummary(analyzer, direction);
-  const unrealizedPeak = path.peak;
-  const opportunity = path.profitOpportunity;
-  const outcomeLines: string[] = [];
-  const partialExitCount = analyzer.events.filter((event) => event.kind === "partial_exit").length;
-  const securedProfit = profitSecuredByScalingOnWayDown(analyzer, direction, unrealizedPeak);
-  let finalResult: Decimal | null = null;
-  let finalReturn: Decimal | null = null;
-  let realizedProfitBeforeOpportunity: Decimal | null = null;
-  try {
-    const parsedFinalResult = actualNetPnl === null ? null : new Decimal(actualNetPnl);
-    finalResult = parsedFinalResult?.isFinite()
-      ? parsedFinalResult
-      : null;
-    const parsedFinalPercent = finalReturnPercent === null ? null : new Decimal(finalReturnPercent);
-    finalReturn = parsedFinalPercent?.isFinite()
-      ? parsedFinalPercent
-      : null;
-    const parsedRealizedProfit = opportunity === null
-      ? null
-      : new Decimal(opportunity.realizedPnlBeforeWindowDecimal);
-    realizedProfitBeforeOpportunity = parsedRealizedProfit?.isFinite() && parsedRealizedProfit.isPositive()
-      ? parsedRealizedProfit
-      : null;
-  } catch {
-    finalResult = null;
-    finalReturn = null;
-    realizedProfitBeforeOpportunity = null;
-  }
-
-  const finalResultDescription = finalResult === null
-    ? null
-    : finalResult.isNegative()
-      ? finalReturn === null || !finalReturn.isNegative()
-        ? `a ${price(finalResult.abs().toFixed(), currency)} loss`
-        : `a ${plainPercentage(finalReturn.abs().toFixed())} loss (${price(finalResult.abs().toFixed(), currency)})`
-      : finalResult.isPositive()
-        ? finalReturn === null || !finalReturn.isPositive()
-          ? `a ${price(finalResult.toFixed(), currency)} gain`
-          : `a ${plainPercentage(finalReturn.abs().toFixed())} gain (${price(finalResult.toFixed(), currency)})`
-        : `a flat result (${price("0", currency)})`;
-  const meaningfulGiveback = opportunity !== null && finalResult !== null && (
-    finalResult.isNegative() || finalResult.isZero() ||
-    finalReturn !== null && !finalReturn.isNegative() &&
-      finalReturn.lessThanOrEqualTo(new Decimal(opportunity.thresholdPercent).dividedBy(2))
-  );
-
-  if (finalResultDescription && meaningfulGiveback && opportunity !== null && unrealizedPeak !== null) {
-    if (realizedProfitBeforeOpportunity !== null) {
-      outcomeLines.push(
-        `You secured ${price(realizedProfitBeforeOpportunity.toFixed(), currency)} by scaling out. Your open position then stayed at least ${opportunity.thresholdPercent}% profitable for ${opportunity.continuousMinutes} continuous minutes. The trade finished with ${finalResultDescription}.`,
-      );
-    } else if (securedProfit !== null) {
-      outcomeLines.push(
-        `You were up ${plainPercentage(unrealizedPeak.returnPercentDecimal)} or ${price(unrealizedPeak.pnlDecimal, currency)} in unrealized profit. You scaled out on the way down, securing ${price(securedProfit, currency)}. The trade finished with ${finalResultDescription}.`,
-      );
-    } else if (partialExitCount > 0) {
-      outcomeLines.push(
-        `The position stayed at least ${opportunity.thresholdPercent}% profitable for ${opportunity.continuousMinutes} continuous minutes. You reduced your position and finished with ${finalResultDescription}.`,
-      );
-    } else {
-      outcomeLines.push(
-        `The position stayed at least ${opportunity.thresholdPercent}% profitable for ${opportunity.continuousMinutes} continuous minutes. You did not sell any shares during that period and finished with ${finalResultDescription}.`,
-      );
-    }
-  } else if (finalResultDescription && protection?.status === "avoided_additional_loss") {
-    outcomeLines.push(
-      `You reduced ${plainPercentage(protection.reductionPercentDecimal)} of your position and finished with ${finalResultDescription}.`,
-    );
-  }
-
-  if (finalResultDescription && protection?.status === "avoided_additional_loss") {
-    outcomeLines.push(
-      `Based on your actual later exit prices, that reduction avoided an additional ${price(protection.avoidedAdditionalLossDecimal, currency)} loss. If those shares had remained open, your result would have been ${money(protection.counterfactualGrossResultDecimal, currency)} instead of ${money(protection.actualGrossResultDecimal, currency)}.`,
-    );
-  }
-  const addAfterPeakLine = addAfterUnrealizedPeakBeforeLosingFinish(
-    analyzer,
-    unrealizedPeak,
-    actualNetPnl,
-  );
-  if (outcomeLines.length > 0 && addAfterPeakLine !== null) {
-    outcomeLines.push(addAfterPeakLine);
-  }
-  const exitLine = finalExitOutcome(analyzer, currency, direction);
-  const visibleExitLine = exitLine === "The 30-minute post-exit observation is unavailable for this trade."
-    ? null
-    : exitLine;
-  const noMeaningfulConclusion = outcomeLines.length === 0 && visibleExitLine === null;
-  return (
-    <Box sx={{ bgcolor: "background.paper", borderRadius: 1.5, p: 1.5 }}>
-      <Stack spacing={1}>
-        <Typography sx={{ fontWeight: 900 }} variant="body1">Trade outcome</Typography>
-        {noMeaningfulConclusion ? (
-          <Typography variant="body2">
-            We did not find a meaningful profit-taking or risk-management conclusion for this trade. The trade data was still collected and is available under View more.
-          </Typography>
-        ) : null}
-        {outcomeLines.length > 0 ? (
-          <Box>
-            <Stack spacing={0.45}>
-              {outcomeLines.map((line) => <Typography key={line} variant="body2">{line}</Typography>)}
-            </Stack>
-          </Box>
-        ) : null}
-        {visibleExitLine ? (
-          <Box>
-            <Typography color="text.secondary" variant="caption">First review: 30 minutes after final exit</Typography>
-            <Typography sx={{ mt: 0.25 }} variant="body2">{visibleExitLine}</Typography>
-          </Box>
-        ) : null}
-      </Stack>
-    </Box>
-  );
-}
-
 
 function hasVisibleAnalysis(analyzer: DaySessionTradeAnalyzer): boolean {
   return analyzer.candles.length > 0 &&
@@ -1982,7 +1562,6 @@ function TradeReview({
 }) {
   const presetRules = tradeRules.filter((rule) => !rule.custom);
   const tradeLabelColor = pnlColor(roundTrip.netPnl) === "success.main" ? "success" : "error";
-  const [showAnalyzerEvidence, setShowAnalyzerEvidence] = useState(false);
   const [mobileRulesOpen, setMobileRulesOpen] = useState(true);
   const [mobileExecutionsOpen, setMobileExecutionsOpen] = useState(false);
   const [mismatchConfirmationState, setMismatchConfirmationState] = useState<
@@ -2680,15 +2259,6 @@ function TradeReview({
         >
           {hasVisibleAnalysis(analyzer) ? (
             <Stack spacing={1}>
-              {analyzer.status === "ready" ? (
-                <TradeOutcomeSummary
-                  actualNetPnl={roundTrip.netPnl}
-                  analyzer={analyzer}
-                  currency={currency}
-                  direction={roundTrip.direction}
-                  finalReturnPercent={roundTrip.gainLossPercent}
-                />
-              ) : null}
               {analyzer.status === "pending" ? (
                 <Typography color="info.dark" sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.info.main : undefined, fontWeight: 800 }} variant="body2">
                   Trade Analyzer is analyzing this trade.
@@ -2717,28 +2287,13 @@ function TradeReview({
                   The selected execution is highlighted on the complete trade chart.
                 </Typography>
               ) : null}
-              <Button
-                aria-expanded={showAnalyzerEvidence}
-                onClick={() => setShowAnalyzerEvidence((current) => !current)}
-                size="small"
+              <Box
                 sx={{
-                  alignSelf: { xs: "stretch", sm: "flex-start" },
-                  minHeight: 40,
-                  px: { xs: 1, sm: 0 },
-                  textTransform: "none",
+                  display: "grid",
+                  gap: { xs: 2, md: 0 },
+                  gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
                 }}
-                variant="text"
               >
-                {showAnalyzerEvidence ? "Hide analysis details" : "View more"}
-              </Button>
-              <Collapse in={showAnalyzerEvidence} timeout="auto" unmountOnExit>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gap: { xs: 2, md: 0 },
-                    gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
-                  }}
-                >
                   <Stack spacing={1.25} sx={{ minWidth: 0, pr: { xs: 0, md: 2 } }}>
                     <Typography sx={{ fontWeight: 900 }} variant="body1">
                       {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
@@ -2756,8 +2311,7 @@ function TradeReview({
                     currency={currency}
                     timezone={roundTrip.timezone}
                   />
-                </Box>
-              </Collapse>
+              </Box>
               {finalExit && false ? (
                 <Typography color="text.secondary" variant="caption">
                   {finalExit.patterns.map((pattern) => pattern.kind.replaceAll("_", " ")).join(" · ")}
@@ -3597,12 +3151,12 @@ export function DaySessionView({
           <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
             Daily Trade Tracker
           </Typography>
-          <Typography color="text.secondary" sx={{ maxWidth: 900, mt: 1 }} variant="body2">
+          <DashboardPageDescription marginTop={1} maxWidth={900} variant="body2">
             The Daily Trade Tracker helps you review one trading day and the
             trades you took on that particular day. Add tags, notes and track rules
             for each trade. Add notes and track rules that apply to the trading day
             as a whole.
-          </Typography>
+          </DashboardPageDescription>
           <Typography color="error.main" sx={{ fontWeight: 700, maxWidth: 900, mt: 1 }} variant="body2">
             Notes, rules, tags and trade information will appear below after you submit your executions.
           </Typography>

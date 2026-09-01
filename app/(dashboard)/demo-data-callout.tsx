@@ -10,6 +10,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -228,10 +229,16 @@ export function DemoDataCallout({
   expectedAccountSelectionRef: string;
   variant: "compact" | "workspace";
 }) {
+  const theme = useTheme();
+  const demoBodyColor = theme.palette.text.primary;
+  const demoHeadingColor = theme.palette.mode === "dark"
+    ? theme.palette.text.primary
+    : theme.palette.error.main;
+
   if (variant === "compact") {
     return (
       <Stack spacing={0.75} sx={{ alignItems: "flex-start" }}>
-        <Typography color="error.main" sx={{ fontWeight: 800 }} variant="body2">
+        <Typography color={demoHeadingColor} sx={{ fontWeight: 800 }} variant="body2">
           Viewing demo data
         </Typography>
         <ClearDemoDataAction expectedAccountSelectionRef={expectedAccountSelectionRef} />
@@ -250,16 +257,16 @@ export function DemoDataCallout({
       }}
     >
       <Stack spacing={1.25} sx={{ alignItems: "flex-start" }}>
-        <Typography color="error.main" component="h2" sx={{ fontWeight: 850 }} variant="h5">
+        <Typography color={demoHeadingColor} component="h2" sx={{ fontWeight: 850 }} variant="h5">
           Viewing Demo Data
         </Typography>
-        <Typography color="text.primary" variant="body2">
+        <Typography color={demoBodyColor} variant="body2">
           Your account has been preloaded with demo data so you can explore the dashboard and see how everything looks with real trading activity.
         </Typography>
-        <Typography color="text.primary" variant="body2">
+        <Typography color={demoBodyColor} variant="body2">
           Take a tour, explore the features, and get familiar with the platform. When you&apos;re ready, you can start adding your own trades.
         </Typography>
-        <Typography color="text.primary" variant="body2">
+        <Typography color={demoBodyColor} variant="body2">
           Ready to start tracking your own journey? Use the Daily Trade Tracker to record trades, review your performance, and learn from every decision.
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>

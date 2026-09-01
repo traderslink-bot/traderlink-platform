@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Button, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import Decimal from "decimal.js";
 import {
   CandlestickSeries,
@@ -37,6 +37,34 @@ type ChartSemanticColors = Readonly<{
   vwap: string;
 }>;
 type PatternColorMap = Readonly<Record<string, string>>;
+
+const DARK_ANALYZER_LIGHT_CHART_THEME = Object.freeze({
+  actionHover: "#0b3475",
+  background: "#ffffff",
+  candleLoss: "#d14343",
+  candleWin: "#1b8a5a",
+  controlBorder: "#b8c6d9",
+  controlText: "#41516a",
+  grid: "#dce5f0",
+  text: "#172033",
+});
+
+const LIGHT_ANALYZER_ANNOTATION_APPEARANCE: TradeAnalyzerAnnotationAppearance = Object.freeze({
+  executionFill: "#ffffff",
+  patternOutline: "rgba(255,255,255,0.98)",
+  ruleText: "#ffffff",
+  selectedExecutionFill: "#fff7d6",
+  selectionShadow: "rgba(1,30,86,0.28)",
+});
+
+const LIGHT_ANALYZER_SEMANTIC_COLORS: ChartSemanticColors = Object.freeze({
+  buy: "#087443",
+  ema: "#ef6c00",
+  rule: "#9A6700",
+  sell: "#b42318",
+  volume: "rgba(1, 30, 86, 0.30)",
+  vwap: "#7b1fa2",
+});
 
 const CHART_INTERVAL_SECONDS: Readonly<Record<DailyTradeChartInterval, number>> = Object.freeze({
   "1m": 60,
@@ -358,54 +386,12 @@ export function DailyTradeAnalyzerChart({
   tradeNumber: number;
 }) {
   const theme = useTheme();
-  const chartTheme = theme.palette.traderLink.chart;
-  const annotationAppearance = useMemo<TradeAnalyzerAnnotationAppearance>(() => ({
-    executionFill: theme.palette.mode === "dark" ? theme.palette.background.paper : "#ffffff",
-    patternOutline: theme.palette.mode === "dark" ? theme.palette.text.primary : "rgba(255,255,255,0.98)",
-    ruleText: theme.palette.mode === "dark" ? theme.palette.background.default : "#ffffff",
-    selectedExecutionFill: theme.palette.mode === "dark" ? theme.palette.action.selected : "#fff7d6",
-    selectionShadow: theme.palette.mode === "dark" ? "rgba(121,170,241,0.28)" : "rgba(1,30,86,0.28)",
-  }), [theme.palette.action.selected, theme.palette.background.default, theme.palette.background.paper, theme.palette.mode, theme.palette.text.primary]);
-  const chartSemanticColors = useMemo<ChartSemanticColors>(() => theme.palette.mode === "dark"
-    ? {
-      buy: theme.palette.success.main,
-      ema: theme.palette.warning.main,
-      rule: theme.palette.warning.main,
-      sell: theme.palette.error.main,
-      volume: alpha(theme.palette.primary.light, 0.54),
-      vwap: theme.palette.primary.light,
-    }
-    : {
-      buy: "#087443",
-      ema: "#ef6c00",
-      rule: "#9A6700",
-      sell: "#b42318",
-      volume: "rgba(1, 30, 86, 0.30)",
-      vwap: "#7b1fa2",
-    }, [theme.palette.error.main, theme.palette.mode, theme.palette.primary.light, theme.palette.success.main, theme.palette.warning.main]);
-  const chartPatternColors = useMemo<PatternColorMap>(() => theme.palette.mode === "dark"
-    ? {
-      compression: theme.palette.text.secondary,
-      compression_break_bearish: theme.palette.error.main,
-      compression_break_bullish: theme.palette.primary.light,
-      doji: theme.palette.text.secondary,
-      engulfing_bearish: theme.palette.error.main,
-      engulfing_bullish: theme.palette.success.main,
-      evening_star_bearish: theme.palette.primary.light,
-      expansion_bearish: theme.palette.error.main,
-      expansion_bullish: theme.palette.success.main,
-      hammer_bullish: theme.palette.primary.light,
-      harami_bearish: theme.palette.error.main,
-      harami_bullish: theme.palette.success.main,
-      high_volume_exhaustion: theme.palette.primary.light,
-      morning_star_bullish: theme.palette.primary.light,
-      rejection_lower: theme.palette.primary.light,
-      rejection_upper: theme.palette.warning.main,
-      shooting_star_bearish: theme.palette.error.main,
-      three_black_crows_bearish: theme.palette.error.main,
-      three_white_soldiers_bullish: theme.palette.success.main,
-    }
-    : LIGHT_PATTERN_COLORS, [theme.palette.error.main, theme.palette.mode, theme.palette.primary.light, theme.palette.success.main, theme.palette.text.secondary, theme.palette.warning.main]);
+  const chartTheme = theme.palette.mode === "dark"
+    ? DARK_ANALYZER_LIGHT_CHART_THEME
+    : theme.palette.traderLink.chart;
+  const annotationAppearance = LIGHT_ANALYZER_ANNOTATION_APPEARANCE;
+  const chartSemanticColors = LIGHT_ANALYZER_SEMANTIC_COLORS;
+  const chartPatternColors = LIGHT_PATTERN_COLORS;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const chartCandleCountRef = useRef(0);
@@ -461,6 +447,10 @@ export function DailyTradeAnalyzerChart({
       },
       height: 420,
       layout: { background: { color: chartTheme.background }, textColor: chartTheme.text },
+      grid: {
+        horzLines: { color: chartTheme.grid },
+        vertLines: { color: chartTheme.grid },
+      },
       rightPriceScale: { borderColor: chartTheme.grid },
       timeScale: {
         borderColor: chartTheme.grid,
@@ -746,7 +736,7 @@ export function DailyTradeAnalyzerChart({
   };
 
   return (
-    <Box sx={{ bgcolor: chartTheme.background, borderBottom: 1, borderColor: "divider", position: "relative" }}>
+    <Box sx={{ bgcolor: chartTheme.background, borderBottom: 1, borderColor: chartTheme.controlBorder, color: chartTheme.text, position: "relative" }}>
       <Stack
         direction="row"
         spacing={{ xs: 0.75, md: 1.5 }}
@@ -780,7 +770,7 @@ export function DailyTradeAnalyzerChart({
           }}
           size="small"
           sx={{
-            bgcolor: theme.palette.mode === "dark" ? "background.paper" : "rgba(255,255,255,0.96)",
+            bgcolor: "rgba(255,255,255,0.96)",
             height: { xs: 44, md: 28 },
             pointerEvents: "auto",
             "& .MuiToggleButton-root": {
@@ -839,9 +829,9 @@ export function DailyTradeAnalyzerChart({
           <Box
             sx={{
               alignItems: "center",
-              bgcolor: theme.palette.mode === "dark" ? "background.paper" : "rgba(255,255,255,0.94)",
+              bgcolor: "rgba(255,255,255,0.94)",
               border: 1,
-              borderColor: "divider",
+              borderColor: chartTheme.controlBorder,
               borderRadius: 1,
               display: { xs: "none", md: "flex" },
               flexWrap: "wrap",
@@ -870,9 +860,9 @@ export function DailyTradeAnalyzerChart({
             onClick={() => setMobilePatternKeyOpen((open) => !open)}
             sx={{
               alignItems: "center",
-              bgcolor: theme.palette.mode === "dark" ? "background.paper" : "rgba(255,255,255,0.96)",
+              bgcolor: "rgba(255,255,255,0.96)",
               border: 1,
-              borderColor: "divider",
+              borderColor: chartTheme.controlBorder,
               borderRadius: 1,
               display: { xs: "flex", md: "none" },
               fontSize: 12,
@@ -897,9 +887,9 @@ export function DailyTradeAnalyzerChart({
             <Box
               id="mobile-candle-patterns"
               sx={{
-                bgcolor: theme.palette.mode === "dark" ? "background.paper" : "rgba(255,255,255,0.98)",
+                bgcolor: "rgba(255,255,255,0.98)",
                 border: 1,
-                borderColor: "divider",
+                borderColor: chartTheme.controlBorder,
                 borderRadius: 1,
                 display: { xs: "block", md: "none" },
                 left: 8,
@@ -934,11 +924,11 @@ export function DailyTradeAnalyzerChart({
       {detail ? (
         <Box
           sx={{
-            bgcolor: theme.palette.mode === "dark" ? "background.paper" : "rgba(255,255,255,0.96)",
+            bgcolor: "rgba(255,255,255,0.96)",
             border: 1,
-            borderColor: "divider",
+            borderColor: chartTheme.controlBorder,
             borderRadius: 1.25,
-            boxShadow: theme.palette.mode === "dark" ? "none" : "0 4px 16px rgba(1,30,86,0.12)",
+            boxShadow: "0 4px 16px rgba(1,30,86,0.12)",
             maxWidth: 310,
             p: 1.25,
             pointerEvents: "auto",
@@ -966,14 +956,14 @@ export function DailyTradeAnalyzerChart({
               : easternTime(detail.candle.time)} ET
             {detail.event ? " execution" : ` · ${chartInterval} candle`}
           </Typography>
-          <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
+          <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
             O {formatPrice(Number(detail.candle.open), currency)} | H {formatPrice(Number(detail.candle.high), currency)} | L {formatPrice(Number(detail.candle.low), currency)} | C {formatPrice(Number(detail.candle.close), currency)}
           </Typography>
-          <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
+          <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
             Volume {formatVolume(Number(detail.candle.volume))}
           </Typography>
           {detail.candle.turnover === null ? null : (
-            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
+            <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
               Candle turnover {formatTurnover(Number(detail.candle.turnover), currency)}
             </Typography>
           )}
@@ -982,7 +972,7 @@ export function DailyTradeAnalyzerChart({
               <Typography sx={{ display: "block", fontWeight: 850, mt: 0.5 }} variant="caption">
                 {detail.priceAction.title}
               </Typography>
-              <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
+              <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
                 {detail.priceAction.explanation}
               </Typography>
             </>
@@ -1000,12 +990,12 @@ export function DailyTradeAnalyzerChart({
               {detail.rules.map((rule) => (
                 <Box key={`${rule.label}:${rule.occurredAt}`}>
                   <Typography sx={{ fontWeight: 800 }} variant="caption">{rule.label}</Typography>
-                  <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
+                  <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
                     {easternTime(Math.floor(Date.parse(rule.occurredAt) / 1000), true)} ET · {rule.violationCount} violation{rule.violationCount === 1 ? "" : "s"} on this candle
                     {rule.netPnl === null ? " · P/L unavailable" : ` · ${formatPrice(Number(rule.netPnl), currency)} P/L`}
                   </Typography>
                   {rule.triggerAt ? (
-                    <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
+                    <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
                       Trigger {easternTime(Math.floor(Date.parse(rule.triggerAt) / 1000), true)} ET
                     </Typography>
                   ) : null}

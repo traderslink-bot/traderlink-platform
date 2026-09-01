@@ -94,3 +94,26 @@
   `text.primary` foreground in both appearances. This preserves the approved
   Light output while making the isolated-staging Dark foreground white without
   changing the accepted toggle, logo or Rules surfaces.
+- [x] Correct only the owner-reported production Dark text surfaces: the
+  title-adjacent descriptions on Trade Explorer, Compare trades and Daily Trade
+  Tracker now use one client leaf that preserves Light `text.secondary` and
+  resolves to white in Dark. The `/analytics/trade-analyzer/day/trades` empty
+  state `No saved trade analyses are available.` receives the same narrow
+  Dark-only foreground; adjacent filter-empty, semantic and status text remain
+  unchanged.
+- [x] Correct the production Daily Trade Tracker render branch: the populated
+  `/trade-tracker` route renders `DaySessionView`, so its live title-adjacent
+  description now uses the same Dark-only `DashboardPageDescription` leaf.
+  The no-data fallback was already covered; titles, copy, layout and Tracker
+  behavior remain unchanged.
+- [x] Keep the Daily Trade Analyzer canvas intentionally Light inside the
+  otherwise Dark dashboard: its Dark-mode rendering uses a white surface,
+  restrained light-gray grid, dark axis and overlay text, Light-equivalent
+  candle/indicator/pattern/annotation colors and focused static contract
+  proof. The surrounding page, cards, drawer and every other chart remain
+  Dark-mode surfaces.
+- [x] Use one Dark-aware heading token in the shared Demo data callout. The
+  compact selected-Demo-account indicator is therefore white on every
+  dashboard route, and the Workspace callout title is white with its existing
+  `text.primary` body copy. Light mode, account visibility, wording, layout
+  and Clear Demo behavior remain unchanged.
