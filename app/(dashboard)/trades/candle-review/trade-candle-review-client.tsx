@@ -56,7 +56,7 @@ function CandleChart({ currency, review }: { currency: string; review: CandleRev
   const container = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!container.current || review.candles.length === 0) return;
-    const chart = createChart(container.current, {
+    const chartApi = createChart(container.current, {
       autoSize: true,
       height: 420,
       layout: {
@@ -70,7 +70,7 @@ function CandleChart({ currency, review }: { currency: string; review: CandleRev
       rightPriceScale: { borderColor: dark ? chart.grid : "#cbd5e1" },
       timeScale: { borderColor: dark ? chart.grid : "#cbd5e1", timeVisible: true, secondsVisible: false },
     });
-    const series = chart.addSeries(CandlestickSeries, {
+    const series = chartApi.addSeries(CandlestickSeries, {
       upColor: dark ? chart.candleWin : "#16845b",
       downColor: dark ? chart.candleLoss : "#c43d4b",
       borderUpColor: dark ? chart.candleWin : "#16845b",
@@ -102,8 +102,8 @@ function CandleChart({ currency, review }: { currency: string; review: CandleRev
         text: `Exit ${formatJournalAnalyticsMoney(review.target.exitPriceDecimal, currency)}`,
       },
     ]);
-    chart.timeScale().fitContent();
-    return () => chart.remove();
+    chartApi.timeScale().fitContent();
+    return () => chartApi.remove();
   }, [chart, currency, dark, review, theme.palette.primary.main, theme.palette.warning.main]);
   return <Box ref={container} sx={{ height: 420, width: "100%" }} />;
 }
