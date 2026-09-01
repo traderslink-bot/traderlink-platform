@@ -14,6 +14,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 
 import type { DailyTradeAnalyzedTradePage } from
@@ -86,6 +87,7 @@ export function AnalyzedTradesIndex({
   offline?: boolean;
   startDate: string | null;
 }) {
+  const theme = useTheme();
   const [draftTicker, setDraftTicker] = useState("");
   const [ticker, setTicker] = useState("");
   const [page, setPage] = useState(1);
@@ -186,9 +188,17 @@ export function AnalyzedTradesIndex({
       {resolvedState === "error" ? (
         <Alert severity="error">Analyzed trades could not be loaded. Try again.</Alert>
       ) : null}
-      {resolvedState === "ready" && rows.length === 0 ? (
-        <Typography color="text.secondary">
-          {currency ? "No analyzed trades match these filters." : "No saved trade analyses are available."}
+      {resolvedState === "ready" && rows.length === 0 ? currency ? (
+        <Typography color="text.secondary">No analyzed trades match these filters.</Typography>
+      ) : (
+        <Typography
+          sx={{
+            color: theme.palette.mode === "dark"
+              ? theme.palette.text.primary
+              : theme.palette.text.secondary,
+          }}
+        >
+          No saved trade analyses are available.
         </Typography>
       ) : null}
 

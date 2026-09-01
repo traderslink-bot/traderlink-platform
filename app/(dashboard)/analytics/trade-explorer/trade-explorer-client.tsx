@@ -66,6 +66,7 @@ import {
   DashboardPrimaryAction,
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
+import { DashboardPageDescription } from "../../dashboard-page-description";
 import type {
   AnalyticsLabPlatformPreview,
   AnalyticsLabPlatformQuery,
@@ -908,9 +909,9 @@ export default function TradeExplorerClient({
     <DashboardPage>
       <Box>
         <Typography component="h1" variant="h1">Trade Explorer</Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+        <DashboardPageDescription marginTop={0.5}>
           Explore your trades, narrow the results, and find the details that matter to you. Add or edit notes, tags, and rules in one place if you prefer not to use the Daily Trade Tracker.
-        </Typography>
+        </DashboardPageDescription>
       </Box>
       {offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
       <DashboardPanel

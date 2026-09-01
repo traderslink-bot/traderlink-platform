@@ -94,3 +94,10 @@
   `text.primary` foreground in both appearances. This preserves the approved
   Light output while making the isolated-staging Dark foreground white without
   changing the accepted toggle, logo or Rules surfaces.
+- [x] Correct only the owner-reported production Dark text surfaces: the
+  title-adjacent descriptions on Trade Explorer, Compare trades and Daily Trade
+  Tracker now use one client leaf that preserves Light `text.secondary` and
+  resolves to white in Dark. The `/analytics/trade-analyzer/day/trades` empty
+  state `No saved trade analyses are available.` receives the same narrow
+  Dark-only foreground; adjacent filter-empty, semantic and status text remain
+  unchanged.

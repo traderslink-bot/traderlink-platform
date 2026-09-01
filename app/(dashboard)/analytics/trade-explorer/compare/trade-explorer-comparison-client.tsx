@@ -52,6 +52,7 @@ import {
   DashboardPrimaryAction,
   DashboardSecondaryAction,
 } from "../../../../dashboard-template";
+import { DashboardPageDescription } from "../../../dashboard-page-description";
 import { HorizontalScrollRegion } from "../../../horizontal-scroll-region";
 import type { AnalyticsLabPlatformQuery } from "../../lab/analytics-lab-platform-types";
 
@@ -539,9 +540,9 @@ export default function TradeExplorerComparisonClient({
     <DashboardPage>
       <Box>
         <Typography component="h1" variant="h1">Compare trades</Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+        <DashboardPageDescription marginTop={0.5}>
           Compare results across two to four groups of your completed trades.
-        </Typography>
+        </DashboardPageDescription>
       </Box>
       {offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
 
