@@ -56,6 +56,13 @@ const WORKSPACE_METRICS = [
   ["Closed trades", "included_count", "All available history"],
 ] as const;
 
+function workspaceMetricId(
+  metricId: (typeof WORKSPACE_METRICS)[number][1],
+  moneyBasis: "gross" | "net",
+): string {
+  return metricId === "gross_pnl" && moneyBasis === "net" ? "net_pnl" : metricId;
+}
+
 type WorkspacePeriod = "today" | "week" | "month" | "all";
 
 function workspacePeriod(value: string | undefined): WorkspacePeriod {
@@ -110,8 +117,8 @@ export default async function WorkspacePage({
     redirect("/account/trading");
   }
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
-    scope, ({ database, dashboard, service }) => {
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+    scope, ({ database, dashboard, pnlReportingBasis, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
 SELECT base_currency, trading_timezone
@@ -138,8 +145,9 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         closingDateRange: dates.startDate && dates.endDate
           ? { endDate: dates.endDate, kind: "inclusive_closing_date", startDate: dates.startDate }
           : { kind: "all_available" },
-        metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
-        moneyBasis: "gross",
+        metricIds: WORKSPACE_METRICS.map(([, metricId]) =>
+          workspaceMetricId(metricId, pnlReportingBasis)),
+        moneyBasis: pnlReportingBasis,
       });
       return Object.freeze({
         account,
@@ -148,6 +156,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         onboardingStatus: readJournalFirstExecutionOnboardingStatusFromDatabase(database, scope),
         periodEndDate: periodDateRange.endDate,
         periodStartDate: periodDateRange.startDate,
+        pnlReportingBasis,
         prScannerCardPreference: new JournalWorkspacePrScannerCardPreferenceService(database).read(scope),
         ruleResultsCardPreference: new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope),
         ruleResultsEndDate: dates.endDate,
@@ -179,13 +188,14 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
   const moomooConnectionPending = cookieStore.get(MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE)?.value
     === MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE;
   const analyticsMetrics = WORKSPACE_METRICS.map(([label, metricId, caption]) => {
-    const metrics = findJournalAnalyticsMetric(response, metricId);
+    const selectedMetricId = workspaceMetricId(metricId, pnlReportingBasis);
+    const metrics = findJournalAnalyticsMetric(response, selectedMetricId);
     const metric = metrics.length === 1 ? metrics[0] ?? null : null;
     return {
       label,
       caption,
-      value: formatJournalAnalyticsPartitionedMetric(response, metricId),
-      valueColor: financialSummaryMetricColor(metricId, metric?.value),
+      value: formatJournalAnalyticsPartitionedMetric(response, selectedMetricId),
+      valueColor: financialSummaryMetricColor(selectedMetricId, metric?.value),
     };
   });
   const offlinePartition = response.partitions.length === 1

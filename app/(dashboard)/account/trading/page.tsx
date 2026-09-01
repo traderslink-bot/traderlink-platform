@@ -26,6 +26,7 @@ import { BrokerConnectionPicker } from "../broker-connection-picker";
 import { MoomooConnectionSettings } from "../moomoo-connection-settings";
 import { MoomooExecutionImportSetup } from "../moomoo-execution-import-setup";
 import { OfflineDataSettings } from "../offline-data-settings";
+import { PnlReportingBasisSettings } from "../pnl-reporting-basis-settings";
 import { ReportingCurrencySettings } from "../reporting-currency-settings";
 
 export const metadata: Metadata = {
@@ -113,6 +114,10 @@ export default async function AccountTradingPage({
 
       <DashboardPanel title="Reporting currency">
         <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
+      </DashboardPanel>
+
+      <DashboardPanel title="P/L preference">
+        <PnlReportingBasisSettings pnlReportingBasis={profile.pnlReportingBasis} />
       </DashboardPanel>
 
       <DashboardPanel title="Broker connections">

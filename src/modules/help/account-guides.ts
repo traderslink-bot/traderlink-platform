@@ -2,6 +2,23 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const ACCOUNT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "set-pnl-preference",
+    title: "Set your P/L preference",
+    description: "Choose whether summary P/L defaults to Net or Gross without changing any recorded trade facts.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "choose-pnl-basis",
+        title: "Choose your default P/L basis",
+        summary: "Use I enter fees for Net P/L or I don’t enter fees for Gross P/L.",
+        keywords: Object.freeze(["p/l", "profit and loss", "gross", "net", "fees", "preference"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Open Account settings, select General, then use P/L preference. I enter fees selects Net P/L. I don’t enter fees selects Gross P/L. Save the choice to use it as the default for summary analytics, including the five Workspace cards." }),
+          Object.freeze({ kind: "callout", title: "Recorded facts stay unchanged", text: "This setting changes the default summary basis only. It does not relabel or rewrite the Gross, Net, price, quantity or fee facts saved for a trade. A blank fee remains unavailable for Net P/L; an explicit zero fee can be included in Net P/L." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
     slug: "manage-sign-ins",
     title: "Manage your sign-ins",
     description: "Review each active TraderLink sign-in, end one you do not recognize, or sign out everywhere when you need to.",
