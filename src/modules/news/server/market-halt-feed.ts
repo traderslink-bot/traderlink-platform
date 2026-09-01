@@ -158,7 +158,7 @@ async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: strin
       status: Object.freeze({ available: true, httpStatus: response.statusCode, source: "nasdaq" }),
     });
   } catch (error) {
-    console.warn("nasdaq_halt_relay_request_failed", { code: errorCode(error) });
+    console.warn("nasdaq_halt_relay_request_failed", { code: errorCode(error), message: error instanceof Error ? error.message : null });
     return Object.freeze({
       halts: Object.freeze([]),
       status: Object.freeze({ available: false, failureCode: networkFailureCode(error), httpStatus: null, source: "nasdaq" }),
