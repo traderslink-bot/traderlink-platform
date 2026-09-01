@@ -39,9 +39,11 @@ export function DashboardAppearanceSwitch() {
         <LightModeRoundedIcon
           aria-hidden="true"
           sx={(currentTheme) => ({
-            color: currentTheme.palette.mode === "dark" || selectedDark
-              ? currentTheme.palette.text.primary
-              : currentTheme.palette.primary.main,
+            color: selectedDark
+              ? currentTheme.palette.mode === "dark"
+                ? currentTheme.palette.text.primary
+                : currentTheme.palette.primary.main
+              : currentTheme.palette.primary.contrastText,
             fontSize: 14,
             left: 5,
             pointerEvents: "none",
@@ -53,9 +55,11 @@ export function DashboardAppearanceSwitch() {
         <DarkModeRoundedIcon
           aria-hidden="true"
           sx={(currentTheme) => ({
-            color: currentTheme.palette.mode === "dark" || !selectedDark
-              ? currentTheme.palette.text.primary
-              : currentTheme.palette.primary.main,
+            color: selectedDark
+              ? currentTheme.palette.primary.contrastText
+              : currentTheme.palette.mode === "dark"
+                ? currentTheme.palette.text.primary
+                : currentTheme.palette.primary.main,
             fontSize: 14,
             pointerEvents: "none",
             position: "absolute",

@@ -59,3 +59,9 @@
   Confirm the compact navigation toggle persists the selected mode, remains
   keyboard-focusable and leaves Account Preferences available. Do not mark this
   gate complete from source inspection alone.
+- [x] Correct the independent source-QA selected-icon contrast finding: the
+  selected sun or moon now uses the primary contrast text color over the active
+  thumb, while its inactive counterpart remains contrasted against the track in
+  each appearance. The 44px input, 44px by 22px visible track, focus treatment,
+  and authorized preference action remain unchanged. This correction requires
+  a fresh independent source QA pass before isolated staging.
