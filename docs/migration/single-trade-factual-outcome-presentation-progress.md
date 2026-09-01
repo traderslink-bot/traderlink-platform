@@ -1,6 +1,6 @@
 # Single-Trade Factual Outcome Presentation Progress
 
-**Status:** Local source implemented and statically reviewed — real-data owner review pending
+**Status:** Compact outcome presentation deferred — full saved Analyzer evidence restored for owner review
 
 **Controlling plan:** [Single-Trade Factual Outcome Presentation Plan](single-trade-factual-outcome-presentation-plan.md)
 
@@ -50,6 +50,10 @@
 
 - [x] Owner authorized implementation into the existing Analyzer read model and
   user interface.
+- [x] Owner directed the existing full saved Analyzer analysis to remain visible
+  by default while the outcome comparison is redesigned.
+- [ ] Owner approves a planned trade-wide actual-profit versus hypothetical
+  gross-profit comparison for all completed shares.
 - [ ] Owner approves or revises the real-data wording and layout.
 - [ ] Owner reviews the rendering against real saved account-scoped data.
 

@@ -1984,7 +1984,6 @@ function TradeReview({
 }) {
   const presetRules = tradeRules.filter((rule) => !rule.custom);
   const tradeLabelColor = pnlColor(roundTrip.netPnl) === "success.main" ? "success" : "error";
-  const [showAnalyzerEvidence, setShowAnalyzerEvidence] = useState(false);
   const [mobileRulesOpen, setMobileRulesOpen] = useState(true);
   const [mobileExecutionsOpen, setMobileExecutionsOpen] = useState(false);
   const [mismatchConfirmationState, setMismatchConfirmationState] = useState<
@@ -2682,15 +2681,6 @@ function TradeReview({
         >
           {hasVisibleAnalysis(analyzer) ? (
             <Stack spacing={1}>
-              {analyzer.status === "ready" ? (
-                <TradeOutcomeSummary
-                  actualNetPnl={roundTrip.netPnl}
-                  analyzer={analyzer}
-                  currency={currency}
-                  direction={roundTrip.direction}
-                  finalReturnPercent={roundTrip.gainLossPercent}
-                />
-              ) : null}
               {analyzer.status === "pending" ? (
                 <Typography color="info.dark" sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.info.main : undefined, fontWeight: 800 }} variant="body2">
                   Trade Analyzer is analyzing this trade.
@@ -2719,47 +2709,31 @@ function TradeReview({
                   The selected execution is highlighted on the complete trade chart.
                 </Typography>
               ) : null}
-              <Button
-                aria-expanded={showAnalyzerEvidence}
-                onClick={() => setShowAnalyzerEvidence((current) => !current)}
-                size="small"
+              <Box
                 sx={{
-                  alignSelf: { xs: "stretch", sm: "flex-start" },
-                  minHeight: 40,
-                  px: { xs: 1, sm: 0 },
-                  textTransform: "none",
+                  display: "grid",
+                  gap: { xs: 2, md: 0 },
+                  gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
                 }}
-                variant="text"
               >
-                {showAnalyzerEvidence ? "Hide analysis details" : "View more"}
-              </Button>
-              <Collapse in={showAnalyzerEvidence} timeout="auto" unmountOnExit>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gap: { xs: 2, md: 0 },
-                    gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
-                  }}
-                >
-                  <Stack spacing={1.25} sx={{ minWidth: 0, pr: { xs: 0, md: 2 } }}>
-                    <Typography sx={{ fontWeight: 900 }} variant="body1">
-                      {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
-                    </Typography>
-                    {analysisSections.map((section) => (
-                      <TradeAnalysisSectionBlock
-                        key={section.title}
-                        section={section}
-                      />
-                    ))}
-                  </Stack>
-                  <GreenToRedAnalysis
-                    actualNetPnl={roundTrip.netPnl}
-                    analysis={analyzer.greenToRed ?? UNAVAILABLE_GREEN_TO_RED_ANALYSIS}
-                    currency={currency}
-                    timezone={roundTrip.timezone}
-                  />
-                </Box>
-              </Collapse>
+                <Stack spacing={1.25} sx={{ minWidth: 0, pr: { xs: 0, md: 2 } }}>
+                  <Typography sx={{ fontWeight: 900 }} variant="body1">
+                    {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
+                  </Typography>
+                  {analysisSections.map((section) => (
+                    <TradeAnalysisSectionBlock
+                      key={section.title}
+                      section={section}
+                    />
+                  ))}
+                </Stack>
+                <GreenToRedAnalysis
+                  actualNetPnl={roundTrip.netPnl}
+                  analysis={analyzer.greenToRed ?? UNAVAILABLE_GREEN_TO_RED_ANALYSIS}
+                  currency={currency}
+                  timezone={roundTrip.timezone}
+                />
+              </Box>
               {finalExit && false ? (
                 <Typography color="text.secondary" variant="caption">
                   {finalExit.patterns.map((pattern) => pattern.kind.replaceAll("_", " ")).join(" · ")}

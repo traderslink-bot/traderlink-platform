@@ -1,6 +1,6 @@
 # Single-Trade Factual Outcome Presentation Plan
 
-**Status:** Local source implemented; real-data owner review pending
+**Status:** Trade outcome presentation deferred; full saved analysis restored
 
 **Related plan:** [Trade Analyzer Analysis Pages Plan](trade-analyzer-analysis-pages-plan.md)
 
@@ -9,6 +9,20 @@
 **Controlling delivery sequence:** [Trade Analyzer Profit-Protection
 Presentation Plan](trade-analyzer-profit-protection-presentation-plan.md)
 controls the card-first owner-approval gate and the later results-page work.
+
+## Current owner direction
+
+The compact **Trade outcome** card is hidden from the visible review while its
+trade-wide actual-versus-comparison calculation is planned against real saved
+data. The existing full saved Analyzer analysis remains visible by default:
+execution context, VWAP/EMA references, activity, patterns, calculated paths,
+and Green-to-Red evidence.
+
+No current presentation may label a per-share post-exit movement as the whole
+trade's missed profit. The later comparison must define the total actual profit
+from all completed shares, the specific saved comparison price, the
+hypothetical gross profit for those same shares, and its fee treatment before
+it is shown.
 
 ## Purpose
 
@@ -116,16 +130,16 @@ long-term comparisons remain observational: they must not say that reducing,
 adding, holding, an indicator or a pattern caused, prevented, protected or
 guaranteed an outcome.
 
-## Review composition
+## Deferred review composition
 
-The review composition keeps one concise outcome card above optional technical
-evidence. It shows the final-exit statement first, then the applicable
-green-to-red statement. Existing chart replay, fills, indicators, patterns and
-coverage states remain detailed evidence below rather than competing with the
-outcome.
+Until the trade-wide calculation and wording are owner-approved against real
+data, the review shows the full existing Analyzer evidence without a compact
+outcome card or a **View more** gate.
 
 ## Approval gates
 
-1. Owner approves the direct factual copy and responsive composition.
-2. Implementation maps only the listed existing saved facts.
-3. Owner reviews real saved data in the application before acceptance.
+1. Define the trade-wide actual-versus-comparison contract, including gross/net
+   and all-share accounting.
+2. Owner approves the direct factual copy and responsive composition against
+   real saved data.
+3. Implementation maps only the approved existing saved facts.
