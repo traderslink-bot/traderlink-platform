@@ -1,5 +1,7 @@
 import "server-only";
 
+import { request as httpsRequest } from "node:https";
+
 export const NASDAQ_TRADE_HALTS_RSS_URL = "https://nasdaqtrader.com/rss.aspx?feed=tradehalts";
 export const NYSE_TRADE_HALTS_CSV_URL = "https://www.nyse.com/api/trade-halts/current/download?format=csv";
 export type MarketHaltSource = "nasdaq" | "nyse";
@@ -59,13 +61,51 @@ async function fetchMarketHaltSource(input: Readonly<{
   }
 }
 
+async function fetchNasdaqTradeHalts(): Promise<Readonly<{ halts: readonly MarketHalt[]; status: MarketHaltSourceStatus }>> {
+  try {
+    const response = await new Promise<Readonly<{ body: string; statusCode: number }>>((resolve, reject) => {
+      const request = httpsRequest(NASDAQ_TRADE_HALTS_RSS_URL, {
+        family: 4,
+        headers: {
+          Accept: "application/rss+xml, application/xml, text/xml",
+          "User-Agent": "TradersLinkPlatform/1.0",
+        },
+        method: "GET",
+        timeout: 15_000,
+      }, (incoming) => {
+        const chunks: Buffer[] = [];
+        incoming.on("data", (chunk: Buffer) => chunks.push(chunk));
+        incoming.once("error", reject);
+        incoming.once("end", () => resolve(Object.freeze({
+          body: Buffer.concat(chunks).toString("utf8"),
+          statusCode: incoming.statusCode ?? 0,
+        })));
+      });
+      request.once("error", reject);
+      request.once("timeout", () => request.destroy(new Error("Nasdaq Trade Halt RSS request timed out.")));
+      request.end();
+    });
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return Object.freeze({
+        halts: Object.freeze([]),
+        status: Object.freeze({ available: false, httpStatus: response.statusCode || null, source: "nasdaq" }),
+      });
+    }
+    return Object.freeze({
+      halts: parseNasdaqTradeHalts(response.body),
+      status: Object.freeze({ available: true, httpStatus: response.statusCode, source: "nasdaq" }),
+    });
+  } catch {
+    return Object.freeze({
+      halts: Object.freeze([]),
+      status: Object.freeze({ available: false, httpStatus: null, source: "nasdaq" }),
+    });
+  }
+}
+
 export async function fetchOfficialMarketHalts(): Promise<OfficialMarketHalts> {
   const [nasdaq, nyse] = await Promise.all([
-    fetchMarketHaltSource({
-      parse: parseNasdaqTradeHalts,
-      source: "nasdaq",
-      url: NASDAQ_TRADE_HALTS_RSS_URL,
-    }),
+    fetchNasdaqTradeHalts(),
     fetchMarketHaltSource({
       parse: parseNyseTradeHalts,
       source: "nyse",
