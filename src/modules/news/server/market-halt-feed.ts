@@ -26,7 +26,7 @@ const nyseReasonMap: readonly [RegExp, string, string][] = Object.freeze([
   [/information requested/i, "NYSE Information Requested", "Information requested"], [/straddle/i, "NYSE Volatility Pause Straddle", "Volatility trading pause — straddle condition"], [/limit up.limit down|luld|volatility trading pause/i, "NYSE LULD", "Volatility trading pause"],
 ]);
 function clean(value: string): string { return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gu, "$1").replace(/&amp;/gu, "&").replace(/&lt;/gu, "<").replace(/&gt;/gu, ">").replace(/&quot;/gu, '"').replace(/&#39;/gu, "'").replace(/\s+/gu, " ").trim(); }
-function xmlTag(item: string, name: string): string | null { const escaped = name.replace(/:/gu, "\\:"); const match = item.match(new RegExp(`<${escaped}(?:\\s[^>]*)?>([\\s\\S]*?)</${escaped}>`, "iu")); return match ? clean(match[1]) || null : null; }
+function xmlTag(item: string, name: string): string | null { const match = item.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, "iu")); return match ? clean(match[1]) || null : null; }
 function validTicker(value: string | null): value is string { return !!value && /^[A-Z0-9.-]{1,24}$/u.test(value); }
 function errorCode(value: unknown): string | null { return value && typeof value === "object" && "code" in value && typeof value.code === "string" ? value.code : null; }
 function networkFailureCode(error: unknown): MarketHaltSourceFailureCode {
@@ -158,7 +158,6 @@ async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: strin
       status: Object.freeze({ available: true, httpStatus: response.statusCode, source: "nasdaq" }),
     });
   } catch (error) {
-    console.warn("nasdaq_halt_relay_request_failed", { code: errorCode(error), message: error instanceof Error ? error.message : null });
     return Object.freeze({
       halts: Object.freeze([]),
       status: Object.freeze({ available: false, failureCode: networkFailureCode(error), httpStatus: null, source: "nasdaq" }),
