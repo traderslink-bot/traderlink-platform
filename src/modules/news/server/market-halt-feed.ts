@@ -1,6 +1,6 @@
 import "server-only";
 
-export const NASDAQ_TRADE_HALTS_RSS_URL = "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts";
+export const NASDAQ_TRADE_HALTS_RSS_URL = "https://nasdaqtrader.com/rss.aspx?feed=tradehalts";
 export const NYSE_TRADE_HALTS_CSV_URL = "https://www.nyse.com/api/trade-halts/current/download?format=csv";
 export type MarketHaltSource = "nasdaq" | "nyse";
 export type MarketHalt = Readonly<{ haltDateEt: string; haltTimeEt: string; issueName: string; market: string; reasonCode: string; reasonDescription: string; resumptionQuoteTimeEt: string | null; resumptionTradeTimeEt: string | null; source: MarketHaltSource; ticker: string }>;
@@ -39,6 +39,7 @@ async function fetchMarketHaltSource(input: Readonly<{
         Accept: "application/rss+xml, application/xml, text/xml, text/csv",
         "User-Agent": "TradersLinkPlatform/1.0",
       },
+      signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) {
       return Object.freeze({
