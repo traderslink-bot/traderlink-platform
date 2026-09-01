@@ -46,6 +46,14 @@ Railway release boundary.
 
 **Moomoo OAuth reconnect reliability:** [Moomoo Direct Connection Plan](moomoo-direct-connection-plan.md), its [progress record](moomoo-direct-connection-progress.md), and the [Moomoo Import Reliability and Admin Errors Plan](moomoo-import-reliability-and-admin-errors-plan.md) register additive migration `0094_platform_moomoo_oauth_pending_attempts`. It stores only a SHA-256 digest of the OAuth state and the server-resolved initiating user/workspace/session binding, a short expiry and consumed marker; it never stores the state, verifier, authorization code or token. Old rows are boundedly cleaned during a later OAuth start. The additive table is safe to retain if application code is rolled back and does not change existing connection records. Migration execution remains a separate Railway release boundary.
 
+**Default dark appearance:** [Dark Appearance Preference
+Plan](dark-appearance-preference-plan.md) and its [progress
+record](dark-appearance-preference-progress.md) register migration
+`0110_platform_default_dark_appearance`. It moves existing authenticated user
+preferences to Dark once and makes Dark the default for newly provisioned
+users. The existing account-scoped Light/Dark control remains available.
+Migration execution remains a separate Railway release boundary.
+
 **Demo Trade Data:** [Demo Trade Data Plan](demo-trade-data-plan.md) and its
 [progress record](demo-trade-data-progress.md) register additive migration
 `0095_journal_demo_trade_data`. It creates immutable pack-version and

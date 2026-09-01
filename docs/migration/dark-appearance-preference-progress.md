@@ -15,6 +15,9 @@
 - [x] Add a strictly validated Light/Dark preference to the existing user preference record and source migration manifest.
 - [x] Read that preference through the authorized dashboard frame and apply it through the shared Material provider.
 - [x] Add the Appearance control to Account Settings.
+- [x] Register migration `0110_platform_default_dark_appearance` so every
+  existing preference is moved to Dark once and every newly provisioned user
+  starts in Dark, while the normal Light/Dark control remains available.
 - [x] Apply approved tokens to shared components, dashboard shell, charts and scoped PWA/offline state.
 - [x] Repair the focused source QA findings without changing Light behavior: chart containers and analytic SVGs, Daily Trade Analyzer floating controls, AI Chat support surfaces, and Community Watchlist cards now use the Navy token branch in Dark mode.
 - [x] Repair the follow-up source QA findings without changing Light behavior: restore the exact Light ticker-input border and radius, theme the Newsletter cards and sticky table-header surface in Dark mode, and correct this checkpoint record.
