@@ -29,6 +29,7 @@ import {
   type PressReleaseChannel,
 } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { DashboardPage, DashboardPanel } from "../../dashboard-template";
+import { DashboardAppearanceText } from "../dashboard-appearance-text";
 import { markPressReleaseChannelRead, markPressReleaseRead } from "./press-release-actions";
 
 function easternTime(value: string, includeDate = false): string {
@@ -170,9 +171,9 @@ export function PressReleaseFeed({
       >
         <Box>
           <Typography component="h1" variant="h1">{definition.label}</Typography>
-          <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
+          <DashboardAppearanceText lightColor="text.secondary" sx={{ mt: 0.75 }} variant="body2">
             {pageDescription}
-          </Typography>
+          </DashboardAppearanceText>
         </Box>
         <Button
           component={NextLink}

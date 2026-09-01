@@ -117,3 +117,9 @@
   dashboard route, and the Workspace callout title is white with its existing
   `text.primary` body copy. Light mode, account visibility, wording, layout
   and Clear Demo behavior remain unchanged.
+- [x] Route the owner-reported Dark text hotfix through one shared appearance
+  Typography leaf: Demo data headings and body text, both Daily Trade Tracker
+  render branches, the Execution Analytics eyebrow and description, and every
+  Press Release / News Scanner page description now preserve their exact Light
+  semantic colors and resolve to `text.primary` in Dark. The Week Ahead has no
+  title-adjacent page description, so its existing content is unchanged.

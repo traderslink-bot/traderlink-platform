@@ -9,6 +9,7 @@ import {
   DashboardPrimaryAction,
 } from "../../dashboard-template";
 import { DashboardPageDescription } from "../dashboard-page-description";
+import { DashboardAppearanceText } from "../dashboard-appearance-text";
 import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
@@ -160,9 +161,9 @@ export default async function TradeTrackerPage({
         <DashboardPageDescription maxWidth={900} variant="body2">
           The Daily Trade Tracker helps you review one trading day and the trades you took on that particular day. Add tags, notes and track rules for each trade. Add notes and track rules that apply to the trading day as a whole.
         </DashboardPageDescription>
-        <Typography color="error.main" sx={{ fontWeight: 700, maxWidth: 900 }} variant="body2">
+        <DashboardAppearanceText lightColor="error.main" sx={{ fontWeight: 700, maxWidth: 900 }} variant="body2">
           Notes, rules, tags and trade information will appear below after you submit your executions.
-        </Typography>
+        </DashboardAppearanceText>
         {topContent}
       </DashboardPage>
     </TradeTrackerUnsavedChangesProvider>
