@@ -1197,16 +1197,34 @@ export function RulesClient({
 
       {!isMobile ? <Box component="section" id="rule-library" sx={{ scrollMarginTop: 88 }}>
         <Typography
-          color="primary.main"
-          sx={{ fontWeight: 700 }}
+          sx={{
+            color: (theme) => theme.palette.mode === "dark"
+              ? theme.palette.text.primary
+              : theme.palette.primary.main,
+            fontWeight: 700,
+          }}
           variant="caption"
         >
           PRESET LIBRARY
         </Typography>
-        <Typography component="h2" sx={{ mt: 0.25 }} variant="h2">
+        <Typography
+          component="h2"
+          sx={{
+            color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined,
+            mt: 0.25,
+          }}
+          variant="h2"
+        >
           Rules that can be checked against your trades
         </Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+        <Typography
+          color="text.secondary"
+          sx={{
+            color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined,
+            mt: 0.5,
+          }}
+          variant="body2"
+        >
           Each preset connects to a specific part of your trade data, such as
           an individual trade, a ticker, or a day session. Browse the library,
           then turn on only the rules you want to follow.

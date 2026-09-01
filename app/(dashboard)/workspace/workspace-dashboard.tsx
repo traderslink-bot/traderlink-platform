@@ -161,7 +161,9 @@ export function WorkspaceDashboard({
       </Box>
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
-          <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} />
+          <Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}>
+            <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} />
+          </Box>
           <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} onClose={() => setFiltersOpen(false)} open={filtersOpen} query={tradeLibraryProps.trades.query} />
           <TradeTagCreationDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} onClose={() => setTagCreationOpen(false)} open={tagCreationOpen} />
         </>

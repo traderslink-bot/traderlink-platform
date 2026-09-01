@@ -698,8 +698,8 @@ export function DashboardShell({
           </List>
         </Box>
         <Stack spacing={0.5} sx={{ px: compact ? 1 : 2, py: 1 }}>
+          <DashboardAppearanceSwitch />
           <InstallTradersLinkPwaMethods compact={compact} />
-          <DashboardAppearanceSwitch compact={compact} />
         </Stack>
         {compact ? null : (
           <Box sx={{ px: 2, py: 1.5 }}>
@@ -768,7 +768,7 @@ export function DashboardShell({
                 alt="TradersLink"
                 height={35}
                 priority
-                src={theme.palette.mode === "dark" ? "/logo-horizontal-main.png" : "/logo-horizontal-light.png"}
+                src="/logo-horizontal-light.png"
                 style={{
                   display: "block",
                   height: 35,

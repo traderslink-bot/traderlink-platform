@@ -22,10 +22,23 @@ export function AiComingSoonPage({
           spacing={1}
           sx={{ alignItems: "center", flexWrap: "wrap" }}
         >
-          <Typography component="h1" variant="h1">{title}</Typography>
+          <Typography
+            component="h1"
+            sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}
+            variant="h1"
+          >
+            {title}
+          </Typography>
           <Chip color="primary" label="Coming soon" size="small" variant="outlined" />
         </Stack>
-        <Typography color="text.secondary" sx={{ maxWidth: 760 }} variant="body2">
+        <Typography
+          color="text.secondary"
+          sx={{
+            color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined,
+            maxWidth: 760,
+          }}
+          variant="body2"
+        >
           {description}
         </Typography>
       </Stack>

@@ -28,7 +28,7 @@
 - [x] Repair the final static-QA P1 findings on parent `df7c596696cca42598a19113a8d621aa18a1a615`: the Swing Tracker status panel now branches to the approved Dark warning alpha surface, and the Daily Analyzer uses one contrast-safe Dark pattern palette for canvas indicators and both legend layouts while retaining every Light pattern literal. The corresponding local child SHA is reported in the Coordinator and QA handoff because a Git commit cannot self-record its final object SHA in its own contents. It has not been pushed, merged, deployed or applied.
 - [x] Repair the final static-QA P2 findings on parent `01943e62054ffb673e5fa890cfd200fb2c55ab42`: generic Help callouts now use Dark warning/info token-alpha surfaces and borders, and expanded navigation groups use the shared Dark divider while preserving `#d4dae3` in Light. The corresponding local child SHA is reported in the Coordinator and QA handoff because a Git commit cannot self-record its final object SHA in its own contents. It has not been pushed, merged, deployed or applied.
 - [x] Correct the owner-reported Dark text contrast at the shared source: the Dark primary and secondary text tokens and table-header override are white; the shared Account Settings and Daily Trade Tracker eyebrow preserve their approved Light primary color while resolving to white in Dark; and the desktop navigation uses the same logo asset as Light with no blue background.
-- [x] Add the owner-approved bottom-navigation appearance switch: expanded desktop sidebar and mobile navigation drawer show the current `Light` or `Dark` label with its sun/moon icon; the 76px collapsed sidebar is icon-only with the current-mode tooltip and accessible name. It reuses the authorized Account Preferences action, has token-based keyboard focus in both appearances and a 44px mobile target, while Account Preferences remains available. The shared Dark table text and header tokens cover the Workspace desktop table without changing Light or white action icons.
+- [x] Add the owner-approved bottom-navigation appearance switch: desktop sidebar and mobile navigation drawer use the compact 44px hit-area sun/moon toggle with a 44px by 22px visible track directly above the existing Install TradersLink app action. It reuses the authorized Account Preferences action, has token-based keyboard focus in both appearances and a 44px mobile target, while Account Preferences remains available. The scoped Workspace trade-library foreground plus shared Dark text/header tokens cover its grid labels and rows without changing Light or white action icons.
 
 ## Guardrails
 
@@ -42,3 +42,20 @@
   and mobile, including third-party chart rendering and the preserved semantic
   annotation colors. This record does not claim a release, deployment or
   browser acceptance.
+
+## Corrective isolated-staging visual gate
+
+- [x] Preserve the owner-rejected staging evidence without operating it: source
+  `62915b227b748b8b0c17a949e0ec0f0ea892bfc6`, parent
+  `825d4e517b8069e2fd84102ae4129fc6b4c2b87d`, successful Railway deployment
+  `b0873433-7164-4790-a540-f808e7adb1d9`, and ready single-node health state.
+- [ ] After the Coordinator deploys this corrective candidate to isolated
+  staging, capture actual Light and Dark desktop/mobile evidence for `/workspace`
+  (top area plus grid headers and rows), `/account/trading`,
+  `/account/preferences`, `/account/ai`, `/account/profile`,
+  `/account/security`, `/account/privacy`, `/trade-tracker`, `/ai-chat`,
+  `/ai-reviews`, and representative dashboard pages `/calendar` and `/analytics`,
+  plus `/rules` with its Preset Library heading and explanatory paragraph.
+  Confirm the compact navigation toggle persists the selected mode, remains
+  keyboard-focusable and leaves Account Preferences available. Do not mark this
+  gate complete from source inspection alone.
