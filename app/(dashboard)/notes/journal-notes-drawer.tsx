@@ -254,7 +254,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
         ...current,
         tags: [...current.tags, createdTag],
       } : current);
-      setMessage("Tag added. Save Session Review to apply it to this session.");
+      setMessage("Tag added. Save multiple note types to a session to apply it to this date.");
     } catch { setMessage("That tag could not be created. Use a unique name and try again."); } finally { setSaving(false); }
   }
   async function retireSessionTag(tag: SessionReview["tags"][number], confirmAssignedDeletion = false): Promise<void> {

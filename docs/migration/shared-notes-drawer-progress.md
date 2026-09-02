@@ -57,8 +57,8 @@ Related plan:
 - Session Review now loads its compact tag and custom-rule catalog independently
   from the reporting-backed Details summary, so the tag selector is not held up
   by session analytics.
-- One **Save Session Review** action saves the entered note plus changed session
-  tags and custom-rule results. Creating a new tag selects it locally; it is
+- One session-level action saves changed session tags and custom-rule results.
+  Creating a new tag selects it locally; it is
   attached only by that one review save.
 - Demo accounts may now write trader-authored notes, tags, and rule reviews,
   while the demo account guard remains in place for execution and market-fact
@@ -121,8 +121,8 @@ release has been run.
 - Saved sessions now has a bounded account-scoped finder with date limits,
   note/tag text search, month grouping, result counts, and a 20-result
   continuation cursor.
-- Calendar now has account-scoped Session Review markers and an
-  **Open Session Review** launcher. Workspace loads the reusable Calendar
+- Calendar now has account-scoped Session Review markers and a Session Review
+  reader tab. Workspace loads the reusable Calendar
   client only after its Calendar action is selected.
 
 ## 2026-09-02 Session view correction
