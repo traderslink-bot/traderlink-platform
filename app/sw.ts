@@ -135,7 +135,7 @@ const serwist = new Serwist({
       handler: new NetworkOnly({ plugins: [offlineNavigationPlugin] }),
     },
   ],
-  skipWaiting: false,
+  skipWaiting: true,
 });
 
 self.addEventListener("fetch", (event) => {
