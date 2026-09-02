@@ -34,7 +34,7 @@ export function WorkspaceCalendarPanel({ onClose }: Readonly<{ onClose: () => vo
       .catch((failure: unknown) => { if (!(failure instanceof DOMException && failure.name === "AbortError")) setError(true); });
     return () => controller.abort();
   }, [period]);
-  return <Dialog aria-label="Trading Calendar" fullScreen onClose={() => onClose()} open PaperProps={{ sx: { bgcolor: "background.default" } }}>
+  return <Dialog aria-label="Trading Calendar" fullScreen onClose={() => onClose()} open sx={{ "& .MuiDialog-paper": { bgcolor: "background.default" } }}>
     <Box sx={{ minHeight: "100%", p: { xs: 1.5, sm: 3 } }}>
       <Tooltip title="Close Calendar">
         <IconButton aria-label="Close Calendar" onClick={onClose} size="small" sx={{ float: "right", mt: -0.5 }}>
