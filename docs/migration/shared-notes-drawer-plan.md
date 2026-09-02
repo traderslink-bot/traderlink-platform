@@ -22,7 +22,7 @@ Session Review entry uses three tabs:
 
 1. **Review**
 2. **Details**
-3. **Saved sessions**
+3. **Find sessions**
 On mobile, the tab row becomes one full-width view selector that displays the
 selected view and opens a menu or bottom sheet containing those same three
 views. Unsaved text is never discarded when the trader changes views or
@@ -133,7 +133,7 @@ no cross-account value is silently selected as the user’s new focus.
    release. Moomoo/Analyzer availability is unrelated to this Notes feature.
 
 6. After owner approval of the Saved Sessions design, add independent
-   session-note saving, the bounded Saved Sessions finder, account-local tag
+session-note saving, the bounded Find sessions editor finder, account-local tag
    library controls, Calendar session-review markers, and the on-demand
    Workspace Calendar panel. Reuse the one shared drawer and existing
    Calendar; do not create parallel note or Calendar data, and do not preload

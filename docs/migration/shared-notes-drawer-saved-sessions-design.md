@@ -14,8 +14,8 @@ authoritative day-note, tag, rule-review, or Calendar facts.
 1. A trader can save each selected session note type independently.
 2. The final Session Review save remains responsible for the session-level tag
    and custom-rule selections.
-3. Saved sessions become a finder for complete dated reviews, not a list of
-   only the currently open note.
+3. Find sessions becomes a bounded date-indexed editor finder. Calendar is
+   the complete dated-review reader.
 4. Saved sessions become visible from the existing Calendar.
 
 ## Proposed drawer direction for owner review
@@ -24,7 +24,7 @@ Desktop tab order and mobile selector order are identical:
 
 1. **Review**
 2. **Details**
-3. **Saved sessions**
+3. **Find sessions**
 
 ### Review
 
@@ -43,15 +43,15 @@ is the account-local tag library: it contains the create-personal-tag field and
 the retirement controls. Retiring a used tag requires confirmation and
 preserves historical assignment evidence.
 
-### Saved sessions
+### Find sessions
 
-This view is a bounded finder rather than a date-chip row. Its top controls are
+This view is a bounded editor finder rather than a date-chip row. Its top controls are
 a date range and a text search across saved session-note text and saved tag
 names. Results are grouped by month and paginated. Each result shows its date,
-saved-note count, selected-tag count, and saved rule-result count. Selecting a
-result opens the whole dated review in one read-only overview: its note types,
-tags, and rule outcomes, with an **Open Review** action to add or change
-content.
+saved-note count, selected-tag count, and saved rule-result count. Its **Edit
+review** action opens the entry view on that selected date. The complete saved
+review is read in Calendar's Session Review tab, not rendered again inside the
+entry drawer.
 
 The query remains account-scoped, server-bounded, and does not load Calendar
 or chart data.

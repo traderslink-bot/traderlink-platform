@@ -136,3 +136,6 @@ release has been run.
   view: Calendar will be the read surface for tickers, trades and executions;
   its session tab will display saved notes, tags and rule results and provide
   the explicit edit action.
+- The former Saved sessions reader is now **Find sessions**, a bounded
+  date-indexed way to choose an earlier review for editing. It no longer tries
+  to double as a second saved-session card.
