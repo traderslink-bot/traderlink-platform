@@ -8,7 +8,11 @@ import {
   openReadonlyPlatformDatabase,
   withReadonlyPlatformDatabase,
 } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import {
+  openPlatformDatabase,
+  readPlatformRuntimeDatabaseFingerprint,
+} from "@/src/modules/platform/server/database/open-platform-database";
+import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import {
   PLATFORM_REPORTING_CURRENCIES,
   PlatformUserPreferenceRepository,
@@ -77,6 +81,52 @@ type JournalAnalyticsReportingRuntimeOptions = Readonly<{
   prefetchAllFactSet?: boolean;
 }>;
 
+const JOURNAL_ANALYTICS_RUNTIME_CACHE_LIMIT = 4;
+const journalAnalyticsRuntimeCacheKey =
+  "__traderlinkJournalAnalyticsRuntimeCache" as const;
+
+type CachedJournalAnalyticsFactSet = Readonly<{
+  databaseFingerprint: string;
+  factSet: JournalAnalyticsFactSet;
+}>;
+
+type CachedReportingPreparation = Readonly<{
+  databaseFingerprint: string;
+  preparation: ReportingRuntimePreparation;
+}>;
+
+type JournalAnalyticsRuntimeProcessCache = Readonly<{
+  factSets: Map<string, CachedJournalAnalyticsFactSet>;
+  reportingPreparations: Map<string, CachedReportingPreparation>;
+}>;
+
+type JournalAnalyticsRuntimeProcessState = typeof globalThis & {
+  [journalAnalyticsRuntimeCacheKey]: JournalAnalyticsRuntimeProcessCache | undefined;
+};
+
+function readJournalAnalyticsRuntimeProcessCache(): JournalAnalyticsRuntimeProcessCache {
+  const processState = globalThis as JournalAnalyticsRuntimeProcessState;
+  return (processState[journalAnalyticsRuntimeCacheKey] ??= Object.freeze({
+    factSets: new Map<string, CachedJournalAnalyticsFactSet>(),
+    reportingPreparations: new Map<string, CachedReportingPreparation>(),
+  }));
+}
+
+function rememberRuntimeCacheEntry<T>(
+  entries: Map<string, T>,
+  key: string,
+  entry: T,
+): T {
+  entries.delete(key);
+  entries.set(key, entry);
+  while (entries.size > JOURNAL_ANALYTICS_RUNTIME_CACHE_LIMIT) {
+    const oldestKey = entries.keys().next().value;
+    if (typeof oldestKey !== "string") break;
+    entries.delete(oldestKey);
+  }
+  return entry;
+}
+
 function factSetReaderKey(
   scope: WorkspaceAccessScope,
   request: JournalAnalyticsFactSetRequest,
@@ -120,6 +170,35 @@ class PrefetchedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSet
     const factSet = this.source.getJournalAnalyticsFactSet(scope, request);
     this.cache.set(key, factSet);
     return factSet;
+  }
+}
+
+class CachedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSetReader {
+  constructor(
+    private readonly database: Database.Database,
+    private readonly databasePath: string,
+    private readonly source: JournalAnalyticsFactSetReader,
+  ) {}
+
+  getJournalAnalyticsFactSet(
+    scope: WorkspaceAccessScope,
+    request: JournalAnalyticsFactSetRequest,
+  ): JournalAnalyticsFactSet {
+    const cache = readJournalAnalyticsRuntimeProcessCache().factSets;
+    const key = factSetReaderKey(scope, request);
+    const databaseFingerprint = readPlatformRuntimeDatabaseFingerprint(
+      this.database,
+      this.databasePath,
+    );
+    const cached = cache.get(key);
+    if (cached?.databaseFingerprint === databaseFingerprint) {
+      return rememberRuntimeCacheEntry(cache, key, cached).factSet;
+    }
+    const factSet = this.source.getJournalAnalyticsFactSet(scope, request);
+    return rememberRuntimeCacheEntry(cache, key, Object.freeze({
+      databaseFingerprint,
+      factSet,
+    })).factSet;
   }
 }
 
@@ -218,14 +297,18 @@ export function withJournalAnalyticsDashboardService<T>(
 export function withJournalAnalyticsDashboardRuntime<T>(
   _scope: WorkspaceAccessScope,
   operation: (runtime: Readonly<{
-    facts: JournalAnalyticsFactSetService;
+    facts: JournalAnalyticsFactSetReader;
     dashboard: JournalDashboardReadModelService;
     service: JournalAnalyticsService;
   }>) => T,
 ): T {
   return withReadonlyPlatformDatabase({}, (database) => {
-    const facts = new JournalAnalyticsFactSetService(
-      new JournalAnalyticsFactSetRepository(database),
+    const facts = new CachedJournalAnalyticsFactSetReader(
+      database,
+      resolvePlatformDatabaseConfig().databasePath,
+      new JournalAnalyticsFactSetService(
+        new JournalAnalyticsFactSetRepository(database),
+      ),
     );
     const normalizeFacts = createJournalAnalyticsNormalizer();
     return operation(Object.freeze({
@@ -270,8 +353,13 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
   const database = openReadonlyPlatformDatabase();
   try {
     const accountId = requireActiveJournalAnalyticsAccountId(scope);
-    const source = new JournalAnalyticsFactSetService(
-      new JournalAnalyticsFactSetRepository(database),
+    const databasePath = resolvePlatformDatabaseConfig().databasePath;
+    const source = new CachedJournalAnalyticsFactSetReader(
+      database,
+      databasePath,
+      new JournalAnalyticsFactSetService(
+        new JournalAnalyticsFactSetRepository(database),
+      ),
     );
     const prefetchedFactSet = options.prefetchAllFactSet === true
       ? source.getJournalAnalyticsFactSet(scope, Object.freeze({
@@ -280,40 +368,20 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
         currencySelection: Object.freeze({ kind: "all_partitions" as const }),
       }))
       : null;
-    const snapshot = prefetchedFactSet
-      ? reportingSnapshotFromFactSet(
-        database,
-        scope,
-        requestedAtUtc,
-        prefetchedFactSet,
-      )
-      : reportingSnapshotFromStorage(database, scope, requestedAtUtc, accountId);
-    const supportedCurrencies = new Set<string>(PLATFORM_REPORTING_CURRENCIES);
-    const rateCurrencies = [...new Set([
-      snapshot.reportingCurrency,
-      ...snapshot.sourceCurrencies,
-    ])].filter((currency): currency is PlatformReportingCurrency =>
-      currency !== "USD" && supportedCurrencies.has(currency));
-    const ratesByCurrency = new Map<string, ReadonlyMap<string, string>>();
-    if (rateCurrencies.length > 0 && snapshot.sourceDates.length > 0) {
-      const rateDatabase = openPlatformDatabase({ mode: "runtime" });
-      try {
-        for (const currency of rateCurrencies) {
-          ratesByCurrency.set(currency, await loadUsdEffectiveReportingRates(
-            rateDatabase,
-            { sourceDates: snapshot.sourceDates, targetCurrency: currency },
-          ));
-        }
-      } finally {
-        rateDatabase.close();
-      }
-    }
-    const reportingContext: JournalReportingCurrencyContext = Object.freeze({
-      ratesByCurrency,
-      reportingCurrency: snapshot.reportingCurrency,
+    const preparation = await readReportingRuntimePreparation(
+      database,
+      databasePath,
+      scope,
       requestedAtUtc,
-      sourceCurrencyByRoundTrip: snapshot.sourceCurrencyByRoundTrip,
-      sourceDateByRoundTrip: snapshot.sourceDateByRoundTrip,
+      accountId,
+      prefetchedFactSet,
+    );
+    const reportingContext: JournalReportingCurrencyContext = Object.freeze({
+      ratesByCurrency: preparation.ratesByCurrency,
+      reportingCurrency: preparation.snapshot.reportingCurrency,
+      requestedAtUtc,
+      sourceCurrencyByRoundTrip: preparation.snapshot.sourceCurrencyByRoundTrip,
+      sourceDateByRoundTrip: preparation.snapshot.sourceDateByRoundTrip,
     });
     const facts = createJournalReportingCurrencyFactSetReader(
       prefetchedFactSet
@@ -325,12 +393,15 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
     const dashboard = new JournalDashboardReadModelService(facts, normalizeFacts);
     return await operation(Object.freeze({
       database,
-      dashboard: reportingDashboardReader(dashboard, snapshot.reportingCurrency),
-      reportingCurrency: snapshot.reportingCurrency,
+      dashboard: reportingDashboardReader(
+        dashboard,
+        preparation.snapshot.reportingCurrency,
+      ),
+      reportingCurrency: preparation.snapshot.reportingCurrency,
       reportingContext,
       service: new JournalAnalyticsService(
         facts,
-        snapshot.reportingCurrency,
+        preparation.snapshot.reportingCurrency,
         normalizeFacts,
       ),
       verifiedReadonlyDatabase: database,
@@ -347,6 +418,72 @@ type ReportingSnapshot = Readonly<{
   sourceDateByRoundTrip: ReadonlyMap<string, string>;
   sourceDates: readonly string[];
 }>;
+
+type ReportingRuntimePreparation = Readonly<{
+  ratesByCurrency: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  snapshot: ReportingSnapshot;
+}>;
+
+function reportingPreparationKey(
+  scope: WorkspaceAccessScope,
+  requestedAtUtc: string,
+): string {
+  return JSON.stringify({
+    activeAccountId: scope.activeAccountId,
+    allowedAccountIds: scope.allowedAccountIds,
+    requestedDate: requestedAtUtc.slice(0, 10),
+    userId: scope.userId,
+    workspaceId: scope.workspaceId,
+    workspaceRole: scope.workspaceRole,
+  });
+}
+
+async function readReportingRuntimePreparation(
+  database: Database.Database,
+  databasePath: string,
+  scope: WorkspaceAccessScope,
+  requestedAtUtc: string,
+  accountId: string,
+  prefetchedFactSet: JournalAnalyticsFactSet | null,
+): Promise<ReportingRuntimePreparation> {
+  const cache = readJournalAnalyticsRuntimeProcessCache().reportingPreparations;
+  const key = reportingPreparationKey(scope, requestedAtUtc);
+  const databaseFingerprint = readPlatformRuntimeDatabaseFingerprint(
+    database,
+    databasePath,
+  );
+  const cached = cache.get(key);
+  if (cached?.databaseFingerprint === databaseFingerprint) {
+    return rememberRuntimeCacheEntry(cache, key, cached).preparation;
+  }
+  const snapshot = prefetchedFactSet
+    ? reportingSnapshotFromFactSet(database, scope, requestedAtUtc, prefetchedFactSet)
+    : reportingSnapshotFromStorage(database, scope, requestedAtUtc, accountId);
+  const supportedCurrencies = new Set<string>(PLATFORM_REPORTING_CURRENCIES);
+  const rateCurrencies = [...new Set([
+    snapshot.reportingCurrency,
+    ...snapshot.sourceCurrencies,
+  ])].filter((currency): currency is PlatformReportingCurrency =>
+    currency !== "USD" && supportedCurrencies.has(currency));
+  const ratesByCurrency = new Map<string, ReadonlyMap<string, string>>();
+  if (rateCurrencies.length > 0 && snapshot.sourceDates.length > 0) {
+    const rateDatabase = openPlatformDatabase({ mode: "runtime" });
+    try {
+      for (const currency of rateCurrencies) {
+        ratesByCurrency.set(currency, await loadUsdEffectiveReportingRates(
+          rateDatabase,
+          { sourceDates: snapshot.sourceDates, targetCurrency: currency },
+        ));
+      }
+    } finally {
+      rateDatabase.close();
+    }
+  }
+  return rememberRuntimeCacheEntry(cache, key, Object.freeze({
+    databaseFingerprint,
+    preparation: Object.freeze({ ratesByCurrency, snapshot }),
+  })).preparation;
+}
 
 function reportingSnapshotFromStorage(
   database: ReturnType<typeof openReadonlyPlatformDatabase>,

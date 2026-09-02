@@ -108,20 +108,23 @@ export function verifyPlatformDatabaseConnectionPragmas(
   return evidence;
 }
 
-function readRuntimeDatabaseIntegrityFingerprint(
+function readPlatformDatabaseFileFingerprint(path: string): string {
+  if (!existsSync(path)) return "absent";
+  const details = statSync(path);
+  return [details.dev, details.ino, details.size, details.mtimeMs].join(":");
+}
+
+export function readPlatformRuntimeDatabaseFingerprint(
   database: Database.Database,
   databasePath: string,
 ): string {
-  const details = statSync(databasePath);
   const schemaVersion = readSinglePlatformDatabasePragmaValue(
     database,
     "schema_version",
   );
   return [
-    details.dev,
-    details.ino,
-    details.size,
-    details.mtimeMs,
+    readPlatformDatabaseFileFingerprint(databasePath),
+    readPlatformDatabaseFileFingerprint(`${databasePath}-wal`),
     String(schemaVersion),
   ].join(":");
 }
@@ -135,7 +138,7 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   database: Database.Database,
   databasePath: string,
 ): void {
-  const fingerprint = readRuntimeDatabaseIntegrityFingerprint(
+  const fingerprint = readPlatformRuntimeDatabaseFingerprint(
     database,
     databasePath,
   );
