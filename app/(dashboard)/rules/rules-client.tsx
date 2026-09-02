@@ -1299,7 +1299,7 @@ export function RulesClient({
       <Dialog
         fullWidth
         maxWidth="sm"
-        onClose={() => setEditor(null)}
+        onClose={() => { setEditor(null); if (panelMode === "presets") closePanelMode(); }}
         open={editor !== null}
       >
         {editor ? (
@@ -1382,7 +1382,7 @@ export function RulesClient({
               </Alert>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setEditor(null)}>Cancel</Button>
+              <Button onClick={() => { setEditor(null); if (panelMode === "presets") closePanelMode(); }}>Cancel</Button>
               <Button
                 disabled={
                   busyId !== null ||
