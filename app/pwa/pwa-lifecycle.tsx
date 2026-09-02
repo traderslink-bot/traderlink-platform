@@ -103,10 +103,6 @@ export function PwaLifecycle({
       }
     };
     navigator.serviceWorker.addEventListener("message", onMessage);
-    void navigator.serviceWorker
-      .register("/sw.js", { scope: "/", updateViaCache: "none" })
-      .then((registration) => registration.update())
-      .catch(() => undefined);
     return () => {
       navigator.serviceWorker.removeEventListener("message", onMessage);
     };

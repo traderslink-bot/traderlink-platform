@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AnalyticsConsent } from "./analytics-consent";
 import { MuiProviders } from "./mui-provider";
+import { PwaServiceWorkerBootstrap } from "./pwa/pwa-service-worker-bootstrap";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -46,6 +47,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <PwaServiceWorkerBootstrap />
         <MuiProviders>
           {children}
           <AnalyticsConsent />
