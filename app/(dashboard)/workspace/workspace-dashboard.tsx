@@ -43,6 +43,14 @@ const WorkspaceRulesPanel = dynamic(
   () => import("./workspace-rules-panel").then((module) => module.WorkspaceRulesPanel),
   { ssr: false },
 );
+const WorkspaceNewsScannerCard = dynamic(
+  () => import("./workspace-news-scanner-card").then((module) => module.WorkspaceNewsScannerCard),
+  { ssr: false },
+);
+const WorkspaceNewsScannerPanel = dynamic(
+  () => import("./workspace-news-scanner-panel").then((module) => module.WorkspaceNewsScannerPanel),
+  { ssr: false },
+);
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -82,6 +90,7 @@ type WorkspaceDashboardProps = Readonly<{
   firstTimeMoomooConnected?: boolean;
   firstTimeOnboardingResult?: WorkspaceFirstTimeOnboardingResult;
   hasRealAcceptedExecution?: boolean;
+  newsScannerAvailable?: boolean;
   offlineSavedAtUtc?: string;
   period?: "today" | "week" | "month" | "all";
   ruleResultsCard?: Readonly<{ brokenRuleCount: number; recentBrokenRuleTitles: readonly string[] }>;
@@ -166,6 +175,7 @@ export function WorkspaceDashboard({
   firstTimeMoomooConnected,
   firstTimeOnboardingResult,
   hasRealAcceptedExecution,
+  newsScannerAvailable = false,
   offlineSavedAtUtc,
   period = "all",
   ruleResultsCard,
@@ -179,6 +189,7 @@ export function WorkspaceDashboard({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sessionNotesOpen, setSessionNotesOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [newsScannerOpen, setNewsScannerOpen] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [rulesAccountSelectionRef, setRulesAccountSelectionRef] = useState<string | null>(null);
   const [rulesInitialView, setRulesInitialView] = useState<"custom" | "presets" | "results" | "rules">("rules");
@@ -244,14 +255,14 @@ export function WorkspaceDashboard({
           <DashboardChartAction />
         </Stack> : null}
       </Stack>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : <>
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : hasLiveTradeLibraryProps(tradeLibraryProps) && newsScannerOpen ? <WorkspaceNewsScannerPanel onClose={() => setNewsScannerOpen(false)} /> : <>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Link href="/trade-tracker">Open Day Trade Tracker</Link></Alert> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && (currentFocuses || (showRuleResultsCard && ruleResultsCard)) ? <Box sx={{
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && (currentFocuses || (showRuleResultsCard && ruleResultsCard) || newsScannerAvailable) ? <Box sx={{
         "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
         "& h2": { fontSize: "1rem", lineHeight: 1.25 },
         "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root": {
@@ -276,12 +287,13 @@ export function WorkspaceDashboard({
         mt: 1.5,
       }}>{currentFocuses ? <DashboardPanel title="Current Focuses">
         <CurrentFocusContent content={currentFocuses} />
-      </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel action={<Button onClick={() => openRules("results")} size="small">View results</Button>} title="Rules broken">
-        <Stack spacing={1}>
-          <Typography sx={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1 }}>{ruleResultsCard.brokenRuleCount}</Typography>
-          {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
+      </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel action={<Typography sx={{ fontSize: "1.25rem", fontWeight: 750, lineHeight: 1 }}>{ruleResultsCard.brokenRuleCount}</Typography>} title="Rules broken">
+        <Stack spacing={0.75} sx={{ height: "100%", minHeight: 0 }}>
+          <Typography color="text.secondary" sx={{ fontWeight: 700 }} variant="caption">Recent broken rules</Typography>
+          {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5} sx={{ minWidth: 0 }}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
+          <Box sx={{ mt: "auto" }}><Button onClick={() => openRules("results")} size="small">View results</Button></Box>
         </Stack>
-      </DashboardPanel> : null}</Box> : null}
+      </DashboardPanel> : null}{newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}</Box> : null}
       <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>

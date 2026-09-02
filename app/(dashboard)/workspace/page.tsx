@@ -11,6 +11,7 @@ import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, Workspace
 import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
+import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import {
   findJournalAnalyticsMetric,
   formatJournalAnalyticsPartitionedMetric,
@@ -22,7 +23,7 @@ import {
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import {
   currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformServerComponentPageScope,
+  requireTraderLinkPlatformServerComponentPageIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import {
@@ -99,7 +100,8 @@ export default async function WorkspacePage({
   const group: WorkspaceTradeLibraryGroup = queryParameters.group === "day" || queryParameters.group === "ticker" ? queryParameters.group : "none";
   const allowedSorts: readonly WorkspaceTradeLibrarySort[] = ["newest", "oldest", "position", "buy_quantity", "entry", "exit", "entry_value", "hold", "pnl_high", "pnl_low"];
   const sort: WorkspaceTradeLibrarySort = allowedSorts.includes(queryParameters.sort as WorkspaceTradeLibrarySort) ? queryParameters.sort as WorkspaceTradeLibrarySort : "newest";
-  const scope = await requireTraderLinkPlatformServerComponentPageScope();
+  const identity = await requireTraderLinkPlatformServerComponentPageIdentity();
+  const scope = identity.scope;
   if (!scope.activeAccountId) {
     // Preserve the existing read-before-redirect failure boundary.
     readJournalFirstExecutionOnboardingStatus(scope);
@@ -215,6 +217,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
         showDemoTradeTrackerInvitation={showDemoTradeTrackerInvitation}
         hasRealAcceptedExecution={onboardingStatus.hasRealAcceptedExecution}
+        newsScannerAvailable={hasPressReleaseDashboardAccess(identity)}
         firstTimeMoomooConnectionPending={showFirstTimeOnboarding ? moomooConnectionPending : undefined}
         firstTimeMoomooConnected={onboardingStatus.hasActiveMoomooConnection}
         firstTimeOnboardingResult={showFirstTimeOnboarding
