@@ -218,6 +218,7 @@ export function WorkspaceDashboard({
           <DashboardChartAction />
         </Stack> : null}
       </Stack>
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : <>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Link href="/trade-tracker">Open Day Trade Tracker</Link></Alert> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
@@ -251,7 +252,6 @@ export function WorkspaceDashboard({
         <CurrentFocusContent content={currentFocuses} />
       </DashboardPanel></Box> : null}
       <DashboardChartPanelSlot />
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : null}
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
           <Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}>
@@ -261,6 +261,7 @@ export function WorkspaceDashboard({
           <JournalNotesDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} focusOnly={sessionNotesInitialView === "focuses"} initialView={sessionNotesInitialView} key={sessionNotesInitialView} launch={{ kind: "session", sessionDate: sessionDateInTimezone(tradeLibraryProps.accountTimezone) }} onClose={() => setSessionNotesOpen(false)} onFocusSaved={(focus) => setCurrentFocuses(focus.showInWorkspace && focus.focusText.trim() ? focus.focusText.trim() : null)} open={sessionNotesOpen} />
         </>
       ) : null}
+      </>}
       </DashboardPage>
     </DashboardChartProvider>
   );

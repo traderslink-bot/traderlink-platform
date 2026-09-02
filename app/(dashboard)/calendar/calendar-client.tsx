@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
@@ -676,12 +675,12 @@ export function CalendarClient({
   initialView: CalendarView;
   offlineSavedAtUtc?: string;
   onNavigatePeriod?: (view: CalendarView, period: string) => void;
-  presentation?: "page" | "workspace-overlay";
+  presentation?: "page" | "workspace-embedded";
   selectedMonth: string;
   selectedWeek: string;
 }) {
   const router = useRouter();
-  const workspaceOverlay = presentation === "workspace-overlay";
+  const workspaceEmbedded = presentation === "workspace-embedded";
   const view = initialView;
   const activeMonth = selectedMonth;
   const [selectedDate, setSelectedDate] = useState(initialData.activeDate);
@@ -782,7 +781,7 @@ export function CalendarClient({
 
   return (
     <DashboardPage>
-      {!workspaceOverlay ? <Typography
+      {!workspaceEmbedded ? <Typography
         component="h1"
         sx={{
           color: "text.primary",
@@ -794,7 +793,7 @@ export function CalendarClient({
       >
         Trading Calendar
       </Typography> : null}
-      {!workspaceOverlay && offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
+      {!workspaceEmbedded && offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ alignItems: { lg: "center" }, justifyContent: "space-between" }}>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           <ToggleButtonGroup exclusive onChange={(_, value: CalendarView | null) => {
@@ -810,9 +809,9 @@ export function CalendarClient({
             <ToggleButton value="month">Month</ToggleButton>
             <ToggleButton value="week">Week</ToggleButton>
           </ToggleButtonGroup>
-          {workspaceOverlay ? null : <FeatureHelpLink href="/help/calendar/month-and-week#navigate-periods" label="month and week views" />}
+          {workspaceEmbedded ? null : <FeatureHelpLink href="/help/calendar/month-and-week#navigate-periods" label="month and week views" />}
         </Stack>
-        {workspaceOverlay ? null : <FeatureHelpLink href="/help/calendar" label="Calendar" size="medium" />}
+        {workspaceEmbedded ? null : <FeatureHelpLink href="/help/calendar" label="Calendar" size="medium" />}
         {showLegacyCalendarControls ? <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
           <Button onClick={() => setFiltersOpen(true)} startIcon={<DateRangeRoundedIcon />} variant="outlined">Date range</Button>
           <Button onClick={() => setFiltersOpen(true)} startIcon={<FilterAltRoundedIcon />} variant="outlined">P/L and session filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button>
@@ -820,7 +819,7 @@ export function CalendarClient({
         </Stack> : null}
       </Stack>
 
-      {!workspaceOverlay ? <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+      {!workspaceEmbedded ? <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
         {initialData.state !== "unavailable" ? <DashboardDataScopeChip /> : null}
         <FeatureHelpLink href="/help/calendar/coverage-and-limits#included-trades" label="Calendar coverage" />
         <Typography color="text.secondary" sx={{ alignSelf: "center", display: initialData.state === "ready" ? "none" : undefined }} variant="caption">
@@ -832,7 +831,7 @@ export function CalendarClient({
         </Typography>
       </Stack> : null}
 
-      {!workspaceOverlay ? <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
+      {!workspaceEmbedded ? <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
         <DashboardMetricCard caption="Selected period" label="P/L" value={initialData.state === "ready" ? money(initialData.summary.netPnlDecimal, initialData.currency) : "—"} valueColor={initialData.state === "ready" ? financialOutcomeColor(initialData.summary.netPnlDecimal) : "text.primary"} />
         <DashboardMetricCard caption="Selected period" label="Trades" value={initialData.state === "ready" ? String(initialData.summary.tradeCount) : "—"} />
         <DashboardMetricCard caption="Selected period" label="Win rate" value={initialData.state === "ready" ? percent(initialData.summary.winRatePercentDecimal) : "—"} valueColor={initialData.state === "ready" ? financialThresholdColor(initialData.summary.winRatePercentDecimal, 50) : "text.primary"} />
@@ -927,14 +926,14 @@ export function CalendarClient({
         </Stack>
       </Drawer>
 
-      <Drawer anchor={workspaceOverlay ? "bottom" : "right"} onClose={() => { setDetailsOpen(false); setExpandedTickerId(null); }} open={detailsOpen} slotProps={{ paper: { sx: workspaceOverlay ? { height: "100%", p: { xs: 1.5, sm: 3 }, width: "100%" } : { p: 3, width: { xs: "100%", sm: 520 } } } }}>
+      <Drawer anchor="right" onClose={() => { setDetailsOpen(false); setExpandedTickerId(null); }} open={detailsOpen} slotProps={{ paper: { sx: { p: 3, width: { xs: "100%", sm: 520 } } }}>
         {detailsOpen ? (
           <>
             <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
               <Typography component="h2" variant="h5">{new Date(`${selected.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", weekday: "long" })}</Typography>
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-                {workspaceOverlay ? null : <FeatureHelpLink href="/help/calendar/inspect-a-day#open-details" label="selected-day details" />}
-                <Button aria-label={workspaceOverlay ? "Back to calendar" : "Close day details"} onClick={() => { setDetailsOpen(false); setExpandedTickerId(null); }} size="small" startIcon={workspaceOverlay ? <ArrowBackRoundedIcon /> : <CloseRoundedIcon />} sx={{ minHeight: 44 }}>{workspaceOverlay ? "Back to calendar" : "Close"}</Button>
+                <FeatureHelpLink href="/help/calendar/inspect-a-day#open-details" label="selected-day details" />
+                <Button aria-label="Close day details" onClick={() => { setDetailsOpen(false); setExpandedTickerId(null); }} size="small" startIcon={<CloseRoundedIcon />} sx={{ minHeight: 44 }}>Close</Button>
               </Stack>
             </Stack>
             <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between", mt: 0.75 }}>
