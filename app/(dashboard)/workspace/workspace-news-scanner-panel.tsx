@@ -66,16 +66,16 @@ export function WorkspaceNewsScannerPanel({ expectedAccountSelectionRef, initial
     }
   }
 
-  return <Slide appear direction="left" in><Box sx={{ minHeight: { xs: "70vh", md: "calc(100vh - 180px)" } }}>
+  return <Slide appear direction="left" in><Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.common.white : "text.primary", minHeight: { xs: "70vh", md: "calc(100vh - 180px)" } }}>
     <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 1 }}>
       <Typography component="h2" variant="h2">PR Scanner</Typography>
-      <Stack direction="row" spacing={0.5}><Button component={Link} href="/press-releases" size="small">All news</Button><Button onClick={onClose} size="small" startIcon={<CloseRoundedIcon />}>Close PR Scanner</Button></Stack>
+      <Stack direction="row" spacing={0.5}><Button color="inherit" component={Link} href="/press-releases" size="small">All press releases</Button><Button color="inherit" onClick={onClose} size="small" startIcon={<CloseRoundedIcon />}>Close PR Scanner</Button></Stack>
     </Stack>
-    <FormControlLabel control={<Switch checked={preference.showInWorkspace} disabled={savingPreference} onChange={(event) => void savePreference(event.target.checked)} />} label="Display PR Scanner card in Workspace" sx={{ mb: 1 }} />
+    <FormControlLabel control={<Switch checked={preference.showInWorkspace} disabled={savingPreference} onChange={(event) => void savePreference(event.target.checked)} />} label="Display PR Scanner card in Workspace" sx={{ color: "inherit", mb: 1 }} />
     {preferenceError ? <Alert severity="error" sx={{ mb: 1 }}>The Workspace card setting could not be saved. Try again.</Alert> : null}
-    {failed ? <Alert severity="error">PR Scanner could not be loaded. Try again.</Alert> : articles === null ? <Box sx={{ display: "grid", minHeight: 280, placeItems: "center" }}><CircularProgress aria-label="Loading PR Scanner" size={28} /></Box> : articles.length ? <Box sx={{ border: 1, borderColor: "divider", borderRadius: 2, overflow: "hidden" }}>{articles.map((article) => <Button aria-label={`Open ${article.ticker} article: ${article.headline}`} fullWidth key={article.id} onClick={() => selectArticle(article)} sx={{ alignItems: "center", borderBottom: 1, borderColor: "divider", display: "grid", gap: 1, gridTemplateColumns: { xs: "64px minmax(0, 1fr)", sm: "76px minmax(0, 1fr)" }, justifyContent: "initial", minHeight: 52, px: 1.5, py: 1, textAlign: "left", textTransform: "none" }}>
-      <Typography noWrap sx={{ fontWeight: article.isRead ? 700 : 850 }} variant="body2">{article.ticker}</Typography>
-      <Box sx={{ minWidth: 0 }}><Typography noWrap sx={{ display: "block", fontWeight: article.isRead ? 500 : 720 }} variant="body2">{article.headline}</Typography><Typography color="text.secondary" variant="caption">{pressReleaseEasternTime(article.publishedAt)}</Typography></Box>
+    {failed ? <Alert severity="error">PR Scanner could not be loaded. Try again.</Alert> : articles === null ? <Box sx={{ display: "grid", minHeight: 280, placeItems: "center" }}><CircularProgress aria-label="Loading PR Scanner" size={28} /></Box> : articles.length ? <Box sx={{ border: 1, borderColor: "divider", borderRadius: 2, overflow: "hidden" }}>{articles.map((article) => <Button aria-label={`Open ${article.ticker} article: ${article.headline}`} color="inherit" fullWidth key={article.id} onClick={() => selectArticle(article)} sx={{ alignItems: "center", borderBottom: 1, borderColor: "divider", display: "grid", gap: 1, gridTemplateColumns: { xs: "72px minmax(0, 1fr)", sm: "88px minmax(0, 1fr)" }, justifyContent: "initial", minHeight: 52, px: 1.5, py: 1, textAlign: "left", textTransform: "none" }}>
+      <Typography noWrap sx={{ color: "warning.main", fontSize: "0.95rem", fontWeight: article.isRead ? 800 : 900, letterSpacing: "0.025em" }} variant="body2">{article.ticker}</Typography>
+      <Box sx={{ minWidth: 0 }}><Typography noWrap sx={{ color: "inherit", display: "block", fontWeight: article.isRead ? 550 : 750 }} variant="body2">{article.headline}</Typography><Typography sx={{ color: (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.74)" : "text.secondary" }} variant="caption">{pressReleaseEasternTime(article.publishedAt)}</Typography></Box>
     </Button>)}</Box> : <Alert severity="info">No recent scanner articles.</Alert>}
     <PressReleaseArticleDrawer article={selected} onClose={() => setSelected(null)} />
   </Box></Slide>;

@@ -14,17 +14,21 @@ import { markPressReleaseRead } from "../press-releases/press-release-actions";
 
 type ScannerResponse = Readonly<{ articles?: readonly PressReleaseArticle[] }>;
 
+const SCANNER_REFRESH_MS = 60_000;
+
 export function WorkspaceNewsScannerCard({ onViewMore }: Readonly<{ onViewMore: () => void }>) {
   const [articles, setArticles] = useState<readonly PressReleaseArticle[] | null>(null);
   const [selected, setSelected] = useState<PressReleaseArticle | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetch("/api/platform/news/workspace-scanner", { cache: "no-store", signal: controller.signal })
+    const load = () => void fetch("/api/platform/news/workspace-scanner", { cache: "no-store", signal: controller.signal })
       .then(async (response) => response.ok ? response.json() as Promise<ScannerResponse> : Promise.reject(new Error("scanner_unavailable")))
       .then((result) => setArticles(result.articles ?? []))
       .catch((error: unknown) => { if (!(error instanceof DOMException && error.name === "AbortError")) setArticles([]); });
-    return () => controller.abort();
+    load();
+    const refresh = window.setInterval(load, SCANNER_REFRESH_MS);
+    return () => { controller.abort(); window.clearInterval(refresh); };
   }, []);
 
   function selectArticle(article: PressReleaseArticle): void {
@@ -38,7 +42,7 @@ export function WorkspaceNewsScannerCard({ onViewMore }: Readonly<{ onViewMore: 
     <DashboardPanel title="PR Scanner">
       <Stack spacing={0.15} sx={{ height: "100%", minHeight: 0 }}>
         {articles === null ? <Box sx={{ display: "grid", flex: 1, placeItems: "center" }}><CircularProgress aria-label="Loading PR Scanner" size={22} /></Box> : articles.length ? articles.slice(0, 6).map((article) => <Button aria-label={`Open ${article.ticker} article: ${article.headline}`} key={article.id} onClick={() => selectArticle(article)} sx={{ display: "block", lineHeight: 1.3, minHeight: 0, minWidth: 0, overflow: "hidden", p: 0, textAlign: "left", textOverflow: "ellipsis", textTransform: "none", whiteSpace: "nowrap", width: "100%" }} title={`${article.ticker} ${article.headline}`}>
-          <Box component="span" sx={{ color: "secondary.main", fontSize: "0.9rem", fontWeight: article.isRead ? 750 : 900, mr: 0.6 }}>{article.ticker}</Box>{article.headline}
+          <Box component="span" sx={{ color: "warning.main", fontSize: "0.95rem", fontWeight: article.isRead ? 800 : 900, letterSpacing: "0.02em", mr: 0.6 }}>{article.ticker}</Box>{article.headline}
         </Button>) : <Typography color="text.secondary" variant="body2">No recent scanner articles.</Typography>}
         <Box sx={{ mt: "auto", pt: 0.5 }}><Button onClick={onViewMore} size="small">Open scanner</Button></Box>
       </Stack>

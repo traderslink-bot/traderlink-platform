@@ -26,6 +26,7 @@ export type WorkspaceTradeLibraryRow = Readonly<{
   exitTime: string | null;
   entryValueDecimal: string | null;
   gainLossDecimal: string | null;
+  hasCurrentAnalyzerResult: boolean;
   holdDurationSeconds: number | null;
   positionDecimal: string;
   roundTripId: string;
@@ -50,7 +51,18 @@ export type WorkspaceEditableExecution = Readonly<{
 }>;
 
 export type WorkspaceTradeLibraryFilter = "all" | "open" | "swing" | "closed";
-export type WorkspaceTradeLibrarySort = "newest" | "oldest" | "position" | "buy_quantity" | "entry" | "exit" | "entry_value" | "hold" | "pnl_high" | "pnl_low";
+export type WorkspaceTradeLibrarySort =
+  | "newest" | "oldest"
+  | "ticker_asc" | "ticker_desc"
+  | "direction_asc" | "direction_desc"
+  | "status_asc" | "status_desc"
+  | "position" | "position_asc"
+  | "buy_quantity" | "buy_quantity_asc"
+  | "entry" | "entry_asc"
+  | "exit" | "exit_asc"
+  | "entry_value" | "entry_value_asc"
+  | "hold" | "hold_asc"
+  | "pnl_high" | "pnl_low";
 export type WorkspaceTradeLibraryGroup = "none" | "day" | "ticker";
 
 export type WorkspaceTradeLibraryQuery = Readonly<{
@@ -99,6 +111,7 @@ type ProjectionRow = Readonly<{
   maximum_position_quantity_decimal: string | null;
   gross_pnl_decimal: string | null;
   gross_pnl_sort_key: string | null;
+  has_current_analyzer_result: 0 | 1;
   hold_duration_seconds: number | null;
   hold_duration_sort_key: string | null;
   net_pnl_decimal: string | null;
@@ -159,7 +172,7 @@ function canonicalQuery(value: WorkspaceTradeLibraryQuery): WorkspaceTradeLibrar
     startDate: value.startDate || null,
   } as const;
   if (!(["all", "open", "swing", "closed"] as const).includes(query.filter) ||
-      !(["newest", "oldest", "position", "buy_quantity", "entry", "exit", "entry_value", "hold", "pnl_high", "pnl_low"] as const).includes(query.sort) ||
+      !(["newest", "oldest", "ticker_asc", "ticker_desc", "direction_asc", "direction_desc", "status_asc", "status_desc", "position", "position_asc", "buy_quantity", "buy_quantity_asc", "entry", "entry_asc", "exit", "exit_asc", "entry_value", "entry_value_asc", "hold", "hold_asc", "pnl_high", "pnl_low"] as const).includes(query.sort) ||
       !(["none", "day", "ticker"] as const).includes(query.group) ||
       !TICKER.test(query.searchTicker) ||
       (query.startDate !== null && !DATE.test(query.startDate)) ||
@@ -191,15 +204,38 @@ function decodeCursor(value: string, revision: string, digest: string, sort: Wor
   }
 }
 
+type SortDefinition = Readonly<{ direction: "ASC" | "DESC"; expression: string }>;
+
+function sortDefinition(sort: WorkspaceTradeLibrarySort): SortDefinition {
+  if (sort === "newest") return { direction: "DESC", expression: "projection.activity_at_utc" };
+  if (sort === "oldest") return { direction: "ASC", expression: "projection.activity_at_utc" };
+  if (sort === "ticker_asc") return { direction: "ASC", expression: "instrument.normalized_symbol" };
+  if (sort === "ticker_desc") return { direction: "DESC", expression: "instrument.normalized_symbol" };
+  if (sort === "direction_asc") return { direction: "ASC", expression: "version.direction" };
+  if (sort === "direction_desc") return { direction: "DESC", expression: "version.direction" };
+  if (sort === "status_asc") return { direction: "ASC", expression: "CASE WHEN projection.projection_state = 'legitimate_open' THEN CASE WHEN style.trade_style = 'swing' THEN 'Open swing' ELSE 'Open' END ELSE CASE WHEN style.trade_style = 'swing' THEN 'Closed swing' ELSE 'Closed' END END" };
+  if (sort === "status_desc") return { direction: "DESC", expression: "CASE WHEN projection.projection_state = 'legitimate_open' THEN CASE WHEN style.trade_style = 'swing' THEN 'Open swing' ELSE 'Open' END ELSE CASE WHEN style.trade_style = 'swing' THEN 'Closed swing' ELSE 'Closed' END END" };
+  if (sort === "position" || sort === "position_asc") return { direction: sort === "position" ? "DESC" : "ASC", expression: "projection.position_sort_key" };
+  if (sort === "buy_quantity" || sort === "buy_quantity_asc") return { direction: sort === "buy_quantity" ? "DESC" : "ASC", expression: "projection.buy_quantity_sort_key" };
+  if (sort === "entry" || sort === "entry_asc") return { direction: sort === "entry" ? "DESC" : "ASC", expression: "projection.entry_price_sort_key" };
+  if (sort === "exit" || sort === "exit_asc") return { direction: sort === "exit" ? "DESC" : "ASC", expression: "projection.exit_price_sort_key" };
+  if (sort === "entry_value" || sort === "entry_value_asc") return { direction: sort === "entry_value" ? "DESC" : "ASC", expression: "projection.entry_value_sort_key" };
+  if (sort === "hold" || sort === "hold_asc") return { direction: sort === "hold" ? "DESC" : "ASC", expression: "projection.hold_duration_sort_key" };
+  return { direction: sort === "pnl_low" ? "ASC" : "DESC", expression: "projection.gross_pnl_sort_key" };
+}
+
 function sortKey(row: ProjectionRow, sort: WorkspaceTradeLibrarySort): string | null {
-  if (sort === "position") return row.position_sort_key;
-  if (sort === "buy_quantity") return row.buy_quantity_sort_key;
-  if (sort === "entry") return row.entry_price_sort_key;
-  if (sort === "exit") return row.exit_price_sort_key;
-  if (sort === "entry_value") return row.entry_value_sort_key;
-  if (sort === "hold") return row.hold_duration_sort_key;
-  if (sort === "pnl_high" || sort === "pnl_low") return row.gross_pnl_sort_key;
-  return null;
+  if (sort === "newest" || sort === "oldest") return row.activity_at_utc;
+  if (sort === "ticker_asc" || sort === "ticker_desc") return row.symbol;
+  if (sort === "direction_asc" || sort === "direction_desc") return row.direction;
+  if (sort === "status_asc" || sort === "status_desc") return row.projection_state === "legitimate_open" ? row.trade_style === "swing" ? "Open swing" : "Open" : row.trade_style === "swing" ? "Closed swing" : "Closed";
+  if (sort === "position" || sort === "position_asc") return row.position_sort_key;
+  if (sort === "buy_quantity" || sort === "buy_quantity_asc") return row.buy_quantity_sort_key;
+  if (sort === "entry" || sort === "entry_asc") return row.entry_price_sort_key;
+  if (sort === "exit" || sort === "exit_asc") return row.exit_price_sort_key;
+  if (sort === "entry_value" || sort === "entry_value_asc") return row.entry_value_sort_key;
+  if (sort === "hold" || sort === "hold_asc") return row.hold_duration_sort_key;
+  return row.gross_pnl_sort_key;
 }
 
 function encodeCursor(row: ProjectionRow, revision: string, digest: string, sort: WorkspaceTradeLibrarySort): string {
@@ -352,6 +388,7 @@ function toWorkspaceTradeLibraryRows(
     exitTime: row.exit_local_time,
     entryValueDecimal: row.entry_notional_decimal,
     gainLossDecimal: row.gross_pnl_decimal,
+    hasCurrentAnalyzerResult: row.has_current_analyzer_result === 1,
     holdDurationSeconds: row.hold_duration_seconds,
     positionDecimal: facts.get(row.round_trip_version_id)?.positionDecimal ?? "0",
     roundTripId: row.round_trip_id,
@@ -404,34 +441,15 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as
   if (query.filter === "swing") clauses.push("style.trade_style = 'swing'");
   const where = clauses.join(" AND ");
   const filterParameters = [...parameters];
+  const sort = sortDefinition(query.sort);
   const keyset = (() => {
     if (!cursor) return "";
-    if (query.sort === "newest") { parameters.push(cursor.activityAtUtc, cursor.activityAtUtc, cursor.roundTripId); return " AND (projection.activity_at_utc < ? OR (projection.activity_at_utc = ? AND projection.round_trip_id < ?))"; }
-    if (query.sort === "oldest") { parameters.push(cursor.activityAtUtc, cursor.activityAtUtc, cursor.roundTripId); return " AND (projection.activity_at_utc > ? OR (projection.activity_at_utc = ? AND projection.round_trip_id > ?))"; }
-    const sortColumn = query.sort === "position" ? "position_sort_key"
-      : query.sort === "buy_quantity" ? "buy_quantity_sort_key"
-        : query.sort === "entry" ? "entry_price_sort_key"
-          : query.sort === "exit" ? "exit_price_sort_key"
-            : query.sort === "entry_value" ? "entry_value_sort_key"
-              : query.sort === "hold" ? "hold_duration_sort_key"
-                : "gross_pnl_sort_key";
-    if (cursor.netPnlSortKey === null) { parameters.push(cursor.roundTripId); return ` AND projection.${sortColumn} IS NULL AND projection.round_trip_id ${query.sort === "pnl_low" ? ">" : "<"} ?`; }
+    const comparison = sort.direction === "ASC" ? ">" : "<";
+    if (cursor.netPnlSortKey === null) { parameters.push(cursor.roundTripId); return ` AND (${sort.expression}) IS NULL AND projection.round_trip_id ${comparison} ?`; }
     parameters.push(cursor.netPnlSortKey, cursor.netPnlSortKey, cursor.roundTripId);
-    return query.sort === "pnl_low"
-      ? ` AND (projection.${sortColumn} IS NULL OR projection.${sortColumn} > ? OR (projection.${sortColumn} = ? AND projection.round_trip_id > ?))`
-      : ` AND (projection.${sortColumn} IS NULL OR projection.${sortColumn} < ? OR (projection.${sortColumn} = ? AND projection.round_trip_id < ?))`;
+    return ` AND ((${sort.expression}) IS NULL OR (${sort.expression}) ${comparison} ? OR ((${sort.expression}) = ? AND projection.round_trip_id ${comparison} ?))`;
   })();
-  const selectedSortColumn = query.sort === "position" ? "position_sort_key"
-    : query.sort === "buy_quantity" ? "buy_quantity_sort_key"
-      : query.sort === "entry" ? "entry_price_sort_key"
-        : query.sort === "exit" ? "exit_price_sort_key"
-          : query.sort === "entry_value" ? "entry_value_sort_key"
-            : query.sort === "hold" ? "hold_duration_sort_key"
-              : "gross_pnl_sort_key";
-  const order = query.sort === "newest" ? "projection.activity_at_utc DESC, projection.round_trip_id DESC"
-    : query.sort === "oldest" ? "projection.activity_at_utc ASC, projection.round_trip_id ASC"
-      : query.sort === "pnl_low" ? `projection.${selectedSortColumn} IS NULL ASC, projection.${selectedSortColumn} ASC, projection.round_trip_id ASC`
-        : `projection.${selectedSortColumn} IS NULL ASC, projection.${selectedSortColumn} DESC, projection.round_trip_id DESC`;
+  const order = `(${sort.expression}) IS NULL ASC, (${sort.expression}) ${sort.direction}, projection.round_trip_id ${sort.direction}`;
   const base = `FROM journal_workspace_trade_library_projections projection
 JOIN journal_round_trip_versions version ON version.workspace_id = projection.workspace_id
  AND version.account_id = projection.account_id AND version.round_trip_version_id = projection.round_trip_version_id
@@ -448,6 +466,24 @@ LEFT JOIN journal_trade_style_plans style ON style.workspace_id = projection.wor
   projection.exit_price_decimal, projection.exit_price_sort_key, projection.maximum_position_quantity_decimal, projection.gross_pnl_decimal, projection.gross_pnl_sort_key, projection.net_pnl_decimal, projection.net_pnl_sort_key, projection.hold_duration_seconds, projection.hold_duration_sort_key,
   projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
   projection.projection_state, projection.round_trip_id, projection.round_trip_version_id, instrument.normalized_symbol AS symbol,
+  EXISTS (
+    SELECT 1
+    FROM journal_round_trip_daily_trade_analyses analysis
+    JOIN journal_round_trip_daily_trade_analysis_versions analysis_version
+      ON analysis_version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
+     AND analysis_version.revision_number = analysis.current_revision
+    JOIN journal_round_trip_versions analyzed_version
+      ON analyzed_version.workspace_id = analysis.workspace_id
+     AND analyzed_version.account_id = analysis.account_id
+     AND analyzed_version.round_trip_version_id = analysis.round_trip_version_id
+    WHERE analysis.workspace_id = projection.workspace_id
+      AND analysis.account_id = projection.account_id
+      AND analysis.round_trip_id = projection.round_trip_id
+      AND analysis.round_trip_version_id = projection.round_trip_version_id
+      AND analysis.status = 'ready'
+      AND analysis_version.status = 'ready'
+      AND analyzed_version.projection_fingerprint_sha256 = version.projection_fingerprint_sha256
+  ) AS has_current_analyzer_result,
   version.trade_currency, style.trade_style, projection.unique_execution_count
 ${base} WHERE ${where}${keyset} ORDER BY ${order} LIMIT ?`).all(...pageParameters) as readonly ProjectionRow[];
   const selected = rows.slice(0, PAGE_SIZE);
@@ -473,6 +509,24 @@ export function readWorkspaceTradeLibrarySavedTrade(
   projection.exit_price_decimal, projection.exit_price_sort_key, projection.maximum_position_quantity_decimal, projection.gross_pnl_decimal, projection.gross_pnl_sort_key, projection.net_pnl_decimal, projection.net_pnl_sort_key, projection.hold_duration_seconds, projection.hold_duration_sort_key,
   projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
   projection.projection_state, projection.round_trip_id, projection.round_trip_version_id, instrument.normalized_symbol AS symbol,
+  EXISTS (
+    SELECT 1
+    FROM journal_round_trip_daily_trade_analyses analysis
+    JOIN journal_round_trip_daily_trade_analysis_versions analysis_version
+      ON analysis_version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
+     AND analysis_version.revision_number = analysis.current_revision
+    JOIN journal_round_trip_versions analyzed_version
+      ON analyzed_version.workspace_id = analysis.workspace_id
+     AND analyzed_version.account_id = analysis.account_id
+     AND analyzed_version.round_trip_version_id = analysis.round_trip_version_id
+    WHERE analysis.workspace_id = projection.workspace_id
+      AND analysis.account_id = projection.account_id
+      AND analysis.round_trip_id = projection.round_trip_id
+      AND analysis.round_trip_version_id = projection.round_trip_version_id
+      AND analysis.status = 'ready'
+      AND analysis_version.status = 'ready'
+      AND analyzed_version.projection_fingerprint_sha256 = version.projection_fingerprint_sha256
+  ) AS has_current_analyzer_result,
   version.trade_currency, style.trade_style, projection.unique_execution_count
 FROM journal_workspace_trade_library_projections projection
 JOIN journal_round_trip_versions version ON version.workspace_id = projection.workspace_id

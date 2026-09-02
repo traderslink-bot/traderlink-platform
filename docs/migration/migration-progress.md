@@ -692,3 +692,8 @@ source commit recorded above; the database remained unchanged.
 
 The owner-approved Workspace card refinement and PR Scanner preference work is
 tracked in [workspace-pr-scanner-and-card-refinement-plan.md](./workspace-pr-scanner-and-card-refinement-plan.md).
+
+# Active Workspace PR Scanner and trade table refinement
+
+The owner-approved Navy Dark Scanner and Workspace trade-table refinement is
+tracked in [workspace-pr-scanner-and-trade-table-refinement-plan.md](./workspace-pr-scanner-and-trade-table-refinement-plan.md).

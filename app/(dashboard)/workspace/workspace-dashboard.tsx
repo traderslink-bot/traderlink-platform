@@ -7,6 +7,7 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import GavelIcon from "@mui/icons-material/Gavel";
+import NewspaperIcon from "@mui/icons-material/Newspaper";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -252,10 +253,10 @@ export function WorkspaceDashboard({
         </Stack>
         {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: { xs: "flex-end", md: "flex-start" } }}>
           <Button onClick={openWorkspaceTradeDrawer} variant="contained">Add Trade</Button>
-          <Button onClick={() => openRules("rules")} startIcon={<GavelIcon />} variant="outlined">Rules</Button>
+          <Tooltip title="Trading Rules"><Button onClick={() => openRules("rules")} startIcon={<GavelIcon />} variant="outlined">Rules</Button></Tooltip>
           <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }} startIcon={<EditNoteIcon />}>Sessions</DashboardSecondaryAction></Tooltip>
            <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} startIcon={<VisibilityIcon />}>Focuses</DashboardSecondaryAction></Tooltip>
-           {newsScannerAvailable ? <DashboardSecondaryAction onClick={() => setNewsScannerOpen(true)}>PR Scanner</DashboardSecondaryAction> : null}
+           {newsScannerAvailable ? <Tooltip title="Small cap daily PP"><DashboardSecondaryAction onClick={() => setNewsScannerOpen(true)} startIcon={<NewspaperIcon />}>PR Scanner</DashboardSecondaryAction></Tooltip> : null}
            <DashboardSecondaryAction onClick={() => setCalendarOpen(true)} startIcon={<CalendarMonthIcon />}>Calendar</DashboardSecondaryAction>
           <DashboardChartAction />
         </Stack> : null}
@@ -269,7 +270,7 @@ export function WorkspaceDashboard({
       </Box>
       {hasLiveTradeLibraryProps(tradeLibraryProps) && (currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
         "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
-        "& h2": { fontSize: "1.125rem", lineHeight: 1.25 },
+        "& h2": { fontSize: "1.2rem", lineHeight: 1.25 },
         "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root": {
           boxSizing: "border-box",
           display: "flex",
