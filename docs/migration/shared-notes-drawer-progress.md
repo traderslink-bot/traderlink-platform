@@ -176,3 +176,9 @@ release has been run.
 - The standalone Calendar route and its day drawer remain unchanged. No
   Calendar Help guide updates are required because the established Calendar
   interactions and facts are unchanged.
+
+## 2026-09-02 Workspace Calendar removal
+
+- Removed the Workspace Calendar action, on-demand panel, and its dedicated
+  read route. Calendar remains available only from its established standalone
+  dashboard page with its existing trade-details drawer.

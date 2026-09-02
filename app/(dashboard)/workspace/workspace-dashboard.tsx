@@ -8,7 +8,6 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useRouter, useSearchParams } from "next/navigation";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -30,11 +29,6 @@ import { WorkspaceMoreFiltersDrawer } from "./workspace-more-filters-drawer";
 import { openWorkspaceTradeDrawer } from "./workspace-trade-drawer-events";
 import { DashboardChartAction, DashboardChartPanelSlot, DashboardChartProvider } from "../dashboard-chart-tool";
 import { JournalNotesDrawer, type JournalNotesDrawerInitialView } from "../notes/journal-notes-drawer";
-
-const WorkspaceCalendarPanel = dynamic(
-  () => import("./workspace-calendar-panel").then((module) => module.WorkspaceCalendarPanel),
-  { ssr: false },
-);
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -166,7 +160,6 @@ export function WorkspaceDashboard({
   const searchParams = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sessionNotesOpen, setSessionNotesOpen] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const [sessionNotesInitialView, setSessionNotesInitialView] = useState<JournalNotesDrawerInitialView>("add");
   const multipleTradeSave = searchParams.get("tradeSave") === "multiple";
   const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
@@ -214,11 +207,9 @@ export function WorkspaceDashboard({
           <Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button>
           <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }}>+ Sessions</DashboardSecondaryAction></Tooltip>
           <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }}>+ Focuses</DashboardSecondaryAction></Tooltip>
-          <DashboardSecondaryAction onClick={() => setCalendarOpen(true)}>Calendar</DashboardSecondaryAction>
           <DashboardChartAction />
         </Stack> : null}
       </Stack>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : <>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Link href="/trade-tracker">Open Day Trade Tracker</Link></Alert> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
@@ -261,7 +252,6 @@ export function WorkspaceDashboard({
           <JournalNotesDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} focusOnly={sessionNotesInitialView === "focuses"} initialView={sessionNotesInitialView} key={sessionNotesInitialView} launch={{ kind: "session", sessionDate: sessionDateInTimezone(tradeLibraryProps.accountTimezone) }} onClose={() => setSessionNotesOpen(false)} onFocusSaved={(focus) => setCurrentFocuses(focus.showInWorkspace && focus.focusText.trim() ? focus.focusText.trim() : null)} open={sessionNotesOpen} />
         </>
       ) : null}
-      </>}
       </DashboardPage>
     </DashboardChartProvider>
   );
