@@ -687,3 +687,8 @@ source commit recorded above; the database remained unchanged.
 - The owner visually approved the Privacy UI on 2026-08-10. Hosted
   backup-retention and public-session reauthentication remain separate launch
   gates in the controlling plan.
+
+# Active Workspace PR Scanner and card refinement
+
+The owner-approved Workspace card refinement and PR Scanner preference work is
+tracked in [workspace-pr-scanner-and-card-refinement-plan.md](./workspace-pr-scanner-and-card-refinement-plan.md).

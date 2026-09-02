@@ -11,6 +11,7 @@ import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, Workspace
 import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
+import { JournalWorkspacePrScannerCardPreferenceService } from "@/src/modules/journal/server/news/journal-workspace-pr-scanner-card-preference";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import {
   findJournalAnalyticsMetric,
@@ -109,7 +110,7 @@ export default async function WorkspacePage({
     redirect("/account/trading");
   }
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
@@ -147,6 +148,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         onboardingStatus: readJournalFirstExecutionOnboardingStatusFromDatabase(database, scope),
         periodEndDate: periodDateRange.endDate,
         periodStartDate: periodDateRange.startDate,
+        prScannerCardPreference: new JournalWorkspacePrScannerCardPreferenceService(database).read(scope),
         ruleResultsCardPreference: new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope),
         ruleResultsEndDate: dates.endDate,
         ruleResultsStartDate: dates.startDate,
@@ -218,6 +220,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         showDemoTradeTrackerInvitation={showDemoTradeTrackerInvitation}
         hasRealAcceptedExecution={onboardingStatus.hasRealAcceptedExecution}
         newsScannerAvailable={hasPressReleaseDashboardAccess(identity)}
+        prScannerCardPreference={prScannerCardPreference}
         firstTimeMoomooConnectionPending={showFirstTimeOnboarding ? moomooConnectionPending : undefined}
         firstTimeMoomooConnected={onboardingStatus.hasActiveMoomooConnection}
         firstTimeOnboardingResult={showFirstTimeOnboarding

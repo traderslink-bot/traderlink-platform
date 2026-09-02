@@ -26,6 +26,7 @@ import { journalWorkspaceTradeStyleSourceMigration } from "@/src/modules/journal
 import { journalSharedNotesMigration } from "@/src/modules/journal/server/database/migrations/0111_journal_shared_notes";
 import { journalTradingDayTagsMigration } from "@/src/modules/journal/server/database/migrations/0112_journal_trading_day_tags";
 import { journalWorkspaceRuleResultsCardMigration } from "@/src/modules/journal/server/database/migrations/0113_journal_workspace_rule_results_card";
+import { journalWorkspacePrScannerCardMigration } from "@/src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -551,6 +552,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0113_journal_workspace_rule_results_card.ts",
       migration: journalWorkspaceRuleResultsCardMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card.ts",
+      migration: journalWorkspacePrScannerCardMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -955,6 +960,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0113_journal_workspace_rule_results_card": Object.freeze([
       "journal_workspace_rule_results_card_preferences",
+    ]),
+    "0114_journal_workspace_pr_scanner_card": Object.freeze([
+      "journal_workspace_pr_scanner_card_preferences",
     ]),
   });
 

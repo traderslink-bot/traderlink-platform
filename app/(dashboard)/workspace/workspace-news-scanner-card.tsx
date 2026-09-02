@@ -35,12 +35,12 @@ export function WorkspaceNewsScannerCard({ onViewMore }: Readonly<{ onViewMore: 
   }
 
   return <>
-    <DashboardPanel title="News Scanner">
-      <Stack spacing={0.25} sx={{ height: "100%", minHeight: 0 }}>
-        {articles === null ? <Box sx={{ display: "grid", flex: 1, placeItems: "center" }}><CircularProgress aria-label="Loading News Scanner" size={22} /></Box> : articles.length ? articles.map((article) => <Button aria-label={`Open ${article.ticker} article: ${article.headline}`} key={article.id} onClick={() => selectArticle(article)} sx={{ display: "block", minWidth: 0, overflow: "hidden", p: 0, textAlign: "left", textOverflow: "ellipsis", textTransform: "none", whiteSpace: "nowrap", width: "100%" }} title={`${article.ticker} ${article.headline}`}>
-          <Box component="span" sx={{ fontWeight: article.isRead ? 700 : 850, mr: 0.5 }}>{article.ticker}</Box>{article.headline}
+    <DashboardPanel title="PR Scanner">
+      <Stack spacing={0.15} sx={{ height: "100%", minHeight: 0 }}>
+        {articles === null ? <Box sx={{ display: "grid", flex: 1, placeItems: "center" }}><CircularProgress aria-label="Loading PR Scanner" size={22} /></Box> : articles.length ? articles.slice(0, 6).map((article) => <Button aria-label={`Open ${article.ticker} article: ${article.headline}`} key={article.id} onClick={() => selectArticle(article)} sx={{ display: "block", lineHeight: 1.3, minHeight: 0, minWidth: 0, overflow: "hidden", p: 0, textAlign: "left", textOverflow: "ellipsis", textTransform: "none", whiteSpace: "nowrap", width: "100%" }} title={`${article.ticker} ${article.headline}`}>
+          <Box component="span" sx={{ color: "secondary.main", fontSize: "0.9rem", fontWeight: article.isRead ? 750 : 900, mr: 0.6 }}>{article.ticker}</Box>{article.headline}
         </Button>) : <Typography color="text.secondary" variant="body2">No recent scanner articles.</Typography>}
-        <Box sx={{ mt: "auto" }}><Button onClick={onViewMore} size="small">View more</Button></Box>
+        <Box sx={{ mt: "auto", pt: 0.5 }}><Button onClick={onViewMore} size="small">Open scanner</Button></Box>
       </Stack>
     </DashboardPanel>
     <PressReleaseArticleDrawer article={selected} onClose={() => setSelected(null)} />

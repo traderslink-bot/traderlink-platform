@@ -93,6 +93,7 @@ type WorkspaceDashboardProps = Readonly<{
   newsScannerAvailable?: boolean;
   offlineSavedAtUtc?: string;
   period?: "today" | "week" | "month" | "all";
+  prScannerCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
   ruleResultsCard?: Readonly<{ brokenRuleCount: number; recentBrokenRuleTitles: readonly string[] }>;
   ruleResultsCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
   reviewSummary?: WorkspaceReviewSummary;
@@ -178,6 +179,7 @@ export function WorkspaceDashboard({
   newsScannerAvailable = false,
   offlineSavedAtUtc,
   period = "all",
+  prScannerCardPreference,
   ruleResultsCard,
   ruleResultsCardPreference,
   reviewSummary,
@@ -194,6 +196,7 @@ export function WorkspaceDashboard({
   const [rulesAccountSelectionRef, setRulesAccountSelectionRef] = useState<string | null>(null);
   const [rulesInitialView, setRulesInitialView] = useState<"custom" | "presets" | "results" | "rules">("rules");
   const [showRuleResultsCard, setShowRuleResultsCard] = useState(ruleResultsCardPreference?.showInWorkspace ?? false);
+  const [showPrScannerCard, setShowPrScannerCard] = useState(prScannerCardPreference?.showInWorkspace ?? true);
   const [sessionNotesInitialView, setSessionNotesInitialView] = useState<JournalNotesDrawerInitialView>("add");
   const activeAccountSelectionRef = hasLiveTradeLibraryProps(tradeLibraryProps)
     ? tradeLibraryProps.expectedAccountSelectionRef
@@ -220,6 +223,7 @@ export function WorkspaceDashboard({
   const [currentFocuses, setCurrentFocuses] = useState(summaryCurrentFocuses);
   useEffect(() => { setCurrentFocuses(summaryCurrentFocuses); }, [summaryCurrentFocuses]);
   useEffect(() => { setShowRuleResultsCard(ruleResultsCardPreference?.showInWorkspace ?? false); }, [ruleResultsCardPreference?.showInWorkspace]);
+  useEffect(() => { setShowPrScannerCard(prScannerCardPreference?.showInWorkspace ?? true); }, [prScannerCardPreference?.showInWorkspace]);
   useEffect(() => { setRulesOpen(false); setRulesAccountSelectionRef(null); }, [activeAccountSelectionRef]);
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
@@ -250,21 +254,22 @@ export function WorkspaceDashboard({
           <Button onClick={openWorkspaceTradeDrawer} variant="contained">Add Trade</Button>
           <Button onClick={() => openRules("rules")} startIcon={<GavelIcon />} variant="outlined">Rules</Button>
           <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }} startIcon={<EditNoteIcon />}>Sessions</DashboardSecondaryAction></Tooltip>
-          <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} startIcon={<VisibilityIcon />}>Focuses</DashboardSecondaryAction></Tooltip>
-          <DashboardSecondaryAction onClick={() => setCalendarOpen(true)} startIcon={<CalendarMonthIcon />}>Calendar</DashboardSecondaryAction>
+           <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} startIcon={<VisibilityIcon />}>Focuses</DashboardSecondaryAction></Tooltip>
+           {newsScannerAvailable ? <DashboardSecondaryAction onClick={() => setNewsScannerOpen(true)}>PR Scanner</DashboardSecondaryAction> : null}
+           <DashboardSecondaryAction onClick={() => setCalendarOpen(true)} startIcon={<CalendarMonthIcon />}>Calendar</DashboardSecondaryAction>
           <DashboardChartAction />
         </Stack> : null}
       </Stack>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : hasLiveTradeLibraryProps(tradeLibraryProps) && newsScannerOpen ? <WorkspaceNewsScannerPanel onClose={() => setNewsScannerOpen(false)} /> : <>
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : hasLiveTradeLibraryProps(tradeLibraryProps) && newsScannerOpen ? <WorkspaceNewsScannerPanel expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} initialPreference={prScannerCardPreference ?? { revision: null, showInWorkspace: true }} onClose={() => setNewsScannerOpen(false)} onPreferenceSaved={(preference) => { setShowPrScannerCard(preference.showInWorkspace); router.refresh(); }} /> : <>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 800, textDecoration: "underline" }} variant="inherit">Open Day Trade Tracker</Typography></Alert> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && (currentFocuses || (showRuleResultsCard && ruleResultsCard) || newsScannerAvailable) ? <Box sx={{
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && (currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
         "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
-        "& h2": { fontSize: "1rem", lineHeight: 1.25 },
+        "& h2": { fontSize: "1.125rem", lineHeight: 1.25 },
         "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root": {
           boxSizing: "border-box",
           display: "flex",
@@ -287,13 +292,13 @@ export function WorkspaceDashboard({
         mt: 1.5,
       }}>{currentFocuses ? <DashboardPanel title="Current Focuses">
         <CurrentFocusContent content={currentFocuses} />
-      </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel action={<Typography sx={{ fontSize: "1.25rem", fontWeight: 750, lineHeight: 1 }}>{ruleResultsCard.brokenRuleCount}</Typography>} title="Rules broken">
-        <Stack spacing={0.75} sx={{ height: "100%", minHeight: 0 }}>
-          <Typography color="text.secondary" sx={{ fontWeight: 700 }} variant="caption">Recent broken rules</Typography>
-          {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5} sx={{ minWidth: 0 }}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
+      </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel title="Rules broken" titleAdornment={<Typography sx={{ fontSize: "1.5rem", fontWeight: 850, lineHeight: 1 }}>{ruleResultsCard.brokenRuleCount}</Typography>}>
+        <Stack spacing={0.75} sx={{ height: "100%", minHeight: 0, pt: 0.75 }}>
+          <Typography color="text.secondary" sx={{ fontWeight: 700, mt: 0.5 }} variant="caption">Recent broken rules</Typography>
+          {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5} sx={{ minWidth: 0, pt: 0.5 }}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
           <Box sx={{ mt: "auto" }}><Button onClick={() => openRules("results")} size="small">View results</Button></Box>
         </Stack>
-      </DashboardPanel> : null}{newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}</Box> : null}
+      </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}</Box> : null}
       <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>

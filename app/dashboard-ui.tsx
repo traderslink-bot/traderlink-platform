@@ -85,12 +85,14 @@ export function DashboardPanel({
   eyebrow,
   hideHeader = false,
   title,
+  titleAdornment,
 }: {
   action?: ReactNode;
   children: ReactNode;
   eyebrow?: string;
   hideHeader?: boolean;
   title?: string;
+  titleAdornment?: ReactNode;
 }) {
   const hasHeader = !hideHeader && Boolean(action || eyebrow || title);
   return (
@@ -120,7 +122,7 @@ export function DashboardPanel({
                   {eyebrow}
                 </Typography>
               ) : null}
-              {title ? <Typography component="h2" variant="h2">{title}</Typography> : null}
+              {title ? titleAdornment ? <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}><Typography component="h2" variant="h2">{title}</Typography>{titleAdornment}</Stack> : <Typography component="h2" variant="h2">{title}</Typography> : null}
             </Box>
             {action}
           </Stack>

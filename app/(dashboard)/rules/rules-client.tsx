@@ -623,7 +623,6 @@ export function RulesClient({
                     color={presetScopeColor(template.scope)}
                     label={scopeLabels[template.scope]}
                     size="small"
-                    variant="outlined"
                   />
                 </Box>
                 <Typography sx={{ mt: 1.25 }} variant="h3">
@@ -945,12 +944,9 @@ export function RulesClient({
                             size="small"
                           />
                           <Chip label="Preset" size="small" variant="outlined" />
+                          <Chip color={presetCategoryColor(rule.template.category)} label={categoryLabels[rule.template.category]} size="small" />
                           <Chip
-                            label={categoryLabels[rule.template.category]}
-                            size="small"
-                            variant="outlined"
-                          />
-                          <Chip
+                            color={presetScopeColor(rule.template.scope)}
                             label={
                               scopeLabels[
                                 rule.template
@@ -958,7 +954,6 @@ export function RulesClient({
                               ] ?? rule.template.scope
                             }
                             size="small"
-                            variant="outlined"
                           />
                         </Box>
                         <Typography component="h3" variant="h3">

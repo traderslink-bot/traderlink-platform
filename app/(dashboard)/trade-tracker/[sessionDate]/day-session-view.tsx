@@ -45,7 +45,6 @@ import {
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
 import { DashboardPageDescription } from "../../dashboard-page-description";
-import { DashboardAppearanceText } from "../../dashboard-appearance-text";
 import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
@@ -3603,9 +3602,9 @@ export function DaySessionView({
             for each trade. Add notes and track rules that apply to the trading day
             as a whole.
           </DashboardPageDescription>
-          <DashboardAppearanceText lightColor="error.main" sx={{ fontWeight: 700, maxWidth: 900, mt: 1 }} variant="body2">
+          <Typography sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.error.main, fontWeight: 700, maxWidth: 900, mt: 1 }} variant="body2">
             Notes, rules, tags and trade information will appear below after you submit your executions.
-          </DashboardAppearanceText>
+          </Typography>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifySelf: { md: "end" } }}>
           <FeatureHelpLink href="/help/daily-trade-tracker" label="Daily Trade Tracker" size="medium" />
