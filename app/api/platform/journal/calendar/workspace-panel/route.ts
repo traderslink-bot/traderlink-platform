@@ -28,7 +28,7 @@ async function panelModel(scope: ReturnType<typeof requireTraderLinkPlatformRequ
     const unfiltered: CalendarFilterInput = { currency: "all", direction: "all", endDate: "", performance: "all", pnlRange: "all", session: "all", startDate: "", symbol: "all", tradeCount: "all" };
     const catalog = read(unfiltered);
     const currentWeek = journalScopeCurrentWeek(readJournalDemoScopeClock(scope), catalog.timezone ?? "America/New_York");
-    const activityDates = catalog.days.filter((day) => day.tradeCount > 0 || day.hasSessionReview).map((day) => day.date);
+    const activityDates = catalog.days.filter((day) => day.tradeCount > 0).map((day) => day.date);
     const selectedMonth = requestedMonth ?? currentWeek.slice(0, 7);
     const selectedWeek = requestedWeek ?? currentWeek;
     const availableMonths = [...new Set([...activityDates.map((date) => date.slice(0, 7)), selectedMonth])].sort();
