@@ -90,8 +90,16 @@
 ## Homepage dark-mode showcase
 
 - [x] Owner visually approved a new homepage section immediately before the
-  final signup CTA. The release candidate uses five real dark-mode
+  final signup CTA. Checkpoint `3d4cd7a4` was published to the production static
+  service as Railway deployment `ac61f533-5fc6-4bfb-a9ce-530763bb5a20`; the
+  homepage and all five images passed live smoke. The section uses five real dark-mode
   dashboard screenshots in one illuminated screen, fast crossfades, a restrained
   scan-light transition, manual view selectors, viewport-aware autoplay,
-  hover/focus pausing, and reduced-motion fallback. Production publication and
-  live smoke verification remain pending.
+  hover/focus pausing, and reduced-motion fallback.
+- [x] Completed the focused performance correction after the owner's first-live
+  report: responsive 720/1440 image sources, preload and decode the sequence before
+  autoplay, remove the accidental whole-section pointer pause, and keep the
+  scan/crossfade on compositor-friendly properties. Keyboard-focus pausing and
+  manual view controls remain available. The visual sequence and approved
+  section copy remain unchanged. Production publication and live verification
+  remain pending.
