@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ElementType } from "react";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArchiveRoundedIcon from "@mui/icons-material/ArchiveRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
@@ -210,14 +210,22 @@ export function RulesClient({
   initialView,
   initialRuleIdeas,
   monetaryMultiplier,
+  onOpenResults,
+  onPanelModeClose,
   offlineSavedAtUtc,
+  panelMode,
+  presentation = "page",
   reportingCurrency,
   sourceCurrency,
 }: {
   initialView: TradingRulesDashboardView;
   initialRuleIdeas: readonly JournalRuleIdeaRecord[];
   monetaryMultiplier: string;
+  onOpenResults?: () => void;
+  onPanelModeClose?: () => void;
   offlineSavedAtUtc?: string;
+  panelMode?: "custom" | "presets";
+  presentation?: "page" | "workspace-panel";
   reportingCurrency: string;
   sourceCurrency: string;
 }) {
@@ -238,12 +246,14 @@ export function RulesClient({
   const [retireRule, setRetireRule] =
     useState<ExecutionRuleDashboardCard | null>(null);
   const [manualEditor, setManualEditor] =
-    useState<ManualRuleEditorState | null>(null);
+    useState<ManualRuleEditorState | null>(panelMode === "custom"
+      ? { mode: "create", rule: null }
+      : null);
   const [manualValues, setManualValues] =
     useState<ManualRuleValues>(defaultManualRuleValues);
   const [retireManualRule, setRetireManualRule] =
     useState<ManualCustomRuleRecord | null>(null);
-  const [presetLibraryOpen, setPresetLibraryOpen] = useState(false);
+  const [presetLibraryOpen, setPresetLibraryOpen] = useState(panelMode === "presets");
   const [customRulesOpen, setCustomRulesOpen] = useState(false);
   const [expandedRuleIds, setExpandedRuleIds] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -428,6 +438,7 @@ export function RulesClient({
       }
       setAddingIdeaId(null);
       setEditor(null);
+      if (panelMode === "presets") onPanelModeClose?.();
     }
   }
 
@@ -478,7 +489,10 @@ export function RulesClient({
       mutation,
       manualEditor.rule ? `manual-${manualEditor.rule.ruleId}` : "create-manual",
     );
-    if (saved) setManualEditor(null);
+    if (saved) {
+      setManualEditor(null);
+      if (panelMode === "custom") onPanelModeClose?.();
+    }
   }
 
   async function transitionManual(
@@ -622,9 +636,12 @@ export function RulesClient({
     ? view.templates.find((template) => template.templateId === currentRuleIdea.evidence.templateId) ?? null
     : null;
 
+  const ContentContainer: ElementType = presentation === "page" ? DashboardPage : Box;
+  const closePanelMode = (): void => { onPanelModeClose?.(); };
+
   return (
     <Box component="fieldset" disabled={Boolean(offlineSavedAtUtc)} sx={{ border: 0, m: 0, minWidth: 0, p: 0 }}>
-    <DashboardPage>
+    <ContentContainer>
       <Stack
         direction="column"
         spacing={2}
@@ -670,9 +687,7 @@ export function RulesClient({
             },
           }}
         >
-          <Button component={Link} href="/rules/results" variant="outlined">
-            Rule Results
-          </Button>
+          {onOpenResults ? <Button onClick={onOpenResults} variant="outlined">Rule Results</Button> : <Button component={Link} href="/rules/results" variant="outlined">Rule Results</Button>}
           <Button
             onClick={() => {
               if (isMobile) {
@@ -1241,9 +1256,11 @@ export function RulesClient({
 
       <Dialog
         aria-labelledby="mobile-preset-library-title"
-        fullScreen
-        onClose={() => setPresetLibraryOpen(false)}
-        open={isMobile && presetLibraryOpen}
+        fullScreen={isMobile}
+        fullWidth
+        maxWidth="lg"
+        onClose={() => { setPresetLibraryOpen(false); closePanelMode(); }}
+        open={(isMobile || presentation === "workspace-panel") && presetLibraryOpen}
       >
         <DialogTitle
           id="mobile-preset-library-title"
@@ -1262,7 +1279,7 @@ export function RulesClient({
           Browse preset rules
           <IconButton
             aria-label="Close preset rules"
-            onClick={() => setPresetLibraryOpen(false)}
+            onClick={() => { setPresetLibraryOpen(false); closePanelMode(); }}
             sx={{ minHeight: 44, minWidth: 44 }}
           >
             <CloseRoundedIcon />
@@ -1385,7 +1402,7 @@ export function RulesClient({
       <Dialog
         fullWidth
         maxWidth="sm"
-        onClose={() => setManualEditor(null)}
+        onClose={() => { setManualEditor(null); closePanelMode(); }}
         open={manualEditor !== null}
       >
         {manualEditor ? (
@@ -1482,7 +1499,7 @@ export function RulesClient({
               </Stack>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setManualEditor(null)}>Cancel</Button>
+              <Button onClick={() => { setManualEditor(null); closePanelMode(); }}>Cancel</Button>
               <Button
                 disabled={
                   busyId !== null ||
@@ -1556,7 +1573,7 @@ export function RulesClient({
           </Button>
         </DialogActions>
       </Dialog>
-    </DashboardPage>
+    </ContentContainer>
     </Box>
   );
 }

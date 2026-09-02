@@ -53,6 +53,16 @@ export type RuleResultsView = Readonly<{
   summaries: readonly RuleResultSummary[];
 }>;
 
+export type RuleResultsDateRange = Readonly<{
+  endDate: string | null;
+  startDate: string | null;
+}>;
+
+export type WorkspaceRuleResultsCard = Readonly<{
+  brokenRuleCount: number;
+  recentBrokenRuleTitles: readonly string[];
+}>;
+
 function summarize(events: readonly RuleResultEvent[]): readonly RuleResultSummary[] {
   const groups = new Map<string, RuleResultEvent[]>();
   for (const event of events) {
@@ -97,15 +107,31 @@ function summarize(events: readonly RuleResultEvent[]): readonly RuleResultSumma
   }).sort((left, right) => left.label.localeCompare(right.label)));
 }
 
-export async function readRuleResults(scope: WorkspaceAccessScope): Promise<RuleResultsView> {
+export function workspaceRuleResultsCard(view: RuleResultsView): WorkspaceRuleResultsCard {
+  const broken = view.events
+    .filter((event) => event.result === "Broken")
+    .sort((left, right) => right.date.localeCompare(left.date) || left.label.localeCompare(right.label));
+  const titles = [...new Set(broken.map((event) => event.label))].slice(0, 3);
+  return Object.freeze({
+    brokenRuleCount: new Set(broken.map((event) => event.ruleId)).size,
+    recentBrokenRuleTitles: Object.freeze(titles),
+  });
+}
+
+export async function readRuleResults(
+  scope: WorkspaceAccessScope,
+  dateRange: RuleResultsDateRange = { endDate: null, startDate: null },
+): Promise<RuleResultsView> {
   const reporting = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, reportingCurrency }) => {
     const latest = dashboard.getTradingDay(scope, { currency: null, requestedDate: null });
     return Object.freeze({
       currency: reportingCurrency,
-      models: latest.availableTradingDates.map((date) => dashboard.getTradingDay(scope, {
+      models: latest.availableTradingDates
+        .filter((date) => (!dateRange.startDate || date >= dateRange.startDate) && (!dateRange.endDate || date <= dateRange.endDate))
+        .map((date) => dashboard.getTradingDay(scope, {
         currency: reportingCurrency,
         requestedDate: date,
-      })),
+        })),
     });
   });
   const sourceModels = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) =>

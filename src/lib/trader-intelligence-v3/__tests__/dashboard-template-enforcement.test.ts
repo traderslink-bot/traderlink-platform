@@ -16,6 +16,7 @@ const reviewedFeaturePanelFiles = new Set([
   join(dashboardRoot, "ai-chat", "ai-chat-client.tsx"),
   join(dashboardRoot, "ai-reviews", "trade-tracker-review-coverage.tsx"),
   join(dashboardRoot, "calendar", "calendar-client.tsx"),
+  join(dashboardRoot, "workspace", "workspace-rules-panel.tsx"),
 ]);
 
 function filesBelow(root: string): readonly string[] {

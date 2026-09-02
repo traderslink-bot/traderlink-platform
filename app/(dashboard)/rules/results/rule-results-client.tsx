@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ElementType } from "react";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { Box, Button, Chip, InputAdornment, MenuItem, Stack, TextField, Typography } from "@mui/material";
@@ -36,9 +36,11 @@ function factSentence(summary: RuleResultsView["summaries"][number], currency: s
 export function RuleResultsClient({
   initialView,
   offlineSavedAtUtc,
+  presentation = "page",
 }: {
   initialView: RuleResultsView;
   offlineSavedAtUtc?: string;
+  presentation?: "page" | "workspace-panel";
 }) {
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("All");
@@ -64,9 +66,11 @@ export function RuleResultsClient({
   const brokenEvents = initialView.events.filter((event) => event.result === "Broken");
   const uniqueBrokenRules = new Set(brokenEvents.map((event) => event.ruleId)).size;
 
+  const ContentContainer: ElementType = presentation === "page" ? DashboardPage : Box;
+
   return (
-    <DashboardPage>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
+    <ContentContainer>
+      {presentation === "page" ? <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
         <Box>
           <Typography color="primary.main" sx={{ fontWeight: 700 }} variant="caption">TRADING RULES</Typography>
           <Typography component="h1" variant="h1">Rule Results</Typography>
@@ -83,7 +87,7 @@ export function RuleResultsClient({
           </Typography>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}><FeatureHelpLink href="/help/trading-rules/results-history" label="Rule Results" size="medium" /><Button component={Link} href="/rules" startIcon={<ArrowBackRoundedIcon />} variant="outlined">Trading Rules</Button></Stack>
-      </Stack>
+      </Stack> : null}
       {offlineSavedAtUtc ? (
         <OfflineSavedViewStatus
           message="This saved result history is available offline. Search, filters and paging still work on the saved results."
@@ -135,6 +139,6 @@ export function RuleResultsClient({
         </Stack>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-end", mt: 1.5 }}><Button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</Button><Typography variant="body2">Page {page} of {pageCount}</Typography><Button disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</Button></Stack>
       </DashboardPanel>
-    </DashboardPage>
+    </ContentContainer>
   );
 }

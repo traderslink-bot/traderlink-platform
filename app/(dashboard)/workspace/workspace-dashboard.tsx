@@ -35,6 +35,10 @@ const WorkspaceCalendarPanel = dynamic(
   () => import("./workspace-calendar-panel").then((module) => module.WorkspaceCalendarPanel),
   { ssr: false },
 );
+const WorkspaceRulesPanel = dynamic(
+  () => import("./workspace-rules-panel").then((module) => module.WorkspaceRulesPanel),
+  { ssr: false },
+);
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -76,6 +80,8 @@ type WorkspaceDashboardProps = Readonly<{
   hasRealAcceptedExecution?: boolean;
   offlineSavedAtUtc?: string;
   period?: "today" | "week" | "month" | "all";
+  ruleResultsCard?: Readonly<{ brokenRuleCount: number; recentBrokenRuleTitles: readonly string[] }>;
+  ruleResultsCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
   reviewSummary?: WorkspaceReviewSummary;
   showDemoTradeTrackerInvitation?: boolean;
 }> & (WorkspaceLiveTradeLibraryProps | WorkspaceOfflineTradeLibraryProps);
@@ -158,6 +164,8 @@ export function WorkspaceDashboard({
   hasRealAcceptedExecution,
   offlineSavedAtUtc,
   period = "all",
+  ruleResultsCard,
+  ruleResultsCardPreference,
   reviewSummary,
   showDemoTradeTrackerInvitation,
   ...tradeLibraryProps
@@ -167,6 +175,9 @@ export function WorkspaceDashboard({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sessionNotesOpen, setSessionNotesOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [rulesInitialView, setRulesInitialView] = useState<"custom" | "presets" | "results" | "rules">("rules");
+  const [showRuleResultsCard, setShowRuleResultsCard] = useState(ruleResultsCardPreference?.showInWorkspace ?? false);
   const [sessionNotesInitialView, setSessionNotesInitialView] = useState<JournalNotesDrawerInitialView>("add");
   const multipleTradeSave = searchParams.get("tradeSave") === "multiple";
   const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
@@ -183,6 +194,7 @@ export function WorkspaceDashboard({
   const summaryCurrentFocuses = reviewSummary?.currentFocuses?.trim() || null;
   const [currentFocuses, setCurrentFocuses] = useState(summaryCurrentFocuses);
   useEffect(() => { setCurrentFocuses(summaryCurrentFocuses); }, [summaryCurrentFocuses]);
+  useEffect(() => { setShowRuleResultsCard(ruleResultsCardPreference?.showInWorkspace ?? false); }, [ruleResultsCardPreference?.showInWorkspace]);
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
   }
@@ -211,7 +223,7 @@ export function WorkspaceDashboard({
         {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: { xs: "flex-end", md: "flex-start" } }}>
           <Button onClick={openWorkspaceTradeDrawer} variant="contained">+ Trade</Button>
           <Button href="/imports" size="small" variant="outlined">Imports</Button>
-          <Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button>
+          <Button onClick={() => { setRulesInitialView("rules"); setRulesOpen(true); }} variant="outlined">+ Rules</Button>
           <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }}>+ Sessions</DashboardSecondaryAction></Tooltip>
           <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }}>+ Focuses</DashboardSecondaryAction></Tooltip>
           <DashboardSecondaryAction onClick={() => setCalendarOpen(true)}>Calendar</DashboardSecondaryAction>
@@ -251,6 +263,17 @@ export function WorkspaceDashboard({
       }}><DashboardPanel action={<Button onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} size="small">Edit Focuses</Button>} title="Current Focuses">
         <CurrentFocusContent content={currentFocuses} />
       </DashboardPanel></Box> : null}
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && showRuleResultsCard && ruleResultsCard ? <Box sx={{
+        display: "grid",
+        gap: 1.5,
+        gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" },
+        mt: 1.5,
+      }}><Box sx={{ gridColumn: { xs: "1", md: "span 2" } }}><DashboardPanel action={<Button onClick={() => { setRulesInitialView("results"); setRulesOpen(true); }} size="small">View results</Button>} title="Rules broken">
+        <Stack spacing={1}>
+          <Typography sx={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1 }}>{ruleResultsCard.brokenRuleCount}</Typography>
+          {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
+        </Stack>
+      </DashboardPanel></Box></Box> : null}
       <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
@@ -259,6 +282,7 @@ export function WorkspaceDashboard({
           </Box>
           <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} onClose={() => setFiltersOpen(false)} open={filtersOpen} query={tradeLibraryProps.trades.query} />
           <JournalNotesDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} focusOnly={sessionNotesInitialView === "focuses"} initialView={sessionNotesInitialView} key={sessionNotesInitialView} launch={{ kind: "session", sessionDate: sessionDateInTimezone(tradeLibraryProps.accountTimezone) }} onClose={() => setSessionNotesOpen(false)} onFocusSaved={(focus) => setCurrentFocuses(focus.showInWorkspace && focus.focusText.trim() ? focus.focusText.trim() : null)} open={sessionNotesOpen} />
+          {rulesOpen ? <WorkspaceRulesPanel initialView={rulesInitialView} key={rulesInitialView} onClose={() => setRulesOpen(false)} onPreferenceSaved={(preference) => { setShowRuleResultsCard(preference.showInWorkspace); router.refresh(); }} /> : null}
         </>
       ) : null}
       </>}

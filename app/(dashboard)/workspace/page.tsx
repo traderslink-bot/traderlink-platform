@@ -5,10 +5,13 @@ import { redirect } from "next/navigation";
 import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
 import { recoverLegacyDemoWorkspaceTradeLibraryProjection } from "@/src/modules/journal-analytics/server/workspace-trade-library-demo-projection-recovery";
 import { WorkspaceDashboard } from "./workspace-dashboard";
+import { readRuleResults, workspaceRuleResultsCard } from "../rules/results/rule-results-data";
 import { readWorkspaceTradeLibrary } from "./workspace-trade-library";
 import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, WorkspaceTradeLibrarySort } from "./workspace-trade-library";
 import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
+import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {
   findJournalAnalyticsMetric,
   formatJournalAnalyticsPartitionedMetric,
@@ -105,7 +108,7 @@ export default async function WorkspacePage({
     redirect("/account/trading");
   }
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, response, reviewSummary, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, response, reviewSummary, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
@@ -143,6 +146,8 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         onboardingStatus: readJournalFirstExecutionOnboardingStatusFromDatabase(database, scope),
         periodEndDate: periodDateRange.endDate,
         periodStartDate: periodDateRange.startDate,
+        ruleResultsEndDate: dates.endDate,
+        ruleResultsStartDate: dates.startDate,
         response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
         reviewSummary: readWorkspaceReviewSummary(
           database,
@@ -186,6 +191,14 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     analyticsMetrics,
     reviewSummary,
   });
+  const ruleResultsCardPreference = withReadonlyPlatformDatabase({}, (database) =>
+    new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope));
+  const ruleResultsCard = ruleResultsCardPreference.showInWorkspace
+    ? workspaceRuleResultsCard(await readRuleResults(scope, {
+      endDate: ruleResultsEndDate,
+      startDate: ruleResultsStartDate,
+    }))
+    : undefined;
   return (
     <>
       <WorkspaceOfflineViewCapture
@@ -212,6 +225,8 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         reviewSummary={reviewSummary}
         offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
         period={period}
+        ruleResultsCard={ruleResultsCard}
+        ruleResultsCardPreference={ruleResultsCardPreference}
         customEndDate={customEndDate}
         customStartDate={customStartDate}
         periodEndDate={periodEndDate}

@@ -60,7 +60,9 @@ application navigation drawer. A dashboard feature may use a Drawer only when
 it is a locally scoped feature panel, does not contain application navigation,
 and is explicitly reviewed in the architecture enforcement allowlist. The
 reviewed feature panels are the AI Chat mobile conversation list, the monthly
-AI Review coverage panel, and Calendar filters, saved views, and day details.
+AI Review coverage panel, Calendar filters, saved views, and day details, and
+the Workspace Rules tool panel. The Rules panel may contain rule-management
+views only; it must not duplicate application navigation.
 Adding another feature Drawer requires updating this contract and the explicit
 allowlist; importing Drawer must never be used to build another dashboard
 shell or sidebar.

@@ -130,23 +130,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       ]),
     }),
     Object.freeze({
-      id: "rules" as const,
-      label: "Rules",
-      icon: "rules" as const,
-      items: Object.freeze([
-        Object.freeze({
-          href: "/rules",
-          label: "Trading Rules",
-          icon: "rules" as const,
-        }),
-        Object.freeze({
-          href: "/rules/results",
-          label: "Rule Results",
-          icon: "results" as const,
-        }),
-      ]),
-    }),
-    Object.freeze({
       id: "tradeAnalyzer" as const,
       label: "Trade Analyzer",
       icon: "tradeAnalyzer" as const,
