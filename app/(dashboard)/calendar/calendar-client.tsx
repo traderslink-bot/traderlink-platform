@@ -926,7 +926,7 @@ export function CalendarClient({
         </Stack>
       </Drawer>
 
-      <Drawer anchor="right" onClose={() => { setDetailsOpen(false); setExpandedTickerId(null); }} open={detailsOpen} slotProps={{ paper: { sx: { p: 3, width: { xs: "100%", sm: 520 } } }}>
+      <Drawer anchor="right" onClose={() => { setDetailsOpen(false); setExpandedTickerId(null); }} open={detailsOpen} slotProps={{ paper: { sx: { p: 3, width: { xs: "100%", sm: 520 } } } }}>
         {detailsOpen ? (
           <>
             <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
