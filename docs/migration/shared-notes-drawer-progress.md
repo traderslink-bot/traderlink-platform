@@ -128,8 +128,8 @@ release has been run.
 ## 2026-09-02 Session view correction
 
 - The entry controls now place **Save Note** directly below its text field and
-  place **Save multiple note types to a session** alongside it. The checked tag
-  chips are the only selected-state display.
+  place **Save multiple note types to a session** after Session tags and
+  Session rules. The checked tag chips are the only selected-state display.
 - The Workspace Calendar route now awaits its Calendar read model before
   serializing it, fixing the empty model that made the on-demand panel fail.
 - The Session Review entry drawer is being separated from the Calendar Session
@@ -139,3 +139,11 @@ release has been run.
 - The former Saved sessions reader is now **Find sessions**, a bounded
   date-indexed way to choose an earlier review for editing. It no longer tries
   to double as a second saved-session card.
+
+## 2026-09-02 Session Review editing correction
+
+- Opening an earlier review now loads the saved text for the selected note
+  type into the editor. **Save Note** updates that note in place and keeps the
+  edited text visible.
+- The session-level tags/rules action is now at the bottom of the entry view,
+  after the controls it saves.

@@ -29,13 +29,15 @@ Desktop tab order and mobile selector order are identical:
 ### Review
 
 The note-type selector and editor appear first. Its action is **Save note**;
-it saves only that selected note type for the chosen session date, clears the
-editor, and keeps the trader in Review so another type can be written next.
+it saves only that selected note type for the chosen session date and keeps the
+saved text in the editor so it can be changed again. Selecting a previously
+saved note type loads that note's current text into the editor.
 
-**Save Note** sits immediately below the note editor. Beside it, **Save
-multiple note types to a session** saves the selected session tags and changed
-custom-rule results. It does not silently save or overwrite text that is still
-in the note editor.
+**Save Note** sits immediately below the note editor. **Save multiple note
+types to a session** sits after the Session tags and Session rules controls,
+so it is available where those choices are made. It saves the selected session
+tags and changed custom-rule results; it does not silently save or overwrite
+text that is still in the note editor.
 
 The tag picker is a short scroll region. A checked tag has a check icon and
 filled appearance; it is not repeated below the picker. **Manage saved tags**
