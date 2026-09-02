@@ -12,6 +12,7 @@ import { emptyCalendarData, withCalendarDataRuntime } from "./calendar-data";
 import {
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { calendarDisabledForPerformanceTest } from "@/src/modules/platform/server/runtime-configuration/calendar-performance-test";
 import {
   journalScopeCurrentWeek,
   readJournalDemoScopeClock,
@@ -137,6 +138,9 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  if (calendarDisabledForPerformanceTest()) {
+    redirect("/workspace");
+  }
   const query = await searchParams;
   const selectedFilters = filters(query);
   const reviewLayout = process.env.NODE_ENV !== "production" && value(query.review) === "layout";
