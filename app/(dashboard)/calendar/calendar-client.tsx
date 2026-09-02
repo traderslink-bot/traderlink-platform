@@ -848,18 +848,15 @@ export function CalendarClient({
           <>
             <Box sx={{ display: { xs: "block", md: "none" }, mx: { xs: -1, sm: 0 } }}>
               <HorizontalScrollHint label="Swipe sideways to see more days" />
-              <Box sx={{ pb: 1, px: { xs: 0, sm: 0 } }}>
+              <Box sx={{ overflowX: "auto", pb: 1 }}>
                 <Box
                   sx={{
                     borderColor: "divider",
                     borderLeft: 1,
                     borderTop: 1,
                     display: "grid",
-                    gridTemplateColumns: {
-                      xs: "repeat(7, minmax(0, 1fr))",
-                      sm: "repeat(7, minmax(0, 1fr))",
-                    },
-                    minWidth: 0,
+                    gridTemplateColumns: "repeat(7, minmax(96px, 1fr))",
+                    minWidth: 700,
                   }}
                 >
                   {weekdayLabels.map((label) => <Box key={label} sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, py: 0.75, textAlign: "center" }}><Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 850 }}>{label}</Typography></Box>)}
