@@ -662,6 +662,7 @@ export function CalendarClient({
   initialView,
   offlineSavedAtUtc,
   onNavigatePeriod,
+  presentation = "page",
   selectedMonth,
   selectedWeek,
 }: {
@@ -674,10 +675,12 @@ export function CalendarClient({
   initialView: CalendarView;
   offlineSavedAtUtc?: string;
   onNavigatePeriod?: (view: CalendarView, period: string) => void;
+  presentation?: "page" | "workspace-embedded";
   selectedMonth: string;
   selectedWeek: string;
 }) {
   const router = useRouter();
+  const workspaceEmbedded = presentation === "workspace-embedded";
   const view = initialView;
   const activeMonth = selectedMonth;
   const [selectedDate, setSelectedDate] = useState(initialData.activeDate);
@@ -778,7 +781,7 @@ export function CalendarClient({
 
   return (
     <DashboardPage>
-      <Typography
+      {!workspaceEmbedded ? <Typography
         component="h1"
         sx={{
           color: "text.primary",
@@ -789,8 +792,8 @@ export function CalendarClient({
         variant="h1"
       >
         Trading Calendar
-      </Typography>
-      {offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
+      </Typography> : null}
+      {!workspaceEmbedded && offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ alignItems: { lg: "center" }, justifyContent: "space-between" }}>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           <ToggleButtonGroup exclusive onChange={(_, value: CalendarView | null) => {
@@ -806,9 +809,9 @@ export function CalendarClient({
             <ToggleButton value="month">Month</ToggleButton>
             <ToggleButton value="week">Week</ToggleButton>
           </ToggleButtonGroup>
-          <FeatureHelpLink href="/help/calendar/month-and-week#navigate-periods" label="month and week views" />
+          {workspaceEmbedded ? null : <FeatureHelpLink href="/help/calendar/month-and-week#navigate-periods" label="month and week views" />}
         </Stack>
-        <FeatureHelpLink href="/help/calendar" label="Calendar" size="medium" />
+        {workspaceEmbedded ? null : <FeatureHelpLink href="/help/calendar" label="Calendar" size="medium" />}
         {showLegacyCalendarControls ? <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
           <Button onClick={() => setFiltersOpen(true)} startIcon={<DateRangeRoundedIcon />} variant="outlined">Date range</Button>
           <Button onClick={() => setFiltersOpen(true)} startIcon={<FilterAltRoundedIcon />} variant="outlined">P/L and session filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button>
@@ -816,7 +819,7 @@ export function CalendarClient({
         </Stack> : null}
       </Stack>
 
-      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+      {!workspaceEmbedded ? <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
         {initialData.state !== "unavailable" ? <DashboardDataScopeChip /> : null}
         <FeatureHelpLink href="/help/calendar/coverage-and-limits#included-trades" label="Calendar coverage" />
         <Typography color="text.secondary" sx={{ alignSelf: "center", display: initialData.state === "ready" ? "none" : undefined }} variant="caption">
@@ -826,13 +829,13 @@ export function CalendarClient({
               ? "No completed trades match this calendar view"
               : "This calendar filter cannot be calculated from the available facts"}
         </Typography>
-      </Stack>
+      </Stack> : null}
 
-      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
+      {!workspaceEmbedded ? <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
         <DashboardMetricCard caption="Selected period" label="P/L" value={initialData.state === "ready" ? money(initialData.summary.netPnlDecimal, initialData.currency) : "—"} valueColor={initialData.state === "ready" ? financialOutcomeColor(initialData.summary.netPnlDecimal) : "text.primary"} />
         <DashboardMetricCard caption="Selected period" label="Trades" value={initialData.state === "ready" ? String(initialData.summary.tradeCount) : "—"} />
         <DashboardMetricCard caption="Selected period" label="Win rate" value={initialData.state === "ready" ? percent(initialData.summary.winRatePercentDecimal) : "—"} valueColor={initialData.state === "ready" ? financialThresholdColor(initialData.summary.winRatePercentDecimal, 50) : "text.primary"} />
-      </Box>
+      </Box> : null}
 
       <DashboardPanel hideHeader>
         <CalendarPeriodNavigation

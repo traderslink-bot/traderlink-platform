@@ -38,8 +38,15 @@ that day’s trades and leads to Trade Tracker. It does not display, read, or
 edit Session Reviews. Editing an existing session remains in Trade Tracker
 until a separate session reader is planned and approved.
 
-Workspace does not host a Calendar entry or panel. Calendar remains the
-standalone trading-day inspection surface with its own layout and day drawer.
+Workspace opens the reusable Calendar only on demand as a large panel that
+slides in from the right within the Workspace content area. It replaces the
+Workspace cards and trade table while open, but keeps the app shell visible;
+it never takes over the browser screen. The panel omits the standalone Calendar
+title and period metric cards. Its mobile month grid scrolls sideways with
+readable day cells. Selecting a day uses the established day-details drawer
+while the calendar stays mounted beneath it, preserving the selected period.
+Closing Calendar restores the unchanged Workspace. The standalone Calendar
+route keeps its own layout and day drawer.
 
 An unattached launch starts a **Session Note** for the current account-local
 date and lets the trader select an earlier date. A trade launch remains tied

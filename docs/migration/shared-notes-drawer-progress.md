@@ -182,3 +182,12 @@ release has been run.
 - Removed the Workspace Calendar action, on-demand panel, and its dedicated
   read route. Calendar remains available only from its established standalone
   dashboard page with its existing trade-details drawer.
+
+## 2026-09-02 Workspace Calendar restoration
+
+- Restored the Workspace Calendar action, on-demand right-entering panel, and
+  bounded account-scoped read route. It keeps the app shell visible, temporarily
+  replacing Workspace cards and the trade table until closed.
+- The shared Calendar mobile month grid now scrolls sideways with readable day
+  columns, so the standalone page and Workspace panel have the same mobile
+  Calendar behavior.
