@@ -11,7 +11,6 @@ import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, Workspace
 import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
-import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {
   findJournalAnalyticsMetric,
   formatJournalAnalyticsPartitionedMetric,
@@ -108,7 +107,7 @@ export default async function WorkspacePage({
     redirect("/account/trading");
   }
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, response, reviewSummary, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
@@ -146,6 +145,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         onboardingStatus: readJournalFirstExecutionOnboardingStatusFromDatabase(database, scope),
         periodEndDate: periodDateRange.endDate,
         periodStartDate: periodDateRange.startDate,
+        ruleResultsCardPreference: new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope),
         ruleResultsEndDate: dates.endDate,
         ruleResultsStartDate: dates.startDate,
         response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
@@ -191,8 +191,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     analyticsMetrics,
     reviewSummary,
   });
-  const ruleResultsCardPreference = withReadonlyPlatformDatabase({}, (database) =>
-    new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope));
   const ruleResultsCard = ruleResultsCardPreference.showInWorkspace
     ? workspaceRuleResultsCard(await readRuleResults(scope, {
       endDate: ruleResultsEndDate,
