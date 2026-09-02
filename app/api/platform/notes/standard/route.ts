@@ -62,7 +62,7 @@ export async function PUT(request: Request): Promise<Response> {
         technicalNote: categoryValue === "technical_recap" ? noteText : current?.technicalNote ?? "",
         tradeNote: categoryValue === "general" ? noteText : current?.tradeNote ?? "",
       });
-    });
+    }, { allowDemoAccountAnnotations: true });
     return Response.json({ status: "ready" }, { headers: HEADERS });
   } catch (error) { const conflict = isTraderLinkPlatformError(error) && error.code === "TRADERLINK_JOURNAL_ANNOTATION_CONFLICT"; return Response.json({ status: "unavailable" }, { headers: HEADERS, status: conflict ? 409 : 400 }); }
 }

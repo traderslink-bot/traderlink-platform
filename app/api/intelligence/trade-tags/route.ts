@@ -68,7 +68,7 @@ export async function POST(request: Request): Promise<Response> {
       body.expectedAccountSelectionRef,
     );
     const data = withWritableJournalAnnotations(scope, (service, account) =>
-      tagView(service.createTag(account, { name: body.name })));
+      tagView(service.createTag(account, { name: body.name })), { allowDemoAccountAnnotations: true });
     return Response.json({ ok: true, data }, { status: 201 });
   } catch (error) {
     return errorResponse(error);

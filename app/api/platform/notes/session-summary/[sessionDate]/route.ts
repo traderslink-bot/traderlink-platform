@@ -38,6 +38,12 @@ export async function GET(
       status: "ready",
       summary: {
         pnl: session?.netPnl ?? null,
+        presetRules: session?.rules.filter((rule) => rule.applicability === "day" && !rule.custom).map((rule) => ({
+          ruleId: rule.ruleId,
+          ruleVersion: rule.ruleVersion,
+          status: rule.status,
+          title: rule.label,
+        })) ?? [],
         tradeCount: trades.length,
       },
       trades,

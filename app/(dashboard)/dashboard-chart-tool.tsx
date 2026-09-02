@@ -11,13 +11,17 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { DashboardSecondaryAction } from "../dashboard-template";
 import { TradingViewChart } from "./charts/trading-view-chart";
 
 type DashboardChartContextValue = Readonly<{
+  closeChart: () => void;
+  open: boolean;
+  openRequest: number;
   openChart: (symbol?: string) => void;
+  symbol: string;
 }>;
 
 const DashboardChartContext = createContext<DashboardChartContextValue | null>(null);
@@ -33,11 +37,14 @@ function DashboardChartPanel({
 }>) {
   const [fullScreen, setFullScreen] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const visibleHeight = fullScreen ? "100dvh" : { xs: 460, md: 620 };
 
   useEffect(() => {
     setFullScreen(false);
     setMinimized(false);
+    const frame = window.requestAnimationFrame(() => panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    return () => window.cancelAnimationFrame(frame);
   }, [openRequest]);
 
   useEffect(() => {
@@ -46,6 +53,7 @@ function DashboardChartPanel({
 
   return (
     <Box
+      ref={panelRef}
       sx={{
         bgcolor: "background.paper",
         border: fullScreen ? 0 : 1,
@@ -118,9 +126,8 @@ export function DashboardChartProvider({ children }: Readonly<{ children: ReactN
   };
 
   return (
-    <DashboardChartContext.Provider value={{ openChart }}>
+    <DashboardChartContext.Provider value={{ closeChart: () => setOpen(false), open, openChart, openRequest, symbol }}>
       {children}
-      {open ? <DashboardChartPanel onClose={() => setOpen(false)} openRequest={openRequest} symbol={symbol} /> : null}
     </DashboardChartContext.Provider>
   );
 }
@@ -140,4 +147,9 @@ export function DashboardChartAction() {
       </DashboardSecondaryAction>
     </Tooltip>
   );
+}
+
+export function DashboardChartPanelSlot() {
+  const { closeChart, open, openRequest, symbol } = useDashboardChart();
+  return open ? <DashboardChartPanel onClose={closeChart} openRequest={openRequest} symbol={symbol} /> : null;
 }

@@ -1,4 +1,3 @@
-import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
 import { JournalSharedNotesService, type SharedNoteTarget } from "@/src/modules/journal/server/shared-notes/journal-shared-notes-service";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
 import { requireExpectedJournalAccountSelection, requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -45,7 +44,6 @@ export async function PUT(request: Request): Promise<Response> {
     const body = await request.json() as Record<string, unknown>;
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const note = withPlatformDatabase({ mode: "runtime" }, (database) => {
-      new JournalDemoAccountRepository(database).requireActiveAccountIsNotDemo(scope);
       return new JournalSharedNotesService(database).saveCategorizedNote(
         narrowWorkspaceAccessToAccount(scope, scope.activeAccountId ?? ""),
         { category: body.category, customTypeId: body.customTypeId, expectedRevision: body.expectedRevision, target: target(body), text: body.text },

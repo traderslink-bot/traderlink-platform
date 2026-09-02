@@ -51,6 +51,23 @@ Related plan:
   installed; no dependency installation, server start, migration, or test suite
   was run.
 
+## 2026-09-01 Session Review repair
+
+- Session Review now loads its compact tag and custom-rule catalog independently
+  from the reporting-backed Details summary, so the tag selector is not held up
+  by session analytics.
+- One **Save Session Review** action saves the entered note plus changed session
+  tags and custom-rule results. Creating a new tag selects it locally; it is
+  attached only by that one review save.
+- Demo accounts may now write trader-authored notes, tags, and rule reviews,
+  while the demo account guard remains in place for execution and market-fact
+  mutations.
+- The Details empty state names the selected date and does not render P/L or
+  trade-detail content when there are no recorded trades. Its P/L wording no
+  longer makes an unsupported net/gross claim.
+- Automatically evaluated preset day rules are surfaced as read-only status
+  rows beside the editable custom rules.
+
 ## Resume point
 
 The implementation is intentionally separate from the Analyzer: new shared

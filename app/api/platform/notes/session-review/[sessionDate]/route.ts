@@ -1,4 +1,3 @@
-import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
 import { createJournalAnnotationService, withScopedJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
@@ -14,6 +13,28 @@ const HEADERS = { "cache-control": "private, no-store, max-age=0" };
 function invalid(field: string): never { return platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID", { field }); }
 function sessionDate(value: string): string { if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) invalid("sessionDate"); return value; }
 function isStringArray(value: unknown): value is readonly string[] { return Array.isArray(value) && value.every((item): item is string => typeof item === "string"); }
+type RuleReviewInput = Readonly<{
+  expectedRevision: number | null;
+  ruleId: string;
+  ruleVersion: string;
+  status: "followed" | "broken" | "not-reviewed";
+}>;
+function ruleReviews(value: unknown): readonly RuleReviewInput[] {
+  if (!Array.isArray(value)) invalid("ruleReviews");
+  const seen = new Set<string>();
+  return value.map((item): RuleReviewInput => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) invalid("ruleReviews");
+    const candidate = item as Record<string, unknown>;
+    if (typeof candidate.ruleId !== "string" || typeof candidate.ruleVersion !== "string" ||
+      (candidate.status !== "followed" && candidate.status !== "broken" && candidate.status !== "not-reviewed") ||
+      (candidate.expectedRevision !== null && (!Number.isSafeInteger(candidate.expectedRevision) || Number(candidate.expectedRevision) <= 0))) {
+      invalid("ruleReviews");
+    }
+    if (seen.has(candidate.ruleId)) invalid("ruleReviews");
+    seen.add(candidate.ruleId);
+    return { expectedRevision: candidate.expectedRevision as number | null, ruleId: candidate.ruleId, ruleVersion: candidate.ruleVersion, status: candidate.status };
+  });
+}
 function tags(database: Parameters<typeof createJournalAnnotationService>[0], scope: AccountScope, dayId: string | null) {
   return database.prepare(`SELECT tag_id FROM journal_trading_day_tag_assignments
 WHERE workspace_id = ? AND account_id = ? AND trading_day_id = ? AND assignment_state = 'assigned'
@@ -24,14 +45,14 @@ function data(database: Parameters<typeof createJournalAnnotationService>[0], sc
     const dayId = service.resolveTradingDayId(account, date);
     const reviews = dayId ? service.listRuleReviews(account, { tradingDayId: dayId, roundTripIds: [] }) : [];
     return {
-      rules: service.listRules(account).filter((rule) => rule.lifecycleState === "active" && rule.sourceKind === "custom" && (rule.reviewScope === "day" || rule.reviewScope === "both")).map((rule) => ({ ruleId: rule.ruleId, ruleVersion: rule.versionId, statement: rule.statement, title: rule.title })),
+      rules: service.listRulesForEvaluation(account, `${date}T00:00:00.000Z`, `${date}T23:59:59.999Z`).filter((rule) => rule.sourceKind === "custom" && (rule.reviewScope === "day" || rule.reviewScope === "both")).map((rule) => ({ ruleId: rule.ruleId, ruleVersion: rule.versionId, statement: rule.statement, title: rule.title })),
       reviews: reviews.filter((review) => review.targetKind === "trading_day").map((review) => ({ revision: review.revision, ruleId: review.ruleId, ruleVersion: review.ruleVersionId, status: review.status === "not_reviewed" ? "not-reviewed" : review.status })),
       selectedTagIds: tags(database, account, dayId).map((row) => row.tag_id),
       tags: service.listTags(account).map((tag) => ({ name: tag.name, tagId: tag.tagId })),
     };
   });
 }
-function replaceTags(database: Parameters<typeof createJournalAnnotationService>[0], scope: ReturnType<typeof requireTraderLinkPlatformRequestScope>, date: string, tagIds: readonly string[]) {
+function saveSessionReview(database: Parameters<typeof createJournalAnnotationService>[0], scope: ReturnType<typeof requireTraderLinkPlatformRequestScope>, date: string, tagIds: readonly string[], reviewInputs: readonly RuleReviewInput[]) {
   return withScopedJournalAnnotations(database, scope, (service, account) => {
     const active = new Set(service.listTags(account).map((tag) => tag.tagId));
     if (tagIds.length > 10 || tagIds.some((tagId) => !active.has(tagId))) invalid("tagIds");
@@ -62,6 +83,21 @@ WHERE workspace_id = ? AND account_id = ? AND trading_day_tag_assignment_id = ? 
   assignment_event_id, workspace_id, account_id, trading_day_tag_assignment_id, version_number, event_kind, authored_by_user_id, created_at_utc
 ) VALUES (?, ?, ?, ?, 1, 'assigned', ?, ?)`).run(eventId, account.workspaceId, account.accountId, assignmentId, account.userId, at);
     }
+    if (reviewInputs.length === 0) return;
+    const availableRules = new Set(service.listRulesForEvaluation(account, `${date}T00:00:00.000Z`, `${date}T23:59:59.999Z`)
+      .filter((rule) => rule.sourceKind === "custom" && (rule.reviewScope === "day" || rule.reviewScope === "both"))
+      .map((rule) => `${rule.ruleId}:${rule.versionId}`));
+    for (const review of reviewInputs) {
+      if (!availableRules.has(`${review.ruleId}:${review.ruleVersion}`)) invalid("ruleReviews");
+      service.saveRuleReview(account, {
+        expectedRevision: review.expectedRevision,
+        ruleId: review.ruleId,
+        ruleVersionId: review.ruleVersion,
+        status: review.status === "not-reviewed" ? "not_reviewed" : review.status,
+        targetId: dayId,
+        targetKind: "trading_day",
+      });
+    }
   });
 }
 export async function GET(request: Request, context: { params: Promise<{ sessionDate: string }> }): Promise<Response> {
@@ -71,15 +107,15 @@ export async function PUT(request: Request, context: { params: Promise<{ session
   try {
     requirePlatformMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const body = await request.json() as { expectedAccountSelectionRef?: unknown; tagIds?: unknown };
+    const body = await request.json() as { expectedAccountSelectionRef?: unknown; ruleReviews?: unknown; tagIds?: unknown };
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const tagIds = body.tagIds;
     if (!isStringArray(tagIds)) invalid("tagIds");
+    const reviewInputs = body.ruleReviews === undefined ? [] : ruleReviews(body.ruleReviews);
     const { sessionDate: raw } = await context.params;
     const date = sessionDate(raw);
     withPlatformDatabase({ mode: "runtime" }, (database) => database.transaction(() => {
-      new JournalDemoAccountRepository(database).requireActiveAccountIsNotDemo(scope);
-      replaceTags(database, scope, date, tagIds);
+      saveSessionReview(database, scope, date, tagIds, reviewInputs);
     }).immediate());
     return Response.json({ status: "ready" }, { headers: HEADERS });
   } catch (error) {

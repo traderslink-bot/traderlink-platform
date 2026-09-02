@@ -27,7 +27,7 @@ import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
 import { WorkspaceTradeLibrary } from "./workspace-trade-library-client";
 import { WorkspaceMoreFiltersDrawer } from "./workspace-more-filters-drawer";
 import { openWorkspaceTradeDrawer } from "./workspace-trade-drawer-events";
-import { DashboardChartAction, DashboardChartProvider } from "../dashboard-chart-tool";
+import { DashboardChartAction, DashboardChartPanelSlot, DashboardChartProvider } from "../dashboard-chart-tool";
 import { JournalNotesDrawer, type JournalNotesDrawerInitialView } from "../notes/journal-notes-drawer";
 
 export type WorkspaceMetric = Readonly<{
@@ -188,18 +188,19 @@ export function WorkspaceDashboard({
           <Button onClick={openWorkspaceTradeDrawer} variant="contained">+ Trade</Button>
           <Button href="/imports" size="small" variant="outlined">Imports</Button>
           <Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button>
-          <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }}>Session</DashboardSecondaryAction></Tooltip>
-          <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }}>Focuses</DashboardSecondaryAction></Tooltip>
+          <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }}>+ Sessions</DashboardSecondaryAction></Tooltip>
+          <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }}>+ Focuses</DashboardSecondaryAction></Tooltip>
           <DashboardChartAction />
         </Stack> : null}
       </Stack>
+      <DashboardChartPanelSlot />
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Link href="/trade-tracker">Open Day Trade Tracker</Link></Alert> : null}
       {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && currentFocuses ? <Box sx={{ mt: 1.5 }}><DashboardPanel action={<Button onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} size="small">Edit Focuses</Button>} title="Current Focuses">
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && currentFocuses ? <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" }, mt: 1.5 }}><DashboardPanel action={<Button onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} size="small">Edit Focuses</Button>} title="Current Focuses">
         <Typography color="text.secondary" sx={{ mb: 1.25 }} variant="body2">Set a clear focus for your trading: a rule to follow, an emotion to manage, a setup to wait for, or a skill to build.</Typography>
         <CurrentFocusContent content={currentFocuses} />
       </DashboardPanel></Box> : null}

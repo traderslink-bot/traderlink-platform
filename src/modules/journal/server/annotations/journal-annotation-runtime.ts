@@ -57,10 +57,13 @@ export function withWritableJournalAnnotations<T>(
     service: JournalAnnotationService,
     account: ReturnType<typeof accountScope>,
   ) => T,
+  options: Readonly<{ allowDemoAccountAnnotations?: boolean }> = {},
 ): T {
   return withPlatformDatabase({ mode: "runtime" }, (database) => {
     const account = accountScope(scope);
-    new JournalDemoAccountRepository(database).requireActiveAccountIsNotDemo(scope);
+    if (!options.allowDemoAccountAnnotations) {
+      new JournalDemoAccountRepository(database).requireActiveAccountIsNotDemo(scope);
+    }
     return operation(createJournalAnnotationService(database), account);
   });
 }
