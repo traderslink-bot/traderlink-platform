@@ -33,14 +33,7 @@ export default function DashboardLoading() {
           width={64}
         />
       </Box>
-      <Typography
-        color="text.secondary"
-        sx={(theme) => ({
-          color: theme.palette.mode === "dark" ? "common.white" : undefined,
-          fontWeight: 750,
-        })}
-        variant="body2"
-      >
+      <Typography color="text.secondary" sx={{ fontWeight: 750 }} variant="body2">
         Loading…
       </Typography>
     </Stack>
