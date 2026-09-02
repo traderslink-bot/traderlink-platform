@@ -74,6 +74,9 @@ Related plan:
 - The Workspace Current Focuses card now keeps only the saved focus content,
   caps that content in a compact scroll area with shared light/dark theme
   scrollbar tokens, and places an open chart below the card.
+- Its card-specific content layout uses smaller title spacing and side padding,
+  then gives the focus text the remaining card height. This does not change the
+  surrounding Workspace metric cards.
 - A minimized workspace chart now removes the chart body from layout while
   retaining it for restore, leaving one compact **Minimized {ticker} Chart**
   control rather than an empty chart surface.

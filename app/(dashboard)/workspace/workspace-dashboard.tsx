@@ -116,7 +116,8 @@ function sessionDateInTimezone(timezone: string): string {
 
 function CurrentFocusContent({ content }: Readonly<{ content: string }>) {
   return <Box sx={{
-    maxHeight: { xs: 112, sm: 68 },
+    flex: 1,
+    minHeight: 0,
     overflowY: "auto",
     pr: 0.5,
     scrollbarWidth: "thin",
@@ -213,7 +214,29 @@ export function WorkspaceDashboard({
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && currentFocuses ? <Box sx={{ "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 }, "& h2": { fontSize: "1rem", lineHeight: 1.25 }, display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" }, height: { xs: 260, sm: 220 }, mt: 1.5 }}><DashboardPanel action={<Button onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} size="small">Edit Focuses</Button>} title="Current Focuses">
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && currentFocuses ? <Box sx={{
+        "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
+        "& h2": { fontSize: "1rem", lineHeight: 1.25 },
+        "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root": {
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          p: { xs: 1.5, sm: 1.25 },
+          "&:last-child": { pb: { xs: 1.5, sm: 1.25 } },
+        },
+        "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root > .MuiBox-root:last-child": {
+          display: "flex",
+          flex: 1,
+          minHeight: 0,
+          mt: 1,
+        },
+        display: "grid",
+        gap: 1.5,
+        gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" },
+        height: { xs: 260, sm: 220 },
+        mt: 1.5,
+      }}><DashboardPanel action={<Button onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} size="small">Edit Focuses</Button>} title="Current Focuses">
         <CurrentFocusContent content={currentFocuses} />
       </DashboardPanel></Box> : null}
       <DashboardChartPanelSlot />
