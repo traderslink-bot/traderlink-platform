@@ -98,7 +98,7 @@ export function WorkspaceRulesPanel({ initialView = "rules", onClose, onPreferen
     anchor="right"
     onClose={onClose}
     open
-    PaperProps={{ sx: { maxWidth: "100vw", width: { xs: "100%", md: 1040 } } }}
+    slotProps={{ paper: { sx: { maxWidth: "100vw", width: { xs: "100%", md: 1040 } } } }}
   >
     <Stack sx={{ height: "100%", minHeight: 0 }}>
       <Stack direction="row" sx={{ alignItems: "center", borderBottom: 1, borderColor: "divider", justifyContent: "space-between", px: { xs: 1, sm: 2 }, py: 0.75 }}>
