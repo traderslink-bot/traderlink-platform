@@ -38,6 +38,13 @@ that day’s trades and leads to Trade Tracker. It does not display, read, or
 edit Session Reviews. Editing an existing session remains in Trade Tracker
 until a separate session reader is planned and approved.
 
+Workspace opens the reusable Calendar only on demand in a full-page overlay.
+That overlay omits the standalone Calendar title and period metric cards.
+Selecting a day opens the established day details as a full-page surface with
+a **Back to calendar** action, rather than a cramped nested side drawer. It
+preserves the selected period when the trader returns. The standalone Calendar
+route keeps its own layout and day drawer.
+
 An unattached launch starts a **Session Note** for the current account-local
 date and lets the trader select an earlier date. A trade launch remains tied
 to that exact stable trade identity.

@@ -156,3 +156,15 @@ release has been run.
 - Removed the Session Review history/finder from the Workspace entry drawer.
   Workspace **+ Sessions** is for creating a review; editing an existing
   session remains in Trade Tracker until a separate reader is planned.
+
+## 2026-09-02 Workspace Calendar overlay
+
+- Workspace Calendar now opens on demand as a full-page overlay instead of an
+  inline panel. It omits the standalone title and duplicate P/L, Trades, and
+  Win rate cards.
+- Selecting a day opens the established day details as a full-page surface.
+  **Back to calendar** returns to the same calendar state; the top-level close
+  action returns the trader to the unchanged Workspace.
+- The standalone Calendar route and its day drawer remain unchanged. No
+  Calendar Help guide updates are required because the established Calendar
+  interactions and facts are unchanged.

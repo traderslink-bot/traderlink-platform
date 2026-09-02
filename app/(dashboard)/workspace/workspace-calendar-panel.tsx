@@ -1,7 +1,7 @@
 "use client";
 
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import { Alert, Box, Button, CircularProgress, Stack } from "@mui/material";
+import { Alert, Box, CircularProgress, Dialog, IconButton, Tooltip } from "@mui/material";
 import { useEffect, useState } from "react";
 
 import { CalendarClient } from "../calendar/calendar-client";
@@ -34,8 +34,14 @@ export function WorkspaceCalendarPanel({ onClose }: Readonly<{ onClose: () => vo
       .catch((failure: unknown) => { if (!(failure instanceof DOMException && failure.name === "AbortError")) setError(true); });
     return () => controller.abort();
   }, [period]);
-  return <Box sx={{ mt: 1.5 }}>
-    <Stack direction="row" sx={{ alignItems: "center", justifyContent: "flex-end", mb: 0.5 }}><Button onClick={onClose} size="small" startIcon={<CloseRoundedIcon />}>Close Calendar</Button></Stack>
-    {error ? <Alert severity="error">Calendar could not be loaded. Try again.</Alert> : model === null ? <Box sx={{ display: "grid", minHeight: 280, placeItems: "center" }}><CircularProgress aria-label="Loading Calendar" size={28} /></Box> : <CalendarClient {...model} onNavigatePeriod={(view, value) => setPeriod(view === "month" ? { month: value, view } : { view, week: value })} />}
-  </Box>;
+  return <Dialog aria-label="Trading Calendar" fullScreen onClose={() => onClose()} open PaperProps={{ sx: { bgcolor: "background.default" } }}>
+    <Box sx={{ minHeight: "100%", p: { xs: 1.5, sm: 3 } }}>
+      <Tooltip title="Close Calendar">
+        <IconButton aria-label="Close Calendar" onClick={onClose} size="small" sx={{ float: "right", mt: -0.5 }}>
+          <CloseRoundedIcon />
+        </IconButton>
+      </Tooltip>
+      {error ? <Alert severity="error">Calendar could not be loaded. Try again.</Alert> : model === null ? <Box sx={{ display: "grid", minHeight: 280, placeItems: "center" }}><CircularProgress aria-label="Loading Calendar" size={28} /></Box> : <CalendarClient {...model} onNavigatePeriod={(view, value) => setPeriod(view === "month" ? { month: value, view } : { view, week: value })} presentation="workspace-overlay" />}
+    </Box>
+  </Dialog>;
 }
