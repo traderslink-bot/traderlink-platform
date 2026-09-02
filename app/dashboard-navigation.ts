@@ -245,15 +245,8 @@ export type DashboardSidebarNavigationSection = Readonly<
 >;
 
 export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNavigationSection[] =
-  Object.freeze([
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[0] }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[1] }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[2] }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[3] }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[4] }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5] }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[6] }),
-  ]);
+  Object.freeze(DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group) =>
+    Object.freeze({ kind: "group" as const, group })));
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({
