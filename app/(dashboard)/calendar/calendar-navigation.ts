@@ -18,6 +18,7 @@ export type CalendarNavigationOptions = Readonly<{
   availableMonths: readonly string[];
   availableWeekOptions: readonly CalendarWeekOption[];
   availableWeeks: readonly string[];
+  currentWeek: string;
   selectedMonth: string;
   selectedWeek: string;
 }>;
@@ -107,6 +108,7 @@ export function calendarNavigationOptions(
     availableMonths: Object.freeze(availableMonths),
     availableWeekOptions: Object.freeze(availableWeekOptions),
     availableWeeks: Object.freeze(availableWeeks),
+    currentWeek,
     selectedMonth: requestedMonth && availableMonths.includes(requestedMonth)
       ? requestedMonth
       : activityMonths.at(-1) ?? currentWeek.slice(0, 7),
