@@ -8,12 +8,12 @@ import BookmarksRoundedIcon from "@mui/icons-material/BookmarksRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadOffIcon from "@mui/icons-material/FileUploadOff";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
@@ -137,7 +137,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     greenToRed: <FileUploadOffIcon />,
     halt: <PauseCircleOutlineRoundedIcon />,
     help: <HelpOutlineRoundedIcon />,
-    import: <CloudUploadRoundedIcon />,
+    import: <FileDownloadIcon />,
     lab: <ScienceRoundedIcon />,
     manualEntry: <NoteAltRoundedIcon />,
     newspaper: <NewspaperRoundedIcon />,
@@ -295,7 +295,7 @@ function NavigationLink({
           slotProps={{
             primary: {
               sx: {
-                fontSize: item.depth === 2 ? 12.5 : grouped ? 13 : 14,
+                fontSize: item.depth === 2 ? 12.5 : grouped ? 13 : 14.5,
                 fontWeight: item.depth === 1 ? 760 : 620,
               },
             },

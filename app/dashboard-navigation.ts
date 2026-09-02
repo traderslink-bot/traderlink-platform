@@ -100,6 +100,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           label: "Add/Edit Trade",
           icon: "manualEntry" as const,
         }),
+        Object.freeze({
+          href: "/imports",
+          label: "Import Trades",
+          icon: "import" as const,
+        }),
       ]),
     }),
     Object.freeze({

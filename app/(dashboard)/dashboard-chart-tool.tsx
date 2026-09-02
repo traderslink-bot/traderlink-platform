@@ -1,6 +1,7 @@
 "use client";
 
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
 import FullscreenExitRoundedIcon from "@mui/icons-material/FullscreenExitRounded";
 import FullscreenRoundedIcon from "@mui/icons-material/FullscreenRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
@@ -156,7 +157,7 @@ export function DashboardChartAction() {
   const { openChart } = useDashboardChart();
   return (
     <Tooltip title="Open chart">
-      <DashboardSecondaryAction onClick={() => openChart()} startIcon={<VisibilityIcon />}>
+      <DashboardSecondaryAction onClick={() => openChart()} startIcon={<CandlestickChartIcon />}>
         Chart
       </DashboardSecondaryAction>
     </Tooltip>
