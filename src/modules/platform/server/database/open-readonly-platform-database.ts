@@ -4,8 +4,10 @@ import {
   resolvePlatformDatabaseConfig,
   validatePlatformDatabasePath,
 } from "./platform-database-config";
-import { verifyPlatformDatabaseConnectionPragmas } from "./open-platform-database";
-import { verifyCompletedPlatformDatabase } from "./run-platform-migrations";
+import {
+  verifyPlatformDatabaseConnectionPragmas,
+  verifyPlatformRuntimeDatabaseIntegrity,
+} from "./open-platform-database";
 
 export function openReadonlyPlatformDatabase(
   options: Readonly<{
@@ -27,7 +29,7 @@ export function openReadonlyPlatformDatabase(
     database.pragma("foreign_keys = ON");
     database.pragma("busy_timeout = 5000");
     database.pragma("query_only = ON");
-    verifyCompletedPlatformDatabase(database);
+    verifyPlatformRuntimeDatabaseIntegrity(database, databasePath);
     verifyPlatformDatabaseConnectionPragmas(database);
     return database;
   } catch (error) {

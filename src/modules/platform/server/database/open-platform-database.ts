@@ -12,6 +12,8 @@ import { verifyCompletedPlatformDatabase } from "./run-platform-migrations";
 
 export type PlatformDatabaseOpenMode = "runtime" | "initializer";
 
+const verifiedRuntimeDatabaseFingerprints = new Map<string, string>();
+
 export type PlatformDatabasePragmaEvidence = Readonly<{
   foreignKeys: number;
   busyTimeout: number;
@@ -101,6 +103,39 @@ export function verifyPlatformDatabaseConnectionPragmas(
   return evidence;
 }
 
+function readRuntimeDatabaseIntegrityFingerprint(
+  database: Database.Database,
+  databasePath: string,
+): string {
+  const details = statSync(databasePath);
+  const schemaVersion = readSinglePlatformDatabasePragmaValue(
+    database,
+    "schema_version",
+  );
+  return [
+    details.dev,
+    details.ino,
+    details.size,
+    details.mtimeMs,
+    String(schemaVersion),
+  ].join(":");
+}
+
+export function verifyPlatformRuntimeDatabaseIntegrity(
+  database: Database.Database,
+  databasePath: string,
+): void {
+  const fingerprint = readRuntimeDatabaseIntegrityFingerprint(
+    database,
+    databasePath,
+  );
+  if (verifiedRuntimeDatabaseFingerprints.get(databasePath) === fingerprint) {
+    return;
+  }
+  verifyCompletedPlatformDatabase(database);
+  verifiedRuntimeDatabaseFingerprints.set(databasePath, fingerprint);
+}
+
 export function openPlatformDatabase(
   options: Readonly<{
     mode: PlatformDatabaseOpenMode;
@@ -131,7 +166,7 @@ export function openPlatformDatabase(
     });
     configurePlatformDatabaseConnection(database, options.mode);
     if (options.mode === "runtime") {
-      verifyCompletedPlatformDatabase(database);
+      verifyPlatformRuntimeDatabaseIntegrity(database, databasePath);
       verifyPlatformDatabaseConnectionPragmas(database);
     }
     return database;
