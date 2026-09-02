@@ -8,6 +8,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Chip
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
+import { JOURNAL_TAG_PRESET_CATALOG, journalTagPresetForName, journalTagPresetKeyFromSelectionId, journalTagPresetSelectionId } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
 type NoteCategory = "what_worked" | "what_needs_work" | "technical_recap" | "general" | "custom";
@@ -87,6 +88,15 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
     || sessionTagsDirty
     || sessionRulesDirty;
   const contextLabel = activeLaunch.kind === "session" ? `Session note · ${activeLaunch.sessionDate}` : `Trade note${activeLaunch.symbol ? ` · ${activeLaunch.symbol}` : ""}`;
+  const persistedPresetKeys = new Set((sessionReview?.tags ?? [])
+    .map((tag) => journalTagPresetForName(tag.name)?.presetKey)
+    .filter((presetKey): presetKey is string => Boolean(presetKey)));
+  const sessionTagChoices = [
+    ...(sessionReview?.tags ?? []),
+    ...JOURNAL_TAG_PRESET_CATALOG
+      .filter((preset) => !persistedPresetKeys.has(preset.presetKey))
+      .map((preset) => ({ name: preset.name, tagId: journalTagPresetSelectionId(preset.presetKey) })),
+  ];
 
   async function readJson(url: string): Promise<Record<string, unknown> | null> { const response = await fetch(url, { cache: "no-store" }); return response.ok ? await response.json() as Record<string, unknown> : null; }
   async function load(): Promise<void> {
@@ -204,7 +214,12 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
           }];
         }) ?? [];
         const response = await fetch(`/api/platform/notes/session-review/${encodeURIComponent(activeLaunch.sessionDate)}`, {
-          method: "PUT", headers: headers(), body: JSON.stringify({ expectedAccountSelectionRef, ruleReviews, tagIds: sessionTagIds }),
+          method: "PUT", headers: headers(), body: JSON.stringify({
+            expectedAccountSelectionRef,
+            presetKeys: sessionTagIds.map(journalTagPresetKeyFromSelectionId).filter((value): value is string => value !== null),
+            ruleReviews,
+            tagIds: sessionTagIds.filter((tagId) => journalTagPresetKeyFromSelectionId(tagId) === null),
+          }),
         });
         if (!response.ok) throw new Error("review");
       }
@@ -252,8 +267,8 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
     <Accordion expanded={sessionTagsOpen} onChange={(_, expanded) => setSessionTagsOpen(expanded)}>
       <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}><Typography sx={{ fontWeight: 800 }}>Session tags</Typography></AccordionSummary>
       <AccordionDetails><Stack spacing={1.25}>
-        <Typography color="text.secondary" variant="body2">Tags describe this full trading session, not one trade.</Typography>
-        {sessionReview ? <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }} useFlexGap>{sessionReview.tags.map((tag) => <Chip color={sessionTagIds.includes(tag.tagId) ? "primary" : "default"} key={tag.tagId} label={tag.name} onClick={() => setSessionTagIds((current) => current.includes(tag.tagId) ? current.filter((id) => id !== tag.tagId) : current.length >= 10 ? current : [...current, tag.tagId])} variant={sessionTagIds.includes(tag.tagId) ? "filled" : "outlined"} />)}</Stack> : <Typography color="text.secondary" variant="body2">Loading available tags…</Typography>}
+        <Typography color="text.secondary" variant="body2">Choose useful presets or create a tag for this full trading session.</Typography>
+        {sessionReview ? <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", maxHeight: 260, overflowY: "auto", pr: 0.5 }} useFlexGap>{sessionTagChoices.map((tag) => <Chip color={sessionTagIds.includes(tag.tagId) ? "primary" : "default"} key={tag.tagId} label={tag.name} onClick={() => setSessionTagIds((current) => current.includes(tag.tagId) ? current.filter((id) => id !== tag.tagId) : current.length >= 10 ? current : [...current, tag.tagId])} variant={sessionTagIds.includes(tag.tagId) ? "filled" : "outlined"} />)}</Stack> : <Typography color="text.secondary" variant="body2">Loading available tags…</Typography>}
         <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75}><TextField label="New session tag" onChange={(event) => setNewSessionTag(event.target.value)} size="small" value={newSessionTag} /><Button disabled={saving || !newSessionTag.trim()} onClick={() => void createSessionTag()} size="small">Add tag</Button></Stack>
       </Stack></AccordionDetails>
     </Accordion>

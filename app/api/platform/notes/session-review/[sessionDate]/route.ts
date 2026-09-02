@@ -1,4 +1,5 @@
 import { createJournalAnnotationService, withScopedJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
+import { journalTagPresetByKey, journalTagPresetForName } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
 import { requireExpectedJournalAccountSelection, requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -52,17 +53,28 @@ function data(database: Parameters<typeof createJournalAnnotationService>[0], sc
     };
   });
 }
-function saveSessionReview(database: Parameters<typeof createJournalAnnotationService>[0], scope: ReturnType<typeof requireTraderLinkPlatformRequestScope>, date: string, tagIds: readonly string[], reviewInputs: readonly RuleReviewInput[]) {
+function saveSessionReview(database: Parameters<typeof createJournalAnnotationService>[0], scope: ReturnType<typeof requireTraderLinkPlatformRequestScope>, date: string, tagIds: readonly string[], presetKeys: readonly string[], reviewInputs: readonly RuleReviewInput[]) {
   return withScopedJournalAnnotations(database, scope, (service, account) => {
-    const active = new Set(service.listTags(account).map((tag) => tag.tagId));
-    if (tagIds.length > 10 || tagIds.some((tagId) => !active.has(tagId))) invalid("tagIds");
+    const activeTags = [...service.listTags(account)];
+    const active = new Set(activeTags.map((tag) => tag.tagId));
+    if (tagIds.some((tagId) => !active.has(tagId))) invalid("tagIds");
+    const selectedTagIds = new Set(tagIds);
+    for (const presetKey of presetKeys) {
+      const preset = journalTagPresetByKey(presetKey);
+      if (!preset) invalid("presetKeys");
+      const existing = activeTags.find((tag) => journalTagPresetForName(tag.name)?.presetKey === presetKey);
+      const tag = existing ?? service.createTag(account, { name: preset.name });
+      if (!existing) activeTags.push(tag);
+      selectedTagIds.add(tag.tagId);
+    }
+    if (selectedTagIds.size > 10) invalid("tagIds");
     const dayId = service.ensureTradingDayId(account, date);
     const at = createCanonicalUtcTimestamp();
     const rows = database.prepare(`SELECT trading_day_tag_assignment_id, tag_id, assignment_state, revision
 FROM journal_trading_day_tag_assignments WHERE workspace_id = ? AND account_id = ? AND trading_day_id = ?`).all(
       account.workspaceId, account.accountId, dayId,
     ) as { trading_day_tag_assignment_id: string; tag_id: string; assignment_state: "assigned" | "removed"; revision: number }[];
-    const selected = new Set(tagIds); const byTag = new Map(rows.map((row) => [row.tag_id, row]));
+    const selected = selectedTagIds; const byTag = new Map(rows.map((row) => [row.tag_id, row]));
     for (const row of rows) {
       const next = selected.has(row.tag_id) ? "assigned" : "removed";
       if (next === row.assignment_state) continue;
@@ -107,15 +119,17 @@ export async function PUT(request: Request, context: { params: Promise<{ session
   try {
     requirePlatformMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const body = await request.json() as { expectedAccountSelectionRef?: unknown; ruleReviews?: unknown; tagIds?: unknown };
+    const body = await request.json() as { expectedAccountSelectionRef?: unknown; presetKeys?: unknown; ruleReviews?: unknown; tagIds?: unknown };
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const tagIds = body.tagIds;
     if (!isStringArray(tagIds)) invalid("tagIds");
+    const presetKeys = body.presetKeys === undefined ? [] : body.presetKeys;
+    if (!isStringArray(presetKeys)) invalid("presetKeys");
     const reviewInputs = body.ruleReviews === undefined ? [] : ruleReviews(body.ruleReviews);
     const { sessionDate: raw } = await context.params;
     const date = sessionDate(raw);
     withPlatformDatabase({ mode: "runtime" }, (database) => database.transaction(() => {
-      saveSessionReview(database, scope, date, tagIds, reviewInputs);
+      saveSessionReview(database, scope, date, tagIds, presetKeys, reviewInputs);
     }).immediate());
     return Response.json({ status: "ready" }, { headers: HEADERS });
   } catch (error) {

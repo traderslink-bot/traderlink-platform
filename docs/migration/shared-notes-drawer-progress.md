@@ -67,6 +67,10 @@ Related plan:
   longer makes an unsupported net/gross claim.
 - Automatically evaluated preset day rules are surfaced as read-only status
   rows beside the editable custom rules.
+- Session Review now exposes the same built-in tag presets as Daily Trade
+  Tracker even when the account has no existing tag catalog. Presets stay
+  provisional in the drawer and are created and attached only by the one
+  Session Review save action.
 
 ## Resume point
 
