@@ -54,7 +54,7 @@ export function WorkspaceRulesPanel({ initialView = "rules", onClose, onPreferen
   }, [loadAttempt]);
 
   useEffect(() => {
-    if (activeView !== "results" || results !== null) return;
+    if (model === null || activeView !== "results" || results !== null) return;
     const controller = new AbortController();
     setError(false);
     void fetch("/api/platform/journal/rules/workspace-panel?includeResults=1", { cache: "no-store", signal: controller.signal })
@@ -67,7 +67,7 @@ export function WorkspaceRulesPanel({ initialView = "rules", onClose, onPreferen
         if (!(failure instanceof DOMException && failure.name === "AbortError")) setError(true);
       });
     return () => controller.abort();
-  }, [activeView, results]);
+  }, [activeView, model, results]);
 
   async function savePreference(showInWorkspace: boolean): Promise<void> {
     if (!model) return;

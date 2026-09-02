@@ -31,7 +31,9 @@ Related plan:
   supplies results history.
 - Opening the Drawer loads rule management only. The all-time Rule Results
   read runs only when the trader selects **Rules results**, avoiding that
-  heavier work during ordinary rule editing.
+  heavier work during ordinary rule editing. When opened directly to Results,
+  the results read waits for the initial Rules model rather than competing with
+  it for database resources.
 - The Drawer is full-width on mobile and 1040px wide on desktop. It contains
   no application navigation and is listed in the dashboard-template Drawer
   allowlist.
