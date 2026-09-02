@@ -251,7 +251,8 @@ export function WorkspaceDashboard({
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && currentFocuses ? <Box sx={{
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && (currentFocuses || (showRuleResultsCard && ruleResultsCard)) ? <Box sx={{
+        "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
         "& h2": { fontSize: "1rem", lineHeight: 1.25 },
         "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root": {
           boxSizing: "border-box",
@@ -270,23 +271,17 @@ export function WorkspaceDashboard({
         },
         display: "grid",
         gap: 1.5,
+        gridAutoRows: { xs: "minmax(220px, auto)", sm: 220 },
         gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" },
-        height: { xs: 260, sm: 220 },
         mt: 1.5,
-      }}><DashboardPanel title="Current Focuses">
+      }}>{currentFocuses ? <DashboardPanel title="Current Focuses">
         <CurrentFocusContent content={currentFocuses} />
-      </DashboardPanel></Box> : null}
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && showRuleResultsCard && ruleResultsCard ? <Box sx={{
-        display: "grid",
-        gap: 1.5,
-        gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" },
-        mt: 1.5,
-      }}><Box sx={{ gridColumn: { xs: "1", md: "span 2" } }}><DashboardPanel action={<Button onClick={() => openRules("results")} size="small">View results</Button>} title="Rules broken">
+      </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel action={<Button onClick={() => openRules("results")} size="small">View results</Button>} title="Rules broken">
         <Stack spacing={1}>
           <Typography sx={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1 }}>{ruleResultsCard.brokenRuleCount}</Typography>
-          {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
+          {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
         </Stack>
-      </DashboardPanel></Box></Box> : null}
+      </DashboardPanel> : null}</Box> : null}
       <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
