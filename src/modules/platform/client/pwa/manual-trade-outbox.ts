@@ -248,6 +248,111 @@ function reviewOrNetworkFailure(
   throw new ManualTradeNeedsReviewError(code);
 }
 
+function manualTradeBasePath(submission: ManualTradeSubmission): string {
+  return submission.tracker === "workspace"
+    ? "/api/platform/journal/workspace-trades"
+    : "/api/platform/journal/manual-trades";
+}
+
+function manualTradeHeaders(): Readonly<Record<string, string>> {
+  return {
+    "content-type": "application/json",
+    [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
+  };
+}
+
+export async function previewManualTradeOnline(
+  submission: ManualTradeSubmission,
+): Promise<JournalManualTradePreview> {
+  const previewResponse = await requestWithNetworkBoundary(
+    "preview",
+    `${manualTradeBasePath(submission)}/preview`,
+    {
+      body: JSON.stringify({
+        entries: submission.entries,
+        expectedAccountSelectionRef: submission.expectedAccountSelectionRef,
+        tracker: submission.tracker,
+        ...(submission.workspaceStyle === undefined
+          ? {}
+          : { workspaceStyle: submission.workspaceStyle }),
+      }),
+      credentials: "same-origin",
+      headers: manualTradeHeaders(),
+      method: "POST",
+    },
+  );
+  const previewBody = await responseBody<PreviewResponse>(previewResponse);
+  if (
+    !previewResponse.ok ||
+    previewBody?.status !== "ready" ||
+    !previewBody.preview
+  ) {
+    reviewOrNetworkFailure(
+      previewResponse,
+      previewBody?.code,
+      "preview",
+    );
+  }
+  return previewBody.preview;
+}
+
+export async function commitManualTradeOnline(
+  submission: ManualTradeSubmission,
+  preview: JournalManualTradePreview,
+  options: Readonly<{
+    offlineDuplicateResolution?: JournalManualTradeOfflineDuplicateResolution;
+  }> = {},
+): Promise<ManualTradeSubmitResult> {
+  const commitResponse = await requestWithNetworkBoundary(
+    "commit",
+    `${manualTradeBasePath(submission)}/commit`,
+    {
+      body: JSON.stringify({
+        confirmations: confirmations(preview),
+        entries: submission.entries,
+        expectedAccountSelectionRef: submission.expectedAccountSelectionRef,
+        idempotencyKey: submission.idempotencyKey,
+        ...(options.offlineDuplicateResolution
+          ? {
+              offlineSync: {
+                duplicateResolution: options.offlineDuplicateResolution,
+              },
+            }
+          : {}),
+        previewRef: preview.previewRef,
+        tracker: submission.tracker,
+        ...(submission.workspaceStyle === undefined
+          ? {}
+          : { workspaceStyle: submission.workspaceStyle }),
+      }),
+      credentials: "same-origin",
+      headers: manualTradeHeaders(),
+      method: "POST",
+    },
+  );
+  const commitBody = await responseBody<CommitResponse>(commitResponse);
+  if (
+    !commitResponse.ok ||
+    commitBody?.status !== "ready" ||
+    !commitBody.result
+  ) {
+    reviewOrNetworkFailure(
+      commitResponse,
+      commitBody?.code,
+      "commit",
+    );
+  }
+  return Object.freeze({
+    acceptedExecutionCount:
+      commitBody.result.acceptedExecutionCount ?? submission.entries.length,
+    affectedDates: Object.freeze(commitBody.result.affectedDates ?? []),
+    affectedTradeRefs: Object.freeze(commitBody.result.affectedTradeRefs ?? []),
+    analyzerQueueOutcome: commitBody.result.analyzerQueueOutcome ?? null,
+    pendingDecisionCount: commitBody.result.pendingDecisionCount ?? 0,
+    savedTrade: commitBody.result.savedTrade ?? null,
+  });
+}
+
 export async function submitManualTradeOnline(
   submission: ManualTradeSubmission,
   options: Readonly<{
@@ -255,13 +360,8 @@ export async function submitManualTradeOnline(
     offlineDuplicateResolution?: JournalManualTradeOfflineDuplicateResolution;
   }> = {},
 ): Promise<ManualTradeSubmitResult> {
-  const headers = {
-    "content-type": "application/json",
-    [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
-  };
-  const basePath = submission.tracker === "workspace"
-    ? "/api/platform/journal/workspace-trades"
-    : "/api/platform/journal/manual-trades";
+  const headers = manualTradeHeaders();
+  const basePath = manualTradeBasePath(submission);
   if (options.checkCommittedFirst) {
     const statusResponse = await requestWithNetworkBoundary(
       "status",
@@ -293,84 +393,8 @@ export async function submitManualTradeOnline(
     }
   }
 
-  const previewResponse = await requestWithNetworkBoundary(
-    "preview",
-    `${basePath}/preview`,
-    {
-      body: JSON.stringify({
-        entries: submission.entries,
-        expectedAccountSelectionRef: submission.expectedAccountSelectionRef,
-        tracker: submission.tracker,
-        ...(submission.workspaceStyle === undefined
-          ? {}
-          : { workspaceStyle: submission.workspaceStyle }),
-      }),
-      credentials: "same-origin",
-      headers,
-      method: "POST",
-    },
-  );
-  const previewBody = await responseBody<PreviewResponse>(previewResponse);
-  if (
-    !previewResponse.ok ||
-    previewBody?.status !== "ready" ||
-    !previewBody.preview
-  ) {
-    reviewOrNetworkFailure(
-      previewResponse,
-      previewBody?.code,
-      "preview",
-    );
-  }
-
-  const commitResponse = await requestWithNetworkBoundary(
-    "commit",
-    `${basePath}/commit`,
-    {
-      body: JSON.stringify({
-        confirmations: confirmations(previewBody.preview),
-        entries: submission.entries,
-        expectedAccountSelectionRef: submission.expectedAccountSelectionRef,
-        idempotencyKey: submission.idempotencyKey,
-        ...(options.offlineDuplicateResolution
-          ? {
-              offlineSync: {
-                duplicateResolution: options.offlineDuplicateResolution,
-              },
-            }
-          : {}),
-        previewRef: previewBody.preview.previewRef,
-        tracker: submission.tracker,
-        ...(submission.workspaceStyle === undefined
-          ? {}
-          : { workspaceStyle: submission.workspaceStyle }),
-      }),
-      credentials: "same-origin",
-      headers,
-      method: "POST",
-    },
-  );
-  const commitBody = await responseBody<CommitResponse>(commitResponse);
-  if (
-    !commitResponse.ok ||
-    commitBody?.status !== "ready" ||
-    !commitBody.result
-  ) {
-    reviewOrNetworkFailure(
-      commitResponse,
-      commitBody?.code,
-      "commit",
-    );
-  }
-  return Object.freeze({
-    acceptedExecutionCount:
-      commitBody.result.acceptedExecutionCount ?? submission.entries.length,
-    affectedDates: Object.freeze(commitBody.result.affectedDates ?? []),
-    affectedTradeRefs: Object.freeze(commitBody.result.affectedTradeRefs ?? []),
-    analyzerQueueOutcome: commitBody.result.analyzerQueueOutcome ?? null,
-    pendingDecisionCount: commitBody.result.pendingDecisionCount ?? 0,
-    savedTrade: commitBody.result.savedTrade ?? null,
-  });
+  const preview = await previewManualTradeOnline(submission);
+  return commitManualTradeOnline(submission, preview, options);
 }
 
 function nowInTimezone(timezone: string): string {

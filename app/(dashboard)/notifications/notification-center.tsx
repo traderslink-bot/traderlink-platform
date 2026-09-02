@@ -85,6 +85,10 @@ export function NotificationCenter({
           )}
           onNotificationDismissed={(notificationRef) => setDismissedNotificationRefs((current) =>
             current.includes(notificationRef) ? current : [...current, notificationRef])}
+          onNotificationOpened={(notification) => {
+            setAnchor(null);
+            if (notification.destinationPath) router.push(notification.destinationPath);
+          }}
           onNotificationRead={(notificationRef) => setReadNotificationRefs((current) =>
             current.includes(notificationRef) ? current : [...current, notificationRef])}
         />

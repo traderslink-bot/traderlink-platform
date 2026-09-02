@@ -69,7 +69,7 @@ export class DailyTradeMoomooAnalyzerWorker {
 
   private notifyFailure(job: ClaimedDailyTradeAnalyzerJob, occurredAt: Date): void {
     try {
-      this.notifications?.notifyFailure({ occurredAt, target: job.target });
+      this.notifications?.notifyFailure({ occurredAt, scope: job.scope, target: job.target });
     } catch (error) {
       console.error("Trade Analyzer owner alert could not be queued.", {
         errorName: error instanceof Error ? error.name : "UnknownError",

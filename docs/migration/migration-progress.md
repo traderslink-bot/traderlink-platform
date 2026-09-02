@@ -197,6 +197,8 @@ made.
 **Left navigation and Workspace follow-up:** The owner-approved [follow-up progress record](left-navigation-and-workspace-follow-up-progress.md) captures the 2026-08-18 navigation ordering and Workspace-card corrections.
 
 **Workspace News Scanner card (active):** The owner-approved [Workspace News Scanner Card Plan](workspace-news-scanner-card-plan.md) adds a lightweight, entitlement-gated scanner card and on-demand Workspace list while reusing the existing article reader.
+
+**Trade Analyzer and Workspace entry follow-up (active):** The owner-approved [Trade Analyzer and Workspace Entry Follow-up Plan](trade-analyzer-and-workspace-entry-follow-up-plan.md) covers correction continuity, fullscreen scaling, server-derived multiple-trade confirmation, outcome notifications, pending-only refresh, and reliable compact-notification navigation.
 **Historical pre-runtime implementation state:** The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) preserve the complete pre-runtime design and execution history. The accepted state immediately below supersedes former queued/unexecuted and 331/1/1 planning claims.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 **Phase 3 implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505` (`feat(journal): complete phase 3 integrity foundation`), preserved locally without push or deployment.

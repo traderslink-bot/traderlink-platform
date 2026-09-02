@@ -148,7 +148,7 @@ export function WorkspaceAtomicTradeEditDrawer({ open, roundTripId, onClose, onS
               <Typography sx={{ fontWeight: 700 }} variant="body2">Execution {index + 1}</Typography>
               <Button color={row.removed ? "inherit" : "error"} disabled={working} onClick={() => { setPreview(null); setRows((current) => current.map((item) => item.clientRowRef === row.clientRowRef ? { ...item, removed: !item.removed } : item)); }} size="small" startIcon={row.removed ? undefined : <DeleteOutlineRoundedIcon />}>{row.removed ? "Undo" : "Remove"}</Button>
             </Stack>
-            {!row.removed ? <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "14ch 10ch 10ch 9ch 10ch 8ch" } }}>
+            {!row.removed ? <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "164px 132px 110px 96px 104px 88px" } }}>
               <TextField label="Date" onChange={(event) => update(row.clientRowRef, "localDate", event.target.value)} size="small" slotProps={{ inputLabel: { shrink: true } }} type="date" value={row.localDate} />
               <TextField label="Time" onChange={(event) => update(row.clientRowRef, "localTime", event.target.value)} size="small" slotProps={{ inputLabel: { shrink: true } }} sx={{ "& input": { pr: 4 } }} type="time" value={row.localTime} />
               <TextField label="Side" onChange={(event) => update(row.clientRowRef, "side", event.target.value as Side)} select size="small" value={row.side}><MenuItem value="buy">Buy</MenuItem><MenuItem value="sell">Sell</MenuItem></TextField>
@@ -162,7 +162,10 @@ export function WorkspaceAtomicTradeEditDrawer({ open, roundTripId, onClose, onS
           {error ? <Alert severity="error">{error}</Alert> : null}
         </> : error ? <Alert severity="error">{error}</Alert> : <Typography color="text.secondary">Loading</Typography>}
       </Stack>
-      <Box sx={{ borderTop: 1, borderColor: "divider", p: 2 }}><Button disabled={!snapshot || working} fullWidth onClick={() => void (preview ? commit() : requestPreview())} variant="contained">{working ? "Saving…" : "Save changes"}</Button></Box>
+      <Stack direction="row" spacing={1} sx={{ borderTop: 1, borderColor: "divider", justifyContent: "flex-end", p: 2 }}>
+        {preview ? <Button disabled={working} onClick={() => setPreview(null)}>Cancel</Button> : null}
+        <Button disabled={!snapshot || working} onClick={() => void (preview ? commit() : requestPreview())} variant="contained">{working ? "Saving…" : preview ? "Confirm changes" : "Review changes"}</Button>
+      </Stack>
     </Stack>
   </Drawer>;
 }

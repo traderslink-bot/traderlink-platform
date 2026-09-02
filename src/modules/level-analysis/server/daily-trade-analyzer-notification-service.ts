@@ -63,8 +63,20 @@ export class DailyTradeAnalyzerNotificationService {
 
   notifyFailure(input: Readonly<{
     occurredAt: Date;
+    scope: AccountScope;
     target: DailyTradeAnalyzerTarget;
   }>): void {
+    new PlatformNotificationRepository(this.database).create({
+      category: "chart_update",
+      destinationPath: `/trade-tracker/${input.target.tradingDateNewYork}?trade=${input.target.roundTripId}`,
+      journalAccountId: input.scope.accountId,
+      kind: "chart_update_ready",
+      occurredAtUtc: createCanonicalUtcTimestamp(input.occurredAt),
+      scope: workspaceScope(input.scope),
+      sourceEventKey: `daily_trade_analysis_unavailable_${input.target.roundTripVersionId}`,
+      summary: "Market data was unavailable for this trade. Review the execution details, then try the analysis again.",
+      title: "Trade Analyzer needs review",
+    });
     notifyJournalOwnerOfDailyTradeAnalyzerFailure({
       database: this.database,
       occurredAt: input.occurredAt,

@@ -2281,7 +2281,7 @@ function TradeReview({
             </Typography>
           </Box>
           <Button aria-expanded={false} onClick={onOpen} size="small" variant="outlined">
-            Review trade
+            Open review
           </Button>
         </Box>
         <Box
@@ -2337,7 +2337,7 @@ function TradeReview({
             </Typography>
           </Box>
           <Button aria-expanded={false} onClick={onOpen} size="small" variant="outlined">
-            Review trade
+            Open review
           </Button>
         </Box>
         {collapsedPendingAnalysisNotice}
@@ -2589,7 +2589,9 @@ function TradeReview({
         <Alert severity="error" sx={{ mt: 1.5 }}>
           <Stack spacing={1}>
             <Typography sx={{ fontWeight: 850 }} variant="body2">
-              Execution did not match market data, so this trade could not be analyzed.
+              {analyzer.executionMismatches.length === 1
+                ? "One execution needs correction before this trade can be analyzed."
+                : `${analyzer.executionMismatches.length} executions need correction before this trade can be analyzed.`}
             </Typography>
             {analyzer.executionMismatches.map((mismatch) => {
               const execution = executions.find((candidate) =>
@@ -2994,6 +2996,14 @@ export function DaySessionView({
   const [expandedTradeKey, setExpandedTradeKey] = useState<string | null>(
     () => firstRenderedTradeKey,
   );
+  useEffect(() => {
+    if (expandedTradeKey === null) return;
+    const visibleTrades = data.tickers.flatMap((ticker) => ticker.roundTrips);
+    if (visibleTrades.some((roundTrip) => roundTrip.roundTripKey === expandedTradeKey)) return;
+    const remainingCorrection = visibleTrades.find((roundTrip) =>
+      roundTrip.analyzer?.status === "execution_mismatch");
+    if (remainingCorrection) setExpandedTradeKey(remainingCorrection.roundTripKey);
+  }, [data.tickers, expandedTradeKey]);
   const [selectedAnalysisEventIds, setSelectedAnalysisEventIds] = useState<Record<string, string | null>>(() =>
     initialFocusTarget ? { [initialFocusTarget.roundTrip.roundTripKey]: initialAnalyzerFocus?.eventId ?? null } : {});
   const [selectedAnalyzerIntervals, setSelectedAnalyzerIntervals] = useState<
@@ -3081,6 +3091,18 @@ export function DaySessionView({
     .flatMap((ticker) => ticker.roundTrips)
     .filter((roundTrip) => roundTrip.analyzer?.status === "pending");
   const pendingAnalysisCount = pendingAnalysisRoundTrips.length;
+  useEffect(() => {
+    if (pendingAnalysisCount === 0 || hasOtherUnsavedChanges) return;
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    const refreshTimer = window.setInterval(refreshWhenVisible, 30_000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(refreshTimer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [hasOtherUnsavedChanges, pendingAnalysisCount, router]);
   const pendingAnalysisTiming = pendingAnalysisRoundTrips
     .map((roundTrip) => {
       const storedReadyAt = roundTrip.analyzer?.availableAtUtc
@@ -3643,7 +3665,7 @@ export function DaySessionView({
       ) : null}
       {analyzerFailureCount > 0 ? (
         <Alert severity="error">
-          Trade Analyzer could not collect the market data needed for {analyzerFailureCount === 1 ? "one trade" : `${analyzerFailureCount} trades`}. We have notified the TradersLink team.
+          Trade Analyzer could not collect the market data needed for {analyzerFailureCount === 1 ? "one trade" : `${analyzerFailureCount} trades`}. We have notified the TradersLink team. If you think an execution may be off, compare its time and price with your broker or chart, then edit and resubmit the trade.
         </Alert>
       ) : null}
       {topContent}

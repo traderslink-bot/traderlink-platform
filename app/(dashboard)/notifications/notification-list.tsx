@@ -34,6 +34,7 @@ export function NotificationList({
   offline = false,
   onAllNotificationsRead,
   onNotificationDismissed,
+  onNotificationOpened,
   onNotificationRead,
   notifications,
 }: {
@@ -41,6 +42,7 @@ export function NotificationList({
   offline?: boolean;
   onAllNotificationsRead?: () => void;
   onNotificationDismissed?: (notificationRef: string) => void;
+  onNotificationOpened?: (notification: PlatformNotification) => void;
   onNotificationRead?: (notificationRef: string) => void;
   notifications: readonly PlatformNotification[];
 }) {
@@ -126,8 +128,12 @@ export function NotificationList({
               <Button
                 component={Link}
                 href={notification.destinationPath}
-                onClick={() => {
+                onClick={(event) => {
                   if (notification.readAtUtc === null) markRead(notification.notificationRef);
+                  if (compact) {
+                    event.preventDefault();
+                    onNotificationOpened?.(notification);
+                  }
                 }}
                 prefetch={false}
                 sx={{ borderRadius: 0, color: "inherit", flex: 1, justifyContent: "stretch", p: 0, textAlign: "left", textTransform: "none" }}

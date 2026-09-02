@@ -250,6 +250,7 @@ function patternsForChartInterval(
 function initialVisibleSpan(
   interval: DailyTradeChartInterval,
   candleCount: number,
+  fullscreen: boolean,
   width: number,
 ): number {
   const bounds: Readonly<Record<DailyTradeChartInterval, Readonly<{
@@ -263,9 +264,10 @@ function initialVisibleSpan(
     "1h": { maximum: 24, minimum: 12, pixelsPerBar: 16 },
   };
   const selected = bounds[interval];
+  const pixelsPerBar = selected.pixelsPerBar * (fullscreen ? 2 : 1);
   return Math.min(
     candleCount,
-    Math.max(selected.minimum, Math.min(selected.maximum, Math.round(width / selected.pixelsPerBar))),
+    Math.max(selected.minimum, Math.min(selected.maximum, Math.round(width / pixelsPerBar))),
   );
 }
 
@@ -727,6 +729,7 @@ export function DailyTradeAnalyzerChart({
       const visibleSpan = initialVisibleSpan(
         chartInterval,
         numericCandles.length,
+        isFullscreen,
         container.clientWidth,
       );
       if (visibleSpan < numericCandles.length) {
@@ -750,7 +753,7 @@ export function DailyTradeAnalyzerChart({
       eventCandleIndexesRef.current = new Map();
       chart.remove();
     };
-  }, [analysis, annotationAppearance, chartInterval, chartPatternColors, chartPatterns, chartSemanticColors, chartTheme, currency, direction, exactTurnoverAvailable, layers, rangeMode, rangeRevision, ruleEvidence]);
+  }, [analysis, annotationAppearance, chartInterval, chartPatternColors, chartPatterns, chartSemanticColors, chartTheme, currency, direction, exactTurnoverAvailable, isFullscreen, layers, rangeMode, rangeRevision, ruleEvidence]);
 
   useEffect(() => {
     selectedEventIdRef.current = selectedEventId;
@@ -830,7 +833,7 @@ export function DailyTradeAnalyzerChart({
   return (
     <Box
       ref={frameRef}
-      sx={{ bgcolor: chartTheme.background, borderBottom: 1, borderColor: chartTheme.controlBorder, color: chartTheme.text }}
+      sx={{ bgcolor: chartTheme.background, borderBottom: 1, borderColor: chartTheme.controlBorder, color: chartTheme.text, height: isFullscreen ? "100dvh" : undefined, overflow: "hidden" }}
     >
       <Box sx={{ position: "relative" }}>
       <Stack
