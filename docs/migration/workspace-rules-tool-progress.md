@@ -45,7 +45,9 @@ Related plan:
   so a newly created, changed, paused, resumed, or retired rule does not leave
   the panel's Results view stale.
 - If the selected Journal account changes while the Rules panel is open, the
-  panel closes before the user can act on a prior account's client model.
+  panel closes before the user can act on a prior account's client model. The
+  rendered panel is additionally bound to the account selection reference that
+  opened it, so prior-account content cannot render during that transition.
 - The direct `/rules` and `/rules/results` routes remain intact. The normal
   left-navigation Rules group is removed.
 - `git diff --check` passed. No app process, test suite, TypeScript run, or

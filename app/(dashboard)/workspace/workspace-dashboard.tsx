@@ -176,12 +176,19 @@ export function WorkspaceDashboard({
   const [sessionNotesOpen, setSessionNotesOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [rulesAccountSelectionRef, setRulesAccountSelectionRef] = useState<string | null>(null);
   const [rulesInitialView, setRulesInitialView] = useState<"custom" | "presets" | "results" | "rules">("rules");
   const [showRuleResultsCard, setShowRuleResultsCard] = useState(ruleResultsCardPreference?.showInWorkspace ?? false);
   const [sessionNotesInitialView, setSessionNotesInitialView] = useState<JournalNotesDrawerInitialView>("add");
   const activeAccountSelectionRef = hasLiveTradeLibraryProps(tradeLibraryProps)
     ? tradeLibraryProps.expectedAccountSelectionRef
     : null;
+  const openRules = (view: "custom" | "presets" | "results" | "rules") => {
+    if (!activeAccountSelectionRef) return;
+    setRulesInitialView(view);
+    setRulesAccountSelectionRef(activeAccountSelectionRef);
+    setRulesOpen(true);
+  };
   const multipleTradeSave = searchParams.get("tradeSave") === "multiple";
   const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
     Boolean(tradeLibraryProps.trades.query.searchTicker) || tradeLibraryProps.trades.query.filter !== "all" ||
@@ -198,7 +205,7 @@ export function WorkspaceDashboard({
   const [currentFocuses, setCurrentFocuses] = useState(summaryCurrentFocuses);
   useEffect(() => { setCurrentFocuses(summaryCurrentFocuses); }, [summaryCurrentFocuses]);
   useEffect(() => { setShowRuleResultsCard(ruleResultsCardPreference?.showInWorkspace ?? false); }, [ruleResultsCardPreference?.showInWorkspace]);
-  useEffect(() => { setRulesOpen(false); }, [activeAccountSelectionRef]);
+  useEffect(() => { setRulesOpen(false); setRulesAccountSelectionRef(null); }, [activeAccountSelectionRef]);
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
   }
@@ -227,7 +234,7 @@ export function WorkspaceDashboard({
         {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: { xs: "flex-end", md: "flex-start" } }}>
           <Button onClick={openWorkspaceTradeDrawer} variant="contained">+ Trade</Button>
           <Button href="/imports" size="small" variant="outlined">Imports</Button>
-          <Button onClick={() => { setRulesInitialView("rules"); setRulesOpen(true); }} variant="outlined">+ Rules</Button>
+          <Button onClick={() => openRules("rules")} variant="outlined">+ Rules</Button>
           <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }}>+ Sessions</DashboardSecondaryAction></Tooltip>
           <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }}>+ Focuses</DashboardSecondaryAction></Tooltip>
           <DashboardSecondaryAction onClick={() => setCalendarOpen(true)}>Calendar</DashboardSecondaryAction>
@@ -272,7 +279,7 @@ export function WorkspaceDashboard({
         gap: 1.5,
         gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" },
         mt: 1.5,
-      }}><Box sx={{ gridColumn: { xs: "1", md: "span 2" } }}><DashboardPanel action={<Button onClick={() => { setRulesInitialView("results"); setRulesOpen(true); }} size="small">View results</Button>} title="Rules broken">
+      }}><Box sx={{ gridColumn: { xs: "1", md: "span 2" } }}><DashboardPanel action={<Button onClick={() => openRules("results")} size="small">View results</Button>} title="Rules broken">
         <Stack spacing={1}>
           <Typography sx={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1 }}>{ruleResultsCard.brokenRuleCount}</Typography>
           {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
@@ -286,7 +293,7 @@ export function WorkspaceDashboard({
           </Box>
           <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} onClose={() => setFiltersOpen(false)} open={filtersOpen} query={tradeLibraryProps.trades.query} />
           <JournalNotesDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} focusOnly={sessionNotesInitialView === "focuses"} initialView={sessionNotesInitialView} key={sessionNotesInitialView} launch={{ kind: "session", sessionDate: sessionDateInTimezone(tradeLibraryProps.accountTimezone) }} onClose={() => setSessionNotesOpen(false)} onFocusSaved={(focus) => setCurrentFocuses(focus.showInWorkspace && focus.focusText.trim() ? focus.focusText.trim() : null)} open={sessionNotesOpen} />
-          {rulesOpen ? <WorkspaceRulesPanel initialView={rulesInitialView} key={rulesInitialView} onClose={() => setRulesOpen(false)} onPreferenceSaved={(preference) => { setShowRuleResultsCard(preference.showInWorkspace); router.refresh(); }} /> : null}
+          {rulesOpen && rulesAccountSelectionRef === activeAccountSelectionRef ? <WorkspaceRulesPanel initialView={rulesInitialView} key={rulesInitialView} onClose={() => setRulesOpen(false)} onPreferenceSaved={(preference) => { setShowRuleResultsCard(preference.showInWorkspace); router.refresh(); }} /> : null}
         </>
       ) : null}
       </>}
