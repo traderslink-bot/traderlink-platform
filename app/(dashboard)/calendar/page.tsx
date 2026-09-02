@@ -10,6 +10,7 @@ import {
 } from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
 import { CalendarClient } from "./calendar-client";
 import { emptyCalendarData, withCalendarDataRuntime } from "./calendar-data";
+import { calendarNavigationOptions, readCalendarActivityDates } from "./calendar-navigation";
 import {
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -20,14 +21,12 @@ import {
 } from "@/src/modules/journal/server/demo/journal-demo-scope-clock";
 import type {
   CalendarDirectionFilter,
-  CalendarData,
   CalendarFilterInput,
   CalendarPerformanceFilter,
   CalendarPnlFilter,
   CalendarSessionFilter,
   CalendarTradeCountFilter,
   CalendarView,
-  CalendarWeekOption,
 } from "./calendar-types";
 
 export const metadata: Metadata = {
@@ -60,12 +59,6 @@ function monthEnd(month: string): string {
   return new Date(Date.UTC(year, numericMonth, 0)).toISOString().slice(0, 10);
 }
 
-function weekStart(date: string): string {
-  const value = new Date(`${date}T12:00:00.000Z`);
-  value.setUTCDate(value.getUTCDate() - ((value.getUTCDay() + 6) % 7));
-  return value.toISOString().slice(0, 10);
-}
-
 function weekEnd(week: string): string {
   const value = new Date(`${week}T12:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + 4);
@@ -91,49 +84,6 @@ function filters(search: Record<string, string | string[] | undefined>): Calenda
   };
 }
 
-function calendarNavigationOptions(
-  catalogData: CalendarData,
-  query: Record<string, string | string[] | undefined>,
-  currentWeek: string,
-): Readonly<{
-  availableMonths: readonly string[];
-  availableWeekOptions: readonly CalendarWeekOption[];
-  availableWeeks: readonly string[];
-  currentWeek: string;
-  selectedMonth: string;
-  selectedWeek: string;
-}> {
-  const activityDates = catalogData.days
-    .filter((day) => day.tradeCount > 0)
-    .map((day) => day.date);
-  const activityMonths = [...new Set(activityDates.map((date) => date.slice(0, 7)))];
-  const availableMonths = [...new Set([...activityMonths, currentWeek.slice(0, 7)])].sort();
-  const availableWeeks = [...new Set([...activityDates.map(weekStart), currentWeek])].sort();
-  const availableWeekOptions: readonly CalendarWeekOption[] = availableWeeks.map((week) => Object.freeze({
-    months: Object.freeze([...new Set([
-      ...activityDates
-        .filter((date) => weekStart(date) === week)
-        .map((date) => date.slice(0, 7)),
-      ...(week === currentWeek ? [currentWeek.slice(0, 7)] : []),
-    ])]),
-    week,
-  }));
-  const requestedMonth = value(query.month);
-  const requestedWeek = validDate(value(query.week));
-  return Object.freeze({
-    availableMonths,
-    availableWeekOptions,
-    availableWeeks,
-    currentWeek,
-    selectedMonth: requestedMonth && availableMonths.includes(requestedMonth)
-      ? requestedMonth
-      : activityMonths.at(-1) ?? currentWeek.slice(0, 7),
-    selectedWeek: requestedWeek && availableWeeks.includes(weekStart(requestedWeek))
-      ? weekStart(requestedWeek)
-      : currentWeek,
-  });
-}
-
 export default async function CalendarPage({
   searchParams,
 }: {
@@ -151,7 +101,7 @@ export default async function CalendarPage({
   const calendar = reviewLayout
     ? (() => {
       const navigation = calendarNavigationOptions(
-        emptyCalendarData(),
+        [],
         query,
         journalScopeCurrentWeek(demoClock, "America/New_York"),
       );
@@ -160,16 +110,12 @@ export default async function CalendarPage({
         initialData: emptyCalendarData(),
       });
     })()
-    : await withCalendarDataRuntime(scope, (read) => {
-      const catalog = read({
-        ...selectedFilters,
-        endDate: "",
-        startDate: "",
-      });
+    : await withCalendarDataRuntime(scope, ({ database, read }) => {
+      const activity = readCalendarActivityDates(database, scope);
       const navigation = calendarNavigationOptions(
-        catalog,
+        activity.activityDates,
         query,
-        journalScopeCurrentWeek(demoClock, catalog.timezone ?? "America/New_York"),
+        journalScopeCurrentWeek(demoClock, activity.timezone ?? "America/New_York"),
       );
       return Object.freeze({
         ...navigation,

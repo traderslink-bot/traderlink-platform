@@ -9,6 +9,8 @@ dashboard navigation latency.
 
 Progress: [dashboard-latency-calendar-gate-progress.md](dashboard-latency-calendar-gate-progress.md)
 
+Follow-up: [calendar-navigation-load-plan.md](calendar-navigation-load-plan.md)
+
 ## Scope
 
 - Add a production-only environment gate, disabled by default.

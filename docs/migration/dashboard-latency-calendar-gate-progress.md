@@ -18,3 +18,11 @@ Linked plan: [dashboard-latency-calendar-gate-plan.md](dashboard-latency-calenda
   because the route omitted the existing `next/navigation` `redirect` import.
   The follow-up is import-only; no Calendar behavior, data, migration, or
   configuration became active.
+
+## 2026-09-02 — next owner-approved slice
+
+- Owner requested a shared, compact month/week navigation read for standalone
+  Calendar and the Workspace Calendar panel, while keeping both surfaces
+  available for live comparison.
+- The follow-up plan is
+  [calendar-navigation-load-plan.md](calendar-navigation-load-plan.md).

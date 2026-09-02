@@ -396,21 +396,27 @@ function readCalendarData(
 
 export async function withCalendarDataRuntime<T>(
   scope: WorkspaceAccessScope,
-  operation: (read: (input: CalendarFilterInput) => CalendarData) => T | Promise<T>,
+  operation: (runtime: Readonly<{
+    database: Database.Database;
+    read: (input: CalendarFilterInput) => CalendarData;
+  }>) => T | Promise<T>,
 ): Promise<T> {
   return withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, dashboard }) => {
     const annotationEvidenceByTimezone = new Map<string, CalendarAnnotationEvidence>();
-    return operation((input) => readCalendarData(
-      scope,
-      input,
+    return operation(Object.freeze({
       database,
-      dashboard,
-      annotationEvidenceByTimezone,
-    ));
+      read: (input) => readCalendarData(
+        scope,
+        input,
+        database,
+        dashboard,
+        annotationEvidenceByTimezone,
+      ),
+    }));
   }, { prefetchAllFactSet: true });
 }
 
 export async function getCalendarData(input: CalendarFilterInput): Promise<CalendarData> {
   const scope = await requireTraderLinkPlatformPageScope();
-  return withCalendarDataRuntime(scope, (read) => read(input));
+  return withCalendarDataRuntime(scope, ({ read }) => read(input));
 }
