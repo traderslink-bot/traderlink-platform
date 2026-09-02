@@ -9,6 +9,7 @@ import { openPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import { loadPlatformWebPushConfiguration } from "@/src/modules/platform/server/notifications/platform-web-push-configuration";
 import { PlatformWebPushDeliveryService } from "@/src/modules/platform/server/notifications/platform-web-push-delivery-service";
 import { PressReleaseWebPushRepository } from "@/src/modules/news/server/press-release-web-push-repository";
+import { broadcastWorkspacePrScannerChange } from "@/src/modules/news/server/workspace-pr-scanner-events";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -88,6 +89,7 @@ export async function POST(request: Request): Promise<Response> {
     revalidatePath(`/news/${article.ticker}`);
     revalidatePath("/news");
     revalidatePath("/press-releases", "layout");
+    broadcastWorkspacePrScannerChange();
 
     try {
       const configuration = loadPlatformWebPushConfiguration();

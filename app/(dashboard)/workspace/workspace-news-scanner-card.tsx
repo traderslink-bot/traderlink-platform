@@ -14,8 +14,6 @@ import { markPressReleaseRead } from "../press-releases/press-release-actions";
 
 type ScannerResponse = Readonly<{ articles?: readonly PressReleaseArticle[] }>;
 
-const SCANNER_REFRESH_MS = 60_000;
-
 export function WorkspaceNewsScannerCard({ onViewMore }: Readonly<{ onViewMore: () => void }>) {
   const [articles, setArticles] = useState<readonly PressReleaseArticle[] | null>(null);
   const [selected, setSelected] = useState<PressReleaseArticle | null>(null);
@@ -27,8 +25,12 @@ export function WorkspaceNewsScannerCard({ onViewMore }: Readonly<{ onViewMore: 
       .then((result) => setArticles(result.articles ?? []))
       .catch((error: unknown) => { if (!(error instanceof DOMException && error.name === "AbortError")) setArticles([]); });
     load();
-    const refresh = window.setInterval(load, SCANNER_REFRESH_MS);
-    return () => { controller.abort(); window.clearInterval(refresh); };
+    const stream = new EventSource("/api/platform/news/workspace-scanner/stream");
+    stream.addEventListener("ready", load);
+    stream.addEventListener("scanner_articles_changed", load);
+    const refreshWhenVisible = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => { controller.abort(); stream.close(); document.removeEventListener("visibilitychange", refreshWhenVisible); };
   }, []);
 
   function selectArticle(article: PressReleaseArticle): void {

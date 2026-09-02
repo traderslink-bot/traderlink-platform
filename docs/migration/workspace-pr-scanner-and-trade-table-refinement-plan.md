@@ -20,8 +20,9 @@ Progress is tracked in
      the current panel's content and continue opening the Workspace article
      drawer.
    - Refresh the compact card from its existing same-origin scanner endpoint
-     while it is visible, without requiring a page refresh. The refresh must
-     be bounded and must stop when the card unmounts.
+     when the canonical article publisher emits a scanner update, without a
+     page refresh. The one live connection exists only while the card is
+     visible and closes when it unmounts.
 
 2. **Workspace actions**
    - Add the requested tooltip to Rules and PR Scanner.
@@ -42,8 +43,11 @@ Progress is tracked in
 
 - The compact scanner uses the existing authenticated endpoint with no new
   news source, article storage, or write behavior.
-- The refresh is interval-based and only mounted for a user-enabled compact
-  card. It is not a background process.
+- The refresh uses one authenticated Server-Sent Events connection only for a
+  user-enabled compact card. The original scanner remains the sole publisher;
+  it persists an article first, then broadcasts an update signal. The client
+  reads the saved scanner feed after that signal and never receives a second
+  direct article feed from the scanner computer.
 - Analyzer indication is read-only and only recognizes the current saved
   analysis that matches the current trade version. It does not run an analyzer,
   request market data, or claim a pending/failed analysis is ready.

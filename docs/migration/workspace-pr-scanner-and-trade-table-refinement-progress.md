@@ -27,3 +27,13 @@ Related plan:
   contract values, cursor sort-key coverage, and the current-version Analyzer
   predicate. No app server, browser, broad test runner, build, or migration
   process was started under the low-resource policy.
+- The owner approved replacing the initial 60-second compact-card refresh with
+  an on-demand Server-Sent Events update signal. The existing live Watchlist
+  stream is the project precedent; this remains separate from user-facing Push
+  notifications and uses the canonical saved article feed after each signal.
+- Focused static QA confirms the canonical article route saves and revalidates
+  before it emits an empty update signal, the stream uses the same access gate
+  as the scanner feed, and the compact card closes its live connection and
+  removes its visibility listener when hidden. `git diff --check` passes. No
+  app server, browser, test runner, typecheck, lint, build, or migration was
+  started under the low-resource policy; owner visual review remains pending.
