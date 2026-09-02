@@ -23,6 +23,7 @@ import { journalWorkspaceTradeLibraryProjectionMigration } from "@/src/modules/j
 import { workspaceTradeLibrarySortFactsMigration } from "@/src/modules/journal/server/database/migrations/0101_workspace_trade_library_sort_facts";
 import { workspaceTradeLibraryHoldDurationMigration } from "@/src/modules/journal/server/database/migrations/0102_workspace_trade_library_hold_duration";
 import { journalWorkspaceTradeStyleSourceMigration } from "@/src/modules/journal/server/database/migrations/0108_journal_workspace_trade_style_source";
+import { journalSharedNotesMigration } from "@/src/modules/journal/server/database/migrations/0111_journal_shared_notes";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -536,6 +537,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0110_platform_default_dark_appearance.ts",
       migration: platformDefaultDarkAppearanceMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0111_journal_shared_notes.ts",
+      migration: journalSharedNotesMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -927,6 +932,12 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0100_journal_workspace_trade_library_projection": Object.freeze([
       "journal_workspace_trade_library_projection_revisions",
       "journal_workspace_trade_library_projections",
+    ]),
+    "0111_journal_shared_notes": Object.freeze([
+      "platform_user_current_focuses",
+      "platform_user_note_types",
+      "journal_categorized_notes",
+      "journal_categorized_note_revisions",
     ]),
   });
 
