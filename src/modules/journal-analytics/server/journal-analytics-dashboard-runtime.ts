@@ -10,9 +10,7 @@ import {
 } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {
   openPlatformDatabase,
-  readPlatformRuntimeDatabaseFingerprint,
 } from "@/src/modules/platform/server/database/open-platform-database";
-import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import {
   PLATFORM_REPORTING_CURRENCIES,
   PlatformUserPreferenceRepository,
@@ -86,12 +84,12 @@ const journalAnalyticsRuntimeCacheKey =
   "__traderlinkJournalAnalyticsRuntimeCache" as const;
 
 type CachedJournalAnalyticsFactSet = Readonly<{
-  databaseFingerprint: string;
+  analyticsFingerprint: string;
   factSet: JournalAnalyticsFactSet;
 }>;
 
 type CachedReportingPreparation = Readonly<{
-  databaseFingerprint: string;
+  analyticsFingerprint: string;
   preparation: ReportingRuntimePreparation;
 }>;
 
@@ -145,6 +143,66 @@ function factSetReaderKey(
   });
 }
 
+type JournalAnalyticsAccountFingerprintRow = Readonly<{
+  account_id: string;
+  base_currency: string;
+  status: string;
+  trading_timezone: string;
+  updated_at_utc: string;
+}>;
+
+type JournalAnalyticsRoundTripFingerprintRow = Readonly<{
+  account_id: string;
+  current_version_id: string;
+  lifecycle_state: string;
+  round_trip_id: string;
+  updated_at_utc: string;
+}>;
+
+type JournalAnalyticsReportingPreferenceFingerprintRow = Readonly<{
+  reporting_currency: string;
+  updated_at_utc: string;
+}>;
+
+function readJournalAnalyticsCacheFingerprint(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  accountIds: readonly string[],
+  includeReportingPreference: boolean,
+): string {
+  const normalizedAccountIds = [...new Set(accountIds)].sort();
+  if (normalizedAccountIds.length === 0) return "no_accounts";
+  const placeholders = normalizedAccountIds.map(() => "?").join(", ");
+  const accounts = database.prepare(`SELECT
+ account_id, base_currency, status, trading_timezone, updated_at_utc
+FROM journal_accounts
+WHERE workspace_id = ? AND account_id IN (${placeholders})
+ORDER BY account_id`).all(
+    scope.workspaceId,
+    ...normalizedAccountIds,
+  ) as readonly JournalAnalyticsAccountFingerprintRow[];
+  const roundTrips = database.prepare(`SELECT
+ account_id, current_version_id, lifecycle_state, round_trip_id, updated_at_utc
+FROM journal_round_trips
+WHERE workspace_id = ? AND account_id IN (${placeholders})
+ORDER BY account_id, round_trip_id`).all(
+    scope.workspaceId,
+    ...normalizedAccountIds,
+  ) as readonly JournalAnalyticsRoundTripFingerprintRow[];
+  const reportingPreference = includeReportingPreference
+    ? (database.prepare(`SELECT reporting_currency, updated_at_utc
+FROM platform_user_preferences
+WHERE user_id = ?`).get(scope.userId) as
+      | JournalAnalyticsReportingPreferenceFingerprintRow
+      | undefined)
+    : undefined;
+  return JSON.stringify({
+    accounts,
+    reportingPreference: reportingPreference ?? null,
+    roundTrips,
+  });
+}
+
 class PrefetchedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSetReader {
   private readonly cache = new Map<string, JournalAnalyticsFactSet>();
 
@@ -176,7 +234,6 @@ class PrefetchedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSet
 class CachedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSetReader {
   constructor(
     private readonly database: Database.Database,
-    private readonly databasePath: string,
     private readonly source: JournalAnalyticsFactSetReader,
   ) {}
 
@@ -186,17 +243,19 @@ class CachedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSetRead
   ): JournalAnalyticsFactSet {
     const cache = readJournalAnalyticsRuntimeProcessCache().factSets;
     const key = factSetReaderKey(scope, request);
-    const databaseFingerprint = readPlatformRuntimeDatabaseFingerprint(
+    const analyticsFingerprint = readJournalAnalyticsCacheFingerprint(
       this.database,
-      this.databasePath,
+      scope,
+      request.accountIds,
+      false,
     );
     const cached = cache.get(key);
-    if (cached?.databaseFingerprint === databaseFingerprint) {
+    if (cached?.analyticsFingerprint === analyticsFingerprint) {
       return rememberRuntimeCacheEntry(cache, key, cached).factSet;
     }
     const factSet = this.source.getJournalAnalyticsFactSet(scope, request);
     return rememberRuntimeCacheEntry(cache, key, Object.freeze({
-      databaseFingerprint,
+      analyticsFingerprint,
       factSet,
     })).factSet;
   }
@@ -305,7 +364,6 @@ export function withJournalAnalyticsDashboardRuntime<T>(
   return withReadonlyPlatformDatabase({}, (database) => {
     const facts = new CachedJournalAnalyticsFactSetReader(
       database,
-      resolvePlatformDatabaseConfig().databasePath,
       new JournalAnalyticsFactSetService(
         new JournalAnalyticsFactSetRepository(database),
       ),
@@ -353,10 +411,8 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
   const database = openReadonlyPlatformDatabase();
   try {
     const accountId = requireActiveJournalAnalyticsAccountId(scope);
-    const databasePath = resolvePlatformDatabaseConfig().databasePath;
     const source = new CachedJournalAnalyticsFactSetReader(
       database,
-      databasePath,
       new JournalAnalyticsFactSetService(
         new JournalAnalyticsFactSetRepository(database),
       ),
@@ -370,7 +426,6 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
       : null;
     const preparation = await readReportingRuntimePreparation(
       database,
-      databasePath,
       scope,
       requestedAtUtc,
       accountId,
@@ -440,7 +495,6 @@ function reportingPreparationKey(
 
 async function readReportingRuntimePreparation(
   database: Database.Database,
-  databasePath: string,
   scope: WorkspaceAccessScope,
   requestedAtUtc: string,
   accountId: string,
@@ -448,12 +502,14 @@ async function readReportingRuntimePreparation(
 ): Promise<ReportingRuntimePreparation> {
   const cache = readJournalAnalyticsRuntimeProcessCache().reportingPreparations;
   const key = reportingPreparationKey(scope, requestedAtUtc);
-  const databaseFingerprint = readPlatformRuntimeDatabaseFingerprint(
+  const analyticsFingerprint = readJournalAnalyticsCacheFingerprint(
     database,
-    databasePath,
+    scope,
+    Object.freeze([accountId]),
+    true,
   );
   const cached = cache.get(key);
-  if (cached?.databaseFingerprint === databaseFingerprint) {
+  if (cached?.analyticsFingerprint === analyticsFingerprint) {
     return rememberRuntimeCacheEntry(cache, key, cached).preparation;
   }
   const snapshot = prefetchedFactSet
@@ -480,7 +536,7 @@ async function readReportingRuntimePreparation(
     }
   }
   return rememberRuntimeCacheEntry(cache, key, Object.freeze({
-    databaseFingerprint,
+    analyticsFingerprint,
     preparation: Object.freeze({ ratesByCurrency, snapshot }),
   })).preparation;
 }
