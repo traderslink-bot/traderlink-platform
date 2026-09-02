@@ -1,6 +1,6 @@
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
-import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireExpectedJournalAccountSelection, requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 
@@ -14,6 +14,7 @@ export async function PUT(request: Request): Promise<Response> {
     requirePlatformMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const body = await request.json() as Record<string, unknown>;
+    requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const preference = withPlatformDatabase({ mode: "runtime" }, (database) =>
       new JournalWorkspaceRuleResultsCardPreferenceService(database).save(scope, {
         expectedRevision: body.expectedRevision,

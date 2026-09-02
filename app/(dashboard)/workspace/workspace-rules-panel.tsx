@@ -74,7 +74,11 @@ export function WorkspaceRulesPanel({ initialView = "rules", onClose, onPreferen
     setSavingPreference(true);
     try {
       const response = await fetch("/api/platform/journal/rules/workspace-card-preference", {
-        body: JSON.stringify({ expectedRevision: model.preference.revision, showInWorkspace }),
+        body: JSON.stringify({
+          expectedAccountSelectionRef: model.rules.initialView.expectedAccountSelectionRef,
+          expectedRevision: model.preference.revision,
+          showInWorkspace,
+        }),
         credentials: "same-origin",
         headers: requestHeaders(),
         method: "PUT",
