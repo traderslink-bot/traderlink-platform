@@ -101,10 +101,10 @@ const scopeLabels = {
 
 function presetCategoryColor(
   category: TradingRulesTemplateView["category"],
-): "primary" | "secondary" | "success" {
+): "primary" | "secondary" | "warning" {
   if (category === "trade") return "primary";
   if (category === "trade_day") return "secondary";
-  return "success";
+  return "warning";
 }
 
 function presetScopeColor(
@@ -118,10 +118,10 @@ function presetScopeColor(
 
 function presetCategoryAccent(
   category: TradingRulesTemplateView["category"],
-): "primary.main" | "secondary.main" | "success.main" {
+): "primary.main" | "secondary.main" | "warning.main" {
   if (category === "trade") return "primary.main";
   if (category === "trade_day") return "secondary.main";
-  return "success.main";
+  return "warning.main";
 }
 
 const manualCategoryLabels = {
