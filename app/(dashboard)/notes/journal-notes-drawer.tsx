@@ -256,7 +256,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
         ...current,
         tags: [...current.tags, createdTag],
       } : current);
-      setMessage("Tag added. Save multiple note types to a session to apply it to this date.");
+      setMessage("Tag added. Select Save Review to apply it to this date.");
     } catch { setMessage("That tag could not be created. Use a unique name and try again."); } finally { setSaving(false); }
   }
   async function retireSessionTag(tag: SessionReview["tags"][number], confirmAssignedDeletion = false): Promise<void> {
@@ -279,7 +279,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
       if (!response.ok) throw new Error();
       setSessionTagIds((current) => current.filter((tagId) => tagId !== tag.tagId));
       setSessionReview((current) => current ? { ...current, tags: current.tags.filter((item) => item.tagId !== tag.tagId) } : current);
-      setMessage(`${tag.name} was removed from future tag choices. Save multiple note types to a session to remove it from this date too.`);
+      setMessage(`${tag.name} was removed from future tag choices. Select Save Review to remove it from this date too.`);
     } catch { setMessage("That tag could not be removed. Refresh and try again."); } finally { setSaving(false); }
   }
   async function saveCustomType(): Promise<void> { setSaving(true); try { const response = await fetch("/api/platform/notes/types", { method: "POST", headers: headers(), body: JSON.stringify({ displayName: newTypeName }) }); const payload = await response.json() as { noteType?: CustomType }; if (!response.ok || !payload.noteType) throw new Error(); setCustomTypes((items) => [...items, payload.noteType!]); setCustomTypeId(payload.noteType.noteTypeId); setCategory("custom"); setNewTypeName(""); setAddingType(false); } catch { setMessage("That custom note type could not be saved."); } finally { setSaving(false); } }
@@ -335,9 +335,9 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
         {addingType ? <Stack direction="row" spacing={0.75}><TextField autoFocus onChange={(event) => setNewTypeName(event.target.value)} placeholder="Enter note name" size="small" value={newTypeName} /><Button disabled={saving || !newTypeName.trim()} onClick={() => void saveCustomType()} size="small">Save</Button></Stack> : <Button onClick={() => setAddingType(true)} size="small" startIcon={<AddRoundedIcon />}>Custom note type</Button>}
       </Stack>
       {category === "custom" && !selectedCustomType ? <Alert severity="info">Choose or create a custom note type first.</Alert> : <><TextField label={selectedLabel} minRows={8} multiline onChange={(event) => setNoteText(event.target.value)} placeholder={`Write your ${selectedLabel.toLowerCase()} note…`} value={noteText} />
-      <Button disabled={saving || (category === "custom" && !selectedCustomType)} onClick={() => void saveNote()} sx={{ alignSelf: "flex-start" }} variant="contained">Save Note</Button></>}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button disabled={saving || (category === "custom" && !selectedCustomType)} onClick={() => void saveNote()} sx={{ alignSelf: "flex-start" }} variant="contained">Save Note</Button>{activeLaunch.kind === "session" ? <Typography color="text.secondary" variant="caption">Save multiple note types to a session</Typography> : null}</Stack></>}
       {sessionReviewFields}
-      {activeLaunch.kind === "session" ? <Button disabled={saving || (!sessionTagsDirty && !sessionRulesDirty)} onClick={() => void saveSessionReview()} sx={{ alignSelf: "flex-start" }} variant="outlined">Save multiple note types to a session</Button> : null}
+      {activeLaunch.kind === "session" ? <Button disabled={saving || (!sessionTagsDirty && !sessionRulesDirty)} onClick={() => void saveSessionReview()} sx={{ alignSelf: "flex-start" }} variant="outlined">Save Review</Button> : null}
       {message ? <Alert severity={message.includes("could not") ? "error" : "success"}>{message}</Alert> : null}
     </Stack>
   ) : view === "saved" ? savedNotesContent : view === "details" ? <Stack spacing={1.25}><Typography color="text.secondary" variant="body2">{launch.kind === "session" ? "Session Summary" : "Trade Details"}</Typography>{renderDetails?.() ?? <Typography color="text.secondary" variant="body2">Details are supplied by the page that opened Notes.</Typography>}</Stack> : <Stack spacing={2}><Typography color="text.secondary" variant="body2">Current Focuses are your ongoing trading goals. They are not attached to one trade or one session.</Typography><TextField label="Current Focuses" minRows={7} multiline onChange={(event) => setFocusText(event.target.value)} placeholder="For example: follow my risk rules, or improve chart reading." value={focusText} /><FormControlLabel control={<Switch checked={showInWorkspace} onChange={(event) => setShowInWorkspace(event.target.checked)} />} label="Display this on my Workspace" />{message ? <Alert severity={message.includes("could not") ? "error" : "success"}>{message}</Alert> : null}<Button disabled={saving} onClick={() => void saveFocus()} sx={{ alignSelf: "flex-start" }} variant="contained">Save Current Focuses</Button></Stack>;

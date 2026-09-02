@@ -148,6 +148,14 @@ release has been run.
 - The session-level tags/rules action is now at the bottom of the entry view,
   after the controls it saves.
 
+## 2026-09-02 Session Review save controls correction
+
+- **Save Note** remains the action for the selected note type. The reminder
+  **Save multiple note types to a session** now sits beside it, rather than at
+  the bottom of the review.
+- The bottom session-level action is labeled **Save Review**. It saves the
+  selected session tags and changed custom-rule results together.
+
 ## 2026-09-02 Calendar correction
 
 - Removed the added Session Review Calendar markers, reader tab, and Calendar
