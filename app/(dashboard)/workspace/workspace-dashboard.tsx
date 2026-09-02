@@ -179,6 +179,9 @@ export function WorkspaceDashboard({
   const [rulesInitialView, setRulesInitialView] = useState<"custom" | "presets" | "results" | "rules">("rules");
   const [showRuleResultsCard, setShowRuleResultsCard] = useState(ruleResultsCardPreference?.showInWorkspace ?? false);
   const [sessionNotesInitialView, setSessionNotesInitialView] = useState<JournalNotesDrawerInitialView>("add");
+  const activeAccountSelectionRef = hasLiveTradeLibraryProps(tradeLibraryProps)
+    ? tradeLibraryProps.expectedAccountSelectionRef
+    : null;
   const multipleTradeSave = searchParams.get("tradeSave") === "multiple";
   const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
     Boolean(tradeLibraryProps.trades.query.searchTicker) || tradeLibraryProps.trades.query.filter !== "all" ||
@@ -195,6 +198,7 @@ export function WorkspaceDashboard({
   const [currentFocuses, setCurrentFocuses] = useState(summaryCurrentFocuses);
   useEffect(() => { setCurrentFocuses(summaryCurrentFocuses); }, [summaryCurrentFocuses]);
   useEffect(() => { setShowRuleResultsCard(ruleResultsCardPreference?.showInWorkspace ?? false); }, [ruleResultsCardPreference?.showInWorkspace]);
+  useEffect(() => { setRulesOpen(false); }, [activeAccountSelectionRef]);
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
   }

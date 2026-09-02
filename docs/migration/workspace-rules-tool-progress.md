@@ -44,6 +44,8 @@ Related plan:
 - A successful rule mutation reloads the panel model before results are shown,
   so a newly created, changed, paused, resumed, or retired rule does not leave
   the panel's Results view stale.
+- If the selected Journal account changes while the Rules panel is open, the
+  panel closes before the user can act on a prior account's client model.
 - The direct `/rules` and `/rules/results` routes remain intact. The normal
   left-navigation Rules group is removed.
 - `git diff --check` passed. No app process, test suite, TypeScript run, or
