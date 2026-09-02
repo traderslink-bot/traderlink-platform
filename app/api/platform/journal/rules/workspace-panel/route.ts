@@ -13,13 +13,14 @@ const HEADERS = { "cache-control": "private, no-store, max-age=0" };
 export async function GET(request: Request): Promise<Response> {
   try {
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const [rules, results] = await Promise.all([
-      readTradingRulesPageModel(scope),
-      readRuleResults(scope),
-    ]);
+    if (new URL(request.url).searchParams.get("includeResults") === "1") {
+      const results = await readRuleResults(scope);
+      return Response.json({ data: Object.freeze({ results }), status: "ready" }, { headers: HEADERS });
+    }
+    const rules = await readTradingRulesPageModel(scope);
     const preference = withReadonlyPlatformDatabase({}, (database) =>
       new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope));
-    return Response.json({ data: Object.freeze({ preference, results, rules }), status: "ready" }, { headers: HEADERS });
+    return Response.json({ data: Object.freeze({ preference, rules }), status: "ready" }, { headers: HEADERS });
   } catch (error) {
     return Response.json({ status: "unavailable" }, { headers: HEADERS, status: isTraderLinkPlatformError(error) ? 400 : 500 });
   }

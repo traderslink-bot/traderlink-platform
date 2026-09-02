@@ -29,6 +29,9 @@ Related plan:
   the existing Rules management client supplies Trading Rules, preset browsing,
   and custom-rule creation, while the existing factual Rule Results client
   supplies results history.
+- Opening the Drawer loads rule management only. The all-time Rule Results
+  read runs only when the trader selects **Rules results**, avoiding that
+  heavier work during ordinary rule editing.
 - The Drawer is full-width on mobile and 1040px wide on desktop. It contains
   no application navigation and is listed in the dashboard-template Drawer
   allowlist.

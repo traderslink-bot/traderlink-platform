@@ -13,7 +13,7 @@ import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contrac
 type WorkspaceRulesPanelView = "custom" | "presets" | "results" | "rules";
 type RulesModel = Awaited<ReturnType<typeof readTradingRulesPageModel>>;
 type Preference = Readonly<{ revision: number | null; showInWorkspace: boolean }>;
-type PanelModel = Readonly<{ preference: Preference; results: RuleResultsView; rules: RulesModel }>;
+type PanelModel = Readonly<{ preference: Preference; rules: RulesModel }>;
 
 const panelViews: readonly Readonly<{ label: string; value: WorkspaceRulesPanelView }>[] = [
   { label: "Trading Rules", value: "rules" },
@@ -35,6 +35,7 @@ export function WorkspaceRulesPanel({ initialView = "rules", onClose, onPreferen
   const [error, setError] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [model, setModel] = useState<PanelModel | null>(null);
+  const [results, setResults] = useState<RuleResultsView | null>(null);
   const [savingPreference, setSavingPreference] = useState(false);
 
   useEffect(() => {
@@ -51,6 +52,22 @@ export function WorkspaceRulesPanel({ initialView = "rules", onClose, onPreferen
       });
     return () => controller.abort();
   }, [loadAttempt]);
+
+  useEffect(() => {
+    if (activeView !== "results" || results !== null) return;
+    const controller = new AbortController();
+    setError(false);
+    void fetch("/api/platform/journal/rules/workspace-panel?includeResults=1", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => response.ok ? response.json() as Promise<{ data?: Readonly<{ results?: RuleResultsView }> }> : Promise.reject(new Error("results_unavailable")))
+      .then((payload) => {
+        if (!payload.data?.results) throw new Error("results_unavailable");
+        setResults(payload.data.results);
+      })
+      .catch((failure: unknown) => {
+        if (!(failure instanceof DOMException && failure.name === "AbortError")) setError(true);
+      });
+    return () => controller.abort();
+  }, [activeView, results]);
 
   async function savePreference(showInWorkspace: boolean): Promise<void> {
     if (!model) return;
@@ -100,14 +117,14 @@ export function WorkspaceRulesPanel({ initialView = "rules", onClose, onPreferen
         />
       </Box>
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: { xs: 2, sm: 3 } }}>
-        {error ? <Stack spacing={1.5}><Alert severity="error">Rules could not be loaded or updated. Try again.</Alert><Button onClick={() => { setError(false); setModel(null); setLoadAttempt((current) => current + 1); }} variant="outlined">Try again</Button></Stack> : model === null ? <Box sx={{ display: "grid", minHeight: 280, placeItems: "center" }}><CircularProgress aria-label="Loading Rules" size={28} /></Box> : activeView === "results" ? <RuleResultsClient initialView={model.results} presentation="workspace-panel" /> : <RulesClient
+        {error ? <Stack spacing={1.5}><Alert severity="error">Rules could not be loaded or updated. Try again.</Alert><Button onClick={() => { setError(false); setModel(null); setResults(null); setLoadAttempt((current) => current + 1); }} variant="outlined">Try again</Button></Stack> : model === null || (activeView === "results" && results === null) ? <Box sx={{ display: "grid", minHeight: 280, placeItems: "center" }}><CircularProgress aria-label="Loading Rules" size={28} /></Box> : activeView === "results" && results ? <RuleResultsClient initialView={results} presentation="workspace-panel" /> : <RulesClient
           initialRuleIdeas={model.rules.initialRuleIdeas}
           initialView={model.rules.initialView}
           key={activeView}
           monetaryMultiplier={model.rules.monetaryMultiplier}
           onOpenResults={() => setActiveView("results")}
           onPanelModeClose={() => setActiveView("rules")}
-          onRulesChanged={() => { setModel(null); setLoadAttempt((current) => current + 1); }}
+          onRulesChanged={() => { setModel(null); setResults(null); setLoadAttempt((current) => current + 1); }}
           panelMode={activeView === "presets" || activeView === "custom" ? activeView : undefined}
           presentation="workspace-panel"
           reportingCurrency={model.rules.reportingCurrency}
