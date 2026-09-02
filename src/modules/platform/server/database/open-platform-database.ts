@@ -12,7 +12,12 @@ import { verifyCompletedPlatformDatabase } from "./run-platform-migrations";
 
 export type PlatformDatabaseOpenMode = "runtime" | "initializer";
 
-const verifiedRuntimeDatabaseFingerprints = new Map<string, string>();
+const runtimeIntegrityCacheKey =
+  "__traderlinkPlatformRuntimeDatabaseIntegrityFingerprints" as const;
+
+type RuntimeIntegrityProcessState = typeof globalThis & {
+  [runtimeIntegrityCacheKey]: Map<string, string> | undefined;
+};
 
 export type PlatformDatabasePragmaEvidence = Readonly<{
   foreignKeys: number;
@@ -121,6 +126,11 @@ function readRuntimeDatabaseIntegrityFingerprint(
   ].join(":");
 }
 
+function readVerifiedRuntimeDatabaseFingerprints(): Map<string, string> {
+  const processState = globalThis as RuntimeIntegrityProcessState;
+  return (processState[runtimeIntegrityCacheKey] ??= new Map<string, string>());
+}
+
 export function verifyPlatformRuntimeDatabaseIntegrity(
   database: Database.Database,
   databasePath: string,
@@ -129,11 +139,12 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
     database,
     databasePath,
   );
-  if (verifiedRuntimeDatabaseFingerprints.get(databasePath) === fingerprint) {
+  const verifiedFingerprints = readVerifiedRuntimeDatabaseFingerprints();
+  if (verifiedFingerprints.get(databasePath) === fingerprint) {
     return;
   }
   verifyCompletedPlatformDatabase(database);
-  verifiedRuntimeDatabaseFingerprints.set(databasePath, fingerprint);
+  verifiedFingerprints.set(databasePath, fingerprint);
 }
 
 export function openPlatformDatabase(
