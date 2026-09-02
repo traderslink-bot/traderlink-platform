@@ -115,7 +115,25 @@ function sessionDateInTimezone(timezone: string): string {
 }
 
 function CurrentFocusContent({ content }: Readonly<{ content: string }>) {
-  return <Box sx={{ maxHeight: { xs: 112, sm: 68 }, overflowY: "auto", pr: 0.5 }}>
+  return <Box sx={{
+    maxHeight: { xs: 112, sm: 68 },
+    overflowY: "auto",
+    pr: 0.5,
+    scrollbarWidth: "thin",
+    scrollbarColor: (theme) => theme.palette.mode === "dark"
+      ? `${theme.palette.primary.main} ${theme.palette.action.selected}`
+      : `${theme.palette.primary.dark} ${theme.palette.action.hover}`,
+    "&::-webkit-scrollbar": { width: 6 },
+    "&::-webkit-scrollbar-track": {
+      backgroundColor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.selected : theme.palette.action.hover,
+      borderRadius: 999,
+    },
+    "&::-webkit-scrollbar-thumb": {
+      backgroundColor: (theme) => theme.palette.mode === "dark" ? theme.palette.primary.main : theme.palette.primary.dark,
+      borderRadius: 999,
+    },
+    "&::-webkit-scrollbar-thumb:hover": { backgroundColor: "primary.main" },
+  }}>
     <Typography color="text.secondary" sx={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }} variant="body2">
       {content}
     </Typography>
@@ -195,11 +213,10 @@ export function WorkspaceDashboard({
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
-      <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) && currentFocuses ? <Box sx={{ "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 }, "& h2": { fontSize: "1rem", lineHeight: 1.25 }, display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" }, height: { xs: 260, sm: 220 }, mt: 1.5 }}><DashboardPanel action={<Button onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} size="small">Edit Focuses</Button>} title="Current Focuses">
-        <Typography color="text.secondary" sx={{ mb: 1.25 }} variant="body2">Set a clear focus for your trading: a rule to follow, an emotion to manage, a setup to wait for, or a skill to build.</Typography>
         <CurrentFocusContent content={currentFocuses} />
       </DashboardPanel></Box> : null}
+      <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
           <Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}>

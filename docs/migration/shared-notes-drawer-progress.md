@@ -71,6 +71,9 @@ Related plan:
   Tracker even when the account has no existing tag catalog. Presets stay
   provisional in the drawer and are created and attached only by the one
   Session Review save action.
+- The Workspace Current Focuses card now keeps only the saved focus content,
+  caps that content in a compact scroll area with shared light/dark theme
+  scrollbar tokens, and places an open chart below the card.
 
 ## Resume point
 
