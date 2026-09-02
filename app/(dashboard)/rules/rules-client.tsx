@@ -212,6 +212,7 @@ export function RulesClient({
   monetaryMultiplier,
   onOpenResults,
   onPanelModeClose,
+  onRulesChanged,
   offlineSavedAtUtc,
   panelMode,
   presentation = "page",
@@ -223,6 +224,7 @@ export function RulesClient({
   monetaryMultiplier: string;
   onOpenResults?: () => void;
   onPanelModeClose?: () => void;
+  onRulesChanged?: () => void;
   offlineSavedAtUtc?: string;
   panelMode?: "custom" | "presets";
   presentation?: "page" | "workspace-panel";
@@ -321,6 +323,7 @@ export function RulesClient({
         return false;
       }
       setView(result.data);
+      onRulesChanged?.();
       return true;
     } catch {
       setError("The rule change could not reach the local dashboard server.");

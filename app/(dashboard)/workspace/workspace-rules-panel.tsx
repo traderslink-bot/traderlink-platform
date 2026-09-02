@@ -42,7 +42,10 @@ export function WorkspaceRulesPanel({ initialView = "rules", onClose, onPreferen
     setError(false);
     void fetch("/api/platform/journal/rules/workspace-panel", { cache: "no-store", signal: controller.signal })
       .then(async (response) => response.ok ? response.json() as Promise<{ data?: PanelModel }> : Promise.reject(new Error("rules_unavailable")))
-      .then((payload) => setModel(payload.data ?? null))
+      .then((payload) => {
+        if (!payload.data) throw new Error("rules_unavailable");
+        setModel(payload.data);
+      })
       .catch((failure: unknown) => {
         if (!(failure instanceof DOMException && failure.name === "AbortError")) setError(true);
       });
@@ -104,6 +107,7 @@ export function WorkspaceRulesPanel({ initialView = "rules", onClose, onPreferen
           monetaryMultiplier={model.rules.monetaryMultiplier}
           onOpenResults={() => setActiveView("results")}
           onPanelModeClose={() => setActiveView("rules")}
+          onRulesChanged={() => { setModel(null); setLoadAttempt((current) => current + 1); }}
           panelMode={activeView === "presets" || activeView === "custom" ? activeView : undefined}
           presentation="workspace-panel"
           reportingCurrency={model.rules.reportingCurrency}
