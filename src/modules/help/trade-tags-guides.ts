@@ -19,14 +19,14 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       Object.freeze({
         id: "where-tags-belong",
         title: "Where tags belong",
-        summary: "Tags describe one completed trade or a supported Swing position.",
+        summary: "Tags describe one completed trade, Swing position or saved Session Review.",
         keywords: Object.freeze(["individual trade", "ticker", "day", "day trade", "swing trade"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "table", columns: Object.freeze(["Place", "How tags apply"]), rows: Object.freeze([
             Object.freeze(["Completed Day trade", "Tags belong to the selected Trade 1, Trade 2 or other complete trade in that ticker."]),
             Object.freeze(["Swing position", "Tags belong to that specific position in Swing Trade Tracker."]),
             Object.freeze(["Ticker", "Tags do not automatically apply to every trade in the same ticker."]),
-            Object.freeze(["Complete day", "Tags are not day-wide labels. Use Daily Notes for observations about the day as a whole."]),
+            Object.freeze(["Complete day", "Session Review can save tags that describe the full trading day. They do not automatically apply to each individual trade."]),
             Object.freeze(["Execution", "A tag describes the trade, not one individual buy or sell fill."]),
           ]) }),
         ]),
@@ -415,7 +415,7 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["tag limit", "10 tags", "200 tags", "40 characters", "duplicate name"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "table", columns: Object.freeze(["Limit", "Current value"]), rows: Object.freeze([
-            Object.freeze(["Tags on one trade or supported Swing position", "10"]),
+            Object.freeze(["Tags on one trade, supported Swing position or Session Review", "10"]),
             Object.freeze(["Tag names for one Trade Tracker account", "200, including names retained for preserved history"]),
             Object.freeze(["Visible characters in one tag name", "40"]),
           ]) }),
@@ -425,13 +425,14 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       Object.freeze({
         id: "supported-trades",
         title: "Where tags can be saved",
-        summary: "Completed trades and connected Swing positions support saved tags today.",
+        summary: "Completed trades, connected Swing positions and Session Reviews support saved tags today.",
         keywords: Object.freeze(["supported tag targets", "completed trade", "open position", "swing position", "read only"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "A completed Day trade can save tags from its Daily Trade Tracker card.",
             "Any confirmed completed trade shown in Trade Explorer can save tags from its Review editor.",
             "A connected Swing position can save tags from Swing Trade Tracker.",
+            "A Session Review can save up to 10 tags for the full trading day. Those tags are separate from its individual trade tags.",
             "An ordinary open-position row inside Daily Trade Tracker does not currently save a tag selection. If the position is an intentional Swing, classify it and use Swing Trade Tracker.",
             "Other historical read-only pages can display saved tags without offering the Trade Explorer Review editor.",
           ]) }),

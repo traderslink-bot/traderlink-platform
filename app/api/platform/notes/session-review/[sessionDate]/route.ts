@@ -49,7 +49,7 @@ function data(database: Parameters<typeof createJournalAnnotationService>[0], sc
       rules: service.listRulesForEvaluation(account, `${date}T00:00:00.000Z`, `${date}T23:59:59.999Z`).filter((rule) => rule.sourceKind === "custom" && (rule.reviewScope === "day" || rule.reviewScope === "both")).map((rule) => ({ ruleId: rule.ruleId, ruleVersion: rule.versionId, statement: rule.statement, title: rule.title })),
       reviews: reviews.filter((review) => review.targetKind === "trading_day").map((review) => ({ revision: review.revision, ruleId: review.ruleId, ruleVersion: review.ruleVersionId, status: review.status === "not_reviewed" ? "not-reviewed" : review.status })),
       selectedTagIds: tags(database, account, dayId).map((row) => row.tag_id),
-      tags: service.listTags(account).map((tag) => ({ name: tag.name, tagId: tag.tagId })),
+      tags: service.listTags(account).map((tag) => ({ assignmentCount: tag.assignmentCount, name: tag.name, revision: String(tag.revision), tagId: tag.tagId })),
     };
   });
 }

@@ -80,6 +80,10 @@ Related plan:
 - A minimized workspace chart now removes the chart body from layout while
   retaining it for restore, leaving one compact **Minimized {ticker} Chart**
   control rather than an empty chart surface.
+- Session Review now exposes a date-indexed Session Reviews history in the
+  drawer. Selecting a date opens its complete saved notes, tags and custom
+  rule results; the tag picker is shorter, shows checked selections below the
+  picker, and includes per-account tag creation and retirement controls.
 
 ## Resume point
 

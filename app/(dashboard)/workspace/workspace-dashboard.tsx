@@ -117,6 +117,8 @@ function sessionDateInTimezone(timezone: string): string {
 function CurrentFocusContent({ content }: Readonly<{ content: string }>) {
   return <Box sx={{
     flex: 1,
+    height: "100%",
+    maxHeight: "100%",
     minHeight: 0,
     overflowY: "auto",
     pr: 0.5,
@@ -228,6 +230,7 @@ export function WorkspaceDashboard({
         "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root > .MuiBox-root:last-child": {
           display: "flex",
           flex: 1,
+          flexDirection: "column",
           minHeight: 0,
           mt: 1,
         },
