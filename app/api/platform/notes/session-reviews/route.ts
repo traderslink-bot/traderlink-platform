@@ -43,7 +43,7 @@ LIMIT 120`).all(
   ).map((row) => {
     const value = row as { session_date: string; updated_at_utc: string };
     return Object.freeze({ sessionDate: value.session_date, updatedAtUtc: value.updated_at_utc });
-  }));
+  })));
 }
 
 export async function GET(request: Request): Promise<Response> {
