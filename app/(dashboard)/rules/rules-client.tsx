@@ -99,6 +99,31 @@ const scopeLabels = {
   trade_sequence: "Trade sequence",
 } as const;
 
+function presetCategoryColor(
+  category: TradingRulesTemplateView["category"],
+): "primary" | "secondary" | "success" {
+  if (category === "trade") return "primary";
+  if (category === "trade_day") return "secondary";
+  return "success";
+}
+
+function presetScopeColor(
+  scope: TradingRulesTemplateView["scope"],
+): "default" | "error" | "info" | "warning" {
+  if (scope === "trade") return "info";
+  if (scope === "ticker_day") return "warning";
+  if (scope === "day_session") return "error";
+  return "default";
+}
+
+function presetCategoryAccent(
+  category: TradingRulesTemplateView["category"],
+): "primary.main" | "secondary.main" | "success.main" {
+  if (category === "trade") return "primary.main";
+  if (category === "trade_day") return "secondary.main";
+  return "success.main";
+}
+
 const manualCategoryLabels = {
   process: "Process",
   setup: "Setup",
@@ -578,7 +603,7 @@ export function RulesClient({
           }}
         >
           {filteredTemplates.map((template) => (
-            <Card key={template.templateId} variant="outlined">
+            <Card key={template.templateId} sx={{ borderTop: 3, borderTopColor: presetCategoryAccent(template.category) }} variant="outlined">
               <CardContent
                 sx={{
                   display: "flex",
@@ -590,10 +615,12 @@ export function RulesClient({
               >
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
                   <Chip
+                    color={presetCategoryColor(template.category)}
                     label={categoryLabels[template.category]}
                     size="small"
                   />
                   <Chip
+                    color={presetScopeColor(template.scope)}
                     label={scopeLabels[template.scope]}
                     size="small"
                     variant="outlined"
@@ -643,7 +670,19 @@ export function RulesClient({
   const closePanelMode = (): void => { onPanelModeClose?.(); };
 
   return (
-    <Box component="fieldset" disabled={Boolean(offlineSavedAtUtc)} sx={{ border: 0, m: 0, minWidth: 0, p: 0 }}>
+    <Box component="fieldset" disabled={Boolean(offlineSavedAtUtc)} sx={{
+      border: 0,
+      m: 0,
+      minWidth: 0,
+      p: 0,
+      ...(presentation === "workspace-panel" ? {
+        "& > .MuiBox-root": {
+          display: "grid",
+          gap: { xs: 2, sm: 2.5 },
+          minWidth: 0,
+        },
+      } : {}),
+    }}>
     <ContentContainer>
       <Stack
         direction="column"
@@ -825,7 +864,7 @@ export function RulesClient({
             <Button
               disabled={ruleIdeaBusy}
               onClick={() => void mutateRuleIdea("check")}
-              variant="outlined"
+              variant="contained"
             >
               {ruleIdeaBusy ? "Checking…" : ruleIdeaCheckComplete ? "Check again" : "Check my trades"}
             </Button>
@@ -1220,7 +1259,7 @@ export function RulesClient({
 
       <Divider sx={{ display: { xs: "none", md: "block" } }} />
 
-      {!isMobile ? <Box component="section" id="rule-library" sx={{ scrollMarginTop: 88 }}>
+      {!isMobile && presentation !== "workspace-panel" ? <Box component="section" id="rule-library" sx={{ scrollMarginTop: 88 }}>
         <Typography
           sx={{
             color: (theme) => theme.palette.mode === "dark"
