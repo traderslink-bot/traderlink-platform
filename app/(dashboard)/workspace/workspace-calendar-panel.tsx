@@ -19,7 +19,7 @@ type CalendarPanelModel = Readonly<{
   selectedWeek: string;
 }>;
 
-export function WorkspaceCalendarPanel({ expectedAccountSelectionRef, onClose }: Readonly<{ expectedAccountSelectionRef: string; onClose: () => void }>) {
+export function WorkspaceCalendarPanel({ onClose }: Readonly<{ onClose: () => void }>) {
   const [model, setModel] = useState<CalendarPanelModel | null>(null);
   const [error, setError] = useState(false);
   const [period, setPeriod] = useState<Readonly<{ month?: string; view: CalendarView; week?: string }>>({ view: "month" });
@@ -36,6 +36,6 @@ export function WorkspaceCalendarPanel({ expectedAccountSelectionRef, onClose }:
   }, [period]);
   return <Box sx={{ mt: 1.5 }}>
     <Stack direction="row" sx={{ alignItems: "center", justifyContent: "flex-end", mb: 0.5 }}><Button onClick={onClose} size="small" startIcon={<CloseRoundedIcon />}>Close Calendar</Button></Stack>
-    {error ? <Alert severity="error">Calendar could not be loaded. Try again.</Alert> : model === null ? <Box sx={{ display: "grid", minHeight: 280, placeItems: "center" }}><CircularProgress aria-label="Loading Calendar" size={28} /></Box> : <CalendarClient {...model} expectedAccountSelectionRef={expectedAccountSelectionRef} onNavigatePeriod={(view, value) => setPeriod(view === "month" ? { month: value, view } : { view, week: value })} />}
+    {error ? <Alert severity="error">Calendar could not be loaded. Try again.</Alert> : model === null ? <Box sx={{ display: "grid", minHeight: 280, placeItems: "center" }}><CircularProgress aria-label="Loading Calendar" size={28} /></Box> : <CalendarClient {...model} onNavigatePeriod={(view, value) => setPeriod(view === "month" ? { month: value, view } : { view, week: value })} />}
   </Box>;
 }

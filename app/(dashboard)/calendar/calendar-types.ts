@@ -31,7 +31,6 @@ export type CalendarFilterInput = {
 export type CalendarTickerResult = JournalCalendarTickerReadModel;
 export type CalendarDay = JournalCalendarDayReadModel & Readonly<{
   hasDailyTracker: boolean;
-  hasSessionReview: boolean;
 }>;
 export type CalendarData = Omit<JournalCalendarReadModel, "days"> & Readonly<{
   days: readonly CalendarDay[];

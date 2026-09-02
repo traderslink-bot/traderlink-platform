@@ -1,7 +1,8 @@
 # Shared Notes Drawer Saved Sessions Design
 
-Status: owner-approved interaction direction. Implementation, commit, and
-release remain separate checkpoints.
+Status: superseded by the 2026-09-02 Calendar correction. Retained as a
+decision record; historical-session discovery and a separate reader are
+deferred.
 
 Related plan:
 [Shared Notes Drawer Plan](./shared-notes-drawer-plan.md).
@@ -14,9 +15,9 @@ authoritative day-note, tag, rule-review, or Calendar facts.
 1. A trader can save each selected session note type independently.
 2. The final Session Review save remains responsible for the session-level tag
    and custom-rule selections.
-3. Find sessions becomes a bounded date-indexed editor finder. Calendar is
-   the complete dated-review reader.
-4. Saved sessions become visible from the existing Calendar.
+3. Historical-session discovery and editing are deferred until a separate,
+   approved reader is planned. Existing session editing remains in Trade
+   Tracker.
 
 ## Proposed drawer direction for owner review
 
@@ -24,7 +25,6 @@ Desktop tab order and mobile selector order are identical:
 
 1. **Review**
 2. **Details**
-3. **Find sessions**
 
 ### Review
 
@@ -45,41 +45,24 @@ is the account-local tag library: it contains the create-personal-tag field and
 the retirement controls. Retiring a used tag requires confirmation and
 preserves historical assignment evidence.
 
-### Find sessions
+### Deferred historical sessions
 
-This view is a bounded editor finder rather than a date-chip row. Its top controls are
-a date range and a text search across saved session-note text and saved tag
-names. Results are grouped by month and paginated. Each result shows its date,
-saved-note count, selected-tag count, and saved rule-result count. Its **Edit
-review** action opens the entry view on that selected date. The complete saved
-review is read in Calendar's Session Review tab, not rendered again inside the
-entry drawer.
+The entry drawer is for creating a Session Review and keeping the session’s
+notes, tags, and custom-rule selections together. Historical-session discovery
+and editing will be designed as a separate feature later. Until then, existing
+session editing remains in Trade Tracker.
 
-The query remains account-scoped, server-bounded, and does not load Calendar
-or chart data.
-
-### Calendar Session view
-
-The existing Calendar remains the Session Review reader. A date with a saved
-Session Review receives a compact **Session Review** marker. Selecting that
-date opens the existing ticker/trade/execution drawer. Its **Session Review**
-tab shows that date's saved notes, tags and preset/custom rule outcomes. The
-reader has an explicit **Edit Session Review** action which opens the shared
-entry drawer on the same date. No parallel Calendar data store is created.
-
-On Workspace, a compact **Calendar** action beside the existing tool actions
-opens the existing Calendar as an on-demand Workspace panel. Workspace does
-not request or render Calendar data until that action is used. Closing the
-panel unmounts it; the complete Calendar page remains available separately.
+Calendar keeps its existing selected-day drawer for tickers, trades, and
+executions. It does not show Session Review markers, tabs, notes, tags, or
+rules. Workspace may open that Calendar on demand; it does not request or
+render Calendar data until the user selects it.
 
 ## Acceptance and non-goals
 
 - A new session note type does not replace any previously saved session note.
 - Saving tags/rules cannot overwrite an unsaved note editor value.
-- Calendar markers expose only the presence of the selected account's saved
-  Session Review; they do not expose note contents in the calendar grid. The
-  selected-day drawer loads the saved review only when its Session Review tab
-  is opened.
+- Calendar remains independent of Session Review persistence and does not
+  expose session-note, tag, or rule information.
 - Existing trade notes, Current Focuses, chart behavior, and individual trade
   tags are unchanged.
 - The Workspace Calendar panel reuses the Calendar read model and account

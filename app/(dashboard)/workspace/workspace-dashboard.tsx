@@ -251,7 +251,7 @@ export function WorkspaceDashboard({
         <CurrentFocusContent content={currentFocuses} />
       </DashboardPanel></Box> : null}
       <DashboardChartPanelSlot />
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} onClose={() => setCalendarOpen(false)} /> : null}
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : null}
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
           <Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}>

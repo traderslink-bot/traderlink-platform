@@ -10,7 +10,6 @@ import {
 import { CalendarClient } from "./calendar-client";
 import { emptyCalendarData, withCalendarDataRuntime } from "./calendar-data";
 import {
-  currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {
@@ -232,7 +231,6 @@ export default async function CalendarPage({
       availableWeeks={availableWeeks}
       availableWeekOptions={availableWeekOptions}
       currentWeek={currentWeek}
-      expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
       initialData={initialData}
       initialFilters={initialFilters}
       initialView={initialView}

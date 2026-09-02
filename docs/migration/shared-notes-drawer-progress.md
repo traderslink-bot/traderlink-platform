@@ -147,3 +147,12 @@ release has been run.
   edited text visible.
 - The session-level tags/rules action is now at the bottom of the entry view,
   after the controls it saves.
+
+## 2026-09-02 Calendar correction
+
+- Removed the added Session Review Calendar markers, reader tab, and Calendar
+  edit launcher. Calendar has returned to its established day drawer for
+  trades and Trade Tracker only.
+- Removed the Session Review history/finder from the Workspace entry drawer.
+  Workspace **+ Sessions** is for creating a review; editing an existing
+  session remains in Trade Tracker until a separate reader is planned.

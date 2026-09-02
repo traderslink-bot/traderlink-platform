@@ -60,7 +60,6 @@ type CalendarAnnotationEvidence = Readonly<{
   annotations: ReadonlyMap<string, Readonly<AnnotationTotal>>;
   dailyTrackerDates: ReadonlySet<string>;
   reviewStatusByDate: ReadonlyMap<string, "reviewed" | "needs_review">;
-  sessionReviewDates: ReadonlySet<string>;
 }>;
 
 type MutableCalendarDay = Omit<CalendarDay, "tickers"> & Readonly<{
@@ -88,7 +87,6 @@ function calendarAnnotationEvidence(
     annotations: new Map<string, Readonly<AnnotationTotal>>(),
     dailyTrackerDates: new Set<string>(),
     reviewStatusByDate: new Map<string, "reviewed" | "needs_review">(),
-    sessionReviewDates: new Set<string>(),
   });
   const evidence = Object.freeze({
     roundTrips: database.prepare<[string, string], AnnotationRow>(`SELECT
@@ -164,14 +162,6 @@ JOIN journal_trading_days day
  AND day.account_id = review.account_id
  AND day.trading_day_id = review.trading_day_id
 WHERE review.workspace_id = ? AND review.account_id = ?`).all(scope.workspaceId, accountId),
-    sessionReviews: database.prepare<[string, string], Readonly<{ trading_date: string }>>(`
-SELECT DISTINCT day.trading_date
-FROM journal_trading_days day
-WHERE day.workspace_id = ? AND day.account_id = ? AND day.status = 'active'
-  AND (EXISTS (SELECT 1 FROM journal_daily_notes note WHERE note.workspace_id = day.workspace_id AND note.account_id = day.account_id AND note.trading_day_id = day.trading_day_id)
-    OR EXISTS (SELECT 1 FROM journal_categorized_notes note WHERE note.workspace_id = day.workspace_id AND note.account_id = day.account_id AND note.trading_day_id = day.trading_day_id AND note.target_kind = 'trading_day')
-    OR EXISTS (SELECT 1 FROM journal_trading_day_tag_assignments assignment WHERE assignment.workspace_id = day.workspace_id AND assignment.account_id = day.account_id AND assignment.trading_day_id = day.trading_day_id AND assignment.assignment_state = 'assigned')
-    OR EXISTS (SELECT 1 FROM journal_rule_reviews review WHERE review.workspace_id = day.workspace_id AND review.account_id = day.account_id AND review.trading_day_id = day.trading_day_id AND review.target_kind = 'trading_day'))`).all(scope.workspaceId, accountId),
     manualExecutions: database.prepare<[string, string], ManualExecutionDateRow>(`SELECT
  version.executed_at_utc
 FROM journal_executions execution
@@ -240,7 +230,6 @@ WHERE execution.workspace_id = ? AND execution.account_id = ?
       row.trading_date,
       row.review_status === "reviewed" ? "reviewed" : "needs_review",
       ] as const)),
-    sessionReviewDates: new Set(evidence.sessionReviews.map((row) => row.trading_date)),
   });
 }
 
@@ -255,7 +244,6 @@ function withCalendarAnnotations(
     days: Object.freeze(data.days.map((day) => Object.freeze({
       ...day,
       hasDailyTracker: false,
-      hasSessionReview: false,
     }))),
   });
   const evidence = annotationEvidence;
@@ -263,7 +251,6 @@ function withCalendarAnnotations(
   const days: MutableCalendarDay[] = data.days.map((day) => ({
     ...day,
     hasDailyTracker: evidence.dailyTrackerDates.has(day.date),
-    hasSessionReview: evidence.sessionReviewDates.has(day.date),
     reviewStatus: day.tradeCount > 0
       ? evidence.reviewStatusByDate.get(day.date) ?? "needs_review"
       : null,
@@ -289,7 +276,6 @@ function withCalendarAnnotations(
       const day = dayByDate.get(annotation.date) ?? {
         date: annotation.date,
         hasDailyTracker: false,
-        hasSessionReview: false,
         peakGivebackDecimal: null,
         pnlDecimal: null,
         pnlSign: null,
@@ -311,22 +297,6 @@ function withCalendarAnnotations(
         });
       }
       dayByDate.set(annotation.date, day);
-    }
-    for (const date of evidence.sessionReviewDates) {
-      if ((input.startDate && date < input.startDate) || (input.endDate && date > input.endDate)) continue;
-      const day = dayByDate.get(date) ?? {
-        date,
-        hasDailyTracker: false,
-        hasSessionReview: true,
-        peakGivebackDecimal: null,
-        pnlDecimal: null,
-        pnlSign: null,
-        tickers: [],
-        tradeCount: 0,
-        reviewStatus: null,
-        winRatePercentDecimal: null,
-      };
-      dayByDate.set(date, { ...day, hasSessionReview: true });
     }
   }
   const annotatedDays = [...dayByDate.values()]

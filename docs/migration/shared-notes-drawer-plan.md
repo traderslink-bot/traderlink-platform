@@ -18,11 +18,10 @@ The owner-directed Saved Sessions follow-up is specified for visual review in
 The shared drawer accepts either a trade context (stable round-trip id) or a
 session context (account-local trading date).
 
-Session Review entry uses three tabs:
+Session Review entry uses two tabs:
 
 1. **Review**
 2. **Details**
-3. **Find sessions**
 On mobile, the tab row becomes one full-width view selector that displays the
 selected view and opens a menu or bottom sheet containing those same three
 views. Unsaved text is never discarded when the trader changes views or
@@ -32,13 +31,12 @@ closes the drawer without deciding what to do.
 session launch. Session Summary lists only that account-local day’s trades and
 loads compact factual rows first; an individual row expands for its displayed
 P/L, share size, and entry time. It is reference material while entering a
-review, not the saved-session reader.
+new review.
 
-Calendar is the saved Session Review reader. Its selected-day drawer keeps the
-existing Tickers/Trades/Executions presentation and adds a separate **Session
-Review** tab for saved notes, session tags, preset and custom rule results. An
-explicit **Edit Session Review** action opens the entry drawer on that date.
-It never sends a user from the reader to an implied blank "Add Review" view.
+Calendar remains the existing trade-inspection surface: its day drawer shows
+that day’s trades and leads to Trade Tracker. It does not display, read, or
+edit Session Reviews. Editing an existing session remains in Trade Tracker
+until a separate session reader is planned and approved.
 
 An unattached launch starts a **Session Note** for the current account-local
 date and lets the trader select an earlier date. A trade launch remains tied
@@ -132,12 +130,10 @@ no cross-account value is silently selected as the user’s new focus.
 5. Obtain owner visual approval from the production-capable dashboard before
    release. Moomoo/Analyzer availability is unrelated to this Notes feature.
 
-6. After owner approval of the Saved Sessions design, add independent
-session-note saving, the bounded Find sessions editor finder, account-local tag
-   library controls, Calendar session-review markers, and the on-demand
-   Workspace Calendar panel. Reuse the one shared drawer and existing
-   Calendar; do not create parallel note or Calendar data, and do not preload
-   Calendar data on Workspace.
+6. Session-note saving and account-local tag library controls remain in the
+entry flow. A historical-session finder or reader is deferred. The on-demand
+Workspace Calendar panel reuses the existing Calendar trade data only; it does
+not preload data or render Session Reviews.
 
 ## Acceptance boundary
 
