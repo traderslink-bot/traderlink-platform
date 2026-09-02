@@ -124,3 +124,15 @@ release has been run.
 - Calendar now has account-scoped Session Review markers and an
   **Open Session Review** launcher. Workspace loads the reusable Calendar
   client only after its Calendar action is selected.
+
+## 2026-09-02 Session view correction
+
+- The entry controls now place **Save Note** directly below its text field and
+  place **Save multiple note types to a session** alongside it. The checked tag
+  chips are the only selected-state display.
+- The Workspace Calendar route now awaits its Calendar read model before
+  serializing it, fixing the empty model that made the on-demand panel fail.
+- The Session Review entry drawer is being separated from the Calendar Session
+  view: Calendar will be the read surface for tickers, trades and executions;
+  its session tab will display saved notes, tags and rule results and provide
+  the explicit edit action.

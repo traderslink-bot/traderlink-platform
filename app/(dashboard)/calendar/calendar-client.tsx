@@ -24,6 +24,8 @@ import {
   MenuItem,
   Select,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -85,6 +87,22 @@ type TickerDetailState = Readonly<{
   trades: readonly TickerTradeDetail[];
 }>;
 
+type SessionViewerNote = Readonly<{
+  category: "what_worked" | "what_needs_work" | "technical_recap" | "general" | "custom";
+  customType: Readonly<{ displayName: string }> | null;
+  noteId: string;
+  text: string;
+}>;
+
+type SessionViewerState = Readonly<{
+  notes: readonly SessionViewerNote[];
+  presetRules: readonly Readonly<{ ruleId: string; status: "followed" | "broken" | "not-reviewed" | "n/a"; title: string }>[];
+  rules: readonly Readonly<{ ruleId: string; statement: string; title: string }>[];
+  reviews: readonly Readonly<{ ruleId: string; status: "followed" | "broken" | "not-reviewed" }>[];
+  selectedTagIds: readonly string[];
+  tags: readonly Readonly<{ name: string; tagId: string }>[];
+}>;
+
 const weekdayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 function money(value: string | null, currency: string | null): string {
@@ -109,6 +127,24 @@ function executionTimestamp(value: string, timezone: string | null): string {
 
 function percent(value: string | null): string {
   return value === null ? "—" : `${formatJournalAnalyticsDecimal(value)}%`;
+}
+
+function sessionNoteLabel(note: SessionViewerNote): string {
+  if (note.category === "custom") return note.customType?.displayName ?? "Custom";
+  return {
+    general: "General",
+    technical_recap: "Technical recap",
+    what_needs_work: "What needs work",
+    what_worked: "What worked",
+  }[note.category];
+}
+
+function sessionRuleColor(status: "followed" | "broken" | "not-reviewed" | "n/a"): "default" | "error" | "success" {
+  return status === "broken" ? "error" : status === "followed" ? "success" : "default";
+}
+
+function sessionRuleLabel(status: "followed" | "broken" | "not-reviewed" | "n/a"): string {
+  return status === "n/a" ? "Not available" : status === "not-reviewed" ? "Not reviewed" : status === "broken" ? "Broken" : "Followed";
 }
 
 function monthLabel(monthKey: string): string {
@@ -700,6 +736,9 @@ export function CalendarClient({
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [filters, setFilters] = useState<CalendarFilterInput>(initialFilters);
   const [sessionNotesOpen, setSessionNotesOpen] = useState(false);
+  const [detailsTab, setDetailsTab] = useState<"trades" | "session">("trades");
+  const [sessionViewerState, setSessionViewerState] = useState<SessionViewerState | null>(null);
+  const [sessionViewerStatus, setSessionViewerStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const resolvedWeekOptions = availableWeekOptions.length > 0
     ? availableWeekOptions
     : availableWeeks.map((week) => ({ months: [week.slice(0, 7)], week }));
@@ -713,6 +752,51 @@ export function CalendarClient({
   const expandedTickerRequestKey = expandedTicker
     ? `${selectedDate}:${expandedTicker.instrumentId}:${expandedTickerRoundTripIds}`
     : null;
+
+  useEffect(() => {
+    if (!selected.hasSessionReview) setDetailsTab("trades");
+  }, [selected.date, selected.hasSessionReview]);
+
+  useEffect(() => {
+    if (!detailsOpen || detailsTab !== "session" || !expectedAccountSelectionRef || !selected.hasSessionReview) return;
+    const controller = new AbortController();
+    const read = async (url: string): Promise<Record<string, unknown> | null> => {
+      const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+      return response.ok ? await response.json() as Record<string, unknown> : null;
+    };
+    setSessionViewerStatus("loading");
+    void Promise.all([
+      read(`/api/platform/notes/session-review/${encodeURIComponent(selected.date)}`),
+      read(`/api/platform/notes/session-summary/${encodeURIComponent(selected.date)}`),
+      read(`/api/platform/notes/categorized?${new URLSearchParams({ targetKind: "trading_day", tradingDate: selected.date })}`),
+      ...["general", "what_worked", "what_needs_work", "technical_recap"].map((category) =>
+        read(`/api/platform/notes/standard?${new URLSearchParams({ category, targetKind: "trading_day", tradingDate: selected.date })}`)),
+    ]).then(([reviewPayload, summaryPayload, categorizedPayload, ...standardPayloads]) => {
+      const review = reviewPayload?.data as Partial<SessionViewerState> | undefined;
+      const categorized = Array.isArray(categorizedPayload?.notes) ? categorizedPayload.notes as SessionViewerNote[] : [];
+      const standard = standardPayloads.flatMap((payload, index) => {
+        const note = payload?.note as { available?: unknown; text?: unknown } | undefined;
+        const category = ["general", "what_worked", "what_needs_work", "technical_recap"][index] as SessionViewerNote["category"];
+        return note?.available && typeof note.text === "string" && note.text.trim()
+          ? [{ category, customType: null, noteId: `${category}-standard`, text: note.text } satisfies SessionViewerNote]
+          : [];
+      });
+      const summary = summaryPayload?.summary as { presetRules?: unknown } | undefined;
+      setSessionViewerState({
+        notes: [...standard, ...categorized],
+        presetRules: Array.isArray(summary?.presetRules) ? summary.presetRules as SessionViewerState["presetRules"] : [],
+        reviews: Array.isArray(review?.reviews) ? review.reviews : [],
+        rules: Array.isArray(review?.rules) ? review.rules : [],
+        selectedTagIds: Array.isArray(review?.selectedTagIds) ? review.selectedTagIds : [],
+        tags: Array.isArray(review?.tags) ? review.tags : [],
+      });
+      setSessionViewerStatus("ready");
+    }).catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setSessionViewerStatus("error");
+    });
+    return () => controller.abort();
+  }, [detailsOpen, detailsTab, expectedAccountSelectionRef, selected.date, selected.hasSessionReview]);
 
   useEffect(() => {
     if (offlineSavedAtUtc || !detailsOpen || !expandedTickerRequestKey) return;
@@ -949,10 +1033,39 @@ export function CalendarClient({
                 {money(selected.pnlDecimal, initialData.currency)}
               </Typography>
             </Stack>
+            {selected.hasSessionReview ? <Tabs aria-label="Calendar day view" onChange={(_, value: "trades" | "session") => setDetailsTab(value)} sx={{ borderBottom: 1, borderColor: "divider", mt: 1.5 }} value={detailsTab} variant="fullWidth">
+              <Tab label="Trades" value="trades" />
+              <Tab label="Session Review" value="session" />
+            </Tabs> : null}
+            {detailsTab === "session" && selected.hasSessionReview ? <Stack spacing={1.5} sx={{ mt: 2 }}>
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                <Typography sx={{ fontWeight: 800 }} variant="body2">Saved Session Review</Typography>
+                {expectedAccountSelectionRef ? <Button onClick={() => { setDetailsOpen(false); setSessionNotesOpen(true); }} size="small" variant="outlined">Edit Session Review</Button> : null}
+              </Stack>
+              {sessionViewerStatus === "loading" || sessionViewerStatus === "idle" ? <Typography color="text.secondary" variant="body2">Loading saved notes, tags and rules…</Typography> : null}
+              {sessionViewerStatus === "error" ? <Typography color="error.main" variant="body2">The saved Session Review could not be loaded.</Typography> : null}
+              {sessionViewerStatus === "ready" && sessionViewerState ? <>
+                <Box>
+                  <Typography color="text.secondary" variant="caption">Notes</Typography>
+                  {sessionViewerState.notes.length === 0 ? <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">No session notes were saved.</Typography> : <Stack spacing={0.75} sx={{ mt: 0.5 }}>{sessionViewerState.notes.map((note) => <Box key={note.noteId} sx={{ border: 1, borderColor: "divider", borderRadius: 1.25, p: 1.25 }}><Typography sx={{ fontWeight: 800 }} variant="body2">{sessionNoteLabel(note)}</Typography><Typography sx={{ mt: 0.5, whiteSpace: "pre-wrap" }} variant="body2">{note.text}</Typography></Box>)}</Stack>}
+                </Box>
+                <Box>
+                  <Typography color="text.secondary" variant="caption">Session tags</Typography>
+                  {sessionViewerState.tags.filter((tag) => sessionViewerState.selectedTagIds.includes(tag.tagId)).length === 0 ? <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">No session tags were saved.</Typography> : <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mt: 0.5 }} useFlexGap>{sessionViewerState.tags.filter((tag) => sessionViewerState.selectedTagIds.includes(tag.tagId)).map((tag) => <Chip color="primary" key={tag.tagId} label={tag.name} size="small" />)}</Stack>}
+                </Box>
+                <Box>
+                  <Typography color="text.secondary" variant="caption">Rule results</Typography>
+                  <Stack spacing={0.75} sx={{ mt: 0.5 }}>
+                    {sessionViewerState.presetRules.map((rule) => <Stack direction="row" key={`preset:${rule.ruleId}`} sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography variant="body2">{rule.title}</Typography><Chip color={sessionRuleColor(rule.status)} label={sessionRuleLabel(rule.status)} size="small" /></Stack>)}
+                    {sessionViewerState.rules.map((rule) => { const status = sessionViewerState.reviews.find((review) => review.ruleId === rule.ruleId)?.status ?? "not-reviewed"; return <Stack direction="row" key={rule.ruleId} sx={{ alignItems: "center", justifyContent: "space-between" }}><Box sx={{ minWidth: 0, pr: 1 }}><Typography variant="body2">{rule.title}</Typography><Typography color="text.secondary" variant="caption">{rule.statement}</Typography></Box><Chip color={sessionRuleColor(status)} label={sessionRuleLabel(status)} size="small" /></Stack>; })}
+                    {sessionViewerState.presetRules.length === 0 && sessionViewerState.rules.length === 0 ? <Typography color="text.secondary" variant="body2">No session rules apply to this date.</Typography> : null}
+                  </Stack>
+                </Box>
+              </> : null}
+            </Stack> : <>
             {selected.tradeCount > 0 ? (
               <Button href={`/trade-tracker/${selected.date}`} sx={{ mt: 2 }} variant="outlined">Trade tracker</Button>
             ) : null}
-            {selected.hasSessionReview && expectedAccountSelectionRef ? <Button onClick={() => setSessionNotesOpen(true)} sx={{ mt: 2 }} variant="outlined">Open Session Review</Button> : null}
             <Stack spacing={1} sx={{ mt: 2 }}>
               {selected.tickers.map((ticker) => (
                 <Accordion
@@ -1004,6 +1117,7 @@ export function CalendarClient({
                 </Accordion>
               ))}
             </Stack>
+            </>}
           </>
         ) : null}
       </Drawer>

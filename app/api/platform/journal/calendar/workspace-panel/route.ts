@@ -16,7 +16,7 @@ function weekEnd(week: string): string { const value = new Date(`${week}T12:00:0
 function validMonth(value: string | null): string | null { return value && /^\d{4}-(0[1-9]|1[0-2])$/u.test(value) ? value : null; }
 function validWeek(value: string | null): string | null { return value && /^\d{4}-\d{2}-\d{2}$/u.test(value) ? weekStart(value) : null; }
 
-function panelModel(scope: ReturnType<typeof requireTraderLinkPlatformRequestScope>, request: Request) {
+async function panelModel(scope: ReturnType<typeof requireTraderLinkPlatformRequestScope>, request: Request) {
   const query = new URL(request.url).searchParams;
   const requestedView: CalendarView = query.get("view") === "week" ? "week" : "month";
   const requestedMonth = validMonth(query.get("month"));
@@ -24,7 +24,7 @@ function panelModel(scope: ReturnType<typeof requireTraderLinkPlatformRequestSco
   if ((query.get("month") && !requestedMonth) || (query.get("week") && !requestedWeek)) {
     platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID", { field: "period" });
   }
-  return withCalendarDataRuntime(scope, (read) => {
+  return await withCalendarDataRuntime(scope, (read) => {
     const unfiltered: CalendarFilterInput = { currency: "all", direction: "all", endDate: "", performance: "all", pnlRange: "all", session: "all", startDate: "", symbol: "all", tradeCount: "all" };
     const catalog = read(unfiltered);
     const currentWeek = journalScopeCurrentWeek(readJournalDemoScopeClock(scope), catalog.timezone ?? "America/New_York");
@@ -51,7 +51,7 @@ function panelModel(scope: ReturnType<typeof requireTraderLinkPlatformRequestSco
 export async function GET(request: Request): Promise<Response> {
   try {
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    return Response.json({ data: panelModel(scope, request), status: "ready" }, { headers: HEADERS });
+    return Response.json({ data: await panelModel(scope, request), status: "ready" }, { headers: HEADERS });
   } catch (error) {
     return Response.json({ status: "unavailable" }, { headers: HEADERS, status: isTraderLinkPlatformError(error) ? 400 : 500 });
   }

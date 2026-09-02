@@ -18,7 +18,7 @@ The owner-directed Saved Sessions follow-up is specified for visual review in
 The shared drawer accepts either a trade context (stable round-trip id) or a
 session context (account-local trading date).
 
-Session Review uses three tabs:
+Session Review entry uses three tabs:
 
 1. **Review**
 2. **Details**
@@ -31,7 +31,14 @@ closes the drawer without deciding what to do.
 `Details` means Trade Details for a trade launch and Session Summary for a
 session launch. Session Summary lists only that account-local day’s trades and
 loads compact factual rows first; an individual row expands for its displayed
-P/L, share size, and entry time. It never preloads charts or full history.
+P/L, share size, and entry time. It is reference material while entering a
+review, not the saved-session reader.
+
+Calendar is the saved Session Review reader. Its selected-day drawer keeps the
+existing Tickers/Trades/Executions presentation and adds a separate **Session
+Review** tab for saved notes, session tags, preset and custom rule results. An
+explicit **Edit Session Review** action opens the entry drawer on that date.
+It never sends a user from the reader to an implied blank "Add Review" view.
 
 An unattached launch starts a **Session Note** for the current account-local
 date and lets the trader select an earlier date. A trade launch remains tied
