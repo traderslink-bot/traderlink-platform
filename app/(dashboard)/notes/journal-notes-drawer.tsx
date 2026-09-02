@@ -25,7 +25,7 @@ type SessionReview = Readonly<{
   selectedTagIds: readonly string[];
   tags: readonly Readonly<{ assignmentCount: number; name: string; revision: string; tagId: string }>[];
 }>;
-type SessionReviewHistoryItem = Readonly<{ sessionDate: string; updatedAtUtc: string }>;
+type SessionReviewHistoryItem = Readonly<{ noteCount: number; ruleCount: number; sessionDate: string; tagCount: number; updatedAtUtc: string }>;
 type SessionSummaryTrade = Readonly<{ direction: "long" | "short"; entryAt: string; pnl: string | null; roundTripId: string; shares: string | null; symbol: string; timezone: string }>;
 type SessionPresetRule = Readonly<{ ruleId: string; ruleVersion: string; status: "followed" | "broken" | "not-reviewed" | "n/a"; title: string }>;
 type SessionSummary = Readonly<{ pnl: string | null; presetRules: readonly SessionPresetRule[]; tradeCount: number; trades: readonly SessionSummaryTrade[] }>;
@@ -48,7 +48,7 @@ const categories: readonly Readonly<{ label: string; value: Exclude<NoteCategory
   { label: "Technical recap", value: "technical_recap" },
 ];
 const views: readonly Readonly<{ label: string; value: DrawerView }>[] = [
-  { label: "Add Note", value: "add" }, { label: "Saved Notes", value: "saved" }, { label: "Details", value: "details" },
+  { label: "Review", value: "add" }, { label: "Details", value: "details" }, { label: "Saved sessions", value: "saved" },
 ];
 function headers(): HeadersInit { return { "content-type": "application/json", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" }; }
 function target(launch: Launch): Record<string, string> { return launch.kind === "session" ? { targetKind: "trading_day", tradingDate: launch.sessionDate } : { targetKind: "round_trip", roundTripId: launch.roundTripId }; }
@@ -62,6 +62,8 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   const [legacyRevisions, setLegacyRevisions] = useState<Partial<Record<Exclude<NoteCategory, "custom">, number | null>>>({});
   const [sessionReview, setSessionReview] = useState<SessionReview | null>(null);
   const [sessionReviewHistory, setSessionReviewHistory] = useState<readonly SessionReviewHistoryItem[]>([]);
+  const [historyFrom, setHistoryFrom] = useState(""); const [historyTo, setHistoryTo] = useState(""); const [historyQuery, setHistoryQuery] = useState("");
+  const [historyNextCursor, setHistoryNextCursor] = useState<string | null>(null); const [historyLoading, setHistoryLoading] = useState(false);
   const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null);
   const [sessionTagIds, setSessionTagIds] = useState<readonly string[]>([]);
   const [sessionRuleStatuses, setSessionRuleStatuses] = useState<Record<string, "followed" | "broken" | "not-reviewed">>({});
@@ -102,10 +104,22 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   ];
   const selectedSessionTags = sessionTagChoices.filter((tag) => sessionTagIds.includes(tag.tagId));
   const drawerViews = activeLaunch.kind === "session"
-    ? views.map((item) => item.value === "saved" ? { ...item, label: "Session Reviews" } : item)
-    : views;
+    ? views
+    : views.map((item) => item.value === "saved" ? { ...item, label: "Saved Notes" } : item);
 
   async function readJson(url: string): Promise<Record<string, unknown> | null> { const response = await fetch(url, { cache: "no-store" }); return response.ok ? await response.json() as Record<string, unknown> : null; }
+  async function loadSessionReviewHistory(cursor: string | null = null, append = false): Promise<void> {
+    if (activeLaunch.kind !== "session") return;
+    const query = new URLSearchParams({ limit: "20" });
+    if (cursor) query.set("cursor", cursor); if (historyFrom) query.set("from", historyFrom); if (historyTo) query.set("to", historyTo); if (historyQuery.trim()) query.set("q", historyQuery.trim());
+    setHistoryLoading(true);
+    try {
+      const payload = await readJson(`/api/platform/notes/session-reviews?${query}`);
+      const next = Array.isArray(payload?.sessionReviews) ? payload.sessionReviews as SessionReviewHistoryItem[] : [];
+      setSessionReviewHistory((current) => append ? [...current, ...next] : next);
+      setHistoryNextCursor(typeof payload?.nextCursor === "string" ? payload.nextCursor : null);
+    } finally { setHistoryLoading(false); }
+  }
   async function load(): Promise<void> {
     const request = ++loadRequestRef.current;
     if (focusOnly) {
@@ -117,16 +131,11 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
     }
     const sessionDate = activeLaunch.kind === "session" ? activeLaunch.sessionDate : null;
     if (sessionDate) {
-      const [payload, historyPayload] = await Promise.all([
-        readJson(`/api/platform/notes/session-review/${encodeURIComponent(sessionDate)}`),
-        readJson("/api/platform/notes/session-reviews"),
-      ]);
+      const payload = await readJson(`/api/platform/notes/session-review/${encodeURIComponent(sessionDate)}`);
       if (request !== loadRequestRef.current) return;
       const review = payload?.data as SessionReview | undefined;
       setSessionReview(review ?? null);
-      setSessionReviewHistory(Array.isArray(historyPayload?.sessionReviews)
-        ? historyPayload.sessionReviews as SessionReviewHistoryItem[]
-        : []);
+      void loadSessionReviewHistory();
       setSessionTagIds(review?.selectedTagIds ?? []);
       setSessionRuleStatuses(Object.fromEntries((review?.rules ?? []).map((rule) => [
         rule.ruleId,
@@ -167,7 +176,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   }, [launch.kind, launch.kind === "session" ? launch.sessionDate : ""]);
   useEffect(() => {
     if (!open) return;
-    setMessage(null); setView(focusOnly ? "focuses" : initialView); setCategory("general"); setCustomTypeId(""); setNoteText(""); setSessionTagsOpen(!mobile); setSessionRulesOpen(!mobile);
+    setMessage(null); setView(focusOnly ? "focuses" : initialView); setCategory("general"); setCustomTypeId(""); setNoteText(""); setSessionTagsOpen(!mobile); setSessionRulesOpen(!mobile); setHistoryFrom(""); setHistoryTo(""); setHistoryQuery(""); setHistoryNextCursor(null);
   }, [open, focusOnly, initialView, mobile, launch.kind, launch.kind === "session" ? launch.sessionDate : launch.roundTripId]);
   useEffect(() => {
     if (open) void load();
@@ -180,43 +189,29 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
     setSessionReview(null); setSessionSummary(null); setSessionTagIds([]); setSessionRuleStatuses({}); setSelectedSessionDate(nextDate);
   }
   async function saveNote(): Promise<void> {
-    if (activeLaunch.kind === "session") {
-      await saveSessionReview();
-      return;
-    }
     if (!noteText.trim()) { setMessage("Write a note before saving."); return; }
     setSaving(true); setMessage(null); try {
-      const isLegacy = category === "general" || category === "technical_recap";
+      const isLegacy = activeLaunch.kind === "session"
+        ? category !== "custom"
+        : category === "general" || category === "technical_recap";
       const url = isLegacy ? "/api/platform/notes/standard" : "/api/platform/notes/categorized";
       const existing = savedNotes.find((item) => category === "custom"
         ? item.category === "custom" && item.customType?.noteTypeId === customTypeId
         : item.category === category);
       const expectedRevision = category === "custom" ? existing?.revision ?? null : legacyRevisions[category];
       const response = await fetch(url, { method: "PUT", headers: headers(), body: JSON.stringify({ ...target(activeLaunch), category, customTypeId: category === "custom" ? customTypeId : undefined, expectedAccountSelectionRef, expectedRevision: expectedRevision ?? null, text: noteText }) });
-      if (!response.ok) throw new Error(); setMessage("Note saved."); setNoteText(""); await load(); setView("saved");
+      if (!response.ok) throw new Error(); setMessage("Note saved."); setNoteText(""); await load();
     } catch { setMessage("The note could not be saved. Refresh and try again."); } finally { setSaving(false); }
   }
   async function saveSessionReview(): Promise<void> {
     if (activeLaunch.kind !== "session") return;
-    const hasNote = Boolean(noteText.trim());
-    if (!hasNote && !sessionTagsDirty && !sessionRulesDirty) {
-      setMessage("Add a note, tag, or rule result before saving.");
+    if (!sessionTagsDirty && !sessionRulesDirty) {
+      setMessage("Choose a session tag or change a custom rule result before saving.");
       return;
     }
     setSaving(true); setMessage(null);
     try {
-      if (hasNote) {
-        const isLegacy = category !== "custom";
-        const url = isLegacy ? "/api/platform/notes/standard" : "/api/platform/notes/categorized";
-        const existing = savedNotes.find((item) => category === "custom"
-          ? item.category === "custom" && item.customType?.noteTypeId === customTypeId
-          : item.category === category);
-        const expectedRevision = category === "custom" ? existing?.revision ?? null : legacyRevisions[category];
-        const response = await fetch(url, { method: "PUT", headers: headers(), body: JSON.stringify({ ...target(activeLaunch), category, customTypeId: category === "custom" ? customTypeId : undefined, expectedAccountSelectionRef, expectedRevision: expectedRevision ?? null, text: noteText }) });
-        if (!response.ok) throw new Error("note");
-      }
-      if (sessionTagsDirty || sessionRulesDirty) {
-        const ruleReviews = sessionReview?.rules.flatMap((rule) => {
+      const ruleReviews = sessionReview?.rules.flatMap((rule) => {
           const current = sessionReview.reviews.find((item) => item.ruleId === rule.ruleId) ?? null;
           const status = sessionRuleStatuses[rule.ruleId] ?? "not-reviewed";
           return status === (current?.status ?? "not-reviewed") ? [] : [{
@@ -225,18 +220,17 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
             ruleVersion: rule.ruleVersion,
             status,
           }];
-        }) ?? [];
-        const response = await fetch(`/api/platform/notes/session-review/${encodeURIComponent(activeLaunch.sessionDate)}`, {
-          method: "PUT", headers: headers(), body: JSON.stringify({
-            expectedAccountSelectionRef,
-            presetKeys: sessionTagIds.map(journalTagPresetKeyFromSelectionId).filter((value): value is string => value !== null),
-            ruleReviews,
-            tagIds: sessionTagIds.filter((tagId) => journalTagPresetKeyFromSelectionId(tagId) === null),
-          }),
-        });
-        if (!response.ok) throw new Error("review");
-      }
-      setNoteText(""); setMessage("Session Review saved."); await load();
+      }) ?? [];
+      const response = await fetch(`/api/platform/notes/session-review/${encodeURIComponent(activeLaunch.sessionDate)}`, {
+        method: "PUT", headers: headers(), body: JSON.stringify({
+          expectedAccountSelectionRef,
+          presetKeys: sessionTagIds.map(journalTagPresetKeyFromSelectionId).filter((value): value is string => value !== null),
+          ruleReviews,
+          tagIds: sessionTagIds.filter((tagId) => journalTagPresetKeyFromSelectionId(tagId) === null),
+        }),
+      });
+      if (!response.ok) throw new Error("review");
+      setMessage("Session Review saved."); await load();
     } catch { setMessage("The Session Review could not be saved. Refresh and try again."); } finally { setSaving(false); }
   }
   async function createSessionTag(): Promise<void> {
@@ -313,8 +307,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
           })}</Stack>
           <Box>{selectedSessionTags.length === 0 ? <Typography color="text.secondary" variant="caption">No session tags selected.</Typography> : <><Typography color="text.secondary" variant="caption">Selected for this session</Typography><Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mt: 0.5 }} useFlexGap>{selectedSessionTags.map((tag) => <Chip color="primary" icon={<CheckCircleRoundedIcon />} key={tag.tagId} label={tag.name} onDelete={() => setSessionTagIds((current) => current.filter((tagId) => tagId !== tag.tagId))} size="small" />)}</Stack></>}</Box>
         </> : <Typography color="text.secondary" variant="body2">Loading available tags…</Typography>}
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75}><TextField label="New session tag" onChange={(event) => setNewSessionTag(event.target.value)} size="small" value={newSessionTag} /><Button disabled={saving || !newSessionTag.trim()} onClick={() => void createSessionTag()} size="small">Add tag</Button></Stack>
-        {sessionReview?.tags.length ? <Box component="details"><Box component="summary" sx={{ color: "primary.main", cursor: "pointer", fontSize: "0.875rem", fontWeight: 800 }}>Manage saved tags</Box><Stack spacing={0.5} sx={{ maxHeight: 160, mt: 1, overflowY: "auto", pr: 0.5 }}>{sessionReview.tags.map((tag) => <Stack direction="row" key={tag.tagId} sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography variant="body2">{tag.name}</Typography><IconButton aria-label={`Remove ${tag.name}`} disabled={saving} onClick={() => void retireSessionTag(tag)} size="small"><DeleteOutlineRoundedIcon fontSize="small" /></IconButton></Stack>)}</Stack></Box> : null}
+        <Box component="details"><Box component="summary" sx={{ color: "primary.main", cursor: "pointer", fontSize: "0.875rem", fontWeight: 800 }}>Manage saved tags</Box><Stack spacing={1} sx={{ mt: 1 }}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75}><TextField label="New personal tag" onChange={(event) => setNewSessionTag(event.target.value)} size="small" value={newSessionTag} /><Button disabled={saving || !newSessionTag.trim()} onClick={() => void createSessionTag()} size="small">Add tag</Button></Stack>{sessionReview?.tags.length ? <Stack spacing={0.5} sx={{ maxHeight: 160, overflowY: "auto", pr: 0.5 }}>{sessionReview.tags.map((tag) => <Stack direction="row" key={tag.tagId} sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography variant="body2">{tag.name}</Typography><IconButton aria-label={`Remove ${tag.name}`} disabled={saving} onClick={() => void retireSessionTag(tag)} size="small"><DeleteOutlineRoundedIcon fontSize="small" /></IconButton></Stack>)}</Stack> : <Typography color="text.secondary" variant="body2">No personal tags have been saved yet.</Typography>}</Stack></Box>
       </Stack></AccordionDetails>
     </Accordion>
     <Accordion expanded={sessionRulesOpen} onChange={(_, expanded) => setSessionRulesOpen(expanded)}>
@@ -329,9 +322,14 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   const sessionSummaryContent = activeLaunch.kind !== "session" ? null : <Stack spacing={1.25}>
     {sessionSummary === null ? <Typography color="text.secondary" variant="body2">Loading session trades…</Typography> : sessionSummary.trades.length === 0 ? <Typography color="text.secondary" variant="body2">No trades have been recorded for {activeLaunch.sessionDate}.</Typography> : <><Typography color="text.secondary" variant="body2">Session Summary · {activeLaunch.sessionDate}</Typography><Typography sx={{ fontWeight: 800 }} variant="body2">Session P/L: {sessionSummary.pnl ?? "Unavailable"} · {sessionSummary.tradeCount} completed {sessionSummary.tradeCount === 1 ? "trade" : "trades"}</Typography>{sessionSummary.trades.map((trade) => <Box component="details" key={trade.roundTripId} sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 1.25 }}><Box component="summary" sx={{ cursor: "pointer", fontWeight: 800 }}>{trade.symbol} · {trade.direction === "long" ? "Long" : "Short"}</Box><Stack spacing={0.4} sx={{ mt: 1 }}><Typography variant="body2">P/L: {trade.pnl ?? "Unavailable"}</Typography><Typography variant="body2">Shares traded: {trade.shares ?? "Unavailable"}</Typography><Typography variant="body2">Entry: {new Date(trade.entryAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: trade.timezone })}</Typography></Stack></Box>)}</>}
   </Stack>;
+  const sessionReviewHistoryByMonth = sessionReviewHistory.reduce<Record<string, SessionReviewHistoryItem[]>>((groups, review) => { const month = review.sessionDate.slice(0, 7); (groups[month] ??= []).push(review); return groups; }, {});
   const savedSessionReviewContent = activeLaunch.kind !== "session" ? null : <Stack spacing={1.5}>
-    <Typography color="text.secondary" variant="body2">Open any saved date to view its complete Session Review.</Typography>
-    {sessionReviewHistory.length === 0 ? <Typography color="text.secondary">No saved Session Reviews yet.</Typography> : <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }} useFlexGap>{sessionReviewHistory.map((review) => <Button key={review.sessionDate} onClick={() => changeSessionDate(review.sessionDate)} size="small" variant={review.sessionDate === activeLaunch.sessionDate ? "contained" : "outlined"}>{review.sessionDate}</Button>)}</Stack>}
+    <Typography color="text.secondary" variant="body2">Find a complete saved Session Review by date, note text, or saved tag.</Typography>
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1}><TextField label="From" onChange={(event) => setHistoryFrom(event.target.value)} size="small" slotProps={{ inputLabel: { shrink: true } }} type="date" value={historyFrom} /><TextField label="To" onChange={(event) => setHistoryTo(event.target.value)} size="small" slotProps={{ inputLabel: { shrink: true } }} type="date" value={historyTo} /></Stack>
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1}><TextField fullWidth label="Search notes or tags" onChange={(event) => setHistoryQuery(event.target.value)} size="small" value={historyQuery} /><Button disabled={historyLoading} onClick={() => void loadSessionReviewHistory()} variant="outlined">Search</Button></Stack>
+    {historyLoading && sessionReviewHistory.length === 0 ? <Typography color="text.secondary">Loading saved sessions…</Typography> : null}
+    {sessionReviewHistory.length === 0 && !historyLoading ? <Typography color="text.secondary">No saved Session Reviews match these filters.</Typography> : Object.entries(sessionReviewHistoryByMonth).map(([month, reviews]) => <Stack key={month} spacing={0.75}><Typography sx={{ fontWeight: 800 }} variant="body2">{new Date(`${month}-01T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}</Typography>{reviews.map((review) => <Box key={review.sessionDate} sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 1.25 }}><Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }} variant="body2">{review.sessionDate}</Typography><Button onClick={() => changeSessionDate(review.sessionDate)} size="small" variant="outlined">Open Review</Button></Stack><Typography color="text.secondary" variant="caption">{review.noteCount} saved note{review.noteCount === 1 ? "" : "s"} · {review.tagCount} tag{review.tagCount === 1 ? "" : "s"} · {review.ruleCount} rule result{review.ruleCount === 1 ? "" : "s"}</Typography></Box>)}</Stack>)}
+    {historyNextCursor ? <Button disabled={historyLoading} onClick={() => void loadSessionReviewHistory(historyNextCursor, true)} sx={{ alignSelf: "flex-start" }} variant="outlined">Load more</Button> : null}
     <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}>
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
         <Typography sx={{ fontWeight: 800 }} variant="body2">Session Review · {activeLaunch.sessionDate}</Typography>
@@ -360,7 +358,10 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
       {category === "custom" && !selectedCustomType ? <Alert severity="info">Choose or create a custom note type first.</Alert> : <TextField label={selectedLabel} minRows={8} multiline onChange={(event) => setNoteText(event.target.value)} placeholder={`Write your ${selectedLabel.toLowerCase()} note…`} value={noteText} />}
       {sessionReviewFields}
       {message ? <Alert severity={message.includes("could not") ? "error" : "success"}>{message}</Alert> : null}
-      <Button disabled={saving || (category === "custom" && !selectedCustomType)} onClick={() => void saveNote()} sx={{ alignSelf: "flex-start" }} variant="contained">{activeLaunch.kind === "session" ? "Save Session Review" : "Save Note"}</Button>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+        <Button disabled={saving || (category === "custom" && !selectedCustomType)} onClick={() => void saveNote()} sx={{ alignSelf: "flex-start" }} variant="contained">Save note</Button>
+        {activeLaunch.kind === "session" ? <Button disabled={saving || (!sessionTagsDirty && !sessionRulesDirty)} onClick={() => void saveSessionReview()} sx={{ alignSelf: "flex-start" }} variant="outlined">Save Session Review</Button> : null}
+      </Stack>
     </Stack>
   ) : view === "saved" ? savedContent : view === "details" ? <Stack spacing={1.25}><Typography color="text.secondary" variant="body2">{launch.kind === "session" ? "Session Summary" : "Trade Details"}</Typography>{renderDetails?.() ?? <Typography color="text.secondary" variant="body2">Details are supplied by the page that opened Notes.</Typography>}</Stack> : <Stack spacing={2}><Typography color="text.secondary" variant="body2">Current Focuses are your ongoing trading goals. They are not attached to one trade or one session.</Typography><TextField label="Current Focuses" minRows={7} multiline onChange={(event) => setFocusText(event.target.value)} placeholder="For example: follow my risk rules, or improve chart reading." value={focusText} /><FormControlLabel control={<Switch checked={showInWorkspace} onChange={(event) => setShowInWorkspace(event.target.checked)} />} label="Display this on my Workspace" />{message ? <Alert severity={message.includes("could not") ? "error" : "success"}>{message}</Alert> : null}<Button disabled={saving} onClick={() => void saveFocus()} sx={{ alignSelf: "flex-start" }} variant="contained">Save Current Focuses</Button></Stack>;
   return <Drawer anchor="right" onClose={close} open={open} slotProps={{ paper: { sx: { width: { xs: "100vw", sm: 520 }, maxWidth: "100vw" } } }}><Stack sx={{ height: "100%" }}><Stack direction="row" sx={{ alignItems: "center", borderBottom: 1, borderColor: "divider", justifyContent: "space-between", p: 2 }}><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{focusOnly ? "Current Focuses" : activeLaunch.kind === "session" ? "Session Review" : "Notes"}</Typography><IconButton aria-label="Close Notes" onClick={close}><CloseRoundedIcon /></IconButton></Stack>{focusOnly ? null : mobile ? <Select fullWidth onChange={(event) => setView(event.target.value as DrawerView)} size="small" sx={{ m: 1.5, width: "calc(100% - 24px)" }} value={view}>{drawerViews.map((item) => <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>)}</Select> : <Tabs onChange={(_, value: DrawerView) => setView(value)} value={view} variant="fullWidth">{drawerViews.map((item) => <Tab key={item.value} label={item.label} value={item.value} />)}</Tabs>}<Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>{focusOnly ? content : view === "details" && activeLaunch.kind === "session" ? sessionSummaryContent : content}</Box></Stack></Drawer>;

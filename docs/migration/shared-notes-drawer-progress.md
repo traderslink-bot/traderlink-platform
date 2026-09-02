@@ -16,6 +16,7 @@ Related plan:
 | Session tags and existing day-rule review controls | Implemented locally; needs migration and owner review |
 | Analyzer changes | Explicitly out of scope |
 | Browser review, migration application, commit, deployment | Pending owner and release checkpoints |
+| Saved Sessions finder and Calendar discovery | Implemented locally; needs owner visual review and release checkpoint |
 
 ## Focused QA record
 
@@ -94,3 +95,32 @@ Summary. Standard session/trade fields continue through the established
 annotation service; only custom and unsupported fixed combinations use the
 additive categorized-note records. No migration, browser review, commit, or
 release has been run.
+
+## 2026-09-02 Saved Sessions follow-up
+
+- The owner directed a separate session-note save, retained final Session
+  Review save, tag-library creation/management, reordered Review/Details/Saved
+  sessions navigation, scalable saved-review discovery, and Calendar
+  discoverability.
+- The complete proposed interaction and explicit non-goals are recorded in
+  [shared-notes-drawer-saved-sessions-design.md](./shared-notes-drawer-saved-sessions-design.md).
+- The owner approved the interaction direction, including an on-demand
+  Calendar panel in Workspace. Calendar data is loaded only after the
+  Workspace Calendar action is opened; closing it unmounts the panel. Release
+  remains coordinator-owned; no publish, migration, or Railway action occurs
+  from this worktree.
+
+## 2026-09-02 Saved Sessions implementation
+
+- The Review view now keeps **Save note** independent from **Save Session
+  Review**. The former saves only the selected note type and retains the
+  current editing view; the latter saves only selected session tags and changed
+  custom-rule results.
+- The session-only tabs now read **Review**, **Details**, and **Saved
+  sessions** on desktop and in the mobile selector.
+- Saved sessions now has a bounded account-scoped finder with date limits,
+  note/tag text search, month grouping, result counts, and a 20-result
+  continuation cursor.
+- Calendar now has account-scoped Session Review markers and an
+  **Open Session Review** launcher. Workspace loads the reusable Calendar
+  client only after its Calendar action is selected.

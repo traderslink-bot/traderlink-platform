@@ -8,6 +8,7 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -29,6 +30,11 @@ import { WorkspaceMoreFiltersDrawer } from "./workspace-more-filters-drawer";
 import { openWorkspaceTradeDrawer } from "./workspace-trade-drawer-events";
 import { DashboardChartAction, DashboardChartPanelSlot, DashboardChartProvider } from "../dashboard-chart-tool";
 import { JournalNotesDrawer, type JournalNotesDrawerInitialView } from "../notes/journal-notes-drawer";
+
+const WorkspaceCalendarPanel = dynamic(
+  () => import("./workspace-calendar-panel").then((module) => module.WorkspaceCalendarPanel),
+  { ssr: false },
+);
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -160,6 +166,7 @@ export function WorkspaceDashboard({
   const searchParams = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sessionNotesOpen, setSessionNotesOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [sessionNotesInitialView, setSessionNotesInitialView] = useState<JournalNotesDrawerInitialView>("add");
   const multipleTradeSave = searchParams.get("tradeSave") === "multiple";
   const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
@@ -207,6 +214,7 @@ export function WorkspaceDashboard({
           <Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button>
           <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }}>+ Sessions</DashboardSecondaryAction></Tooltip>
           <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }}>+ Focuses</DashboardSecondaryAction></Tooltip>
+          <DashboardSecondaryAction onClick={() => setCalendarOpen(true)}>Calendar</DashboardSecondaryAction>
           <DashboardChartAction />
         </Stack> : null}
       </Stack>
@@ -243,6 +251,7 @@ export function WorkspaceDashboard({
         <CurrentFocusContent content={currentFocuses} />
       </DashboardPanel></Box> : null}
       <DashboardChartPanelSlot />
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} onClose={() => setCalendarOpen(false)} /> : null}
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
           <Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}>

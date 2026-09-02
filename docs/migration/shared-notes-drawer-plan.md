@@ -10,6 +10,9 @@ chart, Workspace card, or other page supplies the same launch context.
 Progress is tracked in
 [shared-notes-drawer-progress.md](./shared-notes-drawer-progress.md).
 
+The owner-directed Saved Sessions follow-up is specified for visual review in
+[shared-notes-drawer-saved-sessions-design.md](./shared-notes-drawer-saved-sessions-design.md).
+
 ## Owner-approved interaction
 
 The shared drawer accepts either a trade context (stable round-trip id) or a
@@ -17,9 +20,9 @@ session context (account-local trading date).
 
 Session Review uses three tabs:
 
-1. **Add Note**
-2. **Saved Notes**
-3. **Details**
+1. **Review**
+2. **Details**
+3. **Saved sessions**
 On mobile, the tab row becomes one full-width view selector that displays the
 selected view and opens a menu or bottom sheet containing those same three
 views. Unsaved text is never discarded when the trader changes views or
@@ -52,7 +55,7 @@ The Add Note view defaults to **General**. Its type selector exposes the fixed
 types valid for the current scope and active custom types. Beside it, **+ Custom
 note type** expands into an `Enter note name` field and a small **Save** action.
 
-For a session launch, Add Note also includes Session tags and Session rules.
+For a session launch, Review also includes Session tags and Session rules.
 On desktop these sections are open beneath the note editor; on mobile they are
 collapsed until selected. Session tags attach to the trading-day record and
 reuse the account's tag catalog without being confused with any individual
@@ -121,6 +124,13 @@ no cross-account value is silently selected as the user’s new focus.
    or the Trade Analyzer slice.
 5. Obtain owner visual approval from the production-capable dashboard before
    release. Moomoo/Analyzer availability is unrelated to this Notes feature.
+
+6. After owner approval of the Saved Sessions design, add independent
+   session-note saving, the bounded Saved Sessions finder, account-local tag
+   library controls, Calendar session-review markers, and the on-demand
+   Workspace Calendar panel. Reuse the one shared drawer and existing
+   Calendar; do not create parallel note or Calendar data, and do not preload
+   Calendar data on Workspace.
 
 ## Acceptance boundary
 

@@ -362,7 +362,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         summary: "Record trade-specific observations and the larger lesson from the day.",
         keywords: Object.freeze(["trade notes", "daily notes", "what worked", "needs work", "technical recap", "current focuses"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Open Notes from Daily Notes to write a session note or find saved notes. The fixed session types are What worked, What needs work, Technical recap and General. You can also add a personal note type. Trade notes stay attached to one selected trade." }),
+          Object.freeze({ kind: "paragraph", text: "Open Notes from Daily Notes to write a session note or find saved sessions. The Review tab saves one selected note type at a time; Save Session Review separately saves the day's tags and custom rule results. Saved sessions can be searched by date, note text, or saved tag. The fixed session types are What worked, What needs work, Technical recap and General. You can also add a personal note type. Trade notes stay attached to one selected trade." }),
           Object.freeze({ kind: "paragraph", text: "Current Focuses is a separate ongoing reminder, not a trade or session note. You can choose to display it on Workspace when you save it." }),
           Object.freeze({ kind: "paragraph", text: "A Session Review also lets you apply tags to the whole trading day and mark day rules as Followed, Broken, or Not reviewed. These remain separate from any individual trade's tags and rule results." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([

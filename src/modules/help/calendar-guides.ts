@@ -21,7 +21,7 @@ export const CALENDAR_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       paragraph("Week view opens on the current Monday-to-Friday week for the selected account, even before it has completed trades. The period controls also let you move through the account's recorded trading periods. Changing the view does not change Trade Tracker executions, notes, tags or Rule results."),
     ]),
     section("read-a-day", "Read a calendar day", "A day can show completed-trade P/L, trade count, win rate and selected review indicators.", ["day p/l", "trade count", "notes", "tags", "rules", "review completed"], [
-      bullets(["A positive or negative result reflects the saved completed-trade result for the date.", "Ticker rows group the trades in that symbol for the selected day.", "Week view can show Notes, Rules and Tags indicators from saved Trade Tracker activity.", "The current trading week can show whether a Daily Trade Tracker review was completed."]),
+      bullets(["A positive or negative result reflects the saved completed-trade result for the date.", "Ticker rows group the trades in that symbol for the selected day.", "Week view can show Notes, Rules and Tags indicators from saved Trade Tracker activity.", "A Session Review marker means that the selected account has saved notes, session tags, or session rule results for that date. Open that date and choose Open Session Review to continue in the shared drawer.", "The current trading week can show whether a Daily Trade Tracker review was completed."]),
     ]),
   ]),
   guide("inspect-a-day", "Inspect a day and its trades", "Open a day or ticker to see the saved trade information behind the Calendar cell.", [

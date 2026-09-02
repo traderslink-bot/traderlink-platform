@@ -41,6 +41,7 @@ import {
 import { financialOutcomeColor, financialThresholdColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { FeatureHelpLink } from "../feature-help-link";
 import { HorizontalScrollHint } from "../horizontal-scroll-region";
+import { JournalNotesDrawer } from "../notes/journal-notes-drawer";
 
 import {
   DashboardDataScopeChip,
@@ -141,6 +142,7 @@ function emptyDay(date: string): CalendarDay {
   return {
     date,
     hasDailyTracker: false,
+    hasSessionReview: false,
     peakGivebackDecimal: null,
     pnlDecimal: null,
     pnlSign: null,
@@ -249,7 +251,7 @@ function DayCell({
   const dayDate = new Date(`${day.date}T12:00:00.000Z`);
   const hasJournalActivity = day.tickers.some((ticker) =>
     ticker.noteCount > 0 || ticker.ruleReviewCount > 0 || ticker.tagCount > 0);
-  const isEmpty = day.tradeCount === 0 && !hasJournalActivity;
+  const isEmpty = day.tradeCount === 0 && !hasJournalActivity && !day.hasSessionReview;
   return (
     <Box
       onClick={isEmpty ? undefined : onSelect}
@@ -330,6 +332,7 @@ function DayCell({
             />
           </Box>
         ) : null}
+        {day.hasSessionReview ? <Chip color="primary" label="Session Review" size="small" sx={{ alignSelf: "flex-start", mt: 0.75 }} variant="outlined" /> : null}
     </Box>
   );
 }
@@ -347,7 +350,7 @@ function MobileMonthCell({
   onTickerClick: (ticker: CalendarTickerResult) => void;
   selected: boolean;
 }) {
-  const hasActivity = day.tradeCount > 0 || day.tickers.some((ticker) =>
+  const hasActivity = day.hasSessionReview || day.tradeCount > 0 || day.tickers.some((ticker) =>
     ticker.noteCount > 0 || ticker.ruleReviewCount > 0 || ticker.tagCount > 0);
   const label = new Date(`${day.date}T12:00:00.000Z`).toLocaleDateString("en-US", {
     day: "numeric",
@@ -423,6 +426,7 @@ function MobileMonthCell({
           ) : null}
         </Stack>
       ) : null}
+      {day.hasSessionReview ? <Chip color="primary" label="Session Review" size="small" sx={{ alignSelf: "flex-start", mt: 0.5 }} variant="outlined" /> : null}
     </Box>
   );
 }
@@ -474,6 +478,7 @@ function MobileWeekCard({
           ))}
           {day.tickers.length > 4 ? <Typography color="text.secondary" sx={{ px: 0.75 }} variant="caption">{day.tickers.length - 4} more ticker{day.tickers.length === 5 ? "" : "s"}</Typography> : null}
           {showReviewStatus && day.hasDailyTracker && day.tradeCount > 0 && day.reviewStatus ? <Chip color={day.reviewStatus === "reviewed" ? "success" : "warning"} label={day.reviewStatus === "reviewed" ? "Review completed" : "Review not completed"} size="small" sx={{ alignSelf: "flex-start", mt: 0.5 }} /> : null}
+          {day.hasSessionReview ? <Chip color="primary" label="Session Review" size="small" sx={{ alignSelf: "flex-start", mt: 0.5 }} variant="outlined" /> : null}
         </Stack>
       ) : null}
     </Box>
@@ -657,10 +662,12 @@ export function CalendarClient({
   availableWeeks,
   availableWeekOptions = [],
   currentWeek,
+  expectedAccountSelectionRef,
   initialData,
   initialFilters,
   initialView,
   offlineSavedAtUtc,
+  onNavigatePeriod,
   selectedMonth,
   selectedWeek,
 }: {
@@ -668,10 +675,12 @@ export function CalendarClient({
   availableWeeks: readonly string[];
   availableWeekOptions: readonly CalendarWeekOption[];
   currentWeek: string;
+  expectedAccountSelectionRef?: string;
   initialData: CalendarData;
   initialFilters: CalendarFilterInput;
   initialView: CalendarView;
   offlineSavedAtUtc?: string;
+  onNavigatePeriod?: (view: CalendarView, period: string) => void;
   selectedMonth: string;
   selectedWeek: string;
 }) {
@@ -690,6 +699,7 @@ export function CalendarClient({
   const [savedViewsOpen, setSavedViewsOpen] = useState(false);
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [filters, setFilters] = useState<CalendarFilterInput>(initialFilters);
+  const [sessionNotesOpen, setSessionNotesOpen] = useState(false);
   const resolvedWeekOptions = availableWeekOptions.length > 0
     ? availableWeekOptions
     : availableWeeks.map((week) => ({ months: [week.slice(0, 7)], week }));
@@ -767,6 +777,7 @@ export function CalendarClient({
 
   const navigatePeriod = (nextView: CalendarView, period: string) => {
     if (offlineSavedAtUtc) return;
+    if (onNavigatePeriod) { onNavigatePeriod(nextView, period); return; }
     const query = new URLSearchParams({ view: nextView });
     query.set(nextView === "month" ? "month" : "week", period);
     router.push(`/calendar?${query.toString()}`);
@@ -941,6 +952,7 @@ export function CalendarClient({
             {selected.tradeCount > 0 ? (
               <Button href={`/trade-tracker/${selected.date}`} sx={{ mt: 2 }} variant="outlined">Trade tracker</Button>
             ) : null}
+            {selected.hasSessionReview && expectedAccountSelectionRef ? <Button onClick={() => setSessionNotesOpen(true)} sx={{ mt: 2 }} variant="outlined">Open Session Review</Button> : null}
             <Stack spacing={1} sx={{ mt: 2 }}>
               {selected.tickers.map((ticker) => (
                 <Accordion
@@ -1007,6 +1019,7 @@ export function CalendarClient({
         <Typography sx={{ fontWeight: 800 }} variant="body2">Ticker results</Typography>
         <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>{selected.tickers.map((ticker) => <Stack key={ticker.instrumentId} sx={{ py: 1.4 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }}>{ticker.symbol}</Typography><Typography color={pnlTone(ticker.pnlSign).color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(ticker.pnlDecimal, initialData.currency)}</Typography></Stack><TickerAnnotationChips compact={false} noteCount={ticker.noteCount} ruleReviewCount={ticker.ruleReviewCount} tagCount={ticker.tagCount} /></Stack>)}</Stack>
       </Drawer>
+      {expectedAccountSelectionRef ? <JournalNotesDrawer expectedAccountSelectionRef={expectedAccountSelectionRef} launch={{ kind: "session", sessionDate: selected.date }} onClose={() => setSessionNotesOpen(false)} open={sessionNotesOpen} /> : null}
     </DashboardPage>
   );
 }

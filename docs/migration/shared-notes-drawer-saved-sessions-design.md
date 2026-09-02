@@ -1,0 +1,83 @@
+# Shared Notes Drawer Saved Sessions Design
+
+Status: owner-approved interaction direction. Implementation, commit, and
+release remain separate checkpoints.
+
+Related plan:
+[Shared Notes Drawer Plan](./shared-notes-drawer-plan.md).
+
+## Scope
+
+This follow-up corrects the Session Review workflow without changing the
+authoritative day-note, tag, rule-review, or Calendar facts.
+
+1. A trader can save each selected session note type independently.
+2. The final Session Review save remains responsible for the session-level tag
+   and custom-rule selections.
+3. Saved sessions become a finder for complete dated reviews, not a list of
+   only the currently open note.
+4. Saved sessions become visible from the existing Calendar.
+
+## Proposed drawer direction for owner review
+
+Desktop tab order and mobile selector order are identical:
+
+1. **Review**
+2. **Details**
+3. **Saved sessions**
+
+### Review
+
+The note-type selector and editor appear first. Its action is **Save note**;
+it saves only that selected note type for the chosen session date, clears the
+editor, and keeps the trader in Review so another type can be written next.
+
+Session tags and Session rules remain beneath the note editor. Their final
+action is **Save Session Review**, clearly labeled as saving the chosen session
+tags and custom-rule results. It does not silently save or overwrite text that
+is still in the note editor.
+
+The tag picker is a short scroll region. A checked tag has a check icon and is
+repeated in a **Selected for this session** row below it. **Manage saved tags**
+is the account-local tag library: it contains the create-personal-tag field and
+the retirement controls. Retiring a used tag requires confirmation and
+preserves historical assignment evidence.
+
+### Saved sessions
+
+This view is a bounded finder rather than a date-chip row. Its top controls are
+a date range and a text search across saved session-note text and saved tag
+names. Results are grouped by month and paginated. Each result shows its date,
+saved-note count, selected-tag count, and saved rule-result count. Selecting a
+result opens the whole dated review in one read-only overview: its note types,
+tags, and rule outcomes, with an **Open Review** action to add or change
+content.
+
+The query remains account-scoped, server-bounded, and does not load Calendar
+or chart data.
+
+### Calendar
+
+The existing Calendar remains the Calendar surface. A date with a saved Session
+Review receives a compact **Session Review** marker. Selecting that date exposes
+**Open Session Review**, which launches the same shared drawer directly on that
+date. No parallel Calendar data store is created.
+
+On Workspace, a compact **Calendar** action beside the existing tool actions
+opens the existing Calendar as an on-demand Workspace panel. Workspace does
+not request or render Calendar data until that action is used. Closing the
+panel unmounts it; the complete Calendar page remains available separately.
+
+## Acceptance and non-goals
+
+- A new session note type does not replace any previously saved session note.
+- Saving tags/rules cannot overwrite an unsaved note editor value.
+- Calendar markers expose only the presence of the selected account's saved
+  Session Review; they do not expose note contents in the calendar grid.
+- Existing trade notes, Current Focuses, chart behavior, and individual trade
+  tags are unchanged.
+- The Workspace Calendar panel reuses the Calendar read model and account
+  authorization; it is not a second Calendar store or a preloaded dashboard
+  card.
+- Owner visual approval is required before implementation. Focused source and
+  browser checks follow only after that approval.
