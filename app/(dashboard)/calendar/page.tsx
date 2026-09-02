@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import {

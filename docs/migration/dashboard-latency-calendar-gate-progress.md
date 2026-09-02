@@ -14,5 +14,7 @@ Linked plan: [dashboard-latency-calendar-gate-plan.md](dashboard-latency-calenda
   `calendar-performance-test.ts`; when the exact production variable is `true`,
   the Calendar route redirects to Workspace before reading `searchParams`,
   identity, Calendar data, or offline data.
-- No Railway variable, migration, deployment, or test action has run from this
-  record yet.
+- First production build of `45721e8c` failed before service replacement only
+  because the route omitted the existing `next/navigation` `redirect` import.
+  The follow-up is import-only; no Calendar behavior, data, migration, or
+  configuration became active.
