@@ -82,6 +82,25 @@
     #traderslink-homepage-review-v2 .tl2-tools-heading .tl2-section-link { margin-top:40px; }
     #traderslink-homepage-review-v2 .tl2-tools-layout { align-items:stretch; display:grid; gap:30px; grid-template-columns:1fr 1fr; margin:0 auto; max-width:1720px; width:100%; }
     #traderslink-homepage-review-v2 .tl2-tools-left { display:flex; flex-direction:column; gap:35px; justify-content:space-between; }
+    #traderslink-homepage-review-v2 .tl2-dark-mode { background:#07111f; color:#fff; isolation:isolate; overflow:hidden; padding:96px 4.5% 104px; position:relative; }
+    #traderslink-homepage-review-v2 .tl2-dark-mode::before { background:radial-gradient(circle at 50% 68%,var(--tl2-dark-glow,rgba(48,119,226,.31)),transparent 52%); content:""; inset:0; opacity:.95; pointer-events:none; position:absolute; transition:background 650ms ease; z-index:-2; }
+    #traderslink-homepage-review-v2 .tl2-dark-mode::after { background-image:linear-gradient(rgba(124,158,203,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(124,158,203,.07) 1px,transparent 1px); background-size:46px 46px; content:""; inset:0; mask-image:linear-gradient(to bottom,transparent,black 28%,black 78%,transparent); opacity:.34; pointer-events:none; position:absolute; z-index:-1; }
+    #traderslink-homepage-review-v2 .tl2-dark-mode-inner { margin:0 auto; max-width:1540px; text-align:center; }
+    #traderslink-homepage-review-v2 .tl2-dark-mode .tl2-label { color:#74a9ff; }
+    #traderslink-homepage-review-v2 .tl2-dark-mode h2 { font-size:clamp(34px,4.7vw,62px); letter-spacing:-.045em; line-height:1.03; margin:0 auto 17px; max-width:920px; }
+    #traderslink-homepage-review-v2 .tl2-dark-mode-copy { color:#b9c8de; font-size:18px; margin:0 auto 42px; max-width:690px; }
+    #traderslink-homepage-review-v2 .tl2-dark-stage { margin:0 auto; max-width:1410px; position:relative; }
+    #traderslink-homepage-review-v2 .tl2-dark-screen { aspect-ratio:2.02 / 1; background:#101c2c; border:1px solid rgba(133,168,220,.32); border-radius:18px; box-shadow:0 34px 90px rgba(0,0,0,.58),0 0 70px var(--tl2-dark-frame-glow,rgba(42,114,225,.25)); overflow:hidden; position:relative; transition:box-shadow 650ms ease; }
+    #traderslink-homepage-review-v2 .tl2-dark-screen::after { background:linear-gradient(90deg,transparent,rgba(174,213,255,.3),transparent); content:""; inset:-12% auto -12% -28%; opacity:0; pointer-events:none; position:absolute; transform:skewX(-14deg); width:20%; z-index:3; }
+    #traderslink-homepage-review-v2 .tl2-dark-screen.is-switching::after { animation:tl2-screen-scan 680ms cubic-bezier(.22,1,.36,1); }
+    #traderslink-homepage-review-v2 .tl2-dark-slide { height:100%; inset:0; object-fit:contain; opacity:0; position:absolute; transform:scale(1.012); transition:opacity 560ms ease,transform 760ms cubic-bezier(.22,1,.36,1); width:100%; }
+    #traderslink-homepage-review-v2 .tl2-dark-slide.is-active { opacity:1; transform:scale(1); z-index:1; }
+    #traderslink-homepage-review-v2 .tl2-dark-selectors { display:flex; flex-wrap:wrap; gap:9px; justify-content:center; margin-top:25px; }
+    #traderslink-homepage-review-v2 .tl2-dark-selector { align-items:center; background:rgba(17,31,49,.86); border:1px solid rgba(127,161,207,.35); border-radius:999px; color:#b9c8de; cursor:pointer; display:flex; font:inherit; font-size:13px; font-weight:700; gap:8px; min-height:38px; padding:8px 13px; transition:background-color .2s ease,border-color .2s ease,color .2s ease,transform .2s ease; }
+    #traderslink-homepage-review-v2 .tl2-dark-selector::before { background:#56769d; border-radius:50%; content:""; height:7px; transition:background-color .2s ease,box-shadow .2s ease; width:7px; }
+    #traderslink-homepage-review-v2 .tl2-dark-selector:hover { border-color:#74a9ff; color:#fff; transform:translateY(-1px); }
+    #traderslink-homepage-review-v2 .tl2-dark-selector[aria-pressed="true"] { background:#173761; border-color:#74a9ff; color:#fff; }
+    #traderslink-homepage-review-v2 .tl2-dark-selector[aria-pressed="true"]::before { background:#63d58d; box-shadow:0 0 0 4px rgba(99,213,141,.13),0 0 15px rgba(99,213,141,.48); }
     #traderslink-homepage-review-v2 .tl2-signup { background:#062663; color:#fff; padding:68px 4.5%; text-align:center; }
     #traderslink-homepage-review-v2 .tl2-signup h2 { font-size:clamp(30px,4vw,48px); letter-spacing:-.04em; line-height:1.08; margin-bottom:12px; }
     #traderslink-homepage-review-v2 .tl2-signup p { color:#d8e4f8; margin:0 auto 24px; max-width:570px; }
@@ -137,7 +156,8 @@
     #traderslink-homepage-review-v2 .tl2-reveal { opacity:0; transform:translateY(32px); transition:opacity .72s cubic-bezier(.22,1,.36,1),transform .72s cubic-bezier(.22,1,.36,1); }
     #traderslink-homepage-review-v2 .tl2-reveal.is-revealed { opacity:1; transform:translateY(0); }
     @keyframes tl2-panel-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-    @media (prefers-reduced-motion:reduce) { #traderslink-homepage-review-v2 .tl2-tab,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link,#traderslink-homepage-review-v2 .tl2-features-chevron,#traderslink-homepage-review-v2 .tl2-menu-toggle-lines span,#traderslink-homepage-review-v2 .tl2-reveal { transition:none; } #traderslink-homepage-review-v2 .tl2-tab:hover,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link:hover { transform:none; } #traderslink-homepage-review-v2 .tl2-product-panel.is-active { animation:none; } #traderslink-homepage-review-v2 .tl2-reveal { opacity:1; transform:none; } }
+    @keyframes tl2-screen-scan { 0% { left:-28%; opacity:0; } 18% { opacity:1; } 100% { left:112%; opacity:0; } }
+    @media (prefers-reduced-motion:reduce) { #traderslink-homepage-review-v2 .tl2-tab,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link,#traderslink-homepage-review-v2 .tl2-features-chevron,#traderslink-homepage-review-v2 .tl2-menu-toggle-lines span,#traderslink-homepage-review-v2 .tl2-reveal,#traderslink-homepage-review-v2 .tl2-dark-mode::before,#traderslink-homepage-review-v2 .tl2-dark-screen,#traderslink-homepage-review-v2 .tl2-dark-slide,#traderslink-homepage-review-v2 .tl2-dark-selector { transition:none; } #traderslink-homepage-review-v2 .tl2-tab:hover,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link:hover,#traderslink-homepage-review-v2 .tl2-dark-selector:hover { transform:none; } #traderslink-homepage-review-v2 .tl2-product-panel.is-active,#traderslink-homepage-review-v2 .tl2-dark-screen.is-switching::after { animation:none; } #traderslink-homepage-review-v2 .tl2-reveal { opacity:1; transform:none; } }
     @media (max-width:760px) {
       #traderslink-homepage-review-v2 .tl2-header { min-height:68px; padding:0 18px; z-index:30; }
       #traderslink-homepage-review-v2 .tl2-logo img { height:27px; }
@@ -165,6 +185,11 @@
       #traderslink-homepage-review-v2 .tl2-shot > .tl2-desktop-image { display:none; }
       #traderslink-homepage-review-v2 .tl2-mobile-image-stack { background:#f4f7fb; display:grid; gap:12px; padding:12px; }
       #traderslink-homepage-review-v2 .tl2-mobile-image-stack img { border:1px solid #dbe4ef; border-radius:10px; }
+      #traderslink-homepage-review-v2 .tl2-dark-mode { padding:64px 16px 68px; }
+      #traderslink-homepage-review-v2 .tl2-dark-mode-copy { font-size:16px; margin-bottom:29px; }
+      #traderslink-homepage-review-v2 .tl2-dark-screen { border-radius:11px; box-shadow:0 22px 54px rgba(0,0,0,.58),0 0 38px var(--tl2-dark-frame-glow,rgba(42,114,225,.22)); }
+      #traderslink-homepage-review-v2 .tl2-dark-selectors { gap:7px; margin-top:18px; }
+      #traderslink-homepage-review-v2 .tl2-dark-selector { font-size:12px; min-height:34px; padding:6px 10px; }
       #traderslink-homepage-review-v2 .tl2-consent { bottom:12px; left:12px; right:12px; }
       #traderslink-homepage-review-v2 .tl2-consent-card { padding:18px; }
       #traderslink-homepage-review-v2 .tl2-consent-actions { justify-content:stretch; }
@@ -387,6 +412,30 @@
       </div>
     </section>
 
+    <section aria-labelledby="dark-mode-title" class="tl2-dark-mode" data-dark-mode-showcase>
+      <div class="tl2-dark-mode-inner">
+        <p class="tl2-label">Dark mode</p>
+        <h2 id="dark-mode-title">And yes—dark mode is in full effect.</h2>
+        <p class="tl2-dark-mode-copy">Switch the entire TradersLink dashboard to a darker workspace for trading, journaling, and reviewing your results.</p>
+        <div class="tl2-dark-stage">
+          <div aria-live="off" class="tl2-dark-screen">
+            <img alt="TradersLink Workspace overview in dark mode" class="tl2-dark-slide is-active" data-glow="blue" decoding="async" height="927" loading="lazy" src="landing-assets/darkmode/workspace-dashboard.png" width="1880" />
+            <img alt="TradersLink Daily Trade Tracker in dark mode" class="tl2-dark-slide" data-glow="green" decoding="async" height="931" loading="lazy" src="landing-assets/darkmode/trade-tracker-full-dashboard.png" width="1885" />
+            <img alt="TradersLink monthly trading calendar in dark mode" class="tl2-dark-slide" data-glow="teal" decoding="async" height="748" loading="lazy" src="landing-assets/darkmode/calendar.png" width="1608" />
+            <img alt="TradersLink Trade Analyzer chart and analysis in dark mode" class="tl2-dark-slide" data-glow="blue" decoding="async" height="937" loading="lazy" src="landing-assets/darkmode/trade-analyzer-chart.png" width="1910" />
+            <img alt="TradersLink detected candle pattern results in dark mode" class="tl2-dark-slide" data-glow="violet" decoding="async" height="917" loading="lazy" src="landing-assets/darkmode/candle-patterns.png" width="1873" />
+          </div>
+          <div aria-label="Choose a dark mode dashboard view" class="tl2-dark-selectors" role="group">
+            <button aria-label="Show Workspace dark mode view" aria-pressed="true" class="tl2-dark-selector" type="button">Workspace</button>
+            <button aria-label="Show Daily Tracker dark mode view" aria-pressed="false" class="tl2-dark-selector" type="button">Daily Tracker</button>
+            <button aria-label="Show Calendar dark mode view" aria-pressed="false" class="tl2-dark-selector" type="button">Calendar</button>
+            <button aria-label="Show Trade Analyzer dark mode view" aria-pressed="false" class="tl2-dark-selector" type="button">Analyzer</button>
+            <button aria-label="Show Candle Patterns dark mode view" aria-pressed="false" class="tl2-dark-selector" type="button">Candle Patterns</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="tl2-signup" id="free-account">
       <h2>Create your free account.</h2>
       <p>Start using the TradersLink Dashboard for journaling, analysis, and trading tools.</p>
@@ -470,6 +519,81 @@
   });
   positionAnalyticsTabs();
   window.matchMedia('(max-width: 760px)').addEventListener('change', positionAnalyticsTabs);
+  const darkModeShowcase = document.querySelector('[data-dark-mode-showcase]');
+  if (darkModeShowcase) {
+    const darkScreen = darkModeShowcase.querySelector('.tl2-dark-screen');
+    const darkSlides = Array.from(darkModeShowcase.querySelectorAll('.tl2-dark-slide'));
+    const darkSelectors = Array.from(darkModeShowcase.querySelectorAll('.tl2-dark-selector'));
+    const reduceDarkMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const darkGlows = {
+      green: ['rgba(46,155,103,.32)', 'rgba(46,155,103,.24)'],
+      teal: ['rgba(35,154,155,.3)', 'rgba(35,154,155,.22)'],
+      blue: ['rgba(48,119,226,.31)', 'rgba(48,119,226,.25)'],
+      violet: ['rgba(116,91,220,.29)', 'rgba(116,91,220,.22)'],
+      cyan: ['rgba(42,156,193,.3)', 'rgba(42,156,193,.23)']
+    };
+    let darkIndex = 0;
+    let darkTimer = null;
+    let darkVisible = false;
+    let darkPaused = false;
+    const showDarkSlide = (nextIndex, animate = true) => {
+      darkIndex = (nextIndex + darkSlides.length) % darkSlides.length;
+      darkSlides.forEach((slide, index) => slide.classList.toggle('is-active', index === darkIndex));
+      darkSelectors.forEach((selector, index) => selector.setAttribute('aria-pressed', String(index === darkIndex)));
+      const glow = darkGlows[darkSlides[darkIndex].dataset.glow] || darkGlows.blue;
+      darkModeShowcase.style.setProperty('--tl2-dark-glow', glow[0]);
+      darkModeShowcase.style.setProperty('--tl2-dark-frame-glow', glow[1]);
+      if (animate && !reduceDarkMotion.matches) {
+        darkScreen.classList.remove('is-switching');
+        void darkScreen.offsetWidth;
+        darkScreen.classList.add('is-switching');
+      }
+    };
+    const stopDarkAutoplay = () => {
+      if (darkTimer) window.clearInterval(darkTimer);
+      darkTimer = null;
+    };
+    const startDarkAutoplay = () => {
+      stopDarkAutoplay();
+      if (!darkVisible || darkPaused || reduceDarkMotion.matches || document.hidden) return;
+      darkTimer = window.setInterval(() => showDarkSlide(darkIndex + 1), 2200);
+    };
+    darkSelectors.forEach((selector, index) => {
+      selector.addEventListener('click', () => {
+        showDarkSlide(index);
+        startDarkAutoplay();
+      });
+      selector.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        const nextIndex = (index + (event.key === 'ArrowRight' ? 1 : darkSelectors.length - 1)) % darkSelectors.length;
+        darkSelectors[nextIndex].focus();
+        showDarkSlide(nextIndex);
+        startDarkAutoplay();
+      });
+    });
+    darkModeShowcase.addEventListener('mouseenter', () => { darkPaused = true; stopDarkAutoplay(); });
+    darkModeShowcase.addEventListener('mouseleave', () => { darkPaused = false; startDarkAutoplay(); });
+    darkModeShowcase.addEventListener('focusin', () => { darkPaused = true; stopDarkAutoplay(); });
+    darkModeShowcase.addEventListener('focusout', (event) => {
+      if (darkModeShowcase.contains(event.relatedTarget)) return;
+      darkPaused = false;
+      startDarkAutoplay();
+    });
+    document.addEventListener('visibilitychange', startDarkAutoplay);
+    reduceDarkMotion.addEventListener('change', startDarkAutoplay);
+    if ('IntersectionObserver' in window) {
+      const darkModeObserver = new IntersectionObserver((entries) => {
+        darkVisible = entries[0].isIntersecting;
+        startDarkAutoplay();
+      }, { threshold: 0.2 });
+      darkModeObserver.observe(darkModeShowcase);
+    } else {
+      darkVisible = true;
+      startDarkAutoplay();
+    }
+    showDarkSlide(0, false);
+  }
   const featuresMenu = document.querySelector('.tl2-features-menu');
   if (featuresMenu) {
     const featuresToggle = featuresMenu.querySelector('.tl2-features-toggle');

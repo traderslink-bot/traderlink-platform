@@ -1,6 +1,6 @@
 # Railway Public Site Cutover Progress
 
-**Status:** Three-page static production surface live; Trade Analytics final QA complete and serialized publication authorized
+**Status:** Four-page static production surface live and verified
 
 **Controlling plan:** [Railway Public Site Cutover Plan](railway-public-site-cutover-plan.md)
 
@@ -78,6 +78,20 @@
 - [x] Added only the exact `/trade-analytics` static route, relative
   trailing-slash redirect, Docker directory copy, and landing-sitemap entry;
   the dynamic Railway-DNS proxy and all Platform route ownership are retained.
-- [ ] Publish the candidate through the Coordinator-owned static release lane
-  from exact production parent `f0e15a79`, then record the deployment and live
-  smoke evidence.
+- [x] Published candidate `0aa72808` through the Coordinator-owned static
+  release lane from exact production parent `f0e15a79` as Railway deployment
+  `5be665c3-e92c-4424-b5b1-82fc2bd81350`.
+- [x] Live smoke verified `/`, `/trading-journal`, `/trade-analyzer`, and
+  `/trade-analytics` as 200; the Analytics trailing-slash redirect is relative,
+  the representative new asset and discovery files are 200, and Help, News,
+  legal pages, Platform health, and the expected unauthenticated Watchlist SSE
+  boundary all remain healthy.
+
+## Homepage dark-mode showcase
+
+- [x] Owner visually approved a new homepage section immediately before the
+  final signup CTA. The release candidate uses five real dark-mode
+  dashboard screenshots in one illuminated screen, fast crossfades, a restrained
+  scan-light transition, manual view selectors, viewport-aware autoplay,
+  hover/focus pausing, and reduced-motion fallback. Production publication and
+  live smoke verification remain pending.
