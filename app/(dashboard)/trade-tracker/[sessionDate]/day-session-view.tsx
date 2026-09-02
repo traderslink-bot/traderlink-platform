@@ -91,6 +91,7 @@ import {
   DailyTrackerOfflineSavedViewCapture,
   type DailyTrackerOfflineCaptureMetadata,
 } from "./daily-tracker-offline-saved-view-capture";
+import { JournalNotesDrawer } from "../../notes/journal-notes-drawer";
 
 const DailyTradeAnalyzerChart = dynamic(
   () => import("./daily-trade-analyzer-chart").then((module) => module.DailyTradeAnalyzerChart),
@@ -2974,6 +2975,7 @@ export function DaySessionView({
   const [notesState, setNotesState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
+  const [notesDrawerOpen, setNotesDrawerOpen] = useState(false);
   const [dailyNotesDirty, setDailyNotesDirty] = useState(false);
   const [dirtyTradeNoteKeys, setDirtyTradeNoteKeys] = useState<Set<string>>(
     () => new Set(),
@@ -4517,6 +4519,11 @@ export function DaySessionView({
 
       <DashboardPanel title="Daily Notes">
         <>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+          <DashboardSecondaryAction onClick={() => setNotesDrawerOpen(true)}>
+            Open Notes
+          </DashboardSecondaryAction>
+        </Box>
         <Box
           sx={{
             display: "grid",
@@ -4652,6 +4659,12 @@ export function DaySessionView({
         open={manageTagsOpen}
         tags={availableTags}
       />}
+      <JournalNotesDrawer
+        expectedAccountSelectionRef={data.expectedAccountSelectionRef}
+      launch={{ kind: "session", sessionDate: data.date }}
+      onClose={() => setNotesDrawerOpen(false)}
+      open={notesDrawerOpen}
+      />
       {readOnly ? null : <Dialog
         aria-labelledby="review-with-unsaved-changes-title"
         fullWidth

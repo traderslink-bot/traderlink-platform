@@ -5,14 +5,18 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   DashboardDataScopeChip,
   DashboardMetricCard,
   DashboardPage,
+  DashboardPanel,
+  DashboardSecondaryAction,
 } from "../../dashboard-template";
 import { DemoDataCallout, DemoTradeTrackerInvitation } from "../demo-data-callout";
 import type { FinancialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
@@ -22,8 +26,9 @@ import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
 import { WorkspaceTradeLibrary } from "./workspace-trade-library-client";
 import { WorkspaceMoreFiltersDrawer } from "./workspace-more-filters-drawer";
-import { TradeTagCreationDrawer } from "../analytics/trade-explorer/trade-tag-creation-drawer";
 import { openWorkspaceTradeDrawer } from "./workspace-trade-drawer-events";
+import { DashboardChartAction, DashboardChartProvider } from "../dashboard-chart-tool";
+import { JournalNotesDrawer, type JournalNotesDrawerInitialView } from "../notes/journal-notes-drawer";
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -98,6 +103,29 @@ function savedViewTime(value: string): string {
   }).format(new Date(value));
 }
 
+function sessionDateInTimezone(timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: timezone,
+    year: "numeric",
+  }).formatToParts(new Date());
+  const values = new Map(parts.map((part) => [part.type, part.value]));
+  return `${values.get("year")}-${values.get("month")}-${values.get("day")}`;
+}
+
+function CurrentFocusContent({ content }: Readonly<{ content: string }>) {
+  const [expanded, setExpanded] = useState(false);
+  const needsToggle = content.trim().length > 500;
+
+  return <>
+    <Typography color="text.secondary" sx={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap", ...(needsToggle && !expanded ? { WebkitBoxOrient: "vertical", WebkitLineClamp: 8, display: "-webkit-box", overflow: "hidden" } : {}) }} variant="body2">
+      {content}
+    </Typography>
+    {needsToggle ? <Button onClick={() => setExpanded((current) => !current)} size="small" sx={{ mt: 0.75 }}>{expanded ? "Show less" : "View more"}</Button> : null}
+  </>;
+}
+
 export function WorkspaceDashboard({
   analyticsMetrics,
   demoAccountSelectionRef,
@@ -107,14 +135,15 @@ export function WorkspaceDashboard({
   hasRealAcceptedExecution,
   offlineSavedAtUtc,
   period = "all",
-  reviewSummary: _reviewSummary,
+  reviewSummary,
   showDemoTradeTrackerInvitation,
   ...tradeLibraryProps
 }: WorkspaceDashboardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [tagCreationOpen, setTagCreationOpen] = useState(false);
+  const [sessionNotesOpen, setSessionNotesOpen] = useState(false);
+  const [sessionNotesInitialView, setSessionNotesInitialView] = useState<JournalNotesDrawerInitialView>("add");
   const multipleTradeSave = searchParams.get("tradeSave") === "multiple";
   const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
     Boolean(tradeLibraryProps.trades.query.searchTicker) || tradeLibraryProps.trades.query.filter !== "all" ||
@@ -127,11 +156,15 @@ export function WorkspaceDashboard({
       Number(tradeLibraryProps.trades.query.sort !== "newest") + Number(tradeLibraryProps.trades.query.group !== "none")
     : 0;
   const metrics = analyticsMetrics ?? unavailableMetrics;
+  const summaryCurrentFocuses = reviewSummary?.currentFocuses?.trim() || null;
+  const [currentFocuses, setCurrentFocuses] = useState(summaryCurrentFocuses);
+  useEffect(() => { setCurrentFocuses(summaryCurrentFocuses); }, [summaryCurrentFocuses]);
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
   }
   return (
-    <DashboardPage>
+    <DashboardChartProvider>
+      <DashboardPage>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { xs: "stretch", md: "center" }, justifyContent: "space-between" }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
           {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
@@ -151,7 +184,14 @@ export function WorkspaceDashboard({
           <DashboardDataScopeChip />
           {offlineSavedAtUtc ? <Chip color="primary" label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`} size="small" variant="outlined" /> : null}
         </Stack>
-        {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: { xs: "flex-end", md: "flex-start" } }}><Button onClick={openWorkspaceTradeDrawer} variant="contained">+ Trade</Button><Button href="/imports" size="small" variant="outlined">Imports</Button><Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button><Button onClick={() => setTagCreationOpen(true)} variant="outlined">+ Tags</Button></Stack> : null}
+        {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: { xs: "flex-end", md: "flex-start" } }}>
+          <Button onClick={openWorkspaceTradeDrawer} variant="contained">+ Trade</Button>
+          <Button href="/imports" size="small" variant="outlined">Imports</Button>
+          <Button onClick={() => router.push("/rules")} variant="outlined">+ Rules</Button>
+          <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }}>Session</DashboardSecondaryAction></Tooltip>
+          <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }}>Focuses</DashboardSecondaryAction></Tooltip>
+          <DashboardChartAction />
+        </Stack> : null}
       </Stack>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Link href="/trade-tracker">Open Day Trade Tracker</Link></Alert> : null}
@@ -159,15 +199,20 @@ export function WorkspaceDashboard({
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && currentFocuses ? <Box sx={{ mt: 1.5 }}><DashboardPanel action={<Button onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} size="small">Edit Focuses</Button>} title="Current Focuses">
+        <Typography color="text.secondary" sx={{ mb: 1.25 }} variant="body2">Set a clear focus for your trading: a rule to follow, an emotion to manage, a setup to wait for, or a skill to build.</Typography>
+        <CurrentFocusContent content={currentFocuses} />
+      </DashboardPanel></Box> : null}
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
           <Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}>
             <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} />
           </Box>
           <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} onClose={() => setFiltersOpen(false)} open={filtersOpen} query={tradeLibraryProps.trades.query} />
-          <TradeTagCreationDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} onClose={() => setTagCreationOpen(false)} open={tagCreationOpen} />
+          <JournalNotesDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} focusOnly={sessionNotesInitialView === "focuses"} initialView={sessionNotesInitialView} key={sessionNotesInitialView} launch={{ kind: "session", sessionDate: sessionDateInTimezone(tradeLibraryProps.accountTimezone) }} onClose={() => setSessionNotesOpen(false)} onFocusSaved={(focus) => setCurrentFocuses(focus.showInWorkspace && focus.focusText.trim() ? focus.focusText.trim() : null)} open={sessionNotesOpen} />
         </>
       ) : null}
-    </DashboardPage>
+      </DashboardPage>
+    </DashboardChartProvider>
   );
 }

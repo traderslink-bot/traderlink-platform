@@ -8,6 +8,7 @@ import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/ana
 import { JournalAnnotationRepository } from "@/src/modules/journal/server/annotations/journal-annotation-repository";
 import { JournalAnnotationService } from "@/src/modules/journal/server/annotations/journal-annotation-service";
 import { JournalRuleRepository } from "@/src/modules/journal/server/annotations/journal-rule-repository";
+import { JournalSharedNotesService } from "@/src/modules/journal/server/shared-notes/journal-shared-notes-service";
 import { JournalTradingDayReviewService } from "@/src/modules/journal/server/reviews/journal-trading-day-review-service";
 import { JournalDashboardReadModelService } from "@/src/modules/journal-analytics/server/journal-dashboard-read-model-service";
 
@@ -89,7 +90,10 @@ export function readWorkspaceReviewSummary(
   const rules = annotations.listRules(account);
   const ruleNames = new Map(rules.map((rule) => [rule.ruleId, rule.title]));
   const currentDate = currentDateOverride ?? easternTradingDate(now);
-  const currentFocuses = annotations.readCurrentFocus(account, currentDate).trim() || null;
+  const globalFocus = new JournalSharedNotesService(database).readCurrentFocus(scope);
+  const currentFocuses = globalFocus?.showInWorkspace && globalFocus.focusText.trim()
+    ? globalFocus.focusText.trim()
+    : null;
   const focusRules = Object.freeze(rules
     .filter((rule) => rule.lifecycleState === "active" && rule.isFocus)
     .map((rule) => Object.freeze({

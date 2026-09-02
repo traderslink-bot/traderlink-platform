@@ -5,15 +5,19 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
 import { useEffect, useRef, useState } from "react";
 
 const TRADING_VIEW_WIDGET_URL =
   "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
 
-export function TradingViewChart() {
+export function TradingViewChart({
+  symbol = "NASDAQ:AAPL",
+  sx = [],
+}: Readonly<{ symbol?: string; sx?: SxProps<Theme> }>) {
   const theme = useTheme();
   const dark = theme.palette.mode === "dark";
+  const tradingViewSymbol = symbol.trim().toUpperCase() || "NASDAQ:AAPL";
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasLoadError, setHasLoadError] = useState(false);
@@ -48,7 +52,7 @@ export function TradingViewChart() {
       locale: "en",
       save_image: true,
       style: "1",
-      symbol: "NASDAQ:AAPL",
+      symbol: tradingViewSymbol,
       theme: dark ? "dark" : "light",
       timezone: "America/New_York",
       withdateranges: true,
@@ -60,11 +64,11 @@ export function TradingViewChart() {
     return () => {
       chartContainer.replaceChildren();
     };
-  }, [dark, loadAttempt]);
+  }, [dark, loadAttempt, tradingViewSymbol]);
 
   return (
     <Box
-      sx={{
+      sx={[{
         bgcolor: "background.paper",
         border: 1,
         borderColor: "divider",
@@ -74,7 +78,7 @@ export function TradingViewChart() {
         overflow: "hidden",
         position: "relative",
         width: "100%",
-      }}
+      }, ...(Array.isArray(sx) ? sx : [sx])]}
     >
       {!hasLoaded && !hasLoadError ? (
         <Stack
