@@ -293,10 +293,13 @@ while still allowing a trader to make a deliberate completed-trade study later.
      or duplicate the matching trades;
    - `Saved views` opens a bounded right-side drawer on desktop and a
      full-width sheet on phone-sized screens;
-   - every saved-view entry shows its custom title and the selected filters in
-     trader-facing language; and
-   - selecting a saved view restores that complete Explorer setup and reruns
-     the current factual results for the active account.
+   - every saved-view entry is collapsed by default and shows its custom title,
+     creation date and an expansion chevron;
+   - selecting anywhere on the collapsed entry expands its selected filters in
+     trader-facing language, while `Open view` remains a separate explicit
+     action; and
+   - choosing `Open view` restores that complete Explorer setup and reruns the
+     current factual results for the active account.
    Use the accepted Analytics saved-view ownership, versioning and account
    scope where the existing strict query contract can represent them. Explorer
    display and ordering state require their own additive versioned contract;
@@ -311,6 +314,8 @@ while still allowing a trader to make a deliberate completed-trade study later.
      currency, timezone and exact current ordering;
    - keep the report columns aligned with the selected Explorer table, except
      omit the interactive `Review` column from the Trades report;
+   - use 9-point text for both table rows and bold column labels without
+     changing the Trade Explorer table typography in the application;
    - place the TradersLink logo and `traderslink.pro` in the header of every
      report page; and
    - show the report name and selected date range in the repeated header, with

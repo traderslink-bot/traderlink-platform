@@ -455,7 +455,25 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as
     WHERE fee_allocation.workspace_id = projection.workspace_id
       AND fee_allocation.account_id = projection.account_id
       AND fee_allocation.round_trip_version_id = projection.round_trip_version_id
-      AND fee_version.manual_fee_input_state = 'not_entered'
+      AND (
+        fee_version.manual_fee_input_state = 'not_entered'
+        OR (
+          fee_version.manual_fee_input_state IS NULL
+          AND fee_version.fees_decimal IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM journal_execution_provenance manual_fee_provenance
+            JOIN journal_import_batches manual_fee_batch
+              ON manual_fee_batch.workspace_id = manual_fee_provenance.workspace_id
+             AND manual_fee_batch.account_id = manual_fee_provenance.account_id
+             AND manual_fee_batch.import_batch_id = manual_fee_provenance.import_batch_id
+            WHERE manual_fee_provenance.workspace_id = fee_execution.workspace_id
+              AND manual_fee_provenance.account_id = fee_execution.account_id
+              AND manual_fee_provenance.execution_id = fee_execution.execution_id
+              AND manual_fee_batch.source_kind = 'manual_batch'
+          )
+        )
+      )
   )`);
   const where = clauses.join(" AND ");
   const filterParameters = [...parameters];

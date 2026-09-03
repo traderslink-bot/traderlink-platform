@@ -502,3 +502,19 @@
 - Focused source coverage was added for the all-or-nothing server contract;
   no test command, server, build, migration, staging, deployment, push or data
   operation was run in this implementation checkpoint.
+
+## 2026-09-03 — Historical manual no-fee filter fallback
+
+- The Workspace `Fees not entered` query continues to match current manual
+  execution versions explicitly marked `manual_fee_input_state =
+  'not_entered'`.
+- It also matches pre-migration manual execution versions only when the manual
+  fee state and fee value are both `NULL` and execution provenance resolves to
+  a `manual_batch` import source.
+- Broker-imported executions and historical manual executions with an explicit
+  zero fee remain excluded. The fallback is read-only query behavior; it does
+  not backfill, rewrite or otherwise mutate historical Journal data.
+- The Workspace controls and visible copy are unchanged, so the existing Help
+  guidance requires no corresponding presentation update.
+- No test command, browser process, server, migration, data write, build, push
+  or deployment ran in this implementation step at the owner's direction.

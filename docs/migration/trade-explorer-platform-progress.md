@@ -18,6 +18,27 @@ on 2026-08-04 and the corrected Trades/review direction on 2026-08-16.
 
 **PDF visual review:** [Trade Explorer PDF report mockup](trade-explorer-pdf-report-mockup.html)
 
+## 2026-09-03 PDF typography and saved-view card refinement
+
+The owner approved increasing the generated PDF table from 6.4-point row text
+and 6.6-point column labels to 9-point text for both, with the column labels
+remaining bold. This is isolated to the PDF renderer and does not change the
+Trade Explorer table typography in the application.
+
+The Saved views drawer now presents every entry collapsed by default. Its
+collapsed card shows the custom title, the UTC creation date and an expansion
+chevron. Selecting anywhere on that collapsed card expands the same complete
+filter details already shown by the first version. `Open view` remains a
+separate explicit action inside the expanded card so expanding a card cannot
+unexpectedly replace the current Explorer results.
+
+- [x] Owner approved the revised PDF font size and saved-view card composition.
+- [x] Implement the PDF-only typography change.
+- [x] Implement accessible expand/collapse controls and creation dates.
+- [x] Review and align the Trade Explorer Help guide.
+- [ ] Owner will verify the integrated behavior online; no local test suite or
+  browser process is authorized for this refinement.
+
 ## 2026-09-03 current-view PDF report
 
 The approved first report is a direct document export of the currently applied

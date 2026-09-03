@@ -361,6 +361,15 @@ function savedViewDate(value: string): string {
   }).format(new Date(`${value}T00:00:00.000Z`));
 }
 
+function savedViewCreatedDate(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 function exactField(
   label: string,
   value: string | null,
@@ -440,6 +449,9 @@ export default function TradeExplorerClient({
   const [isDownloadingReport, setIsDownloadingReport] = useState(false);
   const [savedViews, setSavedViews] = useState(initialSavedViews);
   const [savedViewsOpen, setSavedViewsOpen] = useState(false);
+  const [expandedSavedViewIds, setExpandedSavedViewIds] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  );
   const [saveViewDialogOpen, setSaveViewDialogOpen] = useState(false);
   const [saveViewName, setSaveViewName] = useState("");
   const [saveViewError, setSaveViewError] = useState<string | null>(null);
@@ -764,6 +776,18 @@ export default function TradeExplorerClient({
     ));
     setSavedViewsOpen(false);
     run(saved.query, saved.tradeSort, saved.resultView, saved.sortDirection);
+  }
+
+  function toggleSavedViewDetails(savedViewId: string): void {
+    setExpandedSavedViewIds((current) => {
+      const next = new Set(current);
+      if (next.has(savedViewId)) {
+        next.delete(savedViewId);
+      } else {
+        next.add(savedViewId);
+      }
+      return next;
+    });
   }
 
   async function downloadPdfReport(): Promise<void> {
@@ -1515,46 +1539,94 @@ export default function TradeExplorerClient({
               </Typography>
             ) : (
               <Stack spacing={1.5}>
-                {savedViews.map((savedView) => (
-                  <ButtonBase
-                    focusRipple
-                    key={savedView.savedViewId}
-                    onClick={() => openSavedView(savedView)}
-                    sx={{
-                      alignItems: "stretch",
-                      border: 1,
-                      borderColor: "divider",
-                      borderRadius: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      p: 2,
-                      textAlign: "left",
-                      width: "100%",
-                      "&:hover": {
-                        bgcolor: "action.hover",
-                        borderColor: "primary.main",
-                      },
-                    }}
-                  >
-                    <Typography sx={{ fontWeight: 800, width: "100%" }}>{savedView.name}</Typography>
-                    <Stack component="dl" spacing={0.5} sx={{ m: 0, mt: 1.25, width: "100%" }}>
-                      {savedViewDetails(savedView.view).map((detail) => (
-                        <Box
-                          component="div"
-                          key={`${detail.label}:${detail.value}`}
-                          sx={{ display: "grid", gap: 1, gridTemplateColumns: "88px minmax(0, 1fr)" }}
-                        >
-                          <Typography color="text.secondary" component="dt" variant="body2">{detail.label}</Typography>
-                          <Typography component="dd" sx={{ m: 0 }} variant="body2">{detail.value}</Typography>
+                {savedViews.map((savedView) => {
+                  const detailsExpanded = expandedSavedViewIds.has(savedView.savedViewId);
+                  const detailsId = `saved-view-details-${savedView.savedViewId}`;
+                  return (
+                    <Box
+                      component="article"
+                      key={savedView.savedViewId}
+                      sx={{
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 1,
+                        overflow: "hidden",
+                        width: "100%",
+                        "&:hover": {
+                          borderColor: "primary.main",
+                        },
+                      }}
+                    >
+                      <ButtonBase
+                        aria-controls={detailsId}
+                        aria-expanded={detailsExpanded}
+                        focusRipple
+                        onClick={() => toggleSavedViewDetails(savedView.savedViewId)}
+                        sx={{
+                          alignItems: "center",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          minHeight: 68,
+                          p: 2,
+                          textAlign: "left",
+                          width: "100%",
+                          "&:hover": { bgcolor: "action.hover" },
+                        }}
+                      >
+                        <Box sx={{ minWidth: 0, pr: 1, width: "100%" }}>
+                          <Typography noWrap sx={{ fontWeight: 800 }}>{savedView.name}</Typography>
+                          <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+                            Created {savedViewCreatedDate(savedView.createdAtUtc)}
+                          </Typography>
                         </Box>
-                      ))}
-                    </Stack>
-                    <Stack direction="row" sx={{ alignItems: "center", color: "primary.main", gap: 0.5, mt: 1.25 }}>
-                      <Typography sx={{ fontWeight: 800 }} variant="body2">Open view</Typography>
-                      <ArrowForwardRoundedIcon fontSize="small" />
-                    </Stack>
-                  </ButtonBase>
-                ))}
+                        <ExpandMoreRoundedIcon
+                          aria-hidden="true"
+                          sx={{
+                            color: "text.secondary",
+                            flexShrink: 0,
+                            transform: detailsExpanded ? "rotate(180deg)" : "none",
+                            transition: (theme) => theme.transitions.create("transform"),
+                          }}
+                        />
+                      </ButtonBase>
+                      <Collapse id={detailsId} in={detailsExpanded} unmountOnExit>
+                        <Box sx={{ borderTop: 1, borderColor: "divider", px: 2, pb: 1, pt: 1.5 }}>
+                          <Stack component="dl" spacing={0.5} sx={{ m: 0, width: "100%" }}>
+                            {savedViewDetails(savedView.view).map((detail) => (
+                              <Box
+                                component="div"
+                                key={`${detail.label}:${detail.value}`}
+                                sx={{ display: "grid", gap: 1, gridTemplateColumns: "88px minmax(0, 1fr)" }}
+                              >
+                                <Typography color="text.secondary" component="dt" variant="body2">{detail.label}</Typography>
+                                <Typography component="dd" sx={{ m: 0 }} variant="body2">{detail.value}</Typography>
+                              </Box>
+                            ))}
+                          </Stack>
+                          <ButtonBase
+                            aria-label={`Open saved view ${savedView.name}`}
+                            focusRipple
+                            onClick={() => openSavedView(savedView)}
+                            sx={{
+                              borderRadius: 1,
+                              color: "primary.main",
+                              display: "flex",
+                              justifyContent: "flex-start",
+                              minHeight: 44,
+                              mt: 0.75,
+                              px: 1,
+                              width: "100%",
+                              "&:hover": { bgcolor: "action.hover" },
+                            }}
+                          >
+                            <Typography sx={{ fontWeight: 800 }} variant="body2">Open view</Typography>
+                            <ArrowForwardRoundedIcon fontSize="small" sx={{ ml: 0.5 }} />
+                          </ButtonBase>
+                        </Box>
+                      </Collapse>
+                    </Box>
+                  );
+                })}
               </Stack>
             )}
           </Box>

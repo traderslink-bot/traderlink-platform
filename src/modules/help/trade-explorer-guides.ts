@@ -33,7 +33,7 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       bullets([
         "Apply the filters, result view and ordering you want, then choose Save view and enter a custom name.",
         "Saved views stores the Explorer setup for the selected trading account. It does not create a second copy of the matching trades, notes, tags, rules or reviews.",
-        "Open Saved views to see each custom title and its selected filters. Choose a card to restore that setup and recalculate the current results.",
+        "Open Saved views to see each custom title and the date it was created. Choose a card to expand or collapse its selected filters, then choose Open view to restore that setup and recalculate the current results.",
         "If you change a filter without applying it, apply the new results before saving so the saved view matches the table you can see.",
       ]),
       link("/analytics/trade-explorer", "Open Trade Explorer", "Save or reopen an Explorer view."),

@@ -756,8 +756,8 @@ export async function renderTradeExplorerPdfDocument(table: ReportTable): Promis
     let x = margin;
     table.columns.forEach((column, columnIndex) => {
       const width = columnWidths[columnIndex];
-      const label = truncateText(column, width - 8, 6.6);
-      commands.push(textCommand(label, x + 4, headerBottom + 7, 6.6, "F2"));
+      const label = truncateText(column, width - 8, 9);
+      commands.push(textCommand(label, x + 4, headerBottom + 7, 9, "F2"));
       x += width;
     });
     let rowTop = headerBottom;
@@ -776,10 +776,10 @@ export async function renderTradeExplorerPdfDocument(table: ReportTable): Promis
       row.forEach((cell, columnIndex) => {
         const width = columnWidths[columnIndex];
         commands.push(textCommand(
-          truncateText(cell, width - 8, 6.4),
+          truncateText(cell, width - 8, 9),
           cellX + 4,
           rowBottom + 6,
-          6.4,
+          9,
           columnIndex === 0 ? "F2" : "F1",
         ));
         cellX += width;
