@@ -10,6 +10,15 @@
 **Progressive Web App:** The owner-approved [TraderLink Platform PWA Plan](traderlink-platform-pwa-plan.md) and [progress tracker](traderlink-platform-pwa-progress.md) preserve the complete dashboard and add offline Daily/Swing/Quick Trade Entry, bounded last-synced dashboard projections, retry-safe foreground and best-effort background sync, opt-in privacy-safe Web Push and one corrected icon family. PWA 1 is authorized locally; no deployment or production push activation is implied.
 **Rule:** A legacy item cannot be removed until its row is `Owner accepted` and its legacy dependency check is complete.
 
+**Trade Explorer saved views:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
+and its [progress record](trade-explorer-platform-progress.md) register additive
+migration `0117_trade_explorer_saved_views`, appended after production migration
+`0116_journal_manual_fee_input_state`. It stores an immutable-versioned,
+account-scoped custom title plus the normalized Explorer filters, selected
+result view, Gross/Net basis, currency and ordering. It does not duplicate
+trades, executions, notes, tags, rules or reviews. Migration execution remains
+a separate Railway release boundary.
+
 **Stock Levels private saved maps:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)
 and its [progress record](stock-levels-generator-progress.md) reserve additive
 migration `0090_platform_stock_levels_saved_maps`. It stores a private,

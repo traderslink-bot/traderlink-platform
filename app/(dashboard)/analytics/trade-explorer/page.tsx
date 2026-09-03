@@ -10,6 +10,7 @@ import {
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import TradeExplorerClient from "./trade-explorer-client";
+import { listTradeExplorerSavedViews } from "./trade-explorer-saved-view-runtime";
 import { readTradeExplorerPageModel } from "./trade-explorer-service";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,10 @@ export const metadata: Metadata = {
 
 export default async function TradeExplorerPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const model = await readTradeExplorerPageModel(scope);
+  const [model, savedViews] = await Promise.all([
+    readTradeExplorerPageModel(scope),
+    Promise.resolve(listTradeExplorerSavedViews(scope)),
+  ]);
   return (
     <>
       <OfflineSavedViewCapture
@@ -37,7 +41,7 @@ export default async function TradeExplorerPage() {
         routeViewVersion={JOURNAL_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_OFFLINE_ROUTE_VIEW_KEYS["trade-explorer"]}
       />
-      <TradeExplorerClient model={model} />
+      <TradeExplorerClient initialSavedViews={savedViews} model={model} />
     </>
   );
 }

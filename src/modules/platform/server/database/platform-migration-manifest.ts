@@ -29,6 +29,7 @@ import { journalWorkspaceRuleResultsCardMigration } from "@/src/modules/journal/
 import { journalWorkspacePrScannerCardMigration } from "@/src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card";
 import { journalManualFeeInputStateMigration } from "@/src/modules/journal/server/database/migrations/0116_journal_manual_fee_input_state";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
+import { tradeExplorerSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0117_trade_explorer_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
 import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/server/database/migrations/0010_level_analysis_deliveries";
@@ -566,6 +567,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0116_journal_manual_fee_input_state.ts",
       migration: journalManualFeeInputStateMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal-analytics/server/database/migrations/0117_trade_explorer_saved_views.ts",
+      migration: tradeExplorerSavedViewsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -975,6 +980,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "journal_workspace_pr_scanner_card_preferences",
     ]),
     "0116_journal_manual_fee_input_state": Object.freeze([]),
+    "0117_trade_explorer_saved_views": Object.freeze([
+      "journal_trade_explorer_saved_views",
+      "journal_trade_explorer_saved_view_versions",
+    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

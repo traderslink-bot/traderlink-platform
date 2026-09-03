@@ -13,6 +13,10 @@ import {
   updateTradeExplorerComparisonStudy as updateComparisonStudy,
 } from "./trade-explorer-comparison-study-runtime";
 import type { TradeExplorerComparisonStudyMutationResult } from "./trade-explorer-comparison-model";
+import {
+  createTradeExplorerSavedView as createSavedView,
+} from "./trade-explorer-saved-view-runtime";
+import type { TradeExplorerSavedViewMutationResult } from "./trade-explorer-saved-view-model";
 
 function inputRecord(input: unknown): Readonly<Record<string, unknown>> {
   if (!input || Array.isArray(input) || typeof input !== "object") return Object.freeze({});
@@ -69,6 +73,43 @@ export async function runTradeExplorer(
           : resultsChanged
             ? "These results changed while you were paging. Choose Update results to load the latest trades."
             : "Those results could not be displayed. The table still shows your last successful results. Check the selected filters and try again.",
+    });
+  }
+}
+
+export async function createTradeExplorerSavedView(
+  input: unknown,
+): Promise<TradeExplorerSavedViewMutationResult> {
+  try {
+    const value = inputRecord(input);
+    const scope = await requireTraderLinkPlatformPageScope();
+    const result = createSavedView(scope, {
+      name: value.name,
+      view: value.view,
+    });
+    return Object.freeze({
+      ok: true as const,
+      savedViews: result.savedViews,
+      selectedSavedViewId: result.savedViewId,
+    });
+  } catch (error) {
+    const refreshRequired = isTraderLinkPlatformError(error) && [
+      "TRADERLINK_AUTH_SESSION_INVALID",
+      "TRADERLINK_WORKSPACE_ACCESS_DENIED",
+      "TRADERLINK_ACCOUNT_ACCESS_DENIED",
+      "TRADERLINK_ACCOUNT_SELECTION_CONFLICT",
+    ].includes(error.code);
+    const limitReached = isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_TRADE_EXPLORER_SAVED_VIEW_CONFLICT" &&
+      error.safeContext.reason === "active_view_limit";
+    return Object.freeze({
+      ok: false as const,
+      refreshRequired,
+      message: refreshRequired
+        ? "Your access or selected trading account changed. Refresh this page and try again."
+        : limitReached
+          ? "This account already has 100 saved views."
+          : "This view could not be saved. Check its name and try again.",
     });
   }
 }

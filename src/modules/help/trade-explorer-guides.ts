@@ -7,7 +7,7 @@ const section = (id: string, title: string, summary: string, keywords: readonly 
 const guide = (slug: string, title: string, description: string, sections: readonly HelpArticleSection[]): HelpGuide => Object.freeze({ description, sections: Object.freeze(sections), slug, title });
 
 export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
-  guide("use-trade-explorer", "Use Trade Explorer", "Inspect individual completed trades, rank factual groups and maintain trade-review details.", [
+  guide("use-trade-explorer", "Use Trade Explorer", "Inspect individual completed trades, rank factual groups, save useful views and maintain trade-review details.", [
     section("sort-and-rank", "Sort trades or rank groups", "Keep individual-trade sorting separate from grouped rankings.", ["trade explorer", "sort trades", "rank by", "result filter", "gross p/l", "net p/l"], [
       bullets([
         "The Trades view starts with all directions and the most recently closed trade first.",
@@ -15,9 +15,10 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "Trading Days, Tickers, Entry Times, Holding Time, Position Size and Periods use Rank by to order their factual groups.",
         "Result narrows the current Gross or Net P/L population to Wins, Losses or Flat trades.",
         "Rank by offers the Gross or Net P/L that matches the selected Result basis and hides calculations that cannot produce a meaningful order for that selection.",
-        "For manual trades, Gross and Net change P/L calculation only. Leaving a manual fee blank records a $0 fee and does not hide the trade.",
-        "Use Workspace More filters, then Fees not entered, to review manual entries where the fee was left blank. Older imported trades with no fee details remain identified as unavailable for Net P/L.",
+        "Manually entered trades with no fee entered are included in Net P/L. Use View no-fee trades to review those entries in Workspace.",
+        "When broker fee details are missing from imported trades, they are excluded from Net P/L. Trade Explorer shows the excluded count only when it is greater than zero.",
       ]),
+      link("/workspace?filter=fees_not_entered", "View no-fee trades", "Review manually entered trades where no fee was entered."),
     ]),
     section("review-a-trade", "Review a completed trade", "Save notes, tags and custom-rule results without changing execution facts.", ["review trade", "trade notes", "trade tags", "custom rules", "preset rules"], [
       bullets([
@@ -27,6 +28,15 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "Review never changes the trade's executions, price, quantity, date or P/L.",
       ]),
       link("/analytics/trade-explorer", "Open Trade Explorer", "Inspect and review your completed trades."),
+    ]),
+    section("saved-views", "Save and open views", "Keep a named Explorer setup for the selected trading account.", ["saved views", "save view", "filters", "saved filters", "open view"], [
+      bullets([
+        "Apply the filters, result view and ordering you want, then choose Save view and enter a custom name.",
+        "Saved views stores the Explorer setup for the selected trading account. It does not create a second copy of the matching trades, notes, tags, rules or reviews.",
+        "Open Saved views to see each custom title and its selected filters. Choose a card to restore that setup and recalculate the current results.",
+        "If you change a filter without applying it, apply the new results before saving so the saved view matches the table you can see.",
+      ]),
+      link("/analytics/trade-explorer", "Open Trade Explorer", "Save or reopen an Explorer view."),
     ]),
   ]),
   guide("compare-trades", "Compare Trades", "Compare the recorded results of two to four completed-trade groups without changing your trades or reviews.", [

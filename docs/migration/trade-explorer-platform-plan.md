@@ -285,14 +285,39 @@ while still allowing a trader to make a deliberate completed-trade study later.
    results here.” It does not show fixtures or sample comparisons.
 4. Explain only the immediate value of a control in trader language. Avoid
    engine, eligibility, internal state and code language.
-5. Allow saved named studies using the accepted Analytics saved-view ownership,
-   versioning and account scope where the existing strict query contract can
-   represent them. Comparison-group persistence may require an additive
-   versioned schema/contract; it must not squeeze arbitrary Explorer JSON into
-   the existing Lab view shape.
-6. Provide a concise export/share-ready table for a study only after a
-   privacy, account-scope and exact-value export contract is approved. It is
-   not part of the first interactive Explorer UI.
+5. Allow account-scoped saved Trade Explorer views. The owner confirmed this
+   next feature on 2026-09-03:
+   - `Save view` opens a small dialog where the trader enters a custom name;
+   - saving captures the currently applied filters, selected result view,
+     Gross/Net basis, currency and current result ordering, but does not copy
+     or duplicate the matching trades;
+   - `Saved views` opens a bounded right-side drawer on desktop and a
+     full-width sheet on phone-sized screens;
+   - every saved-view entry shows its custom title and the selected filters in
+     trader-facing language; and
+   - selecting a saved view restores that complete Explorer setup and reruns
+     the current factual results for the active account.
+   Use the accepted Analytics saved-view ownership, versioning and account
+   scope where the existing strict query contract can represent them. Explorer
+   display and ordering state require their own additive versioned contract;
+   they must not be hidden in unrelated Lab fields or squeezed into the
+   existing Lab view shape. Updating, renaming and retiring saved views remain
+   outside this first requested interaction until separately approved.
+6. Provide an account-scoped downloadable PDF of the currently applied
+   Trade Explorer result. The owner approved this first report contract on
+   2026-09-03:
+   - export the complete matching population, not only the visible page;
+   - preserve the applied filters, selected result view, Gross/Net basis,
+     currency, timezone and exact current ordering;
+   - keep the report columns aligned with the selected Explorer table, except
+     omit the interactive `Review` column from the Trades report;
+   - place the TradersLink logo and `traderslink.pro` in the header of every
+     report page; and
+   - show the report name and selected date range in the repeated header, with
+     the generation time and page number in the footer.
+   The first report does not attach notes, tags, rule results or individual
+   trade reviews. It does not create a public share URL, save report history,
+   send email or schedule delivery.
 
 ## 6. Technical design
 

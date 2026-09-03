@@ -1,6 +1,10 @@
 "use client";
 
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import BookmarkAddRoundedIcon from "@mui/icons-material/BookmarkAddRounded";
+import BookmarksRoundedIcon from "@mui/icons-material/BookmarksRounded";
+import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
@@ -9,13 +13,19 @@ import {
   Autocomplete,
   Box,
   Button,
+  ButtonBase,
   Chip,
   Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Drawer,
   FormControl,
   IconButton,
   InputLabel,
   ListSubheader,
+  Link as MuiLink,
   MenuItem,
   Select,
   Stack,
@@ -28,12 +38,16 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import NextLink from "next/link";
 import { Fragment, useMemo, useRef, useState, useTransition } from "react";
 
 import type {
   JournalAnalyticsGroupResult,
   JournalAnalyticsMetricResult,
 } from "@/src/modules/journal-analytics/contracts/analytics-result";
+import {
+  TRADE_EXPLORER_SAVED_VIEW_VERSION,
+} from "@/src/modules/journal-analytics/contracts/trade-explorer-saved-view";
 import {
   formatJournalAnalyticsDecimal,
   formatJournalAnalyticsDuration,
@@ -73,7 +87,12 @@ import type {
 } from "../lab/analytics-lab-platform-types";
 import { HorizontalScrollRegion } from "../../horizontal-scroll-region";
 
-import { runTradeExplorer } from "./actions";
+import { createTradeExplorerSavedView, runTradeExplorer } from "./actions";
+import type {
+  TradeExplorerResultView as ExplorerResultView,
+  TradeExplorerSavedView,
+  TradeExplorerSavedViewDefinition,
+} from "./trade-explorer-saved-view-model";
 import { TradeExplorerReviewEditor } from "./trade-review-editor";
 import type { TradeExplorerReviewTarget } from "./trade-review-model";
 import type { TradeExplorerPageModel } from "./trade-explorer-service";
@@ -85,8 +104,6 @@ type ExplorerGroup = Readonly<{
   partitionLabel: string;
   group: JournalAnalyticsGroupResult;
 }>;
-
-type ExplorerResultView = "trades" | "days" | "tickers" | "entry_times" | "holding_time" | "position_size" | "periods";
 
 type ExplorerGroupColumn = Readonly<{
   label: string;
@@ -116,6 +133,8 @@ type ExplorerViewDefinition = Readonly<{
 }>;
 
 const RESULTS_UPDATE_FAILURE = "The results could not be updated. The table still shows your last successful results. Try again.";
+const REPORT_DOWNLOAD_FAILURE = "The PDF report could not be downloaded. Try again.";
+const SAVED_VIEW_SAVE_FAILURE = "This view could not be saved. Check its name and try again.";
 
 const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, ExplorerViewDefinition>> = Object.freeze({
   days: Object.freeze({
@@ -333,6 +352,15 @@ function tradeCloseTime(value: string, timeZone: string): string {
   }).format(new Date(value));
 }
 
+function savedViewDate(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00.000Z`));
+}
+
 function exactField(
   label: string,
   value: string | null,
@@ -383,9 +411,11 @@ function tradeExplorerQueriesMatch(
 }
 
 export default function TradeExplorerClient({
+  initialSavedViews = Object.freeze([]),
   model,
   offlineSavedAtUtc,
 }: Readonly<{
+  initialSavedViews?: readonly TradeExplorerSavedView[];
   model: TradeExplorerPageModel;
   offlineSavedAtUtc?: string;
 }>) {
@@ -406,6 +436,14 @@ export default function TradeExplorerClient({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [reviewRoundTripId, setReviewRoundTripId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
+  const [savedViews, setSavedViews] = useState(initialSavedViews);
+  const [savedViewsOpen, setSavedViewsOpen] = useState(false);
+  const [saveViewDialogOpen, setSaveViewDialogOpen] = useState(false);
+  const [saveViewName, setSaveViewName] = useState("");
+  const [saveViewError, setSaveViewError] = useState<string | null>(null);
+  const [isSavingView, startSavingViewTransition] = useTransition();
   const [expandedRoundTripId, setExpandedRoundTripId] = useState<string | null>(null);
   const [expandedExecutions, setExpandedExecutions] = useState<readonly TradeExecution[]>(Object.freeze([]));
   const [executionDetailsStatus, setExecutionDetailsStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -567,6 +605,213 @@ export default function TradeExplorerClient({
     setExecutionDetailsStatus("idle");
   }
 
+  function viewLabel(view: ExplorerResultView): string {
+    return view === "trades" ? "Trades" : RESULT_VIEWS[view].label;
+  }
+
+  function savedViewDetails(
+    view: TradeExplorerSavedViewDefinition,
+  ): readonly Readonly<{ label: string; value: string }>[] {
+    const savedQuery = view.query;
+    const tradeSortLabel = TRADE_EXPLORER_TRADE_SORT_OPTIONS.find((option) =>
+      option.value === view.tradeSort)?.label ?? "Newest first";
+    const rankMetric = explorerMetrics.get(savedQuery.metricId);
+    const rankLabel = rankMetric
+      ? explorerMetricLabel(rankMetric.metricId, rankMetric.title)
+      : savedQuery.metricId.replaceAll("_", " ");
+    const details: Readonly<{ label: string; value: string }>[] = [
+      Object.freeze({
+        label: "Date",
+        value: `${savedViewDate(savedQuery.startDate)} to ${savedViewDate(savedQuery.endDate)}`,
+      }),
+      Object.freeze({ label: "View", value: viewLabel(view.resultView) }),
+      Object.freeze({
+        label: view.resultView === "trades" ? "Sort" : "Rank",
+        value: view.resultView === "trades"
+          ? tradeSortLabel
+          : `${rankLabel} · ${view.sortDirection === "descending" ? "Highest first" : "Lowest first"}`,
+      }),
+      Object.freeze({
+        label: "Result",
+        value: savedQuery.outcome === null
+          ? "All results"
+          : savedQuery.outcome === "win"
+            ? "Wins"
+            : savedQuery.outcome === "loss"
+              ? "Losses"
+              : "Flat",
+      }),
+      Object.freeze({
+        label: "Currency",
+        value: `${savedQuery.currency ?? "All currencies"} · ${savedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}`,
+      }),
+      Object.freeze({ label: "Ticker", value: savedQuery.symbol ?? "All tickers" }),
+      Object.freeze({
+        label: "Direction",
+        value: savedQuery.direction === null
+          ? "All directions"
+          : savedQuery.direction === "long" ? "Long" : "Short",
+      }),
+    ];
+    if (view.resultView === "periods") {
+      const periodLabel = new Map(model.groupings.map((item) => [item.value, item.label]))
+        .get(savedQuery.grouping);
+      if (periodLabel) details.push(Object.freeze({ label: "Period", value: periodLabel }));
+    }
+    if (view.resultView === "trades") {
+      details.push(Object.freeze({
+        label: "Page size",
+        value: `${savedQuery.evidenceRows} results per page`,
+      }));
+    }
+    if (savedQuery.tradeClassification !== null) {
+      details.push(Object.freeze({
+        label: "Trade type",
+        value: savedQuery.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade",
+      }));
+    }
+    if (savedQuery.entryWeekday !== null) {
+      details.push(Object.freeze({
+        label: "Entry weekday",
+        value: savedQuery.entryWeekday.slice(0, 1).toUpperCase() + savedQuery.entryWeekday.slice(1),
+      }));
+    }
+    if (savedQuery.entryTimeBucket !== null) {
+      details.push(Object.freeze({
+        label: "Entry time",
+        value: `${savedQuery.entryTimeBucket} · ${savedQuery.entryTimeBucketMinutes}-minute detail`,
+      }));
+    }
+    const ranges = [
+      ["Holding seconds", savedQuery.minimumHoldingSeconds, savedQuery.maximumHoldingSeconds],
+      ["Entered quantity", savedQuery.minimumEnteredQuantity, savedQuery.maximumEnteredQuantity],
+      ["Maximum position", savedQuery.minimumPositionQuantity, savedQuery.maximumPositionQuantity],
+      ["Entry value", savedQuery.minimumEntryNotional, savedQuery.maximumEntryNotional],
+    ] as const;
+    for (const [label, minimum, maximum] of ranges) {
+      if (minimum !== null || maximum !== null) {
+        details.push(Object.freeze({
+          label,
+          value: `${minimum ?? "No minimum"} to ${maximum ?? "No maximum"}`,
+        }));
+      }
+    }
+    return Object.freeze(details);
+  }
+
+  function openSaveViewDialog(): void {
+    if (hasUnappliedChanges || isPending) return;
+    setSaveViewError(null);
+    setSaveViewName("");
+    setSaveViewDialogOpen(true);
+  }
+
+  function saveCurrentView(): void {
+    const name = saveViewName.trim();
+    if (name.length < 1 || name.length > 80 || isSavingView) {
+      setSaveViewError("Enter a view name between 1 and 80 characters.");
+      return;
+    }
+    setSaveViewError(null);
+    startSavingViewTransition(async () => {
+      try {
+        const result = await createTradeExplorerSavedView(Object.freeze({
+          name,
+          view: Object.freeze({
+            viewVersion: TRADE_EXPLORER_SAVED_VIEW_VERSION,
+            query: appliedQuery,
+            resultView: appliedResultView,
+            tradeSort: appliedTradeSort,
+            sortDirection,
+          }),
+        }));
+        if (!result.ok) {
+          if (result.refreshRequired) {
+            window.location.reload();
+            return;
+          }
+          setSaveViewError(result.message);
+          return;
+        }
+        setSavedViews(result.savedViews);
+        setSaveViewDialogOpen(false);
+        setSaveViewName("");
+        setSavedViewsOpen(true);
+      } catch {
+        setSaveViewError(SAVED_VIEW_SAVE_FAILURE);
+      }
+    });
+  }
+
+  function openSavedView(savedView: TradeExplorerSavedView): void {
+    const saved = savedView.view;
+    sortDirectionRevisionRef.current += 1;
+    setQuery(saved.query);
+    setResultView(saved.resultView);
+    setTradeSort(saved.tradeSort);
+    setSortDirection(saved.sortDirection);
+    setAdvanced(Boolean(
+      saved.query.entryWeekday ||
+      saved.query.entryTimeBucket ||
+      saved.query.minimumHoldingSeconds ||
+      saved.query.maximumHoldingSeconds ||
+      saved.query.minimumEnteredQuantity ||
+      saved.query.maximumEnteredQuantity ||
+      saved.query.minimumPositionQuantity ||
+      saved.query.maximumPositionQuantity ||
+      saved.query.minimumEntryNotional ||
+      saved.query.maximumEntryNotional
+    ));
+    setSavedViewsOpen(false);
+    run(saved.query, saved.tradeSort, saved.resultView, saved.sortDirection);
+  }
+
+  async function downloadPdfReport(): Promise<void> {
+    if (hasUnappliedChanges || isPending || isDownloadingReport) return;
+    setReportError(null);
+    setIsDownloadingReport(true);
+    try {
+      const response = await fetch("/api/platform/journal/analytics/trade-explorer-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: appliedQuery,
+          resultView: appliedResultView,
+          sortDirection,
+          tradeSort: appliedTradeSort,
+        }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as Readonly<{
+          message?: string;
+          refreshRequired?: boolean;
+        }> | null;
+        if (body?.refreshRequired) {
+          window.location.reload();
+          return;
+        }
+        throw new Error(body?.message ?? REPORT_DOWNLOAD_FAILURE);
+      }
+      const disposition = response.headers.get("content-disposition") ?? "";
+      const filename = /filename="([^"]+)"/u.exec(disposition)?.[1] ??
+        `traderslink-trade-explorer-${appliedResultView}.pdf`;
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    } catch (downloadError) {
+      setReportError(downloadError instanceof Error
+        ? downloadError.message
+        : REPORT_DOWNLOAD_FAILURE);
+    } finally {
+      setIsDownloadingReport(false);
+    }
+  }
+
   function run(
     nextQuery = query,
     nextTradeSort = tradeSort,
@@ -582,6 +827,7 @@ export default function TradeExplorerClient({
     const requestNumber = previewRequestRef.current + 1;
     previewRequestRef.current = requestNumber;
     setError(null);
+    setReportError(null);
     clearExpandedTrade();
     startTransition(async () => {
       try {
@@ -809,6 +1055,7 @@ export default function TradeExplorerClient({
     setGroupPageSize(25);
     setGroupPageIndex(0);
     setError(null);
+    setReportError(null);
   }
 
   function renderFilterControls(compact: boolean) {
@@ -989,16 +1236,61 @@ export default function TradeExplorerClient({
                 </Box>
               )}
             </Box>
+            <Stack direction="row" sx={{ columnGap: 1, flexWrap: "wrap", justifyContent: { xs: "flex-start", sm: "flex-end" }, rowGap: 1 }}>
+              <DashboardSecondaryAction
+                disabled={isPending || hasUnappliedChanges}
+                onClick={openSaveViewDialog}
+                startIcon={<BookmarkAddRoundedIcon />}
+              >
+                Save view
+              </DashboardSecondaryAction>
+              <DashboardSecondaryAction
+                onClick={() => setSavedViewsOpen(true)}
+                startIcon={<BookmarksRoundedIcon />}
+              >
+                Saved views
+              </DashboardSecondaryAction>
+              <DashboardSecondaryAction
+                disabled={
+                  isDownloadingReport ||
+                  isPending ||
+                  hasUnappliedChanges ||
+                  preview.response.crossPartitionCounts.includedCount === 0 ||
+                  (appliedResultView === "trades" && preview.evidence === null)
+                }
+                onClick={() => void downloadPdfReport()}
+                startIcon={<DownloadRoundedIcon />}
+              >
+                {isDownloadingReport ? "Preparing PDF" : "Download PDF"}
+              </DashboardSecondaryAction>
+            </Stack>
           </Stack>
+          {reportError ? <Alert severity="error" sx={{ mb: 1.5 }}>{reportError}</Alert> : null}
           {appliedQuery.moneyBasis === "net" ? (
-            <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
-              For manual trades, Gross and Net change P/L calculation only. A fee left blank is included as $0; use Workspace More filters, then Fees not entered, to review those entries.
-            </Typography>
-          ) : null}
-          {appliedQuery.moneyBasis === "net" && feeIncompleteTradeCount > 0 ? (
-            <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
-              Some older imported trades do not have fee details, so Net P/L is unavailable for {feeIncompleteTradeCount} closed {feeIncompleteTradeCount === 1 ? "trade" : "trades"}.
-            </Typography>
+            <Stack spacing={0.25} sx={{ mb: 1.5 }}>
+              <Typography color="text.secondary" variant="body2">
+                Manually entered trades with no fee entered are included in Net P/L.{" "}
+                <MuiLink
+                  component={NextLink}
+                  href="/workspace?filter=fees_not_entered"
+                  sx={{ fontWeight: 700 }}
+                >
+                  View no-fee trades
+                </MuiLink>
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                When broker fee details are missing from imported trades, they are excluded from Net P/L.
+              </Typography>
+              {feeIncompleteTradeCount > 0 ? (
+                <Typography color="text.secondary" variant="body2">
+                  This report excludes{" "}
+                  <Box component="span" sx={{ fontWeight: 700 }}>
+                    {feeIncompleteTradeCount}
+                  </Box>{" "}
+                  {feeIncompleteTradeCount === 1 ? "trade" : "trades"} with missing fee details.
+                </Typography>
+              ) : null}
+            </Stack>
           ) : null}
           {activeView ? (
             <>
@@ -1184,6 +1476,150 @@ export default function TradeExplorerClient({
           ) : null}
         </Box>
       </DashboardPanel>
+
+      <Drawer
+        anchor="right"
+        onClose={() => setSavedViewsOpen(false)}
+        open={savedViewsOpen}
+        slotProps={{
+          paper: {
+            sx: {
+              height: "100dvh",
+              maxWidth: 440,
+              width: "100%",
+            },
+          },
+        }}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+          <Stack
+            direction="row"
+            sx={{
+              alignItems: "center",
+              borderBottom: 1,
+              borderColor: "divider",
+              justifyContent: "space-between",
+              px: 2,
+              py: 1.25,
+            }}
+          >
+            <Typography component="h2" sx={{ fontWeight: 800 }} variant="h6">Saved views</Typography>
+            <IconButton aria-label="Close saved views" onClick={() => setSavedViewsOpen(false)} sx={{ minHeight: 44, minWidth: 44 }}>
+              <CloseRoundedIcon />
+            </IconButton>
+          </Stack>
+          <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
+            {savedViews.length === 0 ? (
+              <Typography color="text.secondary">
+                No saved views yet. Apply your filters, then choose Save view.
+              </Typography>
+            ) : (
+              <Stack spacing={1.5}>
+                {savedViews.map((savedView) => (
+                  <ButtonBase
+                    focusRipple
+                    key={savedView.savedViewId}
+                    onClick={() => openSavedView(savedView)}
+                    sx={{
+                      alignItems: "stretch",
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      p: 2,
+                      textAlign: "left",
+                      width: "100%",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                        borderColor: "primary.main",
+                      },
+                    }}
+                  >
+                    <Typography sx={{ fontWeight: 800, width: "100%" }}>{savedView.name}</Typography>
+                    <Stack component="dl" spacing={0.5} sx={{ m: 0, mt: 1.25, width: "100%" }}>
+                      {savedViewDetails(savedView.view).map((detail) => (
+                        <Box
+                          component="div"
+                          key={`${detail.label}:${detail.value}`}
+                          sx={{ display: "grid", gap: 1, gridTemplateColumns: "88px minmax(0, 1fr)" }}
+                        >
+                          <Typography color="text.secondary" component="dt" variant="body2">{detail.label}</Typography>
+                          <Typography component="dd" sx={{ m: 0 }} variant="body2">{detail.value}</Typography>
+                        </Box>
+                      ))}
+                    </Stack>
+                    <Stack direction="row" sx={{ alignItems: "center", color: "primary.main", gap: 0.5, mt: 1.25 }}>
+                      <Typography sx={{ fontWeight: 800 }} variant="body2">Open view</Typography>
+                      <ArrowForwardRoundedIcon fontSize="small" />
+                    </Stack>
+                  </ButtonBase>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        </Box>
+      </Drawer>
+
+      <Dialog
+        fullWidth
+        maxWidth="xs"
+        onClose={() => {
+          if (!isSavingView) setSaveViewDialogOpen(false);
+        }}
+        open={saveViewDialogOpen}
+      >
+        <Box
+          component="form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            saveCurrentView();
+          }}
+        >
+          <DialogTitle sx={{ alignItems: "center", display: "flex", justifyContent: "space-between", pb: 1 }}>
+            Save view
+            <IconButton
+              aria-label="Close save view dialog"
+              disabled={isSavingView}
+              onClick={() => setSaveViewDialogOpen(false)}
+              sx={{ minHeight: 44, minWidth: 44 }}
+            >
+              <CloseRoundedIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              error={saveViewName.trim().length > 80}
+              fullWidth
+              helperText={`${saveViewName.trim().length}/80`}
+              inputProps={{ maxLength: 80 }}
+              label="View name"
+              onChange={(event) => {
+                setSaveViewName(event.target.value);
+                setSaveViewError(null);
+              }}
+              required
+              value={saveViewName}
+            />
+            <Box sx={{ bgcolor: "action.hover", borderRadius: 1, mt: 2, p: 1.5 }}>
+              <Typography sx={{ fontWeight: 800 }} variant="body2">This saves the current Explorer setup</Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+                {viewLabel(appliedResultView)} · {savedViewDate(appliedQuery.startDate)} to {savedViewDate(appliedQuery.endDate)} · {appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"} · {appliedQuery.outcome === null ? "All results" : appliedQuery.outcome === "win" ? "Wins" : appliedQuery.outcome === "loss" ? "Losses" : "Flat"}
+              </Typography>
+            </Box>
+            {saveViewError ? <Alert severity="error" sx={{ mt: 2 }}>{saveViewError}</Alert> : null}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+            <DashboardSecondaryAction disabled={isSavingView} onClick={() => setSaveViewDialogOpen(false)}>
+              Cancel
+            </DashboardSecondaryAction>
+            <DashboardPrimaryAction disabled={isSavingView || saveViewName.trim().length < 1} type="submit">
+              {isSavingView ? "Saving" : "Save view"}
+            </DashboardPrimaryAction>
+          </DialogActions>
+        </Box>
+      </Dialog>
 
       <Drawer
           anchor="right"

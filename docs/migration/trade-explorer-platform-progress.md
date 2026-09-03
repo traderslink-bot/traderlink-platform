@@ -1,6 +1,13 @@
 # Trade Explorer Progress
 
-**Status:** Explorer 1 truthful-ordering correction remains complete. The
+**Status:** The owner-approved current-view downloadable PDF report is
+implemented locally and its representative three-page output passes visual and
+structural inspection. Integrated browser verification remains pending because
+the shared checkout currently cannot load the application through unrelated
+missing migration files. The owner approved the saved-views composition on
+2026-09-03, and its account-scoped persistence, Save view dialog, Saved views
+drawer and restore-and-rerun flow are implemented locally. Online owner testing
+remains the acceptance gate. Explorer 1 truthful-ordering correction remains complete. The
 owner-approved completed-trade Review editor is implemented over the existing
 note, tag and rule-review contracts. Focused source, TypeScript and local
 mobile-browser QA are complete; final owner visual/product acceptance remains
@@ -8,6 +15,94 @@ available. The owner approved implementation
 on 2026-08-04 and the corrected Trades/review direction on 2026-08-16.
 
 **Controlling plan:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
+
+**PDF visual review:** [Trade Explorer PDF report mockup](trade-explorer-pdf-report-mockup.html)
+
+## 2026-09-03 current-view PDF report
+
+The approved first report is a direct document export of the currently applied
+Trade Explorer view. It includes the complete filtered population in the exact
+selected order, even when the browser table is paginated. Trades, Trading Days,
+Tickers, Entry Times, Holding Time, Position Size and Periods retain their
+current user-facing columns and factual formatting. The Trades report omits
+only the interactive `Review` link column.
+
+Every page repeats the TradersLink logo, `traderslink.pro`, report name and
+selected date range. The footer repeats the generated time and page number.
+The first version contains no attached trade reviews, public sharing, saved
+report history, email or scheduled delivery. The server continues to derive
+the active Platform user, workspace and Journal account and regenerates the
+report through the canonical Journal Analytics facts.
+
+### Current gate
+
+- [x] Owner approved the report contents and exclusions in conversation.
+- [x] Record the exact-value, account-scope and full-population contract.
+- [x] Prepare the lightweight action and PDF-page visual mockup.
+- [x] Owner approves the visual placement.
+- [x] Implement the private PDF generation and download action.
+- [x] Render a representative generated PDF and inspect every page.
+- [ ] Verify the integrated desktop/mobile download states in light and dark
+  mode without changing the PDF's fixed print styling. On 2026-09-03 the owner
+  stopped further local testing and elected to perform this check online.
+
+The local report route resolves the active Platform scope, validates a strict
+request, regenerates the complete result through Journal Analytics and returns
+a no-store PDF attachment. The Trades exporter follows every bounded evidence
+cursor under one fixed fact revision before rendering. Targeted ESLint and
+diff-whitespace checks pass. The representative report contains 46 trades over
+three pages; PDF text inspection confirms all 46 rows, repeated branding on all
+three pages and no `Review` column. The rendered pages were visually inspected.
+The whole-project TypeScript command exceeded the two-gigabyte Node heap in the
+large shared working tree, so it was not repeated in deference to the low-resource
+policy.
+
+The Net P/L fee note now distinguishes the two factual cases in both Trade
+Explorer and its PDF: manually entered trades with no fee entered remain
+included, while imported trades with missing broker fee details remain
+excluded. The dashboard provides a bold `View no-fee trades` link to
+`/workspace?filter=fees_not_entered`. The report-specific excluded count is
+dynamic and is omitted when it is zero. No automated test, local server,
+commit, push or deployment was run because the owner elected to test online.
+
+## 2026-09-03 saved Trade Explorer views
+
+The requested first interaction adds `Save view` beside the current Explorer
+results, asks for a custom title and saves the complete applied setup rather
+than a copy of the trades. `Saved views` opens a right-side desktop drawer; its
+phone counterpart uses the full available width. Every entry shows the custom
+title plus the selected filters, result view and ordering. Opening an entry
+restores the setup and reruns current account-scoped results.
+
+### Current gate
+
+- [x] Record the owner-requested interaction and persistence boundary.
+- [x] Audit the existing Analytics Lab saved-view contract.
+- [x] Prepare the Save view dialog, desktop drawer and mobile drawer mockup.
+- [x] Owner approves the saved-views composition and visible information.
+- [x] Add the versioned account-scoped Explorer saved-view contract.
+- [x] Implement save, list and open behavior in Trade Explorer.
+- [x] Update the Trade Explorer Help guide with save/open behavior and the
+  no-duplicated-trade-data boundary.
+- [ ] Verify desktop/mobile, Light/Dark, loading, empty, success and error states.
+
+Additive migration `0117_trade_explorer_saved_views`, appended after production
+`0116_journal_manual_fee_input_state`, owns separate Explorer
+saved-view and immutable-version tables rather than reusing the stricter
+Analytics Lab document shape. The stored document omits the account-selection
+reference; list and create operations derive the current Platform scope and
+restore the server-selected account reference before returning a view. The
+first interaction supports create, list and open only. Rename, update and
+retire remain outside the approved slice.
+
+The approved controls live beside the current result heading. `Save view` is
+disabled until changed controls are applied, preventing a saved definition from
+silently differing from the visible results. A successful save returns the
+fresh account-scoped list and opens the drawer. Opening a saved card restores
+the query, selected result view, trade ordering or grouped rank direction and
+then runs the canonical Explorer query against current facts. No local browser
+or long-running test suite was started because the owner elected to test this
+slice online.
 
 ## Current checkpoint
 

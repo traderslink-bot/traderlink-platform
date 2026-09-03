@@ -205,6 +205,23 @@ export async function runTradeExplorerQuery(
   afterCursor?: unknown,
   tradeSort?: unknown,
 ): Promise<AnalyticsLabPlatformPreview> {
+  const normalizedRequest = normalizeTradeExplorerQueryRequest(input, tradeSort);
+  return execute(
+    scope,
+    normalizedRequest.query,
+    normalizeEvidenceCursor(afterCursor),
+    normalizedRequest.tableOrder,
+  );
+}
+
+export function normalizeTradeExplorerQueryRequest(
+  input: unknown,
+  tradeSort: unknown,
+): Readonly<{
+  query: AnalyticsLabPlatformQuery;
+  tradeSort: TradeExplorerTradeSort;
+  tableOrder: JournalAnalyticsTableOrder;
+}> {
   const normalized = normalizeAnalyticsLabPlatformQuery(input);
   if (!EXPLORER_SELECTOR_METRIC_IDS.has(normalized.metricId)) {
     throw new TypeError("Invalid Trade Explorer metric.");
@@ -221,12 +238,69 @@ export async function runTradeExplorerQuery(
     tradeSort ?? "closed_desc",
     explorerQuery.outcome,
   );
-  return execute(
-    scope,
-    explorerQuery,
-    normalizeEvidenceCursor(afterCursor),
-    tradeExplorerTableOrder(explorerTradeSort),
-  );
+  return Object.freeze({
+    query: explorerQuery,
+    tradeSort: explorerTradeSort,
+    tableOrder: tradeExplorerTableOrder(explorerTradeSort),
+  });
+}
+
+export async function runCompleteTradeExplorerTableQuery(
+  scope: WorkspaceAccessScope,
+  input: unknown,
+  tradeSort?: unknown,
+): Promise<AnalyticsLabPlatformPreview> {
+  const normalizedRequest = normalizeTradeExplorerQueryRequest(input, tradeSort);
+  const reportQuery = Object.freeze({
+    ...normalizedRequest.query,
+    evidenceRows: 100 as const,
+  });
+  const asOfUtc = new Date().toISOString();
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) => {
+    const first = buildPreview(
+      scope,
+      reportQuery,
+      null,
+      service,
+      normalizedRequest.tableOrder,
+      asOfUtc,
+    );
+    if (first.evidence === null || first.evidence.continuationCursor === null) {
+      return first;
+    }
+
+    const rows = [...first.evidence.rows];
+    let cursor: string | null = first.evidence.continuationCursor;
+    while (cursor !== null) {
+      const page = service.getRoundTripAnalyticsTable(
+        scope,
+        journalQuery(scope, reportQuery, cursor, asOfUtc),
+        normalizedRequest.tableOrder,
+      );
+      if (
+        page.factSetRevisionSha256 !== first.evidence.factSetRevisionSha256 ||
+        page.moneyBasis !== first.evidence.moneyBasis ||
+        page.currency !== first.evidence.currency ||
+        page.timezone !== first.evidence.timezone ||
+        page.totalRowCount !== first.evidence.totalRowCount
+      ) {
+        throw new TypeError("Trade Explorer report rows changed while the report was generated.");
+      }
+      rows.push(...page.rows);
+      cursor = page.continuationCursor;
+    }
+    if (rows.length !== first.evidence.totalRowCount) {
+      throw new TypeError("Trade Explorer report did not include every matching trade.");
+    }
+    return Object.freeze({
+      ...first,
+      evidence: Object.freeze({
+        ...first.evidence,
+        rows: Object.freeze(rows),
+        continuationCursor: null,
+      }),
+    });
+  });
 }
 
 function comparisonRecord(value: unknown): Readonly<Record<string, unknown>> {

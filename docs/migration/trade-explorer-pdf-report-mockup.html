@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trade Explorer PDF report mockup</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, Arial, sans-serif; background: #eef2f7; color: #162033; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px; }
+    .note { margin: 0 auto 18px; max-width: 1120px; color: #43516a; font-size: 14px; }
+    .app { max-width: 1120px; margin: 0 auto 34px; background: white; border: 1px solid #dfe5ee; border-radius: 12px; padding: 24px; box-shadow: 0 10px 30px rgba(1,30,86,.08); }
+    h1 { margin: 0 0 20px; font-size: 26px; }
+    .filters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
+    .field { border: 1px solid #b9c3d1; border-radius: 6px; padding: 9px 11px; font-size: 12px; color: #5c687a; }
+    .field b { display: block; margin-top: 4px; color: #172033; font-size: 14px; }
+    .results-head { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #e0e5ec; padding-top: 18px; }
+    .results-head h2 { margin: 0; font-size: 18px; }
+    .results-head p { margin: 4px 0 0; color: #69758a; font-size: 13px; }
+    button { border: 0; border-radius: 8px; min-height: 40px; padding: 0 17px; background: #011e56; color: white; font-weight: 700; font-size: 14px; }
+    .table { margin-top: 14px; border: 1px solid #e1e6ee; border-radius: 8px; overflow: hidden; }
+    .row { display: grid; grid-template-columns: 1.05fr 1.2fr .8fr .8fr .85fr .85fr .9fr .9fr; }
+    .row > div { min-width: 0; padding: 10px; border-right: 1px solid #e5e9ef; font-size: 12px; }
+    .row > div:last-child { border-right: 0; }
+    .row.head { background: #f4f6f9; font-weight: 800; }
+    .row + .row { border-top: 1px solid #e5e9ef; }
+    .pdf-label { max-width: 1120px; margin: 0 auto 10px; font-weight: 800; }
+    .pages { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .page { aspect-ratio: 1.414 / 1; background: white; box-shadow: 0 8px 28px rgba(15,30,58,.16); padding: 24px 28px 20px; display: flex; flex-direction: column; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 9px; border-bottom: 2px solid #011e56; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img { display: block; width: 142px; height: auto; background: #011e56; }
+    .url { color: #011e56; font-weight: 800; font-size: 12px; }
+    .report-title { margin: 13px 0 4px; font-size: 18px; }
+    .range { color: #5c687a; font-size: 11px; }
+    .scope { margin-top: 10px; background: #f4f6f9; border-radius: 5px; padding: 7px 9px; color: #4f5d72; font-size: 9px; line-height: 1.55; }
+    .pdf-table { margin-top: 12px; border: 1px solid #dfe4eb; }
+    .pdf-row { display: grid; grid-template-columns: .8fr 1fr .65fr .65fr .75fr .75fr .75fr .65fr; }
+    .pdf-row div { padding: 6px; border-right: 1px solid #e3e7ed; font-size: 8px; }
+    .pdf-row div:last-child { border-right: 0; }
+    .pdf-row + .pdf-row { border-top: 1px solid #e3e7ed; }
+    .pdf-row.head { background: #011e56; color: white; font-weight: 800; }
+    .footer { margin-top: auto; padding-top: 8px; border-top: 1px solid #dfe4eb; display: flex; justify-content: space-between; color: #667287; font-size: 8px; }
+    @media (max-width: 800px) { body { padding: 16px; } .filters { grid-template-columns: 1fr 1fr; } .pages { grid-template-columns: 1fr; } .results-head { align-items: flex-start; gap: 14px; } }
+  </style>
+</head>
+<body>
+  <p class="note">Visual placement for approval. The real report uses the currently applied Trade Explorer filters, view and ordering. The Review column is intentionally absent from the PDF.</p>
+  <section class="app">
+    <h1>Trade Explorer</h1>
+    <div class="filters">
+      <div class="field">From<b>2026-04-01</b></div><div class="field">To<b>2026-09-30</b></div>
+      <div class="field">View<b>Trades</b></div><div class="field">Sort trades<b>Highest P/L</b></div>
+    </div>
+    <div class="results-head">
+      <div><h2>Trades</h2><p>Closed trades: 87 &nbsp; Net P/L: $12,482.17 &nbsp; Win rate: 61.3%</p></div>
+      <button type="button">Download PDF</button>
+    </div>
+    <div class="table">
+      <div class="row head"><div>Ticker</div><div>Closed</div><div>Direction</div><div>Shares</div><div>Avg entry</div><div>Avg exit</div><div>Net P/L</div><div>Return</div></div>
+      <div class="row"><div>AAPL</div><div>Sep 24, 10:42</div><div>Long</div><div>500</div><div>$18.42</div><div>$20.11</div><div>$842.10</div><div>9.17%</div></div>
+    </div>
+  </section>
+
+  <div class="pdf-label">Generated PDF - repeated page header and footer</div>
+  <section class="pages">
+    <article class="page">
+      <div class="page-header"><div class="brand"><img src="../../public/logo-horizontal-main.png" alt="TradersLink"><span class="url">traderslink.pro</span></div><strong>Trade Explorer - Trades</strong></div>
+      <h2 class="report-title">Trade Explorer - Trades</h2><div class="range">April 1, 2026 to September 30, 2026</div>
+      <div class="scope">Filters: All tickers | All directions | All results | Net P/L<br>Order: Highest P/L | Currency: USD | Trading timezone: America/New_York</div>
+      <div class="pdf-table">
+        <div class="pdf-row head"><div>Ticker</div><div>Closed</div><div>Side</div><div>Shares</div><div>Avg entry</div><div>Avg exit</div><div>Net P/L</div><div>Return</div></div>
+        <div class="pdf-row"><div>AAPL</div><div>Sep 24 10:42</div><div>Long</div><div>500</div><div>$18.42</div><div>$20.11</div><div>$842.10</div><div>9.17%</div></div>
+        <div class="pdf-row"><div>TSLA</div><div>Aug 18 14:03</div><div>Short</div><div>120</div><div>$244.30</div><div>$238.33</div><div>$716.40</div><div>2.44%</div></div>
+        <div class="pdf-row"><div>NVDA</div><div>Jul 08 11:27</div><div>Long</div><div>200</div><div>$151.42</div><div>$154.44</div><div>$603.22</div><div>1.99%</div></div>
+      </div>
+      <div class="footer"><span>Generated September 3, 2026 at 11:42 AM EDT</span><span>Page 1 of 2</span></div>
+    </article>
+    <article class="page">
+      <div class="page-header"><div class="brand"><img src="../../public/logo-horizontal-main.png" alt="TradersLink"><span class="url">traderslink.pro</span></div><strong>Trade Explorer - Trades</strong></div>
+      <h2 class="report-title">Trade Explorer - Trades</h2><div class="range">April 1, 2026 to September 30, 2026</div>
+      <div class="pdf-table">
+        <div class="pdf-row head"><div>Ticker</div><div>Closed</div><div>Side</div><div>Shares</div><div>Avg entry</div><div>Avg exit</div><div>Net P/L</div><div>Return</div></div>
+        <div class="pdf-row"><div>AMD</div><div>Jun 17 09:58</div><div>Long</div><div>300</div><div>$164.14</div><div>$165.76</div><div>$486.00</div><div>0.99%</div></div>
+        <div class="pdf-row"><div>PLTR</div><div>May 22 13:20</div><div>Long</div><div>450</div><div>$129.55</div><div>$130.43</div><div>$396.00</div><div>0.68%</div></div>
+      </div>
+      <div class="footer"><span>Generated September 3, 2026 at 11:42 AM EDT</span><span>Page 2 of 2</span></div>
+    </article>
+  </section>
+</body>
+</html>
