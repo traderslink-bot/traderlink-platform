@@ -63,7 +63,6 @@ export type JournalAdapterExecution = Readonly<{
     | "not_reported"
     | "broker_reported_signed"
     | "cash_effect";
-  manualFeeInputState?: "not_entered" | "entered";
   factCompleteness: "complete" | "price_missing" | "order_ambiguous";
   providerExecutionIdentity: string | null;
   normalizedContentIdentity: string;

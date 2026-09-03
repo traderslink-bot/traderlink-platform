@@ -4,15 +4,12 @@ import type { WorkspaceAccessScope } from "../../contracts/workspace-access-scop
 import { deriveJournalAccountSelectionRef } from "../../contracts/journal-account-selection";
 import { platformFailure } from "../database/platform-migration-contract";
 import {
-  parsePlatformPnlReportingBasis,
   parsePlatformReportingCurrency,
-  type PlatformPnlReportingBasis,
   type PlatformReportingCurrency,
 } from "./platform-user-preference-repository";
 
 export type PlatformAccountProfile = Readonly<{
   displayName: string;
-  pnlReportingBasis: PlatformPnlReportingBasis;
   reportingCurrency: PlatformReportingCurrency;
   accessMode: "local_development" | "authenticated";
   authenticationLabel: string;
@@ -33,7 +30,6 @@ export type PlatformAccountProfile = Readonly<{
 type ProfileRow = Readonly<{
   display_name: string;
   auth_provider: string;
-  pnl_reporting_basis: string;
   reporting_currency: string;
   workspace_display_name: string;
   default_trading_timezone: string;
@@ -60,7 +56,6 @@ export class PlatformAccountProfileReadService {
     const profile = this.database.prepare<[string, string], ProfileRow>(`SELECT
   user.display_name,
   user.auth_provider,
-  preference.pnl_reporting_basis,
   preference.reporting_currency,
   workspace.display_name AS workspace_display_name,
   workspace.default_trading_timezone,
@@ -97,7 +92,6 @@ ORDER BY display_name, account_id`).all(scope.workspaceId)
       }));
     return Object.freeze({
       displayName: profile.display_name,
-      pnlReportingBasis: parsePlatformPnlReportingBasis(profile.pnl_reporting_basis),
       reportingCurrency: parsePlatformReportingCurrency(profile.reporting_currency),
       accessMode: profile.auth_provider === "development_local"
         ? "local_development" as const

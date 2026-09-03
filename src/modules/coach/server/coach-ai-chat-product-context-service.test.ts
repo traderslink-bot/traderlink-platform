@@ -108,7 +108,6 @@ function fixture() {
     profile: {
       get: vi.fn(() => Object.freeze({
         displayName: "Trader",
-        pnlReportingBasis: "gross" as const,
         reportingCurrency: "USD" as const,
         accessMode: "authenticated" as const,
         authenticationLabel: "Discord",

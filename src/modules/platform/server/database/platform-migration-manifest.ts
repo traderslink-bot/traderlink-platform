@@ -27,7 +27,6 @@ import { journalSharedNotesMigration } from "@/src/modules/journal/server/databa
 import { journalTradingDayTagsMigration } from "@/src/modules/journal/server/database/migrations/0112_journal_trading_day_tags";
 import { journalWorkspaceRuleResultsCardMigration } from "@/src/modules/journal/server/database/migrations/0113_journal_workspace_rule_results_card";
 import { journalWorkspacePrScannerCardMigration } from "@/src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card";
-import { journalManualFeeInputStateMigration } from "@/src/modules/journal/server/database/migrations/0115_journal_manual_fee_input_state";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -102,7 +101,6 @@ import { platformWatchlistUsageMigration } from "./migrations/0092_platform_watc
 import { platformWatchlistUsagePresenceSignalsMigration } from "./migrations/0093_platform_watchlist_usage_presence_signals";
 import { platformMoomooOAuthPendingAttemptsMigration } from "./migrations/0094_platform_moomoo_oauth_pending_attempts";
 import { platformAppearancePreferencesMigration } from "./migrations/0103_platform_appearance_preferences";
-import { platformPnlReportingPreferenceMigration } from "./migrations/0109_platform_pnl_reporting_preference";
 import { platformDefaultDarkAppearanceMigration } from "./migrations/0110_platform_default_dark_appearance";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
@@ -539,10 +537,6 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       migration: journalWorkspaceTradeStyleSourceMigration,
     }),
     Object.freeze({
-      sourcePath: "src/modules/platform/server/database/migrations/0109_platform_pnl_reporting_preference.ts",
-      migration: platformPnlReportingPreferenceMigration,
-    }),
-    Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0110_platform_default_dark_appearance.ts",
       migration: platformDefaultDarkAppearanceMigration,
     }),
@@ -561,10 +555,6 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card.ts",
       migration: journalWorkspacePrScannerCardMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0115_journal_manual_fee_input_state.ts",
-      migration: journalManualFeeInputStateMigration,
     }),
   ]);
 
@@ -974,7 +964,6 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0114_journal_workspace_pr_scanner_card": Object.freeze([
       "journal_workspace_pr_scanner_card_preferences",
     ]),
-    "0115_journal_manual_fee_input_state": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

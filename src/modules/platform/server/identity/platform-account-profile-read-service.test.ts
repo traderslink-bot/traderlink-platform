@@ -71,8 +71,6 @@ describe("Platform account profile read service", () => {
       });
       expect(profile).toEqual({
         displayName: "TraderLink Owner",
-        pnlReportingBasis: "gross",
-        reportingCurrency: "USD",
         accessMode: "local_development",
         authenticationLabel: "Local development owner",
         workspace: {

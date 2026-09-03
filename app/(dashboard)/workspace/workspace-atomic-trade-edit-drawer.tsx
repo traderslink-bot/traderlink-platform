@@ -19,7 +19,6 @@ type Execution = Readonly<{
   editRef: string; localDate: string; localTime: string; sourceTimezone: string;
   normalizedSymbol: string; tradeCurrency: string; side: Side; quantityDecimal: string;
   priceDecimal: string | null; feesDecimal: string | null;
-  manualFeeInputState: "not_entered" | "entered" | null;
 }>;
 type Snapshot = Readonly<{
   executionCount: number; executions: readonly Execution[]; snapshotRef: string;
@@ -44,7 +43,7 @@ function rowFromExecution(execution: Execution, index: number): DraftRow {
     tradeCurrency: execution.tradeCurrency, side: execution.side, quantityDecimal: execution.quantityDecimal,
     priceDecimal: execution.priceDecimal === null
       ? ""
-      : formatJournalAnalyticsDecimal(execution.priceDecimal, 2, true), feesDecimal: execution.manualFeeInputState === "not_entered" ? "" : execution.feesDecimal ?? "" };
+      : formatJournalAnalyticsDecimal(execution.priceDecimal, 2, true), feesDecimal: execution.feesDecimal ?? "" };
 }
 
 export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, journalTarget, open, roundTripId, onClose, onSaved, startingTab = "trade" }: Readonly<{
@@ -169,7 +168,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
               <TextField label="Side" onChange={(event) => update(row.clientRowRef, "side", event.target.value as Side)} select size="small" value={row.side}><MenuItem value="buy">Buy</MenuItem><MenuItem value="sell">Sell</MenuItem></TextField>
               <TextField label="Shares" onChange={(event) => update(row.clientRowRef, "quantityDecimal", event.target.value)} size="small" value={row.quantityDecimal} />
               <TextField label="Price" onChange={(event) => update(row.clientRowRef, "priceDecimal", event.target.value)} size="small" value={row.priceDecimal} />
-              <TextField helperText="Leave blank when there was no fee. This records a $0 fee and includes the trade in Net P/L." label="Fee" onChange={(event) => update(row.clientRowRef, "feesDecimal", event.target.value)} size="small" value={row.feesDecimal} />
+              <TextField label="Fee" onChange={(event) => update(row.clientRowRef, "feesDecimal", event.target.value)} size="small" value={row.feesDecimal} />
             </Box> : null}
           </Box>)}
           <Button disabled={working || activeRows.length === 0} onClick={addExecution} startIcon={<AddRoundedIcon />} sx={{ alignSelf: "flex-start" }}>Add execution</Button>

@@ -6,7 +6,7 @@ import { readDailyTradePatternOccurrence } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
 import { reportDailyTradePatternOccurrence } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-reporting";
-import { resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from
+import { withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { journalReportingCurrencyMultiplier } from
   "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
@@ -26,13 +26,13 @@ export async function GET(request: Request): Promise<Response> {
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const { analysis, occurrence } = await withJournalAnalyticsReportingDashboardRuntime(
       scope,
-      ({ pnlReportingBasis, reportingContext }) => {
+      ({ reportingContext }) => {
         const sourceOccurrence = withReadonlyPlatformDatabase({}, (database) =>
           readDailyTradePatternOccurrence(
             database,
             scope,
             url.searchParams.get("ref") ?? "",
-            resolveJournalAnalyticsMoneyBasis(url.searchParams.get("basis"), pnlReportingBasis),
+            url.searchParams.get("basis") === "net" ? "net" : "gross",
           ));
         const sourceAnalysis = getReplacementDailyTradeAnalyzerReplay(scope, {
           direction: sourceOccurrence.direction,

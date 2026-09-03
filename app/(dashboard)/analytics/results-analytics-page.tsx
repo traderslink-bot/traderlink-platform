@@ -13,15 +13,13 @@ import {
   type JournalAnalyticsResultsOfflineViewModel,
 } from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
 import { ResultsTickerTable, type ResultsTickerRow } from "./results-ticker-table";
 
-function metricsFor(moneyBasis: "gross" | "net") {
-  return [moneyBasis === "gross" ? "gross_pnl" : "net_pnl", "win_rate", "profit_factor", "total_trades", "trading_day_count", "average_pnl"] as const;
-}
+const METRICS = ["net_pnl", "win_rate", "profit_factor", "total_trades", "trading_day_count", "average_pnl"] as const;
 
 function metricFor(metrics: readonly JournalAnalyticsMetricResult[], id: string) {
   return metrics.find((metric) => metric.metricId === id) ?? null;
@@ -58,28 +56,22 @@ function range(input: Readonly<Record<string, string | string[] | undefined>>): 
 export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
   const scope = await requireTraderLinkPlatformPageScope();
   const selectedRange = range(searchParams);
-  const { moneyBasis, response } = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
-    const moneyBasis = resolveJournalAnalyticsMoneyBasis(searchParams.basis, pnlReportingBasis);
-    const query = buildJournalAnalyticsDashboardQuery(scope, {
-      closingDateRange: selectedRange.startDate && selectedRange.endDate
-        ? { endDate: selectedRange.endDate, kind: "inclusive_closing_date", startDate: selectedRange.startDate }
-        : { kind: "all_available" },
-      groupings: ["instrument"],
-      metricIds: metricsFor(moneyBasis),
-      moneyBasis,
-    });
-    return Object.freeze({ moneyBasis, response: service.getResultAnalytics(scope, query) });
+  const query = buildJournalAnalyticsDashboardQuery(scope, {
+    closingDateRange: selectedRange.startDate && selectedRange.endDate
+      ? { endDate: selectedRange.endDate, kind: "inclusive_closing_date", startDate: selectedRange.startDate }
+      : { kind: "all_available" },
+    groupings: ["instrument"],
+    metricIds: METRICS,
   });
-  const metrics = metricsFor(moneyBasis);
-  const pnlMetricId = moneyBasis === "gross" ? "gross_pnl" : "net_pnl";
+  const response = await withJournalAnalyticsReportingDashboardService(scope, (service) => service.getResultAnalytics(scope, query));
   const rows: readonly ResultsTickerRow[] = response.partitions.flatMap((partition) =>
     partition.groups.filter((group) => group.grouping === "instrument").map((group) => {
-      const read = (id: (typeof metrics)[number]) => metricFor(group.metrics, id);
+      const read = (id: (typeof METRICS)[number]) => metricFor(group.metrics, id);
       return {
         averagePnl: formatJournalAnalyticsMetric(read("average_pnl")!),
         averagePnlValue: numberValue(read("average_pnl")?.value ?? null),
-        netPnl: formatJournalAnalyticsMetric(read(pnlMetricId)!),
-        netPnlValue: numberValue(read(pnlMetricId)?.value ?? null),
+        netPnl: formatJournalAnalyticsMetric(read("net_pnl")!),
+        netPnlValue: numberValue(read("net_pnl")?.value ?? null),
         profitFactor: formatJournalAnalyticsMetric(read("profit_factor")!),
         profitFactorValue: numberValue(read("profit_factor")?.value ?? null),
         ticker: group.label,
@@ -94,7 +86,6 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
   const offlineModel: JournalAnalyticsResultsOfflineViewModel = Object.freeze({
     dateRange: Object.freeze({ ...selectedRange }),
     kind: "analytics-results",
-    moneyBasis,
     rows,
     version: 1,
   });
@@ -107,7 +98,7 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
         generatedAtUtc={response.generatedAtUtc}
         model={offlineModel}
         pathname="/analytics/results"
-        queryIdentity={`range:${selectedRange.kind}:${selectedRange.startDate ?? "all"}:${selectedRange.endDate ?? "all"}:basis:${moneyBasis}`}
+        queryIdentity={`range:${selectedRange.kind}:${selectedRange.startDate ?? "all"}:${selectedRange.endDate ?? "all"}`}
         reportingCurrency={response.partitions[0]?.currency ?? null}
         routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-results"]}
@@ -120,7 +111,7 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
         <Box sx={{ alignItems: { sm: "center" }, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 0.5 }}>
           <OverviewDateRangeControl href="/analytics/results" value={selectedRange} />
         </Box>
-        <ResultsTickerTable endDate={selectedRange.endDate} moneyBasis={moneyBasis} rows={rows} startDate={selectedRange.startDate} />
+        <ResultsTickerTable endDate={selectedRange.endDate} rows={rows} startDate={selectedRange.startDate} />
       </DashboardPage>
     </>
   );

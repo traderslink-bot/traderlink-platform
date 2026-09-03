@@ -12,7 +12,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("what-analytics-shows", "What Analytics shows", "The Analytics pages summarize completed trades that have enough accepted facts for each result.", ["analytics", "analytics overview", "completed trades", "trade tracker", "results", "performance"], [
       paragraph("Analytics is the factual view of confirmed Trade Tracker results, including imported and manually entered trades. It includes Analytics Overview, Ticker, Timing and Trade Breakdown. It helps you compare recorded outcomes; it does not predict a future trade or recommend an action."),
       table(["Page", "Use it for"], [
-        ["Overview", "Read key completed-trade measures and their monthly P/L history using the selected basis."],
+        ["Overview", "Read key completed-trade measures and their monthly Net P/L history."],
         ["Ticker", "Compare completed-trade results by ticker."],
         ["Timing", "Compare completed-trade results by entry time, exit time, day of week and trading session."],
         ["Trade Breakdown", "Compare completed trades by entry price, entry size, maximum position and holding time, then open exact executions."],
@@ -23,7 +23,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       link("/help/daily-trade-tracker/getting-started", "Read Daily Trade Tracker help", "Open the Daily Tracker when you want to review one trading date or work with its supporting tools."),
     ]),
   ]),
-  guide("overview-and-date-range", "Read the overview and date range", "Choose a completed-trade date range, then read the key results and monthly P/L without mixing currencies.", [
+  guide("overview-and-date-range", "Read the overview and date range", "Choose a completed-trade date range, then read the key results and monthly Net P/L without mixing currencies.", [
     section("set-a-date-range", "Set a date range", "Analytics Overview, Ticker and Trade Breakdown use the selected completed-trade date range.", ["date range", "all time", "last 3 months", "custom date", "update analytics"], [
       bullets([
         "Choose All time, Last 3 months, Last 6 months, Last 12 months, This year or Custom range.",
@@ -32,13 +32,13 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       ]),
       paragraph("Timing currently shows the available completed-trade population without this date-range control. Its time labels identify the displayed timezone."),
     ]),
-    section("read-the-overview", "Read the Overview cards", "Overview shows the selected period's completed-trade measures and a monthly P/L chart when available.", ["gross p/l", "net p/l", "win rate", "profit factor", "expectancy", "monthly p/l"], [
+    section("read-the-overview", "Read the Overview cards", "Overview shows the selected period's completed-trade measures and a monthly Net P/L chart when available.", ["net p/l", "win rate", "profit factor", "expectancy", "monthly p/l"], [
       table(["Measure", "Meaning"], [
-        ["P/L", "The selected completed-trade profit or loss. Gross is before fees; Net includes covered trade charges."],
+        ["Net P/L", "The selected completed-trade profit or loss after the covered trade charges."],
         ["Win rate", "The share of included completed trades with a positive result."],
         ["Profit factor", "Gross winning results divided by the absolute gross losing results when both are available."],
         ["Expectancy", "The average result per included completed trade."],
-        ["Monthly P/L", "The same completed-trade P/L arranged by closing month using the selected basis."],
+        ["Monthly Net P/L", "The same completed-trade Net P/L arranged by closing month."],
       ]),
       paragraph("A result can be unavailable when the required facts or a valid denominator are missing. That is different from a real zero result."),
     ]),
@@ -51,7 +51,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("compare-results-by-ticker", "Use the Ticker page", "Use the Ticker table to search, sort, paginate and compare the selected completed-trade results by ticker.", [
     section("read-the-results-table", "Read the Ticker table", "Each row groups the selected completed trades for one ticker.", ["results", "ticker", "net p/l", "average p/l", "trade count"], [
       table(["Column", "Meaning"], [
-        ["Gross / Net P/L", "The completed-trade result for the ticker using your saved P/L preference or this view's explicit basis."],
+        ["Net P/L", "The selected completed-trade result for the ticker."],
         ["Win rate", "The percentage of included completed trades for that ticker with a positive result."],
         ["Profit factor", "The ticker's gross winning results divided by absolute gross losing results when available."],
         ["Trades / Trading days", "The included completed-trade count and the number of trading dates represented."],
@@ -66,7 +66,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("timing-and-execution", "Review timing and execution", "Compare recorded timing and completed-trade execution characteristics without treating a summary as a trading rule.", [
     section("read-timing", "Read Timing", "Timing groups the current completed-trade population by recorded entry or exit time, weekday and trading session.", ["timing", "entry time", "exit time", "day of week", "trading session"], [
       bullets([
-        "The P/L measure begins with your saved Account preference. Choose Average P/L per trade, Win rate or Trade count to change the measure in the charts.",
+        "Choose Net P/L, Average P/L per trade, Win rate or Trade count to change the measure in the charts.",
         "Entry time and Exit time show the timezone named in the chart title.",
         "Entry time and Exit time use phone-friendly horizontal bars. Day of week and Trading session keep their available chart-style control.",
         "Highest total P/L identifies the time range with the largest recorded result. It is useful history, but it is not automatically the most repeatable time to trade.",
@@ -79,7 +79,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "Entry Price Results groups every completed trade once by its weighted average entry price across its recorded entries and adds. Its table shows Under $1.00, $1.00 to under $2.00, $2.00 to under $3.00, $3.00 to under $5.00 and $5.00+.",
         "The main comparison is Under $1.00 versus $1.00 and above. It uses win rate and average P/L rather than total P/L, because a group with more trades can otherwise appear stronger simply from having more trades.",
         "Trade Breakdown does not make any entry-price finding until the selected range has 30 completed trades. Each side of the Under-$1.00 comparison needs at least 10 trades, and each $1.00 to under $5.00 range needs at least 10 trades before it can appear in a supporting finding. An uneven count is shown as direction rather than a firm conclusion.",
-        "The P/L measure begins with your saved Account preference. Choose Win rate or Trade count to change the chart measure.",
+        "Choose Net P/L, Win rate or Trade count to change the chart measure.",
         "Use the chart-style control to switch between horizontal bars and columns.",
         "Use the ticker, direction and trade-type filters to narrow the completed-trade evidence.",
         "On a phone, use the Sort control and swipe the contained table sideways to read the complete execution facts. The Ticker column stays pinned as a reference.",

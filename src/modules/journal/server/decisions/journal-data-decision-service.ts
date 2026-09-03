@@ -2054,7 +2054,6 @@ export class JournalDataDecisionService {
       input.facts.feesDecimal ?? "",
       input.facts.feeCurrency ?? "",
       input.facts.feeSignConvention,
-      input.facts.manualFeeInputState ?? "",
       input.facts.factCompleteness,
     ]);
     const rawFieldsJson = JSON.stringify(fields);

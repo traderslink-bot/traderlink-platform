@@ -17,7 +17,6 @@ import {
 } from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
 import {
   buildJournalAnalyticsDashboardQuery,
-  resolveJournalAnalyticsMoneyBasis,
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { journalReportingCurrencyMultiplier } from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
@@ -113,15 +112,10 @@ export async function TradeAnalysisPage({
 }) {
   const scope = await requireTraderLinkPlatformPageScope();
   const dateRange = selectedDateRange(searchParams);
+  const moneyBasis = searchParams.basis === "net" ? "net" as const : "gross" as const;
   const details = VIEW_DETAILS[view];
-  const { moneyBasis, moomooMarketDataAccess } = withReadonlyPlatformDatabase({}, (database) =>
-    Object.freeze({
-      moneyBasis: resolveJournalAnalyticsMoneyBasis(
-        searchParams.basis,
-        new PlatformUserPreferenceRepository(database).getActiveUserPnlReportingBasis(scope.userId),
-      ),
-      moomooMarketDataAccess: readMoomooMarketDataAccess(database, scope),
-    }));
+  const moomooMarketDataAccess = withReadonlyPlatformDatabase({}, (database) =>
+    readMoomooMarketDataAccess(database, scope));
 
   if (view === "trades") {
     const tradeIndex = await withJournalAnalyticsReportingDashboardRuntime(

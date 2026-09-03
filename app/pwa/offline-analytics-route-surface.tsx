@@ -139,20 +139,20 @@ export function OfflineAnalyticsRouteSurface({ kind, partitionKey, pathname }: {
 
   const { model, savedAtUtc } = savedView;
   if (model.kind === "analytics-overview") {
-    return <AnalyticsOverviewView dateRange={model.dateRange} moneyBasis={model.moneyBasis} offlineSavedAtUtc={savedAtUtc} response={model.response} />;
+    return <AnalyticsOverviewView dateRange={model.dateRange} offlineSavedAtUtc={savedAtUtc} response={model.response} />;
   }
   return (
     <DashboardPage>
       <AnalyticsHeader kind={kind} />
       <OfflineSavedViewStatus savedAtUtc={savedAtUtc} />
       {model.kind === "analytics-results" ? (
-        <ResultsTickerTable endDate={model.dateRange.endDate} moneyBasis={model.moneyBasis} offline rows={model.rows} startDate={model.dateRange.startDate} />
+        <ResultsTickerTable endDate={model.dateRange.endDate} offline rows={model.rows} startDate={model.dateRange.startDate} />
       ) : null}
       {model.kind === "analytics-timing" ? (
-        <TimingAnalyticsClient chartData={model.chartData} completedTradeCount={model.completedTradeCount} moneyBasis={model.moneyBasis} timezone={model.timezone} />
+        <TimingAnalyticsClient chartData={model.chartData} completedTradeCount={model.completedTradeCount} timezone={model.timezone} />
       ) : null}
       {model.kind === "analytics-execution" ? (
-        <ExecutionAnalyticsClient chartData={model.chartData} currency={model.currency} moneyBasis={model.moneyBasis} offline priceComparison={model.priceComparison} priceInsights={model.priceInsights} priceResults={model.priceResults} rows={model.rows} />
+        <ExecutionAnalyticsClient chartData={model.chartData} currency={model.currency} offline priceComparison={model.priceComparison} priceInsights={model.priceInsights} priceResults={model.priceResults} rows={model.rows} />
       ) : null}
       {model.kind === "trade-analyzer-trades" ? (
         <AnalyzedTradesIndex

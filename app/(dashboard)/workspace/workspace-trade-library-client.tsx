@@ -20,9 +20,9 @@ import { loadWorkspaceTradeLibraryPage } from "./workspace-trade-library-actions
 import { WorkspaceAtomicTradeEditDrawer } from "./workspace-atomic-trade-edit-drawer";
 import { useDashboardChart } from "../dashboard-chart-tool";
 import { TradeDetailsDrawer } from "../trades/trade-details-drawer";
-import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryModel, WorkspaceTradeLibraryRow, WorkspaceTradeLibrarySort } from "./workspace-trade-library";
+import type { WorkspaceTradeLibraryModel, WorkspaceTradeLibraryRow, WorkspaceTradeLibrarySort } from "./workspace-trade-library";
 
-type TradeStateFilter = WorkspaceTradeLibraryFilter;
+type TradeStateFilter = "all" | "open" | "swing" | "closed";
 type TradeSort = WorkspaceTradeLibrarySort;
 type TradeGroup = "none" | "day" | "ticker";
 

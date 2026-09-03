@@ -77,13 +77,12 @@ export class JournalExecutionReconciliationRepository {
       price_decimal: string | null;
       fees_decimal: string | null;
       fee_currency: string | null;
-      manual_fee_input_state: "not_entered" | "entered" | null;
       account_timezone: string;
     }>(`SELECT execution.execution_id, execution.current_version_id,
  version.instrument_id, instrument.asset_class, instrument.normalized_symbol,
  version.trade_currency, version.source_timestamp_text, version.source_timezone,
  version.executed_at_utc, version.side, version.quantity_decimal,
- version.price_decimal, version.fees_decimal, version.fee_currency, version.manual_fee_input_state,
+ version.price_decimal, version.fees_decimal, version.fee_currency,
  account.trading_timezone AS account_timezone
 FROM journal_executions execution
 JOIN journal_execution_versions version
@@ -136,7 +135,6 @@ ORDER BY version.executed_at_utc, version.source_order_key, execution.execution_
         priceDecimal: row.price_decimal,
         feesDecimal: row.fees_decimal,
         feeCurrency: row.fee_currency,
-        manualFeeInputState: row.manual_fee_input_state,
         accountTimezone: row.account_timezone,
     })));
   }

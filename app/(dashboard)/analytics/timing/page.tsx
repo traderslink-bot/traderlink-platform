@@ -6,10 +6,6 @@ export const metadata: Metadata = {
   title: "Timing | TraderLink",
 };
 
-export default async function TimingPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ basis?: string | string[] | undefined }>;
-}) {
-  return <TimingAnalyticsPage searchParams={searchParams} />;
+export default function TimingPage() {
+  return <TimingAnalyticsPage />;
 }

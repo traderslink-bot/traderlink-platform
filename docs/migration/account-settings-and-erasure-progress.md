@@ -33,9 +33,6 @@
 - [x] Add the Security route, quick Account menu, current-device sign-out,
   individual active-session controls and confirmed sign-out everywhere; keep
   the related Help guide aligned.
-- [ ] Add the one user-level P/L preference and connect its selected default to
-  Workspace, Analytics Overview, Results, Timing, Trade Breakdown, Trade
-  Analyzer, Trade Explorer and Compare without relabeling factual Gross/Net data.
 
 ## Guardrails
 

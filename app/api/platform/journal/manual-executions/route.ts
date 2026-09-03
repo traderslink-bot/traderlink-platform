@@ -65,13 +65,14 @@ function manualEntry(value: unknown): Readonly<{
   }
   const feesInput = string(value, "fees").trim();
   const canonicalFee = feesInput === ""
-    ? "0"
+    ? null
     : canonicalDecimal(feesInput, "fees");
-  if (canonicalFee.startsWith("-")) {
+  if (canonicalFee?.startsWith("-")) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "fees",
     });
   }
+  const feeCost = canonicalFee === "0" ? null : canonicalFee;
   return Object.freeze({
     date,
     execution: Object.freeze({
@@ -82,10 +83,9 @@ function manualEntry(value: unknown): Readonly<{
       side: side as "buy" | "sell",
       quantityDecimal: canonicalDecimal(string(value, "quantity"), "quantity", true),
       priceDecimal: canonicalDecimal(string(value, "price"), "price", true),
-      feesDecimal: canonicalFee === "0" ? "0" : `-${canonicalFee}`,
-      feeCurrency: currency,
-      feeSignConvention: "cash_effect",
-      manualFeeInputState: feesInput === "" ? "not_entered" as const : "entered" as const,
+      feesDecimal: feeCost === null ? null : `-${feeCost}`,
+      feeCurrency: feeCost === null ? null : currency,
+      feeSignConvention: feeCost === null ? "not_reported" : "cash_effect",
       tradeIntent: tradeIntent as "not_set" | "day_trade" | "swing",
     }),
   });

@@ -32,7 +32,7 @@ export default async function TradeExplorerPage() {
         generatedAtUtc={new Date().toISOString()}
         model={createJournalTradeExplorerOfflineViewModel(model)}
         pathname="/analytics/trade-explorer"
-        queryIdentity={`basis=${model.initialQuery.moneyBasis}`}
+        queryIdentity="current"
         reportingCurrency={model.initialQuery.currency ?? null}
         routeViewVersion={JOURNAL_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_OFFLINE_ROUTE_VIEW_KEYS["trade-explorer"]}

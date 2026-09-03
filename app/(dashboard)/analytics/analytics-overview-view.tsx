@@ -10,7 +10,6 @@ import type {
   JournalAnalyticsPartitionedResponse,
   JournalAnalyticsResponse,
 } from "@/src/modules/journal-analytics/contracts/analytics-result";
-import type { JournalAnalyticsMoneyBasis } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import { financialSummaryMetricColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
@@ -18,19 +17,17 @@ import { FeatureHelpLink } from "../feature-help-link";
 import { MonthlyPnlChart, type MonthlyPnlChartRow } from "./monthly-pnl-chart";
 import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
 
-export function analyticsOverviewMetrics(moneyBasis: JournalAnalyticsMoneyBasis) {
-  return [
-  { id: moneyBasis === "gross" ? "gross_pnl" : "net_pnl", label: `${moneyBasis === "gross" ? "Gross" : "Net"} P/L`, caption: "All completed trades" },
+export const ANALYTICS_OVERVIEW_METRICS = [
+  { id: "net_pnl", label: "Net P/L", caption: "All completed trades" },
   { id: "win_rate", label: "Win rate", caption: "Completed trades that were profitable" },
-  { id: "profit_factor", label: "Profit factor", caption: `${moneyBasis === "gross" ? "Gross" : "Net"} wins divided by ${moneyBasis} losses` },
-  { id: "expectancy", label: "Expectancy", caption: `Average ${moneyBasis} result per trade` },
+  { id: "profit_factor", label: "Profit factor", caption: "Gross wins divided by gross losses" },
+  { id: "expectancy", label: "Expectancy", caption: "Average result per trade" },
   { id: "average_winning_trade", label: "Average win", caption: "Average profitable trade" },
   { id: "average_losing_trade", label: "Average loss", caption: "Average losing trade" },
   { id: "best_trade", label: "Largest win", caption: "Best single trade" },
   { id: "worst_trade", label: "Largest loss", caption: "Worst single trade" },
   { id: "total_trades", label: "Completed trades", caption: "All closed trades" },
-  ] as const;
-}
+] as const;
 
 function metricFor(metrics: readonly JournalAnalyticsMetricResult[], metricId: string) {
   return metrics.find((metric) => metric.metricId === metricId) ?? null;
@@ -49,11 +46,11 @@ function monthLabel(value: string): string {
     : new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC", year: "numeric" }).format(date);
 }
 
-function MonthlyPnlChartForPartition({ moneyBasis, partition }: { moneyBasis: JournalAnalyticsMoneyBasis; partition: JournalAnalyticsResponse }) {
+function MonthlyPnlChartForPartition({ partition }: { partition: JournalAnalyticsResponse }) {
   const rows: readonly MonthlyPnlChartRow[] = partition.groups
     .filter((group) => group.grouping === "closing_month")
     .map((group) => {
-      const metric = metricFor(group.metrics, moneyBasis === "gross" ? "gross_pnl" : "net_pnl");
+      const metric = metricFor(group.metrics, "net_pnl");
       return {
         display: metric ? formatJournalAnalyticsMetric(metric) : "Unavailable",
         key: group.groupKey,
@@ -64,24 +61,23 @@ function MonthlyPnlChartForPartition({ moneyBasis, partition }: { moneyBasis: Jo
   return <MonthlyPnlChart rows={rows} />;
 }
 
-function OverviewPartition({ moneyBasis, partition, showCurrency }: { moneyBasis: JournalAnalyticsMoneyBasis; partition: JournalAnalyticsResponse; showCurrency: boolean }) {
+function OverviewPartition({ partition, showCurrency }: { partition: JournalAnalyticsResponse; showCurrency: boolean }) {
   return (
     <Stack spacing={2.5}>
       {showCurrency ? <Typography sx={{ fontWeight: 800 }}>{partition.currency ?? "Currency unavailable"}</Typography> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
-        {analyticsOverviewMetrics(moneyBasis).map((definition) => {
+        {ANALYTICS_OVERVIEW_METRICS.map((definition) => {
           const metric = metricFor(partition.metrics, definition.id);
           return <DashboardMetricCard caption={definition.caption} key={definition.id} label={definition.label} value={metric ? formatJournalAnalyticsMetric(metric) : "Unavailable"} valueColor={financialSummaryMetricColor(definition.id, metric?.value)} />;
         })}
       </Box>
-      <MonthlyPnlChartForPartition moneyBasis={moneyBasis} partition={partition} />
+      <MonthlyPnlChartForPartition partition={partition} />
     </Stack>
   );
 }
 
-export function AnalyticsOverviewView({ dateRange, moneyBasis, offlineSavedAtUtc, response }: {
+export function AnalyticsOverviewView({ dateRange, offlineSavedAtUtc, response }: {
   dateRange: OverviewDateRange;
-  moneyBasis: JournalAnalyticsMoneyBasis;
   offlineSavedAtUtc?: string;
   response: JournalAnalyticsPartitionedResponse;
 }) {
@@ -101,7 +97,7 @@ export function AnalyticsOverviewView({ dateRange, moneyBasis, offlineSavedAtUtc
           <FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" />
         </Stack>
       )}
-      {response.partitions.map((partition) => <OverviewPartition key={partition.currency ?? "currency-unavailable"} moneyBasis={moneyBasis} partition={partition} showCurrency={response.partitions.length > 1} />)}
+      {response.partitions.map((partition) => <OverviewPartition key={partition.currency ?? "currency-unavailable"} partition={partition} showCurrency={response.partitions.length > 1} />)}
     </DashboardPage>
   );
 }

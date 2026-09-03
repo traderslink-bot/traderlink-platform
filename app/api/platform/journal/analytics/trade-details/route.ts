@@ -1,4 +1,4 @@
-import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from
+import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformRequestScope } from
   "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -37,7 +37,7 @@ export async function GET(request: Request): Promise<Response> {
 
     const result = await withJournalAnalyticsReportingDashboardRuntime(
       scope,
-      ({ pnlReportingBasis, reportingCurrency, service }) => {
+      ({ reportingCurrency, service }) => {
         const baseQuery = buildJournalAnalyticsDashboardQuery(scope, {
           afterCursor,
           closingDateRange: startDate && endDate
@@ -45,7 +45,6 @@ export async function GET(request: Request): Promise<Response> {
             : Object.freeze({ kind: "all_available" as const }),
           currency: reportingCurrency,
           metricIds: ["included_count"],
-          moneyBasis: resolveJournalAnalyticsMoneyBasis(url.searchParams.get("basis"), pnlReportingBasis),
           pageSize: 25,
         });
         const query = Object.freeze({ ...baseQuery, symbols: Object.freeze([symbol]) });

@@ -4,7 +4,6 @@ import type { ResultsTickerRow } from "@/app/(dashboard)/analytics/results-ticke
 import type { TimingChartData } from "@/app/(dashboard)/analytics/timing/timing-analytics-client";
 import type { TradeAnalysisView } from "@/app/(dashboard)/analytics/trade-analysis-client";
 import type { JournalAnalyticsPartitionedResponse } from "./analytics-result";
-import type { JournalAnalyticsMoneyBasis } from "./analytics-query";
 import type { PlatformOfflineCoverageFact } from "@/src/modules/platform/contracts/platform-offline-saved-view-contracts";
 import type { DailyTradeAnalyzedTradePage } from "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
 import type { DailyTradeLongTermAnalyticsModel } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
@@ -49,7 +48,6 @@ type EvidenceQuery = Readonly<{
 export type JournalAnalyticsOverviewOfflineViewModel = Readonly<{
   dateRange: OverviewDateRange;
   kind: "analytics-overview";
-  moneyBasis: "gross" | "net";
   response: JournalAnalyticsPartitionedResponse;
   version: 1;
 }>;
@@ -57,7 +55,6 @@ export type JournalAnalyticsOverviewOfflineViewModel = Readonly<{
 export type JournalAnalyticsResultsOfflineViewModel = Readonly<{
   dateRange: OverviewDateRange;
   kind: "analytics-results";
-  moneyBasis: "gross" | "net";
   rows: readonly ResultsTickerRow[];
   version: 1;
 }>;
@@ -66,7 +63,6 @@ export type JournalAnalyticsTimingOfflineViewModel = Readonly<{
   chartData: TimingChartData;
   completedTradeCount: number;
   kind: "analytics-timing";
-  moneyBasis: JournalAnalyticsMoneyBasis;
   timezone: string;
   version: 1;
 }>;
@@ -75,7 +71,6 @@ export type JournalAnalyticsExecutionOfflineViewModel = Readonly<{
   chartData: ExecutionChartData;
   currency: string | null;
   dateRange: OverviewDateRange;
-  moneyBasis: JournalAnalyticsMoneyBasis;
   kind: "analytics-execution";
   priceComparison: EntryPriceComparison;
   priceInsights: EntryPriceInsights;
@@ -232,24 +227,16 @@ export function isJournalAnalyticsOfflineViewModel(
   expectedKind: JournalAnalyticsOfflineRouteKind,
 ): value is JournalAnalyticsOfflineViewModel {
   if (!isRecord(value) || value.version !== 1 || value.kind !== expectedKind) return false;
-  if (expectedKind === "analytics-overview") {
-    return isRecord(value.response) && isRecord(value.dateRange) &&
-      (value.moneyBasis === "gross" || value.moneyBasis === "net");
-  }
-  if (expectedKind === "analytics-results") {
-    return Array.isArray(value.rows) && isRecord(value.dateRange) &&
-      (value.moneyBasis === "gross" || value.moneyBasis === "net");
-  }
+  if (expectedKind === "analytics-overview") return isRecord(value.response) && isRecord(value.dateRange);
+  if (expectedKind === "analytics-results") return Array.isArray(value.rows) && isRecord(value.dateRange);
   if (expectedKind === "analytics-timing") {
     return isRecord(value.chartData) && Number.isSafeInteger(value.completedTradeCount) &&
-      typeof value.timezone === "string" &&
-      (value.moneyBasis === "gross" || value.moneyBasis === "net");
+      typeof value.timezone === "string";
   }
   if (expectedKind === "analytics-execution") {
     return isRecord(value.chartData) && Array.isArray(value.priceResults) &&
       isRecord(value.priceComparison) && isRecord(value.priceInsights) &&
-      Array.isArray(value.rows) && isRecord(value.dateRange) &&
-      (value.moneyBasis === "gross" || value.moneyBasis === "net");
+      Array.isArray(value.rows) && isRecord(value.dateRange);
   }
   if (expectedKind === "trade-analyzer-trades") {
     return isRecord(value.dateRange) && (value.page === null || isRecord(value.page));

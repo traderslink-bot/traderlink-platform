@@ -323,9 +323,6 @@ export function ExecutionEntryCard({
           </Typography>
         </>
       )}
-      <Alert severity="info" sx={{ mt: 1.5 }}>
-        Leave Fees blank when your broker charged no fee. The trade is then recorded with a $0 fee and included in both Gross and Net P/L. Enter a fee only when your broker charged one.
-      </Alert>
       <Stack spacing={1.5} sx={{ mt: 2.5 }}>
         {rows.map((row, index) => (
           <Box
@@ -412,10 +409,9 @@ export function ExecutionEntryCard({
               value={row.price}
             />
             <TextField
-              helperText="Leave blank when there was no fee. Enter a fee only when charged."
               label="Fees"
               onChange={(event) => update(row.id, "fees", event.target.value)}
-              placeholder="No fee"
+              placeholder="Optional"
               size="small"
               slotProps={{ htmlInput: { inputMode: "decimal", min: 0 } }}
               value={row.fees}

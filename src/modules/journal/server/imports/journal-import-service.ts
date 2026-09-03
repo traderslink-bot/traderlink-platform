@@ -206,7 +206,6 @@ export type ManualExecutionInput = Readonly<{
   feesDecimal: string | null;
   feeCurrency: string | null;
   feeSignConvention: "not_reported" | "broker_reported_signed" | "cash_effect";
-  manualFeeInputState?: "not_entered" | "entered";
   tradeIntent?: "not_set" | "day_trade" | "swing";
 }>;
 
@@ -320,7 +319,6 @@ function executionFacts(execution: JournalAdapterExecution, instrumentId: string
     feesDecimal: execution.feesDecimal,
     feeCurrency: execution.feeCurrency,
     feeSignConvention: execution.feeSignConvention,
-    manualFeeInputState: execution.manualFeeInputState ?? null,
     factCompleteness: execution.factCompleteness,
   });
 }
@@ -932,15 +930,6 @@ export class JournalImportService {
         });
       }
       if (
-        entry.manualFeeInputState !== undefined &&
-        entry.manualFeeInputState !== "not_entered" &&
-        entry.manualFeeInputState !== "entered"
-      ) {
-        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
-          field: "manualFeeInputState",
-        });
-      }
-      if (
         entry.tradeIntent !== undefined &&
         !["not_set", "day_trade", "swing"].includes(entry.tradeIntent)
       ) {
@@ -976,7 +965,6 @@ export class JournalImportService {
         side: entry.side, quantityDecimal: entry.quantityDecimal,
         priceDecimal: entry.priceDecimal, feesDecimal: entry.feesDecimal,
         feeCurrency: entry.feeCurrency, feeSignConvention: entry.feeSignConvention,
-        manualFeeInputState: entry.manualFeeInputState,
         factCompleteness: entry.priceDecimal === null ? "price_missing" as const : "complete" as const,
         providerExecutionIdentity: null, normalizedContentIdentity,
         contentOccurrenceOrdinal: occurrence,
@@ -985,7 +973,7 @@ export class JournalImportService {
     const rawOccurrences = new Map<string, number>();
     const rows: JournalAdapterSourceRow[] = adapterExecutions.map((execution) => {
       const fields = Object.freeze([
-        "manual_execution_v2", execution.sourceTimestampText, execution.sourceTimezone,
+        "manual_execution_v1", execution.sourceTimestampText, execution.sourceTimezone,
         execution.executedAtUtc, execution.timeParserVersion,
         localDateAtUtc(execution.executedAtUtc, account.tradingTimezone),
         account.tradingTimezone,
@@ -993,7 +981,6 @@ export class JournalImportService {
         execution.priceDecimal ?? "", execution.feesDecimal ?? "",
         execution.feeCurrency ?? "", execution.feeSignConvention,
         execution.tradeCurrency, input.entries[execution.recordOrdinal - 1]?.tradeIntent ?? "not_set",
-        input.entries[execution.recordOrdinal - 1]?.manualFeeInputState ?? "",
       ]);
       const rawFieldsJson = JSON.stringify(fields);
       const fingerprint = sha256(rawFieldsJson);
@@ -1086,10 +1073,10 @@ export class JournalImportService {
       sourceSystem: "manual", sourceFileSha256: null, sourceFileSizeBytes: null,
       sourceMimeType: null, sourceEncoding: null, sourceDisplayLabel: input.sourceDisplayLabel,
       evidenceObjectKey: null, manualIdempotencyKey: input.idempotencyKey,
-      adapterId: "manual_execution", adapterVersion: "manual_execution_v2",
-      parserVersion: "manual_record_v2", mappingVersion: "manual_execution_mapping_v2",
+      adapterId: "manual_execution", adapterVersion: "manual_execution_v1",
+      parserVersion: "manual_record_v1", mappingVersion: "manual_execution_mapping_v1",
       mappingContractJson: JSON.stringify({
-        contractVersion: "manual_execution_mapping_v2",
+        contractVersion: "manual_execution_mapping_v1",
         coverage: "point_only",
         contentResolution: input.contentResolution === "trader_confirmed_separate"
           ? "trader_confirmed_separate"

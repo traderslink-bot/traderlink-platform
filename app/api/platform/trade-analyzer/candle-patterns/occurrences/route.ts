@@ -2,7 +2,7 @@ import { readDailyTradePatternOccurrences } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
 import { reportDailyTradePatternOccurrences } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-reporting";
-import { resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from
+import { withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformRequestScope } from
   "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -25,6 +25,7 @@ export async function GET(request: Request): Promise<Response> {
     const timeframe = url.searchParams.get("timeframe") ?? "all";
     const execution = url.searchParams.get("execution") ?? "all";
     const location = url.searchParams.get("location") ?? "all";
+    const basis = url.searchParams.get("basis") === "net" ? "net" : "gross";
     if (
       !["all", "1m", "5m"].includes(timeframe) ||
       !["all", "entry", "exit"].includes(execution) ||
@@ -34,7 +35,7 @@ export async function GET(request: Request): Promise<Response> {
     }
     const page = await withJournalAnalyticsReportingDashboardRuntime(
       scope,
-      ({ pnlReportingBasis, reportingContext }) => withReadonlyPlatformDatabase({}, (database) =>
+      ({ reportingContext }) => withReadonlyPlatformDatabase({}, (database) =>
         reportDailyTradePatternOccurrences(
           readDailyTradePatternOccurrences(database, scope, {
             afterCursor: url.searchParams.get("cursor"),
@@ -42,7 +43,7 @@ export async function GET(request: Request): Promise<Response> {
             endDate: optionalDate(url.searchParams.get("end")),
             execution: execution as "all" | "entry" | "exit",
             location: location as "all" | "exact" | "before",
-            moneyBasis: resolveJournalAnalyticsMoneyBasis(url.searchParams.get("basis"), pnlReportingBasis),
+            moneyBasis: basis,
             pageSize: Number(url.searchParams.get("pageSize") ?? 25),
             pattern: url.searchParams.get("pattern") ?? "",
             startDate: optionalDate(url.searchParams.get("start")),

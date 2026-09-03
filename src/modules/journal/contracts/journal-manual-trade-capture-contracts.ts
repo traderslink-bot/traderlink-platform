@@ -23,7 +23,6 @@ export type JournalManualTradeEntry = Readonly<{
   quantityDecimal: string;
   priceDecimal: string;
   feesDecimal: string | null;
-  manualFeeInputState?: "not_entered" | "entered";
 }>;
 
 export type JournalManualTradePreviewAllocation = Readonly<{
