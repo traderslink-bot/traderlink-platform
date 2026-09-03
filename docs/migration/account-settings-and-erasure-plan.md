@@ -60,8 +60,9 @@ sessions remain unlabeled and show their real created/last-active dates.
   are exactly **I enter fees** (Net) and **I don’t enter fees** (Gross). An
   explicit page-level Gross/Net choice overrides the saved default for that
   view without creating another saved preference. It never rewrites factual
-  Gross/Net fields, and an execution with a blank fee remains unavailable for
-  Net while an explicit zero fee is Net-eligible.
+  Gross/Net fields. A blank fee on a new or edited manual execution is an
+  intentional $0 fee and is Net-eligible; historical/imported missing-fee
+  facts remain unavailable for Net rather than being invented.
 
 **P/L preference progress:** [Account P/L Reporting Basis Progress](account-pnl-reporting-basis-progress.md)
 - Do not make the Discord identity disconnectable inside TraderLink. Discord

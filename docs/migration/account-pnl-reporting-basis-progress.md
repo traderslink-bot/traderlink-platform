@@ -24,9 +24,9 @@ the complete current analytics inventory:
 8. Compare
 
 An explicit Gross/Net selection on an individual page remains an override for
-that view. It does not write a second setting. Raw trade rows remain visible;
-Net can mark a calculated result unavailable when fees are blank, while an
-explicit zero fee remains Net-eligible.
+that view. It does not write a second setting. A blank fee on a new or edited
+manual execution records an intentional $0 fee and remains Net-eligible.
+Historical/imported missing-fee facts remain unavailable for Net.
 
 ## Implementation record
 
@@ -36,8 +36,8 @@ explicit zero fee remains Net-eligible.
 - [x] Connect Workspace to the saved preference.
 - [x] Connect all eight requested presentation defaults and preserve explicit
   page-level overrides.
-- [x] Explain at manual entry and editing that a blank fee keeps the raw trade
-  visible but excludes it from Net P/L; tell the trader to enter 0 when there
-  was no fee.
+- [x] Treat a blank fee on a new or edited manual execution as an intentional
+  $0 fee, so it remains included in Net P/L. A trader enters a fee only when a
+  broker charged one; historical/imported missing-fee facts remain unchanged.
 - [x] Complete narrow static review.
 - [ ] Complete staging visual acceptance before any release handoff.

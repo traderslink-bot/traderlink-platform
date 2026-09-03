@@ -249,7 +249,7 @@ export function ManualExecutionEditDialog({
               <TextField label="Side" onChange={(event) => update("side", event.target.value as ManualExecutionEditDraft["side"])} select value={draft.side}><MenuItem value="buy">Buy</MenuItem><MenuItem value="sell">Sell</MenuItem></TextField>
               <TextField label="Quantity" onChange={(event) => update("quantity", event.target.value)} value={draft.quantity} />
               <TextField label="Price" onChange={(event) => update("price", event.target.value)} value={draft.price} />
-              <TextField helperText="Enter 0 when there was no fee. A blank fee keeps the trade visible but excludes it from Net P/L analytics." label="Fees" onChange={(event) => update("fees", event.target.value)} value={draft.fees} />
+              <TextField helperText="Leave blank when there was no fee. This records a $0 fee and includes the trade in Net P/L." label="Fees" onChange={(event) => update("fees", event.target.value)} value={draft.fees} />
             </Box>
             {error ? (
               <Alert
