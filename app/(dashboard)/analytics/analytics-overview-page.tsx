@@ -7,10 +7,14 @@ import {
   journalAnalyticsOfflineRouteCoverage,
   type JournalAnalyticsOverviewOfflineViewModel,
 } from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
-import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import {
+  buildJournalAnalyticsDashboardQuery,
+  resolveJournalAnalyticsMoneyBasis,
+  withJournalAnalyticsReportingDashboardRuntime,
+} from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
-import { ANALYTICS_OVERVIEW_METRICS, AnalyticsOverviewView } from "./analytics-overview-view";
+import { analyticsOverviewMetrics, AnalyticsOverviewView } from "./analytics-overview-view";
 import type { OverviewDateRange } from "./overview-date-range-control";
 
 function easternToday(): string {
@@ -43,21 +47,26 @@ function dateRangeFromSearchParams(searchParams: Readonly<Record<string, string 
 export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
   const scope = await requireTraderLinkPlatformPageScope();
   const dateRange = dateRangeFromSearchParams(searchParams);
-  const query = buildJournalAnalyticsDashboardQuery(scope, {
-    closingDateRange: dateRange.startDate && dateRange.endDate
-      ? { endDate: dateRange.endDate, kind: "inclusive_closing_date", startDate: dateRange.startDate }
-      : { kind: "all_available" },
-    groupings: ["closing_month"],
-    metricIds: ANALYTICS_OVERVIEW_METRICS.map((metric) => metric.id),
-  });
-  const response = await withJournalAnalyticsReportingDashboardRuntime(
+  const { moneyBasis, response } = await withJournalAnalyticsReportingDashboardRuntime(
     scope,
-    ({ service }) => service.getAnalyticsOverview(scope, query),
+    ({ pnlReportingBasis, service }) => {
+      const moneyBasis = resolveJournalAnalyticsMoneyBasis(searchParams.basis, pnlReportingBasis);
+      const query = buildJournalAnalyticsDashboardQuery(scope, {
+        closingDateRange: dateRange.startDate && dateRange.endDate
+          ? { endDate: dateRange.endDate, kind: "inclusive_closing_date", startDate: dateRange.startDate }
+          : { kind: "all_available" },
+        groupings: ["closing_month"],
+        metricIds: analyticsOverviewMetrics(moneyBasis).map((metric) => metric.id),
+        moneyBasis,
+      });
+      return Object.freeze({ moneyBasis, response: service.getAnalyticsOverview(scope, query) });
+    },
     { prefetchAllFactSet: dateRange.kind === "all" },
   );
   const offlineModel: JournalAnalyticsOverviewOfflineViewModel = Object.freeze({
     dateRange: Object.freeze({ ...dateRange }),
     kind: "analytics-overview",
+    moneyBasis,
     response,
     version: 1,
   });
@@ -70,12 +79,12 @@ export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Re
         generatedAtUtc={response.generatedAtUtc}
         model={offlineModel}
         pathname="/analytics"
-        queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}`}
+        queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}`}
         reportingCurrency={response.partitions[0]?.currency ?? null}
         routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-overview"]}
       />
-      <AnalyticsOverviewView dateRange={dateRange} response={response} />
+      <AnalyticsOverviewView dateRange={dateRange} moneyBasis={moneyBasis} response={response} />
     </>
   );
 }

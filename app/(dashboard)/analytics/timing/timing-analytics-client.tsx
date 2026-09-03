@@ -12,7 +12,7 @@ import { useMemo, useState } from "react";
 import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 
-export type TimingMetricId = "net_pnl" | "average_pnl" | "win_rate" | "included_count" | "median_pnl" | "best_trade";
+export type TimingMetricId = "gross_pnl" | "net_pnl" | "average_pnl" | "win_rate" | "included_count" | "median_pnl" | "best_trade";
 type TimingChartId = "entry_time_bucket" | "exit_time_bucket" | "entry_weekday" | "entry_session";
 type TimingChartStyle = "columns" | "line" | "horizontal_bars";
 type TimingMetricValue = Readonly<{
@@ -30,12 +30,14 @@ export type TimingChartData = Readonly<Record<TimingChartId, readonly TimingPoin
 const RELIABLE_TIME_MINIMUM_TRADES = 10;
 const RELIABLE_TIME_SAMPLE_WEIGHT = 10;
 
-const MEASURES: readonly Readonly<{ id: TimingMetricId; label: string }>[] = [
-  { id: "net_pnl", label: "Net P/L" },
+function measures(pnlMetricId: "gross_pnl" | "net_pnl"): readonly Readonly<{ id: TimingMetricId; label: string }>[] {
+  return [
+  { id: pnlMetricId, label: pnlMetricId === "gross_pnl" ? "Gross P/L" : "Net P/L" },
   { id: "average_pnl", label: "Average P/L per trade" },
   { id: "win_rate", label: "Win rate" },
   { id: "included_count", label: "Trade count" },
-];
+  ];
+}
 
 const CHARTS: readonly Readonly<{ id: TimingChartId; title: string; showTimezone?: boolean }>[] = [
   { id: "entry_time_bucket", title: "Entry time", showTimezone: true },
@@ -92,6 +94,7 @@ function yFor(value: number, range: Readonly<{ min: number; max: number }>, heig
 
 function highestLabel(metricId: TimingMetricId): string {
   switch (metricId) {
+    case "gross_pnl": return "Highest total P/L";
     case "net_pnl": return "Highest total P/L";
     case "average_pnl": return "Highest average P/L";
     case "win_rate": return "Highest win rate";
@@ -117,30 +120,30 @@ type ReliableTimeCandidate = Readonly<{
   point: TimingPoint;
 }>;
 
-function reliableTimeCandidate(point: TimingPoint): ReliableTimeCandidate | null {
+function reliableTimeCandidate(point: TimingPoint, pnlMetricId: "gross_pnl" | "net_pnl"): ReliableTimeCandidate | null {
   const count = point.metrics.included_count;
   const average = point.metrics.average_pnl;
   const median = point.metrics.median_pnl;
-  const netPnl = point.metrics.net_pnl;
+  const pnl = point.metrics[pnlMetricId];
   const bestTrade = point.metrics.best_trade;
   const winRate = point.metrics.win_rate;
   if (
     count.state !== "complete" ||
     average.state !== "complete" ||
     median.state !== "complete" ||
-    netPnl.state !== "complete" ||
+    pnl.state !== "complete" ||
     bestTrade.state !== "complete" ||
     winRate.state !== "complete" ||
     count.value === null ||
     average.value === null ||
     median.value === null ||
-    netPnl.value === null ||
+    pnl.value === null ||
     bestTrade.value === null ||
     winRate.value === null ||
     count.value < RELIABLE_TIME_MINIMUM_TRADES ||
     median.value <= 0 ||
     winRate.value <= 50 ||
-    netPnl.value - bestTrade.value <= 0
+    pnl.value - bestTrade.value <= 0
   ) return null;
 
   return Object.freeze({
@@ -149,9 +152,9 @@ function reliableTimeCandidate(point: TimingPoint): ReliableTimeCandidate | null
   });
 }
 
-function ReliableTimeLabel({ chart, points }: { chart: (typeof CHARTS)[number]; points: readonly TimingPoint[] }) {
+function ReliableTimeLabel({ chart, points, pnlMetricId }: { chart: (typeof CHARTS)[number]; points: readonly TimingPoint[]; pnlMetricId: "gross_pnl" | "net_pnl" }) {
   const reliable = useMemo(() => points
-    .map(reliableTimeCandidate)
+    .map((point) => reliableTimeCandidate(point, pnlMetricId))
     .filter((candidate): candidate is ReliableTimeCandidate => candidate !== null)
     .sort((left, right) => {
       if (right.adjustedAveragePnl !== left.adjustedAveragePnl) return right.adjustedAveragePnl - left.adjustedAveragePnl;
@@ -160,7 +163,7 @@ function ReliableTimeLabel({ chart, points }: { chart: (typeof CHARTS)[number]; 
       const winRateDifference = (right.point.metrics.win_rate.value ?? 0) - (left.point.metrics.win_rate.value ?? 0);
       if (winRateDifference !== 0) return winRateDifference;
       return (right.point.metrics.included_count.value ?? 0) - (left.point.metrics.included_count.value ?? 0);
-    })[0] ?? null, [points]);
+    })[0] ?? null, [pnlMetricId, points]);
   const noun = chart.id === "entry_time_bucket" ? "entry" : "exit";
   if (!reliable) {
     const mostRepeated = [...points]
@@ -172,7 +175,7 @@ function ReliableTimeLabel({ chart, points }: { chart: (typeof CHARTS)[number]; 
     const reasons = [
       (mostRepeated.metrics.median_pnl.value ?? 0) <= 0 ? "a profitable typical trade" : null,
       (mostRepeated.metrics.win_rate.value ?? 0) <= 50 ? "more than half winning trades" : null,
-      (mostRepeated.metrics.net_pnl.value ?? 0) - (mostRepeated.metrics.best_trade.value ?? 0) <= 0
+      (mostRepeated.metrics[pnlMetricId].value ?? 0) - (mostRepeated.metrics.best_trade.value ?? 0) <= 0
         ? "profitability without relying on its largest winner"
         : null,
     ].filter((reason): reason is string => reason !== null);
@@ -323,7 +326,7 @@ function PieChart({ points, donut }: { points: readonly TimingPoint[]; donut: bo
   );
 }
 
-function ChartPanel({ chart, points, metricId, timezone, styles }: { chart: (typeof CHARTS)[number]; points: readonly TimingPoint[]; metricId: TimingMetricId; timezone: string; styles: readonly Readonly<{ id: TimingChartStyle; label: string }>[] }) {
+function ChartPanel({ chart, points, metricId, pnlMetricId, timezone, styles }: { chart: (typeof CHARTS)[number]; points: readonly TimingPoint[]; metricId: TimingMetricId; pnlMetricId: "gross_pnl" | "net_pnl"; timezone: string; styles: readonly Readonly<{ id: TimingChartStyle; label: string }>[] }) {
   const [chartStyle, setChartStyle] = useState<TimingChartStyle>("horizontal_bars");
   const fixedHorizontalBars = chart.id === "entry_time_bucket" || chart.id === "exit_time_bucket";
   return (
@@ -333,10 +336,10 @@ function ChartPanel({ chart, points, metricId, timezone, styles }: { chart: (typ
           <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">
             {chart.title}{chart.showTimezone ? ` (${timezone === "America/New_York" ? "Eastern Time" : timezone})` : ""}
           </Typography>
-          <Typography color="text.secondary" variant="body2">{MEASURES.find((measure) => measure.id === metricId)?.label}</Typography>
+          <Typography color="text.secondary" variant="body2">{measures(pnlMetricId).find((measure) => measure.id === metricId)?.label}</Typography>
           <Stack spacing={0.25} sx={{ mt: 0.75 }}>
             <HighestLabel chart={chart} metricId={metricId} points={points} />
-            {chart.id === "entry_time_bucket" || chart.id === "exit_time_bucket" ? <ReliableTimeLabel chart={chart} points={points} /> : null}
+            {chart.id === "entry_time_bucket" || chart.id === "exit_time_bucket" ? <ReliableTimeLabel chart={chart} pnlMetricId={pnlMetricId} points={points} /> : null}
           </Stack>
         </Box>
         {!fixedHorizontalBars ? <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
@@ -369,18 +372,19 @@ function TradeDistributionPanel({ chart, points }: { chart: (typeof CHARTS)[numb
   );
 }
 
-export function TimingAnalyticsClient({ chartData, completedTradeCount, timezone }: { chartData: TimingChartData; completedTradeCount: number; timezone: string }) {
-  const [metricId, setMetricId] = useState<TimingMetricId>("net_pnl");
+export function TimingAnalyticsClient({ chartData, completedTradeCount, moneyBasis, timezone }: { chartData: TimingChartData; completedTradeCount: number; moneyBasis: "gross" | "net"; timezone: string }) {
+  const pnlMetricId = moneyBasis === "gross" ? "gross_pnl" : "net_pnl";
+  const [metricId, setMetricId] = useState<TimingMetricId>(pnlMetricId);
   return (
     <Stack spacing={2.5}>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "center" }, justifyContent: "flex-end" }}>
         <TextField label="Measure" onChange={(event) => setMetricId(event.target.value as TimingMetricId)} select size="small" sx={{ minWidth: { sm: 220 } }} value={metricId}>
-          {MEASURES.map((option) => <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>)}
+          {measures(pnlMetricId).map((option) => <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>)}
         </TextField>
         <FeatureHelpLink href="/help/core-analytics/timing-and-execution#read-timing" label="Timing measures" />
       </Stack>
       <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>
-        {CHARTS.map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} styles={CATEGORY_CHART_STYLES} timezone={timezone} />)}
+        {CHARTS.map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} pnlMetricId={pnlMetricId} points={chartData[chart.id]} styles={CATEGORY_CHART_STYLES} timezone={timezone} />)}
       </Box>
       <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>
         <TradeDistributionPanel chart={CHARTS[2]!} points={chartData.entry_weekday} />

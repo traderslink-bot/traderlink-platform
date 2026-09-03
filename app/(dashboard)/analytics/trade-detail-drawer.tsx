@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { JournalAnalyticsMoneyBasis } from "@/src/modules/journal-analytics/contracts/analytics-query";
 
 import type { DaySessionTradeAnalyzer } from
   "@/app/(dashboard)/trade-tracker/[sessionDate]/day-session-types";
@@ -70,10 +71,10 @@ function money(value: string | null, currency: string | null): string {
   return value === null ? "Unavailable" : formatJournalAnalyticsMoney(value, currency);
 }
 
-async function loadTrade(trade: AnalyticsTradeDetail): Promise<LoadedTrade> {
+async function loadTrade(trade: AnalyticsTradeDetail, moneyBasis: JournalAnalyticsMoneyBasis): Promise<LoadedTrade> {
   try {
     const detailsUrl = `/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(trade.roundTripId)}`;
-    const analysisUrl = `/api/platform/trade-analyzer/trade?roundTripId=${encodeURIComponent(trade.roundTripId)}&direction=${trade.direction}`;
+    const analysisUrl = `/api/platform/trade-analyzer/trade?roundTripId=${encodeURIComponent(trade.roundTripId)}&direction=${trade.direction}&basis=${moneyBasis}`;
     const marketDataAccessUrl = "/api/platform/moomoo-market-data-access";
     const [detailsResponse, analysisResponse, marketDataAccessResponse] = await Promise.all([
       fetch(detailsUrl, { cache: "no-store" }),
@@ -109,6 +110,7 @@ export function AnalyticsTradeDetailDrawer({
   error,
   hasMore,
   loading,
+  moneyBasis = "net",
   onClose,
   onLoadMore,
   open,
@@ -119,6 +121,7 @@ export function AnalyticsTradeDetailDrawer({
   error?: string | null;
   hasMore?: boolean;
   loading?: boolean;
+  moneyBasis?: JournalAnalyticsMoneyBasis;
   onClose: () => void;
   onLoadMore?: () => void;
   open: boolean;
@@ -155,7 +158,7 @@ export function AnalyticsTradeDetailDrawer({
       ...current,
       [trade.roundTripId]: Object.freeze({ analysis: null, executions: Object.freeze([]), showMoomooConnectionGuidance: false, status: "loading" as const }),
     }));
-    const result = await loadTrade(trade);
+    const result = await loadTrade(trade, moneyBasis);
     if (revision !== requestRevision.current) return;
     setLoadedById((current) => ({ ...current, [trade.roundTripId]: result }));
   };
@@ -281,12 +284,14 @@ export function AnalyticsTradeDetailDrawer({
 
 export function TickerTradeDetailDrawer({
   endDate,
+  moneyBasis = "net",
   onClose,
   open,
   startDate,
   ticker,
 }: {
   endDate: string | null;
+  moneyBasis?: JournalAnalyticsMoneyBasis;
   onClose: () => void;
   open: boolean;
   startDate: string | null;
@@ -309,6 +314,7 @@ export function TickerTradeDetailDrawer({
     setLoading(true);
     setError(null);
     const query = new URLSearchParams({ symbol: ticker });
+    query.set("basis", moneyBasis);
     if (startDate && endDate) {
       query.set("start", startDate);
       query.set("end", endDate);
@@ -331,7 +337,7 @@ export function TickerTradeDetailDrawer({
     } finally {
       if (revision === requestRevision.current) setLoading(false);
     }
-  }, [endDate, startDate, ticker]);
+  }, [endDate, moneyBasis, startDate, ticker]);
 
   useEffect(() => {
     if (!open || !ticker) return;
@@ -347,6 +353,7 @@ export function TickerTradeDetailDrawer({
       error={error}
       hasMore={nextCursor !== null}
       loading={loading}
+      moneyBasis={moneyBasis}
       onClose={onClose}
       onLoadMore={() => void fetchPage(nextCursor, true)}
       open={open}

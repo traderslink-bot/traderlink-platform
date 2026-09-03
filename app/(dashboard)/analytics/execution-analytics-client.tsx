@@ -20,7 +20,7 @@ import { FeatureHelpLink } from "../feature-help-link";
 import { HorizontalScrollHint, HorizontalScrollRegion } from "../horizontal-scroll-region";
 import { AnalyticsTradeDetailDrawer, type AnalyticsTradeDetail } from "./trade-detail-drawer";
 
-type ExecutionMetricId = "net_pnl" | "win_rate" | "included_count";
+type ExecutionMetricId = "gross_pnl" | "net_pnl" | "win_rate" | "included_count";
 type ChartId = "entered_quantity_bucket" | "maximum_position_bucket" | "holding_duration_bucket";
 type ChartStyle = "columns" | "horizontal_bars";
 type Point = Readonly<{ key: string; label: string; metrics: Readonly<Record<ExecutionMetricId, Readonly<{ display: string; value: number | null }>>> }>;
@@ -36,17 +36,21 @@ const CHARTS: readonly Readonly<{ id: ChartId; title: string }>[] = [
   { id: "maximum_position_bucket", title: "Maximum position" },
   { id: "holding_duration_bucket", title: "Hold time" },
 ];
-const MEASURES: readonly Readonly<{ id: ExecutionMetricId; label: string }>[] = [
-  { id: "net_pnl", label: "Net P/L" },
+function measures(pnlMetricId: "gross_pnl" | "net_pnl"): readonly Readonly<{ id: ExecutionMetricId; label: string }>[] {
+  return [
+  { id: pnlMetricId, label: pnlMetricId === "gross_pnl" ? "Gross P/L" : "Net P/L" },
   { id: "win_rate", label: "Win rate" },
   { id: "included_count", label: "Trades" },
-];
+  ];
+}
 type SortColumn = "ticker" | "direction" | "tradeType" | "opened" | "closed" | "executions" | "averageEntry" | "averageExit" | "maximumPosition" | "holdTime" | "netPnl";
-const COLUMNS: readonly Readonly<{ id: SortColumn; label: string }>[] = [
-  { id: "ticker", label: "Ticker" }, { id: "direction", label: "Direction" }, { id: "tradeType", label: "Trade type" }, { id: "opened", label: "Opened" }, { id: "closed", label: "Closed" }, { id: "executions", label: "Executions" }, { id: "averageEntry", label: "Average entry" }, { id: "averageExit", label: "Average exit" }, { id: "maximumPosition", label: "Max shares" }, { id: "holdTime", label: "Hold time" }, { id: "netPnl", label: "Net P/L" },
-];
+function columns(moneyBasis: "gross" | "net"): readonly Readonly<{ id: SortColumn; label: string }>[] {
+  return [
+  { id: "ticker", label: "Ticker" }, { id: "direction", label: "Direction" }, { id: "tradeType", label: "Trade type" }, { id: "opened", label: "Opened" }, { id: "closed", label: "Closed" }, { id: "executions", label: "Executions" }, { id: "averageEntry", label: "Average entry" }, { id: "averageExit", label: "Average exit" }, { id: "maximumPosition", label: "Max shares" }, { id: "holdTime", label: "Hold time" }, { id: "netPnl", label: moneyBasis === "gross" ? "Gross P/L" : "Net P/L" },
+  ];
+}
 
-function mobileSortLabel(column: (typeof COLUMNS)[number], direction: "asc" | "desc"): string {
+function mobileSortLabel(column: Readonly<{ id: SortColumn; label: string }>, direction: "asc" | "desc"): string {
   if (column.id === "opened" || column.id === "closed") {
     return `${column.label}: ${direction === "desc" ? "newest" : "oldest"}`;
   }
@@ -85,9 +89,9 @@ function Chart({ points, metricId, style }: { points: readonly Point[]; metricId
   return <><HorizontalScrollHint label="Swipe sideways to see the full chart" /><Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}><Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox={`0 0 ${width} 230`}><line stroke={dark ? chart.grid : "#d9e1ec"} strokeWidth="1" x1="20" x2="620" y1={baseline} y2={baseline} />{points.map((point, index) => { const value = point.metrics[metricId].value ?? 0; const barHeight = Math.max(2, Math.abs(value) / max * 88); const barWidth = Math.max(24, 440 / points.length); const x = 42 + index * (560 / points.length); return <g key={point.key}><title>{`${point.label}: ${point.metrics[metricId].display}`}</title><rect fill={value < 0 ? chart.loss : chart.win} height={barHeight} rx="4" width={barWidth} x={x} y={value < 0 ? baseline : baseline - barHeight} /><text fill={dark ? theme.palette.text.secondary : "#627083"} fontSize="11" textAnchor="middle" x={x + barWidth / 2} y="211">{point.label.slice(0, 9)}</text></g>; })}</Box></Box></>;
 }
 
-function ChartPanel({ chart, points, metricId }: { chart: (typeof CHARTS)[number]; points: readonly Point[]; metricId: ExecutionMetricId }) {
+function ChartPanel({ chart, points, metricId, pnlMetricId }: { chart: (typeof CHARTS)[number]; points: readonly Point[]; metricId: ExecutionMetricId; pnlMetricId: "gross_pnl" | "net_pnl" }) {
   const [style, setStyle] = useState<ChartStyle>("horizontal_bars");
-  return <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined"><Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{chart.title}</Typography><TextField aria-label={`${chart.title} chart type`} onChange={(event) => setStyle(event.target.value as ChartStyle)} select size="small" sx={{ minWidth: 150 }} value={style}><MenuItem value="horizontal_bars">Horizontal bars</MenuItem><MenuItem value="columns">Columns</MenuItem></TextField></Stack><Typography color="text.secondary" variant="body2">{MEASURES.find((measure) => measure.id === metricId)?.label}</Typography><Chart metricId={metricId} points={points} style={style} /></Paper>;
+  return <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined"><Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{chart.title}</Typography><TextField aria-label={`${chart.title} chart type`} onChange={(event) => setStyle(event.target.value as ChartStyle)} select size="small" sx={{ minWidth: 150 }} value={style}><MenuItem value="horizontal_bars">Horizontal bars</MenuItem><MenuItem value="columns">Columns</MenuItem></TextField></Stack><Typography color="text.secondary" variant="body2">{measures(pnlMetricId).find((measure) => measure.id === metricId)?.label}</Typography><Chart metricId={metricId} points={points} style={style} /></Paper>;
 }
 
 type EntryPriceInsightKind = "highest_win_rate" | "lowest_win_rate" | "highest_average_pnl" | "lowest_average_pnl";
@@ -127,7 +131,7 @@ function EntryPriceComparison({ comparison }: { comparison: EntryPriceComparison
   return <Stack spacing={0.75}><Typography component="h3" sx={{ fontWeight: 850 }} variant="subtitle1">Under $1.00 compared with $1.00+</Typography><Typography color="text.secondary" variant="body2">{sentence}</Typography><Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}><Box><Typography sx={{ fontWeight: 800 }} variant="body2">Under $1.00</Typography><Typography color="text.secondary" variant="body2">{comparison.underOne.winRate} win rate · {comparison.underOne.averagePnl} avg P/L · {comparison.underOne.tradeCountDisplay} trades</Typography></Box><Box><Typography sx={{ fontWeight: 800 }} variant="body2">$1.00 and above</Typography><Typography color="text.secondary" variant="body2">{comparison.oneAndAbove.winRate} win rate · {comparison.oneAndAbove.averagePnl} avg P/L · {comparison.oneAndAbove.tradeCountDisplay} trades</Typography></Box></Box><Typography color={comparison.evidenceState === "uneven_sample" ? "warning.main" : "text.secondary"} variant="body2">{comparison.evidenceState === "uneven_sample" ? `Uneven sample: ${comparison.underOne.tradeCountDisplay} trades under $1.00 compared with ${comparison.oneAndAbove.tradeCountDisplay} trades at $1.00 and above. Treat this as direction, not a firm conclusion.` : "Comparable sample sizes support this historical comparison."}</Typography></Stack>;
 }
 
-function EntryPriceResults({ comparison, insights, results }: { comparison: EntryPriceComparison; insights: EntryPriceInsights; results: readonly EntryPriceResult[] }) {
+function EntryPriceResults({ comparison, insights, moneyBasis, results }: { comparison: EntryPriceComparison; insights: EntryPriceInsights; moneyBasis: "gross" | "net"; results: readonly EntryPriceResult[] }) {
   const highestWinRate = results.find((result) => result.key === insights.highestWinRateKey) ?? null;
   const highestAveragePnl = results.find((result) => result.key === insights.highestAveragePnlKey) ?? null;
   const lowestWinRate = results.find((result) => result.key === insights.lowestWinRateKey) ?? null;
@@ -139,15 +143,17 @@ function EntryPriceResults({ comparison, insights, results }: { comparison: Entr
       <EntryPriceComparison comparison={comparison} />
       {comparison.evidenceState === "needs_overall_history" ? null : hasRangeInsights ? <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}><Stack spacing={2}><EntryPriceInsight kind="highest_win_rate" result={highestWinRate} /><EntryPriceInsight kind="highest_average_pnl" result={highestAveragePnl} /></Stack><Stack spacing={2}><EntryPriceInsight kind="lowest_win_rate" result={lowestWinRate} /><EntryPriceInsight kind="lowest_average_pnl" result={lowestAveragePnl} /></Stack></Box> : <Typography color="text.secondary" variant="body2">No price range from $1.00 to under $5.00 has 10 completed trades yet. The table remains available while that history builds.</Typography>}
       <HorizontalScrollRegion label="Entry price results table" minTableWidth={720}>
-        <Table size="small" sx={{ width: "auto", "& .MuiTableCell-root": { px: 0.875, whiteSpace: "nowrap" }, "& .MuiTableCell-root:first-of-type": { minWidth: 164 } }}><TableHead><TableRow><TableCell>Entry price</TableCell><TableCell align="right">Net P/L</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Wins</TableCell><TableCell align="right">Losses</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg P/L</TableCell></TableRow></TableHead><TableBody>{results.map((result) => <TableRow key={result.key}><TableCell sx={{ fontWeight: 800 }}>{result.entryPriceBand}</TableCell><TableCell align="right" sx={{ color: result.netPnlDecimal !== null && result.netPnlDecimal.startsWith("-") ? "error.main" : "success.main", fontWeight: 800 }}>{result.netPnl}</TableCell><TableCell align="right">{result.tradeCountDisplay}</TableCell><TableCell align="right">{result.winsDisplay}</TableCell><TableCell align="right">{result.lossesDisplay}</TableCell><TableCell align="right">{result.winRate}</TableCell><TableCell align="right">{result.averagePnl}</TableCell></TableRow>)}</TableBody></Table>
+        <Table size="small" sx={{ width: "auto", "& .MuiTableCell-root": { px: 0.875, whiteSpace: "nowrap" }, "& .MuiTableCell-root:first-of-type": { minWidth: 164 } }}><TableHead><TableRow><TableCell>Entry price</TableCell><TableCell align="right">{moneyBasis === "gross" ? "Gross" : "Net"} P/L</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Wins</TableCell><TableCell align="right">Losses</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg P/L</TableCell></TableRow></TableHead><TableBody>{results.map((result) => <TableRow key={result.key}><TableCell sx={{ fontWeight: 800 }}>{result.entryPriceBand}</TableCell><TableCell align="right" sx={{ color: result.netPnlDecimal !== null && result.netPnlDecimal.startsWith("-") ? "error.main" : "success.main", fontWeight: 800 }}>{result.netPnl}</TableCell><TableCell align="right">{result.tradeCountDisplay}</TableCell><TableCell align="right">{result.winsDisplay}</TableCell><TableCell align="right">{result.lossesDisplay}</TableCell><TableCell align="right">{result.winRate}</TableCell><TableCell align="right">{result.averagePnl}</TableCell></TableRow>)}</TableBody></Table>
       </HorizontalScrollRegion>
-      <Typography color="text.secondary" variant="body2">includes completed trades in the selected date range. Net P/L is shown when trading fees are available.</Typography>
+      <Typography color="text.secondary" variant="body2">Includes completed trades in the selected date range.</Typography>
     </Stack>
   </Paper>;
 }
 
-export function ExecutionAnalyticsClient({ chartData, currency, offline = false, priceComparison, priceInsights, priceResults, rows }: { chartData: ExecutionChartData; currency: string | null; offline?: boolean; priceComparison: EntryPriceComparison; priceInsights: EntryPriceInsights; priceResults: readonly EntryPriceResult[]; rows: readonly ExecutionTradeRow[] }) {
-  const [metricId, setMetricId] = useState<ExecutionMetricId>("net_pnl");
+export function ExecutionAnalyticsClient({ chartData, currency, moneyBasis, offline = false, priceComparison, priceInsights, priceResults, rows }: { chartData: ExecutionChartData; currency: string | null; moneyBasis: "gross" | "net"; offline?: boolean; priceComparison: EntryPriceComparison; priceInsights: EntryPriceInsights; priceResults: readonly EntryPriceResult[]; rows: readonly ExecutionTradeRow[] }) {
+  const pnlMetricId = moneyBasis === "gross" ? "gross_pnl" : "net_pnl";
+  const [metricId, setMetricId] = useState<ExecutionMetricId>(pnlMetricId);
+  const columnsForBasis = columns(moneyBasis);
   const [ticker, setTicker] = useState("");
   const [direction, setDirection] = useState<"all" | "long" | "short">("all");
   const [tradeType, setTradeType] = useState<"all" | "day_trade" | "multi_day_trade">("all");
@@ -163,14 +169,14 @@ export function ExecutionAnalyticsClient({ chartData, currency, offline = false,
     <Stack spacing={2.5}>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "center" }, justifyContent: "flex-start" }}>
         <TextField label="Measure" onChange={(event) => setMetricId(event.target.value as ExecutionMetricId)} select size="small" sx={{ minWidth: { sm: 180 } }} value={metricId}>
-          {MEASURES.map((measure) => <MenuItem key={measure.id} value={measure.id}>{measure.label}</MenuItem>)}
+          {measures(pnlMetricId).map((measure) => <MenuItem key={measure.id} value={measure.id}>{measure.label}</MenuItem>)}
         </TextField>
         <FeatureHelpLink href="/help/core-analytics/timing-and-execution#read-execution" label="Trade Breakdown measures" />
       </Stack>
       <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 1.25fr) minmax(0, 0.75fr)" } }}>
-        <EntryPriceResults comparison={priceComparison} insights={priceInsights} results={priceResults} />
+        <EntryPriceResults comparison={priceComparison} insights={priceInsights} moneyBasis={moneyBasis} results={priceResults} />
         <Stack spacing={2.5}>
-          {[CHARTS[1], CHARTS[0], CHARTS[2]].map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} />)}
+          {[CHARTS[1], CHARTS[0], CHARTS[2]].map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} pnlMetricId={pnlMetricId} points={chartData[chart.id]} />)}
         </Stack>
       </Box>
       <Paper sx={{ overflow: "hidden" }} variant="outlined">
@@ -191,7 +197,7 @@ export function ExecutionAnalyticsClient({ chartData, currency, offline = false,
             sx={{ display: { xs: "flex", md: "none" } }}
             value={`${sortColumn}:${sortDirection}`}
           >
-            {COLUMNS.flatMap((column) => (["desc", "asc"] as const).map((directionValue) => (
+            {columnsForBasis.flatMap((column) => (["desc", "asc"] as const).map((directionValue) => (
               <MenuItem key={`${column.id}:${directionValue}`} value={`${column.id}:${directionValue}`}>
                 {mobileSortLabel(column, directionValue)}
               </MenuItem>
@@ -203,7 +209,7 @@ export function ExecutionAnalyticsClient({ chartData, currency, offline = false,
           <Typography color="text.secondary" sx={{ px: 2.25, pb: 3 }}>No completed trades match these filters.</Typography>
         ) : (
           <HorizontalScrollRegion label="Execution trade table" minTableWidth={1280} stickyFirstColumn>
-            <Table size="small"><TableHead><TableRow>{COLUMNS.map((column) => <TableCell key={column.id}><TableSortLabel active={sortColumn === column.id} direction={sortColumn === column.id ? sortDirection : "asc"} hideSortIcon={false} onClick={() => changeSort(column.id)} slotProps={{ icon: { sx: { opacity: sortColumn === column.id ? 1 : 0.45 } } }}>{column.label}</TableSortLabel></TableCell>)}</TableRow></TableHead><TableBody>{paginatedRows.map((row) => <TableRow aria-label={offline ? undefined : `View ${row.ticker} trade details`} hover key={row.roundTripId} onClick={offline ? undefined : () => setSelectedTrade(row)} onKeyDown={(event) => { if (offline) return; if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedTrade(row); } }} role={offline ? undefined : "button"} sx={{ cursor: offline ? "default" : "pointer" }} tabIndex={offline ? undefined : 0}><TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.tradeType}</TableCell><TableCell>{row.opened}</TableCell><TableCell>{row.closed}</TableCell><TableCell>{row.executions}</TableCell><TableCell>{row.averageEntry}</TableCell><TableCell>{row.averageExit}</TableCell><TableCell>{row.maximumPosition}</TableCell><TableCell>{row.holdTime}</TableCell><TableCell sx={{ color: row.netPnlValue < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{row.netPnl}</TableCell></TableRow>)}</TableBody></Table>
+            <Table size="small"><TableHead><TableRow>{columnsForBasis.map((column) => <TableCell key={column.id}><TableSortLabel active={sortColumn === column.id} direction={sortColumn === column.id ? sortDirection : "asc"} hideSortIcon={false} onClick={() => changeSort(column.id)} slotProps={{ icon: { sx: { opacity: sortColumn === column.id ? 1 : 0.45 } } }}>{column.label}</TableSortLabel></TableCell>)}</TableRow></TableHead><TableBody>{paginatedRows.map((row) => <TableRow aria-label={offline ? undefined : `View ${row.ticker} trade details`} hover key={row.roundTripId} onClick={offline ? undefined : () => setSelectedTrade(row)} onKeyDown={(event) => { if (offline) return; if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedTrade(row); } }} role={offline ? undefined : "button"} sx={{ cursor: offline ? "default" : "pointer" }} tabIndex={offline ? undefined : 0}><TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.tradeType}</TableCell><TableCell>{row.opened}</TableCell><TableCell>{row.closed}</TableCell><TableCell>{row.executions}</TableCell><TableCell>{row.averageEntry}</TableCell><TableCell>{row.averageExit}</TableCell><TableCell>{row.maximumPosition}</TableCell><TableCell>{row.holdTime}</TableCell><TableCell sx={{ color: row.netPnlValue < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{row.netPnl}</TableCell></TableRow>)}</TableBody></Table>
           </HorizontalScrollRegion>
         )}
         <Box sx={{ borderTop: 1, borderColor: "divider" }}>
@@ -225,6 +231,7 @@ export function ExecutionAnalyticsClient({ chartData, currency, offline = false,
       </Paper>
       {offline ? null : <AnalyticsTradeDetailDrawer
         currency={currency}
+        moneyBasis={moneyBasis}
         onClose={() => setSelectedTrade(null)}
         open={selectedTrade !== null}
         title={selectedTrade ? `${selectedTrade.ticker} trade` : "Trade details"}

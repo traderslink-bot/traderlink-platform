@@ -36,7 +36,7 @@ export default async function TradeExplorerComparisonPage() {
         generatedAtUtc={new Date().toISOString()}
         model={createJournalCompareTradesOfflineViewModel(model, studies)}
         pathname="/analytics/trade-explorer/compare"
-        queryIdentity="current"
+        queryIdentity={`basis=${model.initialQuery.moneyBasis}`}
         reportingCurrency={model.initialQuery.currency ?? null}
         routeViewVersion={JOURNAL_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_OFFLINE_ROUTE_VIEW_KEYS["compare-trades"]}
