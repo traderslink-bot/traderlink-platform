@@ -131,6 +131,7 @@ export function parseJournalManualTradeEntry(
     { allowLeadingDecimal: true, positive: true },
   );
   const feeText = text(input.fees ?? input.feesDecimal ?? "", "fees").trim();
+  const manualFeeInputState = feeText === "" ? "not_entered" as const : "entered" as const;
   const feesDecimal = feeText === ""
     ? "0"
     : canonicalDecimal(feeText, "fees", {
@@ -154,6 +155,7 @@ export function parseJournalManualTradeEntry(
     quantityDecimal,
     priceDecimal,
     feesDecimal,
+    manualFeeInputState,
   });
 }
 
@@ -172,6 +174,8 @@ export function toManualExecutionInput(
     feesDecimal: feeCost === "0" ? "0" : `-${feeCost}`,
     feeCurrency: entry.tradeCurrency,
     feeSignConvention: "cash_effect",
+    manualFeeInputState: entry.manualFeeInputState ??
+      (entry.feesDecimal === null ? "not_entered" : "entered"),
     tradeIntent: "not_set",
   });
 }

@@ -18,6 +18,8 @@ export type JournalExecutionFacts = Readonly<{
   feesDecimal: string | null;
   feeCurrency: string | null;
   feeSignConvention: "not_reported" | "broker_reported_signed" | "cash_effect";
+  /** Present only for manual entry surfaces; null preserves imported evidence. */
+  manualFeeInputState?: "not_entered" | "entered" | null;
   factCompleteness: "complete" | "price_missing" | "order_ambiguous";
 }>;
 

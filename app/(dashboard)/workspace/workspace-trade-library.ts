@@ -43,6 +43,7 @@ export type WorkspaceEditableExecution = Readonly<{
   fees: string | null;
   localDate: string;
   localTime: string;
+  manualFeeInputState: "not_entered" | "entered" | null;
   price: string | null;
   quantity: string;
   side: "buy" | "sell";
@@ -50,7 +51,7 @@ export type WorkspaceEditableExecution = Readonly<{
   tradeCurrency: string;
 }>;
 
-export type WorkspaceTradeLibraryFilter = "all" | "open" | "swing" | "closed";
+export type WorkspaceTradeLibraryFilter = "all" | "open" | "swing" | "closed" | "fees_not_entered";
 export type WorkspaceTradeLibrarySort =
   | "newest" | "oldest"
   | "ticker_asc" | "ticker_desc"
@@ -171,7 +172,7 @@ function canonicalQuery(value: WorkspaceTradeLibraryQuery): WorkspaceTradeLibrar
     sort: value.sort,
     startDate: value.startDate || null,
   } as const;
-  if (!(["all", "open", "swing", "closed"] as const).includes(query.filter) ||
+  if (!(["all", "open", "swing", "closed", "fees_not_entered"] as const).includes(query.filter) ||
       !(["newest", "oldest", "ticker_asc", "ticker_desc", "direction_asc", "direction_desc", "status_asc", "status_desc", "position", "position_asc", "buy_quantity", "buy_quantity_asc", "entry", "entry_asc", "exit", "exit_asc", "entry_value", "entry_value_asc", "hold", "hold_asc", "pnl_high", "pnl_low"] as const).includes(query.sort) ||
       !(["none", "day", "ticker"] as const).includes(query.group) ||
       !TICKER.test(query.searchTicker) ||
@@ -292,6 +293,7 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
       fees: editableRow.feesDecimal,
       localDate: editableRow.localDate,
       localTime: editableRow.localTime,
+      manualFeeInputState: editableRow.manualFeeInputState,
       price: editableRow.priceDecimal,
       quantity: editableRow.quantityDecimal,
       side: editableRow.side,
@@ -439,6 +441,22 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as
   if (query.filter === "open") clauses.push("projection.projection_state = 'legitimate_open'");
   if (query.filter === "closed") clauses.push("projection.projection_state = 'ready_closed' AND coalesce(style.trade_style, 'other') <> 'swing'");
   if (query.filter === "swing") clauses.push("style.trade_style = 'swing'");
+  if (query.filter === "fees_not_entered") clauses.push(`EXISTS (
+    SELECT 1
+    FROM journal_round_trip_execution_allocations fee_allocation
+    JOIN journal_executions fee_execution
+      ON fee_execution.workspace_id = fee_allocation.workspace_id
+     AND fee_execution.account_id = fee_allocation.account_id
+     AND fee_execution.current_version_id = fee_allocation.execution_version_id
+    JOIN journal_execution_versions fee_version
+      ON fee_version.workspace_id = fee_execution.workspace_id
+     AND fee_version.account_id = fee_execution.account_id
+     AND fee_version.execution_version_id = fee_execution.current_version_id
+    WHERE fee_allocation.workspace_id = projection.workspace_id
+      AND fee_allocation.account_id = projection.account_id
+      AND fee_allocation.round_trip_version_id = projection.round_trip_version_id
+      AND fee_version.manual_fee_input_state = 'not_entered'
+  )`);
   const where = clauses.join(" AND ");
   const filterParameters = [...parameters];
   const sort = sortDefinition(query.sort);
