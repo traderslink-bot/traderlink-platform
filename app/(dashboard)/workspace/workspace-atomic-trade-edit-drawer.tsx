@@ -168,7 +168,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
               <TextField label="Side" onChange={(event) => update(row.clientRowRef, "side", event.target.value as Side)} select size="small" value={row.side}><MenuItem value="buy">Buy</MenuItem><MenuItem value="sell">Sell</MenuItem></TextField>
               <TextField label="Shares" onChange={(event) => update(row.clientRowRef, "quantityDecimal", event.target.value)} size="small" value={row.quantityDecimal} />
               <TextField label="Price" onChange={(event) => update(row.clientRowRef, "priceDecimal", event.target.value)} size="small" value={row.priceDecimal} />
-              <TextField helperText="Enter 0 when there was no fee. Blank excludes this trade from Net P/L." label="Fee" onChange={(event) => update(row.clientRowRef, "feesDecimal", event.target.value)} size="small" value={row.feesDecimal} />
+              <TextField helperText="Leave blank when there was no fee. This records a $0 fee and includes the trade in Net P/L." label="Fee" onChange={(event) => update(row.clientRowRef, "feesDecimal", event.target.value)} size="small" value={row.feesDecimal} />
             </Box> : null}
           </Box>)}
           <Button disabled={working || activeRows.length === 0} onClick={addExecution} startIcon={<AddRoundedIcon />} sx={{ alignSelf: "flex-start" }}>Add execution</Button>
