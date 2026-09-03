@@ -161,6 +161,21 @@ WHERE subscription_id = ? AND user_id = ?`).run(
     return Object.freeze({ deviceRef: currentDeviceRef });
   }
 
+  status(input: Readonly<{
+    endpoint: unknown;
+    scope: WorkspaceAccessScope;
+  }>): "active" | "inactive" {
+    this.assertActiveScope(input.scope);
+    const endpoint = normalizePlatformWebPushEndpoint(input.endpoint);
+    const row = this.database.prepare<[string, string], { state: string }>(`SELECT state
+FROM platform_web_push_subscriptions
+WHERE user_id = ? AND endpoint_hash = ?`).get(
+      input.scope.userId,
+      endpointHash(endpoint),
+    );
+    return row?.state === "active" ? "active" : "inactive";
+  }
+
   revoke(input: Readonly<{
     endpoint: unknown;
     scope: WorkspaceAccessScope;

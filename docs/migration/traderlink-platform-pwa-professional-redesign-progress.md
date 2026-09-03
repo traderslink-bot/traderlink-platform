@@ -582,28 +582,32 @@ Vitest, broad suite, production build, deployment or hosted-state change ran.
 The existing Notifications Help already describes permission, category and
 privacy behavior, so no Help copy change is required.
 
-### Installed-app Push setup notice
+### Persistent installed-app Push-status warning
 
-The installed PWA now shows one top-of-page **Turn on notifications** notice
-when the current device has no Push subscription. It is limited to standalone
-display mode, stays out of the ordinary website and the Account Preferences
-destination itself, and remains hidden while offline or when Push support
-cannot be checked safely. The approved notice text is **Turn on TradersLink
-notifications on this device**. Its setup action opens the exact Push section
-at `/account/preferences#push-notifications`.
+After the owner observed a phone PWA outage without an in-app warning, the
+owner approved replacing the dismissible setup reminder with a persistent
+warning at the top of every signed-in installed-app page. The warning now checks
+browser permission, the local browser subscription and an authenticated
+server-side status for that exact endpoint. It hides only when all three are
+healthy.
 
-The notice disappears as soon as this device has an active Push subscription.
-**Don't show again** records a device-local choice so a trader who does not want
-Push is not repeatedly prompted on later PWA launches. Turning Push off from
-Preferences records the same choice. A blocked browser permission uses
-**Notifications are turned off** and **View setup steps** without attempting to
-open the browser permission prompt automatically. The normal Enable action
-remains the only gesture that requests permission.
+Confirmed missing permission or subscription shows **Phone notifications are
+not enabled** with a direct **Enable notifications** action. A local
+subscription whose server record is missing, revoked or expired shows **Phone
+notifications need to be restored** with **Restore notifications**. Denied
+browser permission shows setup guidance. Offline, HTTP failure, 502 or an
+unreadable status shows **We can’t confirm phone notifications** with **Check
+again**; it does not misstate uncertainty as proof of device delivery or setup
+failure.
 
-Notifications Help now names the installed-app setup path and the optional
-**Don't show again** choice. This keeps the guide aligned with the new visible
-behavior; no Journal, provider, notification category or hosted-state contract
-changed.
+Enable and Restore use the existing saved alert choices. The status check and
+restore path do not replace notification categories, change preferences or send
+a test notification. The permanent dismissal path is removed. Existing
+service-worker, offline, authentication and app-shell behavior is unchanged.
+The aligned Notifications Help explains the persistent warning and saved-choice
+boundary. Per the low-resource owner/coordinator instruction, no tests, local
+server, migration, Push delivery, deployment or production action ran for this
+slice; only the final allowlisted diff check is authorized.
 
 ## Current exact resume point
 

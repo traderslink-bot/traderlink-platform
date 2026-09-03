@@ -143,7 +143,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         keywords: Object.freeze(["push notifications", "press releases", "news filtered", "market cap", "lock screen", "permission", "phone alerts"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open Notifications settings", text: "In the installed app, select Set up notifications in the notice at the top of the page. You can also select Account in the top bar, choose Notifications and find Push notifications." }),
+            Object.freeze({ title: "1. Enable this phone", text: "In the installed app, select Enable notifications in the warning at the top of the page. If this phone was previously connected, select Restore notifications instead. You can also open Account, choose Notifications and find Push notifications." }),
             Object.freeze({ title: "2. Choose alerts", text: "Choose account and trading updates plus the News Filtered and market-cap Press Releases channels. Select all chooses every alert shown here." }),
             Object.freeze({ title: "3. Set Halt Alerts", text: "Choose Halt Alerts (Nasdaq/NYSE) in the left navigation, then turn Halt alerts on. Read the Halt Alerts guide when you want to know what is included or mute a ticker for the day." }),
             Object.freeze({ title: "4. Save your choices", text: "Select Set Preferences. TraderLink asks the browser for permission only after you select this button." }),
@@ -151,7 +151,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
           Object.freeze({ kind: "link", href: "/help/tools/halt-alerts", label: "Read Halt Alerts guide", text: "See how halt alerts work, what they show and how to mute a ticker until 8:00 PM ET." }),
           Object.freeze({ kind: "callout", title: "Private alerts stay generic", text: "Account and trading alerts never show tickers, P/L, prices, quantities, account details, statement names, broker identity, notes or AI Review text. Press release alerts may show the public ticker and headline. Halt alerts show the public ticker, exchange halt reason and posted return-to-trading times." }),
           Object.freeze({ kind: "paragraph", text: "A press release alert opens the signed-in Press Releases page and shows that article in the details drawer. Reading it marks the article as read across every Press Releases channel where it appears." }),
-          Object.freeze({ kind: "paragraph", text: "If you do not want push notifications, select Don't show again in the installed-app notice. You can still turn them on later from Account Notifications." }),
+          Object.freeze({ kind: "paragraph", text: "The installed app keeps the warning visible while Push is off, the phone's subscription is no longer active, or TradersLink cannot confirm its status. Enable and Restore reuse your saved alert choices; they do not select new alert categories or send a test notification." }),
           Object.freeze({ kind: "paragraph", text: "Push notifications are separate from the Notifications page and Discord messages. Turning push off on one device does not remove in-app updates or change your Discord choices." }),
         ]),
       }),

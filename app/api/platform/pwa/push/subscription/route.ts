@@ -20,6 +20,7 @@ const HEADERS = Object.freeze({
 type SubscriptionMutation = Readonly<{
   categories?: readonly unknown[];
   endpoint?: unknown;
+  operation?: unknown;
   subscription?: unknown;
 }>;
 
@@ -56,7 +57,16 @@ export async function POST(request: Request): Promise<Response> {
     requirePlatformMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const input = await body(request);
-    const categories = Array.isArray(input.categories) ? input.categories : [];
+    if (input.operation === "status") {
+      const status = withPlatformDatabase({ mode: "runtime" }, (database) =>
+        new PlatformWebPushRepository(
+          database,
+          loadPlatformWebPushEncryptionConfiguration(),
+        ).status({ endpoint: input.endpoint, scope })
+      );
+      return Response.json({ status }, { headers: HEADERS });
+    }
+    const categories = Array.isArray(input.categories) ? input.categories : null;
     withPlatformDatabase({ mode: "runtime" }, (database) => database.transaction(() => {
       new PlatformWebPushRepository(
         database,
@@ -66,11 +76,13 @@ export async function POST(request: Request): Promise<Response> {
         subscription: input.subscription,
         updatedAtUtc: createCanonicalUtcTimestamp(),
       });
-      new PlatformNotificationRepository(database).replaceWebPushCategories({
-        categories,
-        scope,
-        updatedAtUtc: createCanonicalUtcTimestamp(),
-      });
+      if (categories) {
+        new PlatformNotificationRepository(database).replaceWebPushCategories({
+          categories,
+          scope,
+          updatedAtUtc: createCanonicalUtcTimestamp(),
+        });
+      }
     }).immediate());
     return Response.json({ status: "ready" }, { headers: HEADERS });
   } catch (error) {
