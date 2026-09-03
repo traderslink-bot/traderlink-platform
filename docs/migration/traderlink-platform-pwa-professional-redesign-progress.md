@@ -609,6 +609,23 @@ boundary. Per the low-resource owner/coordinator instruction, no tests, local
 server, migration, Push delivery, deployment or production action ran for this
 slice; only the final allowlisted diff check is authorized.
 
+### Confirmed terminal Push failure correction
+
+The first production status implementation treated any exact-endpoint
+subscription row whose state remained `active` as healthy. The delivery worker
+can retain that subscription state after a delivery exhausts its retry budget
+and becomes terminal `delivery_failed`, so a repeatedly failing phone could
+still hide the recovery warning.
+
+The exact-endpoint status now returns `needs_restore` when the subscription is
+revoked or expired, or when its Platform, Press Release or Halt delivery history
+contains a terminal failure that remains the subscription's current unresolved
+failure. A later successful delivery or explicit re-subscription clears that
+status boundary. Pending `delivery_retry` rows do not trigger Restore. This is
+evidence of a failed delivery path, not proof that any individual phone
+notification was or was not received. No alert choice, subscription, delivery
+row or other runtime data is changed by the read.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at

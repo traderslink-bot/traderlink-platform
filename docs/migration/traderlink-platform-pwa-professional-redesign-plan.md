@@ -525,6 +525,9 @@ During implementation:
       the exact server-side device subscription are all healthy. Confirmed off,
       restore-required, blocked and status-unknown states use truthful direct
       actions without changing alert choices or sending a test notification.
+      An active database row is not sufficient by itself: a terminal delivery
+      failure that remains the subscription's current unresolved failure is
+      confirmed restore-required evidence, while a pending retry is not.
 - [x] Desktop and narrow-mobile screenshot gates pass throughout or are closed
       by the owner's explicit waiver of further visual review.
 - [ ] Genuine installed-app offline relaunch passes across the complete inventory.

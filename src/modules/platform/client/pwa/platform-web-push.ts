@@ -82,10 +82,10 @@ export async function preparePlatformWebPush(): Promise<PreparedPlatformWebPush>
   }
 }
 
-export async function readPlatformWebPushSubscriptionStatus(): Promise<"active" | "inactive"> {
+export async function readPlatformWebPushSubscriptionStatus(): Promise<"active" | "needs_restore"> {
   if (!supported()) throw new Error("Push notifications are not supported in this browser.");
   const subscription = await (await registration()).pushManager.getSubscription();
-  if (!subscription) return "inactive";
+  if (!subscription) return "needs_restore";
   const response = await fetch("/api/platform/pwa/push/subscription", {
     body: JSON.stringify({ endpoint: subscription.endpoint, operation: "status" }),
     cache: "no-store",
@@ -97,7 +97,7 @@ export async function readPlatformWebPushSubscriptionStatus(): Promise<"active" 
     method: "POST",
   });
   const body = await response.json() as PushSubscriptionStatusResponse;
-  if (!response.ok || (body.status !== "active" && body.status !== "inactive")) {
+  if (!response.ok || (body.status !== "active" && body.status !== "needs_restore")) {
     throw new Error("Push notification status could not be confirmed.");
   }
   return body.status;

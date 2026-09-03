@@ -30,6 +30,19 @@ type SubscriptionRow = Readonly<{
   user_id: string;
 }>;
 
+type SubscriptionStatusRow = Readonly<{
+  failure_count: number;
+  last_failure_at_utc: string | null;
+  last_success_at_utc: string | null;
+  state: string;
+  subscription_id: string;
+  updated_at_utc: string;
+}>;
+
+type TerminalFailureRow = Readonly<{
+  terminal_failure_at_utc: string | null;
+}>;
+
 type ClaimedDeliveryRow = SubscriptionRow & Readonly<{
   attempt_count: number;
   delivery_id: string;
@@ -164,16 +177,48 @@ WHERE subscription_id = ? AND user_id = ?`).run(
   status(input: Readonly<{
     endpoint: unknown;
     scope: WorkspaceAccessScope;
-  }>): "active" | "inactive" {
+  }>): "active" | "needs_restore" {
     this.assertActiveScope(input.scope);
     const endpoint = normalizePlatformWebPushEndpoint(input.endpoint);
-    const row = this.database.prepare<[string, string], { state: string }>(`SELECT state
+    const row = this.database.prepare<[string, string], SubscriptionStatusRow>(`SELECT
+  subscription_id, state, failure_count, last_success_at_utc,
+  last_failure_at_utc, updated_at_utc
 FROM platform_web_push_subscriptions
 WHERE user_id = ? AND endpoint_hash = ?`).get(
       input.scope.userId,
       endpointHash(endpoint),
     );
-    return row?.state === "active" ? "active" : "inactive";
+    if (!row || row.state !== "active") return "needs_restore";
+
+    const terminal = this.database.prepare<[string, string, string], TerminalFailureRow>(`SELECT
+  MAX(failure_at_utc) AS terminal_failure_at_utc
+FROM (
+  SELECT updated_at_utc AS failure_at_utc
+  FROM platform_web_push_deliveries
+  WHERE subscription_id = ? AND state = 'failed' AND failure_code = 'delivery_failed'
+  UNION ALL
+  SELECT updated_at_utc AS failure_at_utc
+  FROM news_press_release_push_deliveries
+  WHERE subscription_id = ? AND state = 'failed' AND failure_code = 'delivery_failed'
+  UNION ALL
+  SELECT updated_at_utc AS failure_at_utc
+  FROM news_market_halt_push_deliveries
+  WHERE subscription_id = ? AND state = 'failed' AND failure_code = 'delivery_failed'
+)`).get(row.subscription_id, row.subscription_id, row.subscription_id);
+    const terminalFailureAtUtc = terminal?.terminal_failure_at_utc ?? null;
+    if (!terminalFailureAtUtc) return "active";
+    if (
+      row.last_success_at_utc &&
+      row.last_success_at_utc >= terminalFailureAtUtc
+    ) return "active";
+
+    const staleClaimBecameTerminal = terminalFailureAtUtc > row.updated_at_utc;
+    const terminalIsCurrentSubscriptionFailure = row.failure_count > 0 &&
+      row.last_failure_at_utc === terminalFailureAtUtc &&
+      row.updated_at_utc === terminalFailureAtUtc;
+    return staleClaimBecameTerminal || terminalIsCurrentSubscriptionFailure
+      ? "needs_restore"
+      : "active";
   }
 
   revoke(input: Readonly<{
