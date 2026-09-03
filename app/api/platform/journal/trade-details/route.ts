@@ -28,8 +28,10 @@ export async function GET(request: Request): Promise<Response> {
   } catch (error) {
     return Response.json(
       { status: "unavailable" },
-      { status: isTraderLinkPlatformError(error) ? 400 : 500 },
-      { headers: { "cache-control": "no-store" } },
+      {
+        headers: { "cache-control": "no-store" },
+        status: isTraderLinkPlatformError(error) ? 400 : 500,
+      },
     );
   }
 }
