@@ -1593,7 +1593,7 @@ export default function TradeExplorerClient({
               error={saveViewName.trim().length > 80}
               fullWidth
               helperText={`${saveViewName.trim().length}/80`}
-              inputProps={{ maxLength: 80 }}
+              slotProps={{ htmlInput: { maxLength: 80 } }}
               label="View name"
               onChange={(event) => {
                 setSaveViewName(event.target.value);
