@@ -215,7 +215,7 @@ export class JournalManualExecutionEditService {
     const normalizedSymbol = normalizeJournalStockSymbol(input.normalizedSymbol);
     const feesDecimal = input.feesDecimal === null ||
         input.feesDecimal.trim().length === 0
-      ? null
+      ? "0"
       : normalizeBrokerDecimal(
           normalizeLeadingDecimal(input.feesDecimal),
           "feesDecimal",
@@ -253,10 +253,8 @@ export class JournalManualExecutionEditService {
           { positive: true },
         ),
         feesDecimal,
-        feeCurrency: feesDecimal === null ? null : tradeCurrency,
-        feeSignConvention: feesDecimal === null
-          ? "not_reported"
-          : "broker_reported_signed",
+        feeCurrency: tradeCurrency,
+        feeSignConvention: "broker_reported_signed",
         factCompleteness: "complete",
       });
       return this.decisions.correctManualExecution(scope, {

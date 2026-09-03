@@ -13,7 +13,7 @@ export const ACCOUNT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["p/l", "profit and loss", "gross", "net", "fees", "preference"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Open Account settings, select General, then use P/L preference. I enter fees selects Net P/L. I don’t enter fees selects Gross P/L. Save the choice to set the default across Workspace, Analytics Overview, Results, Timing, Trade Breakdown, Trade Analyzer, Trade Explorer and Compare. A page's own Gross or Net choice still overrides the saved default for that view." }),
-          Object.freeze({ kind: "callout", title: "Enter 0 when there was no fee", text: "A trade with a blank fee still appears in Workspace, but Net P/L analytics cannot include it because its net result is unknown. Enter 0 when your broker charged no fee. This setting changes the default summary basis only; it never relabels or rewrites recorded Gross, Net, price, quantity or fee facts." }),
+          Object.freeze({ kind: "callout", title: "Leave Fees blank when there was no fee", text: "For a manual trade, a blank Fee is recorded as $0 and included in both Gross and Net P/L. Enter a fee only when your broker charged one. This setting changes the default summary basis only; it never relabels or rewrites recorded Gross, Net, price, quantity or fee facts." }),
         ]),
       }),
     ]),

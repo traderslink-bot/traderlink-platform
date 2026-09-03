@@ -132,7 +132,7 @@ export function parseJournalManualTradeEntry(
   );
   const feeText = text(input.fees ?? input.feesDecimal ?? "", "fees").trim();
   const feesDecimal = feeText === ""
-    ? null
+    ? "0"
     : canonicalDecimal(feeText, "fees", {
         allowLeadingDecimal: true,
         nonNegative: true,
@@ -160,7 +160,7 @@ export function parseJournalManualTradeEntry(
 export function toManualExecutionInput(
   entry: JournalManualTradeEntry,
 ): ManualExecutionInput {
-  const feeCost = entry.feesDecimal === "0" ? null : entry.feesDecimal;
+  const feeCost = entry.feesDecimal ?? "0";
   return Object.freeze({
     sourceTimestampText: `${entry.localDate}, ${entry.localTime}`,
     sourceTimezone: entry.sourceTimezone,
@@ -169,9 +169,9 @@ export function toManualExecutionInput(
     side: entry.side,
     quantityDecimal: entry.quantityDecimal,
     priceDecimal: entry.priceDecimal,
-    feesDecimal: feeCost === null ? null : `-${feeCost}`,
-    feeCurrency: feeCost === null ? null : entry.tradeCurrency,
-    feeSignConvention: feeCost === null ? "not_reported" : "cash_effect",
+    feesDecimal: feeCost === "0" ? "0" : `-${feeCost}`,
+    feeCurrency: entry.tradeCurrency,
+    feeSignConvention: "cash_effect",
     tradeIntent: "not_set",
   });
 }
@@ -179,7 +179,7 @@ export function toManualExecutionInput(
 export function journalManualTradeFactKey(
   entry: JournalManualTradeEntry,
 ): string {
-  const feeCost = entry.feesDecimal === "0" ? null : entry.feesDecimal;
+  const feeCost = entry.feesDecimal ?? "0";
   return JSON.stringify([
     `${entry.localDate}, ${entry.localTime}`,
     entry.sourceTimezone,
@@ -188,7 +188,7 @@ export function journalManualTradeFactKey(
     entry.side,
     entry.quantityDecimal,
     entry.priceDecimal,
-    feeCost === null ? "" : `-${feeCost}`,
+    feeCost === "0" ? "0" : `-${feeCost}`,
   ]);
 }
 
