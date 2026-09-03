@@ -39,6 +39,7 @@ export type JournalEditableManualExecution = Readonly<{
   quantityDecimal: string;
   priceDecimal: string | null;
   feesDecimal: string | null;
+  manualFeeInputState: "not_entered" | "entered" | null;
 }>;
 
 type JournalTradeDeletionCandidate = Readonly<{
@@ -169,6 +170,7 @@ export class JournalManualExecutionEditService {
         quantityDecimal: candidate.quantityDecimal,
         priceDecimal: candidate.priceDecimal,
         feesDecimal: candidate.feesDecimal,
+        manualFeeInputState: candidate.manualFeeInputState,
       });
     }));
   }
@@ -220,6 +222,10 @@ export class JournalManualExecutionEditService {
           normalizeLeadingDecimal(input.feesDecimal),
           "feesDecimal",
         );
+    const manualFeeInputState = input.feesDecimal === null ||
+        input.feesDecimal.trim().length === 0
+      ? "not_entered" as const
+      : "entered" as const;
     const correction = this.imports.immediate(() => {
       const timestamp = createCanonicalUtcTimestamp(input.now);
       const instrumentId = this.imports.findOrCreateInstrument({
@@ -255,6 +261,7 @@ export class JournalManualExecutionEditService {
         feesDecimal,
         feeCurrency: tradeCurrency,
         feeSignConvention: "broker_reported_signed",
+        manualFeeInputState,
         factCompleteness: "complete",
       });
       return this.decisions.correctManualExecution(scope, {

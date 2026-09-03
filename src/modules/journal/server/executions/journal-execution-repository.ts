@@ -21,6 +21,7 @@ type VersionRow = Readonly<{
   side: "buy" | "sell"; quantity_decimal: string; price_decimal: string | null;
   fees_decimal: string | null; fee_currency: string | null;
   fee_sign_convention: JournalExecutionFacts["feeSignConvention"];
+  manual_fee_input_state: "not_entered" | "entered" | null;
   fact_completeness: JournalExecutionFacts["factCompleteness"];
   actor_kind: "system" | "user"; actor_user_id: string | null;
   change_reason_code: string; created_at_utc: string;
@@ -46,6 +47,7 @@ function mapVersion(row: VersionRow): JournalExecutionVersionRecord {
     feesDecimal: row.fees_decimal,
     feeCurrency: row.fee_currency,
     feeSignConvention: row.fee_sign_convention,
+    manualFeeInputState: row.manual_fee_input_state,
     factCompleteness: row.fact_completeness,
     actorKind: row.actor_kind,
     actorUserId: row.actor_user_id,
@@ -367,14 +369,15 @@ WHERE execution_id = ? AND workspace_id = ? AND account_id = ? AND current_versi
  execution_version_id, workspace_id, account_id, execution_id, version_number,
  instrument_id, trade_currency, source_timestamp_text, source_timezone,
  time_parser_version, executed_at_utc, source_order_key, side, quantity_decimal,
- price_decimal, fees_decimal, fee_currency, fee_sign_convention, fact_completeness,
+ price_decimal, fees_decimal, fee_currency, fee_sign_convention, manual_fee_input_state, fact_completeness,
  actor_kind, actor_user_id, change_reason_code, created_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .run(input.executionVersionId, input.workspaceId, input.accountId, input.executionId,
         input.versionNumber, facts.instrumentId, facts.tradeCurrency,
         facts.sourceTimestampText, facts.sourceTimezone, facts.timeParserVersion,
         facts.executedAtUtc, facts.sourceOrderKey, facts.side, facts.quantityDecimal,
         facts.priceDecimal, facts.feesDecimal, facts.feeCurrency, facts.feeSignConvention,
+        facts.manualFeeInputState ?? null,
         facts.factCompleteness, input.actorKind, input.actorUserId,
         input.changeReasonCode, input.timestamp);
   }

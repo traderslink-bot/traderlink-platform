@@ -55,5 +55,6 @@ export type JournalManualExecutionCandidate = Readonly<{
   priceDecimal: string | null;
   feesDecimal: string | null;
   feeCurrency: string | null;
+  manualFeeInputState: "not_entered" | "entered" | null;
   accountTimezone: string;
 }>;
