@@ -2,7 +2,7 @@ import { readDailyTradeAnalyzedTrades } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
 import { reportDailyTradeAnalyzedTrades } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-reporting";
-import { withJournalAnalyticsReportingDashboardRuntime } from
+import { resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformRequestScope } from
   "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -24,13 +24,13 @@ export async function GET(request: Request): Promise<Response> {
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const page = await withJournalAnalyticsReportingDashboardRuntime(
       scope,
-      ({ reportingContext }) => withReadonlyPlatformDatabase({}, (database) =>
+      ({ pnlReportingBasis, reportingContext }) => withReadonlyPlatformDatabase({}, (database) =>
         reportDailyTradeAnalyzedTrades(
           readDailyTradeAnalyzedTrades(database, scope, {
             afterCursor: url.searchParams.get("cursor"),
             currency: optionalDate(url.searchParams.get("currency")),
             endDate: optionalDate(url.searchParams.get("end")),
-            moneyBasis: url.searchParams.get("basis") === "net" ? "net" : "gross",
+            moneyBasis: resolveJournalAnalyticsMoneyBasis(url.searchParams.get("basis"), pnlReportingBasis),
             pageSize: Number(url.searchParams.get("pageSize") ?? 25),
             startDate: optionalDate(url.searchParams.get("start")),
             ticker: (url.searchParams.get("ticker") ?? "").slice(0, 32),
