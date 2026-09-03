@@ -2,10 +2,12 @@
 
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import { Box, Chip, Stack, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { alpha, type Theme } from "@mui/material/styles";
+import type { SxProps } from "@mui/system";
 
 import {
   JOURNAL_TAG_PRESET_CATEGORY_LABELS,
+  journalTagPresetForName,
   type JournalTagPresetCategory,
 } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 
@@ -31,13 +33,35 @@ const CATEGORY_ORDER: readonly JournalTagPickerChoice["category"][] = Object.fre
 const CATEGORY_COLORS: Readonly<Record<JournalTagPickerChoice["category"], PickerColor>> = Object.freeze({
   setup: "secondary",
   entry_execution: "info",
-  exit: "success",
+  exit: "primary",
   mistake: "error",
   emotion: "warning",
-  market_context: "primary",
-  risk_process: "secondary",
+  market_context: "warning",
+  risk_process: "success",
   custom: "default",
 });
+
+function tagChipSx(color: PickerColor, selected: boolean): SxProps<Theme> {
+  return (theme) => ({
+    borderRadius: 1,
+    fontSize: "0.76rem",
+    fontWeight: selected ? 850 : 800,
+    height: 26,
+    ...(selected || color === "default" ? {} : {
+      bgcolor: alpha(theme.palette[color as Exclude<PickerColor, "default">].main, 0.14),
+      borderColor: alpha(theme.palette[color as Exclude<PickerColor, "default">].main, 0.88),
+    }),
+  });
+}
+
+export function JournalTagChip({ category, label }: Readonly<{
+  category?: JournalTagPickerChoice["category"];
+  label: string;
+}>) {
+  const resolvedCategory = category ?? journalTagPresetForName(label)?.category ?? "custom";
+  const color = CATEGORY_COLORS[resolvedCategory];
+  return <Chip color={color} label={label} size="small" sx={tagChipSx(color, false)} variant="outlined" />;
+}
 
 export function JournalTagPicker({ choices, disabled = false, maxSelected = 10, onSelectedIdsChange, selectedIds }: Readonly<{
   choices: readonly JournalTagPickerChoice[];
@@ -78,16 +102,7 @@ export function JournalTagPicker({ choices, disabled = false, maxSelected = 10, 
                   }
                 }}
                 size="small"
-                sx={(theme) => ({
-                  borderRadius: 1,
-                  fontSize: "0.76rem",
-                  fontWeight: active ? 850 : 700,
-                  height: 26,
-                  ...(active || color === "default" ? {} : {
-                    bgcolor: alpha(theme.palette[color as Exclude<PickerColor, "default">].main, 0.06),
-                    borderColor: alpha(theme.palette[color as Exclude<PickerColor, "default">].main, 0.55),
-                  }),
-                })}
+                sx={tagChipSx(color, active)}
                 variant={active ? "filled" : "outlined"}
               />;
             })}

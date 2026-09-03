@@ -30,18 +30,12 @@ import {
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 import { WorkspaceTradeAnalyzerPanel } from "../workspace/workspace-trade-analyzer-panel";
+import { JournalTagChip } from "../trade-tags/journal-tag-picker";
 
 type DetailTab = "details" | "analyzer";
 
-type TradeDetails = Readonly<{
+type TradeDetailsBase = Readonly<{
   direction: "long" | "short";
-  executions: readonly Readonly<{
-    executedAtUtc: string;
-    feesDecimal: string | null;
-    priceDecimal: string | null;
-    quantityDecimal: string;
-    side: "buy" | "sell";
-  }>[];
   hasCurrentAnalyzerResult: boolean;
   notes: Readonly<{
     technicalNote: string;
@@ -67,8 +61,27 @@ type TradeDetails = Readonly<{
     ruleTitle: string;
     status: "followed" | "broken" | "not_reviewed";
   }>[];
-  status: "ready";
-  storyCopy:
+  style: Readonly<{
+    tradeStyle: "day_trade" | "swing" | "other";
+  }> | null;
+  symbol: string;
+  tags: readonly Readonly<{
+    name: string;
+  }>[];
+  timezone: string;
+}>;
+
+type TradeDetails = TradeDetailsBase & (
+  | Readonly<{
+    executions: readonly Readonly<{
+      executedAtUtc: string;
+      feesDecimal: string | null;
+      priceDecimal: string | null;
+      quantityDecimal: string;
+      side: "buy" | "sell";
+    }>[];
+    status: "ready";
+    storyCopy:
     | Readonly<{
       chapters: readonly Readonly<{
         sentences: readonly string[];
@@ -80,15 +93,9 @@ type TradeDetails = Readonly<{
       reason: "position_flipped" | "position_reopened";
       status: "factual_timeline_required";
     }>;
-  style: Readonly<{
-    tradeStyle: "day_trade" | "swing" | "other";
-  }> | null;
-  symbol: string;
-  tags: readonly Readonly<{
-    name: string;
-  }>[];
-  timezone: string;
-}>;
+  }>
+  | Readonly<{ status: "summary_only" }>
+);
 
 type DetailState =
   | Readonly<{ status: "idle" | "loading" }>
@@ -119,8 +126,10 @@ function dateTime(value: string, timezone: string): Readonly<{ date: string; tim
 }
 
 function tradeTimeRange(details: TradeDetails): string {
-  const openedAtUtc = details.performance?.openedAtUtc ?? details.executions[0]?.executedAtUtc;
-  const closedAtUtc = details.performance?.closedAtUtc ?? details.executions.at(-1)?.executedAtUtc;
+  const openedAtUtc = details.performance?.openedAtUtc ??
+    (details.status === "ready" ? details.executions[0]?.executedAtUtc : undefined);
+  const closedAtUtc = details.performance?.closedAtUtc ??
+    (details.status === "ready" ? details.executions.at(-1)?.executedAtUtc : undefined);
   if (!openedAtUtc) return "Time unavailable";
   const opened = dateTime(openedAtUtc, details.timezone);
   if (!closedAtUtc || closedAtUtc === openedAtUtc) return `${opened.date} · ${opened.time}`;
@@ -142,9 +151,9 @@ function reviewLabel(status: TradeDetails["ruleReviews"][number]["status"]): str
   return "Not reviewed";
 }
 
-function SurfaceSection({ children, title }: Readonly<{ children: ReactNode; title: string }>) {
-  return <Box sx={{ border: 1, borderColor: "divider", borderRadius: 2, overflow: "hidden" }}>
-    <Typography component="h3" sx={{ bgcolor: "action.hover", fontWeight: 850, px: 1.5, py: 1 }} variant="body2">{title}</Typography>
+function SurfaceSection({ children, emphasizeHeader = false, outcomeTone, title }: Readonly<{ children: ReactNode; emphasizeHeader?: boolean; outcomeTone: "success" | "error" | null; title: string }>) {
+  return <Box sx={{ border: 1.5, borderColor: outcomeTone ? `${outcomeTone}.main` : "divider", borderRadius: 2, overflow: "hidden" }}>
+    <Typography component="h3" sx={{ bgcolor: emphasizeHeader && outcomeTone ? `${outcomeTone}.main` : "action.hover", color: emphasizeHeader && outcomeTone ? `${outcomeTone}.contrastText` : "text.primary", fontWeight: 850, px: 1.5, py: 1 }} variant="body2">{title}</Typography>
     <Box sx={{ p: 1.5 }}>{children}</Box>
   </Box>;
 }
@@ -195,6 +204,7 @@ export function TradeDetailsDrawer({
   const details = state.status === "ready" ? state.details : null;
   const performance = details?.performance ?? null;
   const resultColor = performance ? financialOutcomeColor(performance.grossPnlDecimal) : "text.primary";
+  const outcomeTone = resultColor === "success.main" ? "success" : resultColor === "error.main" ? "error" : null;
   const resultValue = performance
     ? formatJournalAnalyticsMoney(performance.grossPnlDecimal, performance.tradeCurrency, { showPositiveSign: true })
     : details?.projectionState === "legitimate_open" ? "Open" : "—";
@@ -210,6 +220,7 @@ export function TradeDetailsDrawer({
               {details.projectionState === "legitimate_open" ? <Chip label="Open" size="small" variant="outlined" /> : null}
             </Stack>
             <Typography color="text.secondary" sx={{ mt: 0.25 }} variant="body2">{tradeTimeRange(details)}</Typography>
+            {details.status === "summary_only" ? <Typography color="text.secondary" sx={{ mt: 0.25 }} variant="caption">Historical trade summary</Typography> : null}
           </> : null}
         </Box>
         <Stack sx={{ alignItems: "flex-end", flexShrink: 0 }}>
@@ -232,7 +243,7 @@ export function TradeDetailsDrawer({
         {state.status === "loading" ? <Stack spacing={1} sx={{ alignItems: "center", minHeight: 220, justifyContent: "center" }}><CircularProgress size={28} /><Typography color="text.secondary">Loading trade details…</Typography></Stack> : null}
         {state.status === "error" ? <Alert severity="error">Trade details could not be loaded. Refresh and try again.</Alert> : null}
         {details ? <Stack spacing={1.5}>
-          <SurfaceSection title="Result">
+          <SurfaceSection emphasizeHeader outcomeTone={outcomeTone} title="Result">
             {performance ? <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
               <Box><Typography color="text.secondary" variant="caption">Gross P/L</Typography><Typography color={resultColor} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>{resultValue}</Typography></Box>
               <Box><Typography color="text.secondary" variant="caption">Fees</Typography><Typography sx={{ fontWeight: 800 }}>{performance.chargeCoverage === "complete" ? formatJournalAnalyticsMoney(performance.chargeCostDecimal, performance.tradeCurrency) : "N/A"}</Typography></Box>
@@ -243,23 +254,23 @@ export function TradeDetailsDrawer({
             </Box> : <Typography color="text.secondary" variant="body2">This position is still open. Completed-trade P/L and fees will appear after it is fully exited.</Typography>}
           </SurfaceSection>
 
-          <SurfaceSection title="Trade Story">
-            {details.storyCopy.status === "ready" ? <Stack spacing={1.25}>{details.storyCopy.chapters.map((chapter) => <Box key={chapter.tradingDate}><Typography color="text.secondary" sx={{ fontWeight: 850 }} variant="caption">{new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short", timeZone: details.timezone, year: "numeric" }).format(new Date(`${chapter.tradingDate}T12:00:00Z`))}</Typography><Stack spacing={0.75} sx={{ mt: 0.5 }}>{chapter.sentences.map((sentence) => <Typography key={sentence} variant="body2">{sentence}</Typography>)}</Stack></Box>)}</Stack> : <Typography color="text.secondary" variant="body2">This trade contains a position transition that needs its exact execution timeline instead of a summarized story.</Typography>}
+          <SurfaceSection outcomeTone={outcomeTone} title="Trade Story">
+            {details.status === "summary_only" ? <Typography color="text.secondary" variant="body2">This historical trade keeps its verified result summary, but its full Journal execution timeline is not retained. A Trade Story cannot be composed without those executions.</Typography> : details.storyCopy.status === "ready" ? <Stack spacing={1.25}>{details.storyCopy.chapters.map((chapter) => <Box key={chapter.tradingDate}><Typography color="text.secondary" sx={{ fontWeight: 850 }} variant="caption">{new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short", timeZone: details.timezone, year: "numeric" }).format(new Date(`${chapter.tradingDate}T12:00:00Z`))}</Typography><Stack spacing={0.75} sx={{ mt: 0.5 }}>{chapter.sentences.map((sentence) => <Typography key={sentence} variant="body2">{sentence}</Typography>)}</Stack></Box>)}</Stack> : <Typography color="text.secondary" variant="body2">This trade contains a position transition that needs its exact execution timeline instead of a summarized story.</Typography>}
           </SurfaceSection>
 
-          <SurfaceSection title="Journal">
+          <SurfaceSection outcomeTone={outcomeTone} title="Journal">
             <Stack spacing={1.25}>
               {details.notes?.tradeNote.trim() ? <Box><Typography color="text.secondary" variant="caption">Trade note</Typography><Typography sx={{ whiteSpace: "pre-wrap" }} variant="body2">{details.notes.tradeNote}</Typography></Box> : null}
               {details.notes?.technicalNote.trim() ? <Box><Typography color="text.secondary" variant="caption">Technical note</Typography><Typography sx={{ whiteSpace: "pre-wrap" }} variant="body2">{details.notes.technicalNote}</Typography></Box> : null}
-              {details.tags.length > 0 ? <Box><Typography color="text.secondary" variant="caption">Tags</Typography><Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>{details.tags.map((tag) => <Chip key={tag.name} label={tag.name} size="small" variant="outlined" />)}</Stack></Box> : null}
+              {details.tags.length > 0 ? <Box><Typography color="text.secondary" variant="caption">Tags</Typography><Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>{details.tags.map((tag) => <JournalTagChip key={tag.name} label={tag.name} />)}</Stack></Box> : null}
               {details.ruleReviews.length > 0 ? <Box><Typography color="text.secondary" variant="caption">Rules</Typography><Stack spacing={0.5} sx={{ mt: 0.5 }}>{details.ruleReviews.map((review, index) => <Stack direction="row" key={`${review.ruleTitle}-${index}`} spacing={0.75} sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography sx={{ minWidth: 0 }} variant="body2">{review.ruleTitle}</Typography><Chip color={reviewTone(review.status)} label={reviewLabel(review.status)} size="small" /></Stack>)}</Stack></Box> : null}
               {!details.notes?.tradeNote.trim() && !details.notes?.technicalNote.trim() && details.tags.length === 0 && details.ruleReviews.length === 0 ? <Typography color="text.secondary" variant="body2">No notes, tags, or reviewed rules have been saved for this trade.</Typography> : null}
             </Stack>
           </SurfaceSection>
 
-          <Accordion disableGutters elevation={0} sx={{ border: 1, borderColor: "divider", borderRadius: 2, "&:before": { display: "none" }, overflow: "hidden" }}>
-            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ bgcolor: "action.hover", px: 1.5 }}><Typography sx={{ fontWeight: 850 }}>Exact executions ({details.executions.length})</Typography></AccordionSummary>
-            <AccordionDetails sx={{ p: 0 }}><Stack divider={<Divider flexItem />}>{details.executions.map((execution, index) => <Stack direction="row" key={`${execution.executedAtUtc}-${execution.side}-${execution.quantityDecimal}-${index}`} sx={{ justifyContent: "space-between", p: 1.5 }}><Box><Typography sx={{ fontWeight: 800 }} variant="body2">{execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantityDecimal)} shares</Typography><Typography color="text.secondary" variant="caption">{dateTime(execution.executedAtUtc, details.timezone).date} · {dateTime(execution.executedAtUtc, details.timezone).time}</Typography></Box><Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }} variant="body2">{formatJournalAnalyticsMoney(execution.priceDecimal, performance?.tradeCurrency ?? null)}</Typography></Stack>)}</Stack></AccordionDetails>
+          <Accordion disableGutters elevation={0} sx={{ border: 1.5, borderColor: outcomeTone ? `${outcomeTone}.main` : "divider", borderRadius: 2, "&:before": { display: "none" }, overflow: "hidden" }}>
+            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ bgcolor: "action.hover", px: 1.5 }}><Typography sx={{ fontWeight: 850 }}>Exact executions {details.status === "ready" ? `(${details.executions.length})` : null}</Typography></AccordionSummary>
+            <AccordionDetails sx={{ p: details.status === "summary_only" ? 1.5 : 0 }}>{details.status === "summary_only" ? <Typography color="text.secondary" variant="body2">Exact executions are unavailable for this historical trade summary.</Typography> : <Stack divider={<Divider flexItem />}>{details.executions.map((execution, index) => <Stack direction="row" key={`${execution.executedAtUtc}-${execution.side}-${execution.quantityDecimal}-${index}`} sx={{ justifyContent: "space-between", p: 1.5 }}><Box><Typography sx={{ fontWeight: 800 }} variant="body2">{execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantityDecimal)} shares</Typography><Typography color="text.secondary" variant="caption">{dateTime(execution.executedAtUtc, details.timezone).date} · {dateTime(execution.executedAtUtc, details.timezone).time}</Typography></Box><Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }} variant="body2">{formatJournalAnalyticsMoney(execution.priceDecimal, performance?.tradeCurrency ?? null)}</Typography></Stack>)}</Stack>}</AccordionDetails>
           </Accordion>
         </Stack> : null}
       </Box> : analyzer && roundTripId ? <WorkspaceTradeAnalyzerPanel currency={analyzer.currency} direction={analyzer.direction} executionCount={analyzer.executionCount} gainLossDecimal={analyzer.gainLossDecimal} onClose={() => setTab("details")} open roundTripId={roundTripId} symbol={analyzer.symbol} timezone={analyzer.timezone} /> : <Box sx={{ p: 2 }}><Alert severity="info">Analyzer is unavailable for this trade.</Alert></Box>}

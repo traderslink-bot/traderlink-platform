@@ -12,7 +12,7 @@ import type { ReactNode } from "react";
 import { JOURNAL_TAG_PRESET_CATALOG, journalTagPresetForName, journalTagPresetKeyFromSelectionId, journalTagPresetSelectionId } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
-import { JournalTagPicker } from "../trade-tags/journal-tag-picker";
+import { JournalTagChip, JournalTagPicker } from "../trade-tags/journal-tag-picker";
 
 type NoteCategory = "what_worked" | "what_needs_work" | "technical_recap" | "general" | "custom";
 type DrawerView = "add" | "saved" | "details" | "focuses";
@@ -310,7 +310,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
         {sessionReview ? <>
           <JournalTagPicker choices={sessionTagChoices} disabled={saving} onSelectedIdsChange={setSessionTagIds} selectedIds={sessionTagIds} />
         </> : <Typography color="text.secondary" variant="body2">Loading available tags…</Typography>}
-        <Box component="details"><Box component="summary" sx={{ color: "primary.main", cursor: "pointer", fontSize: "0.875rem", fontWeight: 800 }}>Manage saved tags</Box><Stack spacing={1} sx={{ mt: 1 }}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75}><TextField label="New personal tag" onChange={(event) => setNewSessionTag(event.target.value)} size="small" value={newSessionTag} /><Button disabled={saving || !newSessionTag.trim()} onClick={() => void createSessionTag()} size="small">Add tag</Button></Stack>{sessionReview?.tags.length ? <Stack spacing={0.5} sx={{ maxHeight: 160, overflowY: "auto", pr: 0.5 }}>{sessionReview.tags.map((tag) => <Stack direction="row" key={tag.tagId} sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography variant="body2">{tag.name}</Typography><IconButton aria-label={`Remove ${tag.name}`} disabled={saving} onClick={() => void retireSessionTag(tag)} size="small"><DeleteOutlineRoundedIcon fontSize="small" /></IconButton></Stack>)}</Stack> : <Typography color="text.secondary" variant="body2">No personal tags have been saved yet.</Typography>}</Stack></Box>
+        <Box component="details"><Box component="summary" sx={{ color: "primary.main", cursor: "pointer", fontSize: "0.875rem", fontWeight: 800 }}>Manage saved tags</Box><Stack spacing={1} sx={{ mt: 1 }}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75}><TextField label="New personal tag" onChange={(event) => setNewSessionTag(event.target.value)} size="small" value={newSessionTag} /><Button disabled={saving || !newSessionTag.trim()} onClick={() => void createSessionTag()} size="small">Add tag</Button></Stack>{sessionReview?.tags.length ? <Stack spacing={0.5} sx={{ maxHeight: 160, overflowY: "auto", pr: 0.5 }}>{sessionReview.tags.map((tag) => <Stack direction="row" key={tag.tagId} sx={{ alignItems: "center", justifyContent: "space-between" }}><JournalTagChip label={tag.name} /><IconButton aria-label={`Remove ${tag.name}`} disabled={saving} onClick={() => void retireSessionTag(tag)} size="small"><DeleteOutlineRoundedIcon fontSize="small" /></IconButton></Stack>)}</Stack> : <Typography color="text.secondary" variant="body2">No personal tags have been saved yet.</Typography>}</Stack></Box>
       </Stack></AccordionDetails>
     </Accordion>
     <Accordion expanded={sessionRulesOpen} onChange={(_, expanded) => setSessionRulesOpen(expanded)}>

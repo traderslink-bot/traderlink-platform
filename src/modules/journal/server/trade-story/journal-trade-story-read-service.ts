@@ -18,7 +18,7 @@ import { withJournalAnalyticsDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { platformFailure } from
+import { isTraderLinkPlatformError, platformFailure } from
   "@/src/modules/platform/server/database/platform-migration-contract";
 import { withReadonlyPlatformDatabase } from
   "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -68,6 +68,22 @@ export type JournalTradeStoryPerformance = Readonly<{
   tradeCurrency: string;
 }>;
 
+export type JournalTradeStoryHistoricalSummary = Readonly<{
+  direction: "long" | "short";
+  hasCurrentAnalyzerResult: boolean;
+  notes: JournalRoundTripNoteRecord | null;
+  performance: JournalTradeStoryPerformance | null;
+  projectionState: "ready_closed" | "legitimate_open";
+  ruleReviews: readonly JournalTradeStoryRuleReview[];
+  status: "summary_only";
+  style: Readonly<{
+    tradeStyle: "day_trade" | "swing" | "other";
+  }> | null;
+  symbol: string;
+  tags: readonly JournalTagRecord[];
+  timezone: string;
+}>;
+
 export type JournalTradeStoryReadModel = Readonly<{
   direction: "long" | "short";
   executions: JournalTrackedPositionDetail["executions"];
@@ -85,6 +101,23 @@ export type JournalTradeStoryReadModel = Readonly<{
   symbol: string;
   tags: readonly JournalTagRecord[];
   timezone: string;
+}> | JournalTradeStoryHistoricalSummary;
+
+type HistoricalSummaryRow = Readonly<{
+  closed_at_utc: string | null;
+  direction: "long" | "short";
+  entered_quantity_decimal: string | null;
+  entry_notional_decimal: string | null;
+  gross_pnl_decimal: string | null;
+  hold_duration_seconds: number | null;
+  maximum_position_quantity_decimal: string | null;
+  opened_at_utc: string;
+  projection_state: "ready_closed" | "legitimate_open";
+  symbol: string;
+  trade_currency: string;
+  trade_style: "day_trade" | "swing" | "other" | null;
+  trading_timezone: string;
+  unique_execution_count: number;
 }>;
 
 function performance(
@@ -146,6 +179,98 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
       roundTripId,
     ) as { has_current_analyzer_result: 0 | 1 } | undefined;
     return row?.has_current_analyzer_result === 1;
+  });
+}
+
+function historicalSummary(
+  scope: WorkspaceAccessScope,
+  roundTripId: string,
+): HistoricalSummaryRow | null {
+  if (!scope.activeAccountId) return null;
+  return withReadonlyPlatformDatabase({}, (database) => database.prepare(`SELECT
+  projection.closed_at_utc,
+  version.direction,
+  projection.entered_quantity_decimal,
+  projection.entry_notional_decimal,
+  projection.gross_pnl_decimal,
+  projection.hold_duration_seconds,
+  projection.maximum_position_quantity_decimal,
+  projection.opened_at_utc,
+  projection.projection_state,
+  instrument.normalized_symbol AS symbol,
+  version.trade_currency,
+  style.trade_style,
+  account.trading_timezone,
+  projection.unique_execution_count
+FROM journal_workspace_trade_library_projections projection
+JOIN journal_round_trip_versions version
+  ON version.workspace_id = projection.workspace_id
+ AND version.account_id = projection.account_id
+ AND version.round_trip_version_id = projection.round_trip_version_id
+JOIN journal_instruments instrument
+  ON instrument.workspace_id = version.workspace_id
+ AND instrument.instrument_id = version.instrument_id
+JOIN journal_accounts account
+  ON account.workspace_id = projection.workspace_id
+ AND account.account_id = projection.account_id
+LEFT JOIN journal_trade_style_plans style
+  ON style.workspace_id = projection.workspace_id
+ AND style.account_id = projection.account_id
+ AND style.round_trip_id = projection.round_trip_id
+WHERE projection.workspace_id = ?
+  AND projection.account_id = ?
+  AND projection.round_trip_id = ?
+LIMIT 1`).get(
+    scope.workspaceId,
+    scope.activeAccountId,
+    roundTripId,
+  ) as HistoricalSummaryRow | undefined ?? null);
+}
+
+function historicalSummaryModel(
+  scope: WorkspaceAccessScope,
+  roundTripId: string,
+  summary: HistoricalSummaryRow,
+): JournalTradeStoryHistoricalSummary {
+  const factAnnotations = annotations(scope, roundTripId);
+  const performance = summary.projection_state === "ready_closed" &&
+      summary.closed_at_utc !== null &&
+      summary.entered_quantity_decimal !== null &&
+      summary.entry_notional_decimal !== null &&
+      summary.gross_pnl_decimal !== null &&
+      summary.hold_duration_seconds !== null &&
+      summary.maximum_position_quantity_decimal !== null
+    ? Object.freeze({
+      chargeCostDecimal: null,
+      chargeCoverage: "unavailable" as const,
+      chargeCreditDecimal: null,
+      closedAtUtc: summary.closed_at_utc,
+      enteredQuantityDecimal: summary.entered_quantity_decimal,
+      entryNotionalDecimal: summary.entry_notional_decimal,
+      executionCount: summary.unique_execution_count,
+      exitQuantityDecimal: summary.entered_quantity_decimal,
+      grossPnlDecimal: summary.gross_pnl_decimal,
+      holdDurationMilliseconds: summary.hold_duration_seconds * 1000,
+      maximumPositionQuantityDecimal: summary.maximum_position_quantity_decimal,
+      netPnlDecimal: null,
+      openedAtUtc: summary.opened_at_utc,
+      tradeCurrency: summary.trade_currency,
+    })
+    : null;
+  return Object.freeze({
+    direction: summary.direction,
+    hasCurrentAnalyzerResult: hasCurrentAnalyzerResult(scope, roundTripId),
+    notes: factAnnotations.notes,
+    performance,
+    projectionState: summary.projection_state,
+    ruleReviews: factAnnotations.ruleReviews,
+    status: "summary_only",
+    style: summary.trade_style === null ? null : Object.freeze({
+      tradeStyle: summary.trade_style,
+    }),
+    symbol: summary.symbol,
+    tags: factAnnotations.tags,
+    timezone: summary.trading_timezone,
   });
 }
 
@@ -248,8 +373,18 @@ export function readJournalTradeStory(
     platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
   }
   const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
-  const position = withReadonlyJournalIntegrityRuntime(scope, (journal) =>
-    journal.tradeTrackerReads.positionLedgerDetailForRoundTrip(account, roundTripId));
+  let position: JournalTrackedPositionDetail;
+  try {
+    position = withReadonlyJournalIntegrityRuntime(scope, (journal) =>
+      journal.tradeTrackerReads.positionLedgerDetailForRoundTrip(account, roundTripId));
+  } catch (error) {
+    if (!isTraderLinkPlatformError(error) || error.code !== "TRADERLINK_TRADE_STYLE_CONFLICT") {
+      throw error;
+    }
+    const summary = historicalSummary(scope, roundTripId);
+    if (!summary) throw error;
+    return historicalSummaryModel(scope, roundTripId, summary);
+  }
   const factAnnotations = annotations(scope, roundTripId);
   const tradePerformance = performance(scope, roundTripId);
   const ledger = buildTradeStoryPositionLedger({

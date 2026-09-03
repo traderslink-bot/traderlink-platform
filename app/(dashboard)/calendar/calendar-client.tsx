@@ -41,6 +41,7 @@ import {
 import { financialOutcomeColor, financialThresholdColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { FeatureHelpLink } from "../feature-help-link";
 import { HorizontalScrollHint } from "../horizontal-scroll-region";
+import { JournalTagChip } from "../trade-tags/journal-tag-picker";
 
 import {
   DashboardDataScopeChip,
@@ -977,7 +978,7 @@ export function CalendarClient({
                               <Typography sx={{ fontWeight: 800 }}>Trade {index + 1}</Typography>
                               <Typography color={tone.color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(trade.pnlDecimal, initialData.currency)}</Typography>
                             </Stack>
-                            {detail?.tags.length ? <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mt: 1 }}>{detail.tags.map((tag) => <Chip key={tag} label={tag} size="small" variant="outlined" />)}</Stack> : null}
+                            {detail?.tags.length ? <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mt: 1 }}>{detail.tags.map((tag) => <JournalTagChip key={tag} label={tag} />)}</Stack> : null}
                             {detail?.notes.map((note) => <Typography key={note} sx={{ mt: 1.25, whiteSpace: "pre-wrap" }} variant="body2">{note}</Typography>)}
                             <Accordion disableGutters elevation={0} sx={{ "&:before": { display: "none" }, mt: 1 }}>
                               <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>Show executions ({detail?.executions.length ?? 0})</AccordionSummary>

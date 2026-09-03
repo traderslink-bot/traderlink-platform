@@ -45,7 +45,7 @@ import {
 import { DashboardPageDescription } from "../../dashboard-page-description";
 import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
-import { JournalTagPicker } from "../../trade-tags/journal-tag-picker";
+import { JournalTagChip, JournalTagPicker } from "../../trade-tags/journal-tag-picker";
 import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
 import { MoomooMarketDataConnectionPrompt } from "../../moomoo-market-data-connection-prompt";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
@@ -444,7 +444,7 @@ function TradeTagEditor({
   return (
     <>
       <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75, mt: 0.5 }}>
-        {tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)}
+        {tags.map((tag) => <JournalTagChip category={tag.category} key={tag.tagId} label={tag.name} />)}
         <FeatureHelpLink href="/help/trade-tags/add-edit-tags#open-tag-editor" label="trade tags" />
         <Button
           disabled={disabled}
@@ -2393,7 +2393,7 @@ function TradeReview({
             {readOnly ? (
               <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75 }}>
                 {tags.length > 0 ? (
-                  tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)
+                  tags.map((tag) => <JournalTagChip category={tag.category} key={tag.tagId} label={tag.name} />)
                 ) : (
                   <Typography color="text.secondary" variant="caption">
                     No trade tags saved.
@@ -4050,7 +4050,7 @@ export function DaySessionView({
                       {activeSwing ? null : readOnly ? (
                         <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75 }}>
                           {position.journal.tags.length > 0 ? position.journal.tags.map((tag) => (
-                            <Chip key={tag.tagId} label={tag.name} size="small" />
+                            <JournalTagChip category={tag.category} key={tag.tagId} label={tag.name} />
                           )) : <Typography color="text.secondary" variant="body2">No trade tags saved.</Typography>}
                         </Stack>
                       ) : (

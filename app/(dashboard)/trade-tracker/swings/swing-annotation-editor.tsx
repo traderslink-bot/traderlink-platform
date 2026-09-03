@@ -4,7 +4,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -17,7 +16,7 @@ import {
 import { useState } from "react";
 
 import { FeatureHelpLink } from "../../feature-help-link";
-import { JournalTagPicker } from "../../trade-tags/journal-tag-picker";
+import { JournalTagChip, JournalTagPicker } from "../../trade-tags/journal-tag-picker";
 
 import {
   JOURNAL_TAG_PRESET_CATALOG,
@@ -188,7 +187,7 @@ export function SwingAnnotationEditor({
       <Box>
         <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }} variant="subtitle2">Trade tags</Typography><FeatureHelpLink href="/help/trade-tags/swing-trade-tracker#find-swing-tags" label="Swing Trade Tags" /></Stack>
         <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
-          {tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)}
+          {tags.map((tag) => <JournalTagChip category={tag.category} key={tag.tagId} label={tag.name} />)}
           <Button onClick={openTags} size="small" sx={{ minHeight: { xs: 44, sm: 36 } }} variant="outlined">
             {tags.length === 0 ? "Add tags" : "Edit tags"}
           </Button>

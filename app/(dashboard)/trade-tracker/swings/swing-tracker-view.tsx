@@ -24,6 +24,7 @@ import {
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
 import { FeatureHelpLink } from "../../feature-help-link";
+import { JournalTagChip } from "../../trade-tags/journal-tag-picker";
 import { SwingPositionPlanEditor } from "../swing-position-plan-editor";
 
 const ManualExecutionEditDialog = dynamic(() =>
@@ -178,7 +179,7 @@ function SwingCard({
                   position.tags.length > 0 ? (
                     <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1 }}>
                       {position.tags.map((tag) => (
-                        <Chip key={tag.tagId} label={tag.name} size="small" variant="outlined" />
+                        <JournalTagChip category={tag.category} key={tag.tagId} label={tag.name} />
                       ))}
                     </Stack>
                   ) : (
