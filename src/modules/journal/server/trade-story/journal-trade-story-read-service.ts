@@ -18,7 +18,7 @@ import { withJournalAnalyticsDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { assertCanonicalUuidV4, platformFailure } from
+import { platformFailure } from
   "@/src/modules/platform/server/database/platform-migration-contract";
 import { withReadonlyPlatformDatabase } from
   "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -32,6 +32,8 @@ import { withReadonlyJournalIntegrityRuntime } from "../journal-integrity-runtim
 import { buildTradeStoryActivities, type TradeStoryActivitiesResult } from "./journal-trade-story-activities";
 import { composeTradeStoryCopy, type TradeStoryCopyResult } from "./journal-trade-story-copy";
 import { buildTradeStoryPositionLedger, type TradeStoryLedgerResult } from "./journal-trade-story-position-ledger";
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 
 const StoryDecimal = Decimal.clone({
   precision: 160,
@@ -239,7 +241,9 @@ export function readJournalTradeStory(
   scope: WorkspaceAccessScope,
   roundTripId: string,
 ): JournalTradeStoryReadModel {
-  assertCanonicalUuidV4(roundTripId, "roundTripId");
+  if (!UUID_PATTERN.test(roundTripId)) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "roundTripId" });
+  }
   if (!scope.activeAccountId) {
     platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
   }
