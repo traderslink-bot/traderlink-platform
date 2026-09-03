@@ -626,6 +626,25 @@ evidence of a failed delivery path, not proof that any individual phone
 notification was or was not received. No alert choice, subscription, delivery
 row or other runtime data is changed by the read.
 
+### Current projection-context reuse
+
+The production PWA projection scheduler already waits for a stable page and an
+idle browser callback, cancels obsolete route work and shares an in-flight
+request. It still discarded each successful projection-context response as
+soon as the request finished, so subsequent DOM capture and saved-view capture
+on the same interactive page could repeat the authenticated network status
+check.
+
+The scheduler now keeps one validated context for at most 60 seconds and reuses
+it only when the normalized pathname, opaque offline user scope and selected
+account ref are all unchanged. The response must also retain the exact
+projection contract, route mode, calculation version and generated timestamp.
+A route/account/scope change, offline state, invalid response or expiry clears
+the held context and requires a new authenticated read. Existing idle timing,
+cancellation, in-flight sharing, caller validation, saved-view capture and
+offline projection storage are unchanged. No cache header, service worker,
+authentication, database, background job, UI or data behavior changed.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at

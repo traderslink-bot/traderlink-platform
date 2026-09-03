@@ -520,6 +520,9 @@ During implementation:
 - [x] Private HTML/API/statement/provider data is never broadly cached.
 - [x] Read-only saved pages stay within the 50 MB browser budget without
       automatically removing an unsynced or review-required trade.
+- [x] Projection-context checks run only after the page settles and the browser
+      is idle, are cancellable when the route changes, share in-flight work and
+      briefly reuse only the exact current route/user/account context.
 - [x] The installed app keeps a top-of-page Push-status warning visible across
       signed-in app pages until browser permission, the local subscription and
       the exact server-side device subscription are all healthy. Confirmed off,

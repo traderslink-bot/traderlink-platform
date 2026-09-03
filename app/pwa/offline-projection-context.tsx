@@ -2,6 +2,11 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 
+import {
+  PLATFORM_OFFLINE_PROJECTION_CONTRACT_VERSION,
+  platformOfflineRouteMode,
+} from "@/src/modules/platform/contracts/platform-offline-projection-contracts";
+
 export type OfflineProjectionContext = Readonly<{
   accountSelectionRef?: string | null;
   calculationVersion?: string;
@@ -32,7 +37,16 @@ type ProjectionContextReadLease = Readonly<{
   release: () => void;
 }>;
 
+type CurrentProjectionContext = Readonly<{
+  context: OfflineProjectionContext;
+  key: string;
+  validUntil: number;
+}>;
+
+const CURRENT_CONTEXT_REUSE_MS = 60_000;
 const inflightReads = new Map<string, InflightProjectionContextRead>();
+let currentContext: CurrentProjectionContext | null = null;
+let currentRequestKey: string | null = null;
 
 function requestKey(
   pathname: string,
@@ -41,11 +55,36 @@ function requestKey(
   return `${scope.offlineScopeRef}:${scope.accountSelectionRef ?? "none"}:${pathname}`;
 }
 
+function contextMatchesRequest(
+  context: OfflineProjectionContext,
+  pathname: string,
+  scope: OfflineProjectionRequestScope,
+): boolean {
+  return context.status === "ready" &&
+    context.contractVersion === PLATFORM_OFFLINE_PROJECTION_CONTRACT_VERSION &&
+    context.offlineScopeRef === scope.offlineScopeRef &&
+    context.accountSelectionRef === scope.accountSelectionRef &&
+    context.pathname === pathname &&
+    context.routeMode === platformOfflineRouteMode(pathname) &&
+    typeof context.generatedAtUtc === "string" &&
+    typeof context.calculationVersion === "string";
+}
+
 function beginProjectionContextRead(
   pathname: string,
   scope: OfflineProjectionRequestScope,
 ): ProjectionContextReadLease {
   const key = requestKey(pathname, scope);
+  if (
+    currentContext?.key === key &&
+    currentContext.validUntil > Date.now()
+  ) {
+    return Object.freeze({
+      promise: Promise.resolve(currentContext.context),
+      release: () => undefined,
+    });
+  }
+  currentContext = null;
   let read = inflightReads.get(key);
   if (!read) {
     const controller = new AbortController();
@@ -60,9 +99,21 @@ function beginProjectionContextRead(
           headers: { accept: "application/json" },
           signal: controller.signal,
         },
-      ).then(async (response) =>
-        response.ok ? await response.json() as OfflineProjectionContext : null,
-      ).catch(() => null).finally(() => {
+      ).then(async (response) => {
+        if (!response.ok) return null;
+        const context = await response.json() as OfflineProjectionContext;
+        if (
+          currentRequestKey === key &&
+          contextMatchesRequest(context, pathname, scope)
+        ) {
+          currentContext = Object.freeze({
+            context: Object.freeze(context),
+            key,
+            validUntil: Date.now() + CURRENT_CONTEXT_REUSE_MS,
+          });
+        }
+        return context;
+      }).catch(() => null).finally(() => {
         if (inflightReads.get(key) === read) inflightReads.delete(key);
       }),
     };
@@ -96,6 +147,9 @@ export function scheduleOfflineProjectionContextRead(
     scope: OfflineProjectionRequestScope;
   }>,
 ): () => void {
+  const key = requestKey(input.pathname, input.scope);
+  currentRequestKey = navigator.onLine ? key : null;
+  if (!currentRequestKey || currentContext?.key !== key) currentContext = null;
   let cancelled = false;
   let idleHandle: number | null = null;
   let read: ProjectionContextReadLease | null = null;
