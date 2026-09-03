@@ -17,6 +17,7 @@ import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/au
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 import {
+  journalDemoTradeTrackerLandingDate,
   journalScopeCurrentDate,
   readJournalDemoScopeClock,
 } from "@/src/modules/journal/server/demo/journal-demo-scope-clock";
@@ -63,7 +64,7 @@ export default async function TradeTrackerPage({
   const demoClock = readJournalDemoScopeClock(scope);
   if (onboardingStatus.activeAccountIsDemo) {
     if (!demoClock) throw new Error("TRADERLINK_DEMO_CLOCK_UNAVAILABLE");
-    redirect(`/trade-tracker/${demoClock.today}`);
+    redirect(`/trade-tracker/${journalDemoTradeTrackerLandingDate(demoClock)}`);
   }
   const showFirstExecutionCallout = query.gettingStarted === "daily-entry" &&
     !onboardingStatus.activeAccountIsDemo &&

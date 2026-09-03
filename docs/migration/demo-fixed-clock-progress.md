@@ -6,9 +6,12 @@
 
 ## Owner-approved scope
 
-- [x] Only an active Demo account uses the fixed current date `2026-08-21`.
-- [x] Today, this week, and this month use the existing date boundaries from
-      that fixed date. Real accounts continue to use the real current date.
+- [x] Only an active Demo account uses the fixed current date `2026-08-21` for
+      Workspace, Calendar, and Swing Tracker date-relative reads.
+- [x] The Daily Trade Tracker entry route deliberately resets an active Demo
+      account to the verified financial demo session `2026-08-27` every time
+      the trader opens `/trade-tracker`. Real accounts continue to use the
+      real current date.
 - [x] Stored executions, timestamps, candles, Analyzer facts, imports, news,
       account selection, pagination, cursors, and Demo lifecycle behavior stay
       unchanged.
@@ -28,7 +31,7 @@
 - [x] Add one server-authoritative Demo scope clock, resolved from the active
       Demo account record.
 - [x] Apply it to Workspace period filters and review-date reads, the Daily
-      Trade Tracker default and redirect, Calendar server navigation and its
+      Trade Tracker default/redirect (with its Aug. 27 Demo landing override), Calendar server navigation and its
       client current-week cue, and the rendered Swing Tracker default date.
 - [x] Keep Quick Trade Entry out of this slice because it now redirects to the
       Workspace trade drawer and does not render a date field.

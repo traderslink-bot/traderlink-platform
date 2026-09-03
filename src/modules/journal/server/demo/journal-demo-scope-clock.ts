@@ -7,6 +7,7 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { JournalDemoAccountRepository } from "./journal-demo-account-repository";
 
 const DEMO_TODAY = "2026-08-21";
+const DEMO_TRADE_TRACKER_LANDING_DATE = "2026-08-27";
 
 export type JournalDemoScopeClock = Readonly<{
   month: "2026-08";
@@ -75,4 +76,15 @@ export function journalScopeCurrentMonth(
   now = new Date(),
 ): string {
   return clock?.month ?? journalScopeCurrentDate(null, timezone, now).slice(0, 7);
+}
+
+/**
+ * The Demo account's Daily Trade Tracker opens on the financial demo session
+ * with the complete current-day review. This deliberately does not change the
+ * Demo scope's Workspace, Calendar, or Swing Tracker clock.
+ */
+export function journalDemoTradeTrackerLandingDate(
+  _clock: JournalDemoScopeClock,
+): string {
+  return DEMO_TRADE_TRACKER_LANDING_DATE;
 }
