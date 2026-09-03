@@ -127,9 +127,7 @@ function hasCurrentAnalyzerResult(
   SELECT 1
   FROM journal_round_trip_daily_trade_analyses analysis
   JOIN journal_round_trip_daily_trade_analysis_versions analysis_version
-    ON analysis_version.workspace_id = analysis.workspace_id
-   AND analysis_version.account_id = analysis.account_id
-   AND analysis_version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
+    ON analysis_version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
    AND analysis_version.revision_number = analysis.current_revision
   WHERE analysis.workspace_id = round_trip.workspace_id
     AND analysis.account_id = round_trip.account_id
