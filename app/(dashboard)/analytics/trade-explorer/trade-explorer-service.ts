@@ -23,6 +23,7 @@ import {
   tradeExplorerMetricForOutcome,
   tradeExplorerTableOrder,
   tradeExplorerTradeSortForOutcome,
+  type TradeExplorerTradeSort,
 } from "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
 import { journalAnalyticsMetricRegistry } from "@/src/modules/journal-analytics/server/analytics-metric-registry";
 import type { JournalAnalyticsService } from "@/src/modules/journal-analytics/server/analytics-service";
