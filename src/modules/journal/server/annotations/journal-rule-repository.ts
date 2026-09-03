@@ -42,6 +42,15 @@ type ReviewRow = Readonly<{
   updated_at_utc: string;
 }>;
 
+export type JournalRuleReviewWithRuleTitle = Readonly<{
+  review: JournalRuleReviewRecord;
+  ruleTitle: string;
+}>;
+
+type ReviewWithRuleTitleRow = ReviewRow & Readonly<{
+  rule_title: string;
+}>;
+
 type LifecycleRow = Readonly<{
   rule_id: string;
   new_state: JournalRuleLifecycleState;
@@ -66,6 +75,21 @@ JOIN journal_rule_review_versions v
   ON v.workspace_id = r.workspace_id AND v.account_id = r.account_id
  AND v.rule_review_id = r.rule_review_id
  AND v.rule_review_version_id = r.current_review_version_id`;
+
+const REVIEW_WITH_RULE_TITLE_SELECT = `SELECT r.rule_review_id, r.rule_id,
+  v.rule_version_id, r.target_kind, r.trading_day_id, r.round_trip_id,
+  v.status, v.note_text, r.revision, r.updated_at_utc,
+  rule_version.title AS rule_title
+FROM journal_rule_reviews r
+JOIN journal_rule_review_versions v
+  ON v.workspace_id = r.workspace_id AND v.account_id = r.account_id
+ AND v.rule_review_id = r.rule_review_id
+ AND v.rule_review_version_id = r.current_review_version_id
+JOIN journal_rule_versions rule_version
+  ON rule_version.workspace_id = r.workspace_id
+ AND rule_version.account_id = r.account_id
+ AND rule_version.rule_id = r.rule_id
+ AND rule_version.rule_version_id = v.rule_version_id`;
 
 function mapRule(row: RuleRow): JournalRuleRecord {
   const parsed: unknown = JSON.parse(row.configuration_json);
@@ -369,6 +393,31 @@ ORDER BY r.target_kind, r.rule_id, r.rule_review_id`).all(
             left.ruleId > right.ruleId ? 1 :
               left.ruleReviewId < right.ruleReviewId ? -1 :
                 left.ruleReviewId > right.ruleReviewId ? 1 : 0));
+  }
+
+  listReviewsForRoundTripsWithRuleTitles(input: Readonly<{
+    scope: AccountScope;
+    roundTripIds: readonly string[];
+  }>): readonly JournalRuleReviewWithRuleTitle[] {
+    const roundTripIds = [...new Set(input.roundTripIds)].sort();
+    if (roundTripIds.length === 0) return Object.freeze([]);
+    const records: JournalRuleReviewWithRuleTitle[] = [];
+    for (let offset = 0; offset < roundTripIds.length; offset += 350) {
+      const batch = roundTripIds.slice(offset, offset + 350);
+      const rows = this.database.prepare(`${REVIEW_WITH_RULE_TITLE_SELECT}
+WHERE r.workspace_id = ? AND r.account_id = ?
+  AND r.round_trip_id IN (${batch.map(() => "?").join(", ")})
+ORDER BY r.round_trip_id, r.rule_id, r.rule_review_id`).all(
+        input.scope.workspaceId,
+        input.scope.accountId,
+        ...batch,
+      ) as ReviewWithRuleTitleRow[];
+      records.push(...rows.map((row) => Object.freeze({
+        review: mapReview(row),
+        ruleTitle: row.rule_title,
+      })));
+    }
+    return Object.freeze(records);
   }
 
   findReview(input: Readonly<{

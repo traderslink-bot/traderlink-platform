@@ -21,7 +21,10 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 import { JournalAnnotationRepository } from "./journal-annotation-repository";
-import { JournalRuleRepository } from "./journal-rule-repository";
+import {
+  JournalRuleRepository,
+  type JournalRuleReviewWithRuleTitle,
+} from "./journal-rule-repository";
 
 export const JOURNAL_TAGS_PER_ROUND_TRIP_MAXIMUM = 10;
 export const JOURNAL_TAGS_PER_ACCOUNT_MAXIMUM = 200;
@@ -662,6 +665,16 @@ export class JournalAnnotationService {
     input: Readonly<{ tradingDayId: string; roundTripIds: readonly string[] }>,
   ): readonly JournalRuleReviewRecord[] {
     return this.rules.listReviews({ scope, ...input });
+  }
+
+  listRuleReviewsForRoundTripsWithRuleTitles(
+    scope: AccountScope,
+    roundTripIds: readonly string[],
+  ): readonly JournalRuleReviewWithRuleTitle[] {
+    return this.rules.listReviewsForRoundTripsWithRuleTitles({
+      scope,
+      roundTripIds,
+    });
   }
 
   saveRuleReview(

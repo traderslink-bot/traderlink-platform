@@ -26,6 +26,17 @@ function canonicalDecimal(value: Decimal): string {
   return value.isZero() ? "0" : value.toFixed();
 }
 
+function localDateAt(utc: string, timezone: string): string {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: timezone,
+    year: "numeric",
+  }).formatToParts(new Date(utc)).filter((part) => part.type !== "literal")
+    .map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 export class JournalTradeTrackerReadService {
   constructor(
     private readonly database: Database.Database,
@@ -175,6 +186,18 @@ ORDER BY allocation.allocation_sequence`).all(
   ): JournalTrackedPositionDetail {
     const position = this.styles.resolveRoundTripPosition(scope, roundTripId);
     return this.positionDetailFromRow(scope, position, reviewDate);
+  }
+
+  positionLedgerDetailForRoundTrip(
+    scope: AccountScope,
+    roundTripId: string,
+  ): JournalTrackedPositionDetail {
+    const position = this.styles.resolveRoundTripPosition(scope, roundTripId);
+    return this.positionDetailFromRow(
+      scope,
+      position,
+      localDateAt(position.openedAtUtc, position.timezone),
+    );
   }
 
   private positionDetailFromRow(
