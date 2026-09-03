@@ -919,13 +919,10 @@ export function DashboardShell({
           accountCurrency={workspaceTradeContext.accountCurrency}
           accountTimezone={workspaceTradeContext.accountTimezone}
           addOpen
-          currentAccountStillMatches={async () => true}
-          detail={null}
           expectedAccountSelectionRef={workspaceTradeContext.expectedAccountSelectionRef}
           offlineScopeRef={workspaceTradeContext.offlineScopeRef}
           onAddTradeSaved={() => window.location.reload()}
           onClose={() => setWorkspaceTradeContext(null)}
-          startingTab={0}
         />
       ) : null}
       {offline ? null : (
