@@ -323,9 +323,6 @@ export function ExecutionEntryCard({
           </Typography>
         </>
       )}
-      <Alert severity="info" sx={{ mt: 1.5 }}>
-        Leave Fees blank when your broker charged no fee. The trade is then recorded with a $0 fee and included in both Gross and Net P/L. Enter a fee only when your broker charged one.
-      </Alert>
       <Stack spacing={1.5} sx={{ mt: 2.5 }}>
         {rows.map((row, index) => (
           <Box
