@@ -14,7 +14,6 @@ import {
   Box,
   Button,
   Card,
-  Checkbox,
   Chip,
   Collapse,
   Dialog,
@@ -23,7 +22,6 @@ import {
   DialogTitle,
   Divider,
   FormControl,
-  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
@@ -47,6 +45,7 @@ import {
 import { DashboardPageDescription } from "../../dashboard-page-description";
 import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
+import { JournalTagPicker } from "../../trade-tags/journal-tag-picker";
 import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
 import { MoomooMarketDataConnectionPrompt } from "../../moomoo-market-data-connection-prompt";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
@@ -56,11 +55,9 @@ import {
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   JOURNAL_TAG_PRESET_CATALOG,
-  JOURNAL_TAG_PRESET_CATEGORY_LABELS,
   journalTagPresetForName,
   journalTagPresetKeyFromSelectionId,
   journalTagPresetSelectionId,
-  type JournalTagPresetCategory,
 } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 
 import type {
@@ -272,22 +269,6 @@ function ruleSaveFailure(error: unknown): string {
   return "The rule change could not be saved. Check your connection and try again.";
 }
 
-const TAG_CATEGORY_ORDER: readonly (JournalTagPresetCategory | "custom")[] =
-  Object.freeze([
-    "setup",
-    "entry_execution",
-    "exit",
-    "mistake",
-    "emotion",
-    "market_context",
-    "risk_process",
-    "custom",
-  ]);
-
-function tagCategory(tag: DaySessionTradeTag): JournalTagPresetCategory | "custom" {
-  return tag.category ?? journalTagPresetForName(tag.name)?.category ?? "custom";
-}
-
 function TradeTagEditor({
   availableTags,
   disabled,
@@ -347,13 +328,6 @@ function TradeTagEditor({
     (tag, index, tags) =>
       tags.findIndex((candidate) => candidate.tagId === tag.tagId) === index,
   );
-  const groupedCatalog = TAG_CATEGORY_ORDER.map((category) => ({
-    category,
-    tags: catalog
-      .filter((tag) => tagCategory(tag) === category)
-      .sort((left, right) => left.name.localeCompare(right.name)),
-  })).filter((group) => group.tags.length > 0);
-
   function showEditor(): void {
     setSelectedIds(tags.map((tag) => tag.tagId));
     setError("");
@@ -488,35 +462,7 @@ function TradeTagEditor({
           <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
             Choose useful presets or create your own tags.
           </Typography>
-          <Stack spacing={1.5} sx={{ maxHeight: 360, overflowY: "auto" }}>
-            {groupedCatalog.map((group) => (
-              <Box key={group.category}>
-                <Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">
-                  {JOURNAL_TAG_PRESET_CATEGORY_LABELS[group.category]}
-                </Typography>
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" } }}>
-                  {group.tags.map((tag) => (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectedIds.includes(tag.tagId)}
-                          onChange={(_, checked) =>
-                            setSelectedIds((current) =>
-                              checked
-                                ? [...current, tag.tagId]
-                                : current.filter((tagId) => tagId !== tag.tagId),
-                            )
-                          }
-                        />
-                      }
-                      key={tag.tagId}
-                      label={tag.name}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            ))}
-          </Stack>
+          <JournalTagPicker choices={catalog.map((tag) => ({ category: tag.category ?? journalTagPresetForName(tag.name)?.category ?? ("custom" as const), name: tag.name, selectionId: tag.tagId }))} disabled={busy} onSelectedIdsChange={(next) => setSelectedIds([...next])} selectedIds={selectedIds} />
           <Divider sx={{ my: 2 }} />
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
             <TextField

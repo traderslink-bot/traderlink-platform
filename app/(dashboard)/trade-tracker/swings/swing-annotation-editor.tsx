@@ -4,13 +4,11 @@ import {
   Alert,
   Box,
   Button,
-  Checkbox,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
   MenuItem,
   Stack,
   TextField,
@@ -19,14 +17,13 @@ import {
 import { useState } from "react";
 
 import { FeatureHelpLink } from "../../feature-help-link";
+import { JournalTagPicker } from "../../trade-tags/journal-tag-picker";
 
 import {
   JOURNAL_TAG_PRESET_CATALOG,
-  JOURNAL_TAG_PRESET_CATEGORY_LABELS,
   journalTagPresetForName,
   journalTagPresetKeyFromSelectionId,
   journalTagPresetSelectionId,
-  type JournalTagPresetCategory,
 } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 import type {
@@ -38,22 +35,6 @@ type ApiResult<T> = Readonly<{
   data?: T;
   error?: Readonly<{ message?: string }>;
 }>;
-
-const CATEGORY_ORDER: readonly (JournalTagPresetCategory | "custom")[] =
-  Object.freeze([
-    "setup",
-    "entry_execution",
-    "exit",
-    "mistake",
-    "emotion",
-    "market_context",
-    "risk_process",
-    "custom",
-  ]);
-
-function category(tag: DaySessionTradeTag): JournalTagPresetCategory | "custom" {
-  return tag.category ?? journalTagPresetForName(tag.name)?.category ?? "custom";
-}
 
 async function request<T>(url: string, init: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -111,13 +92,6 @@ export function SwingAnnotationEditor({
         tagId: journalTagPresetSelectionId(preset.presetKey),
       })),
   ];
-  const groupedCatalog = CATEGORY_ORDER.map((groupCategory) => ({
-    category: groupCategory,
-    tags: catalog
-      .filter((tag) => category(tag) === groupCategory)
-      .sort((left, right) => left.name.localeCompare(right.name)),
-  })).filter((group) => group.tags.length > 0);
-
   function openTags() {
     setSelectedIds(tags.map((tag) => tag.tagId));
     setError(null);
@@ -262,32 +236,7 @@ export function SwingAnnotationEditor({
           <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
             Choose useful presets or create your own tags.
           </Typography>
-          <Stack spacing={1.5} sx={{ maxHeight: 360, overflowY: "auto" }}>
-            {groupedCatalog.map((group) => (
-              <Box key={group.category}>
-                <Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">
-                  {JOURNAL_TAG_PRESET_CATEGORY_LABELS[group.category]}
-                </Typography>
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" } }}>
-                  {group.tags.map((tag) => (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectedIds.includes(tag.tagId)}
-                          onChange={(_, checked) => setSelectedIds((current) =>
-                            checked
-                              ? [...current, tag.tagId]
-                              : current.filter((tagId) => tagId !== tag.tagId))}
-                        />
-                      }
-                      key={tag.tagId}
-                      label={tag.name}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            ))}
-          </Stack>
+          <JournalTagPicker choices={catalog.map((tag) => ({ category: tag.category ?? journalTagPresetForName(tag.name)?.category ?? ("custom" as const), name: tag.name, selectionId: tag.tagId }))} disabled={busy} onSelectedIdsChange={(next) => setSelectedIds([...next])} selectedIds={selectedIds} />
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 2 }}>
             <TextField
               fullWidth

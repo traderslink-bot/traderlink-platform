@@ -5,10 +5,8 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import {
   Alert,
-  Autocomplete,
   Box,
   Button,
-  Checkbox,
   Chip,
   CircularProgress,
   Dialog,
@@ -30,8 +28,9 @@ import {
   journalTagPresetForName,
   journalTagPresetKeyFromSelectionId,
   journalTagPresetSelectionId,
-  type JournalTagPresetCategory,
 } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
+
+import { JournalTagPicker, type JournalTagPickerChoice } from "../../trade-tags/journal-tag-picker";
 
 import {
   loadTradeExplorerReview,
@@ -44,12 +43,6 @@ import type {
   TradeExplorerReviewTag,
   TradeExplorerReviewTarget,
 } from "./trade-review-model";
-
-type TagChoice = Readonly<{
-  category: JournalTagPresetCategory | "custom";
-  name: string;
-  selectionId: string;
-}>;
 
 type ReviewDraft = Readonly<{
   ruleStatuses: Readonly<Record<string, TradeExplorerCustomRuleReview["status"]>>;
@@ -96,7 +89,7 @@ function statusColor(status: "followed" | "broken" | "n/a") {
   return "default" as const;
 }
 
-function tagChoices(availableTags: readonly TradeExplorerReviewTag[]): readonly TagChoice[] {
+function tagChoices(availableTags: readonly TradeExplorerReviewTag[]): readonly JournalTagPickerChoice[] {
   const persistedPresetKeys = new Set(availableTags.flatMap((tag) => {
     const preset = journalTagPresetForName(tag.name);
     return preset ? [preset.presetKey] : [];
@@ -157,11 +150,6 @@ export function TradeExplorerReviewEditor({
   const reviewDirty = hasChanges(model, draft);
   const hasUnsavedWork = reviewDirty;
   const choices = useMemo(() => tagChoices(availableTags), [availableTags]);
-  const selectedChoices = useMemo(() => {
-    const selected = new Set(draft?.selectedTagIds ?? []);
-    return choices.filter((choice) => selected.has(choice.selectionId));
-  }, [choices, draft?.selectedTagIds]);
-
   useEffect(() => {
     if (!open || !selectedTrade) {
       requestRef.current += 1;
@@ -414,45 +402,22 @@ export function TradeExplorerReviewEditor({
                   <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">
                     Choose up to 10 labels that you believe describe this trade.
                   </Typography>
-                  <Autocomplete
-                    disableCloseOnSelect
-                    getOptionLabel={(option) => option.name}
-                    getOptionDisabled={(option) =>
-                      draft.selectedTagIds.length >= TAG_LIMIT &&
-                      !draft.selectedTagIds.includes(option.selectionId)}
-                    groupBy={(option) => JOURNAL_TAG_PRESET_CATEGORY_LABELS[option.category]}
-                    isOptionEqualToValue={(option, value) => option.selectionId === value.selectionId}
-                    multiple
-                    onChange={(_event, next) => {
+                  <JournalTagPicker
+                    choices={choices}
+                    disabled={state === "saving"}
+                    maxSelected={TAG_LIMIT}
+                    onSelectedIdsChange={(next) => {
                       setSuccess(null);
                       setDraft((current) => current
                         ? Object.freeze({
                             ...current,
-                            selectedTagIds: Object.freeze(next.map((choice) => choice.selectionId)),
+                            selectedTagIds: Object.freeze([...next]),
                           })
                         : current);
                     }}
-                    options={choices}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        error={draft.selectedTagIds.length > TAG_LIMIT}
-                        helperText={showTagSelectionCount ? `${draft.selectedTagIds.length} of ${TAG_LIMIT} selected` : undefined}
-                        label="Trade tags"
-                        placeholder="Search tags"
-                      />
-                    )}
-                    renderOption={(props, option, { selected }) => {
-                      const { key, ...optionProps } = props;
-                      return (
-                        <li key={key} {...optionProps}>
-                          <Checkbox checked={selected} sx={{ mr: 1 }} />
-                          {option.name}
-                        </li>
-                      );
-                    }}
-                    value={selectedChoices}
+                    selectedIds={draft.selectedTagIds}
                   />
+                  {showTagSelectionCount ? <Typography color={draft.selectedTagIds.length > TAG_LIMIT ? "error.main" : "text.secondary"} sx={{ mt: 0.75 }} variant="caption">{draft.selectedTagIds.length} of {TAG_LIMIT} selected</Typography> : null}
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 1.5 }}>
                     <Button
                       disabled={state === "saving"}

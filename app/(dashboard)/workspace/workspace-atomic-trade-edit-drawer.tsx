@@ -3,14 +3,18 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import { Alert, Box, Button, Drawer, IconButton, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Drawer, IconButton, MenuItem, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
+import { TradeExplorerReviewEditor } from "../analytics/trade-explorer/trade-review-editor";
+import type { TradeExplorerReviewTarget } from "../analytics/trade-explorer/trade-review-model";
+
 type TradeStyle = "day_trade" | "swing" | "other";
 type Side = "buy" | "sell";
+type EditTab = "trade" | "journal";
 type Execution = Readonly<{
   editRef: string; localDate: string; localTime: string; sourceTimezone: string;
   normalizedSymbol: string; tradeCurrency: string; side: Side; quantityDecimal: string;
@@ -42,11 +46,14 @@ function rowFromExecution(execution: Execution, index: number): DraftRow {
       : formatJournalAnalyticsDecimal(execution.priceDecimal, 2, true), feesDecimal: execution.feesDecimal ?? "" };
 }
 
-export function WorkspaceAtomicTradeEditDrawer({ open, roundTripId, onClose, onSaved }: Readonly<{
+export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, journalTarget, open, roundTripId, onClose, onSaved, startingTab = "trade" }: Readonly<{
+  expectedAccountSelectionRef: string;
+  journalTarget: TradeExplorerReviewTarget | null;
   open: boolean;
   roundTripId: string | null;
   onClose: () => void;
   onSaved?: () => void;
+  startingTab?: EditTab;
 }>) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [rows, setRows] = useState<DraftRow[]>([]);
@@ -54,12 +61,13 @@ export function WorkspaceAtomicTradeEditDrawer({ open, roundTripId, onClose, onS
   const [preview, setPreview] = useState<Readonly<{ previewRef: string; consequenceCopy: string }> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  const [tab, setTab] = useState<EditTab>(startingTab);
   const nextRow = useRef(100);
 
   useEffect(() => {
     if (!open || !roundTripId) return;
     let active = true;
-    setSnapshot(null); setRows([]); setTradeStyle(null); setPreview(null); setError(null);
+    setSnapshot(null); setRows([]); setTradeStyle(null); setPreview(null); setError(null); setTab(startingTab);
     void fetch(`/api/platform/journal/workspace-trades/${roundTripId}/edit`, { cache: "no-store" })
       .then(async (response) => {
         const result = await response.json() as { snapshot?: Snapshot; code?: unknown };
@@ -74,7 +82,7 @@ export function WorkspaceAtomicTradeEditDrawer({ open, roundTripId, onClose, onS
       })
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : failureMessage(null)); });
     return () => { active = false; };
-  }, [open, roundTripId]);
+  }, [open, roundTripId, startingTab]);
 
   const activeRows = useMemo(() => rows.filter((row) => !row.removed), [rows]);
   const update = <K extends keyof DraftRow>(clientRowRef: string, key: K, value: DraftRow[K]) => {
@@ -131,11 +139,17 @@ export function WorkspaceAtomicTradeEditDrawer({ open, roundTripId, onClose, onS
 
   return <Drawer anchor="right" onClose={working ? undefined : onClose} open={open} slotProps={{ paper: { sx: { width: { xs: "100%", md: 820 } } } }}>
     <Stack sx={{ height: "100%", minHeight: 0 }}>
-      <Stack direction="row" sx={{ alignItems: "center", borderBottom: 1, borderColor: "divider", justifyContent: "space-between", px: 2, py: 1.25 }}>
-        <Typography component="h2" sx={{ fontWeight: 800 }} variant="h6">Edit trade</Typography>
-        <IconButton aria-label="Close" disabled={working} onClick={onClose}><CloseRoundedIcon /></IconButton>
-      </Stack>
-      <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", px: 2, py: 1.25 }}>
+          <Typography component="h2" sx={{ fontWeight: 800 }} variant="h6">Edit trade</Typography>
+          <IconButton aria-label="Close" disabled={working} onClick={onClose}><CloseRoundedIcon /></IconButton>
+        </Stack>
+        <Tabs aria-label="Edit trade sections" onChange={(_event, value: EditTab) => setTab(value)} value={tab} variant="fullWidth">
+          <Tab label="Trade" value="trade" />
+          <Tab label="Journal" value="journal" />
+        </Tabs>
+      </Box>
+      {tab === "trade" ? <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
         {snapshot ? <>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
             <TextField label="Ticker" onChange={(event) => { const value = event.target.value.toUpperCase(); setPreview(null); setRows((current) => current.map((row) => ({ ...row, normalizedSymbol: value }))); }} size="small" sx={{ width: "9ch" }} value={activeRows[0]?.normalizedSymbol ?? ""} />
@@ -161,11 +175,13 @@ export function WorkspaceAtomicTradeEditDrawer({ open, roundTripId, onClose, onS
           {preview ? <Alert severity="info">{preview.consequenceCopy}</Alert> : null}
           {error ? <Alert severity="error">{error}</Alert> : null}
         </> : error ? <Alert severity="error">{error}</Alert> : <Typography color="text.secondary">Loading</Typography>}
-      </Stack>
-      <Stack direction="row" spacing={1} sx={{ borderTop: 1, borderColor: "divider", justifyContent: "flex-end", p: 2 }}>
+      </Stack> : journalTarget ? <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+        <TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setTab("trade")} onSelectTrade={() => undefined} open selectedRoundTripId={journalTarget.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={[journalTarget]} />
+      </Box> : <Box sx={{ flex: 1, p: 2 }}><Alert severity="info">Journal review is unavailable for this trade.</Alert></Box>}
+      {tab === "trade" ? <Stack direction="row" spacing={1} sx={{ borderTop: 1, borderColor: "divider", justifyContent: "flex-end", p: 2 }}>
         {preview ? <Button disabled={working} onClick={() => setPreview(null)}>Cancel</Button> : null}
         <Button disabled={!snapshot || working} onClick={() => void (preview ? commit() : requestPreview())} variant="contained">{working ? "Saving…" : preview ? "Confirm changes" : "Review changes"}</Button>
-      </Stack>
+      </Stack> : null}
     </Stack>
   </Drawer>;
 }

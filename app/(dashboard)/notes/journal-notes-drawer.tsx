@@ -1,7 +1,6 @@
 "use client";
 
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
@@ -12,6 +11,8 @@ import type { ReactNode } from "react";
 
 import { JOURNAL_TAG_PRESET_CATALOG, journalTagPresetForName, journalTagPresetKeyFromSelectionId, journalTagPresetSelectionId } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
+
+import { JournalTagPicker } from "../trade-tags/journal-tag-picker";
 
 type NoteCategory = "what_worked" | "what_needs_work" | "technical_recap" | "general" | "custom";
 type DrawerView = "add" | "saved" | "details" | "focuses";
@@ -97,10 +98,14 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
     .map((tag) => journalTagPresetForName(tag.name)?.presetKey)
     .filter((presetKey): presetKey is string => Boolean(presetKey)));
   const sessionTagChoices = [
-    ...(sessionReview?.tags ?? []),
+    ...(sessionReview?.tags ?? []).map((tag) => ({
+      category: journalTagPresetForName(tag.name)?.category ?? ("custom" as const),
+      name: tag.name,
+      selectionId: tag.tagId,
+    })),
     ...JOURNAL_TAG_PRESET_CATALOG
       .filter((preset) => !persistedPresetKeys.has(preset.presetKey))
-      .map((preset) => ({ name: preset.name, tagId: journalTagPresetSelectionId(preset.presetKey) })),
+      .map((preset) => ({ category: preset.category, name: preset.name, selectionId: journalTagPresetSelectionId(preset.presetKey) })),
   ];
   const drawerViews = activeLaunch.kind === "session" ? sessionViews : tradeViews;
 
@@ -303,10 +308,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
       <AccordionDetails><Stack spacing={1.25}>
         <Typography color="text.secondary" variant="body2">Choose useful presets or create a tag for this full trading session.</Typography>
         {sessionReview ? <>
-          <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", maxHeight: 130, overflowY: "auto", pr: 0.5 }} useFlexGap>{sessionTagChoices.map((tag) => {
-            const selected = sessionTagIds.includes(tag.tagId);
-            return <Chip color={selected ? "primary" : "default"} icon={selected ? <CheckCircleRoundedIcon /> : undefined} key={tag.tagId} label={tag.name} onClick={() => setSessionTagIds((current) => current.includes(tag.tagId) ? current.filter((id) => id !== tag.tagId) : current.length >= 10 ? current : [...current, tag.tagId])} sx={selected ? { fontWeight: 800 } : undefined} variant={selected ? "filled" : "outlined"} />;
-          })}</Stack>
+          <JournalTagPicker choices={sessionTagChoices} disabled={saving} onSelectedIdsChange={setSessionTagIds} selectedIds={sessionTagIds} />
         </> : <Typography color="text.secondary" variant="body2">Loading available tags…</Typography>}
         <Box component="details"><Box component="summary" sx={{ color: "primary.main", cursor: "pointer", fontSize: "0.875rem", fontWeight: 800 }}>Manage saved tags</Box><Stack spacing={1} sx={{ mt: 1 }}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.75}><TextField label="New personal tag" onChange={(event) => setNewSessionTag(event.target.value)} size="small" value={newSessionTag} /><Button disabled={saving || !newSessionTag.trim()} onClick={() => void createSessionTag()} size="small">Add tag</Button></Stack>{sessionReview?.tags.length ? <Stack spacing={0.5} sx={{ maxHeight: 160, overflowY: "auto", pr: 0.5 }}>{sessionReview.tags.map((tag) => <Stack direction="row" key={tag.tagId} sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography variant="body2">{tag.name}</Typography><IconButton aria-label={`Remove ${tag.name}`} disabled={saving} onClick={() => void retireSessionTag(tag)} size="small"><DeleteOutlineRoundedIcon fontSize="small" /></IconButton></Stack>)}</Stack> : <Typography color="text.secondary" variant="body2">No personal tags have been saved yet.</Typography>}</Stack></Box>
       </Stack></AccordionDetails>
