@@ -42,5 +42,8 @@ Historical/imported missing-fee facts remain unavailable for Net.
 - [x] Record whether a manual fee was left blank separately from the $0 fee
   fact, and add the Workspace **Fees not entered** filter. This starts with
   the released schema; no older $0 trade is guessed to have been blank.
+- [x] Clarify in Trade Explorer that Gross/Net never hides manual trades, and
+  direct the trader to the **Fees not entered** review filter. Older imported
+  trades without fee facts remain explicitly unavailable for Net P/L.
 - [x] Complete narrow static review.
 - [ ] Complete staging visual acceptance before any release handoff.

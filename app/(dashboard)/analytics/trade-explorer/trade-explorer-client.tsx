@@ -990,9 +990,14 @@ export default function TradeExplorerClient({
               )}
             </Box>
           </Stack>
+          {appliedQuery.moneyBasis === "net" ? (
+            <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
+              For manual trades, Gross and Net change P/L calculation only. A fee left blank is included as $0; use Workspace More filters, then Fees not entered, to review those entries.
+            </Typography>
+          ) : null}
           {appliedQuery.moneyBasis === "net" && feeIncompleteTradeCount > 0 ? (
             <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
-              Net P/L excludes {feeIncompleteTradeCount} closed {feeIncompleteTradeCount === 1 ? "trade" : "trades"} without complete fee details. Choose Gross P/L to include {feeIncompleteTradeCount === 1 ? "it" : "them"}.
+              Some older imported trades do not have fee details, so Net P/L is unavailable for {feeIncompleteTradeCount} closed {feeIncompleteTradeCount === 1 ? "trade" : "trades"}.
             </Typography>
           ) : null}
           {activeView ? (

@@ -140,7 +140,10 @@ describe("Trade Explorer visible contract", () => {
     expect(client).toContain("No fee-covered trades match these filters.");
     expect(client).toContain("preview.evidenceUnavailableReason");
     expect(client).toContain(
-      "without complete fee details. Choose Gross P/L to include",
+      "For manual trades, Gross and Net change P/L calculation only.",
+    );
+    expect(client).toContain(
+      "Some older imported trades do not have fee details",
     );
     expect(client).toContain(
       "Results are ranked separately within each currency and trading timezone.",

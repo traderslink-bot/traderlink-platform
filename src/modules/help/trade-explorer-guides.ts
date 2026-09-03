@@ -15,7 +15,8 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "Trading Days, Tickers, Entry Times, Holding Time, Position Size and Periods use Rank by to order their factual groups.",
         "Result narrows the current Gross or Net P/L population to Wins, Losses or Flat trades.",
         "Rank by offers the Gross or Net P/L that matches the selected Result basis and hides calculations that cannot produce a meaningful order for that selection.",
-        "Net P/L uses fee-covered completed trades. When fee details are incomplete, Trade Explorer states how many trades are omitted and Gross P/L remains available when its facts are complete.",
+        "For manual trades, Gross and Net change P/L calculation only. Leaving a manual fee blank records a $0 fee and does not hide the trade.",
+        "Use Workspace More filters, then Fees not entered, to review manual entries where the fee was left blank. Older imported trades with no fee details remain identified as unavailable for Net P/L.",
       ]),
     ]),
     section("review-a-trade", "Review a completed trade", "Save notes, tags and custom-rule results without changing execution facts.", ["review trade", "trade notes", "trade tags", "custom rules", "preset rules"], [
