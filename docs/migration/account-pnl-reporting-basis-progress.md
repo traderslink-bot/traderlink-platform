@@ -36,5 +36,8 @@ explicit zero fee remains Net-eligible.
 - [x] Connect Workspace to the saved preference.
 - [x] Connect all eight requested presentation defaults and preserve explicit
   page-level overrides.
+- [x] Explain at manual entry and editing that a blank fee keeps the raw trade
+  visible but excludes it from Net P/L; tell the trader to enter 0 when there
+  was no fee.
 - [x] Complete narrow static review.
 - [ ] Complete staging visual acceptance before any release handoff.

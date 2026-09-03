@@ -323,6 +323,9 @@ export function ExecutionEntryCard({
           </Typography>
         </>
       )}
+      <Alert severity="info" sx={{ mt: 1.5 }}>
+        Fees determine whether this trade can be included in Net P/L. Enter 0 if your broker charged no fee. If you leave Fees blank, the trade still saves and appears in Workspace, but it is excluded from Net P/L analytics.
+      </Alert>
       <Stack spacing={1.5} sx={{ mt: 2.5 }}>
         {rows.map((row, index) => (
           <Box
@@ -409,9 +412,10 @@ export function ExecutionEntryCard({
               value={row.price}
             />
             <TextField
+              helperText="Enter 0 when there was no fee. Blank excludes this trade from Net P/L."
               label="Fees"
               onChange={(event) => update(row.id, "fees", event.target.value)}
-              placeholder="Optional"
+              placeholder="0.00"
               size="small"
               slotProps={{ htmlInput: { inputMode: "decimal", min: 0 } }}
               value={row.fees}
