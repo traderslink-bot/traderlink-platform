@@ -12,7 +12,7 @@ import {
   type JournalAnalyticsTimingOfflineViewModel,
 } from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
@@ -26,14 +26,16 @@ const GROUPINGS: readonly JournalAnalyticsGrouping[] = [
   "entry_session",
 ];
 
-const METRIC_IDS: readonly TimingMetricId[] = [
-  "net_pnl",
+function metricIdsFor(moneyBasis: "gross" | "net"): readonly TimingMetricId[] {
+  return [
+  moneyBasis === "gross" ? "gross_pnl" : "net_pnl",
   "average_pnl",
   "win_rate",
   "included_count",
   "median_pnl",
   "best_trade",
-];
+  ];
+}
 
 function valueAsNumber(value: JournalAnalyticsExactValue | null): number | null {
   if (value === null) return null;
@@ -61,14 +63,24 @@ function chartOrder(grouping: JournalAnalyticsGrouping, key: string): number | s
   return key;
 }
 
-export async function TimingAnalyticsPage() {
+export async function TimingAnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ basis?: string | string[] | undefined }>;
+}) {
   const scope = await requireTraderLinkPlatformPageScope();
-  const query = buildJournalAnalyticsDashboardQuery(scope, {
-    groupings: GROUPINGS,
-    metricIds: METRIC_IDS,
+  const requestedBasis = (await searchParams).basis;
+  const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
+    const moneyBasis = resolveJournalAnalyticsMoneyBasis(requestedBasis, pnlReportingBasis);
+    const query = buildJournalAnalyticsDashboardQuery(scope, {
+      groupings: GROUPINGS,
+      metricIds: metricIdsFor(moneyBasis),
+      moneyBasis,
+    });
+    return Object.freeze({ moneyBasis, response: service.getTimingAnalytics(scope, query) });
   });
-  const response = await withJournalAnalyticsReportingDashboardService(scope, (service) =>
-    service.getTimingAnalytics(scope, query));
+  const { moneyBasis, response } = result;
+  const metricIds = metricIdsFor(moneyBasis);
   const chartData: TimingChartData = Object.freeze(Object.fromEntries(
     GROUPINGS.map((grouping) => [grouping, Object.freeze(response.partitions.flatMap((partition) =>
       partition.groups
@@ -76,7 +88,7 @@ export async function TimingAnalyticsPage() {
         .map((group) => Object.freeze({
           key: group.groupKey,
           label: group.label,
-          metrics: Object.freeze(Object.fromEntries(METRIC_IDS.map((metricId) => [
+          metrics: Object.freeze(Object.fromEntries(metricIds.map((metricId) => [
             metricId,
             metricValue(group.metrics.find((metric) => metric.metricId === metricId) ?? null),
           ]))),
@@ -95,6 +107,7 @@ export async function TimingAnalyticsPage() {
     chartData,
     completedTradeCount: response.crossPartitionCounts.readyClosedCount,
     kind: "analytics-timing",
+    moneyBasis,
     timezone,
     version: 1,
   });
@@ -108,7 +121,7 @@ export async function TimingAnalyticsPage() {
       generatedAtUtc={response.generatedAtUtc}
       model={offlineModel}
       pathname="/analytics/timing"
-      queryIdentity="all-available"
+      queryIdentity={`basis=${moneyBasis}`}
       reportingCurrency={response.partitions[0]?.currency ?? null}
       routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
       viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-timing"]}
@@ -129,6 +142,7 @@ export async function TimingAnalyticsPage() {
       <TimingAnalyticsClient
         chartData={chartData}
         completedTradeCount={response.crossPartitionCounts.readyClosedCount}
+        moneyBasis={moneyBasis}
         timezone={timezone}
       />
     </DashboardPage>

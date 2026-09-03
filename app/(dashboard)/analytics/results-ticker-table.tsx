@@ -15,6 +15,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
 
+import type { JournalAnalyticsMoneyBasis } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import { TickerTradeDetailDrawer } from "./trade-detail-drawer";
 
@@ -43,15 +44,17 @@ type SortColumn =
   | "tradingDays"
   | "averagePnl";
 
-const COLUMNS: readonly Readonly<{ id: SortColumn; label: string }>[] = [
+function columns(moneyBasis: JournalAnalyticsMoneyBasis): readonly Readonly<{ id: SortColumn; label: string }>[] {
+  return [
   { id: "ticker", label: "Ticker" },
-  { id: "netPnl", label: "Net P/L" },
+  { id: "netPnl", label: `${moneyBasis === "gross" ? "Gross" : "Net"} P/L` },
   { id: "winRate", label: "Win rate" },
   { id: "profitFactor", label: "Profit factor" },
   { id: "trades", label: "Trades" },
   { id: "tradingDays", label: "Trading days" },
   { id: "averagePnl", label: "Average P/L" },
-];
+  ];
+}
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50, 100] as const;
 
 function sortableValue(
@@ -78,11 +81,13 @@ function sortableValue(
 
 export function ResultsTickerTable({
   endDate,
+  moneyBasis,
   offline = false,
   rows,
   startDate,
 }: {
   endDate: string | null;
+  moneyBasis: JournalAnalyticsMoneyBasis;
   offline?: boolean;
   rows: readonly ResultsTickerRow[];
   startDate: string | null;
@@ -93,6 +98,7 @@ export function ResultsTickerTable({
   const [sortColumn, setSortColumn] = useState<SortColumn>("netPnl");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
+  const columnsForBasis = columns(moneyBasis);
   const visibleRows = useMemo(
     () => rows
       .filter((row) => row.ticker.toUpperCase().includes(search.trim().toUpperCase()))
@@ -171,7 +177,7 @@ export function ResultsTickerTable({
           sx={{ display: { xs: "flex", md: "none" }, width: "100%" }}
           value={`${sortColumn}:${sortDirection}`}
         >
-          {COLUMNS.flatMap((column) => (["desc", "asc"] as const).map((direction) => (
+          {columnsForBasis.flatMap((column) => (["desc", "asc"] as const).map((direction) => (
             <MenuItem key={`${column.id}:${direction}`} value={`${column.id}:${direction}`}>
               {column.label}: {column.id === "ticker"
                 ? direction === "asc" ? "A–Z" : "Z–A"
@@ -189,7 +195,7 @@ export function ResultsTickerTable({
           <Table size="small">
             <TableHead>
               <TableRow>
-                {COLUMNS.map((column) => (
+                {columnsForBasis.map((column) => (
                   <TableCell key={column.id}>
                     <TableSortLabel
                       active={sortColumn === column.id}
@@ -272,6 +278,7 @@ export function ResultsTickerTable({
       </Box>
       {offline ? null : <TickerTradeDetailDrawer
         endDate={endDate}
+        moneyBasis={moneyBasis}
         onClose={() => setSelectedTicker(null)}
         open={selectedTicker !== null}
         startDate={startDate}

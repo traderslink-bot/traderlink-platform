@@ -446,7 +446,7 @@ export async function runTradeExplorerComparison(
 export async function readTradeExplorerPageModel(
   scope: WorkspaceAccessScope,
 ): Promise<TradeExplorerPageModel> {
-  const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, service }) => {
+  const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, pnlReportingBasis, service }) => {
     const calendarInput = Object.freeze({
       currency: null,
       startDate: null,
@@ -476,7 +476,7 @@ export async function readTradeExplorerPageModel(
       expectedAccountSelectionRef: currentJournalAccountSelectionRef(scope),
       metricId: "total_trades",
       grouping: "closing_month",
-      moneyBasis: "net",
+      moneyBasis: pnlReportingBasis,
       currency: calendar.currency,
       symbol: null,
       direction: null,
