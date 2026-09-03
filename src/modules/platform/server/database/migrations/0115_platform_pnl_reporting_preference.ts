@@ -6,7 +6,7 @@ ADD COLUMN pnl_reporting_basis TEXT NOT NULL DEFAULT 'gross'
 
 export const platformPnlReportingPreferenceMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
-  migrationId: "0109_platform_pnl_reporting_preference",
-  executionOrder: 109,
+  migrationId: "0115_platform_pnl_reporting_preference",
+  executionOrder: 115,
   statements: Object.freeze([sql]),
 });
