@@ -152,24 +152,24 @@ function reviewLabel(status: TradeDetails["ruleReviews"][number]["status"]): str
   return "Not reviewed";
 }
 
-function SurfaceSection({ children, emphasizeHeader = false, outcomeTone, title }: Readonly<{ children: ReactNode; emphasizeHeader?: boolean; outcomeTone: "success" | "error" | null; title: string }>) {
+function SurfaceSection({ children, outcomeTone, title }: Readonly<{ children: ReactNode; outcomeTone: "success" | "error" | "warning" | null; title: string }>) {
   return <Box sx={(theme) => ({
     bgcolor: theme.palette.mode === "dark" && outcomeTone
       ? alpha(theme.palette[outcomeTone].main, 0.08)
       : "background.paper",
     border: 1,
-    borderColor: "divider",
+    borderColor: theme.palette.mode === "dark" || !outcomeTone ? "divider" : `${outcomeTone}.main`,
     borderRadius: 2,
     overflow: "hidden",
   })}>
     <Typography component="h3" sx={(theme) => {
       const useDarkOutcomeSurface = theme.palette.mode === "dark" && outcomeTone !== null;
-      const useLightResultSurface = theme.palette.mode !== "dark" && emphasizeHeader && outcomeTone !== null;
+      const useLightOutcomeSurface = theme.palette.mode !== "dark" && outcomeTone !== null;
       return {
         bgcolor: useDarkOutcomeSurface
           ? alpha(theme.palette[outcomeTone!].main, 0.18)
-          : useLightResultSurface ? `${outcomeTone}.main` : "action.hover",
-        color: useDarkOutcomeSurface || useLightResultSurface ? "common.white" : "text.primary",
+          : useLightOutcomeSurface ? `${outcomeTone}.main` : "action.hover",
+        color: useDarkOutcomeSurface || useLightOutcomeSurface ? "common.white" : "text.primary",
         fontWeight: 850,
         px: 1.5,
         py: 1,
@@ -224,8 +224,14 @@ export function TradeDetailsDrawer({
 
   const details = state.status === "ready" ? state.details : null;
   const performance = details?.performance ?? null;
-  const resultColor = performance ? financialOutcomeColor(performance.grossPnlDecimal) : "text.primary";
-  const outcomeTone = resultColor === "success.main" ? "success" : resultColor === "error.main" ? "error" : null;
+  const resultColor = performance
+    ? financialOutcomeColor(performance.grossPnlDecimal)
+    : details?.projectionState === "legitimate_open" ? "warning.main" : "text.primary";
+  const outcomeTone = resultColor === "success.main"
+    ? "success"
+    : resultColor === "error.main"
+      ? "error"
+      : resultColor === "warning.main" ? "warning" : null;
   const resultValue = performance
     ? formatJournalAnalyticsMoney(performance.grossPnlDecimal, performance.tradeCurrency, { showPositiveSign: true })
     : details?.projectionState === "legitimate_open" ? "Open" : "—";
@@ -264,7 +270,7 @@ export function TradeDetailsDrawer({
         {state.status === "loading" ? <Stack spacing={1} sx={{ alignItems: "center", minHeight: 220, justifyContent: "center" }}><CircularProgress size={28} /><Typography color="text.secondary">Loading trade details…</Typography></Stack> : null}
         {state.status === "error" ? <Alert severity="error">Trade details could not be loaded. Refresh and try again.</Alert> : null}
         {details ? <Stack spacing={1.5}>
-          <SurfaceSection emphasizeHeader outcomeTone={outcomeTone} title="Result">
+          <SurfaceSection outcomeTone={outcomeTone} title="Result">
             {performance ? <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
               <Box><Typography color="text.secondary" variant="caption">Gross P/L</Typography><Typography color={resultColor} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>{resultValue}</Typography></Box>
               <Box><Typography color="text.secondary" variant="caption">Fees</Typography><Typography sx={{ fontWeight: 800 }}>{performance.chargeCoverage === "complete" ? formatJournalAnalyticsMoney(performance.chargeCostDecimal, performance.tradeCurrency) : "N/A"}</Typography></Box>
@@ -289,8 +295,8 @@ export function TradeDetailsDrawer({
             </Stack>
           </SurfaceSection>
 
-          <Accordion disableGutters elevation={0} sx={(theme) => ({ bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.08) : "background.paper", border: 1, borderColor: "divider", borderRadius: 2, "&:before": { display: "none" }, overflow: "hidden" })}>
-            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={(theme) => ({ bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.18) : "action.hover", color: theme.palette.mode === "dark" && outcomeTone ? "common.white" : "text.primary", px: 1.5 })}><Typography sx={{ fontWeight: 850 }}>Exact executions {details.status === "ready" ? `(${details.executions.length})` : null}</Typography></AccordionSummary>
+          <Accordion disableGutters elevation={0} sx={(theme) => ({ bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.08) : "background.paper", border: 1, borderColor: theme.palette.mode === "dark" || !outcomeTone ? "divider" : `${outcomeTone}.main`, borderRadius: 2, "&:before": { display: "none" }, overflow: "hidden" })}>
+            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={(theme) => ({ bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.18) : outcomeTone ? `${outcomeTone}.main` : "action.hover", color: outcomeTone ? "common.white" : "text.primary", px: 1.5 })}><Typography sx={{ fontWeight: 850 }}>Exact executions {details.status === "ready" ? `(${details.executions.length})` : null}</Typography></AccordionSummary>
             <AccordionDetails sx={{ p: details.status === "summary_only" ? 1.5 : 0 }}>{details.status === "summary_only" ? <Typography color="text.secondary" variant="body2">Exact executions are unavailable for this historical trade summary.</Typography> : <Stack divider={<Divider flexItem />}>{details.executions.map((execution, index) => <Stack direction="row" key={`${execution.executedAtUtc}-${execution.side}-${execution.quantityDecimal}-${index}`} sx={{ justifyContent: "space-between", p: 1.5 }}><Box><Typography sx={{ fontWeight: 800 }} variant="body2">{execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantityDecimal)} shares</Typography><Typography color="text.secondary" variant="caption">{dateTime(execution.executedAtUtc, details.timezone).date} · {dateTime(execution.executedAtUtc, details.timezone).time}</Typography></Box><Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }} variant="body2">{formatJournalAnalyticsMoney(execution.priceDecimal, performance?.tradeCurrency ?? null)}</Typography></Stack>)}</Stack>}</AccordionDetails>
           </Accordion>
         </Stack> : null}
