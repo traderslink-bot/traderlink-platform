@@ -19,6 +19,7 @@ import {
   Tabs,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { financialOutcomeColor } from
@@ -152,8 +153,28 @@ function reviewLabel(status: TradeDetails["ruleReviews"][number]["status"]): str
 }
 
 function SurfaceSection({ children, emphasizeHeader = false, outcomeTone, title }: Readonly<{ children: ReactNode; emphasizeHeader?: boolean; outcomeTone: "success" | "error" | null; title: string }>) {
-  return <Box sx={{ border: 1.5, borderColor: outcomeTone ? `${outcomeTone}.main` : "divider", borderRadius: 2, overflow: "hidden" }}>
-    <Typography component="h3" sx={{ bgcolor: emphasizeHeader && outcomeTone ? `${outcomeTone}.main` : "action.hover", color: emphasizeHeader && outcomeTone ? `${outcomeTone}.contrastText` : "text.primary", fontWeight: 850, px: 1.5, py: 1 }} variant="body2">{title}</Typography>
+  return <Box sx={(theme) => ({
+    bgcolor: theme.palette.mode === "dark" && outcomeTone
+      ? alpha(theme.palette[outcomeTone].main, 0.08)
+      : "background.paper",
+    border: 1,
+    borderColor: "divider",
+    borderRadius: 2,
+    overflow: "hidden",
+  })}>
+    <Typography component="h3" sx={(theme) => {
+      const useDarkOutcomeSurface = theme.palette.mode === "dark" && outcomeTone !== null;
+      const useLightResultSurface = theme.palette.mode !== "dark" && emphasizeHeader && outcomeTone !== null;
+      return {
+        bgcolor: useDarkOutcomeSurface
+          ? alpha(theme.palette[outcomeTone!].main, 0.18)
+          : useLightResultSurface ? `${outcomeTone}.main` : "action.hover",
+        color: useDarkOutcomeSurface || useLightResultSurface ? "common.white" : "text.primary",
+        fontWeight: 850,
+        px: 1.5,
+        py: 1,
+      };
+    }} variant="body2">{title}</Typography>
     <Box sx={{ p: 1.5 }}>{children}</Box>
   </Box>;
 }
@@ -268,8 +289,8 @@ export function TradeDetailsDrawer({
             </Stack>
           </SurfaceSection>
 
-          <Accordion disableGutters elevation={0} sx={{ border: 1.5, borderColor: outcomeTone ? `${outcomeTone}.main` : "divider", borderRadius: 2, "&:before": { display: "none" }, overflow: "hidden" }}>
-            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ bgcolor: "action.hover", px: 1.5 }}><Typography sx={{ fontWeight: 850 }}>Exact executions {details.status === "ready" ? `(${details.executions.length})` : null}</Typography></AccordionSummary>
+          <Accordion disableGutters elevation={0} sx={(theme) => ({ bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.08) : "background.paper", border: 1, borderColor: "divider", borderRadius: 2, "&:before": { display: "none" }, overflow: "hidden" })}>
+            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={(theme) => ({ bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.18) : "action.hover", color: theme.palette.mode === "dark" && outcomeTone ? "common.white" : "text.primary", px: 1.5 })}><Typography sx={{ fontWeight: 850 }}>Exact executions {details.status === "ready" ? `(${details.executions.length})` : null}</Typography></AccordionSummary>
             <AccordionDetails sx={{ p: details.status === "summary_only" ? 1.5 : 0 }}>{details.status === "summary_only" ? <Typography color="text.secondary" variant="body2">Exact executions are unavailable for this historical trade summary.</Typography> : <Stack divider={<Divider flexItem />}>{details.executions.map((execution, index) => <Stack direction="row" key={`${execution.executedAtUtc}-${execution.side}-${execution.quantityDecimal}-${index}`} sx={{ justifyContent: "space-between", p: 1.5 }}><Box><Typography sx={{ fontWeight: 800 }} variant="body2">{execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantityDecimal)} shares</Typography><Typography color="text.secondary" variant="caption">{dateTime(execution.executedAtUtc, details.timezone).date} · {dateTime(execution.executedAtUtc, details.timezone).time}</Typography></Box><Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }} variant="body2">{formatJournalAnalyticsMoney(execution.priceDecimal, performance?.tradeCurrency ?? null)}</Typography></Stack>)}</Stack>}</AccordionDetails>
           </Accordion>
         </Stack> : null}
