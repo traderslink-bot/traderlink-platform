@@ -28,17 +28,76 @@ function newYorkWallTimeToEpochSeconds(
   month: number,
   day: number,
   hour: number,
+  minute = 0,
 ): number | null {
   const offsetMinutes = offsetMinutesAt(year, month, day, hour);
   return offsetMinutes === null
     ? null
-    : Math.floor((Date.UTC(year, month - 1, day, hour) - offsetMinutes * 60_000) / 1000);
+    : Math.floor((Date.UTC(year, month - 1, day, hour, minute) - offsetMinutes * 60_000) / 1000);
 }
 
 export type NewYorkExtendedSession = Readonly<{
   endTime: number;
   startTime: number;
 }>;
+
+export type NewYorkMarketSession = "pre_market" | "regular_hours" | "post_market";
+
+export type NewYorkMarketSessionBoundary = Readonly<{
+  atUtc: string;
+  session: NewYorkMarketSession;
+  tradingDate: string;
+}>;
+
+/** Classifies a timestamp against the same 04:00–20:00 New York schedule used by the Daily Trade Analyzer. */
+export function newYorkMarketSessionAt(
+  atUtc: string,
+): NewYorkMarketSession | null {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    hourCycle: "h23",
+    minute: "2-digit",
+    timeZone: NEW_YORK,
+  }).formatToParts(new Date(atUtc)).filter((part) => part.type !== "literal")
+    .map((part) => [part.type, part.value]));
+  const minuteOfDay = Number(parts.hour) * 60 + Number(parts.minute);
+  if (!Number.isInteger(minuteOfDay)) return null;
+  if (minuteOfDay >= 4 * 60 && minuteOfDay < 9 * 60 + 30) return "pre_market";
+  if (minuteOfDay >= 9 * 60 + 30 && minuteOfDay < 16 * 60) return "regular_hours";
+  if (minuteOfDay >= 16 * 60 && minuteOfDay < 20 * 60) return "post_market";
+  return null;
+}
+
+/**
+ * Returns the named-session crossovers a position can carry through on one
+ * U.S. equities date. Premarket starts are not a carry boundary because the
+ * preceding overnight interval is not a named trading session in the story.
+ */
+export function newYorkMarketSessionBoundaries(
+  date: string,
+): readonly NewYorkMarketSessionBoundary[] {
+  const parts = dateParts(date);
+  if (!parts) return Object.freeze([]);
+  const [year, month, day] = parts;
+  const atUtc = (hour: number, minute: number): string | null => {
+    const seconds = newYorkWallTimeToEpochSeconds(year, month, day, hour, minute);
+    return seconds === null ? null : new Date(seconds * 1_000).toISOString();
+  };
+  const regularOpen = atUtc(9, 30);
+  const postMarketOpen = atUtc(16, 0);
+  return Object.freeze([
+    ...(regularOpen === null ? [] : [Object.freeze({
+      atUtc: regularOpen,
+      session: "regular_hours" as const,
+      tradingDate: date,
+    })]),
+    ...(postMarketOpen === null ? [] : [Object.freeze({
+      atUtc: postMarketOpen,
+      session: "post_market" as const,
+      tradingDate: date,
+    })]),
+  ]);
+}
 
 /** The approved 4:00 AM through 8:00 PM New York extended-hours session. */
 export function newYorkExtendedSession(date: string): NewYorkExtendedSession | null {
