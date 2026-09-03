@@ -36,6 +36,12 @@ function validateFacts(facts: JournalExecutionFacts): void {
     (facts.feesDecimal === null) !== (facts.feeCurrency === null) ||
     (facts.feesDecimal === null) !== (facts.feeSignConvention === "not_reported")
   ) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "executionFacts" });
+  if (
+    facts.manualFeeInputState !== undefined &&
+    facts.manualFeeInputState !== null &&
+    facts.manualFeeInputState !== "not_entered" &&
+    facts.manualFeeInputState !== "entered"
+  ) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "manualFeeInputState" });
 }
 
 export class JournalExecutionService {

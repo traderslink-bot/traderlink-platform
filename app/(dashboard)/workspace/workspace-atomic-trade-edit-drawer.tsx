@@ -19,6 +19,7 @@ type Execution = Readonly<{
   editRef: string; localDate: string; localTime: string; sourceTimezone: string;
   normalizedSymbol: string; tradeCurrency: string; side: Side; quantityDecimal: string;
   priceDecimal: string | null; feesDecimal: string | null;
+  manualFeeInputState: "not_entered" | "entered" | null;
 }>;
 type Snapshot = Readonly<{
   executionCount: number; executions: readonly Execution[]; snapshotRef: string;
@@ -43,7 +44,7 @@ function rowFromExecution(execution: Execution, index: number): DraftRow {
     tradeCurrency: execution.tradeCurrency, side: execution.side, quantityDecimal: execution.quantityDecimal,
     priceDecimal: execution.priceDecimal === null
       ? ""
-      : formatJournalAnalyticsDecimal(execution.priceDecimal, 2, true), feesDecimal: execution.feesDecimal ?? "" };
+      : formatJournalAnalyticsDecimal(execution.priceDecimal, 2, true), feesDecimal: execution.manualFeeInputState === "not_entered" ? "" : execution.feesDecimal ?? "" };
 }
 
 export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, journalTarget, open, roundTripId, onClose, onSaved, startingTab = "trade" }: Readonly<{

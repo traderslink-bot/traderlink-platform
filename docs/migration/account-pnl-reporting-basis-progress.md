@@ -39,5 +39,8 @@ Historical/imported missing-fee facts remain unavailable for Net.
 - [x] Treat a blank fee on a new or edited manual execution as an intentional
   $0 fee, so it remains included in Net P/L. A trader enters a fee only when a
   broker charged one; historical/imported missing-fee facts remain unchanged.
+- [x] Record whether a manual fee was left blank separately from the $0 fee
+  fact, and add the Workspace **Fees not entered** filter. This starts with
+  the released schema; no older $0 trade is guessed to have been blank.
 - [x] Complete narrow static review.
 - [ ] Complete staging visual acceptance before any release handoff.

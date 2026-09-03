@@ -40,7 +40,7 @@ function factKeyFromManualSourceRow(rawFieldsJson: string): string | null {
   if (
     !Array.isArray(fields) ||
     fields.length < 16 ||
-    fields[0] !== "manual_execution_v1"
+    (fields[0] !== "manual_execution_v1" && fields[0] !== "manual_execution_v2")
   ) {
     return null;
   }

@@ -85,6 +85,7 @@ function manualEntry(value: unknown): Readonly<{
       feesDecimal: canonicalFee === "0" ? "0" : `-${canonicalFee}`,
       feeCurrency: currency,
       feeSignConvention: "cash_effect",
+      manualFeeInputState: feesInput === "" ? "not_entered" as const : "entered" as const,
       tradeIntent: tradeIntent as "not_set" | "day_trade" | "swing",
     }),
   });

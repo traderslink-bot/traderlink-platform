@@ -43,6 +43,7 @@ export type JournalWorkspaceTradeEditableExecution = Readonly<{
   quantityDecimal: string;
   priceDecimal: string | null;
   feesDecimal: string | null;
+  manualFeeInputState: "not_entered" | "entered" | null;
 }>;
 
 type SnapshotState = Readonly<{
@@ -349,6 +350,7 @@ ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
           quantityDecimal: editable.quantityDecimal,
           priceDecimal: editable.priceDecimal,
           feesDecimal: editable.feesDecimal,
+          manualFeeInputState: editable.manualFeeInputState,
         });
       })),
       snapshotRef: this.authority.opaqueRef("workspace_trade_edit_snapshot", material),
@@ -462,7 +464,8 @@ ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
           existing.side === entry.side &&
           existing.quantityDecimal === entry.quantityDecimal &&
           existing.priceDecimal === entry.priceDecimal &&
-          existing.feesDecimal === entry.feesDecimal
+          existing.feesDecimal === entry.feesDecimal &&
+          existing.manualFeeInputState === (entry.manualFeeInputState ?? null)
         ) continue;
         this.executionEdits.correct(accountScope, existing.editRef, {
           idempotencyKey: `${request.idempotencyKey}:edit:${correctedExecutionCount + 1}`,
