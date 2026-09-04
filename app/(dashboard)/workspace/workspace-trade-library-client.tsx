@@ -306,6 +306,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   const [analyzerUses, setAnalyzerUses] = useState<Readonly<{
     enabled: boolean; dailyAvailable: number; periodAvailable: number; selectableAvailable: number; daysUntilReset: number;
   }> | null>(null);
+  const [analyzerUsesStatus, setAnalyzerUsesStatus] = useState<"loading" | "ready" | "unavailable">("loading");
   const [analyzerError, setAnalyzerError] = useState<string | null>(null);
   const [analyzerSelection, setAnalyzerSelection] = useState<readonly string[]>([]);
   const [expandedJournalTradeId, setExpandedJournalTradeId] = useState<string | null>(null);
@@ -324,14 +325,20 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   const loadAnalyzerUses = useCallback(async () => {
     const requestNumber = analyzerUsesRequestRef.current + 1;
     analyzerUsesRequestRef.current = requestNumber;
+    setAnalyzerUsesStatus("loading");
     try {
       const response = await fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" });
       const result = await response.json() as { availability?: typeof analyzerUses };
       if (analyzerUsesRequestRef.current === requestNumber) {
-        setAnalyzerUses(response.ok ? result.availability ?? null : null);
+        const availability = response.ok ? result.availability ?? null : null;
+        setAnalyzerUses(availability);
+        setAnalyzerUsesStatus(response.ok && availability ? "ready" : "unavailable");
       }
     } catch {
-      if (analyzerUsesRequestRef.current === requestNumber) setAnalyzerUses(null);
+      if (analyzerUsesRequestRef.current === requestNumber) {
+        setAnalyzerUses(null);
+        setAnalyzerUsesStatus("unavailable");
+      }
     }
   }, []);
   const savedReviewTargets: readonly TradeExplorerReviewTarget[] = useMemo(() =>
@@ -486,7 +493,18 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
             </Box>;
           })}
           {analyzerError ? <Typography color="error.main" variant="body2">{analyzerError}</Typography> : null}
-          {analyzerUses?.enabled ? <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}><Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available in 30 days · resets in {analyzerUses.daysUntilReset} days</Typography></Box> : null}
+          <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}>
+            <Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography>
+            {analyzerUsesStatus === "loading" ? <Typography color="text.secondary" variant="body2">Loading…</Typography> : null}
+            {analyzerUsesStatus === "ready" && analyzerUses?.enabled ? <>
+              <Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today</Typography>
+              <Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available in 30 days · resets in {analyzerUses.daysUntilReset} days</Typography>
+            </> : null}
+            {analyzerUsesStatus === "unavailable" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+              <Typography color="error.main" variant="body2">Analyzer usage could not be loaded.</Typography>
+              <Button onClick={() => void loadAnalyzerUses()} size="small">Try again</Button>
+            </Stack> : null}
+          </Box>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button disabled={journalSaving || sendingAnalyses} onClick={() => requestReviewAction(() => { setSavedTrades([]); setSavedReviewComplete(false); setSavedReviewError(null); })} variant="outlined">Add another trade</Button>{analyzerUses?.enabled && savedTrades.length > 0 ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
         </Stack>}
       </Box>

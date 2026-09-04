@@ -18,9 +18,13 @@ export async function GET(request: Request): Promise<Response> {
     });
     return Response.json({ status: "ready", availability });
   } catch (error) {
+    console.error("[daily-trade-analyzer/allowance] Failed to read Analyzer availability.", error);
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
-    return Response.json({ status: "unavailable", code }, { status: 400 });
+    return Response.json({ status: "unavailable", code }, {
+      status: 400,
+      headers: { "cache-control": "no-store" },
+    });
   }
 }
