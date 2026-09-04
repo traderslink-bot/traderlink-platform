@@ -310,12 +310,16 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   const [analyzerSelection, setAnalyzerSelection] = useState<readonly string[]>([]);
   const [expandedJournalTradeId, setExpandedJournalTradeId] = useState<string | null>(null);
   const [sendingAnalyses, setSendingAnalyses] = useState(false);
+  const [journalSaving, setJournalSaving] = useState(false);
   const [discardJournalOpen, setDiscardJournalOpen] = useState(false);
   const journalDirtyRef = useRef(false);
   const pendingReviewActionRef = useRef<(() => void) | null>(null);
   const analyzerUsesRequestRef = useRef(0);
   const handleJournalDirtyChange = useCallback((dirty: boolean) => {
     journalDirtyRef.current = dirty;
+  }, []);
+  const handleJournalSavingChange = useCallback((saving: boolean) => {
+    setJournalSaving(saving);
   }, []);
   const loadAnalyzerUses = useCallback(async () => {
     const requestNumber = analyzerUsesRequestRef.current + 1;
@@ -352,6 +356,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   }, [loadAnalyzerUses, tradeEntryOpen]);
   if (!tradeEntryOpen) return null;
   const requestReviewAction = (action: () => void) => {
+    if (journalSaving) return;
     if (!journalDirtyRef.current) {
       action();
       return;
@@ -359,7 +364,10 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
     pendingReviewActionRef.current = action;
     setDiscardJournalOpen(true);
   };
-  const closeTradeDrawer = () => requestReviewAction(onClose);
+  const closeTradeDrawer = () => {
+    if (sendingAnalyses) return;
+    requestReviewAction(onClose);
+  };
   const handleNewTradeSaved = async (result: ManualTradeSubmitResult | null) => {
     if (result) {
       const nextSavedTrades = result.savedTrades as readonly WorkspaceTradeLibraryRow[];
@@ -420,7 +428,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
       <Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}>
         <Stack direction="row" sx={{ justifyContent: "space-between" }}>
           <Typography component="h2" variant="h6">{savedReviewComplete ? "Review saved trades" : "Add trade"}</Typography>
-          <Button onClick={closeTradeDrawer}>Close</Button>
+          <Button disabled={journalSaving || sendingAnalyses} onClick={closeTradeDrawer}>Close</Button>
         </Stack>
       </Box>
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
@@ -441,15 +449,15 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
                 </Stack>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", mt: 1 }}>
                   {analyzable ? <FormControlLabel control={<Checkbox checked={analyzerSelection.includes(trade.roundTripId)} onChange={(event) => toggleAnalysis(trade, event.target.checked)} sx={{ color: "common.white", "&.Mui-checked": { color: "common.white" } }} />} label="Analyze" sx={{ m: 0, "& .MuiFormControlLabel-label": { fontSize: "0.875rem", fontWeight: 800 } }} /> : <Box />}
-                  <Button color="inherit" endIcon={journalOpen ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />} onClick={() => requestReviewAction(() => setExpandedJournalTradeId((current) => current === trade.roundTripId ? null : trade.roundTripId))} sx={{ color: "inherit", fontWeight: 800 }}>Journal</Button>
+                  <Button color="inherit" disabled={journalSaving} endIcon={journalOpen ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />} onClick={() => requestReviewAction(() => setExpandedJournalTradeId((current) => current === trade.roundTripId ? null : trade.roundTripId))} sx={{ color: "inherit", fontWeight: 800 }}>Journal</Button>
                 </Stack>
               </Box>
-              <Collapse in={journalOpen} timeout="auto" unmountOnExit><Box sx={{ borderTop: 1, borderColor: "divider" }}><TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setExpandedJournalTradeId(null)} onDirtyChange={handleJournalDirtyChange} onSelectTrade={() => undefined} open selectedRoundTripId={trade.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={savedReviewTargets} /></Box></Collapse>
+              <Collapse in={journalOpen} timeout="auto" unmountOnExit><Box sx={{ borderTop: 1, borderColor: "divider" }}><TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setExpandedJournalTradeId(null)} onDirtyChange={handleJournalDirtyChange} onSavingChange={handleJournalSavingChange} onSelectTrade={() => undefined} open selectedRoundTripId={trade.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={savedReviewTargets} /></Box></Collapse>
             </Box>;
           })}
           {analyzerError ? <Typography color="error.main" variant="body2">{analyzerError}</Typography> : null}
           {analyzerUses?.enabled ? <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}><Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available in 30 days · resets in {analyzerUses.daysUntilReset} days</Typography></Box> : null}
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button onClick={() => requestReviewAction(() => { setSavedTrades([]); setSavedReviewComplete(false); setSavedReviewError(null); })} variant="outlined">Add another trade</Button>{analyzerUses?.enabled && savedTrades.length > 0 ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button disabled={journalSaving || sendingAnalyses} onClick={() => requestReviewAction(() => { setSavedTrades([]); setSavedReviewComplete(false); setSavedReviewError(null); })} variant="outlined">Add another trade</Button>{analyzerUses?.enabled && savedTrades.length > 0 ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
         </Stack>}
       </Box>
     </Stack>

@@ -118,6 +118,7 @@ export function TradeExplorerReviewEditor({
   expectedAccountSelectionRef,
   onClose,
   onDirtyChange,
+  onSavingChange,
   onSelectTrade,
   open,
   selectedRoundTripId,
@@ -129,6 +130,7 @@ export function TradeExplorerReviewEditor({
   expectedAccountSelectionRef: string;
   onClose: () => void;
   onDirtyChange?: (dirty: boolean) => void;
+  onSavingChange?: (saving: boolean) => void;
   onSelectTrade: (roundTripId: string) => void;
   open: boolean;
   selectedRoundTripId: string | null;
@@ -158,6 +160,10 @@ export function TradeExplorerReviewEditor({
     onDirtyChange?.(reviewDirty);
     return () => onDirtyChange?.(false);
   }, [onDirtyChange, reviewDirty]);
+  useEffect(() => {
+    onSavingChange?.(state === "saving");
+    return () => onSavingChange?.(false);
+  }, [onSavingChange, state]);
   useEffect(() => {
     if (!open || !selectedTradeRoundTripId) {
       requestRef.current += 1;
