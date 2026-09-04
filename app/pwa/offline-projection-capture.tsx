@@ -38,6 +38,7 @@ import {
   type OfflineProjectionContext,
 } from "./offline-projection-context";
 import type { PlatformAppearance } from "@/src/modules/platform/contracts/platform-appearance";
+import { useDashboardAppearanceValue } from "../mui-provider";
 
 const CAPTURE_SELECTOR = "h1,h2,h3,h4,p,li,dt,dd,tr,svg text,[data-pwa-offline-text]";
 const EXCLUDED_SELECTOR = "button,a,input,select,textarea,form,script,style,[aria-hidden='true'],[data-pwa-offline-exclude]";
@@ -163,6 +164,7 @@ export function OfflineProjectionCapture({
   const pathname = normalizePlatformOfflinePathname(usePathname());
   const rootRef = useRef<HTMLDivElement>(null);
   const navigationSnapshot = useMemo(() => navigation(), []);
+  const activeAppearance = useDashboardAppearanceValue(appearance);
   const partitionKey = useMemo(
     () => platformOfflinePartitionKey(offlineScopeRef, accountSelectionRef),
     [accountSelectionRef, offlineScopeRef],
@@ -177,7 +179,7 @@ export function OfflineProjectionCapture({
       accountCurrency,
       accountSelectionRef,
       accountTimezone,
-      appearance,
+      appearance: activeAppearance,
       key: "current" as const,
       navigation: navigationSnapshot,
       offlineScopeRef,
@@ -185,7 +187,7 @@ export function OfflineProjectionCapture({
       updatedAtUtc: new Date().toISOString(),
       version: 2 as const,
     }));
-  }, [accountCurrency, accountSelectionRef, accountTimezone, appearance, navigationSnapshot, offlineScopeRef, partitionKey]);
+  }, [accountCurrency, accountSelectionRef, accountTimezone, activeAppearance, navigationSnapshot, offlineScopeRef, partitionKey]);
 
   const capture = useCallback((context: OfflineProjectionContext | null) => {
     const root = rootRef.current;

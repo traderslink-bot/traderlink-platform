@@ -2,30 +2,27 @@
 
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import { useTheme } from "@mui/material/styles";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useTransition } from "react";
 
 import { saveAppearance } from "./(dashboard)/account/appearance-actions";
+import { useDashboardAppearance } from "./mui-provider";
 
 export function DashboardAppearanceSwitch({ compact = false }: { compact?: boolean }) {
-  const router = useRouter();
-  const theme = useTheme();
+  const { appearance, setAppearance } = useDashboardAppearance();
   const [working, startTransition] = useTransition();
-  const dark = theme.palette.mode === "dark";
-  const [selectedDark, setSelectedDark] = useState(dark);
-
-  useEffect(() => setSelectedDark(dark), [dark]);
+  const selectedDark = appearance === "dark";
 
   function switchAppearance(nextDark: boolean): void {
     if (working) return;
-    setSelectedDark(nextDark);
+    const previousAppearance = appearance;
+    const nextAppearance = nextDark ? "dark" : "light";
+    setAppearance(nextAppearance);
     startTransition(async () => {
-      const result = await saveAppearance(nextDark ? "dark" : "light");
+      const result = await saveAppearance(nextAppearance);
       if (result.ok) {
-        router.refresh();
+        setAppearance(result.appearance);
       } else {
-        setSelectedDark(dark);
+        setAppearance(previousAppearance);
       }
     });
   }

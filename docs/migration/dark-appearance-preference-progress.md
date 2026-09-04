@@ -33,6 +33,22 @@
 - [x] Correct the owner-reported Dark text contrast at the shared source: the Dark primary and secondary text tokens and table-header override are white; the shared Account Settings and Daily Trade Tracker eyebrow preserve their approved Light primary color while resolving to white in Dark; and the desktop navigation uses the same logo asset as Light with no blue background.
 - [x] Add the owner-approved bottom-navigation appearance switch: desktop sidebar and mobile navigation drawer use the normal MUI Switch directly above the existing Install TradersLink app action. Its visible `Light mode` or `Dark mode` label states the current result; there are no icon glyphs or custom track/thumb travel geometry. It reuses the authorized Account Preferences action and retains its accessible action name, pending behavior, and immediate save/revert behavior while Account Preferences remains available. The scoped Workspace trade-library foreground plus shared Dark text/header tokens cover its grid labels and rows without changing Light or white action icons.
 
+## 2026-09-03 immediate appearance switching
+
+The shared navigation appearance switch now updates the existing dashboard
+Material provider immediately instead of waiting for the preference action and
+then calling `router.refresh()`. The authenticated preference still saves in
+the background; success keeps the server-normalized result and failure reverts
+the provider to its prior appearance without adding error UI or changing the
+control, label, layout or theme design.
+
+The provider remounts for an exact opaque user/account partition so optimistic
+state cannot carry into another scope. Offline projection device state reads
+the active provider appearance and therefore retains the same partitioned
+offline mode behavior without a dashboard refresh. Fresh navigation/reload
+remains server-authoritative. No authentication, data, migration, service
+worker, background job or other PWA capture behavior changed.
+
 ## Guardrails
 
 - The task is source-only. No migration is applied and no local database,

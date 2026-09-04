@@ -91,7 +91,10 @@ async function TraderLinkPlatformDashboardFrameContent({
     : null;
   const offlineScopeRef = currentPlatformOfflineScopeRef(scope);
   return (
-    <DashboardMuiProviders appearance={dashboardContext.appearance}>
+    <DashboardMuiProviders
+      appearance={dashboardContext.appearance}
+      key={`${offlineScopeRef}:${accountSelectionRef ?? "platform"}`}
+    >
       <>
         <TraderLinkPlatformDashboardTemplate
           accountCurrency={dashboardContext.activeAccount?.baseCurrency ?? null}
