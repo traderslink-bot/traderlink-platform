@@ -1,5 +1,5 @@
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
-import type { DailyTradeMoomooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-moomoo-analyzer-service";
+import type { LogicalTradeAnalyzerSelectionService } from "@/src/modules/level-analysis/server/logical-trade-analyzer-selection-service";
 import {
   createCanonicalUtcTimestamp,
   createCanonicalUuidV4,
@@ -69,9 +69,9 @@ export class JournalManualExecutionEditService {
     private readonly imports: JournalImportRepository,
     private readonly decisions: JournalDataDecisionService,
     private readonly authority: JournalManualTradePreviewAuthority,
-    private readonly dailyTradeAnalyzer?: Pick<
-      DailyTradeMoomooAnalyzerService,
-      "queueAfterJournalRebuild"
+    private readonly logicalTradeAnalyzer?: Pick<
+      LogicalTradeAnalyzerSelectionService,
+      "afterJournalRebuild"
     >,
   ) {}
 
@@ -189,6 +189,7 @@ export class JournalManualExecutionEditService {
       quantityDecimal: string;
       priceDecimal: string;
       feesDecimal: string | null;
+      refreshAnalyzer?: boolean;
       now?: Date;
     }>,
   ) {
@@ -280,14 +281,16 @@ export class JournalManualExecutionEditService {
       ),
     ]);
     let queuedRoundTripIds: readonly string[] = Object.freeze([]);
-    try {
-      queuedRoundTripIds = this.dailyTradeAnalyzer?.queueAfterJournalRebuild(
-        scope,
-        affectedRoundTripIds,
-      ) ?? Object.freeze([]);
-    } catch {
-      // The Journal correction is already committed. Analyzer availability
-      // cannot turn that successful fact correction into a reported failure.
+    if (input.refreshAnalyzer !== false) {
+      try {
+        queuedRoundTripIds = this.logicalTradeAnalyzer?.afterJournalRebuild(
+          scope,
+          affectedRoundTripIds,
+        ) ?? Object.freeze([]);
+      } catch {
+        // The Journal correction is already committed. Analyzer availability
+        // cannot turn that successful fact correction into a reported failure.
+      }
     }
     return Object.freeze({
       executionVersionId: correction.executionVersionId,
@@ -298,6 +301,14 @@ export class JournalManualExecutionEditService {
         queuedTradeCount: queuedRoundTripIds.length,
       }),
     });
+  }
+
+  refreshLogicalTradesAfterRebuild(
+    scope: AccountScope,
+    affectedRoundTripIds: readonly string[],
+    now: Date,
+  ): readonly string[] {
+    return this.logicalTradeAnalyzer?.afterJournalRebuild(scope, affectedRoundTripIds, now) ?? Object.freeze([]);
   }
 
   remove(
@@ -336,7 +347,7 @@ export class JournalManualExecutionEditService {
     ]);
     let queuedRoundTripIds: readonly string[] = Object.freeze([]);
     try {
-      queuedRoundTripIds = this.dailyTradeAnalyzer?.queueAfterJournalRebuild(
+      queuedRoundTripIds = this.logicalTradeAnalyzer?.afterJournalRebuild(
         scope,
         affectedRoundTripIds,
       ) ?? Object.freeze([]);
@@ -392,7 +403,7 @@ export class JournalManualExecutionEditService {
     ]);
     let queuedRoundTripIds: readonly string[] = Object.freeze([]);
     try {
-      queuedRoundTripIds = this.dailyTradeAnalyzer?.queueAfterJournalRebuild(
+      queuedRoundTripIds = this.logicalTradeAnalyzer?.afterJournalRebuild(
         scope,
         affectedRoundTripIds,
       ) ?? Object.freeze([]);

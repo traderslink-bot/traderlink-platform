@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 
 import type {
   JournalManualTradeEntry,
@@ -18,8 +19,12 @@ import {
   ManualTradeNeedsReviewError,
   ManualTradeNetworkError,
   queueManualTradeSubmission,
-  submitManualTradeOnline,
+  commitManualTradeOnline,
+  previewManualTradeOnline,
+  type ManualTradeSubmission,
+  type ManualTradeSubmitResult,
 } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
+import { ManualTradePostEntryReview, type PreviewLogicalTradeMerge } from "./manual-trade-post-entry-review";
 
 function friendlyFailure(
   code: string | undefined,
@@ -123,6 +128,26 @@ export function ManualExecutionEntry({
           ]
       : [],
   );
+  const [analyzerUses, setAnalyzerUses] = useState<Readonly<{
+    enabled: boolean; dailyAvailable: number; periodAvailable: number; selectableAvailable: number; daysUntilReset: number;
+  }> | null>(null);
+  const [analyzerGroupRefs, setAnalyzerGroupRefs] = useState<readonly string[]>([]);
+  const [logicalTradeMerges, setLogicalTradeMerges] = useState<readonly PreviewLogicalTradeMerge[]>([]);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [pendingReview, setPendingReview] = useState<Readonly<{
+    submission: ManualTradeSubmission;
+    preview: Awaited<ReturnType<typeof previewManualTradeOnline>>;
+    resolve: (result: ExecutionSaveResult) => void;
+    reject: (error: Error) => void;
+  }> | null>(null);
+  const loadAnalyzerUses = async () => {
+    try {
+      const response = await fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" });
+      const result = await response.json() as { availability?: typeof analyzerUses };
+      if (response.ok) setAnalyzerUses(result.availability ?? null);
+    } catch { /* Entry remains available when the allowance display is unavailable. */ }
+  };
+  useEffect(() => { void loadAnalyzerUses(); }, []);
   useTradeTrackerUnsavedChanges(
     `daily-trade-tracker:manual-execution:${tracker}`,
     draftDirty,
@@ -152,23 +177,14 @@ export function ManualExecutionEntry({
       });
     }
     try {
-      const result = await submitManualTradeOnline(submission);
-      idempotencyKey.current = null;
-      const submittedTradingDate = tracker === "day" ? result.affectedDates[0] : null;
-      if (submittedTradingDate) {
-        const submittedDayPath = `/trade-tracker/${encodeURIComponent(submittedTradingDate)}`;
-        const postSaveOutcome = result.analyzerQueueOutcome === "connection_required" ||
-          result.analyzerQueueOutcome === "not_eligible"
-          ? `?analyzer=${result.analyzerQueueOutcome}`
-          : "";
-        if (pathname === submittedDayPath && postSaveOutcome.length === 0) router.refresh();
-        else router.replace(`${submittedDayPath}${postSaveOutcome}`);
-      } else if (onboarding) {
-        router.replace("/trade-tracker");
-      } else {
-        router.refresh();
-      }
-      return Object.freeze({ status: "saved" as const, ...result });
+      const preview = await previewManualTradeOnline(submission);
+      const result = await new Promise<ExecutionSaveResult>((resolve, reject) => {
+        setAnalyzerGroupRefs([]);
+        setLogicalTradeMerges([]);
+        setReviewError(null);
+        setPendingReview({ submission, preview, resolve, reject });
+      });
+      return result;
     } catch (error) {
       if (error instanceof ManualTradeNetworkError) {
         await queueManualTradeSubmission({
@@ -187,6 +203,35 @@ export function ManualExecutionEntry({
         throw new Error(friendlyFailure(error.code, tracker));
       }
       throw error;
+    }
+  }
+
+  function finishSavedResult(result: ManualTradeSubmitResult): ExecutionSaveResult {
+      idempotencyKey.current = null;
+      const submittedTradingDate = tracker === "day" ? result.affectedDates[0] : null;
+      if (submittedTradingDate) {
+        const submittedDayPath = `/trade-tracker/${encodeURIComponent(submittedTradingDate)}`;
+        if (pathname === submittedDayPath) router.refresh();
+        else router.replace(submittedDayPath);
+      } else if (onboarding) {
+        router.replace("/trade-tracker");
+      } else {
+        router.refresh();
+      }
+      return Object.freeze({ status: "saved" as const, ...result });
+  }
+
+  async function confirmReview() {
+    if (!pendingReview) return;
+    const pending = pendingReview;
+    try {
+      const result = await commitManualTradeOnline(pending.submission, pending.preview, { analyzerGroupRefs, logicalTradeMerges });
+      pending.resolve(finishSavedResult(result));
+      void loadAnalyzerUses();
+    } catch (error) {
+      pending.reject(error instanceof Error ? error : new Error("The trades could not be saved."));
+    } finally {
+      setPendingReview(null);
     }
   }
 
@@ -216,6 +261,20 @@ export function ManualExecutionEntry({
       sessionDate={defaultSessionDate}
       submittedCount={submittedCount}
       />
+      <Dialog fullWidth maxWidth="sm" open={pendingReview !== null} onClose={() => {
+        pendingReview?.reject(new Error("Review the trades before saving."));
+        setPendingReview(null);
+      }}>
+        <DialogTitle>Review trades found</DialogTitle>
+        <DialogContent><Stack spacing={1.5}>
+          {pendingReview ? <ManualTradePostEntryReview analyzerGroupRefs={analyzerGroupRefs} analyzerUses={analyzerUses} groups={pendingReview.preview.groups} merges={logicalTradeMerges} onAnalyzerGroupRefsChange={setAnalyzerGroupRefs} onError={setReviewError} onMergesChange={setLogicalTradeMerges} /> : null}
+          {reviewError ? <Typography color="error.main" variant="body2">{reviewError}</Typography> : null}
+        </Stack></DialogContent>
+        <DialogActions><Button onClick={() => {
+          pendingReview?.reject(new Error("Review the trades before saving."));
+          setPendingReview(null);
+        }}>Cancel</Button><Button onClick={() => void confirmReview()} variant="contained">Save trades</Button></DialogActions>
+      </Dialog>
     </>
   );
 }

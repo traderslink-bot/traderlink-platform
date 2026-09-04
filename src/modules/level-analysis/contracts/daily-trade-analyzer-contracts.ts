@@ -8,7 +8,12 @@ export type DailyTradeAnalyzerQueueOutcome =
   | "not_eligible"
   | "queued";
 
-export type DailyTradeAnalyzerEventKind = "entry" | "add" | "partial_exit" | "final_exit";
+export type DailyTradeAnalyzerEventKind =
+  | "entry"
+  | "add"
+  | "partial_exit"
+  | "temporary_flat"
+  | "final_exit";
 
 export type DailyTradeAnalyzerEvent = Readonly<{
   eventId: string;

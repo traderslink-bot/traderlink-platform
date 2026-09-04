@@ -92,7 +92,7 @@ export type DaySessionTradeAnalyzer = {
       rsi14CalculationVersion: "wilder_rsi_14_v1" | null;
       vwap: number | null;
     } | null;
-    kind: "entry" | "add" | "partial_exit" | "final_exit";
+    kind: "entry" | "add" | "partial_exit" | "temporary_flat" | "final_exit";
     metrics: {
       available: boolean;
       averageEntryPriceAfter: string | null;

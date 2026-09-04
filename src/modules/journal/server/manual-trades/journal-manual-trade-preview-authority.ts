@@ -24,7 +24,8 @@ export type JournalManualTradePreviewAuthority = Readonly<{
   issue(payload: string): Readonly<{ previewRef: string; expiresAtUtc: string }>;
   verify(previewRef: string, payload: string): boolean;
   opaqueRef(
-    purpose: "execution" | "group" | "position" | "workspace_trade_edit_snapshot",
+    purpose: "execution" | "group" | "position" | "workspace_trade_edit_snapshot" |
+      "logical_trade_merge_candidate",
     material: string,
   ): string;
 }>;

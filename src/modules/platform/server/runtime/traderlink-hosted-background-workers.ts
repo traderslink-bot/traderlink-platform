@@ -19,7 +19,8 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
     if (analyzerRunning) return;
     analyzerRunning = true;
     try {
-      await runDailyTradeAnalyzerOnce();
+      const processed = await runDailyTradeAnalyzerOnce();
+      if (processed) setTimeout(() => void runAnalyzer(), 2_000);
     } catch (error) {
       console.error("TraderLink hosted Trade Analyzer worker failed.", {
         errorName: error instanceof Error ? error.name : "UnknownError",

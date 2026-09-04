@@ -291,6 +291,22 @@ export function parseJournalManualTradeCommitRequest(
     idempotencyKey.length < 16 || idempotencyKey.length > 128 ||
     !Array.isArray(input.confirmations) ||
     input.confirmations.length < 1 || input.confirmations.length > 200 ||
+    (input.analyzerGroupRefs !== undefined && (
+      !Array.isArray(input.analyzerGroupRefs) ||
+      input.analyzerGroupRefs.length > input.confirmations.length ||
+      input.analyzerGroupRefs.some((ref) => typeof ref !== "string" || !OPAQUE_REF_PATTERN.test(ref))
+    )) ||
+    (input.logicalTradeMerges !== undefined && (
+      !Array.isArray(input.logicalTradeMerges) || input.logicalTradeMerges.length > (Array.isArray(input.confirmations) ? input.confirmations.length : 0) ||
+      input.logicalTradeMerges.some((merge) => {
+        if (!merge || typeof merge !== "object" || Array.isArray(merge)) return true;
+        const candidate = merge as Record<string, unknown>;
+        return !Array.isArray(candidate.groupRefs) || candidate.groupRefs.length < 2 ||
+          candidate.groupRefs.length > (Array.isArray(input.confirmations) ? input.confirmations.length : 0) ||
+          candidate.groupRefs.some((ref) => typeof ref !== "string" || !OPAQUE_REF_PATTERN.test(ref)) ||
+          (candidate.tradeStyle !== "day" && candidate.tradeStyle !== "swing");
+      })
+    )) ||
     (input.preparedBy !== undefined && input.preparedBy !== "ai_chat")
   ) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
@@ -308,6 +324,17 @@ export function parseJournalManualTradeCommitRequest(
     expectedAccountSelectionRef,
     idempotencyKey,
     confirmations: Object.freeze(input.confirmations.map(parseConfirmation)),
+    ...(input.analyzerGroupRefs === undefined
+      ? {}
+      : { analyzerGroupRefs: Object.freeze([...new Set(input.analyzerGroupRefs as string[])]) }),
+    ...(input.logicalTradeMerges === undefined ? {} : {
+      logicalTradeMerges: Object.freeze((input.logicalTradeMerges as Array<{
+        groupRefs: string[]; tradeStyle: "day" | "swing";
+      }>).map((merge) => Object.freeze({
+        groupRefs: Object.freeze([...new Set(merge.groupRefs)]),
+        tradeStyle: merge.tradeStyle,
+      }))),
+    }),
     ...(input.preparedBy === "ai_chat" ? { preparedBy: "ai_chat" as const } : {}),
     ...(workspaceStyle === undefined ? {} : { workspaceStyle }),
     ...(input.offlineSync === undefined

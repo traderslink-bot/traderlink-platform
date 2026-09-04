@@ -28,6 +28,8 @@ import { journalTradingDayTagsMigration } from "@/src/modules/journal/server/dat
 import { journalWorkspaceRuleResultsCardMigration } from "@/src/modules/journal/server/database/migrations/0113_journal_workspace_rule_results_card";
 import { journalWorkspacePrScannerCardMigration } from "@/src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card";
 import { journalManualFeeInputStateMigration } from "@/src/modules/journal/server/database/migrations/0116_journal_manual_fee_input_state";
+import { journalLogicalTradesMigration } from "@/src/modules/journal/server/database/migrations/0118_journal_logical_trades";
+import { sharedTradeAnalyzerBetaMigration } from "@/src/modules/level-analysis/server/database/migrations/0119_shared_trade_analyzer_beta";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0117_trade_explorer_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
@@ -571,6 +573,14 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal-analytics/server/database/migrations/0117_trade_explorer_saved_views.ts",
       migration: tradeExplorerSavedViewsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0118_journal_logical_trades.ts",
+      migration: journalLogicalTradesMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0119_shared_trade_analyzer_beta.ts",
+      migration: sharedTradeAnalyzerBetaMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -983,6 +993,32 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0117_trade_explorer_saved_views": Object.freeze([
       "journal_trade_explorer_saved_views",
       "journal_trade_explorer_saved_view_versions",
+    ]),
+    "0118_journal_logical_trades": Object.freeze([
+      "journal_logical_trades",
+      "journal_logical_trade_versions",
+      "journal_logical_trade_version_members",
+      "journal_active_logical_trade_memberships",
+      "journal_logical_trade_events",
+    ]),
+    "0119_shared_trade_analyzer_beta": Object.freeze([
+      "level_analysis_shared_analyzer_settings",
+      "level_analysis_user_allowance_cycles",
+      "level_analysis_user_allowance_overrides",
+      "level_analysis_user_allowance_resets",
+      "level_analysis_shared_analyzer_admin_events",
+      "journal_logical_trade_daily_analyses",
+      "journal_logical_trade_daily_analysis_versions",
+      "level_analysis_logical_trade_jobs",
+      "level_analysis_analyzer_reservations",
+      "level_analysis_analyzer_acquisitions",
+      "level_analysis_analyzer_correction_opportunities",
+      "journal_logical_trade_notes",
+      "journal_logical_trade_note_events",
+      "journal_logical_trade_tag_assignments",
+      "journal_logical_trade_rule_reviews",
+      "journal_logical_trade_tag_assignment_events",
+      "journal_logical_trade_rule_review_events",
     ]),
   });
 
