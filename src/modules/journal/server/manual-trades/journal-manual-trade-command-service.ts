@@ -1,7 +1,9 @@
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { DailyTradeMoomooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-moomoo-analyzer-service";
 import type { DailyTradeAnalyzerQueueOutcome } from "@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts";
+import type { SharedAnalyzerSelectionOutcome } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
+import type { LogicalTradeAnalyzerSelectionService } from "@/src/modules/level-analysis/server/logical-trade-analyzer-selection-service";
+import type { JournalLogicalTradeService } from "../logical-trades/journal-logical-trade-service";
 import {
   createCanonicalUtcTimestamp,
   platformFailure,
@@ -43,6 +45,10 @@ export type JournalManualTradeCommitResult = JournalImportCommitResult & Readonl
     roundTripVersionId: string;
   }>[];
   analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null;
+  analyzerSelectionOutcomes: readonly Readonly<{
+    groupRef: string;
+    outcome: SharedAnalyzerSelectionOutcome;
+  }>[];
   relatedDecisionIds: readonly string[];
   rebuilds: readonly JournalChainRebuildResult[];
   styledTradeCount: number;
@@ -73,8 +79,9 @@ export class JournalManualTradeCommandService {
     private readonly decisions: JournalDataDecisionService,
     private readonly roundTrips: JournalRoundTripService,
     private readonly previews: JournalManualTradePreviewService,
-    private readonly dailyTradeAnalyzer?: DailyTradeMoomooAnalyzerService,
+    private readonly logicalTradeAnalyzer?: LogicalTradeAnalyzerSelectionService,
     private readonly notifications?: PlatformNotificationRepository,
+    private readonly logicalTrades?: JournalLogicalTradeService,
   ) {}
 
   committedStatus(
@@ -130,7 +137,7 @@ export class JournalManualTradeCommandService {
       platformFailure("TRADERLINK_MANUAL_TRADE_PREVIEW_INVALID");
     }
 
-    const result = this.repository.immediate(() => {
+    return this.repository.immediate(() => {
       const exactOfflineDuplicate = request.offlineSync
         ? this.repository.hasExactManualBatchWithDifferentIdempotency({
             scope: accountScope,
@@ -251,6 +258,8 @@ export class JournalManualTradeCommandService {
           relatedDecisionIds: Object.freeze([]),
           rebuilds: Object.freeze([]),
           styledTradeCount: preview.groups.length,
+          analyzerQueueOutcome: null,
+          analyzerSelectionOutcomes: Object.freeze([]),
         });
       }
 
@@ -362,8 +371,61 @@ export class JournalManualTradeCommandService {
         });
       }
       const affectedTradeTargets = resolveAffectedTradeTargets();
+      if (this.logicalTradeAnalyzer) {
+        for (const target of affectedTradeTargets) {
+          this.logicalTradeAnalyzer.materialize(accountScope, target.roundTripId, now);
+        }
+      }
       const affectedPositionRefs = Object.freeze(affectedTradeTargets.map((target) =>
         this.previews.positionRefForTarget(scope, target)).sort());
+      const targetByGroupRef = new Map(preview.groups.map((group) => {
+        const allocations: JournalManualAllocationTarget[] = group.allocations.map((allocation) => Object.freeze({
+          executionId: executionIdByClientRow.get(allocation.clientRowRef)!,
+          role: allocation.role,
+          quantityDecimal: allocation.quantityDecimal,
+        }));
+        return [group.groupRef, this.repository.resolveRoundTripForAllocations(accountScope, allocations)] as const;
+      }));
+      const mergedRefs = new Set<string>();
+      for (const merge of request.logicalTradeMerges ?? []) {
+        if (merge.groupRefs.length < 2 || merge.groupRefs.some((ref) =>
+          mergedRefs.has(ref) || !confirmations.has(ref) || !targetByGroupRef.has(ref))) {
+          platformFailure("TRADERLINK_MANUAL_TRADE_RELATIONSHIP_CONFLICT", { reason: "merge_selection_changed" });
+        }
+        merge.groupRefs.forEach((ref) => mergedRefs.add(ref));
+        if (!this.logicalTrades) {
+          platformFailure("TRADERLINK_MANUAL_TRADE_RELATIONSHIP_CONFLICT", { reason: "merge_unavailable" });
+        }
+        const targets = merge.groupRefs.map((ref) => targetByGroupRef.get(ref)!);
+        const current = this.logicalTrades.ensureMaterialized(accountScope, targets[0]!.roundTripId, now);
+        const others = targets.slice(1).map((target) =>
+          this.logicalTrades!.ensureMaterialized(accountScope, target.roundTripId, now));
+        this.logicalTrades.merge(accountScope, targets[0]!.roundTripId, {
+          expectedCurrentRevision: current.revision,
+          fallbackRoundTripIds: Object.freeze([]),
+          logicalTradeIds: Object.freeze(others.map((trade) => trade.logicalTradeId!)),
+          tradeStyle: merge.tradeStyle,
+        }, now);
+      }
+      const selectedGroups = new Set(request.analyzerGroupRefs ?? []);
+      if ([...selectedGroups].some((groupRef) => !confirmations.has(groupRef))) {
+        platformFailure("TRADERLINK_MANUAL_TRADE_RELATIONSHIP_CONFLICT", {
+          reason: "analyzer_selection_changed",
+        });
+      }
+      const analyzerSelectionOutcomes = this.logicalTradeAnalyzer
+        ? Object.freeze(preview.groups.filter((group) => selectedGroups.has(group.groupRef)).map((group) => {
+            const target = targetByGroupRef.get(group.groupRef)!;
+            return Object.freeze({
+              groupRef: group.groupRef,
+              outcome: this.logicalTradeAnalyzer!.select(accountScope, target.roundTripId, now),
+            });
+          }))
+        : Object.freeze([]);
+      const analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null =
+        analyzerSelectionOutcomes.some((selection) => selection.outcome === "queued")
+          ? "queued"
+          : analyzerSelectionOutcomes.length > 0 ? "not_eligible" : null;
       return Object.freeze({
         ...committed,
         affectedDates,
@@ -375,15 +437,9 @@ export class JournalManualTradeCommandService {
         ]),
         rebuilds,
         styledTradeCount: preview.groups.length,
+        analyzerQueueOutcome,
+        analyzerSelectionOutcomes,
       });
     });
-    let analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null = null;
-    if (result.status !== "already_imported" && this.dailyTradeAnalyzer) {
-      analyzerQueueOutcome = this.dailyTradeAnalyzer.queueAfterJournalRebuildWithOutcome(
-        accountScope,
-        result.rebuilds.flatMap((rebuild) => rebuild.roundTripIds),
-      ).outcome;
-    }
-    return Object.freeze({ ...result, analyzerQueueOutcome });
   }
 }

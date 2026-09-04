@@ -271,7 +271,8 @@ ORDER BY version.executed_at_utc, version.source_order_key, execution.execution_
       trade_currency: string;
       trade_style: "day_trade" | "swing" | "other" | null;
     }>(`SELECT round_trip.current_version_id, version.instrument_id, version.trade_currency,
-       style.trade_style
+       COALESCE(CASE logical_version.trade_style WHEN 'day' THEN 'day_trade' ELSE logical_version.trade_style END,
+         style.trade_style) AS trade_style
 FROM journal_round_trips round_trip
 JOIN journal_round_trip_versions version
   ON version.workspace_id = round_trip.workspace_id
@@ -281,12 +282,20 @@ LEFT JOIN journal_trade_style_plans style
   ON style.workspace_id = round_trip.workspace_id
  AND style.account_id = round_trip.account_id
  AND style.round_trip_id = round_trip.round_trip_id
+LEFT JOIN journal_active_logical_trade_memberships membership
+  ON membership.workspace_id = round_trip.workspace_id
+ AND membership.account_id = round_trip.account_id
+ AND membership.round_trip_id = round_trip.round_trip_id
+LEFT JOIN journal_logical_trade_versions logical_version
+  ON logical_version.workspace_id = membership.workspace_id
+ AND logical_version.account_id = membership.account_id
+ AND logical_version.logical_trade_version_id = membership.logical_trade_version_id
 WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
   AND round_trip.round_trip_id = ? AND round_trip.lifecycle_state = 'active'
 LIMIT 1`).get(scope.workspaceId, scope.accountId, roundTripId);
     if (!trade) platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
 
-    const members = this.database.prepare<[string, string, string], {
+    const members = this.database.prepare<[string, string, string, string, string, string, string, string], {
       execution_id: string;
       execution_version_id: string;
     }>(`SELECT execution.execution_id, allocation.execution_version_id
@@ -300,13 +309,27 @@ JOIN journal_executions execution
  AND execution.account_id = allocation.account_id
  AND execution.execution_id = allocation_version.execution_id
 WHERE allocation.workspace_id = ? AND allocation.account_id = ?
-  AND allocation.round_trip_version_id = ?
+  AND allocation.round_trip_version_id IN (
+    SELECT member_round_trip.current_version_id
+    FROM journal_round_trips member_round_trip
+    WHERE member_round_trip.workspace_id = ? AND member_round_trip.account_id = ?
+      AND member_round_trip.lifecycle_state = 'active'
+      AND (member_round_trip.round_trip_id = ? OR member_round_trip.round_trip_id IN (
+        SELECT grouped.round_trip_id
+        FROM journal_active_logical_trade_memberships selected
+        JOIN journal_active_logical_trade_memberships grouped
+          ON grouped.workspace_id = selected.workspace_id
+         AND grouped.account_id = selected.account_id
+         AND grouped.logical_trade_id = selected.logical_trade_id
+        WHERE selected.workspace_id = ? AND selected.account_id = ?
+          AND selected.round_trip_id = ?
+      ))
+  )
   AND execution.current_version_id = allocation.execution_version_id
   AND execution.current_state = 'accepted'
 ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
-      scope.workspaceId,
-      scope.accountId,
-      trade.current_version_id,
+      scope.workspaceId, scope.accountId, scope.workspaceId, scope.accountId,
+      roundTripId, scope.workspaceId, scope.accountId, roundTripId,
     ).map((row) => Object.freeze({
       executionId: row.execution_id,
       executionVersionId: row.execution_version_id,
@@ -478,6 +501,7 @@ ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
           quantityDecimal: entry.quantityDecimal,
           priceDecimal: entry.priceDecimal,
           feesDecimal: entry.feesDecimal,
+          refreshAnalyzer: false,
           now,
         });
         correctedExecutionCount += 1;
@@ -498,6 +522,10 @@ ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
         maintenanceReasonCode: "workspace_atomic_trade_edit",
         now,
       });
+      const affectedRoundTripIds = Object.freeze([...new Set(rebuilds
+        .filter((rebuild) => rebuild.status === "rebuilt")
+        .flatMap((rebuild) => rebuild.roundTripIds))]);
+      this.executionEdits.refreshLogicalTradesAfterRebuild(accountScope, affectedRoundTripIds, now);
       if (draft.tradeStyle !== current.snapshot.tradeStyle) {
         const targetRows = this.database.prepare<[string, string, string], {
           round_trip_id: string;

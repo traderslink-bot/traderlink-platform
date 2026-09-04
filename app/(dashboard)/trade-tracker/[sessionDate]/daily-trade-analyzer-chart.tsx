@@ -285,6 +285,7 @@ function eventLabel(kind: DaySessionTradeAnalyzer["events"][number]["kind"]): st
   if (kind === "entry") return "Entry";
   if (kind === "add") return "Add";
   if (kind === "partial_exit") return "Partial exit";
+  if (kind === "temporary_flat") return "Temporary flat";
   return "Final exit";
 }
 

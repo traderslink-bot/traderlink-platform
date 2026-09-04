@@ -185,9 +185,7 @@ export function buildTradeStoryPositionLedger(input: Readonly<{
     let increasePhase: TradeStoryLedgerCheckpoint["increasePhase"] = null;
 
     if (positionBeforeDecimal === "0") {
-      if (hasOpened) {
-        return Object.freeze({ checkpoints: Object.freeze(checkpoints), reason: "position_reopened", status: "unsupported" });
-      }
+      if (hasOpened) hasScaledOut = false;
       hasOpened = true;
       direction = execution.side === "buy" ? "long" : "short";
       averageEntryPriceDecimal = execution.priceDecimal;

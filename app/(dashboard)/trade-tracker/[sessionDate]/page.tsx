@@ -2,17 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Alert from "@mui/material/Alert";
 
-import {
-  DashboardPage,
-  DashboardSecondaryAction,
-  DashboardUnavailableState,
-} from "../../../dashboard-template";
+import { DashboardPage, DashboardUnavailableState } from "../../../dashboard-template";
 import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 
@@ -67,8 +61,6 @@ export default async function TradeTrackerDayPage({
     ? currentJournalAccountSelectionRef(scope)
     : null;
   const account = getReplacementTradeTrackerAccount(scope);
-  const moomooMarketDataAccess = withReadonlyPlatformDatabase({}, (database) =>
-    readMoomooMarketDataAccess(database, scope));
   const data = await getReplacementReportingDaySession(scope, {
     date: sessionDate,
   });
@@ -96,23 +88,9 @@ export default async function TradeTrackerDayPage({
             queryIdentity: `date:${data.date}`,
           }}
           readOnly={demoAccountSelectionRef !== null}
-          showMoomooConnectionGuidance={!demoAccountSelectionRef &&
-            moomooMarketDataAccess.shouldShowConnectionGuidance}
           topContent={
             !demoAccountSelectionRef ? <>
-              {query.analyzer === "connection_required" ? (
-                <Alert
-                  action={(
-                    <DashboardSecondaryAction href="/account/trading" size="small">
-                      Connect Moomoo
-                    </DashboardSecondaryAction>
-                  )}
-                  severity="info"
-                  sx={{ alignItems: "center" }}
-                >
-                  Connect Moomoo to analyze this trade.
-                </Alert>
-              ) : query.analyzer === "not_eligible" ? (
+              {query.analyzer === "not_eligible" ? (
                 <Alert severity="info">
                   Executions saved. This trade is not currently eligible for Trade Analyzer.
                 </Alert>

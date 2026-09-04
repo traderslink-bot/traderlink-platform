@@ -63,6 +63,71 @@ export class JournalLogicalTradeService {
     return this.repository.list(scope);
   }
 
+  refreshAfterJournalRebuild(
+    scope: AccountScope,
+    affectedRoundTripIds: readonly string[],
+    now: Date = new Date(),
+  ): Readonly<{ refreshed: readonly JournalLogicalTrade[]; reviewRequiredCount: number }> {
+    return this.repository.immediate(() => {
+      const groups = new Map<string, JournalLogicalTrade>();
+      for (const roundTripId of new Set(affectedRoundTripIds)) {
+        const trade = this.repository.findByRoundTripId(scope, roundTripId);
+        if (trade?.logicalTradeId) groups.set(trade.logicalTradeId, trade);
+      }
+      const refreshed: JournalLogicalTrade[] = [];
+      let reviewRequiredCount = 0;
+      const timestamp = createCanonicalUtcTimestamp(now);
+      for (const trade of groups.values()) {
+        const remainsCompatible = this.repository.membersRemainCompatible(
+          scope,
+          trade.members.map((member) => member.roundTripId),
+        );
+        this.repository.removeActiveMemberships(scope, [trade.logicalTradeId!]);
+        this.repository.createVersion({
+          scope,
+          logicalTradeId: trade.logicalTradeId!,
+          priorRevision: trade.revision,
+          members: trade.members,
+          tradeStyle: trade.tradeStyle,
+          changeKind: remainsCompatible ? "member_refreshed" : "review_required",
+          lifecycleState: remainsCompatible ? "active" : "review_required",
+          reasonCode: remainsCompatible ? "member_facts_changed" : "member_no_longer_compatible",
+          timestamp,
+        });
+        this.repository.markLogicalAnalysisStale(scope, trade.logicalTradeId!, timestamp);
+        if (remainsCompatible) {
+          const current = this.repository.findByLogicalTradeId(scope, trade.logicalTradeId!);
+          if (current) refreshed.push(current);
+        } else {
+          reviewRequiredCount += 1;
+        }
+      }
+      return Object.freeze({ refreshed: Object.freeze(refreshed), reviewRequiredCount });
+    });
+  }
+
+  ensureMaterialized(
+    scope: AccountScope,
+    roundTripId: string,
+    now: Date = new Date(),
+  ): JournalLogicalTrade {
+    return this.repository.immediate(() => {
+      const current = this.repository.findByRoundTripId(scope, roundTripId);
+      if (!current) platformFailure("TRADERLINK_LOGICAL_TRADE_INVALID", { reason: "trade_not_found" });
+      if (current.logicalTradeId) return current;
+      const id = this.repository.createVersion({
+        scope,
+        members: current.members,
+        tradeStyle: current.tradeStyle,
+        changeKind: "created",
+        timestamp: createCanonicalUtcTimestamp(now),
+      });
+      const materialized = this.repository.findByLogicalTradeId(scope, id);
+      if (!materialized) platformFailure("TRADERLINK_LOGICAL_TRADE_CONFLICT");
+      return materialized;
+    });
+  }
+
   mergePreview(scope: AccountScope, roundTripId: string): JournalLogicalTradeMergePreview {
     const current = this.repository.findByRoundTripId(scope, roundTripId);
     if (!current) platformFailure("TRADERLINK_LOGICAL_TRADE_INVALID", { reason: "trade_not_found" });
@@ -174,6 +239,11 @@ export class JournalLogicalTradeService {
       const dates = new Set(selected.map((trade) => marketDate(trade.closedAtUtc)));
       if (dates.size > 1 && command.tradeStyle !== "swing") {
         platformFailure("TRADERLINK_LOGICAL_TRADE_INVALID", { reason: "cross_date_requires_swing" });
+      }
+      const selectedStyles = new Set(selected.map((trade) => trade.tradeStyle));
+      if (dates.size === 1 && selectedStyles.size === 1 &&
+        command.tradeStyle !== selected[0]!.tradeStyle) {
+        platformFailure("TRADERLINK_LOGICAL_TRADE_INVALID", { reason: "matching_style_must_be_preserved" });
       }
       const timestamp = createCanonicalUtcTimestamp(now);
       const retiredIds = selected.flatMap((trade) => trade.logicalTradeId ? [trade.logicalTradeId] : []);

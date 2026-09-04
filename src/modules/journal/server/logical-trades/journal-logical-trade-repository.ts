@@ -188,7 +188,7 @@ export class JournalLogicalTradeRepository {
       const sequence = index + 1;
       insertMember.run(input.scope.workspaceId, input.scope.accountId, logicalTradeId,
         versionId, sequence, member.roundTripId, member.roundTripVersionId);
-      if (lifecycle !== "retired") {
+      if (lifecycle === "active") {
         insertActive.run(input.scope.workspaceId, input.scope.accountId,
           member.roundTripId, logicalTradeId, versionId, sequence, input.timestamp);
       }
@@ -218,5 +218,33 @@ WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ? AND revision 
 WHERE workspace_id = ? AND account_id = ?
  AND logical_trade_id IN (${logicalTradeIds.map(() => "?").join(", ")})`)
       .run(scope.workspaceId, scope.accountId, ...logicalTradeIds);
+  }
+
+  membersRemainCompatible(scope: AccountScope, roundTripIds: readonly string[]): boolean {
+    if (roundTripIds.length === 0) return false;
+    const rows = this.database.prepare(`SELECT version.instrument_id,
+ version.trade_currency, version.direction, version.projection_state
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_versions version
+ ON version.workspace_id = round_trip.workspace_id
+ AND version.account_id = round_trip.account_id
+ AND version.round_trip_version_id = round_trip.current_version_id
+WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
+ AND round_trip.lifecycle_state = 'active'
+ AND round_trip.round_trip_id IN (${roundTripIds.map(() => "?").join(", ")})`).all(
+      scope.workspaceId, scope.accountId, ...roundTripIds,
+    ) as readonly { instrument_id: string; trade_currency: string; direction: string; projection_state: string }[];
+    if (rows.length !== roundTripIds.length) return false;
+    const first = rows[0]!;
+    return rows.every((row) => row.projection_state === "ready_closed" &&
+      row.instrument_id === first.instrument_id && row.trade_currency === first.trade_currency &&
+      row.direction === first.direction);
+  }
+
+  markLogicalAnalysisStale(scope: AccountScope, logicalTradeId: string, timestamp: string): void {
+    this.database.prepare(`UPDATE journal_logical_trade_daily_analyses
+SET status = 'stale', updated_at_utc = ?
+WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?
+ AND status <> 'stale'`).run(timestamp, scope.workspaceId, scope.accountId, logicalTradeId);
   }
 }

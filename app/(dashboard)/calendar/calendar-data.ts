@@ -8,6 +8,8 @@ import {
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
+import { JournalLogicalTradeRepository } from "@/src/modules/journal/server/logical-trades/journal-logical-trade-repository";
+import { addExactDecimals, compareExactDecimals, percentageExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
 
 import type {
   CalendarData,
@@ -321,6 +323,114 @@ function withCalendarAnnotations(
   });
 }
 
+function logicalCalendarModel(database: Database.Database, scope: WorkspaceAccessScope,
+  data: JournalCalendarReadModel): JournalCalendarReadModel {
+  if (!scope.activeAccountId || !data.timezone) return data;
+  const logical = new JournalLogicalTradeRepository(database).list(Object.freeze({
+    userId: scope.userId, workspaceId: scope.workspaceId, accountId: scope.activeAccountId,
+    workspaceRole: scope.workspaceRole,
+  })).filter((trade) => trade.members.length > 1);
+  if (logical.length === 0) return data;
+  const days = data.days.map((day) => ({ ...day, tickers: day.tickers.map((ticker) => ({
+    ...ticker, trades: [...ticker.trades],
+  })) }));
+  let removed = 0;
+  for (const logicalTrade of logical) {
+    const located = logicalTrade.members.map((member) => {
+      for (const day of days) for (const ticker of day.tickers) {
+        const trade = ticker.trades.find((candidate) => candidate.roundTripId === member.roundTripId);
+        if (trade) return { day, ticker, trade };
+      }
+      return null;
+    });
+    if (located.some((item) => item === null)) continue;
+    const members = located as Array<NonNullable<(typeof located)[number]>>;
+    for (const item of members) item.ticker.trades = item.ticker.trades.filter((trade) => trade.roundTripId !== item.trade.roundTripId);
+    const finalDate = localDate(logicalTrade.closedAtUtc, data.timezone);
+    const targetDay = days.find((day) => day.date === finalDate) ?? members.at(-1)!.day;
+    const targetTicker = targetDay.tickers.find((ticker) => ticker.instrumentId === members[0]!.ticker.instrumentId) ?? members.at(-1)!.ticker;
+    const pnl = members.every((item) => item.trade.pnlDecimal !== null)
+      ? members.reduce((total, item) => addExactDecimals(total, item.trade.pnlDecimal!), "0") : null;
+    const logicalNote = database.prepare(`SELECT note_text FROM journal_logical_trade_notes
+WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?`).get(
+      scope.workspaceId, scope.activeAccountId, logicalTrade.logicalTradeId,
+    ) as { note_text: string } | undefined;
+    const logicalTags = database.prepare(`SELECT tag.current_name
+FROM journal_logical_trade_tag_assignments assignment
+JOIN journal_tags tag ON tag.workspace_id = assignment.workspace_id
+ AND tag.account_id = assignment.account_id AND tag.tag_id = assignment.tag_id
+WHERE assignment.workspace_id = ? AND assignment.account_id = ?
+ AND assignment.logical_trade_id = ? AND assignment.assignment_state = 'assigned'
+ORDER BY tag.normalized_name, tag.tag_id`).all(
+      scope.workspaceId, scope.activeAccountId, logicalTrade.logicalTradeId,
+    ) as readonly { current_name: string }[];
+    targetTicker.trades.push(Object.freeze({ ...members[0]!.trade,
+      executions: Object.freeze(members.flatMap((item) => item.trade.executions)
+        .sort((left, right) => left.executedAtUtc.localeCompare(right.executedAtUtc))),
+      notes: Object.freeze([...members.flatMap((item) => item.trade.notes),
+        ...(logicalNote?.note_text ? [logicalNote.note_text] : [])]),
+      pnlDecimal: pnl,
+      pnlSign: pnl === null ? null : compareExactDecimals(pnl, "0") as -1 | 0 | 1,
+      tags: Object.freeze([...new Set([...members.flatMap((item) => item.trade.tags),
+        ...logicalTags.map((tag) => tag.current_name)])]),
+    }));
+    removed += members.length - 1;
+  }
+  if (removed === 0) return data;
+  let wins = 0; let trades = 0;
+  const frozenDays = days.map((day) => {
+    const tickers = day.tickers.map((ticker) => {
+      const pnls = ticker.trades.map((trade) => trade.pnlDecimal);
+      const pnl = pnls.length > 0 && pnls.every((value) => value !== null)
+        ? (pnls as string[]).reduce(addExactDecimals, "0") : null;
+      return Object.freeze({ ...ticker, pnlDecimal: pnl,
+        pnlSign: pnl === null ? null : compareExactDecimals(pnl, "0") as -1 | 0 | 1,
+        trades: Object.freeze(ticker.trades) });
+    });
+    const dayTrades = tickers.flatMap((ticker) => ticker.trades);
+    const dayWins = dayTrades.filter((trade) => trade.pnlDecimal !== null && compareExactDecimals(trade.pnlDecimal, "0") > 0).length;
+    wins += dayWins; trades += dayTrades.length;
+    return Object.freeze({ ...day, tickers: Object.freeze(tickers), tradeCount: dayTrades.length,
+      winRatePercentDecimal: dayTrades.length === 0 ? null : percentageExactDecimals(String(dayWins), String(dayTrades.length)).roundedDecimal });
+  });
+  return Object.freeze({ ...data, days: Object.freeze(frozenDays), summary: Object.freeze({
+    ...data.summary, tradeCount: trades,
+    winRatePercentDecimal: trades === 0 ? null : percentageExactDecimals(String(wins), String(trades)).roundedDecimal,
+  }) });
+}
+
+function calendarDateWindow(
+  data: JournalCalendarReadModel,
+  startDate: string | null,
+  endDate: string | null,
+): JournalCalendarReadModel {
+  const days = data.days.filter((day) =>
+    (!startDate || day.date >= startDate) && (!endDate || day.date <= endDate));
+  const trades = days.flatMap((day) => day.tickers.flatMap((ticker) => ticker.trades));
+  const tradePnls = trades.map((trade) => trade.pnlDecimal);
+  const netPnl = tradePnls.length > 0 && tradePnls.every((value) => value !== null)
+    ? (tradePnls as string[]).reduce(addExactDecimals, "0")
+    : null;
+  const wins = trades.filter((trade) => trade.pnlDecimal !== null &&
+    compareExactDecimals(trade.pnlDecimal, "0") > 0).length;
+  return Object.freeze({
+    ...data,
+    activeDate: days.at(-1)?.date ?? data.activeDate,
+    days: Object.freeze(days),
+    maximumDate: days.at(-1)?.date ?? endDate ?? data.maximumDate,
+    minimumDate: days[0]?.date ?? startDate ?? data.minimumDate,
+    summary: Object.freeze({
+      ...data.summary,
+      netPnlDecimal: netPnl,
+      netPnlSign: netPnl === null ? null : compareExactDecimals(netPnl, "0") as -1 | 0 | 1,
+      tradeCount: trades.length,
+      tradingDayCount: days.filter((day) => day.tradeCount > 0).length,
+      winRatePercentDecimal: trades.length === 0 ? null :
+        percentageExactDecimals(String(wins), String(trades.length)).roundedDecimal,
+    }),
+  });
+}
+
 export function emptyCalendarData(): CalendarData {
   const today = new Date().toISOString().slice(0, 10);
   return Object.freeze({
@@ -373,7 +483,7 @@ function readCalendarData(
   }>,
   annotationEvidenceByTimezone: Map<string, CalendarAnnotationEvidence>,
 ): CalendarData {
-  const data = dashboard.getCalendar(scope, {
+  const dashboardInput = {
     currency: input.currency === "all" ? null : input.currency,
     startDate: input.startDate || null,
     endDate: input.endDate || null,
@@ -383,7 +493,23 @@ function readCalendarData(
     pnlBand: input.pnlRange === "all" ? null : input.pnlRange,
     tradeCountBand: input.tradeCount === "all" ? null : input.tradeCount,
     session: input.session === "all" ? null : input.session,
-  });
+  } as const;
+  const rawData = dashboard.getCalendar(scope, dashboardInput);
+  const needsEarlierSwingMembers = Boolean(scope.activeAccountId && rawData.timezone && dashboardInput.startDate &&
+    new JournalLogicalTradeRepository(database).list(Object.freeze({
+      userId: scope.userId, workspaceId: scope.workspaceId, accountId: scope.activeAccountId!,
+      workspaceRole: scope.workspaceRole,
+    })).some((trade) => trade.members.length > 1 && trade.tradeStyle === "swing" &&
+      localDate(trade.closedAtUtc, rawData.timezone!) >= dashboardInput.startDate! &&
+      (!dashboardInput.endDate || localDate(trade.closedAtUtc, rawData.timezone!) <= dashboardInput.endDate) &&
+      localDate(trade.openedAtUtc, rawData.timezone!) < dashboardInput.startDate!));
+  const logicalInput = needsEarlierSwingMembers
+    ? dashboard.getCalendar(scope, { ...dashboardInput, startDate: null })
+    : rawData;
+  const logicalData = logicalCalendarModel(database, scope, logicalInput);
+  const data = needsEarlierSwingMembers
+    ? calendarDateWindow(logicalData, dashboardInput.startDate, dashboardInput.endDate)
+    : logicalData;
   const annotationEvidence = data.timezone
     ? annotationEvidenceByTimezone.get(data.timezone) ??
       calendarAnnotationEvidence(database, scope, data.timezone)

@@ -154,10 +154,10 @@ function setup() {
     decisions,
     authority,
     {
-      queueAfterJournalRebuild: (_scope, roundTripIds) => {
+      afterJournalRebuild: (_scope, roundTripIds) => {
         const queued = Object.freeze([...roundTripIds]);
         queuedAnalysisRoundTripIds.push(queued);
-        return queued;
+        return Object.freeze([]);
       },
     },
   );

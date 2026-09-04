@@ -43,10 +43,10 @@ import { JournalSwingNoteService } from "./swing-notes/journal-swing-note-servic
 import { JournalTradeStyleRepository } from "./trade-style/journal-trade-style-repository";
 import { JournalTradeStyleService } from "./trade-style/journal-trade-style-service";
 import { JournalTradingDayReviewService } from "./reviews/journal-trading-day-review-service";
-import { DailyTradeAnalyzerRepository } from "@/src/modules/level-analysis/server/daily-trade-analyzer-repository";
-import { DailyTradeMoomooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-moomoo-analyzer-service";
-import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
+import { LogicalTradeAnalyzerRepository } from "@/src/modules/level-analysis/server/logical-trade-analyzer-repository";
+import { LogicalTradeAnalyzerSelectionService } from "@/src/modules/level-analysis/server/logical-trade-analyzer-selection-service";
+import { SharedAnalyzerAllowanceRepository } from "@/src/modules/level-analysis/server/shared-analyzer-allowance-repository";
 
 export type JournalIntegrityRuntime = Readonly<{
   accounts: JournalAccountService;
@@ -54,6 +54,7 @@ export type JournalIntegrityRuntime = Readonly<{
   decisions: JournalDataDecisionService;
   imports: JournalImportService;
   logicalTrades: JournalLogicalTradeService;
+  logicalTradeAnalyzer: LogicalTradeAnalyzerSelectionService;
   manualTrades: JournalManualTradeCommandService;
   manualExecutionEdits: JournalManualExecutionEditService;
   workspaceTradeEdits: JournalWorkspaceTradeEditService;
@@ -117,20 +118,21 @@ export function createJournalIntegrityRuntime(
     tradeStyles,
   );
   const tradingDayReviews = new JournalTradingDayReviewService(database);
-  const dailyTradeAnalyzer = new DailyTradeMoomooAnalyzerService(
-    new DailyTradeAnalyzerRepository(database),
-    new MoomooConnectionRepository(database),
+  const logicalTrades = new JournalLogicalTradeService(
+    new JournalLogicalTradeRepository(database),
+    manualTradeAuthority,
+  );
+  const logicalTradeAnalyzer = new LogicalTradeAnalyzerSelectionService(
+    logicalTrades,
+    new LogicalTradeAnalyzerRepository(database),
+    new SharedAnalyzerAllowanceRepository(database),
   );
   const manualExecutionEdits = new JournalManualExecutionEditService(
     new JournalExecutionReconciliationRepository(database),
     importRepository,
     decisions,
     manualTradeAuthority,
-    dailyTradeAnalyzer,
-  );
-  const logicalTrades = new JournalLogicalTradeService(
-    new JournalLogicalTradeRepository(database),
-    manualTradeAuthority,
+    logicalTradeAnalyzer,
   );
   return Object.freeze({
     accounts,
@@ -143,6 +145,7 @@ export function createJournalIntegrityRuntime(
     decisions,
     imports,
     logicalTrades,
+    logicalTradeAnalyzer,
     manualExecutionEdits,
     manualTrades: new JournalManualTradeCommandService(
       new JournalManualTradeCommandRepository(database),
@@ -150,8 +153,9 @@ export function createJournalIntegrityRuntime(
       decisions,
       roundTrips,
       manualTradePreviews,
-      dailyTradeAnalyzer,
+      logicalTradeAnalyzer,
       new PlatformNotificationRepository(database),
+      logicalTrades,
     ),
     manualTradePreviews,
     workspaceTradeEdits: new JournalWorkspaceTradeEditService(

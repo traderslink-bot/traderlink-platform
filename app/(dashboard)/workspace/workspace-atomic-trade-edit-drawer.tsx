@@ -207,6 +207,18 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
     } finally { setWorking(false); }
   };
 
+  const selectedMergeTrades = mergeView
+    ? [...mergeView.sameDay, ...mergeView.otherDates].filter((trade) =>
+        selectedMergeRefs.includes(trade.candidateRef))
+    : [];
+  const selectedMergeStyles = new Set([
+    ...(mergeView ? [mergeView.current.tradeStyle] : []),
+    ...selectedMergeTrades.map((trade) => trade.tradeStyle),
+  ]);
+  const selectedAcrossDates = Boolean(mergeView && mergeView.otherDates.some((trade) =>
+    selectedMergeRefs.includes(trade.candidateRef)));
+  const tradeStyleChoiceRequired = selectedMergeStyles.size > 1 && !selectedAcrossDates;
+
   const candidate = (item: MergeCandidate, otherDate: boolean) => <FormControlLabel
     control={<Checkbox checked={selectedMergeRefs.includes(item.candidateRef)} onChange={(event) => {
       setSelectedMergeRefs((current) => event.target.checked
@@ -240,7 +252,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
         {mergeView.isMerged ? <Button color="error" disabled={working} onClick={() => void saveMerge("unmerge")} variant="outlined">Unmerge Trade</Button> : <>
           {mergeView.sameDay.length > 0 ? <Stack spacing={1}><Typography sx={{ fontWeight: 800 }}>Same day</Typography>{mergeView.sameDay.map((item) => candidate(item, false))}</Stack> : null}
           {mergeView.otherDates.length > 0 ? <Stack spacing={1}><Typography sx={{ fontWeight: 800 }}>Other dates</Typography>{mergeView.otherDates.map((item) => candidate(item, true))}</Stack> : null}
-          <TextField label="Trade type" onChange={(event) => setMergeStyle(event.target.value as "day" | "swing")} select size="small" value={mergeStyle}><MenuItem value="day">Day Trade</MenuItem><MenuItem value="swing">Swing</MenuItem></TextField>
+          <TextField disabled={!tradeStyleChoiceRequired} label="Trade type" onChange={(event) => setMergeStyle(event.target.value as "day" | "swing")} select size="small" value={selectedAcrossDates ? "swing" : mergeStyle}><MenuItem value="day">Day Trade</MenuItem><MenuItem value="swing">Swing</MenuItem></TextField>
           <Typography color="text.secondary" variant="body2">Result: 1 trade from {selectedMergeRefs.length + 1} selected trades</Typography>
           <Button disabled={working || selectedMergeRefs.length === 0} onClick={() => void saveMerge("merge")} variant="contained">Merge Trades</Button>
         </>}

@@ -42,7 +42,6 @@ import type { DailyTradeChartInterval } from
 
 import { TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
-import { MoomooMarketDataConnectionPrompt } from "../moomoo-market-data-connection-prompt";
 
 const DailyTradeAnalyzerChart = dynamic(
   () => import("@/app/(dashboard)/trade-tracker/[sessionDate]/daily-trade-analyzer-chart")
@@ -147,7 +146,6 @@ export function CandlePatternOccurrenceExplorer({
   moneyBasis,
   onClose,
   pattern,
-  showMoomooConnectionGuidance = false,
   startDate,
 }: {
   currency: string | null;
@@ -155,7 +153,6 @@ export function CandlePatternOccurrenceExplorer({
   moneyBasis: "gross" | "net";
   onClose: () => void;
   pattern: string;
-  showMoomooConnectionGuidance?: boolean;
   startDate: string | null;
 }) {
   const theme = useTheme();
@@ -312,7 +309,6 @@ export function CandlePatternOccurrenceExplorer({
         <Divider />
         {replayState === "loading" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", py: 4 }}><CircularProgress size={20} /><Typography color="text.secondary">Loading the saved trade chart…</Typography></Stack> : null}
         {replayState === "error" ? <Alert severity="warning">The saved chart is unavailable. You can still open the full Daily Trade Tracker review.</Alert> : null}
-        {replayState === "ready" && !replay?.analysis && showMoomooConnectionGuidance ? <MoomooMarketDataConnectionPrompt compact surface="drawer" /> : null}
         {replayState === "ready" && replay?.analysis ? (
           <DailyTradeAnalyzerChart
             analysis={replay.analysis}

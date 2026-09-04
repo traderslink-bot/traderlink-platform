@@ -26,7 +26,6 @@ import {
   formatJournalAnalyticsDecimal,
   formatJournalAnalyticsMoney,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import { MoomooMarketDataConnectionPrompt } from "../moomoo-market-data-connection-prompt";
 
 const DailyTradeAnalyzerChart = dynamic(
   () => import("@/app/(dashboard)/trade-tracker/[sessionDate]/daily-trade-analyzer-chart")
@@ -56,7 +55,6 @@ type ExactExecution = Readonly<{
 type LoadedTrade = Readonly<{
   analysis: DaySessionTradeAnalyzer | null;
   executions: readonly ExactExecution[];
-  showMoomooConnectionGuidance: boolean;
   status: "loading" | "ready" | "error";
 }>;
 
@@ -75,11 +73,9 @@ async function loadTrade(trade: AnalyticsTradeDetail, moneyBasis: JournalAnalyti
   try {
     const detailsUrl = `/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(trade.roundTripId)}`;
     const analysisUrl = `/api/platform/trade-analyzer/trade?roundTripId=${encodeURIComponent(trade.roundTripId)}&direction=${trade.direction}&basis=${moneyBasis}`;
-    const marketDataAccessUrl = "/api/platform/moomoo-market-data-access";
-    const [detailsResponse, analysisResponse, marketDataAccessResponse] = await Promise.all([
+    const [detailsResponse, analysisResponse] = await Promise.all([
       fetch(detailsUrl, { cache: "no-store" }),
       fetch(analysisUrl, { cache: "no-store" }),
-      fetch(marketDataAccessUrl, { cache: "no-store" }),
     ]);
     if (!detailsResponse.ok) throw new Error("details_unavailable");
     const details = await detailsResponse.json() as Readonly<{
@@ -89,19 +85,15 @@ async function loadTrade(trade: AnalyticsTradeDetail, moneyBasis: JournalAnalyti
       analysis?: DaySessionTradeAnalyzer;
       status?: string;
     }>;
-    const marketDataAccess = marketDataAccessResponse.ok
-      ? await marketDataAccessResponse.json() as Readonly<{ showConnectionGuidance?: boolean }>
-      : null;
     return Object.freeze({
       analysis: analysisResponse.ok && analysisPayload.status === "ready"
         ? analysisPayload.analysis ?? null
         : null,
       executions: details.trades?.find((item) => item.roundTripId === trade.roundTripId)?.executions ?? [],
-      showMoomooConnectionGuidance: marketDataAccess?.showConnectionGuidance === true,
       status: "ready" as const,
     });
   } catch {
-    return Object.freeze({ analysis: null, executions: Object.freeze([]), showMoomooConnectionGuidance: false, status: "error" as const });
+    return Object.freeze({ analysis: null, executions: Object.freeze([]), status: "error" as const });
   }
 }
 
@@ -156,7 +148,7 @@ export function AnalyticsTradeDetailDrawer({
     const revision = ++requestRevision.current;
     setLoadedById((current) => ({
       ...current,
-      [trade.roundTripId]: Object.freeze({ analysis: null, executions: Object.freeze([]), showMoomooConnectionGuidance: false, status: "loading" as const }),
+      [trade.roundTripId]: Object.freeze({ analysis: null, executions: Object.freeze([]), status: "loading" as const }),
     }));
     const result = await loadTrade(trade, moneyBasis);
     if (revision !== requestRevision.current) return;
@@ -239,11 +231,9 @@ export function AnalyticsTradeDetailDrawer({
                         </Box>
                       ) : null}
                       {loaded?.status === "ready" && !loaded.analysis ? (
-                        loaded.showMoomooConnectionGuidance ? <MoomooMarketDataConnectionPrompt compact surface="drawer" /> : (
-                          <Typography color="text.secondary" variant="body2">
-                            A saved Trade Analyzer chart is not available for this trade.
-                          </Typography>
-                        )
+                        <Typography color="text.secondary" variant="body2">
+                          A saved Trade Analyzer chart is not available for this trade.
+                        </Typography>
                       ) : null}
                       {loaded?.status === "ready" ? (
                         <Stack spacing={0.75}>
