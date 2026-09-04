@@ -1,6 +1,6 @@
 # User-Defined Trades And Post-Entry Review Progress
 
-**Status:** Planning — QA recorded; ready to define the schema
+**Status:** Implementation complete; focused verification complete; release handoff pending
 
 **Controlling plan:** [User-Defined Trades And Post-Entry Review Plan](user-defined-trades-and-entry-review-plan.md)
 
@@ -848,8 +848,45 @@ No provider request, production data change, push, deployment, or release action
 has occurred. The unrelated Trade Details story-ledger work remains outside this
 feature slice.
 
-## Active implementation checkpoint
+## Completed implementation checkpoint — 2026-09-04
 
-Complete the logical-trade repository, authenticated merge/unmerge authority,
-and shared logical-trade reader before adopting it in the scoped trade-facing
-surfaces.
+- Migrations `0115` and `0116` add versioned logical trades, immutable
+  membership history, group reviews, Analyzer requests, reservations,
+  allowances, acquisitions, correction opportunities, and owner settings.
+- Workspace Add Trade and Day Trade Tracker share the same post-entry review:
+  resulting trades can be merged/unmerged before save and completed day trades
+  can be selected explicitly for Analyzer use.
+- Edit Trade provides authenticated merge/unmerge selection for saved trades.
+  Workspace, Calendar, Day Tracker, and Trade Details now present active logical
+  trades with combined chronological executions and group-level review data.
+- Analyzer uses the designated shared Moomoo connection through one persistent
+  FIFO acquisition worker, rechecks compatible stored candle coverage, applies
+  the approved retention rule, enforces daily/fixed-30-day/global acquisition
+  controls, and preserves the single correction waiver.
+- Demo remains view-only for prebuilt Analyzer examples. Personal Moomoo
+  Analyzer prompts and the obsolete Analyzer connection copy were removed;
+  Moomoo remains available on Account for broker execution imports.
+- Owner administration exposes the designated connection, beta limits, usage,
+  per-user overrides, and daily/period resets.
+
+## Focused verification
+
+- The bounded server TypeScript check covering logical-trade commands, manual
+  entry integration, Analyzer repositories/worker/routes, migration `0116`, and
+  hosted worker scheduling passed with no errors.
+- The bounded UI TypeScript check found no feature errors. It reported only the
+  pre-existing duplicate `fancy-canvas` identity errors caused by type-checking
+  this dependency-light worktree against the canonical checkout's modules.
+- A disposable empty database initialized through migration `0116` and matched
+  the updated migration manifest.
+- `git diff --check` passed. Broad tests, Vitest, a production build, and a local
+  app process were intentionally not run under the low-resource project policy.
+
+## Release boundary
+
+No push, Railway action, production mutation, or provider-depth request was
+performed here. Before production release, the Release Coordinator must make
+the staging Railway application match production application configuration and
+schema behavior, deploy this exact commit set to staging, verify the scoped
+flows there, and only then publish the same accepted code to production. This
+does not authorize copying production user data into staging.
