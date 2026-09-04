@@ -86,7 +86,7 @@ FROM level_analysis_shared_analyzer_settings WHERE settings_key = 'beta'`).get()
 
   isDemo(scope: AccountScope): boolean {
     return Boolean(this.database.prepare(`SELECT 1 FROM journal_demo_accounts
-WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(scope.workspaceId, scope.accountId));
+WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, scope.accountId));
   }
 
   private currentCycle(userId: string, date: string): Cycle | null {
