@@ -55,6 +55,7 @@ type SnapshotState = Readonly<{
 const CONSEQUENCE_COPY: Readonly<Record<JournalWorkspaceTradeEditConsequence, string>> = Object.freeze({
   keeps_closed: "This update keeps the trade closed.",
   leaves_open: "This update leaves the trade open.",
+  deletes_trade: "This update deletes the trade because all executions are removed.",
   creates_multiple: "This update creates multiple trades because the position reaches zero and then opens again.",
   merges: "This update merges trades.",
   changes_nearby_boundaries: "This update changes nearby trade boundaries.",
@@ -239,24 +240,25 @@ ORDER BY version.executed_at_utc, version.source_order_key, execution.execution_
       left.executedAtUtc.localeCompare(right.executedAtUtc) ||
       left.orderKey.localeCompare(right.orderKey) ||
       left.executionId.localeCompare(right.executionId));
+    const editableExecutionIds = new Set(state.editable.map((editable) => editable.executionId));
     const beforeBoundaries = chainBoundaries(current);
     const afterBoundaries = chainBoundaries(after);
-    if (afterBoundaries.closedTradeCount > beforeBoundaries.closedTradeCount) {
-      return "creates_multiple";
-    }
-    if (afterBoundaries.closedTradeCount < beforeBoundaries.closedTradeCount) {
-      return "merges";
-    }
-    if (beforeBoundaries.boundaryExecutionIds.join("\u001f") !==
-      afterBoundaries.boundaryExecutionIds.join("\u001f")) {
+    const outsideSubjectBoundaryIds = (boundaryIds: readonly string[]) => boundaryIds
+      .filter((executionId) => !editableExecutionIds.has(executionId))
+      .join("\u001f");
+    if (outsideSubjectBoundaryIds(beforeBoundaries.boundaryExecutionIds) !==
+      outsideSubjectBoundaryIds(afterBoundaries.boundaryExecutionIds)) {
       return "changes_nearby_boundaries";
     }
-    const draftedPosition = chainBoundaries(after.filter((entry) =>
-      state.editable.some((editable) => editable.executionId === entry.executionId) ||
-      entry.executionId.startsWith("new:"),
-    )).finalPosition;
-    return compareDecimal(draftedPosition, "0") === 0
-      ? "keeps_closed"
+    const editedTrade = after.filter((entry) =>
+      editableExecutionIds.has(entry.executionId) || entry.executionId.startsWith("new:"));
+    if (editedTrade.length === 0) return "deletes_trade";
+    const editedBoundaries = chainBoundaries(editedTrade);
+    if (compareDecimal(editedBoundaries.finalPosition, "0") === 0) {
+      return "keeps_closed";
+    }
+    return editedBoundaries.closedTradeCount > 0
+      ? "creates_multiple"
       : "leaves_open";
   }
 
@@ -327,7 +329,7 @@ WHERE allocation.workspace_id = ? AND allocation.account_id = ?
   )
   AND execution.current_version_id = allocation.execution_version_id
   AND execution.current_state = 'accepted'
-ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
+ORDER BY allocation_version.executed_at_utc, allocation_version.source_order_key, execution.execution_id`).all(
       scope.workspaceId, scope.accountId, scope.workspaceId, scope.accountId,
       roundTripId, scope.workspaceId, scope.accountId, roundTripId,
     ).map((row) => Object.freeze({
@@ -525,7 +527,12 @@ ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
       const affectedRoundTripIds = Object.freeze([...new Set(rebuilds
         .filter((rebuild) => rebuild.status === "rebuilt")
         .flatMap((rebuild) => rebuild.roundTripIds))]);
-      this.executionEdits.refreshLogicalTradesAfterRebuild(accountScope, affectedRoundTripIds, now);
+      try {
+        this.executionEdits.refreshLogicalTradesAfterRebuild(accountScope, affectedRoundTripIds, now);
+      } catch {
+        // A valid Journal edit must not be rolled back because a follow-up
+        // Analyzer/logical-trade refresh cannot run at that moment.
+      }
       if (draft.tradeStyle !== current.snapshot.tradeStyle) {
         const targetRows = this.database.prepare<[string, string, string], {
           round_trip_id: string;

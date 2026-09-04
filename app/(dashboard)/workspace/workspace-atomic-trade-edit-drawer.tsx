@@ -17,6 +17,7 @@ import type { TradeExplorerReviewTarget } from "../analytics/trade-explorer/trad
 type TradeStyle = "day_trade" | "swing" | "other";
 type Side = "buy" | "sell";
 type EditTab = "trade" | "journal";
+type EditConsequence = "keeps_closed" | "leaves_open" | "deletes_trade" | "creates_multiple" | "merges" | "changes_nearby_boundaries";
 type MergeCandidate = Readonly<{
   candidateRef: string; symbol: string; tradeStyle: "day" | "swing";
   openedAtUtc: string; closedAtUtc: string; memberCount: number;
@@ -69,7 +70,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [rows, setRows] = useState<DraftRow[]>([]);
   const [tradeStyle, setTradeStyle] = useState<TradeStyle | null>(null);
-  const [preview, setPreview] = useState<Readonly<{ previewRef: string; consequenceCopy: string }> | null>(null);
+  const [preview, setPreview] = useState<Readonly<{ previewRef: string; consequence: EditConsequence; consequenceCopy: string }> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const [tab, setTab] = useState<EditTab>(startingTab);
@@ -148,7 +149,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
       const response = await fetch(`/api/platform/journal/workspace-trades/${roundTripId}/edit/preview`, {
         method: "POST", headers: { "Content-Type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" }, body: JSON.stringify(payload()),
       });
-      const result = await response.json() as { preview?: { previewRef: string; consequenceCopy: string }; code?: unknown };
+      const result = await response.json() as { preview?: { previewRef: string; consequence: EditConsequence; consequenceCopy: string }; code?: unknown };
       if (!response.ok || !result.preview) { setError(failureMessage(result.code)); return; }
       setPreview(result.preview);
     } catch { setError(failureMessage(null)); } finally { setWorking(false); }
@@ -306,7 +307,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
       </Box> : <Box sx={{ flex: 1, p: 2 }}><Alert severity="info">Journal review is unavailable for this trade.</Alert></Box>}
       {!mergeView && tab === "trade" ? <Stack direction="row" spacing={1} sx={{ borderTop: 1, borderColor: "divider", justifyContent: "flex-end", p: 2 }}>
         {preview ? <Button disabled={working} onClick={() => setPreview(null)}>Cancel</Button> : null}
-        <Button disabled={!snapshot || working} onClick={() => void (preview ? commit() : requestPreview())} variant="contained">{working ? "Saving…" : preview ? "Confirm changes" : "Review changes"}</Button>
+        <Button color={preview?.consequence === "deletes_trade" ? "error" : "primary"} disabled={!snapshot || working} onClick={() => void (preview ? commit() : requestPreview())} variant="contained">{working ? "Saving…" : preview ? preview.consequence === "deletes_trade" ? "Delete trade" : "Confirm changes" : "Review changes"}</Button>
       </Stack> : null}
     </Stack>
   </Drawer>;

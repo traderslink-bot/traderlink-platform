@@ -6,6 +6,18 @@
 
 ## Staging correction — 2026-09-04
 
+- Workspace Edit Trade now evaluates only the edited trade when describing the
+  pending result. A normal final exit is one closed trade; an edit with shares
+  remaining is one open trade; only a genuine close followed by a re-entry is
+  described as multiple trades. Removing every execution is explicitly a
+  delete-trade confirmation.
+- Workspace Edit Trade keeps a valid factual execution save independent from
+  a best-effort Analyzer/logical-trade refresh, and presents grouped member
+  executions in their actual chronological order.
+- The atomic Edit Trade command reuses its active Journal transaction while
+  adding or removing executions, instead of attempting a nested immediate
+  transaction after the trader has confirmed a valid preview.
+
 - A merged trade is now projected as one combined row in Trade Explorer's
   individual-trade view and Trade Breakdown's supporting-trade table. The
   preserved member round trips remain available only for execution detail and

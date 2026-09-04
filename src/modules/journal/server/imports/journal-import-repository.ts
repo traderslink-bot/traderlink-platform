@@ -38,7 +38,9 @@ export class JournalImportRepository {
   constructor(private readonly database: Database.Database) {}
 
   immediate<T>(operation: () => T): T {
-    return this.database.transaction(operation).immediate();
+    return this.database.inTransaction
+      ? operation()
+      : this.database.transaction(operation).immediate();
   }
 
   findByFileDigest(workspaceId: string, sourceSystem: string, digest: string): ExistingImportBatch | null {
