@@ -20,17 +20,33 @@ export function WorkspaceNewsScannerCard({ onViewMore }: Readonly<{ onViewMore: 
 
   useEffect(() => {
     const controller = new AbortController();
-    const load = () => void fetch("/api/platform/news/workspace-scanner", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => response.ok ? response.json() as Promise<ScannerResponse> : Promise.reject(new Error("scanner_unavailable")))
-      .then((result) => setArticles(result.articles ?? []))
-      .catch((error: unknown) => { if (!(error instanceof DOMException && error.name === "AbortError")) setArticles([]); });
+    let active = true;
+    let loading = false;
+    const load = () => {
+      if (!active || loading) return;
+      loading = true;
+      void fetch("/api/platform/news/workspace-scanner", { cache: "no-store", signal: controller.signal })
+        .then(async (response) => response.ok ? response.json() as Promise<ScannerResponse> : Promise.reject(new Error("scanner_unavailable")))
+        .then((result) => { if (active) setArticles(result.articles ?? []); })
+        .catch((error: unknown) => { if (active && !(error instanceof DOMException && error.name === "AbortError")) setArticles([]); })
+        .finally(() => { loading = false; });
+    };
     load();
     const stream = new EventSource("/api/platform/news/workspace-scanner/stream");
     stream.addEventListener("ready", load);
     stream.addEventListener("scanner_articles_changed", load);
     const refreshWhenVisible = () => { if (document.visibilityState === "visible") load(); };
     document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => { controller.abort(); stream.close(); document.removeEventListener("visibilitychange", refreshWhenVisible); };
+    window.addEventListener("focus", refreshWhenVisible);
+    window.addEventListener("pageshow", refreshWhenVisible);
+    return () => {
+      active = false;
+      controller.abort();
+      stream.close();
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      window.removeEventListener("focus", refreshWhenVisible);
+      window.removeEventListener("pageshow", refreshWhenVisible);
+    };
   }, []);
 
   function selectArticle(article: PressReleaseArticle): void {

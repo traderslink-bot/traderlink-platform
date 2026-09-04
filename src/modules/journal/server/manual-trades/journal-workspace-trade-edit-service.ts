@@ -54,8 +54,8 @@ type SnapshotState = Readonly<{
 
 const CONSEQUENCE_COPY: Readonly<Record<JournalWorkspaceTradeEditConsequence, string>> = Object.freeze({
   keeps_closed: "This update keeps the trade closed.",
-  leaves_open: "This update leaves the trade open.",
-  creates_multiple: "This update creates multiple trades because the position reaches zero and then opens again.",
+  leaves_open: "This edit cannot be saved as one trade here. Review the executions and try again.",
+  creates_multiple: "This edit cannot be saved as one trade here. Review the executions and try again.",
   merges: "This update merges trades.",
   changes_nearby_boundaries: "This update changes nearby trade boundaries.",
 });

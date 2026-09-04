@@ -18,7 +18,7 @@ import { withJournalAnalyticsDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { isTraderLinkPlatformError, platformFailure } from
+import { platformFailure } from
   "@/src/modules/platform/server/database/platform-migration-contract";
 import { withReadonlyPlatformDatabase } from
   "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -378,9 +378,6 @@ export function readJournalTradeStory(
     position = withReadonlyJournalIntegrityRuntime(scope, (journal) =>
       journal.tradeTrackerReads.positionLedgerDetailForRoundTrip(account, roundTripId));
   } catch (error) {
-    if (!isTraderLinkPlatformError(error) || error.code !== "TRADERLINK_TRADE_STYLE_CONFLICT") {
-      throw error;
-    }
     const summary = historicalSummary(scope, roundTripId);
     if (!summary) throw error;
     return historicalSummaryModel(scope, roundTripId, summary);
