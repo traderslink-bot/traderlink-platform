@@ -26,8 +26,6 @@ import {
 } from "../../dashboard-template";
 import { DemoDataCallout, DemoTradeTrackerInvitation } from "../demo-data-callout";
 import type { FinancialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
-import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
-import { WorkspaceFirstTimeOnboardingPanel } from "./workspace-first-time-onboarding-panel";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
 import { WorkspaceTradeLibrary } from "./workspace-trade-library-client";
@@ -87,9 +85,6 @@ type WorkspaceOfflineTradeLibraryProps = Readonly<{
 type WorkspaceDashboardProps = Readonly<{
   analyticsMetrics?: readonly WorkspaceMetric[];
   demoAccountSelectionRef?: string;
-  firstTimeMoomooConnectionPending?: boolean;
-  firstTimeMoomooConnected?: boolean;
-  firstTimeOnboardingResult?: WorkspaceFirstTimeOnboardingResult;
   hasRealAcceptedExecution?: boolean;
   newsScannerAvailable?: boolean;
   offlineSavedAtUtc?: string;
@@ -173,9 +168,6 @@ function CurrentFocusContent({ content }: Readonly<{ content: string }>) {
 export function WorkspaceDashboard({
   analyticsMetrics,
   demoAccountSelectionRef,
-  firstTimeMoomooConnectionPending,
-  firstTimeMoomooConnected,
-  firstTimeOnboardingResult,
   hasRealAcceptedExecution,
   newsScannerAvailable = false,
   offlineSavedAtUtc,
@@ -264,7 +256,6 @@ export function WorkspaceDashboard({
       {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : hasLiveTradeLibraryProps(tradeLibraryProps) && newsScannerOpen ? <WorkspaceNewsScannerPanel expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} initialPreference={prScannerCardPreference ?? { revision: null, showInWorkspace: true }} onClose={() => setNewsScannerOpen(false)} onPreferenceSaved={(preference) => { setShowPrScannerCard(preference.showInWorkspace); router.refresh(); }} /> : <>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 800, textDecoration: "underline" }} variant="inherit">Open Day Trade Tracker</Typography></Alert> : null}
-      {firstTimeOnboardingResult !== undefined ? <WorkspaceFirstTimeOnboardingPanel moomooConnected={firstTimeMoomooConnected ?? false} moomooConnectionPending={firstTimeMoomooConnectionPending ?? false} result={firstTimeOnboardingResult} /> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
