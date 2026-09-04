@@ -28,6 +28,7 @@ import { journalTradingDayTagsMigration } from "@/src/modules/journal/server/dat
 import { journalWorkspaceRuleResultsCardMigration } from "@/src/modules/journal/server/database/migrations/0113_journal_workspace_rule_results_card";
 import { journalWorkspacePrScannerCardMigration } from "@/src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card";
 import { journalManualFeeInputStateMigration } from "@/src/modules/journal/server/database/migrations/0116_journal_manual_fee_input_state";
+import { journalLogicalTradesMigration } from "@/src/modules/journal/server/database/migrations/0118_journal_logical_trades";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0117_trade_explorer_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
@@ -571,6 +572,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal-analytics/server/database/migrations/0117_trade_explorer_saved_views.ts",
       migration: tradeExplorerSavedViewsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0118_journal_logical_trades.ts",
+      migration: journalLogicalTradesMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -983,6 +988,13 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0117_trade_explorer_saved_views": Object.freeze([
       "journal_trade_explorer_saved_views",
       "journal_trade_explorer_saved_view_versions",
+    ]),
+    "0118_journal_logical_trades": Object.freeze([
+      "journal_logical_trades",
+      "journal_logical_trade_versions",
+      "journal_logical_trade_version_members",
+      "journal_active_logical_trade_memberships",
+      "journal_logical_trade_events",
     ]),
   });
 
