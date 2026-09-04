@@ -125,6 +125,7 @@ type ProjectionRow = Readonly<{
   net_pnl_decimal: string | null;
   net_pnl_sort_key: string | null;
   projection_state: "ready_closed" | "legitimate_open";
+  recorded_at_utc: string;
   position_decimal: string | null;
   position_sort_key: string | null;
   round_trip_id: string;
@@ -216,8 +217,8 @@ function decodeCursor(value: string, revision: string, digest: string, sort: Wor
 type SortDefinition = Readonly<{ direction: "ASC" | "DESC"; expression: string }>;
 
 function sortDefinition(sort: WorkspaceTradeLibrarySort): SortDefinition {
-  if (sort === "newest") return { direction: "DESC", expression: "projection.activity_at_utc" };
-  if (sort === "oldest") return { direction: "ASC", expression: "projection.activity_at_utc" };
+  if (sort === "newest") return { direction: "DESC", expression: "projection.activity_local_date || '|' || version.created_at_utc" };
+  if (sort === "oldest") return { direction: "ASC", expression: "projection.activity_local_date || '|' || version.created_at_utc" };
   if (sort === "ticker_asc") return { direction: "ASC", expression: "instrument.normalized_symbol" };
   if (sort === "ticker_desc") return { direction: "DESC", expression: "instrument.normalized_symbol" };
   if (sort === "direction_asc") return { direction: "ASC", expression: "version.direction" };
@@ -234,7 +235,7 @@ function sortDefinition(sort: WorkspaceTradeLibrarySort): SortDefinition {
 }
 
 function sortKey(row: ProjectionRow, sort: WorkspaceTradeLibrarySort): string | null {
-  if (sort === "newest" || sort === "oldest") return row.activity_at_utc;
+  if (sort === "newest" || sort === "oldest") return `${row.activity_local_date}|${row.recorded_at_utc}`;
   if (sort === "ticker_asc" || sort === "ticker_desc") return row.symbol;
   if (sort === "direction_asc" || sort === "direction_desc") return row.direction;
   if (sort === "status_asc" || sort === "status_desc") return row.projection_state === "legitimate_open" ? row.trade_style === "swing" ? "Open swing" : "Open" : row.trade_style === "swing" ? "Closed swing" : "Closed";
@@ -614,7 +615,8 @@ LEFT JOIN journal_logical_trade_versions logical_version
   projection.exit_local_time, projection.exit_notional_decimal, projection.exit_quantity_decimal,
   projection.exit_price_decimal, projection.exit_price_sort_key, projection.maximum_position_quantity_decimal, projection.gross_pnl_decimal, projection.gross_pnl_sort_key, projection.net_pnl_decimal, projection.net_pnl_sort_key, projection.hold_duration_seconds, projection.hold_duration_sort_key,
   projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
-  projection.projection_state, projection.round_trip_id, projection.round_trip_version_id, instrument.normalized_symbol AS symbol,
+  projection.projection_state, projection.round_trip_id, projection.round_trip_version_id,
+  version.created_at_utc AS recorded_at_utc, instrument.normalized_symbol AS symbol,
   EXISTS (
     SELECT 1
     FROM journal_round_trip_daily_trade_analyses analysis

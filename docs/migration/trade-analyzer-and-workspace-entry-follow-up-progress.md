@@ -60,3 +60,9 @@ Related plan:
   provider call with an otherwise opaque SQLite error. The worker now records
   the exact safe processing stage plus SQLite code/message so the failing
   saved-session statement can be corrected from evidence rather than guessed.
+- The resulting evidence showed the owner failure-notification lookup used the
+  nonexistent workspace-membership field `joined_at_utc`; it now uses the
+  canonical membership creation timestamp.
+- Workspace's default Date/Newest order now keeps the trading date primary and
+  places the most recently recorded trade first within that date. Explicit
+  user-selected column sorting remains available.

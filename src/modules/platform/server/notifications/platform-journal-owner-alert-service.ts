@@ -18,7 +18,7 @@ JOIN platform_workspaces workspace ON workspace.workspace_id = membership.worksp
 WHERE membership.user_id = ? AND membership.status = 'active'
   AND membership.role = 'owner' AND user.status = 'active'
   AND workspace.status = 'active'
-ORDER BY membership.joined_at_utc, membership.workspace_id
+ORDER BY membership.created_at_utc, membership.workspace_id
 LIMIT 1`).get(owner.userId);
   if (!membership) return null;
   return Object.freeze({
