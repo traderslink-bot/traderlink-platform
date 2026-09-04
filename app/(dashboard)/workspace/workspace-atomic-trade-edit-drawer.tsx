@@ -79,6 +79,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
   const [selectedMergeRefs, setSelectedMergeRefs] = useState<readonly string[]>([]);
   const [mergeStyle, setMergeStyle] = useState<"day" | "swing">("day");
   const nextRow = useRef(100);
+  const cannotSaveAsOneTrade = preview?.consequence === "leaves_open" || preview?.consequence === "creates_multiple";
 
   useEffect(() => {
     if (!open || !roundTripId) return;
@@ -307,7 +308,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
       </Box> : <Box sx={{ flex: 1, p: 2 }}><Alert severity="info">Journal review is unavailable for this trade.</Alert></Box>}
       {!mergeView && tab === "trade" ? <Stack direction="row" spacing={1} sx={{ borderTop: 1, borderColor: "divider", justifyContent: "flex-end", p: 2 }}>
         {preview ? <Button disabled={working} onClick={() => setPreview(null)}>Cancel</Button> : null}
-        <Button color={preview?.consequence === "deletes_trade" ? "error" : "primary"} disabled={!snapshot || working} onClick={() => void (preview ? commit() : requestPreview())} variant="contained">{working ? "Saving…" : preview ? preview.consequence === "deletes_trade" ? "Delete trade" : "Confirm changes" : "Review changes"}</Button>
+        <Button color={preview?.consequence === "deletes_trade" ? "error" : "primary"} disabled={!snapshot || working || cannotSaveAsOneTrade} onClick={() => void (preview ? commit() : requestPreview())} variant="contained">{working ? "Saving…" : preview ? preview.consequence === "deletes_trade" ? "Delete trade" : cannotSaveAsOneTrade ? "Review required" : "Confirm changes" : "Review changes"}</Button>
       </Stack> : null}
     </Stack>
   </Drawer>;
