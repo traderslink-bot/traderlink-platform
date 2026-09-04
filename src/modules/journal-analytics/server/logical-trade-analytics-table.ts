@@ -69,7 +69,7 @@ export function toLogicalTradeAnalyticsTable(
       rows.push(row);
       continue;
     }
-    const combined = (members as readonly JournalAnalyticsRoundTripTableRow[]).sort((left, right) =>
+    const combined = [...members].sort((left, right) =>
       left.openedAtUtc.localeCompare(right.openedAtUtc) || left.roundTripId.localeCompare(right.roundTripId));
     const first = combined[0]!;
     const last = combined.at(-1)!;
