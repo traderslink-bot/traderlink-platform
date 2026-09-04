@@ -20,7 +20,6 @@ import {
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import {
   requireActiveJournalAnalyticsAccountId,
   withJournalAnalyticsDashboardRuntime,
@@ -111,6 +110,7 @@ function tradeContext(
     expectedRoundTripVersionId?: unknown;
     roundTripId: unknown;
   }>,
+  logical: LogicalReviewTarget | null = null,
 ) {
   if (typeof input.roundTripId !== "string") invalid("roundTripId");
   assertCanonicalUuidV4(input.roundTripId, "roundTripId");
@@ -134,16 +134,19 @@ function tradeContext(
       candidate.accountId === accountId &&
       candidate.roundTripId === input.roundTripId);
     const account = factSet.accounts.find((candidate) => candidate.accountId === accountId);
+    const expectedVersionId = logical?.logicalTradeVersionId ?? trade?.roundTripVersionId;
     if (!trade || !account ||
         (input.expectedRoundTripVersionId !== undefined &&
-          trade.roundTripVersionId !== input.expectedRoundTripVersionId)) conflict();
-    const isOpen = closeLocalDate === null;
+          expectedVersionId !== input.expectedRoundTripVersionId)) conflict();
+    const isOpen = logical === null && closeLocalDate === null;
+    if (logical !== null && closeLocalDate === null) conflict();
+    const closedAtUtc = logical?.closedAtUtc ?? trade.closedAtUtc;
     if (isOpen
       ? trade.projectionState !== "legitimate_open" || trade.closedAtUtc !== null
-      : trade.projectionState !== "ready_closed" || trade.closedAtUtc === null) conflict();
+      : trade.projectionState !== "ready_closed" || closedAtUtc === null) conflict();
     const journalLocalDate = isOpen
       ? journalAnalyticsLocalTimeFact(trade.openedAtUtc, account.tradingTimezone).localDate
-      : journalAnalyticsLocalTimeFact(trade.closedAtUtc!, account.tradingTimezone).localDate;
+      : journalAnalyticsLocalTimeFact(closedAtUtc!, account.tradingTimezone).localDate;
     if (closeLocalDate !== null && journalLocalDate !== closeLocalDate) conflict();
     const day = dashboard.getTradingDay(scope, {
       currency: trade.tradeCurrency,
@@ -152,7 +155,7 @@ function tradeContext(
     return Object.freeze({
       accountId,
       closeLocalDate: isOpen ? null : journalLocalDate,
-      closedAtUtc: trade.closedAtUtc,
+      closedAtUtc,
       day,
       journalLocalDate,
       timezone: account.tradingTimezone,
@@ -186,8 +189,10 @@ export function readTradeExplorerReview(
   }>,
 ): TradeExplorerReviewModel {
   requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef);
-  const context = tradeContext(scope, input);
-  const logical = logicalReviewTarget(scope, context.trade.roundTripId);
+  if (typeof input.roundTripId !== "string") invalid("roundTripId");
+  assertCanonicalUuidV4(input.roundTripId, "roundTripId");
+  const logical = logicalReviewTarget(scope, input.roundTripId);
+  const context = tradeContext(scope, input, logical);
   return withReadonlyJournalAnnotations(scope, (service, account) => {
     const range = reviewRange(logical?.openedAtUtc ?? context.trade.openedAtUtc,
       logical?.closedAtUtc ?? context.closedAtUtc);
@@ -321,19 +326,17 @@ function saveLogicalTradeReview(
 ): void {
   if (!scope.activeAccountId || input.expectedRoundTripVersionId !== logical.logicalTradeVersionId) conflict();
   const selectedTagIds = new Set(input.tags?.tagIds ?? []);
-  if (input.tags) {
-    withWritableJournalAnnotations(scope, (service, account) => {
+  withWritableJournalAnnotations(scope, (service, account, database) => database.transaction(() => {
+    if (input.tags) {
       const existing = service.listTags(account);
-      for (const presetKey of input.tags!.presetKeys) {
+      for (const presetKey of input.tags.presetKeys) {
         const preset = journalTagPresetByKey(presetKey);
         if (!preset) invalid("presetKeys");
         const tag = existing.find((candidate) => journalTagPresetForName(candidate.name)?.presetKey === presetKey)
           ?? service.createTag(account, { name: preset.name });
         selectedTagIds.add(tag.tagId);
       }
-    });
-  }
-  withPlatformDatabase({ mode: "runtime" }, (database) => database.transaction(() => {
+    }
     const current = database.prepare(`SELECT current_version_id, lifecycle_state
 FROM journal_logical_trades WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?`).get(
       scope.workspaceId, scope.activeAccountId!, logical.logicalTradeId,
@@ -414,10 +417,12 @@ ON CONFLICT(workspace_id, account_id, logical_trade_id, tag_id) DO UPDATE SET
       const editable = before.customRules.find((rule) => rule.ruleId === change.ruleId &&
         rule.ruleVersionId === change.ruleVersionId && rule.revision === change.expectedRevision);
       if (!editable) conflict();
-      const priorReview = database.prepare(`SELECT note_text FROM journal_logical_trade_rule_reviews
+      const priorReview = database.prepare(`SELECT note_text, revision, rule_version_id FROM journal_logical_trade_rule_reviews
 WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ? AND rule_id = ?`).get(
         scope.workspaceId, scope.activeAccountId!, logical.logicalTradeId, change.ruleId,
-      ) as { note_text: string } | undefined;
+      ) as { note_text: string; revision: number; rule_version_id: string } | undefined;
+      if ((priorReview?.revision ?? null) !== change.expectedRevision ||
+        (priorReview && priorReview.rule_version_id !== change.ruleVersionId)) conflict();
       database.prepare(`INSERT INTO journal_logical_trade_rule_reviews (
  workspace_id, account_id, logical_trade_id, rule_id, rule_version_id,
  status, note_text, revision, reviewed_by_user_id, created_at_utc, updated_at_utc

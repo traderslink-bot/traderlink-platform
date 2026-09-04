@@ -10,6 +10,7 @@ import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/ana
 import {
   absoluteExactDecimal,
   addExactDecimals,
+  divideExactDecimals,
   multiplyExactDecimals,
   subtractExactDecimals,
 } from "./exact-analytics-math";
@@ -68,7 +69,9 @@ WHERE type = 'table' AND name = 'journal_workspace_trade_library_projections'`).
 
 function executionFacts(roundTrip: JournalAnalyticsFactSet["roundTrips"][number]) {
   let buyQuantityDecimal = "0";
+  let sellQuantityDecimal = "0";
   let buyValueDecimal: string | null = "0";
+  let sellValueDecimal: string | null = "0";
   let signedPositionDecimal = "0";
   for (const allocation of roundTrip.allocations) {
     if (allocation.side === "buy") {
@@ -76,15 +79,26 @@ function executionFacts(roundTrip: JournalAnalyticsFactSet["roundTrips"][number]
       buyValueDecimal = buyValueDecimal === null || allocation.priceDecimal === null ? null : addExactDecimals(buyValueDecimal, multiplyExactDecimals(allocation.allocatedQuantityDecimal, allocation.priceDecimal));
       signedPositionDecimal = addExactDecimals(signedPositionDecimal, allocation.allocatedQuantityDecimal);
     } else {
+      sellQuantityDecimal = addExactDecimals(sellQuantityDecimal, allocation.allocatedQuantityDecimal);
+      sellValueDecimal = sellValueDecimal === null || allocation.priceDecimal === null ? null : addExactDecimals(sellValueDecimal, multiplyExactDecimals(allocation.allocatedQuantityDecimal, allocation.priceDecimal));
       signedPositionDecimal = subtractExactDecimals(signedPositionDecimal, allocation.allocatedQuantityDecimal);
     }
   }
+  const entryQuantityDecimal = roundTrip.direction === "long" ? buyQuantityDecimal : sellQuantityDecimal;
+  const entryValueDecimal = roundTrip.direction === "long" ? buyValueDecimal : sellValueDecimal;
+  const exitQuantityDecimal = roundTrip.direction === "long" ? sellQuantityDecimal : buyQuantityDecimal;
+  const exitValueDecimal = roundTrip.direction === "long" ? sellValueDecimal : buyValueDecimal;
+  const average = (value: string | null, quantity: string): string | null => value === null || quantity === "0"
+    ? null
+    : divideExactDecimals(value, quantity, { decimalPlaces: 8, roundingPolicy: "half_up_8dp" }).roundedDecimal;
   return Object.freeze({
     buyQuantityDecimal,
     buyValueDecimal,
-    entryPriceDecimal: roundTrip.allocations.at(0)?.priceDecimal ?? null,
+    entryQuantityDecimal,
+    entryValueDecimal,
+    entryPriceDecimal: average(entryValueDecimal, entryQuantityDecimal),
     exitPriceDecimal: roundTrip.projectionState === "ready_closed"
-      ? roundTrip.allocations.at(-1)?.priceDecimal ?? null
+      ? average(exitValueDecimal, exitQuantityDecimal)
       : null,
     positionDecimal: absoluteExactDecimal(signedPositionDecimal),
   });
@@ -134,12 +148,12 @@ WHERE workspace_id = ? AND account_id = ?`).run(scope.workspaceId, scope.activeA
       row.grossPnlDecimal, row.netPnlDecimal,
       row.netPnlDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(row.netPnlDecimal),
       row.enteredQuantityDecimal, row.exitQuantityDecimal, row.maximumPositionQuantityDecimal,
-      execution.buyValueDecimal, row.exitNotionalDecimal, row.uniqueExecutionCount, refreshedAtUtc,
-      execution.buyQuantityDecimal, workspaceTradeLibraryDecimalSortKey(execution.buyQuantityDecimal),
+      execution.entryValueDecimal, row.exitNotionalDecimal, row.uniqueExecutionCount, refreshedAtUtc,
+      execution.buyQuantityDecimal, workspaceTradeLibraryDecimalSortKey(row.enteredQuantityDecimal),
       execution.positionDecimal, workspaceTradeLibraryDecimalSortKey(execution.positionDecimal),
       execution.entryPriceDecimal, execution.entryPriceDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.entryPriceDecimal),
       execution.exitPriceDecimal, execution.exitPriceDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.exitPriceDecimal),
-      execution.buyValueDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.buyValueDecimal), workspaceTradeLibraryDecimalSortKey(row.grossPnlDecimal),
+      execution.entryValueDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.entryValueDecimal), workspaceTradeLibraryDecimalSortKey(row.grossPnlDecimal),
       Math.floor((Date.parse(row.closedAtUtc) - Date.parse(row.openedAtUtc)) / 1000), String(Math.floor((Date.parse(row.closedAtUtc) - Date.parse(row.openedAtUtc)) / 1000)).padStart(16, "0"),
     );
   }
@@ -155,12 +169,12 @@ WHERE workspace_id = ? AND account_id = ?`).run(scope.workspaceId, scope.activeA
       local.localDate, local.localDate,
       `${String(local.hour).padStart(2, "0")}:${String(local.minute).padStart(2, "0")}`,
       null, null, null, null, null,
-      null, null, null, null, null,
+      execution.entryQuantityDecimal, null, null, execution.entryValueDecimal, null,
       new Set(row.allocations.map((allocation) => allocation.executionId)).size, refreshedAtUtc,
-      execution.buyQuantityDecimal, workspaceTradeLibraryDecimalSortKey(execution.buyQuantityDecimal),
+      execution.buyQuantityDecimal, workspaceTradeLibraryDecimalSortKey(execution.entryQuantityDecimal),
       execution.positionDecimal, workspaceTradeLibraryDecimalSortKey(execution.positionDecimal),
       execution.entryPriceDecimal, execution.entryPriceDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.entryPriceDecimal),
-      null, null, null, null, null, null,
+      null, null, execution.entryValueDecimal === null ? null : workspaceTradeLibraryDecimalSortKey(execution.entryValueDecimal), null, null, null,
     );
   }
   database.prepare(`INSERT INTO journal_workspace_trade_library_projection_revisions (

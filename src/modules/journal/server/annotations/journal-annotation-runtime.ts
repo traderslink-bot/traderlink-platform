@@ -56,6 +56,7 @@ export function withWritableJournalAnnotations<T>(
   operation: (
     service: JournalAnnotationService,
     account: ReturnType<typeof accountScope>,
+    database: Database.Database,
   ) => T,
   options: Readonly<{ allowDemoAccountAnnotations?: boolean }> = {},
 ): T {
@@ -64,6 +65,6 @@ export function withWritableJournalAnnotations<T>(
     if (!options.allowDemoAccountAnnotations) {
       new JournalDemoAccountRepository(database).requireActiveAccountIsNotDemo(scope);
     }
-    return operation(createJournalAnnotationService(database), account);
+    return operation(createJournalAnnotationService(database), account, database);
   });
 }
