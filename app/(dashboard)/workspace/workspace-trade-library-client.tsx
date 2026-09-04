@@ -301,6 +301,8 @@ function WorkspaceExecutionEditForm({
 export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen, addTradeOpen, expectedAccountSelectionRef, offlineScopeRef, onAddTradeSaved, onClose }: Readonly<{ accountCurrency: string; accountTimezone: string; addOpen?: boolean; addTradeOpen?: boolean; currentAccountStillMatches?: () => Promise<boolean>; detail?: unknown; expectedAccountSelectionRef: string; offlineScopeRef: string; onAddTradeSaved?: () => void; onClose: () => void; startingTab?: number }>) {
   const tradeEntryOpen = addOpen ?? addTradeOpen ?? false;
   const [savedTrades, setSavedTrades] = useState<readonly WorkspaceTradeLibraryRow[]>([]);
+  const [savedReviewComplete, setSavedReviewComplete] = useState(false);
+  const [savedReviewError, setSavedReviewError] = useState<string | null>(null);
   const [analyzerUses, setAnalyzerUses] = useState<Readonly<{
     enabled: boolean; dailyAvailable: number; periodAvailable: number; selectableAvailable: number; daysUntilReset: number;
   }> | null>(null);
@@ -334,6 +336,8 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
       setAnalyzerSelection([]);
       setExpandedJournalTradeId(null);
       setSavedTrades([]);
+      setSavedReviewComplete(false);
+      setSavedReviewError(null);
       return;
     }
     void loadAnalyzerUses();
@@ -350,7 +354,12 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   const closeTradeDrawer = () => requestReviewAction(onClose);
   const handleNewTradeSaved = async (result: ManualTradeSubmitResult | null) => {
     if (result) {
-      setSavedTrades(result.savedTrades as readonly WorkspaceTradeLibraryRow[]);
+      const nextSavedTrades = result.savedTrades as readonly WorkspaceTradeLibraryRow[];
+      setSavedTrades(nextSavedTrades);
+      setSavedReviewComplete(true);
+      setSavedReviewError(nextSavedTrades.length === 0
+        ? "The trade was saved, but its review could not be loaded. Close and reopen the trade to review it."
+        : null);
       setAnalyzerSelection([]);
       setExpandedJournalTradeId(null);
       await loadAnalyzerUses();
@@ -375,7 +384,6 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
     setSendingAnalyses(true);
     setAnalyzerError(null);
     try {
-      const sent: string[] = [];
       for (const roundTripId of analyzerSelection) {
         const response = await fetch("/api/platform/trade-analyzer/trade/request", {
           body: JSON.stringify({ roundTripId }),
@@ -387,14 +395,12 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
           outcome?: string;
         }> | null;
         if (!response.ok || (result?.outcome !== "queued" && result?.outcome !== "already_requested")) {
-          setAnalyzerSelection((current) => current.filter((id) => !sent.includes(id)));
           setAnalyzerError("The selected trade could not be sent to Trade Analyzer. Try again.");
           return;
         }
-        sent.push(roundTripId);
+        setAnalyzerSelection((current) => current.filter((id) => id !== roundTripId));
         setAnalyzerUses(result.availability ?? null);
       }
-      setAnalyzerSelection([]);
     } catch {
       setAnalyzerError("The selected trade could not be sent to Trade Analyzer. Try again.");
     } finally {
@@ -412,12 +418,13 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
     <Stack sx={{ height: "100%" }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}>
         <Stack direction="row" sx={{ justifyContent: "space-between" }}>
-          <Typography component="h2" variant="h6">{savedTrades.length > 0 ? "Review saved trades" : "Add trade"}</Typography>
+          <Typography component="h2" variant="h6">{savedReviewComplete ? "Review saved trades" : "Add trade"}</Typography>
           <Button onClick={closeTradeDrawer}>Close</Button>
         </Stack>
       </Box>
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
-        {savedTrades.length === 0 ? <AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} embedded expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} onSaved={handleNewTradeSaved} /> : <Stack spacing={1.5}>
+        {!savedReviewComplete ? <AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} embedded expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} onSaved={handleNewTradeSaved} /> : <Stack spacing={1.5}>
+          {savedReviewError ? <Alert severity="warning">{savedReviewError}</Alert> : null}
           {savedTrades.map((trade) => {
             const outcomeColor = financialOutcomeColor(trade.gainLossDecimal);
             const outcomeTone = outcomeColor === "success.main" ? "success" : outcomeColor === "error.main" ? "error" : null;
@@ -441,7 +448,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
           })}
           {analyzerError ? <Typography color="error.main" variant="body2">{analyzerError}</Typography> : null}
           {analyzerUses?.enabled ? <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}><Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available in 30 days · resets in {analyzerUses.daysUntilReset} days</Typography></Box> : null}
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button onClick={() => requestReviewAction(() => setSavedTrades([]))} variant="outlined">Add another trade</Button>{analyzerUses?.enabled ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button onClick={() => requestReviewAction(() => { setSavedTrades([]); setSavedReviewComplete(false); setSavedReviewError(null); })} variant="outlined">Add another trade</Button>{analyzerUses?.enabled && savedTrades.length > 0 ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
         </Stack>}
       </Box>
     </Stack>
