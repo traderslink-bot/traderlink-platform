@@ -538,19 +538,22 @@ export function TradeExplorerReviewEditor({
           >
             {!embedded ? <Typography color="text.secondary" variant="body2">
               {reviewDirty ? "Unsaved changes" : "All changes saved"}
-            </Typography> : success ? <Typography color="success.main" sx={{ fontWeight: 700 }} variant="body2">{success}</Typography> : <Box />}
-            <Button
-              disabled={
-                !reviewDirty ||
-                state === "saving" ||
-                (draft?.selectedTagIds.length ?? 0) > TAG_LIMIT
-              }
-              onClick={() => void save()}
-              sx={{ minHeight: 44, minWidth: 128, width: { xs: "100%", sm: "auto" } }}
-              variant="contained"
-            >
-              {state === "saving" ? "Saving…" : "Save review"}
-            </Button>
+            </Typography> : <Box sx={{ flex: 1 }} />}
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, width: { xs: "100%", sm: "auto" } }}>
+              {embedded && success ? <Alert severity="success" sx={{ py: 0, "& .MuiAlert-message": { fontWeight: 700, py: 0.75 } }}>{success}</Alert> : null}
+              <Button
+                disabled={
+                  !reviewDirty ||
+                  state === "saving" ||
+                  (draft?.selectedTagIds.length ?? 0) > TAG_LIMIT
+                }
+                onClick={() => void save()}
+                sx={{ minHeight: 44, minWidth: 128, width: { xs: "100%", sm: "auto" } }}
+                variant="contained"
+              >
+                {state === "saving" ? "Saving…" : "Save review"}
+              </Button>
+            </Stack>
           </Stack>
         </Box>
       </ReviewSurface>
