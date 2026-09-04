@@ -7,6 +7,7 @@ import type {
   JournalRuleReviewRecord,
   JournalTagRecord,
 } from "@/src/modules/journal/contracts/journal-annotation-contracts";
+import type { JournalLogicalTrade } from "@/src/modules/journal/contracts/journal-logical-trade-contracts";
 import type { JournalTrackedPositionDetail } from "@/src/modules/journal/contracts/journal-trade-tracker-contracts";
 import { normalizeJournalAnalyticsFacts } from
   "@/src/modules/journal-analytics/server/normalize-journal-analytics-facts";
@@ -445,11 +446,12 @@ export function readJournalTradeStory(
     platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
   }
   const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
-  const logicalTrade = withReadonlyPlatformDatabase({}, (database) =>
-    new JournalLogicalTradeRepository(database).findByRoundTripId(account, roundTripId));
-  const memberIds = logicalTrade?.members.map((member) => member.roundTripId) ?? [roundTripId];
+  let logicalTrade: JournalLogicalTrade | null = null;
   let position: JournalTrackedPositionDetail;
   try {
+    logicalTrade = withReadonlyPlatformDatabase({}, (database) =>
+      new JournalLogicalTradeRepository(database).findByRoundTripId(account, roundTripId));
+    const memberIds = logicalTrade?.members.map((member) => member.roundTripId) ?? [roundTripId];
     position = withReadonlyJournalIntegrityRuntime(scope, (journal) => {
       const members = memberIds.map((memberId) =>
         journal.tradeTrackerReads.positionLedgerDetailForRoundTrip(account, memberId));
@@ -467,6 +469,7 @@ export function readJournalTradeStory(
     return historicalSummaryOrThrow(scope, roundTripId, error);
   }
   try {
+    const memberIds = logicalTrade?.members.map((member) => member.roundTripId) ?? [roundTripId];
     const annotationMembers = memberIds.map((memberId) => annotations(scope, memberId));
     const groupAnnotations = logicalTrade?.logicalTradeId && logicalTrade.members.length > 1
       ? logicalAnnotations(scope, logicalTrade.logicalTradeId) : null;

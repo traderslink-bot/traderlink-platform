@@ -21,8 +21,10 @@ Progress is tracked in
      drawer.
    - Refresh the compact card from its existing same-origin scanner endpoint
      when the canonical article publisher emits a scanner update, without a
-     page refresh. The one live connection exists only while the card is
-     visible and closes when it unmounts.
+     page refresh. When a browser resumes the tab after pausing the live
+     connection, refresh immediately on return. The connection exists only
+     while the card is visible and closes when it unmounts; no periodic
+     browser polling is used.
 
 2. **Workspace actions**
    - Add the requested tooltip to Rules and PR Scanner.
