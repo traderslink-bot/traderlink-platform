@@ -17,6 +17,7 @@ import { formatJournalAnalyticsDecimal, formatJournalAnalyticsDuration, formatJo
 import type { JournalManualTradeEntry, JournalManualTradePreview } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
 import { commitManualTradeOnline, ManualTradeNeedsReviewError, previewManualTradeOnline, queueManualTradeSubmission, type ManualTradeSubmission, type ManualTradeSubmitResult } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
 import { loadWorkspaceTradeLibraryPage } from "./workspace-trade-library-actions";
 import { WorkspaceAtomicTradeEditDrawer } from "./workspace-atomic-trade-edit-drawer";
@@ -378,7 +379,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
       for (const roundTripId of analyzerSelection) {
         const response = await fetch("/api/platform/trade-analyzer/trade/request", {
           body: JSON.stringify({ roundTripId }),
-          headers: { "Content-Type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
+          headers: { "Content-Type": "application/json", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" },
           method: "POST",
         });
         const result = await response.json().catch(() => null) as Readonly<{
@@ -444,7 +445,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
         </Stack>}
       </Box>
     </Stack>
-    <Dialog onClose={() => setDiscardJournalOpen(false)} open={discardJournalOpen}>
+    <Dialog onClose={() => { pendingReviewActionRef.current = null; setDiscardJournalOpen(false); }} open={discardJournalOpen}>
       <DialogTitle>Discard unsaved journal changes?</DialogTitle>
       <DialogContent><Typography>Your unsaved note, tags, or rule changes will be lost.</Typography></DialogContent>
       <DialogActions><Button onClick={() => { pendingReviewActionRef.current = null; setDiscardJournalOpen(false); }}>Keep editing</Button><Button color="error" onClick={() => {
