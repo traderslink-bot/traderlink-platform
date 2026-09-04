@@ -309,6 +309,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   }> | null>(null);
   const [analyzerUsesStatus, setAnalyzerUsesStatus] = useState<"loading" | "ready" | "unavailable">("loading");
   const [analyzerError, setAnalyzerError] = useState<string | null>(null);
+  const [analyzerSuccess, setAnalyzerSuccess] = useState<string | null>(null);
   const [analyzerSelection, setAnalyzerSelection] = useState<readonly string[]>([]);
   const [expandedJournalTradeId, setExpandedJournalTradeId] = useState<string | null>(null);
   const [sendingAnalyses, setSendingAnalyses] = useState(false);
@@ -353,6 +354,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   useEffect(() => {
     if (!tradeEntryOpen) {
       setAnalyzerError(null);
+      setAnalyzerSuccess(null);
       setAnalyzerSelection([]);
       setExpandedJournalTradeId(null);
       setSavedTrades([]);
@@ -427,14 +429,17 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
       return;
     }
     setAnalyzerError(null);
+    setAnalyzerSuccess(null);
     setAnalyzerSelection((current) => checked
       ? [...current, trade.roundTripId]
       : current.filter((roundTripId) => roundTripId !== trade.roundTripId));
   };
   const sendSelectedAnalyses = async () => {
     if (analyzerSelection.length === 0 || sendingAnalyses) return;
+    const selectedCount = analyzerSelection.length;
     setSendingAnalyses(true);
     setAnalyzerError(null);
+    setAnalyzerSuccess(null);
     try {
       for (const roundTripId of analyzerSelection) {
         const response = await fetch("/api/platform/trade-analyzer/trade/request", {
@@ -453,6 +458,9 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
         setAnalyzerSelection((current) => current.filter((id) => id !== roundTripId));
         setAnalyzerUses(result.availability ?? null);
       }
+      setAnalyzerSuccess(selectedCount === 1
+        ? "Trade sent to Trade Analyzer."
+        : "Selected trades sent to Trade Analyzer.");
     } catch {
       setAnalyzerError("The selected trade could not be sent to Trade Analyzer. Try again.");
     } finally {
@@ -508,6 +516,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
             </Box>;
           })}
           {analyzerError ? <Typography color="error.main" variant="body2">{analyzerError}</Typography> : null}
+          {analyzerSuccess ? <Alert severity="success">{analyzerSuccess}</Alert> : null}
           <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}>
             <Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography>
             {analyzerUsesStatus === "loading" ? <Typography color="text.secondary" variant="body2">Loading…</Typography> : null}
