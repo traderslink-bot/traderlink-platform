@@ -20,7 +20,6 @@ import {
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import {
   requireActiveJournalAnalyticsAccountId,
   withJournalAnalyticsDashboardRuntime,
@@ -327,19 +326,17 @@ function saveLogicalTradeReview(
 ): void {
   if (!scope.activeAccountId || input.expectedRoundTripVersionId !== logical.logicalTradeVersionId) conflict();
   const selectedTagIds = new Set(input.tags?.tagIds ?? []);
-  if (input.tags) {
-    withWritableJournalAnnotations(scope, (service, account) => {
+  withWritableJournalAnnotations(scope, (service, account, database) => database.transaction(() => {
+    if (input.tags) {
       const existing = service.listTags(account);
-      for (const presetKey of input.tags!.presetKeys) {
+      for (const presetKey of input.tags.presetKeys) {
         const preset = journalTagPresetByKey(presetKey);
         if (!preset) invalid("presetKeys");
         const tag = existing.find((candidate) => journalTagPresetForName(candidate.name)?.presetKey === presetKey)
           ?? service.createTag(account, { name: preset.name });
         selectedTagIds.add(tag.tagId);
       }
-    });
-  }
-  withPlatformDatabase({ mode: "runtime" }, (database) => database.transaction(() => {
+    }
     const current = database.prepare(`SELECT current_version_id, lifecycle_state
 FROM journal_logical_trades WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?`).get(
       scope.workspaceId, scope.activeAccountId!, logical.logicalTradeId,

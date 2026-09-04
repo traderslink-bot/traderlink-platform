@@ -17,6 +17,7 @@ export type WorkspaceTradeLibraryRow = Readonly<{
   date: string;
   direction: "long" | "short";
   buyQuantityDecimal: string;
+  entryQuantityDecimal: string;
   editableExecutions: readonly WorkspaceEditableExecution[];
   entryDate: string;
   entryPriceDecimal: string | null;
@@ -140,6 +141,7 @@ type TradeExecutionFact = Readonly<{
 
 type WorkspaceTradeExecutionFacts = Readonly<{
   buyQuantityDecimal: string;
+  entryQuantityDecimal: string;
   entryPriceDecimal: string | null;
   exitPriceDecimal: string | null;
   positionDecimal: string;
@@ -290,6 +292,7 @@ WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?
     result.push(Object.freeze({
       ...first,
       buyQuantityDecimal: sum(members.map((member) => member.buyQuantityDecimal)),
+      entryQuantityDecimal: sum(members.map((member) => member.entryQuantityDecimal)),
       date: last.date,
       editableExecutions: Object.freeze(members.flatMap((member) => member.editableExecutions)
         .sort((left, right) => `${left.localDate}T${left.localTime}`.localeCompare(`${right.localDate}T${right.localTime}`))),
@@ -410,17 +413,20 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
   for (const row of rows) {
     const entries = byVersion.get(row.round_trip_version_id) ?? [];
     let buyQuantityDecimal = "0";
+    let sellQuantityDecimal = "0";
     let signedPositionDecimal = "0";
     for (const entry of entries) {
       if (entry.side === "buy") {
         buyQuantityDecimal = addExactDecimals(buyQuantityDecimal, entry.quantity_decimal);
         signedPositionDecimal = addExactDecimals(signedPositionDecimal, entry.quantity_decimal);
       } else {
+        sellQuantityDecimal = addExactDecimals(sellQuantityDecimal, entry.quantity_decimal);
         signedPositionDecimal = subtractExactDecimals(signedPositionDecimal, entry.quantity_decimal);
       }
     }
     result.set(row.round_trip_version_id, Object.freeze({
       buyQuantityDecimal,
+      entryQuantityDecimal: row.direction === "long" ? buyQuantityDecimal : sellQuantityDecimal,
       entryPriceDecimal: entries.at(0)?.price_decimal ?? null,
       exitPriceDecimal: row.projection_state === "ready_closed" ? entries.at(-1)?.price_decimal ?? null : null,
       positionDecimal: absoluteExactDecimal(signedPositionDecimal),
@@ -439,6 +445,7 @@ function toWorkspaceTradeLibraryRows(
   const deletes = tradeDeleteRefs(scope, rows);
   return Object.freeze(rows.map((row) => Object.freeze({
     buyQuantityDecimal: facts.get(row.round_trip_version_id)?.buyQuantityDecimal ?? "0",
+    entryQuantityDecimal: facts.get(row.round_trip_version_id)?.entryQuantityDecimal ?? "0",
     date: row.activity_local_date,
     direction: row.direction,
     editableExecutions: editable.get(row.round_trip_id) ?? Object.freeze([]),

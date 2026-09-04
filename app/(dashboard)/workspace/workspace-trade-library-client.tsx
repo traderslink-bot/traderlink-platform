@@ -444,7 +444,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
             return <Box key={trade.roundTripId} sx={{ border: 1, borderColor: outcomeTone ? `${outcomeTone}.main` : "divider", borderRadius: 2, overflow: "hidden" }}>
               <Box sx={{ bgcolor: outcomeTone ? `${outcomeTone}.main` : "action.hover", color: outcomeTone ? "common.white" : "text.primary", p: 1.5 }}>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
-                  <Box><Typography sx={{ fontWeight: 850 }}>{trade.symbol} · {trade.direction === "long" ? "Long" : "Short"}</Typography><Typography color="inherit" variant="body2">{trade.executionCount} executions · {formatJournalAnalyticsDecimal(trade.buyQuantityDecimal)} shares</Typography></Box>
+                  <Box><Typography sx={{ fontWeight: 850 }}>{trade.symbol} · {trade.direction === "long" ? "Long" : "Short"}</Typography><Typography color="inherit" variant="body2">{trade.executionCount} executions · {formatJournalAnalyticsDecimal(trade.entryQuantityDecimal)} shares</Typography></Box>
                   <Typography color="inherit" sx={{ fontWeight: 850 }}>{tradeMoney(trade)}</Typography>
                 </Stack>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", mt: 1 }}>
