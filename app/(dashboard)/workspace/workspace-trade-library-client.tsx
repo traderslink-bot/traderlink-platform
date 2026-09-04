@@ -370,7 +370,35 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   };
   const handleNewTradeSaved = async (result: ManualTradeSubmitResult | null) => {
     if (result) {
-      const nextSavedTrades = result.savedTrades as readonly WorkspaceTradeLibraryRow[];
+      const responseTrades = result.savedTrades as readonly WorkspaceTradeLibraryRow[];
+      const savedRoundTripIds = new Set(responseTrades.flatMap((trade) =>
+        trade.underlyingRoundTripIds.length > 0 ? trade.underlyingRoundTripIds : [trade.roundTripId]));
+      const affectedDates = [...result.affectedDates].sort();
+      const refreshed = affectedDates.length > 0
+        ? await loadWorkspaceTradeLibraryPage({
+          afterCursor: null,
+          endDate: affectedDates.at(-1) ?? null,
+          filter: "all",
+          followDashboardPeriod: false,
+          group: "none",
+          searchTicker: "",
+          sort: "newest",
+          startDate: affectedDates[0] ?? null,
+        }).catch(() => null)
+        : null;
+      const refreshedSavedTrades = refreshed?.ok &&
+        refreshed.accountSelectionRef === expectedAccountSelectionRef
+        ? refreshed.model.rows.filter((trade) => trade.underlyingRoundTripIds.some((roundTripId) =>
+          savedRoundTripIds.has(roundTripId)))
+        : [];
+      const nextSavedTrades = Object.freeze([
+        ...refreshedSavedTrades,
+        ...responseTrades.filter((responseTrade) => !refreshedSavedTrades.some((refreshedTrade) =>
+          refreshedTrade.underlyingRoundTripIds.some((roundTripId) =>
+            responseTrade.underlyingRoundTripIds.includes(roundTripId)))),
+      ].sort((left, right) =>
+        `${left.entryDate}T${left.entryTime}`.localeCompare(`${right.entryDate}T${right.entryTime}`) ||
+        left.roundTripId.localeCompare(right.roundTripId)));
       setSavedTrades(nextSavedTrades);
       setSavedReviewComplete(true);
       setSavedReviewError(nextSavedTrades.length === 0
