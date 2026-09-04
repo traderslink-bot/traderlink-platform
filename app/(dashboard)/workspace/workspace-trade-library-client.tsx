@@ -329,29 +329,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   if (!tradeEntryOpen) return null;
   const handleNewTradeSaved = async (result: ManualTradeSubmitResult | null) => {
     if (result) {
-      const savedTradeIds = new Set((result.savedTrades as readonly WorkspaceTradeLibraryRow[])
-        .map((trade) => trade.roundTripId));
-      const affectedDates = [...result.affectedDates].sort();
-      const refreshed = affectedDates.length > 0
-        ? await loadWorkspaceTradeLibraryPage({
-          afterCursor: null,
-          endDate: affectedDates.at(-1) ?? null,
-          filter: "all",
-          followDashboardPeriod: false,
-          group: "none",
-          searchTicker: "",
-          sort: "newest",
-          startDate: affectedDates[0] ?? null,
-        })
-        : null;
-      const logicalSavedTrades = refreshed?.ok &&
-        refreshed.accountSelectionRef === expectedAccountSelectionRef
-        ? refreshed.model.rows.filter((trade) =>
-          trade.underlyingRoundTripIds.some((roundTripId) => savedTradeIds.has(roundTripId)))
-        : [];
-      setSavedTrades(logicalSavedTrades.length > 0
-        ? logicalSavedTrades
-        : result.savedTrades as readonly WorkspaceTradeLibraryRow[]);
+      setSavedTrades(result.savedTrades as readonly WorkspaceTradeLibraryRow[]);
       setAnalyzerSelection([]);
       setExpandedJournalTradeId(null);
       onAddTradeSaved?.();
@@ -375,6 +353,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
     setSendingAnalyses(true);
     setAnalyzerError(null);
     try {
+      const sent: string[] = [];
       for (const roundTripId of analyzerSelection) {
         const response = await fetch("/api/platform/trade-analyzer/trade/request", {
           body: JSON.stringify({ roundTripId }),
@@ -385,10 +364,12 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
           availability?: typeof analyzerUses;
           outcome?: string;
         }> | null;
-        if (!response.ok || result?.outcome !== "queued") {
+        if (!response.ok || (result?.outcome !== "queued" && result?.outcome !== "already_requested")) {
+          setAnalyzerSelection((current) => current.filter((id) => !sent.includes(id)));
           setAnalyzerError("The selected trade could not be sent to Trade Analyzer. Try again.");
           return;
         }
+        sent.push(roundTripId);
         setAnalyzerUses(result.availability ?? null);
       }
       setAnalyzerSelection([]);
@@ -418,7 +399,8 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
           {savedTrades.map((trade) => {
             const outcomeColor = financialOutcomeColor(trade.gainLossDecimal);
             const outcomeTone = outcomeColor === "success.main" ? "success" : outcomeColor === "error.main" ? "error" : null;
-            const analyzable = (trade.status === "Closed" || trade.status === "Closed swing") &&
+            const analyzable = analyzerUses?.enabled === true &&
+              trade.status === "Closed" &&
               trade.entryDate === trade.exitDate;
             const journalOpen = expandedJournalTradeId === trade.roundTripId;
             return <Box key={trade.roundTripId} sx={{ border: 1, borderColor: outcomeTone ? `${outcomeTone}.main` : "divider", borderRadius: 2, overflow: "hidden" }}>
@@ -436,8 +418,8 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
             </Box>;
           })}
           {analyzerError ? <Typography color="error.main" variant="body2">{analyzerError}</Typography> : null}
-          {analyzerUses?.enabled ? <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}><Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available this period · resets in {analyzerUses.daysUntilReset} days</Typography></Box> : null}
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button onClick={() => setSavedTrades([])} variant="outlined">Add another trade</Button><Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button></Stack>
+          {analyzerUses?.enabled ? <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}><Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available in 30 days · resets in {analyzerUses.daysUntilReset} days</Typography></Box> : null}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button onClick={() => setSavedTrades([])} variant="outlined">Add another trade</Button>{analyzerUses?.enabled ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
         </Stack>}
       </Box>
     </Stack>

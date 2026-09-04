@@ -661,3 +661,16 @@ LIMIT 1`).all(
   ) as readonly ProjectionRow[];
   return toWorkspaceTradeLibraryRows(database, scope, rows)[0] ?? null;
 }
+
+export function readWorkspaceTradeLibrarySavedTrades(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  targets: readonly Readonly<{ roundTripId: string; roundTripVersionId: string }>[],
+): readonly WorkspaceTradeLibraryRow[] {
+  const unique = new Map<string, WorkspaceTradeLibraryRow>();
+  for (const target of targets) {
+    const trade = readWorkspaceTradeLibrarySavedTrade(database, scope, target);
+    if (trade) unique.set(trade.roundTripId, trade);
+  }
+  return mergeLogicalWorkspaceRows(database, scope, Object.freeze([...unique.values()]));
+}

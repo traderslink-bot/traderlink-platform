@@ -13,7 +13,10 @@ import {
   isTraderLinkPlatformError,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { readWorkspaceTradeLibrarySavedTrade } from "@/app/(dashboard)/workspace/workspace-trade-library";
+import {
+  readWorkspaceTradeLibrarySavedTrade,
+  readWorkspaceTradeLibrarySavedTrades,
+} from "@/app/(dashboard)/workspace/workspace-trade-library";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,14 +48,8 @@ export async function POST(request: Request): Promise<Response> {
           result.affectedTradeTargets[0]!,
         ))
       : null;
-    const savedTrades = withReadonlyPlatformDatabase({}, (database) => {
-      const unique = new Map<string, NonNullable<ReturnType<typeof readWorkspaceTradeLibrarySavedTrade>>>();
-      for (const target of result.affectedTradeTargets) {
-        const trade = readWorkspaceTradeLibrarySavedTrade(database, requestScope, target);
-        if (trade) unique.set(trade.roundTripId, trade);
-      }
-      return Object.freeze([...unique.values()]);
-    });
+    const savedTrades = withReadonlyPlatformDatabase({}, (database) =>
+      readWorkspaceTradeLibrarySavedTrades(database, requestScope, result.affectedTradeTargets));
     return Response.json({
       status: "ready",
       result: {
