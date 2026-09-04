@@ -24,6 +24,7 @@ export type JournalWorkspaceTradeEditDraft = Readonly<{
 export type JournalWorkspaceTradeEditConsequence =
   | "keeps_closed"
   | "leaves_open"
+  | "deletes_trade"
   | "creates_multiple"
   | "merges"
   | "changes_nearby_boundaries";
