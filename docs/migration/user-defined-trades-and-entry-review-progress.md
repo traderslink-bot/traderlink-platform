@@ -6,6 +6,12 @@
 
 ## Staging correction — 2026-09-04
 
+- By owner decision, Workspace Edit Trade does not offer a save for
+  closed-to-open or closed-plus-re-entry execution combinations. The preview
+  states that the edit cannot be saved as one trade there and disables the
+  confirmation action; it no longer promises an open position that may remain
+  closed.
+
 - A Workspace edit that rebuilds a formerly closed trade into a new open
   position now applies the selected style to that current rebuilt trade even
   when its style text did not change. A Swing displays as `Open swing` and is

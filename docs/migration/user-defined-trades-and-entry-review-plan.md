@@ -8,6 +8,14 @@
 
 **Implementation progress:** [User-Defined Trades And Post-Entry Review Progress](user-defined-trades-and-entry-review-progress.md)
 
+## Workspace Edit boundary
+
+The Workspace Edit Trade drawer does not save a closed factual round trip plus
+a later open position as one trade, and it does not save an existing closed
+trade as open. Those previews state that the edit cannot be saved as one trade
+there and do not offer confirmation. This boundary leaves the factual execution
+ledger unchanged.
+
 ## Outcome
 
 Keep the Journal's factual execution and zero-to-zero round-trip reconstruction
