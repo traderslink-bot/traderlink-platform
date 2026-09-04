@@ -617,7 +617,7 @@ LEFT JOIN journal_logical_trade_versions logical_version
   projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
   projection.projection_state, projection.round_trip_id, projection.round_trip_version_id,
   version.created_at_utc AS recorded_at_utc, instrument.normalized_symbol AS symbol,
-  EXISTS (
+  (EXISTS (
     SELECT 1
     FROM journal_round_trip_daily_trade_analyses analysis
     JOIN journal_round_trip_daily_trade_analysis_versions analysis_version
@@ -634,7 +634,23 @@ LEFT JOIN journal_logical_trade_versions logical_version
       AND analysis.status = 'ready'
       AND analysis_version.status = 'ready'
       AND analyzed_version.projection_fingerprint_sha256 = version.projection_fingerprint_sha256
-  ) AS has_current_analyzer_result,
+  ) OR EXISTS (
+    SELECT 1
+    FROM journal_active_logical_trade_memberships analyzer_membership
+    JOIN journal_logical_trade_daily_analyses logical_analysis
+      ON logical_analysis.workspace_id = analyzer_membership.workspace_id
+     AND logical_analysis.account_id = analyzer_membership.account_id
+     AND logical_analysis.logical_trade_id = analyzer_membership.logical_trade_id
+     AND logical_analysis.logical_trade_version_id = analyzer_membership.logical_trade_version_id
+    JOIN journal_logical_trade_daily_analysis_versions logical_analysis_version
+      ON logical_analysis_version.logical_trade_analysis_id = logical_analysis.logical_trade_analysis_id
+     AND logical_analysis_version.revision_number = logical_analysis.current_revision
+    WHERE analyzer_membership.workspace_id = projection.workspace_id
+      AND analyzer_membership.account_id = projection.account_id
+      AND analyzer_membership.round_trip_id = projection.round_trip_id
+      AND logical_analysis.status = 'ready'
+      AND logical_analysis_version.status = 'ready'
+  )) AS has_current_analyzer_result,
   version.trade_currency,
   COALESCE(CASE logical_version.trade_style WHEN 'day' THEN 'day_trade' ELSE logical_version.trade_style END,
     style.trade_style) AS trade_style,
@@ -663,7 +679,7 @@ export function readWorkspaceTradeLibrarySavedTrade(
   projection.exit_price_decimal, projection.exit_price_sort_key, projection.maximum_position_quantity_decimal, projection.gross_pnl_decimal, projection.gross_pnl_sort_key, projection.net_pnl_decimal, projection.net_pnl_sort_key, projection.hold_duration_seconds, projection.hold_duration_sort_key,
   projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
   projection.projection_state, projection.round_trip_id, projection.round_trip_version_id, instrument.normalized_symbol AS symbol,
-  EXISTS (
+  (EXISTS (
     SELECT 1
     FROM journal_round_trip_daily_trade_analyses analysis
     JOIN journal_round_trip_daily_trade_analysis_versions analysis_version
@@ -680,7 +696,23 @@ export function readWorkspaceTradeLibrarySavedTrade(
       AND analysis.status = 'ready'
       AND analysis_version.status = 'ready'
       AND analyzed_version.projection_fingerprint_sha256 = version.projection_fingerprint_sha256
-  ) AS has_current_analyzer_result,
+  ) OR EXISTS (
+    SELECT 1
+    FROM journal_active_logical_trade_memberships analyzer_membership
+    JOIN journal_logical_trade_daily_analyses logical_analysis
+      ON logical_analysis.workspace_id = analyzer_membership.workspace_id
+     AND logical_analysis.account_id = analyzer_membership.account_id
+     AND logical_analysis.logical_trade_id = analyzer_membership.logical_trade_id
+     AND logical_analysis.logical_trade_version_id = analyzer_membership.logical_trade_version_id
+    JOIN journal_logical_trade_daily_analysis_versions logical_analysis_version
+      ON logical_analysis_version.logical_trade_analysis_id = logical_analysis.logical_trade_analysis_id
+     AND logical_analysis_version.revision_number = logical_analysis.current_revision
+    WHERE analyzer_membership.workspace_id = projection.workspace_id
+      AND analyzer_membership.account_id = projection.account_id
+      AND analyzer_membership.round_trip_id = projection.round_trip_id
+      AND logical_analysis.status = 'ready'
+      AND logical_analysis_version.status = 'ready'
+  )) AS has_current_analyzer_result,
   version.trade_currency, style.trade_style, projection.unique_execution_count
 FROM journal_workspace_trade_library_projections projection
 JOIN journal_round_trip_versions version ON version.workspace_id = projection.workspace_id

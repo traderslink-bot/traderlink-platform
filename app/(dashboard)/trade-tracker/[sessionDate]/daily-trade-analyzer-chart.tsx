@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
 import Decimal from "decimal.js";
 import {
   CandlestickSeries,
@@ -52,34 +52,6 @@ type ChartSemanticColors = Readonly<{
   vwap: string;
 }>;
 type PatternColorMap = Readonly<Record<string, string>>;
-
-const DARK_ANALYZER_LIGHT_CHART_THEME = Object.freeze({
-  actionHover: "#0b3475",
-  background: "#ffffff",
-  candleLoss: "#d14343",
-  candleWin: "#1b8a5a",
-  controlBorder: "#b8c6d9",
-  controlText: "#41516a",
-  grid: "#dce5f0",
-  text: "#172033",
-});
-
-const LIGHT_ANALYZER_ANNOTATION_APPEARANCE: TradeAnalyzerAnnotationAppearance = Object.freeze({
-  executionFill: "#ffffff",
-  patternOutline: "rgba(255,255,255,0.98)",
-  ruleText: "#ffffff",
-  selectedExecutionFill: "#fff7d6",
-  selectionShadow: "rgba(1,30,86,0.28)",
-});
-
-const LIGHT_ANALYZER_SEMANTIC_COLORS: ChartSemanticColors = Object.freeze({
-  buy: "#087443",
-  ema: "#ef6c00",
-  rule: "#9A6700",
-  sell: "#b42318",
-  volume: "rgba(1, 30, 86, 0.30)",
-  vwap: "#7b1fa2",
-});
 
 const CHART_INTERVAL_SECONDS: Readonly<Record<DailyTradeChartInterval, number>> = Object.freeze({
   "1m": 60,
@@ -413,13 +385,55 @@ export function DailyTradeAnalyzerChart({
 }) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
-  const chartTheme = theme.palette.mode === "dark"
-    ? DARK_ANALYZER_LIGHT_CHART_THEME
-    : theme.palette.traderLink.chart;
+  const chartTheme = theme.palette.traderLink.chart;
   const usesDarkChartControls = theme.palette.mode === "dark";
-  const annotationAppearance = LIGHT_ANALYZER_ANNOTATION_APPEARANCE;
-  const chartSemanticColors = LIGHT_ANALYZER_SEMANTIC_COLORS;
-  const chartPatternColors = LIGHT_PATTERN_COLORS;
+  const annotationAppearance = useMemo<TradeAnalyzerAnnotationAppearance>(() => ({
+    executionFill: theme.palette.mode === "dark" ? theme.palette.background.paper : "#ffffff",
+    patternOutline: theme.palette.mode === "dark" ? theme.palette.text.primary : "rgba(255,255,255,0.98)",
+    ruleText: theme.palette.mode === "dark" ? theme.palette.background.default : "#ffffff",
+    selectedExecutionFill: theme.palette.mode === "dark" ? theme.palette.action.selected : "#fff7d6",
+    selectionShadow: theme.palette.mode === "dark" ? "rgba(121,170,241,0.28)" : "rgba(1,30,86,0.28)",
+  }), [theme.palette.action.selected, theme.palette.background.default, theme.palette.background.paper, theme.palette.mode, theme.palette.text.primary]);
+  const chartSemanticColors = useMemo<ChartSemanticColors>(() => theme.palette.mode === "dark"
+    ? {
+      buy: theme.palette.success.main,
+      ema: theme.palette.warning.main,
+      rule: theme.palette.warning.main,
+      sell: theme.palette.error.main,
+      volume: alpha(theme.palette.primary.light, 0.54),
+      vwap: theme.palette.primary.light,
+    }
+    : {
+      buy: "#087443",
+      ema: "#ef6c00",
+      rule: "#9A6700",
+      sell: "#b42318",
+      volume: "rgba(1, 30, 86, 0.30)",
+      vwap: "#7b1fa2",
+    }, [theme.palette.error.main, theme.palette.mode, theme.palette.primary.light, theme.palette.success.main, theme.palette.warning.main]);
+  const chartPatternColors = useMemo<PatternColorMap>(() => theme.palette.mode === "dark"
+    ? {
+      compression: theme.palette.text.secondary,
+      compression_break_bearish: theme.palette.error.main,
+      compression_break_bullish: theme.palette.primary.light,
+      doji: theme.palette.text.secondary,
+      engulfing_bearish: theme.palette.error.main,
+      engulfing_bullish: theme.palette.success.main,
+      evening_star_bearish: theme.palette.primary.light,
+      expansion_bearish: theme.palette.error.main,
+      expansion_bullish: theme.palette.success.main,
+      hammer_bullish: theme.palette.primary.light,
+      harami_bearish: theme.palette.error.main,
+      harami_bullish: theme.palette.success.main,
+      high_volume_exhaustion: theme.palette.primary.light,
+      morning_star_bullish: theme.palette.primary.light,
+      rejection_lower: theme.palette.primary.light,
+      rejection_upper: theme.palette.warning.main,
+      shooting_star_bearish: theme.palette.error.main,
+      three_black_crows_bearish: theme.palette.error.main,
+      three_white_soldiers_bullish: theme.palette.success.main,
+    }
+    : LIGHT_PATTERN_COLORS, [theme.palette.error.main, theme.palette.mode, theme.palette.primary.light, theme.palette.success.main, theme.palette.text.secondary, theme.palette.warning.main]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const chartCandleCountRef = useRef(0);
@@ -1157,17 +1171,17 @@ export function DailyTradeAnalyzerChart({
           sx={{
             width: { xs: "100%", md: "auto" },
             ...(usesDarkChartControls ? {
-              bgcolor: theme.palette.secondary.main,
+              bgcolor: theme.palette.primary.main,
               border: 1,
-              borderColor: theme.palette.secondary.main,
+              borderColor: theme.palette.primary.light,
             } : {}),
             "& .MuiToggleButton-root": {
               ...(usesDarkChartControls ? {
-                borderColor: theme.palette.secondary.main,
-                color: theme.palette.text.primary,
+                borderColor: theme.palette.primary.light,
+                color: theme.palette.primary.contrastText,
                 "&:hover": {
                   bgcolor: theme.palette.action.hover,
-                  borderColor: theme.palette.secondary.main,
+                  borderColor: theme.palette.primary.light,
                 },
                 "&.Mui-selected": {
                   bgcolor: `${theme.palette.primary.main} !important`,
@@ -1199,10 +1213,10 @@ export function DailyTradeAnalyzerChart({
           sx={{
             minHeight: { xs: 44, md: 32 },
             ...(usesDarkChartControls ? {
-              bgcolor: theme.palette.secondary.main,
-              borderColor: theme.palette.secondary.main,
-              color: theme.palette.text.primary,
-              "&:hover": { bgcolor: theme.palette.action.hover, borderColor: theme.palette.secondary.main },
+              bgcolor: theme.palette.primary.main,
+              borderColor: theme.palette.primary.light,
+              color: theme.palette.primary.contrastText,
+              "&:hover": { bgcolor: theme.palette.primary.dark, borderColor: theme.palette.primary.light },
               "&.Mui-disabled": { bgcolor: theme.palette.action.disabledBackground, borderColor: theme.palette.action.disabledBackground, color: theme.palette.action.disabled },
             } : {}),
           }}
@@ -1216,10 +1230,10 @@ export function DailyTradeAnalyzerChart({
           sx={{
             minHeight: { xs: 44, md: 32 },
             ...(usesDarkChartControls ? {
-              bgcolor: theme.palette.secondary.main,
-              borderColor: theme.palette.secondary.main,
-              color: theme.palette.text.primary,
-              "&:hover": { bgcolor: theme.palette.action.hover, borderColor: theme.palette.secondary.main },
+              bgcolor: theme.palette.primary.main,
+              borderColor: theme.palette.primary.light,
+              color: theme.palette.primary.contrastText,
+              "&:hover": { bgcolor: theme.palette.primary.dark, borderColor: theme.palette.primary.light },
               "&.Mui-disabled": { bgcolor: theme.palette.action.disabledBackground, borderColor: theme.palette.action.disabledBackground, color: theme.palette.action.disabled },
             } : {}),
           }}
