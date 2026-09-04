@@ -141,6 +141,43 @@ export class JournalLogicalTradeRepository {
       trade.members.some((member) => member.roundTripId === roundTripId)) ?? null;
   }
 
+  findRetiredExactTrade(
+    scope: AccountScope,
+    members: readonly JournalLogicalTradeMember[],
+    tradeStyle: JournalLogicalTradeStyle,
+  ): Readonly<{ logicalTradeId: string; revision: number }> | null {
+    if (members.length === 0) return null;
+    const memberMatch = members.map(() => "(member.round_trip_id = ? AND member.round_trip_version_id = ?)")
+      .join(" OR ");
+    const values = members.flatMap((member) => [member.roundTripId, member.roundTripVersionId]);
+    return (this.database.prepare(`SELECT logical.logical_trade_id AS logicalTradeId,
+ logical.revision AS revision
+FROM journal_logical_trades logical
+JOIN journal_logical_trade_versions version
+  ON version.workspace_id = logical.workspace_id
+ AND version.account_id = logical.account_id
+ AND version.logical_trade_id = logical.logical_trade_id
+ AND version.logical_trade_version_id = logical.current_version_id
+WHERE logical.workspace_id = ? AND logical.account_id = ?
+ AND logical.lifecycle_state = 'retired' AND version.trade_style = ?
+ AND (SELECT COUNT(*) FROM journal_logical_trade_version_members member
+      WHERE member.workspace_id = version.workspace_id
+       AND member.account_id = version.account_id
+       AND member.logical_trade_id = version.logical_trade_id
+       AND member.logical_trade_version_id = version.logical_trade_version_id) = ?
+ AND NOT EXISTS (
+   SELECT 1 FROM journal_logical_trade_version_members member
+   WHERE member.workspace_id = version.workspace_id
+    AND member.account_id = version.account_id
+    AND member.logical_trade_id = version.logical_trade_id
+    AND member.logical_trade_version_id = version.logical_trade_version_id
+    AND NOT (${memberMatch})
+ )
+ORDER BY logical.updated_at_utc DESC, logical.logical_trade_id
+LIMIT 1`).get(scope.workspaceId, scope.accountId, tradeStyle, members.length, ...values) as
+      Readonly<{ logicalTradeId: string; revision: number }> | undefined) ?? null;
+  }
+
   createVersion(input: Readonly<{
     scope: AccountScope;
     logicalTradeId?: string;

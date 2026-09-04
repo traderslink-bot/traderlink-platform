@@ -266,8 +266,11 @@ export class JournalLogicalTradeService {
       const members = selected.flatMap((trade) => trade.members)
         .sort((left, right) => left.openedAtUtc.localeCompare(right.openedAtUtc) ||
           left.roundTripId.localeCompare(right.roundTripId));
+      const priorExactTrade = this.repository.findRetiredExactTrade(scope, members, command.tradeStyle);
       const logicalTradeId = this.repository.createVersion({
         scope,
+        logicalTradeId: priorExactTrade?.logicalTradeId,
+        priorRevision: priorExactTrade?.revision,
         members,
         tradeStyle: command.tradeStyle,
         changeKind: "merged",
