@@ -136,7 +136,7 @@ export function ManualTradePostEntryReview({
       </Box>;
     })}
     {completed.filter((group) => !mergedByRef.has(group.groupRef)).length > 1 ? <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}>
-      <Typography sx={{ fontWeight: 800 }} variant="body2">Merge trades</Typography>
+      <Typography sx={{ fontWeight: 800 }} variant="body2">Merge into one trade?</Typography>
       <Stack spacing={0.25}>
         {completed.filter((group) => !mergedByRef.has(group.groupRef)).map((group) => {
           const compatible = !firstSelected || (group.symbol === firstSelected.symbol &&

@@ -9,6 +9,8 @@ import { withReadonlyJournalIntegrityRuntime } from "@/src/modules/journal/serve
 import {
   absoluteExactDecimal,
   addExactDecimals,
+  divideExactDecimals,
+  multiplyExactDecimals,
   subtractExactDecimals,
 } from "@/src/modules/journal-analytics/server/exact-analytics-math";
 import { JournalLogicalTradeRepository } from "@/src/modules/journal/server/logical-trades/journal-logical-trade-repository";
@@ -25,6 +27,8 @@ export type WorkspaceTradeLibraryRow = Readonly<{
   executionCount: number;
   exitDate: string | null;
   exitPriceDecimal: string | null;
+  exitQuantityDecimal: string | null;
+  exitValueDecimal: string | null;
   exitTime: string | null;
   entryValueDecimal: string | null;
   gainLossDecimal: string | null;
@@ -282,6 +286,15 @@ function mergeLogicalWorkspaceRows(
     const sum = (values: readonly string[]): string => values.reduce(addExactDecimals, "0");
     const nullableSum = (values: readonly (string | null)[]): string | null =>
       values.every((value) => value !== null) ? sum(values as readonly string[]) : null;
+    const average = (notional: string | null, quantity: string | null): string | null =>
+      notional === null || quantity === null || quantity === "0" ? null : divideExactDecimals(notional, quantity, {
+        decimalPlaces: 8,
+        roundingPolicy: "half_up_8dp",
+      }).roundedDecimal;
+    const entryValueDecimal = nullableSum(members.map((member) => member.entryValueDecimal));
+    const entryQuantityDecimal = sum(members.map((member) => member.entryQuantityDecimal));
+    const exitValueDecimal = nullableSum(members.map((member) => member.exitValueDecimal));
+    const exitQuantityDecimal = nullableSum(members.map((member) => member.exitQuantityDecimal));
     const analyzer = trade.logicalTradeId ? database.prepare(`SELECT 1
 FROM journal_logical_trade_daily_analyses
 WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?
@@ -292,15 +305,18 @@ WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?
     result.push(Object.freeze({
       ...first,
       buyQuantityDecimal: sum(members.map((member) => member.buyQuantityDecimal)),
-      entryQuantityDecimal: sum(members.map((member) => member.entryQuantityDecimal)),
+      entryQuantityDecimal,
       date: last.date,
       editableExecutions: Object.freeze(members.flatMap((member) => member.editableExecutions)
         .sort((left, right) => `${left.localDate}T${left.localTime}`.localeCompare(`${right.localDate}T${right.localTime}`))),
-      entryValueDecimal: nullableSum(members.map((member) => member.entryValueDecimal)),
+      entryPriceDecimal: average(entryValueDecimal, entryQuantityDecimal),
+      entryValueDecimal,
       executionCount: members.reduce((total, member) => total + member.executionCount, 0),
       exitDate: last.exitDate,
-      exitPriceDecimal: last.exitPriceDecimal,
+      exitPriceDecimal: average(exitValueDecimal, exitQuantityDecimal),
+      exitQuantityDecimal,
       exitTime: last.exitTime,
+      exitValueDecimal,
       gainLossDecimal: nullableSum(members.map((member) => member.gainLossDecimal)),
       hasCurrentAnalyzerResult: Boolean(analyzer),
       holdDurationSeconds: Math.max(0, Math.round((Date.parse(trade.closedAtUtc) - Date.parse(trade.openedAtUtc)) / 1000)),
@@ -414,21 +430,32 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
     const entries = byVersion.get(row.round_trip_version_id) ?? [];
     let buyQuantityDecimal = "0";
     let sellQuantityDecimal = "0";
+    let buyValueDecimal: string | null = "0";
+    let sellValueDecimal: string | null = "0";
     let signedPositionDecimal = "0";
     for (const entry of entries) {
       if (entry.side === "buy") {
         buyQuantityDecimal = addExactDecimals(buyQuantityDecimal, entry.quantity_decimal);
+        buyValueDecimal = buyValueDecimal === null || entry.price_decimal === null ? null : addExactDecimals(buyValueDecimal, multiplyExactDecimals(entry.quantity_decimal, entry.price_decimal));
         signedPositionDecimal = addExactDecimals(signedPositionDecimal, entry.quantity_decimal);
       } else {
         sellQuantityDecimal = addExactDecimals(sellQuantityDecimal, entry.quantity_decimal);
+        sellValueDecimal = sellValueDecimal === null || entry.price_decimal === null ? null : addExactDecimals(sellValueDecimal, multiplyExactDecimals(entry.quantity_decimal, entry.price_decimal));
         signedPositionDecimal = subtractExactDecimals(signedPositionDecimal, entry.quantity_decimal);
       }
     }
+    const entryQuantityDecimal = row.direction === "long" ? buyQuantityDecimal : sellQuantityDecimal;
+    const entryValueDecimal = row.direction === "long" ? buyValueDecimal : sellValueDecimal;
+    const exitQuantityDecimal = row.direction === "long" ? sellQuantityDecimal : buyQuantityDecimal;
+    const exitValueDecimal = row.direction === "long" ? sellValueDecimal : buyValueDecimal;
+    const average = (value: string | null, quantity: string): string | null => value === null || quantity === "0"
+      ? null
+      : divideExactDecimals(value, quantity, { decimalPlaces: 8, roundingPolicy: "half_up_8dp" }).roundedDecimal;
     result.set(row.round_trip_version_id, Object.freeze({
       buyQuantityDecimal,
-      entryQuantityDecimal: row.direction === "long" ? buyQuantityDecimal : sellQuantityDecimal,
-      entryPriceDecimal: entries.at(0)?.price_decimal ?? null,
-      exitPriceDecimal: row.projection_state === "ready_closed" ? entries.at(-1)?.price_decimal ?? null : null,
+      entryQuantityDecimal,
+      entryPriceDecimal: average(entryValueDecimal, entryQuantityDecimal),
+      exitPriceDecimal: row.projection_state === "ready_closed" ? average(exitValueDecimal, exitQuantityDecimal) : null,
       positionDecimal: absoluteExactDecimal(signedPositionDecimal),
     }));
   }
@@ -455,7 +482,9 @@ function toWorkspaceTradeLibraryRows(
     executionCount: row.unique_execution_count,
     exitDate: row.exit_local_date,
     exitPriceDecimal: facts.get(row.round_trip_version_id)?.exitPriceDecimal ?? null,
+    exitQuantityDecimal: row.exit_quantity_decimal,
     exitTime: row.exit_local_time,
+    exitValueDecimal: row.exit_notional_decimal,
     entryValueDecimal: row.entry_notional_decimal,
     gainLossDecimal: row.gross_pnl_decimal,
     hasCurrentAnalyzerResult: row.has_current_analyzer_result === 1,

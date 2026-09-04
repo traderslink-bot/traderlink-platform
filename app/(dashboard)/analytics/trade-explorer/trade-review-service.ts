@@ -417,10 +417,12 @@ ON CONFLICT(workspace_id, account_id, logical_trade_id, tag_id) DO UPDATE SET
       const editable = before.customRules.find((rule) => rule.ruleId === change.ruleId &&
         rule.ruleVersionId === change.ruleVersionId && rule.revision === change.expectedRevision);
       if (!editable) conflict();
-      const priorReview = database.prepare(`SELECT note_text FROM journal_logical_trade_rule_reviews
+      const priorReview = database.prepare(`SELECT note_text, revision, rule_version_id FROM journal_logical_trade_rule_reviews
 WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ? AND rule_id = ?`).get(
         scope.workspaceId, scope.activeAccountId!, logical.logicalTradeId, change.ruleId,
-      ) as { note_text: string } | undefined;
+      ) as { note_text: string; revision: number; rule_version_id: string } | undefined;
+      if ((priorReview?.revision ?? null) !== change.expectedRevision ||
+        (priorReview && priorReview.rule_version_id !== change.ruleVersionId)) conflict();
       database.prepare(`INSERT INTO journal_logical_trade_rule_reviews (
  workspace_id, account_id, logical_trade_id, rule_id, rule_version_id,
  status, note_text, revision, reviewed_by_user_id, created_at_utc, updated_at_utc
