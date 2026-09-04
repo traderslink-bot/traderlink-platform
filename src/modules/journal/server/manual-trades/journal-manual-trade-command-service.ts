@@ -371,13 +371,6 @@ export class JournalManualTradeCommandService {
         });
       }
       const affectedTradeTargets = resolveAffectedTradeTargets();
-      if (this.logicalTradeAnalyzer) {
-        for (const target of affectedTradeTargets) {
-          this.logicalTradeAnalyzer.materialize(accountScope, target.roundTripId, now);
-        }
-      }
-      const affectedPositionRefs = Object.freeze(affectedTradeTargets.map((target) =>
-        this.previews.positionRefForTarget(scope, target)).sort());
       const targetByGroupRef = new Map(preview.groups.map((group) => {
         const allocations: JournalManualAllocationTarget[] = group.allocations.map((allocation) => Object.freeze({
           executionId: executionIdByClientRow.get(allocation.clientRowRef)!,
@@ -386,6 +379,19 @@ export class JournalManualTradeCommandService {
         }));
         return [group.groupRef, this.repository.resolveRoundTripForAllocations(accountScope, allocations)] as const;
       }));
+      if (this.logicalTradeAnalyzer) {
+        const completedTargets = new Map(preview.groups
+          .filter((group) => group.state === "complete_trade" || group.state === "existing_position_closed")
+          .map((group) => {
+            const target = targetByGroupRef.get(group.groupRef)!;
+            return [target.roundTripId, target] as const;
+          }));
+        for (const target of completedTargets.values()) {
+          this.logicalTradeAnalyzer.materialize(accountScope, target.roundTripId, now);
+        }
+      }
+      const affectedPositionRefs = Object.freeze(affectedTradeTargets.map((target) =>
+        this.previews.positionRefForTarget(scope, target)).sort());
       const mergedRefs = new Set<string>();
       for (const merge of request.logicalTradeMerges ?? []) {
         if (merge.groupRefs.length < 2 || merge.groupRefs.some((ref) =>

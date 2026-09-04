@@ -143,9 +143,16 @@ CREATE TRIGGER journal_logical_trade_events_no_delete
 BEFORE DELETE ON journal_logical_trade_events
 BEGIN SELECT RAISE(ABORT, 'journal_logical_trade_event_history_required'); END;`;
 
+// Keep each top-level DDL unit independently visible to the migration runner.
+// SQLite trigger bodies retain their internal semicolons, so splitting on every
+// semicolon would be unsafe.
+const statements = Object.freeze(
+  sql.split(/\n(?=CREATE (?:TABLE|INDEX|TRIGGER)\b)/u).map((statement) => statement.trim()),
+);
+
 export const journalLogicalTradesMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "journal",
   migrationId: "0118_journal_logical_trades",
   executionOrder: 118,
-  statements: Object.freeze([sql]),
+  statements,
 });

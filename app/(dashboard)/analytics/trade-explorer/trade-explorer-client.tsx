@@ -532,12 +532,12 @@ export default function TradeExplorerClient({
     ? Object.freeze([
         Object.freeze({
           label: appliedQuery.moneyBasis === "net" ? "Fee-covered trades" : "Closed trades",
-          value: String(preview.response.crossPartitionCounts.includedCount),
+          value: String(preview.evidence?.totalRowCount ?? preview.response.crossPartitionCounts.includedCount),
           valueColor: "text.primary" as const,
         }),
       ])
     : Object.freeze([
-        Object.freeze({ label: appliedQuery.moneyBasis === "net" ? "Fee-covered trades" : "Closed trades", value: value(tradeSummaryPartition, "total_trades"), valueColor: "text.primary" as const }),
+        Object.freeze({ label: appliedQuery.moneyBasis === "net" ? "Fee-covered trades" : "Closed trades", value: String(preview.evidence?.totalRowCount ?? value(tradeSummaryPartition, "total_trades")), valueColor: "text.primary" as const }),
         Object.freeze({
           label: appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L",
           value: value(tradeSummaryPartition, appliedQuery.moneyBasis === "gross" ? "gross_pnl" : "net_pnl"),

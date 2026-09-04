@@ -151,6 +151,10 @@ function compactPatterns(
 }
 
 function compactEvent(snapshot: DailyTradeAnalyzerEventSnapshot) {
+  // A temporary flat boundary is meaningful only for a user-defined logical
+  // trade. Coach's existing completed-round-trip evidence contract has no
+  // equivalent event, so it must not be relabeled as a partial or final exit.
+  if (snapshot.event.kind === "temporary_flat") return null;
   const excursion = snapshot.metrics.excursionUntilFlat;
   const completed = snapshot.fiveMinuteContext.completedBeforeExecution;
   const containing = snapshot.fiveMinuteContext.containingCandle;
@@ -453,7 +457,10 @@ ORDER BY daily_trade_analysis_version_id, opportunity_sequence`).all(
         availability: "ready",
         unavailableReason: null,
         analyzerContractVersion: row.analyzer_contract_version,
-        events: Object.freeze((snapshots as DailyTradeAnalyzerEventSnapshot[]).map(compactEvent)),
+        events: Object.freeze((snapshots as DailyTradeAnalyzerEventSnapshot[]).flatMap((snapshot) => {
+          const event = compactEvent(snapshot);
+          return event === null ? [] : [event];
+        })),
         greenToRed: path && validPath ? Object.freeze({
           status: path.path_status,
           feesComplete: path.fees_complete === 1,

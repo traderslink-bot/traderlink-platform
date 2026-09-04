@@ -167,8 +167,9 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
         submissionConfirmation.preview,
         { analyzerGroupRefs, logicalTradeMerges },
       ));
+      setSubmissionConfirmation(null);
       void loadAnalyzerUses();
-    } catch (cause) { setError(cause instanceof ManualTradeNeedsReviewError ? manualTradePreviewMessage(cause.code) : cause instanceof Error ? cause.message : "The trade could not be saved. Your entries are still here."); } finally { setSaving(false); setSubmissionConfirmation(null); }
+    } catch (cause) { setError(cause instanceof ManualTradeNeedsReviewError ? manualTradePreviewMessage(cause.code) : cause instanceof Error ? cause.message : "The trade could not be saved. Your entries are still here."); } finally { setSaving(false); }
   };
   return <Stack sx={{ height: "100%" }}>
       {embedded ? null : <Stack direction="row" sx={{ borderBottom: 1, borderColor: "divider", justifyContent: "space-between", p: 2 }}>
