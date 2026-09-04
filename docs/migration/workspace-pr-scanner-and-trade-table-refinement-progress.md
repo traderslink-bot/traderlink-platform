@@ -37,3 +37,7 @@ Related plan:
   removes its visibility listener when hidden. `git diff --check` passes. No
   app server, browser, test runner, typecheck, lint, build, or migration was
   started under the low-resource policy; owner visual review remains pending.
+- The compact card now refetches the saved scanner feed when Workspace regains
+  visibility, browser focus, or a restored page state. This covers a paused
+  Server-Sent Events connection after the trader returns to Workspace without
+  adding periodic browser polling.
