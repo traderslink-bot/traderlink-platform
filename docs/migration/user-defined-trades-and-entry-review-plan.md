@@ -823,6 +823,13 @@ unrelated chart connection policy without owner approval.
   connection: selectable when entitlement, positive allowance, and trade facts
   permit; stored candles do not reduce a positive balance, and no personal
   connection-required redirect or alert appears.
+- A Workspace edit that rebuilds a closed factual round trip into a current
+  open position preserves the trader's selected Day Trade or Swing style on
+  that rebuilt position. A Swing must display as `Open swing` and remain
+  available through the existing Workspace Swing filter.
+- A close followed by re-entry remains one closed factual round trip and one
+  open position. The confirmation uses that exact result; it does not invent a
+  completed logical merge or change the closed leg's factual P/L.
 - `/account/trading` reconnect and connection-helper states discuss importing
   only; Analyzer and unrelated chart policy do not leak into that copy.
 

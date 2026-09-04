@@ -6,6 +6,14 @@
 
 ## Staging correction — 2026-09-04
 
+- A Workspace edit that rebuilds a formerly closed trade into a new open
+  position now applies the selected style to that current rebuilt trade even
+  when its style text did not change. A Swing displays as `Open swing` and is
+  included by the existing Swing filter.
+- A factual close followed by a re-entry now previews as one closed round trip
+  and one open position. The first realized P/L remains factual and separate;
+  no open-member logical merge is created.
+
 - Workspace Edit Trade now evaluates only the edited trade when describing the
   pending result. A normal final exit is one closed trade; an edit with shares
   remaining is one open trade; only a genuine close followed by a re-entry is

@@ -56,7 +56,7 @@ const CONSEQUENCE_COPY: Readonly<Record<JournalWorkspaceTradeEditConsequence, st
   keeps_closed: "This update keeps the trade closed.",
   leaves_open: "This update leaves the trade open.",
   deletes_trade: "This update deletes the trade because all executions are removed.",
-  creates_multiple: "This update creates multiple trades because the position reaches zero and then opens again.",
+  creates_multiple: "This update saves one closed round trip and one open position.",
   merges: "This update merges trades.",
   changes_nearby_boundaries: "This update changes nearby trade boundaries.",
 });
@@ -457,6 +457,7 @@ ORDER BY allocation_version.executed_at_utc, allocation_version.source_order_key
         platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT");
       }
       this.assertCompleteDraft(current.snapshot, draft);
+      const consequence = this.consequence(accountScope, current, draft);
       const originalOpeningExecutionId = current.editable[0]?.executionId;
       if (!originalOpeningExecutionId) platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT");
       if (!this.verifyPreview(scope, roundTripId, draft, request.previewRef)) {
@@ -533,7 +534,7 @@ ORDER BY allocation_version.executed_at_utc, allocation_version.source_order_key
         // A valid Journal edit must not be rolled back because a follow-up
         // Analyzer/logical-trade refresh cannot run at that moment.
       }
-      if (draft.tradeStyle !== current.snapshot.tradeStyle) {
+      if (draft.tradeStyle !== null && consequence !== "deletes_trade") {
         const targetRows = this.database.prepare<[string, string, string], {
           round_trip_id: string;
         }>(`SELECT DISTINCT round_trip.round_trip_id
@@ -552,33 +553,35 @@ WHERE execution.workspace_id = ? AND execution.account_id = ?
           accountScope.accountId,
           originalOpeningExecutionId,
         );
-        if (targetRows.length !== 1 || !draft.tradeStyle) {
+        if (targetRows.length !== 1) {
           platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
         }
         const roundTripId = targetRows[0]!.round_trip_id;
         const positionRef = this.tradeStyles.positionRef(accountScope, roundTripId);
         const priorStyle = this.tradeStyles.read(accountScope, positionRef);
-        this.tradeStyles.change(accountScope, {
-          positionRef,
-          expectedRevision: priorStyle?.revision ?? null,
-          tradeStyle: draft.tradeStyle,
-          openStatus: draft.tradeStyle === "swing"
-            ? "swing"
-            : draft.tradeStyle === "day_trade"
-              ? "day_trade_still_open"
-              : "other",
-          plannedFromEntry: priorStyle?.plannedFromEntry ?? false,
-          claimedEffectiveAtUtc: this.tradeStyles.resolveRoundTripPosition(
-            accountScope,
-            roundTripId,
-          ).openedAtUtc,
-          reason: "reclassified",
-          sourceUi: "workspace",
-          idempotencyKey: `${request.idempotencyKey}:style`,
-        }, now);
+        if (priorStyle?.tradeStyle !== draft.tradeStyle) {
+          this.tradeStyles.change(accountScope, {
+            positionRef,
+            expectedRevision: priorStyle?.revision ?? null,
+            tradeStyle: draft.tradeStyle,
+            openStatus: draft.tradeStyle === "swing"
+              ? "swing"
+              : draft.tradeStyle === "day_trade"
+                ? "day_trade_still_open"
+                : "other",
+            plannedFromEntry: priorStyle?.plannedFromEntry ?? false,
+            claimedEffectiveAtUtc: this.tradeStyles.resolveRoundTripPosition(
+              accountScope,
+              roundTripId,
+            ).openedAtUtc,
+            reason: "reclassified",
+            sourceUi: "workspace",
+            idempotencyKey: `${request.idempotencyKey}:style`,
+          }, now);
+        }
       }
       return Object.freeze({
-        consequence: this.consequence(accountScope, current, draft),
+        consequence,
         acceptedNewExecutionCount: additions.length,
         correctedExecutionCount,
         removedExecutionCount,
