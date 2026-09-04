@@ -4,6 +4,8 @@
 
 **Controlling plan:** [Nasdaq and NYSE Halt Alerts Plan](nasdaq-nyse-halt-alerts-plan.md)
 
+**Active duplicate-repair record:** [Halt Alert Lifecycle Reconciliation Progress](halt-alert-lifecycle-reconciliation-progress.md)
+
 - [x] Owner set the included/excluded halt types and 07:50 ET Nasdaq T1 suppression.
 - [x] Owner selected opt-in Halt alerts, same-day ticker mutes, Select all controls, and live deployment.
 - [x] Add durable event, preference, mute and delivery records.

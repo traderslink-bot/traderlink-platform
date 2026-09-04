@@ -43,6 +43,7 @@ The alert shows the source exchange, its actual code, and that code's plain-Engl
 - Nasdaq: official Trade Halt RSS only, never more frequently than Nasdaq's one-minute guideline.
 - NYSE: official current-halts CSV only. Normalize accepted NYSE reason text/codes without claiming a Nasdaq code.
 - De-duplicate a halt across sources and notify once per halt/device.
+- Reconcile a revised or sparse official snapshot into its existing ticker, source, reason and trading-day lifecycle. Preserve the first alert and its most complete published resumption times; a later halt after the prior published resumption boundary remains a new lifecycle. See [Halt Alert Lifecycle Reconciliation Progress](halt-alert-lifecycle-reconciliation-progress.md).
 
 ## Verification and launch
 

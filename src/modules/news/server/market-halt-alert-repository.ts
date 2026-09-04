@@ -32,6 +32,39 @@ function normalizeTicker(value: string): string {
   return ticker;
 }
 
+const sparseHaltLifecycleToleranceSeconds = 2 * 60;
+
+type ExistingHaltLifecycle = Readonly<{
+  halt_id: string;
+  halt_time_et: string;
+  resumption_quote_time_et: string | null;
+  resumption_trade_time_et: string | null;
+}>;
+
+function easternTimeSeconds(value: string): number | null {
+  const matched = /^(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?$/u.exec(value);
+  if (!matched) return null;
+  const hours = Number(matched[1]);
+  const minutes = Number(matched[2]);
+  const seconds = Number(matched[3]);
+  if (hours > 23 || minutes > 59 || seconds > 59) return null;
+  return (hours * 60 * 60) + (minutes * 60) + seconds;
+}
+
+function isSameHaltLifecycle(existing: ExistingHaltLifecycle, halt: MarketHalt): boolean {
+  if (existing.halt_time_et === halt.haltTimeEt) return true;
+  const existingHaltSeconds = easternTimeSeconds(existing.halt_time_et);
+  const incomingHaltSeconds = easternTimeSeconds(halt.haltTimeEt);
+  if (existingHaltSeconds === null || incomingHaltSeconds === null) return false;
+
+  const expectedResumptionSeconds = easternTimeSeconds(
+    existing.resumption_trade_time_et ?? existing.resumption_quote_time_et ?? "",
+  );
+  if (expectedResumptionSeconds !== null && incomingHaltSeconds <= expectedResumptionSeconds) return true;
+
+  return Math.abs(incomingHaltSeconds - existingHaltSeconds) <= sparseHaltLifecycleToleranceSeconds;
+}
+
 export class MarketHaltAlertRepository {
   constructor(private readonly database: Database.Database) {}
 
@@ -115,17 +148,20 @@ WHERE user_id = ? AND ticker = ?`).run(input.scope.userId, ticker);
     sourceUrl: string;
   }>): Readonly<{ haltId: string; inserted: boolean }> {
     assertCanonicalUtcTimestamp(input.observedAtUtc, "marketHaltObservedAt");
-    const existing = this.database.prepare<[string, string, string], { halt_id: string }>(`SELECT halt_id
-FROM news_market_halt_events WHERE halt_date_et = ? AND halt_time_et = ? AND ticker = ?`).get(
+    const existing = this.database.prepare<[string, string, string, string], ExistingHaltLifecycle>(`SELECT
+  halt_id, halt_time_et, resumption_quote_time_et, resumption_trade_time_et
+FROM news_market_halt_events
+WHERE source = ? AND halt_date_et = ? AND ticker = ? AND reason_code = ?
+ORDER BY halt_time_et DESC, updated_at_utc DESC`).all(
+      input.halt.source,
       input.halt.haltDateEt,
-      input.halt.haltTimeEt,
       input.halt.ticker,
-    );
+      input.halt.reasonCode,
+    ).find((candidate) => isSameHaltLifecycle(candidate, input.halt));
     if (existing) {
       this.database.prepare(`UPDATE news_market_halt_events SET
-reason_code = ?, reason_description = ?, resumption_quote_time_et = ?,
-resumption_trade_time_et = ?, updated_at_utc = ? WHERE halt_id = ?`).run(
-        input.halt.reasonCode,
+reason_description = ?, resumption_quote_time_et = COALESCE(?, resumption_quote_time_et),
+resumption_trade_time_et = COALESCE(?, resumption_trade_time_et), updated_at_utc = ? WHERE halt_id = ?`).run(
         input.halt.reasonDescription,
         input.halt.resumptionQuoteTimeEt,
         input.halt.resumptionTradeTimeEt,
