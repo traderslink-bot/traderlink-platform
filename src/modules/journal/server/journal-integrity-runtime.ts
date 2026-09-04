@@ -31,6 +31,8 @@ import { JournalManualTradeCommandRepository } from "./manual-trades/journal-man
 import { JournalManualTradeCommandService } from "./manual-trades/journal-manual-trade-command-service";
 import { JournalManualExecutionEditService } from "./manual-trades/journal-manual-execution-edit-service";
 import { JournalWorkspaceTradeEditService } from "./manual-trades/journal-workspace-trade-edit-service";
+import { JournalLogicalTradeRepository } from "./logical-trades/journal-logical-trade-repository";
+import { JournalLogicalTradeService } from "./logical-trades/journal-logical-trade-service";
 import { JournalProductReadService } from "./product/journal-product-read-service";
 import { JournalTradeTrackerReadService } from "./product/journal-trade-tracker-read-service";
 import { JournalExecutionReconciliationRepository } from "./reconciliation/journal-execution-reconciliation-repository";
@@ -51,6 +53,7 @@ export type JournalIntegrityRuntime = Readonly<{
   command: JournalIntegrityCommandService;
   decisions: JournalDataDecisionService;
   imports: JournalImportService;
+  logicalTrades: JournalLogicalTradeService;
   manualTrades: JournalManualTradeCommandService;
   manualExecutionEdits: JournalManualExecutionEditService;
   workspaceTradeEdits: JournalWorkspaceTradeEditService;
@@ -125,6 +128,10 @@ export function createJournalIntegrityRuntime(
     manualTradeAuthority,
     dailyTradeAnalyzer,
   );
+  const logicalTrades = new JournalLogicalTradeService(
+    new JournalLogicalTradeRepository(database),
+    manualTradeAuthority,
+  );
   return Object.freeze({
     accounts,
     command: new JournalIntegrityCommandService(
@@ -135,6 +142,7 @@ export function createJournalIntegrityRuntime(
     ),
     decisions,
     imports,
+    logicalTrades,
     manualExecutionEdits,
     manualTrades: new JournalManualTradeCommandService(
       new JournalManualTradeCommandRepository(database),

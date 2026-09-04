@@ -32,9 +32,32 @@ export type JournalLogicalTradeMergePreview = Readonly<{
   otherDates: readonly JournalLogicalTradeCandidate[];
 }>;
 
+export type JournalLogicalTradeMergeCandidateView = Readonly<{
+  candidateRef: string;
+  symbol: string;
+  tradeStyle: JournalLogicalTradeStyle;
+  openedAtUtc: string;
+  closedAtUtc: string;
+  memberCount: number;
+}>;
+
+export type JournalLogicalTradeMergeView = Readonly<{
+  revision: number;
+  isMerged: boolean;
+  current: JournalLogicalTradeMergeCandidateView;
+  sameDay: readonly JournalLogicalTradeMergeCandidateView[];
+  otherDates: readonly JournalLogicalTradeMergeCandidateView[];
+}>;
+
 export type JournalLogicalTradeMergeCommand = Readonly<{
   expectedCurrentRevision: number;
   logicalTradeIds: readonly string[];
   fallbackRoundTripIds: readonly string[];
+  tradeStyle: JournalLogicalTradeStyle;
+}>;
+
+export type JournalLogicalTradeMergeSelection = Readonly<{
+  expectedCurrentRevision: number;
+  candidateRefs: readonly string[];
   tradeStyle: JournalLogicalTradeStyle;
 }>;

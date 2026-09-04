@@ -20,7 +20,7 @@ type RoundTripRow = Readonly<{
   direction: "long" | "short";
   opened_at_utc: string;
   closed_at_utc: string;
-  trade_style: JournalLogicalTradeStyle | null;
+  trade_style: "day_trade" | "swing" | "other" | null;
   logical_trade_id: string | null;
   logical_trade_version_id: string | null;
   logical_trade_revision: number | null;
@@ -94,7 +94,7 @@ function mapRows(rows: readonly RoundTripRow[]): readonly JournalLogicalTrade[] 
       logicalTradeId: first.logical_trade_id,
       revision: first.logical_trade_revision ?? 0,
       lifecycleState: first.logical_trade_lifecycle ?? "active",
-      tradeStyle: first.logical_trade_style ?? first.trade_style ?? "day",
+      tradeStyle: first.logical_trade_style ?? (first.trade_style === "swing" ? "swing" : "day"),
       instrumentId: first.instrument_id,
       symbol: first.normalized_symbol,
       currency: first.trade_currency,

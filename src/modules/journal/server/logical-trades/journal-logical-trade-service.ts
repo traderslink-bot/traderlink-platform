@@ -7,7 +7,10 @@ import type {
   JournalLogicalTrade,
   JournalLogicalTradeMergeCommand,
   JournalLogicalTradeMergePreview,
+  JournalLogicalTradeMergeSelection,
+  JournalLogicalTradeMergeView,
 } from "../../contracts/journal-logical-trade-contracts";
+import type { JournalManualTradePreviewAuthority } from "../manual-trades/journal-manual-trade-preview-authority";
 import { JournalLogicalTradeRepository } from "./journal-logical-trade-repository";
 
 function marketDate(timestamp: string): string {
@@ -29,7 +32,32 @@ function compatible(left: JournalLogicalTrade, right: JournalLogicalTrade): bool
 }
 
 export class JournalLogicalTradeService {
-  constructor(private readonly repository: JournalLogicalTradeRepository) {}
+  constructor(
+    private readonly repository: JournalLogicalTradeRepository,
+    private readonly authority: JournalManualTradePreviewAuthority,
+  ) {}
+
+  private candidateRef(scope: AccountScope, trade: JournalLogicalTrade): string {
+    const identity = trade.logicalTradeId ?? `round-trip:${trade.members[0]!.roundTripId}`;
+    return this.authority.opaqueRef("logical_trade_merge_candidate", [
+      scope.userId,
+      scope.workspaceId,
+      scope.accountId,
+      identity,
+      String(trade.revision),
+    ].join("\u001f"));
+  }
+
+  private view(scope: AccountScope, trade: JournalLogicalTrade) {
+    return Object.freeze({
+      candidateRef: this.candidateRef(scope, trade),
+      symbol: trade.symbol,
+      tradeStyle: trade.tradeStyle,
+      openedAtUtc: trade.openedAtUtc,
+      closedAtUtc: trade.closedAtUtc,
+      memberCount: trade.members.length,
+    });
+  }
 
   list(scope: AccountScope): readonly JournalLogicalTrade[] {
     return this.repository.list(scope);
@@ -53,6 +81,57 @@ export class JournalLogicalTradeService {
       sameDay: Object.freeze(candidates.filter((candidate) => candidate.sameMarketDate)),
       otherDates: Object.freeze(candidates.filter((candidate) => !candidate.sameMarketDate)),
     });
+  }
+
+  mergeView(scope: AccountScope, roundTripId: string): JournalLogicalTradeMergeView {
+    const preview = this.mergePreview(scope, roundTripId);
+    return Object.freeze({
+      revision: preview.current.revision,
+      isMerged: preview.current.logicalTradeId !== null && preview.current.members.length > 1,
+      current: this.view(scope, preview.current),
+      sameDay: Object.freeze(preview.sameDay.map((trade) => this.view(scope, trade))),
+      otherDates: Object.freeze(preview.otherDates.map((trade) => this.view(scope, trade))),
+    });
+  }
+
+  mergeSelection(
+    scope: AccountScope,
+    roundTripId: string,
+    selection: JournalLogicalTradeMergeSelection,
+    now: Date = new Date(),
+  ): JournalLogicalTradeMergeView {
+    const preview = this.mergePreview(scope, roundTripId);
+    const byRef = new Map([...preview.sameDay, ...preview.otherDates]
+      .map((trade) => [this.candidateRef(scope, trade), trade] as const));
+    const selected = selection.candidateRefs.map((ref) => byRef.get(ref));
+    if (selected.length === 0 || selected.some((trade) => trade === undefined) ||
+      new Set(selection.candidateRefs).size !== selection.candidateRefs.length) {
+      platformFailure("TRADERLINK_LOGICAL_TRADE_CONFLICT", { reason: "candidate_changed" });
+    }
+    const trades = selected as readonly JournalLogicalTrade[];
+    this.merge(scope, roundTripId, Object.freeze({
+      expectedCurrentRevision: selection.expectedCurrentRevision,
+      logicalTradeIds: Object.freeze(trades.flatMap((trade) =>
+        trade.logicalTradeId ? [trade.logicalTradeId] : [])),
+      fallbackRoundTripIds: Object.freeze(trades.flatMap((trade) =>
+        trade.logicalTradeId === null ? [trade.members[0]!.roundTripId] : [])),
+      tradeStyle: selection.tradeStyle,
+    }), now);
+    return this.mergeView(scope, roundTripId);
+  }
+
+  unmergeSelection(
+    scope: AccountScope,
+    roundTripId: string,
+    expectedRevision: number,
+    now: Date = new Date(),
+  ): JournalLogicalTradeMergeView {
+    const current = this.repository.findByRoundTripId(scope, roundTripId);
+    if (!current?.logicalTradeId) {
+      platformFailure("TRADERLINK_LOGICAL_TRADE_INVALID", { reason: "merged_trade_required" });
+    }
+    this.unmerge(scope, current.logicalTradeId, expectedRevision, now);
+    return this.mergeView(scope, roundTripId);
   }
 
   merge(
