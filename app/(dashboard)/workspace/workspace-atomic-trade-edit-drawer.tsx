@@ -44,6 +44,7 @@ type DraftRow = {
 
 function canonicalTime(value: string): string { return value.length === 5 ? `${value}:00` : value; }
 function failureMessage(code: unknown): string {
+  if (code === "TRADERLINK_DEMO_ACCOUNT_READ_ONLY") return "Demo account trades can't be edited.";
   if (code === "TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT") return "This trade changed before it could be saved. Your entries are still here.";
   if (code === "TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION") return "This trade needs review before it can be changed. Your entries are still here.";
   return "The trade could not be saved. Your entries are still here.";
