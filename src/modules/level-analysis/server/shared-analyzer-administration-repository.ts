@@ -23,11 +23,11 @@ export class SharedAnalyzerAdministrationRepository {
 FROM level_analysis_analyzer_acquisitions`).get(since) as
       { total: number; charged: number | null; waived: number | null; rolling: number | null };
     const connections = this.database.prepare(`SELECT connection.user_id, connection.workspace_id,
- account.account_id, account.account_label
+ account.account_id, account.display_name AS account_label
 FROM platform_broker_connections connection
 JOIN journal_accounts account ON account.workspace_id = connection.workspace_id
 WHERE connection.provider = 'moomoo' AND connection.connection_state = 'active'
-ORDER BY account.account_label, account.account_id`).all() as
+ORDER BY account.display_name, account.account_id`).all() as
       readonly { user_id: string; workspace_id: string; account_id: string; account_label: string }[];
     const users = this.database.prepare(`SELECT user.user_id, user.display_name,
  override.daily_limit, override.period_limit

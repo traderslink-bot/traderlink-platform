@@ -66,3 +66,6 @@ Related plan:
 - Workspace's default Date/Newest order now keeps the trading date primary and
   places the most recently recorded trade first within that date. Explicit
   user-selected column sorting remains available.
+- The Shared Analyzer administration page now reads the canonical Journal
+  account `display_name`; its stale `account_label` reference prevented the
+  owner from selecting the designated Moomoo connection.
