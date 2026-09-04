@@ -314,10 +314,31 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   const [reviewTab, setReviewTab] = useState<"trade" | "journal">("journal");
   useEffect(() => { if (!tradeEntryOpen) { setSavedTrades([]); setReviewTrade(null); } }, [tradeEntryOpen]);
   if (!tradeEntryOpen) return null;
-  const handleNewTradeSaved = (result: ManualTradeSubmitResult | null) => {
-    router.refresh();
+  const handleNewTradeSaved = async (result: ManualTradeSubmitResult | null) => {
     if (result) {
-      setSavedTrades(result.savedTrades as readonly WorkspaceTradeLibraryRow[]);
+      const savedTradeIds = new Set((result.savedTrades as readonly WorkspaceTradeLibraryRow[])
+        .map((trade) => trade.roundTripId));
+      const affectedDates = [...result.affectedDates].sort();
+      const refreshed = affectedDates.length > 0
+        ? await loadWorkspaceTradeLibraryPage({
+          afterCursor: null,
+          endDate: affectedDates.at(-1) ?? null,
+          filter: "all",
+          followDashboardPeriod: false,
+          group: "none",
+          searchTicker: "",
+          sort: "newest",
+          startDate: affectedDates[0] ?? null,
+        })
+        : null;
+      const logicalSavedTrades = refreshed?.ok &&
+        refreshed.accountSelectionRef === expectedAccountSelectionRef
+        ? refreshed.model.rows.filter((trade) =>
+          trade.underlyingRoundTripIds.some((roundTripId) => savedTradeIds.has(roundTripId)))
+        : [];
+      setSavedTrades(logicalSavedTrades.length > 0
+        ? logicalSavedTrades
+        : result.savedTrades as readonly WorkspaceTradeLibraryRow[]);
       onAddTradeSaved?.();
       return;
     }
