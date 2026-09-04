@@ -27,6 +27,7 @@ import {
   formatJournalAnalyticsMoney,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { compareExactDecimals, multiplyExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
+import { toLogicalTradeAnalyticsTable } from "@/src/modules/journal-analytics/server/logical-trade-analytics-table";
 import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
@@ -185,8 +186,14 @@ function money(value: string | null, currency: string | null): string {
   return formatJournalAnalyticsMoney(value, currency);
 }
 
-function timestamp(value: string): string {
-  return value.replace("T", " ").replace(".000Z", "");
+function timestamp(value: string, timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit", hour: "2-digit", hour12: false, minute: "2-digit",
+    month: "2-digit", second: "2-digit", timeZone: timezone, year: "numeric",
+  }).formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")} ${part("hour")}:${part("minute")}:${part("second")}`;
 }
 
 function duration(milliseconds: number): string {
@@ -222,13 +229,14 @@ export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: R
   const closingDateRange = selectedRange.startDate && selectedRange.endDate
     ? { endDate: selectedRange.endDate, kind: "inclusive_closing_date" as const, startDate: selectedRange.startDate }
     : { kind: "all_available" as const };
-  const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
+  const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, pnlReportingBasis, service }) => {
     const moneyBasis = resolveJournalAnalyticsMoneyBasis(searchParams.basis, pnlReportingBasis);
     const pnlMetricId = moneyBasis === "gross" ? "gross_pnl" : "net_pnl";
     const chartQuery = buildJournalAnalyticsDashboardQuery(scope, { closingDateRange, groupings: GROUPINGS, metricIds: metricsFor(moneyBasis), moneyBasis });
     const charts = service.getExecutionAnalytics(scope, chartQuery);
     const currency = charts.partitions[0]?.currency ?? null;
-    const trades = currency === null ? null : service.getRoundTripAnalyticsTable(scope, buildJournalAnalyticsDashboardQuery(scope, { closingDateRange, currency, metricIds: ["included_count"], moneyBasis, pageSize: 200 }));
+    const rawTrades = currency === null ? null : service.getRoundTripAnalyticsTable(scope, buildJournalAnalyticsDashboardQuery(scope, { closingDateRange, currency, metricIds: ["included_count"], moneyBasis, pageSize: 200 }));
+    const trades = rawTrades === null ? null : toLogicalTradeAnalyticsTable(scope, database, rawTrades);
     return Object.freeze({ charts, moneyBasis, pnlMetricId, trades });
   });
   const chartData = Object.freeze(Object.fromEntries(CHART_GROUPINGS.map((grouping) => {
@@ -248,7 +256,7 @@ export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: R
   const priceResults = entryPriceResults(result.charts, result.pnlMetricId);
   const priceComparison = entryPriceComparison(result.charts);
   const priceInsights = entryPriceInsights(priceResults);
-  const rows: readonly ExecutionTradeRow[] = result.trades?.rows.map((row) => ({ averageEntry: money(row.averageEntryPriceDecimal ?? null, result.trades?.currency ?? null), averageEntryValue: Number(row.averageEntryPriceDecimal ?? 0), averageExit: money(row.averageExitPriceDecimal ?? null, result.trades?.currency ?? null), averageExitValue: Number(row.averageExitPriceDecimal ?? 0), closed: timestamp(row.closedAtUtc), closedValue: row.closedAtUtc, direction: row.direction, executions: row.uniqueExecutionCount, maximumPosition: formatJournalAnalyticsDecimal(row.maximumPositionQuantityDecimal, 2, true), maximumPositionValue: Number(row.maximumPositionQuantityDecimal), netPnl: money(row.selectedPnlDecimal, result.trades?.currency ?? null), netPnlDecimal: row.selectedPnlDecimal, netPnlValue: Number(row.selectedPnlDecimal ?? 0), opened: timestamp(row.openedAtUtc), openedValue: row.openedAtUtc, roundTripId: row.roundTripId, ticker: row.displayedSymbol, tradeType: row.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade", tradeTypeValue: row.tradeClassification, holdTime: duration(row.holdingDurationMilliseconds), holdTimeValue: row.holdingDurationMilliseconds })) ?? [];
+  const rows: readonly ExecutionTradeRow[] = result.trades?.rows.map((row) => ({ averageEntry: money(row.averageEntryPriceDecimal ?? null, result.trades?.currency ?? null), averageEntryValue: Number(row.averageEntryPriceDecimal ?? 0), averageExit: money(row.averageExitPriceDecimal ?? null, result.trades?.currency ?? null), averageExitValue: Number(row.averageExitPriceDecimal ?? 0), closed: timestamp(row.closedAtUtc, result.trades?.timezone ?? "UTC"), closedValue: row.closedAtUtc, direction: row.direction, executions: row.uniqueExecutionCount, maximumPosition: formatJournalAnalyticsDecimal(row.maximumPositionQuantityDecimal, 2, true), maximumPositionValue: Number(row.maximumPositionQuantityDecimal), netPnl: money(row.selectedPnlDecimal, result.trades?.currency ?? null), netPnlDecimal: row.selectedPnlDecimal, netPnlValue: Number(row.selectedPnlDecimal ?? 0), opened: timestamp(row.openedAtUtc, result.trades?.timezone ?? "UTC"), openedValue: row.openedAtUtc, roundTripId: row.roundTripId, ticker: row.displayedSymbol, tradeType: row.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade", tradeTypeValue: row.tradeClassification, holdTime: duration(row.holdingDurationMilliseconds), holdTimeValue: row.holdingDurationMilliseconds })) ?? [];
   const currency = result.trades?.currency ?? result.charts.partitions[0]?.currency ?? null;
   const offlineModel = createJournalAnalyticsExecutionOfflineViewModel({
     chartData,

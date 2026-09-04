@@ -100,6 +100,11 @@ export type JournalManualTradeCommitRequest = Readonly<{
   expectedAccountSelectionRef: string;
   idempotencyKey: string;
   confirmations: readonly JournalManualTradeGroupConfirmation[];
+  analyzerGroupRefs?: readonly string[];
+  logicalTradeMerges?: readonly Readonly<{
+    groupRefs: readonly string[];
+    tradeStyle: "day" | "swing";
+  }>[];
   preparedBy?: "ai_chat";
   offlineSync?: JournalManualTradeOfflineSync;
 }>;

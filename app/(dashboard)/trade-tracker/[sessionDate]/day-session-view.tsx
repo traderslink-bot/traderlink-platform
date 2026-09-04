@@ -47,7 +47,6 @@ import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 import { JournalTagChip, JournalTagPicker } from "../../trade-tags/journal-tag-picker";
 import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
-import { MoomooMarketDataConnectionPrompt } from "../../moomoo-market-data-connection-prompt";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
 import {
   formatJournalAnalyticsDecimal,
@@ -907,7 +906,7 @@ function combinedTradeAnalysisSections(
   timeframe: TradeAnalysisTimeframe,
 ): TradeAnalysisSection[] {
   const entries = analyzer.events.filter((event) => event.kind === "entry" || event.kind === "add");
-  const exits = analyzer.events.filter((event) => event.kind === "partial_exit" || event.kind === "final_exit");
+  const exits = analyzer.events.filter((event) => event.kind === "partial_exit" || event.kind === "temporary_flat" || event.kind === "final_exit");
   if (entries.length === 0) return [];
   const entryQuantity = entries.reduce((total, event) => total + Number(event.quantity), 0);
   const exitQuantity = exits.reduce((total, event) => total + Number(event.quantity), 0);
@@ -1889,7 +1888,6 @@ function TradeReview({
   ruleSaveError,
   sessionDate,
   selectedAnalysisEventId,
-  showMoomooConnectionGuidance,
   tags,
   tradeNumber,
   tradeRules,
@@ -1923,7 +1921,6 @@ function TradeReview({
   ruleSaveError: string | null;
   sessionDate: string;
   selectedAnalysisEventId: string | null;
-  showMoomooConnectionGuidance: boolean;
   tags: DaySessionTradeTag[];
   tradeNumber: number;
   tradeRules: DaySessionRule[];
@@ -2634,12 +2631,6 @@ function TradeReview({
                   Trade Analyzer is analyzing this trade.
                 </Typography>
               ) : null}
-              {showMoomooConnectionGuidance ? (
-                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
-                  <MoomooMarketDataConnectionPrompt compact surface="entry-exit" />
-                  <MoomooMarketDataConnectionPrompt compact surface="green-to-red" />
-                </Box>
-              ) : null}
               {analyzer.status === "pending" ? (
                 <Typography color="text.secondary" variant="caption">
                   {analysisWindowShortenedAtMarketClose
@@ -2697,12 +2688,7 @@ function TradeReview({
             </Stack>
           ) : (
             <Stack spacing={0.75}>
-              {showMoomooConnectionGuidance ? (
-                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
-                  <MoomooMarketDataConnectionPrompt compact surface="entry-exit" />
-                  <MoomooMarketDataConnectionPrompt compact surface="green-to-red" />
-                </Box>
-              ) : <>
+              <>
                 <Typography sx={{ fontWeight: 900 }} variant="body1">
                   {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
                 </Typography>
@@ -2711,30 +2697,9 @@ function TradeReview({
                     ? "Trade Analyzer is collecting market data."
                     : "Trade Analyzer could not collect the market data needed for this trade."}
                 </Typography>
-              </>}
+              </>
             </Stack>
           )}
-        </Box>
-      ) : showMoomooConnectionGuidance ? (
-        <Box
-          sx={{
-            alignItems: { xs: "flex-start", sm: "center" },
-            bgcolor: informationSurface("rgba(25, 118, 210, 0.06)"),
-            borderRadius: 1.5,
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            gap: 1,
-            justifyContent: "space-between",
-            mt: 1.5,
-            p: 1.5,
-          }}
-        >
-          <Typography color="info.dark" sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.info.main : undefined, fontWeight: 750 }} variant="body2">
-            Connect Moomoo to analyze this trade.
-          </Typography>
-          <DashboardSecondaryAction href="/account/trading" size="small">
-            Connect Moomoo
-          </DashboardSecondaryAction>
         </Box>
       ) : null}
 
@@ -2817,7 +2782,6 @@ export function DaySessionView({
   offlineSavedAtUtc,
   pendingExecutions = false,
   readOnly = false,
-  showMoomooConnectionGuidance = false,
   topContent,
 }: {
   data: DaySessionData;
@@ -2832,7 +2796,6 @@ export function DaySessionView({
   offlineSavedAtUtc?: string;
   pendingExecutions?: boolean;
   readOnly?: boolean;
-  showMoomooConnectionGuidance?: boolean;
   topContent?: ReactNode;
 }) {
   const router = useRouter();
@@ -3814,11 +3777,6 @@ export function DaySessionView({
                 ) + 1}
               />
             ) : null}
-            {showMoomooConnectionGuidance ? (
-              <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
-                <MoomooMarketDataConnectionPrompt surface="chart" />
-              </Box>
-            ) : null}
             <Box
               sx={{
                 display: "grid",
@@ -3947,7 +3905,6 @@ export function DaySessionView({
                     ruleSaveError={ruleSaveErrors[`trade:${roundTrip.roundTripKey}`] ?? null}
                     sessionDate={data.date}
                     selectedAnalysisEventId={selectedAnalysisEventIds[roundTrip.roundTripKey] ?? null}
-                    showMoomooConnectionGuidance={showMoomooConnectionGuidance}
                     tags={tradeTags[roundTrip.roundTripKey] ?? []}
                     tradeNumber={index + 1}
                     tradeRules={rules.filter(

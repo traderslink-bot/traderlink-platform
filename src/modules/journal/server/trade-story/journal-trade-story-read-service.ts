@@ -7,6 +7,7 @@ import type {
   JournalRuleReviewRecord,
   JournalTagRecord,
 } from "@/src/modules/journal/contracts/journal-annotation-contracts";
+import type { JournalLogicalTrade } from "@/src/modules/journal/contracts/journal-logical-trade-contracts";
 import type { JournalTrackedPositionDetail } from "@/src/modules/journal/contracts/journal-trade-tracker-contracts";
 import { normalizeJournalAnalyticsFacts } from
   "@/src/modules/journal-analytics/server/normalize-journal-analytics-facts";
@@ -29,6 +30,7 @@ import {
 
 import { withReadonlyJournalAnnotations } from "../annotations/journal-annotation-runtime";
 import { withReadonlyJournalIntegrityRuntime } from "../journal-integrity-runtime";
+import { JournalLogicalTradeRepository } from "../logical-trades/journal-logical-trade-repository";
 import { buildTradeStoryActivities, type TradeStoryActivitiesResult } from "./journal-trade-story-activities";
 import { composeTradeStoryCopy, type TradeStoryCopyResult } from "./journal-trade-story-copy";
 import { buildTradeStoryPositionLedger, type TradeStoryLedgerResult } from "./journal-trade-story-position-ledger";
@@ -71,6 +73,7 @@ export type JournalTradeStoryPerformance = Readonly<{
 export type JournalTradeStoryHistoricalSummary = Readonly<{
   direction: "long" | "short";
   hasCurrentAnalyzerResult: boolean;
+  journalDataAvailability: "available" | "unavailable";
   notes: JournalRoundTripNoteRecord | null;
   performance: JournalTradeStoryPerformance | null;
   projectionState: "ready_closed" | "legitimate_open";
@@ -232,7 +235,20 @@ function historicalSummaryModel(
   roundTripId: string,
   summary: HistoricalSummaryRow,
 ): JournalTradeStoryHistoricalSummary {
-  const factAnnotations = annotations(scope, roundTripId);
+  const factAnnotations = (() => {
+    try {
+      return Object.freeze({ availability: "available" as const, value: annotations(scope, roundTripId) });
+    } catch {
+      return Object.freeze({
+        availability: "unavailable" as const,
+        value: Object.freeze({
+          notes: null,
+          ruleReviews: Object.freeze([]),
+          tags: Object.freeze([]),
+        }),
+      });
+    }
+  })();
   const performance = summary.projection_state === "ready_closed" &&
       summary.closed_at_utc !== null &&
       summary.entered_quantity_decimal !== null &&
@@ -259,19 +275,36 @@ function historicalSummaryModel(
     : null;
   return Object.freeze({
     direction: summary.direction,
-    hasCurrentAnalyzerResult: hasCurrentAnalyzerResult(scope, roundTripId),
-    notes: factAnnotations.notes,
+    hasCurrentAnalyzerResult: (() => {
+      try {
+        return hasCurrentAnalyzerResult(scope, roundTripId);
+      } catch {
+        return false;
+      }
+    })(),
+    journalDataAvailability: factAnnotations.availability,
+    notes: factAnnotations.value.notes,
     performance,
     projectionState: summary.projection_state,
-    ruleReviews: factAnnotations.ruleReviews,
+    ruleReviews: factAnnotations.value.ruleReviews,
     status: "summary_only",
     style: summary.trade_style === null ? null : Object.freeze({
       tradeStyle: summary.trade_style,
     }),
     symbol: summary.symbol,
-    tags: factAnnotations.tags,
+    tags: factAnnotations.value.tags,
     timezone: summary.trading_timezone,
   });
+}
+
+function historicalSummaryOrThrow(
+  scope: WorkspaceAccessScope,
+  roundTripId: string,
+  cause: unknown,
+): JournalTradeStoryHistoricalSummary {
+  const summary = historicalSummary(scope, roundTripId);
+  if (!summary) throw cause;
+  return historicalSummaryModel(scope, roundTripId, summary);
 }
 
 function localDateAt(utc: string, timezone: string): string {
@@ -356,6 +389,46 @@ function annotations(
   });
 }
 
+function logicalAnnotations(
+  scope: WorkspaceAccessScope,
+  logicalTradeId: string,
+): Readonly<{
+  notes: JournalRoundTripNoteRecord | null;
+  ruleReviews: readonly JournalTradeStoryRuleReview[];
+  tags: readonly JournalTagRecord[];
+}> {
+  if (!scope.activeAccountId) return Object.freeze({ notes: null, ruleReviews: [], tags: [] });
+  return withReadonlyJournalAnnotations(scope, (service, account) => {
+    const allTags = service.listTags(account);
+    const rules = new Map(service.listRules(account).map((rule) => [rule.ruleId, rule.title]));
+    return withReadonlyPlatformDatabase({}, (database) => {
+      const note = database.prepare(`SELECT technical_note_text, note_text, revision, created_at_utc, updated_at_utc
+FROM journal_logical_trade_notes WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?`).get(
+        scope.workspaceId, scope.activeAccountId!, logicalTradeId,
+      ) as { technical_note_text: string; note_text: string; revision: number; created_at_utc: string; updated_at_utc: string } | undefined;
+      const tagRows = database.prepare(`SELECT tag_id FROM journal_logical_trade_tag_assignments
+WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?
+ AND assignment_state = 'assigned'`).all(scope.workspaceId, scope.activeAccountId!, logicalTradeId) as readonly { tag_id: string }[];
+      const reviews = database.prepare(`SELECT rule_id, rule_version_id, status, note_text, revision, updated_at_utc
+FROM journal_logical_trade_rule_reviews WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?`).all(
+        scope.workspaceId, scope.activeAccountId!, logicalTradeId,
+      ) as readonly { rule_id: string; rule_version_id: string;
+          status: "followed" | "broken" | "not_reviewed"; note_text: string; revision: number; updated_at_utc: string }[];
+      return Object.freeze({
+        notes: note ? Object.freeze({ roundTripNoteId: logicalTradeId, roundTripId: logicalTradeId,
+          revision: note.revision, technicalNote: note.technical_note_text, tradeNote: note.note_text,
+          createdAtUtc: note.created_at_utc, updatedAtUtc: note.updated_at_utc }) : null,
+        ruleReviews: Object.freeze(reviews.map((review) => Object.freeze({
+          note: review.note_text, ruleId: review.rule_id, ruleTitle: rules.get(review.rule_id) ?? "Trading rule",
+          ruleVersionId: review.rule_version_id, status: review.status,
+          updatedAtUtc: review.updated_at_utc,
+        }))),
+        tags: Object.freeze(allTags.filter((tag) => tagRows.some((row) => row.tag_id === tag.tagId))),
+      });
+    });
+  });
+}
+
 /**
  * Reads one stable Journal round trip and translates its canonical execution
  * allocations into the reusable Trade Story facts. This is deliberately a
@@ -373,53 +446,120 @@ export function readJournalTradeStory(
     platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
   }
   const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
+  let logicalTrade: JournalLogicalTrade | null = null;
   let position: JournalTrackedPositionDetail;
   try {
-    position = withReadonlyJournalIntegrityRuntime(scope, (journal) =>
-      journal.tradeTrackerReads.positionLedgerDetailForRoundTrip(account, roundTripId));
+    logicalTrade = withReadonlyPlatformDatabase({}, (database) =>
+      new JournalLogicalTradeRepository(database).findByRoundTripId(account, roundTripId));
+    const memberIds = logicalTrade?.members.map((member) => member.roundTripId) ?? [roundTripId];
+    position = withReadonlyJournalIntegrityRuntime(scope, (journal) => {
+      const members = memberIds.map((memberId) =>
+        journal.tradeTrackerReads.positionLedgerDetailForRoundTrip(account, memberId));
+      const first = members[0]!;
+      return members.length === 1 ? first : Object.freeze({ ...first,
+        closedAtUtc: members.at(-1)!.closedAtUtc,
+        executions: Object.freeze(members.flatMap((member) => member.executions)
+          .sort((left, right) => left.executedAtUtc.localeCompare(right.executedAtUtc))),
+        style: first.style ? Object.freeze({ ...first.style,
+          tradeStyle: logicalTrade?.tradeStyle === "swing" ? "swing" as const : "day_trade" as const,
+        }) : first.style,
+      });
+    });
   } catch (error) {
-    const summary = historicalSummary(scope, roundTripId);
-    if (!summary) throw error;
-    return historicalSummaryModel(scope, roundTripId, summary);
+    return historicalSummaryOrThrow(scope, roundTripId, error);
   }
-  const factAnnotations = annotations(scope, roundTripId);
-  const tradePerformance = performance(scope, roundTripId);
-  const ledger = buildTradeStoryPositionLedger({
-    executions: position.executions.map((execution, index) => Object.freeze({
-      executionId: execution.executionId,
-      executedAtUtc: execution.executedAtUtc,
-      marketSession: newYorkMarketSessionAt(execution.executedAtUtc),
-      priceDecimal: execution.priceDecimal,
-      quantityDecimal: execution.quantityDecimal,
-      sequence: index + 1,
-      side: execution.side,
-      tradingDate: localDateAt(
-        execution.executedAtUtc,
-        position.timezone,
-      ),
-    })),
-    sessionBoundaries: Object.freeze([...new Set(position.executions.map((execution) =>
-      localDateAt(execution.executedAtUtc, "America/New_York")))].flatMap(
-      (tradingDate) => newYorkMarketSessionBoundaries(tradingDate),
-    )),
-  });
-  const story = buildTradeStoryActivities(ledger);
-  return Object.freeze({
-    direction: position.direction,
-    executions: position.executions,
-    hasCurrentAnalyzerResult: hasCurrentAnalyzerResult(scope, roundTripId),
-    ledger,
-    notes: factAnnotations.notes,
-    positionRef: position.positionRef,
-    performance: tradePerformance,
-    projectionState: position.projectionState,
-    ruleReviews: factAnnotations.ruleReviews,
-    status: "ready",
-    story,
-    storyCopy: tradeStoryCopy(story, position),
-    style: position.style,
-    symbol: position.symbol,
-    tags: factAnnotations.tags,
-    timezone: position.timezone,
-  });
+  try {
+    const memberIds = logicalTrade?.members.map((member) => member.roundTripId) ?? [roundTripId];
+    const annotationMembers = memberIds.map((memberId) => annotations(scope, memberId));
+    const groupAnnotations = logicalTrade?.logicalTradeId && logicalTrade.members.length > 1
+      ? logicalAnnotations(scope, logicalTrade.logicalTradeId) : null;
+    const factAnnotations = Object.freeze({
+      notes: (() => {
+        const notes = annotationMembers.map((item) => item.notes).filter((item) => item !== null);
+        if (groupAnnotations?.notes) return groupAnnotations.notes;
+        if (notes.length === 0) return null;
+        return Object.freeze({ ...notes[0]!,
+          technicalNote: notes.map((item) => item.technicalNote.trim()).filter(Boolean).join("\n\n"),
+          tradeNote: notes.map((item) => item.tradeNote.trim()).filter(Boolean).join("\n\n"),
+        });
+      })(),
+      ruleReviews: Object.freeze([...(groupAnnotations?.ruleReviews ?? []),
+        ...annotationMembers.flatMap((item) => item.ruleReviews)]),
+      tags: Object.freeze([...new Map([...(groupAnnotations?.tags ?? []), ...annotationMembers.flatMap((item) => item.tags)]
+        .map((tag) => [tag.tagId, tag] as const)).values()]),
+    });
+    const performances = memberIds.map((memberId) => performance(scope, memberId));
+    const tradePerformance = performances.every((item) => item !== null)
+      ? (() => {
+          const values = performances as JournalTradeStoryPerformance[];
+          const sum = (field: keyof JournalTradeStoryPerformance) => values.reduce(
+            (total, value) => {
+              const next = value[field];
+              if (next === null || next === undefined || typeof next === "boolean") {
+                platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
+              }
+              return new StoryDecimal(total).plus(String(next)).toFixed();
+            }, "0");
+          const chargesComplete = values.every((value) => value.chargeCoverage === "complete");
+          return Object.freeze({ ...values[0]!,
+            chargeCostDecimal: chargesComplete ? sum("chargeCostDecimal") : null,
+            chargeCoverage: chargesComplete ? "complete" as const : "unavailable" as const,
+            chargeCreditDecimal: chargesComplete ? sum("chargeCreditDecimal") : null,
+            closedAtUtc: values.at(-1)!.closedAtUtc,
+            enteredQuantityDecimal: sum("enteredQuantityDecimal"),
+            entryNotionalDecimal: sum("entryNotionalDecimal"),
+            executionCount: values.reduce((total, value) => total + value.executionCount, 0),
+            exitQuantityDecimal: sum("exitQuantityDecimal"),
+            grossPnlDecimal: sum("grossPnlDecimal"),
+            holdDurationMilliseconds: Date.parse(values.at(-1)!.closedAtUtc) - Date.parse(values[0]!.openedAtUtc),
+            maximumPositionQuantityDecimal: StoryDecimal.max(...values.map((value) => value.maximumPositionQuantityDecimal)).toFixed(),
+            netPnlDecimal: chargesComplete ? sum("netPnlDecimal") : null,
+          });
+        })() : null;
+    const ledger = buildTradeStoryPositionLedger({
+      executions: position.executions.map((execution, index) => Object.freeze({
+        executionId: execution.executionId,
+        executedAtUtc: execution.executedAtUtc,
+        marketSession: newYorkMarketSessionAt(execution.executedAtUtc),
+        priceDecimal: execution.priceDecimal,
+        quantityDecimal: execution.quantityDecimal,
+        sequence: index + 1,
+        side: execution.side,
+        tradingDate: localDateAt(
+          execution.executedAtUtc,
+          position.timezone,
+        ),
+      })),
+      sessionBoundaries: Object.freeze([...new Set(position.executions.map((execution) =>
+        localDateAt(execution.executedAtUtc, "America/New_York")))].flatMap(
+        (tradingDate) => newYorkMarketSessionBoundaries(tradingDate),
+      )),
+    });
+    const story = buildTradeStoryActivities(ledger);
+    return Object.freeze({
+      direction: position.direction,
+      executions: position.executions,
+      hasCurrentAnalyzerResult: logicalTrade?.logicalTradeId
+        ? withReadonlyPlatformDatabase({}, (database) => Boolean(database.prepare(`SELECT 1
+FROM journal_logical_trade_daily_analyses WHERE workspace_id = ? AND account_id = ?
+ AND logical_trade_id = ? AND status = 'ready' LIMIT 1`).get(
+          scope.workspaceId, scope.activeAccountId!, logicalTrade.logicalTradeId)))
+        : hasCurrentAnalyzerResult(scope, roundTripId),
+      ledger,
+      notes: factAnnotations.notes,
+      positionRef: position.positionRef,
+      performance: tradePerformance,
+      projectionState: position.projectionState,
+      ruleReviews: factAnnotations.ruleReviews,
+      status: "ready",
+      story,
+      storyCopy: tradeStoryCopy(story, position),
+      style: position.style,
+      symbol: position.symbol,
+      tags: factAnnotations.tags,
+      timezone: position.timezone,
+    });
+  } catch (error) {
+    return historicalSummaryOrThrow(scope, roundTripId, error);
+  }
 }

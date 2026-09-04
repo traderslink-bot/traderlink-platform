@@ -11,6 +11,7 @@ import {
   addExactDecimals,
   subtractExactDecimals,
 } from "@/src/modules/journal-analytics/server/exact-analytics-math";
+import { JournalLogicalTradeRepository } from "@/src/modules/journal/server/logical-trades/journal-logical-trade-repository";
 
 export type WorkspaceTradeLibraryRow = Readonly<{
   date: string;
@@ -30,6 +31,7 @@ export type WorkspaceTradeLibraryRow = Readonly<{
   holdDurationSeconds: number | null;
   positionDecimal: string;
   roundTripId: string;
+  underlyingRoundTripIds: readonly string[];
   status: "Open" | "Open swing" | "Closed" | "Closed swing";
   symbol: string;
   tradeDeleteRef: string | null;
@@ -246,8 +248,67 @@ function encodeCursor(row: ProjectionRow, revision: string, digest: string, sort
     projectionRevisionId: revision,
     queryDigest: digest,
     roundTripId: row.round_trip_id,
+    underlyingRoundTripIds: Object.freeze([row.round_trip_id]),
     sort,
   }), "utf8").toString("base64url");
+}
+
+function mergeLogicalWorkspaceRows(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  rows: readonly WorkspaceTradeLibraryRow[],
+): readonly WorkspaceTradeLibraryRow[] {
+  const accountId = activeAccountId(scope);
+  const accountScope = Object.freeze({ userId: scope.userId, workspaceId: scope.workspaceId,
+    accountId, workspaceRole: scope.workspaceRole });
+  const logical = new JournalLogicalTradeRepository(database).list(accountScope);
+  const byMember = new Map(logical.flatMap((trade) => trade.members.map((member) => [member.roundTripId, trade] as const)));
+  const result: WorkspaceTradeLibraryRow[] = [];
+  const included = new Set<string>();
+  for (const row of rows) {
+    const trade = byMember.get(row.roundTripId);
+    const key = trade?.logicalTradeId ?? row.roundTripId;
+    if (included.has(key)) continue;
+    included.add(key);
+    if (!trade || trade.members.length === 1) { result.push(row); continue; }
+    const members = trade.members.map((member) => readWorkspaceTradeLibrarySavedTrade(database, scope, {
+      roundTripId: member.roundTripId, roundTripVersionId: member.roundTripVersionId,
+    })).filter((member): member is WorkspaceTradeLibraryRow => member !== null)
+      .sort((left, right) => `${left.entryDate}T${left.entryTime}`.localeCompare(`${right.entryDate}T${right.entryTime}`));
+    const first = members[0]; const last = members.at(-1);
+    if (!first || !last || members.length !== trade.members.length) { result.push(row); continue; }
+    const sum = (values: readonly string[]): string => values.reduce(addExactDecimals, "0");
+    const nullableSum = (values: readonly (string | null)[]): string | null =>
+      values.every((value) => value !== null) ? sum(values as readonly string[]) : null;
+    const analyzer = trade.logicalTradeId ? database.prepare(`SELECT 1
+FROM journal_logical_trade_daily_analyses
+WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?
+ AND logical_trade_version_id = (SELECT current_version_id FROM journal_logical_trades
+  WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?)
+ AND status = 'ready' LIMIT 1`).get(scope.workspaceId, accountId, trade.logicalTradeId,
+        scope.workspaceId, accountId, trade.logicalTradeId) : null;
+    result.push(Object.freeze({
+      ...first,
+      buyQuantityDecimal: sum(members.map((member) => member.buyQuantityDecimal)),
+      date: last.date,
+      editableExecutions: Object.freeze(members.flatMap((member) => member.editableExecutions)
+        .sort((left, right) => `${left.localDate}T${left.localTime}`.localeCompare(`${right.localDate}T${right.localTime}`))),
+      entryValueDecimal: nullableSum(members.map((member) => member.entryValueDecimal)),
+      executionCount: members.reduce((total, member) => total + member.executionCount, 0),
+      exitDate: last.exitDate,
+      exitPriceDecimal: last.exitPriceDecimal,
+      exitTime: last.exitTime,
+      gainLossDecimal: nullableSum(members.map((member) => member.gainLossDecimal)),
+      hasCurrentAnalyzerResult: Boolean(analyzer),
+      holdDurationSeconds: Math.max(0, Math.round((Date.parse(trade.closedAtUtc) - Date.parse(trade.openedAtUtc)) / 1000)),
+      positionDecimal: "0",
+      status: trade.tradeStyle === "swing" ? "Closed swing" : "Closed",
+      tradeDeleteRef: null,
+      tradeStyle: trade.tradeStyle === "swing" ? "swing" : "day_trade",
+      underlyingRoundTripIds: Object.freeze(trade.members.map((member) => member.roundTripId)),
+    }));
+  }
+  return Object.freeze(result);
 }
 
 function editableExecutions(
@@ -401,6 +462,7 @@ function toWorkspaceTradeLibraryRows(
     tradeDeleteRef: deletes.get(row.round_trip_id) ?? null,
     tradeStyle: row.trade_style,
     tradeCurrency: row.trade_currency,
+    underlyingRoundTripIds: Object.freeze([row.round_trip_id]),
   })));
 }
 
@@ -439,8 +501,8 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as
   if (query.startDate) { clauses.push("projection.activity_local_date >= ?"); parameters.push(query.startDate); }
   if (query.endDate) { clauses.push("projection.activity_local_date <= ?"); parameters.push(query.endDate); }
   if (query.filter === "open") clauses.push("projection.projection_state = 'legitimate_open'");
-  if (query.filter === "closed") clauses.push("projection.projection_state = 'ready_closed' AND coalesce(style.trade_style, 'other') <> 'swing'");
-  if (query.filter === "swing") clauses.push("style.trade_style = 'swing'");
+  if (query.filter === "closed") clauses.push("projection.projection_state = 'ready_closed' AND coalesce(logical_version.trade_style, style.trade_style, 'other') <> 'swing'");
+  if (query.filter === "swing") clauses.push("coalesce(logical_version.trade_style, style.trade_style) = 'swing'");
   if (query.filter === "fees_not_entered") clauses.push(`EXISTS (
     SELECT 1
     FROM journal_round_trip_execution_allocations fee_allocation
@@ -475,6 +537,13 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as
         )
       )
   )`);
+  clauses.push(`(logical_membership.logical_trade_id IS NULL OR logical_membership.member_sequence = (
+    SELECT max(grouped_membership.member_sequence)
+    FROM journal_active_logical_trade_memberships grouped_membership
+    WHERE grouped_membership.workspace_id = logical_membership.workspace_id
+      AND grouped_membership.account_id = logical_membership.account_id
+      AND grouped_membership.logical_trade_id = logical_membership.logical_trade_id
+  ))`);
   const where = clauses.join(" AND ");
   const filterParameters = [...parameters];
   const sort = sortDefinition(query.sort);
@@ -492,8 +561,16 @@ JOIN journal_round_trip_versions version ON version.workspace_id = projection.wo
 JOIN journal_instruments instrument ON instrument.workspace_id = version.workspace_id
  AND instrument.instrument_id = version.instrument_id
 LEFT JOIN journal_trade_style_plans style ON style.workspace_id = projection.workspace_id
- AND style.account_id = projection.account_id AND style.round_trip_id = projection.round_trip_id`;
-  const totalRowCount = (database.prepare(`SELECT count(*) AS count ${base} WHERE ${where}`).get(...filterParameters) as { count: number }).count;
+ AND style.account_id = projection.account_id AND style.round_trip_id = projection.round_trip_id
+LEFT JOIN journal_active_logical_trade_memberships logical_membership
+ ON logical_membership.workspace_id = projection.workspace_id
+ AND logical_membership.account_id = projection.account_id
+ AND logical_membership.round_trip_id = projection.round_trip_id
+LEFT JOIN journal_logical_trade_versions logical_version
+ ON logical_version.workspace_id = logical_membership.workspace_id
+ AND logical_version.account_id = logical_membership.account_id
+ AND logical_version.logical_trade_version_id = logical_membership.logical_trade_version_id`;
+  const totalRowCount = (database.prepare(`SELECT count(DISTINCT coalesce(logical_membership.logical_trade_id, projection.round_trip_id)) AS count ${base} WHERE ${where}`).get(...filterParameters) as { count: number }).count;
   const pageParameters = [...parameters, String(PAGE_SIZE + 1)];
   const rows = database.prepare(`SELECT projection.activity_at_utc, projection.activity_local_date,
   projection.closed_at_utc, version.direction, projection.entry_local_date, projection.entry_local_time,
@@ -520,14 +597,17 @@ LEFT JOIN journal_trade_style_plans style ON style.workspace_id = projection.wor
       AND analysis_version.status = 'ready'
       AND analyzed_version.projection_fingerprint_sha256 = version.projection_fingerprint_sha256
   ) AS has_current_analyzer_result,
-  version.trade_currency, style.trade_style, projection.unique_execution_count
+  version.trade_currency,
+  COALESCE(CASE logical_version.trade_style WHEN 'day' THEN 'day_trade' ELSE logical_version.trade_style END,
+    style.trade_style) AS trade_style,
+  projection.unique_execution_count
 ${base} WHERE ${where}${keyset} ORDER BY ${order} LIMIT ?`).all(...pageParameters) as readonly ProjectionRow[];
   const selected = rows.slice(0, PAGE_SIZE);
   return Object.freeze({
     continuationCursor: rows.length > PAGE_SIZE ? encodeCursor(selected.at(-1)!, revision.projection_revision_id, digest, query.sort) : null,
     projectionState: "ready",
     query,
-    rows: toWorkspaceTradeLibraryRows(database, scope, selected),
+    rows: mergeLogicalWorkspaceRows(database, scope, toWorkspaceTradeLibraryRows(database, scope, selected)),
     totalRowCount,
   });
 }

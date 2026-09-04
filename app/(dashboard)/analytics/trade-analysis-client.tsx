@@ -464,7 +464,6 @@ export function TradeAnalysisClient({
   evidenceQuery,
   model,
   offline = false,
-  showMoomooConnectionGuidance = false,
   view,
 }: {
   evidenceQuery: Readonly<{
@@ -475,7 +474,6 @@ export function TradeAnalysisClient({
   }>;
   model: DailyTradeLongTermAnalyticsModel;
   offline?: boolean;
-  showMoomooConnectionGuidance?: boolean;
   view: TradeAnalysisView;
 }) {
   const [patternPage, setPatternPage] = useState(1);
@@ -498,12 +496,6 @@ export function TradeAnalysisClient({
     return (
       <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined">
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No trades have been analyzed.</Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-          TradersLink Trade Analyzer analyzes trades that are manually submitted in the Daily Trade Tracker. While the app is in beta the Trade Analyzer uses market data provided by connected Moomoo accounts. A free moomoo account is all that is need to use the analyzer. If you already have a moomoo account TraderLink will connect your account quickly and securely using moomo&apos;s official OAuth.
-        </Typography>
-        <DashboardPrimaryAction href="/account/trading" sx={{ mt: 2 }}>
-          Connect Moomoo
-        </DashboardPrimaryAction>
       </Paper>
     );
   }
@@ -709,7 +701,6 @@ export function TradeAnalysisClient({
               moneyBasis={evidenceQuery.moneyBasis}
               onClose={() => setSelectedPattern(null)}
               pattern={selectedPattern}
-              showMoomooConnectionGuidance={showMoomooConnectionGuidance}
               startDate={evidenceQuery.startDate}
             />
           ) : null}

@@ -5,6 +5,7 @@ import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import { Alert, Box, Button, Chip, CircularProgress, Collapse, Drawer, IconButton, Stack, Typography } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
@@ -132,7 +133,7 @@ function closestPatternLine(events: readonly AnalyzerEvent[], timeframe: Analyze
 
 function combinedTradeAnalysisSections(analysis: DaySessionTradeAnalyzer, currency: string, timezone: string): TradeAnalysisSection[] {
   const entries = analysis.events.filter((event) => event.kind === "entry" || event.kind === "add");
-  const exits = analysis.events.filter((event) => event.kind === "partial_exit" || event.kind === "final_exit");
+  const exits = analysis.events.filter((event) => event.kind === "partial_exit" || event.kind === "temporary_flat" || event.kind === "final_exit");
   if (entries.length === 0) return [];
   const entryQuantity = entries.reduce((total, event) => total + Number(event.quantity), 0);
   const exitQuantity = exits.reduce((total, event) => total + Number(event.quantity), 0);
@@ -219,6 +220,8 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
   const [analysis, setAnalysis] = useState<DaySessionTradeAnalyzer | null>(null);
   const [interval, setInterval] = useState<DailyTradeChartInterval>("1m");
   const [loadState, setLoadState] = useState<AnalyzerLoadState>("idle");
+  const [availability, setAvailability] = useState<Readonly<{ enabled: boolean; dailyAvailable: number; periodAvailable: number; daysUntilReset: number; selectableAvailable: number }> | null>(null);
+  const [requesting, setRequesting] = useState(false);
   const loadRequestRef = useRef(0);
   async function loadAnalysis(): Promise<void> {
     const request = ++loadRequestRef.current;
@@ -227,7 +230,25 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
       const response = await fetch(`/api/platform/trade-analyzer/trade?${new URLSearchParams({ direction, roundTripId })}`, { cache: "no-store" });
       const payload = await response.json().catch(() => null) as AnalyzerPayload | null;
       if (request !== loadRequestRef.current) return;
-      if (!response.ok || payload?.status !== "ready" || !payload.analysis || payload.analysis.candles.length === 0) { setAnalysis(null); setLoadState("unavailable"); return; }
+      if (response.ok && payload?.status === "ready" && payload.analysis?.status === "pending") {
+        setAnalysis(null); setLoadState("loading");
+        window.setTimeout(() => {
+          if (request === loadRequestRef.current) void loadAnalysis();
+        }, 5_000);
+        return;
+      }
+      if (response.ok && payload?.status === "ready" && payload.analysis?.status === "execution_mismatch") {
+        setAnalysis(payload.analysis); setLoadState("idle");
+        return;
+      }
+      if (!response.ok || payload?.status !== "ready" || !payload.analysis || payload.analysis.candles.length === 0) {
+        setAnalysis(null); setLoadState("unavailable");
+        const uses = await fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" }).then((value) => value.json()).catch(() => null) as { availability?: typeof availability } | null;
+        if (request === loadRequestRef.current) setAvailability(
+          uses?.availability?.enabled === false ? null : uses?.availability ?? null,
+        );
+        return;
+      }
       setAnalysis(payload.analysis); setLoadState("idle");
     } catch { if (request === loadRequestRef.current) { setAnalysis(null); setLoadState("error"); } }
   }
@@ -237,6 +258,22 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
     // The selected trade identity is the intentional loading boundary.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [direction, open, roundTripId]);
+  async function requestAnalysis(): Promise<void> {
+    if (!availability?.enabled || availability.selectableAvailable <= 0) {
+      setLoadState("unavailable");
+      return;
+    }
+    setRequesting(true);
+    try {
+      const response = await fetch("/api/platform/trade-analyzer/trade/request", {
+        method: "POST", headers: { "Content-Type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
+        body: JSON.stringify({ roundTripId }),
+      });
+      const payload = await response.json() as { outcome?: string; availability?: typeof availability };
+      setAvailability(payload.availability?.enabled === false ? null : payload.availability ?? availability);
+      if (response.ok && (payload.outcome === "queued" || payload.outcome === "already_requested")) void loadAnalysis();
+    } finally { setRequesting(false); }
+  }
   const message = unavailableMessage(loadState);
-  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { maxWidth: "none", width: "100vw" } } }}><Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: { xs: 1.25, md: 2 } }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><InsightsRoundedIcon color="primary" /><Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Trade Analyzer</Typography><Typography color="text.secondary" variant="body2">{symbol} · {direction === "long" ? "Long" : "Short"} · {executionCount} execution{executionCount === 1 ? "" : "s"}</Typography></Box></Stack><IconButton aria-label="Close Trade Analyzer" onClick={onClose}><CloseRoundedIcon /></IconButton></Stack></Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>{loadState === "loading" ? <Stack spacing={1} sx={{ alignItems: "center", justifyContent: "center", minHeight: 320, p: 3 }}><CircularProgress /><Typography color="text.secondary" variant="body2">Loading saved chart analysis…</Typography></Stack> : null}{message && loadState !== "loading" ? <Stack spacing={1.5} sx={{ p: { xs: 1.5, md: 2 } }}><Alert severity={loadState === "error" ? "error" : "info"}>{message}</Alert><Button onClick={() => void loadAnalysis()} sx={{ alignSelf: "flex-start" }} variant="outlined">Try again</Button></Stack> : null}{analysis && loadState !== "loading" ? <><DailyTradeAnalyzerChart analysis={analysis} currency={currency} direction={direction} interval={interval} onIntervalChange={setInterval} selectedEventId={null} symbol={symbol} tradeLabelColor={panelOutcomeColor(gainLossDecimal)} tradeNumber={1} /><FullAnalysisEvidence analysis={analysis} currency={currency} timezone={timezone} /></> : null}</Box></Stack></Drawer>;
+  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { maxWidth: "none", width: "100vw" } } }}><Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: { xs: 1.25, md: 2 } }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><InsightsRoundedIcon color="primary" /><Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Trade Analyzer</Typography><Typography color="text.secondary" variant="body2">{symbol} · {direction === "long" ? "Long" : "Short"} · {executionCount} execution{executionCount === 1 ? "" : "s"}</Typography></Box></Stack><IconButton aria-label="Close Trade Analyzer" onClick={onClose}><CloseRoundedIcon /></IconButton></Stack></Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>{loadState === "loading" ? <Stack spacing={1} sx={{ alignItems: "center", justifyContent: "center", minHeight: 320, p: 3 }}><CircularProgress /><Typography color="text.secondary" variant="body2">Loading saved chart analysis…</Typography></Stack> : null}{message && loadState !== "loading" ? <Stack spacing={1.5} sx={{ p: { xs: 1.5, md: 2 } }}><Alert severity={loadState === "error" ? "error" : "info"}>{message}</Alert>{availability ? <><Typography variant="body2">{availability.dailyAvailable} available today</Typography><Typography variant="body2">{availability.periodAvailable} available this period · resets in {availability.daysUntilReset} days</Typography><Button disabled={requesting} onClick={() => void requestAnalysis()} sx={{ alignSelf: "flex-start" }} variant="contained">Analyze Trade</Button>{availability.selectableAvailable <= 0 ? <Typography color="error.main" variant="body2">You have used all available Trade Analyzer uses.</Typography> : null}</> : null}<Button onClick={() => void loadAnalysis()} sx={{ alignSelf: "flex-start" }} variant="outlined">Try again</Button></Stack> : null}{analysis?.status === "execution_mismatch" && loadState !== "loading" ? <Stack spacing={1} sx={{ p: { xs: 1.5, md: 2 } }}><Alert severity="warning">Review the execution details and correct the highlighted time or price before Analyzer runs again.</Alert>{analysis.executionMismatches.map((mismatch) => <Typography key={mismatch.executionId} variant="body2">{mismatch.side.toUpperCase()} · {mismatch.executedAt} · entered {mismatch.enteredPrice} · candle {mismatch.candleLow}–{mismatch.candleHigh}</Typography>)}</Stack> : null}{analysis && analysis.status !== "execution_mismatch" && loadState !== "loading" ? <><DailyTradeAnalyzerChart analysis={analysis} currency={currency} direction={direction} interval={interval} onIntervalChange={setInterval} selectedEventId={null} symbol={symbol} tradeLabelColor={panelOutcomeColor(gainLossDecimal)} tradeNumber={1} /><FullAnalysisEvidence analysis={analysis} currency={currency} timezone={timezone} /></> : null}</Box></Stack></Drawer>;
 }

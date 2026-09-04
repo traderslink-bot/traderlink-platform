@@ -8,7 +8,6 @@ import { WorkspaceDashboard } from "./workspace-dashboard";
 import { readRuleResults, workspaceRuleResultsCard } from "../rules/results/rule-results-data";
 import { readWorkspaceTradeLibrary } from "./workspace-trade-library";
 import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, WorkspaceTradeLibrarySort } from "./workspace-trade-library";
-import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
 import { JournalWorkspacePrScannerCardPreferenceService } from "@/src/modules/journal/server/news/journal-workspace-pr-scanner-card-preference";
@@ -36,10 +35,6 @@ import {
   readJournalFirstExecutionOnboardingStatusFromDatabase,
 } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 import { readJournalDemoScopeClockFromDatabase } from "@/src/modules/journal/server/demo/journal-demo-scope-clock";
-import {
-  MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE,
-  MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE,
-} from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
 
 export const metadata: Metadata = {
   title: "Workspace | TradersLink Platform",
@@ -90,13 +85,6 @@ function periodDates(
   return Object.freeze({ endDate, startDate: date.toISOString().slice(0, 10) });
 }
 
-function workspaceFirstTimeOnboardingResult(
-  value: string | undefined,
-): WorkspaceFirstTimeOnboardingResult {
-  if (value === "moomoo-failed") return value;
-  return null;
-}
-
 export default async function WorkspacePage({
   searchParams,
 }: {
@@ -117,7 +105,7 @@ export default async function WorkspacePage({
     redirect("/account/trading");
   }
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, customEndDate, customStartDate, logicalClosedTradeCount, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, pnlReportingBasis, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
@@ -173,20 +161,19 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
           afterCursor: null, endDate: dates.endDate, filter, followDashboardPeriod: false,
           group, searchTicker: queryParameters.searchTicker ?? "", sort, startDate: dates.startDate,
         }),
+        logicalClosedTradeCount: readWorkspaceTradeLibrary(database, scope, {
+          afterCursor: null, endDate: dates.endDate, filter: "closed", followDashboardPeriod: false,
+          group: "none", searchTicker: "", sort: "newest", startDate: dates.startDate,
+        }).totalRowCount,
       });
     },
     { prefetchAllFactSet: period === "all" && !(queryParameters.startDate && queryParameters.endDate) },
   );
-  const showFirstTimeOnboarding = !onboardingStatus.activeAccountIsDemo &&
-    !onboardingStatus.hasRealAcceptedExecution;
   const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
     ? currentJournalAccountSelectionRef(scope)
     : undefined;
   const showDemoTradeTrackerInvitation = !onboardingStatus.activeAccountIsDemo &&
     onboardingStatus.demoLifecycleState !== "cleared";
-  const cookieStore = await cookies();
-  const moomooConnectionPending = cookieStore.get(MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE)?.value
-    === MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE;
   const analyticsMetrics = WORKSPACE_METRICS.map(([label, metricId, caption]) => {
     const selectedMetricId = workspaceMetricId(metricId, pnlReportingBasis);
     const metrics = findJournalAnalyticsMetric(response, selectedMetricId);
@@ -194,7 +181,9 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     return {
       label,
       caption,
-      value: formatJournalAnalyticsPartitionedMetric(response, selectedMetricId),
+      value: label === "Closed trades"
+        ? String(logicalClosedTradeCount)
+        : formatJournalAnalyticsPartitionedMetric(response, selectedMetricId),
       valueColor: financialSummaryMetricColor(selectedMetricId, metric?.value),
     };
   });
@@ -231,11 +220,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         hasRealAcceptedExecution={onboardingStatus.hasRealAcceptedExecution}
         newsScannerAvailable={hasPressReleaseDashboardAccess(identity)}
         prScannerCardPreference={prScannerCardPreference}
-        firstTimeMoomooConnectionPending={showFirstTimeOnboarding ? moomooConnectionPending : undefined}
-        firstTimeMoomooConnected={onboardingStatus.hasActiveMoomooConnection}
-        firstTimeOnboardingResult={showFirstTimeOnboarding
-          ? workspaceFirstTimeOnboardingResult(queryParameters.gettingStarted)
-          : undefined}
         reviewSummary={reviewSummary}
         offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
         period={period}

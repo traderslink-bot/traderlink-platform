@@ -9,6 +9,7 @@ import type {
   JournalManualWorkspaceStyle,
 } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
 import type { DailyTradeAnalyzerQueueOutcome } from "@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts";
+import type { SharedAnalyzerSelectionOutcome } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
 const DATABASE_NAME = "traderlink-pwa-v1";
@@ -73,10 +74,16 @@ export type ManualTradeOutboxRecord = Readonly<{
 export type ManualTradeSubmitResult = Readonly<{
   acceptedExecutionCount: number;
   affectedDates: readonly string[];
+  affectedTradeIds: readonly string[];
   affectedTradeRefs: readonly string[];
   analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null;
+  analyzerSelectionOutcomes: readonly Readonly<{
+    groupRef: string;
+    outcome: SharedAnalyzerSelectionOutcome;
+  }>[];
   pendingDecisionCount: number;
   savedTrade: unknown | null;
+  savedTrades: readonly unknown[];
 }>;
 
 type PreviewResponse = Readonly<{
@@ -91,10 +98,16 @@ type CommitResponse = Readonly<{
   result?: Readonly<{
     acceptedExecutionCount?: number;
     affectedDates?: readonly string[];
+    affectedTradeIds?: readonly string[];
     affectedTradeRefs?: readonly string[];
     analyzerQueueOutcome?: DailyTradeAnalyzerQueueOutcome | null;
+    analyzerSelectionOutcomes?: readonly Readonly<{
+      groupRef: string;
+      outcome: SharedAnalyzerSelectionOutcome;
+    }>[];
     pendingDecisionCount?: number;
     savedTrade?: unknown | null;
+    savedTrades?: readonly unknown[];
   }>;
 }>;
 
@@ -301,6 +314,8 @@ export async function commitManualTradeOnline(
   preview: JournalManualTradePreview,
   options: Readonly<{
     offlineDuplicateResolution?: JournalManualTradeOfflineDuplicateResolution;
+    analyzerGroupRefs?: readonly string[];
+    logicalTradeMerges?: readonly Readonly<{ groupRefs: readonly string[]; tradeStyle: "day" | "swing" }>[];
   }> = {},
 ): Promise<ManualTradeSubmitResult> {
   const commitResponse = await requestWithNetworkBoundary(
@@ -309,6 +324,12 @@ export async function commitManualTradeOnline(
     {
       body: JSON.stringify({
         confirmations: confirmations(preview),
+        ...(options.analyzerGroupRefs === undefined
+          ? {}
+          : { analyzerGroupRefs: options.analyzerGroupRefs }),
+        ...(options.logicalTradeMerges === undefined
+          ? {}
+          : { logicalTradeMerges: options.logicalTradeMerges }),
         entries: submission.entries,
         expectedAccountSelectionRef: submission.expectedAccountSelectionRef,
         idempotencyKey: submission.idempotencyKey,
@@ -346,10 +367,13 @@ export async function commitManualTradeOnline(
     acceptedExecutionCount:
       commitBody.result.acceptedExecutionCount ?? submission.entries.length,
     affectedDates: Object.freeze(commitBody.result.affectedDates ?? []),
+    affectedTradeIds: Object.freeze(commitBody.result.affectedTradeIds ?? []),
     affectedTradeRefs: Object.freeze(commitBody.result.affectedTradeRefs ?? []),
     analyzerQueueOutcome: commitBody.result.analyzerQueueOutcome ?? null,
+    analyzerSelectionOutcomes: Object.freeze(commitBody.result.analyzerSelectionOutcomes ?? []),
     pendingDecisionCount: commitBody.result.pendingDecisionCount ?? 0,
     savedTrade: commitBody.result.savedTrade ?? null,
+    savedTrades: Object.freeze(commitBody.result.savedTrades ?? []),
   });
 }
 
@@ -358,6 +382,7 @@ export async function submitManualTradeOnline(
   options: Readonly<{
     checkCommittedFirst?: boolean;
     offlineDuplicateResolution?: JournalManualTradeOfflineDuplicateResolution;
+    analyzerGroupRefs?: readonly string[];
   }> = {},
 ): Promise<ManualTradeSubmitResult> {
   const headers = manualTradeHeaders();
@@ -385,10 +410,13 @@ export async function submitManualTradeOnline(
       return Object.freeze({
         acceptedExecutionCount: statusBody.result.acceptedExecutionCount,
         affectedDates: statusBody.result.affectedDates,
+        affectedTradeIds: Object.freeze([]),
         affectedTradeRefs: Object.freeze([]),
         analyzerQueueOutcome: null,
+        analyzerSelectionOutcomes: Object.freeze([]),
         pendingDecisionCount: statusBody.result.pendingDecisionCount,
         savedTrade: null,
+        savedTrades: Object.freeze([]),
       });
     }
   }

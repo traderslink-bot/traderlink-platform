@@ -51,8 +51,12 @@ export async function POST(request: Request): Promise<Response> {
         rebuildCount: result.rebuilds.length,
         styledTradeCount: result.styledTradeCount,
         affectedDates: result.affectedDates,
+        affectedTradeIds: result.affectedTradeTargets.map((target) => target.roundTripId),
+        affectedTradeRefs: result.affectedPositionRefs,
         affectedPositionRefs: result.affectedPositionRefs,
         analyzerQueueOutcome: result.analyzerQueueOutcome,
+        analyzerSelectionOutcomes: result.analyzerSelectionOutcomes,
+        savedTrades: [],
       },
     });
   } catch (error) {

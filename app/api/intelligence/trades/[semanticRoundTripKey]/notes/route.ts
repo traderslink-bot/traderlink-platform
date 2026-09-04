@@ -8,6 +8,9 @@ import {
   isTraderLinkPlatformError,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { activeLogicalTradeReviewTarget, saveLogicalTradeNote } from "@/src/modules/journal/server/logical-trades/journal-logical-trade-review-persistence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,12 +48,24 @@ export async function PUT(
     const body = record(await request.json());
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const { semanticRoundTripKey } = await context.params;
-    const data = withWritableJournalAnnotations(scope, (service, account) =>
-      noteView(service.saveRoundTripNote(account, {
+    if (!scope.activeAccountId || typeof body.technicalNote !== "string" || typeof body.tradeNote !== "string") {
+      platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID");
+    }
+    const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
+    const logicalData = withPlatformDatabase({ mode: "runtime" }, (database) => {
+      const target = activeLogicalTradeReviewTarget(database, account, semanticRoundTripKey);
+      if (!target) return null;
+      const saved = saveLogicalTradeNote(database, account, target, {
         expectedRevision: nullableRevision(body.expectedRevision),
-        roundTripId: semanticRoundTripKey,
-        technicalNote: body.technicalNote,
-        tradeNote: body.tradeNote,
+        technicalNote: body.technicalNote as string,
+        tradeNote: body.tradeNote as string,
+      });
+      return { revision: String(saved.revision), technicalNote: saved.technicalNote, tradeNote: saved.tradeNote };
+    });
+    const data = logicalData ?? withWritableJournalAnnotations(scope, (service, annotationAccount) =>
+      noteView(service.saveRoundTripNote(annotationAccount, {
+        expectedRevision: nullableRevision(body.expectedRevision), roundTripId: semanticRoundTripKey,
+        technicalNote: body.technicalNote, tradeNote: body.tradeNote,
       })));
     return Response.json({ ok: true, data });
   } catch (error) {

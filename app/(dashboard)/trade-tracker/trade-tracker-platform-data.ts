@@ -17,6 +17,8 @@ import type {
 import type { JournalTradeStyleRecord } from "@/src/modules/journal/contracts/journal-trade-style-contracts";
 import type { JournalEditableManualExecution } from "@/src/modules/journal/server/manual-trades/journal-manual-execution-edit-service";
 import type { JournalTradingDayReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
+import { JournalLogicalTradeRepository } from "@/src/modules/journal/server/logical-trades/journal-logical-trade-repository";
+import { addExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
 import {
   withJournalAnalyticsDashboardRuntime,
   withJournalAnalyticsReportingDashboardRuntime,
@@ -60,6 +62,7 @@ import {
   UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS,
 } from "@/src/modules/level-analysis/server/daily-trade-green-to-red-analyzer";
 import { readDailyTradePathMaterialization } from "@/src/modules/level-analysis/server/daily-trade-path-materialization-repository";
+import { LogicalTradeAnalyzerRepository, type LogicalTradeAnalyzerSavedResult } from "@/src/modules/level-analysis/server/logical-trade-analyzer-repository";
 
 import type {
   DaySessionDailyNote,
@@ -200,7 +203,7 @@ function analyzerReferenceDistance(value: unknown): DaySessionTradeAnalyzer["eve
     : null;
 }
 
-function analyzerMetrics(value: unknown): DaySessionTradeAnalyzer["events"][number]["metrics"] {
+export function analyzerMetrics(value: unknown): DaySessionTradeAnalyzer["events"][number]["metrics"] {
   if (!value || typeof value !== "object") {
     return {
       available: false,
@@ -267,7 +270,7 @@ function analyzerMetrics(value: unknown): DaySessionTradeAnalyzer["events"][numb
   };
 }
 
-function analyzerFiveMinuteContext(
+export function analyzerFiveMinuteContext(
   value: unknown,
 ): DaySessionTradeAnalyzer["events"][number]["fiveMinuteContext"] {
   const empty = {
@@ -427,6 +430,60 @@ function withExecutionPatternContexts(
   });
 }
 
+function logicalAnalyzerView(saved: LogicalTradeAnalyzerSavedResult | null): DaySessionTradeAnalyzer | null {
+  if (!saved) return null;
+  if (saved.status === "correction_required") {
+    return { availableAtUtc: saved.availableAtUtc, candles: [], detailLoaded: true,
+      detailVersionRef: saved.logicalTradeVersionId, events: [],
+      executionMismatchSetId: null,
+      executionMismatches: saved.mismatches.map((mismatch) => ({
+        candleHigh: mismatch.candleHighDecimal, candleLow: mismatch.candleLowDecimal,
+        candleTime: mismatch.candleTimeUtcSeconds, enteredPrice: mismatch.enteredPriceDecimal,
+        executedAt: mismatch.event.executedAtUtc, executionId: mismatch.event.eventId,
+        kind: mismatch.kind, quantity: mismatch.event.quantityDecimal, side: mismatch.side,
+      })), finalExitPaths: [], greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS,
+      mismatchBrokerConfirmed: false, status: "execution_mismatch" };
+  }
+  if (!saved.analyzed) {
+    const status = saved.status === "stale" ? "expired" : saved.status;
+    return status === "pending" || status === "no_coverage" ||
+      status === "provider_unavailable" || status === "expired"
+      ? { availableAtUtc: saved.availableAtUtc, candles: [], detailLoaded: true,
+          detailVersionRef: saved.logicalTradeVersionId, events: [], executionMismatchSetId: null,
+          executionMismatches: [], finalExitPaths: [],
+          greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS,
+          mismatchBrokerConfirmed: false, status }
+      : null;
+  }
+  const candleViews = saved.candles.map((candle) => ({ close: candle.closeDecimal,
+    high: candle.highDecimal, low: candle.lowDecimal, open: candle.openDecimal,
+    time: candle.time, turnover: candle.turnoverDecimal ?? null, volume: candle.volumeDecimal }));
+  return { availableAtUtc: saved.availableAtUtc, candles: candleViews, detailLoaded: true,
+    detailVersionRef: saved.logicalTradeVersionId,
+    events: withExecutionPatternContexts(candleViews.map((candle) => ({
+      close: Number(candle.close), high: Number(candle.high), low: Number(candle.low),
+      open: Number(candle.open), time: candle.time,
+      turnover: candle.turnover === null ? null : Number(candle.turnover),
+      volume: Number(candle.volume),
+    })), saved.analyzed.eventSnapshots.map((snapshot) => ({
+      candleTime: snapshot.candleTime, eventId: snapshot.event.eventId,
+      executedAt: snapshot.event.executedAtUtc, fees: snapshot.event.feesDecimal ?? null,
+      fiveMinuteContext: analyzerFiveMinuteContext(snapshot.fiveMinuteContext),
+      indicators: snapshot.indicators ? {
+        ...snapshot.indicators,
+        rsi14CalculationVersion: snapshot.indicators.rsi14CalculationVersion ?? null,
+      } : null,
+      kind: snapshot.event.kind, metrics: analyzerMetrics(snapshot.metrics), patterns: [...snapshot.patterns],
+      price: snapshot.event.priceDecimal, quantity: snapshot.event.quantityDecimal,
+      sequence: snapshot.event.sequence,
+    }))), executionMismatchSetId: null, executionMismatches: [],
+    finalExitPaths: saved.analyzed.finalExitPaths.map((path) => ({
+      favorableMove: path.favorableMoveDecimal, minutesAfterExit: path.minutesAfterExit,
+      observedAt: path.observedAtCandleTime,
+    })), greenToRed: saved.analyzed.greenToRed, mismatchBrokerConfirmed: false,
+    status: saved.status === "ready" ? "ready" : "pending" };
+}
+
 function readDailyTradeAnalyzers(
   scope: WorkspaceAccessScope,
   roundTrips: readonly Readonly<{ direction: "long" | "short"; roundTripId: string }>[],
@@ -542,6 +599,14 @@ ORDER BY candle_time_utc_seconds`);
         .map((analysis) => [analysis.round_trip_id, analysis] as const),
     );
     for (const roundTripId of roundTripIds) {
+      const logical = logicalAnalyzerView(new LogicalTradeAnalyzerRepository(database)
+        .readCurrentByRoundTrip(Object.freeze({ userId: scope.userId,
+          workspaceId: scope.workspaceId, accountId: activeAccountId,
+          workspaceRole: scope.workspaceRole }), roundTripId));
+      if (logical) {
+        result.set(roundTripId, logical);
+        continue;
+      }
       const analysis = analysisByRoundTripId.get(roundTripId);
       if (!analysis) continue;
       if (analysis.execution_mismatch_set_id) {
@@ -1022,6 +1087,113 @@ function annotationSnapshot(
   });
 }
 
+function logicalTradingDayModel(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  model: JournalTradingDayReadModel,
+): JournalTradingDayReadModel {
+  if (!scope.activeAccountId) return model;
+  const accountScope = Object.freeze({ userId: scope.userId, workspaceId: scope.workspaceId,
+    accountId: scope.activeAccountId, workspaceRole: scope.workspaceRole });
+  const logical = new JournalLogicalTradeRepository(database).list(accountScope);
+  const byMember = new Map(logical.flatMap((trade) => trade.members.map((member) => [member.roundTripId, trade] as const)));
+  const seen = new Set<string>();
+  let removed = 0;
+  const tickers = model.tickers.map((ticker) => {
+    const roundTrips = ticker.roundTrips.flatMap((roundTrip) => {
+      const trade = byMember.get(roundTrip.roundTripId);
+      const key = trade?.logicalTradeId ?? roundTrip.roundTripId;
+      if (!trade || trade.members.length === 1) return [roundTrip];
+      if (seen.has(key)) { removed += 1; return []; }
+      const visible = ticker.roundTrips.filter((candidate) => trade.members.some((member) => member.roundTripId === candidate.roundTripId));
+      if (visible.length !== trade.members.length) return [roundTrip];
+      seen.add(key);
+      const ordered = [...visible].sort((left, right) => left.entryAtUtc.localeCompare(right.entryAtUtc));
+      const pnl = ordered.every((member) => member.netPnlDecimal !== null)
+        ? ordered.reduce((total, member) => addExactDecimals(total, member.netPnlDecimal!), "0")
+        : null;
+      return [Object.freeze({ ...ordered[0]!, exitAtUtc: ordered.at(-1)!.exitAtUtc,
+        exitPriceDecimal: ordered.at(-1)!.exitPriceDecimal, gainLossPercentDecimal: null,
+        netPnlDecimal: pnl })];
+    });
+    return Object.freeze({ ...ticker, roundTrips: Object.freeze(roundTrips) });
+  });
+  if (removed === 0) return model;
+  return Object.freeze({ ...model, tickers: Object.freeze(tickers),
+    week: Object.freeze({ ...model.week,
+      days: Object.freeze(model.week.days.map((day) => day.date === model.date
+        ? Object.freeze({ ...day, tradeCount: Math.max(0, day.tradeCount - removed) }) : day)),
+      tradeCount: Math.max(0, model.week.tradeCount - removed),
+    }) });
+}
+
+function logicalAnnotationSnapshot(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  rawModel: JournalTradingDayReadModel,
+  annotations: AnnotationSnapshot,
+): AnnotationSnapshot {
+  if (!scope.activeAccountId) return annotations;
+  const rawIds = new Set(rawModel.tickers.flatMap((ticker) => ticker.roundTrips.map((trade) => trade.roundTripId)));
+  const groups = new JournalLogicalTradeRepository(database).list(Object.freeze({
+    userId: scope.userId, workspaceId: scope.workspaceId, accountId: scope.activeAccountId,
+    workspaceRole: scope.workspaceRole,
+  })).filter((trade) => trade.members.length > 1 && trade.members.every((member) => rawIds.has(member.roundTripId)));
+  if (groups.length === 0) return annotations;
+  const notes = { ...annotations.roundTripNotes };
+  const tagsByRoundTrip = { ...annotations.tagsByRoundTrip };
+  let rules = [...annotations.rules];
+  for (const group of groups) {
+    const representative = group.members[0]!.roundTripId;
+    const memberIds = new Set(group.members.map((member) => member.roundTripId));
+    const logicalNote = database.prepare(`SELECT technical_note_text, note_text, revision,
+ created_at_utc, updated_at_utc FROM journal_logical_trade_notes
+WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?`).get(
+      scope.workspaceId, scope.activeAccountId, group.logicalTradeId,
+    ) as { technical_note_text: string; note_text: string; revision: number;
+      created_at_utc: string; updated_at_utc: string } | undefined;
+    if (logicalNote) notes[representative] = Object.freeze({
+      roundTripNoteId: group.logicalTradeId!, roundTripId: representative,
+      revision: logicalNote.revision, technicalNote: logicalNote.technical_note_text,
+      tradeNote: logicalNote.note_text, createdAtUtc: logicalNote.created_at_utc,
+      updatedAtUtc: logicalNote.updated_at_utc,
+    });
+    else delete notes[representative];
+    const logicalTagIds = new Set((database.prepare(`SELECT tag_id
+FROM journal_logical_trade_tag_assignments assignment
+WHERE assignment.workspace_id = ? AND assignment.account_id = ?
+ AND assignment.logical_trade_id = ? AND assignment.assignment_state = 'assigned'`).all(
+        scope.workspaceId, scope.activeAccountId, group.logicalTradeId,
+      ) as readonly { tag_id: string }[]).map((row) => row.tag_id));
+    tagsByRoundTrip[representative] = Object.freeze([...new Map([
+      ...annotations.tags.filter((tag) => logicalTagIds.has(tag.tagId)),
+    ].map((tag) => [tag.tagId, tag] as const)).values()]);
+    rules = rules.map((rule) => rule.targetRoundTripKey && memberIds.has(rule.targetRoundTripKey)
+      ? { ...rule, targetRoundTripKey: representative }
+      : rule).filter((rule, index, all) => !rule.custom || rule.targetRoundTripKey !== representative ||
+        all.findIndex((candidate) => candidate.custom && candidate.targetRoundTripKey === representative &&
+          candidate.ruleId === rule.ruleId && candidate.ruleVersion === rule.ruleVersion) === index)
+      .map((rule) => rule.custom && rule.targetRoundTripKey === representative
+        ? { ...rule, note: "", revision: null, status: "not-reviewed" as const }
+        : rule);
+    const logicalReviews = database.prepare(`SELECT rule_id, rule_version_id, status,
+ note_text, revision FROM journal_logical_trade_rule_reviews
+WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?`).all(
+      scope.workspaceId, scope.activeAccountId, group.logicalTradeId,
+    ) as readonly { rule_id: string; rule_version_id: string;
+      status: "followed" | "broken" | "not_reviewed"; note_text: string; revision: number }[];
+    for (const review of logicalReviews) {
+      rules = rules.map((rule) => rule.custom && rule.targetRoundTripKey === representative &&
+        rule.ruleId === review.rule_id && rule.ruleVersion === review.rule_version_id
+        ? { ...rule, note: review.note_text, revision: String(review.revision),
+            status: review.status === "not_reviewed" ? "not-reviewed" as const : review.status }
+        : rule);
+    }
+  }
+  return Object.freeze({ ...annotations, roundTripNotes: Object.freeze(notes),
+    rules: Object.freeze(rules), tagsByRoundTrip: Object.freeze(tagsByRoundTrip) });
+}
+
 function toDaySessionData(
   model: JournalTradingDayReadModel,
   annotations: AnnotationSnapshot,
@@ -1222,6 +1394,8 @@ function buildReplacementDaySession(
   reportingContext: JournalReportingCurrencyContext | null,
   verifiedReadonlyDatabase?: Database.Database,
 ): DaySessionData | null {
+  const rawModel = model;
+  if (verifiedReadonlyDatabase) model = logicalTradingDayModel(verifiedReadonlyDatabase, scope, model);
   if (model.currency === null) return null;
   const readTrackerState = (journal: JournalIntegrityRuntime) => {
     const account = journal.tradeStyles.accountScope(scope);
@@ -1299,12 +1473,12 @@ function buildReplacementDaySession(
     ? withScopedJournalAnnotations(
         verifiedReadonlyDatabase,
         scope,
-        (service, account) => annotationSnapshot(
+        (service, account) => logicalAnnotationSnapshot(verifiedReadonlyDatabase, scope, rawModel, annotationSnapshot(
           service,
           account,
-          model,
+          rawModel,
           swingRoundTripIds,
-        ),
+        )),
       )
     : withReadonlyJournalAnnotations(scope, (service, account) =>
         annotationSnapshot(service, account, model, swingRoundTripIds));

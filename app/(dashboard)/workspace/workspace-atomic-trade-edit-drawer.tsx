@@ -1,9 +1,11 @@
 "use client";
 
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import CallMergeRoundedIcon from "@mui/icons-material/CallMergeRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import { Alert, Box, Button, Drawer, IconButton, MenuItem, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Checkbox, Drawer, FormControlLabel, IconButton, MenuItem, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
@@ -15,6 +17,15 @@ import type { TradeExplorerReviewTarget } from "../analytics/trade-explorer/trad
 type TradeStyle = "day_trade" | "swing" | "other";
 type Side = "buy" | "sell";
 type EditTab = "trade" | "journal";
+type EditConsequence = "keeps_closed" | "leaves_open" | "deletes_trade" | "creates_multiple" | "merges" | "changes_nearby_boundaries";
+type MergeCandidate = Readonly<{
+  candidateRef: string; symbol: string; tradeStyle: "day" | "swing";
+  openedAtUtc: string; closedAtUtc: string; memberCount: number;
+}>;
+type MergeView = Readonly<{
+  revision: number; isMerged: boolean; current: MergeCandidate;
+  sameDay: readonly MergeCandidate[]; otherDates: readonly MergeCandidate[];
+}>;
 type Execution = Readonly<{
   editRef: string; localDate: string; localTime: string; sourceTimezone: string;
   normalizedSymbol: string; tradeCurrency: string; side: Side; quantityDecimal: string;
@@ -25,8 +36,6 @@ type Snapshot = Readonly<{
   executionCount: number; executions: readonly Execution[]; snapshotRef: string;
   tradeCurrency: string; tradeStyle: TradeStyle | null;
 }>;
-type PreviewConsequence = "keeps_closed" | "leaves_open" | "deletes_trade" | "creates_multiple" | "merges" | "changes_nearby_boundaries";
-type Preview = Readonly<{ consequence: PreviewConsequence; consequenceCopy: string; previewRef: string }>;
 type DraftRow = {
   kind: "existing" | "new"; executionRef?: string; clientRowRef: string; removed: boolean;
   localDate: string; localTime: string; sourceTimezone: string; normalizedSymbol: string;
@@ -61,10 +70,14 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [rows, setRows] = useState<DraftRow[]>([]);
   const [tradeStyle, setTradeStyle] = useState<TradeStyle | null>(null);
-  const [preview, setPreview] = useState<Preview | null>(null);
+  const [preview, setPreview] = useState<Readonly<{ previewRef: string; consequence: EditConsequence; consequenceCopy: string }> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const [tab, setTab] = useState<EditTab>(startingTab);
+  const [mergeView, setMergeView] = useState<MergeView | null>(null);
+  const [isMerged, setIsMerged] = useState(false);
+  const [selectedMergeRefs, setSelectedMergeRefs] = useState<readonly string[]>([]);
+  const [mergeStyle, setMergeStyle] = useState<"day" | "swing">("day");
   const nextRow = useRef(100);
   const cannotSaveAsOneTrade = preview?.consequence === "leaves_open" || preview?.consequence === "creates_multiple";
 
@@ -72,6 +85,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
     if (!open || !roundTripId) return;
     let active = true;
     setSnapshot(null); setRows([]); setTradeStyle(null); setPreview(null); setError(null); setTab(startingTab);
+    setMergeView(null); setSelectedMergeRefs([]); setIsMerged(false);
     void fetch(`/api/platform/journal/workspace-trades/${roundTripId}/edit`, { cache: "no-store" })
       .then(async (response) => {
         const result = await response.json() as { snapshot?: Snapshot; code?: unknown };
@@ -85,10 +99,32 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
         setTradeStyle(result.tradeStyle);
       })
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : failureMessage(null)); });
+    void fetch(`/api/platform/journal/workspace-trades/${roundTripId}/edit/merge`, { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json() as { view?: MergeView };
+        return response.ok ? result.view ?? null : null;
+      })
+      .then((result) => { if (active && result) setIsMerged(result.isMerged); })
+      .catch(() => { /* The edit form remains available if merge state cannot be read. */ });
     return () => { active = false; };
   }, [open, roundTripId, startingTab]);
 
   const activeRows = useMemo(() => rows.filter((row) => !row.removed), [rows]);
+  const hasUnsavedExecutionChanges = useMemo(() => {
+    if (!snapshot || rows.length !== snapshot.executions.length || tradeStyle !== snapshot.tradeStyle) return true;
+    return rows.some((row, index) => {
+      const saved = snapshot.executions[index];
+      const baseline = saved ? rowFromExecution(saved, index) : null;
+      return !saved || row.kind !== "existing" || row.removed || row.executionRef !== saved.editRef ||
+        !baseline || row.localDate !== baseline.localDate ||
+        canonicalTime(row.localTime) !== canonicalTime(baseline.localTime) ||
+        row.sourceTimezone !== baseline.sourceTimezone ||
+        row.normalizedSymbol !== baseline.normalizedSymbol ||
+        row.tradeCurrency !== baseline.tradeCurrency || row.side !== baseline.side ||
+        row.quantityDecimal !== baseline.quantityDecimal ||
+        row.priceDecimal !== baseline.priceDecimal || row.feesDecimal !== baseline.feesDecimal;
+    });
+  }, [rows, snapshot, tradeStyle]);
   const update = <K extends keyof DraftRow>(clientRowRef: string, key: K, value: DraftRow[K]) => {
     setPreview(null);
     setRows((current) => current.map((row) => row.clientRowRef === clientRowRef ? { ...row, [key]: value } : row));
@@ -114,7 +150,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
       const response = await fetch(`/api/platform/journal/workspace-trades/${roundTripId}/edit/preview`, {
         method: "POST", headers: { "Content-Type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" }, body: JSON.stringify(payload()),
       });
-      const result = await response.json() as { preview?: Preview; code?: unknown };
+      const result = await response.json() as { preview?: { previewRef: string; consequence: EditConsequence; consequenceCopy: string }; code?: unknown };
       if (!response.ok || !result.preview) { setError(failureMessage(result.code)); return; }
       setPreview(result.preview);
     } catch { setError(failureMessage(null)); } finally { setWorking(false); }
@@ -140,20 +176,107 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
     setRows((current) => [...current, { ...basis, kind: "new", executionRef: undefined,
       clientRowRef: `trade-row-${id}`, removed: false }]);
   };
+  const openMerge = async () => {
+    if (!roundTripId) return;
+    if (hasUnsavedExecutionChanges) {
+      setError("Save or discard the execution changes before merging trades.");
+      return;
+    }
+    setWorking(true); setError(null);
+    try {
+      const response = await fetch(`/api/platform/journal/workspace-trades/${roundTripId}/edit/merge`, { cache: "no-store" });
+      const result = await response.json() as { view?: MergeView };
+      if (!response.ok || !result.view) throw new Error("The merge choices changed. Review the current trades again.");
+      setMergeView(result.view); setSelectedMergeRefs([]);
+      setMergeStyle(result.view.current.tradeStyle);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The merge choices could not be loaded.");
+    } finally { setWorking(false); }
+  };
+  const saveMerge = async (action: "merge" | "unmerge") => {
+    if (!roundTripId || !mergeView) return;
+    setWorking(true); setError(null);
+    try {
+      const response = await fetch(`/api/platform/journal/workspace-trades/${roundTripId}/edit/merge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
+        body: JSON.stringify(action === "merge"
+          ? { action, expectedCurrentRevision: mergeView.revision, candidateRefs: selectedMergeRefs, tradeStyle: mergeStyle }
+          : { action, expectedCurrentRevision: mergeView.revision }),
+      });
+      const result = await response.json() as { view?: MergeView; code?: string };
+      if (!response.ok || !result.view) {
+        throw new Error(result.code === "TRADERLINK_LOGICAL_TRADE_INVALID"
+          ? "Selected trades must be compatible and consecutive."
+          : "The trades changed. Review the current trades again.");
+      }
+      window.dispatchEvent(new CustomEvent("traderlink:workspace-trade-edited"));
+      setIsMerged(result.view.isMerged);
+      setMergeView(null);
+      setSelectedMergeRefs([]);
+      onSaved?.();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The trade grouping could not be saved.");
+    } finally { setWorking(false); }
+  };
+
+  const selectedMergeTrades = mergeView
+    ? [...mergeView.sameDay, ...mergeView.otherDates].filter((trade) =>
+        selectedMergeRefs.includes(trade.candidateRef))
+    : [];
+  const selectedMergeStyles = new Set([
+    ...(mergeView ? [mergeView.current.tradeStyle] : []),
+    ...selectedMergeTrades.map((trade) => trade.tradeStyle),
+  ]);
+  const selectedAcrossDates = Boolean(mergeView && mergeView.otherDates.some((trade) =>
+    selectedMergeRefs.includes(trade.candidateRef)));
+  const tradeStyleChoiceRequired = selectedMergeStyles.size > 1 && !selectedAcrossDates;
+
+  const candidate = (item: MergeCandidate, otherDate: boolean) => <FormControlLabel
+    control={<Checkbox checked={selectedMergeRefs.includes(item.candidateRef)} onChange={(event) => {
+      setSelectedMergeRefs((current) => event.target.checked
+        ? [...current, item.candidateRef]
+        : current.filter((ref) => ref !== item.candidateRef));
+      if (otherDate && event.target.checked) setMergeStyle("swing");
+    }} />}
+    key={item.candidateRef}
+    label={<Stack><Typography sx={{ fontWeight: 750 }}>{item.symbol}</Typography><Typography color="text.secondary" variant="body2">{new Date(item.openedAtUtc).toLocaleString()} – {new Date(item.closedAtUtc).toLocaleString()}</Typography></Stack>}
+    sx={{ alignItems: "flex-start", border: 1, borderColor: "divider", borderRadius: 1.5, m: 0, p: 1 }}
+  />;
 
   return <Drawer anchor="right" onClose={working ? undefined : onClose} open={open} slotProps={{ paper: { sx: { width: { xs: "100%", md: 820 } } } }}>
     <Stack sx={{ height: "100%", minHeight: 0 }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", px: 2, py: 1.25 }}>
-          <Typography component="h2" sx={{ fontWeight: 800 }} variant="h6">Edit trade</Typography>
+          <Typography component="h2" sx={{ fontWeight: 800 }} variant="h6">{mergeView ? mergeView.isMerged ? "Unmerge trade" : "Merge trade" : "Edit trade"}</Typography>
           <IconButton aria-label="Close" disabled={working} onClick={onClose}><CloseRoundedIcon /></IconButton>
         </Stack>
-        <Tabs aria-label="Edit trade sections" onChange={(_event, value: EditTab) => setTab(value)} value={tab} variant="fullWidth">
+        {!mergeView ? <Tabs aria-label="Edit trade sections" onChange={(_event, value: EditTab) => setTab(value)} value={tab} variant="fullWidth">
           <Tab label="Trade" value="trade" />
           <Tab label="Journal" value="journal" />
-        </Tabs>
+        </Tabs> : null}
       </Box>
-      {tab === "trade" ? <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
+      {mergeView ? <Stack spacing={2} sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
+        <Button onClick={() => { setMergeView(null); setSelectedMergeRefs([]); setError(null); }} startIcon={<ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>Back</Button>
+        <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
+          <Typography sx={{ fontWeight: 800 }}>{mergeView.current.symbol}</Typography>
+          <Typography color="text.secondary" variant="body2">{mergeView.current.memberCount} round trip{mergeView.current.memberCount === 1 ? "" : "s"}</Typography>
+        </Box>
+        {mergeView.isMerged ? <>
+          <Typography color="text.secondary" variant="body2">This will create {mergeView.current.memberCount} trades from this merged trade.</Typography>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+            <Button disabled={working} onClick={() => { setMergeView(null); setError(null); }}>Cancel</Button>
+            <Button color="error" disabled={working} onClick={() => void saveMerge("unmerge")} variant="contained">Unmerge Trade</Button>
+          </Stack>
+        </> : <>
+          {mergeView.sameDay.length > 0 ? <Stack spacing={1}><Typography sx={{ fontWeight: 800 }}>Same day</Typography>{mergeView.sameDay.map((item) => candidate(item, false))}</Stack> : null}
+          {mergeView.otherDates.length > 0 ? <Stack spacing={1}><Typography sx={{ fontWeight: 800 }}>Other dates</Typography>{mergeView.otherDates.map((item) => candidate(item, true))}</Stack> : null}
+          <TextField disabled={!tradeStyleChoiceRequired} label="Trade type" onChange={(event) => setMergeStyle(event.target.value as "day" | "swing")} select size="small" value={selectedAcrossDates ? "swing" : mergeStyle}><MenuItem value="day">Day Trade</MenuItem><MenuItem value="swing">Swing</MenuItem></TextField>
+          <Typography color="text.secondary" variant="body2">Result: 1 trade from {selectedMergeRefs.length + 1} selected trades</Typography>
+          <Button disabled={working || selectedMergeRefs.length === 0} onClick={() => void saveMerge("merge")} variant="contained">Merge Trades</Button>
+        </>}
+        {error ? <Alert severity="error">{error}</Alert> : null}
+      </Stack> : tab === "trade" ? <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
         {snapshot ? <>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
             <TextField label="Ticker" onChange={(event) => { const value = event.target.value.toUpperCase(); setPreview(null); setRows((current) => current.map((row) => ({ ...row, normalizedSymbol: value }))); }} size="small" sx={{ width: "9ch" }} value={activeRows[0]?.normalizedSymbol ?? ""} />
@@ -176,15 +299,16 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
             </Box> : null}
           </Box>)}
           <Button disabled={working || activeRows.length === 0} onClick={addExecution} startIcon={<AddRoundedIcon />} sx={{ alignSelf: "flex-start" }}>Add execution</Button>
+          <Button disabled={working} onClick={() => void openMerge()} startIcon={<CallMergeRoundedIcon />} sx={{ alignSelf: "flex-start" }}>{isMerged ? "Unmerge Trade" : "Merge Trade"}</Button>
           {preview ? <Alert severity="info">{preview.consequenceCopy}</Alert> : null}
           {error ? <Alert severity="error">{error}</Alert> : null}
         </> : error ? <Alert severity="error">{error}</Alert> : <Typography color="text.secondary">Loading</Typography>}
       </Stack> : journalTarget ? <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setTab("trade")} onSelectTrade={() => undefined} open selectedRoundTripId={journalTarget.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={[journalTarget]} />
       </Box> : <Box sx={{ flex: 1, p: 2 }}><Alert severity="info">Journal review is unavailable for this trade.</Alert></Box>}
-      {tab === "trade" ? <Stack direction="row" spacing={1} sx={{ borderTop: 1, borderColor: "divider", justifyContent: "flex-end", p: 2 }}>
+      {!mergeView && tab === "trade" ? <Stack direction="row" spacing={1} sx={{ borderTop: 1, borderColor: "divider", justifyContent: "flex-end", p: 2 }}>
         {preview ? <Button disabled={working} onClick={() => setPreview(null)}>Cancel</Button> : null}
-        <Button disabled={!snapshot || working || cannotSaveAsOneTrade} onClick={() => void (preview ? commit() : requestPreview())} variant="contained">{working ? "Saving…" : preview ? cannotSaveAsOneTrade ? "Review required" : "Confirm changes" : "Review changes"}</Button>
+        <Button color={preview?.consequence === "deletes_trade" ? "error" : "primary"} disabled={!snapshot || working || cannotSaveAsOneTrade} onClick={() => void (preview ? commit() : requestPreview())} variant="contained">{working ? "Saving…" : preview ? preview.consequence === "deletes_trade" ? "Delete trade" : cannotSaveAsOneTrade ? "Review required" : "Confirm changes" : "Review changes"}</Button>
       </Stack> : null}
     </Stack>
   </Drawer>;

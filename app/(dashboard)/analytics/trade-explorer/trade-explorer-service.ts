@@ -1,5 +1,6 @@
 import "server-only";
 
+import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -27,6 +28,7 @@ import {
 } from "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
 import { journalAnalyticsMetricRegistry } from "@/src/modules/journal-analytics/server/analytics-metric-registry";
 import type { JournalAnalyticsService } from "@/src/modules/journal-analytics/server/analytics-service";
+import { toLogicalTradeAnalyticsTable } from "@/src/modules/journal-analytics/server/logical-trade-analytics-table";
 import {
   requireActiveJournalAnalyticsAccountId,
   withJournalAnalyticsReportingDashboardRuntime,
@@ -146,14 +148,15 @@ async function execute(
   tableOrder: JournalAnalyticsTableOrder = tradeExplorerTableOrder("closed_desc"),
 ): Promise<AnalyticsLabPlatformPreview> {
   const asOfUtc = new Date().toISOString();
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) =>
-    buildPreview(scope, input, afterCursor, service, tableOrder, asOfUtc));
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, service }) =>
+    buildPreview(scope, input, afterCursor, database, service, tableOrder, asOfUtc));
 }
 
 function buildPreview(
   scope: WorkspaceAccessScope,
   input: AnalyticsLabPlatformQuery,
   afterCursor: string | null,
+  database: Database.Database,
   service: JournalAnalyticsService,
   tableOrder: JournalAnalyticsTableOrder,
   asOfUtc: string,
@@ -164,13 +167,14 @@ function buildPreview(
   const selected = response.partitions
     .flatMap((partition) => partition.metrics)
     .find((metric) => metric.metricId === input.metricId) ?? null;
-  const evidence = response.partitions.length === 1
+  const rawEvidence = response.partitions.length === 1
     ? service.getRoundTripAnalyticsTable(
         scope,
         query,
         tableOrder,
       )
     : null;
+  const evidence = rawEvidence === null ? null : toLogicalTradeAnalyticsTable(scope, database, rawEvidence);
   if (evidence !== null && (
     evidence.factSetRevisionSha256 !== response.factSetRevisionSha256 ||
     evidence.moneyBasis !== input.moneyBasis ||
@@ -257,21 +261,27 @@ export async function runCompleteTradeExplorerTableQuery(
     evidenceRows: 100 as const,
   });
   const asOfUtc = new Date().toISOString();
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) => {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, service }) => {
+    const rawFirst = service.getRoundTripAnalyticsTable(
+      scope,
+      journalQuery(scope, reportQuery, null, asOfUtc),
+      normalizedRequest.tableOrder,
+    );
     const first = buildPreview(
       scope,
       reportQuery,
       null,
+      database,
       service,
       normalizedRequest.tableOrder,
       asOfUtc,
     );
-    if (first.evidence === null || first.evidence.continuationCursor === null) {
+    if (first.evidence === null || rawFirst.continuationCursor === null) {
       return first;
     }
 
-    const rows = [...first.evidence.rows];
-    let cursor: string | null = first.evidence.continuationCursor;
+    const rows = [...rawFirst.rows];
+    let cursor: string | null = rawFirst.continuationCursor;
     while (cursor !== null) {
       const page = service.getRoundTripAnalyticsTable(
         scope,
@@ -283,23 +293,23 @@ export async function runCompleteTradeExplorerTableQuery(
         page.moneyBasis !== first.evidence.moneyBasis ||
         page.currency !== first.evidence.currency ||
         page.timezone !== first.evidence.timezone ||
-        page.totalRowCount !== first.evidence.totalRowCount
+        page.totalRowCount !== rawFirst.totalRowCount
       ) {
         throw new TypeError("Trade Explorer report rows changed while the report was generated.");
       }
       rows.push(...page.rows);
       cursor = page.continuationCursor;
     }
-    if (rows.length !== first.evidence.totalRowCount) {
+    if (rows.length !== rawFirst.totalRowCount) {
       throw new TypeError("Trade Explorer report did not include every matching trade.");
     }
     return Object.freeze({
       ...first,
-      evidence: Object.freeze({
-        ...first.evidence,
+      evidence: toLogicalTradeAnalyticsTable(scope, database, Object.freeze({
+        ...rawFirst,
         rows: Object.freeze(rows),
         continuationCursor: null,
-      }),
+      })),
     });
   });
 }
@@ -467,7 +477,7 @@ export async function runTradeExplorerComparison(
 ): Promise<TradeExplorerComparisonResult> {
   const normalized = normalizeTradeExplorerComparison(input);
   const generatedAtUtc = new Date().toISOString();
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) => {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, service }) => {
     const groups = normalized.groups.map((group) => {
       const query = Object.freeze({
         ...group.query,
@@ -482,6 +492,7 @@ export async function runTradeExplorerComparison(
           scope,
           query,
           null,
+          database,
           service,
           tradeExplorerTableOrder("closed_desc"),
           generatedAtUtc,
@@ -521,7 +532,7 @@ export async function runTradeExplorerComparison(
 export async function readTradeExplorerPageModel(
   scope: WorkspaceAccessScope,
 ): Promise<TradeExplorerPageModel> {
-  const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, pnlReportingBasis, service }) => {
+  const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, dashboard, pnlReportingBasis, service }) => {
     const calendarInput = Object.freeze({
       currency: null,
       startDate: null,
@@ -597,6 +608,7 @@ export async function readTradeExplorerPageModel(
         scope,
         initialQuery,
         null,
+        database,
         service,
         tradeExplorerTableOrder("closed_desc"),
         new Date().toISOString(),

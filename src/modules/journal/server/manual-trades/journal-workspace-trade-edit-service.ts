@@ -55,6 +55,7 @@ type SnapshotState = Readonly<{
 const CONSEQUENCE_COPY: Readonly<Record<JournalWorkspaceTradeEditConsequence, string>> = Object.freeze({
   keeps_closed: "This update keeps the trade closed.",
   leaves_open: "This edit cannot be saved as one trade here. Review the executions and try again.",
+  deletes_trade: "This update deletes the trade because all executions are removed.",
   creates_multiple: "This edit cannot be saved as one trade here. Review the executions and try again.",
   merges: "This update merges trades.",
   changes_nearby_boundaries: "This update changes nearby trade boundaries.",
@@ -239,24 +240,25 @@ ORDER BY version.executed_at_utc, version.source_order_key, execution.execution_
       left.executedAtUtc.localeCompare(right.executedAtUtc) ||
       left.orderKey.localeCompare(right.orderKey) ||
       left.executionId.localeCompare(right.executionId));
+    const editableExecutionIds = new Set(state.editable.map((editable) => editable.executionId));
     const beforeBoundaries = chainBoundaries(current);
     const afterBoundaries = chainBoundaries(after);
-    if (afterBoundaries.closedTradeCount > beforeBoundaries.closedTradeCount) {
-      return "creates_multiple";
-    }
-    if (afterBoundaries.closedTradeCount < beforeBoundaries.closedTradeCount) {
-      return "merges";
-    }
-    if (beforeBoundaries.boundaryExecutionIds.join("\u001f") !==
-      afterBoundaries.boundaryExecutionIds.join("\u001f")) {
+    const outsideSubjectBoundaryIds = (boundaryIds: readonly string[]) => boundaryIds
+      .filter((executionId) => !editableExecutionIds.has(executionId))
+      .join("\u001f");
+    if (outsideSubjectBoundaryIds(beforeBoundaries.boundaryExecutionIds) !==
+      outsideSubjectBoundaryIds(afterBoundaries.boundaryExecutionIds)) {
       return "changes_nearby_boundaries";
     }
-    const draftedPosition = chainBoundaries(after.filter((entry) =>
-      state.editable.some((editable) => editable.executionId === entry.executionId) ||
-      entry.executionId.startsWith("new:"),
-    )).finalPosition;
-    return compareDecimal(draftedPosition, "0") === 0
-      ? "keeps_closed"
+    const editedTrade = after.filter((entry) =>
+      editableExecutionIds.has(entry.executionId) || entry.executionId.startsWith("new:"));
+    if (editedTrade.length === 0) return "deletes_trade";
+    const editedBoundaries = chainBoundaries(editedTrade);
+    if (compareDecimal(editedBoundaries.finalPosition, "0") === 0) {
+      return "keeps_closed";
+    }
+    return editedBoundaries.closedTradeCount > 0
+      ? "creates_multiple"
       : "leaves_open";
   }
 
@@ -271,7 +273,8 @@ ORDER BY version.executed_at_utc, version.source_order_key, execution.execution_
       trade_currency: string;
       trade_style: "day_trade" | "swing" | "other" | null;
     }>(`SELECT round_trip.current_version_id, version.instrument_id, version.trade_currency,
-       style.trade_style
+       COALESCE(CASE logical_version.trade_style WHEN 'day' THEN 'day_trade' ELSE logical_version.trade_style END,
+         style.trade_style) AS trade_style
 FROM journal_round_trips round_trip
 JOIN journal_round_trip_versions version
   ON version.workspace_id = round_trip.workspace_id
@@ -281,12 +284,20 @@ LEFT JOIN journal_trade_style_plans style
   ON style.workspace_id = round_trip.workspace_id
  AND style.account_id = round_trip.account_id
  AND style.round_trip_id = round_trip.round_trip_id
+LEFT JOIN journal_active_logical_trade_memberships membership
+  ON membership.workspace_id = round_trip.workspace_id
+ AND membership.account_id = round_trip.account_id
+ AND membership.round_trip_id = round_trip.round_trip_id
+LEFT JOIN journal_logical_trade_versions logical_version
+  ON logical_version.workspace_id = membership.workspace_id
+ AND logical_version.account_id = membership.account_id
+ AND logical_version.logical_trade_version_id = membership.logical_trade_version_id
 WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
   AND round_trip.round_trip_id = ? AND round_trip.lifecycle_state = 'active'
 LIMIT 1`).get(scope.workspaceId, scope.accountId, roundTripId);
     if (!trade) platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
 
-    const members = this.database.prepare<[string, string, string], {
+    const members = this.database.prepare<[string, string, string, string, string, string, string, string], {
       execution_id: string;
       execution_version_id: string;
     }>(`SELECT execution.execution_id, allocation.execution_version_id
@@ -300,13 +311,27 @@ JOIN journal_executions execution
  AND execution.account_id = allocation.account_id
  AND execution.execution_id = allocation_version.execution_id
 WHERE allocation.workspace_id = ? AND allocation.account_id = ?
-  AND allocation.round_trip_version_id = ?
+  AND allocation.round_trip_version_id IN (
+    SELECT member_round_trip.current_version_id
+    FROM journal_round_trips member_round_trip
+    WHERE member_round_trip.workspace_id = ? AND member_round_trip.account_id = ?
+      AND member_round_trip.lifecycle_state = 'active'
+      AND (member_round_trip.round_trip_id = ? OR member_round_trip.round_trip_id IN (
+        SELECT grouped.round_trip_id
+        FROM journal_active_logical_trade_memberships selected
+        JOIN journal_active_logical_trade_memberships grouped
+          ON grouped.workspace_id = selected.workspace_id
+         AND grouped.account_id = selected.account_id
+         AND grouped.logical_trade_id = selected.logical_trade_id
+        WHERE selected.workspace_id = ? AND selected.account_id = ?
+          AND selected.round_trip_id = ?
+      ))
+  )
   AND execution.current_version_id = allocation.execution_version_id
   AND execution.current_state = 'accepted'
-ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
-      scope.workspaceId,
-      scope.accountId,
-      trade.current_version_id,
+ORDER BY allocation_version.executed_at_utc, allocation_version.source_order_key, execution.execution_id`).all(
+      scope.workspaceId, scope.accountId, scope.workspaceId, scope.accountId,
+      roundTripId, scope.workspaceId, scope.accountId, roundTripId,
     ).map((row) => Object.freeze({
       executionId: row.execution_id,
       executionVersionId: row.execution_version_id,
@@ -432,6 +457,7 @@ ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
         platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT");
       }
       this.assertCompleteDraft(current.snapshot, draft);
+      const consequence = this.consequence(accountScope, current, draft);
       const originalOpeningExecutionId = current.editable[0]?.executionId;
       if (!originalOpeningExecutionId) platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT");
       if (!this.verifyPreview(scope, roundTripId, draft, request.previewRef)) {
@@ -478,6 +504,7 @@ ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
           quantityDecimal: entry.quantityDecimal,
           priceDecimal: entry.priceDecimal,
           feesDecimal: entry.feesDecimal,
+          refreshAnalyzer: false,
           now,
         });
         correctedExecutionCount += 1;
@@ -490,6 +517,7 @@ ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
           sourceDisplayLabel: "Workspace trade edit manual executions",
           entries: additions.map(toManualExecutionInput),
           confirmedTraderBoundaries: true,
+          contentResolution: "trader_confirmed_separate",
           now,
         });
       }
@@ -498,7 +526,16 @@ ORDER BY allocation.allocation_sequence, execution.execution_id`).all(
         maintenanceReasonCode: "workspace_atomic_trade_edit",
         now,
       });
-      if (draft.tradeStyle !== current.snapshot.tradeStyle) {
+      const affectedRoundTripIds = Object.freeze([...new Set(rebuilds
+        .filter((rebuild) => rebuild.status === "rebuilt")
+        .flatMap((rebuild) => rebuild.roundTripIds))]);
+      try {
+        this.executionEdits.refreshLogicalTradesAfterRebuild(accountScope, affectedRoundTripIds, now);
+      } catch {
+        // A valid Journal edit must not be rolled back because a follow-up
+        // Analyzer/logical-trade refresh cannot run at that moment.
+      }
+      if (draft.tradeStyle !== null && consequence !== "deletes_trade") {
         const targetRows = this.database.prepare<[string, string, string], {
           round_trip_id: string;
         }>(`SELECT DISTINCT round_trip.round_trip_id
@@ -517,33 +554,35 @@ WHERE execution.workspace_id = ? AND execution.account_id = ?
           accountScope.accountId,
           originalOpeningExecutionId,
         );
-        if (targetRows.length !== 1 || !draft.tradeStyle) {
+        if (targetRows.length !== 1) {
           platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
         }
         const roundTripId = targetRows[0]!.round_trip_id;
         const positionRef = this.tradeStyles.positionRef(accountScope, roundTripId);
         const priorStyle = this.tradeStyles.read(accountScope, positionRef);
-        this.tradeStyles.change(accountScope, {
-          positionRef,
-          expectedRevision: priorStyle?.revision ?? null,
-          tradeStyle: draft.tradeStyle,
-          openStatus: draft.tradeStyle === "swing"
-            ? "swing"
-            : draft.tradeStyle === "day_trade"
-              ? "day_trade_still_open"
-              : "other",
-          plannedFromEntry: priorStyle?.plannedFromEntry ?? false,
-          claimedEffectiveAtUtc: this.tradeStyles.resolveRoundTripPosition(
-            accountScope,
-            roundTripId,
-          ).openedAtUtc,
-          reason: "reclassified",
-          sourceUi: "workspace",
-          idempotencyKey: `${request.idempotencyKey}:style`,
-        }, now);
+        if (priorStyle?.tradeStyle !== draft.tradeStyle) {
+          this.tradeStyles.change(accountScope, {
+            positionRef,
+            expectedRevision: priorStyle?.revision ?? null,
+            tradeStyle: draft.tradeStyle,
+            openStatus: draft.tradeStyle === "swing"
+              ? "swing"
+              : draft.tradeStyle === "day_trade"
+                ? "day_trade_still_open"
+                : "other",
+            plannedFromEntry: priorStyle?.plannedFromEntry ?? false,
+            claimedEffectiveAtUtc: this.tradeStyles.resolveRoundTripPosition(
+              accountScope,
+              roundTripId,
+            ).openedAtUtc,
+            reason: "reclassified",
+            sourceUi: "workspace",
+            idempotencyKey: `${request.idempotencyKey}:style`,
+          }, now);
+        }
       }
       return Object.freeze({
-        consequence: this.consequence(accountScope, current, draft),
+        consequence,
         acceptedNewExecutionCount: additions.length,
         correctedExecutionCount,
         removedExecutionCount,

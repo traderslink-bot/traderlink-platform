@@ -31,6 +31,11 @@ export type PlatformMigrationRunResult = Readonly<{
   finalSchemaSha256: string;
 }>;
 
+function safeMigrationDriverMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : "unknown SQLite error";
+  return message.replace(/\s+/gu, " ").slice(0, 240);
+}
+
 export function verifyCompletedPlatformDatabase(
   database: Database.Database,
   manifestInput: readonly PlatformMigration[] = platformMigrationManifest,
@@ -156,7 +161,7 @@ export function runPlatformMigrations(
       }
       throw new TraderLinkPlatformError(
         "TRADERLINK_MIGRATION_FAILED",
-        { migrationId: migration.migrationId, migrationPhase },
+        { migrationId: migration.migrationId, migrationPhase, sqliteError: safeMigrationDriverMessage(error) },
         { cause: error },
       );
     }

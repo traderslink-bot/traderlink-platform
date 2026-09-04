@@ -6,7 +6,6 @@ import Typography from "@mui/material/Typography";
 import {
   DashboardPage,
   DashboardPanel,
-  DashboardPrimaryAction,
 } from "../../dashboard-template";
 import { DashboardPageDescription } from "../dashboard-page-description";
 import {
@@ -14,14 +13,12 @@ import {
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
-import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 import {
   journalDemoTradeTrackerLandingDate,
   journalScopeCurrentDate,
   readJournalDemoScopeClock,
 } from "@/src/modules/journal/server/demo/journal-demo-scope-clock";
-import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 
 import {
   getReplacementReportingDaySession,
@@ -72,11 +69,7 @@ export default async function TradeTrackerPage({
   const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
     ? currentJournalAccountSelectionRef(scope)
     : null;
-  const showMoomooConnectedStatus = showFirstExecutionCallout &&
-    query.moomoo === "connected" && onboardingStatus.hasActiveMoomooConnection;
   const account = getReplacementTradeTrackerAccount(scope);
-  const moomooMarketDataAccess = withReadonlyPlatformDatabase({}, (database) =>
-    readMoomooMarketDataAccess(database, scope));
   const reportingDate = journalScopeCurrentDate(demoClock, "UTC");
   const initialData = await getReplacementReportingDaySession(scope, {
     date: reportingDate,
@@ -93,26 +86,11 @@ export default async function TradeTrackerPage({
       {showFirstExecutionCallout ? (
         <DashboardPanel title="Ready to add your first execution">
           <Stack spacing={0.75} sx={{ maxWidth: 760 }}>
-            {showMoomooConnectedStatus ? (
-              <Typography color="success.main" sx={{ fontWeight: 700 }} variant="body2">
-                Moomoo is connected. Your eligible completed trades can now receive Trade Analyzer reviews.
-              </Typography>
-            ) : null}
             <Typography color="text.secondary" variant="body2">
               Use the form below to enter the exact date, time, price, quantity, and Buy or Sell side shown by your broker.
             </Typography>
           </Stack>
         </DashboardPanel>
-      ) : null}
-      {!demoAccountSelectionRef && moomooMarketDataAccess.shouldShowConnectionGuidance && !showFirstExecutionCallout ? (
-        <Stack spacing={0.75} sx={{ alignItems: "flex-start", maxWidth: 900, mt: 1 }}>
-          <Typography color="error.main" sx={{ fontWeight: 700 }} variant="body2">
-            You need a data connection if you want your trades analyzed and a chart trade replay.
-          </Typography>
-          <DashboardPrimaryAction href="/account/trading" size="small">
-            Connect Data
-          </DashboardPrimaryAction>
-        </Stack>
       ) : null}
       {!demoAccountSelectionRef ? (
         <ManualExecutionEntry

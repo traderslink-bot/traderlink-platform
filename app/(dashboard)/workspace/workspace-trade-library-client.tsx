@@ -21,6 +21,7 @@ import { WorkspaceAtomicTradeEditDrawer } from "./workspace-atomic-trade-edit-dr
 import { useDashboardChart } from "../dashboard-chart-tool";
 import { TradeDetailsDrawer } from "../trades/trade-details-drawer";
 import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryModel, WorkspaceTradeLibraryRow, WorkspaceTradeLibrarySort } from "./workspace-trade-library";
+import { ManualTradePostEntryReview, type PreviewLogicalTradeMerge } from "../trade-tracker/manual-trade-post-entry-review";
 
 type TradeStateFilter = WorkspaceTradeLibraryFilter;
 type TradeSort = WorkspaceTradeLibrarySort;
@@ -113,11 +114,6 @@ function workspaceSubmissionSummary(preview: JournalManualTradePreview): string 
     : `These executions will ${parts[0] ?? "save a trade"}.`;
 }
 
-function needsWorkspaceSubmissionConfirmation(preview: JournalManualTradePreview): boolean {
-  return preview.groups.length > 1 || preview.groups.some((group) =>
-    group.state === "open_trade" || group.state === "existing_position_changed");
-}
-
 function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, expectedAccountSelectionRef, fixedSymbol, initialWorkspaceStyle = "day_trade", offlineScopeRef, onClose, onSaved }: Readonly<{ accountCurrency: string; accountTimezone: string; embedded?: boolean; expectedAccountSelectionRef: string; fixedSymbol?: string; initialWorkspaceStyle?: "day_trade" | "swing"; offlineScopeRef: string; onClose: () => void; onSaved?: (result: ManualTradeSubmitResult | null) => void }>) {
   const today = workspaceDateInTimezone(accountTimezone);
   const makeRow = (id: number) => ({ date: today, fees: "", id, price: "", quantity: "", side: "buy" as const, time: "" });
@@ -130,7 +126,20 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
     preview: JournalManualTradePreview;
     submission: ManualTradeSubmission;
   }> | null>(null);
+  const [analyzerUses, setAnalyzerUses] = useState<Readonly<{
+    enabled: boolean; dailyAvailable: number; periodAvailable: number; selectableAvailable: number; daysUntilReset: number;
+  }> | null>(null);
+  const [analyzerGroupRefs, setAnalyzerGroupRefs] = useState<readonly string[]>([]);
+  const [logicalTradeMerges, setLogicalTradeMerges] = useState<readonly PreviewLogicalTradeMerge[]>([]);
   const idempotencyKey = useRef<string | null>(null);
+  const loadAnalyzerUses = async () => {
+    try {
+      const response = await fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" });
+      const result = await response.json() as { availability?: typeof analyzerUses };
+      if (response.ok) setAnalyzerUses(result.availability ?? null);
+    } catch { /* Trade entry remains available when allowance display is unavailable. */ }
+  };
+  useEffect(() => { void loadAnalyzerUses(); }, []);
   const update = (id: number, key: "date" | "fees" | "price" | "quantity" | "side" | "time", value: string) => { setError(null); setRows((current) => current.map((row) => row.id === id ? { ...row, [key]: value } as typeof row : row)); };
   const save = async () => {
     const missing: string[] = []; if (!symbol.trim()) missing.push("Ticker is required."); for (const [index, row] of rows.entries()) { const execution = `Execution ${index + 1}`; if (!row.date) missing.push(`${execution}: Date is required.`); if (!row.time) missing.push(`${execution}: Time is required.`); if (!row.side) missing.push(`${execution}: Buy/Sell is required.`); if (!positiveDecimalInput(row.quantity)) missing.push(`${execution}: Shares must be greater than 0.`); if (!positiveDecimalInput(row.price)) missing.push(`${execution}: Price must be greater than 0.`); } if (missing.length > 0) { setError(missing.join(" ")); return; }
@@ -143,11 +152,9 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
         onSaved?.(null);
       } else {
         const preview = await previewManualTradeOnline(submission);
-        if (needsWorkspaceSubmissionConfirmation(preview)) {
-          setSubmissionConfirmation({ preview, submission });
-        } else {
-          onSaved?.(await commitManualTradeOnline(submission, preview));
-        }
+        setAnalyzerGroupRefs([]);
+        setLogicalTradeMerges([]);
+        setSubmissionConfirmation({ preview, submission });
       }
     } catch (cause) { setError(cause instanceof ManualTradeNeedsReviewError ? manualTradePreviewMessage(cause.code) : cause instanceof Error ? cause.message : "The trade could not be saved. Your entries are still here."); } finally { setSaving(false); }
   };
@@ -158,8 +165,11 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
       onSaved?.(await commitManualTradeOnline(
         submissionConfirmation.submission,
         submissionConfirmation.preview,
+        { analyzerGroupRefs, logicalTradeMerges },
       ));
-    } catch (cause) { setError(cause instanceof ManualTradeNeedsReviewError ? manualTradePreviewMessage(cause.code) : cause instanceof Error ? cause.message : "The trade could not be saved. Your entries are still here."); } finally { setSaving(false); setSubmissionConfirmation(null); }
+      setSubmissionConfirmation(null);
+      void loadAnalyzerUses();
+    } catch (cause) { setError(cause instanceof ManualTradeNeedsReviewError ? manualTradePreviewMessage(cause.code) : cause instanceof Error ? cause.message : "The trade could not be saved. Your entries are still here."); } finally { setSaving(false); }
   };
   return <Stack sx={{ height: "100%" }}>
       {embedded ? null : <Stack direction="row" sx={{ borderBottom: 1, borderColor: "divider", justifyContent: "space-between", p: 2 }}>
@@ -191,7 +201,10 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
       </Stack>
       <Dialog fullWidth maxWidth="sm" onClose={saving ? undefined : () => setSubmissionConfirmation(null)} open={submissionConfirmation !== null}>
         <DialogTitle>Confirm trade entries</DialogTitle>
-        <DialogContent><Typography>{submissionConfirmation ? workspaceSubmissionSummary(submissionConfirmation.preview) : ""}</Typography><Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">Review this result before saving. You can cancel to change the execution rows.</Typography></DialogContent>
+        <DialogContent><Stack spacing={1.5}><Typography>{submissionConfirmation ? workspaceSubmissionSummary(submissionConfirmation.preview) : ""}</Typography>
+          {submissionConfirmation ? <ManualTradePostEntryReview analyzerGroupRefs={analyzerGroupRefs} analyzerUses={analyzerUses} groups={submissionConfirmation.preview.groups} merges={logicalTradeMerges} onAnalyzerGroupRefsChange={setAnalyzerGroupRefs} onError={setError} onMergesChange={setLogicalTradeMerges} /> : null}
+          {error ? <Typography color="error.main" variant="body2">{error}</Typography> : null}
+        </Stack></DialogContent>
         <DialogActions><Button disabled={saving} onClick={() => setSubmissionConfirmation(null)}>Cancel</Button><Button disabled={saving} onClick={() => void confirmSubmission()} variant="contained">{saving ? "Saving..." : "Save trades"}</Button></DialogActions>
       </Dialog>
   </Stack>;
@@ -293,26 +306,25 @@ function WorkspaceExecutionEditForm({
   </Box>;
 }
 
-export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen, addTradeOpen, expectedAccountSelectionRef, offlineScopeRef, onAddTradeSaved, onClose }: Readonly<{ accountCurrency: string; accountTimezone: string; addOpen?: boolean; addTradeOpen?: boolean; expectedAccountSelectionRef: string; offlineScopeRef: string; onAddTradeSaved?: () => void; onClose: () => void }>) {
+export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen, addTradeOpen, expectedAccountSelectionRef, offlineScopeRef, onAddTradeSaved, onClose }: Readonly<{ accountCurrency: string; accountTimezone: string; addOpen?: boolean; addTradeOpen?: boolean; currentAccountStillMatches?: () => Promise<boolean>; detail?: unknown; expectedAccountSelectionRef: string; offlineScopeRef: string; onAddTradeSaved?: () => void; onClose: () => void; startingTab?: number }>) {
   const tradeEntryOpen = addOpen ?? addTradeOpen ?? false;
   const router = useRouter();
+  const [savedTrades, setSavedTrades] = useState<readonly WorkspaceTradeLibraryRow[]>([]);
+  const [reviewTrade, setReviewTrade] = useState<WorkspaceTradeLibraryRow | null>(null);
+  const [reviewTab, setReviewTab] = useState<"trade" | "journal">("journal");
+  useEffect(() => { if (!tradeEntryOpen) { setSavedTrades([]); setReviewTrade(null); } }, [tradeEntryOpen]);
   if (!tradeEntryOpen) return null;
   const handleNewTradeSaved = (result: ManualTradeSubmitResult | null) => {
     router.refresh();
-    if (result && result.affectedTradeRefs.length > 1) {
-      onClose();
-      router.push("/workspace?tradeSave=multiple");
-      return;
-    }
     if (result) {
-      onClose();
-      router.push("/workspace");
+      setSavedTrades(result.savedTrades as readonly WorkspaceTradeLibraryRow[]);
+      onAddTradeSaved?.();
       return;
     }
     onAddTradeSaved?.();
     onClose();
   };
-  return <Drawer anchor="right" onClose={onClose} open slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}><Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography component="h2" variant="h6">Add trade</Typography><Button onClick={onClose}>Close</Button></Stack></Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}><AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} embedded expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} onSaved={handleNewTradeSaved} /></Box></Stack></Drawer>;
+  return <><Drawer anchor="right" onClose={onClose} open slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}><Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography component="h2" variant="h6">{savedTrades.length > 0 ? "Review saved trades" : "Add trade"}</Typography><Button onClick={onClose}>Close</Button></Stack></Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>{savedTrades.length === 0 ? <AddTradePanel accountCurrency={accountCurrency} accountTimezone={accountTimezone} embedded expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={onClose} onSaved={handleNewTradeSaved} /> : <Stack spacing={1.5}>{savedTrades.map((trade) => <Box key={trade.roundTripId} sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: 1.5 }}><Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Box><Typography sx={{ fontWeight: 850 }}>{trade.symbol}</Typography><Typography color="text.secondary" variant="body2">{trade.executionCount} executions</Typography></Box><Stack direction="row" spacing={1}><Button onClick={() => { setReviewTab("trade"); setReviewTrade(trade); }} variant="outlined">Edit trade</Button><Button onClick={() => { setReviewTab("journal"); setReviewTrade(trade); }} variant="contained">Review journal</Button></Stack></Stack></Box>)}<Button onClick={() => setSavedTrades([])} sx={{ alignSelf: "flex-start" }}>Add another trade</Button></Stack>}</Box></Stack></Drawer><WorkspaceAtomicTradeEditDrawer expectedAccountSelectionRef={expectedAccountSelectionRef} journalTarget={reviewTrade ? { closeLocalDate: reviewTrade.exitDate, closedAtUtc: null, direction: reviewTrade.direction, displayedSymbol: reviewTrade.symbol, roundTripId: reviewTrade.roundTripId } : null} onClose={() => setReviewTrade(null)} onSaved={() => { setReviewTrade(null); router.refresh(); }} open={reviewTrade !== null} roundTripId={reviewTrade?.roundTripId ?? null} startingTab={reviewTab} /></>;
 }
 
 export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTradeOpen, customEndDate, customStartDate, expectedAccountSelectionRef, offlineScopeRef, onAddTradeClose, periodEndDate, periodStartDate, trades }: Readonly<{ accountCurrency: string; accountTimezone: string; addTradeOpen: boolean; customEndDate: string | null; customStartDate: string | null; expectedAccountSelectionRef: string; offlineScopeRef: string; onAddTradeClose: () => void; periodEndDate: string | null; periodStartDate: string | null; trades: WorkspaceTradeLibraryModel }>) {

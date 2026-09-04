@@ -8,6 +8,9 @@ import {
   isTraderLinkPlatformError,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { activeLogicalTradeReviewTarget, saveLogicalTradeRuleReview } from "@/src/modules/journal/server/logical-trades/journal-logical-trade-review-persistence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,6 +79,23 @@ export async function PUT(
           ? body.targetRoundTripKey
           : null;
       if (!targetId) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+      if (body.applicability === "trade" && scope.activeAccountId) {
+        const accountScope = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
+        const logical = withPlatformDatabase({ mode: "runtime" }, (database) =>
+          activeLogicalTradeReviewTarget(database, accountScope, targetId));
+        if (logical) {
+          const saved = withPlatformDatabase({ mode: "runtime" }, (database) =>
+            saveLogicalTradeRuleReview(database, accountScope, logical, {
+              expectedRevision,
+              note: typeof body.note === "string" ? body.note : "",
+              ruleId: rule.ruleId,
+              ruleVersionId: rule.versionId,
+              status: body.status === "not-reviewed" ? "not_reviewed" : body.status as "followed" | "broken",
+            }));
+          return { note: saved.note, revision: String(saved.revision),
+            status: saved.status === "not_reviewed" ? "not-reviewed" as const : saved.status };
+        }
+      }
       return reviewView(service.saveRuleReview(account, {
         expectedRevision,
         ruleId: rule.ruleId,

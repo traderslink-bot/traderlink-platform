@@ -123,27 +123,11 @@ export default async function AccountTradingPage({
       <DashboardPanel title="Broker connections">
         <Stack spacing={0.75} sx={{ mb: 2 }}>
           <Typography color="text.primary" variant="body2">
-            Import your trade history and use TradersLink Trade Analyzer.
+            Import your trade history.
           </Typography>
           <Typography color="text.secondary" variant="body2">
             Currently, the app only supports connecting to Moomoo. For users with other brokers, you can <Link href="/imports">import</Link> your historical broker statements.
           </Typography>
-        </Stack>
-        <Stack spacing={0.75} sx={{ mb: 2 }}>
-          <Typography color="error.main" sx={{ fontWeight: 800 }} variant="body2">
-            Attention
-          </Typography>
-          <Typography color="text.primary" variant="body2">
-            While TradersLink is in beta, you need to connect a free Moomoo account to use the Trade Analyzer and receive market data. You do not need to open a trading or brokerage account with Moomoo. All you need to do is sign up, and your free account is created in seconds. You can then use your Moomoo credentials to connect to its market data API through TradersLink.
-          </Typography>
-          <Link
-            href="https://open.moomoo.com/api/overview/"
-            rel="noopener noreferrer"
-            sx={{ alignSelf: "flex-start", fontWeight: 700 }}
-            target="_blank"
-          >
-            About Moomoo data
-          </Link>
         </Stack>
         {moomooConnectionFailed ? (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -169,7 +153,7 @@ export default async function AccountTradingPage({
           <Alert severity="warning" sx={{ mt: 2 }}>
             <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
               <Typography variant="body2">
-                Moomoo market data is unavailable. Reconnect Moomoo to use Trade Analyzer.
+                Reconnect Moomoo to continue importing trades.
               </Typography>
               <MoomooConnectionSettings state="reauthorization_required" />
             </Stack>

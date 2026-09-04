@@ -45,15 +45,26 @@ export async function POST(request: Request): Promise<Response> {
           result.affectedTradeTargets[0]!,
         ))
       : null;
+    const savedTrades = withReadonlyPlatformDatabase({}, (database) => {
+      const unique = new Map<string, NonNullable<ReturnType<typeof readWorkspaceTradeLibrarySavedTrade>>>();
+      for (const target of result.affectedTradeTargets) {
+        const trade = readWorkspaceTradeLibrarySavedTrade(database, requestScope, target);
+        if (trade) unique.set(trade.roundTripId, trade);
+      }
+      return Object.freeze([...unique.values()]);
+    });
     return Response.json({
       status: "ready",
       result: {
         acceptedExecutionCount: result.executionIds.length,
         affectedDates: result.affectedDates,
+        affectedTradeIds: result.affectedTradeTargets.map((target) => target.roundTripId),
         affectedTradeRefs,
         analyzerQueueOutcome: result.analyzerQueueOutcome,
+        analyzerSelectionOutcomes: result.analyzerSelectionOutcomes,
         pendingDecisionCount: result.relatedDecisionIds.length,
         savedTrade,
+        savedTrades,
       },
     });
   } catch (error) {
