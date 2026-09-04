@@ -23,12 +23,13 @@ export class SharedAnalyzerAdministrationRepository {
 FROM level_analysis_analyzer_acquisitions`).get(since) as
       { total: number; charged: number | null; waived: number | null; rolling: number | null };
     const connections = this.database.prepare(`SELECT connection.user_id, connection.workspace_id,
- account.account_id, account.display_name AS account_label
+ account.account_id, account.display_name AS account_label, user.display_name AS user_label
 FROM platform_broker_connections connection
+JOIN platform_users user ON user.user_id = connection.user_id
 JOIN journal_accounts account ON account.workspace_id = connection.workspace_id
 WHERE connection.provider = 'moomoo' AND connection.connection_state = 'active'
-ORDER BY account.display_name, account.account_id`).all() as
-      readonly { user_id: string; workspace_id: string; account_id: string; account_label: string }[];
+ORDER BY lower(user.display_name), lower(account.display_name), account.account_id`).all() as
+      readonly { user_id: string; workspace_id: string; account_id: string; account_label: string; user_label: string }[];
     const users = this.database.prepare(`SELECT user.user_id, user.display_name,
  override.daily_limit, override.period_limit
 FROM platform_users user
@@ -47,7 +48,7 @@ WHERE settings_key = 'beta'`).get() as { designated_user_id: string | null;
         ? `${designated.designated_user_id}:${designated.designated_workspace_id}:${designated.designated_account_id}` : "",
       connections: Object.freeze(connections.map((item) => Object.freeze({
         userId: item.user_id, workspaceId: item.workspace_id, accountId: item.account_id,
-        label: item.account_label,
+        label: `${item.user_label} · ${item.account_label}`,
       }))), users: Object.freeze(users.map((item) => Object.freeze({
         userId: item.user_id, label: item.display_name,
         dailyOverride: item.daily_limit, periodOverride: item.period_limit,

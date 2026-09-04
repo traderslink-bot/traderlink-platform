@@ -69,3 +69,4 @@ Related plan:
 - The Shared Analyzer administration page now reads the canonical Journal
   account `display_name`; its stale `account_label` reference prevented the
   owner from selecting the designated Moomoo connection.
+- The shared Analyzer connection selector now identifies each active connection by both user and Journal account, so repeated account names such as `Primary Journal` are no longer ambiguous.
