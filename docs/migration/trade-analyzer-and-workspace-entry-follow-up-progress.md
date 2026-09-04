@@ -56,3 +56,7 @@ Related plan:
 - Production logs now identify the symbol, UTC request window, adapter, safe
   failure category, HTTP status/page where available, and Moomoo return code
   where available. OAuth credentials and access tokens are never recorded.
+- A production IMRN retry was accepted and charged but failed before the
+  provider call with an otherwise opaque SQLite error. The worker now records
+  the exact safe processing stage plus SQLite code/message so the failing
+  saved-session statement can be corrected from evidence rather than guessed.

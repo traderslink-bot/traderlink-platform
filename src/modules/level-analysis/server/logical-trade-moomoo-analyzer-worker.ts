@@ -34,10 +34,18 @@ export class LogicalTradeMoomooAnalyzerWorker {
     const claimedAt = this.now();
     const job = this.logical.claimNext(claimedAt);
     if (!job) return false;
+    let diagnosticStage = "process_start";
     try {
-      return await this.process(job, claimedAt);
+      return await this.process(job, claimedAt, (stage) => {
+        diagnosticStage = stage;
+      });
     } catch (error) {
       console.error("TraderLink Trade Analyzer worker attempt failed.", {
+        diagnosticStage,
+        errorCode: error && typeof error === "object" && "code" in error
+          ? String(error.code)
+          : null,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
         errorName: error instanceof Error ? error.name : "UnknownError",
         logicalTradeVersionId: job.target.logicalTradeVersionId,
         requestedEndUtc: job.desiredCoverageEndUtc,
@@ -56,7 +64,11 @@ export class LogicalTradeMoomooAnalyzerWorker {
     }
   }
 
-  private async process(job: ClaimedLogicalTradeAnalyzerJob, startedAt: Date): Promise<boolean> {
+  private async process(
+    job: ClaimedLogicalTradeAnalyzerJob,
+    startedAt: Date,
+    setDiagnosticStage: (stage: string) => void,
+  ): Promise<boolean> {
     const session = newYorkExtendedSession(job.target.tradingDateNewYork);
     const policyEnd = session ? dailyTradeFirstResultCoverageEnd(session, job.target.finalExitAtUtc) : null;
     const availableEnd = session ? availableSessionEnd(session, startedAt) : null;
@@ -68,8 +80,11 @@ export class LogicalTradeMoomooAnalyzerWorker {
       return true;
     }
     const desiredEnd = Math.min(policyEnd, availableEnd);
+    setDiagnosticStage("read_current_candles");
     let current = this.candles.readCurrentCandles(job.marketSessionSetId);
+    setDiagnosticStage("read_current_session_version");
     let sessionVersionId = this.candles.currentSessionVersionId(job.marketSessionSetId);
+    setDiagnosticStage("read_current_session_coverage");
     const storedCoverageEnd = this.candles.currentSessionCoverageEnd(job.marketSessionSetId);
     let hasDesiredCoverage = current.length > 0 && storedCoverageEnd !== null &&
       Math.floor(Date.parse(storedCoverageEnd) / 1000) >= desiredEnd;
@@ -84,6 +99,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
         requestedStartUtc: new Date(session.startTime * 1000).toISOString(),
         requestedEndUtc: new Date(desiredEnd * 1000).toISOString(), sha256: null });
     if (!hasDesiredCoverage) {
+      setDiagnosticStage("resolve_designated_scope");
       const providerScope = this.allowances.designatedScope();
       if (!providerScope) {
         sessionVersionId = recordFailure("shared_moomoo_scope_unavailable", "provider_unavailable", startedAt);
@@ -96,6 +112,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
       }
       let provider: MarketDataProvider;
       try {
+        setDiagnosticStage("create_moomoo_provider");
         provider = await this.providerFor(providerScope);
       } catch {
         sessionVersionId = recordFailure("moomoo_connection_unavailable", "provider_unavailable", startedAt);
@@ -106,6 +123,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
         this.notifications?.notifyFailure({ occurredAt: startedAt, scope: job.scope, target: job.target });
         return true;
       }
+      setDiagnosticStage("begin_moomoo_acquisition");
       const acquisition = this.allowances.beginAcquisition({
         jobId: job.jobId, marketSessionSetId: job.marketSessionSetId, now: startedAt,
       });
@@ -117,6 +135,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
         return true;
       }
       chargedAcquisitionId = acquisition.acquisitionId;
+      setDiagnosticStage("fetch_moomoo_candles");
       const result = await provider.fetch({
         symbol: job.target.providerSymbol, interval: "1m", startTime: session.startTime,
         endTime: desiredEnd, includeExtendedHours: true,
@@ -156,6 +175,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
     } else {
       this.allowances.release(job.jobId, startedAt);
     }
+    setDiagnosticStage("validate_execution_candles");
     const mismatches = validateDailyTradeExecutionCandles({
       candles: current, direction: job.target.direction, events: job.target.events,
     });
