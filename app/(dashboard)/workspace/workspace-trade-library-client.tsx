@@ -330,6 +330,14 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
       if (analyzerUsesRequestRef.current === requestNumber) setAnalyzerUses(null);
     }
   }, []);
+  const savedReviewTargets: readonly TradeExplorerReviewTarget[] = useMemo(() =>
+    savedTrades.map((trade) => Object.freeze({
+      closeLocalDate: trade.exitDate,
+      closedAtUtc: null,
+      direction: trade.direction,
+      displayedSymbol: trade.symbol,
+      roundTripId: trade.roundTripId,
+    })), [savedTrades]);
   useEffect(() => {
     if (!tradeEntryOpen) {
       setAnalyzerError(null);
@@ -407,13 +415,6 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
       setSendingAnalyses(false);
     }
   };
-  const savedReviewTargets: readonly TradeExplorerReviewTarget[] = savedTrades.map((trade) => Object.freeze({
-    closeLocalDate: trade.exitDate,
-    closedAtUtc: null,
-    direction: trade.direction,
-    displayedSymbol: trade.symbol,
-    roundTripId: trade.roundTripId,
-  }));
   return <Drawer anchor="right" onClose={closeTradeDrawer} open slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}>
     <Stack sx={{ height: "100%" }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}>

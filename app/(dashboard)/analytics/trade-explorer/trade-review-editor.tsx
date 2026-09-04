@@ -149,6 +149,8 @@ export function TradeExplorerReviewEditor({
   const savingRef = useRef(false);
   const selectedIndex = trades.findIndex((trade) => trade.roundTripId === selectedRoundTripId);
   const selectedTrade = selectedIndex >= 0 ? trades[selectedIndex]! : null;
+  const selectedTradeCloseLocalDate = selectedTrade?.closeLocalDate ?? null;
+  const selectedTradeRoundTripId = selectedTrade?.roundTripId ?? null;
   const reviewDirty = hasChanges(model, draft);
   const hasUnsavedWork = reviewDirty;
   const choices = useMemo(() => tagChoices(availableTags), [availableTags]);
@@ -157,7 +159,7 @@ export function TradeExplorerReviewEditor({
     return () => onDirtyChange?.(false);
   }, [onDirtyChange, reviewDirty]);
   useEffect(() => {
-    if (!open || !selectedTrade) {
+    if (!open || !selectedTradeRoundTripId) {
       requestRef.current += 1;
       setState("idle");
       setModel(null);
@@ -176,9 +178,9 @@ export function TradeExplorerReviewEditor({
     setError(null);
     setSuccess(null);
     void loadTradeExplorerReview({
-      closeLocalDate: selectedTrade.closeLocalDate,
+      closeLocalDate: selectedTradeCloseLocalDate,
       expectedAccountSelectionRef,
-      roundTripId: selectedTrade.roundTripId,
+      roundTripId: selectedTradeRoundTripId,
     }).then((result) => {
       if (requestRef.current !== requestNumber) return;
       if (!result.ok) {
@@ -199,7 +201,7 @@ export function TradeExplorerReviewEditor({
       setError("This trade review could not be opened. Try again.");
       setState("ready");
     });
-  }, [expectedAccountSelectionRef, open, selectedTrade]);
+  }, [expectedAccountSelectionRef, open, selectedTradeCloseLocalDate, selectedTradeRoundTripId]);
 
   function runAfterDiscard(action: () => void): void {
     if (state === "saving" || savingRef.current) return;
