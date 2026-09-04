@@ -8,6 +8,7 @@ import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import { Alert, Box, Button, Checkbox, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, Drawer, FormControlLabel, IconButton, MenuItem, Stack, TableSortLabel, TextField, Tooltip, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -471,8 +472,22 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
               trade.status === "Closed" &&
               trade.entryDate === trade.exitDate;
             const journalOpen = expandedJournalTradeId === trade.roundTripId;
-            return <Box key={trade.roundTripId} sx={{ border: 1, borderColor: outcomeTone ? `${outcomeTone}.main` : "divider", borderRadius: 2, overflow: "hidden" }}>
-              <Box sx={{ bgcolor: outcomeTone ? `${outcomeTone}.main` : "action.hover", color: outcomeTone ? "common.white" : "text.primary", p: 1.5 }}>
+            return <Box key={trade.roundTripId} sx={(theme) => ({
+              bgcolor: theme.palette.mode === "dark" && outcomeTone
+                ? alpha(theme.palette[outcomeTone].main, 0.08)
+                : "background.paper",
+              border: 1,
+              borderColor: theme.palette.mode === "dark" || !outcomeTone ? "divider" : `${outcomeTone}.main`,
+              borderRadius: 2,
+              overflow: "hidden",
+            })}>
+              <Box sx={(theme) => ({
+                bgcolor: theme.palette.mode === "dark" && outcomeTone
+                  ? alpha(theme.palette[outcomeTone].main, 0.18)
+                  : outcomeTone ? `${outcomeTone}.main` : "action.hover",
+                color: outcomeTone ? "common.white" : "text.primary",
+                p: 1.5,
+              })}>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
                   <Box><Typography sx={{ fontWeight: 850 }}>{trade.symbol} · {trade.direction === "long" ? "Long" : "Short"}</Typography><Typography color="inherit" variant="body2">{trade.executionCount} executions · {formatJournalAnalyticsDecimal(trade.entryQuantityDecimal)} shares</Typography></Box>
                   <Typography color="inherit" sx={{ fontWeight: 850 }}>{tradeMoney(trade)}</Typography>
