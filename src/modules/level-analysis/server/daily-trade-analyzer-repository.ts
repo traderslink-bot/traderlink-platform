@@ -480,6 +480,8 @@ WHERE session.market_session_set_id = ?`)
     requestedStartUtc: string;
     requestedEndUtc: string;
     sha256: string | null;
+    /** Retain a failed request as evidence without replacing usable cached candles. */
+    promoteCurrent?: boolean;
   }>): string {
     return this.database.transaction(() => {
       const revision = this.database.prepare<[string], { revision: number }>(`SELECT
@@ -512,11 +514,14 @@ WHERE market_session_set_id = ?`).get(input.marketSessionSetId)?.revision ?? 1;
           ? [...values, candle.turnoverDecimal ?? null]
           : values));
       }
-      this.database.prepare(`UPDATE level_analysis_market_session_sets
+      if (input.promoteCurrent !== false) this.database.prepare(`UPDATE level_analysis_market_session_sets
 SET current_version_id = ?, current_coverage_end_utc = ?, current_status = ?,
   lease_expires_at_utc = NULL, updated_at_utc = ?
 WHERE market_session_set_id = ?`)
         .run(versionId, input.coverageEndUtc, input.outcome, input.completedAtUtc, input.marketSessionSetId);
+      else this.database.prepare(`UPDATE level_analysis_market_session_sets
+SET lease_expires_at_utc = NULL, updated_at_utc = ?
+WHERE market_session_set_id = ?`).run(input.completedAtUtc, input.marketSessionSetId);
       return versionId;
     }).immediate();
   }

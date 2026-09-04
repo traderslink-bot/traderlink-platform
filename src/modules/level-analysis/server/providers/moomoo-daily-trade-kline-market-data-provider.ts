@@ -131,15 +131,26 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
   ) {}
 
   async fetch(input: MarketDataRequest): Promise<MarketDataProviderResult> {
-    if (!validRequest(input)) return unavailable("invalid_payload", "market_data_request_invalid");
+    const requestedUtc = (seconds: number): string | null => Number.isSafeInteger(seconds) && seconds > 0
+      ? new Date(seconds * 1000).toISOString() : null;
+    const failed = (code: "coverage_unavailable" | "invalid_payload" | "provider_unavailable",
+      failureReasonCode: string, details: Readonly<Record<string, number | string | null>> = {}) => {
+      console.error("Moomoo History K-Line request failed.", {
+        failureReasonCode, requestedEndUtc: requestedUtc(input.endTime),
+        requestedStartUtc: requestedUtc(input.startTime),
+        symbol: input.symbol, ...details,
+      });
+      return unavailable(code, failureReasonCode);
+    };
+    if (!validRequest(input)) return failed("invalid_payload", "market_data_request_invalid");
     const start = newYorkDate(input.startTime);
     const end = newYorkDate(input.startTime, 1);
-    if (!start || !end) return unavailable("invalid_payload", "market_data_request_date_invalid");
+    if (!start || !end) return failed("invalid_payload", "market_data_request_date_invalid");
     let token: string;
     try {
       token = await this.accessToken();
     } catch {
-      return unavailable("provider_unavailable", "moomoo_connection_unavailable");
+      return failed("provider_unavailable", "moomoo_connection_unavailable");
     }
     const candles = new Map<number, NormalizedMarketCandle>();
     let cursor: string | null = null;
@@ -157,26 +168,31 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
           { cache: "no-store", headers: { Accept: "application/json", Authorization: `Bearer ${token}` } },
         );
       } catch {
-        return unavailable("provider_unavailable", "moomoo_request_failed");
+        return failed("provider_unavailable", "moomoo_request_failed", { page: page + 1 });
       }
       let payload: MoomooPayload;
       try {
         payload = await response.json() as MoomooPayload;
       } catch {
-        return unavailable("invalid_payload", "moomoo_json_invalid");
+        return failed("invalid_payload", "moomoo_json_invalid", { httpStatus: response.status, page: page + 1 });
       }
-      if (!response.ok) return unavailable("provider_unavailable", "moomoo_http_unavailable");
+      if (!response.ok) return failed("provider_unavailable", "moomoo_http_unavailable",
+        { httpStatus: response.status, page: page + 1 });
       if (payload.ret_code !== 0 || !Array.isArray(payload.data?.kline_list)) {
-        return unavailable("coverage_unavailable", "moomoo_reported_no_coverage");
+        return failed("coverage_unavailable", "moomoo_reported_no_coverage", {
+          httpStatus: response.status, page: page + 1,
+          providerRetCode: typeof payload.ret_code === "number" || typeof payload.ret_code === "string"
+            ? String(payload.ret_code).slice(0, 32) : null,
+        });
       }
       metadata = providerMetadata(payload.data.kline_list);
       for (const value of payload.data.kline_list) {
         const candle = normalizeCandle(value, input);
-        if (candle === "invalid") return unavailable("invalid_payload", "moomoo_candle_invalid");
+        if (candle === "invalid") return failed("invalid_payload", "moomoo_candle_invalid", { page: page + 1 });
         if (!candle) continue;
         const prior = candles.get(candle.time);
         if (prior && JSON.stringify(prior) !== JSON.stringify(candle)) {
-          return unavailable("invalid_payload", "moomoo_duplicate_candle_conflict");
+          return failed("invalid_payload", "moomoo_duplicate_candle_conflict", { page: page + 1 });
         }
         candles.set(candle.time, candle);
       }
@@ -187,7 +203,7 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
       if (Number.isFinite(earliest) && earliest <= input.startTime) break;
     }
     const normalized = Object.freeze([...candles.values()].sort((left, right) => left.time - right.time));
-    if (normalized.length === 0) return unavailable("coverage_unavailable", "moomoo_returned_no_candles");
+    if (normalized.length === 0) return failed("coverage_unavailable", "moomoo_returned_no_candles");
     return Object.freeze({
       ok: true,
       candles: normalized,

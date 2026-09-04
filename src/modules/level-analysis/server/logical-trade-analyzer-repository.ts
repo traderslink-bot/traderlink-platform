@@ -318,6 +318,19 @@ WHERE logical_trade_job_id = ? AND status = 'queued'
   claimNext(now: Date): ClaimedLogicalTradeAnalyzerJob | null {
     const timestamp = createCanonicalUtcTimestamp(now);
     const row = this.database.transaction(() => {
+      // The first shared-worker release judged sparse symbols incomplete when
+      // they had no 4:00 AM candle, then could overwrite a usable result with
+      // a terminal provider failure. Requeue only jobs whose shared session
+      // already proves the requested window was successfully acquired.
+      this.database.prepare(`UPDATE level_analysis_logical_trade_jobs
+SET status = 'queued', attempt_count = 0, next_attempt_at_utc = ?,
+ completed_at_utc = NULL, lease_expires_at_utc = NULL, updated_at_utc = ?
+WHERE status IN ('no_coverage', 'provider_unavailable')
+ AND EXISTS (SELECT 1 FROM level_analysis_market_session_sets session
+  WHERE session.market_session_set_id = level_analysis_logical_trade_jobs.market_session_set_id
+   AND session.current_status = 'ready' AND session.current_version_id IS NOT NULL
+   AND session.current_coverage_end_utc >= level_analysis_logical_trade_jobs.desired_coverage_end_utc)`)
+        .run(timestamp, timestamp);
       this.database.prepare(`UPDATE level_analysis_analyzer_reservations
 SET status = 'released', updated_at_utc = ?
 WHERE status = 'active' AND expires_at_utc < ?`).run(timestamp, timestamp);
@@ -327,6 +340,11 @@ WHERE status = 'queued' AND NOT EXISTS (
  SELECT 1 FROM level_analysis_analyzer_reservations reservation
  WHERE reservation.logical_trade_job_id = level_analysis_logical_trade_jobs.logical_trade_job_id
    AND reservation.status = 'active'
+ ) AND NOT EXISTS (
+ SELECT 1 FROM level_analysis_market_session_sets session
+ WHERE session.market_session_set_id = level_analysis_logical_trade_jobs.market_session_set_id
+  AND session.current_status = 'ready' AND session.current_version_id IS NOT NULL
+  AND session.current_coverage_end_utc >= level_analysis_logical_trade_jobs.desired_coverage_end_utc
 )`).run(timestamp, timestamp);
       this.database.prepare(`UPDATE level_analysis_logical_trade_jobs
 SET status = 'expired', completed_at_utc = ?, lease_expires_at_utc = NULL, updated_at_utc = ?

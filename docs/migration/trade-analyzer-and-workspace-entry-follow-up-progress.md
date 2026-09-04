@@ -38,3 +38,21 @@ Related plan:
 - Confirmed pending Tracker refresh starts only with pending Analyzer work,
   avoids unsaved changes, checks document visibility, and cleans up both its
   timer and visibility listener.
+
+## 2026-09-04 shared Moomoo acquisition regression repair
+
+- Production review of valid IMRN and CDTG submissions exposed a regression in
+  the logical-trade worker introduced with the shared beta acquisition path.
+- The 4:00 AM Eastern request boundary remains unchanged. Coverage is now
+  determined from the successful provider request window stored on the market
+  session, not from whether a sparse small-cap ticker happened to print a
+  candle at the opening boundary.
+- Terminal jobs that already have a successful cached session covering their
+  requested window are requeued for cache-only recovery. This neither requests
+  Moomoo again nor consumes another user acquisition.
+- Failed provider attempts now retain the requested UTC window and safe reason
+  code as immutable market-session evidence. Existing usable candle revisions
+  are not replaced by a later failed attempt.
+- Production logs now identify the symbol, UTC request window, adapter, safe
+  failure category, HTTP status/page where available, and Moomoo return code
+  where available. OAuth credentials and access tokens are never recorded.
