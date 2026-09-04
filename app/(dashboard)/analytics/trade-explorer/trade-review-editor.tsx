@@ -117,6 +117,7 @@ export function TradeExplorerReviewEditor({
   embedded = false,
   expectedAccountSelectionRef,
   onClose,
+  onDirtyChange,
   onSelectTrade,
   open,
   selectedRoundTripId,
@@ -127,6 +128,7 @@ export function TradeExplorerReviewEditor({
   embedded?: boolean;
   expectedAccountSelectionRef: string;
   onClose: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
   onSelectTrade: (roundTripId: string) => void;
   open: boolean;
   selectedRoundTripId: string | null;
@@ -150,6 +152,10 @@ export function TradeExplorerReviewEditor({
   const reviewDirty = hasChanges(model, draft);
   const hasUnsavedWork = reviewDirty;
   const choices = useMemo(() => tagChoices(availableTags), [availableTags]);
+  useEffect(() => {
+    onDirtyChange?.(reviewDirty);
+    return () => onDirtyChange?.(false);
+  }, [onDirtyChange, reviewDirty]);
   useEffect(() => {
     if (!open || !selectedTrade) {
       requestRef.current += 1;

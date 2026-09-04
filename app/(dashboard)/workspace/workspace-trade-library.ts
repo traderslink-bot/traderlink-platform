@@ -672,5 +672,8 @@ export function readWorkspaceTradeLibrarySavedTrades(
     const trade = readWorkspaceTradeLibrarySavedTrade(database, scope, target);
     if (trade) unique.set(trade.roundTripId, trade);
   }
-  return mergeLogicalWorkspaceRows(database, scope, Object.freeze([...unique.values()]));
+  return Object.freeze([...mergeLogicalWorkspaceRows(database, scope, Object.freeze([...unique.values()]))]
+    .sort((left, right) =>
+      `${left.entryDate}T${left.entryTime}`.localeCompare(`${right.entryDate}T${right.entryTime}`) ||
+      left.roundTripId.localeCompare(right.roundTripId)));
 }

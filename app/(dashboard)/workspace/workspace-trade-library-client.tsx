@@ -7,8 +7,8 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
-import { Alert, Box, Button, Checkbox, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, Drawer, IconButton, MenuItem, Stack, TableSortLabel, TextField, Tooltip, Typography } from "@mui/material";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Alert, Box, Button, Checkbox, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, Drawer, FormControlLabel, IconButton, MenuItem, Stack, TableSortLabel, TextField, Tooltip, Typography } from "@mui/material";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -307,15 +307,26 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   const [analyzerSelection, setAnalyzerSelection] = useState<readonly string[]>([]);
   const [expandedJournalTradeId, setExpandedJournalTradeId] = useState<string | null>(null);
   const [sendingAnalyses, setSendingAnalyses] = useState(false);
-  const loadAnalyzerUses = async () => {
+  const [discardJournalOpen, setDiscardJournalOpen] = useState(false);
+  const journalDirtyRef = useRef(false);
+  const pendingReviewActionRef = useRef<(() => void) | null>(null);
+  const analyzerUsesRequestRef = useRef(0);
+  const handleJournalDirtyChange = useCallback((dirty: boolean) => {
+    journalDirtyRef.current = dirty;
+  }, []);
+  const loadAnalyzerUses = useCallback(async () => {
+    const requestNumber = analyzerUsesRequestRef.current + 1;
+    analyzerUsesRequestRef.current = requestNumber;
     try {
       const response = await fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" });
       const result = await response.json() as { availability?: typeof analyzerUses };
-      setAnalyzerUses(response.ok ? result.availability ?? null : null);
+      if (analyzerUsesRequestRef.current === requestNumber) {
+        setAnalyzerUses(response.ok ? result.availability ?? null : null);
+      }
     } catch {
-      setAnalyzerUses(null);
+      if (analyzerUsesRequestRef.current === requestNumber) setAnalyzerUses(null);
     }
-  };
+  }, []);
   useEffect(() => {
     if (!tradeEntryOpen) {
       setAnalyzerError(null);
@@ -325,13 +336,23 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
       return;
     }
     void loadAnalyzerUses();
-  }, [tradeEntryOpen]);
+  }, [loadAnalyzerUses, tradeEntryOpen]);
   if (!tradeEntryOpen) return null;
+  const requestReviewAction = (action: () => void) => {
+    if (!journalDirtyRef.current) {
+      action();
+      return;
+    }
+    pendingReviewActionRef.current = action;
+    setDiscardJournalOpen(true);
+  };
+  const closeTradeDrawer = () => requestReviewAction(onClose);
   const handleNewTradeSaved = async (result: ManualTradeSubmitResult | null) => {
     if (result) {
       setSavedTrades(result.savedTrades as readonly WorkspaceTradeLibraryRow[]);
       setAnalyzerSelection([]);
       setExpandedJournalTradeId(null);
+      await loadAnalyzerUses();
       onAddTradeSaved?.();
       return;
     }
@@ -386,12 +407,12 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
     displayedSymbol: trade.symbol,
     roundTripId: trade.roundTripId,
   }));
-  return <Drawer anchor="right" onClose={onClose} open slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}>
+  return <Drawer anchor="right" onClose={closeTradeDrawer} open slotProps={{ paper: { sx: { width: { xs: "100vw", md: 880 } } } }}>
     <Stack sx={{ height: "100%" }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider", p: 2 }}>
         <Stack direction="row" sx={{ justifyContent: "space-between" }}>
           <Typography component="h2" variant="h6">{savedTrades.length > 0 ? "Review saved trades" : "Add trade"}</Typography>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={closeTradeDrawer}>Close</Button>
         </Stack>
       </Box>
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
@@ -410,19 +431,30 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
                   <Typography color="inherit" sx={{ fontWeight: 850 }}>{tradeMoney(trade)}</Typography>
                 </Stack>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", mt: 1 }}>
-                  {analyzable ? <Box sx={{ alignItems: "center", display: "flex" }}><Checkbox checked={analyzerSelection.includes(trade.roundTripId)} onChange={(event) => toggleAnalysis(trade, event.target.checked)} sx={{ color: "common.white", "&.Mui-checked": { color: "common.white" } }} /><Typography sx={{ fontWeight: 800 }} variant="body2">Analyze</Typography></Box> : <Box />}
-                  <Button color="inherit" endIcon={journalOpen ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />} onClick={() => setExpandedJournalTradeId((current) => current === trade.roundTripId ? null : trade.roundTripId)} sx={{ color: "inherit", fontWeight: 800 }}>Journal</Button>
+                  {analyzable ? <FormControlLabel control={<Checkbox checked={analyzerSelection.includes(trade.roundTripId)} onChange={(event) => toggleAnalysis(trade, event.target.checked)} sx={{ color: "common.white", "&.Mui-checked": { color: "common.white" } }} />} label="Analyze" sx={{ m: 0, "& .MuiFormControlLabel-label": { fontSize: "0.875rem", fontWeight: 800 } }} /> : <Box />}
+                  <Button color="inherit" endIcon={journalOpen ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />} onClick={() => requestReviewAction(() => setExpandedJournalTradeId((current) => current === trade.roundTripId ? null : trade.roundTripId))} sx={{ color: "inherit", fontWeight: 800 }}>Journal</Button>
                 </Stack>
               </Box>
-              <Collapse in={journalOpen} timeout="auto" unmountOnExit><Box sx={{ borderTop: 1, borderColor: "divider" }}><TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setExpandedJournalTradeId(null)} onSelectTrade={() => undefined} open selectedRoundTripId={trade.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={savedReviewTargets} /></Box></Collapse>
+              <Collapse in={journalOpen} timeout="auto" unmountOnExit><Box sx={{ borderTop: 1, borderColor: "divider" }}><TradeExplorerReviewEditor embedded expectedAccountSelectionRef={expectedAccountSelectionRef} onClose={() => setExpandedJournalTradeId(null)} onDirtyChange={handleJournalDirtyChange} onSelectTrade={() => undefined} open selectedRoundTripId={trade.roundTripId} showTagSelectionCount={false} showTradeNavigation={false} trades={savedReviewTargets} /></Box></Collapse>
             </Box>;
           })}
           {analyzerError ? <Typography color="error.main" variant="body2">{analyzerError}</Typography> : null}
           {analyzerUses?.enabled ? <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}><Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today</Typography><Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available in 30 days · resets in {analyzerUses.daysUntilReset} days</Typography></Box> : null}
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button onClick={() => setSavedTrades([])} variant="outlined">Add another trade</Button>{analyzerUses?.enabled ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button onClick={() => requestReviewAction(() => setSavedTrades([]))} variant="outlined">Add another trade</Button>{analyzerUses?.enabled ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
         </Stack>}
       </Box>
     </Stack>
+    <Dialog onClose={() => setDiscardJournalOpen(false)} open={discardJournalOpen}>
+      <DialogTitle>Discard unsaved journal changes?</DialogTitle>
+      <DialogContent><Typography>Your unsaved note, tags, or rule changes will be lost.</Typography></DialogContent>
+      <DialogActions><Button onClick={() => { pendingReviewActionRef.current = null; setDiscardJournalOpen(false); }}>Keep editing</Button><Button color="error" onClick={() => {
+        journalDirtyRef.current = false;
+        setDiscardJournalOpen(false);
+        const action = pendingReviewActionRef.current;
+        pendingReviewActionRef.current = null;
+        action?.();
+      }}>Discard changes</Button></DialogActions>
+    </Dialog>
   </Drawer>;
 }
 
