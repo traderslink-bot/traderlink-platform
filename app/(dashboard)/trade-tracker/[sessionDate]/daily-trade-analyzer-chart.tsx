@@ -53,6 +53,17 @@ type ChartSemanticColors = Readonly<{
 }>;
 type PatternColorMap = Readonly<Record<string, string>>;
 
+const LIGHT_CHART_THEME = Object.freeze({
+  actionHover: "#0b3475",
+  background: "#ffffff",
+  candleLoss: "#d14343",
+  candleWin: "#1b8a5a",
+  controlBorder: "#b8c6d9",
+  controlText: "#41516a",
+  grid: "#dce5f0",
+  text: "#172033",
+});
+
 const CHART_INTERVAL_SECONDS: Readonly<Record<DailyTradeChartInterval, number>> = Object.freeze({
   "1m": 60,
   "5m": 5 * 60,
@@ -385,16 +396,18 @@ export function DailyTradeAnalyzerChart({
 }) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
-  const chartTheme = theme.palette.traderLink.chart;
+  const [lightChartInDarkMode, setLightChartInDarkMode] = useState(false);
+  const usesLightChart = theme.palette.mode === "light" || lightChartInDarkMode;
+  const chartTheme = usesLightChart ? LIGHT_CHART_THEME : theme.palette.traderLink.chart;
   const usesDarkChartControls = theme.palette.mode === "dark";
   const annotationAppearance = useMemo<TradeAnalyzerAnnotationAppearance>(() => ({
-    executionFill: theme.palette.mode === "dark" ? theme.palette.background.paper : "#ffffff",
-    patternOutline: theme.palette.mode === "dark" ? theme.palette.text.primary : "rgba(255,255,255,0.98)",
-    ruleText: theme.palette.mode === "dark" ? theme.palette.background.default : "#ffffff",
-    selectedExecutionFill: theme.palette.mode === "dark" ? theme.palette.action.selected : "#fff7d6",
-    selectionShadow: theme.palette.mode === "dark" ? "rgba(121,170,241,0.28)" : "rgba(1,30,86,0.28)",
-  }), [theme.palette.action.selected, theme.palette.background.default, theme.palette.background.paper, theme.palette.mode, theme.palette.text.primary]);
-  const chartSemanticColors = useMemo<ChartSemanticColors>(() => theme.palette.mode === "dark"
+    executionFill: usesLightChart ? "#ffffff" : theme.palette.background.paper,
+    patternOutline: usesLightChart ? "rgba(255,255,255,0.98)" : theme.palette.text.primary,
+    ruleText: usesLightChart ? "#ffffff" : theme.palette.background.default,
+    selectedExecutionFill: usesLightChart ? "#fff7d6" : theme.palette.action.selected,
+    selectionShadow: usesLightChart ? "rgba(1,30,86,0.28)" : "rgba(121,170,241,0.28)",
+  }), [theme.palette.action.selected, theme.palette.background.default, theme.palette.background.paper, theme.palette.text.primary, usesLightChart]);
+  const chartSemanticColors = useMemo<ChartSemanticColors>(() => !usesLightChart
     ? {
       buy: theme.palette.success.main,
       ema: theme.palette.warning.main,
@@ -410,8 +423,8 @@ export function DailyTradeAnalyzerChart({
       sell: "#b42318",
       volume: "rgba(1, 30, 86, 0.30)",
       vwap: "#7b1fa2",
-    }, [theme.palette.error.main, theme.palette.mode, theme.palette.primary.light, theme.palette.success.main, theme.palette.warning.main]);
-  const chartPatternColors = useMemo<PatternColorMap>(() => theme.palette.mode === "dark"
+    }, [theme.palette.error.main, theme.palette.primary.light, theme.palette.success.main, theme.palette.warning.main, usesLightChart]);
+  const chartPatternColors = useMemo<PatternColorMap>(() => !usesLightChart
     ? {
       compression: theme.palette.text.secondary,
       compression_break_bearish: theme.palette.error.main,
@@ -433,7 +446,7 @@ export function DailyTradeAnalyzerChart({
       three_black_crows_bearish: theme.palette.error.main,
       three_white_soldiers_bullish: theme.palette.success.main,
     }
-    : LIGHT_PATTERN_COLORS, [theme.palette.error.main, theme.palette.mode, theme.palette.primary.light, theme.palette.success.main, theme.palette.text.secondary, theme.palette.warning.main]);
+    : LIGHT_PATTERN_COLORS, [theme.palette.error.main, theme.palette.primary.light, theme.palette.success.main, theme.palette.text.secondary, theme.palette.warning.main, usesLightChart]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const chartCandleCountRef = useRef(0);
@@ -1241,6 +1254,22 @@ export function DailyTradeAnalyzerChart({
         >
           {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
         </Button>
+        {theme.palette.mode === "dark" ? (
+          <Button
+            onClick={() => setLightChartInDarkMode((current) => !current)}
+            size="small"
+            sx={{
+              bgcolor: theme.palette.primary.main,
+              borderColor: theme.palette.primary.light,
+              color: theme.palette.primary.contrastText,
+              minHeight: { xs: 44, md: 32 },
+              "&:hover": { bgcolor: theme.palette.primary.dark, borderColor: theme.palette.primary.light },
+            }}
+            variant="outlined"
+          >
+            {lightChartInDarkMode ? "Dark chart" : "Light chart"}
+          </Button>
+        ) : null}
       </Stack>
       <Menu
         anchorEl={displayMenuAnchor}

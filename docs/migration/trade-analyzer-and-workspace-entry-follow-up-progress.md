@@ -71,3 +71,4 @@ Related plan:
   owner from selecting the designated Moomoo connection.
 - The shared Analyzer connection selector now identifies each active connection by both user and Journal account, so repeated account names such as `Primary Journal` are no longer ambiguous.
 - Restored the Analyzer chart's Navy Dark surface while keeping its grid hidden, increased the contrast of the range, display, and fullscreen controls, and made Workspace recognize current shared logical-trade Analyzer results when coloring the Analyzer action.
+- In Navy Dark appearance, the Analyzer controls now include a chart-only Light chart / Dark chart toggle that does not change the rest of the application appearance.
