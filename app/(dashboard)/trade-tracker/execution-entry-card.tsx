@@ -409,7 +409,6 @@ export function ExecutionEntryCard({
               value={row.price}
             />
             <TextField
-              helperText="Leave blank when there was no fee. Enter a fee only when charged."
               label="Fees"
               onChange={(event) => update(row.id, "fees", event.target.value)}
               placeholder="No fee"
