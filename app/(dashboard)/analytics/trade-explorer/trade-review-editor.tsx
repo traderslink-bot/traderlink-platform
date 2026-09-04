@@ -388,7 +388,7 @@ export function TradeExplorerReviewEditor({
               </Stack>
             ) : null}
             {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
-            {success ? <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert> : null}
+            {success && !embedded ? <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert> : null}
             {model && draft ? (
               <Stack spacing={3}>
                 <Box>
@@ -538,7 +538,7 @@ export function TradeExplorerReviewEditor({
           >
             {!embedded ? <Typography color="text.secondary" variant="body2">
               {reviewDirty ? "Unsaved changes" : "All changes saved"}
-            </Typography> : <Box />}
+            </Typography> : success ? <Typography color="success.main" sx={{ fontWeight: 700 }} variant="body2">{success}</Typography> : <Box />}
             <Button
               disabled={
                 !reviewDirty ||
