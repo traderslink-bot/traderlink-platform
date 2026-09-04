@@ -517,6 +517,7 @@ ORDER BY allocation_version.executed_at_utc, allocation_version.source_order_key
           sourceDisplayLabel: "Workspace trade edit manual executions",
           entries: additions.map(toManualExecutionInput),
           confirmedTraderBoundaries: true,
+          contentResolution: "trader_confirmed_separate",
           now,
         });
       }

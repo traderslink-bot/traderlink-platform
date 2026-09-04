@@ -13,6 +13,10 @@
 - A factual close followed by a re-entry now previews as one closed round trip
   and one open position. The first realized P/L remains factual and separate;
   no open-member logical merge is created.
+- Confirmed new execution rows in Workspace Edit Trade are now preserved as
+  separate manual executions even when they duplicate an earlier row's
+  date/time/side/quantity/price facts. This prevents a confirmed re-entry from
+  being silently matched away as an automatic duplicate.
 
 - Workspace Edit Trade now evaluates only the edited trade when describing the
   pending result. A normal final exit is one closed trade; an edit with shares

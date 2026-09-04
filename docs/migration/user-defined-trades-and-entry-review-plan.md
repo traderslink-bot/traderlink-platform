@@ -830,6 +830,10 @@ unrelated chart connection policy without owner approval.
 - A close followed by re-entry remains one closed factual round trip and one
   open position. The confirmation uses that exact result; it does not invent a
   completed logical merge or change the closed leg's factual P/L.
+- After the trader explicitly confirms a Workspace Edit Trade addition, that
+  new row is a separate factual execution even if its displayed facts match an
+  earlier manual execution. The command must not silently deduplicate it and
+  leave the confirmed edit as a no-op.
 - `/account/trading` reconnect and connection-helper states discuss importing
   only; Analyzer and unrelated chart policy do not leak into that copy.
 
