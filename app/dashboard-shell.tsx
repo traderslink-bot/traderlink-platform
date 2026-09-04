@@ -921,8 +921,11 @@ export function DashboardShell({
           addOpen
           expectedAccountSelectionRef={workspaceTradeContext.expectedAccountSelectionRef}
           offlineScopeRef={workspaceTradeContext.offlineScopeRef}
-          onAddTradeSaved={() => window.location.reload()}
-          onClose={() => setWorkspaceTradeContext(null)}
+          onAddTradeSaved={() => undefined}
+          onClose={() => {
+            setWorkspaceTradeContext(null);
+            window.location.reload();
+          }}
         />
       ) : null}
       {offline ? null : (
