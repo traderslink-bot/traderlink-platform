@@ -105,7 +105,7 @@ export default async function WorkspacePage({
     redirect("/account/trading");
   }
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, customEndDate, customStartDate, logicalClosedTradeCount, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, pnlReportingBasis, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
@@ -161,6 +161,10 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
           afterCursor: null, endDate: dates.endDate, filter, followDashboardPeriod: false,
           group, searchTicker: queryParameters.searchTicker ?? "", sort, startDate: dates.startDate,
         }),
+        logicalClosedTradeCount: readWorkspaceTradeLibrary(database, scope, {
+          afterCursor: null, endDate: dates.endDate, filter: "closed", followDashboardPeriod: false,
+          group: "none", searchTicker: "", sort: "newest", startDate: dates.startDate,
+        }).totalRowCount,
       });
     },
     { prefetchAllFactSet: period === "all" && !(queryParameters.startDate && queryParameters.endDate) },
@@ -177,7 +181,9 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     return {
       label,
       caption,
-      value: formatJournalAnalyticsPartitionedMetric(response, selectedMetricId),
+      value: label === "Closed trades"
+        ? String(logicalClosedTradeCount)
+        : formatJournalAnalyticsPartitionedMetric(response, selectedMetricId),
       valueColor: financialSummaryMetricColor(selectedMetricId, metric?.value),
     };
   });

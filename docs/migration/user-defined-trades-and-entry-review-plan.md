@@ -1,6 +1,6 @@
 # User-Defined Trades And Post-Entry Review Plan
 
-**Status:** Implemented; focused verification complete; release handoff pending
+**Status:** Implemented; staging correction in progress; release handoff pending
 
 **Date:** 2026-09-04
 
@@ -61,8 +61,10 @@ approved short control labels.
   incomplete, and the review provides a concise decision-critical warning for
   that rejected merge.
 - An unmerged factual round trip counts as one trade. A merged set of two or
-  more round trips counts as one trade in this feature's scoped trade-facing
-  screens. Analytics and Trade Explorer are not changed.
+  more round trips counts as one trade in every user-facing trade list and
+  count. Workspace, Trade Explorer's individual-trade view, and Trade
+  Breakdown must read the active logical-trade projection. Raw round trips
+  remain available only as execution and factual-detail evidence.
 - Underlying round trips remain visible inside a merged trade as factual
   history. They are not hidden, rewritten, or represented as a different
   execution chain.

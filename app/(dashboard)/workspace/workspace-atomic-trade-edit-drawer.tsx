@@ -74,6 +74,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
   const [working, setWorking] = useState(false);
   const [tab, setTab] = useState<EditTab>(startingTab);
   const [mergeView, setMergeView] = useState<MergeView | null>(null);
+  const [isMerged, setIsMerged] = useState(false);
   const [selectedMergeRefs, setSelectedMergeRefs] = useState<readonly string[]>([]);
   const [mergeStyle, setMergeStyle] = useState<"day" | "swing">("day");
   const nextRow = useRef(100);
@@ -82,7 +83,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
     if (!open || !roundTripId) return;
     let active = true;
     setSnapshot(null); setRows([]); setTradeStyle(null); setPreview(null); setError(null); setTab(startingTab);
-    setMergeView(null); setSelectedMergeRefs([]);
+    setMergeView(null); setSelectedMergeRefs([]); setIsMerged(false);
     void fetch(`/api/platform/journal/workspace-trades/${roundTripId}/edit`, { cache: "no-store" })
       .then(async (response) => {
         const result = await response.json() as { snapshot?: Snapshot; code?: unknown };
@@ -96,6 +97,13 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
         setTradeStyle(result.tradeStyle);
       })
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : failureMessage(null)); });
+    void fetch(`/api/platform/journal/workspace-trades/${roundTripId}/edit/merge`, { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json() as { view?: MergeView };
+        return response.ok ? result.view ?? null : null;
+      })
+      .then((result) => { if (active && result) setIsMerged(result.isMerged); })
+      .catch(() => { /* The edit form remains available if merge state cannot be read. */ });
     return () => { active = false; };
   }, [open, roundTripId, startingTab]);
 
@@ -201,7 +209,10 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
           : "The trades changed. Review the current trades again.");
       }
       window.dispatchEvent(new CustomEvent("traderlink:workspace-trade-edited"));
-      onSaved?.(); onClose();
+      setIsMerged(result.view.isMerged);
+      setMergeView(null);
+      setSelectedMergeRefs([]);
+      onSaved?.();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The trade grouping could not be saved.");
     } finally { setWorking(false); }
@@ -235,7 +246,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
     <Stack sx={{ height: "100%", minHeight: 0 }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", px: 2, py: 1.25 }}>
-          <Typography component="h2" sx={{ fontWeight: 800 }} variant="h6">{mergeView ? "Merge trade" : "Edit trade"}</Typography>
+          <Typography component="h2" sx={{ fontWeight: 800 }} variant="h6">{mergeView ? mergeView.isMerged ? "Unmerge trade" : "Merge trade" : "Edit trade"}</Typography>
           <IconButton aria-label="Close" disabled={working} onClick={onClose}><CloseRoundedIcon /></IconButton>
         </Stack>
         {!mergeView ? <Tabs aria-label="Edit trade sections" onChange={(_event, value: EditTab) => setTab(value)} value={tab} variant="fullWidth">
@@ -249,7 +260,13 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
           <Typography sx={{ fontWeight: 800 }}>{mergeView.current.symbol}</Typography>
           <Typography color="text.secondary" variant="body2">{mergeView.current.memberCount} round trip{mergeView.current.memberCount === 1 ? "" : "s"}</Typography>
         </Box>
-        {mergeView.isMerged ? <Button color="error" disabled={working} onClick={() => void saveMerge("unmerge")} variant="outlined">Unmerge Trade</Button> : <>
+        {mergeView.isMerged ? <>
+          <Typography color="text.secondary" variant="body2">This will create {mergeView.current.memberCount} trades from this merged trade.</Typography>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+            <Button disabled={working} onClick={() => { setMergeView(null); setError(null); }}>Cancel</Button>
+            <Button color="error" disabled={working} onClick={() => void saveMerge("unmerge")} variant="contained">Unmerge Trade</Button>
+          </Stack>
+        </> : <>
           {mergeView.sameDay.length > 0 ? <Stack spacing={1}><Typography sx={{ fontWeight: 800 }}>Same day</Typography>{mergeView.sameDay.map((item) => candidate(item, false))}</Stack> : null}
           {mergeView.otherDates.length > 0 ? <Stack spacing={1}><Typography sx={{ fontWeight: 800 }}>Other dates</Typography>{mergeView.otherDates.map((item) => candidate(item, true))}</Stack> : null}
           <TextField disabled={!tradeStyleChoiceRequired} label="Trade type" onChange={(event) => setMergeStyle(event.target.value as "day" | "swing")} select size="small" value={selectedAcrossDates ? "swing" : mergeStyle}><MenuItem value="day">Day Trade</MenuItem><MenuItem value="swing">Swing</MenuItem></TextField>
@@ -280,7 +297,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
             </Box> : null}
           </Box>)}
           <Button disabled={working || activeRows.length === 0} onClick={addExecution} startIcon={<AddRoundedIcon />} sx={{ alignSelf: "flex-start" }}>Add execution</Button>
-          <Button disabled={working} onClick={() => void openMerge()} startIcon={<CallMergeRoundedIcon />} sx={{ alignSelf: "flex-start" }}>Merge Trade</Button>
+          <Button disabled={working} onClick={() => void openMerge()} startIcon={<CallMergeRoundedIcon />} sx={{ alignSelf: "flex-start" }}>{isMerged ? "Unmerge Trade" : "Merge Trade"}</Button>
           {preview ? <Alert severity="info">{preview.consequenceCopy}</Alert> : null}
           {error ? <Alert severity="error">{error}</Alert> : null}
         </> : error ? <Alert severity="error">{error}</Alert> : <Typography color="text.secondary">Loading</Typography>}

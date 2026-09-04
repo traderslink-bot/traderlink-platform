@@ -1,8 +1,25 @@
 # User-Defined Trades And Post-Entry Review Progress
 
-**Status:** Implementation complete; focused verification complete; release handoff pending
+**Status:** Staging correction in progress; release handoff pending
 
 **Controlling plan:** [User-Defined Trades And Post-Entry Review Plan](user-defined-trades-and-entry-review-plan.md)
+
+## Staging correction — 2026-09-04
+
+- A merged trade is now projected as one combined row in Trade Explorer's
+  individual-trade view and Trade Breakdown's supporting-trade table. The
+  preserved member round trips remain available only for execution detail and
+  reversible unmerge history.
+- Workspace's Closed trades card now uses the logical-trade reader rather
+  than the raw Analytics included-round-trip count.
+- Trade Breakdown formats its opening and closing timestamps in the selected
+  account timezone rather than rendering the stored UTC values as local time.
+- The Workspace edit drawer reads its current merge state before rendering the
+  action, retains the drawer after merge/unmerge, and requires an explicit
+  unmerge confirmation with Cancel.
+- A mixed completed-and-open manual save now materializes logical Analyzer
+  subjects only for completed results. The open Day Trade stays savable and is
+  not falsely treated as an Analyzer-eligible logical trade.
 
 ## Approved direction
 
@@ -36,11 +53,13 @@ Raw factual round trips are counted separately in these user-facing paths:
   whether it measures user-defined trades or factual round trips.
 
 The new reader must become the source for Workspace, Calendar, Day Tracker,
-and Trade Details rows that currently identify a trade by one round trip. A
+Trade Details, Trade Explorer's individual-trade view, and Trade Breakdown
+rows that currently identify a trade by one round trip. A
 logical trade presents its combined chronological executions there. Raw
 round-trip readers remain necessary for factual execution/allocation detail,
-rule-result evidence, imports, and Data Decisions. Current Analytics and Trade
-Explorer behavior remains out of scope and unchanged.
+rule-result evidence, imports, and Data Decisions. Aggregate Analytics metrics
+remain a separate calculation scope; the current correction covers the
+user-visible individual-trade rows and displayed trade counts.
 
 ## Plan QA — 2026-09-04
 
