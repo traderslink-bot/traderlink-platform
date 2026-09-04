@@ -229,9 +229,9 @@ export function MoomooExecutionImportSetup({
     return (
       <Stack spacing={1.5} sx={{ mt: 2 }}>
         <Alert severity="success">
-          <Typography sx={{ fontWeight: 800 }} variant="body2">Chart features available</Typography>
+          <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo connected</Typography>
           <Typography variant="body2">
-            This free Moomoo connection provides the market data used for chart replay and trade analysis on eligible trading dates.
+            Connect Moomoo to import executions from a supported trading account.
           </Typography>
         </Alert>
         <Alert severity="info">
@@ -255,9 +255,9 @@ export function MoomooExecutionImportSetup({
   return (
     <Stack spacing={1.5} sx={{ mt: 2 }}>
       <Alert severity="success">
-        <Typography sx={{ fontWeight: 800 }} variant="body2">Chart features available</Typography>
+        <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo connected</Typography>
         <Typography variant="body2">
-          Moomoo provides the market data used for chart replay and trade analysis on eligible trading dates.
+          Moomoo execution imports are available for supported linked trading accounts.
         </Typography>
       </Alert>
 

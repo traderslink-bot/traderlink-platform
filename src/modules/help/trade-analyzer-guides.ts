@@ -34,17 +34,6 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         ],
       },
       {
-        id: "moomoo-account",
-        title: "Moomoo account requirements",
-        summary: "Separate free chart-data access from broker execution importing.",
-        keywords: ["free moomoo account", "cash account", "margin account", "execution import", "broker connection"],
-        blocks: [
-          { kind: "callout", title: "A free Moomoo account is enough for supported chart data", text: "A free Moomoo account can unlock supported chart replay and Analyzer market data. If you sign up with email on Moomoo's website, it can send you to brokerage-account setup without a skip choice. Stop there, download the Moomoo mobile app and sign in with the new email and password. In the app, choose Do this later at brokerage selection. Then return to TradersLink and select Connect Moomoo." },
-          { kind: "link", href: "https://www.moomoo.com/us/", label: "Create a free Moomoo account", text: "Start on Moomoo's site, then use its mobile app to finish free-account setup before returning to TradersLink to select Connect Moomoo." },
-          { kind: "paragraph", text: "Automatic Moomoo execution imports are separate. They require a supported Moomoo trading account that can share trading history. If your connected account cannot import executions, you can still enter them manually or use supported statement imports." },
-        ],
-      },
-      {
         id: "current-scope",
         title: "Current day-trade scope",
         summary: "Use the current Analyzer for supported day trades while Swing analysis remains separate future work.",
@@ -533,10 +522,10 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       {
         id: "market-data-and-imports",
         title: "Market data and execution imports",
-        summary: "Use one Moomoo connection for supported chart data while treating execution imports separately.",
-        keywords: ["moomoo", "market data", "execution imports", "free account", "saved candles"],
+        summary: "Treat Analyzer market data and execution imports as separate workflows.",
+        keywords: ["moomoo", "market data", "execution imports", "saved candles"],
         blocks: [
-          { kind: "paragraph", text: "TradersLink checks its saved server-side candles before requesting missing Moomoo data. A free Moomoo account can support chart data, but email signup can require the Moomoo mobile-app step before the account is ready to connect. Automatic execution imports require a supported trading account; manual entry and statement imports remain available when broker importing is unavailable." },
+          { kind: "paragraph", text: "Automatic execution imports require a supported trading account. Manual entry and statement imports remain available when broker importing is unavailable." },
         ],
       },
       {
