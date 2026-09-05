@@ -237,6 +237,17 @@ used for that trade's zone and exit calculations. It must equal price-and-
 quantity Gross P/L and must not subtract fees, substitute a selected Net result
 or use another trade in the same ticker.
 
+The selected-zone evidence heading states the exact non-overlapping range, such
+as `Trades that reached 20%–29.99%`, followed by the number of those trades out
+of the current analyzed-trade population. Definitions belong in concise heading
+tooltips rather than repeated text in every row. First Reached explains the
+one-minute timing, Time to Zone begins at the first entry order, and Time in
+Zone totals every completed minute in the band while the trade is active,
+including later returns. Partial Profit describes scaling out, Full Exit Profit
+means fully exiting the position with one sell order, Gross Opportunity is the
+highest calculated opportunity inside that band, and Final Gross P/L excludes
+broker fees. Next-zone outcomes use supporting-text typography.
+
 ### Entries and Exits
 
 Separate initial entries from adds and partial exits from final exits. Identify

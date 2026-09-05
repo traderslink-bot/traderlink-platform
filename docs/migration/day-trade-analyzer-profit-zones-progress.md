@@ -237,5 +237,14 @@ to this worker.
   exact zone row. The affected demo trades contain six $0.50 execution fees;
   the prior $3-lower value was fee-inclusive. Fees now affect Net only and
   cannot reduce the Final Gross value.
+- [x] Simplify the selected-zone evidence heading to the exact non-overlapping
+  range (for example, `20%–29.99%`) and state its count against the page's
+  analyzed-trade population without repeating a second range chip.
+- [x] Move the definitions for First Reached, Time to Zone, Time in Zone,
+  Partial Profit, Full Exit Profit, Gross Opportunity and Final Gross P/L into
+  plain-language table-heading tooltips. Remove the repeated reach-source and
+  full-exit explanations from every evidence row.
+- [x] Keep Full Exit Profit limited to fully exiting the position with one sell
+  order, and render Next Zone outcomes in the smaller supporting-text size.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.
