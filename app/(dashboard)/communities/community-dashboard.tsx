@@ -36,8 +36,8 @@ function RelationshipButton({isReview,item,label,status}:{isReview:boolean;item:
 function money(minor:number,currency:string){ return new Intl.NumberFormat("en-US",{style:"currency",currency}).format(minor/100); }
 function has(snapshot:TraderLinkCommunityDashboardSnapshot,key:string){ return snapshot.viewer.capabilities.includes(key as never); }
 
-export function CommunityDashboard({snapshot,section,isReview=false}:{snapshot:TraderLinkCommunityDashboardSnapshot;section:TraderLinkCommunitySection;isReview?:boolean}){
-  const base=`/communities/${snapshot.community.slug}`;
+export function CommunityDashboard({snapshot,section,isReview=false,baseOverride}:{snapshot:TraderLinkCommunityDashboardSnapshot;section:TraderLinkCommunitySection;isReview?:boolean;baseOverride?:string}){
+  const base=baseOverride??`/communities/${snapshot.community.slug}`;
   const selected=[...memberTabs,...manageTabs].findIndex(tab=>tab.section===section);
   const canManage=has(snapshot,"community.manage"); const canCoach=has(snapshot,"community.coaching.offer");
   return <DashboardPage>
