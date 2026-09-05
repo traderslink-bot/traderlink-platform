@@ -254,5 +254,17 @@ to this worker.
   trade rate and exact Gross profit; Exit Type shows the exclusive partial/full
   percentage and Gross-dollar split, or `No profit-taking exits` when none
   occurred.
+- [x] Replace the generic Stopped Here summary with the missing behavioral
+  evidence: Missed Opportunity shows how many zone-reaching trades took no
+  profit there and their combined maximum remaining-share Gross opportunity.
+- [x] Add Next Move for missed-opportunity trades only. Its exclusive rates show
+  whether the trade reached the next zone first, dropped below the current zone
+  first or exited from the zone; the three outcomes total 100%.
+- [x] Calculate each exact trade's Gross Opportunity from its highest remaining-
+  share profit inside the selected band, capped at `29.99%`, `39.99%` and so on
+  for non-overlapping zones. The exact table and missed-opportunity total now
+  use this same calculation.
+- [x] Focused ESLint and `git diff --check` pass for the missed-opportunity,
+  next-move and exact-zone Gross Opportunity correction.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.

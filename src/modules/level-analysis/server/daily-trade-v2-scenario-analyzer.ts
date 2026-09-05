@@ -73,6 +73,7 @@ export type DailyTradeV2ProfitZone = Readonly<{
   firstReachSource: "completed_close" | "exit" | null;
   longestConsecutiveMinutesAtOrAbove: number;
   lowerBoundPercent: number;
+  maximumProfitOpportunityInZoneGrossDecimal: string | null;
   minutesFromEntryToFirstReach: number | null;
   observedOutcome: "did_not_reach" | "dropped_before_next" | "exited_before_next" | "reached_next";
   partialProfitTakenAfterNextGrossDecimal: string;
@@ -273,11 +274,26 @@ function buildProfitZones(input: Readonly<{
           .dividedBy(100)
           .times(firstReached.openQuantity)
       : null;
+    const maximumProfitOpportunityInZone = firstReached
+      ? input.reachObservations.slice(firstReachedIndex).reduce((maximum, observation) => {
+          if (observation.openShareReturnPercent + Number.EPSILON < lowerBoundPercent) return maximum;
+          const boundedReturnPercent = upperBoundPercent === null
+            ? observation.openShareReturnPercent
+            : Math.min(observation.openShareReturnPercent, upperBoundPercent - 0.01);
+          const openPositionProfit = observation.averageEntryPrice
+            .times(new Decimal(boundedReturnPercent.toString()))
+            .dividedBy(100)
+            .times(observation.openQuantity);
+          return Decimal.max(maximum, openPositionProfit);
+        }, new Decimal(0))
+      : null;
     return Object.freeze({
       firstReachedAtUtcSeconds: firstReached?.time ?? null,
       firstReachSource: firstReached?.source ?? null,
       longestConsecutiveMinutesAtOrAbove,
       lowerBoundPercent,
+      maximumProfitOpportunityInZoneGrossDecimal:
+        maximumProfitOpportunityInZone?.toFixed() ?? null,
       minutesFromEntryToFirstReach: firstReached
         ? Math.max(0, (firstReached.time - input.entryAtUtcSeconds) / 60)
         : null,

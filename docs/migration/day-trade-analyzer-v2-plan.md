@@ -192,14 +192,15 @@ For each threshold/band pair show:
   completed red plus the sum of their realized gross losses; and
 - exact supporting records for every row and outcome.
 
-`Profit available at level` is a conservative calculated scenario: average
-entry multiplied by the threshold return and the shares still open at the
-first completed close or exit execution proving the threshold was reached. It
-is not an execution or guaranteed fill. `Profit taken in zone` and `Realized
-gross losses` come only from recorded executions and completed Journal trades.
-The ladder and its exact records never add overlapping level opportunities into a false
-grand total. All profit-zone money stays Gross even when the page's general
-Gross/Net selector is Net.
+`Gross Opportunity` is the highest calculated unrealized Gross profit on the
+shares still open inside that exact zone. For a trade moving beyond the zone,
+the calculation is capped at the zone's non-overlapping upper edge (`29.99%`,
+`39.99%` and so on); the top zone has no cap. It is not an execution or
+guaranteed fill. `Profit taken in zone` and `Realized gross losses` come only
+from recorded executions and completed Journal trades. The ladder and its exact
+records never add overlapping zone opportunities into a false grand total. All
+profit-zone money stays Gross even when the page's general Gross/Net selector
+is Net.
 
 The exact record for a selected zone distinguishes partial profit taken before
 the next zone, partial profit taken after the trade had already reached the next
@@ -255,6 +256,13 @@ profit and their combined Gross profit. A separate Exit Type column directly
 after it contains the exclusive Partial exits and Full exits percentage-and-
 dollar split. Its percentage denominator is the profit-taking trades in that
 zone, not all trades reaching the zone.
+Missed Opportunity shows the complementary population: zone-reaching trades
+with no profitable exit in that zone, their percentage of reached trades and
+their combined exact-zone Gross Opportunity. Next Move uses only that missed-
+opportunity population and partitions its first recorded outcome into reached
+the next zone, dropped below the current zone or exited from the zone. These are
+exclusive outcomes whose rates total 100%; a later recovery remains visible in
+the exact trade record.
 
 ### Entries and Exits
 
