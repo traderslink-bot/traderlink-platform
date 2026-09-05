@@ -75,3 +75,4 @@ Related plan:
 - Both TradingView Advanced Chart embeds now default eligible symbols to extended-hours candles and hide only the side toolbar at 700px and below, rebuilding the widget when that breakpoint changes.
 - The Workspace Rules broken card now places its larger count at the right side of the header and uses the warning color for the Recent broken rules label.
 - Added a compact Top tickers Workspace card with Most profitable, Most traded, and Highest buy value rankings that follow the active Workspace date filter and logical-trade identity.
+- Best trade and Worst trade Workspace metric cards now place a Trade details action to the right of their values and open the exact filtered trade in the existing details drawer.

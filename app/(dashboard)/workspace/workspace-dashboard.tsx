@@ -34,6 +34,7 @@ import { WorkspaceMoreFiltersDrawer } from "./workspace-more-filters-drawer";
 import { openWorkspaceTradeDrawer } from "./workspace-trade-drawer-events";
 import { DashboardChartAction, DashboardChartPanelSlot, DashboardChartProvider } from "../dashboard-chart-tool";
 import { JournalNotesDrawer, type JournalNotesDrawerInitialView } from "../notes/journal-notes-drawer";
+import { TradeDetailsDrawer } from "../trades/trade-details-drawer";
 
 const WorkspaceCalendarPanel = dynamic(
   () => import("./workspace-calendar-panel").then((module) => module.WorkspaceCalendarPanel),
@@ -57,6 +58,7 @@ export type WorkspaceMetric = Readonly<{
   value: string;
   valueColor?: FinancialOutcomeColor;
   caption: string;
+  tradeDetailsRoundTripId?: string | null;
 }>;
 
 type WorkspaceLiveTradeLibraryProps = Readonly<{
@@ -217,6 +219,7 @@ export function WorkspaceDashboard({
   const metrics = analyticsMetrics ?? unavailableMetrics;
   const summaryCurrentFocuses = reviewSummary?.currentFocuses?.trim() || null;
   const [currentFocuses, setCurrentFocuses] = useState(summaryCurrentFocuses);
+  const [summaryTradeDetailsId, setSummaryTradeDetailsId] = useState<string | null>(null);
   useEffect(() => { setCurrentFocuses(summaryCurrentFocuses); }, [summaryCurrentFocuses]);
   useEffect(() => { setShowRuleResultsCard(ruleResultsCardPreference?.showInWorkspace ?? false); }, [ruleResultsCardPreference?.showInWorkspace]);
   useEffect(() => { setShowPrScannerCard(prScannerCardPreference?.showInWorkspace ?? true); }, [prScannerCardPreference?.showInWorkspace]);
@@ -260,7 +263,7 @@ export function WorkspaceDashboard({
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 800, textDecoration: "underline" }} variant="inherit">Open Day Trade Tracker</Typography></Alert> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
-        {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
+        {metrics.map((metric) => <DashboardMetricCard action={metric.tradeDetailsRoundTripId ? <Button onClick={() => setSummaryTradeDetailsId(metric.tradeDetailsRoundTripId ?? null)} size="small">Trade details</Button> : undefined} hideCaption key={metric.label} {...metric} />)}
       </Box>
       {hasLiveTradeLibraryProps(tradeLibraryProps) && (topTickersCard || currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
         "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
@@ -307,6 +310,7 @@ export function WorkspaceDashboard({
           <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} onClose={() => setFiltersOpen(false)} open={filtersOpen} query={tradeLibraryProps.trades.query} />
           <JournalNotesDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} focusOnly={sessionNotesInitialView === "focuses"} initialView={sessionNotesInitialView} key={sessionNotesInitialView} launch={{ kind: "session", sessionDate: sessionDateInTimezone(tradeLibraryProps.accountTimezone) }} onClose={() => setSessionNotesOpen(false)} onFocusSaved={(focus) => setCurrentFocuses(focus.showInWorkspace && focus.focusText.trim() ? focus.focusText.trim() : null)} open={sessionNotesOpen} />
           {rulesOpen && rulesAccountSelectionRef === activeAccountSelectionRef ? <WorkspaceRulesPanel initialView={rulesInitialView} key={rulesInitialView} onClose={() => setRulesOpen(false)} onPreferenceSaved={(preference) => { setShowRuleResultsCard(preference.showInWorkspace); router.refresh(); }} /> : null}
+          <TradeDetailsDrawer analyzer={null} initialTab="details" onClose={() => setSummaryTradeDetailsId(null)} open={summaryTradeDetailsId !== null} roundTripId={summaryTradeDetailsId} />
         </>
       ) : null}
       </>}

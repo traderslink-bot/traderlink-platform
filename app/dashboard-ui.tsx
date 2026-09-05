@@ -41,12 +41,14 @@ export function DashboardSecondaryAction(props: DashboardActionProps) {
 }
 
 export function DashboardMetricCard({
+  action,
   caption,
   hideCaption = false,
   label,
   value,
   valueColor = "text.primary",
 }: {
+  action?: ReactNode;
   caption: string;
   hideCaption?: boolean;
   label: string;
@@ -56,16 +58,21 @@ export function DashboardMetricCard({
   return (
     <Card data-traderlink-platform-dashboard-card="metric" sx={{ minWidth: 0 }}>
       <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-        <Typography color="text.secondary" noWrap variant="caption">
-          {label}
-        </Typography>
-        <Typography
-          component="div"
-          noWrap
-          sx={{ color: valueColor, fontSize: "1.35rem", fontWeight: 720, mt: 0.5 }}
-        >
-          {value}
-        </Typography>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between", minWidth: 0 }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography color="text.secondary" noWrap variant="caption">
+              {label}
+            </Typography>
+            <Typography
+              component="div"
+              noWrap
+              sx={{ color: valueColor, fontSize: "1.35rem", fontWeight: 720, mt: 0.5 }}
+            >
+              {value}
+            </Typography>
+          </Box>
+          {action ? <Box sx={{ flexShrink: 0 }}>{action}</Box> : null}
+        </Stack>
         {!hideCaption ? <Typography
           color="text.secondary"
           noWrap

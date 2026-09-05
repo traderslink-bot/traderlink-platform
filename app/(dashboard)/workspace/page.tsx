@@ -191,6 +191,9 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         ? String(logicalClosedTradeCount)
         : formatJournalAnalyticsPartitionedMetric(response, selectedMetricId),
       valueColor: financialSummaryMetricColor(selectedMetricId, metric?.value),
+      tradeDetailsRoundTripId: label === "Best trade"
+        ? topTickersCard.bestTradeRoundTripId
+        : label === "Worst trade" ? topTickersCard.worstTradeRoundTripId : null,
     };
   });
   const offlinePartition = response.partitions.length === 1

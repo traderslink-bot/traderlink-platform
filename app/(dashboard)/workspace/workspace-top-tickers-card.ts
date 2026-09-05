@@ -4,15 +4,18 @@ import type Database from "better-sqlite3";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 
 export type WorkspaceTopTickersCard = Readonly<{
+  bestTradeRoundTripId: string | null;
   highestBuyValue: string | null;
   mostProfitable: string | null;
   mostTraded: string | null;
+  worstTradeRoundTripId: string | null;
 }>;
 
 type TradeRow = Readonly<{
   gross_pnl_decimal: string | null;
   logical_trade_key: string;
   net_pnl_decimal: string | null;
+  round_trip_id: string;
   symbol: string;
 }>;
 
@@ -38,15 +41,41 @@ function highest(entries: ReadonlyMap<string, Decimal>): string | null {
     right.comparedTo(left) || leftSymbol.localeCompare(rightSymbol))[0]?.[0] ?? null;
 }
 
+function tradeExtremes(rows: readonly TradeRow[], moneyBasis: "gross" | "net"): Readonly<{
+  bestTradeRoundTripId: string | null;
+  worstTradeRoundTripId: string | null;
+}> {
+  const grouped = new Map<string, { complete: boolean; pnl: Decimal; roundTripId: string }>();
+  for (const row of rows) {
+    const current = grouped.get(row.logical_trade_key) ?? {
+      complete: true,
+      pnl: new Decimal(0),
+      roundTripId: row.round_trip_id,
+    };
+    const pnl = moneyBasis === "net" ? row.net_pnl_decimal : row.gross_pnl_decimal;
+    if (pnl === null) current.complete = false;
+    else current.pnl = current.pnl.plus(pnl);
+    grouped.set(row.logical_trade_key, current);
+  }
+  const complete = [...grouped.entries()].filter(([, trade]) => trade.complete);
+  const ordered = complete.sort(([leftKey, left], [rightKey, right]) =>
+    left.pnl.comparedTo(right.pnl) || leftKey.localeCompare(rightKey));
+  return Object.freeze({
+    bestTradeRoundTripId: ordered.at(-1)?.[1].roundTripId ?? null,
+    worstTradeRoundTripId: ordered[0]?.[1].roundTripId ?? null,
+  });
+}
+
 export function readWorkspaceTopTickersCard(
   database: Database.Database,
   scope: WorkspaceAccessScope,
   input: Readonly<{ endDate: string | null; moneyBasis: "gross" | "net"; startDate: string | null }>,
 ): WorkspaceTopTickersCard {
-  if (!scope.activeAccountId) return Object.freeze({ highestBuyValue: null, mostProfitable: null, mostTraded: null });
+  if (!scope.activeAccountId) return Object.freeze({ bestTradeRoundTripId: null, highestBuyValue: null, mostProfitable: null, mostTraded: null, worstTradeRoundTripId: null });
   const dates = dateClause("projection", input.startDate, input.endDate);
   const tradeRows = database.prepare(`SELECT instrument.normalized_symbol AS symbol,
  coalesce(membership.logical_trade_id, projection.round_trip_id) AS logical_trade_key,
+ projection.round_trip_id,
  projection.gross_pnl_decimal, projection.net_pnl_decimal
 FROM journal_workspace_trade_library_projections projection
 JOIN journal_round_trip_versions version
@@ -103,9 +132,12 @@ WHERE projection.workspace_id = ? AND projection.account_id = ?
   }
 
   const tradeCounts = new Map([...tradesByTicker].map(([symbol, trades]) => [symbol, new Decimal(trades.size)]));
+  const extremes = tradeExtremes(tradeRows, input.moneyBasis);
   return Object.freeze({
+    bestTradeRoundTripId: extremes.bestTradeRoundTripId,
     highestBuyValue: highest(buyValueByTicker),
     mostProfitable: highest(profitByTicker),
     mostTraded: highest(tradeCounts),
+    worstTradeRoundTripId: extremes.worstTradeRoundTripId,
   });
 }
