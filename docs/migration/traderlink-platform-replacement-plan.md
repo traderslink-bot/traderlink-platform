@@ -14,6 +14,23 @@
 
 **Approved Journal import simplification:** [Journal Import Simplification And Reliability Plan](journal-import-simplification-and-reliability-plan.md) with its [progress tracker](journal-import-simplification-and-reliability-progress.md). It replaces the technical import-review presentation with verified auto-save, an explicit manual-mapping fallback and clear completed outcomes while preserving the last committed import-engine behavior. The consented AI repair worker remains a separately controlled Railway/OpenAI activation boundary.
 
+**TraderLink Communities planning contract:** [TraderLink Communities Partner
+Platform Plan](traderlink-communities-partner-platform-plan.md) with its
+[progress tracker](traderlink-communities-partner-platform-progress.md). The
+owner approved the Discord-server partner direction: TraderLink provides global
+Communities Administration, permission-driven owner/staff workspaces, private
+server alerts and watchlists, human coaching unlocked by server-managed Discord
+roles while coaching payments remain outside TraderLink, named
+community activity and Tier 2 partner attribution. Singular `/community`
+remains the TraderLink-native Watchlists/profile layer and may later grow into
+user discovery and ticker discussion, while private Discord-backed spaces use
+plural `/communities`. The owner approved the planning contract and route
+separation and authorized the Communities 1 identity and permissions foundation
+on 2026-09-05. The owner subsequently authorized the complete implementation
+and deferred visual approval until the integrated staging review. Communities
+1-7 are assembled with focused data-contract proof passing; final build,
+rendered QA and staging publication are tracked in the progress record.
+
 **Completed Phase 6 contract:** [Replacement Acceptance Plan](phase-6-replacement-acceptance-plan.md), [progress tracker](phase-6-replacement-acceptance-progress.md), and [acceptance report](phase-6-replacement-acceptance-report.md)
 
 **Phase 7 preservation boundary:** [Legacy Retirement Progress](phase-7-legacy-retirement-progress.md)

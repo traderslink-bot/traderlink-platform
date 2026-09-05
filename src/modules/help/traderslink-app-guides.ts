@@ -68,9 +68,60 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Turn on alerts only when you want them on this device.",
         keywords: Object.freeze(["push alerts", "notifications", "permission", "phone alerts", "turn off notifications"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Installing TradersLink does not turn on notifications by itself. In the installed app, open Account Preferences and choose Enable push notifications. Your browser asks for permission only after you select that action." }),
+          Object.freeze({ kind: "paragraph", text: "Installing TradersLink does not turn on notifications by itself. In the installed app, open Account Notifications and choose Enable push notifications. Your browser asks for permission only after you select that action." }),
           Object.freeze({ kind: "paragraph", text: "You can choose alert categories for this device and turn them off later without changing your in-app updates or Discord choices. Lock-screen messages for account and trading updates stay generic and do not show trade or account details." }),
-          Object.freeze({ kind: "link", href: "/account/preferences#push-notifications", label: "Open Push notifications", text: "Use Account Preferences to turn alerts on or off and choose the categories this device may receive." }),
+          Object.freeze({ kind: "link", href: "/account/preferences#push-notifications", label: "Open Push notifications", text: "Use Account Notifications to turn alerts on or off and choose the categories this device may receive." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
+    slug: "discord-communities",
+    title: "Discord communities in TradersLink",
+    description: "Join your server workspace, open role-based posts, share watchlists and control coaching Journal access.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "joining-a-community",
+        title: "Join through your Discord server",
+        summary: "A connected server gives all verified members a TraderLink account path.",
+        keywords: Object.freeze(["Discord community", "server", "roles", "join TraderLink", "membership"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Sign in with the Discord account that belongs to the connected server. Every verified active member can use TraderLink; the server owner does not choose which roles may create an account." }),
+          Object.freeze({ kind: "paragraph", text: "The owner can use current Discord roles to limit only that server's alerts, watchlists or coaching plans. If your role changes, access changes after TraderLink receives a fresh Discord membership check." }),
+          Object.freeze({ kind: "link", href: "/communities", label: "Open My Communities", text: "Choose one of your connected Discord communities." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "posts-and-watchlists",
+        title: "Alerts and shared watchlists",
+        summary: "Open server posts in TraderLink and share a watchlist you own.",
+        keywords: Object.freeze(["alerts", "watchlists", "share to community", "Discord channel"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "bullets", items: Object.freeze([
+            "Server owners and assigned staff can publish alerts to the audience and Discord channel chosen by the owner.",
+            "A regular member can share an already-published personal Community Watchlist. The member remains its named owner; sharing does not create a server-owned copy.",
+            "A Discord post links back to the exact TraderLink page. TraderLink does not decide whether the server's alert or watchlist is a paid service.",
+          ]) }),
+        ]),
+      }),
+      Object.freeze({
+        id: "coaching-and-journal-privacy",
+        title: "Coaching and Journal privacy",
+        summary: "The coach controls their plan while you control every Journal share.",
+        keywords: Object.freeze(["coach", "coaching", "Journal sharing", "revoke", "payment"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Coaches create their own plans, delivery details, displayed prices and student limits. The coach or server handles payment in Discord; TraderLink does not provide checkout or collect a launch coaching commission." }),
+          Object.freeze({ kind: "callout", title: "Coaching never opens your Journal automatically", text: "You must separately choose a specific Journal account and data scope for an active coach. You can revoke that read access at any time. A coach cannot edit your executions, P/L, broker evidence or Journal facts." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "community-activity",
+        title: "Community activity visible to owners",
+        summary: "Understand which named activity a server owner can see.",
+        keywords: Object.freeze(["activity", "views", "privacy", "server owner", "tracking"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "The community owner and authorized administrators can see your name, last community activity and visits to that server's TraderLink pages and posts. Named event details are normally retained for 90 days, while daily member-and-page totals may remain longer." }),
+          Object.freeze({ kind: "paragraph", text: "Community reporting excludes your Journal trades, P/L, broker information, private AI conversations and coach-only data. A server owner receives no access to communities they do not own." }),
         ]),
       }),
     ]),

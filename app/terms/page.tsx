@@ -52,10 +52,21 @@ export default function TermsAndConditionsPage() {
         </p>
         <p>
           Paid access, billing periods, prices, renewals, cancellations and any
-          applicable refund terms are disclosed at the time of purchase and may
-          be administered by a payment or membership provider such as Whop. The
-          purchase terms shown there control that transaction. Nothing in these
+          applicable refund terms are disclosed at the time of purchase. A
+          Discord community owner or coach handles payment for that
+          community&apos;s alerts, watchlists and coaching outside TradersLink; their
+          purchase terms control that transaction. TradersLink does not collect
+          a fee or commission on those community coaching payments unless a
+          future written arrangement expressly says otherwise. Nothing in these
           terms limits a non-waivable consumer right under applicable law.
+        </p>
+        <p>
+          Community owners choose which of their Discord roles can open their
+          restricted community content. TradersLink verifies and applies those
+          mappings but does not decide why a role was assigned. Owners and their
+          authorized administrators can see named visits to their community
+          pages and posts. They cannot see your private trading journal unless
+          you separately grant a specific coach revocable read access.
         </p>
       </section>
 
@@ -152,7 +163,7 @@ export default function TermsAndConditionsPage() {
         <h2>9. Third-party services and links</h2>
         <p>
           TradersLink may connect to or link to services operated by others,
-          including Discord, Whop, Google, brokers, market-data sources and AI
+          including Discord, billing providers, Google, brokers, market-data sources and AI
           providers. Their services are governed by their own terms and privacy
           practices. We do not control and are not responsible for third-party
           services, content, security or availability.

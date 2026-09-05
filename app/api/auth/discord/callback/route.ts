@@ -27,6 +27,10 @@ import { PlatformNewsletterContactRepository } from "@/src/modules/platform/serv
 import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
 import { resolvePlatformSessionClientLabel } from "@/src/modules/platform/server/authentication/platform-session-client-label";
 import { PlatformDashboardMemberAccessRepository } from "@/src/modules/platform/server/authentication/platform-dashboard-member-access-repository";
+import { PlatformDiscordMembershipRepository } from "@/src/modules/platform/server/authentication/platform-discord-membership-repository";
+import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
+import { TraderLinkCommunityAdminRepository } from "@/src/modules/communities/server/traderlink-community-admin-repository";
+import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 import {
   TRADERLINK_PLATFORM_SESSION_COOKIE,
   TRADERLINK_PLATFORM_SESSION_TTL_MS,
@@ -107,15 +111,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const config = getDiscordOAuthConfig(resolvePlatformPublicOrigin(request));
     const token = await exchangeDiscordCode({ config, code });
-    const [discordUser, guildMember] = await Promise.all([
+    const [discordUser, configuredGuildMember, discordGuilds] = await Promise.all([
       fetchDiscordCurrentUser(token.access_token),
       resolveDiscordCurrentGuildMembership({
         accessToken: token.access_token,
         guildId: config.guildId,
       }),
+      fetchDiscordCurrentUserGuilds(token.access_token).catch(() => []),
     ]);
-
-    if (!guildMember) {
+    const enrolledGuildIds = withPlatformDatabase({ mode: "runtime" }, (database) =>
+      (database.prepare(`SELECT discord_guild_id FROM traderlink_communities WHERE status IN ('setup','active')`)
+        .all() as readonly { discord_guild_id: string }[]).map((row) => row.discord_guild_id),
+    );
+    const partnerGuild = discordGuilds.find((guild) => enrolledGuildIds.includes(guild.id));
+    const signInGuildId = configuredGuildMember ? config.guildId : partnerGuild?.id;
+    const guildMember = configuredGuildMember ?? (signInGuildId
+      ? await resolveDiscordCurrentGuildMembership({ accessToken: token.access_token, guildId: signInGuildId })
+      : null);
+    if (!guildMember || !signInGuildId) {
       const response = authRedirect(request, returnTo, "join-discord");
       clearDiscordOAuthCookies(response, request);
       return response;
@@ -123,8 +136,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     let resolvedGuildMember = guildMember;
     try {
-      const guilds = await fetchDiscordCurrentUserGuilds(token.access_token);
-      const currentGuild = guilds.find((guild) => guild.id === config.guildId);
+      const currentGuild = discordGuilds.find((guild) => guild.id === signInGuildId);
       if (currentGuild?.owner === true) {
         resolvedGuildMember = { ...guildMember, guild_owner: true };
       }
@@ -133,7 +145,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
-    const dashboardAccessAllowed = watchlistReturn || withPlatformDatabase(
+    const dashboardAccessAllowed = Boolean(partnerGuild) || watchlistReturn || withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformDashboardMemberAccessRepository(database)
         .read().allowAllDiscordMembers || hasPlatformDiscordPremiumAccess({
@@ -185,7 +197,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             avatarHash: discordUser.avatar ?? null,
             emailAddress: discordUser.email ?? null,
             emailVerified: discordUser.verified === true,
-            guildId: config.guildId,
+            guildId: signInGuildId,
             joinedAtUtc: resolvedGuildMember.joined_at ?? null,
             roleIds: resolvedGuildMember.roles ?? [],
             guildOwner: resolvedGuildMember.guild_owner === true,
@@ -201,6 +213,85 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       allowedAccountIds = signInResult.allowedAccountIds;
       demoAccountId = signInResult.demoAccountId;
       workspaceId = signInResult.workspaceId;
+
+      // Refresh every onboarded community the person currently belongs to. The
+      // OAuth token remains request-local; only verified membership and role IDs
+      // are stored. Discord therefore remains the source of paid-role access.
+      try {
+        if (discordGuilds.length > 0) {
+        const visibleGuilds = discordGuilds.filter((guild) =>
+          enrolledGuildIds.includes(guild.id) || guild.owner === true,
+        ).slice(0, 50);
+        const verifiedAtUtc = createCanonicalUtcTimestamp();
+        withPlatformDatabase({ mode: "runtime" }, (database) => {
+          const save = database.prepare(`INSERT INTO traderlink_community_discord_guild_candidates (
+  user_id, discord_guild_id, guild_name, guild_owner, can_manage_guild, verified_at_utc
+) VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT(user_id, discord_guild_id) DO UPDATE SET
+  guild_name = excluded.guild_name, guild_owner = excluded.guild_owner,
+  can_manage_guild = excluded.can_manage_guild, verified_at_utc = excluded.verified_at_utc`);
+          for (const guild of discordGuilds) {
+            const permissions = BigInt(guild.permissions ?? "0");
+            const manageGuildPermission = BigInt(32);
+            const canManageGuild = guild.owner === true || (permissions & manageGuildPermission) === manageGuildPermission;
+            if (guild.owner === true || canManageGuild) {
+              save.run(
+                signInResult.userId,
+                guild.id,
+                guild.name?.trim() || `Discord server ${guild.id}`,
+                guild.owner === true ? 1 : 0,
+                canManageGuild ? 1 : 0,
+                verifiedAtUtc,
+              );
+            }
+          }
+        });
+        for (const guild of visibleGuilds) {
+          const enrolled = enrolledGuildIds.includes(guild.id);
+          const member = enrolled
+            ? await resolveDiscordCurrentGuildMembership({
+              accessToken: token.access_token,
+              guildId: guild.id,
+            })
+            : null;
+          if (enrolled && !member) continue;
+          withPlatformDatabase({ mode: "runtime" }, (database) => {
+            new PlatformDiscordMembershipRepository(database).upsertCurrent({
+              userId: signInResult.userId,
+              guildId: guild.id,
+              username: discordUser.username,
+              globalDisplayName: discordUser.global_name ?? null,
+              avatarHash: discordUser.avatar ?? null,
+              roleIds: member?.roles ?? [],
+              guildOwner: guild.owner === true,
+              joinedAtUtc: member?.joined_at ?? null,
+              verifiedAtUtc,
+            });
+            const community = database.prepare(`SELECT community_id
+FROM traderlink_communities WHERE discord_guild_id = ?`).get(guild.id) as
+              | { community_id: string }
+              | undefined;
+            if (community) {
+              new TraderLinkCommunityRepository(database).syncActiveMemberFromDiscord({
+                communityId: community.community_id,
+                userId: signInResult.userId,
+                timestamp: verifiedAtUtc,
+              });
+              new TraderLinkCommunityAdminRepository(database).attributeMember({
+                communityId: community.community_id,
+                userId: signInResult.userId,
+                atUtc: verifiedAtUtc,
+              });
+            }
+          });
+        }
+        }
+      } catch (error) {
+        console.warn(
+          "Discord community membership refresh failed",
+          getSafeDiscordAuthErrorMessage(error),
+        );
+      }
     } catch (error) {
       console.error(
         "Discord Platform session failed",
