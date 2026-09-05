@@ -112,6 +112,10 @@ function entrySentence(
 function activitySentence(
   activity: TradeStoryActivity,
   input: TradeStoryCopyInput,
+  context?: Readonly<{
+    previousActivity: TradeStoryActivity | null;
+    scaleOutNumberInSession: number;
+  }>,
 ): string {
   if (activity.kind === "carried") {
     if (activity.marketSession !== null) {
@@ -124,10 +128,32 @@ function activitySentence(
       activity.scaledOutQuantityDecimal,
       activity.positionBeforeQuantityDecimal,
     );
+    const quantity = input.formatters.formatQuantity(activity.scaledOutQuantityDecimal);
+    const remaining = input.formatters.formatQuantity(activity.remainingPositionQuantityDecimal);
+    const time = input.formatters.formatTime(activity.atUtc);
+    const session = activity.marketSession === null
+      ? ""
+      : ` in ${input.formatters.describeSession(activity.marketSession)}`;
+    if (context?.scaleOutNumberInSession === 2) {
+      return `You scaled out a second time${session}, selling ${quantity} shares (${percent} of the position) at ${time}, and held ${remaining} shares.`;
+    }
+    if (context && context.scaleOutNumberInSession >= 3) {
+      if (context.scaleOutNumberInSession === 3) {
+        const sessionLabel = activity.marketSession === null
+          ? ""
+          : ` ${input.formatters.describeSession(activity.marketSession)}`;
+        return `At ${time}, you made a third${sessionLabel} scale-out of ${quantity} shares (${percent} of the position), bringing the position down to ${remaining} shares.`;
+      }
+      return `At ${time}, you scaled out another ${quantity} shares (${percent} of the position)${session}, reducing the position to ${remaining} shares.`;
+    }
     return `${narrationPrefix(activity, input)} scaled out ${input.formatters.formatQuantity(activity.scaledOutQuantityDecimal)} shares (${percent} of the position) at ${input.formatters.formatTime(activity.atUtc)}, leaving ${input.formatters.formatQuantity(activity.remainingPositionQuantityDecimal)} shares.`;
   }
   if (activity.kind === "fully_exited") {
     const outcomeCopy = input.finalOutcomeCopy ? ` ${input.finalOutcomeCopy}` : "";
+    if (context?.previousActivity?.kind === "scaled_out" &&
+        context.previousActivity.marketSession === activity.marketSession) {
+      return `At ${input.formatters.formatTime(activity.atUtc)}, you sold the remaining ${input.formatters.formatQuantity(activity.exitedQuantityDecimal)} shares to fully exit the trade${outcomeCopy}.`;
+    }
     return `${narrationPrefix(activity, input)} fully exited the remaining ${input.formatters.formatQuantity(activity.exitedQuantityDecimal)} shares at ${input.formatters.formatTime(activity.atUtc)}${outcomeCopy}.`;
   }
   throw new Error("trade_story_entry_run_required");
@@ -162,22 +188,36 @@ export function composeTradeStoryCopy(input: TradeStoryCopyInput): TradeStoryCop
   }
   const chapters = input.activities.chapters.map((chapter) => {
     const sentences: string[] = [];
+    const scaleOutsBySession = new Map<TradeStoryMarketSession | null, number>();
+    let previousActivity: TradeStoryActivity | null = null;
     for (let index = 0; index < chapter.activities.length;) {
       const activity = chapter.activities[index]!;
       if (activity.kind === "carried") {
         if (activity.fromTradingDate !== null || carriesIntoSessionWithActivity(chapter.activities, index)) {
           sentences.push(activitySentence(activity, input));
         }
+        previousActivity = activity;
         index += 1;
         continue;
       }
       if (activity.kind === "opened" || activity.kind === "accumulated" || activity.kind === "added") {
         const run = entryRun(chapter.activities, index);
         sentences.push(entrySentence(run, input));
+        previousActivity = run.at(-1) ?? activity;
         index += run.length;
         continue;
       }
-      sentences.push(activitySentence(activity, input));
+      const scaleOutNumberInSession = activity.kind === "scaled_out"
+        ? (scaleOutsBySession.get(activity.marketSession) ?? 0) + 1
+        : 0;
+      if (activity.kind === "scaled_out") {
+        scaleOutsBySession.set(activity.marketSession, scaleOutNumberInSession);
+      }
+      sentences.push(activitySentence(activity, input, {
+        previousActivity,
+        scaleOutNumberInSession,
+      }));
+      previousActivity = activity;
       index += 1;
     }
     return Object.freeze({ sentences: Object.freeze(sentences), tradingDate: chapter.tradingDate });

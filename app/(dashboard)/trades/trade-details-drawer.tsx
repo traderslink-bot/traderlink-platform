@@ -281,9 +281,9 @@ export function TradeDetailsDrawer({
             </Box> : <Typography color="text.secondary" variant="body2">This position is still open. Completed-trade P/L and fees will appear after it is fully exited.</Typography>}
           </SurfaceSection>
 
-          <SurfaceSection outcomeTone={outcomeTone} title="Trade Story">
-            {details.status === "summary_only" ? <Typography color="text.secondary" variant="body2">This historical trade keeps its verified result summary, but its full Journal execution timeline is not retained. A Trade Story cannot be composed without those executions.</Typography> : details.storyCopy.status === "ready" ? <Stack spacing={1.25}>{details.storyCopy.chapters.map((chapter) => <Box key={chapter.tradingDate}><Typography color="text.secondary" sx={{ fontWeight: 850 }} variant="caption">{new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short", timeZone: details.timezone, year: "numeric" }).format(new Date(`${chapter.tradingDate}T12:00:00Z`))}</Typography><Stack spacing={0.75} sx={{ mt: 0.5 }}>{chapter.sentences.map((sentence) => <Typography key={sentence} variant="body2">{sentence}</Typography>)}</Stack></Box>)}</Stack> : <Typography color="text.secondary" variant="body2">This trade contains a position transition that needs its exact execution timeline instead of a summarized story.</Typography>}
-          </SurfaceSection>
+          {details.status === "ready" ? <SurfaceSection outcomeTone={outcomeTone} title="Trade Story">
+            {details.storyCopy.status === "ready" ? <Stack spacing={1.25}>{details.storyCopy.chapters.map((chapter) => <Box key={chapter.tradingDate}><Typography color="text.secondary" sx={{ fontWeight: 850 }} variant="caption">{new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short", timeZone: details.timezone, year: "numeric" }).format(new Date(`${chapter.tradingDate}T12:00:00Z`))}</Typography><Stack spacing={0.75} sx={{ mt: 0.5 }}>{chapter.sentences.map((sentence) => <Typography key={sentence} variant="body2">{sentence}</Typography>)}</Stack></Box>)}</Stack> : <Typography color="text.secondary" variant="body2">This trade contains a position transition that needs its exact execution timeline instead of a summarized story.</Typography>}
+          </SurfaceSection> : null}
 
           <SurfaceSection outcomeTone={outcomeTone} title="Journal">
             <Stack spacing={1.25}>
