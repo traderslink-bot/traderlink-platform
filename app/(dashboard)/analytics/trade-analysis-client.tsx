@@ -19,7 +19,6 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Decimal from "decimal.js";
@@ -40,10 +39,10 @@ import type {
   TradeAnalysisScalingOutRow,
   TradeAnalysisBreakdownRow,
   TradeAnalysisPatternRow,
-  TradeAnalysisTradeRow,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
 
 import { CandlePatternOccurrenceExplorer } from "./candle-pattern-occurrence-explorer";
+import { GreenToRedAnalysis } from "./green-to-red-analysis";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import { ProfitZoneAnalysis } from "./profit-zone-analysis";
 import {
@@ -123,40 +122,6 @@ function groupPatternRows(rows: readonly TradeAnalysisPatternRow[]): readonly Pa
     right.occurrenceCount - left.occurrenceCount || friendlyPattern(left.pattern).localeCompare(friendlyPattern(right.pattern)));
 }
 
-function greenToRedLabel(value: TradeAnalysisTradeRow["greenToRedStatus"]): string {
-  switch (value) {
-    case "never_green": return "Never green";
-    case "green_no_red": return "Green, stayed above breakeven";
-    case "green_to_red_ended_red": return "Green to red, ended red";
-    case "green_to_red_recovered": return "Green to red, recovered";
-    case "green_to_red_ended_flat": return "Green to red, ended flat";
-    case "unavailable": return "Unavailable";
-  }
-}
-
-function postExitThirtyMinuteMessage(row: TradeAnalysisTradeRow, currency: string | null): string {
-  const move = row.postExitThirtyMinuteMoveDecimal === null ? null : Number(row.postExitThirtyMinuteMoveDecimal);
-  if (move === null || !Number.isFinite(move) || row.finalExitPriceDecimal === null || row.postExitThirtyMinutePriceDecimal === null) {
-    return "The 30-minute post-exit observation is unavailable for this trade.";
-  }
-  const exitPrice = money(row.finalExitPriceDecimal, currency);
-  const observedPrice = money(row.postExitThirtyMinutePriceDecimal, currency);
-  const moveLabel = `${move > 0 ? "+" : ""}${money(row.postExitThirtyMinuteMoveDecimal, currency)}/share`;
-  if (move > 0) {
-    return row.direction === "long"
-      ? `Price rose to ${observedPrice} after you sold at ${exitPrice} (${moveLabel}).`
-      : `Price fell to ${observedPrice} after you covered at ${exitPrice} (${moveLabel}).`;
-  }
-  if (move === 0) {
-    return row.direction === "long"
-      ? `Price did not rise above your ${exitPrice} sell price in the first 30 minutes after exit.`
-      : `Price did not fall below your ${exitPrice} cover price in the first 30 minutes after exit.`;
-  }
-  return row.direction === "long"
-    ? `Price stayed below your ${exitPrice} sell price; its highest price was ${observedPrice} (${moveLabel}) in the first 30 minutes after exit.`
-    : `Price stayed above your ${exitPrice} cover price; its lowest price was ${observedPrice} (${moveLabel}) in the first 30 minutes after exit.`;
-}
-
 function BreakdownTable({
   rows,
   valueLabel,
@@ -224,118 +189,6 @@ function Section({
   );
 }
 
-type SortColumn = "symbol" | "closeDate" | "actual" | "return";
-
-function sortValue(row: TradeAnalysisTradeRow, column: SortColumn): string | number {
-  switch (column) {
-    case "symbol": return row.symbol;
-    case "closeDate": return row.closeDate;
-    case "actual": return Number(row.actualPnlDecimal);
-    case "return": return row.returnPercent ?? Number.NEGATIVE_INFINITY;
-  }
-}
-
-function TradeTable({ direction, model, offline = false }: { direction: "long" | "short"; model: DailyTradeLongTermAnalyticsV2Model; offline?: boolean }) {
-  const [ticker, setTicker] = useState("");
-  const [outcome, setOutcome] = useState<"all" | TradeAnalysisTradeRow["greenToRedStatus"]>("all");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const [sortColumn, setSortColumn] = useState<SortColumn>("closeDate");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const rows = useMemo(() => model.trades.filter((row) =>
-    row.direction === direction && row.symbol.toUpperCase().includes(ticker.trim().toUpperCase()) &&
-    (outcome === "all" || row.greenToRedStatus === outcome))
-    .sort((left, right) => {
-      const leftValue = sortValue(left, sortColumn);
-      const rightValue = sortValue(right, sortColumn);
-      const comparison = typeof leftValue === "string"
-        ? leftValue.localeCompare(rightValue as string)
-        : leftValue - (rightValue as number);
-      return sortDirection === "asc" ? comparison : -comparison;
-    }), [direction, model.trades, outcome, sortColumn, sortDirection, ticker]);
-  const currentPage = boundedPage(page, rows.length, pageSize);
-  const visibleRows = paginatedRows(rows, currentPage, pageSize);
-  const changeSort = (column: SortColumn) => {
-    if (column === sortColumn) setSortDirection((value) => value === "asc" ? "desc" : "asc");
-    else {
-      setSortColumn(column);
-      setSortDirection(column === "symbol" ? "asc" : "desc");
-    }
-    setPage(1);
-  };
-  const heading = (column: SortColumn, label: string) => (
-    <TableSortLabel active={sortColumn === column} direction={sortColumn === column ? sortDirection : "asc"} onClick={() => changeSort(column)}>{label}</TableSortLabel>
-  );
-  const trackerHref = (row: TradeAnalysisTradeRow) =>
-    offline
-      ? `/trade-tracker/${row.trackerDate}`
-      : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`;
-  return (
-    <Stack spacing={1.5}>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
-        <TextField label="Ticker" onChange={(event) => { setTicker(event.target.value); setPage(1); }} size="small" value={ticker} />
-        <TextField label="Green-to-red outcome" onChange={(event) => { setOutcome(event.target.value as typeof outcome); setPage(1); }} select size="small" sx={{ minWidth: { xs: 0, md: 230 }, width: { xs: "100%", md: "auto" } }} value={outcome}>
-          <MenuItem value="all">All outcomes</MenuItem>
-          <MenuItem value="never_green">Never green</MenuItem>
-          <MenuItem value="green_no_red">Green, stayed above breakeven</MenuItem>
-          <MenuItem value="green_to_red_ended_red">Green to red, ended red</MenuItem>
-          <MenuItem value="green_to_red_recovered">Green to red, recovered</MenuItem>
-          <MenuItem value="green_to_red_ended_flat">Green to red, ended flat</MenuItem>
-        </TextField>
-        <TextField
-          label="Sort"
-          onChange={(event) => {
-            const [column, direction] = event.target.value.split(":") as [SortColumn, "asc" | "desc"];
-            setSortColumn(column);
-            setSortDirection(direction);
-            setPage(1);
-          }}
-          select
-          size="small"
-          sx={{ display: { xs: "flex", md: "none" } }}
-          value={`${sortColumn}:${sortDirection}`}
-        >
-          <MenuItem value="closeDate:desc">Newest closed</MenuItem>
-          <MenuItem value="closeDate:asc">Oldest closed</MenuItem>
-          <MenuItem value="symbol:asc">Ticker A–Z</MenuItem>
-          <MenuItem value="symbol:desc">Ticker Z–A</MenuItem>
-          <MenuItem value="actual:desc">Highest result</MenuItem>
-          <MenuItem value="actual:asc">Lowest result</MenuItem>
-          <MenuItem value="return:desc">Highest return</MenuItem>
-          <MenuItem value="return:asc">Lowest return</MenuItem>
-        </TextField>
-      </Stack>
-      <TradeAnalyzerTablePagination
-        onPageChange={setPage}
-        onPageSizeChange={(nextSize) => { setPageSize(nextSize); setPage(1); }}
-        page={currentPage}
-        pageSize={pageSize}
-        rowCount={rows.length}
-      />
-      {rows.length === 0 ? <Typography color="text.secondary">No analyzed trades match these filters.</Typography> : (
-          <HorizontalScrollRegion label="Analyzed trades table" minTableWidth={1320} stickyFirstColumn>
-            <Table size="small">
-              <TableHead><TableRow>
-                <TableCell>{heading("symbol", "Ticker")}</TableCell><TableCell>Direction</TableCell><TableCell>{heading("closeDate", "Closed")}</TableCell>
-                <TableCell align="right">{heading("actual", `${model.moneyBasis === "gross" ? "Gross" : "Net"} P/L`)}</TableCell><TableCell align="right">{heading("return", "Return")}</TableCell>
-                <TableCell>Breakeven path</TableCell><TableCell>30-minute price after final exit</TableCell><TableCell align="right">Executions</TableCell><TableCell />
-              </TableRow></TableHead>
-              <TableBody>{visibleRows.map((row) => (
-                <TableRow hover key={row.roundTripId}>
-                  <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell>
-                  <TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 800 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell>
-                  <TableCell align="right" sx={{ color: financialOutcomeColor(row.returnPercent) }}>{percent(row.returnPercent)}</TableCell>
-                  <TableCell>{greenToRedLabel(row.greenToRedStatus)}</TableCell><TableCell sx={{ maxWidth: 360, minWidth: 280, whiteSpace: "normal" }}>{postExitThirtyMinuteMessage(row, model.currency)}</TableCell><TableCell align="right">{row.executionCount}</TableCell>
-                  <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={trackerHref(row)} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
-                </TableRow>
-              ))}</TableBody>
-            </Table>
-          </HorizontalScrollRegion>
-      )}
-    </Stack>
-  );
-}
-
 function MfeMaeTable({
   direction,
   model,
@@ -393,14 +246,6 @@ function PatternRanking({ groups }: { groups: readonly PatternGroup[] }) {
   );
 }
 
-function clockTime(seconds: number, timezone: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: timezone,
-  }).format(new Date(seconds * 1000));
-}
-
 function executionDateTime(value: string, timezone: string): string {
   return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
@@ -410,45 +255,6 @@ function executionDateTime(value: string, timezone: string): string {
     timeZone: timezone,
     year: "numeric",
   }).format(new Date(value));
-}
-
-function MeaningfulProfitTable({
-  currency,
-  moneyBasis,
-  offline,
-  rows,
-  timezone,
-}: {
-  currency: string | null;
-  moneyBasis: "gross" | "net";
-  offline: boolean;
-  rows: readonly TradeAnalysisMeaningfulProfitRow[];
-  timezone: string;
-}) {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const basisLabel = moneyBasis === "gross" ? "Gross" : "Net";
-  const currentPage = boundedPage(page, rows.length, pageSize);
-  const visibleRows = paginatedRows(rows, currentPage, pageSize);
-  if (rows.length === 0) return <Typography color="text.secondary">No trades in this selection held one of the sustained profit levels.</Typography>;
-  return <Stack spacing={1.25}>
-    <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
-    <HorizontalScrollRegion label="Meaningful profit trades" minTableWidth={1180} stickyFirstColumn>
-      <Table size="small"><TableHead><TableRow>
-        <TableCell>Ticker</TableCell><TableCell>Profit level held</TableCell><TableCell>Qualifying candle close</TableCell><TableCell align="right">Calculated {basisLabel} profit opportunity</TableCell><TableCell align="right">Final {basisLabel} trade P/L</TableCell><TableCell align="right">Additional {basisLabel} profit opportunity</TableCell><TableCell>Profit taking</TableCell><TableCell>Outcome</TableCell><TableCell />
-      </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={row.roundTripId}>
-        <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell>
-        <TableCell>{row.thresholdPercent}% · {row.requiredCloseCount} consecutive closes</TableCell>
-        <TableCell>{money(row.profitLevelPriceDecimal, currency)} at {clockTime(row.qualifiedAtUtcSeconds, timezone)}</TableCell>
-        <TableCell align="right" sx={{ color: financialOutcomeColor(row.calculatedPotentialPnlDecimal), fontWeight: 750 }}>{money(row.calculatedPotentialPnlDecimal, currency)}</TableCell>
-        <TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 750 }}>{money(row.actualPnlDecimal, currency)}</TableCell>
-        <TableCell align="right" sx={{ color: potentialDifferenceColor(row.differenceDecimal), fontWeight: 750 }}>{money(row.differenceDecimal, currency)}</TableCell>
-        <TableCell>{row.scaledOutWhileGreen ? "Scaled out after profit level" : "No profitable scale-out after level"}</TableCell>
-        <TableCell>{row.outcome === "ended_green" ? "Ended green" : row.outcome === "ended_red" ? "Ended red" : "Ended flat"}</TableCell>
-        <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${row.trackerDate}` : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">Full analysis</Button></TableCell>
-      </TableRow>)}</TableBody></Table>
-    </HorizontalScrollRegion>
-  </Stack>;
 }
 
 function ScalingOutTable({
@@ -623,7 +429,7 @@ function ExecutionContextTable({
 }
 
 const CAPABILITIES = Object.freeze([
-  Object.freeze({ href: "/analytics/trade-analyzer/day/green-to-red", title: "Giving Back Profit", description: "Compare calculated potential results at sustained profit levels with the actual completed results." }),
+  Object.freeze({ href: "/analytics/trade-analyzer/day/green-to-red", title: "Green to Red", description: "See trades that reached +20% or more and what happened before they finished." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/scaling-out", title: "Scaling Out", description: "See profit-taking after a sustained profit level—and qualifying trades with no profitable scale-out before a red finish." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/entry-exit", title: "Entries & Exits", description: "Review entries, adds and exits against Session VWAP, EMA 9 and later saved prices." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/mfe-mae", title: "Room After Entry", description: "See explicit price rises and drops after each entry or add, per share and by percentage." }),
@@ -693,6 +499,8 @@ export function TradeAnalysisClient({
     row.direction === activeDirection), [activeDirection, model.scalingOut.rows]);
   const profitZoneRows = model.profitZones?.rowsByDirection[activeDirection] ?? [];
   const profitZoneRecords = model.profitZones?.recordsByDirection[activeDirection] ?? [];
+  const greenToRedOpportunityRows = useMemo(() => model.greenToRedOpportunity.rows.filter((row) =>
+    row.direction === activeDirection), [activeDirection, model.greenToRedOpportunity.rows]);
   const directionExcursions = useMemo(() => model.excursions.filter((row) =>
     row.direction === activeDirection), [activeDirection, model.excursions]);
   const directionMovement = useMemo(() => {
@@ -737,11 +545,6 @@ export function TradeAnalysisClient({
   }), [scalingRows]);
   const noScaleEndedRedRows = useMemo(() => scalingRows.filter((row) =>
     !row.scaledOutWhileGreen && new Decimal(row.actualPnlDecimal).isNegative()), [scalingRows]);
-  const rawGreenToRedRows = model.greenToRedByDirection[activeDirection];
-  const rawGreenToRedDamage = model.greenToRedDamageByDirection[activeDirection];
-  const rawGreenToRedTradeCount = model.trades.filter((row) => row.direction === activeDirection && [
-    "green_to_red_ended_red", "green_to_red_recovered", "green_to_red_ended_flat",
-  ].includes(row.greenToRedStatus)).length;
   const directionEventCounts = useMemo(() => {
     const events = new Map<string, TradeAnalysisEventPathRow>();
     for (const row of model.eventPaths) {
@@ -793,7 +596,6 @@ export function TradeAnalysisClient({
   const adverseMoneyLabel = activeDirection === "long" ? "price drop after long entry" : "price rise after short entry";
   const entryContext = model.entryContextByDirection[activeDirection];
   const exitContext = model.exitExecutionContextByDirection[activeDirection];
-  const thresholdCounts = model.meaningfulProfit.thresholdCountsByDirection[activeDirection];
   return (
     <Stack spacing={2.5}>
       {view !== "day" ? <DirectionControl activeDirection={activeDirection} counts={model.directionTradeCounts} onChange={(direction) => {
@@ -849,47 +651,18 @@ export function TradeAnalysisClient({
         </Stack>
       ) : null}
 
-      {view === "green-to-red" ? <Section defaultExpanded description="Final trade P/L compared with the calculated profit opportunity at the first candle close that completed the strongest sustained profit level reached by each trade." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Meaningful profit reached">
-        <Stack spacing={2.25}>
-          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
-            <DashboardMetricCard caption={`Completed ${directionLabel} trades with a qualifying sustained profit level${model.moneyBasis === "net" ? " and complete saved fee facts" : ""}`} label="Qualifying trades" value={String(meaningfulProfitRows.length)} />
-            <DashboardMetricCard caption={`Calculated ${moneyBasisLabel} P/L if the open shares were sold at each qualifying candle close`} label={`Calculated ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.potential, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.potential)} />
-            <DashboardMetricCard caption={`Final ${moneyBasisLabel} P/L for those same completed trades`} label={`Final ${moneyBasisLabel} trade P/L`} value={money(meaningfulSummary.actual, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.actual)} />
-            <DashboardMetricCard caption={`Calculated ${moneyBasisLabel} profit opportunity minus final ${moneyBasisLabel} trade P/L`} label={`Additional ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.difference, model.currency)} valueColor={potentialDifferenceColor(meaningfulSummary.difference)} />
-            <DashboardMetricCard caption="Qualifying trades whose completed result stayed above zero" label="Ended green" value={String(meaningfulSummary.endedGreen)} />
-            <DashboardMetricCard caption="Qualifying trades whose completed result finished below zero" label="Ended red" value={String(meaningfulSummary.endedRed)} />
-          </Box>
-          <Paper sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? theme.palette.action.hover : "rgba(1, 30, 86, 0.035)", p: 1.5 }} variant="outlined">
-            <Typography sx={{ fontWeight: 800 }}>Profit levels use completed 1-minute candles</Typography>
-            <Typography color="text.secondary" variant="body2">50% held for 3 consecutive closes · 30% for 5 · 20% for 10 · 15% for 15. A missing minute breaks the sequence.</Typography>
-            {model.moneyBasis === "net" ? <Typography color="text.secondary" variant="body2">Net scenarios appear only when every saved execution in the trade has a fee fact. The calculated potential and actual result use the same complete saved trade-fee total; Gross is not substituted when fees are incomplete.</Typography> : null}
-            <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(4, minmax(0, 1fr))" }, mt: 1.5 }}>
-              {thresholdCounts.map((threshold) => <Box key={threshold.thresholdPercent}>
-                <Typography sx={{ fontWeight: 850 }}>{threshold.thresholdPercent}%+ / {threshold.requiredCloseCount} closes</Typography>
-                <Typography color="text.secondary" variant="caption">{threshold.qualifiedTradeCount} trade{threshold.qualifiedTradeCount === 1 ? "" : "s"} · {percent(model.directionTradeCounts[activeDirection] === 0 ? null : threshold.qualifiedTradeCount / model.directionTradeCounts[activeDirection] * 100)}</Typography>
-              </Box>)}
-            </Box>
-          </Paper>
-          <MeaningfulProfitTable currency={model.currency} moneyBasis={model.moneyBasis} offline={offline} rows={meaningfulProfitRows} timezone={model.timezone} />
-        </Stack>
+      {view === "green-to-red" ? <Section defaultExpanded description="What happened after completed trades reached a gain of 20% or more while shares were open." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Green-to-red trades">
+        <GreenToRedAnalysis
+          currency={model.currency}
+          direction={activeDirection}
+          offline={offline}
+          rows={greenToRedOpportunityRows}
+          timezone={model.timezone}
+          totalTradeCount={model.directionTradeCounts[activeDirection]}
+        />
       </Section> : null}
 
-      {view === "green-to-red" ? <Section description="A separate supporting view of every saved breakeven crossing. Crossing above zero is not the same as reaching a meaningful-profit level." helpHref="/help/trade-analyzer/green-to-red-analysis#green-to-red-outcomes" title="Raw breakeven crossings">
-        <Stack spacing={2.25}>
-          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
-            <DashboardMetricCard caption={`Moved above breakeven and later fell below it among completed ${directionLabel} trades`} label="Green-to-red trades" value={`${rawGreenToRedTradeCount} of ${model.directionTradeCounts[activeDirection]}`} />
-            <DashboardMetricCard caption="Average time from first green to first red" label="Time before turning red" value={rawGreenToRedDamage.averageGreenToRedMinutes === null ? "Unavailable" : `${rawGreenToRedDamage.averageGreenToRedMinutes.toFixed(1)} min`} />
-            <DashboardMetricCard caption="Turned positive again after first going red" label="Recovery rate" value={percent(rawGreenToRedDamage.recoveryRatePercent)} />
-          </Box>
-          <BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={rawGreenToRedRows} showOccurrences={false} />
-        </Stack>
-      </Section> : null}
-
-      {view === "green-to-red" ? <Section description="The exact completed trades behind both views." helpHref="/help/trade-analyzer/green-to-red-analysis#supporting-trades" title="Supporting trades">
-        <TradeTable direction={activeDirection} model={model} offline={offline} />
-      </Section> : null}
-
-      {view === "scaling-out" ? <Section defaultExpanded description="How often trades reached each profit level, where shares were actually sold for profit, what advanced to the next level and what ended red without profit taken in that zone." helpHref="/help/trade-analyzer/scaling-out#behavior" title="Profit taking by price level">
+      {view === "scaling-out" ? <Section defaultExpanded description="Profit taking and opportunity across 10% gain zones." helpHref="/help/trade-analyzer/scaling-out#behavior" title="Profit taking by price level">
         <ProfitZoneAnalysis
           currency={model.currency}
           direction={activeDirection}

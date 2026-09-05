@@ -38,6 +38,8 @@ type PostExitPathRow = Readonly<{
 type CandleRow = Readonly<{
   candle_time_utc_seconds: number;
   close_decimal: string;
+  high_decimal: string;
+  low_decimal: string;
 }>;
 
 type EventPathFact = Readonly<{
@@ -249,6 +251,29 @@ export type TradeAnalysisProfitZoneSummaryRow = Readonly<{
   upperBoundPercent: number | null;
 }>;
 
+export type TradeAnalysisGreenToRedOpportunityRow = Readonly<{
+  closeDate: string;
+  direction: "long" | "short";
+  finalGrossPnlDecimal: string;
+  firstReachedTwentyAtUtcSeconds: number;
+  firstRedAfterTwentyAtUtcSeconds: number | null;
+  maximumGainAtUtcSeconds: number;
+  maximumGainPercent: number;
+  maximumGainPriceDecimal: string;
+  maximumGrossProfitOpportunityDecimal: string;
+  peakZoneLowerBoundPercent: number;
+  peakZoneUpperBoundPercent: number | null;
+  profitOpportunityToFinalDifferenceDecimal: string;
+  profitSecuredGrossDecimal: string;
+  profitTakingExitCount: number;
+  recoveredAfterTurningRed: boolean;
+  roundTripId: string;
+  symbol: string;
+  timeInPeakZoneMinutes: number;
+  totalHoldingMinutes: number;
+  trackerDate: string;
+}>;
+
 export type TradeAnalysisEventPathRow = Readonly<{
   adverseMoveDecimal: string | null;
   closeDate: string;
@@ -340,6 +365,9 @@ export type DailyTradeLongTermAnalyticsModel = Readonly<{
   greenToRedByDirection?: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
   greenToRedDamage: TradeAnalysisGreenToRedDamage;
   greenToRedDamageByDirection?: Readonly<Record<"long" | "short", TradeAnalysisGreenToRedDamage>>;
+  greenToRedOpportunity?: Readonly<{
+    rows: readonly TradeAnalysisGreenToRedOpportunityRow[];
+  }>;
   greenToRedTradeCount: number;
   holding: readonly TradeAnalysisBreakdownRow[];
   holdingDuration: readonly TradeAnalysisBreakdownRow[];
@@ -428,7 +456,7 @@ export type DailyTradeLongTermAnalyticsV2Model = Omit<
   DailyTradeLongTermAnalyticsModel,
   "directionTradeCounts" | "entryContext" | "entryContextByDirection" | "eventPaths" | "executionContextRows" |
   "exitContextByDirection" | "exitExecutionContextByDirection" | "greenToRedByDirection" |
-  "greenToRedDamageByDirection" | "meaningfulProfit" | "profitZones" | "scalingOut"
+  "greenToRedDamageByDirection" | "greenToRedOpportunity" | "meaningfulProfit" | "profitZones" | "scalingOut"
 > & Readonly<{
   directionTradeCounts: Readonly<{ long: number; short: number }>;
   entryContext: TradeAnalysisExecutionContext;
@@ -439,6 +467,7 @@ export type DailyTradeLongTermAnalyticsV2Model = Omit<
   exitExecutionContextByDirection: Readonly<Record<"long" | "short", TradeAnalysisExecutionContext>>;
   greenToRedByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
   greenToRedDamageByDirection: Readonly<Record<"long" | "short", TradeAnalysisGreenToRedDamage>>;
+  greenToRedOpportunity: NonNullable<DailyTradeLongTermAnalyticsModel["greenToRedOpportunity"]>;
   meaningfulProfit: NonNullable<DailyTradeLongTermAnalyticsModel["meaningfulProfit"]>;
   profitZones: NonNullable<DailyTradeLongTermAnalyticsModel["profitZones"]>;
   scalingOut: NonNullable<DailyTradeLongTermAnalyticsModel["scalingOut"]>;
@@ -618,7 +647,9 @@ WHERE daily_trade_analysis_version_id = ?
 ORDER BY minutes_after_exit`);
   const candles = database.prepare<[string], CandleRow>(`SELECT
   candle_time_utc_seconds,
-  close_decimal
+  close_decimal,
+  high_decimal,
+  low_decimal
 FROM level_analysis_market_session_candles
 WHERE market_session_set_version_id = ?
 ORDER BY candle_time_utc_seconds`);
@@ -634,6 +665,8 @@ ORDER BY candle_time_utc_seconds`);
     const scenario = analyzeDailyTradeV2Scenario({
       candles: savedCandles.map((candle) => Object.freeze({
         closeDecimal: candle.close_decimal,
+        highDecimal: candle.high_decimal,
+        lowDecimal: candle.low_decimal,
         time: candle.candle_time_utc_seconds,
       })),
       direction: analysis.direction,
@@ -810,6 +843,18 @@ function scaleAnalyzerFact(fact: AnalyzerFact, multiplier: string): AnalyzerFact
       ...fact.scenario,
       calculatedFinalGrossResultDecimal: scaledDecimal(fact.scenario.calculatedFinalGrossResultDecimal, multiplier)!,
       calculatedFinalNetResultDecimal: scaledDecimal(fact.scenario.calculatedFinalNetResultDecimal, multiplier),
+      greenOpportunity: fact.scenario.greenOpportunity ? Object.freeze({
+        ...fact.scenario.greenOpportunity,
+        maximumGainPriceDecimal: scaledDecimal(fact.scenario.greenOpportunity.maximumGainPriceDecimal, multiplier)!,
+        maximumGrossProfitOpportunityDecimal: scaledDecimal(
+          fact.scenario.greenOpportunity.maximumGrossProfitOpportunityDecimal,
+          multiplier,
+        )!,
+        profitSecuredGrossDecimal: scaledDecimal(
+          fact.scenario.greenOpportunity.profitSecuredGrossDecimal,
+          multiplier,
+        )!,
+      }) : null,
       primaryQualification: fact.scenario.primaryQualification ? Object.freeze({
         ...fact.scenario.primaryQualification,
         calculatedGrossResultDecimal: scaledDecimal(fact.scenario.primaryQualification.calculatedGrossResultDecimal, multiplier)!,
@@ -1370,6 +1415,37 @@ export function buildDailyTradeLongTermAnalytics(
       trackerDate: row.journal.entryLocalDate,
     })];
   }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
+  const greenToRedOpportunityRows = Object.freeze(joined.flatMap((row): TradeAnalysisGreenToRedOpportunityRow[] => {
+    const opportunity = row.analyzer.scenario?.greenOpportunity;
+    const calculatedFinalGross = row.analyzer.scenario?.calculatedFinalGrossResultDecimal;
+    if (!opportunity || new Decimal(opportunity.maximumGrossProfitOpportunityDecimal).lte(0) ||
+        calculatedFinalGross === undefined ||
+        new Decimal(calculatedFinalGross).minus(row.journal.grossPnlDecimal).abs().gt("0.02")) return [];
+    return [Object.freeze({
+      closeDate: row.journal.closeLocalDate,
+      direction: row.journal.direction,
+      finalGrossPnlDecimal: row.journal.grossPnlDecimal,
+      firstReachedTwentyAtUtcSeconds: opportunity.firstReachedTwentyAtUtcSeconds,
+      firstRedAfterTwentyAtUtcSeconds: opportunity.firstRedAfterTwentyAtUtcSeconds,
+      maximumGainAtUtcSeconds: opportunity.maximumGainAtUtcSeconds,
+      maximumGainPercent: opportunity.maximumGainPercent,
+      maximumGainPriceDecimal: opportunity.maximumGainPriceDecimal,
+      maximumGrossProfitOpportunityDecimal: opportunity.maximumGrossProfitOpportunityDecimal,
+      peakZoneLowerBoundPercent: opportunity.peakZoneLowerBoundPercent,
+      peakZoneUpperBoundPercent: opportunity.peakZoneUpperBoundPercent,
+      profitOpportunityToFinalDifferenceDecimal: new Decimal(opportunity.maximumGrossProfitOpportunityDecimal)
+        .minus(row.journal.grossPnlDecimal)
+        .toString(),
+      profitSecuredGrossDecimal: opportunity.profitSecuredGrossDecimal,
+      profitTakingExitCount: opportunity.profitTakingExitCount,
+      recoveredAfterTurningRed: opportunity.recoveredAfterTurningRed,
+      roundTripId: row.journal.roundTripId,
+      symbol: row.journal.displayedSymbol,
+      timeInPeakZoneMinutes: opportunity.timeInPeakZoneMinutes,
+      totalHoldingMinutes: row.journal.holdingDurationMilliseconds / 60_000,
+      trackerDate: row.journal.entryLocalDate,
+    })];
+  }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
   const scalingRows = Object.freeze(joined.flatMap((row): TradeAnalysisScalingOutRow[] => {
     const qualification = row.analyzer.scenario?.primaryQualification;
     const scaleOut = row.analyzer.scenario?.scaleOut;
@@ -1557,6 +1633,9 @@ export function buildDailyTradeLongTermAnalytics(
     greenToRedDamageByDirection: Object.freeze({
       long: greenToRedDamageFor(joined.filter((row) => row.journal.direction === "long")),
       short: greenToRedDamageFor(joined.filter((row) => row.journal.direction === "short")),
+    }),
+    greenToRedOpportunity: Object.freeze({
+      rows: greenToRedOpportunityRows,
     }),
     greenToRedTradeCount: greenToRedTrades.length,
     holding: holdingRows(joined),

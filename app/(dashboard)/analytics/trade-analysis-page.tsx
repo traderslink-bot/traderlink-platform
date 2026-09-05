@@ -44,7 +44,7 @@ const VIEW_DETAILS: Readonly<Record<TradeAnalysisView, Readonly<{
   day: Object.freeze({ helpHref: "/help/trade-analyzer/day-trade-analysis", title: "Day Trade Analysis" }),
   "entry-exit": Object.freeze({ helpHref: "/help/trade-analyzer/entry-exit-analysis", title: "Entries and exits" }),
   "mfe-mae": Object.freeze({ helpHref: "/help/trade-analyzer/mfe-mae", title: "Room after entry" }),
-  "green-to-red": Object.freeze({ helpHref: "/help/trade-analyzer/green-to-red-analysis", title: "Giving back profit" }),
+  "green-to-red": Object.freeze({ helpHref: "/help/trade-analyzer/green-to-red-analysis", title: "Green to red" }),
   "scaling-out": Object.freeze({ helpHref: "/help/trade-analyzer/day-trade-analysis", title: "Scaling out" }),
   "candle-patterns": Object.freeze({ helpHref: "/help/trade-analyzer/candle-patterns", title: "Candle patterns" }),
   trades: Object.freeze({ helpHref: "/help/trade-analyzer/analyzed-trades", title: "Your analyzed trades" }),

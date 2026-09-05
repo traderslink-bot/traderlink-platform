@@ -183,6 +183,13 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
       ...row,
       roundTripId: localRef(row.roundTripId),
     }))),
+    greenToRedOpportunity: Object.freeze({
+      ...input.model.greenToRedOpportunity,
+      rows: Object.freeze(input.model.greenToRedOpportunity.rows.map((row) => Object.freeze({
+        ...row,
+        roundTripId: localRef(row.roundTripId),
+      }))),
+    }),
     meaningfulProfit: Object.freeze({
       ...input.model.meaningfulProfit,
       rows: Object.freeze(input.model.meaningfulProfit.rows.map((row) => Object.freeze({

@@ -2,10 +2,10 @@
 
 **Plan:** [Day Trade Analyzer Version 2 Plan](day-trade-analyzer-v2-plan.md)
 
-**Status:** Implementation and focused low-resource source QA are complete and
-ready for the Visual release coordinator handoff. No push, deployment,
-migration, hosted data write or configuration change is authorized to this
-worker.
+**Status:** Owner-directed Green-to-Red and compact zone-ladder refinement is
+implemented locally and has passed focused low-resource source QA. No push,
+deployment, migration, hosted data write or configuration change is authorized
+to this worker.
 
 ## Git and ownership checkpoint — 2026-09-05
 
@@ -82,7 +82,66 @@ worker.
 - [x] Added the existing Scaling Out help target without changing help content.
 - [x] The focused five-file TypeScript compilation now passes.
 - [x] Focused ESLint and `git diff --check` pass after the repair.
-- [x] A clean squashed repair candidate directly parented to restored
-  production `71193458da04603cb6d0d3a8134a6ce3a4c0aa95` remains to be created
-  and handed to the Visual release coordinator. No push or deployment is
-  authorized to this worker.
+- [x] Clean repair commit `54bd4f5eb96555307f2dd19ccf35806907d9b209`
+  was created directly on restored production
+  `71193458da04603cb6d0d3a8134a6ce3a4c0aa95`, released by the Visual release
+  coordinator and verified healthy in production and staging.
+
+## Production chart wording correction — 2026-09-05
+
+- [x] Owner identified that the progression annotation `4 reached +30% · 3
+  did not` failed to name the seven-trade +20% starting group.
+- [x] Each chart row now states the complete relationship directly: how many
+  trades reached the current threshold, and, of those exact trades, how many
+  reached or did not reach the next threshold.
+- [x] The percentage at the right remains the current threshold's cumulative
+  reach rate; it is no longer visually paired with an unexplained trade count.
+- [x] Owner then refined the level presentation to make percentages and money
+  the primary decision facts rather than shares or unexplained counts.
+- [x] The selected level now states the percentage of all trades reaching the
+  threshold and their combined calculated Gross profit available.
+- [x] It separately states the percentage of level-reaching trades with a
+  recorded partial or final exit in the exclusive zone and their exact Gross
+  profit taken; the copy explicitly says the trade may have continued.
+- [x] It states both denominators for failure to progress: percentage of all
+  selected trades and percentage of trades reaching the current threshold,
+  together with calculated Gross opportunity on the trades that did not reach
+  the next level.
+- [x] Visible shares-sold columns were removed. Exact profit taken, opportunity,
+  red finishes, losses and time facts remain visible.
+- [x] A zero profit-taking rate is presented directly as `You took no profit in
+  this zone`, not softened or implied to be a positive behavior.
+
+## Green-to-Red and compact zone-ladder refinement — 2026-09-05
+
+- [x] Green-to-Red now uses a single inclusion boundary: price reached +20% or
+  more while shares were open. The sustained-close rules no longer exclude a
+  short-lived +20% move from this page.
+- [x] The page leads with the percentage and count reaching +20%, combined
+  maximum Gross profit opportunity, exact Gross profit taken, percentage later
+  turning red, and percentage plus combined loss finishing red.
+- [x] Finished-red trades are split into no-profit-taken and
+  some-profit-taken groups. Recovery after first turning red remains a separate
+  fact.
+- [x] Exact finished-red records show maximum gain, maximum Gross opportunity,
+  peak ten-point zone, total time in that zone, Gross profit taken, final Gross
+  P/L and the opportunity-to-final difference.
+- [x] The oversized progression bars and wide duplicate matrix were replaced
+  by a compact vertical zone ladder. The 20–30% zone is at the bottom and the
+  100%+ zone is at the top.
+- [x] Each zone uses a subtle transparent color progression and contains its
+  reach rate, profit-taking rate and dollars, stopped-here rate and opportunity,
+  and median time in zone.
+- [x] Long definitions moved into tooltips and the new numbers use compact type
+  rather than oversized metric-card typography.
+- [x] The page title, route card and left navigation now use the direct name
+  `Green to red` so the analysis is easy to find.
+- [x] The exact zone table was reduced to the facts needed to audit the selected
+  zone; all exact-trade links remain.
+- [x] Offline saved views replace the new exact round-trip identifiers with
+  local offline references.
+- [x] Focused ESLint and a nine-file TypeScript project pass.
+- [x] Small runtime probes cover both a long and short trade reaching +20%,
+  taking partial profit and ultimately finishing red.
+- [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
+  authorized online review after release.

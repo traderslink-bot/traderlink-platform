@@ -108,6 +108,13 @@ A trade may satisfy more than one matrix row. Headline trade counts are unique;
 the supporting table can show all thresholds reached. The primary scenario is
 the highest threshold satisfied; ties use the earliest qualifying close.
 
+The sustained-close matrix remains available for the separate scaling and
+profit-protection scenarios. It does **not** determine the Green-to-Red
+population. Green-to-Red includes a completed trade when price reached at least
+20% in the trade's direction while shares were open; there is no minimum time
+requirement. Time in the peak ten-point gain zone is a displayed fact, not an
+eligibility gate.
+
 Gross scenarios contain no fees. Net scenarios appear only when fee facts are
 complete and use the same fee basis as the actual Journal result. Gross is never
 silently substituted for Net.
@@ -120,11 +127,17 @@ Show selected-period analyzed trades, candle coverage, actual P/L, qualifying
 scenario count and direct links to the focused questions. Avoid a generic
 takeaway that chooses a winner for the trader.
 
-### Giving Back Profit
+### Green to Red
 
-Lead with qualifying trades, calculated potential result, actual completed
-result and difference. Separate raw Green-to-Red crossings from the meaningful
-matrix-qualified population. Show the exact no-scale ended-red total and rows.
+Lead with the percentage and count of completed trades that reached +20%, their
+combined maximum Gross profit opportunity, exact Gross profit taken, the count
+that later turned red, and the count and combined Gross loss that finished red.
+Keep the denominators explicit. Split finished-red trades into no-profit-taken
+and some-profit-taken groups, and show recoveries separately. For each
+finished-red trade show its maximum gain, maximum Gross opportunity, peak
+ten-point zone, total time in that zone, exact Gross profit taken and final
+Gross P/L. Do not use the sustained-close matrix as a gate and do not promote
+raw one-cent breakeven crossings as the primary analysis.
 
 ### Scaling Out
 
@@ -138,11 +151,11 @@ Lead this page with a collective `Profit taking by price level` view for every
 analyzed trade in the selected closing-date range. It has two coordinated
 parts:
 
-1. A progression chart uses cumulative direction-adjusted thresholds: at least
+1. A compact vertical zone ladder uses cumulative direction-adjusted thresholds: at least
    20%, 30%, 40%, 50%, 60%, 70%, 80%, 90% and 100%. A trade that moves from
    below 30% to at least 40% on one completed close counts as reaching both
    thresholds; it is never added as a second or "skipped-zone" trade.
-2. An exact matrix assigns every profitable exit fill to one exclusive band:
+2. Exact zone facts assign every profitable exit fill to one exclusive band:
    20% to under 30%, 30% to under 40%, through 90% to under 100%, then 100% or
    more. The fill's direction-adjusted return uses the weighted average entry
    immediately before that fill. Its gross realized profit, quantity and trade
@@ -152,13 +165,13 @@ For each threshold/band pair show:
 
 - unique trades reaching at least the lower threshold and its percentage of
   the selected direction's analyzed trades;
-- trades and percentage taking profit inside the exclusive band, shares sold
-  there and exact gross profit taken there;
+- trades and percentage taking profit inside the exclusive band and exact gross
+  profit taken there;
 - trades reaching the next threshold while shares remained open;
 - trades that did not reach the next threshold before the final exit, with a
   separate count for a completed close falling below the current threshold;
-- median first-reach time from entry, median longest consecutive time at or
-  above the threshold and median completed-trade holding time;
+- median first-reach time from entry and median total time inside the exact
+  ten-point zone;
 - calculated gross profit available on the shares held when the threshold was
   first reached, partitioned exactly between trades that did and did not reach
   the next threshold;
@@ -171,7 +184,7 @@ entry multiplied by the threshold return and the shares still open at the
 first completed close or exit execution proving the threshold was reached. It
 is not an execution or guaranteed fill. `Profit taken in zone` and `Realized
 gross losses` come only from recorded executions and completed Journal trades.
-The chart and matrix never add overlapping level opportunities into a false
+The ladder and its exact records never add overlapping level opportunities into a false
 grand total. All profit-zone money stays Gross even when the page's general
 Gross/Net selector is Net.
 

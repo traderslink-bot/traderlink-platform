@@ -159,7 +159,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/green-to-red",
-          label: "Giving back profit",
+          label: "Green to red",
           icon: "greenToRed" as const,
           depth: 2 as const,
         }),
@@ -275,7 +275,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/trade-analyzer/day": "Day Trade Analysis",
     "/analytics/trade-analyzer/day/entry-exit": "Entries and exits",
     "/analytics/trade-analyzer/day/mfe-mae": "Room after entry",
-    "/analytics/trade-analyzer/day/green-to-red": "Giving back profit",
+    "/analytics/trade-analyzer/day/green-to-red": "Green to red",
     "/analytics/trade-analyzer/day/scaling-out": "Scaling out",
     "/analytics/trade-analyzer/day/candle-patterns": "Candle patterns",
     "/analytics/trade-analyzer/day/trades": "Your analyzed trades",
@@ -316,7 +316,7 @@ export type DashboardHelpTarget = Readonly<{
 const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: string }>[] =
   Object.freeze([
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle patterns" }),
-    Object.freeze({ route: "/analytics/trade-analyzer/day/green-to-red", href: "/help/trade-analyzer/green-to-red-analysis", label: "Giving back profit" }),
+    Object.freeze({ route: "/analytics/trade-analyzer/day/green-to-red", href: "/help/trade-analyzer/green-to-red-analysis", label: "Green to red" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/scaling-out", href: "/help/trade-analyzer/day-trade-analysis", label: "Scaling out" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/entry-exit", href: "/help/trade-analyzer/entry-exit-analysis", label: "Entries and exits" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/mfe-mae", href: "/help/trade-analyzer/mfe-mae", label: "Room after entry" }),
