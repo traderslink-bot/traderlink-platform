@@ -2,6 +2,8 @@
 
 **Plan:** [Day Trade Analyzer Version 2 Plan](day-trade-analyzer-v2-plan.md)
 
+**Active follow-up:** [Profit Zones Progress](day-trade-analyzer-profit-zones-progress.md)
+
 **Audit:** [Day Trade Analyzer Version 2 Data Audit](day-trade-analyzer-v2-data-audit.md)
 
 **Status:** The page, calculation, navigation and offline implementation is
@@ -128,6 +130,16 @@ owner accepts the pages. No release is in progress.
 The source and calculation QA boundary passes. Integrated desktop/mobile
 Light/Dark rendering remains deliberately deferred to the separately authorized
 online release review and is not claimed by this checkpoint.
+
+## Profit-zone collective analysis follow-up — 2026-09-05
+
+- [x] Owner approved the collective progression-chart and profit-zone matrix
+  direction.
+- [x] Visual release coordinator assigned a clean branch at current production.
+- [x] Exact cumulative-threshold, exclusive-fill-band, Gross-money and
+  supporting-record contracts are recorded in the plan.
+- [x] Implementation and focused source QA are complete and tracked in the
+  linked Profit Zones progress record; online rendered review remains pending.
 
 ## Owner wording follow-up — 2026-09-04
 

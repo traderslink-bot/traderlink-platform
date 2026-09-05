@@ -190,6 +190,19 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
         roundTripId: localRef(row.roundTripId),
       }))),
     }),
+    profitZones: Object.freeze({
+      ...input.model.profitZones,
+      recordsByDirection: Object.freeze({
+        long: Object.freeze(input.model.profitZones.recordsByDirection.long.map((row) => Object.freeze({
+          ...row,
+          roundTripId: localRef(row.roundTripId),
+        }))),
+        short: Object.freeze(input.model.profitZones.recordsByDirection.short.map((row) => Object.freeze({
+          ...row,
+          roundTripId: localRef(row.roundTripId),
+        }))),
+      }),
+    }),
     scalingOut: Object.freeze({
       ...input.model.scalingOut,
       rows: Object.freeze(input.model.scalingOut.rows.map((row) => Object.freeze({

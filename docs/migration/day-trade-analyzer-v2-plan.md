@@ -7,6 +7,8 @@ completed work is placed online through a separately authorized release.
 
 **Progress:** [Day Trade Analyzer Version 2 Progress](day-trade-analyzer-v2-progress.md)
 
+**Active follow-up:** [Profit Zones Progress](day-trade-analyzer-profit-zones-progress.md)
+
 **Data audit:** [Day Trade Analyzer Version 2 Data Audit](day-trade-analyzer-v2-data-audit.md)
 
 **Visual review:** [Day Trade Analyzer Version 2 Mockup](day-trade-analyzer-v2-mockup.html)
@@ -131,6 +133,47 @@ did not, how many no-scale trades ended red, percentage of the position reduced,
 profit secured by the reduction, remaining shares/exposure and exact trades.
 Where the existing quantity-conserving later-fill comparison is available,
 show its exact avoided-loss/given-up-profit result as a secondary fact.
+
+Lead this page with a collective `Profit taking by price level` view for every
+analyzed trade in the selected closing-date range. It has two coordinated
+parts:
+
+1. A progression chart uses cumulative direction-adjusted thresholds: at least
+   20%, 30%, 40%, 50%, 60%, 70%, 80%, 90% and 100%. A trade that moves from
+   below 30% to at least 40% on one completed close counts as reaching both
+   thresholds; it is never added as a second or "skipped-zone" trade.
+2. An exact matrix assigns every profitable exit fill to one exclusive band:
+   20% to under 30%, 30% to under 40%, through 90% to under 100%, then 100% or
+   more. The fill's direction-adjusted return uses the weighted average entry
+   immediately before that fill. Its gross realized profit, quantity and trade
+   identity are known Journal/analyzer facts and belong to that band only.
+
+For each threshold/band pair show:
+
+- unique trades reaching at least the lower threshold and its percentage of
+  the selected direction's analyzed trades;
+- trades and percentage taking profit inside the exclusive band, shares sold
+  there and exact gross profit taken there;
+- trades reaching the next threshold while shares remained open;
+- trades that did not reach the next threshold before the final exit, with a
+  separate count for a completed close falling below the current threshold;
+- median first-reach time from entry, median longest consecutive time at or
+  above the threshold and median completed-trade holding time;
+- calculated gross profit available on the shares held when the threshold was
+  first reached, partitioned exactly between trades that did and did not reach
+  the next threshold;
+- among trades taking no profit inside that band, the exact count and rate that
+  completed red plus the sum of their realized gross losses; and
+- exact supporting records for every row and outcome.
+
+`Profit available at level` is a conservative calculated scenario: average
+entry multiplied by the threshold return and the shares still open at the
+first completed close or exit execution proving the threshold was reached. It
+is not an execution or guaranteed fill. `Profit taken in zone` and `Realized
+gross losses` come only from recorded executions and completed Journal trades.
+The chart and matrix never add overlapping level opportunities into a false
+grand total. All profit-zone money stays Gross even when the page's general
+Gross/Net selector is Net.
 
 ### Entries and Exits
 
