@@ -96,6 +96,7 @@ type WorkspaceDashboardProps = Readonly<{
   ruleResultsCard?: Readonly<{ brokenRuleCount: number; recentBrokenRuleTitles: readonly string[] }>;
   ruleResultsCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
   topTickersCard?: WorkspaceTopTickersCard;
+  topTickersCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
   reviewSummary?: WorkspaceReviewSummary;
   showDemoTradeTrackerInvitation?: boolean;
 }> & (WorkspaceLiveTradeLibraryProps | WorkspaceOfflineTradeLibraryProps);
@@ -184,6 +185,7 @@ export function WorkspaceDashboard({
   ruleResultsCard,
   ruleResultsCardPreference,
   topTickersCard,
+  topTickersCardPreference,
   reviewSummary,
   showDemoTradeTrackerInvitation,
   ...tradeLibraryProps
@@ -199,6 +201,7 @@ export function WorkspaceDashboard({
   const [rulesInitialView, setRulesInitialView] = useState<"custom" | "presets" | "results" | "rules">("rules");
   const [showRuleResultsCard, setShowRuleResultsCard] = useState(ruleResultsCardPreference?.showInWorkspace ?? false);
   const [showPrScannerCard, setShowPrScannerCard] = useState(prScannerCardPreference?.showInWorkspace ?? true);
+  const [showTopTickersCard, setShowTopTickersCard] = useState(topTickersCardPreference?.showInWorkspace ?? true);
   const [sessionNotesInitialView, setSessionNotesInitialView] = useState<JournalNotesDrawerInitialView>("add");
   const activeAccountSelectionRef = hasLiveTradeLibraryProps(tradeLibraryProps)
     ? tradeLibraryProps.expectedAccountSelectionRef
@@ -210,16 +213,6 @@ export function WorkspaceDashboard({
     setRulesOpen(true);
   };
   const multipleTradeSave = searchParams.get("tradeSave") === "multiple";
-  const hasActiveTableFilters = hasLiveTradeLibraryProps(tradeLibraryProps) && (
-    Boolean(tradeLibraryProps.trades.query.searchTicker) || tradeLibraryProps.trades.query.filter !== "all" ||
-    Boolean(tradeLibraryProps.customStartDate) || Boolean(tradeLibraryProps.customEndDate) ||
-    tradeLibraryProps.trades.query.sort !== "newest" || tradeLibraryProps.trades.query.group !== "none"
-  );
-  const activeFilterCount = hasLiveTradeLibraryProps(tradeLibraryProps)
-    ? Number(Boolean(tradeLibraryProps.trades.query.searchTicker)) + Number(tradeLibraryProps.trades.query.filter !== "all") +
-      Number(Boolean(tradeLibraryProps.customStartDate)) + Number(Boolean(tradeLibraryProps.customEndDate)) +
-      Number(tradeLibraryProps.trades.query.sort !== "newest") + Number(tradeLibraryProps.trades.query.group !== "none")
-    : 0;
   const metrics = analyticsMetrics ?? unavailableMetrics;
   const summaryCurrentFocuses = reviewSummary?.currentFocuses?.trim() || null;
   const [currentFocuses, setCurrentFocuses] = useState(summaryCurrentFocuses);
@@ -227,6 +220,7 @@ export function WorkspaceDashboard({
   useEffect(() => { setCurrentFocuses(summaryCurrentFocuses); }, [summaryCurrentFocuses]);
   useEffect(() => { setShowRuleResultsCard(ruleResultsCardPreference?.showInWorkspace ?? false); }, [ruleResultsCardPreference?.showInWorkspace]);
   useEffect(() => { setShowPrScannerCard(prScannerCardPreference?.showInWorkspace ?? true); }, [prScannerCardPreference?.showInWorkspace]);
+  useEffect(() => { setShowTopTickersCard(topTickersCardPreference?.showInWorkspace ?? true); }, [topTickersCardPreference?.showInWorkspace]);
   useEffect(() => { setRulesOpen(false); setRulesAccountSelectionRef(null); }, [activeAccountSelectionRef]);
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
@@ -248,8 +242,7 @@ export function WorkspaceDashboard({
               </Button>
             ))
           ) : null}
-          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)}>More filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button> : null}
-          {hasActiveTableFilters ? <Button onClick={() => { const next = new URLSearchParams(searchParams.toString()); ["endDate", "filter", "group", "searchTicker", "sort", "startDate"].forEach((key) => next.delete(key)); router.push(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }}>Clear filters</Button> : null}
+          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)} sx={{ display: { xs: "none", md: "inline-flex" } }}>More filters</Button> : null}
           <DashboardDataScopeChip />
           {offlineSavedAtUtc ? <Chip color="primary" label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`} size="small" variant="outlined" /> : null}
         </Stack>
@@ -269,7 +262,7 @@ export function WorkspaceDashboard({
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard action={metric.tradeDetailsRoundTripId ? <Button onClick={() => setSummaryTradeDetailsId(metric.tradeDetailsRoundTripId ?? null)} size="small">Trade details</Button> : undefined} hideCaption key={metric.label} {...metric} />)}
       </Box>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && (topTickersCard || currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && ((showTopTickersCard && topTickersCard) || currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
         "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
         "& h2": { fontSize: "1.2rem", lineHeight: 1.25 },
         "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root": {
@@ -300,7 +293,7 @@ export function WorkspaceDashboard({
           {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5} sx={{ minWidth: 0, pt: 0.5 }}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
           <Box sx={{ mt: "auto" }}><Button onClick={() => openRules("results")} size="small">View results</Button></Box>
         </Stack>
-      </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}{topTickersCard ? <DashboardPanel title="Top tickers"><Stack spacing={1.5} sx={{ flex: 1, justifyContent: "center" }}>{[
+      </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}{showTopTickersCard && topTickersCard ? <DashboardPanel title="Top tickers"><Stack spacing={1.5} sx={{ flex: 1, justifyContent: "center" }}>{[
         ["Most profitable", topTickersCard.mostProfitable, "pnl"],
         ["Most traded", topTickersCard.mostTraded, "trades"],
       ].map(([label, symbol, rank]) => <Stack key={label} spacing={0.5} sx={{ minWidth: 0 }}><Box component="span" sx={{ color: "warning.main", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.02em" }}>{label}</Box><Stack direction="row" spacing={0.75} sx={{ alignItems: "baseline", minWidth: 0 }}><Typography color="warning.main" noWrap sx={{ fontSize: "1.15rem", fontWeight: 900 }} title={symbol ?? undefined}>{symbol ?? "—"}</Typography><Button component={Link} href={tickerExplorerHref(rank as "pnl" | "trades")} size="small" sx={{ flexShrink: 0, fontSize: "0.7rem", minWidth: 0, p: 0.25 }}>View full list</Button></Stack></Stack>)}</Stack></DashboardPanel> : null}</Box> : null}
@@ -308,9 +301,9 @@ export function WorkspaceDashboard({
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
           <Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}>
-            <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} />
+            <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} onOpenFilters={() => setFiltersOpen(true)} />
           </Box>
-          <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} onClose={() => setFiltersOpen(false)} open={filtersOpen} query={tradeLibraryProps.trades.query} />
+          <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} newsScannerAvailable={newsScannerAvailable} onClose={() => setFiltersOpen(false)} onPreferenceSaved={(kind, show, preference) => { if (kind === "rules") setShowRuleResultsCard(show); else if (kind === "scanner") setShowPrScannerCard(show); else if (kind === "tickers") setShowTopTickersCard(show); else if (!show) setCurrentFocuses(null); if (preference || kind === "focuses") router.refresh(); }} open={filtersOpen} prScannerPreference={prScannerCardPreference ?? { revision: null, showInWorkspace: true }} query={tradeLibraryProps.trades.query} ruleResultsPreference={ruleResultsCardPreference ?? { revision: null, showInWorkspace: false }} topTickersPreference={topTickersCardPreference ?? { revision: null, showInWorkspace: true }} />
           <JournalNotesDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} focusOnly={sessionNotesInitialView === "focuses"} initialView={sessionNotesInitialView} key={sessionNotesInitialView} launch={{ kind: "session", sessionDate: sessionDateInTimezone(tradeLibraryProps.accountTimezone) }} onClose={() => setSessionNotesOpen(false)} onFocusSaved={(focus) => setCurrentFocuses(focus.showInWorkspace && focus.focusText.trim() ? focus.focusText.trim() : null)} open={sessionNotesOpen} />
           {rulesOpen && rulesAccountSelectionRef === activeAccountSelectionRef ? <WorkspaceRulesPanel initialView={rulesInitialView} key={rulesInitialView} onClose={() => setRulesOpen(false)} onPreferenceSaved={(preference) => { setShowRuleResultsCard(preference.showInWorkspace); router.refresh(); }} /> : null}
           <TradeDetailsDrawer analyzer={null} initialTab="details" onClose={() => setSummaryTradeDetailsId(null)} open={summaryTradeDetailsId !== null} roundTripId={summaryTradeDetailsId} />

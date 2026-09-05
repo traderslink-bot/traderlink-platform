@@ -74,6 +74,7 @@ Related plan:
 - The Analyzer chart remains light in both application appearances because its chart labels are clearer on the light surface; Navy Dark still uses the higher-contrast chart controls.
 - Both TradingView Advanced Chart embeds now default eligible symbols to extended-hours candles and hide only the side toolbar at 700px and below, rebuilding the widget when that breakpoint changes.
 - The Workspace Rules broken card now places its larger count at the right side of the header and uses the warning color for the Recent broken rules label.
-- Added a Top tickers Workspace card beside PR Scanner with Most profitable and Most traded rankings that follow the active Workspace date filter and logical-trade identity.
+- Added a half-width Top tickers Workspace card beside PR Scanner with Most profitable and Most traded rankings that follow the active Workspace date filter and logical-trade identity.
 - Best trade and Worst trade Workspace metric cards now place a Trade details action to the right of their values and open the exact filtered trade in the existing details drawer.
 - The Top tickers card links Most profitable and Most traded to all-time Trade Explorer Ticker views, selecting the corresponding P/L or closed-trade ranking from highest to lowest.
+- Workspace now places the existing trade filters in one desktop row directly above the table, moves the mobile More filters action directly above the trade cards, and uses that drawer for mobile filters plus saved Workspace card visibility controls. Top Tickers now has its own account-and-user-scoped display preference.
