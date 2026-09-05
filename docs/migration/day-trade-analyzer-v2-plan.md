@@ -192,15 +192,14 @@ For each threshold/band pair show:
   completed red plus the sum of their realized gross losses; and
 - exact supporting records for every row and outcome.
 
-`Gross Opportunity` is the highest calculated unrealized Gross profit on the
-shares still open inside that exact zone. For a trade moving beyond the zone,
-the calculation is capped at the zone's non-overlapping upper edge (`29.99%`,
-`39.99%` and so on); the top zone has no cap. It is not an execution or
-guaranteed fill. `Profit taken in zone` and `Realized gross losses` come only
-from recorded executions and completed Journal trades. The ladder and its exact
-records never add overlapping zone opportunities into a false grand total. All
-profit-zone money stays Gross even when the page's general Gross/Net selector
-is Net.
+`Profit available at level` is a conservative calculated scenario: average
+entry multiplied by the threshold return and the shares still open at the
+first completed close or exit execution proving the threshold was reached. It
+is not an execution or guaranteed fill. `Profit taken in zone` and `Realized
+gross losses` come only from recorded executions and completed Journal trades.
+The ladder and its exact records never add overlapping level opportunities into a false
+grand total. All profit-zone money stays Gross even when the page's general
+Gross/Net selector is Net.
 
 The exact record for a selected zone distinguishes partial profit taken before
 the next zone, partial profit taken after the trade had already reached the next
@@ -209,60 +208,13 @@ flat does not imply that the user-defined trade ended because the trader may
 re-enter inside the same saved trade. This prevents closing the current
 position from being presented as scaling out.
 
-The main profit-taking rate uses trades reaching the zone as its denominator. A
-full exit means all remaining open shares were sold.
-Zone reach uses the favorable side of each recorded one-minute candle (high for
-long trades and low for short trades), with an exact sell execution as direct
-evidence when it reaches a level between candle observations. Profit-taking is
-counted separately from profitable sell executions inside the band, so a sell
-cannot turn its own profit-taking rate into a circular 100% denominator.
-The partial/full breakdown is exclusive and uses only profit-taking trades as
-its denominator. A Full exit is an all-at-once exit: the entire open position is
-sold in one execution with no earlier partial sell in that position cycle. Once
-a position cycle scales out, every later sell needed to close its remaining
-shares stays part of Partial exits and is never reclassified as a Full exit.
-Partial and full-exit rates therefore add to 100%, while the main rate remains
-the share of zone-reaching trades that took profit. Each group shows the exact
-Gross profit taken in the zone by its trades. Stopped-here progression remains
-independent of profit taking.
-
-The Profit Zones population uses the platform's canonical current trade key:
-the user-defined `logicalTradeId` when that trade exists, otherwise the
-individual `roundTripId`. Multiple canonical trades in the same ticker always
-remain separate. Ticker is display text only and must never be used as a
-grouping key, denominator or P/L lookup key. A one-member trade may continue
-using its existing ready round-trip analysis until a newer logical-trade
-analysis replaces it; a multi-member trade requires its own combined analysis.
-The exact-trade table's Final Gross P/L comes from the same execution snapshots
-used for that trade's zone and exit calculations. It must equal price-and-
-quantity Gross P/L and must not subtract fees, substitute a selected Net result
-or use another trade in the same ticker.
-
-The selected-zone evidence heading states the exact non-overlapping range, such
-as `Trades that reached 20%–29.99%`, followed by the number of those trades out
-of the current analyzed-trade population. Definitions belong in concise heading
-tooltips rather than repeated text in every row. First Reached explains the
-one-minute timing, Time to Zone begins at the first entry order, and Time in
-Zone totals every completed minute in the band while the trade is active,
-including later returns. Partial Profit describes scaling out, Full Exit Profit
-means fully exiting the position with one sell order, Gross Opportunity is the
-highest calculated opportunity inside that band, and Final Gross P/L excludes
-broker fees. Next-zone outcomes use supporting-text typography.
-The exact record table keeps every heading and value left-aligned and uses
-compact, deliberate column widths so removing repeated row explanations also
-removes the empty horizontal gaps they created.
-Profit Taken contains only the percentage of zone-reaching trades that took
-profit and their combined Gross profit. A separate Exit Type column directly
-after it contains the exclusive Partial exits and Full exits percentage-and-
-dollar split. Its percentage denominator is the profit-taking trades in that
-zone, not all trades reaching the zone.
-Missed Opportunity shows the complementary population: zone-reaching trades
-with no profitable exit in that zone, their percentage of reached trades and
-their combined exact-zone Gross Opportunity. Next Move uses only that missed-
-opportunity population and partitions its first recorded outcome into reached
-the next zone, dropped below the current zone or exited from the zone. These are
-exclusive outcomes whose rates total 100%; a later recovery remains visible in
-the exact trade record.
+Partial-profit and profitable-full-exit rates both use trades reaching the zone
+as their denominator. A full exit means all remaining open shares were sold.
+They are independent, potentially overlapping behaviors rather than parts of a
+100% whole: one saved trade may partially exit and later fully exit. The ladder
+leads with the deduplicated rate of trades with any profitable exit in the zone,
+then shows partial exits, full exits and their overlap. Stopped-here progression
+is also independent of both profit-taking measures.
 
 ### Entries and Exits
 
