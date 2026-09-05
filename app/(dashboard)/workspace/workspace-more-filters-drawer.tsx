@@ -1,26 +1,17 @@
 "use client";
 
-import { Alert, Box, Button, Divider, Drawer, FormControlLabel, MenuItem, Stack, Switch, TextField, Typography } from "@mui/material";
+import { Button, Drawer, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type { WorkspaceTradeLibraryQuery } from "./workspace-trade-library";
-import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
-type Preference = Readonly<{ revision: number | null; showInWorkspace: boolean }>;
-
-export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, expectedAccountSelectionRef, newsScannerAvailable, onClose, onPreferenceSaved, open, prScannerPreference, query, ruleResultsPreference, topTickersPreference }: Readonly<{
+export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, onClose, open, query }: Readonly<{
   customEndDate: string | null;
   customStartDate: string | null;
-  expectedAccountSelectionRef: string;
-  newsScannerAvailable: boolean;
   onClose: () => void;
-  onPreferenceSaved: (kind: "focuses" | "rules" | "scanner" | "tickers", show: boolean, preference?: Preference) => void;
   open: boolean;
-  prScannerPreference: Preference;
   query: WorkspaceTradeLibraryQuery;
-  ruleResultsPreference: Preference;
-  topTickersPreference: Preference;
 }>) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,26 +20,10 @@ export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, exp
     endDate: customEndDate ?? "", filter: query.filter, group: query.group,
     searchTicker: query.searchTicker, sort: query.sort, startDate: customStartDate ?? "",
   }));
-  const [preferences, setPreferences] = useState({ focuses: false, rules: ruleResultsPreference, scanner: prScannerPreference, tickers: topTickersPreference });
-  const [focusRevision, setFocusRevision] = useState<number | null>(null);
-  const [focusText, setFocusText] = useState("");
-  const [preferenceError, setPreferenceError] = useState(false);
-  const [saving, setSaving] = useState<string | null>(null);
   useEffect(() => {
     if (!open) return;
     setDraft({ endDate: customEndDate ?? "", filter: query.filter, group: query.group, searchTicker: query.searchTicker, sort: query.sort, startDate: customStartDate ?? "" });
   }, [customEndDate, customStartDate, open, query]);
-  useEffect(() => {
-    if (!open) return;
-    setPreferences((current) => ({ ...current, rules: ruleResultsPreference, scanner: prScannerPreference, tickers: topTickersPreference }));
-    void fetch("/api/platform/notes/current-focuses", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("focus_unavailable")))
-      .then((payload: { focus?: { focusText: string; revision: number; showInWorkspace: boolean } | null }) => {
-        setFocusRevision(payload.focus?.revision ?? null);
-        setFocusText(payload.focus?.focusText ?? "");
-        setPreferences((current) => ({ ...current, focuses: payload.focus?.showInWorkspace ?? false }));
-      }).catch(() => setPreferenceError(true));
-  }, [open, prScannerPreference, ruleResultsPreference, topTickersPreference]);
   useEffect(() => {
     if (!open) return;
     const handle = window.setTimeout(() => {
@@ -65,38 +40,9 @@ export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, exp
   }, [currentSearch, draft, open, router]);
   const active = Number(Boolean(draft.searchTicker)) + Number(draft.filter !== "all") + Number(Boolean(draft.startDate)) + Number(Boolean(draft.endDate)) + Number(draft.sort !== "newest") + Number(draft.group !== "none");
   const clear = () => setDraft({ endDate: "", filter: "all", group: "none", searchTicker: "", sort: "newest", startDate: "" });
-  const savePreference = async (kind: "focuses" | "rules" | "scanner" | "tickers", showInWorkspace: boolean) => {
-    setPreferenceError(false); setSaving(kind);
-    const endpoints = { focuses: "/api/platform/notes/current-focuses", rules: "/api/platform/journal/rules/workspace-card-preference", scanner: "/api/platform/news/workspace-scanner/card-preference", tickers: "/api/platform/journal/workspace-top-tickers-card-preference" } as const;
-    const current = kind === "rules"
-      ? preferences.rules
-      : kind === "scanner"
-        ? preferences.scanner
-        : kind === "tickers"
-          ? preferences.tickers
-          : null;
-    const body = kind === "focuses"
-      ? { expectedRevision: focusRevision, focusText, showInWorkspace }
-      : { expectedAccountSelectionRef, expectedRevision: current!.revision, showInWorkspace };
-    try {
-      const response = await fetch(endpoints[kind], { body: JSON.stringify(body), credentials: "same-origin", headers: { "content-type": "application/json", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" }, method: "PUT" });
-      const payload = await response.json() as { focus?: { revision: number; showInWorkspace: boolean }; preference?: Preference };
-      const saved = kind === "focuses" ? payload.focus : payload.preference;
-      if (!response.ok || !saved) throw new Error("preference_unavailable");
-      if (kind === "focuses") { setFocusRevision(payload.focus!.revision); setPreferences((value) => ({ ...value, focuses: showInWorkspace })); }
-      else setPreferences((value) => ({ ...value, [kind]: saved }));
-      onPreferenceSaved(kind, showInWorkspace, kind === "focuses" ? undefined : saved as Preference);
-    } catch { setPreferenceError(true); } finally { setSaving(null); }
-  };
   return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { width: { xs: "100vw", sm: 400 } } } }}>
     <Stack spacing={1.25} sx={{ p: 2 }}>
-      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography component="h2" variant="h6">Workspace display</Typography><Button onClick={onClose}>Close</Button></Stack>
-      {preferenceError ? <Alert severity="error">The Workspace display setting could not be saved. Try again.</Alert> : null}
-      <FormControlLabel control={<Switch checked={preferences.focuses} disabled={!focusText.trim() || saving !== null} onChange={(event) => void savePreference("focuses", event.target.checked)} />} label="Current Focuses" />
-      <FormControlLabel control={<Switch checked={preferences.rules.showInWorkspace} disabled={saving !== null} onChange={(event) => void savePreference("rules", event.target.checked)} />} label="Rules Broken" />
-      {newsScannerAvailable ? <FormControlLabel control={<Switch checked={preferences.scanner.showInWorkspace} disabled={saving !== null} onChange={(event) => void savePreference("scanner", event.target.checked)} />} label="PR Scanner" /> : null}
-      <FormControlLabel control={<Switch checked={preferences.tickers.showInWorkspace} disabled={saving !== null} onChange={(event) => void savePreference("tickers", event.target.checked)} />} label="Top Tickers" />
-      <Box sx={{ display: { md: "none" } }}><Divider sx={{ my: 1.5 }} /><Stack spacing={1.25}>
+      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography component="h2" variant="h6">More filters</Typography><Button onClick={onClose}>Close</Button></Stack>
       <TextField label="Search ticker" onChange={(event) => setDraft((value) => ({ ...value, searchTicker: event.target.value.toUpperCase() }))} size="small" value={draft.searchTicker} />
       <TextField label="Filter" onChange={(event) => setDraft((value) => ({ ...value, filter: event.target.value as typeof value.filter }))} select size="small" value={draft.filter}><MenuItem value="all">All</MenuItem><MenuItem value="open">Open</MenuItem><MenuItem value="swing">Swing</MenuItem><MenuItem value="closed">Closed</MenuItem><MenuItem value="fees_not_entered">Fees not entered</MenuItem></TextField>
       <TextField label="From" onChange={(event) => setDraft((value) => ({ ...value, startDate: event.target.value }))} size="small" slotProps={{ inputLabel: { shrink: true } }} type="date" value={draft.startDate} />
@@ -107,7 +53,6 @@ export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, exp
       <TextField label="Group" onChange={(event) => setDraft((value) => ({ ...value, group: event.target.value as typeof value.group }))} select size="small" value={draft.group}><MenuItem value="none">None</MenuItem><MenuItem value="day">Day</MenuItem><MenuItem value="ticker">Ticker</MenuItem></TextField>
       <Typography color="text.secondary" variant="body2">{active} active filter{active === 1 ? "" : "s"}</Typography>
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}><Button onClick={clear}>Clear filters</Button><Button disabled={draft.sort === "newest"} onClick={() => setDraft((value) => ({ ...value, sort: "newest" }))}>Return to newest</Button></Stack>
-      </Stack></Box>
     </Stack>
   </Drawer>;
 }

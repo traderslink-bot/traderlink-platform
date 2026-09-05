@@ -29,7 +29,6 @@ import { journalWorkspaceRuleResultsCardMigration } from "@/src/modules/journal/
 import { journalWorkspacePrScannerCardMigration } from "@/src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card";
 import { journalManualFeeInputStateMigration } from "@/src/modules/journal/server/database/migrations/0116_journal_manual_fee_input_state";
 import { journalLogicalTradesMigration } from "@/src/modules/journal/server/database/migrations/0118_journal_logical_trades";
-import { journalWorkspaceTopTickersCardMigration } from "@/src/modules/journal/server/database/migrations/0120_journal_workspace_top_tickers_card";
 import { sharedTradeAnalyzerBetaMigration } from "@/src/modules/level-analysis/server/database/migrations/0119_shared_trade_analyzer_beta";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0117_trade_explorer_saved_views";
@@ -582,10 +581,6 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/level-analysis/server/database/migrations/0119_shared_trade_analyzer_beta.ts",
       migration: sharedTradeAnalyzerBetaMigration,
     }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0120_journal_workspace_top_tickers_card.ts",
-      migration: journalWorkspaceTopTickersCardMigration,
-    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -1024,9 +1019,6 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "journal_logical_trade_rule_reviews",
       "journal_logical_trade_tag_assignment_events",
       "journal_logical_trade_rule_review_events",
-    ]),
-    "0120_journal_workspace_top_tickers_card": Object.freeze([
-      "journal_workspace_top_tickers_card_preferences",
     ]),
   });
 

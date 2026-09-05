@@ -12,7 +12,6 @@ import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { readWorkspaceTopTickersCard } from "./workspace-top-tickers-card";
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
 import { JournalWorkspacePrScannerCardPreferenceService } from "@/src/modules/journal/server/news/journal-workspace-pr-scanner-card-preference";
-import { JournalWorkspaceTopTickersCardPreferenceService } from "@/src/modules/journal/server/workspace/journal-workspace-top-tickers-card-preference";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import {
   findJournalAnalyticsMetric,
@@ -107,7 +106,7 @@ export default async function WorkspacePage({
     redirect("/account/trading");
   }
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, logicalClosedTradeCount, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, topTickersCard, topTickersCardPreference, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, customEndDate, customStartDate, logicalClosedTradeCount, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, topTickersCard, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, pnlReportingBasis, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
@@ -149,7 +148,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         pnlReportingBasis,
         prScannerCardPreference: new JournalWorkspacePrScannerCardPreferenceService(database).read(scope),
         ruleResultsCardPreference: new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope),
-        topTickersCardPreference: new JournalWorkspaceTopTickersCardPreferenceService(database).read(scope),
         ruleResultsEndDate: dates.endDate,
         ruleResultsStartDate: dates.startDate,
         response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
@@ -237,7 +235,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         ruleResultsCard={ruleResultsCard}
         ruleResultsCardPreference={ruleResultsCardPreference}
         topTickersCard={topTickersCard}
-        topTickersCardPreference={topTickersCardPreference}
         customEndDate={customEndDate}
         customStartDate={customStartDate}
         periodEndDate={periodEndDate}
