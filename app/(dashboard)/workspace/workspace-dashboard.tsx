@@ -30,7 +30,6 @@ import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
 import type { WorkspaceTopTickersCard } from "./workspace-top-tickers-card";
 import { WorkspaceTradeLibrary } from "./workspace-trade-library-client";
-import { WorkspaceMoreFiltersDrawer } from "./workspace-more-filters-drawer";
 import { openWorkspaceTradeDrawer } from "./workspace-trade-drawer-events";
 import { DashboardChartAction, DashboardChartPanelSlot, DashboardChartProvider } from "../dashboard-chart-tool";
 import { JournalNotesDrawer, type JournalNotesDrawerInitialView } from "../notes/journal-notes-drawer";
@@ -192,7 +191,6 @@ export function WorkspaceDashboard({
 }: WorkspaceDashboardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [sessionNotesOpen, setSessionNotesOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [newsScannerOpen, setNewsScannerOpen] = useState(false);
@@ -242,7 +240,6 @@ export function WorkspaceDashboard({
               </Button>
             ))
           ) : null}
-          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)}>Display</Button> : null}
           <DashboardDataScopeChip />
           {offlineSavedAtUtc ? <Chip color="primary" label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`} size="small" variant="outlined" /> : null}
         </Stack>
@@ -303,7 +300,6 @@ export function WorkspaceDashboard({
           <Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}>
             <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} />
           </Box>
-          <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} newsScannerAvailable={newsScannerAvailable} onClose={() => setFiltersOpen(false)} onPreferenceSaved={(kind, show, preference) => { if (kind === "rules") setShowRuleResultsCard(show); else if (kind === "scanner") setShowPrScannerCard(show); else if (kind === "tickers") setShowTopTickersCard(show); else if (!show) setCurrentFocuses(null); if (preference || kind === "focuses") router.refresh(); }} open={filtersOpen} prScannerPreference={prScannerCardPreference ?? { revision: null, showInWorkspace: true }} query={tradeLibraryProps.trades.query} ruleResultsPreference={ruleResultsCardPreference ?? { revision: null, showInWorkspace: false }} topTickersPreference={topTickersCardPreference ?? { revision: null, showInWorkspace: true }} />
           <JournalNotesDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} focusOnly={sessionNotesInitialView === "focuses"} initialView={sessionNotesInitialView} key={sessionNotesInitialView} launch={{ kind: "session", sessionDate: sessionDateInTimezone(tradeLibraryProps.accountTimezone) }} onClose={() => setSessionNotesOpen(false)} onFocusSaved={(focus) => setCurrentFocuses(focus.showInWorkspace && focus.focusText.trim() ? focus.focusText.trim() : null)} open={sessionNotesOpen} />
           {rulesOpen && rulesAccountSelectionRef === activeAccountSelectionRef ? <WorkspaceRulesPanel initialView={rulesInitialView} key={rulesInitialView} onClose={() => setRulesOpen(false)} onPreferenceSaved={(preference) => { setShowRuleResultsCard(preference.showInWorkspace); router.refresh(); }} /> : null}
           <TradeDetailsDrawer analyzer={null} initialTab="details" onClose={() => setSummaryTradeDetailsId(null)} open={summaryTradeDetailsId !== null} roundTripId={summaryTradeDetailsId} />
