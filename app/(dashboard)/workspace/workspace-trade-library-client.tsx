@@ -570,7 +570,7 @@ export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTra
   const changeSort = (column: TradeTableColumn) => setSort((current) => current === column.ascending ? column.descending : column.ascending);
   return <>
     {error ? <Typography color="error.main" variant="body2">{error}</Typography> : null}
-    <Box sx={{ alignItems: "center", display: { xs: "none", md: "grid" }, gap: 1, gridTemplateColumns: "10ch 210px 16ch 16ch 25ch 12ch max-content", mt: 0.5, overflowX: "auto", pb: 0.25, pt: 1 }}>
+    <Box sx={{ alignItems: "center", display: { xs: "none", md: "grid" }, gap: 1, gridTemplateColumns: "10ch 210px 18ch 18ch 25ch 12ch max-content", mt: 0.5, overflowX: "auto", pb: 0.25, pt: 1 }}>
       <TextField label="Ticker" onChange={(event) => setTicker(event.target.value.toUpperCase())} size="small" slotProps={{ htmlInput: { maxLength: 5 } }} value={ticker} />
       <TextField label="Filter" onChange={(event) => setFilter(event.target.value as TradeStateFilter)} select size="small" value={filter}><MenuItem value="all">All</MenuItem><MenuItem value="open">Open</MenuItem><MenuItem value="swing">Swing</MenuItem><MenuItem value="closed">Closed</MenuItem><MenuItem value="fees_not_entered">Fees not entered</MenuItem></TextField>
       <TextField label="From" onChange={(event) => setStartDate(event.target.value)} size="small" slotProps={{ inputLabel: { shrink: true } }} type="date" value={startDate} />
@@ -580,8 +580,8 @@ export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTra
       </TextField>
       <TextField label="Group" onChange={(event) => setGroup(event.target.value as TradeGroup)} select size="small" value={group}><MenuItem value="none">None</MenuItem><MenuItem value="day">Day</MenuItem><MenuItem value="ticker">Ticker</MenuItem></TextField>
       <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", whiteSpace: "nowrap" }}>
-        {activeFilterCount > 0 ? <Button color="primary" onClick={clearFilters} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Clear filters</Button> : null}
-        {sort !== "newest" ? <Button color="primary" onClick={() => setSort("newest")} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Return to newest</Button> : null}
+        <Button color="primary" disabled={activeFilterCount === 0} onClick={clearFilters} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Clear filters</Button>
+        <Button color="primary" disabled={sort === "newest"} onClick={() => setSort("newest")} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Reset</Button>
       </Stack>
     </Box>
     <Box sx={{ border: 1, borderColor: "divider", borderRadius: 2, mt: 1, overflow: "hidden" }}>
