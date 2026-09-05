@@ -75,8 +75,13 @@ export type DailyTradeV2ProfitZone = Readonly<{
   lowerBoundPercent: number;
   minutesFromEntryToFirstReach: number | null;
   observedOutcome: "did_not_reach" | "dropped_before_next" | "exited_before_next" | "reached_next";
+  partialProfitTakenAfterNextGrossDecimal: string;
+  partialProfitTakenBeforeNextGrossDecimal: string;
+  partialProfitTakenInZoneGrossDecimal: string;
+  partialProfitTakingExitCount: number;
   profitAvailableAtLevelGrossDecimal: string | null;
   profitTakenInZoneGrossDecimal: string;
+  profitableFullExitInZoneGrossDecimal: string;
   quantitySoldInZoneDecimal: string;
   reachedNextLevel: boolean;
   totalCompletedMinutesInZone: number;
@@ -118,6 +123,7 @@ type ProfitObservation = Readonly<{
 
 type ExitProfit = Readonly<{
   grossProfit: Decimal;
+  kind: "final_exit" | "partial_exit" | "temporary_flat";
   quantity: Decimal;
   returnPercent: number;
   time: number;
@@ -202,9 +208,11 @@ function buildProfitZones(input: Readonly<{
     const firstReachedIndex = input.observations.findIndex((observation) =>
       observation.openShareReturnPercent + Number.EPSILON >= lowerBoundPercent);
     const firstReached = firstReachedIndex < 0 ? null : input.observations[firstReachedIndex]!;
-    const reachedNextLevel = firstReached !== null && upperBoundPercent !== null &&
-      input.observations.slice(firstReachedIndex).some((observation) =>
-        observation.openShareReturnPercent + Number.EPSILON >= upperBoundPercent);
+    const firstNextLevel = firstReached === null || upperBoundPercent === null
+      ? null
+      : input.observations.slice(firstReachedIndex).find((observation) =>
+          observation.openShareReturnPercent + Number.EPSILON >= upperBoundPercent) ?? null;
+    const reachedNextLevel = firstNextLevel !== null;
     let observedOutcome: DailyTradeV2ProfitZone["observedOutcome"] = "did_not_reach";
     if (firstReached) {
       observedOutcome = upperBoundPercent !== null &&
@@ -248,6 +256,14 @@ function buildProfitZones(input: Readonly<{
       exit.returnPercent + Number.EPSILON >= lowerBoundPercent &&
       (upperBoundPercent === null || exit.returnPercent < upperBoundPercent));
     const profitTaken = exitProfits.reduce((total, exit) => total.plus(Decimal.max(exit.grossProfit, 0)), new Decimal(0));
+    const profitablePartialExits = exitProfits.filter((exit) =>
+      exit.kind === "partial_exit" && exit.grossProfit.isPositive());
+    const profitableFullExits = exitProfits.filter((exit) =>
+      exit.kind !== "partial_exit" && exit.grossProfit.isPositive());
+    const partialProfitBeforeNext = profitablePartialExits.filter((exit) =>
+      firstNextLevel === null || exit.time < firstNextLevel.time);
+    const partialProfitAfterNext = profitablePartialExits.filter((exit) =>
+      firstNextLevel !== null && exit.time >= firstNextLevel.time);
     const quantitySold = exitProfits.reduce((total, exit) =>
       exit.grossProfit.isPositive() ? total.plus(exit.quantity) : total, new Decimal(0));
     const profitAvailable = firstReached
@@ -265,8 +281,21 @@ function buildProfitZones(input: Readonly<{
         ? Math.max(0, (firstReached.time - input.entryAtUtcSeconds) / 60)
         : null,
       observedOutcome,
+      partialProfitTakenAfterNextGrossDecimal: partialProfitAfterNext
+        .reduce((total, exit) => total.plus(exit.grossProfit), new Decimal(0))
+        .toFixed(),
+      partialProfitTakenBeforeNextGrossDecimal: partialProfitBeforeNext
+        .reduce((total, exit) => total.plus(exit.grossProfit), new Decimal(0))
+        .toFixed(),
+      partialProfitTakenInZoneGrossDecimal: profitablePartialExits
+        .reduce((total, exit) => total.plus(exit.grossProfit), new Decimal(0))
+        .toFixed(),
+      partialProfitTakingExitCount: profitablePartialExits.length,
       profitAvailableAtLevelGrossDecimal: profitAvailable?.toFixed() ?? null,
       profitTakenInZoneGrossDecimal: profitTaken.toFixed(),
+      profitableFullExitInZoneGrossDecimal: profitableFullExits
+        .reduce((total, exit) => total.plus(exit.grossProfit), new Decimal(0))
+        .toFixed(),
       quantitySoldInZoneDecimal: quantitySold.toFixed(),
       reachedNextLevel,
       totalCompletedMinutesInZone: completedCloses.filter((close) =>
@@ -456,7 +485,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
       source: "exit",
       time,
     }));
-    exitProfits.push(Object.freeze({ grossProfit, quantity: closingQuantity, returnPercent, time }));
+    exitProfits.push(Object.freeze({ grossProfit, kind: event.kind, quantity: closingQuantity, returnPercent, time }));
     realizedGross = realizedGross.plus(grossProfit);
     positionQuantity = Decimal.max(0, positionQuantity.minus(closingQuantity));
     if (event.kind === "partial_exit" && grossProfit.isPositive()) {

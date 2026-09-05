@@ -7,6 +7,16 @@ implemented locally and has passed focused low-resource source QA. No push,
 deployment, migration, hosted data write or configuration change is authorized
 to this worker.
 
+## Current user-defined-trade refinement — 2026-09-05
+
+- [x] Work remains isolated in the assigned
+  `C:\Users\jerac\Documents\TraderLink\worktrees\trade-analyzer-v2`
+  worktree on branch `codex/day-analyzer-profit-zones-repair-71193458`.
+- [x] This refinement is parented to local commit
+  `aecfcb1c9be9c05214617da8520bce7ecd09e76a`.
+- [x] The owner has not authorized a coordinator handoff, push or deployment
+  for this refinement.
+
 ## Git and ownership checkpoint — 2026-09-05
 
 - [x] Visual release coordinator assigned the existing clean worktree
@@ -143,5 +153,55 @@ to this worker.
 - [x] Focused ESLint and a nine-file TypeScript project pass.
 - [x] Small runtime probes cover both a long and short trade reaching +20%,
   taking partial profit and ultimately finishing red.
+- [x] Separate profitable partial exits from profitable full-position exits in every
+  zone. The ladder rate must use partial-profit trades divided by trades that
+  reached the zone, while exact records show before-next, after-next-pullback
+  and full-position-exit facts separately.
+- [x] The ladder now prints all denominators directly: reached trades out of
+  all analyzed user-defined trades, partial-profit trades out of trades that
+  reached the zone, and stopped trades out of trades that reached the zone.
+- [x] Partial-profit totals use exact Gross profit dollars from recorded
+  partial exits. Raw share quantity is not used as the comparison because share
+  price differs across trades.
+- [x] Focused TypeScript and ESLint pass, and a small runtime probe separates a
+  $2.50 partial profit from a $22.50 full-position profit while correctly
+  distinguishing partial profit before versus after reaching the next zone.
+- [x] Move the new zone and Green-to-Red populations from legacy round-trip
+  facts to the current user-defined logical-trade analyzer. One saved trade
+  counts once even when it contains multiple flat-to-flat position cycles.
+- [x] A multi-cycle runtime probe keeps two entries, two profitable partial
+  exits, one temporary return to flat, one re-entry and one final exit inside a
+  single analyzed trade; it reconciles $37.50 final Gross P/L and $12.50 Gross
+  partial profit without treating the temporary flat as a partial exit.
+- [x] Exact zone records label profitable exits that return the position to
+  flat without implying that the user-defined trade ended; the saved trade may
+  continue with a later re-entry.
+- [x] Older offline snapshots fall back to their existing direction counts and
+  render unavailable new partial-profit fields safely instead of failing.
+- [x] The compact ladder now leads with the percentage of zone-reaching trades
+  that recorded any profitable exit in the zone and its exact Gross dollars.
+  It then separates profitable partial exits and profitable full exits, with
+  separate rates and Gross dollar totals.
+- [x] When a saved trade partially exits and later fully exits in the same
+  zone, the ladder shows the overlap explicitly. The overall profitable-exit
+  rate remains a deduplicated trade rate rather than adding overlapping rates.
+- [x] Stopped-here remains independent of profit taking, so a zone can show
+  partial scaling profit while correctly showing zero trades stopped there.
+- [x] Focused TypeScript, ESLint and `git diff --check` pass after adding the
+  percentage-first profit-exit breakdown.
+- [x] Trader-facing chart and table wording uses `Full exit` instead of
+  `Returned flat`; its tooltip states that all remaining open shares were sold
+  and that the saved trade may still contain a later re-entry.
+- [x] Audited the complete `/analytics/trade-analyzer/day` route group: result
+  models, direction counts and evidence lists are sourced only from ready
+  analyzer records. Unanalyzed completed trades remain coverage status only.
+- [x] Every page now exposes its analyzed-trade population near the top. Green
+  to Red and Profit Zones use their user-defined analyzed-trade counts for the
+  top number and Long/Short selection instead of the legacy round-trip count.
+- [x] Below the top count, captions and denominators use ordinary `trades`
+  wording because the route context already establishes the analyzed
+  population.
+- [x] Focused TypeScript, ESLint and `git diff --check` pass for the shared top
+  count and direction-population correction.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.

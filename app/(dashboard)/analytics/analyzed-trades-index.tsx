@@ -3,6 +3,7 @@
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import {
   Alert,
+  Box,
   Button,
   CircularProgress,
   Stack,
@@ -21,6 +22,7 @@ import type { DailyTradeAnalyzedTradePage } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
 import { financialOutcomeColor } from
   "@/src/modules/journal-analytics/presentation/financial-outcome-color";
+import { DashboardMetricCard } from "@/app/dashboard-template";
 
 import { TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
@@ -155,6 +157,13 @@ export function AnalyzedTradesIndex({
     : [];
   return (
     <Stack spacing={1.5}>
+      <Box sx={{ maxWidth: 240 }}>
+        <DashboardMetricCard
+          caption="Ready analyzer records in the selected period"
+          label="Analyzed trades"
+          value={String(result?.totalRowCount ?? 0)}
+        />
+      </Box>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <TextField
           label="Ticker"

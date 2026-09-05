@@ -488,11 +488,18 @@ export function TradeAnalysisClient({
   const searchParams = useSearchParams();
   const [patternPage, setPatternPage] = useState(1);
   const [patternPageSize, setPatternPageSize] = useState(10);
-  const defaultDirection = evidenceQuery.direction && model.directionTradeCounts[evidenceQuery.direction] > 0
+  const greenToRedDirectionCounts = model.greenToRedOpportunity.tradeCountsByDirection ?? model.directionTradeCounts;
+  const profitZoneDirectionCounts = model.profitZones.tradeCountsByDirection ?? model.directionTradeCounts;
+  const visibleDirectionCounts = view === "green-to-red"
+    ? greenToRedDirectionCounts
+    : view === "scaling-out"
+      ? profitZoneDirectionCounts
+      : model.directionTradeCounts;
+  const defaultDirection = evidenceQuery.direction && visibleDirectionCounts[evidenceQuery.direction] > 0
     ? evidenceQuery.direction
-    : model.directionTradeCounts.long > 0 ? "long" as const : "short" as const;
+    : visibleDirectionCounts.long > 0 ? "long" as const : "short" as const;
   const [selectedDirection, setSelectedDirection] = useState<"long" | "short">(defaultDirection);
-  const activeDirection = model.directionTradeCounts[selectedDirection] > 0 ? selectedDirection : defaultDirection;
+  const activeDirection = visibleDirectionCounts[selectedDirection] > 0 ? selectedDirection : defaultDirection;
   const meaningfulProfitRows = useMemo(() => model.meaningfulProfit.rows.filter((row) =>
     row.direction === activeDirection), [activeDirection, model.meaningfulProfit.rows]);
   const scalingRows = useMemo(() => model.scalingOut.rows.filter((row) =>
@@ -598,7 +605,7 @@ export function TradeAnalysisClient({
   const exitContext = model.exitExecutionContextByDirection[activeDirection];
   return (
     <Stack spacing={2.5}>
-      {view !== "day" ? <DirectionControl activeDirection={activeDirection} counts={model.directionTradeCounts} onChange={(direction) => {
+      {view !== "day" ? <DirectionControl activeDirection={activeDirection} counts={visibleDirectionCounts} onChange={(direction) => {
         setSelectedDirection(direction);
         if (offline) return;
         const params = new URLSearchParams(searchParams.toString());
@@ -610,15 +617,15 @@ export function TradeAnalysisClient({
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Selected-period records</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
           <DashboardMetricCard caption={`${model.analyzedExecutionCount} saved execution snapshots`} label="Analyzed day trades" value={String(model.analyzedTradeCount)} />
-          <DashboardMetricCard caption={`${model.eligibleDayTradeCount} completed day trades in the selected period`} label="Analyzer coverage" value={percent(model.coveragePercent)} />
+          <DashboardMetricCard caption={`${model.eligibleDayTradeCount} completed day trades checked`} label="Analyzer coverage" value={percent(model.coveragePercent)} />
           <DashboardMetricCard caption={`Combined completed ${moneyBasisLabel} P/L`} label={`${moneyBasisLabel} trade P/L`} value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
           <DashboardMetricCard caption="Trades that held a meaningful profit level for its required number of completed 1-minute closes" label="Meaningful-profit scenarios" value={String(model.meaningfulProfit.tradeCount)} />
           <DashboardMetricCard caption={model.directionTradeCounts.long > 0 && model.directionTradeCounts.short > 0
             ? `${model.directionTradeCounts.long} long · ${model.directionTradeCounts.short} short`
             : model.directionTradeCounts.long > 0
-              ? `${model.directionTradeCounts.long} completed long ${model.directionTradeCounts.long === 1 ? "trade" : "trades"}`
-              : `${model.directionTradeCounts.short} completed short ${model.directionTradeCounts.short === 1 ? "trade" : "trades"}`} label="Trade direction" value={model.directionTradeCounts.long > 0 && model.directionTradeCounts.short > 0 ? "Long / Short" : model.directionTradeCounts.long > 0 ? "Long only" : "Short only"} />
-          <DashboardMetricCard caption="Average percentage result for completed trades" label="Average return" value={percent(model.averageReturnPercent)} valueColor={financialOutcomeColor(model.averageReturnPercent)} />
+              ? `${model.directionTradeCounts.long} long ${model.directionTradeCounts.long === 1 ? "trade" : "trades"}`
+              : `${model.directionTradeCounts.short} short ${model.directionTradeCounts.short === 1 ? "trade" : "trades"}`} label="Trade direction" value={model.directionTradeCounts.long > 0 && model.directionTradeCounts.short > 0 ? "Long / Short" : model.directionTradeCounts.long > 0 ? "Long only" : "Short only"} />
+          <DashboardMetricCard caption="Average percentage result for these trades" label="Average return" value={percent(model.averageReturnPercent)} valueColor={financialOutcomeColor(model.averageReturnPercent)} />
         </Box>
       </Stack> : null}
 
@@ -627,7 +634,7 @@ export function TradeAnalysisClient({
           <CardContent>
             <Typography color="text.secondary" variant="caption">Analyzed trades</Typography>
             <Typography component="div" sx={{ fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>
-              {view === "day" ? model.analyzedTradeCount : model.directionTradeCounts[activeDirection]}
+              {view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
             </Typography>
           </CardContent>
         </CardActionArea>
@@ -651,14 +658,14 @@ export function TradeAnalysisClient({
         </Stack>
       ) : null}
 
-      {view === "green-to-red" ? <Section defaultExpanded description="What happened after completed trades reached a gain of 20% or more while shares were open." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Green-to-red trades">
+      {view === "green-to-red" ? <Section defaultExpanded description="What happened after user-defined trades reached a gain of 20% or more while shares were open." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Green-to-red trades">
         <GreenToRedAnalysis
           currency={model.currency}
           direction={activeDirection}
           offline={offline}
           rows={greenToRedOpportunityRows}
           timezone={model.timezone}
-          totalTradeCount={model.directionTradeCounts[activeDirection]}
+          totalTradeCount={greenToRedDirectionCounts[activeDirection]}
         />
       </Section> : null}
 
@@ -670,7 +677,7 @@ export function TradeAnalysisClient({
           records={profitZoneRecords}
           rows={profitZoneRows}
           timezone={model.timezone}
-          totalTradeCount={model.directionTradeCounts[activeDirection]}
+          totalTradeCount={profitZoneDirectionCounts[activeDirection]}
         />
       </Section> : null}
 

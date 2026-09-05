@@ -65,6 +65,13 @@ or turn an observed scenario into advice.
     render it directly without an unnecessary toggle.
 13. Short borrow, locate and interest costs appear only when exact imported and
     allocated facts exist; otherwise do not describe Net P/L as all-in.
+14. Every page in the Day Trade Analyzer uses only trades with ready analyzer
+    evidence. Completed but unanalyzed journal trades may appear only in an
+    explicit coverage status; they never enter result totals, percentages,
+    direction counts or evidence tables. Show the applicable analyzed-trade
+    count near the top of every page. Below that count, ordinary `trades`
+    wording refers to that population; do not repeat `analyzed trades` in every
+    caption or denominator.
 
 ## Routes
 
@@ -129,7 +136,7 @@ takeaway that chooses a winner for the trader.
 
 ### Green to Red
 
-Lead with the percentage and count of completed trades that reached +20%, their
+Lead with the percentage and count of analyzed user-defined trades that reached +20%, their
 combined maximum Gross profit opportunity, exact Gross profit taken, the count
 that later turned red, and the count and combined Gross loss that finished red.
 Keep the denominators explicit. Split finished-red trades into no-profit-taken
@@ -148,8 +155,10 @@ Where the existing quantity-conserving later-fill comparison is available,
 show its exact avoided-loss/given-up-profit result as a secondary fact.
 
 Lead this page with a collective `Profit taking by price level` view for every
-analyzed trade in the selected closing-date range. It has two coordinated
-parts:
+analyzed user-defined trade in the selected closing-date range. The trader's
+saved grouping is authoritative: entries, adds, partial exits, temporary
+returns to flat, re-entries and the final exit remain inside one trade, and that
+trade contributes once to each percentage. It has two coordinated parts:
 
 1. A compact vertical zone ladder uses cumulative direction-adjusted thresholds: at least
    20%, 30%, 40%, 50%, 60%, 70%, 80%, 90% and 100%. A trade that moves from
@@ -165,8 +174,12 @@ For each threshold/band pair show:
 
 - unique trades reaching at least the lower threshold and its percentage of
   the selected direction's analyzed trades;
-- trades and percentage taking profit inside the exclusive band and exact gross
-  profit taken there;
+- trades and percentage taking partial profit inside the exclusive band,
+  divided by the trades that reached that band, and exact gross profit from
+  those partial exits;
+- profitable full-position exits inside the band remain a separate exact fact
+  and must not inflate the partial-profit rate; the compact ladder shows their
+  trade rate and exact Gross dollars separately;
 - trades reaching the next threshold while shares remained open;
 - trades that did not reach the next threshold before the final exit, with a
   separate count for a completed close falling below the current threshold;
@@ -187,6 +200,21 @@ gross losses` come only from recorded executions and completed Journal trades.
 The ladder and its exact records never add overlapping level opportunities into a false
 grand total. All profit-zone money stays Gross even when the page's general
 Gross/Net selector is Net.
+
+The exact record for a selected zone distinguishes partial profit taken before
+the next zone, partial profit taken after the trade had already reached the next
+zone and pulled back, and a profitable return to flat in the zone. Returning to
+flat does not imply that the user-defined trade ended because the trader may
+re-enter inside the same saved trade. This prevents closing the current
+position from being presented as scaling out.
+
+Partial-profit and profitable-full-exit rates both use trades reaching the zone
+as their denominator. A full exit means all remaining open shares were sold.
+They are independent, potentially overlapping behaviors rather than parts of a
+100% whole: one saved trade may partially exit and later fully exit. The ladder
+leads with the deduplicated rate of trades with any profitable exit in the zone,
+then shows partial exits, full exits and their overlap. Stopped-here progression
+is also independent of both profit-taking measures.
 
 ### Entries and Exits
 

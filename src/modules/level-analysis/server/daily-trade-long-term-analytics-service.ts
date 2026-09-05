@@ -4,6 +4,8 @@ import type Database from "better-sqlite3";
 import type { JournalAnalyticsRoundTripTableRow } from "@/src/modules/journal-analytics/contracts/analytics-result";
 import { readJournalProfitProtectionOutcome } from
   "@/src/modules/journal/server/analytics/journal-profit-protection-outcome-service";
+import { JournalLogicalTradeRepository } from
+  "@/src/modules/journal/server/logical-trades/journal-logical-trade-repository";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 
 import type {
@@ -11,6 +13,7 @@ import type {
   DailyTradeProfitProtectionOutcome,
 } from "../contracts/daily-trade-analyzer-contracts";
 import { readDailyTradePathMaterialization } from "./daily-trade-path-materialization-repository";
+import { LogicalTradeAnalyzerRepository } from "./logical-trade-analyzer-repository";
 import {
   analyzeDailyTradeV2Scenario,
   DAILY_TRADE_V2_PROFIT_ZONE_LEVELS,
@@ -89,6 +92,17 @@ type AnalyzerFact = Readonly<{
   profitProtection: DailyTradeProfitProtectionOutcome;
   roundTripId: string;
   scenario: DailyTradeV2ScenarioAnalysis | null;
+}>;
+
+type ScenarioTrade = Readonly<{
+  closeLocalDate: string;
+  direction: "long" | "short";
+  entryLocalDate: string;
+  finalGrossPnlDecimal: string;
+  representativeRoundTripId: string;
+  scenario: DailyTradeV2ScenarioAnalysis;
+  symbol: string;
+  totalHoldingMinutes: number;
 }>;
 
 export type TradeAnalysisBreakdownRow = Readonly<{
@@ -214,8 +228,13 @@ export type TradeAnalysisProfitZoneRecord = Readonly<{
   lowerBoundPercent: number;
   minutesFromEntryToFirstReach: number;
   observedOutcome: "dropped_before_next" | "exited_before_next" | "reached_next";
+  partialProfitTakenAfterNextGrossDecimal: string;
+  partialProfitTakenBeforeNextGrossDecimal: string;
+  partialProfitTakenInZoneGrossDecimal: string;
+  partialProfitTakingExitCount: number;
   profitAvailableAtLevelGrossDecimal: string;
   profitTakenInZoneGrossDecimal: string;
+  profitableFullExitInZoneGrossDecimal: string;
   quantitySoldInZoneDecimal: string;
   reachedNextLevel: boolean;
   roundTripId: string;
@@ -238,10 +257,17 @@ export type TradeAnalysisProfitZoneSummaryRow = Readonly<{
   noProfitEndedRedGrossLossDecimal: string;
   noProfitEndedRedRatePercent: number | null;
   noProfitEndedRedTradeCount: number;
+  partialProfitRateOfReachedPercent: number | null;
+  partialProfitTakenInZoneGrossDecimal: string;
+  partialProfitTradeCount: number;
+  partialAndReturnedFlatRateOfReachedPercent: number | null;
+  partialAndReturnedFlatTradeCount: number;
   profitAvailableAtLevelGrossDecimal: string;
   profitAvailableDidNotReachNextGrossDecimal: string | null;
   profitAvailableReachedNextGrossDecimal: string | null;
   profitTakenInZoneGrossDecimal: string;
+  profitableFullExitInZoneGrossDecimal: string;
+  profitableFullExitTradeCount: number;
   quantitySoldInZoneDecimal: string;
   reachRatePercent: number | null;
   reachedNextTradeCount: number | null;
@@ -367,6 +393,7 @@ export type DailyTradeLongTermAnalyticsModel = Readonly<{
   greenToRedDamageByDirection?: Readonly<Record<"long" | "short", TradeAnalysisGreenToRedDamage>>;
   greenToRedOpportunity?: Readonly<{
     rows: readonly TradeAnalysisGreenToRedOpportunityRow[];
+    tradeCountsByDirection: Readonly<{ long: number; short: number }>;
   }>;
   greenToRedTradeCount: number;
   holding: readonly TradeAnalysisBreakdownRow[];
@@ -426,6 +453,7 @@ export type DailyTradeLongTermAnalyticsModel = Readonly<{
   profitZones?: Readonly<{
     recordsByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisProfitZoneRecord[]>>;
     rowsByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisProfitZoneSummaryRow[]>>;
+    tradeCountsByDirection: Readonly<{ long: number; short: number }>;
   }>;
   riskManagement: Readonly<{
     addedAfterPeak: readonly TradeAnalysisBreakdownRow[];
@@ -479,7 +507,8 @@ export function readDailyTradeAnalysisCurrencies(
 ): readonly string[] {
   const accountId = scope.activeAccountId;
   if (!accountId || !scope.allowedAccountIds.includes(accountId)) return Object.freeze([]);
-  const rows = database.prepare<[string, string], { trade_currency: string }>(`SELECT DISTINCT round_trip_version.trade_currency
+  const rows = database.prepare<[string, string, string, string], { trade_currency: string }>(`SELECT DISTINCT trade_currency FROM (
+SELECT round_trip_version.trade_currency AS trade_currency
 FROM journal_round_trip_daily_trade_analyses analysis
 JOIN journal_round_trip_daily_trade_analysis_versions version
   ON version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
@@ -499,7 +528,28 @@ WHERE analysis.workspace_id = ? AND analysis.account_id = ?
       AND candle.candle_time_utc_seconds = snapshot.candle_time_utc_seconds
     WHERE snapshot.daily_trade_analysis_version_id = version.daily_trade_analysis_version_id
   )
-ORDER BY round_trip_version.trade_currency`).all(scope.workspaceId, accountId);
+UNION
+SELECT round_trip_version.trade_currency AS trade_currency
+FROM journal_logical_trade_daily_analyses analysis
+JOIN journal_logical_trade_daily_analysis_versions version
+  ON version.logical_trade_analysis_id = analysis.logical_trade_analysis_id
+  AND version.revision_number = analysis.current_revision
+JOIN journal_logical_trade_version_members member
+  ON member.workspace_id = analysis.workspace_id
+  AND member.account_id = analysis.account_id
+  AND member.logical_trade_id = analysis.logical_trade_id
+  AND member.logical_trade_version_id = analysis.logical_trade_version_id
+  AND member.member_sequence = 1
+JOIN journal_round_trip_versions round_trip_version
+  ON round_trip_version.workspace_id = member.workspace_id
+  AND round_trip_version.account_id = member.account_id
+  AND round_trip_version.round_trip_version_id = member.round_trip_version_id
+WHERE analysis.workspace_id = ? AND analysis.account_id = ?
+  AND analysis.status = 'ready' AND version.status = 'ready'
+  AND version.evidence_candles_json IS NOT NULL
+  AND json_array_length(version.evidence_candles_json) > 0
+)
+ORDER BY trade_currency`).all(scope.workspaceId, accountId, scope.workspaceId, accountId);
   return Object.freeze(rows.map((row) => row.trade_currency));
 }
 
@@ -799,6 +849,73 @@ function scaleProfitProtection(
   return outcome;
 }
 
+function scaleScenario(
+  scenario: DailyTradeV2ScenarioAnalysis,
+  multiplier: string,
+): DailyTradeV2ScenarioAnalysis {
+  if (multiplier === "1") return scenario;
+  return Object.freeze({
+    ...scenario,
+    calculatedFinalGrossResultDecimal: scaledDecimal(scenario.calculatedFinalGrossResultDecimal, multiplier)!,
+    calculatedFinalNetResultDecimal: scaledDecimal(scenario.calculatedFinalNetResultDecimal, multiplier),
+    greenOpportunity: scenario.greenOpportunity ? Object.freeze({
+      ...scenario.greenOpportunity,
+      maximumGainPriceDecimal: scaledDecimal(scenario.greenOpportunity.maximumGainPriceDecimal, multiplier)!,
+      maximumGrossProfitOpportunityDecimal: scaledDecimal(
+        scenario.greenOpportunity.maximumGrossProfitOpportunityDecimal,
+        multiplier,
+      )!,
+      profitSecuredGrossDecimal: scaledDecimal(
+        scenario.greenOpportunity.profitSecuredGrossDecimal,
+        multiplier,
+      )!,
+    }) : null,
+    primaryQualification: scenario.primaryQualification ? Object.freeze({
+      ...scenario.primaryQualification,
+      calculatedGrossResultDecimal: scaledDecimal(
+        scenario.primaryQualification.calculatedGrossResultDecimal,
+        multiplier,
+      )!,
+      calculatedNetResultDecimal: scaledDecimal(
+        scenario.primaryQualification.calculatedNetResultDecimal,
+        multiplier,
+      ),
+      closePriceDecimal: scaledDecimal(scenario.primaryQualification.closePriceDecimal, multiplier)!,
+    }) : null,
+    qualifications: Object.freeze(scenario.qualifications.map((qualification) => Object.freeze({
+      ...qualification,
+      calculatedGrossResultDecimal: scaledDecimal(qualification.calculatedGrossResultDecimal, multiplier)!,
+      calculatedNetResultDecimal: scaledDecimal(qualification.calculatedNetResultDecimal, multiplier),
+      closePriceDecimal: scaledDecimal(qualification.closePriceDecimal, multiplier)!,
+    }))),
+    profitZones: Object.freeze(scenario.profitZones.map((zone) => Object.freeze({
+      ...zone,
+      partialProfitTakenAfterNextGrossDecimal: scaledDecimal(
+        zone.partialProfitTakenAfterNextGrossDecimal,
+        multiplier,
+      )!,
+      partialProfitTakenBeforeNextGrossDecimal: scaledDecimal(
+        zone.partialProfitTakenBeforeNextGrossDecimal,
+        multiplier,
+      )!,
+      partialProfitTakenInZoneGrossDecimal: scaledDecimal(
+        zone.partialProfitTakenInZoneGrossDecimal,
+        multiplier,
+      )!,
+      profitAvailableAtLevelGrossDecimal: scaledDecimal(zone.profitAvailableAtLevelGrossDecimal, multiplier),
+      profitTakenInZoneGrossDecimal: scaledDecimal(zone.profitTakenInZoneGrossDecimal, multiplier)!,
+      profitableFullExitInZoneGrossDecimal: scaledDecimal(
+        zone.profitableFullExitInZoneGrossDecimal,
+        multiplier,
+      )!,
+    }))),
+    scaleOut: Object.freeze({
+      ...scenario.scaleOut,
+      profitSecuredGrossDecimal: scaledDecimal(scenario.scaleOut.profitSecuredGrossDecimal, multiplier)!,
+    }),
+  });
+}
+
 function scaleAnalyzerFact(fact: AnalyzerFact, multiplier: string): AnalyzerFact {
   if (multiplier === "1") return fact;
   return Object.freeze({
@@ -839,44 +956,7 @@ function scaleAnalyzerFact(fact: AnalyzerFact, multiplier: string): AnalyzerFact
     }))),
     postExitThirtyMinuteMoveDecimal: scaledDecimal(fact.postExitThirtyMinuteMoveDecimal, multiplier),
     profitProtection: scaleProfitProtection(fact.profitProtection, multiplier),
-    scenario: fact.scenario ? Object.freeze({
-      ...fact.scenario,
-      calculatedFinalGrossResultDecimal: scaledDecimal(fact.scenario.calculatedFinalGrossResultDecimal, multiplier)!,
-      calculatedFinalNetResultDecimal: scaledDecimal(fact.scenario.calculatedFinalNetResultDecimal, multiplier),
-      greenOpportunity: fact.scenario.greenOpportunity ? Object.freeze({
-        ...fact.scenario.greenOpportunity,
-        maximumGainPriceDecimal: scaledDecimal(fact.scenario.greenOpportunity.maximumGainPriceDecimal, multiplier)!,
-        maximumGrossProfitOpportunityDecimal: scaledDecimal(
-          fact.scenario.greenOpportunity.maximumGrossProfitOpportunityDecimal,
-          multiplier,
-        )!,
-        profitSecuredGrossDecimal: scaledDecimal(
-          fact.scenario.greenOpportunity.profitSecuredGrossDecimal,
-          multiplier,
-        )!,
-      }) : null,
-      primaryQualification: fact.scenario.primaryQualification ? Object.freeze({
-        ...fact.scenario.primaryQualification,
-        calculatedGrossResultDecimal: scaledDecimal(fact.scenario.primaryQualification.calculatedGrossResultDecimal, multiplier)!,
-        calculatedNetResultDecimal: scaledDecimal(fact.scenario.primaryQualification.calculatedNetResultDecimal, multiplier),
-        closePriceDecimal: scaledDecimal(fact.scenario.primaryQualification.closePriceDecimal, multiplier)!,
-      }) : null,
-      qualifications: Object.freeze(fact.scenario.qualifications.map((qualification) => Object.freeze({
-        ...qualification,
-        calculatedGrossResultDecimal: scaledDecimal(qualification.calculatedGrossResultDecimal, multiplier)!,
-        calculatedNetResultDecimal: scaledDecimal(qualification.calculatedNetResultDecimal, multiplier),
-        closePriceDecimal: scaledDecimal(qualification.closePriceDecimal, multiplier)!,
-      }))),
-      profitZones: Object.freeze(fact.scenario.profitZones.map((zone) => Object.freeze({
-        ...zone,
-        profitAvailableAtLevelGrossDecimal: scaledDecimal(zone.profitAvailableAtLevelGrossDecimal, multiplier),
-        profitTakenInZoneGrossDecimal: scaledDecimal(zone.profitTakenInZoneGrossDecimal, multiplier)!,
-      }))),
-      scaleOut: Object.freeze({
-        ...fact.scenario.scaleOut,
-        profitSecuredGrossDecimal: scaledDecimal(fact.scenario.scaleOut.profitSecuredGrossDecimal, multiplier)!,
-      }),
-    }) : null,
+    scenario: fact.scenario ? scaleScenario(fact.scenario, multiplier) : null,
   });
 }
 
@@ -1282,6 +1362,13 @@ function profitZoneSummaryRows(
     const upperBoundPercent = zoneRecords[0]?.upperBoundPercent ??
       (lowerBoundPercent < 100 ? lowerBoundPercent + 10 : null);
     const tookProfit = zoneRecords.filter((record) => new Decimal(record.profitTakenInZoneGrossDecimal).isPositive());
+    const tookPartialProfit = zoneRecords.filter((record) =>
+      new Decimal(record.partialProfitTakenInZoneGrossDecimal).isPositive());
+    const closedProfitably = zoneRecords.filter((record) =>
+      new Decimal(record.profitableFullExitInZoneGrossDecimal).isPositive());
+    const partiallyExitedAndClosedProfitably = zoneRecords.filter((record) =>
+      new Decimal(record.partialProfitTakenInZoneGrossDecimal).isPositive() &&
+      new Decimal(record.profitableFullExitInZoneGrossDecimal).isPositive());
     const noProfit = zoneRecords.filter((record) =>
       new Decimal(record.profitTakenInZoneGrossDecimal).isZero());
     const noProfitEndedRed = noProfit.filter((record) =>
@@ -1309,6 +1396,15 @@ function profitZoneSummaryRows(
         record.finalGrossPnlDecimal)) ?? "0",
       noProfitEndedRedRatePercent: percentage(noProfitEndedRed.length, noProfit.length),
       noProfitEndedRedTradeCount: noProfitEndedRed.length,
+      partialProfitRateOfReachedPercent: percentage(tookPartialProfit.length, zoneRecords.length),
+      partialProfitTakenInZoneGrossDecimal: sumDecimals(tookPartialProfit.map((record) =>
+        record.partialProfitTakenInZoneGrossDecimal)) ?? "0",
+      partialProfitTradeCount: tookPartialProfit.length,
+      partialAndReturnedFlatRateOfReachedPercent: percentage(
+        partiallyExitedAndClosedProfitably.length,
+        zoneRecords.length,
+      ),
+      partialAndReturnedFlatTradeCount: partiallyExitedAndClosedProfitably.length,
       profitAvailableAtLevelGrossDecimal: sumDecimals(zoneRecords.map((record) =>
         record.profitAvailableAtLevelGrossDecimal)) ?? "0",
       profitAvailableDidNotReachNextGrossDecimal: upperBoundPercent === null
@@ -1319,6 +1415,9 @@ function profitZoneSummaryRows(
         : sumDecimals(reachedNext.map((record) => record.profitAvailableAtLevelGrossDecimal)) ?? "0",
       profitTakenInZoneGrossDecimal: sumDecimals(tookProfit.map((record) =>
         record.profitTakenInZoneGrossDecimal)) ?? "0",
+      profitableFullExitInZoneGrossDecimal: sumDecimals(closedProfitably.map((record) =>
+        record.profitableFullExitInZoneGrossDecimal)) ?? "0",
+      profitableFullExitTradeCount: closedProfitably.length,
       quantitySoldInZoneDecimal: sumDecimals(tookProfit.map((record) => record.quantitySoldInZoneDecimal)) ?? "0",
       reachRatePercent: percentage(zoneRecords.length, totalTradeCount),
       reachedNextTradeCount: upperBoundPercent === null ? null : reachedNext.length,
@@ -1327,6 +1426,78 @@ function profitZoneSummaryRows(
       tookProfitTradeCount: tookProfit.length,
       upperBoundPercent,
     });
+  }));
+}
+
+function analyzedScenarioTrades(input: Readonly<{
+  analyzerByRoundTripId: ReadonlyMap<string, AnalyzerFact>;
+  database: Database.Database;
+  journalRows: readonly JournalAnalyticsRoundTripTableRow[];
+  reportingMultiplierByRoundTrip: ReadonlyMap<string, string>;
+  scope: WorkspaceAccessScope;
+}>): readonly ScenarioTrade[] {
+  const accountId = input.scope.activeAccountId;
+  if (!accountId || !input.scope.allowedAccountIds.includes(accountId)) return Object.freeze([]);
+  const accountScope = Object.freeze({
+    accountId,
+    userId: input.scope.userId,
+    workspaceId: input.scope.workspaceId,
+    workspaceRole: input.scope.workspaceRole,
+  });
+  const journalByRoundTripId = new Map(input.journalRows.map((row) =>
+    [row.roundTripId, row] as const));
+  const logicalAnalyzer = new LogicalTradeAnalyzerRepository(input.database);
+  const trades = new JournalLogicalTradeRepository(input.database).list(accountScope);
+
+  return Object.freeze(trades.flatMap((trade): ScenarioTrade[] => {
+    if (trade.tradeStyle !== "day" || trade.lifecycleState !== "active") return [];
+    const journalMembers = trade.members.map((member) => journalByRoundTripId.get(member.roundTripId) ?? null);
+    if (journalMembers.some((member) => member === null)) return [];
+    const members = journalMembers as readonly JournalAnalyticsRoundTripTableRow[];
+    const representative = trade.members[0];
+    const firstJournal = members[0];
+    const lastJournal = members.at(-1);
+    if (!representative || !firstJournal || !lastJournal) return [];
+    const multiplier = input.reportingMultiplierByRoundTrip.get(representative.roundTripId) ?? "1";
+    let scenario: DailyTradeV2ScenarioAnalysis | null = null;
+
+    if (trade.logicalTradeId) {
+      const saved = logicalAnalyzer.readCurrentByRoundTrip(accountScope, representative.roundTripId);
+      if (saved?.status === "ready" && saved.analyzed) {
+        scenario = analyzeDailyTradeV2Scenario({
+          candles: saved.candles.map((candle) => Object.freeze({
+            closeDecimal: candle.closeDecimal,
+            highDecimal: candle.highDecimal,
+            lowDecimal: candle.lowDecimal,
+            time: candle.time,
+          })),
+          direction: trade.direction,
+          events: saved.analyzed.eventSnapshots.map((snapshot) => Object.freeze({
+            executedAtUtc: snapshot.event.executedAtUtc,
+            feesDecimal: snapshot.event.feesDecimal ?? null,
+            kind: snapshot.event.kind,
+            priceDecimal: snapshot.event.priceDecimal,
+            quantityDecimal: snapshot.event.quantityDecimal,
+            sequence: snapshot.event.sequence,
+          })),
+        });
+      }
+    } else {
+      scenario = input.analyzerByRoundTripId.get(representative.roundTripId)?.scenario ?? null;
+    }
+    if (!scenario) return [];
+
+    return [Object.freeze({
+      closeLocalDate: lastJournal.closeLocalDate,
+      direction: trade.direction,
+      entryLocalDate: firstJournal.entryLocalDate,
+      finalGrossPnlDecimal: members.reduce((total, member) =>
+        total.plus(member.grossPnlDecimal), new Decimal(0)).toString(),
+      representativeRoundTripId: representative.roundTripId,
+      scenario: scaleScenario(scenario, multiplier),
+      symbol: trade.symbol,
+      totalHoldingMinutes: Math.max(0, Date.parse(trade.closedAtUtc) - Date.parse(trade.openedAtUtc)) / 60_000,
+    })];
   }));
 }
 
@@ -1341,6 +1512,13 @@ export function buildDailyTradeLongTermAnalytics(
 ): DailyTradeLongTermAnalyticsV2Model {
   const analyzer = readAnalyzerFacts(database, scope);
   const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade");
+  const scenarioTrades = analyzedScenarioTrades({
+    analyzerByRoundTripId: analyzer,
+    database,
+    journalRows,
+    reportingMultiplierByRoundTrip,
+    scope,
+  });
   const joined: readonly Joined[] = Object.freeze(eligibleDayTrades.flatMap((journal) => {
     const sourceFact = analyzer.get(journal.roundTripId);
     if (!sourceFact || journal.selectedPnlDecimal === null) return [];
@@ -1415,16 +1593,15 @@ export function buildDailyTradeLongTermAnalytics(
       trackerDate: row.journal.entryLocalDate,
     })];
   }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
-  const greenToRedOpportunityRows = Object.freeze(joined.flatMap((row): TradeAnalysisGreenToRedOpportunityRow[] => {
-    const opportunity = row.analyzer.scenario?.greenOpportunity;
-    const calculatedFinalGross = row.analyzer.scenario?.calculatedFinalGrossResultDecimal;
+  const greenToRedOpportunityRows = Object.freeze(scenarioTrades.flatMap((trade): TradeAnalysisGreenToRedOpportunityRow[] => {
+    const opportunity = trade.scenario.greenOpportunity;
+    const calculatedFinalGross = trade.scenario.calculatedFinalGrossResultDecimal;
     if (!opportunity || new Decimal(opportunity.maximumGrossProfitOpportunityDecimal).lte(0) ||
-        calculatedFinalGross === undefined ||
-        new Decimal(calculatedFinalGross).minus(row.journal.grossPnlDecimal).abs().gt("0.02")) return [];
+        new Decimal(calculatedFinalGross).minus(trade.finalGrossPnlDecimal).abs().gt("0.02")) return [];
     return [Object.freeze({
-      closeDate: row.journal.closeLocalDate,
-      direction: row.journal.direction,
-      finalGrossPnlDecimal: row.journal.grossPnlDecimal,
+      closeDate: trade.closeLocalDate,
+      direction: trade.direction,
+      finalGrossPnlDecimal: trade.finalGrossPnlDecimal,
       firstReachedTwentyAtUtcSeconds: opportunity.firstReachedTwentyAtUtcSeconds,
       firstRedAfterTwentyAtUtcSeconds: opportunity.firstRedAfterTwentyAtUtcSeconds,
       maximumGainAtUtcSeconds: opportunity.maximumGainAtUtcSeconds,
@@ -1434,16 +1611,16 @@ export function buildDailyTradeLongTermAnalytics(
       peakZoneLowerBoundPercent: opportunity.peakZoneLowerBoundPercent,
       peakZoneUpperBoundPercent: opportunity.peakZoneUpperBoundPercent,
       profitOpportunityToFinalDifferenceDecimal: new Decimal(opportunity.maximumGrossProfitOpportunityDecimal)
-        .minus(row.journal.grossPnlDecimal)
+        .minus(trade.finalGrossPnlDecimal)
         .toString(),
       profitSecuredGrossDecimal: opportunity.profitSecuredGrossDecimal,
       profitTakingExitCount: opportunity.profitTakingExitCount,
       recoveredAfterTurningRed: opportunity.recoveredAfterTurningRed,
-      roundTripId: row.journal.roundTripId,
-      symbol: row.journal.displayedSymbol,
+      roundTripId: trade.representativeRoundTripId,
+      symbol: trade.symbol,
       timeInPeakZoneMinutes: opportunity.timeInPeakZoneMinutes,
-      totalHoldingMinutes: row.journal.holdingDurationMilliseconds / 60_000,
-      trackerDate: row.journal.entryLocalDate,
+      totalHoldingMinutes: trade.totalHoldingMinutes,
+      trackerDate: trade.entryLocalDate,
     })];
   }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
   const scalingRows = Object.freeze(joined.flatMap((row): TradeAnalysisScalingOutRow[] => {
@@ -1470,32 +1647,37 @@ export function buildDailyTradeLongTermAnalytics(
   }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
   const noScaleEndedRedRows = meaningfulProfitRows.filter((row) =>
     !row.scaledOutWhileGreen && row.outcome === "ended_red");
-  const profitZoneRecords = Object.freeze(joined.flatMap((row): TradeAnalysisProfitZoneRecord[] =>
-    (row.analyzer.scenario?.profitZones ?? []).flatMap((zone) => {
+  const profitZoneRecords = Object.freeze(scenarioTrades.flatMap((trade): TradeAnalysisProfitZoneRecord[] =>
+    trade.scenario.profitZones.flatMap((zone) => {
       if (zone.firstReachedAtUtcSeconds === null ||
           zone.firstReachSource === null ||
           zone.minutesFromEntryToFirstReach === null ||
           zone.profitAvailableAtLevelGrossDecimal === null ||
           zone.observedOutcome === "did_not_reach") return [];
       return [Object.freeze({
-        closeDate: row.journal.closeLocalDate,
-        direction: row.journal.direction,
-        finalGrossPnlDecimal: row.journal.grossPnlDecimal,
+        closeDate: trade.closeLocalDate,
+        direction: trade.direction,
+        finalGrossPnlDecimal: trade.finalGrossPnlDecimal,
         firstReachedAtUtcSeconds: zone.firstReachedAtUtcSeconds,
         firstReachSource: zone.firstReachSource,
         longestConsecutiveMinutesAtOrAbove: zone.longestConsecutiveMinutesAtOrAbove,
         lowerBoundPercent: zone.lowerBoundPercent,
         minutesFromEntryToFirstReach: zone.minutesFromEntryToFirstReach,
         observedOutcome: zone.observedOutcome,
+        partialProfitTakenAfterNextGrossDecimal: zone.partialProfitTakenAfterNextGrossDecimal,
+        partialProfitTakenBeforeNextGrossDecimal: zone.partialProfitTakenBeforeNextGrossDecimal,
+        partialProfitTakenInZoneGrossDecimal: zone.partialProfitTakenInZoneGrossDecimal,
+        partialProfitTakingExitCount: zone.partialProfitTakingExitCount,
         profitAvailableAtLevelGrossDecimal: zone.profitAvailableAtLevelGrossDecimal,
         profitTakenInZoneGrossDecimal: zone.profitTakenInZoneGrossDecimal,
+        profitableFullExitInZoneGrossDecimal: zone.profitableFullExitInZoneGrossDecimal,
         quantitySoldInZoneDecimal: zone.quantitySoldInZoneDecimal,
         reachedNextLevel: zone.reachedNextLevel,
-        roundTripId: row.journal.roundTripId,
-        symbol: row.journal.displayedSymbol,
+        roundTripId: trade.representativeRoundTripId,
+        symbol: trade.symbol,
         totalCompletedMinutesInZone: zone.totalCompletedMinutesInZone,
-        totalHoldingMinutes: row.journal.holdingDurationMilliseconds / 60_000,
-        trackerDate: row.journal.entryLocalDate,
+        totalHoldingMinutes: trade.totalHoldingMinutes,
+        trackerDate: trade.entryLocalDate,
         upperBoundPercent: zone.upperBoundPercent,
       })];
     })
@@ -1636,6 +1818,10 @@ export function buildDailyTradeLongTermAnalytics(
     }),
     greenToRedOpportunity: Object.freeze({
       rows: greenToRedOpportunityRows,
+      tradeCountsByDirection: Object.freeze({
+        long: scenarioTrades.filter((trade) => trade.direction === "long").length,
+        short: scenarioTrades.filter((trade) => trade.direction === "short").length,
+      }),
     }),
     greenToRedTradeCount: greenToRedTrades.length,
     holding: holdingRows(joined),
@@ -1699,12 +1885,16 @@ export function buildDailyTradeLongTermAnalytics(
       rowsByDirection: Object.freeze({
         long: profitZoneSummaryRows(
           profitZoneRecordsByDirection.long,
-          joined.filter((row) => row.journal.direction === "long").length,
+          scenarioTrades.filter((trade) => trade.direction === "long").length,
         ),
         short: profitZoneSummaryRows(
           profitZoneRecordsByDirection.short,
-          joined.filter((row) => row.journal.direction === "short").length,
+          scenarioTrades.filter((trade) => trade.direction === "short").length,
         ),
+      }),
+      tradeCountsByDirection: Object.freeze({
+        long: scenarioTrades.filter((trade) => trade.direction === "long").length,
+        short: scenarioTrades.filter((trade) => trade.direction === "short").length,
       }),
     }),
     riskManagement: Object.freeze({
