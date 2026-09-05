@@ -251,6 +251,8 @@ export type TradeAnalysisProfitZoneSummaryRow = Readonly<{
   didNotReachNextTradeCount: number | null;
   droppedBeforeNextTradeCount: number | null;
   exitedBeforeNextTradeCount: number | null;
+  fullExitOnlyTradeProfitInZoneGrossDecimal: string;
+  fullExitShareOfProfitTakingPercent: number | null;
   lowerBoundPercent: number;
   medianFirstReachMinutes: number | null;
   medianCompletedMinutesInZone: number | null;
@@ -270,6 +272,8 @@ export type TradeAnalysisProfitZoneSummaryRow = Readonly<{
   partialProfitTradeCount: number;
   partialAndReturnedFlatRateOfReachedPercent: number | null;
   partialAndReturnedFlatTradeCount: number;
+  partialExitShareOfProfitTakingPercent: number | null;
+  partialExitTradeProfitInZoneGrossDecimal: string;
   profitAvailableAtLevelGrossDecimal: string;
   profitAvailableDidNotReachNextGrossDecimal: string | null;
   profitAvailableReachedNextGrossDecimal: string | null;
@@ -1376,6 +1380,8 @@ function profitZoneSummaryRows(
     const tookProfit = zoneRecords.filter((record) => new Decimal(record.profitTakenInZoneGrossDecimal).isPositive());
     const tookPartialProfit = zoneRecords.filter((record) =>
       new Decimal(record.partialProfitTakenInZoneGrossDecimal).isPositive());
+    const tookFullExitOnlyProfit = tookProfit.filter((record) =>
+      new Decimal(record.partialProfitTakenInZoneGrossDecimal).isZero());
     const closedProfitably = zoneRecords.filter((record) =>
       new Decimal(record.profitableFullExitInZoneGrossDecimal).isPositive());
     const partiallyExitedAndClosedProfitably = zoneRecords.filter((record) =>
@@ -1403,6 +1409,9 @@ function profitZoneSummaryRows(
         record.observedOutcome === "dropped_before_next").length,
       exitedBeforeNextTradeCount: upperBoundPercent === null ? null : zoneRecords.filter((record) =>
         record.observedOutcome === "exited_before_next").length,
+      fullExitOnlyTradeProfitInZoneGrossDecimal: sumDecimals(tookFullExitOnlyProfit.map((record) =>
+        record.profitTakenInZoneGrossDecimal)) ?? "0",
+      fullExitShareOfProfitTakingPercent: percentage(tookFullExitOnlyProfit.length, tookProfit.length),
       lowerBoundPercent,
       medianCompletedMinutesInZone: medianNumbers(zoneRecords.map((record) =>
         record.totalCompletedMinutesInZone)),
@@ -1430,6 +1439,9 @@ function profitZoneSummaryRows(
         zoneRecords.length,
       ),
       partialAndReturnedFlatTradeCount: partiallyExitedAndClosedProfitably.length,
+      partialExitShareOfProfitTakingPercent: percentage(tookPartialProfit.length, tookProfit.length),
+      partialExitTradeProfitInZoneGrossDecimal: sumDecimals(tookPartialProfit.map((record) =>
+        record.profitTakenInZoneGrossDecimal)) ?? "0",
       profitAvailableAtLevelGrossDecimal: sumDecimals(zoneRecords.map((record) =>
         record.profitAvailableAtLevelGrossDecimal)) ?? "0",
       profitAvailableDidNotReachNextGrossDecimal: upperBoundPercent === null
