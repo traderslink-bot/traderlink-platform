@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 
 const TRADING_VIEW_WIDGET_URL =
   "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+const MOBILE_CHART_QUERY = "(max-width: 700px)";
 
 export function TradingViewChart({
   symbol = "NASDAQ:AAPL",
@@ -22,6 +23,15 @@ export function TradingViewChart({
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasLoadError, setHasLoadError] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [mobileChart, setMobileChart] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_CHART_QUERY);
+    const update = () => setMobileChart(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     const chartContainer = chartContainerRef.current;
@@ -43,9 +53,10 @@ export function TradingViewChart({
       backgroundColor: dark ? "#0e1520" : "#FFFFFF",
       calendar: false,
       details: false,
+      extended_hours: true,
       gridColor: dark ? "#314158" : "rgba(1, 30, 86, 0.08)",
       hide_legend: false,
-      hide_side_toolbar: false,
+      hide_side_toolbar: mobileChart,
       hide_top_toolbar: false,
       hide_volume: false,
       interval: "15",
@@ -64,7 +75,7 @@ export function TradingViewChart({
     return () => {
       chartContainer.replaceChildren();
     };
-  }, [dark, loadAttempt, tradingViewSymbol]);
+  }, [dark, loadAttempt, mobileChart, tradingViewSymbol]);
 
   return (
     <Box

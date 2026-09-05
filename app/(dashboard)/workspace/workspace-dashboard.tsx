@@ -284,9 +284,9 @@ export function WorkspaceDashboard({
         mt: 1.5,
       }}>{currentFocuses ? <DashboardPanel title="Current Focuses">
         <CurrentFocusContent content={currentFocuses} />
-      </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel title="Rules broken" titleAdornment={<Typography sx={{ fontSize: "1.5rem", fontWeight: 850, lineHeight: 1 }}>{ruleResultsCard.brokenRuleCount}</Typography>}>
+      </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel action={<Typography sx={{ alignSelf: "flex-end", fontSize: "3rem", fontWeight: 850, lineHeight: 0.85, ml: "auto", textAlign: "right" }}>{ruleResultsCard.brokenRuleCount}</Typography>} title="Rules broken">
         <Stack spacing={0.75} sx={{ height: "100%", minHeight: 0, pt: 0.75 }}>
-          <Typography color="text.secondary" sx={{ fontWeight: 700, mt: 0.5 }} variant="caption">Recent broken rules</Typography>
+          <Typography color="warning.main" sx={{ fontWeight: 700, mt: 0.5 }} variant="caption">Recent broken rules</Typography>
           {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5} sx={{ minWidth: 0, pt: 0.5 }}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
           <Box sx={{ mt: "auto" }}><Button onClick={() => openRules("results")} size="small">View results</Button></Box>
         </Stack>

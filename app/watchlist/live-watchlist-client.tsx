@@ -59,6 +59,7 @@ const watchlistTimeCellStyle: CSSProperties = {
 };
 
 const LIVE_WATCHLIST_CLIENT_POLL_INTERVAL_MS = 15_000;
+const MOBILE_TRADING_VIEW_QUERY = "(max-width: 700px)";
 
 const tradingViewExchangePrefixes: Record<string, string> = {
   AMEX: "AMEX",
@@ -139,10 +140,19 @@ function buildTradingViewSymbol(symbol: string, exchange: string | null | undefi
 
 function TradingViewChart({ symbol }: { symbol: LiveWatchlistSymbolState }) {
   const widgetContainerRef = useRef<HTMLDivElement>(null);
+  const [mobileChart, setMobileChart] = useState(false);
   const tradingViewSymbol = buildTradingViewSymbol(
     symbol.symbol,
     symbol.extendedQuote?.exchange,
   );
+
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_TRADING_VIEW_QUERY);
+    const update = () => setMobileChart(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     const container = widgetContainerRef.current;
@@ -167,9 +177,10 @@ function TradingViewChart({ symbol }: { symbol: LiveWatchlistSymbolState }) {
       backgroundColor: "rgba(8, 15, 28, 1)",
       calendar: false,
       details: false,
+      extended_hours: true,
       gridColor: "rgba(255, 255, 255, 0.06)",
       hide_legend: false,
-      hide_side_toolbar: false,
+      hide_side_toolbar: mobileChart,
       hide_top_toolbar: false,
       hide_volume: false,
       hotlist: false,
@@ -189,7 +200,7 @@ function TradingViewChart({ symbol }: { symbol: LiveWatchlistSymbolState }) {
     return () => {
       container.replaceChildren();
     };
-  }, [tradingViewSymbol]);
+  }, [mobileChart, tradingViewSymbol]);
 
   return (
     <section

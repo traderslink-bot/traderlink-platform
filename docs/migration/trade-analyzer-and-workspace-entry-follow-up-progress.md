@@ -72,3 +72,5 @@ Related plan:
 - The shared Analyzer connection selector now identifies each active connection by both user and Journal account, so repeated account names such as `Primary Journal` are no longer ambiguous.
 - Restored the Analyzer chart's Navy Dark surface while keeping its grid hidden, increased the contrast of the range, display, and fullscreen controls, and made Workspace recognize current shared logical-trade Analyzer results when coloring the Analyzer action.
 - The Analyzer chart remains light in both application appearances because its chart labels are clearer on the light surface; Navy Dark still uses the higher-contrast chart controls.
+- Both TradingView Advanced Chart embeds now default eligible symbols to extended-hours candles and hide only the side toolbar at 700px and below, rebuilding the widget when that breakpoint changes.
+- The Workspace Rules broken card now places its larger count at the right side of the header and uses the warning color for the Recent broken rules label.
