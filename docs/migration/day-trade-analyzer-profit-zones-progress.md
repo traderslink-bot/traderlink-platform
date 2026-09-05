@@ -203,5 +203,39 @@ to this worker.
   population.
 - [x] Focused TypeScript, ESLint and `git diff --check` pass for the shared top
   count and direction-population correction.
+- [x] Replace the overlapping profit-exit presentation with the owner-specified
+  exclusive split. The ladder now shows the percentage of zone-reaching trades
+  taking profit and its Gross dollars, then partial-exit trades and full-exit
+  trades as an exclusive breakdown of profit-taking trades that adds to 100%.
+- [x] Remove the redundant `X of X` count from the profit-taking cell. Counts
+  remain available through the reached population and exact supporting records.
+- [x] Correct the profit-taking denominator: zone reach now uses favorable
+  recorded candle movement (high for longs, low for shorts), while profitable
+  sells remain the numerator. Exact sell executions can still prove an
+  intraminute reach, but no longer define the complete reached population.
+- [x] Focused runtime proof covers the owner-reported failure: seven trades
+  reaching a zone with zero profitable sells returns 0%; three profitable sells
+  returns 42.9%; and 100% appears only when every reaching trade takes profit.
+- [x] Focused TypeScript, ESLint and `git diff --check` pass for this correction.
+- [x] Correct Full exit to mean an all-at-once position-cycle exit. A final sell
+  after any earlier scale-out stays under Partial exits; its remaining-share
+  profit is no longer mislabeled as an all-at-once Full exit.
+- [x] Use the analyzer's exact execution-summed Gross result for the exact
+  Profit Zones record so Final Gross P/L reconciles with the executions used by
+  the same row instead of mixing a separate Analytics-row total into it.
+- [x] Focused runtime proof confirms a $3 fee changes only Net, never Gross, and
+  confirms that a final remaining-share sell after scaling contributes $0 to
+  Full exit while an all-at-once exit contributes its complete Gross profit.
+- [x] Key Profit Zones by the current platform trade identity:
+  `logicalTradeId` for a user-defined trade and `roundTripId` only when no
+  logical trade exists. Multiple CELU or LGPS trades remain separate; ticker is
+  display text only.
+- [x] Preserve a ready one-member round-trip analysis when that same trade has
+  been materialized into the logical-trade system but has not received a newer
+  logical analysis. Multi-member trades still require their combined analysis.
+- [x] Use each canonical trade's own execution-summed scenario Gross P/L in its
+  exact zone row. The affected demo trades contain six $0.50 execution fees;
+  the prior $3-lower value was fee-inclusive. Fees now affect Net only and
+  cannot reduce the Final Gross value.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.

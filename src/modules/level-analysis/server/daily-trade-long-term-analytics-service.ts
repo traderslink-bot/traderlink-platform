@@ -98,11 +98,11 @@ type ScenarioTrade = Readonly<{
   closeLocalDate: string;
   direction: "long" | "short";
   entryLocalDate: string;
-  finalGrossPnlDecimal: string;
   representativeRoundTripId: string;
   scenario: DailyTradeV2ScenarioAnalysis;
   symbol: string;
   totalHoldingMinutes: number;
+  tradeId: string;
 }>;
 
 export type TradeAnalysisBreakdownRow = Readonly<{
@@ -241,6 +241,7 @@ export type TradeAnalysisProfitZoneRecord = Readonly<{
   symbol: string;
   totalCompletedMinutesInZone: number;
   totalHoldingMinutes: number;
+  tradeId: string;
   trackerDate: string;
   upperBoundPercent: number | null;
 }>;
@@ -1482,7 +1483,13 @@ function analyzedScenarioTrades(input: Readonly<{
           })),
         });
       }
-    } else {
+    }
+
+    // A materialized one-member trade is still the same individual trade. Its
+    // existing round-trip analysis remains valid until a logical re-analysis
+    // replaces it. Multi-member user-defined trades require their own combined
+    // analysis and must never be reconstructed by ticker or by member totals.
+    if (!scenario && trade.members.length === 1) {
       scenario = input.analyzerByRoundTripId.get(representative.roundTripId)?.scenario ?? null;
     }
     if (!scenario) return [];
@@ -1491,12 +1498,11 @@ function analyzedScenarioTrades(input: Readonly<{
       closeLocalDate: lastJournal.closeLocalDate,
       direction: trade.direction,
       entryLocalDate: firstJournal.entryLocalDate,
-      finalGrossPnlDecimal: members.reduce((total, member) =>
-        total.plus(member.grossPnlDecimal), new Decimal(0)).toString(),
       representativeRoundTripId: representative.roundTripId,
       scenario: scaleScenario(scenario, multiplier),
       symbol: trade.symbol,
       totalHoldingMinutes: Math.max(0, Date.parse(trade.closedAtUtc) - Date.parse(trade.openedAtUtc)) / 60_000,
+      tradeId: trade.logicalTradeId ?? representative.roundTripId,
     })];
   }));
 }
@@ -1596,12 +1602,11 @@ export function buildDailyTradeLongTermAnalytics(
   const greenToRedOpportunityRows = Object.freeze(scenarioTrades.flatMap((trade): TradeAnalysisGreenToRedOpportunityRow[] => {
     const opportunity = trade.scenario.greenOpportunity;
     const calculatedFinalGross = trade.scenario.calculatedFinalGrossResultDecimal;
-    if (!opportunity || new Decimal(opportunity.maximumGrossProfitOpportunityDecimal).lte(0) ||
-        new Decimal(calculatedFinalGross).minus(trade.finalGrossPnlDecimal).abs().gt("0.02")) return [];
+    if (!opportunity || new Decimal(opportunity.maximumGrossProfitOpportunityDecimal).lte(0)) return [];
     return [Object.freeze({
       closeDate: trade.closeLocalDate,
       direction: trade.direction,
-      finalGrossPnlDecimal: trade.finalGrossPnlDecimal,
+      finalGrossPnlDecimal: calculatedFinalGross,
       firstReachedTwentyAtUtcSeconds: opportunity.firstReachedTwentyAtUtcSeconds,
       firstRedAfterTwentyAtUtcSeconds: opportunity.firstRedAfterTwentyAtUtcSeconds,
       maximumGainAtUtcSeconds: opportunity.maximumGainAtUtcSeconds,
@@ -1611,7 +1616,7 @@ export function buildDailyTradeLongTermAnalytics(
       peakZoneLowerBoundPercent: opportunity.peakZoneLowerBoundPercent,
       peakZoneUpperBoundPercent: opportunity.peakZoneUpperBoundPercent,
       profitOpportunityToFinalDifferenceDecimal: new Decimal(opportunity.maximumGrossProfitOpportunityDecimal)
-        .minus(trade.finalGrossPnlDecimal)
+        .minus(calculatedFinalGross)
         .toString(),
       profitSecuredGrossDecimal: opportunity.profitSecuredGrossDecimal,
       profitTakingExitCount: opportunity.profitTakingExitCount,
@@ -1657,7 +1662,7 @@ export function buildDailyTradeLongTermAnalytics(
       return [Object.freeze({
         closeDate: trade.closeLocalDate,
         direction: trade.direction,
-        finalGrossPnlDecimal: trade.finalGrossPnlDecimal,
+        finalGrossPnlDecimal: trade.scenario.calculatedFinalGrossResultDecimal,
         firstReachedAtUtcSeconds: zone.firstReachedAtUtcSeconds,
         firstReachSource: zone.firstReachSource,
         longestConsecutiveMinutesAtOrAbove: zone.longestConsecutiveMinutesAtOrAbove,
@@ -1677,6 +1682,7 @@ export function buildDailyTradeLongTermAnalytics(
         symbol: trade.symbol,
         totalCompletedMinutesInZone: zone.totalCompletedMinutesInZone,
         totalHoldingMinutes: trade.totalHoldingMinutes,
+        tradeId: trade.tradeId,
         trackerDate: trade.entryLocalDate,
         upperBoundPercent: zone.upperBoundPercent,
       })];
