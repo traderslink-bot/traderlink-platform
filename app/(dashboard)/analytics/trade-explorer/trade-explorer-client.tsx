@@ -420,10 +420,12 @@ function tradeExplorerQueriesMatch(
 }
 
 export default function TradeExplorerClient({
+  initialResultView = "trades",
   initialSavedViews = Object.freeze([]),
   model,
   offlineSavedAtUtc,
 }: Readonly<{
+  initialResultView?: ExplorerResultView;
   initialSavedViews?: readonly TradeExplorerSavedView[];
   model: TradeExplorerPageModel;
   offlineSavedAtUtc?: string;
@@ -431,8 +433,8 @@ export default function TradeExplorerClient({
   const [query, setQuery] = useState(model.initialQuery);
   const [appliedQuery, setAppliedQuery] = useState(model.initialQuery);
   const [preview, setPreview] = useState<AnalyticsLabPlatformPreview>(model.initialPreview);
-  const [resultView, setResultView] = useState<ExplorerResultView>("trades");
-  const [appliedResultView, setAppliedResultView] = useState<ExplorerResultView>("trades");
+  const [resultView, setResultView] = useState<ExplorerResultView>(initialResultView);
+  const [appliedResultView, setAppliedResultView] = useState<ExplorerResultView>(initialResultView);
   const [tradeSort, setTradeSort] = useState<TradeExplorerTradeSort>("closed_desc");
   const [appliedTradeSort, setAppliedTradeSort] = useState<TradeExplorerTradeSort>("closed_desc");
   const [sortMetricId, setSortMetricId] = useState(model.initialQuery.metricId);

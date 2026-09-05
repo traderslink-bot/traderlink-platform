@@ -21,10 +21,21 @@ export const metadata: Metadata = {
   description: "Explore your confirmed Trade Tracker results.",
 };
 
-export default async function TradeExplorerPage() {
+export default async function TradeExplorerPage({
+  searchParams,
+}: Readonly<{
+  searchParams: Promise<Readonly<Record<string, string | string[] | undefined>>>;
+}>) {
+  const parameters = await searchParams;
+  const rank = parameters.rank === "pnl" || parameters.rank === "trades" ? parameters.rank : null;
+  const tickerView = parameters.view === "tickers" && rank !== null;
+  const date = (value: string | string[] | undefined): string | null =>
+    typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value) ? value : null;
+  const startDate = date(parameters.startDate);
+  const endDate = date(parameters.endDate);
   const scope = await requireTraderLinkPlatformPageScope();
   const [model, savedViews] = await Promise.all([
-    readTradeExplorerPageModel(scope),
+    readTradeExplorerPageModel(scope, tickerView ? { endDate, rank, startDate } : undefined),
     Promise.resolve(listTradeExplorerSavedViews(scope)),
   ]);
   return (
@@ -41,7 +52,7 @@ export default async function TradeExplorerPage() {
         routeViewVersion={JOURNAL_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_OFFLINE_ROUTE_VIEW_KEYS["trade-explorer"]}
       />
-      <TradeExplorerClient initialSavedViews={savedViews} model={model} />
+      <TradeExplorerClient initialResultView={tickerView ? "tickers" : "trades"} initialSavedViews={savedViews} model={model} />
     </>
   );
 }

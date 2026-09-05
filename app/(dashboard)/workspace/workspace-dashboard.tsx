@@ -140,6 +140,10 @@ function sessionDateInTimezone(timezone: string): string {
   return `${values.get("year")}-${values.get("month")}-${values.get("day")}`;
 }
 
+function tickerExplorerHref(rank: "pnl" | "trades"): string {
+  return `/analytics/trade-explorer?view=tickers&rank=${rank}`;
+}
+
 function CurrentFocusContent({ content }: Readonly<{ content: string }>) {
   return <Box sx={{
     flex: 1,
@@ -297,10 +301,10 @@ export function WorkspaceDashboard({
           <Box sx={{ mt: "auto" }}><Button onClick={() => openRules("results")} size="small">View results</Button></Box>
         </Stack>
       </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}{topTickersCard ? <DashboardPanel title="Top tickers"><Stack spacing={1.25} sx={{ flex: 1, justifyContent: "center" }}>{[
-        ["Most profitable", topTickersCard.mostProfitable],
-        ["Most traded", topTickersCard.mostTraded],
-        ["Highest buy value", topTickersCard.highestBuyValue],
-      ].map(([label, symbol]) => <Stack direction="row" key={label} spacing={1} sx={{ alignItems: "baseline", justifyContent: "space-between", minWidth: 0 }}><Typography color="text.secondary" sx={{ fontSize: "0.8rem", fontWeight: 750 }} variant="body2">{label}</Typography><Typography color="warning.main" noWrap sx={{ fontSize: "1.15rem", fontWeight: 900 }} title={symbol ?? undefined}>{symbol ?? "—"}</Typography></Stack>)}</Stack></DashboardPanel> : null}</Box> : null}
+        ["Most profitable", topTickersCard.mostProfitable, "pnl"],
+        ["Most traded", topTickersCard.mostTraded, "trades"],
+        ["Highest buy value", topTickersCard.highestBuyValue, null],
+      ].map(([label, symbol, rank]) => <Stack direction="row" key={label} spacing={1} sx={{ alignItems: "baseline", justifyContent: "space-between", minWidth: 0 }}><Typography color="text.secondary" sx={{ fontSize: "0.8rem", fontWeight: 750 }} variant="body2">{label}</Typography><Stack direction="row" spacing={0.75} sx={{ alignItems: "baseline", minWidth: 0 }}><Typography color="warning.main" noWrap sx={{ fontSize: "1.15rem", fontWeight: 900 }} title={symbol ?? undefined}>{symbol ?? "—"}</Typography>{rank ? <Button component={Link} href={tickerExplorerHref(rank as "pnl" | "trades")} size="small" sx={{ flexShrink: 0, fontSize: "0.7rem", minWidth: 0, p: 0.25 }}>View full list</Button> : null}</Stack></Stack>)}</Stack></DashboardPanel> : null}</Box> : null}
       <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>

@@ -531,6 +531,11 @@ export async function runTradeExplorerComparison(
 
 export async function readTradeExplorerPageModel(
   scope: WorkspaceAccessScope,
+  initialView?: Readonly<{
+    endDate: string | null;
+    rank: "pnl" | "trades";
+    startDate: string | null;
+  }>,
 ): Promise<TradeExplorerPageModel> {
   const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, dashboard, pnlReportingBasis, service }) => {
     const calendarInput = Object.freeze({
@@ -560,8 +565,8 @@ export async function readTradeExplorerPageModel(
       item.symbols))].sort());
     const initialQuery: AnalyticsLabPlatformQuery = Object.freeze({
       expectedAccountSelectionRef: currentJournalAccountSelectionRef(scope),
-      metricId: "total_trades",
-      grouping: "closing_month",
+      metricId: initialView?.rank === "pnl" ? `${pnlReportingBasis}_pnl` : "total_trades",
+      grouping: initialView ? "instrument" : "closing_month",
       moneyBasis: pnlReportingBasis,
       currency: calendar.currency,
       symbol: null,
@@ -572,8 +577,8 @@ export async function readTradeExplorerPageModel(
       entryWeekday: null,
       entryTimeBucketMinutes: 30,
       entryTimeBucket: null,
-      startDate: minimumDate,
-      endDate: maximumDate,
+      startDate: initialView?.startDate ?? minimumDate,
+      endDate: initialView?.endDate ?? maximumDate,
       minimumHoldingSeconds: null,
       maximumHoldingSeconds: null,
       minimumEnteredQuantity: null,
