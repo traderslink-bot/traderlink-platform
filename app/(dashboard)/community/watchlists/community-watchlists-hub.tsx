@@ -155,7 +155,7 @@ export function CommunityWatchlistsHub({ mine, shared }: { mine: readonly Commun
     <DashboardPage>
       <Box sx={{ display: "flex", gap: 1, alignItems: { sm: "center" }, justifyContent: "space-between", flexDirection: { xs: "column", sm: "row" } }}>
         <Typography component="h1" variant="h1">Community Watchlists</Typography>
-        <DashboardPrimaryAction component={Link} href="/community/watchlists/new" startIcon={<AddRoundedIcon />}>Create watchlist</DashboardPrimaryAction>
+        <Stack direction="row" spacing={1}><Button component={Link} href="/community/watchlists/share" variant="outlined">Share with a server</Button><DashboardPrimaryAction component={Link} href="/community/watchlists/new" startIcon={<AddRoundedIcon />}>Create watchlist</DashboardPrimaryAction></Stack>
       </Box>
       <Tabs aria-label="Community Watchlists" onChange={(_, value) => setTab(value)} value={tab}>
         <Tab label="My Watchlists" value="mine" />

@@ -64,7 +64,7 @@ export function isDashboardNavigationItem(
 }
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "stockTools";
+  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "stockTools" | "communities";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationGroupItem[];
@@ -235,6 +235,15 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", icon: "newspaper" as const }),
       ]),
     }),
+    Object.freeze({
+      id: "communities" as const,
+      label: "Communities",
+      icon: "account" as const,
+      items: Object.freeze([
+        Object.freeze({ href: "/communities", label: "My Communities", icon: "account" as const }),
+        Object.freeze({ href: "/community/watchlists", label: "Community Watchlists", icon: "watchlist" as const }),
+      ]),
+    }),
   ]);
 
 // Kept for dashboard-template compatibility. Scanner and Market Charts now live
@@ -263,6 +272,9 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/watchlist": "Watchlist",
     "/levels": "Stock Levels",
     "/admin/watchlist": "Watchlist Admin",
+    "/communities": "Communities",
+    "/community/watchlists": "Community Watchlists",
+    "/admin/communities": "Communities Administration",
     "/trade-tracker": "Session Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
     "/quick-trade-entry": "Quick Trade Entry",

@@ -126,14 +126,27 @@ function resolveTraderLinkPlatformRequestIdentity(
       if (!session || session.authProvider !== "discord") {
         platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       }
-      const membership = new PlatformDiscordMembershipRepository(database)
-        .findCurrent(
-          session.userId,
-          resolveTraderLinkDiscordGuildId(environment),
-        );
+      const memberships = new PlatformDiscordMembershipRepository(database);
+      const configuredMembership = memberships.findCurrent(
+        session.userId,
+        resolveTraderLinkDiscordGuildId(environment),
+      );
+      const communityGuild = database.prepare(`SELECT community.discord_guild_id
+FROM traderlink_communities community
+JOIN traderlink_community_memberships member
+  ON member.community_id = community.community_id
+WHERE member.user_id = ?
+  AND member.status = 'active'
+  AND community.status IN ('setup', 'active')
+ORDER BY member.discord_verified_at_utc DESC
+LIMIT 1`).get(session.userId) as { discord_guild_id: string } | undefined;
+      const membership = configuredMembership ?? (communityGuild
+        ? memberships.findCurrent(session.userId, communityGuild.discord_guild_id)
+        : null);
       if (!membership) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       if (
         options.requireDashboardAccess &&
+        !communityGuild &&
         !new PlatformDashboardMemberAccessRepository(database)
           .read().allowAllDiscordMembers &&
         !hasPlatformDiscordPremiumAccess({

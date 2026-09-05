@@ -10,6 +10,21 @@
 **Progressive Web App:** The owner-approved [TraderLink Platform PWA Plan](traderlink-platform-pwa-plan.md) and [progress tracker](traderlink-platform-pwa-progress.md) preserve the complete dashboard and add offline Daily/Swing/Quick Trade Entry, bounded last-synced dashboard projections, retry-safe foreground and best-effort background sync, opt-in privacy-safe Web Push and one corrected icon family. PWA 1 is authorized locally; no deployment or production push activation is implied.
 **Rule:** A legacy item cannot be removed until its row is `Owner accepted` and its legacy dependency check is complete.
 
+**TraderLink Communities partner platform:** [Communities Partner Platform
+Plan](traderlink-communities-partner-platform-plan.md), its [complete progress
+record](traderlink-communities-partner-platform-progress.md) and
+[Communities 1 foundation record](traderlink-communities-1-identity-permissions-progress.md)
+register additive migrations `0121_traderlink_communities_identity_permissions`
+and `0122_traderlink_communities_partner_platform`. They store Discord-backed
+community identity, verified Platform-user membership, owner-controlled custom
+roles and capabilities, Discord-role mappings and immutable authorization
+audit history, along with community content, audiences, delivery attempts,
+coaching relationships and revocable Journal grant references, named activity,
+and provider-neutral Tier 2 attribution. They store no payment credentials,
+coaching transactions, Discord tokens or Journal facts. The focused disposable
+database proof passes; migration execution remains a separate deployment
+boundary.
+
 **Trade Explorer saved views:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
 and its [progress record](trade-explorer-platform-progress.md) register additive
 migration `0117_trade_explorer_saved_views`, appended after production migration

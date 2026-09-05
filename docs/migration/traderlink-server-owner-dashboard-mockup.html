@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TraderLink Server Owner Dashboard Mockup</title>
+  <style>
+    :root {
+      --navy:#011e56; --navy-hover:#001744; --blue-soft:#eaf1ff; --bg:#f5f7fb;
+      --paper:#fff; --text:#172033; --muted:#5f6b7d; --subtle:#8a94a6;
+      --line:rgba(1,30,86,.12); --success:#137333; --success-bg:#e7f5ea;
+      --warning:#8a4f00; --warning-bg:#fff2d8; --danger:#b3261e; --danger-bg:#fce8e6;
+      --info:#00639b; --info-bg:#e1f3ff; --drawer:272px; --shadow:0 1px 2px rgba(20,38,68,.04);
+    }
+    html[data-theme="dark"] {
+      --navy:#8bb4ff; --navy-hover:#aac9ff; --blue-soft:#172c51; --bg:#10151e;
+      --paper:#181f2b; --text:#f2f5fa; --muted:#b3bdcc; --subtle:#8894a5;
+      --line:rgba(190,210,240,.15); --success:#72d28c; --success-bg:#173824;
+      --warning:#ffc46b; --warning-bg:#3d2b0f; --danger:#ff9a93; --danger-bg:#461f1d;
+      --info:#7fc9f5; --info-bg:#13364b; --shadow:0 1px 3px rgba(0,0,0,.22);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px Arial,Helvetica,sans-serif; overflow-x:hidden; }
+    button,input,select { font:inherit; }
+    button { cursor:pointer; }
+    .app { display:grid; grid-template-columns:var(--drawer) minmax(0,1fr); min-height:100vh; }
+    .sidebar { background:var(--paper); border-right:1px solid var(--line); display:flex; flex-direction:column; height:100vh; left:0; position:fixed; top:0; width:var(--drawer); z-index:20; }
+    .brand { align-items:center; display:flex; height:72px; padding:0 20px; }
+    .brand img { display:block; height:35px; max-width:170px; object-fit:contain; }
+    html[data-theme="dark"] .brand img { background:#fff; border-radius:6px; padding:5px 8px; }
+    .community-name { padding:0 20px 15px; }
+    .community-name strong { color:var(--navy); display:block; font-size:12px; }
+    .community-name span { color:var(--muted); display:block; margin-top:4px; }
+    .divider { border-top:1px solid var(--line); }
+    .nav { flex:1; overflow-y:auto; padding:12px 8px; }
+    .nav-button { align-items:center; background:transparent; border:0; border-radius:8px; color:var(--text); display:flex; font-weight:700; gap:12px; margin-bottom:4px; min-height:43px; padding:9px 12px; text-align:left; width:100%; }
+    .nav-button:hover { background:var(--blue-soft); }
+    .nav-button.active { background:#011e56; color:#fff; }
+    html[data-theme="dark"] .nav-button.active { background:#315d9d; }
+    .nav-icon { align-items:center; border:1px solid currentColor; border-radius:6px; display:inline-flex; font-size:11px; height:25px; justify-content:center; opacity:.78; width:25px; }
+    .back-link { align-items:center; color:var(--text); display:flex; font-weight:700; gap:10px; padding:18px 20px; text-decoration:none; }
+    .workspace { grid-column:2; max-width:100vw; min-width:0; }
+    .topbar { align-items:center; background:var(--paper); border-bottom:1px solid var(--line); display:flex; gap:14px; height:72px; justify-content:space-between; padding:0 28px; position:sticky; top:0; z-index:10; }
+    .top-left { align-items:center; display:flex; gap:12px; min-width:0; }
+    .top-title { font-size:16px; font-weight:800; }
+    .top-meta { color:var(--muted); font-size:12px; margin-top:4px; }
+    .top-actions { align-items:center; display:flex; gap:8px; }
+    .chip { align-items:center; border:1px solid var(--line); border-radius:8px; color:var(--text); display:inline-flex; font-size:12px; font-weight:700; min-height:28px; padding:4px 9px; white-space:nowrap; }
+    .chip.primary { background:#011e56; border-color:#011e56; color:#fff; }
+    .chip.success { background:var(--success-bg); border-color:transparent; color:var(--success); }
+    .chip.warning { background:var(--warning-bg); border-color:transparent; color:var(--warning); }
+    .chip.info { background:var(--info-bg); border-color:transparent; color:var(--info); }
+    .chip.muted { color:var(--muted); }
+    .icon-button { align-items:center; background:transparent; border:1px solid var(--line); border-radius:8px; color:var(--text); display:inline-flex; height:38px; justify-content:center; width:38px; }
+    .mobile-menu { display:none; }
+    main { margin:0 auto; max-width:1600px; padding:28px; width:100%; }
+    .view[hidden] { display:none; }
+    .eyebrow { color:var(--navy); font-size:12px; font-weight:800; }
+    h1 { font-size:28px; letter-spacing:-.025em; margin:7px 0 0; }
+    h2 { font-size:17px; margin:0; }
+    h3 { font-size:15px; margin:0; }
+    p { color:var(--muted); line-height:1.55; }
+    .page-head { align-items:flex-end; display:flex; gap:20px; justify-content:space-between; margin-bottom:22px; }
+    .button { align-items:center; border:0; border-radius:8px; display:inline-flex; font-weight:800; justify-content:center; min-height:40px; padding:9px 15px; }
+    .button.primary { background:#011e56; color:#fff; }
+    .button.primary:hover { background:#001744; }
+    .button.outlined { background:transparent; border:1px solid #011e56; color:var(--navy); }
+    html[data-theme="dark"] .button.outlined { border-color:var(--navy); }
+    .button.small { min-height:34px; padding:7px 11px; }
+    .text-button { background:transparent; border:0; color:var(--navy); font-weight:800; padding:5px; }
+    .metrics { display:grid; gap:16px; grid-template-columns:repeat(4,minmax(0,1fr)); margin-bottom:18px; }
+    .metric,.panel { background:var(--paper); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow); }
+    .metric { padding:18px; }
+    .metric-label { color:var(--muted); font-size:12px; font-weight:700; }
+    .metric-value { font-size:25px; font-weight:800; margin-top:8px; }
+    .metric-note { color:var(--muted); font-size:12px; margin-top:7px; }
+    .metric-note.good { color:var(--success); }
+    .grid-2 { display:grid; gap:18px; grid-template-columns:minmax(0,1.5fr) minmax(310px,1fr); }
+    .grid-equal { display:grid; gap:18px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .panel { min-width:0; }
+    .panel-head { align-items:center; border-bottom:1px solid var(--line); display:flex; gap:12px; justify-content:space-between; min-height:58px; padding:14px 18px; }
+    .panel-body { padding:18px; }
+    .stack { display:grid; gap:12px; }
+    .list-row { align-items:center; border-bottom:1px solid var(--line); display:flex; gap:13px; justify-content:space-between; min-height:61px; padding:10px 0; }
+    .list-row:last-child { border-bottom:0; }
+    .identity { align-items:center; display:flex; gap:11px; min-width:0; }
+    .avatar { align-items:center; background:var(--blue-soft); border-radius:50%; color:var(--navy); display:flex; flex:0 0 auto; font-size:12px; font-weight:900; height:36px; justify-content:center; width:36px; }
+    .name { font-weight:800; }
+    .detail { color:var(--muted); font-size:12px; margin-top:4px; }
+    .bar { background:var(--blue-soft); border-radius:999px; height:8px; overflow:hidden; }
+    .bar span { background:#315d9d; display:block; height:100%; }
+    .activity-line { display:grid; gap:8px; grid-template-columns:88px 1fr 40px; margin:15px 0; }
+    .activity-line strong { font-size:12px; }
+    .activity-line span:last-child { color:var(--muted); font-size:12px; text-align:right; }
+    .table-wrap { overflow:auto; }
+    table { border-collapse:collapse; min-width:820px; width:100%; }
+    th,td { border-bottom:1px solid var(--line); padding:13px 14px; text-align:left; vertical-align:middle; }
+    th { color:var(--muted); font-size:11px; letter-spacing:.04em; text-transform:uppercase; }
+    tbody tr { cursor:pointer; }
+    tbody tr:hover,tbody tr.selected { background:var(--blue-soft); }
+    .tags { display:flex; flex-wrap:wrap; gap:6px; }
+    .notice { background:var(--info-bg); border-radius:8px; color:var(--info); line-height:1.5; padding:12px 14px; }
+    .warning-box { background:var(--warning-bg); border-radius:8px; color:var(--warning); line-height:1.5; padding:12px 14px; }
+    .role-grid { display:grid; gap:14px; grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .role-card { background:var(--paper); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow); padding:17px; }
+    .role-card.selected { border:2px solid var(--navy); padding:16px; }
+    .role-top { align-items:center; display:flex; gap:10px; justify-content:space-between; }
+    .role-card p { font-size:12px; margin:8px 0 12px; }
+    .role-card ul { color:var(--muted); line-height:1.7; margin:0; padding-left:18px; }
+    .permission-grid { display:grid; gap:0; grid-template-columns:minmax(170px,1fr) repeat(4,minmax(90px,.55fr)); overflow:auto; }
+    .permission-grid > div { align-items:center; border-bottom:1px solid var(--line); display:flex; min-height:50px; padding:9px 12px; }
+    .permission-grid .head { color:var(--muted); font-size:11px; font-weight:800; text-transform:uppercase; }
+    .check { color:var(--success); font-size:17px; font-weight:900; }
+    .dash { color:var(--subtle); }
+    .content-card { border:1px solid var(--line); border-radius:9px; padding:15px; }
+    .content-card p { font-size:12px; margin:7px 0 0; }
+    .discord-message { background:var(--paper); border:1px solid var(--line); border-left:4px solid #5865f2; border-radius:8px; padding:16px; }
+    .direct-link { color:var(--muted); font-size:12px; margin-top:10px; overflow-wrap:anywhere; }
+    .split { display:flex; gap:8px; flex-wrap:wrap; }
+    .empty { color:var(--muted); padding:25px; text-align:center; }
+    .modal-backdrop { align-items:center; background:rgba(0,0,0,.48); display:none; inset:0; justify-content:center; padding:20px; position:fixed; z-index:50; }
+    .modal-backdrop.open { display:flex; }
+    .modal { background:var(--paper); border-radius:12px; box-shadow:0 22px 70px rgba(0,0,0,.28); max-width:620px; padding:22px; width:100%; }
+    .modal-head { align-items:center; display:flex; justify-content:space-between; }
+    .form-grid { display:grid; gap:14px; grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:18px; }
+    label { color:var(--muted); display:block; font-size:12px; font-weight:800; }
+    input,select { background:var(--paper); border:1px solid var(--line); border-radius:8px; color:var(--text); margin-top:7px; min-height:40px; padding:9px 10px; width:100%; }
+    .permission-picks { display:grid; gap:9px; grid-template-columns:repeat(2,minmax(0,1fr)); margin:15px 0; }
+    .permission-picks label { align-items:center; border:1px solid var(--line); border-radius:8px; color:var(--text); display:flex; gap:8px; padding:10px; }
+    .permission-picks input { margin:0; min-height:auto; width:auto; }
+    .modal-actions { display:flex; gap:9px; justify-content:flex-end; }
+    .mobile-backdrop { display:none; }
+    .toast { background:var(--text); border-radius:8px; bottom:22px; color:var(--paper); display:none; font-weight:700; left:50%; padding:12px 16px; position:fixed; transform:translateX(-50%); z-index:80; }
+    .toast.show { display:block; }
+    @media (max-width:1050px) { .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .role-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:760px) {
+      .app { display:block; }
+      .sidebar { transform:translateX(-100%); transition:transform .18s ease; }
+      .sidebar.open { transform:translateX(0); }
+      .mobile-backdrop { background:rgba(0,0,0,.45); inset:0; position:fixed; z-index:15; }
+      .mobile-backdrop.open { display:block; }
+      .workspace { grid-column:auto; }
+      .mobile-menu { display:inline-flex; }
+      .topbar { padding:0 14px; }
+      .top-meta,.desktop-only { display:none; }
+      main { padding:19px 14px; }
+      h1 { font-size:24px; }
+      .page-head { align-items:flex-start; flex-direction:column; }
+      .metrics,.grid-2,.grid-equal,.role-grid,.form-grid { grid-template-columns:1fr; }
+      .metric { padding:15px; }
+      .permission-grid { min-width:690px; }
+      .permission-picks { grid-template-columns:1fr; }
+      .list-row { align-items:flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><img src="../../public/logo-horizontal-main.png" alt="TraderLink"></div>
+      <div class="community-name"><strong>SERVER OWNER DASHBOARD</strong><span>Momentum Traders</span></div>
+      <div class="divider"></div>
+      <nav class="nav" aria-label="Server owner navigation">
+        <button class="nav-button active" data-view="overview"><span class="nav-icon">OV</span>Overview</button>
+        <button class="nav-button" data-view="team"><span class="nav-icon">TM</span>Team</button>
+        <button class="nav-button" data-view="permissions"><span class="nav-icon">RP</span>Roles &amp; Permissions</button>
+        <button class="nav-button" data-view="members"><span class="nav-icon">MB</span>Members</button>
+        <button class="nav-button" data-view="alerts"><span class="nav-icon">AL</span>Alerts</button>
+        <button class="nav-button" data-view="watchlists"><span class="nav-icon">WL</span>Watchlists</button>
+        <button class="nav-button" data-view="coaching"><span class="nav-icon">CH</span>Coaching</button>
+        <button class="nav-button" data-view="activity"><span class="nav-icon">AC</span>Activity &amp; Analytics</button>
+        <button class="nav-button" data-view="earnings"><span class="nav-icon">T2</span>Tier 2 Earnings</button>
+        <button class="nav-button" data-view="channels"><span class="nav-icon">DC</span>Discord Channels</button>
+        <button class="nav-button" data-view="settings"><span class="nav-icon">ST</span>Community Settings</button>
+      </nav>
+      <div class="divider"></div>
+      <a class="back-link" href="traderlink-communities-administration-mockup.html">← Communities Administration</a>
+    </aside>
+    <div class="mobile-backdrop" id="mobileBackdrop"></div>
+
+    <section class="workspace">
+      <header class="topbar">
+        <div class="top-left">
+          <button class="icon-button mobile-menu" id="menuButton" aria-label="Open navigation">☰</button>
+          <div><div class="top-title">Momentum Traders</div><div class="top-meta">Discord connected · 1,842 members</div></div>
+        </div>
+        <div class="top-actions">
+          <span class="chip success desktop-only">Discord connected</span>
+          <span class="chip muted desktop-only">Visual mockup · Sample data</span>
+          <button class="icon-button" id="themeButton" aria-label="Toggle dark mode" title="Toggle Light/Dark">◐</button>
+          <span class="avatar">MT</span>
+        </div>
+      </header>
+
+      <main>
+        <section class="view" id="view-overview">
+          <div class="page-head"><div><div class="eyebrow">COMMUNITY</div><h1>Overview</h1></div><button class="button primary" data-jump="team">Manage team</button></div>
+          <div class="metrics">
+            <div class="metric"><div class="metric-label">Discord members</div><div class="metric-value">1,842</div><div class="metric-note good">+74 this month</div></div>
+            <div class="metric"><div class="metric-label">Active on TraderLink</div><div class="metric-value">617</div><div class="metric-note">33.5% of server members</div></div>
+            <div class="metric"><div class="metric-label">Content views</div><div class="metric-value">6,914</div><div class="metric-note good">+18% in 30 days</div></div>
+            <div class="metric"><div class="metric-label">Tier 2 members</div><div class="metric-value">83</div><div class="metric-note">Partner earnings tracked</div></div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head"><h2>Team</h2><button class="text-button" data-jump="team">Manage team</button></div>
+              <div class="panel-body stack">
+                <div class="list-row"><div class="identity"><span class="avatar">AM</span><div><div class="name">Alexa M.</div><div class="detail">Lead Analyst + Coach</div></div></div><span class="chip success">Active</span></div>
+                <div class="list-row"><div class="identity"><span class="avatar">CD</span><div><div class="name">Chris D.</div><div class="detail">Moderator</div></div></div><span class="chip success">Active</span></div>
+                <div class="list-row"><div class="identity"><span class="avatar">JK</span><div><div class="name">Jordan K.</div><div class="detail">Watchlist Contributor</div></div></div><span class="chip warning">Invite pending</span></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Needs attention</h2></div>
+              <div class="panel-body stack">
+                <div class="warning-box"><strong>1 staff invite is pending.</strong><br>Jordan K. has not accepted access.</div>
+                <div class="content-card"><strong>#swing-alerts is not mapped</strong><p>Choose where Swing Desk alerts should be posted in Discord.</p></div>
+                <div class="content-card"><strong>Coaching roster is nearly full</strong><p>Two coaches are at 90% of their student limits.</p></div>
+              </div>
+            </div>
+          </div>
+          <div class="grid-equal" style="margin-top:18px">
+            <div class="panel"><div class="panel-head"><h2>Content activity</h2><button class="text-button" data-jump="activity">View analytics</button></div><div class="panel-body"><div class="activity-line"><strong>Alerts</strong><div class="bar"><span style="width:84%"></span></div><span>3.2k</span></div><div class="activity-line"><strong>Watchlists</strong><div class="bar"><span style="width:62%"></span></div><span>2.4k</span></div><div class="activity-line"><strong>Coaching</strong><div class="bar"><span style="width:31%"></span></div><span>1.2k</span></div></div></div>
+            <div class="panel"><div class="panel-head"><h2>Recent activity</h2></div><div class="panel-body stack"><div class="list-row"><div><div class="name">Alexa posted an alert</div><div class="detail">NVDA Momentum · 18 minutes ago</div></div><span class="chip info">Alert</span></div><div class="list-row"><div><div class="name">Chris updated a Discord channel</div><div class="detail">#daily-watchlists · 1 hour ago</div></div><span class="chip muted">Setup</span></div><div class="list-row"><div><div class="name">14 members joined TraderLink</div><div class="detail">Today</div></div><span class="chip success">Members</span></div></div></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-team" hidden>
+          <div class="page-head"><div><div class="eyebrow">ACCESS</div><h1>Team</h1></div><button class="button primary" id="addTeamButton">Add team member</button></div>
+          <div class="notice" style="margin-bottom:16px"><strong>You control your team.</strong> Add anyone from your Discord server, name their responsibilities, and choose exactly what they can access.</div>
+          <div class="panel">
+            <div class="panel-head"><h2>Team members</h2><span class="chip muted">4 people</span></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Person</th><th>Responsibilities</th><th>Can publish</th><th>Coaching</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr class="selected" data-member="marcus"><td><div class="identity"><span class="avatar">MT</span><div><div class="name">Marcus T.</div><div class="detail">@marcust · You</div></div></div></td><td><div class="tags"><span class="chip primary">Server Owner</span></div></td><td>All pages</td><td>Manage roster</td><td><span class="chip success">Active</span></td><td><button class="text-button">View</button></td></tr>
+                <tr data-member="alexa"><td><div class="identity"><span class="avatar">AM</span><div><div class="name">Alexa M.</div><div class="detail">@alexatrades</div></div></div></td><td><div class="tags"><span class="chip info">Lead Analyst</span><span class="chip info">Coach</span></div></td><td>Alerts + Watchlists</td><td>Own students</td><td><span class="chip success">Active</span></td><td><button class="text-button">Edit</button></td></tr>
+                <tr data-member="chris"><td><div class="identity"><span class="avatar">CD</span><div><div class="name">Chris D.</div><div class="detail">@chrisdaytrade</div></div></div></td><td><div class="tags"><span class="chip info">Moderator</span></div></td><td>Alerts</td><td>None</td><td><span class="chip success">Active</span></td><td><button class="text-button">Edit</button></td></tr>
+                <tr data-member="jordan"><td><div class="identity"><span class="avatar">JK</span><div><div class="name">Jordan K.</div><div class="detail">@jkstocks</div></div></div></td><td><div class="tags"><span class="chip info">Watchlist Contributor</span></div></td><td>Watchlists</td><td>None</td><td><span class="chip warning">Invite pending</span></td><td><button class="text-button">Edit</button></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+          <div class="grid-equal" style="margin-top:18px">
+            <div class="panel"><div class="panel-head"><h2 id="memberTitle">Marcus T.</h2><span class="chip primary" id="memberStatus">Server Owner</span></div><div class="panel-body"><p id="memberCopy">Full access to community settings, team, content, coaching roster, activity, and Tier 2 partner reporting.</p><div class="split" id="memberPermissions"><span class="chip success">Manage team</span><span class="chip success">Publish content</span><span class="chip success">Manage coaching</span><span class="chip success">View activity</span></div></div></div>
+            <div class="panel"><div class="panel-head"><h2>How access works</h2></div><div class="panel-body"><p>Responsibilities are labels you choose. Permissions control what the person can actually do. One person can hold several responsibilities.</p><div class="notice">A server owner can see coaches, offers, enrolled students and the Discord roles that unlock each service. Only the approved coach can open a student's shared Journal data.</div></div></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-permissions" hidden>
+          <div class="page-head"><div><div class="eyebrow">ACCESS</div><h1>Roles &amp; Permissions</h1></div><button class="button primary" id="newRoleButton">Create responsibility</button></div>
+          <div class="role-grid">
+            <button class="role-card selected" data-role="analyst" style="text-align:left;color:inherit"><div class="role-top"><h3>Lead Analyst</h3><span class="chip info">1 person</span></div><p>Posts the main trading content for the server.</p><ul><li>Publish alerts</li><li>Publish watchlists</li><li>View content activity</li></ul></button>
+            <button class="role-card" data-role="coach" style="text-align:left;color:inherit"><div class="role-top"><h3>Coach</h3><span class="chip info">2 people</span></div><p>Creates coaching offers and works with approved students.</p><ul><li>Manage own offers</li><li>Manage own students</li><li>View approved Journal data</li></ul></button>
+            <button class="role-card" data-role="moderator" style="text-align:left;color:inherit"><div class="role-top"><h3>Moderator</h3><span class="chip info">3 people</span></div><p>Helps publish and manage community activity.</p><ul><li>Publish selected content</li><li>View member activity</li><li>No coaching access</li></ul></button>
+          </div>
+          <div class="panel" style="margin-top:18px">
+            <div class="panel-head"><div><h2 id="permissionTitle">Lead Analyst permissions</h2><div class="detail">Select a responsibility above to review its access.</div></div><button class="button outlined small" id="editPermissionsButton">Edit permissions</button></div>
+            <div class="table-wrap"><div class="permission-grid">
+              <div class="head">Capability</div><div class="head">Server Owner</div><div class="head">Lead Analyst</div><div class="head">Coach</div><div class="head">Moderator</div>
+              <div><strong>Publish alerts</strong></div><div class="check">✓</div><div class="check">✓</div><div class="dash">—</div><div class="check">✓</div>
+              <div><strong>Publish watchlists</strong></div><div class="check">✓</div><div class="check">✓</div><div class="dash">—</div><div class="dash">—</div>
+              <div><strong>Create coaching offers</strong></div><div class="check">✓</div><div class="dash">—</div><div class="check">✓</div><div class="dash">—</div>
+              <div><strong>View own students' shared data</strong></div><div class="dash">—</div><div class="dash">—</div><div class="check">✓</div><div class="dash">—</div>
+              <div><strong>View named community activity</strong></div><div class="check">✓</div><div class="check">✓</div><div class="dash">—</div><div class="check">✓</div>
+              <div><strong>Manage team and permissions</strong></div><div class="check">✓</div><div class="dash">—</div><div class="dash">—</div><div class="dash">—</div>
+            </div></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-members" hidden>
+          <div class="page-head"><div><div class="eyebrow">COMMUNITY</div><h1>Members</h1></div><button class="button outlined">Export view</button></div>
+          <div class="metrics"><div class="metric"><div class="metric-label">Server members</div><div class="metric-value">1,842</div></div><div class="metric"><div class="metric-label">TraderLink members</div><div class="metric-value">617</div></div><div class="metric"><div class="metric-label">Active this week</div><div class="metric-value">391</div></div><div class="metric"><div class="metric-label">Tier 2</div><div class="metric-value">83</div></div></div>
+          <div class="panel"><div class="panel-head"><h2>Member activity</h2><span class="chip muted">Named server activity</span></div><div class="panel-body stack"><div class="list-row"><div class="identity"><span class="avatar">RB</span><div><div class="name">Ryan B.</div><div class="detail">Viewed NVDA Momentum and Weekly Game Plan</div></div></div><span class="detail">12 minutes ago</span></div><div class="list-row"><div class="identity"><span class="avatar">SL</span><div><div class="name">Samantha L.</div><div class="detail">Joined Alexa's coaching plan</div></div></div><span class="detail">1 hour ago</span></div><div class="list-row"><div class="identity"><span class="avatar">DK</span><div><div class="name">Devon K.</div><div class="detail">Viewed Morning Watchlist</div></div></div><span class="detail">3 hours ago</span></div></div></div>
+        </section>
+
+        <section class="view" id="view-alerts" hidden></section>
+        <section class="view" id="view-watchlists" hidden>
+          <div class="page-head"><div><div class="eyebrow">CONTENT</div><h1>Watchlists</h1></div><div class="split"><button class="button outlined" id="previewMemberShare">Preview member sharing</button><button class="button primary">Create community watchlist</button></div></div>
+          <div class="notice" style="margin-bottom:16px"><strong>Members can help build community engagement.</strong> Any active member can create a personal Community Watchlist and share it into Momentum Traders. The member stays the owner and author of that watchlist.</div>
+          <div class="metrics">
+            <div class="metric"><div class="metric-label">Member-shared watchlists</div><div class="metric-value">28</div><div class="metric-note good">+9 this month</div></div>
+            <div class="metric"><div class="metric-label">Contributing members</div><div class="metric-value">19</div><div class="metric-note">No staff role required</div></div>
+            <div class="metric"><div class="metric-label">Member-list views</div><div class="metric-value">2,146</div><div class="metric-note good">+24% in 30 days</div></div>
+            <div class="metric"><div class="metric-label">Watchlist follows</div><div class="metric-value">184</div><div class="metric-note">Across shared lists</div></div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head"><h2>Member-shared watchlists</h2><span class="chip success">Sharing on</span></div>
+              <div class="panel-body stack">
+                <div class="list-row"><div class="identity"><span class="avatar">RB</span><div><div class="name">Premarket Movers</div><div class="detail">Ryan B. · 8 symbols · shared today</div></div></div><div class="tags"><span class="chip info">438 views</span><span class="chip muted">39 follows</span></div></div>
+                <div class="list-row"><div class="identity"><span class="avatar">SL</span><div><div class="name">Biotech Catalysts</div><div class="detail">Samantha L. · 6 symbols · shared yesterday</div></div></div><div class="tags"><span class="chip info">316 views</span><span class="chip muted">27 follows</span></div></div>
+                <div class="list-row"><div class="identity"><span class="avatar">DK</span><div><div class="name">Low Float Ideas</div><div class="detail">Devon K. · 11 symbols · shared Sep 2</div></div></div><div class="tags"><span class="chip info">284 views</span><span class="chip muted">21 follows</span></div></div>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="panel"><div class="panel-head"><h2>Member sharing</h2></div><div class="panel-body stack"><div class="list-row"><div><div class="name">Who can share</div><div class="detail">All active community members</div></div><span class="chip success">On</span></div><div class="list-row"><div><div class="name">Owner approval</div><div class="detail">Members publish directly</div></div><span class="chip muted">Not required</span></div><div class="list-row"><div><div class="name">Discord channel</div><div class="detail">Exact watchlist links are delivered here</div></div><span class="chip info">#member-watchlists</span></div></div></div>
+              <div class="panel"><div class="panel-head"><h2>Ownership</h2></div><div class="panel-body"><p>The member can unshare from Momentum Traders without deleting their watchlist. You can remove its placement from this server, but you cannot edit the member's research or remove it from another community.</p></div></div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:18px"><div class="panel-head"><h2>Community-owned watchlists</h2><span class="chip muted">Owner and approved staff</span></div><div class="panel-body stack"><div class="list-row"><div><div class="name">Morning Watchlist</div><div class="detail">Alexa M. · Lead Analyst · #daily-watchlists</div></div><span class="chip success">Published</span></div><div class="list-row"><div><div class="name">Weekly Game Plan</div><div class="detail">Marcus T. · Server Owner · #daily-watchlists</div></div><span class="chip warning">Draft</span></div></div></div>
+          <div class="grid-equal" style="margin-top:18px"><div class="panel"><div class="panel-head"><h2>Discord link preview</h2><span class="chip info">#member-watchlists</span></div><div class="panel-body"><div class="discord-message"><div class="detail">Ryan B. shared a watchlist</div><h3 style="margin-top:7px">Premarket Movers</h3><p>8 symbols · LASE · BNAI · RGTI · 5 more</p><button class="button primary small" id="openDiscordWatchlist">View watchlist in TraderLink →</button><div class="direct-link">traderslink.pro/community/ryan-b/watchlists/premarket-movers</div></div></div></div><div class="panel"><div class="panel-head"><h2>How the link works</h2></div><div class="panel-body stack"><div class="list-row"><div><div class="name">Exact destination</div><div class="detail">Opens this watchlist, not the dashboard home</div></div><span class="chip success">Deep link</span></div><div class="list-row"><div><div class="name">Signed-out member</div><div class="detail">Returns here after TraderLink sign-in</div></div><span class="chip info">Return saved</span></div><div class="list-row"><div><div class="name">Shared to many servers</div><div class="detail">Same page, separate community engagement</div></div><span class="chip muted">Tracked</span></div></div></div></div>
+        </section>
+
+        <section class="view" id="view-coaching" hidden>
+          <div class="page-head"><div><div class="eyebrow">SERVICES</div><h1>Coaching</h1></div><div class="split"><button class="button outlined">Map access roles</button><button class="button primary">Add coach</button></div></div>
+          <div class="notice" style="margin-bottom:16px">Coaches create their own plans, prices, delivery and student limits. Your Discord server handles payments and role assignment. Map the appropriate Discord role to each coaching offer to control TraderLink access.</div>
+          <div class="metrics"><div class="metric"><div class="metric-label">Approved coaches</div><div class="metric-value">2</div></div><div class="metric"><div class="metric-label">Active plans</div><div class="metric-value">4</div></div><div class="metric"><div class="metric-label">Enrolled students</div><div class="metric-value">31</div></div><div class="metric"><div class="metric-label">Available spots</div><div class="metric-value">7</div></div></div>
+          <div class="panel"><div class="panel-head"><h2>Coaches</h2><span class="chip muted">Community members only</span></div><div class="table-wrap"><table><thead><tr><th>Coach</th><th>Plans</th><th>Students</th><th>Limit</th><th>Access role</th><th>Status</th></tr></thead><tbody><tr><td><div class="identity"><span class="avatar">AM</span><div><div class="name">Alexa M.</div><div class="detail">@alexatrades</div></div></div></td><td>Weekly Reviews, 10-Trade Review</td><td>18</td><td>20</td><td>@Alexa Coaching</td><td><span class="chip success">Open</span></td></tr><tr><td><div class="identity"><span class="avatar">PW</span><div><div class="name">Paul W.</div><div class="detail">@paulpriceaction</div></div></div></td><td>Monthly Coaching, 5-Trade Review</td><td>13</td><td>18</td><td>@Price Action</td><td><span class="chip success">Open</span></td></tr></tbody></table></div></div>
+          <div class="warning-box" style="margin-top:16px"><strong>Private student data stays with the coach.</strong> You can manage who is approved to coach and see roster totals, but you cannot open a student's Journal unless that student separately grants you coaching access.</div>
+        </section>
+
+        <section class="view" id="view-activity" hidden>
+          <div class="page-head"><div><div class="eyebrow">INSIGHTS</div><h1>Activity &amp; Analytics</h1></div><select style="width:auto;margin:0"><option>Last 30 days</option><option>Last 7 days</option></select></div>
+          <div class="metrics"><div class="metric"><div class="metric-label">Page views</div><div class="metric-value">6,914</div><div class="metric-note good">+18%</div></div><div class="metric"><div class="metric-label">Unique viewers</div><div class="metric-value">489</div></div><div class="metric"><div class="metric-label">Discord deliveries</div><div class="metric-value">146</div></div><div class="metric"><div class="metric-label">Tier 2 upgrades</div><div class="metric-value">17</div></div></div>
+          <div class="grid-equal"><div class="panel"><div class="panel-head"><h2>Most viewed pages</h2></div><div class="panel-body"><div class="activity-line"><strong>NVDA Momentum</strong><div class="bar"><span style="width:91%"></span></div><span>842</span></div><div class="activity-line"><strong>Weekly Plan</strong><div class="bar"><span style="width:72%"></span></div><span>663</span></div><div class="activity-line"><strong>Morning List</strong><div class="bar"><span style="width:58%"></span></div><span>529</span></div></div></div><div class="panel"><div class="panel-head"><h2>Most active members</h2></div><div class="panel-body stack"><div class="list-row"><strong>Ryan B.</strong><span class="chip info">46 views</span></div><div class="list-row"><strong>Samantha L.</strong><span class="chip info">39 views</span></div><div class="list-row"><strong>Devon K.</strong><span class="chip info">35 views</span></div></div></div></div>
+        </section>
+
+        <section class="view" id="view-earnings" hidden>
+          <div class="page-head"><div><div class="eyebrow">PARTNER</div><h1>Tier 2 Earnings</h1></div></div>
+          <div class="metrics"><div class="metric"><div class="metric-label">Tier 2 members</div><div class="metric-value">83</div></div><div class="metric"><div class="metric-label">New this month</div><div class="metric-value">17</div></div><div class="metric"><div class="metric-label">Partner status</div><div class="metric-value" style="font-size:20px">Active</div></div><div class="metric"><div class="metric-label">Next statement</div><div class="metric-value" style="font-size:20px">Oct 1</div></div></div>
+          <div class="panel"><div class="panel-head"><h2>Monthly partner activity</h2></div><div class="panel-body"><p>This area will show the server owner's share from eligible members who upgrade to TraderLink Tier 2. Exact payout rules and reporting fields will be finalized before implementation.</p></div></div>
+        </section>
+
+        <section class="view" id="view-channels" hidden>
+          <div class="page-head"><div><div class="eyebrow">DISCORD</div><h1>Discord Channels</h1></div><button class="button primary">Map channel</button></div>
+          <div class="grid-equal">
+            <div class="panel"><div class="panel-head"><div><h2>TraderLink visibility idea</h2><div class="detail">Not decided · shown for discussion</div></div><span class="chip warning">Idea only</span></div><div class="panel-body stack"><div class="notice"><strong>Paid community services stay managed in Discord.</strong><br>The visibility arrangement is still its own decision. One option is giving TraderLink a visible home in the server for its dashboard, Journal and feature updates.</div><div class="list-row"><div><div class="name">Possible visibility channel</div><div class="detail">Readable by the entire server</div></div><span class="chip info">#traderlink-tools</span></div><div class="list-row"><div><div class="name">Possible access message</div><div class="detail">Open TraderLink link and member sign-in</div></div><span class="chip muted">Not decided</span></div><div class="list-row"><div><div class="name">Possible feature updates</div><div class="detail">Cadence has not been selected</div></div><span class="chip muted">Not decided</span></div><p>This is one idea, not a requirement or approved partner agreement.</p></div></div>
+            <div class="panel"><div class="panel-head"><h2>Community content delivery</h2><span class="chip success">Bot connected</span></div><div class="panel-body stack"><div class="list-row"><div><div class="name">Alerts</div><div class="detail">All alert pages</div></div><span class="chip info">#trade-alerts</span></div><div class="list-row"><div><div class="name">Watchlists</div><div class="detail">Owner and staff watchlists</div></div><span class="chip info">#daily-watchlists</span></div><div class="list-row"><div><div class="name">Member watchlists</div><div class="detail">Member-created lists shared to this server</div></div><span class="chip info">#member-watchlists</span></div><div class="list-row"><div><div class="name">Swing Desk alerts</div><div class="detail">Alerts by Alexa M.</div></div><span class="chip warning">Not mapped</span></div></div></div>
+          </div>
+          <div class="panel" style="margin-top:18px"><div class="panel-head"><div><h2>Other visibility ideas</h2><div class="detail">Choose later after server-owner feedback</div></div><span class="chip muted">No decision</span></div><div class="panel-body"><div class="role-grid"><div class="content-card"><div class="role-top"><strong>Built into useful posts</strong><span class="chip success">Low pressure</span></div><p>Alerts, watchlists and coach profiles already sent to Discord include a small Open in TraderLink button.</p></div><div class="content-card"><div class="role-top"><strong>Existing resources channel</strong><span class="chip info">One post</span></div><p>Pin one permanent TraderLink access message in a channel the server already uses. No recurring promotion required.</p></div><div class="content-card"><div class="role-top"><strong>Discord Server Guide</strong><span class="chip info">Onboarding</span></div><p>Add TraderLink as a server resource where Discord Community Onboarding is enabled.</p></div><div class="content-card"><div class="role-top"><strong>/traderlink command</strong><span class="chip info">On request</span></div><p>Members ask the bot for the access link and current feature shortcuts when they want them.</p></div><div class="content-card"><div class="role-top"><strong>Community recap</strong><span class="chip muted">Optional</span></div><p>A value-first post summarizes new public server watchlists and alerts without exposing private activity.</p></div><div class="content-card"><div class="role-top"><strong>Dedicated channel</strong><span class="chip muted">Original idea</span></div><p>A permanent TraderLink home for servers that prefer a separate tools and updates channel.</p></div></div></div></div>
+        </section>
+
+        <section class="view" id="view-settings" hidden>
+          <div class="page-head"><div><div class="eyebrow">COMMUNITY</div><h1>Community Settings</h1></div><button class="button primary" id="saveSettings">Save changes</button></div>
+          <div class="grid-equal"><div class="panel"><div class="panel-head"><h2>Community</h2></div><div class="panel-body"><label>Community name<input value="Momentum Traders"></label><label style="margin-top:14px">Discord server ID<input value="7264••••••••193" disabled></label></div></div><div class="panel"><div class="panel-head"><h2>TraderLink access</h2><span class="chip success">Whole server</span></div><div class="panel-body stack"><div class="list-row"><div><div class="name">Who can join TraderLink?</div><div class="detail">Every verified active server member</div></div><span class="chip success">All members</span></div><div class="list-row"><div><div class="name">Can the owner restrict joining by role?</div><div class="detail">Content access is managed separately below</div></div><span class="chip muted">No</span></div><div class="notice">Whole-server access does not automatically include paid Tier 2 features.</div></div></div></div>
+          <div class="panel" style="margin-top:18px"><div class="panel-head"><div><h2>Server content access</h2><div class="detail">Choose who can see the server's content without affecting their TraderLink account.</div></div><button class="button outlined small">Manage audiences</button></div><div class="table-wrap"><table><thead><tr><th>Content</th><th>Default audience</th><th>Examples</th><th></th></tr></thead><tbody><tr><td><strong>Alerts</strong></td><td><span class="chip success">All members</span></td><td>Authors may select mapped roles or specific members per alert</td><td><button class="text-button">Change</button></td></tr><tr><td><strong>Watchlists</strong></td><td><span class="chip info">Selected access</span></td><td>@Day Traders, @Swing Traders and 12 selected members</td><td><button class="text-button">Change</button></td></tr><tr><td><strong>Coaching offers</strong></td><td><span class="chip info">Selected access</span></td><td>@Coaching Members and 8 selected members</td><td><button class="text-button">Change</button></td></tr></tbody></table></div></div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="teamModal" role="dialog" aria-modal="true" aria-labelledby="teamModalTitle">
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">TEAM ACCESS</div><h2 id="teamModalTitle" style="margin-top:5px">Add team member</h2></div><button class="icon-button" data-close-modal aria-label="Close">×</button></div><div class="form-grid"><label>Discord member<select><option>Select a member</option><option>Taylor R. (@taytrades)</option><option>Naomi S. (@naomistocks)</option></select></label><label>Responsibility name<input value="Trade Analyst"></label></div><p>Choose exactly what this person can do. You can change these permissions later.</p><div class="permission-picks"><label><input type="checkbox" checked> Publish alerts</label><label><input type="checkbox" checked> Publish watchlists</label><label><input type="checkbox"> Offer coaching</label><label><input type="checkbox"> View member activity</label></div><div class="modal-actions"><button class="button outlined" data-close-modal>Cancel</button><button class="button primary" id="sendInvite">Send invite</button></div></div>
+  </div>
+  <div class="modal-backdrop" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">MEMBER WATCHLIST</div><h2 id="shareModalTitle" style="margin-top:5px">Share to community</h2></div><button class="icon-button" data-close-share aria-label="Close member sharing preview">×</button></div><p>This is the small step added to the existing Community Watchlists publish flow.</p><div class="form-grid"><label>My watchlist<select><option>Premarket Movers · 8 symbols</option><option>Friday Reversal Ideas · 5 symbols</option></select></label><label>Community<select><option>Momentum Traders · Active member</option><option>The Small Cap Room · Active member</option></select></label></div><div class="permission-picks"><label><input type="checkbox" checked> Show in the community Watchlists page</label><label><input type="checkbox" checked> Post the exact link to #member-watchlists</label></div><div class="notice">You stay the owner. Sharing does not let the server owner edit your watchlist or see any Journal data.</div><div class="modal-actions" style="margin-top:16px"><button class="button outlined" data-close-share>Cancel</button><button class="button primary" id="confirmMemberShare">Share watchlist</button></div></div>
+  </div>
+  <div class="toast" id="toast">Mockup action saved</div>
+
+  <script>
+    const html = document.documentElement;
+    const sidebar = document.getElementById('sidebar');
+    const mobileBackdrop = document.getElementById('mobileBackdrop');
+    const viewTitles = {overview:'Overview',team:'Team',permissions:'Roles & Permissions',members:'Members',alerts:'Alerts',watchlists:'Watchlists',coaching:'Coaching',activity:'Activity & Analytics',earnings:'Tier 2 Earnings',channels:'Discord Channels',settings:'Community Settings'};
+    const simpleViews = {
+      alerts:['CONTENT','Alerts','Create and manage the alert pages that belong to Momentum Traders. Each page can be assigned to an approved team member and delivered to a mapped Discord channel.','Create alert page'],
+      watchlists:['CONTENT','Watchlists','Create and manage community watchlist pages. These stay separate from each member\'s personal Community Watchlists and TraderLink\'s official Watchlist.','Create watchlist page']
+    };
+    function buildSimpleView(name) {
+      const data=simpleViews[name], section=document.getElementById('view-'+name);
+      if(!data||section.children.length)return;
+      section.innerHTML=`<div class="page-head"><div><div class="eyebrow">${data[0]}</div><h1>${data[1]}</h1></div><button class="button primary">${data[3]}</button></div><div class="panel"><div class="panel-head"><h2>${data[1]} pages</h2><span class="chip muted">Sample content</span></div><div class="panel-body stack"><div class="content-card"><div class="role-top"><strong>${name==='alerts'?'NVDA Momentum':'Morning Watchlist'}</strong><span class="chip success">Published</span></div><p>Owner: Alexa M. · Delivered to ${name==='alerts'?'#trade-alerts':'#daily-watchlists'}</p></div><div class="content-card"><div class="role-top"><strong>${name==='alerts'?'Swing Desk':'Weekly Game Plan'}</strong><span class="chip warning">Draft</span></div><p>Owner: Marcus T. · ${data[2]}</p></div></div></div>`;
+    }
+    function showView(name) {
+      buildSimpleView(name);
+      document.querySelectorAll('.view').forEach(v=>v.hidden=true);
+      const view=document.getElementById('view-'+name); if(view)view.hidden=false;
+      document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
+      document.title=`${viewTitles[name]||'Server Owner'} · TraderLink Mockup`;
+      closeMenu(); window.scrollTo({top:0,behavior:'instant'});
+    }
+    function closeMenu(){sidebar.classList.remove('open');mobileBackdrop.classList.remove('open');}
+    document.querySelectorAll('.nav-button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+    document.querySelectorAll('[data-jump]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.jump)));
+    document.getElementById('menuButton').addEventListener('click',()=>{sidebar.classList.add('open');mobileBackdrop.classList.add('open')});
+    mobileBackdrop.addEventListener('click',closeMenu);
+    document.getElementById('themeButton').addEventListener('click',()=>{html.dataset.theme=html.dataset.theme==='dark'?'light':'dark'});
+    const teamModal=document.getElementById('teamModal');
+    document.getElementById('addTeamButton').addEventListener('click',()=>teamModal.classList.add('open'));
+    document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',()=>teamModal.classList.remove('open')));
+    document.getElementById('sendInvite').addEventListener('click',()=>{teamModal.classList.remove('open');showToast('Sample invite created — no data was sent')});
+    const shareModal=document.getElementById('shareModal');
+    document.getElementById('previewMemberShare').addEventListener('click',()=>shareModal.classList.add('open'));
+    document.querySelectorAll('[data-close-share]').forEach(b=>b.addEventListener('click',()=>shareModal.classList.remove('open')));
+    document.getElementById('confirmMemberShare').addEventListener('click',()=>{shareModal.classList.remove('open');showToast('Sample watchlist shared to Momentum Traders')});
+    document.getElementById('openDiscordWatchlist').addEventListener('click',()=>showToast('This would open the exact TraderLink watchlist page'));
+    const members={
+      marcus:['Marcus T.','Server Owner','Full access to community settings, team, content, coaching roster, activity, and Tier 2 partner reporting.',['Manage team','Publish content','Manage coaching','View activity']],
+      alexa:['Alexa M.','Lead Analyst + Coach','Can publish alerts and watchlists, manage her own coaching offers, and open Journal data shared by her own approved students.',['Publish alerts','Publish watchlists','Own coaching','Content activity']],
+      chris:['Chris D.','Moderator','Can publish alerts and view community activity. Chris has no coaching or settings access.',['Publish alerts','Member activity']],
+      jordan:['Jordan K.','Watchlist Contributor','Invite pending. Once accepted, Jordan can publish watchlists only.',['Publish watchlists']]
+    };
+    document.querySelectorAll('[data-member]').forEach(row=>row.addEventListener('click',()=>{document.querySelectorAll('[data-member]').forEach(r=>r.classList.remove('selected'));row.classList.add('selected');const d=members[row.dataset.member];document.getElementById('memberTitle').textContent=d[0];document.getElementById('memberStatus').textContent=d[1];document.getElementById('memberCopy').textContent=d[2];document.getElementById('memberPermissions').innerHTML=d[3].map(p=>`<span class="chip success">${p}</span>`).join('')}));
+    document.querySelectorAll('[data-role]').forEach(card=>card.addEventListener('click',()=>{document.querySelectorAll('[data-role]').forEach(r=>r.classList.remove('selected'));card.classList.add('selected');const title=card.querySelector('h3').textContent;document.getElementById('permissionTitle').textContent=title+' permissions'}));
+    function showToast(message){const toast=document.getElementById('toast');toast.textContent=message;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2200)}
+    ['newRoleButton','editPermissionsButton','saveSettings'].forEach(id=>document.getElementById(id).addEventListener('click',()=>showToast('Mockup action only — nothing was changed')));
+  </script>
+</body>
+</html>
