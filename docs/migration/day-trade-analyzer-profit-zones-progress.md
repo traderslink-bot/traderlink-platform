@@ -272,5 +272,12 @@ to this worker.
 - [x] Correct the exact-zone maximum-opportunity calculation to use the
   analyzer's canonical observation timeline; the Railway production type
   checker identified the stale internal property name before deployment.
+- [x] Correct zero-profit classification after rendered production QA exposed
+  a 100% Profit Taken/Partial/Full display beside `$0.00`. Decimal.js treats
+  positive zero as `isPositive()`, so Profit Zones now require `gt(0)` for
+  every profitable exit and profit-taking trade count.
+- [x] Apply the same strict comparison to the connected Green-to-Red, scaling
+  and outcome classifications so signed zero remains flat and is never counted
+  as green, red, recovered or profitable.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.

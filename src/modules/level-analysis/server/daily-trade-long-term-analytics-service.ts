@@ -1366,7 +1366,7 @@ function eventKindLabel(kind: EventFact["eventKind"]): TradeAnalysisEventPathRow
 
 function outcomeFor(actualPnlDecimal: string): TradeAnalysisMeaningfulProfitRow["outcome"] {
   const actual = new Decimal(actualPnlDecimal);
-  return actual.isPositive() ? "ended_green" : actual.isNegative() ? "ended_red" : "ended_flat";
+  return actual.gt(0) ? "ended_green" : actual.lt(0) ? "ended_red" : "ended_flat";
 }
 
 function profitZoneSummaryRows(
@@ -1377,16 +1377,16 @@ function profitZoneSummaryRows(
     const zoneRecords = records.filter((record) => record.lowerBoundPercent === lowerBoundPercent);
     const upperBoundPercent = zoneRecords[0]?.upperBoundPercent ??
       (lowerBoundPercent < 100 ? lowerBoundPercent + 10 : null);
-    const tookProfit = zoneRecords.filter((record) => new Decimal(record.profitTakenInZoneGrossDecimal).isPositive());
+    const tookProfit = zoneRecords.filter((record) => new Decimal(record.profitTakenInZoneGrossDecimal).gt(0));
     const tookPartialProfit = zoneRecords.filter((record) =>
-      new Decimal(record.partialProfitTakenInZoneGrossDecimal).isPositive());
+      new Decimal(record.partialProfitTakenInZoneGrossDecimal).gt(0));
     const tookFullExitOnlyProfit = tookProfit.filter((record) =>
       new Decimal(record.partialProfitTakenInZoneGrossDecimal).isZero());
     const closedProfitably = zoneRecords.filter((record) =>
-      new Decimal(record.profitableFullExitInZoneGrossDecimal).isPositive());
+      new Decimal(record.profitableFullExitInZoneGrossDecimal).gt(0));
     const partiallyExitedAndClosedProfitably = zoneRecords.filter((record) =>
-      new Decimal(record.partialProfitTakenInZoneGrossDecimal).isPositive() &&
-      new Decimal(record.profitableFullExitInZoneGrossDecimal).isPositive());
+      new Decimal(record.partialProfitTakenInZoneGrossDecimal).gt(0) &&
+      new Decimal(record.profitableFullExitInZoneGrossDecimal).gt(0));
     const noProfit = zoneRecords.filter((record) =>
       new Decimal(record.profitTakenInZoneGrossDecimal).isZero());
     const noProfitReachedNextFirst = noProfit.filter((record) =>
@@ -1396,7 +1396,7 @@ function profitZoneSummaryRows(
     const noProfitExitedInZone = noProfit.filter((record) =>
       record.observedOutcome === "exited_before_next");
     const noProfitEndedRed = noProfit.filter((record) =>
-      new Decimal(record.finalGrossPnlDecimal).isNegative());
+      new Decimal(record.finalGrossPnlDecimal).lt(0));
     const reachedNext = upperBoundPercent === null
       ? []
       : zoneRecords.filter((record) => record.reachedNextLevel);
@@ -1958,7 +1958,7 @@ export function buildDailyTradeLongTermAnalytics(
     }),
     scalingOut: Object.freeze({
       noScaleEndedRedTradeCount: scalingRows.filter((row) =>
-        !row.scaledOutWhileGreen && new Decimal(row.actualPnlDecimal).isNegative()).length,
+        !row.scaledOutWhileGreen && new Decimal(row.actualPnlDecimal).lt(0)).length,
       noScaleTradeCount: scalingRows.filter((row) => !row.scaledOutWhileGreen).length,
       rows: scalingRows,
       scaledOutTradeCount: scalingRows.filter((row) => row.scaledOutWhileGreen).length,

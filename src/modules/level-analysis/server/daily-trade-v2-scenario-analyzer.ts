@@ -259,15 +259,15 @@ function buildProfitZones(input: Readonly<{
       (upperBoundPercent === null || exit.returnPercent < upperBoundPercent));
     const profitTaken = exitProfits.reduce((total, exit) => total.plus(Decimal.max(exit.grossProfit, 0)), new Decimal(0));
     const profitablePartialExits = exitProfits.filter((exit) =>
-      exit.behavior === "scaled" && exit.grossProfit.isPositive());
+      exit.behavior === "scaled" && exit.grossProfit.gt(0));
     const profitableFullExits = exitProfits.filter((exit) =>
-      exit.behavior === "all_at_once" && exit.grossProfit.isPositive());
+      exit.behavior === "all_at_once" && exit.grossProfit.gt(0));
     const partialProfitBeforeNext = profitablePartialExits.filter((exit) =>
       firstNextLevel === null || exit.time < firstNextLevel.time);
     const partialProfitAfterNext = profitablePartialExits.filter((exit) =>
       firstNextLevel !== null && exit.time >= firstNextLevel.time);
     const quantitySold = exitProfits.reduce((total, exit) =>
-      exit.grossProfit.isPositive() ? total.plus(exit.quantity) : total, new Decimal(0));
+      exit.grossProfit.gt(0) ? total.plus(exit.quantity) : total, new Decimal(0));
     const profitAvailable = firstReached
       ? firstReached.averageEntryPrice
           .times(lowerBoundPercent)
@@ -345,11 +345,11 @@ function buildGreenOpportunity(input: Readonly<{
     ? null
     : peakZoneLowerBoundPercent + 10;
   const firstRed = input.pathPoints.find((point) =>
-    point.time >= reachedTwenty.time && point.grossResult.isNegative()) ?? null;
-  const turnedRed = firstRed !== null || input.finalGrossResult.isNegative();
+    point.time >= reachedTwenty.time && point.grossResult.lt(0)) ?? null;
+  const turnedRed = firstRed !== null || input.finalGrossResult.lt(0);
   const recoveredAfterTurningRed = firstRed !== null && input.pathPoints.some((point) =>
-    point.time > firstRed.time && point.grossResult.isPositive());
-  const profitableExits = input.exitProfits.filter((exit) => exit.grossProfit.isPositive());
+    point.time > firstRed.time && point.grossResult.gt(0));
+  const profitableExits = input.exitProfits.filter((exit) => exit.grossProfit.gt(0));
 
   return Object.freeze({
     firstReachedTwentyAtUtcSeconds: reachedTwenty.time,
@@ -383,7 +383,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
       const time = eventTimeSeconds(event);
       const price = decimal(event.priceDecimal);
       const quantity = decimal(event.quantityDecimal);
-      return time === null || price === null || quantity === null || !quantity.isPositive()
+      return time === null || price === null || quantity === null || !quantity.gt(0)
         ? []
         : [{ event, price, quantity, time }];
     })
@@ -425,7 +425,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
       const candle = candles[candleIndex]!;
       const closeTime = candle.time + 60;
       if (closeTime > eventTime) break;
-      if (averageEntryPrice && positionQuantity.isPositive()) {
+      if (averageEntryPrice && positionQuantity.gt(0)) {
         const perShare = directionMove(input.direction, averageEntryPrice, candle.close);
         const favorablePrice = input.direction === "long" ? candle.high : candle.low;
         const favorablePerShare = directionMove(input.direction, averageEntryPrice, favorablePrice);
@@ -512,7 +512,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
     realizedGross = realizedGross.plus(grossProfit);
     positionQuantity = Decimal.max(0, positionQuantity.minus(closingQuantity));
     positionCycleHadExit = true;
-    if (event.kind === "partial_exit" && grossProfit.isPositive()) {
+    if (event.kind === "partial_exit" && grossProfit.gt(0)) {
       reductions.push(Object.freeze({
         grossProfit,
         positionAfter: positionQuantity,
@@ -529,8 +529,8 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
   }));
   const primaryQualification = qualifications[0] ?? null;
   const firstRedAfterQualification = primaryQualification
-    ? pathPoints.find((point) =>
-        point.time >= primaryQualification.qualifiedAtUtcSeconds && point.grossResult.isNegative()) ?? null
+      ? pathPoints.find((point) =>
+        point.time >= primaryQualification.qualifiedAtUtcSeconds && point.grossResult.lt(0)) ?? null
     : null;
   const relevantReductions = reductions.filter((reduction) =>
     primaryQualification !== null &&
@@ -565,7 +565,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
       firstAtUtcSeconds: relevantReductions[0]?.time ?? null,
       lastAtUtcSeconds: lastReduction?.time ?? null,
       maximumOpenQuantityDecimal: maximumOpenQuantity.toFixed(),
-      positionReducedPercent: maximumOpenQuantity.isPositive()
+      positionReducedPercent: maximumOpenQuantity.gt(0)
         ? Decimal.max(
             0,
             Decimal.min(
