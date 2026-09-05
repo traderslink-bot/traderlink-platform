@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { CommunityDashboard } from "../../(dashboard)/communities/community-dashboard";
+import { DashboardMuiProviders } from "@/app/mui-provider";
 import {
   TRADERLINK_COMMUNITY_SECTIONS,
   type TraderLinkCommunitySection,
@@ -11,8 +12,10 @@ export const dynamic = "force-dynamic";
 
 export default async function CommunitiesPreviewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ section?: string[] }>;
+  searchParams: Promise<{ appearance?: string }>;
 }) {
   if (process.env.RAILWAY_ENVIRONMENT_NAME !== "staging") notFound();
 
@@ -22,13 +25,16 @@ export default async function CommunitiesPreviewPage({
   )
     ? (requested as TraderLinkCommunitySection)
     : "home";
+  const appearance = (await searchParams).appearance === "dark" ? "dark" : "light";
 
   return (
-    <CommunityDashboard
-      baseOverride="/communities-preview"
-      isReview
-      section={section}
-      snapshot={createTraderLinkCommunityReviewFixture()}
-    />
+    <DashboardMuiProviders appearance={appearance}>
+      <CommunityDashboard
+        baseOverride="/communities-preview"
+        isReview
+        section={section}
+        snapshot={createTraderLinkCommunityReviewFixture()}
+      />
+    </DashboardMuiProviders>
   );
 }
