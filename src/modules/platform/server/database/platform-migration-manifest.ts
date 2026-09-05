@@ -44,6 +44,7 @@ import { communityWatchlistFollowsMigration } from "@/src/modules/community/serv
 import { communityProfilesMigration } from "@/src/modules/community/server/database/migrations/0086_community_profiles";
 import { communityTickerCompanyFactsMigration } from "@/src/modules/community/server/database/migrations/0087_community_ticker_company_facts";
 import { traderLinkCommunitiesIdentityPermissionsMigration } from "@/src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions";
+import { traderLinkCommunitiesPartnerPlatformMigration } from "@/src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -591,6 +592,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions.ts",
       migration: traderLinkCommunitiesIdentityPermissionsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform.ts",
+      migration: traderLinkCommunitiesPartnerPlatformMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -1043,6 +1048,28 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "traderlink_community_discord_role_mappings",
       "traderlink_community_owner_events",
       "traderlink_community_authorization_audit_events",
+    ]),
+    "0122_traderlink_communities_partner_platform": Object.freeze([
+      "traderlink_community_operator_grants",
+      "traderlink_community_discord_guild_candidates",
+      "traderlink_community_settings",
+      "traderlink_community_audiences",
+      "traderlink_community_audience_discord_roles",
+      "traderlink_community_discord_destinations",
+      "traderlink_community_alerts",
+      "traderlink_community_watchlist_placements",
+      "traderlink_community_coach_profiles",
+      "traderlink_community_coaching_plans",
+      "traderlink_community_coaching_relationships",
+      "traderlink_community_journal_grants",
+      "traderlink_community_content_deliveries",
+      "traderlink_community_activity_events",
+      "traderlink_community_activity_daily_members",
+      "traderlink_community_partner_programs",
+      "traderlink_community_partner_attributions",
+      "traderlink_community_partner_earnings",
+      "traderlink_community_partner_billing_events",
+      "traderlink_community_coach_fee_rules",
     ]),
   });
 
