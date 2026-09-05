@@ -99,7 +99,7 @@ export function OfflineDailyTrackerSurface({
     return (
       <TradeTrackerUnsavedChangesProvider>
         <DashboardPage>
-          <Typography component="h1" variant="h1">Daily Trade Tracker</Typography>
+          <Typography component="h1" variant="h1">Session Tracker</Typography>
           {entry}
           {savedView.status === "loading" ? (
             <Stack role="status" sx={{ alignItems: "center", justifyContent: "center", minHeight: 320 }}>
@@ -109,7 +109,7 @@ export function OfflineDailyTrackerSurface({
           ) : (
             <DashboardUnavailableState
               compact
-              description="Open this Daily Trade Tracker date once while connected so TraderLink can save its latest trades, notes and review on this device."
+              description="Open this Session Tracker date once while connected so TraderLink can save its latest trades, notes and review on this device."
               title="No saved trading day is available"
             />
           )}

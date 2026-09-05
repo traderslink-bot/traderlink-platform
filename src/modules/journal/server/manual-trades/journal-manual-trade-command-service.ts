@@ -200,7 +200,7 @@ export class JournalManualTradeCommandService {
           ? "Swing Trade Tracker manual executions"
           : request.tracker === "quick"
             ? "Quick Trade Entry manual executions"
-            : "Daily Trade Tracker manual executions",
+            : "Session Tracker manual executions",
         entries: request.entries.map(toManualExecutionInput),
         confirmedTraderBoundaries: true,
         contentResolution: exactOfflineDuplicate &&

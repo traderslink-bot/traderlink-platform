@@ -28,7 +28,6 @@ import { DemoDataCallout, DemoTradeTrackerInvitation } from "../demo-data-callou
 import type { FinancialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
-import type { WorkspaceTopTickersCard } from "./workspace-top-tickers-card";
 import { WorkspaceTradeLibrary } from "./workspace-trade-library-client";
 import { openWorkspaceTradeDrawer } from "./workspace-trade-drawer-events";
 import { DashboardChartAction, DashboardChartPanelSlot, DashboardChartProvider } from "../dashboard-chart-tool";
@@ -94,8 +93,6 @@ type WorkspaceDashboardProps = Readonly<{
   prScannerCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
   ruleResultsCard?: Readonly<{ brokenRuleCount: number; recentBrokenRuleTitles: readonly string[] }>;
   ruleResultsCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
-  topTickersCard?: WorkspaceTopTickersCard;
-  topTickersCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
   reviewSummary?: WorkspaceReviewSummary;
   showDemoTradeTrackerInvitation?: boolean;
 }> & (WorkspaceLiveTradeLibraryProps | WorkspaceOfflineTradeLibraryProps);
@@ -105,7 +102,7 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
   { label: "Win rate", value: "—", caption: "Completed round trips" },
   { label: "Best trade", value: "—", caption: "" },
   { label: "Worst trade", value: "—", caption: "" },
-  { label: "Closed trades", value: "—", caption: "All available history" },
+  { label: "Most profitable ticker", value: "—", caption: "" },
 ];
 
 function hasLiveTradeLibraryProps(
@@ -183,8 +180,6 @@ export function WorkspaceDashboard({
   prScannerCardPreference,
   ruleResultsCard,
   ruleResultsCardPreference,
-  topTickersCard,
-  topTickersCardPreference,
   reviewSummary,
   showDemoTradeTrackerInvitation,
   ...tradeLibraryProps
@@ -199,7 +194,6 @@ export function WorkspaceDashboard({
   const [rulesInitialView, setRulesInitialView] = useState<"custom" | "presets" | "results" | "rules">("rules");
   const [showRuleResultsCard, setShowRuleResultsCard] = useState(ruleResultsCardPreference?.showInWorkspace ?? false);
   const [showPrScannerCard, setShowPrScannerCard] = useState(prScannerCardPreference?.showInWorkspace ?? true);
-  const [showTopTickersCard, setShowTopTickersCard] = useState(topTickersCardPreference?.showInWorkspace ?? true);
   const [sessionNotesInitialView, setSessionNotesInitialView] = useState<JournalNotesDrawerInitialView>("add");
   const activeAccountSelectionRef = hasLiveTradeLibraryProps(tradeLibraryProps)
     ? tradeLibraryProps.expectedAccountSelectionRef
@@ -218,7 +212,6 @@ export function WorkspaceDashboard({
   useEffect(() => { setCurrentFocuses(summaryCurrentFocuses); }, [summaryCurrentFocuses]);
   useEffect(() => { setShowRuleResultsCard(ruleResultsCardPreference?.showInWorkspace ?? false); }, [ruleResultsCardPreference?.showInWorkspace]);
   useEffect(() => { setShowPrScannerCard(prScannerCardPreference?.showInWorkspace ?? true); }, [prScannerCardPreference?.showInWorkspace]);
-  useEffect(() => { setShowTopTickersCard(topTickersCardPreference?.showInWorkspace ?? true); }, [topTickersCardPreference?.showInWorkspace]);
   useEffect(() => { setRulesOpen(false); setRulesAccountSelectionRef(null); }, [activeAccountSelectionRef]);
   if (showDemoTradeTrackerInvitation) {
     return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
@@ -246,7 +239,7 @@ export function WorkspaceDashboard({
         {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: { xs: "flex-end", md: "flex-start" } }}>
           <Button onClick={openWorkspaceTradeDrawer} variant="contained">Add Trade</Button>
           <Tooltip title="Trading Rules"><Button onClick={() => openRules("rules")} startIcon={<GavelIcon />} variant="outlined">Rules</Button></Tooltip>
-          <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }} startIcon={<EditNoteIcon />}>Sessions</DashboardSecondaryAction></Tooltip>
+          <Tooltip title="Session Review"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("add"); setSessionNotesOpen(true); }} startIcon={<EditNoteIcon />}>Notes</DashboardSecondaryAction></Tooltip>
            <Tooltip title="Current Focuses"><DashboardSecondaryAction onClick={() => { setSessionNotesInitialView("focuses"); setSessionNotesOpen(true); }} startIcon={<VisibilityIcon />}>Focuses</DashboardSecondaryAction></Tooltip>
            {newsScannerAvailable ? <Tooltip title="Small cap daily PP"><DashboardSecondaryAction onClick={() => setNewsScannerOpen(true)} startIcon={<NewspaperIcon />}>PR Scanner</DashboardSecondaryAction></Tooltip> : null}
            <DashboardSecondaryAction onClick={() => setCalendarOpen(true)} startIcon={<CalendarMonthIcon />}>Calendar</DashboardSecondaryAction>
@@ -255,11 +248,11 @@ export function WorkspaceDashboard({
       </Stack>
       {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : hasLiveTradeLibraryProps(tradeLibraryProps) && newsScannerOpen ? <WorkspaceNewsScannerPanel expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} initialPreference={prScannerCardPreference ?? { revision: null, showInWorkspace: true }} onClose={() => setNewsScannerOpen(false)} onPreferenceSaved={(preference) => { setShowPrScannerCard(preference.showInWorkspace); router.refresh(); }} /> : <>
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
-      {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Day Trade Tracker when entering executions for multiple trades. <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 800, textDecoration: "underline" }} variant="inherit">Open Day Trade Tracker</Typography></Alert> : null}
+      {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Session Tracker when entering executions for multiple trades. <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 800, textDecoration: "underline" }} variant="inherit">Open Session Tracker</Typography></Alert> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
-        {metrics.map((metric) => <DashboardMetricCard action={metric.tradeDetailsRoundTripId ? <Button onClick={() => setSummaryTradeDetailsId(metric.tradeDetailsRoundTripId ?? null)} size="small">Trade details</Button> : undefined} hideCaption key={metric.label} {...metric} />)}
+        {metrics.map((metric) => <DashboardMetricCard action={metric.label === "Most profitable ticker" ? <Button component={Link} href={tickerExplorerHref("pnl")} size="small">View full list</Button> : metric.tradeDetailsRoundTripId ? <Button onClick={() => setSummaryTradeDetailsId(metric.tradeDetailsRoundTripId ?? null)} size="small">Trade details</Button> : undefined} hideCaption key={metric.label} {...metric} />)}
       </Box>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && ((showTopTickersCard && topTickersCard) || currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && (currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
         "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
         "& h2": { fontSize: "1.2rem", lineHeight: 1.25 },
         "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root": {
@@ -284,16 +277,13 @@ export function WorkspaceDashboard({
         mt: 1.5,
       }}>{currentFocuses ? <DashboardPanel title="Current Focuses">
         <CurrentFocusContent content={currentFocuses} />
-      </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel action={<Typography sx={{ alignSelf: "flex-end", fontSize: "3rem", fontWeight: 850, lineHeight: 0.85, ml: "auto", textAlign: "right" }}>{ruleResultsCard.brokenRuleCount}</Typography>} title="Rules broken">
+      </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel action={<Typography sx={{ alignSelf: "flex-end", fontSize: { xs: "3rem", md: "2.25rem" }, fontWeight: 850, lineHeight: 0.85, ml: "auto", textAlign: "right" }}>{ruleResultsCard.brokenRuleCount}</Typography>} title="Rules broken">
         <Stack spacing={0.75} sx={{ height: "100%", minHeight: 0, pt: 0.75 }}>
           <Box component="span" sx={{ color: "warning.main", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.02em", mt: 0.5 }}>Recent broken rules</Box>
           {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5} sx={{ minWidth: 0, pt: 0.5 }}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
           <Box sx={{ mt: "auto" }}><Button onClick={() => openRules("results")} size="small">View results</Button></Box>
         </Stack>
-      </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}{showTopTickersCard && topTickersCard ? <DashboardPanel title="Top tickers"><Stack spacing={1.5} sx={{ flex: 1, justifyContent: "center" }}>{[
-        ["Most profitable", topTickersCard.mostProfitable, "pnl"],
-        ["Most traded", topTickersCard.mostTraded, "trades"],
-      ].map(([label, symbol, rank]) => <Stack key={label} spacing={0.5} sx={{ minWidth: 0 }}><Box component="span" sx={{ color: "warning.main", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.02em" }}>{label}</Box><Stack direction="row" spacing={0.75} sx={{ alignItems: "baseline", minWidth: 0 }}><Typography color="warning.main" noWrap sx={{ fontSize: "1.15rem", fontWeight: 900 }} title={symbol ?? undefined}>{symbol ?? "—"}</Typography><Button component={Link} href={tickerExplorerHref(rank as "pnl" | "trades")} size="small" sx={{ flexShrink: 0, fontSize: "0.7rem", minWidth: 0, p: 0.25 }}>View full list</Button></Stack></Stack>)}</Stack></DashboardPanel> : null}</Box> : null}
+      </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}</Box> : null}
       <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>

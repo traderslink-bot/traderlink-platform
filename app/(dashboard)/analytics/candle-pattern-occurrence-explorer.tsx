@@ -304,14 +304,14 @@ export function CandlePatternOccurrenceExplorer({
             <Button disabled={selectedIndex === 0} onClick={() => { if (selectedIndex !== null) selectOccurrence(Math.max(0, selectedIndex - 1)); }} size="small" variant="outlined">Previous</Button>
             <Button disabled={selectedIndex === (result?.rows.length ?? 1) - 1} onClick={() => { if (selectedIndex !== null) selectOccurrence(Math.min((result?.rows.length ?? 1) - 1, selectedIndex + 1)); }} size="small" variant="outlined">Next</Button>
           </Stack>
-          <Button endIcon={<OpenInNewIcon />} href={trackerHref(selected)} size="small" sx={{ ml: { sm: "auto !important" } }} variant="contained">Open Daily Trade Tracker</Button>
+          <Button endIcon={<OpenInNewIcon />} href={trackerHref(selected)} size="small" sx={{ ml: { sm: "auto !important" } }} variant="contained">Open Session Tracker</Button>
         </Stack>
       </Box>
       <Stack spacing={2} sx={{ p: { xs: 1.5, sm: 2 } }}>
         <OccurrenceSummary occurrence={selected} timezone={result?.timezone ?? "America/New_York"} />
         <Divider />
         {replayState === "loading" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", py: 4 }}><CircularProgress size={20} /><Typography color="text.secondary">Loading the saved trade chart…</Typography></Stack> : null}
-        {replayState === "error" ? <Alert severity="warning">The saved chart is unavailable. You can still open the full Daily Trade Tracker review.</Alert> : null}
+        {replayState === "error" ? <Alert severity="warning">The saved chart is unavailable. You can still open the full Session Tracker review.</Alert> : null}
         {replayState === "ready" && replay?.analysis ? (
           <DailyTradeAnalyzerChart
             analysis={replay.analysis}

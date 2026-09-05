@@ -306,7 +306,7 @@ export function AiChatManualEntryCard({
         }} select size="small" sx={{ minWidth: { xs: 0, sm: 190 }, width: { xs: "100%", sm: "auto" } }} value={tracker}>
           <MenuItem value="quick">Quick trade entry</MenuItem>
           <MenuItem value="swing">Swing trade</MenuItem>
-          <MenuItem value="day">Daily Trade Tracker</MenuItem>
+          <MenuItem value="day">Session Tracker</MenuItem>
         </TextField>
         <Button disabled={!complete || working} onClick={() => void reviewExecutions()} variant="contained">
           {working && !preview ? "Reviewing..." : "Review executions"}
@@ -314,7 +314,7 @@ export function AiChatManualEntryCard({
       </Stack>
       {tracker === "day" ? (
         <Typography color="text.secondary" sx={{ mt: 1 }} variant="caption">
-          Daily Trade Tracker entries must all use the same trading date.
+          Session Tracker entries must all use the same trading date.
         </Typography>
       ) : null}
 

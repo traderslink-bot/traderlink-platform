@@ -101,7 +101,7 @@ function ArticleBlock({ block }: { block: HelpArticleBlock }) {
 
   return (
     <Paper variant="outlined">
-      <HorizontalScrollRegion label="Daily Trade Tracker help table" minTableWidth={Math.max(520, 150 + Math.max(0, block.columns.length - 1) * 260)} stickyFirstColumn>
+      <HorizontalScrollRegion label="Session Tracker help table" minTableWidth={Math.max(520, 150 + Math.max(0, block.columns.length - 1) * 260)} stickyFirstColumn>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -182,7 +182,7 @@ export function DailyTradeTrackerHelpArticle({ guide }: { guide: DailyTradeTrack
       <Box>
         <Breadcrumbs aria-label="Help breadcrumb" sx={{ mb: 1.25 }}>
           <Link href="/help">Help Center</Link>
-          <Link href="/help/daily-trade-tracker">Daily Trade Tracker</Link>
+          <Link href="/help/daily-trade-tracker">Session Tracker</Link>
           <Typography color="text.primary">{guide.title}</Typography>
         </Breadcrumbs>
         <Typography component="h1" variant="h1">{guide.title}</Typography>
@@ -191,7 +191,7 @@ export function DailyTradeTrackerHelpArticle({ guide }: { guide: DailyTradeTrack
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ mt: 2 }}>
           <Link href="/trade-tracker" style={{ textDecoration: "none" }}>
-            <Button component="span" fullWidth variant="contained">Open Daily Trade Tracker</Button>
+            <Button component="span" fullWidth variant="contained">Open Session Tracker</Button>
           </Link>
           {guide.slug === "rules-notes-day-review" ? (
             <Link href="/rules" style={{ textDecoration: "none" }}>

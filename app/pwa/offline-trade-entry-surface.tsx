@@ -104,7 +104,7 @@ function isDailyTrackerPathname(pathname: string): boolean {
 function trackerTitle(tracker: JournalManualTrackerKind): string {
   if (tracker === "quick") return "Quick Trade Entry";
   if (tracker === "swing") return "Swing Trade Tracker";
-  return "Daily Trade Tracker";
+  return "Session Tracker";
 }
 
 function readyOfflineDeviceState(

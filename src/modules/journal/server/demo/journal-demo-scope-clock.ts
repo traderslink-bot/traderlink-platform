@@ -79,7 +79,7 @@ export function journalScopeCurrentMonth(
 }
 
 /**
- * The Demo account's Daily Trade Tracker opens on the financial demo session
+ * The Demo account's Session Tracker opens on the financial demo session
  * with the complete current-day review. This deliberately does not change the
  * Demo scope's Workspace, Calendar, or Swing Tracker clock.
  */

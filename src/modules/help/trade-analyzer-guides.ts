@@ -12,9 +12,9 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Replay a saved trade and compare its recorded price path with the execution decisions.",
         keywords: ["trade analyzer", "chart replay", "day trade analysis", "historical analytics"],
         blocks: [
-          { kind: "paragraph", text: "The Trade Analyzer combines your exact Trade Tracker executions with supported Moomoo candles. Inside Daily Trade Tracker it replays one selected trade and explains its entries, exits, price path and completed candle patterns. Day Trade Analysis compares saved Analyzer results across eligible day trades." },
+          { kind: "paragraph", text: "The Trade Analyzer combines your exact Trade Tracker executions with supported Moomoo candles. Inside Session Tracker it replays one selected trade and explains its entries, exits, price path and completed candle patterns. Day Trade Analysis compares saved Analyzer results across eligible day trades." },
           { kind: "table", columns: ["Area", "Purpose"], rows: [
-            ["Daily Trade Tracker", "Review one trading day, select a ticker and trade, replay the chart, inspect executions and save notes, tags and rules."],
+            ["Session Tracker", "Review one trading day, select a ticker and trade, replay the chart, inspect executions and save notes, tags and rules."],
             ["Trade Analyzer", "The reusable chart, exact execution details, Green-to-Red review and candle-pattern capability."],
             ["Day Trade Analysis", "Long-term comparisons over eligible day trades that already have saved Analyzer results."],
             ["Analytics", "Regular Trade Tracker analytics over supported historical trading facts. It does not share the Analyzer eligibility population."],
@@ -47,7 +47,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
     slug: "chart-replay",
     title: "Chart replay",
-    description: "Use candles, executions, indicators, timeframes, pattern labels and chart controls inside Daily Trade Tracker.",
+    description: "Use candles, executions, indicators, timeframes, pattern labels and chart controls inside Session Tracker.",
     sections: [
       {
         id: "candles-and-activity",
@@ -241,7 +241,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Audit the entry and add observations behind the long-term statistics.",
         keywords: ["ticker", "entries", "adds", "pagination", "view full analysis", "mobile table", "swipe"],
         blocks: [
-          { kind: "paragraph", text: "Ticker and execution filters apply before pagination. On a phone, the complete evidence table keeps readable column widths and moves sideways inside its card; use the visible swipe cue and pinned Ticker column to compare entry price, movement in your favor, movement against you, percentage movement, time until flat and the actual trade result. View full analysis opens the exact trade in Daily Trade Tracker without changing the Analyzer population." },
+          { kind: "paragraph", text: "Ticker and execution filters apply before pagination. On a phone, the complete evidence table keeps readable column widths and moves sideways inside its card; use the visible swipe cue and pinned Ticker column to compare entry price, movement in your favor, movement against you, percentage movement, time until flat and the actual trade result. View full analysis opens the exact trade in Session Tracker without changing the Analyzer population." },
           { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Paging changes only the visible evidence rows; every card and comparison remains calculated from the complete selected date range, Account reporting currency and gross/net population." },
         ],
       },
@@ -314,7 +314,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Inspect the trades behind the Green-to-red comparisons.",
         keywords: ["supporting trades", "filters", "results per page", "view full analysis", "mobile table", "swipe"],
         blocks: [
-          { kind: "paragraph", text: "This is the detailed Green-to-red evidence view. On a phone, use the Sort control and swipe the contained table sideways to keep every comparison column readable; the Ticker column stays pinned as a reference. Use ticker and outcome filters, then View full analysis to open the exact Daily Trade Tracker trade behind a comparison. Sustained opportunity, additional opportunity, captured percentage and peak-to-exit time stay here because they describe profit capture and reversal behavior." },
+          { kind: "paragraph", text: "This is the detailed Green-to-red evidence view. On a phone, use the Sort control and swipe the contained table sideways to keep every comparison column readable; the Ticker column stays pinned as a reference. Use ticker and outcome filters, then View full analysis to open the exact Session Tracker trade behind a comparison. Sustained opportunity, additional opportunity, captured percentage and peak-to-exit time stay here because they describe profit capture and reversal behavior." },
           { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Showing X-Y of Z and Previous/Next describe only the visible slice; summary cards continue to describe the complete filtered analysis population." },
         ],
       },
@@ -367,11 +367,11 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "pattern-occurrences",
         title: "Pattern occurrences",
         summary: "Open the exact trade and candle context behind a grouped pattern.",
-        keywords: ["view occurrences", "chart", "drawer", "daily trade tracker", "ticker filter", "timeframe"],
+        keywords: ["view occurrences", "chart", "drawer", "Session Tracker", "ticker filter", "timeframe"],
         blocks: [
           { kind: "paragraph", text: "Select View occurrences on a pattern card to open its exact saved execution occurrences without losing your place in the pattern list. The occurrence browser uses a right drawer on desktop and a full-width drawer on mobile. Ticker, timeframe, execution and location filters apply before the server returns a page. Results per page offers 10, 25, 50 or 100 and defaults to 25." },
           { kind: "paragraph", text: "The occurrence browser keeps the complete table on every screen. On a phone, swipe it sideways to read all columns, then select View chart to open the chosen chart full screen. Desktop opens that chart in a second right drawer. Only the selected chart is loaded, so a long history does not create dozens of hidden chart instances." },
-          { kind: "paragraph", text: "The replay focuses the selected execution at the saved 1-minute or 5-minute timeframe. Previous and Next move through the visible occurrence page. Open Daily Trade Tracker keeps the exact trade, execution and interval selected for the full review." },
+          { kind: "paragraph", text: "The replay focuses the selected execution at the saved 1-minute or 5-minute timeframe. Previous and Next move through the visible occurrence page. Open Session Tracker keeps the exact trade, execution and interval selected for the full review." },
           { kind: "callout", title: "Context, not a signal", text: "The chart helps explain the completed candle context around a recorded execution. It does not predict what the same pattern will do next." },
         ],
       },
@@ -472,7 +472,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
     slug: "analyzed-trades",
     title: "Your analyzed trades",
-    description: "Find the recorded trades behind these results and open each exact Daily Trade Tracker review.",
+    description: "Find the recorded trades behind these results and open each exact Session Tracker review.",
     sections: [
       {
         id: "filters",
@@ -496,7 +496,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Return", "Percentage result when a supported denominator is available."],
             ["First review: 30 minutes after final exit", "For a long trade, shows whether price rose after the sale; for a short trade, whether price fell after the cover. The row uses the saved 30-minute post-exit observation only. It says unavailable when that observation is not saved and does not substitute a later 60-minute update."],
             ["Executions", "Number of saved entry, add, partial-exit and final-exit snapshots."],
-            ["View full analysis", "Opens the exact Daily Trade Tracker trade and focuses its saved analysis."],
+            ["View full analysis", "Opens the exact Session Tracker trade and focuses its saved analysis."],
           ] },
           { kind: "paragraph", text: "A positive per-share amount is the favorable movement recorded after the final exit. A zero result means price did not move beyond the final-exit price in that favorable direction. A negative result means the saved 30-minute high for a long sale remained below the sell price, or the saved 30-minute low for a short cover remained above the cover price." },
           { kind: "paragraph", text: "The directory intentionally keeps Green-to-red opportunity, capture and reversal columns off this page. Open the full analysis for entry, exit, pattern and Green-to-red context, or use the Green-to-red page for those cross-trade comparisons." },

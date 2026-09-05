@@ -47,7 +47,7 @@ const capabilities = Object.freeze([
   Object.freeze({
     id: "daily_tracker_drafts",
     kind: "confirmed_draft" as const,
-    plainLanguage: "Draft a Daily Trade Tracker note, one trade note, or Current Focuses for the selected trading day.",
+    plainLanguage: "Draft a Session Tracker note, one trade note, or Current Focuses for the selected trading day.",
     limitations: Object.freeze([
       "The trader reviews and saves the draft themselves.",
       "This note-draft flow cannot change tags, rules, rule outcomes, position classifications, executions, or review completion.",
@@ -99,7 +99,7 @@ const capabilities = Object.freeze([
   Object.freeze({
     id: "current_dashboard_journal_reads",
     kind: "factual_read" as const,
-    plainLanguage: "Read the current Workspace, Daily Trade Tracker, Calendar, Open Positions, and Swing Trade Tracker.",
+    plainLanguage: "Read the current Workspace, Session Tracker, Calendar, Open Positions, and Swing Trade Tracker.",
     limitations: Object.freeze([
       "Open positions never contribute to realized profit and loss.",
       "Swing and open-position types come from the trader's saved classification and are not inferred by Chat.",

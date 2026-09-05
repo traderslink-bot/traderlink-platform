@@ -3503,10 +3503,10 @@ export function DaySessionView({
             Trade Tracker
           </Typography>
           <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
-            Daily Trade Tracker
+            Session Tracker
           </Typography>
           <DashboardPageDescription marginTop={1} maxWidth={900} variant="body2">
-            The Daily Trade Tracker helps you review one trading day and the
+            The Session Tracker helps you review one trading day and the
             trades you took on that particular day. Add tags, notes and track rules
             for each trade. Add notes and track rules that apply to the trading day
             as a whole.
@@ -3516,7 +3516,7 @@ export function DaySessionView({
           </Typography>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifySelf: { md: "end" } }}>
-          <FeatureHelpLink href="/help/daily-trade-tracker" label="Daily Trade Tracker" size="medium" />
+          <FeatureHelpLink href="/help/daily-trade-tracker" label="Session Tracker" size="medium" />
           <Button
             disabled={Boolean(offlineSavedAtUtc)}
             onClick={() => openTraderLinkAiChat({
@@ -3745,7 +3745,7 @@ export function DaySessionView({
             {showDemoMarketDataConnectionNotice && !readyTrade ? (
               <Box sx={{ borderBottom: 1, borderColor: "divider", p: { xs: 1.5, sm: 2 } }}>
                 <Typography color="text.secondary" variant="body2">
-                  If your account isn&apos;t connected to market data trades are not analyzed and the chart will not appear. You can still review its executions, profit or loss, notes, tags, rules, and daily performance. The Daily Trade Tracker remains useful for finding patterns in how you planned, managed, and reviewed your trades.
+                  If your account isn&apos;t connected to market data trades are not analyzed and the chart will not appear. You can still review its executions, profit or loss, notes, tags, rules, and daily performance. The Session Tracker remains useful for finding patterns in how you planned, managed, and reviewed your trades.
                 </Typography>
               </Box>
             ) : null}

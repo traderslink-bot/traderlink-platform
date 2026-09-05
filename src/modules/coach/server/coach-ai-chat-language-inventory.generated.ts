@@ -4548,7 +4548,7 @@ export const coachAiChatRuntimeCapabilityCoverage: readonly CoachAiChatRuntimeCa
     "representativeFixtures": [
       {
         "id": "runtime-daily-tracker-draft",
-        "surface": "Daily Trade Tracker",
+        "surface": "Session Tracker",
         "input": "Draft a note for this trading day from the facts I supplied; do not save it.",
         "expectedRoute": "Daily Tracker editable draft and confirmation gate",
         "expectedKind": "confirmed_draft",

@@ -31,7 +31,7 @@ import { TradeTrackerUnsavedChangesProvider } from "./trade-tracker-unsaved-chan
 
 export const metadata: Metadata = {
   description: "Enter and review the current trading week's Trade Tracker executions.",
-  title: "Daily Trade Tracker | TradersLink Platform",
+  title: "Session Tracker | TradersLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -127,9 +127,9 @@ export default async function TradeTrackerPage({
   return (
     <TradeTrackerUnsavedChangesProvider>
       <DashboardPage>
-        <Typography component="h1" variant="h1">Daily Trade Tracker</Typography>
+        <Typography component="h1" variant="h1">Session Tracker</Typography>
         <DashboardPageDescription maxWidth={900} variant="body2">
-          The Daily Trade Tracker helps you review one trading day and the trades you took on that particular day. Add tags, notes and track rules for each trade. Add notes and track rules that apply to the trading day as a whole.
+          The Session Tracker helps you review one trading day and the trades you took on that particular day. Add tags, notes and track rules for each trade. Add notes and track rules that apply to the trading day as a whole.
         </DashboardPageDescription>
         <Typography sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.error.main, fontWeight: 700, maxWidth: 900 }} variant="body2">
           Notes, rules, tags and trade information will appear below after you submit your executions.

@@ -18,7 +18,7 @@ const STATIC_PAGE_DEFINITIONS: Readonly<Record<string, PageDefinition>> =
     "/workspace": page("workspace", "Workspace", "/workspace"),
     "/trade-tracker": page(
       "daily_trade_tracker",
-      "Daily Trade Tracker",
+      "Session Tracker",
       "/trade-tracker",
     ),
     "/trade-tracker/swings": page(
@@ -147,7 +147,7 @@ const STATIC_PAGE_DEFINITIONS: Readonly<Record<string, PageDefinition>> =
     ),
     "/manual-entry": page(
       "daily_trade_tracker",
-      "Daily Trade Tracker",
+      "Session Tracker",
       "/trade-tracker",
     ),
     "/trades": page("calendar", "Calendar", "/calendar"),
@@ -163,7 +163,7 @@ const STATIC_PAGE_DEFINITIONS: Readonly<Record<string, PageDefinition>> =
     ),
     "/trades/day-sessions": page(
       "daily_trade_tracker",
-      "Daily Trade Tracker",
+      "Session Tracker",
       "/trade-tracker",
     ),
     "/analytics/trade-analysis": page(
@@ -299,7 +299,7 @@ export function parseCoachAiChatPageContext(
   const trackerDate = pathname.match(/^\/trade-tracker\/(\d{4}-\d{2}-\d{2})$/u)?.[1];
   if (trackerDate && validCalendarDate(trackerDate)) {
     return context(
-      page("daily_trade_tracker", "Daily Trade Tracker", "/trade-tracker"),
+      page("daily_trade_tracker", "Session Tracker", "/trade-tracker"),
       trackerDate,
     );
   }
@@ -309,7 +309,7 @@ export function parseCoachAiChatPageContext(
   )?.[1];
   if (compatibilityDate && validCalendarDate(compatibilityDate)) {
     return context(
-      page("daily_trade_tracker", "Daily Trade Tracker", "/trade-tracker"),
+      page("daily_trade_tracker", "Session Tracker", "/trade-tracker"),
       compatibilityDate,
     );
   }

@@ -78,11 +78,11 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       }),
       Object.freeze({
         id: "daily-tracker-context",
-        title: "Ask from Daily Trade Tracker",
+        title: "Ask from Session Tracker",
         summary: "Open Chat from a trading day to use that day's saved trades and review details.",
         keywords: Object.freeze(["daily tracker", "trading day", "daily notes", "trade note"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "When you open Links AI Chat from Daily Trade Tracker, that trading day is shown at the top of Chat. You can ask about its saved trades, notes, tags, rules and Current Focuses or ask for an editable note draft." }),
+          Object.freeze({ kind: "paragraph" as const, text: "When you open Links AI Chat from Session Tracker, that trading day is shown at the top of Chat. You can ask about its saved trades, notes, tags, rules and Current Focuses or ask for an editable note draft." }),
           Object.freeze({ kind: "paragraph" as const, text: "A draft never changes the trading day by itself. Read and edit the proposed wording, then use the normal save action if you want to keep it." }),
         ]),
       }),

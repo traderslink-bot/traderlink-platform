@@ -47,7 +47,7 @@ function stateColor(state: ManualTradeOutboxState) {
 function trackerLabel(record: ManualTradeOutboxRecord): string {
   if (record.tracker === "swing") return "Swing Trade Tracker";
   if (record.tracker === "quick") return "Quick Trade Entry";
-  return "Daily Trade Tracker";
+  return "Session Tracker";
 }
 
 function executionCount(record: ManualTradeOutboxRecord): number {

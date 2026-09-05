@@ -222,7 +222,7 @@ export function createJournalDailyTrackerOfflineViewModel(
 export function journalDailyTrackerOfflineCoverage(): readonly PlatformOfflineCoverageFact[] {
   return Object.freeze([Object.freeze({
     key: "daily_tracker",
-    label: "Daily Trade Tracker",
+    label: "Session Tracker",
     reason: null,
     status: "available",
   }), Object.freeze({

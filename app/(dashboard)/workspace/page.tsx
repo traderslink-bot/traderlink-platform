@@ -12,7 +12,6 @@ import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { readWorkspaceTopTickersCard } from "./workspace-top-tickers-card";
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
 import { JournalWorkspacePrScannerCardPreferenceService } from "@/src/modules/journal/server/news/journal-workspace-pr-scanner-card-preference";
-import { JournalWorkspaceTopTickersCardPreferenceService } from "@/src/modules/journal/server/workspace/journal-workspace-top-tickers-card-preference";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import {
   findJournalAnalyticsMetric,
@@ -50,7 +49,6 @@ const WORKSPACE_METRICS = [
   ["Win rate", "win_rate", "Completed round trips"],
   ["Best trade", "best_trade", ""],
   ["Worst trade", "worst_trade", ""],
-  ["Closed trades", "included_count", "All available history"],
 ] as const;
 
 function workspaceMetricId(
@@ -107,7 +105,7 @@ export default async function WorkspacePage({
     redirect("/account/trading");
   }
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, logicalClosedTradeCount, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, topTickersCard, topTickersCardPreference, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, topTickersCard, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, pnlReportingBasis, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
@@ -149,7 +147,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         pnlReportingBasis,
         prScannerCardPreference: new JournalWorkspacePrScannerCardPreferenceService(database).read(scope),
         ruleResultsCardPreference: new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope),
-        topTickersCardPreference: new JournalWorkspaceTopTickersCardPreferenceService(database).read(scope),
         ruleResultsEndDate: dates.endDate,
         ruleResultsStartDate: dates.startDate,
         response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
@@ -169,10 +166,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
           afterCursor: null, endDate: dates.endDate, filter, followDashboardPeriod: false,
           group, searchTicker: queryParameters.searchTicker ?? "", sort, startDate: dates.startDate,
         }),
-        logicalClosedTradeCount: readWorkspaceTradeLibrary(database, scope, {
-          afterCursor: null, endDate: dates.endDate, filter: "closed", followDashboardPeriod: false,
-          group: "none", searchTicker: "", sort: "newest", startDate: dates.startDate,
-        }).totalRowCount,
       });
     },
     { prefetchAllFactSet: period === "all" && !(queryParameters.startDate && queryParameters.endDate) },
@@ -182,22 +175,25 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     : undefined;
   const showDemoTradeTrackerInvitation = !onboardingStatus.activeAccountIsDemo &&
     onboardingStatus.demoLifecycleState !== "cleared";
-  const analyticsMetrics = WORKSPACE_METRICS.map(([label, metricId, caption]) => {
+  const analyticsMetrics = [...WORKSPACE_METRICS.map(([label, metricId, caption]) => {
     const selectedMetricId = workspaceMetricId(metricId, pnlReportingBasis);
     const metrics = findJournalAnalyticsMetric(response, selectedMetricId);
     const metric = metrics.length === 1 ? metrics[0] ?? null : null;
     return {
       label,
       caption,
-      value: label === "Closed trades"
-        ? String(logicalClosedTradeCount)
-        : formatJournalAnalyticsPartitionedMetric(response, selectedMetricId),
+      value: formatJournalAnalyticsPartitionedMetric(response, selectedMetricId),
       valueColor: financialSummaryMetricColor(selectedMetricId, metric?.value),
       tradeDetailsRoundTripId: label === "Best trade"
         ? topTickersCard.bestTradeRoundTripId
         : label === "Worst trade" ? topTickersCard.worstTradeRoundTripId : null,
     };
-  });
+  }), {
+    caption: "",
+    label: "Most profitable ticker",
+    tradeDetailsRoundTripId: null,
+    value: topTickersCard.mostProfitable ?? "—",
+  }];
   const offlinePartition = response.partitions.length === 1
     ? response.partitions[0] ?? null
     : null;
@@ -236,8 +232,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         period={period}
         ruleResultsCard={ruleResultsCard}
         ruleResultsCardPreference={ruleResultsCardPreference}
-        topTickersCard={topTickersCard}
-        topTickersCardPreference={topTickersCardPreference}
         customEndDate={customEndDate}
         customStartDate={customStartDate}
         periodEndDate={periodEndDate}

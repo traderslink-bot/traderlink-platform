@@ -1558,7 +1558,7 @@ export function AiChatClient({
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography color="primary.main" sx={{ fontWeight: 850 }} variant="body2">
-                Daily Trade Tracker · {dailyContext.tradingDate}
+                Session Tracker · {dailyContext.tradingDate}
               </Typography>
               <Typography color="text.secondary" variant="caption">
                 Your questions will use the saved trades, notes, tags, rules and focuses from this day.

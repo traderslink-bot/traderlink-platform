@@ -50,7 +50,7 @@ const TRADERSLINK_BETA_FEATURES = [
   {
     description: "Enter the executions you took each day and TradersLink builds the trades for you. Review them by ticker with trade replay charts, then add trade notes, tags, and rules. Finish the day with what went well, what to work on, and your main focus for next time.",
     icon: "trendUp",
-    title: "Daily Trade Tracker",
+    title: "Session Tracker",
   },
   {
     description: "Analyze every trade—not just your totals. Review detailed entry, exit, and complete-trade analysis, then use long-term results to study your execution habits over time. See missed profit opportunities, exits that may have happened too early, and trades that were green before they finished red. Candle-pattern data helps you study the conditions around your entries and exits.",

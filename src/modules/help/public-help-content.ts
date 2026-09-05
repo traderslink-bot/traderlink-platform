@@ -39,7 +39,7 @@ function collection(
 
 export const PUBLIC_HELP_COLLECTIONS: readonly PublicHelpCollection[] = Object.freeze([
   collection("account", "Account", "Manage settings and control where your TraderLink account stays signed in.", ACCOUNT_HELP_GUIDES),
-  collection("daily-trade-tracker", "Daily Trade Tracker", "Record trades, review executions and finish your trading day.", DAILY_TRADE_TRACKER_HELP_GUIDES),
+  collection("daily-trade-tracker", "Session Tracker", "Record trades, review executions and finish your trading day.", DAILY_TRADE_TRACKER_HELP_GUIDES),
   collection("quick-trade-entry", "Quick Trade Entry", "Enter completed executions across past trading dates without starting a Tracker review.", QUICK_TRADE_ENTRY_HELP_GUIDES),
   collection("swing-trade-tracker", "Swing Trade Tracker", "Review intentional swing positions and dated notes.", SWING_TRADE_TRACKER_HELP_GUIDES),
   collection("calendar", "Calendar", "Read completed Trade Tracker trades by month or week and inspect a trading day.", CALENDAR_HELP_GUIDES),

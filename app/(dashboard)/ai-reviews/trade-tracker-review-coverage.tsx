@@ -89,7 +89,7 @@ export function WeeklyTradeTrackerReviewCoverage({ days }: {
   return (
     <Box sx={{ mt: 1.5 }}>
       <Typography sx={{ fontWeight: 800 }} variant="body2">
-        Daily Trade Tracker reviews
+        Session Tracker reviews
       </Typography>
       <ReviewDayList days={days} />
     </Box>

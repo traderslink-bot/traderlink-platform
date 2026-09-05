@@ -11,9 +11,9 @@ const guide = (slug: string, title: string, description: string, sections: reado
 export const CANDLE_REVIEW_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("getting-started", "Getting started", "Use Candle Review to inspect the recorded price path around one eligible completed stock trade.", [
     section("choose-a-completed-trade", "Choose a completed trade", "Candle Review starts from one eligible completed Trade Tracker trade, not from a live position or a new manual entry.", ["candle review", "completed trade", "stock trade", "price path", "eligible trade"], [
-      paragraph("Open the completed trade from Daily Trade Tracker when its View candle review link is available. Candle Review is for a confirmed, closed stock trade with the details needed to place its entry and exit on the chart."),
+      paragraph("Open the completed trade from Session Tracker when its View candle review link is available. Candle Review is for a confirmed, closed stock trade with the details needed to place its entry and exit on the chart."),
       bullets(["Open positions do not have a completed price path yet.", "A longer-duration or non-stock trade may not have an approved one-minute review interval.", "Your Trade Tracker trade stays valid if Candle Review is unavailable; only the optional market-data review is unavailable."]),
-      link("/trade-tracker", "Open Daily Trade Tracker", "Return to your daily review and open a completed trade when the follow-up link is available."),
+      link("/trade-tracker", "Open Session Tracker", "Return to your daily review and open a completed trade when the follow-up link is available."),
     ]),
     section("what-candle-review-shows", "What Candle Review shows", "The page places your recorded entry and exit beside one-minute market candles and clear supporting observations.", ["entry marker", "exit marker", "candles", "chart", "one-minute"], [
       paragraph("The chart marks the recorded entry and exit, then shows the market candles available around them. The page can also show price-path feedback, execution context and indicator context when the needed market data is available."),

@@ -51,7 +51,7 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["tag workflow", "add tags", "review tags", "consistent tags"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open one trade", text: "In Daily Trade Tracker, open the ticker and select the exact completed trade you want to describe." }),
+            Object.freeze({ title: "1. Open one trade", text: "In Session Tracker, open the ticker and select the exact completed trade you want to describe." }),
             Object.freeze({ title: "2. Choose Add tags", text: "Select the preset or custom labels that genuinely fit that trade." }),
             Object.freeze({ title: "3. Create a tag if needed", text: "Use a short, reusable name when the existing choices do not match your process." }),
             Object.freeze({ title: "4. Save the complete selection", text: "Choose Save tags. The checked choices become that trade's saved tag list." }),
@@ -70,10 +70,10 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "open-tag-editor",
         title: "Open the Tag editor",
         summary: "Start from the exact completed trade you want to label.",
-        keywords: Object.freeze(["add tags", "edit tags", "daily trade tracker", "trade card"]),
+        keywords: Object.freeze(["add tags", "edit tags", "Session Tracker", "trade card"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open Daily Trade Tracker", text: "Choose the trading date and open the ticker card." }),
+            Object.freeze({ title: "1. Open Session Tracker", text: "Choose the trading date and open the ticker card." }),
             Object.freeze({ title: "2. Select the trade", text: "When the ticker has several trades, choose Trade 1, Trade 2 or the exact trade you want." }),
             Object.freeze({ title: "3. Choose Add tags or Edit tags", text: "Add tags appears when the trade has none. Edit tags appears when it already has saved tags." }),
           ]) }),
@@ -273,7 +273,7 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "open-manage-tags",
         title: "Open Manage tags",
         summary: "Manage the reusable list from a completed Day trade.",
-        keywords: Object.freeze(["manage tags", "daily trade tracker", "rename tag", "delete tag"]),
+        keywords: Object.freeze(["manage tags", "Session Tracker", "rename tag", "delete tag"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Open a completed Day trade", text: "Choose Add tags or Edit tags on the trade." }),
@@ -338,10 +338,10 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       Object.freeze({
         id: "manage-swing-tag-names",
         title: "Manage names used by Swing positions",
-        summary: "Create and assign in Swing Tracker; use Daily Trade Tracker for the current global management window.",
+        summary: "Create and assign in Swing Tracker; use Session Tracker for the current global management window.",
         keywords: Object.freeze(["rename swing tag", "delete swing tag", "manage tags", "shared tag list"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Day and Swing trades use the same reusable tag list for the selected account. Swing Trade Tracker can create and assign tags. To rename or retire a reusable tag, open Manage tags from a completed Day trade in Daily Trade Tracker." }),
+          Object.freeze({ kind: "paragraph", text: "Day and Swing trades use the same reusable tag list for the selected account. Swing Trade Tracker can create and assign tags. To rename or retire a reusable tag, open Manage tags from a completed Day trade in Session Tracker." }),
         ]),
       }),
     ]),
@@ -358,7 +358,7 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["where tags appear", "tag chips", "daily tracker", "swing tracker", "trade explorer"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
-            "Daily Trade Tracker shows tags on the matching completed trade.",
+            "Session Tracker shows tags on the matching completed trade.",
             "Swing Trade Tracker shows tags on the matching supported Swing position.",
             "Trade Explorer opens the same completed-trade tag assignment from its Review action.",
             "Switching between two completed trades in one ticker switches their separate tag lists.",
@@ -429,11 +429,11 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["supported tag targets", "completed trade", "open position", "swing position", "read only"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
-            "A completed Day trade can save tags from its Daily Trade Tracker card.",
+            "A completed Day trade can save tags from its Session Tracker card.",
             "Any confirmed completed trade shown in Trade Explorer can save tags from its Review editor.",
             "A connected Swing position can save tags from Swing Trade Tracker.",
             "A Session Review can save up to 10 tags for the full trading day. Those tags are separate from its individual trade tags.",
-            "An ordinary open-position row inside Daily Trade Tracker does not currently save a tag selection. If the position is an intentional Swing, classify it and use Swing Trade Tracker.",
+            "An ordinary open-position row inside Session Tracker does not currently save a tag selection. If the position is an intentional Swing, classify it and use Swing Trade Tracker.",
             "Other historical read-only pages can display saved tags without offering the Trade Explorer Review editor.",
           ]) }),
         ]),

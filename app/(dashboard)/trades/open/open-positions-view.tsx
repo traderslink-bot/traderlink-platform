@@ -182,7 +182,7 @@ export function OpenPositionsView({
           <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
             {offlineSavedAtUtc
               ? "Reconnect to change an open position type. Your last saved classifications are shown below."
-              : "Your choice is shared by Daily Trade Tracker, Swing Trade Tracker, and Open Positions. Time held never changes it automatically."}
+              : "Your choice is shared by Session Tracker, Swing Trade Tracker, and Open Positions. Time held never changes it automatically."}
           </Typography>
           <Stack spacing={2}>
             {result.positions.map((position) => {

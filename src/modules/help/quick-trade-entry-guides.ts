@@ -11,8 +11,8 @@ const guide = (slug: string, title: string, description: string, sections: reado
 export const QUICK_TRADE_ENTRY_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("getting-started", "Getting started", "Enter executions directly when you do not need to complete a Daily or Swing Trade Tracker review.", [
     section("when-to-use-quick-entry", "When to use Quick Trade Entry", "Choose the execution-only path for past trades or several trading dates.", ["quick entry", "past trades", "multiple dates", "manual entry"], [
-      paragraph("Quick Trade Entry records broker fills in your selected Trade Tracker account without opening a Daily Trade Tracker or Swing Trade Tracker review."),
-      bullets(["Use it when you need to enter executions for more than one past trading date in the same batch.", "Use Daily Trade Tracker when you want to review one trading day with notes, tags, rules and day review.", "Use Swing Trade Tracker when you are recording or managing an intentional swing position."]),
+      paragraph("Quick Trade Entry records broker fills in your selected Trade Tracker account without opening a Session Tracker or Swing Trade Tracker review."),
+      bullets(["Use it when you need to enter executions for more than one past trading date in the same batch.", "Use Session Tracker when you want to review one trading day with notes, tags, rules and day review.", "Use Swing Trade Tracker when you are recording or managing an intentional swing position."]),
       callout("Execution-only entry", "Quick Trade Entry saves executions. It does not create Daily Notes, trade tags, Trading Rule reviews, a day-review record or Swing notes."),
     ]),
     section("what-to-enter", "Enter the broker-shown fill", "Use the date, time, ticker, side, quantity, price and reported fees from the completed fill.", ["fill", "broker time", "ticker", "quantity", "price", "fees"], [
@@ -31,7 +31,7 @@ export const QUICK_TRADE_ENTRY_HELP_GUIDES: readonly HelpGuide[] = Object.freeze
     ]),
     section("how-trades-form", "How executions become trades", "TradersLink follows the running position from zero until it returns to zero.", ["trade", "execution", "flat", "long", "short", "partial fill"], [
       paragraph("A trade starts when the position leaves zero and closes when it returns to zero. Additional fills while shares remain open are part of the same trade. The next execution after zero starts another trade, even when it is the same ticker."),
-      link("/help/daily-trade-tracker/add-edit-trades#executions-build-trades", "Read how executions become trades", "The Daily Trade Tracker guide includes simple Long and Short examples."),
+      link("/help/daily-trade-tracker/add-edit-trades#executions-build-trades", "Read how executions become trades", "The Session Tracker guide includes simple Long and Short examples."),
     ]),
     section("future-times", "Use past execution times only", "A saved execution must already have happened.", ["future time", "future date", "validation", "past date"], [
       paragraph("Quick Trade Entry accepts past trading dates, including several dates in one batch. A future execution time cannot be saved because it is not yet a completed broker fill."),
@@ -39,8 +39,8 @@ export const QUICK_TRADE_ENTRY_HELP_GUIDES: readonly HelpGuide[] = Object.freeze
   ]),
   guide("after-saving", "Review saved entries and next steps", "Find the resulting trade in the right review surface after your executions are saved.", [
     section("choose-next-step", "Choose the right next page", "Quick Trade Entry saves the facts first; your review workflow depends on the trade.", ["after save", "daily tracker", "swing tracker", "open positions"], [
-      bullets(["Open Daily Trade Tracker to review a current or recent trading day with its notes, rules, tags and day review.", "Open Swing Trade Tracker for an intentional active or recently completed swing.", "Open Open Positions when a factual position remains open and you need to choose its current status.", "Open Data Decisions only when TraderLink identifies a specific factual question that needs your broker evidence."]),
-      link("/trade-tracker", "Open Daily Trade Tracker", "Use the Daily Tracker when the next step is reviewing one trading day."),
+      bullets(["Open Session Tracker to review a current or recent trading day with its notes, rules, tags and day review.", "Open Swing Trade Tracker for an intentional active or recently completed swing.", "Open Open Positions when a factual position remains open and you need to choose its current status.", "Open Data Decisions only when TraderLink identifies a specific factual question that needs your broker evidence."]),
+      link("/trade-tracker", "Open Session Tracker", "Use the Daily Tracker when the next step is reviewing one trading day."),
     ]),
     section("manual-and-imported-fills", "Manual and imported fills share one Trade Tracker", "A later broker statement is checked rather than silently counted twice.", ["duplicate", "statement import", "manual fill", "broker import"], [
       paragraph("Quick Trade Entry and statement imports both add to the same Trade Tracker history. When an imported fill might be the same as a manual fill, TradersLink asks for a decision instead of deleting either source or double-counting the trade."),

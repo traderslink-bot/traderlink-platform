@@ -75,7 +75,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "Use the page that matches the work you need to do next.",
         keywords: Object.freeze(["after import", "daily tracker", "quick entry", "data decisions", "open positions"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "bullets", items: Object.freeze(["Upload all available statements for the account before resolving Data Decisions. A later statement may contain the missing executions needed to complete an affected trade automatically.", "Open Data Decisions only for a specific item that still needs source evidence after the available statements are uploaded.", "Open Daily Trade Tracker to review a current or recent trading day.", "Open Quick Trade Entry to add manual executions across past trading dates.", "Open Open Positions to view confirmed positions that remain open."]) }),
+          Object.freeze({ kind: "bullets", items: Object.freeze(["Upload all available statements for the account before resolving Data Decisions. A later statement may contain the missing executions needed to complete an affected trade automatically.", "Open Data Decisions only for a specific item that still needs source evidence after the available statements are uploaded.", "Open Session Tracker to review a current or recent trading day.", "Open Quick Trade Entry to add manual executions across past trading dates.", "Open Open Positions to view confirmed positions that remain open."]) }),
         ]),
       }),
     ]),
@@ -114,7 +114,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
             Object.freeze(["Broker import needs attention", "The import could not finish. Open the update to review the next step."]),
             Object.freeze(["Reconnect Moomoo", "Your Moomoo connection needs to be reconnected before TraderLink can continue updates."]),
             Object.freeze(["Data Decisions need your review", "Some trade details need your confirmation before every affected result can be complete."]),
-            Object.freeze(["Trade Analyzer is ready", "A completed Trade Analyzer update is available for the related Daily Trade Tracker review."]),
+            Object.freeze(["Trade Analyzer is ready", "A completed Trade Analyzer update is available for the related Session Tracker review."]),
             Object.freeze(["Trade Analyzer needs a correction", "One or more execution minutes or prices did not match market data. Open the trade to see every affected execution, edit an incorrect entry or confirm that the broker record is correct."]),
             Object.freeze(["AI Review ready", "A saved weekly or monthly review is ready to read when AI Reviews are available for your account."]),
           ]) }),

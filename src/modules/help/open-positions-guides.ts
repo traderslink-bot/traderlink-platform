@@ -21,7 +21,7 @@ export const OPEN_POSITIONS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("choose-the-best-description", "Choose the best description", "Pick the status that matches what the position is now, not what the system guesses from time held.", ["active swing", "day trade still open", "bag hold", "long-term hold", "status"], [
       bullets(["Choose Active swing for a position you intentionally continue as a Swing.", "Choose Day trade still open when the Day trade is still active.", "Choose Unplanned hold when an intended Day trade became a hold you did not plan.", "Choose Long-term hold when you intentionally treat it as a longer-term holding.", "Choose Not classified while you have not decided how to describe the position.", "Choose Flat / no longer open only when your broker shows a zero position. TraderLink records that confirmation without inventing a sale or profit and loss."]),
     ]),
-    section("shared-status", "The status is shared", "A change is reflected in Daily Trade Tracker, Swing Trade Tracker and Open Positions.", ["shared status", "daily tracker", "swing tracker", "reclassify"], [
+    section("shared-status", "The status is shared", "A change is reflected in Session Tracker, Swing Trade Tracker and Open Positions.", ["shared status", "daily tracker", "swing tracker", "reclassify"], [
       paragraph("These pages read the same confirmed position. Choosing a different status updates its current classification; it does not move executions, change their dates or create a second position history."),
       link("/help/swing-trade-tracker/getting-started", "Read Swing Trade Tracker help", "Open the Swing Tracker when the position is an intentional active Swing."),
     ]),

@@ -91,7 +91,7 @@ export function HelpSearch({ records }: { records: readonly HelpSearchRecord[] }
               </List>
             ) : (
               <Typography color="text.secondary" sx={{ p: 2 }} variant="body2">
-                No matching help was found. Browse the Daily Trade Tracker guide to see the available topics.
+                No matching help was found. Browse the Session Tracker guide to see the available topics.
               </Typography>
             )}
           </Paper>

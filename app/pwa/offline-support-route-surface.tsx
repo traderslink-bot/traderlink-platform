@@ -74,7 +74,7 @@ const HELP_COLLECTIONS: readonly HelpCollection[] = Object.freeze([
   { description: "Read completed Trade Tracker results by week or month.", guides: CALENDAR_HELP_GUIDES, href: "/help/calendar", title: "Calendar" },
   { description: "Request and read optional market context for eligible trades.", guides: CANDLE_REVIEW_HELP_GUIDES, href: "/help/candle-review", title: "Candle Review" },
   { description: "Read Analytics and compare results by ticker, timing and execution.", guides: CORE_ANALYTICS_HELP_GUIDES, href: "/help/core-analytics", title: "Analytics" },
-  { description: "Record executions, review trades and complete each trading day.", guides: DAILY_TRADE_TRACKER_HELP_GUIDES, href: "/help/daily-trade-tracker", title: "Daily Trade Tracker" },
+  { description: "Record executions, review trades and complete each trading day.", guides: DAILY_TRADE_TRACKER_HELP_GUIDES, href: "/help/daily-trade-tracker", title: "Session Tracker" },
   { description: "Answer Journal questions using the broker evidence you trust.", guides: DATA_DECISIONS_HELP_GUIDES, href: "/help/data-decisions", title: "Data Decisions" },
   { description: "Find updates, choose notification delivery and finish imports.", guides: NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES, href: "/help/notifications-and-imports", title: "Notifications and imports" },
   { description: "Learn how to use TraderLink tools such as Halt Alerts.", guides: TOOLS_HELP_GUIDES, href: "/help/tools", title: "Tools" },

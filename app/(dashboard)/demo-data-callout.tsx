@@ -267,11 +267,11 @@ export function DemoDataCallout({
           Take a tour, explore the features, and get familiar with the platform. When you&apos;re ready, you can start adding your own trades.
         </Typography>
         <Typography sx={{ color: demoBodyColor }} variant="body2">
-          Ready to start tracking your own journey? Use the Daily Trade Tracker to record trades, review your performance, and learn from every decision.
+          Ready to start tracking your own journey? Use the Session Tracker to record trades, review your performance, and learn from every decision.
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
           <Button href="/trade-tracker" variant="contained">
-            Open Daily Trade Tracker
+            Open Session Tracker
           </Button>
           <ClearDemoDataAction expectedAccountSelectionRef={expectedAccountSelectionRef} />
         </Stack>

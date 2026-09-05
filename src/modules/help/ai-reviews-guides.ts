@@ -98,7 +98,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Generate from trading activity without requiring daily review completion.",
         keywords: Object.freeze(["automatic", "12 hours", "post-market", "final trading day", "minimal participation"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "This option begins a weekly or two-week review 12 hours after post-market ends on the final open trading session of the period. It does not require daily Trade Tracker reviews to be marked complete." }),
+          Object.freeze({ kind: "paragraph", text: "This option begins a weekly or two-week review 12 hours after post-market ends on the final open trading session of the period. It does not require Session Tracker reviews to be marked complete." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Verified executions are included whether or not a daily review is complete.",
             "Any notes, tags and rule results saved before generation begins may also be included.",
@@ -386,7 +386,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "See which created daily pages are complete without treating them as a quota.",
         keywords: Object.freeze(["marked complete", "not marked complete", "daily reviews", "view month", "drawer"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "The weekly availability card lists created Daily Trade Tracker reviews as Marked complete or Not marked complete. Select a date to open that Trade Tracker page. Monthly coverage opens in a closeable side panel on desktop and a full-width panel on mobile." }),
+          Object.freeze({ kind: "paragraph", text: "The weekly availability card lists created Session Tracker reviews as Marked complete or Not marked complete. Select a date to open that Trade Tracker page. Monthly coverage opens in a closeable side panel on desktop and a full-width panel on mobile." }),
           Object.freeze({ kind: "callout", title: "Coverage is information, not a requirement", text: "The list does not tell you to trade every day or create five reviews. Execution facts and saved input can be useful even when a daily page is not marked complete." }),
         ]),
       }),

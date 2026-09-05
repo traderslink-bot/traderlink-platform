@@ -317,7 +317,7 @@ export function ExecutionEntryCard({
             {entryMode === "quick" ? (
               <>
                 Enter trade executions for any date. Skip the notes, tags and rules flow of the {" "}
-                <NextLink href="/trade-tracker">Daily Trade Tracker</NextLink>.
+                <NextLink href="/trade-tracker">Session Tracker</NextLink>.
               </>
             ) : "Enter the executions that make up this swing trade. Opening and closing executions can have different trading dates."}
           </Typography>

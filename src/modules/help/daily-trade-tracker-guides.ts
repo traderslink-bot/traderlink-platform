@@ -19,7 +19,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         summary: "Move between trading dates and understand the trading-week navigation.",
         keywords: Object.freeze(["open tracker", "date", "week", "traded day", "navigation"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Open Daily Trade Tracker from the main navigation. The page opens a trading date and places it inside its Eastern Time trading week." }),
+          Object.freeze({ kind: "paragraph", text: "Open Session Tracker from the main navigation. The page opens a trading date and places it inside its Eastern Time trading week." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Use the previous and next controls to move between available trading weeks.",
             "Select a traded-day card to open that date. Days with no accepted executions do not pretend that a trading review exists.",
@@ -92,7 +92,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "Enter the ticker, Buy or Sell side, filled quantity and execution price for every fill.",
             "Enter fees only when the broker reports them. Leaving an unknown fee blank is more accurate than guessing.",
             "Add rows for partial entries, adds and partial exits. Remove an unused row before saving.",
-            "Every row in one Daily Trade Tracker save must belong to the same Eastern Time trading date. This keeps the day review, notes and rules tied to one trading day.",
+            "Every row in one Session Tracker save must belong to the same Eastern Time trading date. This keeps the day review, notes and rules tied to one trading day.",
           ]) }),
           Object.freeze({ kind: "callout", tone: "warning", title: "Use the fill, not the order", text: "An order can be cancelled, partially filled or filled at several prices. Record the completed broker fills that actually changed the position." }),
           Object.freeze({ kind: "callout", title: "Connected Moomoo accounts update automatically", text: "After the first execution import completes, TradersLink checks an eligible linked Moomoo trading account regularly without requiring the Account page to remain open. Use Import latest trades in Broker Connections when you want an immediate check. Import older trades is the separate dated action for extending account history." }),
@@ -129,7 +129,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "TradersLink checks the complete set before saving. If the save cannot finish, the form remains available so you can correct it.",
             "After a successful save, the recorded-execution count confirms how many fills were accepted.",
             "If an offline save later matches the same executions entered on the website, TradersLink stops before adding them again. Choose Already entered to remove only the device copy, or Save as separate only when both sets of executions really happened.",
-            "After you open Daily Trade Tracker online once, the installed app can reopen a safe execution form after a full offline relaunch. The form uses the selected account's saved currency and timezone but does not keep an account name or broker identity.",
+            "After you open Session Tracker online once, the installed app can reopen a safe execution form after a full offline relaunch. The form uses the selected account's saved currency and timezone but does not keep an account name or broker identity.",
             "Use the available follow-up link to View candle review when you want to open the saved day immediately.",
             "A manual execution can be edited later. If it is being compared with possible broker data, resolve that Data Decision first so the same fill is not silently counted twice.",
             "Trade Analyzer ignores seconds when it matches an execution. It checks the Eastern-time minute and confirms that the entered price is within that one-minute candle's low-to-high range.",
@@ -145,7 +145,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         summary: "Choose the workflow that matches the data you have.",
         keywords: Object.freeze(["manual", "broker import", "statement", "bulk history", "moomoo"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Daily Trade Tracker manual entry is useful for reviewing one current or recent trading day and for brokers that do not yet connect directly. Use Quick Trade Entry when one batch contains executions from multiple past trading dates. Broker or statement imports are better for larger histories. All three paths ultimately feed the same execution history and use the same trade-building rules." }),
+          Object.freeze({ kind: "paragraph", text: "Session Tracker manual entry is useful for reviewing one current or recent trading day and for brokers that do not yet connect directly. Use Quick Trade Entry when one batch contains executions from multiple past trading dates. Broker or statement imports are better for larger histories. All three paths ultimately feed the same execution history and use the same trade-building rules." }),
           Object.freeze({ kind: "link", href: "/help/quick-trade-entry", label: "Open Quick Trade Entry help", text: "Quick Trade Entry is the execution-only path for multiple past trading dates; it does not begin the Daily Tracker notes, tags, rules or day-review workflow." }),
           Object.freeze({ kind: "paragraph", text: "A broker connection can provide strong execution evidence, but it does not make every row immune from genuine duplicates or contradictions. TradersLink preserves the source and asks only when the facts conflict." }),
         ]),
@@ -378,7 +378,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         summary: "Choose the trader's actual intent for every position that remains open.",
         keywords: Object.freeze(["open position", "active swing", "day trade still open", "bag hold", "long term hold", "not classified"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "An open-position row appears on a Daily Trade Tracker date only when that position had execution activity on that date. It shows the remaining quantity, average entry and opened time. Choose the description that matches your intent; TradersLink does not change it automatically because of time held. Other confirmed open positions remain available on Open Positions." }),
+          Object.freeze({ kind: "paragraph", text: "An open-position row appears on a Session Tracker date only when that position had execution activity on that date. It shows the remaining quantity, average entry and opened time. Choose the description that matches your intent; TradersLink does not change it automatically because of time held. Other confirmed open positions remain available on Open Positions." }),
           Object.freeze({ kind: "table", columns: Object.freeze(["Choice", "Use it when"]), rows: Object.freeze([
             Object.freeze(["Not classified", "You have not decided or recorded the position type yet. The day cannot be marked reviewed."]),
             Object.freeze(["Active swing", "You intentionally continue the position as a Swing. The same position also appears in Swing Trade Tracker; it is not copied into a second trade."]),
@@ -455,7 +455,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         keywords: Object.freeze(["coverage", "incomplete", "unavailable", "premarket", "after hours", "overnight", "us session"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
-            "The current analyzer supports the intended U.S. premarket, regular-session and after-hours coverage used by the Daily Trade Tracker.",
+            "The current analyzer supports the intended U.S. premarket, regular-session and after-hours coverage used by the Session Tracker.",
             "Overnight-session analysis is not currently supported.",
             "If required candles are missing, TradersLink reports incomplete coverage or an unavailable fact instead of claiming a complete analysis.",
             "Broker, symbol, date or account market-data limits may restrict what can be retrieved.",

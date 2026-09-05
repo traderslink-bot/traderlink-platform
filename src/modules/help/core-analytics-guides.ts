@@ -19,8 +19,8 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       ]),
     ]),
     section("what-it-does-not-change", "Analytics does not change executions", "Changing a view, range, sort or filter never edits a Trade Tracker execution or review.", ["read only", "change trade", "filters", "sort"], [
-      paragraph("Use Daily Trade Tracker, Quick Trade Entry, Import Trades or Data Decisions when you need to add, correct or resolve factual trade information. Analytics filters and sorting only arrange the facts that are currently available."),
-      link("/help/daily-trade-tracker/getting-started", "Read Daily Trade Tracker help", "Open the Daily Tracker when you want to review one trading date or work with its supporting tools."),
+      paragraph("Use Session Tracker, Quick Trade Entry, Import Trades or Data Decisions when you need to add, correct or resolve factual trade information. Analytics filters and sorting only arrange the facts that are currently available."),
+      link("/help/daily-trade-tracker/getting-started", "Read Session Tracker help", "Open the Daily Tracker when you want to review one trading date or work with its supporting tools."),
     ]),
   ]),
   guide("overview-and-date-range", "Read the overview and date range", "Choose a completed-trade date range, then read the key results and monthly P/L without mixing currencies.", [

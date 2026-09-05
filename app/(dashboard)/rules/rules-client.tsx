@@ -228,7 +228,7 @@ function parameterHelperText(
 
 function latestResultLabel(rule: ExecutionRuleDashboardCard): string {
   void rule;
-  return "Calculated automatically in Daily Trade Tracker";
+  return "Calculated automatically in Session Tracker";
 }
 
 export function RulesClient({

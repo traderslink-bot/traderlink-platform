@@ -30,7 +30,7 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "The installed app keeps the normal TradersLink dashboard and navigation. Installing it does not create a separate, reduced trading app.",
             "After you open supported pages online, TradersLink can keep bounded, last-updated copies on this device for offline reading.",
-            "Daily Trade Tracker, Swing Trade Tracker and Quick Trade Entry can save a new manual trade on this device when you are offline.",
+            "Session Tracker, Swing Trade Tracker and Quick Trade Entry can save a new manual trade on this device when you are offline.",
             "Push alerts are optional. You choose whether this device may receive them.",
           ]) }),
           Object.freeze({ kind: "callout", title: "Current facts still need a connection", text: "Saved pages clearly show when they were last updated. Imports, account changes, live market data, AI requests and Data Decisions need an internet connection so TraderLink can use the latest facts safely." }),
@@ -51,9 +51,9 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "enter-trades-offline",
         title: "Enter trades without a connection",
         summary: "Save a complete manual trade batch on this device and let TraderLink check it when you reconnect.",
-        keywords: Object.freeze(["offline trade entry", "Daily Trade Tracker", "Swing Trade Tracker", "Quick Trade Entry", "sync", "saved on this device"]),
+        keywords: Object.freeze(["offline trade entry", "Session Tracker", "Swing Trade Tracker", "Quick Trade Entry", "sync", "saved on this device"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "After you open Daily Trade Tracker, Swing Trade Tracker or Quick Trade Entry online once, the installed app can reopen its trade-entry form without a connection. Enter the same exact date, time, price and quantity shown by your broker so TraderLink can later check the trade correctly." }),
+          Object.freeze({ kind: "paragraph", text: "After you open Session Tracker, Swing Trade Tracker or Quick Trade Entry online once, the installed app can reopen its trade-entry form without a connection. Enter the same exact date, time, price and quantity shown by your broker so TraderLink can later check the trade correctly." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "A saved offline trade is shown as Saved on this device. It is not yet part of your positions, P/L, trade counts, rules results or Analytics.",
             "When you reconnect, TradersLink checks the saved batch through the normal preview and save process. It can show Syncing, Saved to TraderLink or Needs your review.",

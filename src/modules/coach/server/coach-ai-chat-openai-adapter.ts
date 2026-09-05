@@ -806,7 +806,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         }),
         tool({
           name: "get_trading_day_details",
-          description: "Read one Daily Trade Tracker day with trades, executions, notes, tags, rules, review state, and coverage.",
+          description: "Read one Session Tracker day with trades, executions, notes, tags, rules, review state, and coverage.",
           parameters: tradingDayDetailsInput,
           execute: (value, _context, details) => dispatch(
             "get_trading_day_details",

@@ -14,7 +14,7 @@ const BETA_FEATURES = [
   {
     description: "Enter the executions you took each day and TradersLink builds the trades for you. Review them by ticker with replay charts, then add notes, tags, and rules.",
     icon: "trendUp",
-    title: "Daily Trade Tracker",
+    title: "Session Tracker",
   },
   {
     description: "Analyze every trade, not just your totals. Study entries, exits, complete trades, and the habits that show up over time.",

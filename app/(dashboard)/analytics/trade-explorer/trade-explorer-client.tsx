@@ -1183,7 +1183,7 @@ export default function TradeExplorerClient({
       <Box>
         <Typography component="h1" variant="h1">Trade Explorer</Typography>
         <DashboardPageDescription marginTop={0.5}>
-          Explore your trades, narrow the results, and find the details that matter to you. Add or edit notes, tags, and rules in one place if you prefer not to use the Daily Trade Tracker.
+          Explore your trades, narrow the results, and find the details that matter to you. Add or edit notes, tags, and rules in one place if you prefer not to use the Session Tracker.
         </DashboardPageDescription>
       </Box>
       {offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}

@@ -24,7 +24,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "table", columns: Object.freeze(["Rule type", "How it works"]), rows: Object.freeze([
             Object.freeze(["Preset", "Choose a ready-made rule and its setting. TraderLink checks it automatically from saved completed Day trades."]),
-            Object.freeze(["Custom", "Write the rule in your own words, choose whether to review it by trade or by day, and select the result yourself in Daily Trade Tracker."]),
+            Object.freeze(["Custom", "Write the rule in your own words, choose whether to review it by trade or by day, and select the result yourself in Session Tracker."]),
           ]) }),
           Object.freeze({ kind: "paragraph", text: "Preset rules do not ask for a daily explanation or confirmation. A custom rule stays Not selected until you explicitly choose Followed or Broken." }),
           Object.freeze({ kind: "paragraph", text: "Trading Rules shows both types together under Your trading rules. Every card is labelled Preset or Custom, and Rule Results remains available directly from the left navigation." }),
@@ -53,7 +53,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Choose a rule", text: "Open Trading Rules and add a preset from the Rule library, or create a custom rule in your own words." }),
             Object.freeze({ title: "2. Set the limit", text: "Enter the time, trade count, loss count, price range or account-currency amount requested by the preset." }),
-            Object.freeze({ title: "3. Review the day", text: "Open Daily Trade Tracker to see automatic results, add custom-rule selections and read any Broken or N/A details." }),
+            Object.freeze({ title: "3. Review the day", text: "Open Session Tracker to see automatic results, add custom-rule selections and read any Broken or N/A details." }),
             Object.freeze({ title: "4. Compare the history", text: "Open Rule Results to search individual checks and view factual totals for each rule version." }),
           ]) }),
           Object.freeze({ kind: "link", href: "/rules", label: "Open Trading Rules", text: "Start with the Trading Rules page when you are ready to choose a rule." }),
@@ -311,21 +311,21 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   }),
   Object.freeze({
     slug: "daily-trade-tracker",
-    title: "Review rules in Daily Trade Tracker",
+    title: "Review rules in Session Tracker",
     description: "Read compact rule rows, open details, use the daily timeline and find grouped Rule markers on the chart.",
     sections: Object.freeze([
       Object.freeze({
         id: "find-rules",
         title: "Find trade and daily rules",
         summary: "Trade rules appear with the matching trade; daily rules appear in the Daily rules card.",
-        keywords: Object.freeze(["daily trade tracker", "trade rules", "daily rules", "rule row"]),
+        keywords: Object.freeze(["Session Tracker", "trade rules", "daily rules", "rule row"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "A trade rule is shown with the completed trade it checks or asks you to review.",
             "A ticker-day rule can use several completed attempts in the same ticker.",
             "A daily rule uses the ordered results across the complete trading day.",
             "Custom rules show a result selector. Preset rules display the automatic result.",
-            "Trade Explorer's Review editor offers the same custom result choices for one completed trade and shows automatic trade-rule results as read-only. Daily rule results remain in Daily Trade Tracker.",
+            "Trade Explorer's Review editor offers the same custom result choices for one completed trade and shows automatic trade-rule results as read-only. Daily rule results remain in Session Tracker.",
           ]) }),
         ]),
       }),
@@ -504,7 +504,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             "Filter by Preset or Custom, by result, and by Day or Trade target.",
             "Sort by newest date, oldest date or highest available P/L.",
             "Use Previous and Next to move through longer histories. Filters and search apply before the page is divided.",
-            "Choose View day to open the matching Daily Trade Tracker date.",
+            "Choose View day to open the matching Session Tracker date.",
           ]) }),
         ]),
       }),
@@ -565,7 +565,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Time-based rules use the Trade Tracker account's accepted timezone.",
         keywords: Object.freeze(["timezone", "eastern time", "trading date", "cutoff", "day boundary"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Daily Trade Tracker currently presents trading times in Eastern Time. A time cutoff and the order of entries and exits are compared using the accepted account timezone, including daylight-saving changes." }),
+          Object.freeze({ kind: "paragraph", text: "Session Tracker currently presents trading times in Eastern Time. A time cutoff and the order of entries and exits are compared using the accepted account timezone, including daylight-saving changes." }),
           Object.freeze({ kind: "paragraph", text: "A daily rule applies only to the matching trading date. It does not carry a count or realized total into the next trading day." }),
         ]),
       }),

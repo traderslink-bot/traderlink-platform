@@ -128,7 +128,7 @@ export function AiChatDailyCompanionCard({
           ) : null}
         </Stack>
         <Typography color="text.secondary" variant="body2">
-          Review and edit this draft. Nothing changes in your Daily Trade Tracker until you save it.
+          Review and edit this draft. Nothing changes in your Session Tracker until you save it.
         </Typography>
 
         {editedProposal.kind === "daily_note_draft" ? editedProposal.updates.map((update) => (
@@ -186,7 +186,7 @@ export function AiChatDailyCompanionCard({
         {error ? <Alert severity="error">{error}</Alert> : null}
         {committed ? (
           <Alert icon={<CheckCircleRoundedIcon fontSize="inherit" />} severity="success">
-            Saved to the Daily Trade Tracker.
+            Saved to the Session Tracker.
           </Alert>
         ) : (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
