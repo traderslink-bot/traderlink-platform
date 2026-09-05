@@ -73,7 +73,6 @@ export type DailyTradeV2ProfitZone = Readonly<{
   firstReachSource: "completed_close" | "exit" | null;
   longestConsecutiveMinutesAtOrAbove: number;
   lowerBoundPercent: number;
-  maximumProfitOpportunityInZoneGrossDecimal: string | null;
   minutesFromEntryToFirstReach: number | null;
   observedOutcome: "did_not_reach" | "dropped_before_next" | "exited_before_next" | "reached_next";
   partialProfitTakenAfterNextGrossDecimal: string;
@@ -123,7 +122,6 @@ type ProfitObservation = Readonly<{
 }>;
 
 type ExitProfit = Readonly<{
-  behavior: "all_at_once" | "scaled";
   grossProfit: Decimal;
   kind: "final_exit" | "partial_exit" | "temporary_flat";
   quantity: Decimal;
@@ -259,9 +257,9 @@ function buildProfitZones(input: Readonly<{
       (upperBoundPercent === null || exit.returnPercent < upperBoundPercent));
     const profitTaken = exitProfits.reduce((total, exit) => total.plus(Decimal.max(exit.grossProfit, 0)), new Decimal(0));
     const profitablePartialExits = exitProfits.filter((exit) =>
-      exit.behavior === "scaled" && exit.grossProfit.isPositive());
+      exit.kind === "partial_exit" && exit.grossProfit.isPositive());
     const profitableFullExits = exitProfits.filter((exit) =>
-      exit.behavior === "all_at_once" && exit.grossProfit.isPositive());
+      exit.kind !== "partial_exit" && exit.grossProfit.isPositive());
     const partialProfitBeforeNext = profitablePartialExits.filter((exit) =>
       firstNextLevel === null || exit.time < firstNextLevel.time);
     const partialProfitAfterNext = profitablePartialExits.filter((exit) =>
@@ -274,26 +272,11 @@ function buildProfitZones(input: Readonly<{
           .dividedBy(100)
           .times(firstReached.openQuantity)
       : null;
-    const maximumProfitOpportunityInZone = firstReached
-      ? input.reachObservations.slice(firstReachedIndex).reduce((maximum, observation) => {
-          if (observation.openShareReturnPercent + Number.EPSILON < lowerBoundPercent) return maximum;
-          const boundedReturnPercent = upperBoundPercent === null
-            ? observation.openShareReturnPercent
-            : Math.min(observation.openShareReturnPercent, upperBoundPercent - 0.01);
-          const openPositionProfit = observation.averageEntryPrice
-            .times(new Decimal(boundedReturnPercent.toString()))
-            .dividedBy(100)
-            .times(observation.openQuantity);
-          return Decimal.max(maximum, openPositionProfit);
-        }, new Decimal(0))
-      : null;
     return Object.freeze({
       firstReachedAtUtcSeconds: firstReached?.time ?? null,
       firstReachSource: firstReached?.source ?? null,
       longestConsecutiveMinutesAtOrAbove,
       lowerBoundPercent,
-      maximumProfitOpportunityInZoneGrossDecimal:
-        maximumProfitOpportunityInZone?.toFixed() ?? null,
       minutesFromEntryToFirstReach: firstReached
         ? Math.max(0, (firstReached.time - input.entryAtUtcSeconds) / 60)
         : null,
@@ -417,7 +400,6 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
   let realizedGross = new Decimal(0);
   let candleIndex = 0;
   let basisVersion = 0;
-  let positionCycleHadExit = false;
   const entryAtUtcSeconds = events.find(({ event }) => event.kind === "entry")?.time ?? events[0]!.time;
 
   const appendCompletedClosesBefore = (eventTime: number) => {
@@ -467,7 +449,6 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
   for (const { event, price, quantity, time } of events) {
     appendCompletedClosesBefore(time);
     if (event.kind === "entry" || event.kind === "add") {
-      const startsNewPositionCycle = positionQuantity.isZero();
       const quantityAfter = positionQuantity.plus(quantity);
       averageEntryPrice = quantityAfter.isZero()
         ? null
@@ -475,7 +456,6 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
             .plus(price.times(quantity))
             .dividedBy(quantityAfter);
       positionQuantity = quantityAfter;
-      if (startsNewPositionCycle) positionCycleHadExit = false;
       basisVersion += 1;
       maximumOpenQuantity = Decimal.max(maximumOpenQuantity, positionQuantity);
       continue;
@@ -485,9 +465,6 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
     const perShare = directionMove(input.direction, averageEntryPrice, price);
     const returnPercent = perShare.dividedBy(averageEntryPrice).times(100).toNumber();
     const grossProfit = perShare.times(closingQuantity);
-    const behavior = !positionCycleHadExit && closingQuantity.equals(positionQuantity)
-      ? "all_at_once" as const
-      : "scaled" as const;
     observations.push(Object.freeze({
       averageEntryPrice,
       basisVersion,
@@ -508,10 +485,9 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
       source: "exit",
       time,
     }));
-    exitProfits.push(Object.freeze({ behavior, grossProfit, kind: event.kind, quantity: closingQuantity, returnPercent, time }));
+    exitProfits.push(Object.freeze({ grossProfit, kind: event.kind, quantity: closingQuantity, returnPercent, time }));
     realizedGross = realizedGross.plus(grossProfit);
     positionQuantity = Decimal.max(0, positionQuantity.minus(closingQuantity));
-    positionCycleHadExit = true;
     if (event.kind === "partial_exit" && grossProfit.isPositive()) {
       reductions.push(Object.freeze({
         grossProfit,
