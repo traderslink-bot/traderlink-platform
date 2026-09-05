@@ -570,7 +570,7 @@ export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTra
   const changeSort = (column: TradeTableColumn) => setSort((current) => current === column.ascending ? column.descending : column.ascending);
   return <>
     {error ? <Typography color="error.main" variant="body2">{error}</Typography> : null}
-    <Box sx={{ alignItems: "center", display: { xs: "none", md: "grid" }, gap: 1, gridTemplateColumns: "10ch 210px 16ch 16ch 25ch 12ch auto auto", mt: 1.5, overflowX: "auto", pb: 0.25 }}>
+    <Box sx={{ alignItems: "center", display: { xs: "none", md: "grid" }, gap: 1, gridTemplateColumns: "10ch 210px 16ch 16ch 25ch 12ch max-content", mt: 0.5, overflowX: "auto", pb: 0.25, pt: 1 }}>
       <TextField label="Ticker" onChange={(event) => setTicker(event.target.value.toUpperCase())} size="small" slotProps={{ htmlInput: { maxLength: 5 } }} value={ticker} />
       <TextField label="Filter" onChange={(event) => setFilter(event.target.value as TradeStateFilter)} select size="small" value={filter}><MenuItem value="all">All</MenuItem><MenuItem value="open">Open</MenuItem><MenuItem value="swing">Swing</MenuItem><MenuItem value="closed">Closed</MenuItem><MenuItem value="fees_not_entered">Fees not entered</MenuItem></TextField>
       <TextField label="From" onChange={(event) => setStartDate(event.target.value)} size="small" slotProps={{ inputLabel: { shrink: true } }} type="date" value={startDate} />
@@ -579,8 +579,10 @@ export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTra
         <MenuItem value="newest">Date: newest</MenuItem><MenuItem value="oldest">Date: oldest</MenuItem><MenuItem value="ticker_asc">Ticker: A-Z</MenuItem><MenuItem value="ticker_desc">Ticker: Z-A</MenuItem><MenuItem value="direction_asc">Side: A-Z</MenuItem><MenuItem value="direction_desc">Side: Z-A</MenuItem><MenuItem value="status_asc">Status: A-Z</MenuItem><MenuItem value="status_desc">Status: Z-A</MenuItem><MenuItem value="buy_quantity">Shares: high to low</MenuItem><MenuItem value="buy_quantity_asc">Shares: low to high</MenuItem><MenuItem value="position">POS: high to low</MenuItem><MenuItem value="position_asc">POS: low to high</MenuItem><MenuItem value="entry">Entry: high to low</MenuItem><MenuItem value="entry_asc">Entry: low to high</MenuItem><MenuItem value="exit">Exit: high to low</MenuItem><MenuItem value="exit_asc">Exit: low to high</MenuItem><MenuItem value="entry_value">Entry value: high to low</MenuItem><MenuItem value="entry_value_asc">Entry value: low to high</MenuItem><MenuItem value="hold">Hold: longest</MenuItem><MenuItem value="hold_asc">Hold: shortest</MenuItem><MenuItem value="pnl_high">Gain/Loss: high to low</MenuItem><MenuItem value="pnl_low">Gain/Loss: low to high</MenuItem>
       </TextField>
       <TextField label="Group" onChange={(event) => setGroup(event.target.value as TradeGroup)} select size="small" value={group}><MenuItem value="none">None</MenuItem><MenuItem value="day">Day</MenuItem><MenuItem value="ticker">Ticker</MenuItem></TextField>
-      <Button disabled={activeFilterCount === 0} onClick={clearFilters} size="small">Clear filters</Button>
-      <Button disabled={sort === "newest"} onClick={() => setSort("newest")} size="small">Return to newest</Button>
+      <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", whiteSpace: "nowrap" }}>
+        <Button color="primary" onClick={clearFilters} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Clear filters</Button>
+        <Button color="primary" onClick={() => setSort("newest")} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Return to newest</Button>
+      </Stack>
     </Box>
     <Box sx={{ display: { md: "none" }, mt: 1.5 }}><Button onClick={onOpenFilters}>More filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button></Box>
     <Box sx={{ border: 1, borderColor: "divider", borderRadius: 2, mt: 1, overflow: "hidden" }}>
