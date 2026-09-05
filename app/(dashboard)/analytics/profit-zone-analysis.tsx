@@ -50,7 +50,7 @@ function minutes(value: number | null): string {
 }
 
 function zoneLabel(lower: number, upper: number | null): string {
-  return upper === null ? `${lower}% or more` : `${lower}% to under ${upper}%`;
+  return upper === null ? `${lower}%+` : `${lower}% to under ${upper}%`;
 }
 
 function reachTime(seconds: number, timezone: string): string {
@@ -64,7 +64,7 @@ function reachTime(seconds: number, timezone: string): string {
 }
 
 function nextLevelOutcome(record: TradeAnalysisProfitZoneRecord): string {
-  if (record.upperBoundPercent === null) return "Reached 100% or more";
+  if (record.upperBoundPercent === null) return "Reached 100%+";
   if (record.reachedNextLevel && record.observedOutcome === "dropped_before_next") {
     return `Dropped below +${record.lowerBoundPercent}%, then reached +${record.upperBoundPercent}%`;
   }
@@ -111,7 +111,7 @@ export function ProfitZoneAnalysis({
             Each bar is the share of all {totalTradeCount} analyzed {direction} trades that reached the level while shares were open. Levels are cumulative, so one trade can reach several levels.
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Reached means a completed 1-minute candle closed at or above the level, or a recorded sell executed there. The 100% or more bar includes every move above 100% and has no next level.
+            Reached means a completed 1-minute candle closed at or above the level, or a recorded sell executed there. The 100%+ bar has no next level.
           </Typography>
         </Box>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 0.5, sm: 2 }}>
@@ -132,14 +132,12 @@ export function ProfitZoneAnalysis({
           return <Box key={row.lowerBoundPercent}>
             <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
               <Button
-                aria-label={row.upperBoundPercent === null
-                  ? "Show exact trades reaching 100% or more"
-                  : `Show exact trades for the +${row.lowerBoundPercent}% level`}
+                aria-label={`Show exact trades for the +${row.lowerBoundPercent}% level`}
                 onClick={() => { setSelectedLevel(row.lowerBoundPercent); setPage(1); }}
                 size="small"
-                sx={{ fontWeight: 900, justifyContent: "flex-start", minWidth: 128, px: 0.5 }}
+                sx={{ fontWeight: 900, justifyContent: "flex-start", minWidth: 68, px: 0.5 }}
                 variant={selectedLevel === row.lowerBoundPercent ? "contained" : "text"}
-              >{row.upperBoundPercent === null ? `${row.lowerBoundPercent}% or more` : `+${row.lowerBoundPercent}%`}</Button>
+              >+{row.lowerBoundPercent}%</Button>
               <Box sx={{ bgcolor: "action.hover", borderRadius: 999, flex: 1, height: 16, overflow: "hidden" }}>
                 <Box sx={{ display: "flex", height: "100%", overflow: "hidden", width: `${reachedWidth}%` }}>
                   <Box sx={{ bgcolor: row.upperBoundPercent === null ? "primary.main" : "success.main", height: "100%", width: `${nextShare}%` }} />
@@ -208,7 +206,7 @@ export function ProfitZoneAnalysis({
     {selectedRow ? <Box>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between", mb: 1 }}>
         <Box>
-          <Typography sx={{ fontWeight: 850 }}>Exact trades reaching {selectedRow.upperBoundPercent === null ? `${selectedRow.lowerBoundPercent}% or more` : `+${selectedRow.lowerBoundPercent}%`}</Typography>
+          <Typography sx={{ fontWeight: 850 }}>Exact trades reaching +{selectedRow.lowerBoundPercent}%</Typography>
           <Typography color="text.secondary" variant="body2">{selectedRecords.length} record{selectedRecords.length === 1 ? "" : "s"} behind this matrix row.</Typography>
         </Box>
         <Chip color="primary" label={zoneLabel(selectedRow.lowerBoundPercent, selectedRow.upperBoundPercent)} variant="outlined" />
@@ -221,7 +219,7 @@ export function ProfitZoneAnalysis({
           pageSize={pageSize}
           rowCount={selectedRecords.length}
         />
-        <HorizontalScrollRegion label={`Exact trades reaching ${selectedRow.upperBoundPercent === null ? `${selectedRow.lowerBoundPercent}% or more` : `+${selectedRow.lowerBoundPercent}%`}`} minTableWidth={1840} stickyFirstColumn>
+        <HorizontalScrollRegion label={`Exact trades reaching +${selectedRow.lowerBoundPercent}%`} minTableWidth={1840} stickyFirstColumn>
           <Table size="small"><TableHead><TableRow>
             <TableCell>Ticker</TableCell><TableCell>First level record</TableCell><TableCell align="right">Time from entry</TableCell><TableCell align="right">Longest time at or above</TableCell><TableCell align="right">Completed minutes in zone</TableCell><TableCell align="right">Total holding time</TableCell><TableCell align="right">Shares sold in zone</TableCell><TableCell align="right">Exact Gross profit taken in zone</TableCell><TableCell align="right">Calculated Gross profit available at level</TableCell><TableCell>Next-level outcome</TableCell><TableCell align="right">Final Gross P/L</TableCell><TableCell />
           </TableRow></TableHead><TableBody>{visibleRecords.map((record) => <TableRow hover key={record.roundTripId}>
