@@ -269,5 +269,8 @@ to this worker.
 - [x] Complete the public Profit Zone summary-row contract for the exclusive
   Partial/Full exit percentages and Gross-dollar totals after the Railway
   production type checker identified the four missing type fields.
+- [x] Correct the exact-zone maximum-opportunity calculation to use the
+  analyzer's canonical observation timeline; the Railway production type
+  checker identified the stale internal property name before deployment.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.

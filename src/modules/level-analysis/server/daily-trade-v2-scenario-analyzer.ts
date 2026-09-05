@@ -275,7 +275,7 @@ function buildProfitZones(input: Readonly<{
           .times(firstReached.openQuantity)
       : null;
     const maximumProfitOpportunityInZone = firstReached
-      ? input.reachObservations.slice(firstReachedIndex).reduce((maximum, observation) => {
+      ? input.observations.slice(firstReachedIndex).reduce((maximum, observation) => {
           if (observation.openShareReturnPercent + Number.EPSILON < lowerBoundPercent) return maximum;
           const boundedReturnPercent = upperBoundPercent === null
             ? observation.openShareReturnPercent
