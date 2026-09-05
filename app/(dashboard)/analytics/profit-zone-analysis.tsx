@@ -61,11 +61,9 @@ function zoneLabel(lower: number, upper: number | null): string {
 }
 
 function TableHeading({
-  align = "left",
   help,
   label,
 }: {
-  align?: "left" | "right";
   help: string;
   label: string;
 }) {
@@ -73,7 +71,7 @@ function TableHeading({
     component="span"
     direction="row"
     spacing={0.25}
-    sx={{ alignItems: "center", justifyContent: align === "right" ? "flex-end" : "flex-start" }}
+    sx={{ alignItems: "center", justifyContent: "flex-start" }}
   >
     <Typography component="span" sx={{ fontSize: "inherit", fontWeight: "inherit" }}>{label}</Typography>
     <Tooltip arrow title={help}>
@@ -229,28 +227,41 @@ export function ProfitZoneAnalysis({
           pageSize={pageSize}
           rowCount={selectedRecords.length}
         />
-        <HorizontalScrollRegion label={`Trades that reached ${zoneLabel(selectedRow.lowerBoundPercent, selectedRow.upperBoundPercent)}`} minTableWidth={1500} stickyFirstColumn>
-          <Table size="small"><TableHead><TableRow>
+        <HorizontalScrollRegion label={`Trades that reached ${zoneLabel(selectedRow.lowerBoundPercent, selectedRow.upperBoundPercent)}`} minTableWidth={1300} stickyFirstColumn>
+          <Table size="small" sx={{ tableLayout: "fixed", "& .MuiTableCell-root": { px: 1, verticalAlign: "top" } }}>
+            <colgroup>
+              <col style={{ width: 82 }} />
+              <col style={{ width: 136 }} />
+              <col style={{ width: 104 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 188 }} />
+              <col style={{ width: 132 }} />
+              <col style={{ width: 132 }} />
+              <col style={{ width: 210 }} />
+              <col style={{ width: 126 }} />
+              <col style={{ width: 118 }} />
+            </colgroup>
+            <TableHead><TableRow>
             <TableCell>Ticker</TableCell>
             <TableCell><TableHeading help="Date and time the trade first reached this zone. For candle-based reaches, the displayed time is the close of the one-minute candle." label="First Reached" /></TableCell>
-            <TableCell align="right"><TableHeading align="right" help={entryOrderHelp} label="Time to Zone" /></TableCell>
-            <TableCell align="right"><TableHeading align="right" help="Total time the active trade spent in this zone, including time before and after leaving the zone and returning." label="Time in Zone" /></TableCell>
-            <TableCell align="right"><TableHeading align="right" help={partialProfitHelp} label="Partial Profit" /></TableCell>
-            <TableCell align="right"><TableHeading align="right" help={fullExitProfitHelp} label="Full Exit Profit" /></TableCell>
-            <TableCell align="right"><TableHeading align="right" help="The highest potential Gross profit opportunity in this zone." label="Gross Opportunity" /></TableCell>
+            <TableCell><TableHeading help={entryOrderHelp} label="Time to Zone" /></TableCell>
+            <TableCell><TableHeading help="Total time the active trade spent in this zone, including time before and after leaving the zone and returning." label="Time in Zone" /></TableCell>
+            <TableCell><TableHeading help={partialProfitHelp} label="Partial Profit" /></TableCell>
+            <TableCell><TableHeading help={fullExitProfitHelp} label="Full Exit Profit" /></TableCell>
+            <TableCell><TableHeading help="The highest potential Gross profit opportunity in this zone." label="Gross Opportunity" /></TableCell>
             <TableCell>Next Zone</TableCell>
-            <TableCell align="right"><TableHeading align="right" help="Your profit or loss for the completed trade without deducting fees charged by your broker." label="Final Gross P/L" /></TableCell>
+            <TableCell><TableHeading help="Your profit or loss for the completed trade without deducting fees charged by your broker." label="Final Gross P/L" /></TableCell>
             <TableCell />
           </TableRow></TableHead><TableBody>{visibleRecords.map((record) => <TableRow hover key={record.tradeId}>
             <TableCell sx={{ fontWeight: 850 }}>{record.symbol}</TableCell>
             <TableCell><Typography component="div" variant="body2">{reachTime(record.firstReachedAtUtcSeconds, timezone)}</Typography></TableCell>
-            <TableCell align="right">{minutes(record.minutesFromEntryToFirstReach)}</TableCell>
-            <TableCell align="right">{minutes(record.totalCompletedMinutesInZone)}</TableCell>
-            <TableCell align="right"><Typography component="div" sx={{ color: financialOutcomeColor(record.partialProfitTakenInZoneGrossDecimal ?? "0"), fontWeight: 750 }} variant="body2">{money(record.partialProfitTakenInZoneGrossDecimal ?? "0", currency)}</Typography><Typography color="text.secondary" component="div" variant="caption">{record.partialProfitTakingExitCount ?? 0} {(record.partialProfitTakingExitCount ?? 0) === 1 ? "partial exit" : "partial exits"} · {partialProfitTiming(record)}</Typography></TableCell>
-            <TableCell align="right"><Typography component="div" sx={{ color: financialOutcomeColor(record.profitableFullExitInZoneGrossDecimal ?? "0"), fontWeight: 750 }} variant="body2">{Number(record.profitableFullExitInZoneGrossDecimal ?? "0") > 0 ? money(record.profitableFullExitInZoneGrossDecimal, currency) : "No"}</Typography></TableCell>
-            <TableCell align="right">{money(record.profitAvailableAtLevelGrossDecimal, currency)}</TableCell>
+            <TableCell>{minutes(record.minutesFromEntryToFirstReach)}</TableCell>
+            <TableCell>{minutes(record.totalCompletedMinutesInZone)}</TableCell>
+            <TableCell><Typography component="div" sx={{ color: financialOutcomeColor(record.partialProfitTakenInZoneGrossDecimal ?? "0"), fontWeight: 750 }} variant="body2">{money(record.partialProfitTakenInZoneGrossDecimal ?? "0", currency)}</Typography><Typography color="text.secondary" component="div" variant="caption">{record.partialProfitTakingExitCount ?? 0} {(record.partialProfitTakingExitCount ?? 0) === 1 ? "partial exit" : "partial exits"} · {partialProfitTiming(record)}</Typography></TableCell>
+            <TableCell><Typography component="div" sx={{ color: financialOutcomeColor(record.profitableFullExitInZoneGrossDecimal ?? "0"), fontWeight: 750 }} variant="body2">{Number(record.profitableFullExitInZoneGrossDecimal ?? "0") > 0 ? money(record.profitableFullExitInZoneGrossDecimal, currency) : "No"}</Typography></TableCell>
+            <TableCell>{money(record.profitAvailableAtLevelGrossDecimal, currency)}</TableCell>
             <TableCell sx={{ maxWidth: 280, whiteSpace: "normal" }}><Typography color="text.secondary" component="div" variant="caption">{nextLevelOutcome(record)}</Typography></TableCell>
-            <TableCell align="right" sx={{ color: financialOutcomeColor(record.finalGrossPnlDecimal), fontWeight: 750 }}>{money(record.finalGrossPnlDecimal, currency)}</TableCell>
+            <TableCell sx={{ color: financialOutcomeColor(record.finalGrossPnlDecimal), fontWeight: 750 }}>{money(record.finalGrossPnlDecimal, currency)}</TableCell>
             <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${record.trackerDate}` : `/trade-tracker/${record.trackerDate}?${new URLSearchParams({ interval: "1m", trade: record.roundTripId }).toString()}`} size="small" variant="outlined">Full analysis</Button></TableCell>
           </TableRow>)}</TableBody></Table>
         </HorizontalScrollRegion>

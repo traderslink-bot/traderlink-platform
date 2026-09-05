@@ -247,6 +247,9 @@ including later returns. Partial Profit describes scaling out, Full Exit Profit
 means fully exiting the position with one sell order, Gross Opportunity is the
 highest calculated opportunity inside that band, and Final Gross P/L excludes
 broker fees. Next-zone outcomes use supporting-text typography.
+The exact record table keeps every heading and value left-aligned and uses
+compact, deliberate column widths so removing repeated row explanations also
+removes the empty horizontal gaps they created.
 
 ### Entries and Exits
 

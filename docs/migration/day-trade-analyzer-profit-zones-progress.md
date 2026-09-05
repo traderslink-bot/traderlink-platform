@@ -246,5 +246,8 @@ to this worker.
   full-exit explanations from every evidence row.
 - [x] Keep Full Exit Profit limited to fully exiting the position with one sell
   order, and render Next Zone outcomes in the smaller supporting-text size.
+- [x] Left-align every exact-trade heading and value, reduce horizontal cell
+  padding, and assign compact column widths so Full Exit Profit and every
+  following column move left instead of leaving large empty gaps.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.
