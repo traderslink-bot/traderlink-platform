@@ -60,7 +60,10 @@ export type JournalTradeStoryPerformance = Readonly<{
   closedAtUtc: string;
   enteredQuantityDecimal: string;
   entryNotionalDecimal: string;
+  entryPriceDecimal: string | null;
   executionCount: number;
+  exitNotionalDecimal: string;
+  exitPriceDecimal: string | null;
   exitQuantityDecimal: string;
   grossPnlDecimal: string;
   holdDurationMilliseconds: number;
@@ -123,6 +126,25 @@ type HistoricalSummaryRow = Readonly<{
   unique_execution_count: number;
 }>;
 
+function averagePrice(notionalDecimal: string, quantityDecimal: string): string | null {
+  const quantity = new StoryDecimal(quantityDecimal);
+  return quantity.isZero()
+    ? null
+    : new StoryDecimal(notionalDecimal).dividedBy(quantity).toDecimalPlaces(4).toFixed();
+}
+
+function exitNotionalFromGross(
+  direction: "long" | "short",
+  entryNotionalDecimal: string,
+  grossPnlDecimal: string,
+): string {
+  const entryNotional = new StoryDecimal(entryNotionalDecimal);
+  const grossPnl = new StoryDecimal(grossPnlDecimal);
+  return direction === "long"
+    ? entryNotional.plus(grossPnl).toFixed()
+    : entryNotional.minus(grossPnl).toFixed();
+}
+
 function performance(
   scope: WorkspaceAccessScope,
   roundTripId: string,
@@ -143,7 +165,10 @@ function performance(
       closedAtUtc: row.closedAtUtc,
       enteredQuantityDecimal: row.enteredQuantityDecimal,
       entryNotionalDecimal: row.entryNotionalDecimal,
+      entryPriceDecimal: averagePrice(row.entryNotionalDecimal, row.enteredQuantityDecimal),
       executionCount: row.uniqueExecutionCount,
+      exitNotionalDecimal: row.exitNotionalDecimal,
+      exitPriceDecimal: averagePrice(row.exitNotionalDecimal, row.exitQuantityDecimal),
       exitQuantityDecimal: row.exitQuantityDecimal,
       grossPnlDecimal: row.grossPnlDecimal,
       holdDurationMilliseconds: row.holdingDurationMilliseconds,
@@ -256,14 +281,23 @@ function historicalSummaryModel(
       summary.gross_pnl_decimal !== null &&
       summary.hold_duration_seconds !== null &&
       summary.maximum_position_quantity_decimal !== null
-    ? Object.freeze({
+    ? (() => {
+      const exitNotionalDecimal = exitNotionalFromGross(
+        summary.direction,
+        summary.entry_notional_decimal!,
+        summary.gross_pnl_decimal!,
+      );
+      return Object.freeze({
       chargeCostDecimal: null,
       chargeCoverage: "unavailable" as const,
       chargeCreditDecimal: null,
       closedAtUtc: summary.closed_at_utc,
       enteredQuantityDecimal: summary.entered_quantity_decimal,
       entryNotionalDecimal: summary.entry_notional_decimal,
+      entryPriceDecimal: averagePrice(summary.entry_notional_decimal, summary.entered_quantity_decimal),
       executionCount: summary.unique_execution_count,
+      exitNotionalDecimal,
+      exitPriceDecimal: averagePrice(exitNotionalDecimal, summary.entered_quantity_decimal),
       exitQuantityDecimal: summary.entered_quantity_decimal,
       grossPnlDecimal: summary.gross_pnl_decimal,
       holdDurationMilliseconds: summary.hold_duration_seconds * 1000,
@@ -271,7 +305,8 @@ function historicalSummaryModel(
       netPnlDecimal: null,
       openedAtUtc: summary.opened_at_utc,
       tradeCurrency: summary.trade_currency,
-    })
+      });
+    })()
     : null;
   return Object.freeze({
     direction: summary.direction,
@@ -501,15 +536,22 @@ export function readJournalTradeStory(
               return new StoryDecimal(total).plus(String(next)).toFixed();
             }, "0");
           const chargesComplete = values.every((value) => value.chargeCoverage === "complete");
+          const enteredQuantityDecimal = sum("enteredQuantityDecimal");
+          const entryNotionalDecimal = sum("entryNotionalDecimal");
+          const exitNotionalDecimal = sum("exitNotionalDecimal");
+          const exitQuantityDecimal = sum("exitQuantityDecimal");
           return Object.freeze({ ...values[0]!,
             chargeCostDecimal: chargesComplete ? sum("chargeCostDecimal") : null,
             chargeCoverage: chargesComplete ? "complete" as const : "unavailable" as const,
             chargeCreditDecimal: chargesComplete ? sum("chargeCreditDecimal") : null,
             closedAtUtc: values.at(-1)!.closedAtUtc,
-            enteredQuantityDecimal: sum("enteredQuantityDecimal"),
-            entryNotionalDecimal: sum("entryNotionalDecimal"),
+            enteredQuantityDecimal,
+            entryNotionalDecimal,
+            entryPriceDecimal: averagePrice(entryNotionalDecimal, enteredQuantityDecimal),
             executionCount: values.reduce((total, value) => total + value.executionCount, 0),
-            exitQuantityDecimal: sum("exitQuantityDecimal"),
+            exitNotionalDecimal,
+            exitPriceDecimal: averagePrice(exitNotionalDecimal, exitQuantityDecimal),
+            exitQuantityDecimal,
             grossPnlDecimal: sum("grossPnlDecimal"),
             holdDurationMilliseconds: Date.parse(values.at(-1)!.closedAtUtc) - Date.parse(values[0]!.openedAtUtc),
             maximumPositionQuantityDecimal: StoryDecimal.max(...values.map((value) => value.maximumPositionQuantityDecimal)).toFixed(),

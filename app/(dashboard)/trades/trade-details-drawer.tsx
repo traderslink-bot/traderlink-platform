@@ -49,7 +49,10 @@ type TradeDetailsBase = Readonly<{
     closedAtUtc: string;
     enteredQuantityDecimal: string;
     entryNotionalDecimal: string;
+    entryPriceDecimal: string | null;
     executionCount: number;
+    exitNotionalDecimal: string;
+    exitPriceDecimal: string | null;
     grossPnlDecimal: string;
     holdDurationMilliseconds: number;
     maximumPositionQuantityDecimal: string;
@@ -243,7 +246,7 @@ export function TradeDetailsDrawer({
           <Typography component="h2" sx={{ fontWeight: 900 }} variant="h6">Trade Details</Typography>
           {details ? <>
             <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", flexWrap: "wrap", mt: 0.5 }}>
-              <Typography sx={{ fontWeight: 850 }}>{details.symbol} · {details.direction === "long" ? "Long" : "Short"} · {tradeStyleLabel(details.style)}</Typography>
+              <Typography sx={{ fontWeight: 850 }}><Box component="span" sx={{ color: "warning.main" }}>{details.symbol}</Box> · {details.direction === "long" ? "Long" : "Short"} · {tradeStyleLabel(details.style)}</Typography>
               {details.projectionState === "legitimate_open" ? <Chip label="Open" size="small" variant="outlined" /> : null}
             </Stack>
             <Typography color="text.secondary" sx={{ mt: 0.25 }} variant="body2">{tradeTimeRange(details)}</Typography>
@@ -252,7 +255,7 @@ export function TradeDetailsDrawer({
         </Box>
         <Stack sx={{ alignItems: "flex-end", flexShrink: 0 }}>
           {details ? <>
-            <Typography color={resultColor} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 900 }} variant="h6">{resultValue}</Typography>
+            <Typography sx={{ color: resultColor, fontFamily: "var(--font-geist-mono)", fontWeight: 900 }} variant="h6">{resultValue}</Typography>
             <Typography color="text.secondary" variant="caption">{performance ? "Gross P/L" : "Position status"}</Typography>
           </> : null}
           <IconButton aria-label="Close trade details" onClick={onClose} sx={{ minHeight: 44, minWidth: 44, mt: 0.25 }}>
@@ -275,7 +278,10 @@ export function TradeDetailsDrawer({
               <Box><Typography color="text.secondary" variant="caption">Gross P/L</Typography><Typography color={resultColor} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>{resultValue}</Typography></Box>
               <Box><Typography color="text.secondary" variant="caption">Fees</Typography><Typography sx={{ fontWeight: 800 }}>{performance.chargeCoverage === "complete" ? formatJournalAnalyticsMoney(performance.chargeCostDecimal, performance.tradeCurrency) : "N/A"}</Typography></Box>
               <Box><Typography color="text.secondary" variant="caption">Total shares</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsDecimal(performance.enteredQuantityDecimal)}</Typography></Box>
-              <Box><Typography color="text.secondary" variant="caption">Executions</Typography><Typography sx={{ fontWeight: 800 }}>{performance.executionCount}</Typography></Box>
+              <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+                <Box><Typography color="text.secondary" variant="caption">Entry</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsMoney(performance.entryPriceDecimal, performance.tradeCurrency)}</Typography></Box>
+                <Box><Typography color="text.secondary" variant="caption">Exit</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsMoney(performance.exitPriceDecimal, performance.tradeCurrency)}</Typography></Box>
+              </Box>
               <Box><Typography color="text.secondary" variant="caption">Entry value</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsMoney(performance.entryNotionalDecimal, performance.tradeCurrency)}</Typography></Box>
               <Box><Typography color="text.secondary" variant="caption">Hold</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsDuration(performance.holdDurationMilliseconds)}</Typography></Box>
             </Box> : <Typography color="text.secondary" variant="body2">This position is still open. Completed-trade P/L and fees will appear after it is fully exited.</Typography>}
