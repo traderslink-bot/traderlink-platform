@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import Decimal from "decimal.js";
 import {
   CandlestickSeries,
@@ -62,6 +62,23 @@ const LIGHT_CHART_THEME = Object.freeze({
   controlText: "#41516a",
   grid: "#dce5f0",
   text: "#172033",
+});
+
+const LIGHT_ANALYZER_ANNOTATION_APPEARANCE: TradeAnalyzerAnnotationAppearance = Object.freeze({
+  executionFill: "#ffffff",
+  patternOutline: "rgba(255,255,255,0.98)",
+  ruleText: "#ffffff",
+  selectedExecutionFill: "#fff7d6",
+  selectionShadow: "rgba(1,30,86,0.28)",
+});
+
+const LIGHT_ANALYZER_SEMANTIC_COLORS: ChartSemanticColors = Object.freeze({
+  buy: "#087443",
+  ema: "#ef6c00",
+  rule: "#9A6700",
+  sell: "#b42318",
+  volume: "rgba(1, 30, 86, 0.30)",
+  vwap: "#7b1fa2",
 });
 
 const CHART_INTERVAL_SECONDS: Readonly<Record<DailyTradeChartInterval, number>> = Object.freeze({
@@ -396,57 +413,11 @@ export function DailyTradeAnalyzerChart({
 }) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
-  const [lightChartInDarkMode, setLightChartInDarkMode] = useState(false);
-  const usesLightChart = theme.palette.mode === "light" || lightChartInDarkMode;
-  const chartTheme = usesLightChart ? LIGHT_CHART_THEME : theme.palette.traderLink.chart;
+  const chartTheme = LIGHT_CHART_THEME;
   const usesDarkChartControls = theme.palette.mode === "dark";
-  const annotationAppearance = useMemo<TradeAnalyzerAnnotationAppearance>(() => ({
-    executionFill: usesLightChart ? "#ffffff" : theme.palette.background.paper,
-    patternOutline: usesLightChart ? "rgba(255,255,255,0.98)" : theme.palette.text.primary,
-    ruleText: usesLightChart ? "#ffffff" : theme.palette.background.default,
-    selectedExecutionFill: usesLightChart ? "#fff7d6" : theme.palette.action.selected,
-    selectionShadow: usesLightChart ? "rgba(1,30,86,0.28)" : "rgba(121,170,241,0.28)",
-  }), [theme.palette.action.selected, theme.palette.background.default, theme.palette.background.paper, theme.palette.text.primary, usesLightChart]);
-  const chartSemanticColors = useMemo<ChartSemanticColors>(() => !usesLightChart
-    ? {
-      buy: theme.palette.success.main,
-      ema: theme.palette.warning.main,
-      rule: theme.palette.warning.main,
-      sell: theme.palette.error.main,
-      volume: alpha(theme.palette.primary.light, 0.54),
-      vwap: theme.palette.primary.light,
-    }
-    : {
-      buy: "#087443",
-      ema: "#ef6c00",
-      rule: "#9A6700",
-      sell: "#b42318",
-      volume: "rgba(1, 30, 86, 0.30)",
-      vwap: "#7b1fa2",
-    }, [theme.palette.error.main, theme.palette.primary.light, theme.palette.success.main, theme.palette.warning.main, usesLightChart]);
-  const chartPatternColors = useMemo<PatternColorMap>(() => !usesLightChart
-    ? {
-      compression: theme.palette.text.secondary,
-      compression_break_bearish: theme.palette.error.main,
-      compression_break_bullish: theme.palette.primary.light,
-      doji: theme.palette.text.secondary,
-      engulfing_bearish: theme.palette.error.main,
-      engulfing_bullish: theme.palette.success.main,
-      evening_star_bearish: theme.palette.primary.light,
-      expansion_bearish: theme.palette.error.main,
-      expansion_bullish: theme.palette.success.main,
-      hammer_bullish: theme.palette.primary.light,
-      harami_bearish: theme.palette.error.main,
-      harami_bullish: theme.palette.success.main,
-      high_volume_exhaustion: theme.palette.primary.light,
-      morning_star_bullish: theme.palette.primary.light,
-      rejection_lower: theme.palette.primary.light,
-      rejection_upper: theme.palette.warning.main,
-      shooting_star_bearish: theme.palette.error.main,
-      three_black_crows_bearish: theme.palette.error.main,
-      three_white_soldiers_bullish: theme.palette.success.main,
-    }
-    : LIGHT_PATTERN_COLORS, [theme.palette.error.main, theme.palette.primary.light, theme.palette.success.main, theme.palette.text.secondary, theme.palette.warning.main, usesLightChart]);
+  const annotationAppearance = LIGHT_ANALYZER_ANNOTATION_APPEARANCE;
+  const chartSemanticColors = LIGHT_ANALYZER_SEMANTIC_COLORS;
+  const chartPatternColors = LIGHT_PATTERN_COLORS;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const chartCandleCountRef = useRef(0);
@@ -1254,22 +1225,6 @@ export function DailyTradeAnalyzerChart({
         >
           {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
         </Button>
-        {theme.palette.mode === "dark" ? (
-          <Button
-            onClick={() => setLightChartInDarkMode((current) => !current)}
-            size="small"
-            sx={{
-              bgcolor: theme.palette.primary.main,
-              borderColor: theme.palette.primary.light,
-              color: theme.palette.primary.contrastText,
-              minHeight: { xs: 44, md: 32 },
-              "&:hover": { bgcolor: theme.palette.primary.dark, borderColor: theme.palette.primary.light },
-            }}
-            variant="outlined"
-          >
-            {lightChartInDarkMode ? "Dark chart" : "Light chart"}
-          </Button>
-        ) : null}
       </Stack>
       <Menu
         anchorEl={displayMenuAnchor}
