@@ -40,8 +40,14 @@ function has(snapshot:TraderLinkCommunityDashboardSnapshot,key:string){ return s
 
 export function CommunityDashboard({snapshot,section,isReview=false,baseOverride}:{snapshot:TraderLinkCommunityDashboardSnapshot;section:TraderLinkCommunitySection;isReview?:boolean;baseOverride?:string}){
   const base=baseOverride??`/communities/${snapshot.community.slug}`;
-  const selected=[...memberTabs,...manageTabs].findIndex(tab=>tab.section===section);
   const canManage=has(snapshot,"community.manage"); const canCoach=has(snapshot,"community.coaching.offer");
+  const memberIndex=memberTabs.findIndex(tab=>tab.section===section);
+  const manageIndex=manageTabs.findIndex(tab=>tab.section===section);
+  const selected=section==="workspace"
+    ? memberTabs.length
+    : manageIndex>=0
+      ? memberTabs.length+(canCoach?1:0)+manageIndex
+      : Math.max(0,memberIndex);
   return <DashboardPage>
     {isReview?<Box sx={{bgcolor:"warning.light",borderRadius:2,color:"warning.contrastText",px:2,py:1}}><Typography style={{fontWeight:800}}>Staging review data</Typography><Typography variant="body2">This complete example is isolated from real Discord servers and financial reporting.</Typography></Box>:null}
     <DashboardPanel hideHeader>
