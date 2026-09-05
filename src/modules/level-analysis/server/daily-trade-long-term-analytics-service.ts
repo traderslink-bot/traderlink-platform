@@ -13,7 +13,6 @@ import type {
 import { readDailyTradePathMaterialization } from "./daily-trade-path-materialization-repository";
 import {
   analyzeDailyTradeV2Scenario,
-  DAILY_TRADE_V2_PROFIT_ZONE_LEVELS,
   type DailyTradeV2ScenarioAnalysis,
 } from "./daily-trade-v2-scenario-analyzer";
 
@@ -202,53 +201,6 @@ export type TradeAnalysisScalingOutRow = Readonly<{
   trackerDate: string;
 }>;
 
-export type TradeAnalysisProfitZoneRecord = Readonly<{
-  closeDate: string;
-  direction: "long" | "short";
-  finalGrossPnlDecimal: string;
-  firstReachedAtUtcSeconds: number;
-  firstReachSource: "completed_close" | "exit";
-  longestConsecutiveMinutesAtOrAbove: number;
-  lowerBoundPercent: number;
-  minutesFromEntryToFirstReach: number;
-  observedOutcome: "dropped_before_next" | "exited_before_next" | "reached_next";
-  profitAvailableAtLevelGrossDecimal: string;
-  profitTakenInZoneGrossDecimal: string;
-  quantitySoldInZoneDecimal: string;
-  reachedNextLevel: boolean;
-  roundTripId: string;
-  symbol: string;
-  totalCompletedMinutesInZone: number;
-  totalHoldingMinutes: number;
-  trackerDate: string;
-  upperBoundPercent: number | null;
-}>;
-
-export type TradeAnalysisProfitZoneSummaryRow = Readonly<{
-  didNotReachNextTradeCount: number | null;
-  droppedBeforeNextTradeCount: number | null;
-  exitedBeforeNextTradeCount: number | null;
-  lowerBoundPercent: number;
-  medianFirstReachMinutes: number | null;
-  medianCompletedMinutesInZone: number | null;
-  medianHoldingMinutes: number | null;
-  medianLongestConsecutiveMinutesAtOrAbove: number | null;
-  noProfitEndedRedGrossLossDecimal: string;
-  noProfitEndedRedRatePercent: number | null;
-  noProfitEndedRedTradeCount: number;
-  profitAvailableAtLevelGrossDecimal: string;
-  profitAvailableDidNotReachNextGrossDecimal: string | null;
-  profitAvailableReachedNextGrossDecimal: string | null;
-  profitTakenInZoneGrossDecimal: string;
-  quantitySoldInZoneDecimal: string;
-  reachRatePercent: number | null;
-  reachedNextTradeCount: number | null;
-  reachedTradeCount: number;
-  tookProfitRateOfReachedPercent: number | null;
-  tookProfitTradeCount: number;
-  upperBoundPercent: number | null;
-}>;
-
 export type TradeAnalysisEventPathRow = Readonly<{
   adverseMoveDecimal: string | null;
   closeDate: string;
@@ -395,10 +347,6 @@ export type DailyTradeLongTermAnalyticsModel = Readonly<{
     totalPotentialPnlDecimal: string | null;
   }>;
   patterns: readonly TradeAnalysisPatternRow[];
-  profitZones?: Readonly<{
-    recordsByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisProfitZoneRecord[]>>;
-    rowsByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisProfitZoneSummaryRow[]>>;
-  }>;
   riskManagement: Readonly<{
     addedAfterPeak: readonly TradeAnalysisBreakdownRow[];
     partialExitBeforeRed: readonly TradeAnalysisBreakdownRow[];
@@ -428,7 +376,7 @@ export type DailyTradeLongTermAnalyticsV2Model = Omit<
   DailyTradeLongTermAnalyticsModel,
   "directionTradeCounts" | "entryContext" | "entryContextByDirection" | "eventPaths" | "executionContextRows" |
   "exitContextByDirection" | "exitExecutionContextByDirection" | "greenToRedByDirection" |
-  "greenToRedDamageByDirection" | "meaningfulProfit" | "profitZones" | "scalingOut"
+  "greenToRedDamageByDirection" | "meaningfulProfit" | "scalingOut"
 > & Readonly<{
   directionTradeCounts: Readonly<{ long: number; short: number }>;
   entryContext: TradeAnalysisExecutionContext;
@@ -440,7 +388,6 @@ export type DailyTradeLongTermAnalyticsV2Model = Omit<
   greenToRedByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
   greenToRedDamageByDirection: Readonly<Record<"long" | "short", TradeAnalysisGreenToRedDamage>>;
   meaningfulProfit: NonNullable<DailyTradeLongTermAnalyticsModel["meaningfulProfit"]>;
-  profitZones: NonNullable<DailyTradeLongTermAnalyticsModel["profitZones"]>;
   scalingOut: NonNullable<DailyTradeLongTermAnalyticsModel["scalingOut"]>;
 }>;
 
@@ -821,11 +768,6 @@ function scaleAnalyzerFact(fact: AnalyzerFact, multiplier: string): AnalyzerFact
         calculatedGrossResultDecimal: scaledDecimal(qualification.calculatedGrossResultDecimal, multiplier)!,
         calculatedNetResultDecimal: scaledDecimal(qualification.calculatedNetResultDecimal, multiplier),
         closePriceDecimal: scaledDecimal(qualification.closePriceDecimal, multiplier)!,
-      }))),
-      profitZones: Object.freeze(fact.scenario.profitZones.map((zone) => Object.freeze({
-        ...zone,
-        profitAvailableAtLevelGrossDecimal: scaledDecimal(zone.profitAvailableAtLevelGrossDecimal, multiplier),
-        profitTakenInZoneGrossDecimal: scaledDecimal(zone.profitTakenInZoneGrossDecimal, multiplier)!,
       }))),
       scaleOut: Object.freeze({
         ...fact.scenario.scaleOut,
@@ -1228,63 +1170,6 @@ function outcomeFor(actualPnlDecimal: string): TradeAnalysisMeaningfulProfitRow[
   return actual.isPositive() ? "ended_green" : actual.isNegative() ? "ended_red" : "ended_flat";
 }
 
-function profitZoneSummaryRows(
-  records: readonly TradeAnalysisProfitZoneRecord[],
-  totalTradeCount: number,
-): readonly TradeAnalysisProfitZoneSummaryRow[] {
-  return Object.freeze(DAILY_TRADE_V2_PROFIT_ZONE_LEVELS.map((lowerBoundPercent) => {
-    const zoneRecords = records.filter((record) => record.lowerBoundPercent === lowerBoundPercent);
-    const upperBoundPercent = zoneRecords[0]?.upperBoundPercent ??
-      (lowerBoundPercent < 100 ? lowerBoundPercent + 10 : null);
-    const tookProfit = zoneRecords.filter((record) => new Decimal(record.profitTakenInZoneGrossDecimal).isPositive());
-    const noProfit = zoneRecords.filter((record) =>
-      new Decimal(record.profitTakenInZoneGrossDecimal).isZero());
-    const noProfitEndedRed = noProfit.filter((record) =>
-      new Decimal(record.finalGrossPnlDecimal).isNegative());
-    const reachedNext = upperBoundPercent === null
-      ? []
-      : zoneRecords.filter((record) => record.reachedNextLevel);
-    const didNotReachNext = upperBoundPercent === null
-      ? []
-      : zoneRecords.filter((record) => !record.reachedNextLevel);
-    return Object.freeze({
-      didNotReachNextTradeCount: upperBoundPercent === null ? null : didNotReachNext.length,
-      droppedBeforeNextTradeCount: upperBoundPercent === null ? null : zoneRecords.filter((record) =>
-        record.observedOutcome === "dropped_before_next").length,
-      exitedBeforeNextTradeCount: upperBoundPercent === null ? null : zoneRecords.filter((record) =>
-        record.observedOutcome === "exited_before_next").length,
-      lowerBoundPercent,
-      medianCompletedMinutesInZone: medianNumbers(zoneRecords.map((record) =>
-        record.totalCompletedMinutesInZone)),
-      medianFirstReachMinutes: medianNumbers(zoneRecords.map((record) => record.minutesFromEntryToFirstReach)),
-      medianHoldingMinutes: medianNumbers(zoneRecords.map((record) => record.totalHoldingMinutes)),
-      medianLongestConsecutiveMinutesAtOrAbove: medianNumbers(zoneRecords.map((record) =>
-        record.longestConsecutiveMinutesAtOrAbove)),
-      noProfitEndedRedGrossLossDecimal: sumDecimals(noProfitEndedRed.map((record) =>
-        record.finalGrossPnlDecimal)) ?? "0",
-      noProfitEndedRedRatePercent: percentage(noProfitEndedRed.length, noProfit.length),
-      noProfitEndedRedTradeCount: noProfitEndedRed.length,
-      profitAvailableAtLevelGrossDecimal: sumDecimals(zoneRecords.map((record) =>
-        record.profitAvailableAtLevelGrossDecimal)) ?? "0",
-      profitAvailableDidNotReachNextGrossDecimal: upperBoundPercent === null
-        ? null
-        : sumDecimals(didNotReachNext.map((record) => record.profitAvailableAtLevelGrossDecimal)) ?? "0",
-      profitAvailableReachedNextGrossDecimal: upperBoundPercent === null
-        ? null
-        : sumDecimals(reachedNext.map((record) => record.profitAvailableAtLevelGrossDecimal)) ?? "0",
-      profitTakenInZoneGrossDecimal: sumDecimals(tookProfit.map((record) =>
-        record.profitTakenInZoneGrossDecimal)) ?? "0",
-      quantitySoldInZoneDecimal: sumDecimals(tookProfit.map((record) => record.quantitySoldInZoneDecimal)) ?? "0",
-      reachRatePercent: percentage(zoneRecords.length, totalTradeCount),
-      reachedNextTradeCount: upperBoundPercent === null ? null : reachedNext.length,
-      reachedTradeCount: zoneRecords.length,
-      tookProfitRateOfReachedPercent: percentage(tookProfit.length, zoneRecords.length),
-      tookProfitTradeCount: tookProfit.length,
-      upperBoundPercent,
-    });
-  }));
-}
-
 export function buildDailyTradeLongTermAnalytics(
   database: Database.Database,
   scope: WorkspaceAccessScope,
@@ -1394,41 +1279,6 @@ export function buildDailyTradeLongTermAnalytics(
   }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
   const noScaleEndedRedRows = meaningfulProfitRows.filter((row) =>
     !row.scaledOutWhileGreen && row.outcome === "ended_red");
-  const profitZoneRecords = Object.freeze(joined.flatMap((row): TradeAnalysisProfitZoneRecord[] =>
-    (row.analyzer.scenario?.profitZones ?? []).flatMap((zone) => {
-      if (zone.firstReachedAtUtcSeconds === null ||
-          zone.firstReachSource === null ||
-          zone.minutesFromEntryToFirstReach === null ||
-          zone.profitAvailableAtLevelGrossDecimal === null ||
-          zone.observedOutcome === "did_not_reach") return [];
-      return [Object.freeze({
-        closeDate: row.journal.closeLocalDate,
-        direction: row.journal.direction,
-        finalGrossPnlDecimal: row.journal.grossPnlDecimal,
-        firstReachedAtUtcSeconds: zone.firstReachedAtUtcSeconds,
-        firstReachSource: zone.firstReachSource,
-        longestConsecutiveMinutesAtOrAbove: zone.longestConsecutiveMinutesAtOrAbove,
-        lowerBoundPercent: zone.lowerBoundPercent,
-        minutesFromEntryToFirstReach: zone.minutesFromEntryToFirstReach,
-        observedOutcome: zone.observedOutcome,
-        profitAvailableAtLevelGrossDecimal: zone.profitAvailableAtLevelGrossDecimal,
-        profitTakenInZoneGrossDecimal: zone.profitTakenInZoneGrossDecimal,
-        quantitySoldInZoneDecimal: zone.quantitySoldInZoneDecimal,
-        reachedNextLevel: zone.reachedNextLevel,
-        roundTripId: row.journal.roundTripId,
-        symbol: row.journal.displayedSymbol,
-        totalCompletedMinutesInZone: zone.totalCompletedMinutesInZone,
-        totalHoldingMinutes: row.journal.holdingDurationMilliseconds / 60_000,
-        trackerDate: row.journal.entryLocalDate,
-        upperBoundPercent: zone.upperBoundPercent,
-      })];
-    })
-  ).sort((left, right) => right.closeDate.localeCompare(left.closeDate) ||
-    left.symbol.localeCompare(right.symbol) || left.lowerBoundPercent - right.lowerBoundPercent));
-  const profitZoneRecordsByDirection = Object.freeze({
-    long: Object.freeze(profitZoneRecords.filter((record) => record.direction === "long")),
-    short: Object.freeze(profitZoneRecords.filter((record) => record.direction === "short")),
-  });
   const eventPathRows = Object.freeze(allEvents.flatMap(({ event, trade }): TradeAnalysisEventPathRow[] =>
     event.postEventPaths.map((path) => Object.freeze({
       adverseMoveDecimal: path.oppositeDirectionMoveDecimal,
@@ -1615,19 +1465,6 @@ export function buildDailyTradeLongTermAnalytics(
         new Decimal(row.actualPnl).plus(row.additional ?? 0).toString())),
     }),
     patterns: patternRows(allEvents),
-    profitZones: Object.freeze({
-      recordsByDirection: profitZoneRecordsByDirection,
-      rowsByDirection: Object.freeze({
-        long: profitZoneSummaryRows(
-          profitZoneRecordsByDirection.long,
-          joined.filter((row) => row.journal.direction === "long").length,
-        ),
-        short: profitZoneSummaryRows(
-          profitZoneRecordsByDirection.short,
-          joined.filter((row) => row.journal.direction === "short").length,
-        ),
-      }),
-    }),
     riskManagement: Object.freeze({
       addedAfterPeak: behaviorRows(
         peakEligibleTrades,

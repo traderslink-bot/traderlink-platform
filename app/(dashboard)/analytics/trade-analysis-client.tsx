@@ -45,7 +45,6 @@ import type {
 
 import { CandlePatternOccurrenceExplorer } from "./candle-pattern-occurrence-explorer";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
-import { ProfitZoneAnalysis } from "./profit-zone-analysis";
 import {
   boundedPage,
   paginatedRows,
@@ -414,20 +413,17 @@ function executionDateTime(value: string, timezone: string): string {
 
 function MeaningfulProfitTable({
   currency,
-  moneyBasis,
   offline,
   rows,
   timezone,
 }: {
   currency: string | null;
-  moneyBasis: "gross" | "net";
   offline: boolean;
   rows: readonly TradeAnalysisMeaningfulProfitRow[];
   timezone: string;
 }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const basisLabel = moneyBasis === "gross" ? "Gross" : "Net";
   const currentPage = boundedPage(page, rows.length, pageSize);
   const visibleRows = paginatedRows(rows, currentPage, pageSize);
   if (rows.length === 0) return <Typography color="text.secondary">No trades in this selection held one of the sustained profit levels.</Typography>;
@@ -435,7 +431,7 @@ function MeaningfulProfitTable({
     <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
     <HorizontalScrollRegion label="Meaningful profit trades" minTableWidth={1180} stickyFirstColumn>
       <Table size="small"><TableHead><TableRow>
-        <TableCell>Ticker</TableCell><TableCell>Profit level held</TableCell><TableCell>Qualifying candle close</TableCell><TableCell align="right">Calculated {basisLabel} profit opportunity</TableCell><TableCell align="right">Final {basisLabel} trade P/L</TableCell><TableCell align="right">Additional {basisLabel} profit opportunity</TableCell><TableCell>Profit taking</TableCell><TableCell>Outcome</TableCell><TableCell />
+        <TableCell>Ticker</TableCell><TableCell>Profit level held</TableCell><TableCell>Saved close</TableCell><TableCell align="right">Calculated potential result</TableCell><TableCell align="right">Actual completed result</TableCell><TableCell align="right">Potential − actual</TableCell><TableCell>Profit taking</TableCell><TableCell>Outcome</TableCell><TableCell />
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={row.roundTripId}>
         <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell>
         <TableCell>{row.thresholdPercent}% · {row.requiredCloseCount} consecutive closes</TableCell>
@@ -454,19 +450,16 @@ function MeaningfulProfitTable({
 function ScalingOutTable({
   currency,
   meaningfulRows,
-  moneyBasis,
   offline,
   rows,
 }: {
   currency: string | null;
   meaningfulRows: readonly TradeAnalysisMeaningfulProfitRow[];
-  moneyBasis: "gross" | "net";
   offline: boolean;
   rows: readonly TradeAnalysisScalingOutRow[];
 }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const basisLabel = moneyBasis === "gross" ? "Gross" : "Net";
   const currentPage = boundedPage(page, rows.length, pageSize);
   const visibleRows = paginatedRows(rows, currentPage, pageSize);
   const meaningfulByTrade = useMemo(() => new Map(
@@ -477,7 +470,7 @@ function ScalingOutTable({
     <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
     <HorizontalScrollRegion label="Scaling out trades" minTableWidth={1780} stickyFirstColumn>
       <Table size="small"><TableHead><TableRow>
-        <TableCell>Ticker</TableCell><TableCell>Profit level held</TableCell><TableCell align="right">Shares sold for profit after level</TableCell><TableCell align="right">Maximum position</TableCell><TableCell align="right">Exposure reduced after last scale-out</TableCell><TableCell align="right">Remaining shares</TableCell><TableCell align="right">Gross profit taken after level</TableCell><TableCell align="right">Calculated {basisLabel} profit opportunity</TableCell><TableCell align="right">Final {basisLabel} trade P/L</TableCell><TableCell align="right">Additional {basisLabel} profit opportunity</TableCell><TableCell>Recorded later-exit comparison</TableCell><TableCell />
+        <TableCell>Ticker</TableCell><TableCell>Profit level held</TableCell><TableCell align="right">Shares sold for profit after level</TableCell><TableCell align="right">Maximum position</TableCell><TableCell align="right">Exposure reduced after last scale-out</TableCell><TableCell align="right">Remaining shares</TableCell><TableCell align="right">Profit secured after level (gross)</TableCell><TableCell align="right">Calculated potential result</TableCell><TableCell align="right">Actual completed result</TableCell><TableCell align="right">Potential − actual</TableCell><TableCell>Recorded later-exit comparison</TableCell><TableCell />
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => {
         const meaningful = meaningfulByTrade.get(row.roundTripId);
         return <TableRow hover key={row.roundTripId}>
@@ -691,8 +684,6 @@ export function TradeAnalysisClient({
     row.direction === activeDirection), [activeDirection, model.meaningfulProfit.rows]);
   const scalingRows = useMemo(() => model.scalingOut.rows.filter((row) =>
     row.direction === activeDirection), [activeDirection, model.scalingOut.rows]);
-  const profitZoneRows = model.profitZones?.rowsByDirection[activeDirection] ?? [];
-  const profitZoneRecords = model.profitZones?.recordsByDirection[activeDirection] ?? [];
   const directionExcursions = useMemo(() => model.excursions.filter((row) =>
     row.direction === activeDirection), [activeDirection, model.excursions]);
   const directionMovement = useMemo(() => {
@@ -788,7 +779,6 @@ export function TradeAnalysisClient({
     );
   }
   const directionLabel = activeDirection === "long" ? "long" : "short";
-  const moneyBasisLabel = model.moneyBasis === "gross" ? "Gross" : "Net";
   const favorableMoneyLabel = activeDirection === "long" ? "price rise after long entry" : "price drop after short entry";
   const adverseMoneyLabel = activeDirection === "long" ? "price drop after long entry" : "price rise after short entry";
   const entryContext = model.entryContextByDirection[activeDirection];
@@ -809,7 +799,7 @@ export function TradeAnalysisClient({
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
           <DashboardMetricCard caption={`${model.analyzedExecutionCount} saved execution snapshots`} label="Analyzed day trades" value={String(model.analyzedTradeCount)} />
           <DashboardMetricCard caption={`${model.eligibleDayTradeCount} completed day trades in the selected period`} label="Analyzer coverage" value={percent(model.coveragePercent)} />
-          <DashboardMetricCard caption={`Combined completed ${moneyBasisLabel} P/L`} label={`${moneyBasisLabel} trade P/L`} value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
+          <DashboardMetricCard caption={`Combined completed ${model.moneyBasis} P/L`} label="Actual completed result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
           <DashboardMetricCard caption="Trades that held a meaningful profit level for its required number of completed 1-minute closes" label="Meaningful-profit scenarios" value={String(model.meaningfulProfit.tradeCount)} />
           <DashboardMetricCard caption={model.directionTradeCounts.long > 0 && model.directionTradeCounts.short > 0
             ? `${model.directionTradeCounts.long} long · ${model.directionTradeCounts.short} short`
@@ -849,13 +839,13 @@ export function TradeAnalysisClient({
         </Stack>
       ) : null}
 
-      {view === "green-to-red" ? <Section defaultExpanded description="Final trade P/L compared with the calculated profit opportunity at the first candle close that completed the strongest sustained profit level reached by each trade." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Meaningful profit reached">
+      {view === "green-to-red" ? <Section defaultExpanded description="Actual completed results compared with the first close that completed the strongest sustained profit level reached by each trade." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Meaningful profit reached">
         <Stack spacing={2.25}>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
             <DashboardMetricCard caption={`Completed ${directionLabel} trades with a qualifying sustained profit level${model.moneyBasis === "net" ? " and complete saved fee facts" : ""}`} label="Qualifying trades" value={String(meaningfulProfitRows.length)} />
-            <DashboardMetricCard caption={`Calculated ${moneyBasisLabel} P/L if the open shares were sold at each qualifying candle close`} label={`Calculated ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.potential, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.potential)} />
-            <DashboardMetricCard caption={`Final ${moneyBasisLabel} P/L for those same completed trades`} label={`Final ${moneyBasisLabel} trade P/L`} value={money(meaningfulSummary.actual, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.actual)} />
-            <DashboardMetricCard caption={`Calculated ${moneyBasisLabel} profit opportunity minus final ${moneyBasisLabel} trade P/L`} label={`Additional ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.difference, model.currency)} valueColor={potentialDifferenceColor(meaningfulSummary.difference)} />
+            <DashboardMetricCard caption={`Calculated ${model.moneyBasis} result at each qualifying completed close`} label="Calculated potential result" value={money(meaningfulSummary.potential, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.potential)} />
+            <DashboardMetricCard caption={`Actual completed ${model.moneyBasis} result for those same trades`} label="Actual completed result" value={money(meaningfulSummary.actual, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.actual)} />
+            <DashboardMetricCard caption="Calculated potential result minus actual completed result" label="Potential − actual" value={money(meaningfulSummary.difference, model.currency)} valueColor={potentialDifferenceColor(meaningfulSummary.difference)} />
             <DashboardMetricCard caption="Qualifying trades whose completed result stayed above zero" label="Ended green" value={String(meaningfulSummary.endedGreen)} />
             <DashboardMetricCard caption="Qualifying trades whose completed result finished below zero" label="Ended red" value={String(meaningfulSummary.endedRed)} />
           </Box>
@@ -870,7 +860,7 @@ export function TradeAnalysisClient({
               </Box>)}
             </Box>
           </Paper>
-          <MeaningfulProfitTable currency={model.currency} moneyBasis={model.moneyBasis} offline={offline} rows={meaningfulProfitRows} timezone={model.timezone} />
+          <MeaningfulProfitTable currency={model.currency} offline={offline} rows={meaningfulProfitRows} timezone={model.timezone} />
         </Stack>
       </Section> : null}
 
@@ -889,18 +879,6 @@ export function TradeAnalysisClient({
         <TradeTable direction={activeDirection} model={model} offline={offline} />
       </Section> : null}
 
-      {view === "scaling-out" ? <Section defaultExpanded description="How often trades reached each profit level, where shares were actually sold for profit, what advanced to the next level and what ended red without profit taken in that zone." title="Profit taking by price level">
-        <ProfitZoneAnalysis
-          currency={model.currency}
-          direction={activeDirection}
-          offline={offline}
-          records={profitZoneRecords}
-          rows={profitZoneRows}
-          timezone={model.timezone}
-          totalTradeCount={model.directionTradeCounts[activeDirection]}
-        />
-      </Section> : null}
-
       {view === "scaling-out" ? <Section defaultExpanded description="Profit-taking behavior on trades that held a meaningful-profit level, including profitable partial exits before reversal and qualifying trades where no shares were sold before a red finish." helpHref="/help/trade-analyzer/scaling-out#behavior" title="Scaling behavior">
         <Stack spacing={2.25}>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
@@ -909,19 +887,19 @@ export function TradeAnalysisClient({
             <DashboardMetricCard caption="Share of qualifying trades with no profitable partial exit after the sustained-profit level and before the first red point or final exit" label="No scale-out while green" value={`${directionScalingSummary.noScale} · ${percent(scalingRows.length === 0 ? null : directionScalingSummary.noScale / scalingRows.length * 100)}`} />
             <DashboardMetricCard caption="Share of no-scale trades whose completed result finished below zero" label="No scale-out, ended red" value={`${directionScalingSummary.noScaleEndedRed} · ${percent(directionScalingSummary.noScale === 0 ? null : directionScalingSummary.noScaleEndedRed / directionScalingSummary.noScale * 100)}`} />
           </Box>
-          <ScalingOutTable currency={model.currency} meaningfulRows={meaningfulProfitRows} moneyBasis={model.moneyBasis} offline={offline} rows={scalingRows} />
-          <Typography color="text.secondary" variant="body2">Profit taken on partial exits is shown as exact Gross realized P/L for the shares sold at those executions. Final trade P/L follows the selected {moneyBasisLabel} basis.</Typography>
+          <ScalingOutTable currency={model.currency} meaningfulRows={meaningfulProfitRows} offline={offline} rows={scalingRows} />
+          <Typography color="text.secondary" variant="body2">Profit secured by partial exits is shown as gross realized P/L because it describes the shares sold at those executions. Actual completed result follows the selected {model.moneyBasis} basis.</Typography>
         </Stack>
       </Section> : null}
 
       {view === "scaling-out" && directionScalingSummary.noScaleEndedRed > 0 ? <Section defaultExpanded description="The qualifying trades where no shares were sold for a profit and the completed result finished below zero." helpHref="/help/trade-analyzer/scaling-out#ended-red" title="No scale-out before a red finish">
         <Stack spacing={2.25}>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(3, minmax(0, 1fr))" } }}>
-            <DashboardMetricCard caption={`${directionScalingSummary.noScaleEndedRed} qualifying ${directionLabel} trades`} label={`Calculated ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.noScaleEndedRedPotential, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.noScaleEndedRedPotential)} />
-            <DashboardMetricCard caption={`Final ${moneyBasisLabel} P/L from the completed trades`} label={`Final ${moneyBasisLabel} trade P/L`} value={money(meaningfulSummary.noScaleEndedRedActual, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.noScaleEndedRedActual)} />
-            <DashboardMetricCard caption={`Calculated ${moneyBasisLabel} profit opportunity minus final ${moneyBasisLabel} trade P/L`} label={`Additional ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.noScaleEndedRedDifference, model.currency)} valueColor={potentialDifferenceColor(meaningfulSummary.noScaleEndedRedDifference)} />
+            <DashboardMetricCard caption={`${directionScalingSummary.noScaleEndedRed} qualifying ${directionLabel} trades`} label="Calculated potential result" value={money(meaningfulSummary.noScaleEndedRedPotential, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.noScaleEndedRedPotential)} />
+            <DashboardMetricCard caption={`Actual completed ${model.moneyBasis} result`} label="Actual completed result" value={money(meaningfulSummary.noScaleEndedRedActual, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.noScaleEndedRedActual)} />
+            <DashboardMetricCard caption="Calculated potential result minus actual completed result" label="Potential − actual" value={money(meaningfulSummary.noScaleEndedRedDifference, model.currency)} valueColor={potentialDifferenceColor(meaningfulSummary.noScaleEndedRedDifference)} />
           </Box>
-          <ScalingOutTable currency={model.currency} meaningfulRows={meaningfulProfitRows} moneyBasis={model.moneyBasis} offline={offline} rows={noScaleEndedRedRows} />
+          <ScalingOutTable currency={model.currency} meaningfulRows={meaningfulProfitRows} offline={offline} rows={noScaleEndedRedRows} />
         </Stack>
       </Section> : null}
 
