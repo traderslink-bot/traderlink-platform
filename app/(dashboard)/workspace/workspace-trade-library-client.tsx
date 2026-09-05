@@ -580,8 +580,8 @@ export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTra
       </TextField>
       <TextField label="Group" onChange={(event) => setGroup(event.target.value as TradeGroup)} select size="small" value={group}><MenuItem value="none">None</MenuItem><MenuItem value="day">Day</MenuItem><MenuItem value="ticker">Ticker</MenuItem></TextField>
       <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", whiteSpace: "nowrap" }}>
-        <Button color="primary" onClick={clearFilters} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Clear filters</Button>
-        <Button color="primary" onClick={() => setSort("newest")} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Return to newest</Button>
+        {activeFilterCount > 0 ? <Button color="primary" onClick={clearFilters} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Clear filters</Button> : null}
+        {sort !== "newest" ? <Button color="primary" onClick={() => setSort("newest")} size="small" sx={{ minWidth: 0, px: 0.5 }} variant="text">Return to newest</Button> : null}
       </Stack>
     </Box>
     <Box sx={{ display: { md: "none" }, mt: 1.5 }}><Button onClick={onOpenFilters}>More filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button></Box>
