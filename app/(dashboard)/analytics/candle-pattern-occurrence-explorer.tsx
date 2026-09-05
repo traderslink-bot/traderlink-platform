@@ -142,6 +142,7 @@ function OccurrenceSummary({
 
 export function CandlePatternOccurrenceExplorer({
   currency,
+  direction,
   endDate,
   moneyBasis,
   onClose,
@@ -149,6 +150,7 @@ export function CandlePatternOccurrenceExplorer({
   startDate,
 }: {
   currency: string | null;
+  direction: "long" | "short";
   endDate: string | null;
   moneyBasis: "gross" | "net";
   onClose: () => void;
@@ -191,6 +193,7 @@ export function CandlePatternOccurrenceExplorer({
     const params = new URLSearchParams({
       basis: moneyBasis,
       currency,
+      direction,
       execution,
       location,
       pageSize: String(pageSize),
@@ -227,7 +230,7 @@ export function CandlePatternOccurrenceExplorer({
       setState("error");
     });
     return () => controller.abort();
-  }, [currency, cursor, endDate, execution, location, moneyBasis, page, pageSize, pattern, startDate, ticker, timeframe]);
+  }, [currency, cursor, direction, endDate, execution, location, moneyBasis, page, pageSize, pattern, startDate, ticker, timeframe]);
 
   useEffect(() => {
     if (!selected) return;

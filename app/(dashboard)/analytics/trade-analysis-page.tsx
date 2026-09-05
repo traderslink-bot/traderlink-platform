@@ -8,6 +8,7 @@ import Typography from "@mui/material/Typography";
 import { DashboardPage } from "@/app/dashboard-template";
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import type { JournalAnalyticsClosingDateRange } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
+import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import {
   createJournalAnalyzedTradesOfflineViewModel,
   createJournalTradeAnalyzerOfflineViewModel,
@@ -44,30 +45,70 @@ const VIEW_DETAILS: Readonly<Record<TradeAnalysisView, Readonly<{
   "entry-exit": Object.freeze({ helpHref: "/help/trade-analyzer/entry-exit-analysis", title: "Entries and exits" }),
   "mfe-mae": Object.freeze({ helpHref: "/help/trade-analyzer/mfe-mae", title: "Room after entry" }),
   "green-to-red": Object.freeze({ helpHref: "/help/trade-analyzer/green-to-red-analysis", title: "Giving back profit" }),
-  "candle-patterns": Object.freeze({ helpHref: "/help/trade-analyzer/candle-patterns", title: "Candle setups" }),
+  "scaling-out": Object.freeze({ helpHref: "/help/trade-analyzer/day-trade-analysis", title: "Scaling out" }),
+  "candle-patterns": Object.freeze({ helpHref: "/help/trade-analyzer/candle-patterns", title: "Candle patterns" }),
   trades: Object.freeze({ helpHref: "/help/trade-analyzer/analyzed-trades", title: "Your analyzed trades" }),
 });
 
-function easternToday(): string {
+function todayInTimezone(timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "2-digit",
-    timeZone: "America/New_York",
+    timeZone: timezone,
     year: "numeric",
   }).formatToParts(new Date());
   const read = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
   return `${read("year")}-${read("month")}-${read("day")}`;
 }
 
-function subtractMonths(date: string, count: number): string {
+function addDays(date: string, count: number): string {
   const value = new Date(`${date}T12:00:00Z`);
-  value.setUTCMonth(value.getUTCMonth() - count);
+  value.setUTCDate(value.getUTCDate() + count);
   return value.toISOString().slice(0, 10);
 }
 
-function selectedDateRange(searchParams: Readonly<Record<string, string | string[] | undefined>>): OverviewDateRange {
+function startOfWeek(date: string): string {
+  const value = new Date(`${date}T12:00:00Z`);
+  const daysFromMonday = (value.getUTCDay() + 6) % 7;
+  return addDays(date, -daysFromMonday);
+}
+
+function startOfMonth(date: string): string {
+  return `${date.slice(0, 7)}-01`;
+}
+
+function subtractMonths(date: string, count: number): string {
+  const value = new Date(`${date}T12:00:00Z`);
+  const day = value.getUTCDate();
+  value.setUTCDate(1);
+  value.setUTCMonth(value.getUTCMonth() - count);
+  const lastDayOfTargetMonth = new Date(Date.UTC(
+    value.getUTCFullYear(),
+    value.getUTCMonth() + 1,
+    0,
+  )).getUTCDate();
+  value.setUTCDate(Math.min(day, lastDayOfTargetMonth));
+  return value.toISOString().slice(0, 10);
+}
+
+function selectedDateRange(
+  searchParams: Readonly<Record<string, string | string[] | undefined>>,
+  timezone: string,
+): OverviewDateRange {
   const kind = typeof searchParams.range === "string" ? searchParams.range : "all";
-  const today = easternToday();
+  const today = todayInTimezone(timezone);
+  if (kind === "today") return { endDate: today, kind, startDate: today };
+  if (kind === "this_week") return { endDate: today, kind, startDate: startOfWeek(today) };
+  if (kind === "last_week") {
+    const thisWeek = startOfWeek(today);
+    return { endDate: addDays(thisWeek, -1), kind, startDate: addDays(thisWeek, -7) };
+  }
+  if (kind === "this_month") return { endDate: today, kind, startDate: startOfMonth(today) };
+  if (kind === "last_month") {
+    const previousMonthEnd = addDays(startOfMonth(today), -1);
+    return { endDate: previousMonthEnd, kind, startDate: startOfMonth(previousMonthEnd) };
+  }
+  if (kind === "30d") return { endDate: today, kind, startDate: addDays(today, -29) };
   if (kind === "3m" || kind === "6m" || kind === "12m") {
     return { endDate: today, kind, startDate: subtractMonths(today, Number(kind.slice(0, -1))) };
   }
@@ -110,7 +151,14 @@ export async function TradeAnalysisPage({
   view: TradeAnalysisView;
 }) {
   const scope = await requireTraderLinkPlatformPageScope();
-  const dateRange = selectedDateRange(searchParams);
+  const accountTimezone = withReadonlyPlatformDatabase({}, (database) => {
+    const accountId = scope.activeAccountId;
+    return accountId
+      ? new JournalAccountRepository(database).findActiveAccount(scope.workspaceId, accountId)?.tradingTimezone
+        ?? "America/New_York"
+      : "America/New_York";
+  });
+  const dateRange = selectedDateRange(searchParams, accountTimezone);
   const details = VIEW_DETAILS[view];
   const moneyBasis = withReadonlyPlatformDatabase({}, (database) =>
     resolveJournalAnalyticsMoneyBasis(
@@ -249,8 +297,12 @@ export async function TradeAnalysisPage({
   }));
   const evidenceQuery = Object.freeze({
     currency: result.model.currency,
+    direction: searchParams.direction === "short" && result.model.directionTradeCounts.short > 0
+      ? "short" as const
+      : result.model.directionTradeCounts.long > 0 ? "long" as const : "short" as const,
     endDate: dateRange.endDate,
     moneyBasis,
+    rangeKind: dateRange.kind,
     startDate: dateRange.startDate,
   });
   const offlineModel = createJournalTradeAnalyzerOfflineViewModel({

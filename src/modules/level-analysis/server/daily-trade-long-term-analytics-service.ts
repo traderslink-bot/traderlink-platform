@@ -2,13 +2,24 @@ import Decimal from "decimal.js";
 import type Database from "better-sqlite3";
 
 import type { JournalAnalyticsRoundTripTableRow } from "@/src/modules/journal-analytics/contracts/analytics-result";
+import { readJournalProfitProtectionOutcome } from
+  "@/src/modules/journal/server/analytics/journal-profit-protection-outcome-service";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 
-import type { DailyTradeGreenToRedStatus } from "../contracts/daily-trade-analyzer-contracts";
+import type {
+  DailyTradeGreenToRedStatus,
+  DailyTradeProfitProtectionOutcome,
+} from "../contracts/daily-trade-analyzer-contracts";
 import { readDailyTradePathMaterialization } from "./daily-trade-path-materialization-repository";
+import {
+  analyzeDailyTradeV2Scenario,
+  type DailyTradeV2ScenarioAnalysis,
+} from "./daily-trade-v2-scenario-analyzer";
 
 type AnalysisRow = Readonly<{
   daily_trade_analysis_version_id: string;
+  direction: "long" | "short";
+  market_session_set_version_id: string;
   round_trip_id: string;
   round_trip_version_id: string;
 }>;
@@ -20,6 +31,19 @@ type SnapshotRow = Readonly<{
 
 type PostExitPathRow = Readonly<{
   favorable_move_decimal: string | null;
+  minutes_after_exit: 5 | 15 | 30 | 60;
+}>;
+
+type CandleRow = Readonly<{
+  candle_time_utc_seconds: number;
+  close_decimal: string;
+}>;
+
+type EventPathFact = Readonly<{
+  minutesAfterEvent: 5 | 15 | 30 | 60;
+  observedAtCandleTime: number | null;
+  oppositeDirectionMoveDecimal: string | null;
+  tradeDirectionMoveDecimal: string | null;
 }>;
 
 type PatternFact = Readonly<{
@@ -29,18 +53,26 @@ type PatternFact = Readonly<{
 }>;
 
 type EventFact = Readonly<{
+  atr14Percent: number | null;
   candleLocationRatio: number | null;
   ema9DistancePercent: number | null;
+  eventId: string;
   eventKind: SnapshotRow["event_kind"];
   eventSequence: number;
   executedAtUtc: string;
+  feesDecimal: string | null;
+  fiveMinuteEma9DistancePercent: number | null;
   excursionAdverseDecimal: string | null;
   excursionFavorableDecimal: string | null;
   excursionMinutes: number | null;
   givebackDecimal: string | null;
   patterns: readonly PatternFact[];
+  positionQuantityAfterDecimal: string | null;
+  positionQuantityBeforeDecimal: string | null;
+  postEventPaths: readonly EventPathFact[];
   priorFavorableExtremePriceDecimal: string | null;
   priceDecimal: string;
+  quantityDecimal: string;
   relativeVolume: number | null;
   vwapDistancePercent: number | null;
 }>;
@@ -49,8 +81,11 @@ type AnalyzerFact = Readonly<{
   events: readonly EventFact[];
   malformedSnapshotCount: number;
   path: NonNullable<ReturnType<typeof readDailyTradePathMaterialization>>["path"];
+  postExitPaths: readonly PostExitPathRow[];
   postExitThirtyMinuteMoveDecimal: string | null;
+  profitProtection: DailyTradeProfitProtectionOutcome;
   roundTripId: string;
+  scenario: DailyTradeV2ScenarioAnalysis | null;
 }>;
 
 export type TradeAnalysisBreakdownRow = Readonly<{
@@ -60,8 +95,10 @@ export type TradeAnalysisBreakdownRow = Readonly<{
   averageReturnPercent: number | null;
   averageValue: number | null;
   label: string;
+  medianPnlDecimal?: string | null;
   occurrenceCount: number;
   opportunityTradeCount: number;
+  totalPnlDecimal?: string | null;
   winRatePercent: number | null;
   tradeCount: number;
 }>;
@@ -70,9 +107,12 @@ export type TradeAnalysisPatternRow = Readonly<{
   averagePnlDecimal: string | null;
   executionSide: "Entry" | "Exit";
   location: "Exact execution candle" | "Before execution";
+  medianPnlDecimal?: string | null;
   occurrenceCount: number;
   pattern: string;
   averageReturnPercent: number | null;
+  direction: "long" | "short";
+  totalPnlDecimal?: string | null;
   winRatePercent: number | null;
   timeframe: "1 min" | "5 min";
   tradeCount: number;
@@ -126,6 +166,91 @@ export type TradeAnalysisExcursionBreakdownRow = Readonly<{
   medianFavorableMoveDecimal: string | null;
 }>;
 
+export type TradeAnalysisMeaningfulProfitRow = Readonly<{
+  actualPnlDecimal: string;
+  calculatedPotentialPnlDecimal: string;
+  closeDate: string;
+  differenceDecimal: string;
+  direction: "long" | "short";
+  outcome: "ended_flat" | "ended_green" | "ended_red";
+  profitLevelPriceDecimal: string;
+  qualifiedAtUtcSeconds: number;
+  requiredCloseCount: number;
+  roundTripId: string;
+  scaledOutWhileGreen: boolean;
+  symbol: string;
+  thresholdPercent: number;
+  trackerDate: string;
+}>;
+
+export type TradeAnalysisScalingOutRow = Readonly<{
+  actualPnlDecimal: string;
+  closeDate: string;
+  direction: "long" | "short";
+  maximumOpenQuantityDecimal: string;
+  positionReducedPercent: number | null;
+  profitSecuredGrossDecimal: string;
+  profitProtection: DailyTradeProfitProtectionOutcome;
+  remainingQuantityDecimal: string | null;
+  requiredCloseCount: number;
+  roundTripId: string;
+  scaledOutWhileGreen: boolean;
+  scaledQuantityDecimal: string;
+  symbol: string;
+  thresholdPercent: number;
+  trackerDate: string;
+}>;
+
+export type TradeAnalysisEventPathRow = Readonly<{
+  adverseMoveDecimal: string | null;
+  closeDate: string;
+  direction: "long" | "short";
+  eventKind: "Add" | "Final exit" | "Initial entry" | "Partial exit";
+  eventPriceDecimal: string;
+  eventSequence: number;
+  executedAtUtc: string;
+  favorableMoveDecimal: string | null;
+  minutesAfterEvent: 5 | 15 | 30 | 60;
+  observedAtCandleTime: number | null;
+  roundTripId: string;
+  session: "After-hours" | "Premarket" | "Regular hours";
+  symbol: string;
+  trackerDate: string;
+}>;
+
+export type TradeAnalysisExecutionContextRow = Readonly<{
+  actualPnlDecimal: string;
+  atr14Percent: number | null;
+  candleLocationPercent: number | null;
+  closeDate: string;
+  direction: "long" | "short";
+  ema9DistancePercent: number | null;
+  ema9FiveMinuteDistancePercent: number | null;
+  eventKind: TradeAnalysisEventPathRow["eventKind"];
+  eventPriceDecimal: string;
+  eventSequence: number;
+  executedAtUtc: string;
+  relativeVolume: number | null;
+  returnPercent: number | null;
+  roundTripId: string;
+  session: TradeAnalysisEventPathRow["session"];
+  symbol: string;
+  trackerDate: string;
+  vwapDistancePercent: number | null;
+}>;
+
+type TradeAnalysisGreenToRedDamage = Readonly<{
+  averageGreenToRedMinutes: number | null;
+  averagePeakToFinalDamageDecimal: string | null;
+  averagePeakToRedDamageDecimal: string | null;
+  averageRecoveryMinutes: number | null;
+  endedRedActualPnlDecimal: string | null;
+  endedRedAdditionalOpportunityDecimal: string | null;
+  endedRedPotentialPnlDecimal: string | null;
+  endedRedTradeCount: number;
+  recoveryRatePercent: number | null;
+}>;
+
 export type DailyTradeLongTermAnalyticsModel = Readonly<{
   analyzedExecutionCount: number;
   analyzedTradeCount: number;
@@ -136,24 +261,37 @@ export type DailyTradeLongTermAnalyticsModel = Readonly<{
   currency: string | null;
   eligibleDayTradeCount: number;
   eligibilityBoundary: "not_configured";
+  directionTradeCounts?: Readonly<{ long: number; short: number }>;
+  eventPaths?: readonly TradeAnalysisEventPathRow[];
+  executionContextRows?: readonly TradeAnalysisExecutionContextRow[];
   entryContext: Readonly<{
     ema9: readonly TradeAnalysisBreakdownRow[];
+    ema9FiveMinute?: readonly TradeAnalysisBreakdownRow[];
     relativeVolume: readonly TradeAnalysisBreakdownRow[];
     vwap: readonly TradeAnalysisBreakdownRow[];
   }>;
+  entryContextByDirection?: Readonly<Record<"long" | "short", Readonly<{
+    atr14Percent: readonly TradeAnalysisBreakdownRow[];
+    candleLocation: readonly TradeAnalysisBreakdownRow[];
+    ema9: readonly TradeAnalysisBreakdownRow[];
+    ema9FiveMinute: readonly TradeAnalysisBreakdownRow[];
+    relativeVolume: readonly TradeAnalysisBreakdownRow[];
+    vwap: readonly TradeAnalysisBreakdownRow[];
+  }>>>;
   exitContext: readonly TradeAnalysisBreakdownRow[];
+  exitContextByDirection?: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
+  exitExecutionContextByDirection?: Readonly<Record<"long" | "short", Readonly<{
+    atr14Percent: readonly TradeAnalysisBreakdownRow[];
+    candleLocation: readonly TradeAnalysisBreakdownRow[];
+    ema9: readonly TradeAnalysisBreakdownRow[];
+    ema9FiveMinute: readonly TradeAnalysisBreakdownRow[];
+    relativeVolume: readonly TradeAnalysisBreakdownRow[];
+    vwap: readonly TradeAnalysisBreakdownRow[];
+  }>>>;
   greenToRed: readonly TradeAnalysisBreakdownRow[];
-  greenToRedDamage: Readonly<{
-    averageGreenToRedMinutes: number | null;
-    averagePeakToFinalDamageDecimal: string | null;
-    averagePeakToRedDamageDecimal: string | null;
-    averageRecoveryMinutes: number | null;
-    endedRedActualPnlDecimal: string | null;
-    endedRedAdditionalOpportunityDecimal: string | null;
-    endedRedPotentialPnlDecimal: string | null;
-    endedRedTradeCount: number;
-    recoveryRatePercent: number | null;
-  }>;
+  greenToRedByDirection?: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
+  greenToRedDamage: TradeAnalysisGreenToRedDamage;
+  greenToRedDamageByDirection?: Readonly<Record<"long" | "short", TradeAnalysisGreenToRedDamage>>;
   greenToRedTradeCount: number;
   holding: readonly TradeAnalysisBreakdownRow[];
   holdingDuration: readonly TradeAnalysisBreakdownRow[];
@@ -174,6 +312,30 @@ export type DailyTradeLongTermAnalyticsModel = Readonly<{
     medianFavorableMovePercent: number | null;
   }>;
   malformedSnapshotCount: number;
+  meaningfulProfit?: Readonly<{
+    endedFlatTradeCount: number;
+    endedGreenTradeCount: number;
+    endedRedTradeCount: number;
+    noScaleEndedRedActualPnlDecimal: string | null;
+    noScaleEndedRedDifferenceDecimal: string | null;
+    noScaleEndedRedPotentialPnlDecimal: string | null;
+    noScaleEndedRedTradeCount: number;
+    rows: readonly TradeAnalysisMeaningfulProfitRow[];
+    thresholdCounts: readonly Readonly<{
+      qualifiedTradeCount: number;
+      requiredCloseCount: number;
+      thresholdPercent: number;
+    }>[];
+    thresholdCountsByDirection: Readonly<Record<"long" | "short", readonly Readonly<{
+      qualifiedTradeCount: number;
+      requiredCloseCount: number;
+      thresholdPercent: number;
+    }>[]>>;
+    totalActualPnlDecimal: string | null;
+    totalDifferenceDecimal: string | null;
+    totalPotentialPnlDecimal: string | null;
+    tradeCount: number;
+  }>;
   moneyBasis: "gross" | "net";
   opportunityTradeCount: number;
   profitCapture: Readonly<{
@@ -189,9 +351,44 @@ export type DailyTradeLongTermAnalyticsModel = Readonly<{
     addedAfterPeak: readonly TradeAnalysisBreakdownRow[];
     partialExitBeforeRed: readonly TradeAnalysisBreakdownRow[];
   }>;
+  scalingOut?: Readonly<{
+    noScaleEndedRedTradeCount: number;
+    noScaleTradeCount: number;
+    rows: readonly TradeAnalysisScalingOutRow[];
+    scaledOutTradeCount: number;
+    tradeCount: number;
+  }>;
   timezone: string;
   trades: readonly TradeAnalysisTradeRow[];
   winRatePercent: number | null;
+}>;
+
+type TradeAnalysisExecutionContext = Readonly<{
+  atr14Percent: readonly TradeAnalysisBreakdownRow[];
+  candleLocation: readonly TradeAnalysisBreakdownRow[];
+  ema9: readonly TradeAnalysisBreakdownRow[];
+  ema9FiveMinute: readonly TradeAnalysisBreakdownRow[];
+  relativeVolume: readonly TradeAnalysisBreakdownRow[];
+  vwap: readonly TradeAnalysisBreakdownRow[];
+}>;
+
+export type DailyTradeLongTermAnalyticsV2Model = Omit<
+  DailyTradeLongTermAnalyticsModel,
+  "directionTradeCounts" | "entryContext" | "entryContextByDirection" | "eventPaths" | "executionContextRows" |
+  "exitContextByDirection" | "exitExecutionContextByDirection" | "greenToRedByDirection" |
+  "greenToRedDamageByDirection" | "meaningfulProfit" | "scalingOut"
+> & Readonly<{
+  directionTradeCounts: Readonly<{ long: number; short: number }>;
+  entryContext: TradeAnalysisExecutionContext;
+  entryContextByDirection: Readonly<Record<"long" | "short", TradeAnalysisExecutionContext>>;
+  eventPaths: readonly TradeAnalysisEventPathRow[];
+  executionContextRows: readonly TradeAnalysisExecutionContextRow[];
+  exitContextByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
+  exitExecutionContextByDirection: Readonly<Record<"long" | "short", TradeAnalysisExecutionContext>>;
+  greenToRedByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
+  greenToRedDamageByDirection: Readonly<Record<"long" | "short", TradeAnalysisGreenToRedDamage>>;
+  meaningfulProfit: NonNullable<DailyTradeLongTermAnalyticsModel["meaningfulProfit"]>;
+  scalingOut: NonNullable<DailyTradeLongTermAnalyticsModel["scalingOut"]>;
 }>;
 
 export function readDailyTradeAnalysisCurrencies(
@@ -248,15 +445,35 @@ function parseEvent(row: SnapshotRow): EventFact | null {
     const snapshot = record(JSON.parse(row.snapshot_json));
     const event = record(snapshot?.event);
     const metrics = record(snapshot?.metrics);
-    if (!snapshot || !event || !metrics || typeof event.executedAtUtc !== "string" ||
+    if (!snapshot || !event || !metrics || typeof event.eventId !== "string" || event.eventId.length === 0 ||
+        typeof event.executedAtUtc !== "string" ||
         Number.isNaN(Date.parse(event.executedAtUtc))) return null;
     const eventSequence = finiteNumber(event.sequence);
     const priceDecimal = decimalString(event.priceDecimal);
-    if (eventSequence === null || !Number.isInteger(eventSequence) || priceDecimal === null || new Decimal(priceDecimal).lte(0)) return null;
+    const quantityDecimal = decimalString(event.quantityDecimal);
+    if (eventSequence === null || !Number.isInteger(eventSequence) || priceDecimal === null ||
+        quantityDecimal === null || new Decimal(priceDecimal).lte(0) || new Decimal(quantityDecimal).lte(0)) return null;
     const indicators = record(snapshot.indicators);
     const vwapDistance = record(metrics.vwapDistance);
     const ema9Distance = record(metrics.ema9Distance);
     const excursion = record(metrics.excursionUntilFlat);
+    const fiveMinuteContext = record(snapshot.fiveMinuteContext);
+    const completedFiveMinuteCandle = record(fiveMinuteContext?.completedBeforeExecution);
+    const fiveMinuteEmaDistance = record(completedFiveMinuteCandle?.ema9Distance);
+    const atr14 = finiteNumber(indicators?.atr14);
+    const postEventPaths = Array.isArray(metrics.postEventPaths)
+      ? metrics.postEventPaths.flatMap((value): EventPathFact[] => {
+          const path = record(value);
+          const minutes = finiteNumber(path?.minutesAfterEvent);
+          if (minutes !== 5 && minutes !== 15 && minutes !== 30 && minutes !== 60) return [];
+          return [Object.freeze({
+            minutesAfterEvent: minutes,
+            observedAtCandleTime: finiteNumber(path?.observedAtCandleTime),
+            oppositeDirectionMoveDecimal: decimalString(path?.oppositeDirectionMoveDecimal),
+            tradeDirectionMoveDecimal: decimalString(path?.tradeDirectionMoveDecimal),
+          })];
+        })
+      : [];
     const patterns = Array.isArray(snapshot.patterns)
       ? snapshot.patterns.flatMap((value): PatternFact[] => {
           const pattern = record(value);
@@ -274,18 +491,28 @@ function parseEvent(row: SnapshotRow): EventFact | null {
         })
       : [];
     return Object.freeze({
+      atr14Percent: atr14 === null ? null : atr14 / Number(priceDecimal) * 100,
       candleLocationRatio: finiteNumber(metrics.candleLocationRatio),
       ema9DistancePercent: finiteNumber(ema9Distance?.signedDistancePercent),
+      eventId: event.eventId,
       eventKind: row.event_kind,
       eventSequence,
       executedAtUtc: event.executedAtUtc,
+      feesDecimal: event.feesDecimal === null || event.feesDecimal === undefined
+        ? null
+        : decimalString(event.feesDecimal),
+      fiveMinuteEma9DistancePercent: finiteNumber(fiveMinuteEmaDistance?.signedDistancePercent),
       excursionAdverseDecimal: decimalString(excursion?.adverseMoveDecimal),
       excursionFavorableDecimal: decimalString(excursion?.favorableMoveDecimal),
       excursionMinutes: finiteNumber(excursion?.minutesUntilFlat),
       givebackDecimal: decimalString(metrics.givebackFromPriorFavorableExtremeDecimal),
       patterns: Object.freeze(patterns),
+      positionQuantityAfterDecimal: decimalString(metrics.positionQuantityAfterDecimal),
+      positionQuantityBeforeDecimal: decimalString(metrics.positionQuantityBeforeDecimal),
+      postEventPaths: Object.freeze(postEventPaths),
       priorFavorableExtremePriceDecimal: decimalString(metrics.priorFavorableExtremePriceDecimal),
       priceDecimal,
+      quantityDecimal,
       relativeVolume: finiteNumber(indicators?.relativeVolume),
       vwapDistancePercent: finiteNumber(vwapDistance?.signedDistancePercent),
     });
@@ -303,7 +530,9 @@ function readAnalyzerFacts(
   const analyses = database.prepare<[string, string], AnalysisRow>(`SELECT
   analysis.round_trip_id,
   analysis.round_trip_version_id,
-  version.daily_trade_analysis_version_id
+  version.daily_trade_analysis_version_id,
+  version.market_session_set_version_id,
+  round_trip_version.direction
 FROM journal_round_trip_daily_trade_analyses analysis
 JOIN journal_round_trip_daily_trade_analysis_versions version
   ON version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
@@ -311,6 +540,8 @@ JOIN journal_round_trip_daily_trade_analysis_versions version
 JOIN journal_round_trip_daily_trade_analysis_path_summaries summary
   ON summary.daily_trade_analysis_version_id = version.daily_trade_analysis_version_id
   AND summary.round_trip_version_id = analysis.round_trip_version_id
+JOIN journal_round_trip_versions round_trip_version
+  ON round_trip_version.round_trip_version_id = analysis.round_trip_version_id
 WHERE analysis.workspace_id = ? AND analysis.account_id = ?
   AND analysis.status = 'ready' AND version.status = 'ready'
   AND EXISTS (
@@ -326,22 +557,66 @@ ORDER BY analysis.round_trip_id`).all(scope.workspaceId, accountId);
 FROM journal_round_trip_daily_trade_analysis_event_snapshots
 WHERE daily_trade_analysis_version_id = ?
 ORDER BY COALESCE(json_extract(snapshot_json, '$.event.sequence'), candle_time_utc_seconds), candle_time_utc_seconds`);
-  const thirtyMinutePostExitPath = database.prepare<[string], PostExitPathRow>(`SELECT favorable_move_decimal
+  const postExitPaths = database.prepare<[string], PostExitPathRow>(`SELECT
+  favorable_move_decimal,
+  minutes_after_exit
 FROM journal_round_trip_daily_trade_analysis_post_exit_paths
-WHERE daily_trade_analysis_version_id = ? AND minutes_after_exit = 30`);
+WHERE daily_trade_analysis_version_id = ?
+ORDER BY minutes_after_exit`);
+  const candles = database.prepare<[string], CandleRow>(`SELECT
+  candle_time_utc_seconds,
+  close_decimal
+FROM level_analysis_market_session_candles
+WHERE market_session_set_version_id = ?
+ORDER BY candle_time_utc_seconds`);
   const result = new Map<string, AnalyzerFact>();
   for (const analysis of analyses) {
     const path = readDailyTradePathMaterialization(database, analysis.daily_trade_analysis_version_id);
     if (!path || path.roundTripVersionId !== analysis.round_trip_version_id) continue;
     const rows = snapshots.all(analysis.daily_trade_analysis_version_id);
     const parsed = rows.map(parseEvent);
-    const postExit = thirtyMinutePostExitPath.get(analysis.daily_trade_analysis_version_id);
+    const parsedEvents = Object.freeze(parsed.filter((event): event is EventFact => event !== null));
+    const savedCandles = candles.all(analysis.market_session_set_version_id);
+    const savedPostExitPaths = Object.freeze(postExitPaths.all(analysis.daily_trade_analysis_version_id));
+    const scenario = analyzeDailyTradeV2Scenario({
+      candles: savedCandles.map((candle) => Object.freeze({
+        closeDecimal: candle.close_decimal,
+        time: candle.candle_time_utc_seconds,
+      })),
+      direction: analysis.direction,
+      events: parsedEvents.map((event) => Object.freeze({
+        executedAtUtc: event.executedAtUtc,
+        feesDecimal: event.feesDecimal,
+        kind: event.eventKind,
+        priceDecimal: event.priceDecimal,
+        quantityDecimal: event.quantityDecimal,
+        sequence: event.eventSequence,
+      })),
+    });
+    const postExitThirty = savedPostExitPaths.find((candidate) => candidate.minutes_after_exit === 30);
+    const profitProtection = readJournalProfitProtectionOutcome(database, scope, {
+      events: parsedEvents.map((event) => Object.freeze({
+        eventId: event.eventId,
+        executedAt: event.executedAtUtc,
+        kind: event.eventKind,
+        metrics: Object.freeze({
+          positionQuantityAfter: event.positionQuantityAfterDecimal ?? "",
+          positionQuantityBefore: event.positionQuantityBeforeDecimal ?? "",
+        }),
+        price: event.priceDecimal,
+        quantity: event.quantityDecimal,
+      })),
+      roundTripId: analysis.round_trip_id,
+    });
     result.set(analysis.round_trip_id, Object.freeze({
-      events: Object.freeze(parsed.filter((event): event is EventFact => event !== null)),
+      events: parsedEvents,
       malformedSnapshotCount: parsed.filter((event) => event === null).length,
       path: path.path,
-      postExitThirtyMinuteMoveDecimal: decimalString(postExit?.favorable_move_decimal),
+      postExitPaths: savedPostExitPaths,
+      postExitThirtyMinuteMoveDecimal: decimalString(postExitThirty?.favorable_move_decimal),
+      profitProtection,
       roundTripId: analysis.round_trip_id,
+      scenario,
     }));
   }
   return result;
@@ -386,13 +661,56 @@ function percentage(numerator: number, denominator: number): number | null {
   return denominator === 0 ? null : numerator / denominator * 100;
 }
 
-function opportunityFor(fact: AnalyzerFact): string | null {
+function legacyOpportunityFor(fact: AnalyzerFact): string | null {
   const index = fact.path.bestProfitOpportunityIndex;
   return index === null ? null : fact.path.profitOpportunities[index]?.peakPnlDecimal ?? null;
 }
 
+function v2OpportunityFor(
+  fact: AnalyzerFact,
+  moneyBasis: "gross" | "net",
+  actualPnlDecimal: string,
+): string | null {
+  const qualification = fact.scenario?.primaryQualification;
+  if (!qualification || !fact.scenario) return null;
+  const calculatedFinal = moneyBasis === "gross"
+    ? fact.scenario.calculatedFinalGrossResultDecimal
+    : fact.scenario.calculatedFinalNetResultDecimal;
+  const potential = moneyBasis === "gross"
+    ? qualification.calculatedGrossResultDecimal
+    : qualification.calculatedNetResultDecimal;
+  if (calculatedFinal === null || potential === null) return null;
+  return new Decimal(calculatedFinal).minus(actualPnlDecimal).abs().lte("0.02")
+    ? potential
+    : null;
+}
+
 function scaledDecimal(value: string | null, multiplier: string): string | null {
   return value === null ? null : new Decimal(value).times(multiplier).toString();
+}
+
+function scaleProfitProtection(
+  outcome: DailyTradeProfitProtectionOutcome,
+  multiplier: string,
+): DailyTradeProfitProtectionOutcome {
+  if (outcome.status === "avoided_additional_loss") return Object.freeze({
+    ...outcome,
+    actualGrossResultDecimal: scaledDecimal(outcome.actualGrossResultDecimal, multiplier)!,
+    avoidedAdditionalLossDecimal: scaledDecimal(outcome.avoidedAdditionalLossDecimal, multiplier)!,
+    counterfactualGrossResultDecimal: scaledDecimal(outcome.counterfactualGrossResultDecimal, multiplier)!,
+  });
+  if (outcome.status === "gave_up_additional_profit") return Object.freeze({
+    ...outcome,
+    actualGrossResultDecimal: scaledDecimal(outcome.actualGrossResultDecimal, multiplier)!,
+    additionalProfitGivenUpDecimal: scaledDecimal(outcome.additionalProfitGivenUpDecimal, multiplier)!,
+    counterfactualGrossResultDecimal: scaledDecimal(outcome.counterfactualGrossResultDecimal, multiplier)!,
+  });
+  if (outcome.status === "no_difference") return Object.freeze({
+    ...outcome,
+    actualGrossResultDecimal: scaledDecimal(outcome.actualGrossResultDecimal, multiplier)!,
+    counterfactualGrossResultDecimal: scaledDecimal(outcome.counterfactualGrossResultDecimal, multiplier)!,
+  });
+  return outcome;
 }
 
 function scaleAnalyzerFact(fact: AnalyzerFact, multiplier: string): AnalyzerFact {
@@ -406,6 +724,11 @@ function scaleAnalyzerFact(fact: AnalyzerFact, multiplier: string): AnalyzerFact
       givebackDecimal: scaledDecimal(event.givebackDecimal, multiplier),
       priorFavorableExtremePriceDecimal: scaledDecimal(event.priorFavorableExtremePriceDecimal, multiplier),
       priceDecimal: scaledDecimal(event.priceDecimal, multiplier)!,
+      postEventPaths: Object.freeze(event.postEventPaths.map((path) => Object.freeze({
+        ...path,
+        oppositeDirectionMoveDecimal: scaledDecimal(path.oppositeDirectionMoveDecimal, multiplier),
+        tradeDirectionMoveDecimal: scaledDecimal(path.tradeDirectionMoveDecimal, multiplier),
+      }))),
     }))),
     path: Object.freeze({
       ...fact.path,
@@ -424,7 +747,33 @@ function scaleAnalyzerFact(fact: AnalyzerFact, multiplier: string): AnalyzerFact
         peakToFinalReversalDecimal: scaledDecimal(opportunity.peakToFinalReversalDecimal, multiplier)!,
       }))),
     }),
+    postExitPaths: Object.freeze(fact.postExitPaths.map((path) => Object.freeze({
+      ...path,
+      favorable_move_decimal: scaledDecimal(path.favorable_move_decimal, multiplier),
+    }))),
     postExitThirtyMinuteMoveDecimal: scaledDecimal(fact.postExitThirtyMinuteMoveDecimal, multiplier),
+    profitProtection: scaleProfitProtection(fact.profitProtection, multiplier),
+    scenario: fact.scenario ? Object.freeze({
+      ...fact.scenario,
+      calculatedFinalGrossResultDecimal: scaledDecimal(fact.scenario.calculatedFinalGrossResultDecimal, multiplier)!,
+      calculatedFinalNetResultDecimal: scaledDecimal(fact.scenario.calculatedFinalNetResultDecimal, multiplier),
+      primaryQualification: fact.scenario.primaryQualification ? Object.freeze({
+        ...fact.scenario.primaryQualification,
+        calculatedGrossResultDecimal: scaledDecimal(fact.scenario.primaryQualification.calculatedGrossResultDecimal, multiplier)!,
+        calculatedNetResultDecimal: scaledDecimal(fact.scenario.primaryQualification.calculatedNetResultDecimal, multiplier),
+        closePriceDecimal: scaledDecimal(fact.scenario.primaryQualification.closePriceDecimal, multiplier)!,
+      }) : null,
+      qualifications: Object.freeze(fact.scenario.qualifications.map((qualification) => Object.freeze({
+        ...qualification,
+        calculatedGrossResultDecimal: scaledDecimal(qualification.calculatedGrossResultDecimal, multiplier)!,
+        calculatedNetResultDecimal: scaledDecimal(qualification.calculatedNetResultDecimal, multiplier),
+        closePriceDecimal: scaledDecimal(qualification.closePriceDecimal, multiplier)!,
+      }))),
+      scaleOut: Object.freeze({
+        ...fact.scenario.scaleOut,
+        profitSecuredGrossDecimal: scaledDecimal(fact.scenario.scaleOut.profitSecuredGrossDecimal, multiplier)!,
+      }),
+    }) : null,
   });
 }
 
@@ -478,6 +827,7 @@ type Joined = Readonly<{
   additional: string | null;
   peakToExit: number | null;
   returnPercent: number | null;
+  v2Opportunity: string | null;
 }>;
 
 function breakdownRow(
@@ -495,8 +845,10 @@ function breakdownRow(
     averageReturnPercent: averageNumbers(rows.flatMap((row) => row.returnPercent === null ? [] : [row.returnPercent])),
     averageValue,
     label,
+    medianPnlDecimal: medianDecimals(rows.map((row) => row.actualPnl)),
     occurrenceCount,
     opportunityTradeCount: opportunityRows.length,
+    totalPnlDecimal: sumDecimals(rows.map((row) => row.actualPnl)),
     tradeCount: rows.length,
     winRatePercent: percentage(rows.filter((row) => new Decimal(row.actualPnl).gt(0)).length, rows.length),
   });
@@ -515,6 +867,37 @@ function outcomeRows(joined: readonly Joined[]): readonly TradeAnalysisBreakdown
     const rows = joined.filter((item) => item.analyzer.path.status === status);
     return breakdownRow(label, rows);
   }).filter((row) => row.tradeCount > 0));
+}
+
+const GREEN_TO_RED_STATUSES: readonly DailyTradeGreenToRedStatus[] = Object.freeze([
+  "green_to_red_ended_red", "green_to_red_recovered", "green_to_red_ended_flat",
+]);
+
+function greenToRedDamageFor(joined: readonly Joined[]): TradeAnalysisGreenToRedDamage {
+  const greenToRedTrades = joined.filter((row) => GREEN_TO_RED_STATUSES.includes(row.analyzer.path.status));
+  const endedRedTrades = joined.filter((row) => row.analyzer.path.status === "green_to_red_ended_red");
+  const recoveries = greenToRedTrades.filter((row) => row.analyzer.path.firstRecoveryAtUtcSeconds !== null);
+  return Object.freeze({
+    averageGreenToRedMinutes: averageNumbers(greenToRedTrades.flatMap((row) => {
+      const { firstGreenAtUtcSeconds: green, firstRedAtUtcSeconds: red } = row.analyzer.path;
+      return green === null || red === null ? [] : [(red - green) / 60];
+    })),
+    averagePeakToFinalDamageDecimal: averageDecimals(greenToRedTrades.flatMap((row) =>
+      row.analyzer.path.peakToFinalReversalDecimal === null ? [] : [row.analyzer.path.peakToFinalReversalDecimal])),
+    averagePeakToRedDamageDecimal: averageDecimals(greenToRedTrades.flatMap((row) =>
+      row.analyzer.path.peakToRedReversalDecimal === null ? [] : [row.analyzer.path.peakToRedReversalDecimal])),
+    averageRecoveryMinutes: averageNumbers(recoveries.flatMap((row) => {
+      const { firstRecoveryAtUtcSeconds: recovery, firstRedAtUtcSeconds: red } = row.analyzer.path;
+      return recovery === null || red === null ? [] : [(recovery - red) / 60];
+    })),
+    endedRedActualPnlDecimal: sumDecimals(endedRedTrades.map((row) => row.actualPnl)),
+    endedRedAdditionalOpportunityDecimal: sumDecimals(endedRedTrades.flatMap((row) =>
+      row.additional === null ? [] : [row.additional])),
+    endedRedPotentialPnlDecimal: sumDecimals(endedRedTrades.map((row) =>
+      new Decimal(row.actualPnl).plus(row.additional ?? 0).toString())),
+    endedRedTradeCount: endedRedTrades.length,
+    recoveryRatePercent: percentage(recoveries.length, greenToRedTrades.length),
+  });
 }
 
 function holdingRows(joined: readonly Joined[]): readonly TradeAnalysisBreakdownRow[] {
@@ -586,19 +969,64 @@ function eventBreakdown(
   }).filter((row) => row.occurrenceCount > 0));
 }
 
+function eventKindBreakdown(
+  events: readonly EventJoined[],
+  kinds: readonly Readonly<{ kind: EventFact["eventKind"]; label: string }>[],
+  definitions: readonly Readonly<{ label: string; test: (value: number) => boolean }>[],
+  read: (event: EventFact) => number | null,
+): readonly TradeAnalysisBreakdownRow[] {
+  return Object.freeze(kinds.flatMap(({ kind, label }) => eventBreakdown(
+    events.filter(({ event }) => event.eventKind === kind),
+    definitions,
+    read,
+  ).map((row) => Object.freeze({ ...row, label: `${label} · ${row.label}` }))));
+}
+
+const ENTRY_EVENT_KINDS = Object.freeze([
+  Object.freeze({ kind: "entry" as const, label: "Initial entry" }),
+  Object.freeze({ kind: "add" as const, label: "Add" }),
+]);
+
+const EXIT_EVENT_KINDS = Object.freeze([
+  Object.freeze({ kind: "partial_exit" as const, label: "Partial exit" }),
+  Object.freeze({ kind: "final_exit" as const, label: "Final exit" }),
+]);
+
 const DISTANCE_BUCKETS = Object.freeze([
-  { label: "5%+ below", test: (value: number) => value < -5 },
+  { label: "20%+ below", test: (value: number) => value < -20 },
+  { label: "10-20% below", test: (value: number) => value >= -20 && value < -10 },
+  { label: "5-10% below", test: (value: number) => value >= -10 && value < -5 },
   { label: "1-5% below", test: (value: number) => value >= -5 && value < -1 },
   { label: "Within 1%", test: (value: number) => value >= -1 && value <= 1 },
   { label: "1-5% above", test: (value: number) => value > 1 && value <= 5 },
-  { label: "5%+ above", test: (value: number) => value > 5 },
+  { label: "5-10% above", test: (value: number) => value > 5 && value <= 10 },
+  { label: "10-20% above", test: (value: number) => value > 10 && value <= 20 },
+  { label: "20%+ above", test: (value: number) => value > 20 },
 ]);
 
 const RELATIVE_VOLUME_BUCKETS = Object.freeze([
   { label: "Below 1x", test: (value: number) => value < 1 },
   { label: "1-2x", test: (value: number) => value >= 1 && value < 2 },
-  { label: "2-3x", test: (value: number) => value >= 2 && value < 3 },
-  { label: "3x+", test: (value: number) => value >= 3 },
+  { label: "2-5x", test: (value: number) => value >= 2 && value < 5 },
+  { label: "5-10x", test: (value: number) => value >= 5 && value < 10 },
+  { label: "10x+", test: (value: number) => value >= 10 },
+]);
+
+const ONE_MINUTE_ATR_BUCKETS = Object.freeze([
+  { label: "Under 2%", test: (value: number) => value < 2 },
+  { label: "2% to under 5%", test: (value: number) => value >= 2 && value < 5 },
+  { label: "5% to under 10%", test: (value: number) => value >= 5 && value < 10 },
+  { label: "10% to under 20%", test: (value: number) => value >= 10 && value < 20 },
+  { label: "20%+", test: (value: number) => value >= 20 },
+]);
+
+const CANDLE_LOCATION_BUCKETS = Object.freeze([
+  { label: "Outside saved candle range", test: (value: number) => value < 0 || value > 1 },
+  { label: "Bottom 20% of candle", test: (value: number) => value >= 0 && value < 0.2 },
+  { label: "Lower-middle 20%", test: (value: number) => value >= 0.2 && value < 0.4 },
+  { label: "Middle 20%", test: (value: number) => value >= 0.4 && value <= 0.6 },
+  { label: "Upper-middle 20%", test: (value: number) => value > 0.6 && value <= 0.8 },
+  { label: "Top 20% of candle", test: (value: number) => value > 0.8 && value <= 1 },
 ]);
 
 function exitRows(events: readonly EventJoined[]): readonly TradeAnalysisBreakdownRow[] {
@@ -620,7 +1048,7 @@ function patternRows(events: readonly EventJoined[]): readonly TradeAnalysisPatt
   for (const item of events) for (const pattern of item.event.patterns) {
     const side = item.event.eventKind === "entry" || item.event.eventKind === "add" ? "Entry" : "Exit";
     const location = pattern.candlesBeforeExecution === 0 ? "Exact execution candle" : "Before execution";
-    const key = `${pattern.timeframe}|${side}|${location}|${pattern.kind}`;
+    const key = `${item.trade.journal.direction}|${pattern.timeframe}|${side}|${location}|${pattern.kind}`;
     const group = groups.get(key) ?? { events: [], pattern };
     group.events.push(item);
     groups.set(key, group);
@@ -632,10 +1060,13 @@ function patternRows(events: readonly EventJoined[]): readonly TradeAnalysisPatt
     return Object.freeze({
       averagePnlDecimal: averageDecimals(tradeRows.map((row) => row.actualPnl)),
       averageReturnPercent: averageNumbers(tradeRows.flatMap((row) => row.returnPercent === null ? [] : [row.returnPercent])),
+      direction: first.trade.journal.direction,
       executionSide: first.event.eventKind === "entry" || first.event.eventKind === "add" ? "Entry" : "Exit",
       location: group.pattern.candlesBeforeExecution === 0 ? "Exact execution candle" : "Before execution",
+      medianPnlDecimal: medianDecimals(tradeRows.map((row) => row.actualPnl)),
       occurrenceCount: group.events.length,
       pattern: group.pattern.kind,
+      totalPnlDecimal: sumDecimals(tradeRows.map((row) => row.actualPnl)),
       winRatePercent: percentage(tradeRows.filter((row) => new Decimal(row.actualPnl).gt(0)).length, tradeRows.length),
       timeframe: group.pattern.timeframe === "1m" ? "1 min" : "5 min",
       tradeCount: tradeRows.length,
@@ -709,6 +1140,36 @@ function entryTimeRows(joined: readonly Joined[], timezone: string): readonly Tr
   }));
 }
 
+function tradingSession(
+  executedAtUtc: string,
+  timezone: string,
+): TradeAnalysisEventPathRow["session"] {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    hour12: false,
+    minute: "2-digit",
+    timeZone: timezone,
+  }).formatToParts(new Date(executedAtUtc));
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0") % 24;
+  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? "0");
+  const total = hour * 60 + minute;
+  if (total < 9 * 60 + 30) return "Premarket";
+  if (total < 16 * 60) return "Regular hours";
+  return "After-hours";
+}
+
+function eventKindLabel(kind: EventFact["eventKind"]): TradeAnalysisEventPathRow["eventKind"] {
+  if (kind === "entry") return "Initial entry";
+  if (kind === "add") return "Add";
+  if (kind === "partial_exit") return "Partial exit";
+  return "Final exit";
+}
+
+function outcomeFor(actualPnlDecimal: string): TradeAnalysisMeaningfulProfitRow["outcome"] {
+  const actual = new Decimal(actualPnlDecimal);
+  return actual.isPositive() ? "ended_green" : actual.isNegative() ? "ended_red" : "ended_flat";
+}
+
 export function buildDailyTradeLongTermAnalytics(
   database: Database.Database,
   scope: WorkspaceAccessScope,
@@ -717,7 +1178,7 @@ export function buildDailyTradeLongTermAnalytics(
   currency: string | null,
   timezone = "America/New_York",
   reportingMultiplierByRoundTrip: ReadonlyMap<string, string> = new Map(),
-): DailyTradeLongTermAnalyticsModel {
+): DailyTradeLongTermAnalyticsV2Model {
   const analyzer = readAnalyzerFacts(database, scope);
   const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade");
   const joined: readonly Joined[] = Object.freeze(eligibleDayTrades.flatMap((journal) => {
@@ -727,7 +1188,8 @@ export function buildDailyTradeLongTermAnalytics(
       sourceFact,
       reportingMultiplierByRoundTrip.get(journal.roundTripId) ?? "1",
     );
-    const opportunity = opportunityFor(fact);
+    const opportunity = legacyOpportunityFor(fact);
+    const v2Opportunity = v2OpportunityFor(fact, moneyBasis, journal.selectedPnlDecimal);
     return [Object.freeze({
       actualPnl: journal.selectedPnlDecimal,
       additional: additionalOpportunity(journal.selectedPnlDecimal, opportunity),
@@ -738,18 +1200,14 @@ export function buildDailyTradeLongTermAnalytics(
       returnPercent: journal.returnPercentDecimal === null || journal.returnPercentDecimal === undefined
         ? null
         : new Decimal(journal.returnPercentDecimal).toNumber(),
+      v2Opportunity,
     })];
   }));
   const allEvents: readonly EventJoined[] = Object.freeze(joined.flatMap((trade) =>
     trade.analyzer.events.map((event) => Object.freeze({ event, trade }))));
   const entryEvents = allEvents.filter(({ event }) => event.eventKind === "entry" || event.eventKind === "add");
   const exitEvents = allEvents.filter(({ event }) => event.eventKind === "partial_exit" || event.eventKind === "final_exit");
-  const greenStatuses: readonly DailyTradeGreenToRedStatus[] = [
-    "green_to_red_ended_red", "green_to_red_recovered", "green_to_red_ended_flat",
-  ];
-  const greenToRedTrades = joined.filter((row) => greenStatuses.includes(row.analyzer.path.status));
-  const endedRedTrades = joined.filter((row) => row.analyzer.path.status === "green_to_red_ended_red");
-  const recoveries = greenToRedTrades.filter((row) => row.analyzer.path.firstRecoveryAtUtcSeconds !== null);
+  const greenToRedTrades = joined.filter((row) => GREEN_TO_RED_STATUSES.includes(row.analyzer.path.status));
   const capturedValues = joined.flatMap((row) => {
     const value = capturedPercent(row.actualPnl, row.opportunity);
     return value === null ? [] : [value];
@@ -777,6 +1235,104 @@ export function buildDailyTradeLongTermAnalytics(
     favorable: excursionPercent(event.excursionFavorableDecimal!, event.priceDecimal),
   }));
   const peakEligibleTrades = joined.filter((row) => row.analyzer.path.peakAtUtcSeconds !== null);
+  const meaningfulProfitRows = Object.freeze(joined.flatMap((row): TradeAnalysisMeaningfulProfitRow[] => {
+    const qualification = row.analyzer.scenario?.primaryQualification;
+    if (!qualification || row.v2Opportunity === null) return [];
+    return [Object.freeze({
+      actualPnlDecimal: row.actualPnl,
+      calculatedPotentialPnlDecimal: row.v2Opportunity,
+      closeDate: row.journal.closeLocalDate,
+      differenceDecimal: new Decimal(row.v2Opportunity).minus(row.actualPnl).toString(),
+      direction: row.journal.direction,
+      outcome: outcomeFor(row.actualPnl),
+      profitLevelPriceDecimal: qualification.closePriceDecimal,
+      qualifiedAtUtcSeconds: qualification.qualifiedAtUtcSeconds,
+      requiredCloseCount: qualification.requiredCloseCount,
+      roundTripId: row.journal.roundTripId,
+      scaledOutWhileGreen: row.analyzer.scenario!.scaleOut.eventCount > 0,
+      symbol: row.journal.displayedSymbol,
+      thresholdPercent: qualification.thresholdPercent,
+      trackerDate: row.journal.entryLocalDate,
+    })];
+  }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
+  const scalingRows = Object.freeze(joined.flatMap((row): TradeAnalysisScalingOutRow[] => {
+    const qualification = row.analyzer.scenario?.primaryQualification;
+    const scaleOut = row.analyzer.scenario?.scaleOut;
+    if (!qualification || !scaleOut || row.v2Opportunity === null) return [];
+    return [Object.freeze({
+      actualPnlDecimal: row.actualPnl,
+      closeDate: row.journal.closeLocalDate,
+      direction: row.journal.direction,
+      maximumOpenQuantityDecimal: scaleOut.maximumOpenQuantityDecimal,
+      positionReducedPercent: scaleOut.positionReducedPercent,
+      profitSecuredGrossDecimal: scaleOut.profitSecuredGrossDecimal,
+      profitProtection: row.analyzer.profitProtection,
+      remainingQuantityDecimal: scaleOut.remainingQuantityDecimal,
+      requiredCloseCount: qualification.requiredCloseCount,
+      roundTripId: row.journal.roundTripId,
+      scaledOutWhileGreen: scaleOut.eventCount > 0,
+      scaledQuantityDecimal: scaleOut.scaledQuantityDecimal,
+      symbol: row.journal.displayedSymbol,
+      thresholdPercent: qualification.thresholdPercent,
+      trackerDate: row.journal.entryLocalDate,
+    })];
+  }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
+  const noScaleEndedRedRows = meaningfulProfitRows.filter((row) =>
+    !row.scaledOutWhileGreen && row.outcome === "ended_red");
+  const eventPathRows = Object.freeze(allEvents.flatMap(({ event, trade }): TradeAnalysisEventPathRow[] =>
+    event.postEventPaths.map((path) => Object.freeze({
+      adverseMoveDecimal: path.oppositeDirectionMoveDecimal,
+      closeDate: trade.journal.closeLocalDate,
+      direction: trade.journal.direction,
+      eventKind: eventKindLabel(event.eventKind),
+      eventPriceDecimal: event.priceDecimal,
+      eventSequence: event.eventSequence,
+      executedAtUtc: event.executedAtUtc,
+      favorableMoveDecimal: path.tradeDirectionMoveDecimal,
+      minutesAfterEvent: path.minutesAfterEvent,
+      observedAtCandleTime: path.observedAtCandleTime,
+      roundTripId: trade.journal.roundTripId,
+      session: tradingSession(event.executedAtUtc, timezone),
+      symbol: trade.journal.displayedSymbol,
+      trackerDate: trade.journal.entryLocalDate,
+    }))
+  ).sort((left, right) => right.closeDate.localeCompare(left.closeDate) ||
+    left.symbol.localeCompare(right.symbol) || left.eventSequence - right.eventSequence ||
+    left.minutesAfterEvent - right.minutesAfterEvent));
+  const executionContextRows = Object.freeze(allEvents.map(({ event, trade }): TradeAnalysisExecutionContextRow => Object.freeze({
+    actualPnlDecimal: trade.actualPnl,
+    atr14Percent: event.atr14Percent,
+    candleLocationPercent: event.candleLocationRatio === null ? null : event.candleLocationRatio * 100,
+    closeDate: trade.journal.closeLocalDate,
+    direction: trade.journal.direction,
+    ema9DistancePercent: event.ema9DistancePercent,
+    ema9FiveMinuteDistancePercent: event.fiveMinuteEma9DistancePercent,
+    eventKind: eventKindLabel(event.eventKind),
+    eventPriceDecimal: event.priceDecimal,
+    eventSequence: event.eventSequence,
+    executedAtUtc: event.executedAtUtc,
+    relativeVolume: event.relativeVolume,
+    returnPercent: trade.returnPercent,
+    roundTripId: trade.journal.roundTripId,
+    session: tradingSession(event.executedAtUtc, timezone),
+    symbol: trade.journal.displayedSymbol,
+    trackerDate: trade.journal.entryLocalDate,
+    vwapDistancePercent: event.vwapDistancePercent,
+  })).sort((left, right) => right.closeDate.localeCompare(left.closeDate) ||
+    left.symbol.localeCompare(right.symbol) || left.eventSequence - right.eventSequence));
+  const thresholdCountsFor = (direction: "long" | "short" | null) => Object.freeze(
+    [50, 30, 20, 15].map((thresholdPercent) => {
+      const requiredCloseCount = thresholdPercent === 50 ? 3 : thresholdPercent === 30 ? 5 : thresholdPercent === 20 ? 10 : 15;
+      return Object.freeze({
+        qualifiedTradeCount: joined.filter((row) =>
+          (direction === null || row.journal.direction === direction) && row.v2Opportunity !== null &&
+          row.analyzer.scenario?.qualifications.some((qualification) =>
+            qualification.thresholdPercent === thresholdPercent)).length,
+        requiredCloseCount,
+        thresholdPercent,
+      });
+    }),
+  );
   return Object.freeze({
     analyzedExecutionCount: allEvents.length,
     analyzedTradeCount: joined.length,
@@ -787,33 +1343,70 @@ export function buildDailyTradeLongTermAnalytics(
     currency,
     eligibleDayTradeCount: eligibleDayTrades.length,
     eligibilityBoundary: "not_configured",
+    directionTradeCounts: Object.freeze({
+      long: joined.filter((row) => row.journal.direction === "long").length,
+      short: joined.filter((row) => row.journal.direction === "short").length,
+    }),
+    eventPaths: eventPathRows,
+    executionContextRows,
     entryContext: Object.freeze({
+      atr14Percent: eventBreakdown(entryEvents, ONE_MINUTE_ATR_BUCKETS, (event) => event.atr14Percent),
+      candleLocation: eventBreakdown(entryEvents, CANDLE_LOCATION_BUCKETS, (event) => event.candleLocationRatio),
       ema9: eventBreakdown(entryEvents, DISTANCE_BUCKETS, (event) => event.ema9DistancePercent),
+      ema9FiveMinute: eventBreakdown(entryEvents, DISTANCE_BUCKETS, (event) => event.fiveMinuteEma9DistancePercent),
       relativeVolume: eventBreakdown(entryEvents, RELATIVE_VOLUME_BUCKETS, (event) => event.relativeVolume),
       vwap: eventBreakdown(entryEvents, DISTANCE_BUCKETS, (event) => event.vwapDistancePercent),
     }),
+    entryContextByDirection: Object.freeze({
+      long: Object.freeze({
+        atr14Percent: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "long"), ENTRY_EVENT_KINDS, ONE_MINUTE_ATR_BUCKETS, (event) => event.atr14Percent),
+        candleLocation: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "long"), ENTRY_EVENT_KINDS, CANDLE_LOCATION_BUCKETS, (event) => event.candleLocationRatio),
+        ema9: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "long"), ENTRY_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.ema9DistancePercent),
+        ema9FiveMinute: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "long"), ENTRY_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.fiveMinuteEma9DistancePercent),
+        relativeVolume: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "long"), ENTRY_EVENT_KINDS, RELATIVE_VOLUME_BUCKETS, (event) => event.relativeVolume),
+        vwap: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "long"), ENTRY_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.vwapDistancePercent),
+      }),
+      short: Object.freeze({
+        atr14Percent: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "short"), ENTRY_EVENT_KINDS, ONE_MINUTE_ATR_BUCKETS, (event) => event.atr14Percent),
+        candleLocation: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "short"), ENTRY_EVENT_KINDS, CANDLE_LOCATION_BUCKETS, (event) => event.candleLocationRatio),
+        ema9: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "short"), ENTRY_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.ema9DistancePercent),
+        ema9FiveMinute: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "short"), ENTRY_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.fiveMinuteEma9DistancePercent),
+        relativeVolume: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "short"), ENTRY_EVENT_KINDS, RELATIVE_VOLUME_BUCKETS, (event) => event.relativeVolume),
+        vwap: eventKindBreakdown(entryEvents.filter(({ trade }) => trade.journal.direction === "short"), ENTRY_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.vwapDistancePercent),
+      }),
+    }),
     exitContext: exitRows(exitEvents),
+    exitContextByDirection: Object.freeze({
+      long: exitRows(exitEvents.filter(({ trade }) => trade.journal.direction === "long")),
+      short: exitRows(exitEvents.filter(({ trade }) => trade.journal.direction === "short")),
+    }),
+    exitExecutionContextByDirection: Object.freeze({
+      long: Object.freeze({
+        atr14Percent: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "long"), EXIT_EVENT_KINDS, ONE_MINUTE_ATR_BUCKETS, (event) => event.atr14Percent),
+        candleLocation: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "long"), EXIT_EVENT_KINDS, CANDLE_LOCATION_BUCKETS, (event) => event.candleLocationRatio),
+        ema9: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "long"), EXIT_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.ema9DistancePercent),
+        ema9FiveMinute: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "long"), EXIT_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.fiveMinuteEma9DistancePercent),
+        relativeVolume: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "long"), EXIT_EVENT_KINDS, RELATIVE_VOLUME_BUCKETS, (event) => event.relativeVolume),
+        vwap: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "long"), EXIT_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.vwapDistancePercent),
+      }),
+      short: Object.freeze({
+        atr14Percent: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "short"), EXIT_EVENT_KINDS, ONE_MINUTE_ATR_BUCKETS, (event) => event.atr14Percent),
+        candleLocation: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "short"), EXIT_EVENT_KINDS, CANDLE_LOCATION_BUCKETS, (event) => event.candleLocationRatio),
+        ema9: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "short"), EXIT_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.ema9DistancePercent),
+        ema9FiveMinute: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "short"), EXIT_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.fiveMinuteEma9DistancePercent),
+        relativeVolume: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "short"), EXIT_EVENT_KINDS, RELATIVE_VOLUME_BUCKETS, (event) => event.relativeVolume),
+        vwap: eventKindBreakdown(exitEvents.filter(({ trade }) => trade.journal.direction === "short"), EXIT_EVENT_KINDS, DISTANCE_BUCKETS, (event) => event.vwapDistancePercent),
+      }),
+    }),
     greenToRed: outcomeRows(joined),
-    greenToRedDamage: Object.freeze({
-      averageGreenToRedMinutes: averageNumbers(greenToRedTrades.flatMap((row) => {
-        const { firstGreenAtUtcSeconds: green, firstRedAtUtcSeconds: red } = row.analyzer.path;
-        return green === null || red === null ? [] : [(red - green) / 60];
-      })),
-      averagePeakToFinalDamageDecimal: averageDecimals(greenToRedTrades.flatMap((row) =>
-        row.analyzer.path.peakToFinalReversalDecimal === null ? [] : [row.analyzer.path.peakToFinalReversalDecimal])),
-      averagePeakToRedDamageDecimal: averageDecimals(greenToRedTrades.flatMap((row) =>
-        row.analyzer.path.peakToRedReversalDecimal === null ? [] : [row.analyzer.path.peakToRedReversalDecimal])),
-      averageRecoveryMinutes: averageNumbers(recoveries.flatMap((row) => {
-        const { firstRecoveryAtUtcSeconds: recovery, firstRedAtUtcSeconds: red } = row.analyzer.path;
-        return recovery === null || red === null ? [] : [(recovery - red) / 60];
-      })),
-      endedRedActualPnlDecimal: sumDecimals(endedRedTrades.map((row) => row.actualPnl)),
-      endedRedAdditionalOpportunityDecimal: sumDecimals(endedRedTrades.flatMap((row) =>
-        row.additional === null ? [] : [row.additional])),
-      endedRedPotentialPnlDecimal: sumDecimals(endedRedTrades.map((row) =>
-        new Decimal(row.actualPnl).plus(row.additional ?? 0).toString())),
-      endedRedTradeCount: endedRedTrades.length,
-      recoveryRatePercent: percentage(recoveries.length, greenToRedTrades.length),
+    greenToRedByDirection: Object.freeze({
+      long: outcomeRows(joined.filter((row) => row.journal.direction === "long")),
+      short: outcomeRows(joined.filter((row) => row.journal.direction === "short")),
+    }),
+    greenToRedDamage: greenToRedDamageFor(joined),
+    greenToRedDamageByDirection: Object.freeze({
+      long: greenToRedDamageFor(joined.filter((row) => row.journal.direction === "long")),
+      short: greenToRedDamageFor(joined.filter((row) => row.journal.direction === "short")),
     }),
     greenToRedTradeCount: greenToRedTrades.length,
     holding: holdingRows(joined),
@@ -840,6 +1433,25 @@ export function buildDailyTradeLongTermAnalytics(
       medianFavorableMovePercent: medianNumbers(excursionPercentRows.map((row) => row.favorable)),
     }),
     malformedSnapshotCount: joined.reduce((sum, row) => sum + row.analyzer.malformedSnapshotCount, 0),
+    meaningfulProfit: Object.freeze({
+      endedFlatTradeCount: meaningfulProfitRows.filter((row) => row.outcome === "ended_flat").length,
+      endedGreenTradeCount: meaningfulProfitRows.filter((row) => row.outcome === "ended_green").length,
+      endedRedTradeCount: meaningfulProfitRows.filter((row) => row.outcome === "ended_red").length,
+      noScaleEndedRedActualPnlDecimal: sumDecimals(noScaleEndedRedRows.map((row) => row.actualPnlDecimal)),
+      noScaleEndedRedDifferenceDecimal: sumDecimals(noScaleEndedRedRows.map((row) => row.differenceDecimal)),
+      noScaleEndedRedPotentialPnlDecimal: sumDecimals(noScaleEndedRedRows.map((row) => row.calculatedPotentialPnlDecimal)),
+      noScaleEndedRedTradeCount: noScaleEndedRedRows.length,
+      rows: meaningfulProfitRows,
+      thresholdCounts: thresholdCountsFor(null),
+      thresholdCountsByDirection: Object.freeze({
+        long: thresholdCountsFor("long"),
+        short: thresholdCountsFor("short"),
+      }),
+      totalActualPnlDecimal: sumDecimals(meaningfulProfitRows.map((row) => row.actualPnlDecimal)),
+      totalDifferenceDecimal: sumDecimals(meaningfulProfitRows.map((row) => row.differenceDecimal)),
+      totalPotentialPnlDecimal: sumDecimals(meaningfulProfitRows.map((row) => row.calculatedPotentialPnlDecimal)),
+      tradeCount: meaningfulProfitRows.length,
+    }),
     moneyBasis,
     opportunityTradeCount: joined.filter((row) => row.opportunity !== null).length,
     profitCapture: Object.freeze({
@@ -866,6 +1478,14 @@ export function buildDailyTradeLongTermAnalytics(
         "No partial exit before red",
         (row) => row.analyzer.path.partialExitBeforeRedCount > 0,
       ),
+    }),
+    scalingOut: Object.freeze({
+      noScaleEndedRedTradeCount: scalingRows.filter((row) =>
+        !row.scaledOutWhileGreen && new Decimal(row.actualPnlDecimal).isNegative()).length,
+      noScaleTradeCount: scalingRows.filter((row) => !row.scaledOutWhileGreen).length,
+      rows: scalingRows,
+      scaledOutTradeCount: scalingRows.filter((row) => row.scaledOutWhileGreen).length,
+      tradeCount: scalingRows.length,
     }),
     timezone,
     trades: Object.freeze(joined.map((row): TradeAnalysisTradeRow => {

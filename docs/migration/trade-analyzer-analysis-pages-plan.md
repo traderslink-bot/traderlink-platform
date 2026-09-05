@@ -2,6 +2,10 @@
 
 **Status:** Complete and owner approved.
 
+**Version 2 successor:** [Day Trade Analyzer Version 2 Plan](day-trade-analyzer-v2-plan.md)
+controls the approved small/micro-cap redesign, date filters, meaningful
+completed-close scenarios and Scaling Out page.
+
 **Progress:** [Trade Analyzer Analysis Pages Progress](trade-analyzer-analysis-pages-progress.md)
 
 **Plain-language presentation:** [Trade Analyzer Plain-Language Insights Progress](trade-analyzer-plain-language-insights-progress.md)

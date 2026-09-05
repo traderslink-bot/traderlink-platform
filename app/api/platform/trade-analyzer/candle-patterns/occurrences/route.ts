@@ -25,10 +25,12 @@ export async function GET(request: Request): Promise<Response> {
     const timeframe = url.searchParams.get("timeframe") ?? "all";
     const execution = url.searchParams.get("execution") ?? "all";
     const location = url.searchParams.get("location") ?? "all";
+    const direction = url.searchParams.get("direction");
     if (
       !["all", "1m", "5m"].includes(timeframe) ||
       !["all", "entry", "exit"].includes(execution) ||
-      !["all", "exact", "before"].includes(location)
+      !["all", "exact", "before"].includes(location) ||
+      (direction !== "long" && direction !== "short")
     ) {
       return Response.json({ status: "invalid_filters" }, { status: 400 });
     }
@@ -39,6 +41,7 @@ export async function GET(request: Request): Promise<Response> {
           readDailyTradePatternOccurrences(database, scope, {
             afterCursor: url.searchParams.get("cursor"),
             currency: null,
+            direction,
             endDate: optionalDate(url.searchParams.get("end")),
             execution: execution as "all" | "entry" | "exit",
             location: location as "all" | "exact" | "before",

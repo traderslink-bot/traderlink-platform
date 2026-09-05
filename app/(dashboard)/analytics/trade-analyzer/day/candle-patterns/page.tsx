@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { TradeAnalysisPage } from "../../../trade-analysis-page";
 
-export const metadata: Metadata = { title: "Candle setups | TraderLink Platform" };
+export const metadata: Metadata = { title: "Candle patterns | TraderLink Platform" };
 
 export default async function CandlePatternsAnalysisPage({ searchParams }: {
   searchParams: Promise<Readonly<Record<string, string | string[] | undefined>>>;

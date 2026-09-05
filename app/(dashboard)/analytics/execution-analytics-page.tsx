@@ -49,7 +49,6 @@ function metricsFor(moneyBasis: "gross" | "net") {
   return [moneyBasis === "gross" ? "gross_pnl" : "net_pnl", "win_rate", "included_count", "win_count", "loss_count", "average_pnl"] as const;
 }
 const ENTRY_PRICE_MINIMUM_TOTAL_TRADES = 30;
-const ENTRY_PRICE_MINIMUM_BAND_TRADES = 10;
 
 function metricFor(metrics: readonly JournalAnalyticsMetricResult[], id: string) {
   return metrics.find((metric) => metric.metricId === id) ?? null;
@@ -119,9 +118,10 @@ function entryPriceComparison(charts: JournalAnalyticsPartitionedResponse): Entr
   const underOneTradeCount = underOne.tradeCount ?? 0;
   const oneAndAboveTradeCount = oneAndAbove.tradeCount ?? 0;
   const totalTradeCount = underOneTradeCount + oneAndAboveTradeCount;
-  const underOneTradesNeeded = Math.max(0, ENTRY_PRICE_MINIMUM_BAND_TRADES - underOneTradeCount);
-  const oneAndAboveTradesNeeded = Math.max(0, ENTRY_PRICE_MINIMUM_BAND_TRADES - oneAndAboveTradeCount);
-  const comparisonAvailable = underOneTradesNeeded === 0 && oneAndAboveTradesNeeded === 0;
+  const underOneTradesNeeded = underOneTradeCount === 0 ? 1 : 0;
+  const oneAndAboveTradesNeeded = oneAndAboveTradeCount === 0 ? 1 : 0;
+  const comparisonAvailable = totalTradeCount >= ENTRY_PRICE_MINIMUM_TOTAL_TRADES &&
+    underOneTradeCount > 0 && oneAndAboveTradeCount > 0;
   const relation = (value: number | null): "higher" | "lower" | "equal" | null => value === null
     ? null
     : value > 0 ? "higher" : value < 0 ? "lower" : "equal";
@@ -156,27 +156,20 @@ function entryPriceComparison(charts: JournalAnalyticsPartitionedResponse): Entr
 function entryPriceInsights(
   results: readonly EntryPriceResult[],
 ): EntryPriceInsights {
-  const included = results.filter((result) => ["1_to_2", "2_to_3", "3_to_5"].includes(result.key) &&
-    result.tradeCount !== null && result.tradeCount >= ENTRY_PRICE_MINIMUM_BAND_TRADES);
+  const included = results.filter((result) => result.tradeCount !== null && result.tradeCount > 0);
   const averagePnlRanked = included.filter((result) => result.averagePnlDecimal !== null);
-  const winRateRanked = included.filter((result) => result.winRateNumeratorDecimal !== null &&
-    result.winRateDenominatorInteger !== null);
-  const compareWinRates = (left: EntryPriceResult, right: EntryPriceResult) => compareExactDecimals(
-    multiplyExactDecimals(left.winRateNumeratorDecimal!, right.winRateDenominatorInteger!),
-    multiplyExactDecimals(right.winRateNumeratorDecimal!, left.winRateDenominatorInteger!),
-  );
+  if (averagePnlRanked.length < 2) return Object.freeze({
+    highestAveragePnlKey: null,
+    lowestAveragePnlKey: null,
+  });
   const highestAveragePnl = averagePnlRanked.sort((left, right) => compareExactDecimals(
     right.averagePnlDecimal!, left.averagePnlDecimal!,
   ))[0] ?? null;
   const lowestAveragePnl = averagePnlRanked.sort((left, right) => compareExactDecimals(
     left.averagePnlDecimal!, right.averagePnlDecimal!,
   ))[0] ?? null;
-  const highestWinRate = winRateRanked.sort((left, right) => compareWinRates(right, left))[0] ?? null;
-  const lowestWinRate = winRateRanked.sort(compareWinRates)[0] ?? null;
   return Object.freeze({
-    highestWinRateKey: highestWinRate?.key ?? null,
     highestAveragePnlKey: highestAveragePnl?.key ?? null,
-    lowestWinRateKey: lowestWinRate?.key ?? null,
     lowestAveragePnlKey: lowestAveragePnl?.key ?? null,
   });
 }

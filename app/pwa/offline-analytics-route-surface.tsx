@@ -39,6 +39,7 @@ const ROUTES: Readonly<Record<string, JournalAnalyticsOfflineRouteKind>> = Objec
   "/analytics/trade-analyzer/day/candle-patterns": "trade-analyzer-candle-patterns",
   "/analytics/trade-analyzer/day/entry-exit": "trade-analyzer-entry-exit",
   "/analytics/trade-analyzer/day/green-to-red": "trade-analyzer-green-to-red",
+  "/analytics/trade-analyzer/day/scaling-out": "trade-analyzer-scaling-out",
   "/analytics/trade-analyzer/day/mfe-mae": "trade-analyzer-mfe-mae",
   "/analytics/trade-analyzer/day/trades": "trade-analyzer-trades",
 });
@@ -48,10 +49,11 @@ const TITLES: Readonly<Record<JournalAnalyticsOfflineRouteKind, string>> = Objec
   "analytics-overview": "Overview",
   "analytics-results": "Ticker",
   "analytics-timing": "Timing",
-  "trade-analyzer-candle-patterns": "Candle Patterns",
+  "trade-analyzer-candle-patterns": "Candle patterns",
   "trade-analyzer-day": "Day Trade Analysis",
   "trade-analyzer-entry-exit": "Entry & Exit",
   "trade-analyzer-green-to-red": "Green-to-Red",
+  "trade-analyzer-scaling-out": "Scaling out",
   "trade-analyzer-mfe-mae": "MFE & MAE",
   "trade-analyzer-trades": "Analyzed Trades",
 });
@@ -65,6 +67,7 @@ const ANALYZER_HELP: Readonly<Record<JournalAnalyticsOfflineRouteKind, string | 
   "trade-analyzer-day": "/help/trade-analyzer/day-trade-analysis",
   "trade-analyzer-entry-exit": "/help/trade-analyzer/entry-exit-analysis",
   "trade-analyzer-green-to-red": "/help/trade-analyzer/green-to-red-analysis",
+  "trade-analyzer-scaling-out": "/help/trade-analyzer/day-trade-analysis",
   "trade-analyzer-mfe-mae": "/help/trade-analyzer/mfe-mae",
   "trade-analyzer-trades": "/help/trade-analyzer/analyzed-trades",
 });

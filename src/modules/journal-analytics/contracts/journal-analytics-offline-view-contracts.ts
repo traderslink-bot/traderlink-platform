@@ -7,7 +7,7 @@ import type { JournalAnalyticsPartitionedResponse } from "./analytics-result";
 import type { JournalAnalyticsMoneyBasis } from "./analytics-query";
 import type { PlatformOfflineCoverageFact } from "@/src/modules/platform/contracts/platform-offline-saved-view-contracts";
 import type { DailyTradeAnalyzedTradePage } from "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
-import type { DailyTradeLongTermAnalyticsModel } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
+import type { DailyTradeLongTermAnalyticsV2Model } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
 
 export type JournalAnalyticsOfflineRouteKind =
   | "analytics-overview"
@@ -18,6 +18,7 @@ export type JournalAnalyticsOfflineRouteKind =
   | "trade-analyzer-entry-exit"
   | "trade-analyzer-mfe-mae"
   | "trade-analyzer-green-to-red"
+  | "trade-analyzer-scaling-out"
   | "trade-analyzer-candle-patterns"
   | "trade-analyzer-trades";
 
@@ -31,18 +32,21 @@ export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS: Readonly<
   "analytics-overview": "journal-analytics:overview:current",
   "analytics-results": "journal-analytics:results:current",
   "analytics-timing": "journal-analytics:timing:current",
-  "trade-analyzer-candle-patterns": "journal-analytics:trade-analyzer:candle-patterns:current",
-  "trade-analyzer-day": "journal-analytics:trade-analyzer:day:current",
-  "trade-analyzer-entry-exit": "journal-analytics:trade-analyzer:entry-exit:current",
-  "trade-analyzer-green-to-red": "journal-analytics:trade-analyzer:green-to-red:current",
-  "trade-analyzer-mfe-mae": "journal-analytics:trade-analyzer:mfe-mae:current",
+  "trade-analyzer-candle-patterns": "journal-analytics:trade-analyzer:candle-patterns:v2",
+  "trade-analyzer-day": "journal-analytics:trade-analyzer:day:v2",
+  "trade-analyzer-entry-exit": "journal-analytics:trade-analyzer:entry-exit:v2",
+  "trade-analyzer-green-to-red": "journal-analytics:trade-analyzer:green-to-red:v2",
+  "trade-analyzer-scaling-out": "journal-analytics:trade-analyzer:scaling-out:v2",
+  "trade-analyzer-mfe-mae": "journal-analytics:trade-analyzer:mfe-mae:v2",
   "trade-analyzer-trades": "journal-analytics:trade-analyzer:trades:current",
 });
 
 type EvidenceQuery = Readonly<{
   currency: string | null;
+  direction: "long" | "short" | null;
   endDate: string | null;
   moneyBasis: "gross" | "net";
+  rangeKind: string;
   startDate: string | null;
 }>;
 
@@ -92,8 +96,9 @@ export type JournalTradeAnalyzerOfflineViewModel = Readonly<{
     | "trade-analyzer-entry-exit"
     | "trade-analyzer-mfe-mae"
     | "trade-analyzer-green-to-red"
+    | "trade-analyzer-scaling-out"
     | "trade-analyzer-candle-patterns";
-  model: DailyTradeLongTermAnalyticsModel;
+  model: DailyTradeLongTermAnalyticsV2Model;
   version: 1;
   view: Exclude<TradeAnalysisView, "trades">;
 }>;
@@ -122,6 +127,7 @@ const ANALYZER_KIND_BY_VIEW: Readonly<
   day: "trade-analyzer-day",
   "entry-exit": "trade-analyzer-entry-exit",
   "green-to-red": "trade-analyzer-green-to-red",
+  "scaling-out": "trade-analyzer-scaling-out",
   "mfe-mae": "trade-analyzer-mfe-mae",
 });
 
@@ -152,7 +158,7 @@ function localTradeRef(index: number): string {
 export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
   dateRange: OverviewDateRange;
   evidenceQuery: EvidenceQuery;
-  model: DailyTradeLongTermAnalyticsModel;
+  model: DailyTradeLongTermAnalyticsV2Model;
   view: Exclude<TradeAnalysisView, "trades">;
 }>): JournalTradeAnalyzerOfflineViewModel {
   const localRefByRoundTrip = new Map<string, string>();
@@ -165,10 +171,32 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
   };
   const model = Object.freeze({
     ...input.model,
+    eventPaths: Object.freeze(input.model.eventPaths.map((row) => Object.freeze({
+      ...row,
+      roundTripId: localRef(row.roundTripId),
+    }))),
+    executionContextRows: Object.freeze(input.model.executionContextRows.map((row) => Object.freeze({
+      ...row,
+      roundTripId: localRef(row.roundTripId),
+    }))),
     excursions: Object.freeze(input.model.excursions.map((row) => Object.freeze({
       ...row,
       roundTripId: localRef(row.roundTripId),
     }))),
+    meaningfulProfit: Object.freeze({
+      ...input.model.meaningfulProfit,
+      rows: Object.freeze(input.model.meaningfulProfit.rows.map((row) => Object.freeze({
+        ...row,
+        roundTripId: localRef(row.roundTripId),
+      }))),
+    }),
+    scalingOut: Object.freeze({
+      ...input.model.scalingOut,
+      rows: Object.freeze(input.model.scalingOut.rows.map((row) => Object.freeze({
+        ...row,
+        roundTripId: localRef(row.roundTripId),
+      }))),
+    }),
     trades: Object.freeze(input.model.trades.map((row) => Object.freeze({
       ...row,
       roundTripId: localRef(row.roundTripId),

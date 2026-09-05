@@ -164,8 +164,14 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           depth: 2 as const,
         }),
         Object.freeze({
+          href: "/analytics/trade-analyzer/day/scaling-out",
+          label: "Scaling out",
+          icon: "entryExit" as const,
+          depth: 2 as const,
+        }),
+        Object.freeze({
           href: "/analytics/trade-analyzer/day/candle-patterns",
-          label: "Candle setups",
+          label: "Candle patterns",
           icon: "marketCharts" as const,
           depth: 2 as const,
         }),
@@ -270,7 +276,8 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/trade-analyzer/day/entry-exit": "Entries and exits",
     "/analytics/trade-analyzer/day/mfe-mae": "Room after entry",
     "/analytics/trade-analyzer/day/green-to-red": "Giving back profit",
-    "/analytics/trade-analyzer/day/candle-patterns": "Candle setups",
+    "/analytics/trade-analyzer/day/scaling-out": "Scaling out",
+    "/analytics/trade-analyzer/day/candle-patterns": "Candle patterns",
     "/analytics/trade-analyzer/day/trades": "Your analyzed trades",
     "/analytics/trade-explorer": "Trade Explorer",
     "/analytics/trade-explorer/compare": "Compare Trades",
@@ -308,8 +315,9 @@ export type DashboardHelpTarget = Readonly<{
 
 const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: string }>[] =
   Object.freeze([
-    Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle setups" }),
+    Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle patterns" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/green-to-red", href: "/help/trade-analyzer/green-to-red-analysis", label: "Giving back profit" }),
+    Object.freeze({ route: "/analytics/trade-analyzer/day/scaling-out", href: "/help/trade-analyzer/day-trade-analysis", label: "Scaling out" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/entry-exit", href: "/help/trade-analyzer/entry-exit-analysis", label: "Entries and exits" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/mfe-mae", href: "/help/trade-analyzer/mfe-mae", label: "Room after entry" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/trades", href: "/help/trade-analyzer/analyzed-trades", label: "Your analyzed trades" }),

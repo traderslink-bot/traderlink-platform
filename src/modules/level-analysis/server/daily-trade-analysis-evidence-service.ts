@@ -592,6 +592,7 @@ export function readDailyTradePatternOccurrences(
   input: Readonly<{
     afterCursor: string | null;
     currency: string | null;
+    direction: "long" | "short" | null;
     endDate: string | null;
     execution: DailyTradePatternExecutionFilter;
     location: DailyTradePatternLocationFilter;
@@ -626,6 +627,10 @@ export function readDailyTradePatternOccurrences(
   if (input.currency !== null) {
     filters.push("trade_currency = ?");
     parameters.push(input.currency);
+  }
+  if (input.direction !== null) {
+    filters.push("direction = ?");
+    parameters.push(input.direction);
   }
   if (bounds) {
     filters.push("executed_at_utc >= ?", "executed_at_utc < ?");
