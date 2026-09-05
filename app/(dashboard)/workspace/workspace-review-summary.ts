@@ -19,11 +19,6 @@ type WorkspaceRuleOutcome = Readonly<{
 }>;
 
 export type WorkspaceReviewSummary = Readonly<{
-  currentFocus: Readonly<{
-    focusText: string;
-    revision: number;
-    showInWorkspace: boolean;
-  }> | null;
   currentFocuses: string | null;
   focusRules: readonly Readonly<{
     ruleId: string;
@@ -110,7 +105,7 @@ export function readWorkspaceReviewSummary(
   const previousReview = new JournalTradingDayReviewService(database)
     .latestReviewedBefore(account, currentDate);
   if (!previousReview) {
-    return Object.freeze({ currentFocus: globalFocus, currentFocuses, focusRules, previousReview: null });
+    return Object.freeze({ currentFocuses, focusRules, previousReview: null });
   }
 
   const facts = dashboard ? null : new JournalAnalyticsFactSetService(
@@ -133,7 +128,6 @@ export function readWorkspaceReviewSummary(
     reviews.filter((review) => review.targetKind === "trading_day"),
   );
   return Object.freeze({
-    currentFocus: globalFocus,
     currentFocuses,
     focusRules,
     previousReview: Object.freeze({
