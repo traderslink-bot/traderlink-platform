@@ -9,6 +9,7 @@ import { readRuleResults, workspaceRuleResultsCard } from "../rules/results/rule
 import { readWorkspaceTradeLibrary } from "./workspace-trade-library";
 import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, WorkspaceTradeLibrarySort } from "./workspace-trade-library";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
+import { readWorkspaceTopTickersCard } from "./workspace-top-tickers-card";
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
 import { JournalWorkspacePrScannerCardPreferenceService } from "@/src/modules/journal/server/news/journal-workspace-pr-scanner-card-preference";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
@@ -105,7 +106,7 @@ export default async function WorkspacePage({
     redirect("/account/trading");
   }
   recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, logicalClosedTradeCount, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, customEndDate, customStartDate, logicalClosedTradeCount, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, topTickersCard, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, pnlReportingBasis, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
@@ -157,6 +158,11 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
           dashboard,
           demoClock?.today,
         ),
+        topTickersCard: readWorkspaceTopTickersCard(database, scope, {
+          endDate: dates.endDate,
+          moneyBasis: pnlReportingBasis,
+          startDate: dates.startDate,
+        }),
         tradeLibrary: readWorkspaceTradeLibrary(database, scope, {
           afterCursor: null, endDate: dates.endDate, filter, followDashboardPeriod: false,
           group, searchTicker: queryParameters.searchTicker ?? "", sort, startDate: dates.startDate,
@@ -225,6 +231,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         period={period}
         ruleResultsCard={ruleResultsCard}
         ruleResultsCardPreference={ruleResultsCardPreference}
+        topTickersCard={topTickersCard}
         customEndDate={customEndDate}
         customStartDate={customStartDate}
         periodEndDate={periodEndDate}

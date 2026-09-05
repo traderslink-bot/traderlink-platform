@@ -28,6 +28,7 @@ import { DemoDataCallout, DemoTradeTrackerInvitation } from "../demo-data-callou
 import type { FinancialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
+import type { WorkspaceTopTickersCard } from "./workspace-top-tickers-card";
 import { WorkspaceTradeLibrary } from "./workspace-trade-library-client";
 import { WorkspaceMoreFiltersDrawer } from "./workspace-more-filters-drawer";
 import { openWorkspaceTradeDrawer } from "./workspace-trade-drawer-events";
@@ -92,6 +93,7 @@ type WorkspaceDashboardProps = Readonly<{
   prScannerCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
   ruleResultsCard?: Readonly<{ brokenRuleCount: number; recentBrokenRuleTitles: readonly string[] }>;
   ruleResultsCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
+  topTickersCard?: WorkspaceTopTickersCard;
   reviewSummary?: WorkspaceReviewSummary;
   showDemoTradeTrackerInvitation?: boolean;
 }> & (WorkspaceLiveTradeLibraryProps | WorkspaceOfflineTradeLibraryProps);
@@ -175,6 +177,7 @@ export function WorkspaceDashboard({
   prScannerCardPreference,
   ruleResultsCard,
   ruleResultsCardPreference,
+  topTickersCard,
   reviewSummary,
   showDemoTradeTrackerInvitation,
   ...tradeLibraryProps
@@ -259,7 +262,7 @@ export function WorkspaceDashboard({
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
         {metrics.map((metric) => <DashboardMetricCard hideCaption key={metric.label} {...metric} />)}
       </Box>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && (currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && (topTickersCard || currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
         "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
         "& h2": { fontSize: "1.2rem", lineHeight: 1.25 },
         "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root": {
@@ -290,7 +293,11 @@ export function WorkspaceDashboard({
           {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5} sx={{ minWidth: 0, pt: 0.5 }}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
           <Box sx={{ mt: "auto" }}><Button onClick={() => openRules("results")} size="small">View results</Button></Box>
         </Stack>
-      </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}</Box> : null}
+      </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}{topTickersCard ? <DashboardPanel title="Top tickers"><Stack spacing={1.25} sx={{ flex: 1, justifyContent: "center" }}>{[
+        ["Most profitable", topTickersCard.mostProfitable],
+        ["Most traded", topTickersCard.mostTraded],
+        ["Highest buy value", topTickersCard.highestBuyValue],
+      ].map(([label, symbol]) => <Stack direction="row" key={label} spacing={1} sx={{ alignItems: "baseline", justifyContent: "space-between", minWidth: 0 }}><Typography color="text.secondary" sx={{ fontSize: "0.8rem", fontWeight: 750 }} variant="body2">{label}</Typography><Typography color="warning.main" noWrap sx={{ fontSize: "1.15rem", fontWeight: 900 }} title={symbol ?? undefined}>{symbol ?? "—"}</Typography></Stack>)}</Stack></DashboardPanel> : null}</Box> : null}
       <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
