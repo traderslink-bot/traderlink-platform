@@ -272,9 +272,6 @@ export function WorkspaceDashboard({
       {hasLiveTradeLibraryProps(tradeLibraryProps) && (topTickersCard || currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
         "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },
         "& h2": { fontSize: "1.2rem", lineHeight: 1.25 },
-        "& > [data-traderlink-platform-dashboard-card='panel']": {
-          gridColumn: { xs: "1 / -1", sm: "span 2" },
-        },
         "& [data-traderlink-platform-dashboard-card='panel'] > .MuiCardContent-root": {
           boxSizing: "border-box",
           display: "flex",
@@ -293,20 +290,20 @@ export function WorkspaceDashboard({
         display: "grid",
         gap: 1.5,
         gridAutoRows: { xs: "minmax(220px, auto)", sm: 220 },
-        gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(4, minmax(0, 1fr))", md: "repeat(10, minmax(0, 1fr))" },
+        gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" },
         mt: 1.5,
       }}>{currentFocuses ? <DashboardPanel title="Current Focuses">
         <CurrentFocusContent content={currentFocuses} />
       </DashboardPanel> : null}{showRuleResultsCard && ruleResultsCard ? <DashboardPanel action={<Typography sx={{ alignSelf: "flex-end", fontSize: "3rem", fontWeight: 850, lineHeight: 0.85, ml: "auto", textAlign: "right" }}>{ruleResultsCard.brokenRuleCount}</Typography>} title="Rules broken">
         <Stack spacing={0.75} sx={{ height: "100%", minHeight: 0, pt: 0.75 }}>
-          <Typography color="warning.main" sx={{ fontWeight: 700, mt: 0.5 }} variant="caption">Recent broken rules</Typography>
+          <Box component="span" sx={{ color: "warning.main", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.02em", mt: 0.5 }}>Recent broken rules</Box>
           {ruleResultsCard.recentBrokenRuleTitles.length ? <Stack spacing={0.5} sx={{ minWidth: 0, pt: 0.5 }}>{ruleResultsCard.recentBrokenRuleTitles.map((title) => <Typography key={title} color="text.secondary" noWrap title={title} variant="body2">{title}</Typography>)}</Stack> : <Typography color="text.secondary" variant="body2">No broken rules in this period.</Typography>}
           <Box sx={{ mt: "auto" }}><Button onClick={() => openRules("results")} size="small">View results</Button></Box>
         </Stack>
-      </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}{topTickersCard ? <Box sx={{ gridColumn: { xs: "1 / -1", sm: "span 1" }, minWidth: 0, "& > [data-traderlink-platform-dashboard-card='panel']": { height: "100%" } }}><DashboardPanel title="Top tickers"><Stack spacing={1.5} sx={{ flex: 1, justifyContent: "center" }}>{[
+      </DashboardPanel> : null}{showPrScannerCard && newsScannerAvailable ? <WorkspaceNewsScannerCard onViewMore={() => setNewsScannerOpen(true)} /> : null}{topTickersCard ? <DashboardPanel title="Top tickers"><Stack spacing={1.5} sx={{ flex: 1, justifyContent: "center" }}>{[
         ["Most profitable", topTickersCard.mostProfitable, "pnl"],
         ["Most traded", topTickersCard.mostTraded, "trades"],
-      ].map(([label, symbol, rank]) => <Stack key={label} spacing={0.5} sx={{ minWidth: 0 }}><Typography color="warning.main" sx={{ fontSize: "0.8rem", fontWeight: 800 }} variant="body2">{label}</Typography><Stack direction="row" spacing={0.75} sx={{ alignItems: "baseline", minWidth: 0 }}><Typography color="warning.main" noWrap sx={{ fontSize: "1.15rem", fontWeight: 900 }} title={symbol ?? undefined}>{symbol ?? "—"}</Typography><Button component={Link} href={tickerExplorerHref(rank as "pnl" | "trades")} size="small" sx={{ flexShrink: 0, fontSize: "0.7rem", minWidth: 0, p: 0.25 }}>View full list</Button></Stack></Stack>)}</Stack></DashboardPanel></Box> : null}</Box> : null}
+      ].map(([label, symbol, rank]) => <Stack key={label} spacing={0.5} sx={{ minWidth: 0 }}><Box component="span" sx={{ color: "warning.main", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.02em" }}>{label}</Box><Stack direction="row" spacing={0.75} sx={{ alignItems: "baseline", minWidth: 0 }}><Typography color="warning.main" noWrap sx={{ fontSize: "1.15rem", fontWeight: 900 }} title={symbol ?? undefined}>{symbol ?? "—"}</Typography><Button component={Link} href={tickerExplorerHref(rank as "pnl" | "trades")} size="small" sx={{ flexShrink: 0, fontSize: "0.7rem", minWidth: 0, p: 0.25 }}>View full list</Button></Stack></Stack>)}</Stack></DashboardPanel> : null}</Box> : null}
       <DashboardChartPanelSlot />
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
