@@ -250,6 +250,11 @@ broker fees. Next-zone outcomes use supporting-text typography.
 The exact record table keeps every heading and value left-aligned and uses
 compact, deliberate column widths so removing repeated row explanations also
 removes the empty horizontal gaps they created.
+Profit Taken contains only the percentage of zone-reaching trades that took
+profit and their combined Gross profit. A separate Exit Type column directly
+after it contains the exclusive Partial exits and Full exits percentage-and-
+dollar split. Its percentage denominator is the profit-taking trades in that
+zone, not all trades reaching the zone.
 
 ### Entries and Exits
 

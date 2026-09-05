@@ -249,5 +249,10 @@ to this worker.
 - [x] Left-align every exact-trade heading and value, reduce horizontal cell
   padding, and assign compact column widths so Full Exit Profit and every
   following column move left instead of leaving large empty gaps.
+- [x] Move the partial/full breakdown out of Profit Taken into a dedicated Exit
+  Type column immediately after it. Profit Taken now shows only its reached-
+  trade rate and exact Gross profit; Exit Type shows the exclusive partial/full
+  percentage and Gross-dollar split, or `No profit-taking exits` when none
+  occurred.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.

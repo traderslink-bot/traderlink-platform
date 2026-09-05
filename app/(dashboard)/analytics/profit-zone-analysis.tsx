@@ -151,6 +151,9 @@ export function ProfitZoneAnalysis({
   const fullExitProfitHelp = direction === "long"
     ? "You fully exited your position with one sell order."
     : "You fully exited your short position with one buy-to-cover order.";
+  const exitTypeHelp = direction === "long"
+    ? "Tracks how trades were exited. Partial = selling under 100% of shares in one execution and the remainder in any following executions. Full exit = selling 100% of shares in one execution."
+    : "Tracks how short trades were exited. Partial = buying back under 100% of shares in one execution and the remainder in any following executions. Full exit = buying back 100% of shares in one execution.";
 
   return <Stack spacing={1.75}>
     <Paper variant="outlined" sx={{ borderRadius: 2.5, p: { xs: 1, sm: 1.25 } }}>
@@ -163,11 +166,12 @@ export function ProfitZoneAnalysis({
           <IconButton aria-label="Explain profit zones" size="small" sx={{ color: "text.secondary", ml: 0.25, p: 0.35 }}><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton>
         </Tooltip>
       </Stack>
-      <Box sx={{ display: { xs: "none", md: "grid" }, gap: 1, gridTemplateColumns: "92px 0.8fr 1.45fr 1.2fr 0.8fr", px: 1, pb: 0.5 }}>
+      <Box sx={{ display: { xs: "none", md: "grid" }, gap: 1, gridTemplateColumns: "92px 0.75fr 1.15fr 1.15fr 1.05fr 0.72fr", px: 1, pb: 0.5 }}>
         {[
           ["Zone", "Ten-point gain range."],
           ["Reached", "Share of all analyzed user-defined trades that reached this level."],
-          ["Profit exits", "Share of trades reaching this zone with any profitable exit here, plus exact combined Gross profit. The breakdown separates partial exits from full exits and identifies trades that did both. A full exit sold all remaining open shares in the current position."],
+          ["Profit taken", "Percentage of trades reaching this zone where profit was taken here, plus exact combined Gross profit."],
+          ["Exit type", exitTypeHelp],
           ["Stopped here", "Share of trades reaching the level that did not reach the next zone, plus their profit opportunity at this level."],
           ["Time in zone", "Median completed one-minute candles inside this exact zone."],
         ].map(([label, help]) => <Tooltip arrow key={label} title={help}><Typography color="text.secondary" sx={{ fontSize: "0.69rem", fontWeight: 800, letterSpacing: "0.035em", textTransform: "uppercase" }}>{label}</Typography></Tooltip>)}
@@ -189,19 +193,24 @@ export function ProfitZoneAnalysis({
               borderRadius: 1.5,
               display: "grid",
               gap: { xs: 0.65, md: 1 },
-              gridTemplateColumns: { xs: "68px repeat(3, minmax(0, 1fr))", md: "92px 0.8fr 1.45fr 1.2fr 0.8fr" },
-              minHeight: { xs: 68, md: 46 },
+              gridTemplateAreas: {
+                xs: '"zone reached profit" "zone exitType stopped"',
+                md: '"zone reached profit exitType stopped time"',
+              },
+              gridTemplateColumns: { xs: "68px repeat(2, minmax(0, 1fr))", md: "92px 0.75fr 1.15fr 1.15fr 1.05fr 0.72fr" },
+              minHeight: { xs: 92, md: 54 },
               px: 1,
               py: 0.55,
               textAlign: "left",
               width: "100%",
             }}
           >
-            <Typography sx={{ fontSize: "0.84rem", fontWeight: 900 }}>{zoneLabel(row.lowerBoundPercent, row.upperBoundPercent)}</Typography>
-            <Box><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Reached</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{percent(row.reachRatePercent)}</Typography><Typography color="text.secondary" variant="caption">{row.reachedTradeCount} of {totalTradeCount} trades</Typography></Box>
-            <Box><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Profit exits</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{(row.tookProfitTradeCount ?? 0) === 0 ? "None" : `${percent(row.tookProfitRateOfReachedPercent)} of reached trades`}</Typography><Typography color="text.secondary" variant="caption">{row.tookProfitTradeCount ?? 0} of {row.reachedTradeCount} · {money(row.profitTakenInZoneGrossDecimal ?? "0", currency)}</Typography><Typography color="text.secondary" sx={{ fontSize: "0.65rem", mt: 0.2 }}>Partial {percent(row.partialProfitRateOfReachedPercent)} · {money(row.partialProfitTakenInZoneGrossDecimal ?? "0", currency)}</Typography><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Full exit {percent(returnedFlatRate)} · {money(row.profitableFullExitInZoneGrossDecimal ?? "0", currency)}</Typography>{(row.partialAndReturnedFlatTradeCount ?? 0) > 0 ? <Typography color="text.secondary" sx={{ fontSize: "0.62rem" }}>Both: {percent(row.partialAndReturnedFlatRateOfReachedPercent)}</Typography> : null}</Box>
-            <Box><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Stopped</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{row.upperBoundPercent === null ? "Top zone" : percent(stoppedRate)}</Typography><Typography color="text.secondary" variant="caption">{row.upperBoundPercent === null ? "No next zone" : `${row.didNotReachNextTradeCount} of ${row.reachedTradeCount} · ${money(row.profitAvailableDidNotReachNextGrossDecimal, currency)} opportunity`}</Typography></Box>
-            <Box sx={{ display: { xs: "none", md: "block" } }}><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{minutes(row.medianCompletedMinutesInZone)}</Typography><Typography color="text.secondary" variant="caption">median</Typography></Box>
+            <Typography sx={{ fontSize: "0.84rem", fontWeight: 900, gridArea: "zone" }}>{zoneLabel(row.lowerBoundPercent, row.upperBoundPercent)}</Typography>
+            <Box sx={{ gridArea: "reached" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Reached</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{percent(row.reachRatePercent)}</Typography><Typography color="text.secondary" variant="caption">{row.reachedTradeCount} of {totalTradeCount} trades</Typography></Box>
+            <Box sx={{ gridArea: "profit" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Profit taken</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{(row.tookProfitTradeCount ?? 0) === 0 ? "No profit taken" : `Profit taken in ${percent(row.tookProfitRateOfReachedPercent)}`}</Typography><Typography color="text.secondary" variant="caption">{(row.tookProfitTradeCount ?? 0) === 0 ? `${money(row.profitTakenInZoneGrossDecimal ?? "0", currency)} Gross profit` : `of reached trades · ${money(row.profitTakenInZoneGrossDecimal ?? "0", currency)} Gross profit`}</Typography></Box>
+            <Box sx={{ gridArea: "exitType" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Exit type</Typography>{(row.tookProfitTradeCount ?? 0) > 0 ? <><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Partial exits {percent(row.partialExitShareOfProfitTakingPercent)} · {money(row.partialExitTradeProfitInZoneGrossDecimal ?? row.partialProfitTakenInZoneGrossDecimal ?? "0", currency)}</Typography><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Full exits {percent(row.fullExitShareOfProfitTakingPercent)} · {money(row.fullExitOnlyTradeProfitInZoneGrossDecimal ?? row.profitableFullExitInZoneGrossDecimal ?? "0", currency)}</Typography></> : <Typography color="text.secondary" variant="caption">No profit-taking exits</Typography>}</Box>
+            <Box sx={{ gridArea: "stopped" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Stopped</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{row.upperBoundPercent === null ? "Top zone" : percent(stoppedRate)}</Typography><Typography color="text.secondary" variant="caption">{row.upperBoundPercent === null ? "No next zone" : `${row.didNotReachNextTradeCount} of ${row.reachedTradeCount} · ${money(row.profitAvailableDidNotReachNextGrossDecimal, currency)} opportunity`}</Typography></Box>
+            <Box sx={{ display: { xs: "none", md: "block" }, gridArea: "time" }}><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{minutes(row.medianCompletedMinutesInZone)}</Typography><Typography color="text.secondary" variant="caption">median</Typography></Box>
           </ButtonBase>;
         })}
       </Stack>
