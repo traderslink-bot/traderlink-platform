@@ -9,11 +9,10 @@ import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contrac
 
 type Preference = Readonly<{ revision: number | null; showInWorkspace: boolean }>;
 
-export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, expectedAccountSelectionRef, initialFocus, newsScannerAvailable, onClose, onPreferenceSaved, open, prScannerPreference, query, ruleResultsPreference, topTickersPreference }: Readonly<{
+export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, expectedAccountSelectionRef, newsScannerAvailable, onClose, onPreferenceSaved, open, prScannerPreference, query, ruleResultsPreference, topTickersPreference }: Readonly<{
   customEndDate: string | null;
   customStartDate: string | null;
   expectedAccountSelectionRef: string;
-  initialFocus: Readonly<{ focusText: string; revision: number; showInWorkspace: boolean }> | null;
   newsScannerAvailable: boolean;
   onClose: () => void;
   onPreferenceSaved: (kind: "focuses" | "rules" | "scanner" | "tickers", show: boolean, preference?: Preference) => void;
@@ -30,9 +29,9 @@ export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, exp
     endDate: customEndDate ?? "", filter: query.filter, group: query.group,
     searchTicker: query.searchTicker, sort: query.sort, startDate: customStartDate ?? "",
   }));
-  const [preferences, setPreferences] = useState({ focuses: initialFocus?.showInWorkspace ?? false, rules: ruleResultsPreference, scanner: prScannerPreference, tickers: topTickersPreference });
-  const [focusRevision, setFocusRevision] = useState<number | null>(initialFocus?.revision ?? null);
-  const [focusText, setFocusText] = useState(initialFocus?.focusText ?? "");
+  const [preferences, setPreferences] = useState({ focuses: false, rules: ruleResultsPreference, scanner: prScannerPreference, tickers: topTickersPreference });
+  const [focusRevision, setFocusRevision] = useState<number | null>(null);
+  const [focusText, setFocusText] = useState("");
   const [preferenceError, setPreferenceError] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
   useEffect(() => {
@@ -41,10 +40,15 @@ export function WorkspaceMoreFiltersDrawer({ customEndDate, customStartDate, exp
   }, [customEndDate, customStartDate, open, query]);
   useEffect(() => {
     if (!open) return;
-    setFocusRevision(initialFocus?.revision ?? null);
-    setFocusText(initialFocus?.focusText ?? "");
-    setPreferences({ focuses: initialFocus?.showInWorkspace ?? false, rules: ruleResultsPreference, scanner: prScannerPreference, tickers: topTickersPreference });
-  }, [initialFocus, open, prScannerPreference, ruleResultsPreference, topTickersPreference]);
+    setPreferences((current) => ({ ...current, rules: ruleResultsPreference, scanner: prScannerPreference, tickers: topTickersPreference }));
+    void fetch("/api/platform/notes/current-focuses", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("focus_unavailable")))
+      .then((payload: { focus?: { focusText: string; revision: number; showInWorkspace: boolean } | null }) => {
+        setFocusRevision(payload.focus?.revision ?? null);
+        setFocusText(payload.focus?.focusText ?? "");
+        setPreferences((current) => ({ ...current, focuses: payload.focus?.showInWorkspace ?? false }));
+      }).catch(() => setPreferenceError(true));
+  }, [open, prScannerPreference, ruleResultsPreference, topTickersPreference]);
   useEffect(() => {
     if (!open) return;
     const handle = window.setTimeout(() => {
