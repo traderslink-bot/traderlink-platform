@@ -37,7 +37,7 @@ export type JournalNotesDrawerProps = Readonly<{
   initialView?: JournalNotesDrawerInitialView;
   launch: Launch;
   onClose: () => void;
-  onFocusSaved?: (focus: Readonly<{ focusText: string; showInWorkspace: boolean }>) => void;
+  onFocusSaved?: (focus: Focus) => void;
   open: boolean;
   renderDetails?: () => ReactNode;
 }>;
@@ -290,7 +290,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   }
   async function saveCustomType(): Promise<void> { setSaving(true); try { const response = await fetch("/api/platform/notes/types", { method: "POST", headers: headers(), body: JSON.stringify({ displayName: newTypeName }) }); const payload = await response.json() as { noteType?: CustomType }; if (!response.ok || !payload.noteType) throw new Error(); setCustomTypes((items) => [...items, payload.noteType!]); setCustomTypeId(payload.noteType.noteTypeId); setCategory("custom"); setNewTypeName(""); setAddingType(false); } catch { setMessage("That custom note type could not be saved."); } finally { setSaving(false); } }
   async function retire(type: CustomType): Promise<void> { if (!window.confirm(`Remove ${type.displayName} from future note choices? Existing notes will stay.`)) return; const response = await fetch(`/api/platform/notes/types/${encodeURIComponent(type.noteTypeId)}`, { method: "DELETE", headers: headers(), body: JSON.stringify({ expectedRevision: type.revision }) }); if (response.ok) { setCustomTypes((items) => items.filter((item) => item.noteTypeId !== type.noteTypeId)); if (customTypeId === type.noteTypeId) setCustomTypeId(""); } else setMessage("That custom note type could not be removed."); }
-  async function saveFocus(): Promise<void> { setSaving(true); try { const response = await fetch("/api/platform/notes/current-focuses", { method: "PUT", headers: headers(), body: JSON.stringify({ expectedRevision: focus?.revision ?? null, focusText, showInWorkspace }) }); const payload = await response.json() as { focus?: Focus }; if (!response.ok || !payload.focus) throw new Error(); setFocus(payload.focus); setFocusText(payload.focus.focusText); setShowInWorkspace(payload.focus.showInWorkspace); onFocusSaved?.({ focusText: payload.focus.focusText, showInWorkspace: payload.focus.showInWorkspace }); setMessage("Current Focuses saved."); } catch { setMessage("Current Focuses could not be saved. Refresh and try again."); } finally { setSaving(false); } }
+  async function saveFocus(): Promise<void> { setSaving(true); try { const response = await fetch("/api/platform/notes/current-focuses", { method: "PUT", headers: headers(), body: JSON.stringify({ expectedRevision: focus?.revision ?? null, focusText, showInWorkspace }) }); const payload = await response.json() as { focus?: Focus }; if (!response.ok || !payload.focus) throw new Error(); setFocus(payload.focus); setFocusText(payload.focus.focusText); setShowInWorkspace(payload.focus.showInWorkspace); onFocusSaved?.(payload.focus); setMessage("Current Focuses saved."); } catch { setMessage("Current Focuses could not be saved. Refresh and try again."); } finally { setSaving(false); } }
   const selectedLabel = categoryLabel(category, selectedCustomType);
   const sessionDateField = activeLaunch.kind !== "session" ? null : (
     <TextField
