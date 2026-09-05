@@ -242,7 +242,7 @@ export function WorkspaceDashboard({
               </Button>
             ))
           ) : null}
-          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)} sx={{ display: { xs: "none", md: "inline-flex" } }}>More filters</Button> : null}
+          {hasLiveTradeLibraryProps(tradeLibraryProps) ? <Button onClick={() => setFiltersOpen(true)}>Display</Button> : null}
           <DashboardDataScopeChip />
           {offlineSavedAtUtc ? <Chip color="primary" label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`} size="small" variant="outlined" /> : null}
         </Stack>
@@ -301,7 +301,7 @@ export function WorkspaceDashboard({
       {hasLiveTradeLibraryProps(tradeLibraryProps) ? (
         <>
           <Box sx={{ color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined }}>
-            <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} onOpenFilters={() => setFiltersOpen(true)} />
+            <WorkspaceTradeLibrary {...tradeLibraryProps} addTradeOpen={false} onAddTradeClose={() => undefined} />
           </Box>
           <WorkspaceMoreFiltersDrawer customEndDate={tradeLibraryProps.customEndDate} customStartDate={tradeLibraryProps.customStartDate} expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} newsScannerAvailable={newsScannerAvailable} onClose={() => setFiltersOpen(false)} onPreferenceSaved={(kind, show, preference) => { if (kind === "rules") setShowRuleResultsCard(show); else if (kind === "scanner") setShowPrScannerCard(show); else if (kind === "tickers") setShowTopTickersCard(show); else if (!show) setCurrentFocuses(null); if (preference || kind === "focuses") router.refresh(); }} open={filtersOpen} prScannerPreference={prScannerCardPreference ?? { revision: null, showInWorkspace: true }} query={tradeLibraryProps.trades.query} ruleResultsPreference={ruleResultsCardPreference ?? { revision: null, showInWorkspace: false }} topTickersPreference={topTickersCardPreference ?? { revision: null, showInWorkspace: true }} />
           <JournalNotesDrawer expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} focusOnly={sessionNotesInitialView === "focuses"} initialView={sessionNotesInitialView} key={sessionNotesInitialView} launch={{ kind: "session", sessionDate: sessionDateInTimezone(tradeLibraryProps.accountTimezone) }} onClose={() => setSessionNotesOpen(false)} onFocusSaved={(focus) => setCurrentFocuses(focus.showInWorkspace && focus.focusText.trim() ? focus.focusText.trim() : null)} open={sessionNotesOpen} />
