@@ -35,6 +35,7 @@ export default async function CommunitiesPreviewPage({
       <CommunityDashboard
         baseOverride={`/communities-preview/${role}`}
         isReview
+        reviewAppearance={appearance}
         section={section}
         snapshot={createTraderLinkCommunityReviewFixture(role)}
       />

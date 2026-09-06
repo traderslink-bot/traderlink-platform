@@ -41,8 +41,9 @@ function CoachOperations({snapshot,isReview}:{snapshot:TraderLinkCommunityDashbo
 function money(minor:number,currency:string){ return new Intl.NumberFormat("en-US",{style:"currency",currency}).format(minor/100); }
 function has(snapshot:TraderLinkCommunityDashboardSnapshot,key:string){ return snapshot.viewer.capabilities.includes(key as never); }
 
-export function CommunityDashboard({snapshot,section,isReview=false,baseOverride,discordClientId=null}:{snapshot:TraderLinkCommunityDashboardSnapshot;section:TraderLinkCommunitySection;isReview?:boolean;baseOverride?:string;discordClientId?:string|null}){
+export function CommunityDashboard({snapshot,section,isReview=false,baseOverride,discordClientId=null,reviewAppearance="light"}:{snapshot:TraderLinkCommunityDashboardSnapshot;section:TraderLinkCommunitySection;isReview?:boolean;baseOverride?:string;discordClientId?:string|null;reviewAppearance?:"light"|"dark"}){
   const base=baseOverride??`/communities/${snapshot.community.slug}`;
+  const href=(path:string)=>isReview&&reviewAppearance==="dark"?`${path}?appearance=dark`:path;
   const canCoach=has(snapshot,"community.coaching.offer");
   const canViewCoaches=has(snapshot,"community.coaching.view")||canCoach||has(snapshot,"community.coaching.manage_all");
   const visibleManageTabs=manageTabs.filter(tab=>snapshot.community.isOwner||(tab.section==="manage"||tab.section==="settings"?has(snapshot,"community.manage"):tab.section==="team"?has(snapshot,"community.team.manage"):tab.section==="roles"?has(snapshot,"community.roles.manage"):tab.section==="members"?has(snapshot,"community.members.view"):tab.section==="activity"?has(snapshot,"community.analytics.view"):tab.section==="channels"?has(snapshot,"community.discord.manage"):false));
@@ -57,16 +58,16 @@ export function CommunityDashboard({snapshot,section,isReview=false,baseOverride
       ? memberTabs.length+(canCoach?1:0)+manageIndex
       : Math.max(0,memberIndex);
   return <DashboardPage>
-    {isReview?<Box sx={{bgcolor:"warning.light",borderRadius:2,color:"warning.contrastText",px:2,py:1.5}}><Typography style={{fontWeight:800}}>Staging review</Typography><Stack direction="row" sx={{flexWrap:"wrap",gap:1,mt:1}}>{["owner","admin","coach","contributor","member","student"].map(role=><Button component={Link} href={`/communities-preview/${role}`} key={role} size="small" variant={base.endsWith(`/${role}`)?"contained":"outlined"}>{role}</Button>)}</Stack></Box>:null}
+    {isReview?<Box sx={{bgcolor:"warning.light",borderRadius:2,color:"warning.contrastText",px:2,py:1.5}}><Typography style={{fontWeight:800}}>Staging review</Typography><Stack direction="row" sx={{flexWrap:"wrap",gap:1,mt:1}}>{["owner","admin","coach","contributor","member","student"].map(role=><Button component={Link} href={href(`/communities-preview/${role}`)} key={role} size="small" variant={base.endsWith(`/${role}`)?"contained":"outlined"}>{role}</Button>)}</Stack></Box>:null}
     <DashboardPanel hideHeader>
       <Stack direction={{xs:"column",md:"row"}} spacing={2} sx={{alignItems:{md:"center"},justifyContent:"space-between"}}>
         <Box><Stack direction="row" spacing={1} sx={{alignItems:"center"}}><Typography component="h1" variant="h1">{snapshot.community.displayName}</Typography><Chip color={snapshot.community.status==="active"?"success":"default"} label={snapshot.community.status} size="small" /></Stack><Typography color="text.secondary" sx={{mt:.5}}>{snapshot.community.memberCount.toLocaleString()} verified Discord members</Typography></Box>
-        <Stack direction="row" spacing={1}>{canAdminister?<Button component={Link} href={visibleManageTabs[0]?.section==="manage"?`${base}/manage`:`${base}/manage/${visibleManageTabs[0]?.section}`} variant="contained">Manage community</Button>:null}</Stack>
+        <Stack direction="row" spacing={1}>{canAdminister?<Button component={Link} href={href(visibleManageTabs[0]?.section==="manage"?`${base}/manage`:`${base}/manage/${visibleManageTabs[0]?.section}`)} variant="contained">Manage community</Button>:null}</Stack>
       </Stack>
       <Tabs allowScrollButtonsMobile scrollButtons="auto" value={Math.max(0,selected)} variant="scrollable" sx={{mt:2,borderBottom:1,borderColor:"divider"}}>
-        {memberTabs.map(tab=><Tab component={Link} href={tab.section==="home"?base:`${base}/${tab.section}`} key={tab.section} label={tab.label} />)}
-        {canCoach?<Tab component={Link} href={`${base}/workspace`} label="Coach workspace" />:null}
-        {visibleManageTabs.map(tab=><Tab component={Link} href={tab.section==="manage"?`${base}/manage`:`${base}/manage/${tab.section}`} key={tab.section} label={tab.label} />)}
+        {memberTabs.map(tab=><Tab component={Link} href={href(tab.section==="home"?base:`${base}/${tab.section}`)} key={tab.section} label={tab.label} />)}
+        {canCoach?<Tab component={Link} href={href(`${base}/workspace`)} label="Coach workspace" />:null}
+        {visibleManageTabs.map(tab=><Tab component={Link} href={href(tab.section==="manage"?`${base}/manage`:`${base}/manage/${tab.section}`)} key={tab.section} label={tab.label} />)}
       </Tabs>
     </DashboardPanel>
     {section==="home"?<Home snapshot={snapshot} base={base}/>:null}
