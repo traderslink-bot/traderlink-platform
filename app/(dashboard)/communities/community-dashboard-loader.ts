@@ -10,7 +10,8 @@ import { notFound } from "next/navigation";
 export async function loadCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}>>{
   if(communitySlug==="review") {
     if(process.env.NODE_ENV==="production"&&process.env.RAILWAY_ENVIRONMENT_NAME!=="staging") notFound();
-    return Object.freeze({snapshot:createTraderLinkCommunityReviewFixture(),isReview:true});
+    const role=path?.includes("/workspace")?"coach":"owner";
+    return Object.freeze({snapshot:createTraderLinkCommunityReviewFixture(role),isReview:true});
   }
   const identity=await requireTraderLinkPlatformServerComponentPageIdentity();
   const snapshot=withPlatformDatabase({mode:"runtime"},database=>{
