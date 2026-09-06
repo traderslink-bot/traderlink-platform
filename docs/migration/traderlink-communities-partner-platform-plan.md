@@ -916,6 +916,66 @@ and one eligible student can grant and revoke bounded read access.
 
 Implementation status: complete locally; staging and final owner visual review pending.
 
+#### Coaching operations consolidation
+
+Owner-approved product direction on 2026-09-06:
+
+1. Replace the separate Coaching Work, Reviews and Sessions navigation pages
+   with one **Coaching Work** operating page. Reviews, sessions, assignments and
+   other coach obligations remain distinct record types, but they share one
+   workload, scheduling and completion surface.
+2. Provide Upcoming, Week, Month and Custom range views. Upcoming accepts a
+   whole-number day count so entering `5` shows work due from today through the
+   following four days. Every list is ordered by due date, with overdue work
+   first.
+3. Workload metrics respond to the selected period. They show total work,
+   overdue work, due-soon work and counts for the coach's actual plans and work
+   types; completed-work and trade-set vanity counts are not primary metrics.
+4. Every work item identifies the student, coaching plan, work type, due date,
+   status and next action without leaving unused desktop space.
+5. The Students page opens a coach-private working copy of the student's
+   explicitly shared Journal scope. It never edits or annotates the student's
+   canonical Journal records.
+6. The coach's shared-trade table supports search, sort and filters; single or
+   multi-trade selection; coach-only review state and date; review count; the
+   related review; Trade Details; and the existing on-demand chart interaction.
+7. A review may cover one trade, multiple trades, a week, a month, a custom
+   period, overall performance, a coaching session or general coaching work.
+8. The review editor keeps the selected trades and their factual details in
+   context. Each attached trade can open both the existing Trade Details drawer
+   and the existing on-demand chart without leaving the review.
+9. Reviews support drafts, due dates, delivery, follow-up, history, private coach
+   notes, student-visible feedback, messages and private image attachments for
+   marked-up charts and screenshots.
+10. A trade's reviewed state belongs only to the coach relationship and review
+    association. It never mutates the student's Journal trade, and the same
+    trade may participate in more than one review.
+11. The student continues to use the normal TraderLink dashboard shell. Their
+    private coaching area shows assigned work, messages, attachments, upcoming
+    coaching, delivered reviews and history for their own relationship only.
+12. Work state and due state are separate. Work state uses Not started, In
+    progress, Delivered, Completed and Cancelled. Due state independently uses
+    Overdue, Due today, Due soon or the ordinary due date.
+13. Delivery records the delivery timestamp. The first authenticated student
+    opening records a separate Viewed timestamp so the coach can distinguish
+    successful delivery from actual viewing without treating viewing as
+    completion.
+14. A coach may mark delivered work Follow-up required after a student response.
+    The follow-up becomes new dated coaching work linked to the original item.
+    Future coaching-plan setup may define whether follow-up is included and its
+    allowed response period; plan creation remains a later UI slice.
+15. Starting an individual item opens a review workspace already scoped to its
+    student and review basis. Supported bases include one trade, student-selected
+    trades, coach-selected trades, one day session, full week, custom period and
+    the complete granted trade table. Group lessons and classes open a group
+    workspace instead of an individual-student review.
+16. The review page loads its primary working set directly and exposes the rest
+    of the student's granted Journal information through contextual side drawers.
+    The precise review-page composition follows approval of Coaching Work.
+
+The required pre-implementation visual contract is
+[Coaching Work and Review Workspace Mockup](traderlink-coaching-work-review-workspace-mockup.html).
+
 The coach workspace must support the coach's full service, not only isolated
 trade feedback:
 

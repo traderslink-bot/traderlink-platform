@@ -7,6 +7,46 @@ visual approval until the complete staging review.
 
 **Controlling plan:** [TraderLink Communities Partner Platform Plan](traderlink-communities-partner-platform-plan.md)
 
+## 2026-09-06 coaching operations revision
+
+- [x] Product direction approved for one Coaching Work page combining the
+  former work, review and session queues.
+- [x] Product direction approved for number-of-days, week, month and custom
+  range workload views with due-date ordering and period-responsive counts.
+- [x] Product direction approved for a coach-private shared-trade table,
+  single/multi-trade review selection, coach-only reviewed state, Trade Details
+  and on-demand chart access.
+- [x] Product direction approved for a full review editor covering trade,
+  multi-trade, period, performance, session and general coaching work, including
+  images, drafts, history and follow-up.
+- [x] Product direction approved for separate work and due states, Delivered
+  and Viewed timestamps, coach-created follow-up work and future plan-level
+  follow-up limits.
+- [x] Product direction approved for review workspaces generated from one trade,
+  selected trades, a day session, a week, a custom period, the complete granted
+  trade table or a group teaching item.
+- [x] Owner visual approval of the
+  [Coaching Work and Review Workspace Mockup](traderlink-coaching-work-review-workspace-mockup.html).
+- [ ] Integrated data contracts, repositories, commands and route actions.
+- [x] Integrated the first approved Coaching Work page: reviews, tasks,
+  sessions and group teaching now share one searchable, filterable and sortable
+  due-date queue with Upcoming, Week, Month, Custom and number-of-days views.
+- [x] Replaced the separate Reviews and Sessions navigation entries and made
+  their old URLs return to Coaching Work.
+- [x] Added a true aligned desktop table and labelled mobile work cards. No
+  internal `in_review` value appears in this surface.
+- [ ] Integrated shared trades and the individual review editor.
+- [ ] Integrated student private coaching workspace updates.
+- [x] Focused ESLint passes for the three changed application files. The
+  repository-wide TypeScript process exhausted the low-memory machine before
+  completion and was not repeated.
+- [x] Direct local Next.js compilation and rendered Light-mode checks pass for
+  the real component at desktop and mobile widths. Number-of-days filtering and
+  the Month control respond; the desktop table and mobile-card breakpoint both
+  render as intended.
+- [ ] Disposable-database verification and final integrated type/build gate.
+- [ ] Rendered desktop/mobile Light/Dark verification and staging acceptance.
+
 **Started:** 2026-09-05
 
 ## Approved direction
@@ -472,7 +512,7 @@ remain deliberately deferred until after the owner's internal-product review.
 
 ## Full coaching platform expansion - 2026-09-06
 
-**Status:** Implemented locally; staging build and rendered acceptance pending
+**Status:** Implemented and released to staging; owner review pending
 
 - [x] Recorded that coaching reviews may cover one trade, multiple trades,
   weekly or monthly performance, general performance, a coaching session or a
@@ -505,5 +545,14 @@ remain deliberately deferred until after the owner's internal-product review.
 - [x] Focused ESLint passes for the expanded slice.
 - [x] Disposable repository QA passes with 28 Communities tables, all 20
   capabilities, zero foreign-key violations and relationship isolation.
-- [ ] Complete the staging build and responsive Light/Dark rendered acceptance.
+- [x] Completed the guarded staging release. Migration `0128` applied exactly
+  once; final normal source `ffd0d5d2c9efa6716e75b275149bed72bf2599b3`
+  deployed as Railway `1292a8e2-8d45-4b55-b1cb-2445a963d081` with one running
+  instance, both maintenance controls absent, and health `ready` /
+  `sqlite_single_node` / 123 migrations.
+- [x] Verified every coach workspace route, the private student workspace and
+  the student coaching composition in Dark mode without a 404 or load error.
+  Verified representative desktop and 390-pixel Light and Dark layouts without
+  horizontal overflow. The student hydration timestamp mismatch was repaired
+  with deterministic UTC rendering.
 - [ ] Owner-review the complete expanded coaching composition on staging.
