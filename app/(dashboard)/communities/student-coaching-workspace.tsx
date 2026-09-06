@@ -4,7 +4,7 @@ import {DashboardPanel,DashboardUnavailableState} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import {replyCommunityReviewAction,requestCommunityTradeReviewAction,sendCommunityCoachingMessageAction,updateCommunityTeachingStudentAction,uploadCommunityCoachingImageAction} from "./community-actions";
 import {CommunityTypography as Typography} from "./community-typography";
-const stamp=(value:string|null)=>value?new Date(value).toLocaleString():"";
+const stamp=(value:string|null)=>value?new Intl.DateTimeFormat("en",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit",timeZone:"UTC"}).format(new Date(value))+" UTC":"";
 export function StudentCoachingWorkspace({snapshot,isReview}:{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}){
  const relationship=snapshot.relationships.find(item=>item.studentUserId===snapshot.viewer.userId&&item.status==="active");
  if(!relationship)return <DashboardUnavailableState compact description="" title="No active coaching"/>;
