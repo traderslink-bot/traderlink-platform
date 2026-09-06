@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { CommunityDashboard } from "../../(dashboard)/communities/community-dashboard";
-import { MuiProviders } from "@/app/mui-provider";
+import { DashboardMuiProviders } from "@/app/mui-provider";
 import {
   TRADERLINK_COMMUNITY_SECTIONS,
   type TraderLinkCommunitySection,
@@ -28,16 +28,16 @@ export default async function CommunitiesPreviewPage({
   )
     ? (requested as TraderLinkCommunitySection)
     : "home";
-  await searchParams;
+  const appearance = (await searchParams).appearance === "dark" ? "dark" : "light";
 
   return (
-    <MuiProviders>
+    <DashboardMuiProviders appearance={appearance}>
       <CommunityDashboard
         baseOverride={`/communities-preview/${role}`}
         isReview
         section={section}
         snapshot={createTraderLinkCommunityReviewFixture(role)}
       />
-    </MuiProviders>
+    </DashboardMuiProviders>
   );
 }
