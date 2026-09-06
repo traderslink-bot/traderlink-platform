@@ -241,6 +241,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       icon: "account" as const,
       items: Object.freeze([
         Object.freeze({ href: "/communities", label: "My Communities", icon: "account" as const }),
+        Object.freeze({ href: "/communities/coaching", label: "Coaching", icon: "reflection" as const }),
         Object.freeze({ href: "/community/watchlists", label: "Community Watchlists", icon: "watchlist" as const }),
       ]),
     }),
@@ -274,7 +275,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/admin/watchlist": "Watchlist Admin",
     "/communities": "Communities",
     "/community/watchlists": "Community Watchlists",
-    "/admin/communities": "Communities Administration",
+    "/admin/journal/communities": "Communities Administration",
     "/trade-tracker": "Session Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
     "/quick-trade-entry": "Quick Trade Entry",

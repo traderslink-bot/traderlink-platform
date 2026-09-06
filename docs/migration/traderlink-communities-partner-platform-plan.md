@@ -1,14 +1,16 @@
 # TraderLink Communities Partner Platform Plan
 
-**Status:** Planning contract and route family approved for the foundation;
-four visual contracts remain open for detailed owner review. Communities 1
-foundation code is assembled under its separate progress record. No live
-Discord installation, payment operation, deployment or production change is
-authorized by this document.
+**Status:** Page composition and initial Light/Dark visual direction are owner
+approved. The platform foundation is deployed to staging. The active boundary
+is a private first-server functional pilot; Communities is not publicly
+available and production remains closed except for a separately verified
+owner-test allowlist if production-only Discord behavior requires it.
 
 **Progress record:** [TraderLink Communities Partner Platform Progress](traderlink-communities-partner-platform-progress.md)
 
 **Active implementation record:** [Communities 1 Identity And Permissions Progress](traderlink-communities-1-identity-permissions-progress.md)
+
+**Active pilot record:** [Communities Discord Pilot Progress](traderlink-communities-discord-pilot-progress.md)
 
 **Current visuals:** [TraderLink Communities Administration Mockup](traderlink-communities-administration-mockup.html),
 [TraderLink Server Owner Dashboard Mockup](traderlink-server-owner-dashboard-mockup.html),
@@ -85,6 +87,11 @@ default. The broader network is not part of the first Communities release.
 - A Discord role is the access entitlement inside TraderLink. TraderLink does
   not need to know whether the server assigned that role because of a payment,
   promotion, complimentary access or another server-controlled reason.
+- Discord is the only member entitlement authority for server-owned features.
+  TraderLink does not maintain a parallel list that separately grants members
+  access to server alerts, Community content or coaching. Setup maps each
+  existing Discord role to one or more TraderLink features and responsibilities;
+  current Discord membership and roles decide the result at sign-in/refresh.
 - The owner maps one or more verified Discord roles to each restricted alert
   area, watchlist area or coaching offer. Role names remain entirely under the
   server's control.
@@ -194,7 +201,7 @@ or copy the person's trading data.
 | --- | --- |
 | Login, Discord identity, sessions and global Platform user | Platform |
 | Discord community, membership, team, roles and permissions | Communities |
-| Server-owner and staff alert/watchlist pages | Communities |
+| Server-owner and authorized staff watchlists | Communities; community-owned, private by default, exact Discord-role access and optional per-watchlist public sharing |
 | Official Premium TradersLink Watchlist | Existing Watchlist module; unchanged |
 | Member-created Community Watchlists | Existing Community feature; the stable Platform user remains the author and may deliberately share one list into communities they belong to |
 | Community placement, Discord delivery and engagement for a member-shared watchlist | Communities, referencing the existing Community Watchlist without copying its ownership |
@@ -234,9 +241,9 @@ that owner is also the selected coach and the student granted that access.
 ### Community staff
 
 Admins, analysts, coaches, moderators and other contributors are not fixed
-exclusive account types. They are community members with one or more roles and
-an exact set of capabilities assigned by the server owner or an authorized
-community administrator.
+exclusive account types. They remain ordinary community members. The owner
+maps each existing Discord role to one or more fixed TraderLink server-feature
+responsibilities; the role's name stays entirely under the owner's control.
 
 ### Community member
 
@@ -260,15 +267,19 @@ Journal or the community relationship.
 
 ## 5. Permission model
 
-TraderLink provides capabilities, while each community owner may create and
-name roles that combine them. Role names are not hard-coded to `Admin`,
-`Analyst` or `Coach`.
+TraderLink provides a fixed capability catalog grouped into understandable
+Community, Alerts, Server Watchlists, Coaching, publishing and Community Admin
+responsibilities. Owners do not create a second set of TraderLink roles: they
+map their existing Discord roles to one or more of those responsibilities.
 
 ### Complete initial capability catalog
 
 | Capability | Allows |
 | --- | --- |
 | `community.view` | Baseline active-member access to the server community, filtered by each content item's audience; not an owner-selected TraderLink admission grant |
+| `community.alerts.view` | Open the server's Alerts area when granted by a current mapped Discord role |
+| `community.watchlists.view` | Open private Server Watchlists when granted by a current mapped Discord role |
+| `community.coaching.view` | Open the server's coaching offers when granted by a current mapped Discord role |
 | `community.manage` | Manage community identity and ordinary settings |
 | `community.team.manage` | Add, remove and change staff assignments |
 | `community.roles.manage` | Create roles and assign allowed capabilities |
@@ -286,10 +297,10 @@ name roles that combine them. Role names are not hard-coded to `Admin`,
 | `community.coaching.manage_all` | Manage community coaching eligibility and access-role settings |
 | `community.referrals.view` | View Tier 2 referral and earnings reporting |
 
-An owner may create `Lead Analyst`, `Swing Coach`, `Moderator` or any other
-role and select capabilities from this catalog. Discord roles may be mapped to
-Community roles, but Discord role names are provider facts and never become
-trusted server authorization without a verified mapping stored by TraderLink.
+An owner's Discord role may be called `Lead Analyst`, `Swing Coach`,
+`Moderator`, `Banana Fanana` or anything else. TraderLink stores the verified
+Discord role ID plus the owner's selected fixed responsibilities; the display
+name never becomes the authorization fact.
 
 Capability changes are additive across a person's active roles. Explicit
 community suspension and Platform suspension override all role capabilities.
@@ -439,7 +450,8 @@ The first-server onboarding is one guided setup:
 4. TraderLink verifies the server and owner/management authority; members do
    not type or trust a raw server ID.
 5. The owner confirms the community name and image.
-6. The owner maps Discord roles or creates TraderLink-only community roles.
+6. The owner maps existing Discord roles to fixed TraderLink server features
+   and responsibilities. TraderLink-only member roles are not created.
 7. The owner appoints the first admins, analysts and coaches.
 8. The owner selects audience defaults for server alerts, watchlists and
    coaching offers; these do not change whole-server TraderLink eligibility.
@@ -760,8 +772,8 @@ customer-facing UI is implemented.
 ### Communities 1 - identity, community and permission foundation
 
 1. Define the module contracts and additive migration.
-2. Implement community, owner, member, role, capability, assignment and audit
-   services.
+2. Implement community, owner, member, capability, Discord-role mapping and
+   audit services.
 3. Extend existing Discord identity with multi-guild community membership
    without rewriting Platform or Journal ownership.
 4. Make every verified active server member eligible for ordinary TraderLink
@@ -770,13 +782,15 @@ customer-facing UI is implemented.
 6. Add no customer-facing content mutation until the permission foundation is
    accepted.
 
-**Exit:** One verified owner can administer one isolated community, assign
-custom roles and grant exact capabilities without exposing another community
-or Journal data.
+**Exit:** One verified owner can administer one isolated community and map
+existing Discord roles to exact fixed responsibilities without exposing
+another community or Journal data.
 
 ### Communities 2 - TraderLink Administration and onboarding
 
-1. Implement `/admin/communities` under a dedicated TraderLink operator grant.
+1. Implement Communities administration inside `/admin/journal/communities`
+   under the existing Journal owner-admin authority plus a Communities operator
+   grant, and redirect the former `/admin/communities` route.
 2. Implement resumable Discord-server onboarding.
 3. Add whole-server join activation and only the TraderLink visibility option
    separately approved for the pilot, if any.
@@ -884,7 +898,8 @@ The complete product cannot be accepted unless:
 
 - the TraderLink operator can see and manage every community without receiving
   unrelated Journal access;
-- one server owner can manage their server, team, custom roles and permissions;
+- one server owner can manage their server and map existing Discord roles to
+  fixed feature responsibilities;
 - one person with several roles receives the correct combined workspace;
 - staff without coaching permission cannot see coaching records;
 - every private read and command is community-scoped on the server;

@@ -38,6 +38,9 @@ export function TraderLinkPlatformDashboardTemplate({
   pressReleaseUnreadCounts = null,
   scannerEarlyAccess = false,
   watchlistMemberNavigationAccess = false,
+  communityNavigationHref = null,
+  coachingNavigationHref = null,
+  communityWatchlistsNavigationAccess = false,
   watchlistAdminNavigationAccess = false,
 }: {
   accountCurrency: string | null;
@@ -53,6 +56,9 @@ export function TraderLinkPlatformDashboardTemplate({
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
   scannerEarlyAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
+  communityNavigationHref?: string | null;
+  coachingNavigationHref?: string | null;
+  communityWatchlistsNavigationAccess?: boolean;
   watchlistAdminNavigationAccess?: boolean;
 }) {
   return (
@@ -63,6 +69,9 @@ export function TraderLinkPlatformDashboardTemplate({
       pressReleaseUnreadCounts={pressReleaseUnreadCounts}
       scannerEarlyAccess={scannerEarlyAccess}
       watchlistMemberNavigationAccess={watchlistMemberNavigationAccess}
+      communityNavigationHref={communityNavigationHref}
+      coachingNavigationHref={coachingNavigationHref}
+      communityWatchlistsNavigationAccess={communityWatchlistsNavigationAccess}
       watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
     >
       <DemoDataAccountIndicator

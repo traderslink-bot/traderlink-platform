@@ -1,5 +1,8 @@
 export const TRADERLINK_COMMUNITY_CAPABILITIES = Object.freeze([
   "community.view",
+  "community.alerts.view",
+  "community.watchlists.view",
+  "community.coaching.view",
   "community.manage",
   "community.team.manage",
   "community.roles.manage",
@@ -22,9 +25,48 @@ export type TraderLinkCommunityCapability =
   (typeof TRADERLINK_COMMUNITY_CAPABILITIES)[number];
 
 export const TRADERLINK_COMMUNITY_MEMBER_BASELINE_CAPABILITIES = Object.freeze([
+  // Every verified member of an onboarded Discord server receives TraderLink's
+  // community entry point and may share their own Community Watchlists. Server
+  // owners cannot remove this baseline. Discord role mappings remain the sole
+  // authority for server-owned alerts, watchlists, coaching, and staff actions.
   "community.view",
   "community.watchlists.share_own",
 ] satisfies readonly TraderLinkCommunityCapability[]);
+
+export const TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES = Object.freeze({
+  "server-watchlists-access": Object.freeze([
+    "community.view",
+    "community.watchlists.view",
+  ]),
+  "server-watchlists-publish": Object.freeze([
+    "community.view",
+    "community.watchlists.view",
+    "community.watchlists.publish_staff",
+  ]),
+  "alerts-access": Object.freeze([
+    "community.view",
+    "community.alerts.view",
+  ]),
+  "alerts-publish": Object.freeze([
+    "community.view",
+    "community.alerts.view",
+    "community.alerts.create",
+  ]),
+  "coaching-access": Object.freeze([
+    "community.view",
+    "community.coaching.view",
+  ]),
+  "coach": Object.freeze([
+    "community.view",
+    "community.coaching.view",
+    "community.coaching.offer",
+    "community.coaching.students",
+  ]),
+  "community-admin": TRADERLINK_COMMUNITY_CAPABILITIES,
+} satisfies Readonly<Record<string, readonly TraderLinkCommunityCapability[]>>);
+
+export type TraderLinkCommunityFixedResponsibility =
+  keyof typeof TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES;
 
 export type TraderLinkCommunityStatus =
   | "setup"

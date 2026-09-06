@@ -3,6 +3,7 @@ import type Database from "better-sqlite3";
 import type { WorkspaceAccessScope } from "../../platform/contracts/workspace-access-scope";
 import { assertCanonicalUuidV4, platformFailure } from "../../platform/server/database/platform-migration-contract";
 import { JournalAnalyticsFactSetRepository } from "../../journal/server/analytics/journal-analytics-fact-set-repository";
+import { TraderLinkCommunityRepository } from "./traderlink-community-repository";
 
 export type CoachStudentJournalSnapshot=Readonly<{
   studentName:string; accountName:string;
@@ -18,6 +19,9 @@ export class TraderLinkCommunityCoachJournalReadService{
   read(input:Readonly<{coachUserId:string;relationshipId:string}>):CoachStudentJournalSnapshot{
     assertCanonicalUuidV4(input.coachUserId,"coachUserId");
     assertCanonicalUuidV4(input.relationshipId,"relationshipId");
+    const relationship=this.database.prepare(`SELECT community_id,coach_user_id FROM traderlink_community_coaching_relationships WHERE relationship_id=? AND status='active'`).get(input.relationshipId) as {community_id:string;coach_user_id:string}|undefined;
+    if(!relationship||relationship.coach_user_id!==input.coachUserId)platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED",{operation:"coach_journal_read"});
+    new TraderLinkCommunityRepository(this.database).requireCapability(relationship.community_id,input.coachUserId,"community.coaching.students");
     const grant=this.database.prepare(`SELECT g.student_user_id,g.journal_account_id,g.data_scope,
   u.display_name student_name,a.display_name account_name,a.workspace_id
 FROM traderlink_community_journal_grants g
@@ -33,7 +37,10 @@ ORDER BY CASE g.data_scope WHEN 'complete' THEN 5 WHEN 'analytics' THEN 4 WHEN '
     const opened=facts.roundTrips.filter(trade=>trade.projectionState==="legitimate_open");
     const coverageStates=facts.accounts[0]?.coverage.rebuilds.latestByChain.map(item=>item.coverageState)??[];
     const coverage=!coverageStates.length?"unavailable":coverageStates.some(state=>state==="unavailable")?"unavailable":coverageStates.some(state=>state==="partial")?"partial":"complete";
-    const showTrades=["trades","journal","complete"].includes(grant.data_scope);
+    // Legacy database values remain readable, but only an explicit trade-history
+    // or complete grant may expose individual trade rows. A journal-only value
+    // must never be interpreted as permission to reveal trades.
+    const showTrades=["trades","complete"].includes(grant.data_scope);
     return Object.freeze({studentName:grant.student_name,accountName:grant.account_name,dataScope:grant.data_scope,coverage,closedTrades:ready.length,openTrades:opened.length,pendingDecisions:facts.pendingDecisions.length,symbols:new Set(facts.roundTrips.map(trade=>trade.displayedSymbol)).size,trades:showTrades?Object.freeze(facts.roundTrips.slice(-100).reverse().map(trade=>Object.freeze({roundTripId:trade.roundTripId,symbol:trade.displayedSymbol,direction:trade.direction,openedAtUtc:trade.openedAtUtc,closedAtUtc:trade.closedAtUtc,state:trade.projectionState}))):Object.freeze([])});
   }
 }

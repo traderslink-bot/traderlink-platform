@@ -377,6 +377,9 @@ export function DashboardShell({
   scannerEarlyAccess = false,
   watchlistMemberNavigationAccess = false,
   watchlistAdminNavigationAccess = false,
+  communityNavigationHref = null,
+  coachingNavigationHref = null,
+  communityWatchlistsNavigationAccess = false,
 }: {
   children: ReactNode;
   initialMarketHaltAlertsEnabled?: boolean;
@@ -387,6 +390,9 @@ export function DashboardShell({
   scannerEarlyAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
   watchlistAdminNavigationAccess?: boolean;
+  communityNavigationHref?: string | null;
+  coachingNavigationHref?: string | null;
+  communityWatchlistsNavigationAccess?: boolean;
 }) {
   const theme = useTheme();
   const pathname = usePathname();
@@ -410,10 +416,37 @@ export function DashboardShell({
 
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
   const accountMenuOpen = Boolean(accountMenuAnchor);
-  const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
-    section.group.id !== "stockTools"
-      ? section
-      : Object.freeze({
+  const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS
+    .filter((section) =>
+      section.group.id !== "communities" || communityNavigationHref !== null)
+    .map((section) => {
+      if (section.group.id === "communities") {
+        return Object.freeze({
+          ...section,
+          group: Object.freeze({
+            ...section.group,
+            items: Object.freeze(section.group.items.flatMap((item) => {
+              if (!isDashboardNavigationItem(item)) return [item];
+              if (item.href === "/communities") {
+                return communityNavigationHref
+                  ? [Object.freeze({ ...item, href: communityNavigationHref })]
+                  : [];
+              }
+              if (item.href === "/communities/coaching") {
+                return coachingNavigationHref
+                  ? [Object.freeze({ ...item, href: coachingNavigationHref })]
+                  : [];
+              }
+              if (item.href === "/community/watchlists") {
+                return communityWatchlistsNavigationAccess ? [item] : [];
+              }
+              return [item];
+            })),
+          }),
+        });
+      }
+      if (section.group.id !== "stockTools") return section;
+      return Object.freeze({
         ...section,
         group: Object.freeze({
           ...section.group,
@@ -422,9 +455,10 @@ export function DashboardShell({
               (item.href !== "/scanner" || scannerEarlyAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
               (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess)
-            ))),
+          ))),
         }),
-      }));
+      });
+    });
   const closeMobile = () => setMobileOpen(false);
   const setDesktopNavigationCollapsed = (nextCollapsed: boolean) => {
     setCollapsed(nextCollapsed);

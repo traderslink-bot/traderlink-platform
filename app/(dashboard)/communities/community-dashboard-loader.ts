@@ -13,6 +13,26 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
     return Object.freeze({snapshot:createTraderLinkCommunityReviewFixture(),isReview:true});
   }
   const identity=await requireTraderLinkPlatformServerComponentPageIdentity();
-  const snapshot=withPlatformDatabase({mode:"runtime"},database=>{const viewer=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const repository=new TraderLinkCommunityPlatformRepository(database);const current=repository.readSnapshot(communitySlug,viewer);repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:path??`/communities/${communitySlug}`,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});return current;});
+  const snapshot=withPlatformDatabase({mode:"runtime"},database=>{
+    const viewer=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
+    const repository=new TraderLinkCommunityPlatformRepository(database);
+    const current=repository.readSnapshot(communitySlug,viewer);
+    const capabilities=new Set(current.viewer.capabilities);
+    const requestedPath=path??"";
+    const permitted=requestedPath.includes("/alerts")
+      ? capabilities.has("community.alerts.view")||capabilities.has("community.alerts.create")
+      : requestedPath.includes("/watchlists")
+        ? capabilities.has("community.watchlists.view")||capabilities.has("community.watchlists.share_own")||capabilities.has("community.watchlists.publish_staff")
+        : requestedPath.includes("/coaches")||requestedPath.includes("/coaching")
+          ? capabilities.has("community.coaching.view")||capabilities.has("community.coaching.offer")
+          : requestedPath.includes("/workspace")
+            ? capabilities.has("community.coaching.offer")
+            : requestedPath.includes("/manage")
+              ? capabilities.has("community.manage")
+              : true;
+    if(!permitted)notFound();
+    repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:path??`/communities/${communitySlug}`,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});
+    return current;
+  });
   return Object.freeze({snapshot,isReview:false});
 }
