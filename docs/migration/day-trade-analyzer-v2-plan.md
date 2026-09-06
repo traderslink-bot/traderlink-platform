@@ -93,6 +93,19 @@ The three deeper sections below it—`Entry execution context`, `Exit execution
 context` and `Price reached after exits`—start collapsed so the page remains
 scannable before the trader chooses a detailed analysis.
 
+Before Execution mix, show an `Entry and exit snapshot` with the percentage and
+count of trades containing adds, trades containing partial exits, and trades
+whose final exit closed shares at a Gross profit. Show exact Gross profit
+secured by profitable partial exits. Compare average selected-basis P/L for
+trades with adds against trades without adds. Show median whole-trade profit
+giveback as the share of calculated peak profit opportunity not retained in
+final P/L. Follow those cards with a compact context table for Entry time,
+Session VWAP, EMA 9, Relative volume, Holding time and Exit giveback. Each row
+names its largest combined gain, highest average P/L and largest combined loss,
+including the dollar amount and supporting trade count. Exit giveback uses
+microcap-relevant bands: under 10%, 10%-20%, 20%-30%, 30%-50% and 50%+, plus
+the factual no-measured-giveback group.
+
 ## Date-filter contract
 
 Required choices: Today, This week, Last week, This month, Last month, Last 30
@@ -102,7 +115,10 @@ custom inclusive start/end dates.
 The filter uses the completed trade's Journal closing date in the account
 timezone. It persists in the URL and across all seven routes, preserves the
 Gross/Net basis and direction when applicable, and resets only invalidated
-pagination. The resolved dates and selected-period trade count stay visible.
+pagination. On every route except Gross-only Scaling Out, the date and
+Gross/Net controls sit directly below the analyzed-trade count and immediately
+above the page's first analysis element. The resolved dates and selected-period
+trade count stay visible.
 
 ## Calculation contract
 
@@ -138,6 +154,12 @@ silently substituted for Net.
 Show selected-period analyzed trades, candle coverage, actual P/L, qualifying
 scenario count and direct links to the focused questions. Avoid a generic
 takeaway that chooses a winner for the trader.
+
+### Room after entry
+
+Keep the plain-language page title while visibly identifying favorable movement
+as Maximum Favorable Excursion (MFE) and adverse movement as Maximum Adverse
+Excursion (MAE). Dollar movement remains explicitly labelled per share.
 
 ### Green to Red
 

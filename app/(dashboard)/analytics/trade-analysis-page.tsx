@@ -1,7 +1,6 @@
 import "server-only";
 
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -32,7 +31,7 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 
-import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
+import type { OverviewDateRange } from "./overview-date-range-control";
 import { AnalyzedTradesIndex } from "./analyzed-trades-index";
 import { TradeAnalysisClient, type TradeAnalysisView } from "./trade-analysis-client";
 import { TradeAnalyzerHelpLink } from "./trade-analyzer-help-link";
@@ -135,20 +134,6 @@ function profitZoneMinimumHoldMinutes(
   return Number.isSafeInteger(value) && value >= 0 && value <= 120 ? value : 0;
 }
 
-function basisHref(
-  baseHref: string,
-  basis: "gross" | "net",
-  searchParams: Readonly<Record<string, string | string[] | undefined>>,
-): string {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (key === "basis") continue;
-    if (typeof value === "string") params.set(key, value);
-  }
-  params.set("basis", basis);
-  return `${baseHref}?${params.toString()}`;
-}
-
 export async function TradeAnalysisPage({
   baseHref,
   searchParams,
@@ -231,18 +216,9 @@ export async function TradeAnalysisPage({
           </Box>
           <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
         </Stack>
-        <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}>
-          <OverviewDateRangeControl href={baseHref} value={dateRange} />
-          <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
-            {(["gross", "net"] as const).map((basis) => (
-              <Button href={basisHref(baseHref, basis, searchParams)} key={basis} size="small" variant={basis === moneyBasis ? "contained" : "outlined"}>
-                {basis === "gross" ? "Gross" : "Net"}
-              </Button>
-            ))}
-          </Stack>
-        </Stack>
         <AnalyzedTradesIndex
           currency={tradeIndex.currency}
+          dateRange={dateRange}
           endDate={dateRange.endDate}
           initialPage={tradeIndex.page}
           moneyBasis={moneyBasis}
@@ -348,21 +324,6 @@ export async function TradeAnalysisPage({
         </Box>
         <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
       </Stack>
-      {view === "scaling-out" ? null : <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}>
-        <OverviewDateRangeControl href={baseHref} value={dateRange} />
-        <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
-          {(["gross", "net"] as const).map((basis) => (
-            <Button
-              href={basisHref(baseHref, basis, searchParams)}
-              key={basis}
-              size="small"
-              variant={basis === moneyBasis ? "contained" : "outlined"}
-            >
-              {basis === "gross" ? "Gross" : "Net"}
-            </Button>
-          ))}
-        </Stack>
-      </Stack>}
       <TradeAnalysisClient
         evidenceQuery={evidenceQuery}
         model={result.model}

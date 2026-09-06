@@ -49,6 +49,7 @@ import { GreenToRedAnalysis } from "./green-to-red-analysis";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
 import { ProfitZoneAnalysis } from "./profit-zone-analysis";
+import { TradeAnalysisRangeAndBasisControls } from "./trade-analysis-range-and-basis-controls";
 import {
   boundedPage,
   paginatedRows,
@@ -193,6 +194,85 @@ function BreakdownTable({
         </Table>
       </HorizontalScrollRegion>
   );
+}
+
+type ContextResult = Readonly<{
+  amountDecimal: string;
+  label: string;
+  tradeCount: number;
+}>;
+
+type ContextSummaryFactor = Readonly<{
+  factor: string;
+  rows: readonly TradeAnalysisBreakdownRow[];
+}>;
+
+function selectContextResult(
+  rows: readonly TradeAnalysisBreakdownRow[],
+  value: "average" | "largest-gain" | "largest-loss",
+): ContextResult | null {
+  const candidates = rows.flatMap((row): ContextResult[] => {
+    const amountDecimal = value === "average" ? row.averagePnlDecimal : row.totalPnlDecimal ?? null;
+    if (amountDecimal === null) return [];
+    const amount = new Decimal(amountDecimal);
+    if (value === "largest-gain" && !amount.isPositive()) return [];
+    if (value === "largest-loss" && !amount.isNegative()) return [];
+    return [{ amountDecimal, label: row.label, tradeCount: row.tradeCount }];
+  });
+  if (candidates.length === 0) return null;
+  return candidates.reduce((selected, candidate) => {
+    const selectedAmount = new Decimal(selected.amountDecimal);
+    const candidateAmount = new Decimal(candidate.amountDecimal);
+    if (value === "largest-loss") return candidateAmount.lt(selectedAmount) ? candidate : selected;
+    return candidateAmount.gt(selectedAmount) ? candidate : selected;
+  });
+}
+
+function ContextResultCell({
+  currency,
+  result,
+}: {
+  currency: string | null;
+  result: ContextResult | null;
+}) {
+  if (result === null) return <Typography color="text.secondary" variant="body2">None in this selection</Typography>;
+  return <Box>
+    <Typography sx={{ fontWeight: 750 }} variant="body2">{result.label}</Typography>
+    <Typography color={financialOutcomeColor(result.amountDecimal)} sx={{ fontWeight: 800 }} variant="body2">
+      {money(result.amountDecimal, currency)}
+    </Typography>
+    <Typography color="text.secondary" variant="caption">
+      {result.tradeCount} {result.tradeCount === 1 ? "trade" : "trades"}
+    </Typography>
+  </Box>;
+}
+
+function EntryExitContextSummary({
+  currency,
+  factors,
+  moneyBasis,
+}: {
+  currency: string | null;
+  factors: readonly ContextSummaryFactor[];
+  moneyBasis: "gross" | "net";
+}) {
+  const basis = moneyBasis === "gross" ? "Gross" : "Net";
+  return <HorizontalScrollRegion label="Entry and exit context summary" minTableWidth={920} stickyFirstColumn>
+    <Table size="small">
+      <TableHead><TableRow>
+        <TableCell>Factor</TableCell>
+        <TableCell><ColumnHeading help={`The group with the highest positive combined ${basis} P/L.`} label={`Largest ${basis} gain`} /></TableCell>
+        <TableCell><ColumnHeading help={`The group with the highest average ${basis} P/L. Use the trade count to judge how much data supports it.`} label={`Highest avg ${basis} P/L`} /></TableCell>
+        <TableCell><ColumnHeading help={`The group with the largest combined ${basis} loss.`} label={`Largest ${basis} loss`} /></TableCell>
+      </TableRow></TableHead>
+      <TableBody>{factors.map((factor) => <TableRow hover key={factor.factor}>
+        <TableCell sx={{ fontWeight: 850 }}>{factor.factor}</TableCell>
+        <TableCell><ContextResultCell currency={currency} result={selectContextResult(factor.rows, "largest-gain")} /></TableCell>
+        <TableCell><ContextResultCell currency={currency} result={selectContextResult(factor.rows, "average")} /></TableCell>
+        <TableCell><ContextResultCell currency={currency} result={selectContextResult(factor.rows, "largest-loss")} /></TableCell>
+      </TableRow>)}</TableBody>
+    </Table>
+  </HorizontalScrollRegion>;
 }
 
 function Section({
@@ -598,6 +678,32 @@ function DirectionControl({
   </Stack>;
 }
 
+function AnalyzedTradeCountCard({
+  capabilityQuery,
+  count,
+}: {
+  capabilityQuery: string;
+  count: number;
+}) {
+  return <Card sx={{ maxWidth: { xs: "100%", sm: 240 } }} variant="outlined">
+    <CardActionArea component={Link} href={`/analytics/trade-analyzer/day/trades?${capabilityQuery}`}>
+      <CardContent>
+        <Tooltip
+          arrow
+          describeChild
+          title={'This page only displays trades that were analyzed by TradersLink "Trade Analyzer" feature.'}
+        >
+          <Stack component="span" direction="row" spacing={0.4} sx={{ alignItems: "center", width: "fit-content" }}>
+            <Typography color="text.secondary" component="span" variant="caption">Results include analyzed trades only</Typography>
+            <InfoOutlinedIcon sx={{ color: "text.secondary", fontSize: 14 }} />
+          </Stack>
+        </Tooltip>
+        <Typography component="div" sx={{ fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>{count}</Typography>
+      </CardContent>
+    </CardActionArea>
+  </Card>;
+}
+
 export function TradeAnalysisClient({
   evidenceQuery,
   model,
@@ -706,6 +812,47 @@ export function TradeAnalysisClient({
       partialExits: rows.filter((row) => row.eventKind === "Partial exit").length,
     });
   }, [activeDirection, model.eventPaths]);
+  const entryExitSnapshot = useMemo(() => {
+    const trades = model.trades.filter((row) => row.direction === activeDirection);
+    const executions = model.executionContextRows.filter((row) => row.direction === activeDirection);
+    const addedTradeIds = new Set(executions.filter((row) => row.eventKind === "Add").map((row) => row.roundTripId));
+    const partialExitTradeIds = new Set(executions.filter((row) => row.eventKind === "Partial exit").map((row) => row.roundTripId));
+    const greenFinalExitTradeIds = new Set(executions.filter((row) =>
+      row.eventKind === "Final exit" && row.executionGrossPnlDecimal !== null &&
+      new Decimal(row.executionGrossPnlDecimal).isPositive()).map((row) => row.roundTripId));
+    const averageTradePnl = (rows: typeof trades): string | null => rows.length === 0
+      ? null
+      : rows.reduce((sum, row) => sum.plus(row.actualPnlDecimal), new Decimal(0)).div(rows.length).toString();
+    const profitablePartialExitGross = executions.filter((row) =>
+      row.eventKind === "Partial exit" && row.executionGrossPnlDecimal !== null &&
+      new Decimal(row.executionGrossPnlDecimal).isPositive()).reduce((sum, row) =>
+        sum.plus(row.executionGrossPnlDecimal!), new Decimal(0));
+    const profitGivebackPercentages = trades.flatMap((row) => {
+      if (row.additionalOpportunityDecimal === null) return [];
+      const potential = new Decimal(row.actualPnlDecimal).plus(row.additionalOpportunityDecimal);
+      return potential.isPositive()
+        ? [new Decimal(row.additionalOpportunityDecimal).div(potential).mul(100).toNumber()]
+        : [];
+    });
+    return Object.freeze({
+      addedAveragePnl: averageTradePnl(trades.filter((row) => addedTradeIds.has(row.roundTripId))),
+      addedTradeCount: addedTradeIds.size,
+      greenFinalExitTradeCount: greenFinalExitTradeIds.size,
+      medianProfitGivebackPercent: median(profitGivebackPercentages),
+      noAddAveragePnl: averageTradePnl(trades.filter((row) => !addedTradeIds.has(row.roundTripId))),
+      partialExitGrossPnl: profitablePartialExitGross.toString(),
+      partialExitTradeCount: partialExitTradeIds.size,
+      tradeCount: trades.length,
+    });
+  }, [activeDirection, model.executionContextRows, model.trades]);
+  const entryExitContextFactors = useMemo((): readonly ContextSummaryFactor[] => Object.freeze([
+    Object.freeze({ factor: "Entry time", rows: model.entryTimeByDirection[activeDirection] }),
+    Object.freeze({ factor: "Session VWAP", rows: model.entryContextByDirection[activeDirection].vwap }),
+    Object.freeze({ factor: "EMA 9", rows: model.entryContextByDirection[activeDirection].ema9 }),
+    Object.freeze({ factor: "Relative volume", rows: model.entryContextByDirection[activeDirection].relativeVolume }),
+    Object.freeze({ factor: "Holding time", rows: model.holdingDurationByDirection[activeDirection] }),
+    Object.freeze({ factor: "Exit giveback", rows: model.exitContextByDirection[activeDirection] }),
+  ]), [activeDirection, model.entryContextByDirection, model.entryTimeByDirection, model.exitContextByDirection, model.holdingDurationByDirection]);
   const capabilityQuery = useMemo(() => {
     const params = new URLSearchParams();
     params.set("basis", evidenceQuery.moneyBasis);
@@ -720,27 +867,33 @@ export function TradeAnalysisClient({
   const currentPatternPage = boundedPage(patternPage, patternGroups.length, patternPageSize);
   const visiblePatternGroups = paginatedRows(patternGroups, currentPatternPage, patternPageSize);
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
-  if (model.eligibleDayTradeCount === 0) {
-    return (
+  if (model.eligibleDayTradeCount === 0 || model.analyzedTradeCount === 0) {
+    return <Stack spacing={2.5}>
+      <AnalyzedTradeCountCard capabilityQuery={capabilityQuery} count={0} />
+      {view === "scaling-out" ? <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <ProfitZoneHeaderControls
+          currentMinutes={profitZoneMinimumHoldMinutes}
+          dateRange={profitZoneDateRange}
+          disabled={offline}
+          href={pathname}
+        />
+      </Box> : <TradeAnalysisRangeAndBasisControls dateRange={profitZoneDateRange} moneyBasis={model.moneyBasis} />}
       <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined">
-        <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No completed day trades</Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-          Trade Analysis will begin after completed day trades are available in this account.
+        <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">
+          {model.eligibleDayTradeCount === 0 ? "No completed day trades" : "No trades have been analyzed."}
         </Typography>
+        {model.eligibleDayTradeCount === 0 ? <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+          Trade Analysis will begin after completed day trades are available in this account.
+        </Typography> : null}
       </Paper>
-    );
-  }
-  if (model.analyzedTradeCount === 0) {
-    return (
-      <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined">
-        <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No trades have been analyzed.</Typography>
-      </Paper>
-    );
+    </Stack>;
   }
   const directionLabel = activeDirection === "long" ? "long" : "short";
   const moneyBasisLabel = model.moneyBasis === "gross" ? "Gross" : "Net";
   const favorableMoneyLabel = activeDirection === "long" ? "price rise after long entry" : "price drop after short entry";
   const adverseMoneyLabel = activeDirection === "long" ? "price drop after long entry" : "price rise after short entry";
+  const favorableMoveLabel = activeDirection === "long" ? "price rise" : "price drop";
+  const adverseMoveLabel = activeDirection === "long" ? "price drop" : "price rise";
   const entryContext = model.entryContextByDirection[activeDirection];
   const exitContext = model.exitExecutionContextByDirection[activeDirection];
   return (
@@ -769,25 +922,15 @@ export function TradeAnalysisClient({
         </Box>
       </Stack> : null}
 
-      <Card sx={{ maxWidth: { xs: "100%", sm: 240 } }} variant="outlined">
-        <CardActionArea component={Link} href={`/analytics/trade-analyzer/day/trades?${capabilityQuery}`}>
-          <CardContent>
-            <Tooltip
-              arrow
-              describeChild
-              title={'This page only displays trades that were analyzed by TradersLink "Trade Analyzer" feature.'}
-            >
-              <Stack component="span" direction="row" spacing={0.4} sx={{ alignItems: "center", width: "fit-content" }}>
-                <Typography color="text.secondary" component="span" variant="caption">Results include analyzed trades only</Typography>
-                <InfoOutlinedIcon sx={{ color: "text.secondary", fontSize: 14 }} />
-              </Stack>
-            </Tooltip>
-            <Typography component="div" sx={{ fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>
-              {view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
-            </Typography>
-          </CardContent>
-        </CardActionArea>
-      </Card>
+      <AnalyzedTradeCountCard
+        capabilityQuery={capabilityQuery}
+        count={view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
+      />
+
+      {view !== "scaling-out" ? <TradeAnalysisRangeAndBasisControls
+        dateRange={profitZoneDateRange}
+        moneyBasis={model.moneyBasis}
+      /> : null}
 
       {view === "day" ? (
         <Stack spacing={1.25}>
@@ -868,6 +1011,44 @@ export function TradeAnalysisClient({
         </Stack>
       </Section> : null}
 
+      {view === "entry-exit" ? <Section
+        collapsible={false}
+        description="A quick view of entry, scaling and exit behavior before the detailed records."
+        helpHref="/help/trade-analyzer/entry-exit-analysis"
+        title="Entry and exit snapshot"
+      >
+        <Stack spacing={2.25}>
+          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" } }}>
+            <DashboardMetricCard
+              caption={`Avg ${moneyBasisLabel} P/L ${money(entryExitSnapshot.addedAveragePnl, model.currency)} vs ${money(entryExitSnapshot.noAddAveragePnl, model.currency)} without adds`}
+              label="Trades with adds"
+              value={`${entryExitSnapshot.addedTradeCount} of ${entryExitSnapshot.tradeCount} · ${percent(entryExitSnapshot.tradeCount === 0 ? null : entryExitSnapshot.addedTradeCount / entryExitSnapshot.tradeCount * 100)}`}
+            />
+            <DashboardMetricCard
+              caption={`Gross profit secured on profitable partial exits: ${money(entryExitSnapshot.partialExitGrossPnl, model.currency)}`}
+              label="Trades with partial exits"
+              value={`${entryExitSnapshot.partialExitTradeCount} of ${entryExitSnapshot.tradeCount} · ${percent(entryExitSnapshot.tradeCount === 0 ? null : entryExitSnapshot.partialExitTradeCount / entryExitSnapshot.tradeCount * 100)}`}
+            />
+            <DashboardMetricCard
+              caption={`Final exit sold ${activeDirection === "long" ? "above" : "below"} the trade's average entry price`}
+              label="Exited while green"
+              value={`${entryExitSnapshot.greenFinalExitTradeCount} of ${entryExitSnapshot.tradeCount} · ${percent(entryExitSnapshot.tradeCount === 0 ? null : entryExitSnapshot.greenFinalExitTradeCount / entryExitSnapshot.tradeCount * 100)}`}
+            />
+            <DashboardMetricCard
+              caption="Median share of each trade's calculated peak profit opportunity not retained in final P/L"
+              label="Median profit given back"
+              value={percent(entryExitSnapshot.medianProfitGivebackPercent)}
+              valueColor={entryExitSnapshot.medianProfitGivebackPercent === null || entryExitSnapshot.medianProfitGivebackPercent === 0 ? "text.primary" : "error.main"}
+            />
+          </Box>
+          <Box>
+            <Typography component="h3" sx={{ fontWeight: 850, mb: 0.25 }} variant="subtitle1">Context summary</Typography>
+            <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">The strongest and weakest groups from the detailed tables, with the trade count supporting each result.</Typography>
+            <EntryExitContextSummary currency={model.currency} factors={entryExitContextFactors} moneyBasis={model.moneyBasis} />
+          </Box>
+        </Stack>
+      </Section> : null}
+
       {view === "entry-exit" ? <Section defaultExpanded description={`Saved ${directionLabel} executions and the market session in which each occurred.`} helpHref="/help/trade-analyzer/entry-exit-analysis#execution-mix" title="Execution mix">
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
           <DashboardMetricCard caption="Executions that opened a flat position" label="Initial entries" value={String(directionEventCounts.initialEntries)} />
@@ -913,15 +1094,15 @@ export function TradeAnalysisClient({
         <EventPathTable currency={model.currency} direction={activeDirection} kinds={["Partial exit", "Final exit"]} model={model} offline={offline} />
       </Section> : null}
 
-      {view === "mfe-mae" ? <Section defaultExpanded description={`Explicit price movement after each ${directionLabel} entry or add while the position remained open. Dollar amounts are per share.`} helpHref="/help/trade-analyzer/mfe-mae#overview" title="Room after entry">
+      {view === "mfe-mae" ? <Section defaultExpanded description={`Maximum Favorable Excursion (MFE) and Maximum Adverse Excursion (MAE) after each ${directionLabel} entry or add while the position remained open. Dollar amounts are per share.`} helpHref="/help/trade-analyzer/mfe-mae#overview" title="Room after entry · MFE / MAE">
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
           <DashboardMetricCard caption="Entries and adds with saved one-minute candle coverage" label="Measured executions" value={String(directionExcursions.length)} />
-          <DashboardMetricCard caption="Average dollar movement" label={`Average ${favorableMoneyLabel} per share`} value={money(directionMovement.averageFavorableMoney?.toString() ?? null, model.currency)} valueColor="success.main" />
-          <DashboardMetricCard caption="Middle dollar movement" label={`Median ${favorableMoneyLabel} per share`} value={money(directionMovement.medianFavorableMoney?.toString() ?? null, model.currency)} valueColor="success.main" />
-          <DashboardMetricCard caption="Average dollar movement" label={`Average ${adverseMoneyLabel} per share`} value={money(directionMovement.averageAdverseMoney?.toString() ?? null, model.currency)} valueColor="error.main" />
-          <DashboardMetricCard caption="Middle dollar movement" label={`Median ${adverseMoneyLabel} per share`} value={money(directionMovement.medianAdverseMoney?.toString() ?? null, model.currency)} valueColor="error.main" />
-          <DashboardMetricCard caption="Average movement relative to execution price" label={`${favorableMoneyLabel} %`} value={percent(directionMovement.averageFavorablePercent)} valueColor="success.main" />
-          <DashboardMetricCard caption="Average movement relative to execution price" label={`${adverseMoneyLabel} %`} value={percent(directionMovement.averageAdversePercent)} valueColor="error.main" />
+          <DashboardMetricCard caption={`Maximum Favorable Excursion (MFE): average ${favorableMoneyLabel}`} label={`Average ${favorableMoveLabel} per share · MFE`} value={money(directionMovement.averageFavorableMoney?.toString() ?? null, model.currency)} valueColor="success.main" />
+          <DashboardMetricCard caption={`Maximum Favorable Excursion (MFE): middle ${favorableMoneyLabel}`} label={`Median ${favorableMoveLabel} per share · MFE`} value={money(directionMovement.medianFavorableMoney?.toString() ?? null, model.currency)} valueColor="success.main" />
+          <DashboardMetricCard caption={`Maximum Adverse Excursion (MAE): average ${adverseMoneyLabel}`} label={`Average ${adverseMoveLabel} per share · MAE`} value={money(directionMovement.averageAdverseMoney?.toString() ?? null, model.currency)} valueColor="error.main" />
+          <DashboardMetricCard caption={`Maximum Adverse Excursion (MAE): middle ${adverseMoneyLabel}`} label={`Median ${adverseMoveLabel} per share · MAE`} value={money(directionMovement.medianAdverseMoney?.toString() ?? null, model.currency)} valueColor="error.main" />
+          <DashboardMetricCard caption={`Average ${favorableMoneyLabel} relative to execution price`} label={`Average ${favorableMoveLabel} % · MFE`} value={percent(directionMovement.averageFavorablePercent)} valueColor="success.main" />
+          <DashboardMetricCard caption={`Average ${adverseMoneyLabel} relative to execution price`} label={`Average ${adverseMoveLabel} % · MAE`} value={percent(directionMovement.averageAdversePercent)} valueColor="error.main" />
         </Box>
       </Section> : null}
 

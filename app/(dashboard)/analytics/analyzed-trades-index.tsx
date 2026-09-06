@@ -24,6 +24,8 @@ import { financialOutcomeColor } from
   "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { DashboardMetricCard } from "@/app/dashboard-template";
 
+import type { OverviewDateRange } from "./overview-date-range-control";
+import { TradeAnalysisRangeAndBasisControls } from "./trade-analysis-range-and-basis-controls";
 import { TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 
@@ -76,6 +78,7 @@ function trackerHref(row: DailyTradeAnalyzedTradePage["rows"][number]): string {
 
 export function AnalyzedTradesIndex({
   currency,
+  dateRange,
   endDate,
   initialPage = null,
   moneyBasis,
@@ -83,6 +86,7 @@ export function AnalyzedTradesIndex({
   startDate,
 }: {
   currency: string | null;
+  dateRange: OverviewDateRange;
   endDate: string | null;
   initialPage?: DailyTradeAnalyzedTradePage | null;
   moneyBasis: "gross" | "net";
@@ -164,6 +168,7 @@ export function AnalyzedTradesIndex({
           value={String(result?.totalRowCount ?? 0)}
         />
       </Box>
+      <TradeAnalysisRangeAndBasisControls dateRange={dateRange} moneyBasis={moneyBasis} />
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <TextField
           label="Ticker"

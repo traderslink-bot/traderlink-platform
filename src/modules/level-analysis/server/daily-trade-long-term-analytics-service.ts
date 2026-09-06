@@ -353,6 +353,7 @@ export type TradeAnalysisExecutionContextRow = Readonly<{
   ema9DistancePercent: number | null;
   ema9FiveMinuteDistancePercent: number | null;
   eventKind: TradeAnalysisEventPathRow["eventKind"];
+  executionGrossPnlDecimal: string | null;
   eventPriceDecimal: string;
   eventSequence: number;
   executedAtUtc: string;
@@ -425,7 +426,9 @@ export type DailyTradeLongTermAnalyticsModel = Readonly<{
   greenToRedTradeCount: number;
   holding: readonly TradeAnalysisBreakdownRow[];
   holdingDuration: readonly TradeAnalysisBreakdownRow[];
+  holdingDurationByDirection?: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
   entryTime: readonly TradeAnalysisBreakdownRow[];
+  entryTimeByDirection?: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
   entryOpportunityRisk: Readonly<{
     averageAdverseMoveDecimal: string | null;
     averageFavorableMoveDecimal: string | null;
@@ -509,13 +512,14 @@ type TradeAnalysisExecutionContext = Readonly<{
 
 export type DailyTradeLongTermAnalyticsV2Model = Omit<
   DailyTradeLongTermAnalyticsModel,
-  "directionTradeCounts" | "entryContext" | "entryContextByDirection" | "eventPaths" | "executionContextRows" |
+  "directionTradeCounts" | "entryContext" | "entryContextByDirection" | "entryTimeByDirection" | "eventPaths" | "executionContextRows" |
   "exitContextByDirection" | "exitExecutionContextByDirection" | "greenToRedByDirection" |
-  "greenToRedDamageByDirection" | "greenToRedOpportunity" | "meaningfulProfit" | "profitZones" | "scalingOut"
+  "greenToRedDamageByDirection" | "greenToRedOpportunity" | "holdingDurationByDirection" | "meaningfulProfit" | "profitZones" | "scalingOut"
 > & Readonly<{
   directionTradeCounts: Readonly<{ long: number; short: number }>;
   entryContext: TradeAnalysisExecutionContext;
   entryContextByDirection: Readonly<Record<"long" | "short", TradeAnalysisExecutionContext>>;
+  entryTimeByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
   eventPaths: readonly TradeAnalysisEventPathRow[];
   executionContextRows: readonly TradeAnalysisExecutionContextRow[];
   exitContextByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
@@ -523,6 +527,7 @@ export type DailyTradeLongTermAnalyticsV2Model = Omit<
   greenToRedByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
   greenToRedDamageByDirection: Readonly<Record<"long" | "short", TradeAnalysisGreenToRedDamage>>;
   greenToRedOpportunity: NonNullable<DailyTradeLongTermAnalyticsModel["greenToRedOpportunity"]>;
+  holdingDurationByDirection: Readonly<Record<"long" | "short", readonly TradeAnalysisBreakdownRow[]>>;
   meaningfulProfit: NonNullable<DailyTradeLongTermAnalyticsModel["meaningfulProfit"]>;
   profitZones: NonNullable<DailyTradeLongTermAnalyticsModel["profitZones"]>;
   scalingOut: NonNullable<DailyTradeLongTermAnalyticsModel["scalingOut"]>;
@@ -1137,7 +1142,47 @@ function holdingRows(joined: readonly Joined[]): readonly TradeAnalysisBreakdown
   }).filter((row) => row.tradeCount > 0));
 }
 
-type EventJoined = Readonly<{ event: EventFact; trade: Joined }>;
+type EventExecutionFinancials = Readonly<{
+  grossPnlDecimal: string | null;
+}>;
+
+type EventJoined = Readonly<{
+  event: EventFact;
+  financials: EventExecutionFinancials;
+  trade: Joined;
+}>;
+
+function executionFinancials(
+  events: readonly EventFact[],
+  direction: "long" | "short",
+): ReadonlyMap<number, EventExecutionFinancials> {
+  const result = new Map<number, EventExecutionFinancials>();
+  let averageEntryPrice: Decimal | null = null;
+  let openQuantity = new Decimal(0);
+  for (const event of [...events].sort((left, right) => left.eventSequence - right.eventSequence)) {
+    const price = new Decimal(event.priceDecimal);
+    const quantity = new Decimal(event.quantityDecimal).abs();
+    if (event.eventKind === "entry" || event.eventKind === "add") {
+      const nextQuantity = openQuantity.plus(quantity);
+      averageEntryPrice = nextQuantity.eq(0)
+        ? null
+        : (averageEntryPrice ?? price).mul(openQuantity).plus(price.mul(quantity)).div(nextQuantity);
+      openQuantity = nextQuantity;
+      result.set(event.eventSequence, Object.freeze({ grossPnlDecimal: null }));
+      continue;
+    }
+    const closingQuantity = Decimal.min(openQuantity, quantity);
+    const grossPnlDecimal = averageEntryPrice === null || closingQuantity.eq(0)
+      ? null
+      : (direction === "long" ? price.minus(averageEntryPrice) : averageEntryPrice.minus(price))
+          .mul(closingQuantity)
+          .toString();
+    result.set(event.eventSequence, Object.freeze({ grossPnlDecimal }));
+    openQuantity = Decimal.max(0, openQuantity.minus(closingQuantity));
+    if (openQuantity.eq(0)) averageEntryPrice = null;
+  }
+  return result;
+}
 
 function excursionPercent(moveDecimal: string, entryPriceDecimal: string): number {
   const entry = new Decimal(entryPriceDecimal);
@@ -1250,9 +1295,11 @@ const CANDLE_LOCATION_BUCKETS = Object.freeze([
 function exitRows(events: readonly EventJoined[]): readonly TradeAnalysisBreakdownRow[] {
   const definitions = Object.freeze([
     { label: "No measured giveback", test: (value: number) => value === 0 },
-    { label: "Up to 1% giveback", test: (value: number) => value > 0 && value <= 1 },
-    { label: "1-3% giveback", test: (value: number) => value > 1 && value <= 3 },
-    { label: "More than 3% giveback", test: (value: number) => value > 3 },
+    { label: "Under 10% giveback", test: (value: number) => value > 0 && value < 10 },
+    { label: "10% to under 20% giveback", test: (value: number) => value >= 10 && value < 20 },
+    { label: "20% to under 30% giveback", test: (value: number) => value >= 20 && value < 30 },
+    { label: "30% to under 50% giveback", test: (value: number) => value >= 30 && value < 50 },
+    { label: "50%+ giveback", test: (value: number) => value >= 50 },
   ]);
   return eventBreakdown(events, definitions, (event) => {
     if (event.givebackDecimal === null || event.priorFavorableExtremePriceDecimal === null) return null;
@@ -1620,8 +1667,16 @@ export function buildDailyTradeLongTermAnalytics(
       v2Opportunity,
     })];
   }));
-  const allEvents: readonly EventJoined[] = Object.freeze(joined.flatMap((trade) =>
-    trade.analyzer.events.map((event) => Object.freeze({ event, trade }))));
+  const allEvents: readonly EventJoined[] = Object.freeze(joined.flatMap((trade) => {
+    const financialsBySequence = executionFinancials(trade.analyzer.events, trade.journal.direction);
+    return trade.analyzer.events.map((event) => Object.freeze({
+      event,
+      financials: financialsBySequence.get(event.eventSequence) ?? Object.freeze({
+        grossPnlDecimal: null,
+      }),
+      trade,
+    }));
+  }));
   const entryEvents = allEvents.filter(({ event }) => event.eventKind === "entry" || event.eventKind === "add");
   const exitEvents = allEvents.filter(({ event }) => event.eventKind === "partial_exit" || event.eventKind === "final_exit");
   const greenToRedTrades = joined.filter((row) => GREEN_TO_RED_STATUSES.includes(row.analyzer.path.status));
@@ -1805,7 +1860,7 @@ export function buildDailyTradeLongTermAnalytics(
   ).sort((left, right) => right.closeDate.localeCompare(left.closeDate) ||
     left.symbol.localeCompare(right.symbol) || left.eventSequence - right.eventSequence ||
     left.minutesAfterEvent - right.minutesAfterEvent));
-  const executionContextRows = Object.freeze(allEvents.map(({ event, trade }): TradeAnalysisExecutionContextRow => Object.freeze({
+  const executionContextRows = Object.freeze(allEvents.map(({ event, financials, trade }): TradeAnalysisExecutionContextRow => Object.freeze({
     actualPnlDecimal: trade.actualPnl,
     atr14Percent: event.atr14Percent,
     candleLocationPercent: event.candleLocationRatio === null ? null : event.candleLocationRatio * 100,
@@ -1814,6 +1869,7 @@ export function buildDailyTradeLongTermAnalytics(
     ema9DistancePercent: event.ema9DistancePercent,
     ema9FiveMinuteDistancePercent: event.fiveMinuteEma9DistancePercent,
     eventKind: eventKindLabel(event.eventKind),
+    executionGrossPnlDecimal: financials.grossPnlDecimal,
     eventPriceDecimal: event.priceDecimal,
     eventSequence: event.eventSequence,
     executedAtUtc: event.executedAtUtc,
@@ -1924,7 +1980,15 @@ export function buildDailyTradeLongTermAnalytics(
     greenToRedTradeCount: greenToRedTrades.length,
     holding: holdingRows(joined),
     holdingDuration: holdingDurationRows(joined),
+    holdingDurationByDirection: Object.freeze({
+      long: holdingDurationRows(joined.filter((row) => row.journal.direction === "long")),
+      short: holdingDurationRows(joined.filter((row) => row.journal.direction === "short")),
+    }),
     entryTime: entryTimeRows(joined, timezone),
+    entryTimeByDirection: Object.freeze({
+      long: entryTimeRows(joined.filter((row) => row.journal.direction === "long"), timezone),
+      short: entryTimeRows(joined.filter((row) => row.journal.direction === "short"), timezone),
+    }),
     entryOpportunityRisk: Object.freeze({
       averageAdverseMoveDecimal: averageDecimals(measuredEntryExcursions.map(({ event }) => event.excursionAdverseDecimal!)),
       averageFavorableMoveDecimal: averageDecimals(measuredEntryExcursions.map(({ event }) => event.excursionFavorableDecimal!)),
