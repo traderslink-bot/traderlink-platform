@@ -7,13 +7,13 @@ implemented locally and has passed focused low-resource source QA. No push,
 deployment, migration, hosted data write or configuration change is authorized
 to this worker.
 
-## Current user-defined-trade refinement — 2026-09-05
+## Current chart refinement — 2026-09-06
 
 - [x] Work remains isolated in the assigned
   `C:\Users\jerac\Documents\TraderLink\worktrees\trade-analyzer-v2`
-  worktree on branch `codex/day-analyzer-profit-zones-repair-71193458`.
+  worktree on branch `codex/release-profit-zones-ee9d35b`.
 - [x] This refinement is parented to local commit
-  `aecfcb1c9be9c05214617da8520bce7ecd09e76a`.
+  `53e45908a7e6a32883afbedeb57fdc16fa506494`.
 - [x] The owner has not authorized a coordinator handoff, push or deployment
   for this refinement.
 
@@ -293,5 +293,81 @@ to this worker.
 - [x] Add two date-filtered, non-prescriptive highlights for the largest missed
   opportunity and longest median zone time, and shorten exact-table headings
   while retaining their full definitions in tooltips.
+- [x] Add a Trade details button to every online exact-zone trade row. It opens
+  the existing Workspace Trade Details drawer on the Scaling Out page and uses
+  the representative round-trip ID only as the safe lookup key for the full
+  current user-defined trade, including every member execution.
+- [x] Remove the redundant Full analysis table link. The Trade Details drawer
+  keeps the trader on Scaling Out and provides its own Analyzer tab.
+- [x] Keep the desktop Profit Zones column labels visible while zone rows are
+  still on screen. The sticky labels sit below the fixed dashboard header and
+  release before the exact-trades table, where those labels no longer apply.
+- [x] Add visible information icons to every desktop Profit Zones chart label
+  so its definition is discoverable directly on the chart instead of requiring
+  the trader to guess that hovering over plain label text opens a tooltip.
+- [x] Shorten every selected-zone exact-trade table heading and add a visible
+  definition tooltip to every column, including the trade and details columns.
+- [x] Shorten every Scaling Behavior table heading and add a visible definition
+  tooltip to all twelve columns. Keep exact calculation details in the tooltip
+  instead of stretching the table with sentence-length labels.
+- [x] Focused QA for the sticky chart labels and both shortened table headers:
+  targeted ESLint, targeted TypeScript and `git diff --check` pass.
+- [x] Remove the Profit zone highlights card at the owner's direction.
+- [x] Move the selected-zone evidence into independently expandable zone rows,
+  order exact profit-taking trades before no-profit/next-move trades, and show
+  each trade's zone activity, next move, timing, final Gross P/L and in-page
+  Trade Details action.
+- [x] Remove the now-duplicated selected-zone table while preserving the
+  separate Scaling Behavior table and its different position-management facts.
+- [x] Open the 20% to 29.99% zone by default and reset it open whenever the
+  selected date range or available Long/Short view changes.
+- [x] Confirm that the existing page-level date control already includes Today,
+  This week, This month and Custom range, plus longer presets, and that the
+  existing direction control already shows Long/Short only when both contain
+  analyzed trades.
+- [x] Focused QA for the expandable ladder passes: targeted ESLint, targeted
+  TypeScript and `git diff --check`.
+- [x] Remove repeated `Profit taken in` and `opportunity` wording from ladder
+  values where the chart heading and its tooltip already supply that meaning.
+- [x] Preserve the desktop zone grid on mobile inside a horizontal touch-scroll
+  region, pin the Zone and expanded Trade columns, show the complete chart
+  labels and add a swipe hint instead of restacking the dense data.
+- [x] Add exact zone-level position context to every expanded trade: cumulative
+  shares sold through its last exit in the band, shares remaining immediately
+  after that exit, profit secured in the band and its individual maximum Gross
+  opportunity. For a zone with no exit, use the share state at first reach.
+- [x] Preserve Reached date/time, Time to zone and total Time in zone inside the
+  expanded trade list after removing the standalone exact-trades table.
+- [x] Focused QA for the mobile grid and zone share snapshot passes: targeted
+  ESLint, targeted TypeScript and `git diff --check`.
+- [x] Keep expanded trade-list headings compact at 0.69rem on mobile, enlarge
+  them to 0.8rem on desktop, and retain a visible tooltip icon for every
+  heading.
+- [x] Carry the exact analyzed execution count into each zone record so the
+  drawer's Analyzer tab receives the same trade-level count as the analysis.
+- [x] Complete focused source QA for the in-page Trade Details integration:
+  targeted ESLint, targeted TypeScript and `git diff --check` pass. Source
+  inspection confirms the drawer lookup expands the representative round trip
+  to every member of the current logical trade before loading executions.
+- [x] Add the chart-only `Minimum time at +20%` selector with Any reach, 1, 2,
+  5, 10 and 15 minute presets plus a custom whole-minute value from 1 to 120.
+- [x] Qualify timed selections with consecutive completed one-minute candle
+  closes at or above +20% while the trade is active, then retain each
+  qualifying trade's complete higher-zone journey.
+- [x] Keep all analyzed trades in the selected date range and direction as the
+  Reached denominator, show the qualifying count beside the chart title and
+  explain the complete calculation in a visible control tooltip.
+- [x] Persist the selected minimum in the page URL and reset the 20% zone open
+  after it changes without filtering any other Scaling Out section.
+- [x] Rename the analyzed-trade count card to `Results include analyzed trades
+  only` and add a visible tooltip explaining that the page displays only
+  trades analyzed by the TradersLink Trade Analyzer feature.
+- [x] Complete focused source QA for the minimum-time selector: targeted
+  ESLint, targeted TypeScript and `git diff --check` pass. Source inspection
+  confirms the filter changes only Profit Zones, keeps the full higher-zone
+  journey for qualifying trades and retains all analyzed trades as the Reached
+  denominator.
+- [ ] Keep this slice local until the owner explicitly authorizes a coordinator
+  handoff and production release.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.

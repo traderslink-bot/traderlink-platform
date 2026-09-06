@@ -98,6 +98,7 @@ type ScenarioTrade = Readonly<{
   closeLocalDate: string;
   direction: "long" | "short";
   entryLocalDate: string;
+  executionCount: number;
   representativeRoundTripId: string;
   scenario: DailyTradeV2ScenarioAnalysis;
   symbol: string;
@@ -220,7 +221,9 @@ export type TradeAnalysisScalingOutRow = Readonly<{
 
 export type TradeAnalysisProfitZoneRecord = Readonly<{
   closeDate: string;
+  cumulativeQuantitySoldDecimal: string;
   direction: "long" | "short";
+  executionCount: number;
   finalGrossPnlDecimal: string;
   firstReachedAtUtcSeconds: number;
   firstReachSource: "completed_close" | "exit";
@@ -238,6 +241,7 @@ export type TradeAnalysisProfitZoneRecord = Readonly<{
   profitableFullExitInZoneGrossDecimal: string;
   quantitySoldInZoneDecimal: string;
   reachedNextLevel: boolean;
+  remainingQuantityAfterZoneActivityDecimal: string | null;
   roundTripId: string;
   scaledPositionClosingExitCount: number;
   scaledPositionClosingProfitGrossDecimal: string;
@@ -1520,11 +1524,13 @@ function analyzedScenarioTrades(input: Readonly<{
     const lastJournal = members.at(-1);
     if (!representative || !firstJournal || !lastJournal) return [];
     const multiplier = input.reportingMultiplierByRoundTrip.get(representative.roundTripId) ?? "1";
+    let executionCount = 0;
     let scenario: DailyTradeV2ScenarioAnalysis | null = null;
 
     if (trade.logicalTradeId) {
       const saved = logicalAnalyzer.readCurrentByRoundTrip(accountScope, representative.roundTripId);
       if (saved?.status === "ready" && saved.analyzed) {
+        executionCount = saved.analyzed.eventSnapshots.length;
         scenario = analyzeDailyTradeV2Scenario({
           candles: saved.candles.map((candle) => Object.freeze({
             closeDecimal: candle.closeDecimal,
@@ -1550,7 +1556,9 @@ function analyzedScenarioTrades(input: Readonly<{
     // replaces it. Multi-member user-defined trades require their own combined
     // analysis and must never be reconstructed by ticker or by member totals.
     if (!scenario && trade.members.length === 1) {
-      scenario = input.analyzerByRoundTripId.get(representative.roundTripId)?.scenario ?? null;
+      const analyzer = input.analyzerByRoundTripId.get(representative.roundTripId);
+      executionCount = analyzer?.events.length ?? 0;
+      scenario = analyzer?.scenario ?? null;
     }
     if (!scenario) return [];
 
@@ -1558,6 +1566,7 @@ function analyzedScenarioTrades(input: Readonly<{
       closeLocalDate: lastJournal.closeLocalDate,
       direction: trade.direction,
       entryLocalDate: firstJournal.entryLocalDate,
+      executionCount,
       representativeRoundTripId: representative.roundTripId,
       scenario: scaleScenario(scenario, multiplier),
       symbol: trade.symbol,
@@ -1575,6 +1584,7 @@ export function buildDailyTradeLongTermAnalytics(
   currency: string | null,
   timezone = "America/New_York",
   reportingMultiplierByRoundTrip: ReadonlyMap<string, string> = new Map(),
+  profitZoneMinimumHoldMinutes = 0,
 ): DailyTradeLongTermAnalyticsV2Model {
   const analyzer = readAnalyzerFacts(database, scope);
   const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade");
@@ -1712,7 +1722,15 @@ export function buildDailyTradeLongTermAnalytics(
   }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
   const noScaleEndedRedRows = meaningfulProfitRows.filter((row) =>
     !row.scaledOutWhileGreen && row.outcome === "ended_red");
-  const profitZoneRecords = Object.freeze(scenarioTrades.flatMap((trade): TradeAnalysisProfitZoneRecord[] =>
+  const profitZoneScenarioTrades = profitZoneMinimumHoldMinutes <= 0
+    ? scenarioTrades
+    : scenarioTrades.filter((trade) => {
+        const twentyPercentZone = trade.scenario.profitZones.find((zone) => zone.lowerBoundPercent === 20);
+        return twentyPercentZone !== undefined &&
+          twentyPercentZone.firstReachedAtUtcSeconds !== null &&
+          twentyPercentZone.longestConsecutiveMinutesAtOrAbove >= profitZoneMinimumHoldMinutes;
+      });
+  const profitZoneRecords = Object.freeze(profitZoneScenarioTrades.flatMap((trade): TradeAnalysisProfitZoneRecord[] =>
     trade.scenario.profitZones.flatMap((zone) => {
       if (zone.firstReachedAtUtcSeconds === null ||
           zone.firstReachSource === null ||
@@ -1722,7 +1740,9 @@ export function buildDailyTradeLongTermAnalytics(
           zone.observedOutcome === "did_not_reach") return [];
       return [Object.freeze({
         closeDate: trade.closeLocalDate,
+        cumulativeQuantitySoldDecimal: zone.cumulativeQuantitySoldDecimal,
         direction: trade.direction,
+        executionCount: trade.executionCount,
         finalGrossPnlDecimal: trade.scenario.calculatedFinalGrossResultDecimal,
         firstReachedAtUtcSeconds: zone.firstReachedAtUtcSeconds,
         firstReachSource: zone.firstReachSource,
@@ -1741,6 +1761,7 @@ export function buildDailyTradeLongTermAnalytics(
         profitableFullExitInZoneGrossDecimal: zone.profitableFullExitInZoneGrossDecimal,
         quantitySoldInZoneDecimal: zone.quantitySoldInZoneDecimal,
         reachedNextLevel: zone.reachedNextLevel,
+        remainingQuantityAfterZoneActivityDecimal: zone.remainingQuantityAfterZoneActivityDecimal,
         roundTripId: trade.representativeRoundTripId,
         scaledPositionClosingExitCount: zone.scaledPositionClosingExitCount,
         scaledPositionClosingProfitGrossDecimal: zone.scaledPositionClosingProfitGrossDecimal,

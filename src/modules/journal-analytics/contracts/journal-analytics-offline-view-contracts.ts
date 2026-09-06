@@ -46,6 +46,7 @@ type EvidenceQuery = Readonly<{
   direction: "long" | "short" | null;
   endDate: string | null;
   moneyBasis: "gross" | "net";
+  profitZoneMinimumHoldMinutes?: number;
   rangeKind: string;
   startDate: string | null;
 }>;

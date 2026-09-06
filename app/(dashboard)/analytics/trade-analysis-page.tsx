@@ -127,6 +127,14 @@ function closingRange(value: OverviewDateRange): JournalAnalyticsClosingDateRang
     : Object.freeze({ kind: "all_available" as const });
 }
 
+function profitZoneMinimumHoldMinutes(
+  searchParams: Readonly<Record<string, string | string[] | undefined>>,
+): number {
+  const rawValue = typeof searchParams.zoneHold === "string" ? searchParams.zoneHold : "0";
+  const value = Number(rawValue);
+  return Number.isSafeInteger(value) && value >= 0 && value <= 120 ? value : 0;
+}
+
 function basisHref(
   baseHref: string,
   basis: "gross" | "net",
@@ -160,6 +168,9 @@ export async function TradeAnalysisPage({
   });
   const dateRange = selectedDateRange(searchParams, accountTimezone);
   const details = VIEW_DETAILS[view];
+  const selectedProfitZoneMinimumHoldMinutes = view === "scaling-out"
+    ? profitZoneMinimumHoldMinutes(searchParams)
+    : 0;
   const moneyBasis = withReadonlyPlatformDatabase({}, (database) =>
     resolveJournalAnalyticsMoneyBasis(
       searchParams.basis,
@@ -292,6 +303,7 @@ export async function TradeAnalysisPage({
         currency,
         timezone,
         multipliers,
+        selectedProfitZoneMinimumHoldMinutes,
       ),
     });
   }));
@@ -302,6 +314,7 @@ export async function TradeAnalysisPage({
       : result.model.directionTradeCounts.long > 0 ? "long" as const : "short" as const,
     endDate: dateRange.endDate,
     moneyBasis,
+    profitZoneMinimumHoldMinutes: selectedProfitZoneMinimumHoldMinutes,
     rangeKind: dateRange.kind,
     startDate: dateRange.startDate,
   });
@@ -320,7 +333,7 @@ export async function TradeAnalysisPage({
       generatedAtUtc={result.generatedAtUtc}
       model={offlineModel}
       pathname={baseHref}
-      queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}`}
+      queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}:zone-hold:${selectedProfitZoneMinimumHoldMinutes}`}
       reportingCurrency={result.model.currency}
       routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
       viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS[offlineModel.kind]}

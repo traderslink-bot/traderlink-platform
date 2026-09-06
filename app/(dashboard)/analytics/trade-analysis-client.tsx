@@ -1,6 +1,7 @@
 "use client";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -11,6 +12,7 @@ import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
 import Drawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -20,6 +22,7 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Decimal from "decimal.js";
 import Link from "next/link";
@@ -66,6 +69,30 @@ function money(value: string | null, currency: string | null): string {
 
 function percent(value: number | null): string {
   return value === null ? "Unavailable" : `${value.toFixed(1)}%`;
+}
+
+function ColumnHeading({
+  align = "left",
+  help,
+  label,
+}: {
+  align?: "left" | "right";
+  help: string;
+  label: string;
+}) {
+  return <Stack
+    component="span"
+    direction="row"
+    spacing={0.25}
+    sx={{ alignItems: "center", justifyContent: align === "right" ? "flex-end" : "flex-start" }}
+  >
+    <Typography component="span" sx={{ fontSize: "inherit", fontWeight: "inherit" }}>{label}</Typography>
+    <Tooltip arrow title={help}>
+      <IconButton aria-label={`Explain ${label}`} size="small" sx={{ color: "text.secondary", p: 0.25 }}>
+        <InfoOutlinedIcon sx={{ fontSize: 15 }} />
+      </IconButton>
+    </Tooltip>
+  </Stack>;
 }
 
 function signedPercent(value: number | null): string {
@@ -283,7 +310,18 @@ function ScalingOutTable({
     <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
     <HorizontalScrollRegion label="Scaling out trades" minTableWidth={1780} stickyFirstColumn>
       <Table size="small"><TableHead><TableRow>
-        <TableCell>Ticker</TableCell><TableCell>Profit level held</TableCell><TableCell align="right">Shares sold for profit after level</TableCell><TableCell align="right">Maximum position</TableCell><TableCell align="right">Exposure reduced after last scale-out</TableCell><TableCell align="right">Remaining shares</TableCell><TableCell align="right">Gross profit taken after level</TableCell><TableCell align="right">Calculated {basisLabel} profit opportunity</TableCell><TableCell align="right">Final {basisLabel} trade P/L</TableCell><TableCell align="right">Additional {basisLabel} profit opportunity</TableCell><TableCell>Recorded later-exit comparison</TableCell><TableCell />
+        <TableCell><ColumnHeading help="Ticker symbol for this analyzed user-defined trade." label="Trade" /></TableCell>
+        <TableCell><ColumnHeading help="The sustained profit level this trade held and the number of consecutive one-minute candle closes required to qualify." label="Level" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="Shares sold through profitable partial exits after the level qualified and before the first red point or final exit." label="Profit shares" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="The largest number of shares open at one time during the trade." label="Max shares" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="Percentage of the maximum position removed through profitable scale-outs after the level qualified." label="Reduced" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="Shares still open after the last profitable scale-out. When no scale-out occurred, this is the number open at the qualifying close." label="Shares left" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="Exact Gross profit secured through profitable partial exits after the level qualified." label="Profit taken" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help={`Calculated ${basisLabel} profit available at the qualifying candle close.`} label="Opportunity" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help={`Completed trade ${basisLabel} profit or loss.`} label="Final P/L" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help={`Calculated ${basisLabel} profit opportunity minus the completed trade's ${basisLabel} profit or loss.`} label="Opportunity gap" /></TableCell>
+        <TableCell><ColumnHeading help="Compares the scale-out with the recorded prices of later exits when exact quantity matching is available." label="Later exits" /></TableCell>
+        <TableCell><ColumnHeading help="Open the trade's complete one-minute analysis." label="Analysis" /></TableCell>
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => {
         const meaningful = meaningfulByTrade.get(row.roundTripId);
         return <TableRow hover key={row.roundTripId}>
@@ -476,6 +514,7 @@ export function TradeAnalysisClient({
     endDate: string | null;
     direction: "long" | "short" | null;
     moneyBasis: "gross" | "net";
+    profitZoneMinimumHoldMinutes?: number;
     rangeKind: string;
     startDate: string | null;
   }>;
@@ -506,6 +545,7 @@ export function TradeAnalysisClient({
     row.direction === activeDirection), [activeDirection, model.scalingOut.rows]);
   const profitZoneRows = model.profitZones?.rowsByDirection[activeDirection] ?? [];
   const profitZoneRecords = model.profitZones?.recordsByDirection[activeDirection] ?? [];
+  const profitZoneMinimumHoldMinutes = evidenceQuery.profitZoneMinimumHoldMinutes ?? 0;
   const greenToRedOpportunityRows = useMemo(() => model.greenToRedOpportunity.rows.filter((row) =>
     row.direction === activeDirection), [activeDirection, model.greenToRedOpportunity.rows]);
   const directionExcursions = useMemo(() => model.excursions.filter((row) =>
@@ -632,7 +672,16 @@ export function TradeAnalysisClient({
       <Card sx={{ maxWidth: { xs: "100%", sm: 240 } }} variant="outlined">
         <CardActionArea component={Link} href={`/analytics/trade-analyzer/day/trades?${capabilityQuery}`}>
           <CardContent>
-            <Typography color="text.secondary" variant="caption">Analyzed trades</Typography>
+            <Tooltip
+              arrow
+              describeChild
+              title={'This page only displays trades that were analyzed by TradersLink "Trade Analyzer" feature.'}
+            >
+              <Stack component="span" direction="row" spacing={0.4} sx={{ alignItems: "center", width: "fit-content" }}>
+                <Typography color="text.secondary" component="span" variant="caption">Results include analyzed trades only</Typography>
+                <InfoOutlinedIcon sx={{ color: "text.secondary", fontSize: 14 }} />
+              </Stack>
+            </Tooltip>
             <Typography component="div" sx={{ fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>
               {view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
             </Typography>
@@ -673,6 +722,15 @@ export function TradeAnalysisClient({
         <ProfitZoneAnalysis
           currency={model.currency}
           direction={activeDirection}
+          key={`${evidenceQuery.rangeKind}:${evidenceQuery.startDate ?? "all"}:${evidenceQuery.endDate ?? "all"}:${activeDirection}:${profitZoneMinimumHoldMinutes}`}
+          minimumHoldMinutes={profitZoneMinimumHoldMinutes}
+          onMinimumHoldMinutesChange={(minutes) => {
+            if (offline) return;
+            const params = new URLSearchParams(searchParams.toString());
+            if (minutes === 0) params.delete("zoneHold");
+            else params.set("zoneHold", String(minutes));
+            router.push(`${pathname}?${params.toString()}`);
+          }}
           offline={offline}
           records={profitZoneRecords}
           rows={profitZoneRows}

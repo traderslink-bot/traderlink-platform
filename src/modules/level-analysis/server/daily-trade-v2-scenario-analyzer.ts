@@ -69,6 +69,7 @@ export type DailyTradeV2ScaleOut = Readonly<{
 }>;
 
 export type DailyTradeV2ProfitZone = Readonly<{
+  cumulativeQuantitySoldDecimal: string;
   firstReachedAtUtcSeconds: number | null;
   firstReachSource: "completed_close" | "exit" | null;
   longestConsecutiveMinutesAtOrAbove: number;
@@ -85,6 +86,7 @@ export type DailyTradeV2ProfitZone = Readonly<{
   profitableFullExitInZoneGrossDecimal: string;
   quantitySoldInZoneDecimal: string;
   reachedNextLevel: boolean;
+  remainingQuantityAfterZoneActivityDecimal: string | null;
   scaledPositionClosingExitCount: number;
   scaledPositionClosingProfitGrossDecimal: string;
   totalCompletedMinutesInZone: number;
@@ -116,6 +118,7 @@ type PathPoint = Readonly<{
 type ProfitObservation = Readonly<{
   averageEntryPrice: Decimal;
   basisVersion: number;
+  cumulativeSoldQuantity: Decimal;
   grossResult: Decimal;
   openQuantity: Decimal;
   openShareReturnPercent: number;
@@ -126,9 +129,11 @@ type ProfitObservation = Readonly<{
 
 type ExitProfit = Readonly<{
   behavior: "all_at_once" | "scaled";
+  cumulativeSoldQuantityAfter: Decimal;
   grossProfit: Decimal;
   kind: "final_exit" | "partial_exit" | "temporary_flat";
   quantity: Decimal;
+  remainingQuantityAfter: Decimal;
   returnPercent: number;
   time: number;
 }>;
@@ -259,6 +264,7 @@ function buildProfitZones(input: Readonly<{
     const exitProfits = input.exitProfits.filter((exit) =>
       exit.returnPercent + Number.EPSILON >= lowerBoundPercent &&
       (upperBoundPercent === null || exit.returnPercent < upperBoundPercent));
+    const lastExitInZone = exitProfits.at(-1) ?? null;
     const profitTaken = exitProfits.reduce((total, exit) => total.plus(Decimal.max(exit.grossProfit, 0)), new Decimal(0));
     const profitableScaledExits = exitProfits.filter((exit) =>
       exit.behavior === "scaled" && exit.grossProfit.gt(0));
@@ -292,6 +298,8 @@ function buildProfitZones(input: Readonly<{
         }, new Decimal(0))
       : null;
     return Object.freeze({
+      cumulativeQuantitySoldDecimal: (lastExitInZone?.cumulativeSoldQuantityAfter ??
+        firstReached?.cumulativeSoldQuantity ?? new Decimal(0)).toFixed(),
       firstReachedAtUtcSeconds: firstReached?.time ?? null,
       firstReachSource: firstReached?.source ?? null,
       longestConsecutiveMinutesAtOrAbove,
@@ -319,6 +327,8 @@ function buildProfitZones(input: Readonly<{
         .toFixed(),
       quantitySoldInZoneDecimal: quantitySold.toFixed(),
       reachedNextLevel,
+      remainingQuantityAfterZoneActivityDecimal: (lastExitInZone?.remainingQuantityAfter ??
+        firstReached?.openQuantity)?.toFixed() ?? null,
       scaledPositionClosingExitCount: profitableScaledPositionClosures.length,
       scaledPositionClosingProfitGrossDecimal: profitableScaledPositionClosures
         .reduce((total, exit) => total.plus(exit.grossProfit), new Decimal(0))
@@ -422,6 +432,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
   let averageEntryPrice: Decimal | null = null;
   let positionQuantity = new Decimal(0);
   let maximumOpenQuantity = new Decimal(0);
+  let cumulativeSoldQuantity = new Decimal(0);
   let realizedGross = new Decimal(0);
   let candleIndex = 0;
   let basisVersion = 0;
@@ -450,6 +461,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
         observations.push(Object.freeze({
           averageEntryPrice,
           basisVersion,
+          cumulativeSoldQuantity,
           grossResult,
           openQuantity: positionQuantity,
           openShareReturnPercent: perShare.dividedBy(averageEntryPrice).times(100).toNumber(),
@@ -460,6 +472,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
         priceObservations.push(Object.freeze({
           averageEntryPrice,
           basisVersion,
+          cumulativeSoldQuantity,
           grossResult: realizedGross.plus(favorablePerShare.times(positionQuantity)),
           openQuantity: positionQuantity,
           openShareReturnPercent: favorablePerShare.dividedBy(averageEntryPrice).times(100).toNumber(),
@@ -499,6 +512,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
     observations.push(Object.freeze({
       averageEntryPrice,
       basisVersion,
+      cumulativeSoldQuantity,
       grossResult: realizedGross.plus(perShare.times(positionQuantity)),
       openQuantity: positionQuantity,
       openShareReturnPercent: returnPercent,
@@ -509,6 +523,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
     priceObservations.push(Object.freeze({
       averageEntryPrice,
       basisVersion,
+      cumulativeSoldQuantity,
       grossResult: realizedGross.plus(perShare.times(positionQuantity)),
       openQuantity: positionQuantity,
       openShareReturnPercent: returnPercent,
@@ -516,9 +531,21 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
       source: "exit",
       time,
     }));
-    exitProfits.push(Object.freeze({ behavior, grossProfit, kind: event.kind, quantity: closingQuantity, returnPercent, time }));
+    const remainingQuantityAfter = Decimal.max(0, positionQuantity.minus(closingQuantity));
+    const cumulativeSoldQuantityAfter = cumulativeSoldQuantity.plus(closingQuantity);
+    exitProfits.push(Object.freeze({
+      behavior,
+      cumulativeSoldQuantityAfter,
+      grossProfit,
+      kind: event.kind,
+      quantity: closingQuantity,
+      remainingQuantityAfter,
+      returnPercent,
+      time,
+    }));
     realizedGross = realizedGross.plus(grossProfit);
-    positionQuantity = Decimal.max(0, positionQuantity.minus(closingQuantity));
+    positionQuantity = remainingQuantityAfter;
+    cumulativeSoldQuantity = cumulativeSoldQuantityAfter;
     positionCycleHadExit = true;
     if (event.kind === "partial_exit" && grossProfit.gt(0)) {
       reductions.push(Object.freeze({

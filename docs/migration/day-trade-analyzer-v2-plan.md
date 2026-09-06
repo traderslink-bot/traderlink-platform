@@ -192,6 +192,42 @@ For each threshold/band pair show:
   completed red plus the sum of their realized gross losses; and
 - exact supporting records for every row and outcome.
 
+Each exact supporting record provides an in-page `Trade details` action that
+opens the established Workspace Trade Details drawer. The drawer resolves the
+record's representative round-trip ID through the current logical-trade
+membership, so a user-defined trade shows all of its executions rather than a
+ticker aggregate or only one historical round trip. The table does not provide
+a second navigation link because the drawer supplies the connected analysis
+without taking the trader away from Scaling Out.
+
+The ladder itself owns those exact supporting records. Each zone expands into
+a compact trade list, ordered with profit-taking trades first and trades with
+only missed-opportunity/next-move evidence after them. Every trade shows its
+zone activity, next move, time to the zone, total time in the zone, final Gross
+P/L and the in-page Trade Details action. Zone activity also shows the trade's
+individual maximum Gross opportunity, cumulative shares sold through its last
+exit in that zone, shares remaining after that exit and exact Gross profit
+taken inside the band. With no zone exit, the share snapshot uses the trade's
+first reach into the zone. The separate selected-zone evidence table is removed
+because it duplicated this list. The 20% to 29.99% zone starts expanded when
+the page opens and resets open after the date range or Long/Short view changes.
+
+The ladder also provides a chart-only `Minimum time at +20%` control. Its
+default `Any reach (0 min)` preserves the ordinary reach population. Presets
+for 1, 2, 5, 10 and 15 minutes plus a custom whole-minute value let the trader
+require consecutive completed one-minute candle closes at or above +20% while
+the trade remains active. Once a trade qualifies at +20%, its entire observed
+journey through every higher zone remains included. The Reached denominator
+continues to be all analyzed trades for the selected date range and direction,
+not only the qualifying trades. The chart states the resulting qualifying
+count, explains the calculation in a tooltip and resets the 20% zone open when
+the setting changes.
+
+On narrow screens, preserve the desktop column relationships inside one
+horizontal scroll region rather than restacking the zone facts. Pin the Zone
+column, keep expanded trade rows aligned to their zone columns and provide a
+short swipe hint. Vertical sticky chart headings remain desktop-only.
+
 `Gross Opportunity` is the highest calculated unrealized Gross profit on the
 shares still open inside that exact zone. For a trade moving beyond the zone,
 the calculation is capped at the zone's non-overlapping upper edge (`29.99%`,
@@ -234,24 +270,22 @@ remain separate. Ticker is display text only and must never be used as a
 grouping key, denominator or P/L lookup key. A one-member trade may continue
 using its existing ready round-trip analysis until a newer logical-trade
 analysis replaces it; a multi-member trade requires its own combined analysis.
-The exact-trade table's Final Gross P/L comes from the same execution snapshots
+The expanded exact-trade list's Final Gross P/L comes from the same execution snapshots
 used for that trade's zone and exit calculations. It must equal price-and-
 quantity Gross P/L and must not subtract fees, substitute a selected Net result
 or use another trade in the same ticker.
 
-The selected-zone evidence heading states the exact non-overlapping range, such
-as `Trades that reached 20%–29.99%`, followed by the number of those trades out
-of the current analyzed-trade population. Definitions belong in concise heading
-tooltips rather than repeated text in every row. First Reached explains the
-one-minute timing, Time to Zone begins at the first entry order, and Time in
-Zone totals every completed minute in the band while the trade is active,
-including later returns. Partial Profit describes scaling out, Full Exit Profit
-means fully exiting the position with one sell order, Gross Opportunity is the
-highest calculated opportunity inside that band, and Final Gross P/L excludes
-broker fees. Next-zone outcomes use supporting-text typography.
-The exact record table keeps every heading and value left-aligned and uses
-compact, deliberate column widths so removing repeated row explanations also
-removes the empty horizontal gaps they created.
+Each expanded zone states its exact non-overlapping range, such as
+`20%–29.99%`, and the number of those trades out of the current analyzed-trade
+population. Definitions belong in concise heading tooltips rather than repeated
+text in every row. Reached explains the one-minute timing, Time to begins at the
+first entry order, and Time in totals every completed minute in the band while
+the trade is active, including later returns. Partial profit describes scaling
+out, Full exit means fully exiting the position with one sell order, Gross
+opportunity is the highest calculated opportunity inside that band, and Final
+Gross P/L excludes broker fees. Next-move outcomes use supporting-text
+typography. The compact list keeps each zone's facts together without a second
+selected-zone table.
 Profit Taken contains only the percentage of zone-reaching trades that took
 profit and their combined Gross profit. A separate Exit Type column directly
 after it contains the exclusive Partial exits and Full exits percentage-and-
