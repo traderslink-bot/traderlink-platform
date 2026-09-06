@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
 import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
 export default async function CommunityCoachingIndexPage() {
   const identity = await requireTraderLinkPlatformServerComponentPageIdentity();
