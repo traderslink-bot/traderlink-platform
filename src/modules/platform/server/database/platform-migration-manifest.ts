@@ -47,6 +47,7 @@ import { traderLinkCommunitiesIdentityPermissionsMigration } from "@/src/modules
 import { traderLinkCommunitiesPartnerPlatformMigration } from "@/src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
 import { traderLinkCommunitiesDiscordFeatureAccessMigration } from "@/src/modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access";
 import { traderLinkCommunitiesServerWatchlistsMigration } from "@/src/modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists";
+import { traderLinkCommunitiesPrivatePilotBootstrapMigration } from "@/src/modules/communities/server/database/migrations/0125_traderlink_communities_private_pilot_bootstrap";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -605,6 +606,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists.ts",
       migration: traderLinkCommunitiesServerWatchlistsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0125_traderlink_communities_private_pilot_bootstrap.ts",
+      migration: traderLinkCommunitiesPrivatePilotBootstrapMigration,
     }),
   ]);
 
