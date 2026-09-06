@@ -148,3 +148,20 @@ online release review and is not claimed by this checkpoint.
 - [x] Keep the overview capability link, browser metadata, route title, Help
   target label, offline title and V2 visual specification consistent with the
   accepted page name.
+
+## Entries and Exits disclosure refinement — 2026-09-06
+
+- [x] Keep `Execution mix` expanded when the page opens.
+- [x] Start `Entry execution context`, `Exit execution context` and `Price
+  reached after exits` collapsed so the deep-dive data is available without
+  overwhelming the initial page view.
+
+## Scaling Out Gross P/L refinement — 2026-09-06
+
+- [x] Remove the Gross/Net selector from Scaling Out.
+- [x] Force every Scaling Out calculation, record and offline query identity to
+  Gross even when an old URL requests Net or the saved account preference is Net.
+- [x] Add `Results use Gross P/L` at the top right of the Profit Taking by Price
+  Zone chart.
+- [x] Focused ESLint, targeted TypeScript, React best-practices review and
+  `git diff --check` pass for the Gross-only refinement.

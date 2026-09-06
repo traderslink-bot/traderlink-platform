@@ -88,6 +88,11 @@ or turn an observed scenario into advice.
 No separate post-exit page and no duplicate Time of Day page are planned.
 `/analytics/timing` already owns entry/exit time analysis.
 
+On Entries and Exits, `Execution mix` remains expanded when the page opens.
+The three deeper sections below it—`Entry execution context`, `Exit execution
+context` and `Price reached after exits`—start collapsed so the page remains
+scannable before the trader chooses a detailed analysis.
+
 ## Date-filter contract
 
 Required choices: Today, This week, Last week, This month, Last month, Last 30
@@ -226,9 +231,11 @@ the setting changes.
 On Scaling Out, the existing page-wide date selector moves into the
 non-collapsible `Profit taking by price zone` header beside the minimum-time
 control. One Update action applies both selections; no duplicate date control
-or second chart-only date state is introduced. The section title owns the
-Profit Zones definition tooltip. The outer section does not collapse, while
-each individual price zone retains its expandable exact-trade list.
+or second chart-only date state is introduced. Scaling Out always calculates
+and displays Gross P/L, so it has no Gross/Net selector; the chart header states
+`Results use Gross P/L`. The section title owns the Profit Zones definition
+tooltip. The outer section does not collapse, while each individual price zone
+retains its expandable exact-trade list.
 
 On narrow screens, preserve the desktop column relationships inside one
 horizontal scroll region rather than restacking the zone facts. Pin the Zone
@@ -242,8 +249,7 @@ the calculation is capped at the zone's non-overlapping upper edge (`29.99%`,
 guaranteed fill. `Profit taken in zone` and `Realized gross losses` come only
 from recorded executions and completed Journal trades. The ladder and its exact
 records never add overlapping zone opportunities into a false grand total. All
-profit-zone money stays Gross even when the page's general Gross/Net selector
-is Net.
+Scaling Out money stays Gross.
 
 The exact record for a selected zone distinguishes partial profit taken before
 the next zone, partial profit taken after the trade had already reached the next

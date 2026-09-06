@@ -263,49 +263,52 @@ function ProfitZoneHeaderControls({
   const requestedMinutes = selection === "custom" ? Number(customMinutes) : Number(selection);
   const valid = Number.isSafeInteger(requestedMinutes) &&
     requestedMinutes >= (selection === "custom" ? 1 : 0) && requestedMinutes <= 120;
-  return <OverviewDateRangeControl
-    additionalControls={<>
-      <Box sx={{ alignItems: "center", display: "flex", gap: 0.4 }}>
-        <TextField
+  return <Stack spacing={0.5} sx={{ alignItems: { lg: "flex-end" } }}>
+    <Typography color="text.secondary" sx={{ alignSelf: "flex-end", fontWeight: 750, textAlign: "right" }} variant="caption">Results use Gross P/L</Typography>
+    <OverviewDateRangeControl
+      additionalControls={<>
+        <Box sx={{ alignItems: "center", display: "flex", gap: 0.4 }}>
+          <TextField
+            disabled={disabled}
+            label="Minimum time at +20%"
+            onChange={(event) => setSelection(event.target.value)}
+            select
+            size="small"
+            sx={{ minWidth: 205 }}
+            value={selection}
+          >
+            <MenuItem value="0">Any reach (0 min)</MenuItem>
+            <MenuItem value="1">1 minute</MenuItem>
+            <MenuItem value="2">2 minutes</MenuItem>
+            <MenuItem value="5">5 minutes</MenuItem>
+            <MenuItem value="10">10 minutes</MenuItem>
+            <MenuItem value="15">15 minutes</MenuItem>
+            <MenuItem value="custom">Custom</MenuItem>
+          </TextField>
+          <Tooltip arrow title="Choose how long a trade must stay at or above +20% before it is included in this chart. Time is counted with consecutive completed 1-minute candle closes while the trade is active. Any reach keeps the current behavior. Once a trade qualifies, its complete journey through every higher zone remains in the chart. Reached percentages still use all analyzed trades in the selected date range.">
+            <IconButton aria-label="Explain minimum time at plus 20 percent" size="small" sx={{ color: "text.secondary", p: 0.35 }}><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton>
+          </Tooltip>
+        </Box>
+        {selection === "custom" ? <TextField
           disabled={disabled}
-          label="Minimum time at +20%"
-          onChange={(event) => setSelection(event.target.value)}
-          select
+          error={!valid}
+          helperText={!valid ? "Enter 1–120" : undefined}
+          label="Minutes"
+          onChange={(event) => setCustomMinutes(event.target.value)}
           size="small"
-          sx={{ minWidth: 205 }}
-          value={selection}
-        >
-          <MenuItem value="0">Any reach (0 min)</MenuItem>
-          <MenuItem value="1">1 minute</MenuItem>
-          <MenuItem value="2">2 minutes</MenuItem>
-          <MenuItem value="5">5 minutes</MenuItem>
-          <MenuItem value="10">10 minutes</MenuItem>
-          <MenuItem value="15">15 minutes</MenuItem>
-          <MenuItem value="custom">Custom</MenuItem>
-        </TextField>
-        <Tooltip arrow title="Choose how long a trade must stay at or above +20% before it is included in this chart. Time is counted with consecutive completed 1-minute candle closes while the trade is active. Any reach keeps the current behavior. Once a trade qualifies, its complete journey through every higher zone remains in the chart. Reached percentages still use all analyzed trades in the selected date range.">
-          <IconButton aria-label="Explain minimum time at plus 20 percent" size="small" sx={{ color: "text.secondary", p: 0.35 }}><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton>
-        </Tooltip>
-      </Box>
-      {selection === "custom" ? <TextField
-        disabled={disabled}
-        error={!valid}
-        helperText={!valid ? "Enter 1–120" : undefined}
-        label="Minutes"
-        onChange={(event) => setCustomMinutes(event.target.value)}
-        size="small"
-        slotProps={{ htmlInput: { max: 120, min: 1, step: 1 } }}
-        sx={{ width: 112 }}
-        type="number"
-        value={customMinutes}
-      /> : null}
-    </>}
-    additionalSearchParams={{ zoneHold: requestedMinutes === 0 ? null : String(requestedMinutes) }}
-    href={href}
-    showCaption={false}
-    updateDisabled={disabled || !valid}
-    value={dateRange}
-  />;
+          slotProps={{ htmlInput: { max: 120, min: 1, step: 1 } }}
+          sx={{ width: 112 }}
+          type="number"
+          value={customMinutes}
+        /> : null}
+      </>}
+      additionalSearchParams={{ basis: null, zoneHold: requestedMinutes === 0 ? null : String(requestedMinutes) }}
+      href={href}
+      showCaption={false}
+      updateDisabled={disabled || !valid}
+      value={dateRange}
+    />
+  </Stack>;
 }
 
 function MfeMaeTable({
@@ -850,7 +853,7 @@ export function TradeAnalysisClient({
             <DashboardMetricCard caption="Share of no-scale trades whose completed result finished below zero" label="No scale-out, ended red" value={`${directionScalingSummary.noScaleEndedRed} · ${percent(directionScalingSummary.noScale === 0 ? null : directionScalingSummary.noScaleEndedRed / directionScalingSummary.noScale * 100)}`} />
           </Box>
           <ScalingOutTable currency={model.currency} meaningfulRows={meaningfulProfitRows} moneyBasis={model.moneyBasis} offline={offline} rows={scalingRows} />
-          <Typography color="text.secondary" variant="body2">Profit taken on partial exits is shown as exact Gross realized P/L for the shares sold at those executions. Final trade P/L follows the selected {moneyBasisLabel} basis.</Typography>
+          <Typography color="text.secondary" variant="body2">Profit taken on partial exits is shown as exact Gross realized P/L for the shares sold at those executions. Final trade P/L is also Gross.</Typography>
         </Stack>
       </Section> : null}
 
@@ -874,7 +877,7 @@ export function TradeAnalysisClient({
         </Box>
       </Section> : null}
 
-      {view === "entry-exit" ? <Section defaultExpanded description={`Initial entries and adds are separated in every row. Volume compares the execution's 1-minute candle with up to 20 preceding 1-minute candles and requires at least 5. A trade can appear in more than one row when its executions occurred in different bands.`} helpHref="/help/trade-analyzer/entry-exit-analysis#entry-execution-context" title="Entry execution context">
+      {view === "entry-exit" ? <Section description={`Initial entries and adds are separated in every row. Volume compares the execution's 1-minute candle with up to 20 preceding 1-minute candles and requires at least 5. A trade can appear in more than one row when its executions occurred in different bands.`} helpHref="/help/trade-analyzer/entry-exit-analysis#entry-execution-context" title="Entry execution context">
         <Stack spacing={2.5}>
           <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from Session VWAP on the completed execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.vwap} /></Box>
           <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from EMA 9 on the completed 1-minute execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.ema9} /></Box>
@@ -890,7 +893,7 @@ export function TradeAnalysisClient({
         </Stack>
       </Section> : null}
 
-      {view === "entry-exit" ? <Section defaultExpanded description={`Partial exits and final exits are separated in every row. Each row reports the completed results of the trades containing those exits; a trade can appear in more than one row when its exits occurred in different bands.`} helpHref="/help/trade-analyzer/entry-exit-analysis#exit-execution-context" title="Exit execution context">
+      {view === "entry-exit" ? <Section description={`Partial exits and final exits are separated in every row. Each row reports the completed results of the trades containing those exits; a trade can appear in more than one row when its exits occurred in different bands.`} helpHref="/help/trade-analyzer/entry-exit-analysis#exit-execution-context" title="Exit execution context">
         <Stack spacing={2.5}>
           <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from Session VWAP on the completed execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.vwap} /></Box>
           <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from EMA 9 on the completed 1-minute execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.ema9} /></Box>
@@ -906,7 +909,7 @@ export function TradeAnalysisClient({
         </Stack>
       </Section> : null}
 
-      {view === "entry-exit" ? <Section defaultExpanded description="The highest and lowest saved prices from each partial or final exit through 5, 15, 30 and 60 minutes. The execution price is the starting point. This is later price history, not a claim that those prices could have been captured." helpHref="/help/trade-analyzer/entry-exit-analysis#after-exit" title="Price reached after exits">
+      {view === "entry-exit" ? <Section description="The highest and lowest saved prices from each partial or final exit through 5, 15, 30 and 60 minutes. The execution price is the starting point. This is later price history, not a claim that those prices could have been captured." helpHref="/help/trade-analyzer/entry-exit-analysis#after-exit" title="Price reached after exits">
         <EventPathTable currency={model.currency} direction={activeDirection} kinds={["Partial exit", "Final exit"]} model={model} offline={offline} />
       </Section> : null}
 

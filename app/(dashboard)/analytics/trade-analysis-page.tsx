@@ -171,11 +171,13 @@ export async function TradeAnalysisPage({
   const selectedProfitZoneMinimumHoldMinutes = view === "scaling-out"
     ? profitZoneMinimumHoldMinutes(searchParams)
     : 0;
-  const moneyBasis = withReadonlyPlatformDatabase({}, (database) =>
-    resolveJournalAnalyticsMoneyBasis(
-      searchParams.basis,
-      new PlatformUserPreferenceRepository(database).getActiveUserPnlReportingBasis(scope.userId),
-    ));
+  const moneyBasis = view === "scaling-out"
+    ? "gross" as const
+    : withReadonlyPlatformDatabase({}, (database) =>
+        resolveJournalAnalyticsMoneyBasis(
+          searchParams.basis,
+          new PlatformUserPreferenceRepository(database).getActiveUserPnlReportingBasis(scope.userId),
+        ));
 
   if (view === "trades") {
     const tradeIndex = await withJournalAnalyticsReportingDashboardRuntime(
@@ -346,8 +348,8 @@ export async function TradeAnalysisPage({
         </Box>
         <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
       </Stack>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: view === "scaling-out" ? "flex-end" : "space-between" }}>
-        {view === "scaling-out" ? null : <OverviewDateRangeControl href={baseHref} value={dateRange} />}
+      {view === "scaling-out" ? null : <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}>
+        <OverviewDateRangeControl href={baseHref} value={dateRange} />
         <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
           {(["gross", "net"] as const).map((basis) => (
             <Button
@@ -360,7 +362,7 @@ export async function TradeAnalysisPage({
             </Button>
           ))}
         </Stack>
-      </Stack>
+      </Stack>}
       <TradeAnalysisClient
         evidenceQuery={evidenceQuery}
         model={result.model}

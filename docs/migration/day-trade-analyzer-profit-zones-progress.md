@@ -378,6 +378,12 @@ to this worker.
   confirms the filter changes only Profit Zones, keeps the full higher-zone
   journey for qualifying trades and retains all analyzed trades as the Reached
   denominator.
+- [x] Remove the Scaling Out Gross/Net selector and force the complete page,
+  including its evidence and offline identities, to Gross P/L.
+- [x] State `Results use Gross P/L` at the top right of the Profit Taking by
+  Price Zone chart beside its date and minimum-time controls.
+- [x] Focused ESLint, targeted TypeScript, React best-practices review and
+  `git diff --check` pass for the Gross-only refinement.
 - [ ] Keep this slice local until the owner explicitly authorizes a coordinator
   handoff and production release.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
