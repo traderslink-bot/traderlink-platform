@@ -207,3 +207,11 @@ online release review and is not claimed by this checkpoint.
   highest-zone table, exact evidence table and same-page Details action.
 - [ ] Integrated desktop/mobile Light/Dark rendering remains for the authorized
   online review; no local server, build, push or deployment was performed.
+
+### Production follow-up
+
+- [x] Keep the exact-record table at 10 rows per page by default and show its
+  pagination controls even when the selected filter currently has ten or fewer
+  trades.
+- [ ] Publish the previously omitted Entry/Exit summary and shared Day-page
+  control-placement parent slice together with this pagination correction.

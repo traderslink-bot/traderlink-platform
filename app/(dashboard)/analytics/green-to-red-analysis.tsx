@@ -213,7 +213,7 @@ export function GreenToRedAnalysis({
   const [detailsTrade, setDetailsTrade] = useState<TradeAnalysisGreenToRedOpportunityRow | null>(null);
   const [filter, setFilter] = useState<EvidenceFilter>("all");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(10);
   const endedRedRows = useMemo(() => rows.filter((row) => new Decimal(row.finalGrossPnlDecimal).isNegative()), [rows]);
   const turnedRedRows = useMemo(() => rows.filter((row) => row.firstRedAfterTwentyAtUtcSeconds !== null), [rows]);
   const profitTakenRows = useMemo(() => rows.filter((row) => new Decimal(row.profitSecuredGrossDecimal).isPositive()), [rows]);
@@ -305,7 +305,7 @@ export function GreenToRedAnalysis({
         </TextField>
       </Stack>
       {filteredRows.length === 0 ? <Typography color="text.secondary">No trades match this filter.</Typography> : <Stack spacing={1}>
-        <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={filteredRows.length} />
+        <TradeAnalyzerTablePagination alwaysVisible onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={filteredRows.length} />
         <HorizontalScrollRegion label="Green-to-red trade records" minTableWidth={1540} stickyFirstColumn>
           <Table size="small"><TableHead><TableRow>
             <TableCell><HelpLabel help="The saved analyzed trade. Multiple executions and round trips remain part of the same trade when the trader grouped them together." label="Trade" /></TableCell>

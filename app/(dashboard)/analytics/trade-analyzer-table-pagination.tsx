@@ -20,19 +20,21 @@ export function paginatedRows<T>(rows: readonly T[], page: number, pageSize: num
 }
 
 export function TradeAnalyzerTablePagination({
+  alwaysVisible = false,
   onPageChange,
   onPageSizeChange,
   page,
   pageSize,
   rowCount,
 }: {
+  alwaysVisible?: boolean;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
   page: number;
   pageSize: number;
   rowCount: number;
 }) {
-  if (rowCount <= 10) return null;
+  if (!alwaysVisible && rowCount <= 10) return null;
   const currentPage = boundedPage(page, rowCount, pageSize);
   const start = (currentPage - 1) * pageSize + 1;
   const end = Math.min(currentPage * pageSize, rowCount);
