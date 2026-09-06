@@ -12,5 +12,5 @@ function resolveSection(parts:readonly string[]):TraderLinkCommunitySection{
 
 export default async function CommunitySectionPage({params}:{params:Promise<{communitySlug:string;section:string[]}>}){
   const {communitySlug,section}=await params; const resolved=resolveSection(section); const loaded=await loadCommunityDashboard(communitySlug,`/communities/${communitySlug}/${section.join("/")}`);
-  return <CommunityDashboard isReview={loaded.isReview} section={resolved} snapshot={loaded.snapshot}/>;
+  return <CommunityDashboard discordClientId={process.env.DISCORD_CLIENT_ID??null} isReview={loaded.isReview} section={resolved} snapshot={loaded.snapshot}/>;
 }

@@ -3,5 +3,5 @@ import { loadCommunityDashboard } from "../community-dashboard-loader";
 
 export default async function CommunityHomePage({params}:{params:Promise<{communitySlug:string}>}){
   const {communitySlug}=await params; const loaded=await loadCommunityDashboard(communitySlug,`/communities/${communitySlug}`);
-  return <CommunityDashboard isReview={loaded.isReview} section="home" snapshot={loaded.snapshot}/>;
+  return <CommunityDashboard discordClientId={process.env.DISCORD_CLIENT_ID??null} isReview={loaded.isReview} section="home" snapshot={loaded.snapshot}/>;
 }
