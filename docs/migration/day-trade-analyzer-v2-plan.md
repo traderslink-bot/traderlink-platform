@@ -116,9 +116,13 @@ The filter uses the completed trade's Journal closing date in the account
 timezone. It persists in the URL and across all seven routes, preserves the
 Gross/Net basis and direction when applicable, and resets only invalidated
 pagination. On every route except Gross-only Scaling Out, the date and
-Gross/Net controls sit directly below the analyzed-trade count and immediately
-above the page's first analysis element. The resolved dates and selected-period
-trade count stay visible.
+Gross/Net controls share the compact row directly below the page title with the
+analyzed-trade count: the count stays left and the date plus Gross/Net controls
+stay right on desktop, then stack cleanly on narrow screens. Scaling Out keeps
+its date and minimum-time controls in the first chart header. The resolved dates
+and selected-period trade count stay visible. Do not show a `Trade Analyzer`
+eyebrow above these page titles, a duplicate single-direction completed-trade
+line, or a second analyzed-trade total in the Day overview cards.
 
 ## Calculation contract
 

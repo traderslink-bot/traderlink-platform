@@ -26,7 +26,7 @@ export function TradeAnalysisRangeAndBasisControls({
   return <Stack
     direction={{ xs: "column", md: "row" }}
     spacing={1.5}
-    sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}
+    sx={{ alignItems: { md: "center" }, justifyContent: "flex-end", ml: { md: "auto" } }}
   >
     <OverviewDateRangeControl href={pathname} value={dateRange} />
     <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>

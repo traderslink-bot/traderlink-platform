@@ -213,5 +213,22 @@ online release review and is not claimed by this checkpoint.
 - [x] Keep the exact-record table at 10 rows per page by default and show its
   pagination controls even when the selected filter currently has ten or fewer
   trades.
-- [ ] Publish the previously omitted Entry/Exit summary and shared Day-page
+- [x] Publish the previously omitted Entry/Exit summary and shared Day-page
   control-placement parent slice together with this pagination correction.
+
+## Compact Day-page headers — 2026-09-06
+
+- [x] Remove the `Trade Analyzer` eyebrow above every online and offline Day
+  Analyzer page title.
+- [x] Remove the duplicate single-direction `Long/Short trades · completed
+  trades` line while preserving the Long/Short selector when both exist.
+- [x] Put the analyzed-trade count directly below the title, with date-range and
+  Gross/Net controls aligned together on the right on desktop.
+- [x] Keep Scaling Out's date and minimum-time controls in its first chart
+  header instead of duplicating them above the chart.
+- [x] Remove the second analyzed-trade total from the Day overview metric grid.
+- [x] Reduce the title-to-content and top-level analysis spacing so the first
+  table, chart or summary starts directly after the compact control row.
+- [x] Pass focused TypeScript, ESLint and whitespace checks for the five changed
+  Day Analyzer UI surfaces; preserve the existing top-right Help control and
+  responsive mobile stacking.

@@ -1,6 +1,5 @@
 import "server-only";
 
-import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -209,21 +208,20 @@ export async function TradeAnalysisPage({
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["trade-analyzer-trades"]}
       />
       <DashboardPage>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-          <Box>
-            <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Trade Analyzer</Typography>
-            <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">{details.title}</Typography>
-          </Box>
-          <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
+        <Stack spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+            <Typography component="h1" variant="h1">{details.title}</Typography>
+            <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
+          </Stack>
+          <AnalyzedTradesIndex
+            currency={tradeIndex.currency}
+            dateRange={dateRange}
+            endDate={dateRange.endDate}
+            initialPage={tradeIndex.page}
+            moneyBasis={moneyBasis}
+            startDate={dateRange.startDate}
+          />
         </Stack>
-        <AnalyzedTradesIndex
-          currency={tradeIndex.currency}
-          dateRange={dateRange}
-          endDate={dateRange.endDate}
-          initialPage={tradeIndex.page}
-          moneyBasis={moneyBasis}
-          startDate={dateRange.startDate}
-        />
       </DashboardPage>
       </>
     );
@@ -317,18 +315,17 @@ export async function TradeAnalysisPage({
       viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS[offlineModel.kind]}
     />
     <DashboardPage>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-        <Box>
-          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Trade Analyzer</Typography>
-          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">{details.title}</Typography>
-        </Box>
-        <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
+      <Stack spacing={1}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+          <Typography component="h1" variant="h1">{details.title}</Typography>
+          <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
+        </Stack>
+        <TradeAnalysisClient
+          evidenceQuery={evidenceQuery}
+          model={result.model}
+          view={view}
+        />
       </Stack>
-      <TradeAnalysisClient
-        evidenceQuery={evidenceQuery}
-        model={result.model}
-        view={view}
-      />
     </DashboardPage>
     </>
   );

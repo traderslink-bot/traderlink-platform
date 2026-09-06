@@ -161,14 +161,16 @@ export function AnalyzedTradesIndex({
     : [];
   return (
     <Stack spacing={1.5}>
-      <Box sx={{ maxWidth: 240 }}>
-        <DashboardMetricCard
-          caption="Ready analyzer records in the selected period"
-          label="Analyzed trades"
-          value={String(result?.totalRowCount ?? 0)}
-        />
-      </Box>
-      <TradeAnalysisRangeAndBasisControls dateRange={dateRange} moneyBasis={moneyBasis} />
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "flex-start" }, justifyContent: "space-between" }}>
+        <Box sx={{ maxWidth: 240, width: "100%" }}>
+          <DashboardMetricCard
+            caption="Ready analyzer records in the selected period"
+            label="Analyzed trades"
+            value={String(result?.totalRowCount ?? 0)}
+          />
+        </Box>
+        <TradeAnalysisRangeAndBasisControls dateRange={dateRange} moneyBasis={moneyBasis} />
+      </Stack>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <TextField
           label="Ticker"

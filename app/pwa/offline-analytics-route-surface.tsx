@@ -82,10 +82,8 @@ function AnalyticsHeader({ kind }: { kind: JournalAnalyticsOfflineRouteKind }) {
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
       <Box>
-        <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
-          {analyzer ? "Trade Analyzer" : "Analytics"}
-        </Typography>
-        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">{TITLES[kind]}</Typography>
+        {!analyzer ? <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography> : null}
+        <Typography component="h1" sx={{ mt: analyzer ? 0 : 0.5 }} variant="h1">{TITLES[kind]}</Typography>
       </Box>
       {helpHref ? <TradeAnalyzerHelpLink href={helpHref} label={TITLES[kind]} size="medium" /> : null}
     </Stack>

@@ -661,10 +661,7 @@ function DirectionControl({
 }) {
   const hasBothDirections = counts.long > 0 && counts.short > 0;
   if (!hasBothDirections) {
-    const count = counts[activeDirection];
-    return <Typography color="text.secondary" variant="body2">
-      {activeDirection === "long" ? "Long" : "Short"} trades · {count} completed {count === 1 ? "trade" : "trades"}
-    </Typography>;
+    return null;
   }
   return <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
     {(["long", "short"] as const).map((direction) => <Button
@@ -685,7 +682,7 @@ function AnalyzedTradeCountCard({
   capabilityQuery: string;
   count: number;
 }) {
-  return <Card sx={{ maxWidth: { xs: "100%", sm: 240 } }} variant="outlined">
+  return <Card sx={{ maxWidth: { xs: "100%", sm: 240 }, width: "100%" }} variant="outlined">
     <CardActionArea component={Link} href={`/analytics/trade-analyzer/day/trades?${capabilityQuery}`}>
       <CardContent>
         <Tooltip
@@ -868,16 +865,16 @@ export function TradeAnalysisClient({
   const visiblePatternGroups = paginatedRows(patternGroups, currentPatternPage, patternPageSize);
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
   if (model.eligibleDayTradeCount === 0 || model.analyzedTradeCount === 0) {
-    return <Stack spacing={2.5}>
-      <AnalyzedTradeCountCard capabilityQuery={capabilityQuery} count={0} />
-      {view === "scaling-out" ? <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <ProfitZoneHeaderControls
+    return <Stack spacing={1.5}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "flex-start" }, justifyContent: "space-between" }}>
+        <AnalyzedTradeCountCard capabilityQuery={capabilityQuery} count={0} />
+        {view === "scaling-out" ? <ProfitZoneHeaderControls
           currentMinutes={profitZoneMinimumHoldMinutes}
           dateRange={profitZoneDateRange}
           disabled={offline}
           href={pathname}
-        />
-      </Box> : <TradeAnalysisRangeAndBasisControls dateRange={profitZoneDateRange} moneyBasis={model.moneyBasis} />}
+        /> : <TradeAnalysisRangeAndBasisControls dateRange={profitZoneDateRange} moneyBasis={model.moneyBasis} />}
+      </Stack>
       <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined">
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">
           {model.eligibleDayTradeCount === 0 ? "No completed day trades" : "No trades have been analyzed."}
@@ -897,19 +894,31 @@ export function TradeAnalysisClient({
   const entryContext = model.entryContextByDirection[activeDirection];
   const exitContext = model.exitExecutionContextByDirection[activeDirection];
   return (
-    <Stack spacing={2.5}>
-      {view !== "day" ? <DirectionControl activeDirection={activeDirection} counts={visibleDirectionCounts} onChange={(direction) => {
-        setSelectedDirection(direction);
-        if (offline) return;
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("direction", direction);
-        params.delete("page");
-        router.replace(`${pathname}?${params.toString()}`);
-      }} /> : null}
+    <Stack spacing={1.5}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "flex-start" }, justifyContent: "space-between" }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-start" } }}>
+          <AnalyzedTradeCountCard
+            capabilityQuery={capabilityQuery}
+            count={view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
+          />
+          {view !== "day" ? <DirectionControl activeDirection={activeDirection} counts={visibleDirectionCounts} onChange={(direction) => {
+            setSelectedDirection(direction);
+            if (offline) return;
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("direction", direction);
+            params.delete("page");
+            router.replace(`${pathname}?${params.toString()}`);
+          }} /> : null}
+        </Stack>
+        {view !== "scaling-out" ? <TradeAnalysisRangeAndBasisControls
+          dateRange={profitZoneDateRange}
+          moneyBasis={model.moneyBasis}
+        /> : null}
+      </Stack>
+
       {view === "day" ? <Stack spacing={1.25}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Selected-period records</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
-          <DashboardMetricCard caption={`${model.analyzedExecutionCount} saved execution snapshots`} label="Analyzed day trades" value={String(model.analyzedTradeCount)} />
           <DashboardMetricCard caption={`${model.eligibleDayTradeCount} completed day trades checked`} label="Analyzer coverage" value={percent(model.coveragePercent)} />
           <DashboardMetricCard caption={`Combined completed ${moneyBasisLabel} P/L`} label={`${moneyBasisLabel} trade P/L`} value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
           <DashboardMetricCard caption="Trades that held a meaningful profit level for its required number of completed 1-minute closes" label="Meaningful-profit scenarios" value={String(model.meaningfulProfit.tradeCount)} />
@@ -921,16 +930,6 @@ export function TradeAnalysisClient({
           <DashboardMetricCard caption="Average percentage result for these trades" label="Average return" value={percent(model.averageReturnPercent)} valueColor={financialOutcomeColor(model.averageReturnPercent)} />
         </Box>
       </Stack> : null}
-
-      <AnalyzedTradeCountCard
-        capabilityQuery={capabilityQuery}
-        count={view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
-      />
-
-      {view !== "scaling-out" ? <TradeAnalysisRangeAndBasisControls
-        dateRange={profitZoneDateRange}
-        moneyBasis={model.moneyBasis}
-      /> : null}
 
       {view === "day" ? (
         <Stack spacing={1.25}>
