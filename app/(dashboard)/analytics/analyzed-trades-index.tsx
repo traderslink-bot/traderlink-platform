@@ -161,7 +161,7 @@ export function AnalyzedTradesIndex({
     : [];
   return (
     <Stack spacing={1.5}>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "flex-start" }, justifyContent: "space-between" }}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "flex-end" }, justifyContent: "space-between" }}>
         <Box sx={{ maxWidth: 240, width: "100%" }}>
           <DashboardMetricCard
             caption="Ready analyzer records in the selected period"

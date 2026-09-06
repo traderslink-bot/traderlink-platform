@@ -28,7 +28,7 @@ export function TradeAnalysisRangeAndBasisControls({
     spacing={1.5}
     sx={{ alignItems: { md: "center" }, justifyContent: "flex-end", ml: { md: "auto" } }}
   >
-    <OverviewDateRangeControl href={pathname} value={dateRange} />
+    <OverviewDateRangeControl href={pathname} showCaption={false} value={dateRange} />
     <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
       {(["gross", "net"] as const).map((basis) => <Button
         href={basisHref(basis)}

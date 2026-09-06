@@ -866,7 +866,7 @@ export function TradeAnalysisClient({
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
   if (model.eligibleDayTradeCount === 0 || model.analyzedTradeCount === 0) {
     return <Stack spacing={1.5}>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "flex-start" }, justifyContent: "space-between" }}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: view === "scaling-out" ? "flex-start" : "flex-end" }, justifyContent: "space-between" }}>
         <AnalyzedTradeCountCard capabilityQuery={capabilityQuery} count={0} />
         {view === "scaling-out" ? <ProfitZoneHeaderControls
           currentMinutes={profitZoneMinimumHoldMinutes}
@@ -895,7 +895,7 @@ export function TradeAnalysisClient({
   const exitContext = model.exitExecutionContextByDirection[activeDirection];
   return (
     <Stack spacing={1.5}>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "flex-start" }, justifyContent: "space-between" }}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: view === "scaling-out" ? "flex-start" : "flex-end" }, justifyContent: "space-between" }}>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-start" } }}>
           <AnalyzedTradeCountCard
             capabilityQuery={capabilityQuery}

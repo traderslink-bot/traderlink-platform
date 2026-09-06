@@ -232,3 +232,13 @@ online release review and is not claimed by this checkpoint.
 - [x] Pass focused TypeScript, ESLint and whitespace checks for the five changed
   Day Analyzer UI surfaces; preserve the existing top-right Help control and
   responsive mobile stacking.
+
+## Day-page control alignment follow-up — 2026-09-06
+
+- [x] Remove the `All completed trade dates · based on each trade's closing
+  date` caption from every Day Analyzer date control.
+- [x] Bottom-align Date range and Gross/Net controls with the analyzed-trade
+  count card so the controls sit directly above each page's first analysis
+  element without changing Scaling Out's approved chart-header controls.
+- [x] Pass focused TypeScript, ESLint, source-contract and whitespace checks for
+  the three changed Day Analyzer components.

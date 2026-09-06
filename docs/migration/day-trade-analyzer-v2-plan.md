@@ -118,9 +118,11 @@ Gross/Net basis and direction when applicable, and resets only invalidated
 pagination. On every route except Gross-only Scaling Out, the date and
 Gross/Net controls share the compact row directly below the page title with the
 analyzed-trade count: the count stays left and the date plus Gross/Net controls
-stay right on desktop, then stack cleanly on narrow screens. Scaling Out keeps
-its date and minimum-time controls in the first chart header. The resolved dates
-and selected-period trade count stay visible. Do not show a `Trade Analyzer`
+stay right on desktop, aligned to the bottom of the count card so they sit
+directly above the first analysis element, then stack cleanly on narrow screens.
+Scaling Out keeps its date and minimum-time controls in the first chart header.
+Do not repeat the resolved closing-date caption below the date control. The
+selected-period trade count stays visible. Do not show a `Trade Analyzer`
 eyebrow above these page titles, a duplicate single-direction completed-trade
 line, or a second analyzed-trade total in the Day overview cards.
 
