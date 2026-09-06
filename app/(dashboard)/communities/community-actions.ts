@@ -31,7 +31,7 @@ async function context(slug: string) {
 export async function createCommunityAlertAction(formData: FormData): Promise<void> {
   const communitySlug=required(formData,"communitySlug"); const {identity}=await context(communitySlug);
   withPlatformDatabase({mode:"runtime"},database=>{ const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug); const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}; const repository=new TraderLinkCommunityPlatformRepository(database); const atUtc=createCanonicalUtcTimestamp(); const audienceId=repository.ensureDefaultAudience({communityId:community.community_id,actorUserId:actor.userId,atUtc}); repository.createAlert({communityId:community.community_id,actor,title:required(formData,"title"),symbol:String(formData.get("symbol")??""),body:required(formData,"body"),audienceId,publish:true,atUtc}); });
-  revalidateCommunityPath(communitySlug,"alerts"); redirect(`/communities/${communitySlug}/alerts`);
+  revalidateCommunityPath(communitySlug,"alerts");
 }
 
 export async function updateCommunityAlertAction(formData:FormData):Promise<void>{
@@ -57,19 +57,18 @@ export async function createCommunityServerWatchlistAction(formData:FormData):Pr
     });
   });
   revalidateCommunityPath(communitySlug,"watchlists");
-  redirect(`/communities/${communitySlug}/watchlists`);
 }
 
 export async function saveCommunityCoachAction(formData: FormData): Promise<void> {
   const communitySlug=required(formData,"communitySlug"); const {identity}=await context(communitySlug);
   withPlatformDatabase({mode:"runtime"},database=>{ const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug); const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}; new TraderLinkCommunityPlatformRepository(database).upsertCoach({communityId:community.community_id,actor,userId:actor.userId,displayName:required(formData,"displayName"),headline:String(formData.get("headline")??""),biography:String(formData.get("biography")??""),deliverySummary:String(formData.get("deliverySummary")??""),capacity:Number(required(formData,"capacity")),active:true,atUtc:createCanonicalUtcTimestamp()}); });
-  revalidateCommunityPath(communitySlug,"workspace"); redirect(`/communities/${communitySlug}/workspace`);
+  revalidateCommunityPath(communitySlug,"workspace");
 }
 
 export async function createCommunityCoachingPlanAction(formData: FormData): Promise<void> {
   const communitySlug=required(formData,"communitySlug"); const {identity}=await context(communitySlug);
   withPlatformDatabase({mode:"runtime"},database=>{ const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug); const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}; const repository=new TraderLinkCommunityPlatformRepository(database); const atUtc=createCanonicalUtcTimestamp(); const audienceId=repository.ensureDefaultAudience({communityId:community.community_id,actorUserId:actor.userId,atUtc}); repository.createPlan({communityId:community.community_id,actor,coachProfileId:required(formData,"coachProfileId"),name:required(formData,"name"),description:String(formData.get("description")??""),cadence:required(formData,"cadence") as "weekly"|"monthly"|"trade_reviews"|"custom",tradeReviewLimit:formData.get("tradeReviewLimit")?Number(formData.get("tradeReviewLimit")):undefined,priceLabel:String(formData.get("priceLabel")??""),paymentInstructions:String(formData.get("paymentInstructions")??""),audienceId,publish:true,atUtc}); });
-  revalidateCommunityPath(communitySlug,"workspace"); redirect(`/communities/${communitySlug}/workspace`);
+  revalidateCommunityPath(communitySlug,"workspace");
 }
 
 export async function requestCommunityCoachingAction(formData: FormData): Promise<void> {
@@ -97,7 +96,6 @@ export async function saveCommunityDiscordRoleFeaturesAction(formData:FormData):
     });
   });
   revalidateCommunityPath(communitySlug,"manage/team");
-  redirect(`/communities/${communitySlug}/manage/team`);
 }
 
 export async function pauseCommunityDiscordRoleFeaturesAction(formData:FormData):Promise<void>{
@@ -110,12 +108,11 @@ export async function pauseCommunityDiscordRoleFeaturesAction(formData:FormData)
     new TraderLinkCommunityRepository(database).pauseDiscordFeatureMapping({communityId:community.community_id,actorUserId:actor.userId,discordRoleId:required(formData,"discordRoleId"),timestamp:createCanonicalUtcTimestamp()});
   });
   revalidateCommunityPath(communitySlug,"manage/team");
-  redirect(`/communities/${communitySlug}/manage/team`);
 }
 
-export async function saveCommunityDiscordDestinationAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).saveDiscordDestination({communityId:community.community_id,actor,name:required(formData,"name"),discordChannelId:required(formData,"discordChannelId"),contentType:required(formData,"contentType") as "alerts"|"watchlists"|"coaching"|"general",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/channels");redirect(`/communities/${communitySlug}/manage/channels`);}
+export async function saveCommunityDiscordDestinationAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).saveDiscordDestination({communityId:community.community_id,actor,name:required(formData,"name"),discordChannelId:required(formData,"discordChannelId"),contentType:required(formData,"contentType") as "alerts"|"watchlists"|"coaching"|"general",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/channels");}
 
-export async function saveCommunitySettingsAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateSettings({communityId:community.community_id,actor,displayName:required(formData,"displayName"),description:String(formData.get("description")??""),retentionDays:Number(required(formData,"retentionDays")),visibilityStatus:required(formData,"visibilityStatus") as "not_configured"|"active"|"declined",visibilityCopy:String(formData.get("visibilityCopy")??""),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/settings");redirect(`/communities/${communitySlug}/manage/settings`);}
+export async function saveCommunitySettingsAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateSettings({communityId:community.community_id,actor,displayName:required(formData,"displayName"),description:String(formData.get("description")??""),retentionDays:Number(required(formData,"retentionDays")),visibilityStatus:required(formData,"visibilityStatus") as "not_configured"|"active"|"declined",visibilityCopy:String(formData.get("visibilityCopy")??""),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/settings");}
 
 export async function grantCoachJournalAccessAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);if(!identity.scope.activeAccountId)throw new Error("Select a Journal account before sharing.");const dataScope=required(formData,"dataScope");if(!["summary","trades","analytics"].includes(dataScope))throw new Error("Choose a supported Journal sharing scope.");withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).grantJournal({communityId:community.community_id,actor,relationshipId:required(formData,"relationshipId"),journalAccountId:identity.scope.activeAccountId as string,dataScope:dataScope as "summary"|"trades"|"analytics",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"coaching");}
 
