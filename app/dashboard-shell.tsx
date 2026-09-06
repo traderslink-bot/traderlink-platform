@@ -79,6 +79,7 @@ import {
   isDashboardNavigationItem,
   type DashboardNavigationDrawerItem,
   type DashboardNavigationGroup,
+  type DashboardNavigationGroupItem,
   type DashboardNavigationIconKey,
   type DashboardNavigationItem,
 } from "./dashboard-navigation";
@@ -425,7 +426,7 @@ export function DashboardShell({
           ...section,
           group: Object.freeze({
             ...section.group,
-            items: Object.freeze(section.group.items.flatMap((item) => {
+            items: Object.freeze(section.group.items.flatMap<DashboardNavigationGroupItem>((item) => {
               if (!isDashboardNavigationItem(item)) return [item];
               if (item.href === "/communities") {
                 return communityNavigationHref
