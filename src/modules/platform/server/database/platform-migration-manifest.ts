@@ -1142,4 +1142,3 @@ export const currentPlatformDomainTableNames =
 export const currentPlatformTableNames = expectedPlatformTableNamesForPrefix(
   platformMigrationManifest.length,
 );
-
