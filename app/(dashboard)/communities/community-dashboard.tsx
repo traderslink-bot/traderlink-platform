@@ -29,6 +29,7 @@ import { CommunityAlertComposer } from "./community-alert-composer";
 import { CommunityAlertTemplateBuilder } from "./community-alert-template-builder";
 import { CommunityWatchlistComposer } from "./community-watchlist-composer";
 import { CommunityCoachMessagingPanel } from "./community-coach-messaging-panel";
+import { CoachingWorkPage } from "./coach-workspace-navigation";
 
 const manageTabs = [{section:"manage",label:"Owner dashboard"},{section:"team",label:"Team"},{section:"roles",label:"Discord role access"},{section:"members",label:"Members"},{section:"activity",label:"Activity"},{section:"channels",label:"Discord channels"},{section:"settings",label:"Settings"}] as const;
 
@@ -75,7 +76,7 @@ export function CommunityDashboard({snapshot,section,isReview=false,baseOverride
     {section==="watchlists"?<Watchlists isReview={isReview} snapshot={snapshot}/>:null}
     {section==="coaches"?<Coaches snapshot={snapshot} isReview={isReview}/>:null}
     {section==="coaching"?<><Coaching isReview={isReview} snapshot={snapshot}/><JournalSharingControls isReview={isReview} snapshot={snapshot}/></>:null}
-    {section==="workspace"?<><CoachWorkspace snapshot={snapshot} isReview={isReview}/><CoachingPlanManager isReview={isReview} snapshot={snapshot}/><RelationshipControls isReview={isReview} snapshot={snapshot}/><CommunityCoachMessagingPanel isReview={isReview} snapshot={snapshot}/><CoachOperations isReview={isReview} snapshot={snapshot}/></>:null}
+    {section==="workspace"?<CoachingWorkPage snapshot={snapshot}/>:null}
     {section==="manage"?<OwnerDashboard snapshot={snapshot}/>:null}
     {section==="team"?<StaffAssignments snapshot={snapshot}/>:null}
     {section==="roles"?<Team isReview={isReview} snapshot={snapshot}/>:null}
@@ -90,7 +91,6 @@ function Home({snapshot,base}:{snapshot:TraderLinkCommunityDashboardSnapshot;bas
   <Grid container spacing={2}>{[{label:"New alerts",value:String(snapshot.alerts.length),icon:<CampaignRoundedIcon/>},{label:"Official watchlists",value:String(serverWatchlists.length),icon:<AutoGraphRoundedIcon/>},{label:"Coaches",value:String(snapshot.coaches.filter(c=>c.status==="active").length),icon:<SchoolRoundedIcon/>},{label:"Members",value:snapshot.community.memberCount.toLocaleString(),icon:<GroupsRoundedIcon/>}].map(x=><Grid key={x.label} size={{xs:12,sm:6,lg:3}}><DashboardPanel hideHeader><Stack direction="row" spacing={1.5} sx={{alignItems:"center"}}><Box sx={{color:"primary.main"}}>{x.icon}</Box><Box><Typography variant="h2">{x.value}</Typography><Typography color="text.secondary" variant="body2">{x.label}</Typography></Box></Stack></DashboardPanel></Grid>)}</Grid>
   <Grid container spacing={2}><Grid size={{xs:12,lg:7}}><DashboardPanel action={<Button component={Link} href={`${base}/alerts`}>View all</Button>} title="Latest alerts"><AlertList snapshot={snapshot}/></DashboardPanel></Grid><Grid size={{xs:12,lg:5}}><DashboardPanel action={<Button component={Link} href={`${base}/watchlists`}>Browse</Button>} title="Community watchlists"><WatchlistList snapshot={snapshot}/></DashboardPanel></Grid></Grid>
   <DashboardPanel title="Coaching in this community"><CoachCards snapshot={snapshot}/></DashboardPanel>
-  <Typography color="text.secondary" variant="caption">TraderLink provides the workspace and access controls. Coaching arrangements and payments are handled by the Discord community and coach.</Typography>
 </>}
 
 function AlertList({snapshot}:{snapshot:TraderLinkCommunityDashboardSnapshot}){const canPublish=has(snapshot,"community.alerts.create");const alerts=canPublish?snapshot.alerts:snapshot.alerts.filter(alert=>alert.publishingMode==="tracked_page");if(!alerts.length)return <DashboardUnavailableState compact description="" title="No alerts yet"/>;return <Stack divider={<Divider flexItem/>} spacing={2}>{alerts.map(a=><Box key={a.alertId}><Stack direction="row" spacing={1} sx={{alignItems:"center",flexWrap:"wrap"}}>{a.symbol?<Chip color="primary" label={a.symbol} size="small"/>:null}<Typography style={{fontWeight:800}}>{a.title}</Typography>{canPublish?<Chip color={a.publishingMode==="tracked_page"?"success":"warning"} label={a.publishingMode==="tracked_page"?"Tracked page":"Discord post"} size="small" variant="outlined"/>:null}</Stack><Typography color="text.secondary" sx={{mt:.75}} variant="body2">{a.body}</Typography><Typography color="text.secondary" sx={{mt:1}} variant="caption">{a.authorName} · {fmt(a.publishedAtUtc)}</Typography></Box>)}</Stack>}

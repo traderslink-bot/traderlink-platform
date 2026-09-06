@@ -417,5 +417,50 @@ capabilities:
 The repository-wide TypeScript diagnostic reaches only pre-existing shared-tree
 failures: deleted Help routes represented by stale `.next` types, the separately
 deleted `0103` appearance migration and unrelated Coach test fixtures. No
-Communities diagnostic remains. Rendered staging QA, the narrow checkpoint
-commit and serialized staging publication are still pending.
+Communities diagnostic remains. The completed staging result follows.
+
+### Continuous-goal staging acceptance - 2026-09-06
+
+- [x] Published the internal-workspace slice through the serialized staging
+  release lane, applied only migration `0126`, and verified the normal service
+  at `ready`, `sqlite_single_node` and 121 migrations.
+- [x] Verified owner, admin, coach, contributor, member and student review
+  compositions without an application error.
+- [x] Verified alerts, independently typed alert templates, official server
+  watchlists, coach plans, coaching requests, messaging, trade reviews, member
+  management, settings and page-specific activity surfaces.
+- [x] Verified that ordinary members and students cannot read full-Discord-post
+  content through TraderLink while authorized publishers can manage it.
+- [x] Verified representative desktop and 390-pixel mobile pages with no
+  horizontal document overflow.
+- [x] Verified Light and Dark surfaces; Dark navigation now preserves the review
+  appearance across tabs and role switching with no white page or card gaps.
+- [x] Final staging source `671b9ef44cb364361ac746b7d7f085eaf6a82787`
+  deployed successfully as Railway deployment
+  `4d11edd0-3294-4db4-b482-11a7f08926e9`.
+
+Live Discord posting, live role synchronization and test-account Discord sign-in
+remain deliberately deferred until after the owner's internal-product review.
+
+## Coach workspace organization - 2026-09-06
+
+**Status:** Implemented locally; staging release and rendered owner review pending
+
+- [x] Reorganized the coach experience into Coaching Work, Students, an
+  individual private student workspace, and Coach Setup.
+- [x] Moved profile, plans and enrollment requests into Coach Setup.
+- [x] Added a coach work queue for open tasks and trade reviews.
+- [x] Added a student roster with task, review and Journal-access status.
+- [x] Added relationship-scoped tasks and durable shared or coach-private
+  coaching history.
+- [x] Added coach-controlled student messaging and trade-review-request access.
+  New active relationships grant neither service until the coach enables it.
+- [x] Preserved coach access to messaging and trade-review work while enforcing
+  the student switches in the repository.
+- [x] Expanded the private student workspace with services, tasks, messages,
+  trade reviews, shared Journal data and coaching history.
+- [x] Focused ESLint and the disposable Communities repository proof pass. The
+  proof covers disabled-by-default student services, coach enablement, tasks,
+  history, relationship isolation and zero foreign-key violations.
+- [ ] Publish migration `0127` and the workspace UI to staging.
+- [ ] Verify desktop and mobile Light and Dark rendering on staging.

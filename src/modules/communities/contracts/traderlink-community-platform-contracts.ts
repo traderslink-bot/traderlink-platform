@@ -121,7 +121,9 @@ export type TraderLinkCommunityRelationship = Readonly<{
   requestedAtUtc: string;
   startedAtUtc: string | null;
   endedAtUtc: string | null;
-}>;
+  studentMessagingEnabled: boolean;
+  studentTradeReviewsEnabled: boolean;
+}>; 
 
 export type TraderLinkCommunityJournalGrant = Readonly<{
   grantId: string;
@@ -159,6 +161,29 @@ export type TraderLinkCommunityTradeReview = Readonly<{
   updatedAtUtc: string;
 }>;
 
+export type TraderLinkCommunityCoachingTask = Readonly<{
+  taskId: string;
+  relationshipId: string;
+  title: string;
+  dueAtUtc: string | null;
+  priority: "normal" | "high";
+  status: "open" | "completed" | "cancelled";
+  createdAtUtc: string;
+  completedAtUtc: string | null;
+}>;
+
+export type TraderLinkCommunityCoachingRecord = Readonly<{
+  recordId: string;
+  relationshipId: string;
+  authorUserId: string;
+  authorName: string;
+  recordType: "session" | "note";
+  visibility: "shared" | "coach_private";
+  title: string;
+  body: string;
+  occurredAtUtc: string;
+}>;
+
 export type TraderLinkCommunityMemberSummary = Readonly<{
   userId: string;
   displayName: string;
@@ -194,6 +219,8 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
   journalGrants: readonly TraderLinkCommunityJournalGrant[];
   coachingMessages: readonly TraderLinkCommunityCoachingMessage[];
   tradeReviews: readonly TraderLinkCommunityTradeReview[];
+  coachingTasks: readonly TraderLinkCommunityCoachingTask[];
+  coachingRecords: readonly TraderLinkCommunityCoachingRecord[];
   settings: Readonly<{
     description: string;
     personalAlertTemplatesEnabled: boolean;

@@ -19,18 +19,6 @@ import { journalDemoTradeDataMigration } from "@/src/modules/journal/server/data
 import { journalDemoPackApplicationsMigration } from "@/src/modules/journal/server/database/migrations/0096_journal_demo_pack_applications";
 import { journalDemoMaterializerProvenanceGuardMigration } from "@/src/modules/journal/server/database/migrations/0097_journal_demo_materializer_provenance_guard";
 import { journalDemoLifecycleMigration } from "@/src/modules/journal/server/database/migrations/0098_journal_demo_lifecycle";
-import { journalWorkspaceTradeLibraryProjectionMigration } from "@/src/modules/journal/server/database/migrations/0100_journal_workspace_trade_library_projection";
-import { workspaceTradeLibrarySortFactsMigration } from "@/src/modules/journal/server/database/migrations/0101_workspace_trade_library_sort_facts";
-import { workspaceTradeLibraryHoldDurationMigration } from "@/src/modules/journal/server/database/migrations/0102_workspace_trade_library_hold_duration";
-import { journalWorkspaceTradeStyleSourceMigration } from "@/src/modules/journal/server/database/migrations/0108_journal_workspace_trade_style_source";
-import { journalSharedNotesMigration } from "@/src/modules/journal/server/database/migrations/0111_journal_shared_notes";
-import { journalTradingDayTagsMigration } from "@/src/modules/journal/server/database/migrations/0112_journal_trading_day_tags";
-import { journalWorkspaceRuleResultsCardMigration } from "@/src/modules/journal/server/database/migrations/0113_journal_workspace_rule_results_card";
-import { journalWorkspacePrScannerCardMigration } from "@/src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card";
-import { journalManualFeeInputStateMigration } from "@/src/modules/journal/server/database/migrations/0116_journal_manual_fee_input_state";
-import { journalLogicalTradesMigration } from "@/src/modules/journal/server/database/migrations/0118_journal_logical_trades";
-import { journalWorkspaceTopTickersCardMigration } from "@/src/modules/journal/server/database/migrations/0120_journal_workspace_top_tickers_card";
-import { sharedTradeAnalyzerBetaMigration } from "@/src/modules/level-analysis/server/database/migrations/0119_shared_trade_analyzer_beta";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0117_trade_explorer_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
@@ -49,6 +37,7 @@ import { traderLinkCommunitiesDiscordFeatureAccessMigration } from "@/src/module
 import { traderLinkCommunitiesServerWatchlistsMigration } from "@/src/modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists";
 import { traderLinkCommunitiesPrivatePilotBootstrapMigration } from "@/src/modules/communities/server/database/migrations/0125_traderlink_communities_private_pilot_bootstrap";
 import { traderLinkCommunitiesWorkspaceToolsMigration } from "@/src/modules/communities/server/database/migrations/0126_traderlink_communities_workspace_tools";
+import { traderLinkCommunitiesCoachingWorkspaceMigration } from "@/src/modules/communities/server/database/migrations/0127_traderlink_communities_coaching_workspace";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -112,8 +101,6 @@ import { platformWatchlistUsageMigration } from "./migrations/0092_platform_watc
 import { platformWatchlistUsagePresenceSignalsMigration } from "./migrations/0093_platform_watchlist_usage_presence_signals";
 import { platformMoomooOAuthPendingAttemptsMigration } from "./migrations/0094_platform_moomoo_oauth_pending_attempts";
 import { platformAppearancePreferencesMigration } from "./migrations/0103_platform_appearance_preferences";
-import { platformDefaultDarkAppearanceMigration } from "./migrations/0110_platform_default_dark_appearance";
-import { platformPnlReportingPreferenceMigration } from "./migrations/0115_platform_pnl_reporting_preference";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -533,64 +520,8 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       migration: newsMarketHaltSchedulerHealthMigration,
     }),
     Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0100_journal_workspace_trade_library_projection.ts",
-      migration: journalWorkspaceTradeLibraryProjectionMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0101_workspace_trade_library_sort_facts.ts",
-      migration: workspaceTradeLibrarySortFactsMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0102_workspace_trade_library_hold_duration.ts",
-      migration: workspaceTradeLibraryHoldDurationMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0108_journal_workspace_trade_style_source.ts",
-      migration: journalWorkspaceTradeStyleSourceMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/platform/server/database/migrations/0110_platform_default_dark_appearance.ts",
-      migration: platformDefaultDarkAppearanceMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0111_journal_shared_notes.ts",
-      migration: journalSharedNotesMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0112_journal_trading_day_tags.ts",
-      migration: journalTradingDayTagsMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0113_journal_workspace_rule_results_card.ts",
-      migration: journalWorkspaceRuleResultsCardMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0114_journal_workspace_pr_scanner_card.ts",
-      migration: journalWorkspacePrScannerCardMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/platform/server/database/migrations/0115_platform_pnl_reporting_preference.ts",
-      migration: platformPnlReportingPreferenceMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0116_journal_manual_fee_input_state.ts",
-      migration: journalManualFeeInputStateMigration,
-    }),
-    Object.freeze({
       sourcePath: "src/modules/journal-analytics/server/database/migrations/0117_trade_explorer_saved_views.ts",
       migration: tradeExplorerSavedViewsMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0118_journal_logical_trades.ts",
-      migration: journalLogicalTradesMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/level-analysis/server/database/migrations/0119_shared_trade_analyzer_beta.ts",
-      migration: sharedTradeAnalyzerBetaMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0120_journal_workspace_top_tickers_card.ts",
-      migration: journalWorkspaceTopTickersCardMigration,
     }),
     Object.freeze({
       sourcePath: "src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions.ts",
@@ -615,6 +546,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/communities/server/database/migrations/0126_traderlink_communities_workspace_tools.ts",
       migration: traderLinkCommunitiesWorkspaceToolsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0127_traderlink_communities_coaching_workspace.ts",
+      migration: traderLinkCommunitiesCoachingWorkspaceMigration,
     }),
   ]);
 
@@ -1004,59 +939,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0104_news_market_halt_scheduler_health": Object.freeze([
       "news_market_halt_scheduler_runs",
     ]),
-    "0100_journal_workspace_trade_library_projection": Object.freeze([
-      "journal_workspace_trade_library_projection_revisions",
-      "journal_workspace_trade_library_projections",
-    ]),
-    "0111_journal_shared_notes": Object.freeze([
-      "platform_user_current_focuses",
-      "platform_user_note_types",
-      "journal_categorized_notes",
-      "journal_categorized_note_revisions",
-    ]),
-    "0112_journal_trading_day_tags": Object.freeze([
-      "journal_trading_day_tag_assignments",
-      "journal_trading_day_tag_assignment_events",
-    ]),
-    "0113_journal_workspace_rule_results_card": Object.freeze([
-      "journal_workspace_rule_results_card_preferences",
-    ]),
-    "0114_journal_workspace_pr_scanner_card": Object.freeze([
-      "journal_workspace_pr_scanner_card_preferences",
-    ]),
-    "0116_journal_manual_fee_input_state": Object.freeze([]),
     "0117_trade_explorer_saved_views": Object.freeze([
       "journal_trade_explorer_saved_views",
       "journal_trade_explorer_saved_view_versions",
-    ]),
-    "0118_journal_logical_trades": Object.freeze([
-      "journal_logical_trades",
-      "journal_logical_trade_versions",
-      "journal_logical_trade_version_members",
-      "journal_active_logical_trade_memberships",
-      "journal_logical_trade_events",
-    ]),
-    "0119_shared_trade_analyzer_beta": Object.freeze([
-      "level_analysis_shared_analyzer_settings",
-      "level_analysis_user_allowance_cycles",
-      "level_analysis_user_allowance_overrides",
-      "level_analysis_user_allowance_resets",
-      "level_analysis_shared_analyzer_admin_events",
-      "journal_logical_trade_daily_analyses",
-      "journal_logical_trade_daily_analysis_versions",
-      "level_analysis_logical_trade_jobs",
-      "level_analysis_analyzer_reservations",
-      "level_analysis_analyzer_acquisitions",
-      "level_analysis_analyzer_correction_opportunities",
-      "journal_logical_trade_notes",
-      "journal_logical_trade_note_events",
-      "journal_logical_trade_tag_assignments",
-      "journal_logical_trade_rule_reviews",
-      "journal_logical_trade_tag_assignment_events",
-      "journal_logical_trade_rule_review_events",
-    ]),
-    "0120_journal_workspace_top_tickers_card": Object.freeze([
-      "journal_workspace_top_tickers_card_preferences",
     ]),
     "0121_traderlink_communities_identity_permissions": Object.freeze([
       "traderlink_communities",
@@ -1102,6 +987,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "traderlink_community_alert_field_values",
       "traderlink_community_coaching_messages",
       "traderlink_community_coaching_trade_reviews",
+    ]),
+    "0127_traderlink_communities_coaching_workspace": Object.freeze([
+      "traderlink_community_coaching_tasks",
+      "traderlink_community_coaching_records",
     ]),
   });
 
