@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {Box,Button,Chip,Grid,MenuItem,Stack,TextField} from "@mui/material";
 import {DashboardMetricCard as BaseDashboardMetricCard,DashboardPanel,DashboardUnavailableState} from "@/app/dashboard-ui";
