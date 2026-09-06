@@ -160,6 +160,7 @@ export function OfflineAnalyticsRouteSurface({ kind, partitionKey, pathname }: {
       {model.kind === "trade-analyzer-trades" ? (
         <AnalyzedTradesIndex
           currency={model.currency}
+          dateRange={model.dateRange}
           endDate={model.dateRange.endDate}
           initialPage={model.page}
           moneyBasis={model.moneyBasis}
