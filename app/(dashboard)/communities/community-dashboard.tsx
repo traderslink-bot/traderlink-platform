@@ -30,6 +30,7 @@ import { CommunityAlertTemplateBuilder } from "./community-alert-template-builde
 import { CommunityWatchlistComposer } from "./community-watchlist-composer";
 import { CommunityCoachMessagingPanel } from "./community-coach-messaging-panel";
 import { CoachingWorkPage } from "./coach-workspace-navigation";
+import { StudentCoachingWorkspace } from "./student-coaching-workspace";
 
 const manageTabs = [{section:"manage",label:"Owner dashboard"},{section:"team",label:"Team"},{section:"roles",label:"Discord role access"},{section:"members",label:"Members"},{section:"activity",label:"Activity"},{section:"channels",label:"Discord channels"},{section:"settings",label:"Settings"}] as const;
 
@@ -75,7 +76,7 @@ export function CommunityDashboard({snapshot,section,isReview=false,baseOverride
     {section==="alerts"?<Alerts snapshot={snapshot} isReview={isReview}/>:null}
     {section==="watchlists"?<Watchlists isReview={isReview} snapshot={snapshot}/>:null}
     {section==="coaches"?<Coaches snapshot={snapshot} isReview={isReview}/>:null}
-    {section==="coaching"?<><Coaching isReview={isReview} snapshot={snapshot}/><JournalSharingControls isReview={isReview} snapshot={snapshot}/></>:null}
+    {section==="coaching"?<><StudentCoachingWorkspace isReview={isReview} snapshot={snapshot}/><JournalSharingControls isReview={isReview} snapshot={snapshot}/></>:null}
     {section==="workspace"?<CoachingWorkPage snapshot={snapshot}/>:null}
     {section==="manage"?<OwnerDashboard snapshot={snapshot}/>:null}
     {section==="team"?<StaffAssignments snapshot={snapshot}/>:null}

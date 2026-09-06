@@ -101,6 +101,11 @@ export type TraderLinkCommunityCoachingPlan = Readonly<{
   description: string;
   cadence: "weekly" | "monthly" | "trade_reviews" | "custom";
   tradeReviewLimit: number | null;
+  studentCapacity: number;
+  messagingIncluded: boolean;
+  tradeReviewsIncluded: boolean;
+  sessionsIncluded: boolean;
+  teachingIncluded: boolean;
   priceLabel: string;
   paymentInstructions: string;
   audienceId: string;
@@ -159,7 +164,16 @@ export type TraderLinkCommunityTradeReview = Readonly<{
   requestedAtUtc: string;
   completedAtUtc: string | null;
   updatedAtUtc: string;
+  reviewType: "single_trade"|"multiple_trades"|"weekly"|"monthly"|"general"|"session"|"custom";
+  periodStart: string | null;
+  periodEnd: string | null;
+  roundTripIds: readonly string[];
 }>;
+
+export type TraderLinkCommunityCoachingSession=Readonly<{sessionId:string;relationshipId:string;title:string;agenda:string;notes:string;scheduledAtUtc:string|null;completedAtUtc:string|null;status:"scheduled"|"completed"|"cancelled"}>;
+export type TraderLinkCommunityTeachingItem=Readonly<{teachingId:string;coachUserId:string;title:string;teachingType:"lesson"|"class"|"assignment";body:string;deliveryUrl:string;scheduledAtUtc:string|null;status:"draft"|"published"|"completed"|"cancelled";audienceMode:"all_students"|"plan"|"selected_students";planId:string|null;students:readonly Readonly<{relationshipId:string;status:"assigned"|"attending"|"completed"|"excused";completedAtUtc:string|null}>[]} >;
+export type TraderLinkCommunityCoachingAttachment=Readonly<{attachmentId:string;relationshipId:string;uploadedByUserId:string;targetType:"message"|"review"|"session"|"teaching"|"submission";targetId:string;filename:string;mediaType:"image/png"|"image/jpeg"|"image/webp";byteLength:number;createdAtUtc:string;href:string}>;
+export type TraderLinkCommunityReviewReply=Readonly<{replyId:string;reviewId:string;authorUserId:string;authorName:string;body:string;createdAtUtc:string}>;
 
 export type TraderLinkCommunityCoachingTask = Readonly<{
   taskId: string;
@@ -221,6 +235,10 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
   tradeReviews: readonly TraderLinkCommunityTradeReview[];
   coachingTasks: readonly TraderLinkCommunityCoachingTask[];
   coachingRecords: readonly TraderLinkCommunityCoachingRecord[];
+  coachingSessions: readonly TraderLinkCommunityCoachingSession[];
+  teachingItems: readonly TraderLinkCommunityTeachingItem[];
+  coachingAttachments: readonly TraderLinkCommunityCoachingAttachment[];
+  reviewReplies: readonly TraderLinkCommunityReviewReply[];
   settings: Readonly<{
     description: string;
     personalAlertTemplatesEnabled: boolean;

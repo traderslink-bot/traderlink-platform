@@ -139,9 +139,10 @@ the entire server:
   Discord; TraderLink may post only the owner-authorized link or access
   instructions for an offer.
 
-This is an idea under review, not an approved requirement or finalized partner
-contract. Exact post cadence, pause behavior and minimum visibility remain
-subject to owner approval.
+This is negotiated directly by TraderLink with each server owner and is not a
+self-service community setting. When agreed, it applies while the server is
+connected; the owner dashboard does not expose a separate duration or
+retention control for it.
 
 Other lower-pressure visibility options remain in the plan:
 
@@ -455,8 +456,7 @@ The first-server onboarding is one guided setup:
 7. The owner appoints the first admins, analysts and coaches.
 8. The owner selects audience defaults for server alerts, watchlists and
    coaching offers; these do not change whole-server TraderLink eligibility.
-9. The owner selects Discord delivery channels for alerts and watchlists and,
-   if one is approved, configures the chosen TraderLink visibility option.
+9. The owner selects Discord delivery channels for alerts and watchlists.
 10. The owner previews the member join experience and sends a test delivery to
    an explicitly chosen test destination.
 11. TraderLink issues the community's join link and activates eligibility for
@@ -487,6 +487,21 @@ presented as live.
 
 ## 10. Alerts and watchlists
 
+### Alert templates
+
+- Each approved alert publisher may create personal templates that only that
+  publisher can use.
+- A template has a publisher-chosen title and a publisher-chosen set of fields,
+  allowing different structures for stock alerts, options alerts and other
+  server workflows.
+- Template definitions are saved in TraderLink but are not posted to Discord;
+  only an alert created from the template is delivered.
+- The server owner may create community templates available to approved alert
+  publishers, delegate community-template management, and allow or disallow
+  personal-template creation for the server.
+- Template use does not change Discord-role authority, alert publishing
+  permissions or the owner-selected delivery channel.
+
 Community owners decide which staff can create server-owned alerts and
 watchlists. Regular members do not need a staff role to create their existing
 personal Community Watchlists or share them into a community where they have
@@ -494,6 +509,31 @@ active membership. Authors control their content. TraderLink supplies the
 page, editing, publishing, community placement, Discord destination and
 engagement reporting; it does not impose an investment thesis, target,
 evidence or performance-scoring format.
+
+### Owner-selected publishing mode
+
+Each alert, official server watchlist and other supported server-content type
+has two publishing modes:
+
+1. **Post to Discord:** TraderLink sends the completed content directly to the
+   owner-selected Discord channel. TraderLink records delivery success or
+   failure but does not claim named viewers or page-view analytics.
+2. **Publish a tracked TraderLink page:** the author places the full content on
+   the community's TraderLink page. Discord receives only a short ready notice
+   and the link to that exact page. TraderLink records page views and named
+   signed-in viewers for the server owner.
+
+Using tracked pages is optional. A server may use direct Discord delivery for
+some or all content. Analytics must clearly separate delivery, link opening
+and authenticated TraderLink page viewing; none of these may be presented as
+Discord message-read data.
+
+The first tracked page types are:
+
+- individual server alerts;
+- individual official server watchlists;
+- coach profiles and coaching plans; and
+- any later server page explicitly added to the supported content catalog.
 
 ### Member-created watchlist engagement loop
 
@@ -566,9 +606,10 @@ Member creates or opens their Community Watchlist
 - Each community stores selected Discord destinations by content type.
 - The owner can allow per-post destination choice from an approved channel
   list.
-- If the dedicated-channel idea is approved, the partner exchange adds one
-  TraderLink visibility destination readable by the entire server, with a
-  permanent access message and the separately approved product-update cadence.
+- A directly negotiated partner arrangement may add one TraderLink visibility
+  destination readable by the entire server, with a permanent access message
+  and the agreed product-update cadence. It is not configured in the
+  server-owner dashboard.
 - The visibility channel is for TraderLink dashboard, Journal and feature
   awareness. It does not give TraderLink authority over the server's trading
   content or coaching commerce.
@@ -589,6 +630,18 @@ Member creates or opens their Community Watchlist
   until a separately authorized pilot step.
 
 ## 12. Coaching
+
+### Coached-trader dashboard placement
+
+- Ordinary server members remain in the normal TraderLink dashboard and use
+  its standard shell and navigation.
+- An active coaching relationship adds the student tools to that normal
+  dashboard: coach and plan details, relationship status, messaging, activity
+  and explicit Journal-sharing controls.
+- Coaches use their capability-derived coach workspace; ordinary students do
+  not use the server-owner community-management layout.
+- Coach/student messaging is part of the required experience. Image
+  attachments remain an owner decision and are not included until approved.
 
 ### Coach and offer setup
 
@@ -632,13 +685,13 @@ feature, not Google Analytics reporting.
 ### Initial activity events
 
 - member joined TraderLink community;
-- member opened the community home;
-- member opened an alert list or alert detail;
-- member opened a watchlist list or watchlist detail;
+- member opened a tracked server alert page;
+- member opened a tracked official server watchlist page;
 - member opened a coach profile or coaching offer;
 - member opened server-managed coaching-access instructions;
 - staff created, published, edited, unpublished or archived content;
-- Discord delivery succeeded or failed; and
+- Discord delivery succeeded or failed;
+- a tracked link was opened and its authenticated page was viewed; and
 - member became eligible for an attributed Tier 2 conversion.
 
 ### Owner reporting
@@ -715,7 +768,8 @@ checkpoint. The complete logical record set is:
 - community-content audience rule with all-member, mapped-role or selected-member
   scope;
 - Discord channel destination;
-- TraderLink visibility-channel agreement and current delivery settings;
+- operator-held TraderLink visibility arrangement and delivery settings, kept
+  outside the server-owner settings page;
 - publication/delivery attempt; and
 - stable community page reference.
 
@@ -792,8 +846,8 @@ another community or Journal data.
    under the existing Journal owner-admin authority plus a Communities operator
    grant, and redirect the former `/admin/communities` route.
 2. Implement resumable Discord-server onboarding.
-3. Add whole-server join activation and only the TraderLink visibility option
-   separately approved for the pilot, if any.
+3. Add whole-server join activation. Keep any TraderLink visibility arrangement
+   operator-held and outside server-owner settings.
 4. Add global community, owner, staff, integration and audit reads.
 5. Add controlled pause/suspend/reassign actions with audit history.
 6. Render and verify every applicable Light and Dark, desktop and mobile state.
@@ -857,6 +911,51 @@ content receives views.
 **Exit:** One approved coach can offer coaching to members holding the selected
 Discord role, a member without that role cannot open the coaching workspace,
 and one eligible student can grant and revoke bounded read access.
+
+#### Coaching workspace expansion
+
+Implementation status: complete locally; staging and final owner visual review pending.
+
+The coach workspace must support the coach's full service, not only isolated
+trade feedback:
+
+1. **Review work:** single-trade, multiple-trade, weekly performance, monthly
+   performance, general performance, session and custom reviews. A review can
+   select one or more shared Journal trades, a date range or a complete shared
+   account view. Draft, delivered and follow-up states preserve the review
+   history.
+2. **Coach and student media:** private image attachments on messages, reviews
+   and review replies for annotated charts and screenshots. Attachments use
+   private storage, authenticated relationship-scoped reads, strict file type
+   and size validation and deletion/audit rules; Discord or public URLs are not
+   treated as private storage.
+3. **Performance comparisons:** coach-selected week-over-week,
+   month-over-month and custom-period comparisons from the student's granted
+   Journal scope. Results remain read-only and preserve coverage and pending
+   Data Decision states.
+4. **Sessions:** scheduled or completed one-to-one sessions with agenda, notes,
+   action items and follow-up. A coach-private note is distinct from the
+   student-visible session record.
+5. **Teaching:** lessons, classes and assignments may target one plan, selected
+   students or every active student of that coach. Delivery may be a scheduled
+   live session, a durable lesson page or an external meeting link. Attendance,
+   completion and student questions belong to the teaching item.
+6. **Plan capacity:** capacity belongs to each coaching plan. The coach profile
+   may retain an optional absolute safety ceiling, but weekly, monthly,
+   review-only and custom plans each control their own enrollment limit.
+7. **Plan services:** trade reviews remain an optional plan service. The plan
+   can define allowed review types and quantities without requiring trade
+   reviews for every coaching offer. Per-student overrides remain under the
+   coach's control.
+8. **Shared Journal:** the student grants one coach read-only access to a
+   selected Journal account and exact scope. Review selectors and performance
+   comparisons can use only the granted facts. Revocation immediately blocks
+   future reads without deleting already delivered coaching records.
+
+The expanded composition requires a new owner-approved visual contract before
+implementation. It must cover Coaching Work, Students, individual student
+workspace, Reviews, Sessions, Teaching and Coach Setup in desktop/mobile Light
+and Dark modes.
 
 ### Communities 7 - Tier 2 partner attribution
 
@@ -929,7 +1028,7 @@ The first-server pilot does not include:
 - a public cross-server TraderLink social network;
 - public people or server discovery;
 - cross-server feeds;
-- direct messages, open comments or live chat;
+- public direct messages, open comments or public live chat;
 - coach ratings, public rankings or a coaching marketplace;
 - challenges, competitions or leaderboards;
 - copy trading, trade execution or managed accounts;

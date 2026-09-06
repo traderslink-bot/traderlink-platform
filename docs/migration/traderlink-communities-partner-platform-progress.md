@@ -444,7 +444,7 @@ remain deliberately deferred until after the owner's internal-product review.
 
 ## Coach workspace organization - 2026-09-06
 
-**Status:** Implemented locally; staging release and rendered owner review pending
+**Status:** Implemented and released to staging; rendered owner review pending
 
 - [x] Reorganized the coach experience into Coaching Work, Students, an
   individual private student workspace, and Coach Setup.
@@ -462,5 +462,48 @@ remain deliberately deferred until after the owner's internal-product review.
 - [x] Focused ESLint and the disposable Communities repository proof pass. The
   proof covers disabled-by-default student services, coach enablement, tasks,
   history, relationship isolation and zero foreign-key violations.
-- [ ] Publish migration `0127` and the workspace UI to staging.
+- [x] Published migration `0127` and the workspace UI to staging at source
+  `a50df1964a2ef291d2e08de4bfade0534845f34c`.
+- [x] Guarded migration deployment applied exactly one migration and verified
+  122 migrations on `sqlite_single_node`. Normal deployment
+  `a58681ae-447f-491f-8dfd-2d6ca540eb35` reached `SUCCESS`; direct health is
+  `ready`.
 - [ ] Verify desktop and mobile Light and Dark rendering on staging.
+
+## Full coaching platform expansion - 2026-09-06
+
+**Status:** Implemented locally; staging build and rendered acceptance pending
+
+- [x] Recorded that coaching reviews may cover one trade, multiple trades,
+  weekly or monthly performance, general performance, a coaching session or a
+  custom review.
+- [x] Recorded private image attachments for annotated charts and screenshots
+  across messages and reviews.
+- [x] Recorded group lessons, classes and assignments for all students, one
+  plan or selected students.
+- [x] Moved enrollment capacity to each coaching plan while retaining only an
+  optional coach-level safety ceiling.
+- [x] Kept trade reviews optional for a plan and coach-controlled per student.
+- [x] Preserved student-owned, revocable, read-only Journal sharing as the only
+  source for coach performance comparisons and trade selection.
+- [x] Expanded coach navigation into Coaching Work, Students, Reviews, Sessions,
+  Teaching and Coach Setup while retaining the shared TraderLink shell.
+- [x] Added plan-level capacity and optional messaging, review, session and
+  teaching services. New enrollment checks use the selected plan's capacity.
+- [x] Added single-trade, multi-trade, weekly, monthly, general, session and
+  custom reviews with optional Journal trade selection and period bounds.
+- [x] Added relationship-scoped review replies and private PNG, JPEG and WebP
+  chart attachments with an 8 MB limit and authenticated no-store reads.
+- [x] Added scheduled/completed sessions, lessons, classes and assignments for
+  all students, a plan or selected students.
+- [x] Added student-facing coaching inside the normal TraderLink dashboard with
+  coach messages, images, reviews, replies, upcoming work, teaching and shared
+  history.
+- [x] Preserved exact relationship authorization: only the assigned coach and
+  student can read private work, and Journal reads still require the student's
+  active, revocable grant plus the coach's live Discord capability.
+- [x] Focused ESLint passes for the expanded slice.
+- [x] Disposable repository QA passes with 28 Communities tables, all 20
+  capabilities, zero foreign-key violations and relationship isolation.
+- [ ] Complete the staging build and responsive Light/Dark rendered acceptance.
+- [ ] Owner-review the complete expanded coaching composition on staging.
