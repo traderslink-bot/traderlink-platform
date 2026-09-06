@@ -10,7 +10,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardMetricCard, DashboardPage, DashboardPanel, DashboardUnavailableState } from "@/app/dashboard-ui";
+import { DashboardMetricCard as BaseDashboardMetricCard, DashboardPage, DashboardPanel, DashboardUnavailableState } from "@/app/dashboard-ui";
 import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { TraderLinkCommunityCoachJournalReadService } from "@/src/modules/communities/server/traderlink-community-coach-journal-read-service";
@@ -19,6 +19,7 @@ import { loadCommunityDashboard } from "../../../../community-dashboard-loader";
 import { createCommunityCoachingRecordAction, createCommunityCoachingTaskAction, sendCommunityCoachingMessageAction, setStudentCoachingServicesAction, updateCommunityCoachingTaskAction, updateCommunityTradeReviewAction } from "../../../../community-actions";
 
 const stamp=(value:string|null)=>value?new Intl.DateTimeFormat("en",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit",timeZone:"UTC"}).format(new Date(value))+" UTC":"None";
+function DashboardMetricCard(props:Omit<Parameters<typeof BaseDashboardMetricCard>[0],"caption">&{caption?:string}){return <BaseDashboardMetricCard {...props} caption={props.caption??"Current"}/>}
 
 export default async function CoachStudentPage({params}:{params:Promise<{communitySlug:string;relationshipId:string}>}){
  const {communitySlug,relationshipId}=await params;const review=communitySlug==="review";const snapshot=review?createTraderLinkCommunityReviewFixture():(await loadCommunityDashboard(communitySlug,`/communities/${communitySlug}/workspace/students/${relationshipId}`)).snapshot;const relationship=snapshot.relationships.find(item=>item.relationshipId===relationshipId&&item.coachUserId===snapshot.viewer.userId)??(review?snapshot.relationships[0]:undefined);if(!relationship)notFound();const id=relationship.relationshipId;const tasks=snapshot.coachingTasks.filter(x=>x.relationshipId===id);const messages=snapshot.coachingMessages.filter(x=>x.relationshipId===id);const reviews=snapshot.tradeReviews.filter(x=>x.relationshipId===id);const records=snapshot.coachingRecords.filter(x=>x.relationshipId===id);const grants=snapshot.journalGrants.filter(x=>x.relationshipId===id&&x.status==="active");const journal=review?{closedTrades:126,openTrades:2,symbols:48,pendingDecisions:1,trades:[{roundTripId:"1",symbol:"NVDA",direction:"long",closedAtUtc:"2026-09-04T18:00:00.000Z"},{roundTripId:"2",symbol:"AMD",direction:"long",closedAtUtc:null}]}:grants.length?await readJournal(id):null;
