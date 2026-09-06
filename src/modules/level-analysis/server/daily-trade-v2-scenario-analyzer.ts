@@ -33,6 +33,7 @@ export type DailyTradeV2ScenarioCandle = Readonly<{
 }>;
 
 export type DailyTradeV2GreenOpportunity = Readonly<{
+  firstRecoveryAfterRedAtUtcSeconds: number | null;
   firstReachedTwentyAtUtcSeconds: number;
   firstRedAfterTwentyAtUtcSeconds: number | null;
   maximumGainAtUtcSeconds: number;
@@ -342,6 +343,7 @@ function buildProfitZones(input: Readonly<{
 }
 
 function buildGreenOpportunity(input: Readonly<{
+  adverseObservations: readonly ProfitObservation[];
   exitProfits: readonly ExitProfit[];
   finalGrossResult: Decimal;
   pathPoints: readonly PathPoint[];
@@ -362,14 +364,17 @@ function buildGreenOpportunity(input: Readonly<{
   const peakZoneUpperBoundPercent = peakZoneLowerBoundPercent >= 100
     ? null
     : peakZoneLowerBoundPercent + 10;
-  const firstRed = input.pathPoints.find((point) =>
-    point.time >= reachedTwenty.time && point.grossResult.lt(0)) ?? null;
+  const firstRed = input.adverseObservations.find((observation) =>
+    observation.time > reachedTwenty.time && observation.grossResult.lt(0)) ?? null;
   const turnedRed = firstRed !== null || input.finalGrossResult.lt(0);
-  const recoveredAfterTurningRed = firstRed !== null && input.pathPoints.some((point) =>
-    point.time > firstRed.time && point.grossResult.gt(0));
+  const firstRecovery = firstRed === null
+    ? null
+    : input.priceObservations.find((observation) =>
+      observation.time > firstRed.time && observation.grossResult.gt(0)) ?? null;
   const profitableExits = input.exitProfits.filter((exit) => exit.grossProfit.gt(0));
 
   return Object.freeze({
+    firstRecoveryAfterRedAtUtcSeconds: firstRecovery?.time ?? null,
     firstReachedTwentyAtUtcSeconds: reachedTwenty.time,
     firstRedAfterTwentyAtUtcSeconds: turnedRed
       ? firstRed?.time ?? input.exitProfits.at(-1)?.time ?? null
@@ -384,7 +389,7 @@ function buildGreenOpportunity(input: Readonly<{
       .reduce((total, exit) => total.plus(exit.grossProfit), new Decimal(0))
       .toFixed(),
     profitTakingExitCount: profitableExits.length,
-    recoveredAfterTurningRed,
+    recoveredAfterTurningRed: firstRecovery !== null,
     timeInPeakZoneMinutes: input.pathPoints.filter((point) =>
       point.openShareReturnPercent + Number.EPSILON >= peakZoneLowerBoundPercent &&
       (peakZoneUpperBoundPercent === null || point.openShareReturnPercent < peakZoneUpperBoundPercent)).length,
@@ -427,6 +432,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
   const pathPoints: PathPoint[] = [];
   const observations: ProfitObservation[] = [];
   const priceObservations: ProfitObservation[] = [];
+  const adverseObservations: ProfitObservation[] = [];
   const exitProfits: ExitProfit[] = [];
   const reductions: Reduction[] = [];
   let averageEntryPrice: Decimal | null = null;
@@ -437,6 +443,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
   let candleIndex = 0;
   let basisVersion = 0;
   let positionCycleHadExit = false;
+  let lastPositionChangeAtUtcSeconds = Number.POSITIVE_INFINITY;
   const entryAtUtcSeconds = events.find(({ event }) => event.kind === "entry")?.time ?? events[0]!.time;
 
   const appendCompletedClosesBefore = (eventTime: number) => {
@@ -446,8 +453,15 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
       if (closeTime > eventTime) break;
       if (averageEntryPrice && positionQuantity.gt(0)) {
         const perShare = directionMove(input.direction, averageEntryPrice, candle.close);
-        const favorablePrice = input.direction === "long" ? candle.high : candle.low;
+        const fullCandleRangeIsAfterPositionChange = candle.time >= lastPositionChangeAtUtcSeconds;
+        const favorablePrice = fullCandleRangeIsAfterPositionChange
+          ? input.direction === "long" ? candle.high : candle.low
+          : candle.close;
         const favorablePerShare = directionMove(input.direction, averageEntryPrice, favorablePrice);
+        const adversePrice = fullCandleRangeIsAfterPositionChange
+          ? input.direction === "long" ? candle.low : candle.high
+          : candle.close;
+        const adversePerShare = directionMove(input.direction, averageEntryPrice, adversePrice);
         const grossResult = realizedGross.plus(perShare.times(positionQuantity));
         pathPoints.push(Object.freeze({
           averageEntryPrice,
@@ -480,6 +494,17 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
           source: "completed_close",
           time: closeTime,
         }));
+        adverseObservations.push(Object.freeze({
+          averageEntryPrice,
+          basisVersion,
+          cumulativeSoldQuantity,
+          grossResult: realizedGross.plus(adversePerShare.times(positionQuantity)),
+          openQuantity: positionQuantity,
+          openShareReturnPercent: adversePerShare.dividedBy(averageEntryPrice).times(100).toNumber(),
+          price: adversePrice,
+          source: "completed_close",
+          time: closeTime,
+        }));
       }
       candleIndex += 1;
     }
@@ -498,6 +523,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
       positionQuantity = quantityAfter;
       if (startsNewPositionCycle) positionCycleHadExit = false;
       basisVersion += 1;
+      lastPositionChangeAtUtcSeconds = time;
       maximumOpenQuantity = Decimal.max(maximumOpenQuantity, positionQuantity);
       continue;
     }
@@ -531,6 +557,17 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
       source: "exit",
       time,
     }));
+    adverseObservations.push(Object.freeze({
+      averageEntryPrice,
+      basisVersion,
+      cumulativeSoldQuantity,
+      grossResult: realizedGross.plus(perShare.times(positionQuantity)),
+      openQuantity: positionQuantity,
+      openShareReturnPercent: returnPercent,
+      price,
+      source: "exit",
+      time,
+    }));
     const remainingQuantityAfter = Decimal.max(0, positionQuantity.minus(closingQuantity));
     const cumulativeSoldQuantityAfter = cumulativeSoldQuantity.plus(closingQuantity);
     exitProfits.push(Object.freeze({
@@ -547,6 +584,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
     positionQuantity = remainingQuantityAfter;
     cumulativeSoldQuantity = cumulativeSoldQuantityAfter;
     positionCycleHadExit = true;
+    lastPositionChangeAtUtcSeconds = time;
     if (event.kind === "partial_exit" && grossProfit.gt(0)) {
       reductions.push(Object.freeze({
         grossProfit,
@@ -564,8 +602,8 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
   }));
   const primaryQualification = qualifications[0] ?? null;
   const firstRedAfterQualification = primaryQualification
-      ? pathPoints.find((point) =>
-        point.time >= primaryQualification.qualifiedAtUtcSeconds && point.grossResult.lt(0)) ?? null
+      ? adverseObservations.find((observation) =>
+        observation.time > primaryQualification.qualifiedAtUtcSeconds && observation.grossResult.lt(0)) ?? null
     : null;
   const relevantReductions = reductions.filter((reduction) =>
     primaryQualification !== null &&
@@ -580,6 +618,7 @@ export function analyzeDailyTradeV2Scenario(input: Readonly<{
     observations,
   });
   const greenOpportunity = buildGreenOpportunity({
+    adverseObservations,
     exitProfits,
     finalGrossResult: realizedGross,
     pathPoints,

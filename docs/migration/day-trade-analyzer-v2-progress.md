@@ -165,3 +165,45 @@ online release review and is not claimed by this checkpoint.
   Zone chart.
 - [x] Focused ESLint, targeted TypeScript, React best-practices review and
   `git diff --check` pass for the Gross-only refinement.
+## Entry/Exit summary and shared control placement — 2026-09-06
+
+- [x] Move the date-range and Gross/Net controls below the analyzed-trade count
+  on every applicable Day Trade Analyzer route, including Analyzed Trades.
+- [x] Preserve Scaling Out's Gross-only chart-level filter placement.
+- [x] Add the Entry and Exit snapshot for adds, partial exits, green final exits
+  and median calculated profit giveback.
+- [x] Add the six-factor context summary with selected-basis gain, average P/L,
+  loss and supporting trade counts.
+- [x] Add visible MFE and MAE terminology to Room after entry while retaining
+  plain-language direction and per-share explanations.
+- [x] Complete focused TypeScript, ESLint, diff and React review for this slice.
+
+## Green-to-Red evidence and outcome refinement — 2026-09-06
+
+- [x] Make later red and recovery chronology symmetric with the +20% evidence:
+  exact executions and direction-aware completed-candle extremes are used.
+- [x] Do not invent the order of a high and low inside one candle, and do not
+  use the full range of a candle that began before a position-changing execution.
+- [x] Carry the saved logical trade ID and execution count in every supporting
+  Green-to-Red record while retaining the representative member ID only for the
+  existing grouped Trade Details lookup.
+- [x] Expand the finished-red split to show maximum Gross opportunity, exact
+  profit taken, final Gross loss and opportunity not retained.
+- [x] Split recovered trades by their final above/below-$0 outcome.
+- [x] Add an exclusive highest-profit-zone outcome table with explicit
+  denominators and Gross dollar totals.
+- [x] Replace the finished-red-only evidence table with filterable exact +20%,
+  turned-red, finished-red and recovered records.
+- [x] Add first-red/recovery timing, peak stock price per share and a same-page
+  Trade Details drawer to each exact record.
+- [x] Replace ambiguous column labels with `Maximum gain` and `Opportunity not
+  retained`, backed by concise formula/evidence tooltips.
+- [x] A direct calculation harness passed Long, Short, exact-exit red,
+  later recovery, same-candle ambiguity and mid-candle position-change cases.
+- [x] Focused ESLint and targeted TypeScript compilation passed. The broad
+  repository TypeScript process was stopped by Node's 2 GB heap limit and was
+  not repeated on the resource-constrained computer.
+- [x] A focused React server-render harness rendered the damage summaries,
+  highest-zone table, exact evidence table and same-page Details action.
+- [ ] Integrated desktop/mobile Light/Dark rendering remains for the authorized
+  online review; no local server, build, push or deployment was performed.

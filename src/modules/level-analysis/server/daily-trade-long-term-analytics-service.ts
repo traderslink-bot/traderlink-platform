@@ -304,7 +304,9 @@ export type TradeAnalysisProfitZoneSummaryRow = Readonly<{
 export type TradeAnalysisGreenToRedOpportunityRow = Readonly<{
   closeDate: string;
   direction: "long" | "short";
+  executionCount: number;
   finalGrossPnlDecimal: string;
+  firstRecoveryAfterRedAtUtcSeconds: number | null;
   firstReachedTwentyAtUtcSeconds: number;
   firstRedAfterTwentyAtUtcSeconds: number | null;
   maximumGainAtUtcSeconds: number;
@@ -321,6 +323,7 @@ export type TradeAnalysisGreenToRedOpportunityRow = Readonly<{
   symbol: string;
   timeInPeakZoneMinutes: number;
   totalHoldingMinutes: number;
+  tradeId: string;
   trackerDate: string;
 }>;
 
@@ -1676,7 +1679,9 @@ export function buildDailyTradeLongTermAnalytics(
     return [Object.freeze({
       closeDate: trade.closeLocalDate,
       direction: trade.direction,
+      executionCount: trade.executionCount,
       finalGrossPnlDecimal: calculatedFinalGross,
+      firstRecoveryAfterRedAtUtcSeconds: opportunity.firstRecoveryAfterRedAtUtcSeconds,
       firstReachedTwentyAtUtcSeconds: opportunity.firstReachedTwentyAtUtcSeconds,
       firstRedAfterTwentyAtUtcSeconds: opportunity.firstRedAfterTwentyAtUtcSeconds,
       maximumGainAtUtcSeconds: opportunity.maximumGainAtUtcSeconds,
@@ -1695,6 +1700,7 @@ export function buildDailyTradeLongTermAnalytics(
       symbol: trade.symbol,
       timeInPeakZoneMinutes: opportunity.timeInPeakZoneMinutes,
       totalHoldingMinutes: trade.totalHoldingMinutes,
+      tradeId: trade.tradeId,
       trackerDate: trade.entryLocalDate,
     })];
   }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));

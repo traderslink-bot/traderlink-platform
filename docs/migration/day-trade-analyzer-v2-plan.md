@@ -145,11 +145,35 @@ Lead with the percentage and count of analyzed user-defined trades that reached 
 combined maximum Gross profit opportunity, exact Gross profit taken, the count
 that later turned red, and the count and combined Gross loss that finished red.
 Keep the denominators explicit. Split finished-red trades into no-profit-taken
-and some-profit-taken groups, and show recoveries separately. For each
-finished-red trade show its maximum gain, maximum Gross opportunity, peak
-ten-point zone, total time in that zone, exact Gross profit taken and final
-Gross P/L. Do not use the sustained-close matrix as a gate and do not promote
-raw one-cent breakeven crossings as the primary analysis.
+and some-profit-taken groups, and show their maximum opportunity, exact profit
+taken, final loss and opportunity not retained. Show recoveries separately,
+including whether recovered trades ultimately finished above or below $0.
+
+Add a highest-profit-zone outcome table in which each trade appears exactly
+once in its exclusive peak ten-point zone. Show the zone's share of the +20%
+population, combined maximum Gross opportunity, exact Gross profit taken,
+turned-red and finished-red rates, final Gross P/L, opportunity not retained and
+median completed-candle time in the zone. Keep this distinct from Scaling Out's
+cumulative reached-zone analysis.
+
+Keep every exact +20% trade available in one filterable evidence table, not
+only trades that finished red. The filters are All, Turned red, Finished red
+and Recovered. Each record shows the saved user-defined trade, execution count,
+first +20% evidence, maximum gain and stock price per share, peak zone and time,
+first later red evidence, later recovery evidence, exact Gross profit taken,
+final Gross P/L and opportunity not retained. Open the existing Trade Details
+drawer on the same page. Supporting records carry the logical trade ID while a
+representative member round-trip ID remains available only for resolving the
+complete grouped trade through the existing drawer service.
+
+For chronology, an exact execution price or the direction-adverse extreme of a
+completed one-minute candle can prove that total open-trade Gross P/L moved
+below $0. A later exact execution price or direction-favorable completed-candle
+extreme can prove recovery. Never infer whether a candle's high or low occurred
+first within the same minute, and never use a full candle range that began
+before the latest position-changing execution. Do not use the sustained-close
+matrix as a gate and do not promote raw one-cent breakeven crossings as the
+primary analysis.
 
 ### Scaling Out
 
