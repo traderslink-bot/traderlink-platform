@@ -279,5 +279,19 @@ to this worker.
 - [x] Apply the same strict comparison to the connected Green-to-Red, scaling
   and outcome classifications so signed zero remains flat and is never counted
   as green, red, recovered or profitable.
+- [x] Refine the ladder from the owner's live walkthrough: split every bounded
+  zone label after the dash, reduce the zone-range type, enlarge and offset the
+  Reached rate, and state how many reached trades advanced or did not advance.
+- [x] Restore the Profit Taken trade count, add profitable shares sold, and
+  promote the exact missed-opportunity dollars above its supporting rate.
+- [x] Replace the compressed `first` phrases with counted next outcomes for
+  no-profit trades, and show the count and combined final Gross loss when those
+  trades later ended red.
+- [x] Track when a scaled exit sequence closed the remaining position in the
+  same zone. Show its percentage, count and Gross profit in the ladder and
+  identify the affected trade in the exact evidence table.
+- [x] Add two date-filtered, non-prescriptive highlights for the largest missed
+  opportunity and longest median zone time, and shorten exact-table headings
+  while retaining their full definitions in tooltips.
 - [ ] Integrated Light/Dark desktop/mobile rendering remains deferred to the
   authorized online review after release.

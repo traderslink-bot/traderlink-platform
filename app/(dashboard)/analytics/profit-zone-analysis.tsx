@@ -56,6 +56,20 @@ function zoneLabel(lower: number, upper: number | null): string {
   return upper === null ? `${lower}% or more` : `${lower}%–${(upper - 0.01).toFixed(2)}%`;
 }
 
+function ZoneRange({ lower, upper }: { lower: number; upper: number | null }) {
+  if (upper === null) return <>{lower}%<br />or more</>;
+  return <>{lower}%–<br />{(upper - 0.01).toFixed(2)}%</>;
+}
+
+function tradeCount(count: number): string {
+  return `${count} ${count === 1 ? "trade" : "trades"}`;
+}
+
+function shares(value: string | null | undefined): string {
+  if (value === null || value === undefined) return "Unavailable";
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 4 }).format(Number(value));
+}
+
 function TableHeading({
   help,
   label,
@@ -142,16 +156,42 @@ export function ProfitZoneAnalysis({
     ? "The time it took the trade to reach this zone from the first buy order."
     : "The time it took the trade to reach this zone from the first short-sale order.";
   const partialProfitHelp = direction === "long"
-    ? "You scaled out and secured some profit by selling less than 100% of your shares."
-    : "You scaled out and secured some profit by buying back less than 100% of your short position.";
+    ? "Gross profit secured through a scaled exit sequence in this zone. The row identifies when a later sell closed the remaining position here."
+    : "Gross profit secured through a scaled cover sequence in this zone. The row identifies when a later buy-to-cover closed the remaining position here.";
   const fullExitProfitHelp = direction === "long"
     ? "You fully exited your position with one sell order."
     : "You fully exited your short position with one buy-to-cover order.";
   const exitTypeHelp = direction === "long"
-    ? "Tracks how trades were exited. Partial = selling under 100% of shares in one execution and the remainder in any following executions. Full exit = selling 100% of shares in one execution."
-    : "Tracks how short trades were exited. Partial = buying back under 100% of shares in one execution and the remainder in any following executions. Full exit = buying back 100% of shares in one execution.";
+    ? "Tracks how profit-taking trades were exited. Partial = selling under 100% of shares in one execution and the remainder in following executions. Full exit = selling 100% of shares in one execution with no earlier scale-out. The indented percentage and count show partial-exit trades whose remaining position also closed in this zone."
+    : "Tracks how profitable short trades were exited. Partial = buying back under 100% of shares in one execution and the remainder in following executions. Full exit = buying back 100% of shares in one execution with no earlier scale-out. The indented percentage and count show partial-exit trades whose remaining position also closed in this zone.";
+  const largestMissedOpportunity = rows.reduce<TradeAnalysisProfitZoneSummaryRow | null>((largest, row) => {
+    if (row.noProfitTradeCount === 0 || Number(row.noProfitMaximumOpportunityGrossDecimal) <= 0) return largest;
+    if (!largest || Number(row.noProfitMaximumOpportunityGrossDecimal) >
+        Number(largest.noProfitMaximumOpportunityGrossDecimal)) return row;
+    return largest;
+  }, null);
+  const longestMedianZone = rows.reduce<TradeAnalysisProfitZoneSummaryRow | null>((longest, row) => {
+    if (row.reachedTradeCount === 0 || row.medianCompletedMinutesInZone === null) return longest;
+    if (!longest || row.medianCompletedMinutesInZone > (longest.medianCompletedMinutesInZone ?? -1)) return row;
+    return longest;
+  }, null);
 
   return <Stack spacing={1.75}>
+    {largestMissedOpportunity || longestMedianZone ? <Paper variant="outlined" sx={{ borderRadius: 2.5, p: 1.25 }}>
+      <Typography sx={{ fontWeight: 850, mb: 0.75 }}>Profit zone highlights</Typography>
+      <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}>
+        {largestMissedOpportunity ? <Box>
+          <Typography color="text.secondary" variant="caption">Largest missed opportunity</Typography>
+          <Typography sx={{ fontSize: "1.15rem", fontWeight: 900 }}>{money(largestMissedOpportunity.noProfitMaximumOpportunityGrossDecimal, currency)}</Typography>
+          <Typography color="text.secondary" variant="body2">{zoneLabel(largestMissedOpportunity.lowerBoundPercent, largestMissedOpportunity.upperBoundPercent)} · {tradeCount(largestMissedOpportunity.noProfitTradeCount)} took no profit</Typography>
+        </Box> : null}
+        {longestMedianZone ? <Box>
+          <Typography color="text.secondary" variant="caption">Longest median time in a zone</Typography>
+          <Typography sx={{ fontSize: "1.15rem", fontWeight: 900 }}>{minutes(longestMedianZone.medianCompletedMinutesInZone)}</Typography>
+          <Typography color="text.secondary" variant="body2">{zoneLabel(longestMedianZone.lowerBoundPercent, longestMedianZone.upperBoundPercent)} · {tradeCount(longestMedianZone.reachedTradeCount)}</Typography>
+        </Box> : null}
+      </Box>
+    </Paper> : null}
     <Paper variant="outlined" sx={{ borderRadius: 2.5, p: { xs: 1, sm: 1.25 } }}>
       <Stack direction="row" sx={{ alignItems: "center", mb: 0.75 }}>
         <Box>
@@ -162,16 +202,16 @@ export function ProfitZoneAnalysis({
           <IconButton aria-label="Explain profit zones" size="small" sx={{ color: "text.secondary", ml: 0.25, p: 0.35 }}><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton>
         </Tooltip>
       </Stack>
-      <Box sx={{ display: { xs: "none", md: "grid" }, gap: 1, gridTemplateColumns: "88px 0.68fr 1fr 1fr 1.12fr 1.18fr 0.65fr", px: 1, pb: 0.5 }}>
+      <Box sx={{ display: { xs: "none", md: "grid" }, gap: 1, gridTemplateColumns: "78px 0.72fr 1.02fr 1.02fr 1.18fr 1.35fr 0.65fr", px: 1, pb: 0.5 }}>
         {[
           ["Zone", "Ten-point gain range."],
-          ["Reached", "Share of all analyzed user-defined trades that reached this level."],
-          ["Profit taken", "Percentage of trades reaching this zone where profit was taken here, plus exact combined Gross profit."],
+          ["Reached", "Share of all analyzed user-defined trades that reached this level. A trade can appear in several zones; scaling out does not remove it while shares remain open and the price reaches a higher zone."],
+          ["Profit taken", "Percentage and count of zone-reaching trades with a profitable exit here, plus the profitable shares sold and exact combined Gross profit. A trade can take partial profit and continue into higher zones."],
           ["Exit type", exitTypeHelp],
-          ["Missed opportunity", "Trades that reached this zone but had no profitable exit in it. Shows their share of reached trades and their combined highest Gross profit opportunity on the remaining shares in this zone."],
-          ["Next move", "The first recorded outcome for trades that took no profit in this zone. These percentages use only the missed-opportunity trades and total 100%."],
+          ["Missed opportunity", "Trades that reached this zone but had no profitable exit in it. The large amount is their combined highest Gross profit opportunity on the remaining shares in this exact zone. Later red losses are final Gross P/L from that no-profit group."],
+          ["Next move", "What happened first after a trade took no profit in this zone: it reached the next zone, dropped below this zone or exited here. Counts and percentages use only the no-profit trades and total 100%."],
           ["Time in zone", "Median completed one-minute candles inside this exact zone."],
-        ].map(([label, help]) => <Tooltip arrow key={label} title={help}><Typography color="text.secondary" sx={{ fontSize: "0.69rem", fontWeight: 800, letterSpacing: "0.035em", textTransform: "uppercase" }}>{label}</Typography></Tooltip>)}
+        ].map(([label, help], index) => <Tooltip arrow key={label} title={help}><Typography color="text.secondary" sx={{ fontSize: "0.69rem", fontWeight: 800, letterSpacing: "0.035em", pl: index === 1 ? 1 : 0, textTransform: "uppercase" }}>{label}</Typography></Tooltip>)}
       </Box>
       <Stack spacing={0.5}>
         {[...rows].reverse().map((row) => {
@@ -192,20 +232,20 @@ export function ProfitZoneAnalysis({
                 xs: '"zone reached profit" "zone exitType missed" "zone nextMove nextMove"',
                 md: '"zone reached profit exitType missed nextMove time"',
               },
-              gridTemplateColumns: { xs: "68px repeat(2, minmax(0, 1fr))", md: "88px 0.68fr 1fr 1fr 1.12fr 1.18fr 0.65fr" },
-              minHeight: { xs: 124, md: 68 },
+              gridTemplateColumns: { xs: "62px repeat(2, minmax(0, 1fr))", md: "78px 0.72fr 1.02fr 1.02fr 1.18fr 1.35fr 0.65fr" },
+              minHeight: { xs: 136, md: 78 },
               px: 1,
               py: 0.55,
               textAlign: "left",
               width: "100%",
             }}
           >
-            <Typography sx={{ fontSize: "0.84rem", fontWeight: 900, gridArea: "zone" }}>{zoneLabel(row.lowerBoundPercent, row.upperBoundPercent)}</Typography>
-            <Box sx={{ gridArea: "reached" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Reached</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{percent(row.reachRatePercent)}</Typography><Typography color="text.secondary" variant="caption">{row.reachedTradeCount} of {totalTradeCount} trades</Typography></Box>
-            <Box sx={{ gridArea: "profit" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Profit taken</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{(row.tookProfitTradeCount ?? 0) === 0 ? "No profit taken" : `Profit taken in ${percent(row.tookProfitRateOfReachedPercent)}`}</Typography><Typography color="text.secondary" variant="caption">{(row.tookProfitTradeCount ?? 0) === 0 ? `${money(row.profitTakenInZoneGrossDecimal ?? "0", currency)} Gross profit` : `of reached trades · ${money(row.profitTakenInZoneGrossDecimal ?? "0", currency)} Gross profit`}</Typography></Box>
-            <Box sx={{ gridArea: "exitType" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Exit type</Typography>{(row.tookProfitTradeCount ?? 0) > 0 ? <><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Partial exits {percent(row.partialExitShareOfProfitTakingPercent)} · {money(row.partialExitTradeProfitInZoneGrossDecimal ?? row.partialProfitTakenInZoneGrossDecimal ?? "0", currency)}</Typography><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Full exits {percent(row.fullExitShareOfProfitTakingPercent)} · {money(row.fullExitOnlyTradeProfitInZoneGrossDecimal ?? row.profitableFullExitInZoneGrossDecimal ?? "0", currency)}</Typography></> : <Typography color="text.secondary" variant="caption">No profit-taking exits</Typography>}</Box>
-            <Box sx={{ gridArea: "missed" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Missed opportunity</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{row.noProfitTradeCount === 0 ? "No missed opportunities" : `No profit taken in ${percent(row.noProfitRateOfReachedPercent)}`}</Typography><Typography color="text.secondary" variant="caption">{row.noProfitTradeCount} of {row.reachedTradeCount} trades · {money(row.noProfitMaximumOpportunityGrossDecimal, currency)} opportunity</Typography></Box>
-            <Box sx={{ gridArea: "nextMove" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Next move</Typography>{row.noProfitTradeCount === 0 ? <Typography color="text.secondary" variant="caption">No missed-opportunity trades</Typography> : <>{row.upperBoundPercent === null ? null : <Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Reached +{row.upperBoundPercent}% first {percent(row.noProfitReachedNextFirstRatePercent)}</Typography>}<Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Dropped below +{row.lowerBoundPercent}% first {percent(row.noProfitDroppedBelowFirstRatePercent)}</Typography><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>{row.upperBoundPercent === null ? `Exited at +${row.lowerBoundPercent}% or higher` : "Exited in zone"} {percent(row.noProfitExitedInZoneRatePercent)}</Typography></>}</Box>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 850, gridArea: "zone", lineHeight: 1.08 }}><ZoneRange lower={row.lowerBoundPercent} upper={row.upperBoundPercent} /></Typography>
+            <Box sx={{ gridArea: "reached", pl: { xs: 0.5, md: 1 } }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Reached</Typography><Typography sx={{ fontSize: "0.84rem", fontWeight: 900 }}>{percent(row.reachRatePercent)}</Typography><Typography color="text.secondary" variant="caption">{row.reachedTradeCount} of {totalTradeCount} trades</Typography>{row.upperBoundPercent !== null ? <Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>{row.reachedNextTradeCount ?? 0} reached +{row.upperBoundPercent}% · {row.didNotReachNextTradeCount ?? 0} did not</Typography> : null}</Box>
+            <Box sx={{ gridArea: "profit" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Profit taken</Typography><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{row.tookProfitTradeCount === 0 ? "No profit taken" : `Profit taken in ${percent(row.tookProfitRateOfReachedPercent)}`}</Typography><Typography color="text.secondary" component="div" variant="caption">{row.tookProfitTradeCount} of {row.reachedTradeCount} trades</Typography><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>{row.tookProfitTradeCount > 0 ? `${shares(row.quantitySoldInZoneDecimal)} profitable shares · ` : ""}{money(row.profitTakenInZoneGrossDecimal, currency)} Gross profit</Typography></Box>
+            <Box sx={{ gridArea: "exitType" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Exit type</Typography>{row.tookProfitTradeCount > 0 ? <><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Partial exits {percent(row.partialExitShareOfProfitTakingPercent)} · {money(row.partialExitTradeProfitInZoneGrossDecimal, currency)}</Typography>{row.scaledExitClosedTradeCount > 0 ? <Typography color="text.secondary" sx={{ fontSize: "0.62rem", pl: 0.75 }}>↳ Closed here {percent(row.scaledExitClosedRateOfPartialExitTradesPercent)} · {row.scaledExitClosedTradeCount} of {row.partialProfitTradeCount} · {money(row.scaledExitClosingProfitGrossDecimal, currency)}</Typography> : null}<Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Full exits {percent(row.fullExitShareOfProfitTakingPercent)} · {money(row.fullExitOnlyTradeProfitInZoneGrossDecimal, currency)}</Typography></> : <Typography color="text.secondary" variant="caption">No profit-taking exits</Typography>}</Box>
+            <Box sx={{ gridArea: "missed" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Missed opportunity</Typography>{row.noProfitTradeCount === 0 ? <><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>No missed opportunities</Typography><Typography color="text.secondary" variant="caption">Every reached trade took profit here</Typography></> : <><Typography sx={{ fontSize: "0.9rem", fontWeight: 900 }}>{money(row.noProfitMaximumOpportunityGrossDecimal, currency)} opportunity</Typography><Typography color="text.secondary" component="div" variant="caption">No profit in {percent(row.noProfitRateOfReachedPercent)} · {row.noProfitTradeCount} of {row.reachedTradeCount}</Typography>{row.noProfitEndedRedTradeCount > 0 ? <Typography sx={{ color: financialOutcomeColor(row.noProfitEndedRedGrossLossDecimal), fontSize: "0.65rem", fontWeight: 750 }}>{row.noProfitEndedRedTradeCount} later ended red · {money(row.noProfitEndedRedGrossLossDecimal, currency)}</Typography> : null}</>}</Box>
+            <Box sx={{ gridArea: "nextMove" }}><Typography color="text.secondary" sx={{ display: { md: "none" }, fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Next move</Typography>{row.noProfitTradeCount === 0 ? <Typography color="text.secondary" variant="caption">No no-profit trades</Typography> : <>{row.upperBoundPercent === null ? null : <Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>{tradeCount(row.noProfitReachedNextFirstTradeCount)} reached +{row.upperBoundPercent}% · {percent(row.noProfitReachedNextFirstRatePercent)}</Typography>}<Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>{tradeCount(row.noProfitDroppedBelowFirstTradeCount)} dropped below +{row.lowerBoundPercent}% · {percent(row.noProfitDroppedBelowFirstRatePercent)}</Typography><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>{tradeCount(row.noProfitExitedInZoneTradeCount)} {row.upperBoundPercent === null ? `exited at +${row.lowerBoundPercent}% or higher` : "exited in zone"} · {percent(row.noProfitExitedInZoneRatePercent)}</Typography></>}</Box>
             <Box sx={{ display: { xs: "none", md: "block" }, gridArea: "time" }}><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{minutes(row.medianCompletedMinutesInZone)}</Typography><Typography color="text.secondary" variant="caption">median</Typography></Box>
           </ButtonBase>;
         })}
@@ -232,39 +272,39 @@ export function ProfitZoneAnalysis({
           pageSize={pageSize}
           rowCount={selectedRecords.length}
         />
-        <HorizontalScrollRegion label={`Trades that reached ${zoneLabel(selectedRow.lowerBoundPercent, selectedRow.upperBoundPercent)}`} minTableWidth={1300} stickyFirstColumn>
+        <HorizontalScrollRegion label={`Trades that reached ${zoneLabel(selectedRow.lowerBoundPercent, selectedRow.upperBoundPercent)}`} minTableWidth={1220} stickyFirstColumn>
           <Table size="small" sx={{ tableLayout: "fixed", "& .MuiTableCell-root": { px: 1, verticalAlign: "top" } }}>
             <colgroup>
               <col style={{ width: 82 }} />
-              <col style={{ width: 136 }} />
-              <col style={{ width: 104 }} />
-              <col style={{ width: 100 }} />
-              <col style={{ width: 188 }} />
-              <col style={{ width: 132 }} />
-              <col style={{ width: 132 }} />
-              <col style={{ width: 210 }} />
-              <col style={{ width: 126 }} />
-              <col style={{ width: 118 }} />
+              <col style={{ width: 120 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 190 }} />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 120 }} />
+              <col style={{ width: 200 }} />
+              <col style={{ width: 108 }} />
+              <col style={{ width: 110 }} />
             </colgroup>
             <TableHead><TableRow>
             <TableCell>Ticker</TableCell>
-            <TableCell><TableHeading help="Date and time the trade first reached this zone. For candle-based reaches, the displayed time is the close of the one-minute candle." label="First Reached" /></TableCell>
-            <TableCell><TableHeading help={entryOrderHelp} label="Time to Zone" /></TableCell>
-            <TableCell><TableHeading help="Total time the active trade spent in this zone, including time before and after leaving the zone and returning." label="Time in Zone" /></TableCell>
-            <TableCell><TableHeading help={partialProfitHelp} label="Partial Profit" /></TableCell>
-            <TableCell><TableHeading help={fullExitProfitHelp} label="Full Exit Profit" /></TableCell>
-            <TableCell><TableHeading help="The highest potential Gross profit opportunity in this zone." label="Gross Opportunity" /></TableCell>
-            <TableCell>Next Zone</TableCell>
-            <TableCell><TableHeading help="Your profit or loss for the completed trade without deducting fees charged by your broker." label="Final Gross P/L" /></TableCell>
+            <TableCell><TableHeading help="Date and time the trade first reached this zone. For candle-based reaches, the displayed time is the close of the one-minute candle." label="Reached at" /></TableCell>
+            <TableCell><TableHeading help={entryOrderHelp} label="To zone" /></TableCell>
+            <TableCell><TableHeading help="Total time the active trade spent in this zone, including time before and after leaving the zone and returning." label="In zone" /></TableCell>
+            <TableCell><TableHeading help={partialProfitHelp} label="Partial profit" /></TableCell>
+            <TableCell><TableHeading help={fullExitProfitHelp} label="Full exit" /></TableCell>
+            <TableCell><TableHeading help="The highest potential Gross profit opportunity in this exact zone." label="Opportunity" /></TableCell>
+            <TableCell><TableHeading help="Whether the trade reached the next zone, dropped below this zone before later reaching it, or exited before the next zone." label="Next move" /></TableCell>
+            <TableCell><TableHeading help="Your profit or loss for the completed trade without deducting fees charged by your broker." label="Final P/L" /></TableCell>
             <TableCell />
           </TableRow></TableHead><TableBody>{visibleRecords.map((record) => <TableRow hover key={record.tradeId}>
             <TableCell sx={{ fontWeight: 850 }}>{record.symbol}</TableCell>
             <TableCell><Typography component="div" variant="body2">{reachTime(record.firstReachedAtUtcSeconds, timezone)}</Typography></TableCell>
             <TableCell>{minutes(record.minutesFromEntryToFirstReach)}</TableCell>
             <TableCell>{minutes(record.totalCompletedMinutesInZone)}</TableCell>
-            <TableCell><Typography component="div" sx={{ color: financialOutcomeColor(record.partialProfitTakenInZoneGrossDecimal ?? "0"), fontWeight: 750 }} variant="body2">{money(record.partialProfitTakenInZoneGrossDecimal ?? "0", currency)}</Typography><Typography color="text.secondary" component="div" variant="caption">{record.partialProfitTakingExitCount ?? 0} {(record.partialProfitTakingExitCount ?? 0) === 1 ? "partial exit" : "partial exits"} · {partialProfitTiming(record)}</Typography></TableCell>
+            <TableCell><Typography component="div" sx={{ color: financialOutcomeColor(record.partialProfitTakenInZoneGrossDecimal ?? "0"), fontWeight: 750 }} variant="body2">{money(record.partialProfitTakenInZoneGrossDecimal ?? "0", currency)}</Typography><Typography color="text.secondary" component="div" variant="caption">{record.partialProfitTakingExitCount ?? 0} {(record.partialProfitTakingExitCount ?? 0) === 1 ? "scaled exit" : "scaled exits"} · {partialProfitTiming(record)}</Typography>{record.scaledPositionClosingExitCount > 0 ? <Typography color="text.secondary" component="div" sx={{ fontSize: "0.65rem" }}>Position closed here after scaling · {money(record.scaledPositionClosingProfitGrossDecimal, currency)}</Typography> : null}</TableCell>
             <TableCell><Typography component="div" sx={{ color: financialOutcomeColor(record.profitableFullExitInZoneGrossDecimal ?? "0"), fontWeight: 750 }} variant="body2">{Number(record.profitableFullExitInZoneGrossDecimal ?? "0") > 0 ? money(record.profitableFullExitInZoneGrossDecimal, currency) : "No"}</Typography></TableCell>
-            <TableCell>{money(record.maximumProfitOpportunityInZoneGrossDecimal, currency)}</TableCell>
+            <TableCell><Typography component="div" variant="body2">{money(record.maximumProfitOpportunityInZoneGrossDecimal, currency)}</Typography>{Number(record.profitTakenInZoneGrossDecimal) <= 0 ? <Typography color="text.secondary" component="div" variant="caption">No profit taken here</Typography> : null}</TableCell>
             <TableCell sx={{ maxWidth: 280, whiteSpace: "normal" }}><Typography color="text.secondary" component="div" variant="caption">{nextLevelOutcome(record)}</Typography></TableCell>
             <TableCell sx={{ color: financialOutcomeColor(record.finalGrossPnlDecimal), fontWeight: 750 }}>{money(record.finalGrossPnlDecimal, currency)}</TableCell>
             <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${record.trackerDate}` : `/trade-tracker/${record.trackerDate}?${new URLSearchParams({ interval: "1m", trade: record.roundTripId }).toString()}`} size="small" variant="outlined">Full analysis</Button></TableCell>
