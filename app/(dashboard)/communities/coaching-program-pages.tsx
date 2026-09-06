@@ -1,9 +1,10 @@
 import Link from "next/link";
-import {Box,Button,Chip,Grid,MenuItem,Stack,TextField,Typography} from "@mui/material";
+import {Box,Button,Chip,Grid,MenuItem,Stack,TextField} from "@mui/material";
 import {DashboardMetricCard,DashboardPanel,DashboardUnavailableState} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import {createCommunityTeachingAction} from "./community-actions";
 import {CoachWorkspaceNavigation} from "./coach-workspace-navigation";
+import {CommunityTypography as Typography} from "./community-typography";
 
 const mine=(snapshot:TraderLinkCommunityDashboardSnapshot)=>new Set(snapshot.relationships.filter(item=>item.coachUserId===snapshot.viewer.userId).map(item=>item.relationshipId));
 

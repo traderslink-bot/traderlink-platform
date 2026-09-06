@@ -1,8 +1,9 @@
 "use client";
-import {Box,Button,Chip,Grid,Stack,TextField,Typography} from "@mui/material";
+import {Box,Button,Chip,Grid,Stack,TextField} from "@mui/material";
 import {DashboardPanel,DashboardUnavailableState} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import {replyCommunityReviewAction,requestCommunityTradeReviewAction,sendCommunityCoachingMessageAction,updateCommunityTeachingStudentAction,uploadCommunityCoachingImageAction} from "./community-actions";
+import {CommunityTypography as Typography} from "./community-typography";
 const stamp=(value:string|null)=>value?new Date(value).toLocaleString():"";
 export function StudentCoachingWorkspace({snapshot,isReview}:{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}){
  const relationship=snapshot.relationships.find(item=>item.studentUserId===snapshot.viewer.userId&&item.status==="active");

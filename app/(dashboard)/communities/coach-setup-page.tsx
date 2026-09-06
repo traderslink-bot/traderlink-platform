@@ -1,9 +1,10 @@
 "use client";
-import {Box,Button,Grid,MenuItem,Stack,TextField,Typography} from "@mui/material";
+import {Box,Button,Grid,MenuItem,Stack,TextField} from "@mui/material";
 import {DashboardPanel} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import {createCommunityCoachingPlanAction,saveCommunityCoachAction,setCoachingRelationshipStatusAction,updateCommunityCoachingPlanStatusAction} from "./community-actions";
 import {CoachWorkspaceNavigation} from "./coach-workspace-navigation";
+import {CommunityTypography as Typography} from "./community-typography";
 
 export function CoachSetupPage({snapshot,isReview=false}:{snapshot:TraderLinkCommunityDashboardSnapshot;isReview?:boolean}){
  const profile=snapshot.coaches.find(item=>item.userId===snapshot.viewer.userId); const plans=profile?snapshot.plans.filter(item=>item.coachProfileId===profile.coachProfileId):[]; const requests=snapshot.relationships.filter(item=>item.coachUserId===snapshot.viewer.userId&&item.status==="pending");

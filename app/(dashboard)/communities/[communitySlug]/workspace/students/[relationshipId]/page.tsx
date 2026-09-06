@@ -7,8 +7,6 @@ import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import MuiTypography from "@mui/material/Typography";
-import type {TypographyProps} from "@mui/material/Typography";
 import { notFound } from "next/navigation";
 import { DashboardMetricCard as BaseDashboardMetricCard, DashboardPage, DashboardPanel, DashboardUnavailableState } from "@/app/dashboard-ui";
 import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -16,11 +14,11 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { TraderLinkCommunityCoachJournalReadService } from "@/src/modules/communities/server/traderlink-community-coach-journal-read-service";
 import { createTraderLinkCommunityReviewFixture } from "@/src/modules/communities/server/traderlink-community-review-fixture";
 import { loadCommunityDashboard } from "../../../../community-dashboard-loader";
+import { CommunityTypography as Typography } from "../../../../community-typography";
 import { completeCommunityCoachingSessionAction, createCommunityCoachingRecordAction, createCommunityCoachingSessionAction, createCommunityCoachingTaskAction, createCommunityExpandedReviewAction, replyCommunityReviewAction, sendCommunityCoachingMessageAction, setStudentCoachingServicesAction, updateCommunityCoachingTaskAction, updateCommunityTradeReviewAction, uploadCommunityCoachingImageAction } from "../../../../community-actions";
 import {CoachWorkspaceNavigation} from "../../../../coach-workspace-navigation";
 
 const stamp=(value:string|null)=>value?new Intl.DateTimeFormat("en",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit",timeZone:"UTC"}).format(new Date(value))+" UTC":"None";
-function Typography({fontWeight,style,...props}:TypographyProps&{fontWeight?:number}){return <MuiTypography {...props} style={{...style,fontWeight}}/>}
 function DashboardMetricCard(props:Omit<Parameters<typeof BaseDashboardMetricCard>[0],"caption">&{caption?:string}){return <BaseDashboardMetricCard {...props} caption={props.caption??"Current"}/>}
 
 export default async function CoachStudentPage({params,searchParams}:{params:Promise<{communitySlug:string;relationshipId:string}>;searchParams:Promise<{from?:string;to?:string}>}){
