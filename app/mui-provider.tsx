@@ -54,6 +54,16 @@ export function DashboardMuiProviders({
     () => createTraderMaterialTheme(activeAppearance),
     [activeAppearance],
   );
+  useEffect(() => {
+    const previousBodyBackground = document.body.style.backgroundColor;
+    const previousRootBackground = document.documentElement.style.backgroundColor;
+    document.body.style.backgroundColor = theme.palette.background.default;
+    document.documentElement.style.backgroundColor = theme.palette.background.default;
+    return () => {
+      document.body.style.backgroundColor = previousBodyBackground;
+      document.documentElement.style.backgroundColor = previousRootBackground;
+    };
+  }, [theme]);
   return (
     <DashboardAppearanceContext.Provider value={contextValue}>
       <ThemeProvider theme={theme}>
