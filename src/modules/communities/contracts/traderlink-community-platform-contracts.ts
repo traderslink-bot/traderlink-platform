@@ -40,6 +40,25 @@ export type TraderLinkCommunityAlert = Readonly<{
   publishedAtUtc: string | null;
   createdAtUtc: string;
   updatedAtUtc: string;
+  publishingMode: "tracked_page" | "discord_post";
+}>;
+
+export type TraderLinkCommunityAlertTemplate = Readonly<{
+  templateId: string;
+  communityId: string;
+  ownerUserId: string;
+  ownerName: string;
+  title: string;
+  scope: "personal" | "community";
+  status: "active" | "archived";
+  fields: readonly Readonly<{
+    key: string;
+    label: string;
+    type: "text" | "number" | "price" | "ticker" | "date" | "time" | "choice" | "notes";
+    required: boolean;
+    placeholder: string;
+    ordinal: number;
+  }>[];
 }>;
 
 export type TraderLinkCommunityWatchlistPlacement = Readonly<{
@@ -57,6 +76,7 @@ export type TraderLinkCommunityWatchlistPlacement = Readonly<{
   symbols?: readonly string[];
   networkVisibility?: "private" | "network_eligible" | "public";
   href?: string;
+  publishingMode?: "tracked_page" | "discord_post";
 }>;
 
 export type TraderLinkCommunityCoach = Readonly<{
@@ -116,6 +136,29 @@ export type TraderLinkCommunityJournalGrant = Readonly<{
   revokedAtUtc: string | null;
 }>;
 
+export type TraderLinkCommunityCoachingMessage = Readonly<{
+  messageId: string;
+  relationshipId: string;
+  authorUserId: string;
+  authorName: string;
+  body: string;
+  createdAtUtc: string;
+  editedAtUtc: string | null;
+}>;
+
+export type TraderLinkCommunityTradeReview = Readonly<{
+  reviewId: string;
+  relationshipId: string;
+  requestedByUserId: string;
+  title: string;
+  studentContext: string;
+  coachFeedback: string;
+  status: "requested" | "in_review" | "completed" | "cancelled";
+  requestedAtUtc: string;
+  completedAtUtc: string | null;
+  updatedAtUtc: string;
+}>;
+
 export type TraderLinkCommunityMemberSummary = Readonly<{
   userId: string;
   displayName: string;
@@ -143,11 +186,18 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
     discordRoleIds: readonly string[];
   }>;
   alerts: readonly TraderLinkCommunityAlert[];
+  alertTemplates: readonly TraderLinkCommunityAlertTemplate[];
   watchlists: readonly TraderLinkCommunityWatchlistPlacement[];
   coaches: readonly TraderLinkCommunityCoach[];
   plans: readonly TraderLinkCommunityCoachingPlan[];
   relationships: readonly TraderLinkCommunityRelationship[];
   journalGrants: readonly TraderLinkCommunityJournalGrant[];
+  coachingMessages: readonly TraderLinkCommunityCoachingMessage[];
+  tradeReviews: readonly TraderLinkCommunityTradeReview[];
+  settings: Readonly<{
+    description: string;
+    personalAlertTemplatesEnabled: boolean;
+  }>;
   audiences: readonly TraderLinkCommunityAudience[];
   channels: readonly TraderLinkCommunityChannel[];
   members: readonly TraderLinkCommunityMemberSummary[];

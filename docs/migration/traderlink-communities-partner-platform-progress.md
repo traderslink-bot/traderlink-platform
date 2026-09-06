@@ -383,9 +383,39 @@ shared working tree; none resolve inside the Communities allowlist.
 No live Discord message was sent, no real partner terms or coach fee were
 activated, no real server was onboarded and production remained unchanged.
 
-## Next authorized step
+## Continuous completion goal - 2026-09-06
 
-Owner reviews the staged Light and Dark dashboards. After visual refinements,
-run the final responsive acceptance pass, onboard the first real Discord server
-under a separate explicit activation boundary, and only then consider a
-production release.
+**Status:** In progress
+
+The owner directed one continuous implementation goal through a complete
+in-application staging review. The order is now explicit:
+
+1. finish every TraderLink Communities workspace and its internal features;
+2. finish role-appropriate shared-shell navigation and authorization;
+3. complete alerts, official server watchlists, alert templates, coaching,
+   coach/student communication, member management, settings and page-specific
+   analytics;
+4. verify responsive Light and Dark rendering and the complete in-app flows;
+5. publish the completed in-app system to staging for owner review; and
+6. defer live Discord posting, Discord-role synchronization testing and
+   test-account sign-in testing until the in-app product is complete.
+
+Internal workspace implementation now includes migration `0126`, independently
+typed personal and community alert templates, tracked-page versus full-Discord
+publishing modes, editable and archivable alerts and official server
+watchlists, coach/student messaging, trade-review requests and feedback,
+coaching-plan pause/archive controls, member suspension/reactivation, role-aware
+navigation and page-specific activity reporting. Ordinary members cannot read
+full-Discord-post content through TraderLink; only publishers and authorized
+managers can inspect it in their workspaces.
+
+The updated disposable proof passes with 22 Communities tables and all 20
+capabilities:
+
+`{"capabilities":20,"communityIsolation":true,"discordRoleMapping":true,"foreignKeyViolations":0,"journalGrantRevoked":true,"namedActivity":true,"ok":true,"tables":22,"tier2Idempotent":true}`
+
+The repository-wide TypeScript diagnostic reaches only pre-existing shared-tree
+failures: deleted Help routes represented by stale `.next` types, the separately
+deleted `0103` appearance migration and unrelated Coach test fixtures. No
+Communities diagnostic remains. Rendered staging QA, the narrow checkpoint
+commit and serialized staging publication are still pending.

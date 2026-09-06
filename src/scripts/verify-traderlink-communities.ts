@@ -14,6 +14,7 @@ import { traderLinkCommunitiesPartnerPlatformMigration } from "../modules/commun
 import { traderLinkCommunitiesDiscordFeatureAccessMigration } from "../modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access";
 import { traderLinkCommunitiesServerWatchlistsMigration } from "../modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists";
 import { traderLinkCommunitiesPrivatePilotBootstrapMigration } from "../modules/communities/server/database/migrations/0125_traderlink_communities_private_pilot_bootstrap";
+import { traderLinkCommunitiesWorkspaceToolsMigration } from "../modules/communities/server/database/migrations/0126_traderlink_communities_workspace_tools";
 import { TRADERLINK_COMMUNITY_CAPABILITIES } from "../modules/communities/contracts/traderlink-community-contracts";
 import { TraderLinkCommunityRepository } from "../modules/communities/server/traderlink-community-repository";
 import { TraderLinkCommunityPlatformRepository } from "../modules/communities/server/traderlink-community-platform-repository";
@@ -38,10 +39,10 @@ const directory=mkdtempSync(join(tmpdir(),"traderlink-communities-qa-"));
 const database=new Database(join(directory,"qa.sqlite"));
 try{
   database.pragma("foreign_keys = ON");
-  for(const migration of [platformIdentityMigration,journalAccountBoundaryMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,communityWatchlistsMigration,traderLinkCommunitiesIdentityPermissionsMigration,traderLinkCommunitiesPartnerPlatformMigration,traderLinkCommunitiesDiscordFeatureAccessMigration,traderLinkCommunitiesServerWatchlistsMigration]){
+  for(const migration of [platformIdentityMigration,journalAccountBoundaryMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,communityWatchlistsMigration,traderLinkCommunitiesIdentityPermissionsMigration,traderLinkCommunitiesPartnerPlatformMigration,traderLinkCommunitiesDiscordFeatureAccessMigration,traderLinkCommunitiesServerWatchlistsMigration,traderLinkCommunitiesWorkspaceToolsMigration]){
     for(const statement of migration.statements)database.exec(statement);
   }
-  const expected=["traderlink_communities","traderlink_community_memberships","traderlink_community_alerts","traderlink_community_watchlist_placements","traderlink_community_server_watchlists","traderlink_community_server_watchlist_symbols","traderlink_community_network_settings","traderlink_community_coach_profiles","traderlink_community_coaching_plans","traderlink_community_coaching_relationships","traderlink_community_journal_grants","traderlink_community_activity_events","traderlink_community_activity_daily_members","traderlink_community_partner_programs","traderlink_community_partner_earnings","traderlink_community_partner_billing_events","traderlink_community_coach_fee_rules"];
+  const expected=["traderlink_communities","traderlink_community_memberships","traderlink_community_alerts","traderlink_community_watchlist_placements","traderlink_community_server_watchlists","traderlink_community_server_watchlist_symbols","traderlink_community_network_settings","traderlink_community_coach_profiles","traderlink_community_coaching_plans","traderlink_community_coaching_relationships","traderlink_community_journal_grants","traderlink_community_activity_events","traderlink_community_activity_daily_members","traderlink_community_partner_programs","traderlink_community_partner_earnings","traderlink_community_partner_billing_events","traderlink_community_coach_fee_rules","traderlink_community_alert_templates","traderlink_community_alert_template_fields","traderlink_community_alert_field_values","traderlink_community_coaching_messages","traderlink_community_coaching_trade_reviews"];
   const present=new Set((database.prepare(`SELECT name FROM sqlite_schema WHERE type='table'`).all() as {name:string}[]).map(row=>row.name));
   for(const table of expected)if(!present.has(table))throw new Error(`Missing Communities table: ${table}`);
   const capabilityCount=(database.prepare(`SELECT count(*) count FROM traderlink_community_capability_catalog`).get() as {count:number}).count;
@@ -113,6 +114,14 @@ try{
   const relationship=platform.requestCoaching({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},planId:plan,atUtc:NOW});
   assert(platform.requestCoaching({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},planId:plan,atUtc:NOW})===relationship,"Repeated coaching requests must remain idempotent while pending.");
   platform.setRelationshipStatus({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},relationshipId:relationship,status:"active",atUtc:NOW});
+  const template=platform.createAlertTemplate({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},title:"Stock alert",scope:"personal",fields:[{label:"Ticker",type:"ticker",required:true,placeholder:"ABC"},{label:"Target",type:"price",required:false,placeholder:"12.50"}],atUtc:NOW});
+  assert(Boolean(template)&&platform.readSnapshot("first-room",{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]}).alertTemplates.length===1,"Alert publishers must be able to save and reuse personal templates.");
+  const message=platform.sendCoachingMessage({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,body:"Please review my entry.",atUtc:NOW});
+  assert(Boolean(message),"An active student must be able to message the selected coach.");
+  const review=platform.requestTradeReview({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,title:"ABC entry",studentContext:"Review the first entry.",atUtc:NOW});
+  platform.updateTradeReview({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},reviewId:review,coachFeedback:"Wait for confirmation.",status:"completed",atUtc:NOW});
+  const coachingSnapshot=platform.readSnapshot("first-room",{userId:OWNER,displayName:"Owner",discordRoleIds:[]});
+  assert(coachingSnapshot.coachingMessages.length===1&&coachingSnapshot.tradeReviews[0]?.status==="completed","Coach and student messaging and trade reviews must stay inside their active relationship.");
   expectDenied(()=>platform.requestCoaching({communityId:first.communityId,actor:{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},planId:plan,atUtc:NOW}),"Coach capacity and membership must be enforced.");
   expectDenied(()=>platform.grantJournal({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,journalAccountId:OUTSIDER_ACCOUNT,dataScope:"trades",atUtc:NOW}),"A student must never grant a coach another user's Journal account.");
   const grant=platform.grantJournal({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,journalAccountId:ACCOUNT,dataScope:"trades",atUtc:NOW});
