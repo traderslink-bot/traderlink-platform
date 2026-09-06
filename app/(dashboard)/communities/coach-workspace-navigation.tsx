@@ -6,8 +6,10 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
-import { DashboardMetricCard, DashboardPanel, DashboardUnavailableState } from "@/app/dashboard-ui";
+import { DashboardMetricCard as BaseDashboardMetricCard, DashboardPanel, DashboardUnavailableState } from "@/app/dashboard-ui";
 import type { TraderLinkCommunityDashboardSnapshot } from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
+
+function DashboardMetricCard(props:Omit<Parameters<typeof BaseDashboardMetricCard>[0],"caption">&{caption?:string}){return <BaseDashboardMetricCard {...props} caption={props.caption??"Current"}/>}
 
 export function CoachWorkspaceNavigation({slug}:{slug:string}){return <Stack direction={{xs:"column",sm:"row"}} spacing={1}><Button component={Link} href={`/communities/${slug}/workspace`}>Coaching work</Button><Button component={Link} href={`/communities/${slug}/workspace/students`}>Students</Button><Button component={Link} href={`/communities/${slug}/workspace/setup`}>Coach setup</Button></Stack>}
 
