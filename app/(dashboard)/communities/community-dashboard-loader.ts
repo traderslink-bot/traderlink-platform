@@ -22,7 +22,7 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
     const permitted=requestedPath.includes("/alerts")
       ? capabilities.has("community.alerts.view")||capabilities.has("community.alerts.create")
       : requestedPath.includes("/watchlists")
-        ? capabilities.has("community.watchlists.view")||capabilities.has("community.watchlists.share_own")||capabilities.has("community.watchlists.publish_staff")
+        ? capabilities.has("community.watchlists.view")||capabilities.has("community.watchlists.publish_staff")
         : requestedPath.includes("/coaches")||requestedPath.includes("/coaching")
           ? capabilities.has("community.coaching.view")||capabilities.has("community.coaching.offer")
           : requestedPath.includes("/workspace")
