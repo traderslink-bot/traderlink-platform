@@ -123,7 +123,7 @@ export type TraderLinkCommunityRelationship = Readonly<{
   endedAtUtc: string | null;
   studentMessagingEnabled: boolean;
   studentTradeReviewsEnabled: boolean;
-}>; 
+}>;
 
 export type TraderLinkCommunityJournalGrant = Readonly<{
   grantId: string;
