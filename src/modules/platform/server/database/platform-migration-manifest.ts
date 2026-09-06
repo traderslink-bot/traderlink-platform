@@ -48,6 +48,7 @@ import { traderLinkCommunitiesPartnerPlatformMigration } from "@/src/modules/com
 import { traderLinkCommunitiesDiscordFeatureAccessMigration } from "@/src/modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access";
 import { traderLinkCommunitiesServerWatchlistsMigration } from "@/src/modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists";
 import { traderLinkCommunitiesPrivatePilotBootstrapMigration } from "@/src/modules/communities/server/database/migrations/0125_traderlink_communities_private_pilot_bootstrap";
+import { traderLinkCommunitiesWorkspaceToolsMigration } from "@/src/modules/communities/server/database/migrations/0126_traderlink_communities_workspace_tools";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -611,6 +612,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/communities/server/database/migrations/0125_traderlink_communities_private_pilot_bootstrap.ts",
       migration: traderLinkCommunitiesPrivatePilotBootstrapMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0126_traderlink_communities_workspace_tools.ts",
+      migration: traderLinkCommunitiesWorkspaceToolsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -1091,6 +1096,13 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "traderlink_community_server_watchlist_symbols",
       "traderlink_community_network_settings",
     ]),
+    "0126_traderlink_communities_workspace_tools": Object.freeze([
+      "traderlink_community_alert_templates",
+      "traderlink_community_alert_template_fields",
+      "traderlink_community_alert_field_values",
+      "traderlink_community_coaching_messages",
+      "traderlink_community_coaching_trade_reviews",
+    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
@@ -1130,3 +1142,4 @@ export const currentPlatformDomainTableNames =
 export const currentPlatformTableNames = expectedPlatformTableNamesForPrefix(
   platformMigrationManifest.length,
 );
+
