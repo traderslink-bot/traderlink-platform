@@ -210,7 +210,8 @@ re-enter inside the same saved trade. This prevents closing the current
 position from being presented as scaling out.
 
 The main profit-taking rate uses trades reaching the zone as its denominator. A
-full exit means all remaining open shares were sold.
+full exit means the entire position was sold in one execution with no earlier
+scale-out in that position cycle.
 Zone reach uses the favorable side of each recorded one-minute candle (high for
 long trades and low for short trades), with an exact sell execution as direct
 evidence when it reaches a level between candle observations. Profit-taking is
@@ -263,6 +264,20 @@ opportunity population and partitions its first recorded outcome into reached
 the next zone, dropped below the current zone or exited from the zone. These are
 exclusive outcomes whose rates total 100%; a later recovery remains visible in
 the exact trade record.
+The ladder also gives the explicit trade counts behind Profit Taken and every
+Next Move outcome, promotes missed-opportunity Gross dollars, and shows the
+combined final Gross loss when no-profit trades later end red. Reached states
+how many trades advanced to the next zone and how many did not, so the trader
+does not need to subtract the next row mentally. Profitable shares sold provide
+scale context beside the realized dollars.
+A scaled exit sequence may later close its remaining position inside the same
+zone. This remains Partial-exit behavior, but the ladder and exact trade record
+identify that closure separately; it never becomes an all-at-once Full exit.
+Two compact, date-filtered highlights identify the largest missed-opportunity
+zone and the longest median time-in-zone without making a recommendation or an
+improvement claim. Bounded zone labels break after the dash, Reached receives
+the stronger visual emphasis, and the exact-table headings remain compact with
+their definitions in tooltips.
 
 ### Entries and Exits
 

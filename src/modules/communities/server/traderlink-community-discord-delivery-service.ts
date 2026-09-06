@@ -15,6 +15,11 @@ export class TraderLinkCommunityDiscordDeliveryService {
       return {content:`${lead}\n${alert.body.slice(0,1500)}\n\nOpen in TraderLink: ${url}`.slice(0,2000),allowed_mentions:{parse:[]}};
     }
     if(row.object_type==="watchlist"){
+      const serverWatchlist=this.database.prepare(`SELECT title FROM traderlink_community_server_watchlists WHERE watchlist_id=? AND status='published'`).get(row.object_id) as {title:string}|undefined;
+      if(serverWatchlist){
+        const url=`${this.config.publicOrigin}/communities/${row.community_slug}/server-watchlists/${row.object_id}`;
+        return {content:`**${serverWatchlist.title}**\nPublished by ${row.community_name}.\n\nOpen in TraderLink: ${url}`.slice(0,2000),allowed_mentions:{parse:[]}};
+      }
       const watchlist=this.database.prepare(`SELECT p.handle,w.slug,w.title FROM community_watchlists w JOIN community_profiles p ON p.user_id=w.owner_user_id WHERE w.watchlist_id=?`).get(row.object_id) as {handle:string;slug:string;title:string}|undefined;
       if(!watchlist)throw new Error("Community watchlist is no longer available.");
       const url=`${this.config.publicOrigin}/community/${encodeURIComponent(watchlist.handle)}/watchlists/${encodeURIComponent(watchlist.slug)}`;

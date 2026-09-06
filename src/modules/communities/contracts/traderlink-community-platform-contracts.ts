@@ -52,6 +52,11 @@ export type TraderLinkCommunityWatchlistPlacement = Readonly<{
   audienceId: string;
   status: "published" | "removed";
   sharedAtUtc: string;
+  sourceKind?: "member" | "server";
+  description?: string;
+  symbols?: readonly string[];
+  networkVisibility?: "private" | "network_eligible" | "public";
+  href?: string;
 }>;
 
 export type TraderLinkCommunityCoach = Readonly<{
@@ -87,9 +92,13 @@ export type TraderLinkCommunityRelationship = Readonly<{
   communityId: string;
   coachProfileId: string;
   coachUserId: string;
+  coachDisplayName: string;
   studentUserId: string;
+  studentDisplayName: string;
   planId: string;
+  planName: string;
   status: "pending" | "active" | "ended" | "declined";
+  requestedAtUtc: string;
   startedAtUtc: string | null;
   endedAtUtc: string | null;
 }>;
@@ -155,6 +164,7 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
     watchlistViews30Days: number;
     coachingViews30Days: number;
     topPages: readonly Readonly<{ path: string; views: number; uniqueMembers: number }>[];
+    namedMemberPages: readonly Readonly<{userId:string;displayName:string;path:string;views:number;lastViewedAtUtc:string}>[];
   }>;
   referrals: Readonly<{
     attributedMembers: number;

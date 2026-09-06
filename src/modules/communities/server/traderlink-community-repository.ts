@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 
 import {
+  TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES,
   TRADERLINK_COMMUNITY_CAPABILITIES,
   TRADERLINK_COMMUNITY_MEMBER_BASELINE_CAPABILITIES,
   isTraderLinkCommunityCapability,
@@ -9,6 +10,7 @@ import {
   type TraderLinkCommunityCapability,
   type TraderLinkCommunityMembership,
   type TraderLinkCommunityMembershipStatus,
+  type TraderLinkCommunityFixedResponsibility,
   type TraderLinkCommunityRole,
 } from "../contracts/traderlink-community-contracts";
 import {
@@ -582,6 +584,123 @@ ON CONFLICT(community_id, discord_role_id, role_id) DO UPDATE SET
         objectType: "discord_role",
         objectRef: input.discordRoleId,
         detail: { roleId: input.roleId },
+        timestamp: input.timestamp,
+      });
+    });
+  }
+
+  saveDiscordFeatureMapping(input: Readonly<{
+    communityId: string;
+    actorUserId: string;
+    discordRoleId: string;
+    discordRoleName: string;
+    responsibilities: readonly TraderLinkCommunityFixedResponsibility[];
+    timestamp: string;
+  }>): TraderLinkCommunityRole {
+    this.requireCapability(input.communityId, input.actorUserId, "community.roles.manage");
+    assertDiscordSnowflake(input.discordRoleId, "discordRoleId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    const roleName = normalizeText(input.discordRoleName, "discordRoleName", 80);
+    const responsibilities = [...new Set(input.responsibilities)];
+    if (
+      responsibilities.length < 1 ||
+      responsibilities.some((responsibility) => !(responsibility in TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES))
+    ) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "responsibilities" });
+    }
+    const capabilities = canonicalCapabilities(
+      responsibilities.flatMap(
+        (responsibility): readonly TraderLinkCommunityCapability[] =>
+          TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES[responsibility],
+      ),
+    );
+
+    return this.runWrite(() => {
+      const existing = this.database.prepare<[string, string], RoleRow>(`SELECT role.*
+FROM traderlink_community_discord_role_mappings mapping
+JOIN traderlink_community_roles role
+  ON role.role_id = mapping.role_id AND role.community_id = mapping.community_id
+WHERE mapping.community_id = ? AND mapping.discord_role_id = ?
+ORDER BY CASE mapping.status WHEN 'active' THEN 0 ELSE 1 END, mapping.created_at_utc
+LIMIT 1`).get(input.communityId, input.discordRoleId);
+      const roleId = existing?.role_id ?? createCanonicalUuidV4();
+      if (existing) {
+        this.database.prepare(`UPDATE traderlink_community_roles
+SET name = ?, status = 'active', updated_at_utc = ?
+WHERE community_id = ? AND role_id = ?`).run(
+          roleName, input.timestamp, input.communityId, roleId,
+        );
+      } else {
+        this.database.prepare(`INSERT INTO traderlink_community_roles (
+  role_id, community_id, name, status, created_by_user_id, created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, 'active', ?, ?, ?)`).run(
+          roleId, input.communityId, roleName, input.actorUserId, input.timestamp, input.timestamp,
+        );
+      }
+      this.database.prepare(`DELETE FROM traderlink_community_role_capabilities
+WHERE community_id = ? AND role_id = ?`).run(input.communityId, roleId);
+      const insertCapability = this.database.prepare(`INSERT INTO traderlink_community_role_capabilities (
+  community_id, role_id, capability_key, granted_by_user_id, granted_at_utc
+) VALUES (?, ?, ?, ?, ?)`);
+      for (const capability of capabilities) {
+        insertCapability.run(input.communityId, roleId, capability, input.actorUserId, input.timestamp);
+      }
+      this.database.prepare(`UPDATE traderlink_community_discord_role_mappings
+SET status = 'paused', mapped_by_user_id = ?, updated_at_utc = ?
+WHERE community_id = ? AND discord_role_id = ? AND role_id <> ? AND status = 'active'`).run(
+        input.actorUserId, input.timestamp, input.communityId, input.discordRoleId, roleId,
+      );
+      this.database.prepare(`INSERT INTO traderlink_community_discord_role_mappings (
+  mapping_id, community_id, discord_role_id, role_id, status,
+  mapped_by_user_id, created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, ?, 'active', ?, ?, ?)
+ON CONFLICT(community_id, discord_role_id, role_id) DO UPDATE SET
+  status = 'active', mapped_by_user_id = excluded.mapped_by_user_id,
+  updated_at_utc = excluded.updated_at_utc`).run(
+        createCanonicalUuidV4(), input.communityId, input.discordRoleId, roleId,
+        input.actorUserId, input.timestamp, input.timestamp,
+      );
+      this.insertAudit({
+        communityId: input.communityId,
+        actorUserId: input.actorUserId,
+        eventType: "discord_role.features_replaced",
+        objectType: "discord_role",
+        objectRef: input.discordRoleId,
+        detail: { responsibilities: responsibilities.join(","), capabilityCount: capabilities.length },
+        timestamp: input.timestamp,
+      });
+      return mapRole(this.database.prepare<[string, string], RoleRow>(`SELECT *
+FROM traderlink_community_roles WHERE community_id = ? AND role_id = ?`).get(
+        input.communityId, roleId,
+      ) as RoleRow);
+    });
+  }
+
+  pauseDiscordFeatureMapping(input: Readonly<{
+    communityId: string;
+    actorUserId: string;
+    discordRoleId: string;
+    timestamp: string;
+  }>): void {
+    this.requireCapability(input.communityId, input.actorUserId, "community.roles.manage");
+    assertDiscordSnowflake(input.discordRoleId, "discordRoleId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    this.runWrite(() => {
+      const changed = this.database.prepare(`UPDATE traderlink_community_discord_role_mappings
+SET status = 'paused', mapped_by_user_id = ?, updated_at_utc = ?
+WHERE community_id = ? AND discord_role_id = ? AND status = 'active'`).run(
+        input.actorUserId, input.timestamp, input.communityId, input.discordRoleId,
+      );
+      if (changed.changes < 1) {
+        platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED", { operation: "pause_discord_feature_mapping" });
+      }
+      this.insertAudit({
+        communityId: input.communityId,
+        actorUserId: input.actorUserId,
+        eventType: "discord_role.features_paused",
+        objectType: "discord_role",
+        objectRef: input.discordRoleId,
+        detail: { mappingCount: changed.changes },
         timestamp: input.timestamp,
       });
     });

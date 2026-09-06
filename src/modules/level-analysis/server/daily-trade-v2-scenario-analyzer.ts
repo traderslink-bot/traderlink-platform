@@ -85,6 +85,8 @@ export type DailyTradeV2ProfitZone = Readonly<{
   profitableFullExitInZoneGrossDecimal: string;
   quantitySoldInZoneDecimal: string;
   reachedNextLevel: boolean;
+  scaledPositionClosingExitCount: number;
+  scaledPositionClosingProfitGrossDecimal: string;
   totalCompletedMinutesInZone: number;
   upperBoundPercent: number | null;
 }>;
@@ -258,13 +260,15 @@ function buildProfitZones(input: Readonly<{
       exit.returnPercent + Number.EPSILON >= lowerBoundPercent &&
       (upperBoundPercent === null || exit.returnPercent < upperBoundPercent));
     const profitTaken = exitProfits.reduce((total, exit) => total.plus(Decimal.max(exit.grossProfit, 0)), new Decimal(0));
-    const profitablePartialExits = exitProfits.filter((exit) =>
+    const profitableScaledExits = exitProfits.filter((exit) =>
       exit.behavior === "scaled" && exit.grossProfit.gt(0));
     const profitableFullExits = exitProfits.filter((exit) =>
       exit.behavior === "all_at_once" && exit.grossProfit.gt(0));
-    const partialProfitBeforeNext = profitablePartialExits.filter((exit) =>
+    const profitableScaledPositionClosures = profitableScaledExits.filter((exit) =>
+      exit.kind === "final_exit" || exit.kind === "temporary_flat");
+    const partialProfitBeforeNext = profitableScaledExits.filter((exit) =>
       firstNextLevel === null || exit.time < firstNextLevel.time);
-    const partialProfitAfterNext = profitablePartialExits.filter((exit) =>
+    const partialProfitAfterNext = profitableScaledExits.filter((exit) =>
       firstNextLevel !== null && exit.time >= firstNextLevel.time);
     const quantitySold = exitProfits.reduce((total, exit) =>
       exit.grossProfit.gt(0) ? total.plus(exit.quantity) : total, new Decimal(0));
@@ -304,10 +308,10 @@ function buildProfitZones(input: Readonly<{
       partialProfitTakenBeforeNextGrossDecimal: partialProfitBeforeNext
         .reduce((total, exit) => total.plus(exit.grossProfit), new Decimal(0))
         .toFixed(),
-      partialProfitTakenInZoneGrossDecimal: profitablePartialExits
+      partialProfitTakenInZoneGrossDecimal: profitableScaledExits
         .reduce((total, exit) => total.plus(exit.grossProfit), new Decimal(0))
         .toFixed(),
-      partialProfitTakingExitCount: profitablePartialExits.length,
+      partialProfitTakingExitCount: profitableScaledExits.length,
       profitAvailableAtLevelGrossDecimal: profitAvailable?.toFixed() ?? null,
       profitTakenInZoneGrossDecimal: profitTaken.toFixed(),
       profitableFullExitInZoneGrossDecimal: profitableFullExits
@@ -315,6 +319,10 @@ function buildProfitZones(input: Readonly<{
         .toFixed(),
       quantitySoldInZoneDecimal: quantitySold.toFixed(),
       reachedNextLevel,
+      scaledPositionClosingExitCount: profitableScaledPositionClosures.length,
+      scaledPositionClosingProfitGrossDecimal: profitableScaledPositionClosures
+        .reduce((total, exit) => total.plus(exit.grossProfit), new Decimal(0))
+        .toFixed(),
       totalCompletedMinutesInZone: completedCloses.filter((close) =>
         close.openShareReturnPercent + Number.EPSILON >= lowerBoundPercent &&
         (upperBoundPercent === null || close.openShareReturnPercent < upperBoundPercent)).length,

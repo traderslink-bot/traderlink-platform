@@ -27,8 +27,8 @@ visual approval until the complete staging review.
   staff, content pages, coaching, activity and Tier 2 partner reporting.
 - [x] Use one permission-driven staff workspace instead of separate fixed apps
   for every coach/admin/analyst combination.
-- [x] Allow community owners to create and name roles from TraderLink-provided
-  capabilities.
+- [x] Replace custom-first TraderLink roles with owner-controlled mappings from
+  existing Discord roles to fixed TraderLink feature responsibilities.
 - [x] Let coaches control their offers while server owners and coaches continue
   handling all coaching payments through their existing Discord-level systems.
 - [x] Use verified Discord roles as the access entitlement for paid coaching,
@@ -282,7 +282,7 @@ planning QA.
 | Checkpoint | Status | Required result |
 | --- | --- | --- |
 | Communities 0 - plan and visual contracts | Planning and foundation routes approved; detailed visual review remains open | Complete plan plus approved routes, terminology and mockups |
-| Communities 1 - identity and permissions | Implemented; focused proof passing | Isolated community, membership, custom roles and exact capabilities |
+| Communities 1 - identity and permissions | Implemented; focused proof passing | Isolated community membership, automatic all-member baseline and Discord-role-derived server features |
 | Communities 2 - TraderLink Administration and onboarding | Implemented; final rendered QA pending | Global control plane and resumable first-server setup |
 | Communities 3 - Owner Dashboard and staff composition | Implemented; final rendered QA pending | Owner-managed team and permission-derived workspaces |
 | Communities 4 - alerts, watchlists and Discord publishing | Implemented; live Discord send deliberately not run | Private pages and exact-channel delivery |
@@ -293,7 +293,7 @@ planning QA.
 
 ## Implementation record - 2026-09-05
 
-- [x] Added additive migrations `0118` and `0119` for community identity,
+- [x] Added additive migrations `0121` through `0125` for community identity,
   memberships, custom roles, Discord mappings, content audiences, destinations,
   alerts, watchlist placements, coaches, plans, relationships, revocable Journal
   grants, named activity, Tier 2 attribution/earnings and disabled future coach
@@ -301,7 +301,8 @@ planning QA.
 - [x] Extended Discord sign-in to discover owner guilds, refresh onboarded
   memberships and roles, and allow every verified member of an active connected
   server to use TraderLink without a server-selected admission role.
-- [x] Added `/admin/communities`, server-owner onboarding, the plural
+- [x] Added Communities controls inside `/admin/journal/communities`, a safe
+  redirect from the former `/admin/communities`, server-owner onboarding, the plural
   `/communities` member workspace, permission-derived owner/staff sections,
   alert and coach detail pages, and a constrained coach student view.
 - [x] Extended personal Community Watchlists with explicit server placement;
@@ -329,10 +330,16 @@ planning QA.
 ### Focused technical proof
 
 The disposable SQLite acceptance script applies all required prerequisite
-migrations plus `0118` and `0119`, exercises the real repositories and removes
+migrations plus `0121` through `0125`, exercises the real repositories and removes
 the database afterward. Current result:
 
-`{"capabilities":17,"communityIsolation":true,"discordRoleMapping":true,"foreignKeyViolations":0,"journalGrantRevoked":true,"namedActivity":true,"ok":true,"tables":14,"tier2Idempotent":true}`
+`{"capabilities":20,"communityIsolation":true,"discordRoleMapping":true,"foreignKeyViolations":0,"journalGrantRevoked":true,"namedActivity":true,"ok":true,"tables":17,"tier2Idempotent":true}`
+
+The separate Discord-delivery proof uses a stubbed Discord HTTP boundary and
+passes exact owner-selected alert/watchlist channels, exact TraderLink links,
+persisted one-attempt receipts and mention suppression:
+
+`{"ok":true,"delivered":2,"exactLinks":true,"ownerChannels":true,"mentionsSuppressed":true}`
 
 The feature-scoped TypeScript diagnostic is clean. A repository-wide TypeScript
 pass still reports unrelated stale `.next` Help routes, removed migration
@@ -353,10 +360,32 @@ shared working tree; none resolve inside the Communities allowlist.
   mockups. Communities 1 code is tracked separately; no process, live Discord,
   Railway, deployment or production state was changed.
 
+## Staging owner-review checkpoint — 2026-09-05
+
+- [x] Reconciled the 52-file implementation onto the exact staging parent
+  without absorbing unrelated shared-checkout work.
+- [x] Renumbered the additive Communities migrations to collision-free `0121`
+  and `0122`, preserving all existing staging migrations through `0120`.
+- [x] Applied both migrations one at a time through the guarded staging
+  maintenance path with backup and post-migration verification.
+- [x] Published final staging source
+  `7ec96b4e0ab61fcd62d9e4fe166f97b2b317bc3b`; Railway deployment
+  `09b87cea-40d5-4c7f-98fc-e1b30a2e01be` reached `SUCCESS`.
+- [x] Verified `/api/platform/health` at HTTP 200 with `status: ready`,
+  `sqlite_single_node` storage and 117 applied migrations.
+- [x] Added the staging-only `/communities-preview` route and verified every
+  member, coach, owner and staff section renders without a server-error state.
+- [x] Verified the default Light and explicit Dark review surfaces. Dark owner
+  review found and corrected the conditional Coach/Owner tab selection index.
+- [ ] Owner visual/product acceptance remains intentionally open for the
+  requested staging review and refinement loop.
+
+No live Discord message was sent, no real partner terms or coach fee were
+activated, no real server was onboarded and production remained unchanged.
+
 ## Next authorized step
 
-Complete focused lint/static checks, final integrated build and rendered
-desktop/mobile Light/Dark review, create narrow local checkpoints, then publish
-only to the configured staging target for owner visual review. Do not send a
-live Discord message, configure real partner economics, activate a real server
-or change production during this boundary.
+Owner reviews the staged Light and Dark dashboards. After visual refinements,
+run the final responsive acceptance pass, onboard the first real Discord server
+under a separate explicit activation boundary, and only then consider a
+production release.

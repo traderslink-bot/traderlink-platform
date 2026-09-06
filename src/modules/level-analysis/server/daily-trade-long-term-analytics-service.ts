@@ -239,6 +239,8 @@ export type TradeAnalysisProfitZoneRecord = Readonly<{
   quantitySoldInZoneDecimal: string;
   reachedNextLevel: boolean;
   roundTripId: string;
+  scaledPositionClosingExitCount: number;
+  scaledPositionClosingProfitGrossDecimal: string;
   symbol: string;
   totalCompletedMinutesInZone: number;
   totalHoldingMinutes: number;
@@ -259,13 +261,16 @@ export type TradeAnalysisProfitZoneSummaryRow = Readonly<{
   medianHoldingMinutes: number | null;
   medianLongestConsecutiveMinutesAtOrAbove: number | null;
   noProfitDroppedBelowFirstRatePercent: number | null;
+  noProfitDroppedBelowFirstTradeCount: number;
   noProfitEndedRedGrossLossDecimal: string;
   noProfitEndedRedRatePercent: number | null;
   noProfitEndedRedTradeCount: number;
   noProfitExitedInZoneRatePercent: number | null;
+  noProfitExitedInZoneTradeCount: number;
   noProfitMaximumOpportunityGrossDecimal: string;
   noProfitRateOfReachedPercent: number | null;
   noProfitReachedNextFirstRatePercent: number | null;
+  noProfitReachedNextFirstTradeCount: number;
   noProfitTradeCount: number;
   partialProfitRateOfReachedPercent: number | null;
   partialProfitTakenInZoneGrossDecimal: string;
@@ -284,6 +289,9 @@ export type TradeAnalysisProfitZoneSummaryRow = Readonly<{
   reachRatePercent: number | null;
   reachedNextTradeCount: number | null;
   reachedTradeCount: number;
+  scaledExitClosedRateOfPartialExitTradesPercent: number | null;
+  scaledExitClosedTradeCount: number;
+  scaledExitClosingProfitGrossDecimal: string;
   tookProfitRateOfReachedPercent: number | null;
   tookProfitTradeCount: number;
   upperBoundPercent: number | null;
@@ -924,6 +932,10 @@ function scaleScenario(
         zone.profitableFullExitInZoneGrossDecimal,
         multiplier,
       )!,
+      scaledPositionClosingProfitGrossDecimal: scaledDecimal(
+        zone.scaledPositionClosingProfitGrossDecimal,
+        multiplier,
+      )!,
     }))),
     scaleOut: Object.freeze({
       ...scenario.scaleOut,
@@ -1387,6 +1399,8 @@ function profitZoneSummaryRows(
     const partiallyExitedAndClosedProfitably = zoneRecords.filter((record) =>
       new Decimal(record.partialProfitTakenInZoneGrossDecimal).gt(0) &&
       new Decimal(record.profitableFullExitInZoneGrossDecimal).gt(0));
+    const scaledExitClosed = tookPartialProfit.filter((record) =>
+      record.scaledPositionClosingExitCount > 0);
     const noProfit = zoneRecords.filter((record) =>
       new Decimal(record.profitTakenInZoneGrossDecimal).isZero());
     const noProfitReachedNextFirst = noProfit.filter((record) =>
@@ -1420,15 +1434,18 @@ function profitZoneSummaryRows(
       medianLongestConsecutiveMinutesAtOrAbove: medianNumbers(zoneRecords.map((record) =>
         record.longestConsecutiveMinutesAtOrAbove)),
       noProfitDroppedBelowFirstRatePercent: percentage(noProfitDroppedBelowFirst.length, noProfit.length),
+      noProfitDroppedBelowFirstTradeCount: noProfitDroppedBelowFirst.length,
       noProfitEndedRedGrossLossDecimal: sumDecimals(noProfitEndedRed.map((record) =>
         record.finalGrossPnlDecimal)) ?? "0",
       noProfitEndedRedRatePercent: percentage(noProfitEndedRed.length, noProfit.length),
       noProfitEndedRedTradeCount: noProfitEndedRed.length,
       noProfitExitedInZoneRatePercent: percentage(noProfitExitedInZone.length, noProfit.length),
+      noProfitExitedInZoneTradeCount: noProfitExitedInZone.length,
       noProfitMaximumOpportunityGrossDecimal: sumDecimals(noProfit.map((record) =>
         record.maximumProfitOpportunityInZoneGrossDecimal)) ?? "0",
       noProfitRateOfReachedPercent: percentage(noProfit.length, zoneRecords.length),
       noProfitReachedNextFirstRatePercent: percentage(noProfitReachedNextFirst.length, noProfit.length),
+      noProfitReachedNextFirstTradeCount: noProfitReachedNextFirst.length,
       noProfitTradeCount: noProfit.length,
       partialProfitRateOfReachedPercent: percentage(tookPartialProfit.length, zoneRecords.length),
       partialProfitTakenInZoneGrossDecimal: sumDecimals(tookPartialProfit.map((record) =>
@@ -1459,6 +1476,13 @@ function profitZoneSummaryRows(
       reachRatePercent: percentage(zoneRecords.length, totalTradeCount),
       reachedNextTradeCount: upperBoundPercent === null ? null : reachedNext.length,
       reachedTradeCount: zoneRecords.length,
+      scaledExitClosedRateOfPartialExitTradesPercent: percentage(
+        scaledExitClosed.length,
+        tookPartialProfit.length,
+      ),
+      scaledExitClosedTradeCount: scaledExitClosed.length,
+      scaledExitClosingProfitGrossDecimal: sumDecimals(scaledExitClosed.map((record) =>
+        record.scaledPositionClosingProfitGrossDecimal)) ?? "0",
       tookProfitRateOfReachedPercent: percentage(tookProfit.length, zoneRecords.length),
       tookProfitTradeCount: tookProfit.length,
       upperBoundPercent,
@@ -1718,6 +1742,8 @@ export function buildDailyTradeLongTermAnalytics(
         quantitySoldInZoneDecimal: zone.quantitySoldInZoneDecimal,
         reachedNextLevel: zone.reachedNextLevel,
         roundTripId: trade.representativeRoundTripId,
+        scaledPositionClosingExitCount: zone.scaledPositionClosingExitCount,
+        scaledPositionClosingProfitGrossDecimal: zone.scaledPositionClosingProfitGrossDecimal,
         symbol: trade.symbol,
         totalCompletedMinutesInZone: zone.totalCompletedMinutesInZone,
         totalHoldingMinutes: trade.totalHoldingMinutes,
