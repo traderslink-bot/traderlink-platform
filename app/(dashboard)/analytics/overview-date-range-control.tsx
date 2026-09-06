@@ -9,7 +9,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 export type OverviewDateRange = Readonly<{
   kind: "all" | "today" | "this_week" | "last_week" | "this_month" |
@@ -33,7 +33,21 @@ const OPTIONS: readonly Readonly<{ value: OverviewDateRange["kind"]; label: stri
   { value: "custom", label: "Custom range" },
 ];
 
-export function OverviewDateRangeControl({ href = "/analytics", value }: { href?: string; value: OverviewDateRange }) {
+export function OverviewDateRangeControl({
+  additionalControls,
+  additionalSearchParams,
+  href = "/analytics",
+  showCaption = true,
+  updateDisabled = false,
+  value,
+}: {
+  additionalControls?: ReactNode;
+  additionalSearchParams?: Readonly<Record<string, string | null>>;
+  href?: string;
+  showCaption?: boolean;
+  updateDisabled?: boolean;
+  value: OverviewDateRange;
+}) {
   const router = useRouter();
   const currentSearchParams = useSearchParams();
   const [kind, setKind] = useState<OverviewDateRange["kind"]>(value.kind);
@@ -50,13 +64,17 @@ export function OverviewDateRangeControl({ href = "/analytics", value }: { href?
       params.set("start", startDate);
       params.set("end", endDate);
     }
+    for (const [key, queryValue] of Object.entries(additionalSearchParams ?? {})) {
+      if (queryValue === null) params.delete(key);
+      else params.set(key, queryValue);
+    }
     router.push(`${href}?${params.toString()}`);
   };
   const selectedDates = value.startDate && value.endDate
     ? `${value.startDate} through ${value.endDate}`
     : "All completed trade dates";
   return <Stack spacing={0.5}>
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}><TextField label="Date range" onChange={(event) => setKind(event.target.value as OverviewDateRange["kind"])} select size="small" sx={{ minWidth: 180 }} value={kind}>{OPTIONS.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}</TextField>{kind === "custom" ? <><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-start-date" shrink>Start date</InputLabel><OutlinedInput id="overview-start-date" inputProps={{ "aria-label": "Start date" }} label="Start date" notched onChange={(event) => setStartDate(event.target.value)} type="date" value={startDate} /></FormControl><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-end-date" shrink>End date</InputLabel><OutlinedInput id="overview-end-date" inputProps={{ "aria-label": "End date" }} label="End date" notched onChange={(event) => setEndDate(event.target.value)} type="date" value={endDate} /></FormControl></> : null}<Button disabled={kind === "custom" && (!startDate || !endDate || startDate > endDate)} onClick={apply} variant="outlined">Update</Button></Stack>
-    <Typography color="text.secondary" variant="caption">{selectedDates} · based on each trade&apos;s closing date</Typography>
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, flexWrap: "wrap" }}><TextField label="Date range" onChange={(event) => setKind(event.target.value as OverviewDateRange["kind"])} select size="small" sx={{ minWidth: 180 }} value={kind}>{OPTIONS.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}</TextField>{kind === "custom" ? <><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-start-date" shrink>Start date</InputLabel><OutlinedInput id="overview-start-date" inputProps={{ "aria-label": "Start date" }} label="Start date" notched onChange={(event) => setStartDate(event.target.value)} type="date" value={startDate} /></FormControl><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-end-date" shrink>End date</InputLabel><OutlinedInput id="overview-end-date" inputProps={{ "aria-label": "End date" }} label="End date" notched onChange={(event) => setEndDate(event.target.value)} type="date" value={endDate} /></FormControl></> : null}{additionalControls}<Button disabled={updateDisabled || (kind === "custom" && (!startDate || !endDate || startDate > endDate))} onClick={apply} variant="outlined">Update</Button></Stack>
+    {showCaption ? <Typography color="text.secondary" variant="caption">{selectedDates} · based on each trade&apos;s closing date</Typography> : null}
   </Stack>;
 }

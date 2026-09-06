@@ -47,6 +47,7 @@ import type {
 import { CandlePatternOccurrenceExplorer } from "./candle-pattern-occurrence-explorer";
 import { GreenToRedAnalysis } from "./green-to-red-analysis";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
+import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
 import { ProfitZoneAnalysis } from "./profit-zone-analysis";
 import {
   boundedPage,
@@ -196,24 +197,115 @@ function BreakdownTable({
 
 function Section({
   children,
+  collapsible = true,
   description,
+  headerActions,
   title,
+  titleHelp,
   defaultExpanded = false,
 }: {
   children: React.ReactNode;
+  collapsible?: boolean;
   defaultExpanded?: boolean;
   description: string;
+  headerActions?: React.ReactNode;
   helpHref: string;
   title: string;
+  titleHelp?: string;
 }) {
+  const heading = <Box sx={{ minWidth: 0 }}>
+    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", width: "fit-content" }}>
+      <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{title}</Typography>
+      {titleHelp ? <Tooltip arrow describeChild title={titleHelp}>
+        <Box aria-label={`Explain ${title}`} component="span" sx={{ color: "text.secondary", display: "inline-flex" }}>
+          <InfoOutlinedIcon sx={{ fontSize: 17 }} />
+        </Box>
+      </Tooltip> : null}
+    </Stack>
+    <Typography color="text.secondary" variant="body2">{description}</Typography>
+  </Box>;
+  if (!collapsible) {
+    return <Paper sx={{ borderRadius: 2, overflow: "hidden" }} variant="outlined">
+      <Stack direction={{ xs: "column", lg: "row" }} spacing={1.25} sx={{ alignItems: { lg: "center" }, justifyContent: "space-between", px: { xs: 1.5, sm: 2.25 }, py: 1.5 }}>
+        {heading}
+        {headerActions ? <Box sx={{ maxWidth: "100%", minWidth: 0 }}>{headerActions}</Box> : null}
+      </Stack>
+      <Box sx={{ px: { xs: 1.5, sm: 2.25 }, pb: 2.25 }}>{children}</Box>
+    </Paper>;
+  }
   return (
     <Accordion defaultExpanded={defaultExpanded} disableGutters sx={{ border: 1, borderColor: "divider", borderRadius: "8px !important", boxShadow: "none", overflow: "hidden", "&:before": { display: "none" } }}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minWidth: 0, px: { xs: 1.5, sm: 2.25 }, py: 0.5 }}>
-        <Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{title}</Typography><Typography color="text.secondary" variant="body2">{description}</Typography></Box>
+        {heading}
       </AccordionSummary>
       <AccordionDetails sx={{ px: { xs: 1.5, sm: 2.25 }, pb: 2.25, pt: 0 }}>{children}</AccordionDetails>
     </Accordion>
   );
+}
+
+const PROFIT_ZONE_HOLD_PRESETS = Object.freeze([0, 1, 2, 5, 10, 15]);
+
+function ProfitZoneHeaderControls({
+  currentMinutes,
+  dateRange,
+  disabled,
+  href,
+}: {
+  currentMinutes: number;
+  dateRange: OverviewDateRange;
+  disabled: boolean;
+  href: string;
+}) {
+  const [selection, setSelection] = useState(() =>
+    PROFIT_ZONE_HOLD_PRESETS.includes(currentMinutes) ? String(currentMinutes) : "custom");
+  const [customMinutes, setCustomMinutes] = useState(() =>
+    String(PROFIT_ZONE_HOLD_PRESETS.includes(currentMinutes) ? 20 : currentMinutes));
+  const requestedMinutes = selection === "custom" ? Number(customMinutes) : Number(selection);
+  const valid = Number.isSafeInteger(requestedMinutes) &&
+    requestedMinutes >= (selection === "custom" ? 1 : 0) && requestedMinutes <= 120;
+  return <OverviewDateRangeControl
+    additionalControls={<>
+      <Box sx={{ alignItems: "center", display: "flex", gap: 0.4 }}>
+        <TextField
+          disabled={disabled}
+          label="Minimum time at +20%"
+          onChange={(event) => setSelection(event.target.value)}
+          select
+          size="small"
+          sx={{ minWidth: 205 }}
+          value={selection}
+        >
+          <MenuItem value="0">Any reach (0 min)</MenuItem>
+          <MenuItem value="1">1 minute</MenuItem>
+          <MenuItem value="2">2 minutes</MenuItem>
+          <MenuItem value="5">5 minutes</MenuItem>
+          <MenuItem value="10">10 minutes</MenuItem>
+          <MenuItem value="15">15 minutes</MenuItem>
+          <MenuItem value="custom">Custom</MenuItem>
+        </TextField>
+        <Tooltip arrow title="Choose how long a trade must stay at or above +20% before it is included in this chart. Time is counted with consecutive completed 1-minute candle closes while the trade is active. Any reach keeps the current behavior. Once a trade qualifies, its complete journey through every higher zone remains in the chart. Reached percentages still use all analyzed trades in the selected date range.">
+          <IconButton aria-label="Explain minimum time at plus 20 percent" size="small" sx={{ color: "text.secondary", p: 0.35 }}><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton>
+        </Tooltip>
+      </Box>
+      {selection === "custom" ? <TextField
+        disabled={disabled}
+        error={!valid}
+        helperText={!valid ? "Enter 1–120" : undefined}
+        label="Minutes"
+        onChange={(event) => setCustomMinutes(event.target.value)}
+        size="small"
+        slotProps={{ htmlInput: { max: 120, min: 1, step: 1 } }}
+        sx={{ width: 112 }}
+        type="number"
+        value={customMinutes}
+      /> : null}
+    </>}
+    additionalSearchParams={{ zoneHold: requestedMinutes === 0 ? null : String(requestedMinutes) }}
+    href={href}
+    showCaption={false}
+    updateDisabled={disabled || !valid}
+    value={dateRange}
+  />;
 }
 
 function MfeMaeTable({
@@ -546,6 +638,11 @@ export function TradeAnalysisClient({
   const profitZoneRows = model.profitZones?.rowsByDirection[activeDirection] ?? [];
   const profitZoneRecords = model.profitZones?.recordsByDirection[activeDirection] ?? [];
   const profitZoneMinimumHoldMinutes = evidenceQuery.profitZoneMinimumHoldMinutes ?? 0;
+  const profitZoneDateRange = Object.freeze({
+    endDate: evidenceQuery.endDate,
+    kind: evidenceQuery.rangeKind as OverviewDateRange["kind"],
+    startDate: evidenceQuery.startDate,
+  });
   const greenToRedOpportunityRows = useMemo(() => model.greenToRedOpportunity.rows.filter((row) =>
     row.direction === activeDirection), [activeDirection, model.greenToRedOpportunity.rows]);
   const directionExcursions = useMemo(() => model.excursions.filter((row) =>
@@ -718,19 +815,24 @@ export function TradeAnalysisClient({
         />
       </Section> : null}
 
-      {view === "scaling-out" ? <Section defaultExpanded description="Profit taking and opportunity across 10% gain zones." helpHref="/help/trade-analyzer/scaling-out#behavior" title="Profit taking by price level">
+      {view === "scaling-out" ? <Section
+        collapsible={false}
+        description="Profit taking and opportunity across 10% gain zones."
+        headerActions={<ProfitZoneHeaderControls
+          currentMinutes={profitZoneMinimumHoldMinutes}
+          dateRange={profitZoneDateRange}
+          disabled={offline}
+          href={pathname}
+          key={`${evidenceQuery.rangeKind}:${evidenceQuery.startDate ?? "all"}:${evidenceQuery.endDate ?? "all"}:${profitZoneMinimumHoldMinutes}`}
+        />}
+        helpHref="/help/trade-analyzer/scaling-out#behavior"
+        title="Profit taking by price zone"
+        titleHelp={`This page uses ${profitZoneDirectionCounts[activeDirection]} analyzed user-defined ${activeDirection} trades. A trade counts once even when it contains several entries, partial exits, full exits or re-entries. Profit-taking and missed-opportunity percentages use only the trades that reached that zone. The partial/full breakdown uses only trades that took profit and always totals 100%: a trade that scaled out in the band is shown under Partial exits; an entire position sold in one order with no earlier scale-out is shown under Full exits.`}
+      >
         <ProfitZoneAnalysis
           currency={model.currency}
           direction={activeDirection}
           key={`${evidenceQuery.rangeKind}:${evidenceQuery.startDate ?? "all"}:${evidenceQuery.endDate ?? "all"}:${activeDirection}:${profitZoneMinimumHoldMinutes}`}
-          minimumHoldMinutes={profitZoneMinimumHoldMinutes}
-          onMinimumHoldMinutesChange={(minutes) => {
-            if (offline) return;
-            const params = new URLSearchParams(searchParams.toString());
-            if (minutes === 0) params.delete("zoneHold");
-            else params.set("zoneHold", String(minutes));
-            router.push(`${pathname}?${params.toString()}`);
-          }}
           offline={offline}
           records={profitZoneRecords}
           rows={profitZoneRows}

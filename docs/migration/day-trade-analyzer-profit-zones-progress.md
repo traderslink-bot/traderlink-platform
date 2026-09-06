@@ -362,6 +362,17 @@ to this worker.
 - [x] Rename the analyzed-trade count card to `Results include analyzed trades
   only` and add a visible tooltip explaining that the page displays only
   trades analyzed by the TradersLink Trade Analyzer feature.
+- [x] Rename the main section `Profit taking by price zone`, remove its outer
+  accordion/collapse control and move the Profit Zones definition tooltip
+  beside that title. Individual zone trade lists remain expandable.
+- [x] Move the existing page-wide date range selector from the page top into
+  the price-zone header beside the +20% minimum-time selector. Use one Update
+  button to apply both URL-backed selections.
+- [x] Enlarge the Profit Zones chart headings by 60%, widen the Zone column for
+  a larger downward/upward expand indicator and tighten Next Move toward Time
+  in Zone while preserving the horizontally scrollable mobile grid.
+- [x] In each expanded trade, promote `In zone` above `To zone` and render the
+  in-zone duration as the larger primary timing value.
 - [x] Complete focused source QA for the minimum-time selector: targeted
   ESLint, targeted TypeScript and `git diff --check` pass. Source inspection
   confirms the filter changes only Profit Zones, keeps the full higher-zone

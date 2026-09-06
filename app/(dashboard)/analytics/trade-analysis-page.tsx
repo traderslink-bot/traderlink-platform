@@ -346,8 +346,8 @@ export async function TradeAnalysisPage({
         </Box>
         <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
       </Stack>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}>
-        <OverviewDateRangeControl href={baseHref} value={dateRange} />
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: view === "scaling-out" ? "flex-end" : "space-between" }}>
+        {view === "scaling-out" ? null : <OverviewDateRangeControl href={baseHref} value={dateRange} />}
         <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
           {(["gross", "net"] as const).map((basis) => (
             <Button

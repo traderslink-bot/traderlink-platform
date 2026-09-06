@@ -223,6 +223,13 @@ not only the qualifying trades. The chart states the resulting qualifying
 count, explains the calculation in a tooltip and resets the 20% zone open when
 the setting changes.
 
+On Scaling Out, the existing page-wide date selector moves into the
+non-collapsible `Profit taking by price zone` header beside the minimum-time
+control. One Update action applies both selections; no duplicate date control
+or second chart-only date state is introduced. The section title owns the
+Profit Zones definition tooltip. The outer section does not collapse, while
+each individual price zone retains its expandable exact-trade list.
+
 On narrow screens, preserve the desktop column relationships inside one
 horizontal scroll region rather than restacking the zone facts. Pin the Zone
 column, keep expanded trade rows aligned to their zone columns and provide a

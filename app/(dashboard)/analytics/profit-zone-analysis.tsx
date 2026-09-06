@@ -7,10 +7,7 @@ import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
-import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
@@ -23,8 +20,6 @@ import type {
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
 
 import { TradeDetailsDrawer } from "../trades/trade-details-drawer";
-
-const PROFIT_ZONE_HOLD_PRESETS = Object.freeze([0, 1, 2, 5, 10, 15]);
 
 function money(value: string | null | undefined, currency: string | null): string {
   if (value === null || value === undefined || currency === null) return "Unavailable";
@@ -124,8 +119,6 @@ function partialProfitTiming(record: TradeAnalysisProfitZoneRecord): string {
 export function ProfitZoneAnalysis({
   currency,
   direction,
-  minimumHoldMinutes,
-  onMinimumHoldMinutesChange,
   offline,
   records,
   rows,
@@ -134,8 +127,6 @@ export function ProfitZoneAnalysis({
 }: {
   currency: string | null;
   direction: "long" | "short";
-  minimumHoldMinutes: number;
-  onMinimumHoldMinutesChange: (minutes: number) => void;
   offline: boolean;
   records: readonly TradeAnalysisProfitZoneRecord[];
   rows: readonly TradeAnalysisProfitZoneSummaryRow[];
@@ -144,10 +135,6 @@ export function ProfitZoneAnalysis({
 }) {
   const [expandedLevels, setExpandedLevels] = useState<ReadonlySet<number>>(() => new Set([20]));
   const [detailsTrade, setDetailsTrade] = useState<TradeAnalysisProfitZoneRecord | null>(null);
-  const [holdSelection, setHoldSelection] = useState(() =>
-    PROFIT_ZONE_HOLD_PRESETS.includes(minimumHoldMinutes) ? String(minimumHoldMinutes) : "custom");
-  const [customHoldMinutes, setCustomHoldMinutes] = useState(() =>
-    String(PROFIT_ZONE_HOLD_PRESETS.includes(minimumHoldMinutes) ? 20 : minimumHoldMinutes));
   const recordsByLevel = useMemo(() => {
     const grouped = new Map<number, TradeAnalysisProfitZoneRecord[]>();
     for (const record of records) {
@@ -171,77 +158,18 @@ export function ProfitZoneAnalysis({
   const exitTypeHelp = direction === "long"
     ? "Tracks how profit-taking trades were exited. Partial = selling under 100% of shares in one execution and the remainder in following executions. Full exit = selling 100% of shares in one execution with no earlier scale-out. The indented percentage and count show partial-exit trades whose remaining position also closed in this zone."
     : "Tracks how profitable short trades were exited. Partial = buying back under 100% of shares in one execution and the remainder in following executions. Full exit = buying back 100% of shares in one execution with no earlier scale-out. The indented percentage and count show partial-exit trades whose remaining position also closed in this zone.";
-  const customHoldValue = Number(customHoldMinutes);
-  const requestedHoldMinutes = holdSelection === "custom" ? customHoldValue : Number(holdSelection);
-  const validHoldSelection = Number.isSafeInteger(requestedHoldMinutes) &&
-    requestedHoldMinutes >= (holdSelection === "custom" ? 1 : 0) && requestedHoldMinutes <= 120;
-  const qualifyingTradeCount = rows.find((row) => row.lowerBoundPercent === 20)?.reachedTradeCount ?? 0;
-  const qualificationSummary = minimumHoldMinutes === 0
-    ? `${qualifyingTradeCount} of ${totalTradeCount} analyzed trades reached +20% or higher.`
-    : `${qualifyingTradeCount} of ${totalTradeCount} analyzed trades held +20% or higher for at least ${minimumHoldMinutes} consecutive ${minimumHoldMinutes === 1 ? "minute" : "minutes"}.`;
   return <Stack spacing={1.75}>
-    <Paper variant="outlined" sx={{ borderRadius: 2.5, p: { xs: 1, sm: 1.25 } }}>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1.25} sx={{ alignItems: { md: "flex-start" }, justifyContent: "space-between", mb: 0.75 }}>
-        <Stack direction="row" sx={{ alignItems: "flex-start" }}>
-          <Box>
-            <Typography sx={{ fontWeight: 850 }}>Profit zones</Typography>
-            <Typography color="text.secondary" component="div" variant="caption">{qualificationSummary}</Typography>
-          </Box>
-          <Tooltip arrow title={`This page uses ${totalTradeCount} analyzed user-defined ${direction} trades. A trade counts once even when it contains several entries, partial exits, full exits or re-entries. Profit-taking and missed-opportunity percentages use only the trades that reached that zone. The partial/full breakdown uses only trades that took profit and always totals 100%: a trade that scaled out in the band is shown under Partial exits; an entire position sold in one order with no earlier scale-out is shown under Full exits.`}>
-            <IconButton aria-label="Explain profit zones" size="small" sx={{ color: "text.secondary", ml: 0.25, p: 0.35 }}><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton>
-          </Tooltip>
-        </Stack>
-        <Box sx={{ alignItems: "center", display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-          <TextField
-            disabled={offline}
-            label="Minimum time at +20%"
-            onChange={(event) => setHoldSelection(event.target.value)}
-            select
-            size="small"
-            sx={{ minWidth: 205 }}
-            value={holdSelection}
-          >
-            <MenuItem value="0">Any reach (0 min)</MenuItem>
-            <MenuItem value="1">1 minute</MenuItem>
-            <MenuItem value="2">2 minutes</MenuItem>
-            <MenuItem value="5">5 minutes</MenuItem>
-            <MenuItem value="10">10 minutes</MenuItem>
-            <MenuItem value="15">15 minutes</MenuItem>
-            <MenuItem value="custom">Custom</MenuItem>
-          </TextField>
-          <Tooltip arrow title="Choose how long a trade must stay at or above +20% before it is included in this chart. Time is counted with consecutive completed 1-minute candle closes while the trade is active. Any reach keeps the current behavior. Once a trade qualifies, its complete journey through every higher zone remains in the chart. Reached percentages still use all analyzed trades in the selected date range.">
-            <IconButton aria-label="Explain minimum time at plus 20 percent" size="small" sx={{ color: "text.secondary", p: 0.35 }}><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton>
-          </Tooltip>
-          {holdSelection === "custom" ? <TextField
-            disabled={offline}
-            error={!validHoldSelection}
-            helperText={!validHoldSelection ? "Enter 1–120" : undefined}
-            label="Minutes"
-            onChange={(event) => setCustomHoldMinutes(event.target.value)}
-            size="small"
-            slotProps={{ htmlInput: { max: 120, min: 1, step: 1 } }}
-            sx={{ width: 112 }}
-            type="number"
-            value={customHoldMinutes}
-          /> : null}
-          <Button
-            disabled={offline || !validHoldSelection || requestedHoldMinutes === minimumHoldMinutes}
-            onClick={() => onMinimumHoldMinutesChange(requestedHoldMinutes)}
-            size="small"
-            variant="outlined"
-          >Update</Button>
-        </Box>
-      </Stack>
+    <Box sx={{ borderRadius: 2.5 }}>
       <Typography color="text.secondary" sx={{ display: { md: "none" }, mb: 0.5 }} variant="caption">Swipe horizontally to view all columns.</Typography>
       <Box sx={{ overflowX: { xs: "auto", md: "visible" }, pb: { xs: 0.5, md: 0 }, WebkitOverflowScrolling: "touch" }}>
-      <Box sx={{ minWidth: { xs: 1040, md: 0 } }}>
+      <Box sx={{ minWidth: { xs: 1200, md: 0 } }}>
       <Box sx={{
         bgcolor: "background.paper",
         borderBottom: 1,
         borderColor: "divider",
         display: "grid",
         gap: 1,
-        gridTemplateColumns: "78px 0.72fr 1.02fr 1.02fr 1.18fr 1.35fr 0.65fr",
+        gridTemplateColumns: "112px 0.8fr 1.03fr 1.03fr 1.14fr 1.06fr 0.84fr",
         position: { xs: "static", md: "sticky" },
         px: 1,
         py: 0.75,
@@ -260,7 +188,7 @@ export function ProfitZoneAnalysis({
           key={label}
           sx={{
             color: "text.secondary",
-            fontSize: "0.69rem",
+            fontSize: "1.1rem",
             fontWeight: 800,
             letterSpacing: "0.035em",
             pl: index === 1 ? 1 : 0,
@@ -300,7 +228,7 @@ export function ProfitZoneAnalysis({
                 display: "grid",
                 gap: 1,
                 gridTemplateAreas: '"zone reached profit exitType missed nextMove time"',
-                gridTemplateColumns: "78px 0.72fr 1.02fr 1.02fr 1.18fr 1.35fr 0.65fr",
+                gridTemplateColumns: "112px 0.8fr 1.03fr 1.03fr 1.14fr 1.06fr 0.84fr",
                 minHeight: 78,
                 px: 1,
                 py: 0.55,
@@ -308,7 +236,7 @@ export function ProfitZoneAnalysis({
                 width: "100%",
               }}
             >
-              <Stack direction="row" spacing={0.2} sx={{ alignItems: "center", alignSelf: "stretch", bgcolor: { xs: "background.paper", md: "transparent" }, gridArea: "zone", left: 0, position: { xs: "sticky", md: "static" }, zIndex: 1 }}><KeyboardArrowDownRoundedIcon sx={{ flexShrink: 0, fontSize: 18, transform: isExpanded ? "none" : "rotate(-90deg)", transition: "transform 150ms ease" }} /><Typography sx={{ fontSize: "0.82rem", fontWeight: 850, lineHeight: 1.08 }}><ZoneRange lower={row.lowerBoundPercent} upper={row.upperBoundPercent} /></Typography></Stack>
+              <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", alignSelf: "stretch", bgcolor: { xs: "background.paper", md: "transparent" }, gridArea: "zone", left: 0, position: { xs: "sticky", md: "static" }, zIndex: 1 }}><Box sx={{ alignItems: "center", bgcolor: "action.selected", border: 1, borderColor: "divider", borderRadius: 1.25, color: "primary.main", display: "inline-flex", flexShrink: 0, height: 34, justifyContent: "center", width: 34 }}><KeyboardArrowDownRoundedIcon sx={{ fontSize: 30, transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 150ms ease" }} /></Box><Typography sx={{ fontSize: "0.82rem", fontWeight: 850, lineHeight: 1.08 }}><ZoneRange lower={row.lowerBoundPercent} upper={row.upperBoundPercent} /></Typography></Stack>
               <Box sx={{ gridArea: "reached", pl: 1 }}><Typography color="text.secondary" sx={{ display: "none", fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>Reached</Typography><Typography sx={{ fontSize: "0.84rem", fontWeight: 900 }}>{percent(row.reachRatePercent)}</Typography><Typography color="text.secondary" variant="caption">{row.reachedTradeCount} of {totalTradeCount} trades</Typography>{row.upperBoundPercent !== null ? <Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>{row.reachedNextTradeCount ?? 0} reached +{row.upperBoundPercent}% · {row.didNotReachNextTradeCount ?? 0} did not</Typography> : null}</Box>
               <Box sx={{ gridArea: "profit" }}><Typography sx={{ fontSize: "0.82rem", fontWeight: 800 }}>{percent(row.tookProfitRateOfReachedPercent)}</Typography><Typography color="text.secondary" component="div" variant="caption">{row.tookProfitTradeCount} of {row.reachedTradeCount} trades</Typography><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>{row.tookProfitTradeCount > 0 ? `${shares(row.quantitySoldInZoneDecimal)} profitable shares · ` : ""}{money(row.profitTakenInZoneGrossDecimal, currency)} Gross profit</Typography></Box>
               <Box sx={{ gridArea: "exitType" }}>{row.tookProfitTradeCount > 0 ? <><Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Partial exits {percent(row.partialExitShareOfProfitTakingPercent)} · {money(row.partialExitTradeProfitInZoneGrossDecimal, currency)}</Typography>{row.scaledExitClosedTradeCount > 0 ? <Typography color="text.secondary" sx={{ fontSize: "0.62rem", pl: 0.75 }}>↳ Closed here {percent(row.scaledExitClosedRateOfPartialExitTradesPercent)} · {row.scaledExitClosedTradeCount} of {row.partialProfitTradeCount} · {money(row.scaledExitClosingProfitGrossDecimal, currency)}</Typography> : null}<Typography color="text.secondary" sx={{ fontSize: "0.65rem" }}>Full exits {percent(row.fullExitShareOfProfitTakingPercent)} · {money(row.fullExitOnlyTradeProfitInZoneGrossDecimal, currency)}</Typography></> : <Typography color="text.secondary" variant="caption">No profit-taking exits</Typography>}</Box>
@@ -340,7 +268,7 @@ export function ProfitZoneAnalysis({
                           <Typography color="text.secondary" component="div" variant="caption">Sold so far · {shares(record.cumulativeQuantitySoldDecimal)} · {shares(record.remainingQuantityAfterZoneActivityDecimal)} left</Typography>
                         </Box>
                         <Box sx={{ gridArea: "next" }}><Typography color="text.secondary" variant="body2">{nextLevelOutcome(record)}</Typography></Box>
-                        <Box sx={{ gridArea: "timing" }}><Typography variant="body2">To zone · {minutes(record.minutesFromEntryToFirstReach)}</Typography><Typography color="text.secondary" component="div" variant="caption">In zone · {minutes(record.totalCompletedMinutesInZone)}</Typography></Box>
+                        <Box sx={{ gridArea: "timing" }}><Typography sx={{ fontSize: "0.95rem", fontWeight: 850 }}>In zone · {minutes(record.totalCompletedMinutesInZone)}</Typography><Typography color="text.secondary" component="div" variant="caption">To zone · {minutes(record.minutesFromEntryToFirstReach)}</Typography></Box>
                         <Box sx={{ gridArea: "final" }}><Typography sx={{ color: financialOutcomeColor(record.finalGrossPnlDecimal), fontWeight: 800 }} variant="body2">{money(record.finalGrossPnlDecimal, currency)}</Typography><Typography color="text.secondary" variant="caption">Gross</Typography></Box>
                         <Box sx={{ gridArea: "details" }}><Button disabled={offline} onClick={() => setDetailsTrade(record)} size="small" variant="outlined">Details</Button></Box>
                       </Box>;
@@ -354,7 +282,7 @@ export function ProfitZoneAnalysis({
       </Stack>
       </Box>
       </Box>
-    </Paper>
+    </Box>
     <TradeDetailsDrawer
       analyzer={detailsTrade && currency ? {
         currency,
