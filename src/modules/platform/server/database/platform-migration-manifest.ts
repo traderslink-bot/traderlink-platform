@@ -46,6 +46,7 @@ import { communityTickerCompanyFactsMigration } from "@/src/modules/community/se
 import { traderLinkCommunitiesIdentityPermissionsMigration } from "@/src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions";
 import { traderLinkCommunitiesPartnerPlatformMigration } from "@/src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
 import { traderLinkCommunitiesDiscordFeatureAccessMigration } from "@/src/modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access";
+import { traderLinkCommunitiesServerWatchlistsMigration } from "@/src/modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -601,6 +602,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access.ts",
       migration: traderLinkCommunitiesDiscordFeatureAccessMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists.ts",
+      migration: traderLinkCommunitiesServerWatchlistsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -1075,6 +1080,11 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "traderlink_community_partner_earnings",
       "traderlink_community_partner_billing_events",
       "traderlink_community_coach_fee_rules",
+    ]),
+    "0124_traderlink_communities_server_watchlists": Object.freeze([
+      "traderlink_community_server_watchlists",
+      "traderlink_community_server_watchlist_symbols",
+      "traderlink_community_network_settings",
     ]),
   });
 
