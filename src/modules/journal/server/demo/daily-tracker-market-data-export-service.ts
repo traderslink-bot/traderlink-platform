@@ -6,12 +6,10 @@ import type { NormalizedMarketCandle } from "@/src/modules/level-analysis/contra
 import { newYorkExtendedSession } from "@/src/modules/level-analysis/server/daily-trade-analyzer-session";
 import { MoomooDailyTradeKlineMarketDataProvider } from "@/src/modules/level-analysis/server/providers/moomoo-daily-trade-kline-market-data-provider";
 import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { PlatformDiscordMembershipRepository } from "@/src/modules/platform/server/authentication/platform-discord-membership-repository";
-import { readProtectedInitialOwnerDiscordSubject, resolveTraderLinkDiscordGuildId } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
+import { SharedAnalyzerAllowanceRepository } from "@/src/modules/level-analysis/server/shared-analyzer-allowance-repository";
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { PlatformOperatorRepository } from "@/src/modules/platform/server/administration/platform-operator-repository";
 
 const MAX_PAGES = 3;
 const MIN_TOKEN_LIFETIME_MILLISECONDS = 15 * 60 * 1000;
@@ -198,19 +196,12 @@ export type AuthorizedDailyTrackerMarketDataExport = Readonly<{
   close: () => void;
 }>;
 
-function configuredOwnerMatches(
-  database: ReturnType<typeof openReadonlyPlatformDatabase>,
-  userId: string,
+function isDesignatedSharedAnalyzerRequester(
+  identity: TraderLinkPlatformRequestIdentity,
+  designated: NonNullable<ReturnType<SharedAnalyzerAllowanceRepository["designatedScope"]>>,
 ): boolean {
-  const ownerSubject = readProtectedInitialOwnerDiscordSubject();
-  if (!ownerSubject) return false;
-  return database.prepare<[string, string], Readonly<{ matches: 0 | 1 }>>(`SELECT EXISTS(
-SELECT 1
-FROM platform_auth_identities
-WHERE user_id = ?
-  AND auth_provider = 'discord'
-  AND auth_subject = ?
-) AS matches`).get(userId, ownerSubject)?.matches === 1;
+  return identity.scope.userId === designated.userId &&
+    identity.scope.workspaceId === designated.workspaceId;
 }
 
 export function authorizeOwnerDailyTrackerMarketDataExport(
@@ -218,20 +209,20 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
 ): AuthorizedDailyTrackerMarketDataExport {
   const database = openReadonlyPlatformDatabase();
   try {
-    const membership = new PlatformDiscordMembershipRepository(database).findCurrent(
-      identity.scope.userId,
-      resolveTraderLinkDiscordGuildId(),
-    );
-    const activeGrant = new PlatformOperatorRepository(database).findActive();
-    const discordServerOwnerMatched = identity.discord?.guildOwner === true && membership?.guildOwner === true;
-    if (
-      !membership || !activeGrant || activeGrant.userId !== identity.scope.userId ||
-      (!configuredOwnerMatches(database, identity.scope.userId) && !discordServerOwnerMatched)
-    ) {
+    // This temporary export may use only the same designated server-side Moomoo
+    // scope that the ordinary shared Trade Analyzer uses. It never authorizes
+    // another account's connection or makes the credential visible to the caller.
+    const designated = new SharedAnalyzerAllowanceRepository(database).designatedScope();
+    if (!designated || !isDesignatedSharedAnalyzerRequester(identity, designated)) {
       throw new DailyTrackerMarketDataExportDenied();
     }
+    const designatedScope = Object.freeze({
+      ...designated,
+      activeAccountId: designated.accountId,
+      allowedAccountIds: Object.freeze([designated.accountId]),
+    });
     const connections = new MoomooConnectionRepository(database);
-    const connection = connections.find(identity.scope);
+    const connection = connections.find(designatedScope);
     const expiresAt = Date.parse(connection?.accessTokenExpiresAtUtc ?? "");
     if (
       !connection || connection.state !== "active" ||
@@ -242,7 +233,9 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
     }
     const access = new MoomooConnectionAccessService(connections);
     return Object.freeze({
-      accessToken: () => access.accessToken(identity.scope),
+      accessToken: () => access.accessToken(designatedScope, {
+        minimumLifetimeMilliseconds: MIN_TOKEN_LIFETIME_MILLISECONDS,
+      }),
       close: () => database.close(),
     });
   } catch (error) {
@@ -250,7 +243,6 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
     throw error;
   }
 }
-
 export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
   authorized: AuthorizedDailyTrackerMarketDataExport;
   date: string;
