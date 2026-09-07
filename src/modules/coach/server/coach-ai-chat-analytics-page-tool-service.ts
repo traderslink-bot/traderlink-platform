@@ -18,6 +18,7 @@ import type {
 import {
   compareTradeExplorerMetricValues,
   TRADE_EXPLORER_DAY_STATISTIC_GROUPS,
+  TRADE_EXPLORER_TRADE_SORT_OPTIONS,
   TRADE_EXPLORER_TRADE_STATISTIC_GROUPS,
   tradeExplorerMetricForMoneyBasis,
   tradeExplorerMetricForOutcome,
@@ -33,7 +34,6 @@ import {
   COACH_AI_CHAT_FACTUAL_TOOL_MAX_PAGE_SIZE,
   COACH_AI_CHAT_TRADE_EXPLORER_GROUPINGS,
   COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS,
-  COACH_AI_CHAT_TRADE_EXPLORER_TRADE_SORTS,
   CoachAiChatFactualToolError,
   type CoachAiChatAnalyticsAggregateSelection,
   type CoachAiChatAnalyticsPageRequest,
@@ -64,6 +64,10 @@ const TRADE_EXPLORER_VIEW_GROUPINGS = Object.freeze({
 
 const TRADE_EXPLORER_TRADE_RANK_METRICS = new Set<string>(
   TRADE_EXPLORER_TRADE_STATISTIC_GROUPS.flatMap((group) => group.metricIds),
+);
+
+const TRADE_EXPLORER_TRADE_SORTS = new Set<string>(
+  TRADE_EXPLORER_TRADE_SORT_OPTIONS.map((option) => option.value),
 );
 const TRADE_EXPLORER_DAY_RANK_METRICS = new Set<string>(
   TRADE_EXPLORER_DAY_STATISTIC_GROUPS.flatMap((group) => group.metricIds),
@@ -329,7 +333,7 @@ export class CoachAiChatAnalyticsPageToolService {
           request.metricId !== undefined || request.grouping !== undefined ||
           request.rankDirection !== undefined || request.tradeSort === undefined ||
           request.pageSize === undefined || request.afterCursor === undefined ||
-          !COACH_AI_CHAT_TRADE_EXPLORER_TRADE_SORTS.includes(request.tradeSort)
+          !TRADE_EXPLORER_TRADE_SORTS.has(request.tradeSort)
         )) ||
         (groupedView && (
           request.metricId === undefined || request.grouping === undefined ||
