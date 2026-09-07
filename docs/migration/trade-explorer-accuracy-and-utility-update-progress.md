@@ -212,8 +212,8 @@ The owner approved one complete follow-up slice:
 - [x] Align PDF and Help copy.
 - [x] Complete focused static verification without an automated test suite.
 - [ ] Complete integrated desktop/mobile Light/Dark browser verification.
-- [ ] Create the narrow local correction commit.
-- [ ] Hand the exact allowlist to the production coordinator.
+- [x] Create the narrow local correction commit.
+- [x] Hand the exact allowlist to the production coordinator.
 - [ ] Record published SHA, Railway deployment and health result.
 
 Implementation now derives entry sessions and maximum position value entirely
@@ -230,3 +230,11 @@ repository-wide and narrowed TypeScript compiler passes reached the existing
 by the low-resource policy. The local review database path recorded by the old
 environment file is no longer present, so integrated visual proof is reserved
 for the direct production candidate after the coordinator publishes it.
+
+The complete 22-file implementation package is local commit
+`ab5e77eb18e962a1b37a410e2e5d2336a9fa510e`, parented to
+`3008ead809dc87a00ae9d1629d0687e01f6a6736` in the isolated
+`trade-explorer-production-package-941e` worktree. Its exact allowlist and the
+owner's direct-production authorization were sent to the existing Railway
+release coordinator. Publication, deployment and production rendering remain
+coordinator-owned.
