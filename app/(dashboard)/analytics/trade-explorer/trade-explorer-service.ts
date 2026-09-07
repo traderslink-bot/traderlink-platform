@@ -129,7 +129,7 @@ const EXPLORER_SELECTOR_METRIC_IDS: ReadonlySet<string> = new Set<string>([
 
 function journalQuery(
   scope: WorkspaceAccessScope,
-  input: TradeExplorerQuery,
+  input: AnalyticsLabPlatformQuery,
   afterCursor: string | null,
   asOfUtc: string,
   roundTripIds: readonly string[] | null = null,

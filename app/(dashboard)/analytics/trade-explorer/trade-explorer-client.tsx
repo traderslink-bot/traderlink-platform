@@ -743,7 +743,7 @@ export default function TradeExplorerClient({
       })));
   const baseActiveViewColumns = activeView?.columns.filter((column) =>
     appliedQuery.outcome === null || (
-      !["win_count", "loss_count", "win_rate"].includes(column.metricId) &&
+      !["win_count", "loss_count", "win_rate"].includes(column.metricId ?? "") &&
       column.kind !== "day_path"
     )).map((column) =>
       column.metricId === "net_pnl"
