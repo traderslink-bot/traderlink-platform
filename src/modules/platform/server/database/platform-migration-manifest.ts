@@ -52,6 +52,7 @@ import { traderLinkCommunitiesWorkspaceToolsMigration } from "@/src/modules/comm
 import { traderLinkCommunitiesCoachingWorkspaceMigration } from "@/src/modules/communities/server/database/migrations/0127_traderlink_communities_coaching_workspace";
 import { traderLinkCommunitiesCoachingProgramsMigration } from "@/src/modules/communities/server/database/migrations/0128_traderlink_communities_coaching_programs";
 import { traderLinkCommunitiesCoachingPlanBuilderMigration } from "@/src/modules/communities/server/database/migrations/0129_traderlink_communities_coaching_plan_builder";
+import { traderLinkCommunitiesCoachingServiceMeasurementMigration } from "@/src/modules/communities/server/database/migrations/0130_traderlink_communities_coaching_service_measurement";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -631,6 +632,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/communities/server/database/migrations/0129_traderlink_communities_coaching_plan_builder.ts",
       migration: traderLinkCommunitiesCoachingPlanBuilderMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0130_traderlink_communities_coaching_service_measurement.ts",
+      migration: traderLinkCommunitiesCoachingServiceMeasurementMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -1110,6 +1115,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "traderlink_community_coaching_plan_items",
       "traderlink_community_coaching_plan_journal_scopes",
     ]),
+    "0130_traderlink_communities_coaching_service_measurement": Object.freeze([]),
     "0124_traderlink_communities_server_watchlists": Object.freeze([
       "traderlink_community_server_watchlists",
       "traderlink_community_server_watchlist_symbols",

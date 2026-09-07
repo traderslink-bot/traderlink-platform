@@ -592,7 +592,7 @@ remain deliberately deferred until after the owner's internal-product review.
 
 ## Coach plan builder and Discord coaching-role continuity - 2026-09-07
 
-**Status:** Implemented locally; staging publication not yet authorized in this slice
+**Status:** Implemented and released to staging; owner review pending
 
 - [x] Replaced the primitive coaching-plan form with a preset coaching-work
   builder that records frequency, coverage period, quantity, due timing,
@@ -616,5 +616,78 @@ remain deliberately deferred until after the owner's internal-product review.
 - [x] Blocked new relationship-scoped coaching messages, review work, sessions,
   replies and image submissions while the required role is unavailable.
 - [x] Focused ESLint passes for the changed coaching files.
-- [ ] Apply migration `0129`, publish through the serialized staging lane and
-  perform integrated desktop/mobile Light/Dark browser verification.
+- [x] Published final source
+  `903264d0b32ea7f31190f9d87c0c574ae4c83708` through the serialized
+  staging lane. Guarded deployment
+  `17c95abf-ad7f-4940-b649-1ebab7fe06e6` verified backup and restore and
+  applied exactly migration `0129`.
+- [x] Final normal deployment
+  `dca1a755-b9f4-4bca-8f16-ab3c2069511b` reached `SUCCESS`; health is HTTP
+  200, `ready`, `sqlite_single_node` and 124 migrations, with both temporary
+  maintenance controls absent.
+- [x] Signed-in staging verification passed for Coach Setup, the structured
+  plan builder, required Discord role, populated plan cards, Students and the
+  390-pixel responsive layout with no overflow or browser errors.
+- [ ] Render-confirm the `Access paused` coach and student treatments with a
+  role-missing review state. The current review fixture has its required role.
+- [ ] Owner-review the staging composition.
+
+## Session and lesson delivery boundary - 2026-09-07
+
+**Status:** Product direction recorded; implementation follows the coaching-plan staging checkpoint
+
+- [x] Defined one-to-one sessions as student-specific scheduled work with an
+  agenda, planned duration, external meeting link, private coach notes, shared
+  notes, action items, follow-up and history.
+- [x] Kept live calls outside TraderLink for the first release. The coach may
+  use Discord voice, Zoom, Google Meet or another service.
+- [x] Defined live lessons, externally hosted recorded lessons, assignments and
+  resources as separate reusable teaching formats.
+- [x] Assigned lesson audience, availability, attendance and completion
+  tracking to TraderLink while leaving video storage and streaming with the
+  coach's selected provider.
+- [x] Preserved the distinction between reusable lessons and private
+  one-student sessions.
+- [ ] Design and implement these session and teaching refinements after the
+  structured coaching-plan builder is accepted on staging.
+
+## Coaching measurement and custom-freedom decision - 2026-09-07
+
+**Status:** Builder refinement implemented locally; staging release pending
+
+- [x] Rejected a generic item count for every coaching service.
+- [x] Defined trade reviews by trades and trading-day reviews by trading days
+  or sessions, with approved Journal context attached to that work.
+- [x] Defined performance, strategy, risk and goal reviews as coach-defined,
+  period-based work whose time and deadlines may be organized by TraderLink.
+- [x] Kept risk review available as a separate service rather than forcing it
+  into every trade review.
+- [x] Required a bounded student-question allowance; unlimited questions are
+  not offered by the structured builder.
+- [x] Classified coach/student screenshots and marked charts as coaching
+  attachments rather than Journal-access scopes.
+- [x] Defined Custom coaching as the full-freedom option. Access, agreement,
+  external commercial terms and explicit Journal permission remain required;
+  quantities, timelines, planned time and generated work are optional.
+- [x] Recorded that TraderLink should strongly encourage timelines because they
+  provide calendar and workload organization without forcing them on custom
+  coaching relationships.
+- [x] Rebuilt the plan builder with separate Structured plan and Custom
+  coaching paths.
+- [x] Removed standalone Journal review from the coaching-service selector and
+  removed coaching images from Journal-access scopes.
+- [x] Added service-specific controls for trades, trading days, check-ins,
+  sessions, lessons and bounded student questions.
+- [x] Added period, planned minutes and due timing for coach-defined
+  performance, rules, strategy, risk and goal reviews.
+- [x] Added Trades only and Complete trading day choices to trading-day review.
+- [x] Made Custom coaching usable with only its agreement and access terms;
+  its timeline is optional.
+- [x] Added additive migration `0130` so measurement kind, optional planned
+  minutes, optional timeline and trading-day review depth are durable facts.
+- [x] Focused ESLint and the disposable Communities repository proof pass with
+  zero foreign-key violations.
+- [ ] Publish migration `0130` and the refined builder to staging, then complete
+  rendered desktop/mobile Light/Dark verification.
+- [ ] Build the finalized relationship-scoped coach/student agreement flow
+  from these persisted plan terms.

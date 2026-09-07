@@ -1023,6 +1023,57 @@ silently reduce the agreed service or infer consent. A custom arrangement may
 show `Custom price` or `Quote required` until the coach records the final
 commercial terms and service settings.
 
+### Coaching service measurement and custom-freedom contract
+
+TraderLink organizes the service the coach and student agree to; it does not
+prescribe the coach's method or judge whether the coach's preferred analysis is
+appropriate. A coach may explain their approach in the plan description,
+including a focus on risk, setups, indicators or another coaching method.
+
+Structured plans use the measurement that matches the service instead of a
+generic `Items` field on every selection:
+
+- trade reviews count trades and record who may select them;
+- trading-day reviews count trading days or sessions and may cover trades only
+  or the complete shared trading-day context;
+- performance, strategy, risk and goal reviews are period-based work. The coach
+  defines what is reviewed while TraderLink tracks the review period, planned
+  time when supplied, due date, upcoming status, overdue status and completion;
+- risk review remains an independent optional service and is not forced into
+  every trade review;
+- student check-ins count check-ins;
+- private sessions count sessions and may record planned minutes;
+- group lessons count lessons;
+- student questions always use a defined allowance per selected period and do
+  not offer an unlimited option; and
+- custom coaching uses the coach's own description and may optionally record
+  frequency, quantities, planned time, due dates or other organization fields.
+
+Journal information supports the selected coaching work rather than becoming
+an abstract number of Journal items. Trade reviews may use the student's
+approved trade notes, rules, tags and related Journal context for the reviewed
+trades. A complete trading-day review may also use approved day/session notes,
+day-level rules, tags, performance and risk information. Rules analysis may
+start with top broken rules, followed rules or focus rules and then drill into
+the supporting trades. Every read remains limited to the student's explicit
+Journal grant.
+
+Images are coaching attachments, not Journal-access scopes. Students and
+coaches may exchange authenticated relationship-scoped screenshots and marked
+charts during coaching. Existing images attached to a Journal record remain
+Journal data and require the corresponding student grant before a coach can
+read them.
+
+Custom coaching is the full-freedom path. It requires only an identifiable
+coach/student agreement, the required Discord access role, external commercial
+terms and whatever Journal access the student explicitly approves. Work
+generation, quantities, timelines, planned duration and schedules are optional.
+TraderLink strongly encourages timelines because they power Coaching Work,
+calendar organization and overdue tracking, but a coach may use only the
+private workspace, approved trade data, communication, attachments, notes,
+feedback and history. The relationship must remain usable when no structured
+work schedule is selected.
+
 The coach workspace must support the coach's full service, not only isolated
 trade feedback:
 
@@ -1040,13 +1091,24 @@ trade feedback:
    month-over-month and custom-period comparisons from the student's granted
    Journal scope. Results remain read-only and preserve coverage and pending
    Data Decision states.
-4. **Sessions:** scheduled or completed one-to-one sessions with agenda, notes,
-   action items and follow-up. A coach-private note is distinct from the
-   student-visible session record.
-5. **Teaching:** lessons, classes and assignments may target one plan, selected
-   students or every active student of that coach. Delivery may be a scheduled
-   live session, a durable lesson page or an external meeting link. Attendance,
-   completion and student questions belong to the teaching item.
+4. **Sessions:** one-to-one coaching remains specific to the individual
+   student. TraderLink organizes the scheduled date and time, planned duration,
+   external meeting link, agenda, action items, follow-up and durable history.
+   The coach keeps separate coach-private notes and student-visible session
+   notes for each student. TraderLink records scheduled and completed session
+   time but does not claim to verify the exact time the coach worked. Discord
+   voice, Zoom, Google Meet or another coach-selected service hosts the call;
+   live audio or video is not a first-release TraderLink capability.
+5. **Teaching:** lessons, classes, recorded lessons and assignments or
+   resources may target one plan, selected students or every active student of
+   that coach. A live lesson records its date, time, audience, external meeting
+   link, attendance and optional recording link. A recorded lesson records its
+   title, thumbnail, availability, external video link and assigned audience.
+   An assignment or resource records its instructions, external resource link,
+   due date and student completion. Lessons are reusable across coaching plans;
+   individual sessions are not. TraderLink organizes the lesson library,
+   access, assignments and progress but does not initially store or stream
+   video. Coaches may link video hosted by their chosen provider.
 6. **Plan capacity:** capacity belongs to each coaching plan. The coach profile
    may retain an optional absolute safety ceiling, but weekly, monthly,
    review-only and custom plans each control their own enrollment limit.
