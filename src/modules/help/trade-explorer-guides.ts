@@ -37,7 +37,7 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("read-results", "Read trade and grouped results", "Use the trade table, day-session results and group evidence without mixing in Trade Analyzer statistics.", ["trade details", "trading days", "drawdown", "recovery", "trade analyzer"], [
       bullets([
         "Trading Days shows first entry, last exit, active ticker count, completed trades, wins, losses, P/L, best and worst trade, win rate, realized drawdown, recovery, giveback and the day's realized P/L path.",
-        "Expand a Trading Days row to see its completed trades. Expand a Tickers row to see the completed trades for that ticker.",
+        "Choose anywhere on a Trading Days or Tickers row, or use its chevron, to expand the contributing completed trades. The indented trade table shows 10 trades per page.",
         "Entry Times and Exit Times show full intervals in the account trading timezone. Quantity and money buckets use non-overlapping ranges.",
         "Choose Details on any trade to open its Trade Details drawer without leaving Trade Explorer. Exact executions remain available in the Trades table and in Trade Details.",
       ]),

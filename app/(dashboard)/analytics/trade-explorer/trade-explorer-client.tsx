@@ -36,6 +36,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import NextLink from "next/link";
@@ -109,6 +110,8 @@ type ExplorerGroup = Readonly<{
   timeZone: string;
   group: JournalAnalyticsGroupResult;
 }>;
+
+const EXPANDED_GROUP_TRADES_PAGE_SIZE = 10;
 
 type ExplorerGroupColumn = Readonly<{
   label: string;
@@ -606,6 +609,8 @@ export default function TradeExplorerClient({
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [expandedGroupTrades, setExpandedGroupTrades] = useState<readonly JournalAnalyticsRoundTripTableRow[]>(Object.freeze([]));
   const [groupTradesContinuationCursor, setGroupTradesContinuationCursor] = useState<string | null>(null);
+  const [groupTradesPageIndex, setGroupTradesPageIndex] = useState(0);
+  const [groupTradesTotalRowCount, setGroupTradesTotalRowCount] = useState(0);
   const [groupTradesStatus, setGroupTradesStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [reportError, setReportError] = useState<string | null>(null);
@@ -807,6 +812,8 @@ export default function TradeExplorerClient({
     setExpandedGroupId(null);
     setExpandedGroupTrades(Object.freeze([]));
     setGroupTradesContinuationCursor(null);
+    setGroupTradesPageIndex(0);
+    setGroupTradesTotalRowCount(0);
     setGroupTradesStatus("idle");
   }
 
@@ -1184,6 +1191,8 @@ export default function TradeExplorerClient({
 
     setExpandedGroupId(item.id);
     setExpandedGroupTrades(Object.freeze([]));
+    setGroupTradesPageIndex(0);
+    setGroupTradesTotalRowCount(0);
     setGroupTradesStatus("loading");
     try {
       const result = await runTradeExplorerGroupTrades(appliedQuery, Object.freeze({
@@ -1202,6 +1211,7 @@ export default function TradeExplorerClient({
       }
       setExpandedGroupTrades(Object.freeze([...(result.preview.evidence?.rows ?? [])]));
       setGroupTradesContinuationCursor(result.preview.evidence?.continuationCursor ?? null);
+      setGroupTradesTotalRowCount(result.preview.evidence?.totalRowCount ?? 0);
       setGroupTradesStatus("ready");
     } catch {
       if (groupTradesRequestRef.current !== requestNumber) return;
@@ -1210,7 +1220,10 @@ export default function TradeExplorerClient({
     }
   }
 
-  async function loadMoreGroupTrades(item: ExplorerGroup): Promise<void> {
+  async function loadMoreGroupTrades(
+    item: ExplorerGroup,
+    nextPageIndex: number,
+  ): Promise<void> {
     if (!groupTradesContinuationCursor || groupTradesStatus === "loading") return;
     const requestNumber = groupTradesRequestRef.current + 1;
     groupTradesRequestRef.current = requestNumber;
@@ -1235,11 +1248,30 @@ export default function TradeExplorerClient({
         ...(result.preview.evidence?.rows ?? []),
       ]));
       setGroupTradesContinuationCursor(result.preview.evidence?.continuationCursor ?? null);
+      setGroupTradesTotalRowCount(result.preview.evidence?.totalRowCount ?? groupTradesTotalRowCount);
+      setGroupTradesPageIndex(nextPageIndex);
       setGroupTradesStatus("ready");
     } catch {
       if (groupTradesRequestRef.current !== requestNumber) return;
       setGroupTradesStatus("error");
     }
+  }
+
+  function showGroupTradesPage(item: ExplorerGroup, nextPageIndex: number): void {
+    if (nextPageIndex < 0 ||
+        nextPageIndex * EXPANDED_GROUP_TRADES_PAGE_SIZE >= groupTradesTotalRowCount) return;
+    if (nextPageIndex * EXPANDED_GROUP_TRADES_PAGE_SIZE < expandedGroupTrades.length) {
+      setGroupTradesPageIndex(nextPageIndex);
+      return;
+    }
+    void loadMoreGroupTrades(item, nextPageIndex);
+  }
+
+  function groupTradesToggleLabel(expanded: boolean): string {
+    const subject = appliedResultView === "days"
+      ? "the day's trades"
+      : "this ticker's trades";
+    return `${expanded ? "Hide" : "View"} ${subject}`;
   }
 
   function choosePageSize(evidenceRows: 12 | 24 | 50 | 100): void {
@@ -1302,10 +1334,16 @@ export default function TradeExplorerClient({
     if (expandedGroupTrades.length === 0) {
       return <Typography color="text.secondary">No completed trades are available for this row.</Typography>;
     }
+    const pageStart = groupTradesPageIndex * EXPANDED_GROUP_TRADES_PAGE_SIZE;
+    const pageEnd = Math.min(
+      pageStart + EXPANDED_GROUP_TRADES_PAGE_SIZE,
+      groupTradesTotalRowCount,
+    );
+    const visibleGroupTrades = expandedGroupTrades.slice(pageStart, pageEnd);
     return (
-      <>
+      <Box sx={{ borderColor: "primary.light", borderLeft: 3, ml: { xs: 0.25, md: 1 }, pl: { xs: 1, md: 1.5 }, pr: 0.5 }}>
         <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-          {expandedGroupTrades.map((trade) => (
+          {visibleGroupTrades.map((trade) => (
             <Box key={trade.roundTripId} sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 1, p: 1.25 }}>
               <Stack direction="row" sx={{ alignItems: "flex-start", gap: 1, justifyContent: "space-between" }}>
                 <Box>
@@ -1317,32 +1355,44 @@ export default function TradeExplorerClient({
                 <Button onClick={() => setDetailsTrade(trade)} size="small" variant="outlined">Details</Button>
               </Stack>
               <Stack direction="row" sx={{ columnGap: 2, flexWrap: "wrap", mt: 0.75, rowGap: 0.5 }}>
-                <Typography variant="body2">Total entry shares: <Box component="span" sx={{ fontWeight: 800 }}>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</Box></Typography>
-                <Typography variant="body2">Total entry value: <Box component="span" sx={{ fontWeight: 800 }}>{money(trade.entryNotionalDecimal, item.currency)}</Box></Typography>
+                <Typography variant="body2">Entry shares: <Box component="span" sx={{ fontWeight: 800 }}>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</Box></Typography>
+                <Typography variant="body2">Entry value: <Box component="span" sx={{ fontWeight: 800 }}>{money(trade.entryNotionalDecimal, item.currency)}</Box></Typography>
                 <Typography variant="body2">P/L: <Box component="span" sx={{ color: financialOutcomeColor(trade.selectedPnlDecimal), fontWeight: 900 }}>{money(trade.selectedPnlDecimal, item.currency)}</Box></Typography>
               </Stack>
             </Box>
           ))}
         </Stack>
         <Box sx={{ display: { xs: "none", md: "block" } }}>
-          <TableContainer sx={{ maxHeight: 360 }}>
-            <Table aria-label={`${item.label} trades`} size="small" stickyHeader>
+          <TableContainer sx={{ maxHeight: 360, maxWidth: "100%", width: "fit-content" }}>
+            <Table
+              aria-label={`${item.label} trades`}
+              size="small"
+              stickyHeader
+              sx={{
+                width: "max-content",
+                "& .MuiTableCell-root": {
+                  px: 1.25,
+                  py: 0.75,
+                  whiteSpace: "nowrap",
+                },
+              }}
+            >
               <TableHead>
                 <TableRow>
-                  <TableCell>Ticker</TableCell><TableCell>Opened</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Total entry shares</TableCell><TableCell>Total entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell><TableCell>Details</TableCell>
+                  <TableCell>Ticker</TableCell><TableCell>Details</TableCell><TableCell>Opened</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Entry shares</TableCell><TableCell>Entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {expandedGroupTrades.map((trade) => (
+                {visibleGroupTrades.map((trade) => (
                   <TableRow key={trade.roundTripId}>
                     <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
+                    <TableCell><Button onClick={() => setDetailsTrade(trade)} size="small" sx={{ minWidth: 0, px: 1.25 }} variant="outlined">Details</Button></TableCell>
                     <TableCell>{trade.entryLocalDate}<Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{tradeCloseTime(trade.openedAtUtc, item.timeZone)}</Typography></TableCell>
                     <TableCell>{trade.closeLocalDate}<Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{tradeCloseTime(trade.closedAtUtc, item.timeZone)}</Typography></TableCell>
                     <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
                     <TableCell>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</TableCell>
                     <TableCell>{money(trade.entryNotionalDecimal, item.currency)}</TableCell>
                     <TableCell sx={{ color: financialOutcomeColor(trade.selectedPnlDecimal), fontWeight: 800 }}>{money(trade.selectedPnlDecimal, item.currency)}</TableCell>
-                    <TableCell><Button onClick={() => setDetailsTrade(trade)} size="small" variant="outlined">Details</Button></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -1350,12 +1400,30 @@ export default function TradeExplorerClient({
           </TableContainer>
         </Box>
         {groupTradesStatus === "error" ? <Alert severity="error" sx={{ mt: 1 }}>More trades could not be loaded. Try again.</Alert> : null}
-        {groupTradesContinuationCursor ? (
-          <Button disabled={groupTradesStatus === "loading"} onClick={() => void loadMoreGroupTrades(item)} sx={{ mt: 1 }} variant="outlined">
-            {groupTradesStatus === "loading" ? "Loading more trades" : "Load more trades"}
-          </Button>
+        {groupTradesTotalRowCount > EXPANDED_GROUP_TRADES_PAGE_SIZE ? (
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-end", mt: 1 }}>
+            <Button
+              disabled={groupTradesPageIndex === 0 || groupTradesStatus === "loading"}
+              onClick={() => showGroupTradesPage(item, groupTradesPageIndex - 1)}
+              size="small"
+              variant="outlined"
+            >
+              Previous
+            </Button>
+            <Typography color="text.secondary" sx={{ whiteSpace: "nowrap" }} variant="body2">
+              {pageStart + 1}-{pageEnd} of {groupTradesTotalRowCount}
+            </Typography>
+            <Button
+              disabled={pageEnd >= groupTradesTotalRowCount || groupTradesStatus === "loading"}
+              onClick={() => showGroupTradesPage(item, groupTradesPageIndex + 1)}
+              size="small"
+              variant="outlined"
+            >
+              {groupTradesStatus === "loading" ? "Loading" : "Next"}
+            </Button>
+          </Stack>
         ) : null}
-      </>
+      </Box>
     );
   }
 
@@ -1837,7 +1905,7 @@ export default function TradeExplorerClient({
                             <Typography sx={{ fontWeight: 800 }}>{item.label}</Typography>
                             {showPartitionColumn ? <Typography color="text.secondary" variant="caption">{item.partitionLabel}</Typography> : null}
                           </Box>
-                          {groupRowsExpandable ? <ExpandMoreRoundedIcon sx={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} /> : null}
+                          {groupRowsExpandable ? <Tooltip title={groupTradesToggleLabel(expanded)}><Box component="span" sx={{ display: "inline-flex" }}><ExpandMoreRoundedIcon sx={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} /></Box></Tooltip> : null}
                         </ButtonBase>
                         <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1 }}>
                           {displayedColumns.map((column) => (
@@ -1874,9 +1942,11 @@ export default function TradeExplorerClient({
                               sx={{ cursor: groupRowsExpandable ? "pointer" : "default" }}
                             >
                               {groupRowsExpandable ? <TableCell>
-                                <IconButton aria-label={`${expanded ? "Hide" : "Show"} trades for ${item.label}`} onClick={(event) => { event.stopPropagation(); void toggleGroupTrades(item); }} size="small">
-                                  <ExpandMoreRoundedIcon sx={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />
-                                </IconButton>
+                                <Tooltip title={groupTradesToggleLabel(expanded)}>
+                                  <IconButton aria-label={groupTradesToggleLabel(expanded)} onClick={(event) => { event.stopPropagation(); void toggleGroupTrades(item); }} size="small">
+                                    <ExpandMoreRoundedIcon sx={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />
+                                  </IconButton>
+                                </Tooltip>
                               </TableCell> : null}
                               <TableCell sx={{ fontWeight: 800, textTransform: ["entry_times", "exit_times"].includes(appliedResultView) ? "none" : "capitalize" }}>{item.label}</TableCell>
                               {showPartitionColumn ? <TableCell>{item.partitionLabel}</TableCell> : null}

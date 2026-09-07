@@ -1,9 +1,10 @@
 # Trade Explorer Accuracy And Utility Update Plan
 
-**Status:** Owner-approved correction slice in progress on 2026-09-06. The
-earlier Journal-only release remains live while this exact follow-up is built
-and verified locally. The owner explicitly waived further approval pauses and
-directed the completed package to the production release coordinator.
+**Status:** Owner-approved expandable child-table follow-up implemented locally
+on 2026-09-07 and awaiting the production coordinator. The preceding complete
+release remains production `main` `81eb823745ca1381b374ae77b3dcbe329c95cb83`;
+Railway deployment `09759d99-68ab-485b-8fe5-401418a749cc` is `SUCCESS`, and
+direct health returned HTTP 200 `ready` / `sqlite_single_node`.
 
 **Parent plan:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
 
@@ -332,6 +333,11 @@ The complete correction target is:
    drawer inside Trade Explorer without navigation.
 10. Preserve exact-execution expansion in Trades. Removing the table Review
     action does not delete saved notes, tags, rules or their filters.
+11. Make the Trading Days and Tickers parent rows clickable across their full
+    width and give each chevron a view-specific tooltip. Present the expanded
+    trade table as an indented child with natural compact column widths, place
+    Details immediately after Ticker, shorten its two entry columns to Entry
+    shares and Entry value, and paginate contributing trades 10 at a time.
 
 ### 6.6 Tags, notes and rules
 

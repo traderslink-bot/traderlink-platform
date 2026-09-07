@@ -1,9 +1,8 @@
 # Trade Explorer Accuracy And Utility Update Progress
 
-**Status:** Follow-up correction in progress on 2026-09-06. The earlier
-Journal-only release remains live. The owner approved the complete correction
-inventory, waived further approval pauses and directed the verified package to
-the release coordinator for production. No automated test suite will run.
+**Status:** Expandable child-table follow-up implemented locally on 2026-09-07
+and awaiting the production coordinator. The preceding correction release is
+complete and production-verified. No automated test suite was run.
 
 **Controlling plan:** [Trade Explorer Accuracy And Utility Update Plan](trade-explorer-accuracy-and-utility-update-plan.md)
 
@@ -211,10 +210,10 @@ The owner approved one complete follow-up slice:
 - [x] Implement the corrected controls, grouped expansions and Details drawer.
 - [x] Align PDF and Help copy.
 - [x] Complete focused static verification without an automated test suite.
-- [ ] Complete integrated desktop/mobile Light/Dark browser verification.
+- [x] Complete integrated desktop/mobile Light/Dark browser verification.
 - [x] Create the narrow local correction commit.
 - [x] Hand the exact allowlist to the production coordinator.
-- [ ] Record published SHA, Railway deployment and health result.
+- [x] Record published SHA, Railway deployment and health result.
 
 Implementation now derives entry sessions and maximum position value entirely
 from Journal execution facts. Exit Times and Entry Price are accepted by the
@@ -231,10 +230,48 @@ by the low-resource policy. The local review database path recorded by the old
 environment file is no longer present, so integrated visual proof is reserved
 for the direct production candidate after the coordinator publishes it.
 
-The complete 22-file implementation package is local commit
+The complete 22-file implementation package was prepared locally as
 `ab5e77eb18e962a1b37a410e2e5d2336a9fa510e`, parented to
 `3008ead809dc87a00ae9d1629d0687e01f6a6736` in the isolated
-`trade-explorer-production-package-941e` worktree. Its exact allowlist and the
-owner's direct-production authorization were sent to the existing Railway
-release coordinator. Publication, deployment and production rendering remain
-coordinator-owned.
+`trade-explorer-production-package-941e` worktree. The production coordinator
+reconciled that package onto exact remote `main` parent
+`add0c27dafd4822eb924e48a3620e15a0cffe808` as implementation commit
+`25a4923110a186b1c78f4c47a7d64252f985d23b` and handoff record
+`a20d471c1a180415f39707000c64b57ae2b70c09`. The first Railway candidate failed
+safely before promotion on an unsupported MUI Typography prop. The one-file
+technical correction was replayed as final production `main`
+`81eb823745ca1381b374ae77b3dcbe329c95cb83`.
+
+Railway deployment `09759d99-68ab-485b-8fe5-401418a749cc` completed with status
+`SUCCESS`. Startup verified 115 migrations; maintenance controls were absent;
+and direct `/api/platform/health` returned HTTP 200 with `ready` and
+`sqlite_single_node`. No migration, database, staging, customer-data or hosted
+configuration action occurred.
+
+Signed-in production acceptance used 728 populated completed trades. All 14
+View choices loaded, including Exit Times, Entry Price, Share Size and the
+money-based Position Size. Premarket, Regular hours and Post market filters
+loaded. Trading Days and Tickers expanded and lazy-loaded their contributing
+trades. Details opened the shared drawer with Exact executions and without a
+Trade Analyzer tab. Desktop and 390 px mobile passed in Light and Dark modes
+without page overflow, browser warnings or browser errors. The page was left in
+Trades / All entry sessions.
+
+## 2026-09-07 expandable grouped-trades follow-up
+
+The owner approved a focused presentation and interaction correction for the
+Trading Days and Tickers child trade tables. Both parent rows retain full-row
+click expansion and now give their chevrons the view-specific tooltip `View the
+day's trades` or `View this ticker's trades` while collapsed. The indented child
+table uses compact natural-width columns, places Details directly after Ticker,
+shortens only the child headings to Entry shares and Entry value, and paginates
+the contributing completed trades 10 at a time. The top-level analytical View
+names remain Total Entry Shares and Total Entry Value.
+
+- [x] Record the owner-approved follow-up in the controlling plan.
+- [x] Implement the shared Trading Days/Tickers interaction and child table.
+- [x] Align the Trade Explorer Help guide.
+- [x] Complete focused static verification.
+- [x] Create the narrow local follow-up commit.
+- [ ] Send the exact allowlist to the production coordinator.
+- [ ] Record production deployment, health and signed-in rendered acceptance.
