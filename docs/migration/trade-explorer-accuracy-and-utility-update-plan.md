@@ -1,10 +1,10 @@
 # Trade Explorer Accuracy And Utility Update Plan
 
-**Status:** Owner-approved Analyzer-tab and mobile-table follow-up implemented
-locally on 2026-09-07 and awaiting the production coordinator. The preceding
-complete release remains production `main`
-`055d379f2cb0c6087c1f437ed3cef8402eaaf36f`; Railway deployment
-`3d9460a3-dbf4-449a-b73c-1cbf875285c4` is `SUCCESS`, and direct health returned
+**Status:** Production follow-up in progress on 2026-09-07 for grouped-table
+mobile scrolling and removal of the redundant currency override. The last
+verified production `main` before this follow-up is
+`471616fba2c2a972ba4c906290fc6997e406808b`; Railway deployment
+`99546057-d877-4882-9208-4ac6f22c9448` is `SUCCESS`, and direct health returned
 HTTP 200 `ready` / `sqlite_single_node`.
 
 **Parent plan:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
@@ -167,9 +167,10 @@ maximum-position range and entry-value range. Saved views, current-view PDF,
 trade Review, execution expansion and bounded pagination remain part of the
 feature.
 
-Currency and day/multi-day trade type already exist in the strict query and
-saved-view contracts but are not consistently selectable in the main Explore
-controls. This plan makes both visible.
+Currency remains in the strict query and saved-view contracts for backward
+compatibility, but the reporting runtime always applies the user's current
+Account-settings reporting currency. Trade Explorer therefore provides no
+separate Currency override. Day/multi-day trade type remains selectable.
 
 ## 4. Required accuracy corrections
 
@@ -192,14 +193,18 @@ controls. This plan makes both visible.
    the account trading timezone.
 7. Make filtered population labels explicit: Wins, Losses or Flat trades rather
    than a generic Trades label after the Result filter is applied.
-8. Add visible Currency and Trade type controls. Use `Day trade` and
-   `Multi-day trade`; holding duration must not infer intentional Swing status.
+8. Apply the user's Account-settings reporting currency and do not expose a
+   second Currency selector. Keep the visible Trade type control. Use `Day
+   trade` and `Multi-day trade`; holding duration must not infer intentional
+   Swing status.
 9. Keep Gross and Net results aligned with the Account preference. Blank-fee
    manual trades remain visible under the accepted manual-fee contract, while
    imported trades lacking required fee facts remain outside Net calculations
    with exact coverage.
-10. Keep money grouped by currency and trading-day results partitioned by
-    currency/timezone. No cross-currency P/L total is introduced.
+10. Display money in the Account-settings reporting currency through the
+    accepted reporting-currency fact set. Keep trading-day results partitioned
+    by timezone and preserve explicit unavailable coverage when conversion
+    facts are unavailable.
 
 ## 5. View and ranking usefulness contract
 
@@ -348,6 +353,10 @@ The complete correction target is:
     Trade Breakdown pattern: preserve natural column widths inside the shared
     horizontally scrollable region, show its scroll hint when columns overflow
     and retain the leading-column context while scrolling.
+14. On narrow screens, expanding a Trading Days or Tickers row resets the
+    shared horizontal result table to its first column. The parent and child
+    rows use one scroll surface so a sideways swipe started on either moves the
+    complete table together.
 
 ### 6.6 Tags, notes and rules
 
@@ -446,7 +455,8 @@ passes or the release owner executes the approved repair or rollback path.
   bounded pagination. Group rankings use exact values and place unavailable
   results last.
 - Every saved view and PDF preserves the corrected view, filters, money basis,
-  currency, timezone and ordering without storing Analyzer identifiers.
+  Account reporting currency, timezone and ordering without storing Analyzer
+  identifiers.
 - New annotation filters use bounded, server-derived account scope and stable
   IDs. Browser input never supplies another account or arbitrary metric/formula.
 - Data Decisions remain metric-specific. One unresolved chain cannot hide an
@@ -465,7 +475,9 @@ The update is complete only when:
 - every view exposes only useful, compatible primary rankings;
 - bucket, shares, dates, times, return, result basis and coverage labels state
   exactly what was calculated;
-- Currency and Trade type can be selected and restored through saved views;
+- the current Account reporting currency is applied without a competing
+  Explorer selector, and Trade type can be selected and restored through saved
+  views;
 - tags, notes and rules follow their factual and overlap contracts;
 - Trading Days clearly separates realized trade-path facts from Analyzer
   market-price-path facts;
@@ -484,7 +496,8 @@ The update is complete only when:
 - Exchange-calendar claims, holiday/half-day inference and live session state.
 - Inferred setups, strategies, mistakes, emotions or rule results.
 - Live/unrealized P/L, live prices and external market-data calls.
-- Cross-currency money totals or implicit FX conversion.
+- Ad hoc Explorer currency overrides or implicit conversion without the
+  accepted reporting-currency facts.
 - Predictive scoring, recommendations or claims of causation.
 - A dedicated Trade Type view until its grouping and usefulness contract is
   separately accepted.

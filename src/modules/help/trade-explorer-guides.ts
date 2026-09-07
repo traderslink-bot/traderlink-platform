@@ -25,7 +25,7 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("filter-trades", "Filter completed trades", "Build an exact Journal-only population before reviewing rows or groups.", ["trade explorer filters", "currency", "trade type", "tags", "notes", "rules", "closed date"], [
       bullets([
         "Closed from and Closed to use each trade's closing date in the account trading timezone.",
-        "Currency keeps money in one factual currency. Trade type classifies a Day trade when the position opens and fully closes on the same account-local date; a cross-date completion is Multi-day. This does not guess whether a trader intended a Swing.",
+        "Money is displayed in the reporting currency selected in Account settings. Trade Explorer does not provide a separate currency override. Trade type classifies a Day trade when the position opens and fully closes on the same account-local date; a cross-date completion is Multi-day. This does not guess whether a trader intended a Swing.",
         "Entry session uses the account trading timezone: Premarket is 4:00–9:29 AM, Regular hours is 9:30 AM–3:59 PM and Post market is 4:00–7:59 PM. Entries outside those ranges remain available under All entry sessions.",
         "More filters includes entry weekday and time, holding time, total entry shares, peak shares held and total entry value.",
         "Choose one exact saved tag or Untagged. Because one trade can have several tags, separate tag selections can overlap and their totals are not expected to add to one exclusive total.",
@@ -37,7 +37,7 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("read-results", "Read trade and grouped results", "Use the trade table, day-session results and group evidence without mixing in Trade Analyzer statistics.", ["trade details", "trading days", "drawdown", "recovery", "trade analyzer"], [
       bullets([
         "Trading Days shows first entry, last exit, active ticker count, completed trades, wins, losses, P/L, best and worst trade, win rate, realized drawdown, recovery, giveback and the day's realized P/L path.",
-        "Choose anywhere on a Trading Days or Tickers row, or use its chevron, to expand the contributing completed trades. The indented trade table shows 10 trades per page. On a narrow screen, scroll the result tables sideways to see every column.",
+        "Choose anywhere on a Trading Days or Tickers row, or use its chevron, to expand the contributing completed trades. The table returns to its first column so the indented child table is visible from the start. It shows 10 trades per page. On a narrow screen, swipe anywhere across the parent or child rows to move the full result table sideways.",
         "Entry Times and Exit Times show full intervals in the account trading timezone. Quantity and money buckets use non-overlapping ranges.",
         "Choose Details on any trade to open its Trade Details drawer without leaving Trade Explorer. Exact executions remain available in the Trades table and in Trade Details.",
       ]),

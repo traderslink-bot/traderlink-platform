@@ -317,5 +317,47 @@ unchanged.
 - [x] Align the Trade Explorer Help guide.
 - [x] Complete focused static verification.
 - [x] Create the narrow local follow-up commit.
+- [x] Send the exact allowlist to the production coordinator.
+- [x] Record production deployment, health and signed-in rendered acceptance.
+
+The coordinator reconciled worker source
+`25a150ed1415d5758999296680475880630f49bc` exactly onto configured Railway
+source branch `main`, exact remote parent
+`055d379f2cb0c6087c1f437ed3cef8402eaaf36f`, as published SHA
+`471616fba2c2a972ba4c906290fc6997e406808b`. Railway deployment
+`99546057-d877-4882-9208-4ac6f22c9448` completed with status `SUCCESS`; startup
+verified 115 migrations, maintenance controls were absent and direct health
+returned HTTP 200 `ready` / `sqlite_single_node`. No migration, database, data,
+staging or hosted-configuration action occurred.
+
+Signed-in production acceptance with 728 completed trades verified the
+horizontally scrollable desktop and mobile tables, the narrow-screen scroll
+hint, and no page-level overflow at 390 px. Trade Details loaded from Explorer
+and exposed the shared Analyzer tab, which resolved without browser warnings or
+errors.
+
+## 2026-09-07 mobile expansion and reporting-currency follow-up
+
+The owner approved a focused mobile correction for the expandable Trading Days
+and Tickers tables. Expanding a row now resets the shared horizontal scroll
+surface to its first column. The child trade table no longer creates a nested
+scroll surface, so a sideways swipe begun on either the parent or child rows
+moves the complete table together.
+
+Source review confirmed that Trade Explorer already receives the user's current
+Account-settings reporting currency from the Journal Analytics dashboard
+runtime and that the analytics service overrides any query currency with that
+reporting currency. The redundant Currency dropdown is removed. Saved-view
+details no longer present a stale currency as an override, while the PDF names
+the actual reporting currency returned by the result partition.
+
+- [x] Confirm the Account reporting-currency runtime contract.
+- [x] Reset grouped results to the first column when a row expands.
+- [x] Use one touch-scroll surface across parent and child rows.
+- [x] Remove the Trade Explorer Currency dropdown and misleading saved-view
+  currency summary.
+- [x] Align the PDF summary, Help guide and controlling plan.
+- [x] Complete focused static verification.
+- [ ] Create the narrow local source commit.
 - [ ] Send the exact allowlist to the production coordinator.
-- [ ] Record production deployment, health and signed-in rendered acceptance.
+- [ ] Record production deployment, health and rendered mobile acceptance.

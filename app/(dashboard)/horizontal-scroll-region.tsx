@@ -40,12 +40,14 @@ export function HorizontalScrollRegion({
   label,
   maxHeight,
   minTableWidth,
+  mobileResetScrollKey,
   stickyFirstColumn = false,
 }: {
   children: ReactNode;
   label: string;
   maxHeight?: number;
   minTableWidth: number;
+  mobileResetScrollKey?: string | number | null;
   stickyFirstColumn?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -64,6 +66,14 @@ export function HorizontalScrollRegion({
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
   }, [minTableWidth]);
+
+  useEffect(() => {
+    if (mobileResetScrollKey === null || mobileResetScrollKey === undefined) return;
+    const container = containerRef.current;
+    if (container && window.matchMedia("(max-width: 899.95px)").matches) {
+      container.scrollLeft = 0;
+    }
+  }, [mobileResetScrollKey]);
 
   return (
     <Box>

@@ -501,7 +501,7 @@ function filterSummary(
   const filters = [
     `View: ${viewLabel}`,
     `Result basis: ${query.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}`,
-    `Currency: ${query.currency ?? "All currencies"}`,
+    `Account reporting currency: ${preview.response.partitions[0]?.currency ?? "Unavailable"}`,
     `Ticker: ${query.symbol ?? "All tickers"}`,
     `Direction: ${query.direction === null ? "All directions" : query.direction === "long" ? "Long" : "Short"}`,
     `Result: ${query.outcome === null ? "All results" : query.outcome === "win" ? "Wins" : query.outcome === "loss" ? "Losses" : "Flat"}`,

@@ -870,8 +870,8 @@ export default function TradeExplorerClient({
               : "Flat",
       }),
       Object.freeze({
-        label: "Currency",
-        value: `${savedQuery.currency ?? "All currencies"} · ${savedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}`,
+        label: "Result basis",
+        value: savedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L",
       }),
       Object.freeze({ label: "Ticker", value: savedQuery.symbol ?? "All tickers" }),
       Object.freeze({
@@ -1356,11 +1356,10 @@ export default function TradeExplorerClient({
     const visibleGroupTrades = expandedGroupTrades.slice(pageStart, pageEnd);
     return (
       <Box sx={{ borderColor: "primary.light", borderLeft: 3, ml: { xs: 0.25, md: 1 }, pl: { xs: 1, md: 1.5 }, pr: 0.5 }}>
-        <HorizontalScrollRegion label={`${item.label} trades`} maxHeight={360} minTableWidth={850} stickyFirstColumn>
+        <Box sx={{ maxWidth: "100%", overflow: "visible" }}>
           <Table
             aria-label={`${item.label} trades`}
             size="small"
-            stickyHeader
             sx={{
               width: "max-content",
               "& .MuiTableCell-root": {
@@ -1390,7 +1389,7 @@ export default function TradeExplorerClient({
               ))}
             </TableBody>
           </Table>
-        </HorizontalScrollRegion>
+        </Box>
         {groupTradesStatus === "error" ? <Alert severity="error" sx={{ mt: 1 }}>More trades could not be loaded. Try again.</Alert> : null}
         {groupTradesTotalRowCount > EXPANDED_GROUP_TRADES_PAGE_SIZE ? (
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-end", mt: 1 }}>
@@ -1594,10 +1593,6 @@ export default function TradeExplorerClient({
         />
         <SelectField idSuffix={idSuffix} label="Direction" onChange={(next) => patch("direction", next === "all" ? null : next as "long" | "short")} value={query.direction ?? "all"}>
           <MenuItem value="all">All directions</MenuItem><MenuItem value="long">Long</MenuItem><MenuItem value="short">Short</MenuItem>
-        </SelectField>
-        <SelectField idSuffix={idSuffix} label="Currency" onChange={(next) => patch("currency", next === "all" ? null : next)} value={query.currency ?? "all"}>
-          <MenuItem value="all">All currencies</MenuItem>
-          {model.currencies.map((currency) => <MenuItem key={currency} value={currency}>{currency}</MenuItem>)}
         </SelectField>
         <SelectField idSuffix={idSuffix} label="Trade type" onChange={(next) => patch("tradeClassification", next === "all" ? null : next as AnalyticsLabPlatformQuery["tradeClassification"])} value={query.tradeClassification ?? "all"}>
           <MenuItem value="all">All trade types</MenuItem><MenuItem value="day_trade">Day trade</MenuItem><MenuItem value="multi_day_trade">Multi-day trade</MenuItem>
@@ -1887,6 +1882,7 @@ export default function TradeExplorerClient({
                     label={`${activeView.label} results table`}
                     maxHeight={560}
                     minTableWidth={Math.max(760, 220 + (groupRowsExpandable ? 56 : 0) + (showPartitionColumn ? 150 : 0) + displayedColumns.length * 150)}
+                    mobileResetScrollKey={expandedGroupId}
                     stickyFirstColumn
                   >
                       <Table size="small" stickyHeader>
