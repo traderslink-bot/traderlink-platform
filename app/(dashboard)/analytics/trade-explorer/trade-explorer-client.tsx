@@ -1336,8 +1336,8 @@ export default function TradeExplorerClient({
                 {expandedGroupTrades.map((trade) => (
                   <TableRow key={trade.roundTripId}>
                     <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
-                    <TableCell>{trade.entryLocalDate}<Typography color="text.secondary" display="block" variant="caption">{tradeCloseTime(trade.openedAtUtc, item.timeZone)}</Typography></TableCell>
-                    <TableCell>{trade.closeLocalDate}<Typography color="text.secondary" display="block" variant="caption">{tradeCloseTime(trade.closedAtUtc, item.timeZone)}</Typography></TableCell>
+                    <TableCell>{trade.entryLocalDate}<Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{tradeCloseTime(trade.openedAtUtc, item.timeZone)}</Typography></TableCell>
+                    <TableCell>{trade.closeLocalDate}<Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{tradeCloseTime(trade.closedAtUtc, item.timeZone)}</Typography></TableCell>
                     <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
                     <TableCell>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</TableCell>
                     <TableCell>{money(trade.entryNotionalDecimal, item.currency)}</TableCell>
