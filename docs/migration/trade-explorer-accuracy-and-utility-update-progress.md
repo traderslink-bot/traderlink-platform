@@ -361,3 +361,15 @@ the actual reporting currency returned by the result partition.
 - [ ] Create the narrow local source commit.
 - [ ] Send the exact allowlist to the production coordinator.
 - [ ] Record production deployment, health and rendered mobile acceptance.
+
+After the first handoff was released, the owner rejected the expanded-table
+mobile spacing. The shared outer scroll region's descendant selector was also
+applying its wide parent-table minimum to the nested child table. The correction
+scopes the outer minimum width to its direct table child and explicitly restores
+the expanded trade table's compact 850 px minimum, while retaining one shared
+touch-scroll surface and the mobile first-column reset.
+
+- [x] Identify the inherited parent-width cause.
+- [x] Restore compact child columns without reintroducing nested scrolling.
+- [x] Complete focused static verification of the correction.
+- [ ] Create and send the correction commit to the production coordinator.

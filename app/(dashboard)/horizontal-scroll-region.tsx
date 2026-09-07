@@ -90,7 +90,7 @@ export function HorizontalScrollRegion({
           overscrollBehaviorX: "contain",
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
-          "& .MuiTable-root": { minWidth: minTableWidth },
+          "& > .MuiTable-root": { minWidth: minTableWidth },
           "& .MuiTableSortLabel-root": {
             minHeight: { xs: 40, md: "auto" },
           },

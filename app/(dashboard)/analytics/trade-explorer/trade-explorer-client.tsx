@@ -1361,6 +1361,7 @@ export default function TradeExplorerClient({
             aria-label={`${item.label} trades`}
             size="small"
             sx={{
+              minWidth: 850,
               width: "max-content",
               "& .MuiTableCell-root": {
                 px: 1.25,

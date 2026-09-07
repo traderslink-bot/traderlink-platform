@@ -356,7 +356,9 @@ The complete correction target is:
 14. On narrow screens, expanding a Trading Days or Tickers row resets the
     shared horizontal result table to its first column. The parent and child
     rows use one scroll surface so a sideways swipe started on either moves the
-    complete table together.
+    complete table together. The outer table's calculated minimum width applies
+    only to that table; the child retains its compact 850 px natural-width
+    layout and must not stretch to match the parent columns.
 
 ### 6.6 Tags, notes and rules
 
