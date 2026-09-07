@@ -20,7 +20,17 @@ import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-dat
 import { ResultsTickerTable, type ResultsTickerRow } from "./results-ticker-table";
 
 function metricsFor(moneyBasis: "gross" | "net") {
-  return [moneyBasis === "gross" ? "gross_pnl" : "net_pnl", "win_rate", "profit_factor", "total_trades", "trading_day_count", "average_pnl"] as const;
+  return [
+    moneyBasis === "gross" ? "gross_pnl" : "net_pnl",
+    "total_trades",
+    "win_count",
+    "loss_count",
+    "win_rate",
+    "profit_factor",
+    "total_entry_notional",
+    "trading_day_count",
+    "average_pnl",
+  ] as const;
 }
 
 function metricFor(metrics: readonly JournalAnalyticsMetricResult[], id: string) {
@@ -30,6 +40,12 @@ function metricFor(metrics: readonly JournalAnalyticsMetricResult[], id: string)
 function numberValue(value: JournalAnalyticsExactValue | null) {
   if (!value || value.kind === "text" || value.kind === "duration") return 0;
   return value.kind === "integer" ? value.value : Number(value.kind === "decimal" ? value.valueDecimal : value.roundedDecimal);
+}
+
+function decimalValue(value: JournalAnalyticsExactValue | null): string | null {
+  if (!value || value.kind === "text" || value.kind === "duration") return null;
+  if (value.kind === "integer") return String(value.value);
+  return value.kind === "decimal" ? value.valueDecimal : value.roundedDecimal;
 }
 
 function today(): string {
@@ -70,15 +86,19 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
     });
     return Object.freeze({ moneyBasis, response: service.getResultAnalytics(scope, query) });
   });
-  const metrics = metricsFor(moneyBasis);
   const pnlMetricId = moneyBasis === "gross" ? "gross_pnl" : "net_pnl";
   const rows: readonly ResultsTickerRow[] = response.partitions.flatMap((partition) =>
     partition.groups.filter((group) => group.grouping === "instrument").map((group) => {
-      const read = (id: (typeof metrics)[number]) => metricFor(group.metrics, id);
+      const read = (id: ReturnType<typeof metricsFor>[number]) => metricFor(group.metrics, id);
       return {
         averagePnl: formatJournalAnalyticsMetric(read("average_pnl")!),
         averagePnlValue: numberValue(read("average_pnl")?.value ?? null),
+        entryValue: formatJournalAnalyticsMetric(read("total_entry_notional")!),
+        entryValueValue: numberValue(read("total_entry_notional")?.value ?? null),
+        losses: formatJournalAnalyticsMetric(read("loss_count")!),
+        lossesValue: numberValue(read("loss_count")?.value ?? null),
         netPnl: formatJournalAnalyticsMetric(read(pnlMetricId)!),
+        netPnlDecimal: decimalValue(read(pnlMetricId)?.value ?? null),
         netPnlValue: numberValue(read(pnlMetricId)?.value ?? null),
         profitFactor: formatJournalAnalyticsMetric(read("profit_factor")!),
         profitFactorValue: numberValue(read("profit_factor")?.value ?? null),
@@ -89,6 +109,8 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
         tradingDaysValue: numberValue(read("trading_day_count")?.value ?? null),
         winRate: formatJournalAnalyticsMetric(read("win_rate")!),
         winRateValue: numberValue(read("win_rate")?.value ?? null),
+        wins: formatJournalAnalyticsMetric(read("win_count")!),
+        winsValue: numberValue(read("win_count")?.value ?? null),
       };
     }));
   const offlineModel: JournalAnalyticsResultsOfflineViewModel = Object.freeze({

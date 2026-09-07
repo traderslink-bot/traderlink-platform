@@ -250,7 +250,7 @@ function inferredMoneyBasis(
 ): JournalAnalyticsMetricDefinition["moneyBasis"] {
   if (
     metricId.includes("open_") || metricId === "average_entry_price" ||
-    metricId === "average_exit_price"
+    metricId === "average_exit_price" || metricId === "total_entry_notional"
   ) return "not_applicable";
   if (
     metricId === "signed_charges" || metricId.includes("_signed_charges") ||

@@ -52,15 +52,17 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("read-the-results-table", "Read the Ticker table", "Each row groups the selected completed trades for one ticker.", ["results", "ticker", "net p/l", "average p/l", "trade count"], [
       table(["Column", "Meaning"], [
         ["Gross / Net P/L", "The completed-trade result for the ticker using your saved P/L preference or this view's explicit basis."],
+        ["Trades / Wins / Losses", "The completed-trade count and how many selected-basis results were positive or negative."],
         ["Win rate", "The percentage of included completed trades for that ticker with a positive result."],
         ["Profit factor", "The ticker's gross winning results divided by absolute gross losing results when available."],
-        ["Trades / Trading days", "The included completed-trade count and the number of trading dates represented."],
-        ["Average P/L", "The average selected result per included completed trade for that ticker."],
+        ["Entry value", "The total value of all recorded entry shares across the included completed trades for that ticker, converted to your Account reporting currency."],
+        ["Days", "The number of closing trading dates represented by the included completed trades."],
+        ["AVG P/L", "The average selected result per included completed trade for that ticker."],
       ]),
     ]),
     section("search-and-sort", "Search, sort and paginate", "Search for a ticker, choose a column heading to change the order, and select how many rows appear on each page.", ["search ticker", "sort results", "table columns", "results filter", "rows per page", "pagination"], [
       paragraph("The Ticker field narrows the displayed rows to matching symbols. On a phone, use the Sort control and swipe the contained table sideways to read every column; the Ticker column stays pinned as a reference. Rows per page changes the page size, and the pagination controls move through the remaining tickers. These controls only change the view in your browser."),
-      paragraph("Select a ticker row to open its completed trades in a responsive side panel. Each trade shows its P/L and can expand to the exact buy and sell executions. When a saved Trade Analyzer chart exists, the same panel shows the complete chart and lets a selected execution highlight its marker."),
+      paragraph("Select a ticker row to open its completed trades for the selected date range. Each date-labelled trade card uses green for a positive result and red for a negative result. Expand a trade to read its saved broken rules, tags and notes, then expand Show executions to inspect the exact buys and sells."),
     ]),
   ]),
   guide("timing-and-execution", "Review timing and execution", "Compare recorded timing and completed-trade execution characteristics without treating a summary as a trading rule.", [

@@ -1,5 +1,9 @@
 # Phase 4 Core Analytics Plan
 
+**Post-acceptance refinement:** The approved 2026-09-07 Ticker Results table
+and drawer update is tracked in
+[Ticker Results Table And Drawer Progress](ticker-results-table-and-drawer-progress.md).
+
 **Status:** Complete and accepted; Slices A-D passed their technical gates and the owner visually approved Slice E on 2026-08-02
 **Phase:** 4 - Core Analytics
 **Owner modules:** Journal publishes facts; Journal Analytics owns calculations

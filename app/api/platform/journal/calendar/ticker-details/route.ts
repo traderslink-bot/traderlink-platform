@@ -13,6 +13,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0
 
 type TradeDetailRow = Readonly<{
   round_trip_id: string;
+  rule_review_count: number;
   tags_text: string;
   technical_note: string;
   trade_note: string;
@@ -25,6 +26,11 @@ type TradeExecutionRow = Readonly<{
   quantity_decimal: string;
   round_trip_id: string;
   side: "buy" | "sell";
+}>;
+
+type BrokenRuleRow = Readonly<{
+  round_trip_id: string;
+  rule_title: string;
 }>;
 
 function requestedRoundTripIds(request: Request): readonly string[] {
@@ -47,8 +53,33 @@ export async function GET(request: Request): Promise<Response> {
       scope,
       ({ reportingContext, reportingCurrency }) => Object.freeze({
         evidence: withReadonlyPlatformDatabase({}, (database) => Object.freeze({
+      brokenRules: database.prepare<unknown[], BrokenRuleRow>(`SELECT
+ review.round_trip_id,
+ rule_version.title AS rule_title
+FROM journal_rule_reviews review
+JOIN journal_rule_review_versions review_version
+  ON review_version.workspace_id = review.workspace_id
+ AND review_version.account_id = review.account_id
+ AND review_version.rule_review_id = review.rule_review_id
+ AND review_version.rule_review_version_id = review.current_review_version_id
+JOIN journal_rule_versions rule_version
+  ON rule_version.workspace_id = review.workspace_id
+ AND rule_version.account_id = review.account_id
+ AND rule_version.rule_id = review.rule_id
+ AND rule_version.rule_version_id = review_version.rule_version_id
+WHERE review.workspace_id = ? AND review.account_id = ?
+  AND review.target_kind = 'round_trip'
+  AND review.round_trip_id IN (${placeholders})
+  AND review_version.status = 'broken'
+ORDER BY review.round_trip_id, rule_version.title, review.rule_id`).all(scope.workspaceId, accountId, ...roundTripIds),
       details: database.prepare<unknown[], TradeDetailRow>(`SELECT
  round_trip.round_trip_id,
+ (SELECT COUNT(*)
+   FROM journal_rule_reviews review
+   WHERE review.workspace_id = round_trip.workspace_id
+     AND review.account_id = round_trip.account_id
+     AND review.round_trip_id = round_trip.round_trip_id
+     AND review.target_kind = 'round_trip') AS rule_review_count,
  COALESCE((SELECT GROUP_CONCAT(tag.current_name, char(31))
    FROM journal_round_trip_tag_assignments assignment
    JOIN journal_tags tag
@@ -112,6 +143,12 @@ ORDER BY version.round_trip_id, execution.executed_at_utc, allocation.allocation
       }),
     );
     const evidence = reporting.evidence;
+    const brokenRulesByRoundTripId = new Map<string, string[]>();
+    for (const brokenRule of evidence.brokenRules) {
+      const current = brokenRulesByRoundTripId.get(brokenRule.round_trip_id) ?? [];
+      if (!current.includes(brokenRule.rule_title)) current.push(brokenRule.rule_title);
+      brokenRulesByRoundTripId.set(brokenRule.round_trip_id, current);
+    }
     const executionsByRoundTripId = new Map<string, TradeExecutionRow[]>();
     for (const execution of evidence.executions) {
       const sourceCurrency = reporting.reportingContext.sourceCurrencyByRoundTrip
@@ -140,9 +177,11 @@ ORDER BY version.round_trip_id, execution.executed_at_utc, allocation.allocation
         const detail = detailsByRoundTripId.get(roundTripId);
         if (!detail) return [];
         return [Object.freeze({
+          brokenRules: brokenRulesByRoundTripId.get(roundTripId) ?? [],
           executions: executionsByRoundTripId.get(roundTripId) ?? [],
           notes: [detail.trade_note, detail.technical_note].filter((note) => note.trim().length > 0),
           roundTripId,
+          ruleCount: detail.rule_review_count,
           tags: detail.tags_text.length > 0 ? detail.tags_text.split(String.fromCharCode(31)) : [],
         })];
       }),

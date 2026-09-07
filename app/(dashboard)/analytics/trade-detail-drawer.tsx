@@ -4,9 +4,13 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Divider,
   Drawer,
@@ -14,9 +18,11 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha, type Theme } from "@mui/material/styles";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { JournalAnalyticsMoneyBasis } from "@/src/modules/journal-analytics/contracts/analytics-query";
+import { JournalTagChip } from "@/app/(dashboard)/trade-tags/journal-tag-picker";
 
 import type { DaySessionTradeAnalyzer } from
   "@/app/(dashboard)/trade-tracker/[sessionDate]/day-session-types";
@@ -34,6 +40,7 @@ const DailyTradeAnalyzerChart = dynamic(
 );
 
 export type AnalyticsTradeDetail = Readonly<{
+  closeLocalDate?: string;
   closedAtUtc: string;
   direction: "long" | "short";
   openedAtUtc: string;
@@ -58,6 +65,15 @@ type LoadedTrade = Readonly<{
   status: "loading" | "ready" | "error";
 }>;
 
+type TickerSupportingDetail = Readonly<{
+  brokenRules: readonly string[];
+  executions: readonly ExactExecution[];
+  notes: readonly string[];
+  roundTripId: string;
+  ruleCount: number;
+  tags: readonly string[];
+}>;
+
 function timestamp(value: string): string {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
@@ -67,6 +83,63 @@ function timestamp(value: string): string {
 
 function money(value: string | null, currency: string | null): string {
   return value === null ? "Unavailable" : formatJournalAnalyticsMoney(value, currency);
+}
+
+function signedMoney(value: string | null, currency: string | null): string {
+  return value === null
+    ? "Unavailable"
+    : formatJournalAnalyticsMoney(value, currency, { showPositiveSign: true });
+}
+
+function pnlSign(value: string | null): -1 | 0 | 1 | null {
+  if (value === null) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number < 0 ? -1 : number > 0 ? 1 : 0 : null;
+}
+
+function pnlTone(sign: -1 | 0 | 1 | null) {
+  if (sign === -1) return {
+    backgroundColor: (theme: Theme) => theme.palette.mode === "dark"
+      ? alpha(theme.palette.error.main, 0.18)
+      : "rgba(211, 47, 47, 0.10)",
+    color: "error.main",
+  };
+  if (sign === 1) return {
+    backgroundColor: (theme: Theme) => theme.palette.mode === "dark"
+      ? alpha(theme.palette.success.main, 0.18)
+      : "rgba(46, 125, 50, 0.11)",
+    color: "success.main",
+  };
+  return {
+    backgroundColor: (theme: Theme) => theme.palette.mode === "dark"
+      ? theme.palette.action.selected
+      : "rgba(1, 30, 86, 0.05)",
+    color: "text.primary",
+  };
+}
+
+function localDate(value: string): string {
+  return new Date(`${value}T12:00:00.000Z`).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function dateRangeLabel(startDate: string | null, endDate: string | null): string {
+  return startDate && endDate
+    ? startDate === endDate ? localDate(startDate) : `${localDate(startDate)} – ${localDate(endDate)}`
+    : "All completed trade dates";
+}
+
+function executionTimestamp(value: string, timezone: string | null): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+    timeZone: timezone ?? undefined,
+  }).format(new Date(value));
 }
 
 async function loadTrade(trade: AnalyticsTradeDetail, moneyBasis: JournalAnalyticsMoneyBasis): Promise<LoadedTrade> {
@@ -277,6 +350,7 @@ export function TickerTradeDetailDrawer({
   moneyBasis = "net",
   onClose,
   open,
+  pnlDecimal,
   startDate,
   ticker,
 }: {
@@ -284,25 +358,33 @@ export function TickerTradeDetailDrawer({
   moneyBasis?: JournalAnalyticsMoneyBasis;
   onClose: () => void;
   open: boolean;
+  pnlDecimal: string | null;
   startDate: string | null;
   ticker: string | null;
 }) {
   const requestRevision = useRef(0);
   const [currency, setCurrency] = useState<string | null>(null);
+  const [timezone, setTimezone] = useState<string | null>(null);
   const [trades, setTrades] = useState<readonly AnalyticsTradeDetail[]>([]);
+  const [detailsById, setDetailsById] = useState<Readonly<Record<string, TickerSupportingDetail>>>({});
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [supportingDetailsError, setSupportingDetailsError] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchPage = useCallback(async (after: string | null, append: boolean) => {
     if (!ticker) return;
     const revision = ++requestRevision.current;
     if (!append) {
       setTrades([]);
+      setDetailsById({});
       setNextCursor(null);
+      setExpandedId(null);
     }
     setLoading(true);
     setError(null);
+    setSupportingDetailsError(false);
     const query = new URLSearchParams({ symbol: ticker });
     query.set("basis", moneyBasis);
     if (startDate && endDate) {
@@ -317,11 +399,32 @@ export function TickerTradeDetailDrawer({
         currency: string | null;
         nextCursor: string | null;
         rows: readonly AnalyticsTradeDetail[];
+        timezone: string | null;
       }>;
       if (revision !== requestRevision.current) return;
       setCurrency(payload.currency);
+      setTimezone(payload.timezone);
       setTrades((current) => append ? Object.freeze([...current, ...payload.rows]) : payload.rows);
       setNextCursor(payload.nextCursor);
+      if (payload.rows.length > 0) {
+        try {
+          const detailResponse = await fetch(
+            `/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(payload.rows.map((row) => row.roundTripId).join(","))}`,
+            { cache: "no-store" },
+          );
+          if (!detailResponse.ok) throw new Error("supporting_details_unavailable");
+          const detailPayload = await detailResponse.json() as Readonly<{
+            trades?: readonly TickerSupportingDetail[];
+          }>;
+          if (revision !== requestRevision.current) return;
+          setDetailsById((current) => Object.freeze({
+            ...current,
+            ...Object.fromEntries((detailPayload.trades ?? []).map((detail) => [detail.roundTripId, detail])),
+          }));
+        } catch {
+          if (revision === requestRevision.current) setSupportingDetailsError(true);
+        }
+      }
     } catch {
       if (revision === requestRevision.current) setError("Completed trades could not be loaded.");
     } finally {
@@ -337,18 +440,149 @@ export function TickerTradeDetailDrawer({
     };
   }, [fetchPage, open, ticker]);
 
-  return (
-    <AnalyticsTradeDetailDrawer
-      currency={currency}
-      error={error}
-      hasMore={nextCursor !== null}
-      loading={loading}
-      moneyBasis={moneyBasis}
-      onClose={onClose}
-      onLoadMore={() => void fetchPage(nextCursor, true)}
-      open={open}
-      title={ticker ?? "Ticker trades"}
-      trades={trades}
-    />
-  );
+  const closeDrawer = () => {
+    requestRevision.current += 1;
+    setExpandedId(null);
+    onClose();
+  };
+
+  return <Drawer
+    anchor="right"
+    onClose={closeDrawer}
+    open={open}
+    slotProps={{ paper: { sx: { p: { xs: 2, sm: 3 }, width: { xs: "100%", sm: 520 } } } }}
+  >
+    <Stack sx={{ minHeight: 0 }}>
+      <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography component="h2" sx={{ fontWeight: 900 }} variant="h5">{ticker ?? "Ticker"}</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+            {dateRangeLabel(startDate, endDate)}
+          </Typography>
+        </Box>
+        <Stack spacing={0.25} sx={{ alignItems: "flex-end", flexShrink: 0 }}>
+          <Button
+            aria-label="Close ticker details"
+            onClick={closeDrawer}
+            size="small"
+            startIcon={<CloseRoundedIcon />}
+            sx={{ minHeight: 44 }}
+          >
+            Close
+          </Button>
+          <Typography
+            color={pnlTone(pnlSign(pnlDecimal)).color}
+            sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}
+          >
+            {signedMoney(pnlDecimal, currency)}
+          </Typography>
+        </Stack>
+      </Stack>
+
+      {error ? <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert> : null}
+      {supportingDetailsError ? (
+        <Alert severity="warning" sx={{ mt: 2 }}>Saved trade notes, rules, tags or executions could not be loaded.</Alert>
+      ) : null}
+      {loading && trades.length === 0 ? (
+        <Stack spacing={1} sx={{ alignItems: "center", minHeight: 180, justifyContent: "center" }}>
+          <CircularProgress size={28} />
+          <Typography color="text.secondary">Loading completed trades…</Typography>
+        </Stack>
+      ) : null}
+      {!loading && !error && trades.length === 0 ? (
+        <Typography color="text.secondary" sx={{ mt: 3 }}>No completed trades are available for this ticker and date range.</Typography>
+      ) : null}
+
+      <Stack spacing={1} sx={{ mt: 2 }}>
+        {trades.map((trade) => {
+          const detail = detailsById[trade.roundTripId];
+          const tone = pnlTone(pnlSign(trade.selectedPnlDecimal));
+          const tradeDate = trade.closeLocalDate ?? trade.closedAtUtc.slice(0, 10);
+          return <Accordion
+            disableGutters
+            elevation={0}
+            expanded={expandedId === trade.roundTripId}
+            key={trade.roundTripId}
+            onChange={(_, isExpanded) => setExpandedId(isExpanded ? trade.roundTripId : null)}
+            sx={{
+              backgroundColor: tone.backgroundColor,
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1.5,
+              "&:before": { display: "none" },
+              overflow: "hidden",
+            }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ px: 1.5 }}>
+              <Box sx={{ minWidth: 0, width: "100%" }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", justifyContent: "space-between", pr: 1 }}>
+                  <Typography sx={{ fontWeight: 850 }}>{localDate(tradeDate)}</Typography>
+                  <Typography color={tone.color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>
+                    {signedMoney(trade.selectedPnlDecimal, currency)}
+                  </Typography>
+                </Stack>
+                {detail && (detail.notes.length > 0 || detail.ruleCount > 0 || detail.tags.length > 0) ? (
+                  <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", mt: 0.75 }} useFlexGap>
+                    {detail.notes.length > 0 ? <Chip label={detail.notes.length === 1 ? "Notes" : `Notes ${detail.notes.length}`} size="small" variant="outlined" /> : null}
+                    {detail.ruleCount > 0 ? <Chip label={`Rules ${detail.ruleCount}`} size="small" variant="outlined" /> : null}
+                    {detail.tags.length > 0 ? <Chip label={`${detail.tags.length} Tags`} size="small" variant="outlined" /> : null}
+                  </Stack>
+                ) : null}
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails sx={{ pt: 0 }}>
+              {!detail && !supportingDetailsError ? <Typography color="text.secondary" variant="body2">Loading trade details…</Typography> : null}
+              {detail?.brokenRules.length ? (
+                <Box sx={{ mt: 0.75 }}>
+                  <Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">Broken rules</Typography>
+                  <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", mt: 0.5 }} useFlexGap>
+                    {detail.brokenRules.map((rule) => <Chip color="error" key={rule} label={rule} size="small" variant="outlined" />)}
+                  </Stack>
+                </Box>
+              ) : null}
+              {detail?.tags.length ? (
+                <Box sx={{ mt: 1.25 }}>
+                  <Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">Tags</Typography>
+                  <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", mt: 0.5 }} useFlexGap>
+                    {detail.tags.map((tag) => <JournalTagChip key={tag} label={tag} />)}
+                  </Stack>
+                </Box>
+              ) : null}
+              {detail?.notes.length ? (
+                <Box sx={{ mt: 1.25 }}>
+                  <Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">Notes</Typography>
+                  {detail.notes.map((note, index) => <Typography key={`${note}-${index}`} sx={{ mt: 0.5, whiteSpace: "pre-wrap" }} variant="body2">{note}</Typography>)}
+                </Box>
+              ) : null}
+              {detail ? (
+                <Accordion disableGutters elevation={0} sx={{ backgroundColor: "transparent", "&:before": { display: "none" }, mt: 1 }}>
+                  <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ minHeight: 48, px: 0 }}>
+                    Show executions ({detail.executions.length})
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ pb: 1, pl: 1.5, pr: 0 }}>
+                    {detail.executions.length === 0 ? <Typography color="text.secondary" variant="body2">No executions are available.</Typography> : null}
+                    <Stack divider={<Divider flexItem />} spacing={0.75}>
+                      {detail.executions.map((execution, index) => (
+                        <Stack key={`${execution.execution_id}-${index}`} spacing={0.25} sx={{ py: 0.75 }}>
+                          <Typography color="text.secondary" variant="caption">{executionTimestamp(execution.executed_at_utc, timezone)}</Typography>
+                          <Typography variant="body2">
+                            {execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantity_decimal)} shares @ {money(execution.price_decimal, currency)}
+                          </Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+              ) : null}
+            </AccordionDetails>
+          </Accordion>;
+        })}
+      </Stack>
+      {nextCursor !== null ? (
+        <Button disabled={loading} fullWidth onClick={() => void fetchPage(nextCursor, true)} sx={{ mt: 2 }} variant="outlined">
+          {loading ? "Loading…" : "Load more trades"}
+        </Button>
+      ) : null}
+    </Stack>
+  </Drawer>;
 }

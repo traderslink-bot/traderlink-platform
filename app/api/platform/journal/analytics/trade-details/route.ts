@@ -57,6 +57,7 @@ export async function GET(request: Request): Promise<Response> {
       currency: result.currency,
       nextCursor: result.continuationCursor,
       rows: result.rows.map((row) => Object.freeze({
+        closeLocalDate: row.closeLocalDate,
         closedAtUtc: row.closedAtUtc,
         direction: row.direction,
         openedAtUtc: row.openedAtUtc,
@@ -67,6 +68,7 @@ export async function GET(request: Request): Promise<Response> {
         uniqueExecutionCount: row.uniqueExecutionCount,
       })),
       status: "ready",
+      timezone: result.timezone,
     }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     return Response.json(

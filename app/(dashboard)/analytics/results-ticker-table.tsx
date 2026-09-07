@@ -22,11 +22,18 @@ import { TickerTradeDetailDrawer } from "./trade-detail-drawer";
 export type ResultsTickerRow = Readonly<{
   ticker: string;
   netPnl: string;
+  netPnlDecimal?: string | null;
   netPnlValue: number;
+  wins?: string;
+  winsValue?: number;
+  losses?: string;
+  lossesValue?: number;
   winRate: string;
   winRateValue: number;
   profitFactor: string;
   profitFactorValue: number;
+  entryValue?: string;
+  entryValueValue?: number;
   trades: string;
   tradesValue: number;
   tradingDays: string;
@@ -38,21 +45,27 @@ export type ResultsTickerRow = Readonly<{
 type SortColumn =
   | "ticker"
   | "netPnl"
+  | "trades"
+  | "wins"
+  | "losses"
   | "winRate"
   | "profitFactor"
-  | "trades"
+  | "entryValue"
   | "tradingDays"
   | "averagePnl";
 
 function columns(moneyBasis: JournalAnalyticsMoneyBasis): readonly Readonly<{ id: SortColumn; label: string }>[] {
   return [
-  { id: "ticker", label: "Ticker" },
-  { id: "netPnl", label: `${moneyBasis === "gross" ? "Gross" : "Net"} P/L` },
-  { id: "winRate", label: "Win rate" },
-  { id: "profitFactor", label: "Profit factor" },
-  { id: "trades", label: "Trades" },
-  { id: "tradingDays", label: "Trading days" },
-  { id: "averagePnl", label: "Average P/L" },
+    { id: "ticker", label: "Ticker" },
+    { id: "netPnl", label: `${moneyBasis === "gross" ? "Gross" : "Net"} P/L` },
+    { id: "trades", label: "Trades" },
+    { id: "wins", label: "Wins" },
+    { id: "losses", label: "Losses" },
+    { id: "winRate", label: "Win rate" },
+    { id: "profitFactor", label: "Profit factor" },
+    { id: "entryValue", label: "Entry value" },
+    { id: "tradingDays", label: "Days" },
+    { id: "averagePnl", label: "AVG P/L" },
   ];
 }
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50, 100] as const;
@@ -66,12 +79,18 @@ function sortableValue(
       return row.ticker;
     case "netPnl":
       return row.netPnlValue;
+    case "trades":
+      return row.tradesValue;
+    case "wins":
+      return row.winsValue ?? 0;
+    case "losses":
+      return row.lossesValue ?? 0;
     case "winRate":
       return row.winRateValue;
     case "profitFactor":
       return row.profitFactorValue;
-    case "trades":
-      return row.tradesValue;
+    case "entryValue":
+      return row.entryValueValue ?? 0;
     case "tradingDays":
       return row.tradingDaysValue;
     case "averagePnl":
@@ -98,6 +117,7 @@ export function ResultsTickerTable({
   const [sortColumn, setSortColumn] = useState<SortColumn>("netPnl");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
+  const selectedRow = rows.find((row) => row.ticker === selectedTicker) ?? null;
   const columnsForBasis = columns(moneyBasis);
   const visibleRows = useMemo(
     () => rows
@@ -191,8 +211,16 @@ export function ResultsTickerTable({
           No tickers match this date range.
         </Typography>
       ) : (
-        <HorizontalScrollRegion label="Ticker results table" minTableWidth={760} stickyFirstColumn>
-          <Table size="small">
+        <HorizontalScrollRegion label="Ticker results table" minTableWidth={900} stickyFirstColumn>
+          <Table
+            size="small"
+            sx={{
+              "& .MuiTableCell-root": {
+                px: { xs: 1.25, md: 1 },
+                whiteSpace: "nowrap",
+              },
+            }}
+          >
             <TableHead>
               <TableRow>
                 {columnsForBasis.map((column) => (
@@ -241,9 +269,12 @@ export function ResultsTickerTable({
                   >
                     {row.netPnl}
                   </TableCell>
+                  <TableCell>{row.trades}</TableCell>
+                  <TableCell>{row.wins ?? "N/A"}</TableCell>
+                  <TableCell>{row.losses ?? "N/A"}</TableCell>
                   <TableCell>{row.winRate}</TableCell>
                   <TableCell>{row.profitFactor}</TableCell>
-                  <TableCell>{row.trades}</TableCell>
+                  <TableCell>{row.entryValue ?? "N/A"}</TableCell>
                   <TableCell>{row.tradingDays}</TableCell>
                   <TableCell>{row.averagePnl}</TableCell>
                 </TableRow>
@@ -281,6 +312,7 @@ export function ResultsTickerTable({
         moneyBasis={moneyBasis}
         onClose={() => setSelectedTicker(null)}
         open={selectedTicker !== null}
+        pnlDecimal={selectedRow?.netPnlDecimal ?? null}
         startDate={startDate}
         ticker={selectedTicker}
       />}

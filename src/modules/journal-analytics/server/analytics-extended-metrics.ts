@@ -634,6 +634,9 @@ export function calculateExtendedJournalAnalyticsMetric(
     case "median_winner_share_quantity": return median(wins.map((row) => row.maximumPositionQuantityDecimal), "winning_trade_population_missing");
     case "average_loser_share_quantity": return average(losses.map((row) => row.maximumPositionQuantityDecimal), "losing_trade_population_missing");
     case "median_loser_share_quantity": return median(losses.map((row) => row.maximumPositionQuantityDecimal), "losing_trade_population_missing");
+    case "total_entry_notional": return rows.length === 0
+      ? unavailable("zero_eligible_trade_denominator")
+      : complete(decimal(sumExactDecimals(rows.map((row) => row.entryNotionalDecimal))));
     case "average_entry_notional": return average(rows.map((row) => row.entryNotionalDecimal));
     case "median_entry_notional": return median(rows.map((row) => row.entryNotionalDecimal));
     case "maximum_entry_notional": {

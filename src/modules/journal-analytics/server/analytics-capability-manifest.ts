@@ -169,6 +169,7 @@ export const JOURNAL_ANALYTICS_ADDITIONAL_CAPABILITY_IDS = Object.freeze([
   "flip_execution_count",
   "average_entry_price",
   "average_exit_price",
+  "total_entry_notional",
   "overnight_trade_count",
   "multi_day_trade_count",
   "pnl_percentile_10",
