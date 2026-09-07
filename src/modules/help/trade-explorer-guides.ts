@@ -37,7 +37,7 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("read-results", "Read trade and grouped results", "Use the trade table, day-session results and group evidence without mixing in Trade Analyzer statistics.", ["trade details", "trading days", "drawdown", "recovery", "trade analyzer"], [
       bullets([
         "Trading Days shows first entry, last exit, active ticker count, completed trades, wins, losses, P/L, best and worst trade, win rate, realized drawdown, recovery, giveback and the day's realized P/L path.",
-        "Choose anywhere on a Trading Days or Tickers row, or use its chevron, to expand the contributing completed trades. The indented trade table shows 10 trades per page.",
+        "Choose anywhere on a Trading Days or Tickers row, or use its chevron, to expand the contributing completed trades. The indented trade table shows 10 trades per page. On a narrow screen, scroll the result tables sideways to see every column.",
         "Entry Times and Exit Times show full intervals in the account trading timezone. Quantity and money buckets use non-overlapping ranges.",
         "Choose Details on any trade to open its Trade Details drawer without leaving Trade Explorer. Exact executions remain available in the Trades table and in Trade Details.",
       ]),
@@ -45,7 +45,7 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     ]),
     section("review-a-trade", "Open trade details", "Inspect one completed trade without leaving Trade Explorer.", ["trade details", "trade notes", "trade tags", "custom rules", "exact executions"], [
       bullets([
-        "Choose Details to see the trade result, total shares, quantity-weighted entry and exit prices, total entry value, holding time, Journal notes, tags, saved rule results and exact executions.",
+        "Choose Details to see the trade result, total shares, quantity-weighted entry and exit prices, total entry value, holding time, Journal notes, tags, saved rule results and exact executions. The same drawer includes the Workspace Analyzer tab when Trade Analyzer is available; Analyzer access and results remain separate from Trade Explorer calculations.",
         "The drawer stays on Trade Explorer and does not show Trade Analyzer results or require Trade Analyzer access.",
         "Trade Details does not change the trade's executions, price, quantity, date or P/L.",
       ]),

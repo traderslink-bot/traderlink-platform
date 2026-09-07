@@ -1,8 +1,8 @@
 # Trade Explorer Accuracy And Utility Update Progress
 
-**Status:** Expandable child-table follow-up implemented locally on 2026-09-07
-and awaiting the production coordinator. The preceding correction release is
-complete and production-verified. No automated test suite was run.
+**Status:** Analyzer-tab and mobile-table follow-up implemented locally on
+2026-09-07 and awaiting the production coordinator. The preceding correction
+release is complete and production-verified. No automated test suite was run.
 
 **Controlling plan:** [Trade Explorer Accuracy And Utility Update Plan](trade-explorer-accuracy-and-utility-update-plan.md)
 
@@ -270,6 +270,50 @@ names remain Total Entry Shares and Total Entry Value.
 
 - [x] Record the owner-approved follow-up in the controlling plan.
 - [x] Implement the shared Trading Days/Tickers interaction and child table.
+- [x] Align the Trade Explorer Help guide.
+- [x] Complete focused static verification.
+- [x] Create the narrow local follow-up commit.
+- [x] Send the exact allowlist to the production coordinator.
+- [x] Record production deployment, health and signed-in rendered acceptance.
+
+The coordinator reconciled the exact four-file source package onto configured
+Railway source branch `main`, exact remote parent
+`81eb823745ca1381b374ae77b3dcbe329c95cb83`, as published SHA
+`055d379f2cb0c6087c1f437ed3cef8402eaaf36f`. Railway deployment
+`3d9460a3-dbf4-449a-b73c-1cbf875285c4` completed with status `SUCCESS`; startup
+verified 115 migrations, maintenance controls were absent and direct health
+returned HTTP 200 `ready` / `sqlite_single_node`. No migration, database, data,
+staging or hosted-configuration action occurred.
+
+Signed-in production acceptance with 728 completed trades verified both Day
+and Ticker chevron labels, the rendered Day tooltip, whole-row expand/collapse,
+compact indented child presentation, Details immediately after Ticker, and the
+Entry shares / Entry value headings. Day pagination advanced from `1-10 of 36`
+to `11-20 of 36`; Ticker pagination advanced from `1-10 of 11` to `11-11 of
+11`. Details opened the shared drawer with Exact executions and without a Trade
+Analyzer tab. Desktop and 390 px mobile passed in Light and Dark modes without
+page overflow, browser warnings or browser errors. The page was restored to
+Trades in Dark mode.
+
+## 2026-09-07 Analyzer-tab and mobile-table follow-up
+
+The owner approved restoring the Workspace Analyzer tab inside Explorer's
+shared Trade Details drawer. The drawer now receives the selected trade's
+currency, direction, execution count, displayed P/L, symbol and exact account
+timezone, while the Explorer tables and calculations remain independent of
+Analyzer access and saved Analyzer data.
+
+The owner also replaced Explorer's separate mobile result cards with the Trade
+Breakdown responsive table pattern. Grouped results, individual trades and
+expanded child trades now use their existing factual tables at every
+breakpoint. On narrow screens the shared horizontal-scroll region provides the
+overflow hint and touch scrolling without forcing all columns into the
+viewport. Desktop table behavior and the existing mobile filter drawer remain
+unchanged.
+
+- [x] Record the owner-approved follow-up in the controlling plan.
+- [x] Restore the Analyzer tab through the shared Trade Details drawer.
+- [x] Replace grouped, trade and expanded-child mobile cards with tables.
 - [x] Align the Trade Explorer Help guide.
 - [x] Complete focused static verification.
 - [x] Create the narrow local follow-up commit.

@@ -111,6 +111,12 @@ type ExplorerGroup = Readonly<{
   group: JournalAnalyticsGroupResult;
 }>;
 
+type ExplorerTradeDetailsSelection = Readonly<{
+  currency: string | null;
+  timeZone: string;
+  trade: JournalAnalyticsRoundTripTableRow;
+}>;
+
 const EXPANDED_GROUP_TRADES_PAGE_SIZE = 10;
 
 type ExplorerGroupColumn = Readonly<{
@@ -605,7 +611,7 @@ export default function TradeExplorerClient({
   const [groupPageIndex, setGroupPageIndex] = useState(0);
   const [advanced, setAdvanced] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [detailsTrade, setDetailsTrade] = useState<JournalAnalyticsRoundTripTableRow | null>(null);
+  const [detailsTrade, setDetailsTrade] = useState<ExplorerTradeDetailsSelection | null>(null);
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [expandedGroupTrades, setExpandedGroupTrades] = useState<readonly JournalAnalyticsRoundTripTableRow[]>(Object.freeze([]));
   const [groupTradesContinuationCursor, setGroupTradesContinuationCursor] = useState<string | null>(null);
@@ -815,6 +821,14 @@ export default function TradeExplorerClient({
     setGroupTradesPageIndex(0);
     setGroupTradesTotalRowCount(0);
     setGroupTradesStatus("idle");
+  }
+
+  function openTradeDetails(
+    trade: JournalAnalyticsRoundTripTableRow,
+    currency: string | null,
+    timeZone: string,
+  ): void {
+    setDetailsTrade(Object.freeze({ currency, timeZone, trade }));
   }
 
   function viewLabel(view: ExplorerResultView): string {
@@ -1342,63 +1356,41 @@ export default function TradeExplorerClient({
     const visibleGroupTrades = expandedGroupTrades.slice(pageStart, pageEnd);
     return (
       <Box sx={{ borderColor: "primary.light", borderLeft: 3, ml: { xs: 0.25, md: 1 }, pl: { xs: 1, md: 1.5 }, pr: 0.5 }}>
-        <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-          {visibleGroupTrades.map((trade) => (
-            <Box key={trade.roundTripId} sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 1, p: 1.25 }}>
-              <Stack direction="row" sx={{ alignItems: "flex-start", gap: 1, justifyContent: "space-between" }}>
-                <Box>
-                  <Typography sx={{ fontWeight: 900 }}>{trade.displayedSymbol}</Typography>
-                  <Typography color="text.secondary" variant="caption">
-                    {trade.entryLocalDate} to {trade.closeLocalDate} · {trade.direction === "long" ? "Long" : "Short"}
-                  </Typography>
-                </Box>
-                <Button onClick={() => setDetailsTrade(trade)} size="small" variant="outlined">Details</Button>
-              </Stack>
-              <Stack direction="row" sx={{ columnGap: 2, flexWrap: "wrap", mt: 0.75, rowGap: 0.5 }}>
-                <Typography variant="body2">Entry shares: <Box component="span" sx={{ fontWeight: 800 }}>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</Box></Typography>
-                <Typography variant="body2">Entry value: <Box component="span" sx={{ fontWeight: 800 }}>{money(trade.entryNotionalDecimal, item.currency)}</Box></Typography>
-                <Typography variant="body2">P/L: <Box component="span" sx={{ color: financialOutcomeColor(trade.selectedPnlDecimal), fontWeight: 900 }}>{money(trade.selectedPnlDecimal, item.currency)}</Box></Typography>
-              </Stack>
-            </Box>
-          ))}
-        </Stack>
-        <Box sx={{ display: { xs: "none", md: "block" } }}>
-          <TableContainer sx={{ maxHeight: 360, maxWidth: "100%", width: "fit-content" }}>
-            <Table
-              aria-label={`${item.label} trades`}
-              size="small"
-              stickyHeader
-              sx={{
-                width: "max-content",
-                "& .MuiTableCell-root": {
-                  px: 1.25,
-                  py: 0.75,
-                  whiteSpace: "nowrap",
-                },
-              }}
-            >
-              <TableHead>
-                <TableRow>
-                  <TableCell>Ticker</TableCell><TableCell>Details</TableCell><TableCell>Opened</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Entry shares</TableCell><TableCell>Entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell>
+        <HorizontalScrollRegion label={`${item.label} trades`} maxHeight={360} minTableWidth={850} stickyFirstColumn>
+          <Table
+            aria-label={`${item.label} trades`}
+            size="small"
+            stickyHeader
+            sx={{
+              width: "max-content",
+              "& .MuiTableCell-root": {
+                px: 1.25,
+                py: 0.75,
+                whiteSpace: "nowrap",
+              },
+            }}
+          >
+            <TableHead>
+              <TableRow>
+                <TableCell>Ticker</TableCell><TableCell>Details</TableCell><TableCell>Opened</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Entry shares</TableCell><TableCell>Entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {visibleGroupTrades.map((trade) => (
+                <TableRow key={trade.roundTripId}>
+                  <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
+                  <TableCell><Button onClick={() => openTradeDetails(trade, item.currency, item.timeZone)} size="small" sx={{ minWidth: 0, px: 1.25 }} variant="outlined">Details</Button></TableCell>
+                  <TableCell>{trade.entryLocalDate}<Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{tradeCloseTime(trade.openedAtUtc, item.timeZone)}</Typography></TableCell>
+                  <TableCell>{trade.closeLocalDate}<Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{tradeCloseTime(trade.closedAtUtc, item.timeZone)}</Typography></TableCell>
+                  <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
+                  <TableCell>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</TableCell>
+                  <TableCell>{money(trade.entryNotionalDecimal, item.currency)}</TableCell>
+                  <TableCell sx={{ color: financialOutcomeColor(trade.selectedPnlDecimal), fontWeight: 800 }}>{money(trade.selectedPnlDecimal, item.currency)}</TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {visibleGroupTrades.map((trade) => (
-                  <TableRow key={trade.roundTripId}>
-                    <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
-                    <TableCell><Button onClick={() => setDetailsTrade(trade)} size="small" sx={{ minWidth: 0, px: 1.25 }} variant="outlined">Details</Button></TableCell>
-                    <TableCell>{trade.entryLocalDate}<Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{tradeCloseTime(trade.openedAtUtc, item.timeZone)}</Typography></TableCell>
-                    <TableCell>{trade.closeLocalDate}<Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{tradeCloseTime(trade.closedAtUtc, item.timeZone)}</Typography></TableCell>
-                    <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
-                    <TableCell>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</TableCell>
-                    <TableCell>{money(trade.entryNotionalDecimal, item.currency)}</TableCell>
-                    <TableCell sx={{ color: financialOutcomeColor(trade.selectedPnlDecimal), fontWeight: 800 }}>{money(trade.selectedPnlDecimal, item.currency)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+              ))}
+            </TableBody>
+          </Table>
+        </HorizontalScrollRegion>
         {groupTradesStatus === "error" ? <Alert severity="error" sx={{ mt: 1 }}>More trades could not be loaded. Try again.</Alert> : null}
         {groupTradesTotalRowCount > EXPANDED_GROUP_TRADES_PAGE_SIZE ? (
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-end", mt: 1 }}>
@@ -1891,43 +1883,12 @@ export default function TradeExplorerClient({
                 emptyResults()
               ) : (
                 <>
-                  <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-                    {visibleGroups.map((item) => {
-                      const expanded = expandedGroupId === item.id;
-                      return <Box key={item.id} sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
-                        <ButtonBase
-                          aria-expanded={groupRowsExpandable ? expanded : undefined}
-                          disabled={!groupRowsExpandable}
-                          onClick={() => void toggleGroupTrades(item)}
-                          sx={{ alignItems: "center", display: "flex", justifyContent: "space-between", minHeight: 52, px: 1.5, py: 1, textAlign: "left", width: "100%" }}
-                        >
-                          <Box>
-                            <Typography sx={{ fontWeight: 800 }}>{item.label}</Typography>
-                            {showPartitionColumn ? <Typography color="text.secondary" variant="caption">{item.partitionLabel}</Typography> : null}
-                          </Box>
-                          {groupRowsExpandable ? <Tooltip title={groupTradesToggleLabel(expanded)}><Box component="span" sx={{ display: "inline-flex" }}><ExpandMoreRoundedIcon sx={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} /></Box></Tooltip> : null}
-                        </ButtonBase>
-                        <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1 }}>
-                          {displayedColumns.map((column) => (
-                            <Box key={column.label} sx={{ px: 1.5, pb: 1 }}>
-                              <Typography color="text.secondary" variant="caption">{column.label}</Typography>
-                              <Typography sx={{ color: !column.metricId || column.kind === "day_path" ? "text.primary" : financialOutcomeMetricColor(column.metricId, metric(item.group, column.metricId)?.value), fontWeight: 700 }}>
-                                {groupColumnValue(item.group, column, item.timeZone)}
-                              </Typography>
-                            </Box>
-                          ))}
-                        </Box>
-                        {expanded ? <Box sx={{ bgcolor: "action.hover", borderTop: 1, borderColor: "divider", p: 1.25 }}>{expandedGroupTradeList(item)}</Box> : null}
-                      </Box>;
-                    })}
-                  </Stack>
-                  <Box sx={{ display: { xs: "none", md: "block" } }}>
-                    <HorizontalScrollRegion
-                      label={`${activeView.label} results table`}
-                      maxHeight={560}
-                      minTableWidth={Math.max(760, 220 + (groupRowsExpandable ? 56 : 0) + (showPartitionColumn ? 150 : 0) + displayedColumns.length * 150)}
-                      stickyFirstColumn
-                    >
+                  <HorizontalScrollRegion
+                    label={`${activeView.label} results table`}
+                    maxHeight={560}
+                    minTableWidth={Math.max(760, 220 + (groupRowsExpandable ? 56 : 0) + (showPartitionColumn ? 150 : 0) + displayedColumns.length * 150)}
+                    stickyFirstColumn
+                  >
                       <Table size="small" stickyHeader>
                         <TableHead><TableRow>{groupRowsExpandable ? <TableCell aria-label="Expand row" sx={{ width: 56 }} /> : null}<TableCell>{activeView.firstColumnLabel}</TableCell>{showPartitionColumn ? <TableCell>{partitionColumnLabel}</TableCell> : null}{displayedColumns.map((column) => <TableCell key={column.label}>{column.label}</TableCell>)}</TableRow></TableHead>
                         <TableBody>
@@ -1961,8 +1922,7 @@ export default function TradeExplorerClient({
                           })}
                         </TableBody>
                       </Table>
-                    </HorizontalScrollRegion>
-                  </Box>
+                  </HorizontalScrollRegion>
                 </>
               )}
               {sortedGroups.length > groupPageSize ? (
@@ -2002,69 +1962,6 @@ export default function TradeExplorerClient({
             emptyResults()
           ) : (
             <>
-              <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-                {preview.evidence.rows.map((trade) => {
-                  const expanded = expandedRoundTripId === trade.roundTripId;
-                  const tradeTimeZone = preview.evidence?.timezone ?? "UTC";
-                  const tradeCurrency = preview.evidence?.currency ?? null;
-                  const cardFacts = [
-                    ["Opened", `${trade.entryLocalDate} · ${tradeCloseTime(trade.openedAtUtc, tradeTimeZone)}`],
-                    ["Closed", `${trade.closeLocalDate} · ${tradeCloseTime(trade.closedAtUtc, tradeTimeZone)}`],
-                    ["Direction", trade.direction === "long" ? "Long" : "Short"],
-                    ["Trade type", trade.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade"],
-                    ["Total entry shares", formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)],
-                    ["Peak shares held", formatJournalAnalyticsDecimal(trade.maximumPositionQuantityDecimal)],
-                    ["Position size", money(trade.maximumPositionValueDecimal ?? null, tradeCurrency)],
-                    ["Average entry", trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal, tradeCurrency) : "N/A"],
-                    ["Average exit", trade.averageExitPriceDecimal ? money(trade.averageExitPriceDecimal, tradeCurrency) : "N/A"],
-                    ["Total entry value", money(trade.entryNotionalDecimal, tradeCurrency)],
-                    ["Return on entry value", trade.returnPercentDecimal === null || trade.returnPercentDecimal === undefined ? "N/A" : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`],
-                    ["Holding time", formatJournalAnalyticsDuration(trade.holdingDurationMilliseconds)],
-                    ["Trading costs", money(trade.tradingCostsDecimal, tradeCurrency)],
-                    ["Execution structure", executionStructure(trade)],
-                  ] as const;
-                  return (
-                    <Box component="article" key={trade.roundTripId} sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 1.5 }}>
-                      <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
-                        <Box>
-                          <Typography sx={{ fontWeight: 900 }}>{trade.displayedSymbol}</Typography>
-                          <Typography sx={{ color: financialOutcomeColor(trade.selectedPnlDecimal), fontWeight: 900 }}>
-                            {money(trade.selectedPnlDecimal, tradeCurrency)}
-                          </Typography>
-                        </Box>
-                        <Button onClick={() => setDetailsTrade(trade)} size="small" variant="outlined">Details</Button>
-                      </Stack>
-                      <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1 }}>
-                        {cardFacts.map(([label, factValue]) => (
-                          <Box key={label} sx={{ gridColumn: label === "Execution structure" ? "1 / -1" : "auto" }}>
-                            <Typography color="text.secondary" variant="caption">{label}</Typography>
-                            <Typography sx={{ fontWeight: 700, overflowWrap: "anywhere" }} variant="body2">{factValue}</Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                      <Button onClick={() => void toggleTradeExecutions(trade.roundTripId)} sx={{ minHeight: 44, mt: 1 }}>
-                        {expanded ? "Hide exact executions" : "Show exact executions"}
-                      </Button>
-                      {expanded ? (
-                        <Box sx={{ bgcolor: "action.hover", borderRadius: 1, mt: 0.5, p: 1 }}>
-                          {executionDetailsStatus === "loading" ? <Typography color="text.secondary">Loading executions…</Typography> : null}
-                          {executionDetailsStatus === "error" ? <Alert severity="error">The executions could not be loaded.</Alert> : null}
-                          {executionDetailsStatus === "ready" && expandedExecutions.length === 0 ? <Typography color="text.secondary">No executions are available for this trade.</Typography> : null}
-                          {executionDetailsStatus === "ready" ? expandedExecutions.map((execution, index) => (
-                            <Box key={`${execution.executed_at_utc}-${execution.side}-${index}`} sx={{ borderBottom: index < expandedExecutions.length - 1 ? 1 : 0, borderColor: "divider", py: 0.75 }}>
-                              <Typography sx={{ fontWeight: 700 }} variant="body2">{executionTime(execution.executed_at_utc, tradeTimeZone)}</Typography>
-                              <Typography color="text.secondary" variant="caption">
-                                {execution.side === "buy" ? "Buy" : "Sell"} · {formatJournalAnalyticsDecimal(execution.quantity_decimal)} shares · {execution.price_decimal === null ? "Price not recorded" : money(execution.price_decimal, tradeCurrency)}
-                              </Typography>
-                            </Box>
-                          )) : null}
-                        </Box>
-                      ) : null}
-                    </Box>
-                  );
-                })}
-              </Stack>
-              <Box sx={{ display: { xs: "none", md: "block" } }}>
               <HorizontalScrollRegion label="Individual trades table" maxHeight={560} minTableWidth={2100} stickyFirstColumn>
                 <Table
                   size="small"
@@ -2102,7 +1999,11 @@ export default function TradeExplorerClient({
                               aria-label={`View details for ${trade.displayedSymbol} closed ${trade.closeLocalDate}`}
                               onClick={(event) => {
                                 event.stopPropagation();
-                                setDetailsTrade(trade);
+                                openTradeDetails(
+                                  trade,
+                                  preview.evidence?.currency ?? null,
+                                  preview.evidence?.timezone ?? "UTC",
+                                );
                               }}
                               onKeyDown={(event) => event.stopPropagation()}
                               size="small"
@@ -2161,7 +2062,6 @@ export default function TradeExplorerClient({
                   </TableBody>
                 </Table>
               </HorizontalScrollRegion>
-              </Box>
               {tradeRowsHaveUnavailable ? (
                 <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
                   N/A means this trade does not have the confirmed details needed for that value.
@@ -2447,12 +2347,18 @@ export default function TradeExplorerClient({
       </Drawer>
 
       {offlineSavedAtUtc ? null : <TradeDetailsDrawer
-        analyzer={null}
+        analyzer={detailsTrade?.currency ? Object.freeze({
+          currency: detailsTrade.currency,
+          direction: detailsTrade.trade.direction,
+          executionCount: detailsTrade.trade.uniqueExecutionCount,
+          gainLossDecimal: detailsTrade.trade.selectedPnlDecimal,
+          symbol: detailsTrade.trade.displayedSymbol,
+          timezone: detailsTrade.timeZone,
+        }) : null}
         initialTab="details"
         onClose={() => setDetailsTrade(null)}
         open={detailsTrade !== null}
-        roundTripId={detailsTrade?.roundTripId ?? null}
-        showAnalyzer={false}
+        roundTripId={detailsTrade?.trade.roundTripId ?? null}
       />}
 
       {error ? <Alert severity="error">{error}</Alert> : null}

@@ -1,10 +1,11 @@
 # Trade Explorer Accuracy And Utility Update Plan
 
-**Status:** Owner-approved expandable child-table follow-up implemented locally
-on 2026-09-07 and awaiting the production coordinator. The preceding complete
-release remains production `main` `81eb823745ca1381b374ae77b3dcbe329c95cb83`;
-Railway deployment `09759d99-68ab-485b-8fe5-401418a749cc` is `SUCCESS`, and
-direct health returned HTTP 200 `ready` / `sqlite_single_node`.
+**Status:** Owner-approved Analyzer-tab and mobile-table follow-up implemented
+locally on 2026-09-07 and awaiting the production coordinator. The preceding
+complete release remains production `main`
+`055d379f2cb0c6087c1f437ed3cef8402eaaf36f`; Railway deployment
+`3d9460a3-dbf4-449a-b73c-1cbf875285c4` is `SUCCESS`, and direct health returned
+HTTP 200 `ready` / `sqlite_single_node`.
 
 **Parent plan:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
 
@@ -75,9 +76,10 @@ any of these Analyzer-owned results:
 - any statistic sourced from Level Analysis market-session candles, Analyzer
   event snapshots, Moomoo or another market-data provider.
 
-An optional `Open in Trade Analyzer` navigation action may be offered from a
-trade detail when separately approved. It cannot show an Analyzer value,
-coverage teaser or locked statistic inside Trade Explorer.
+The shared Trade Details drawer includes the Workspace Analyzer tab by owner
+approval. Analyzer access, availability and saved results remain owned by Trade
+Analyzer; no Analyzer value, coverage teaser or locked statistic enters the
+Trade Explorer result tables, filters, summaries, saved views or reports.
 
 ### 2.3 Similar names must identify different facts
 
@@ -338,6 +340,14 @@ The complete correction target is:
     trade table as an indented child with natural compact column widths, place
     Details immediately after Ticker, shorten its two entry columns to Entry
     shares and Entry value, and paginate contributing trades 10 at a time.
+12. Restore the Workspace Analyzer tab in the shared Trade Details drawer used
+    by Explorer while keeping Analyzer access and data out of Explorer's own
+    result calculations.
+13. Replace the separate mobile result cards with the same factual grouped,
+    individual-trade and expanded-child tables used on desktop. Follow the
+    Trade Breakdown pattern: preserve natural column widths inside the shared
+    horizontally scrollable region, show its scroll hint when columns overflow
+    and retain the leading-column context while scrolling.
 
 ### 6.6 Tags, notes and rules
 
