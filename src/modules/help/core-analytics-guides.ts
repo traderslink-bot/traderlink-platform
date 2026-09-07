@@ -52,11 +52,11 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("read-the-results-table", "Read the Ticker table", "Each row groups the selected completed trades for one ticker.", ["results", "ticker", "net p/l", "average p/l", "trade count"], [
       table(["Column", "Meaning"], [
         ["Gross / Net P/L", "The completed-trade result for the ticker using your saved P/L preference or this view's explicit basis."],
+        ["Days", "The number of closing trading dates represented by the included completed trades."],
         ["Trades / Wins / Losses", "The completed-trade count and how many selected-basis results were positive or negative."],
         ["Win rate", "The percentage of included completed trades for that ticker with a positive result."],
         ["Profit factor", "The ticker's gross winning results divided by absolute gross losing results when available."],
         ["Entry value", "The total value of all recorded entry shares across the included completed trades for that ticker, converted to your Account reporting currency."],
-        ["Days", "The number of closing trading dates represented by the included completed trades."],
         ["AVG P/L", "The average selected result per included completed trade for that ticker."],
       ]),
     ]),

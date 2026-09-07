@@ -16,13 +16,13 @@ The desktop ticker table uses sortable columns in this order:
 
 1. Ticker
 2. Gross or Net P/L from the selected Account P/L basis
-3. Trades
-4. Wins
-5. Losses
-6. Win rate
-7. Profit factor
-8. Entry value
-9. Days
+3. Days
+4. Trades
+5. Wins
+6. Losses
+7. Win rate
+8. Profit factor
+9. Entry value
 10. AVG P/L
 
 `Days` preserves the existing Trading days result using the compact label the

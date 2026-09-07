@@ -58,13 +58,13 @@ function columns(moneyBasis: JournalAnalyticsMoneyBasis): readonly Readonly<{ id
   return [
     { id: "ticker", label: "Ticker" },
     { id: "netPnl", label: `${moneyBasis === "gross" ? "Gross" : "Net"} P/L` },
+    { id: "tradingDays", label: "Days" },
     { id: "trades", label: "Trades" },
     { id: "wins", label: "Wins" },
     { id: "losses", label: "Losses" },
     { id: "winRate", label: "Win rate" },
     { id: "profitFactor", label: "Profit factor" },
     { id: "entryValue", label: "Entry value" },
-    { id: "tradingDays", label: "Days" },
     { id: "averagePnl", label: "AVG P/L" },
   ];
 }
@@ -269,13 +269,13 @@ export function ResultsTickerTable({
                   >
                     {row.netPnl}
                   </TableCell>
+                  <TableCell>{row.tradingDays}</TableCell>
                   <TableCell>{row.trades}</TableCell>
                   <TableCell>{row.wins ?? "N/A"}</TableCell>
                   <TableCell>{row.losses ?? "N/A"}</TableCell>
                   <TableCell>{row.winRate}</TableCell>
                   <TableCell>{row.profitFactor}</TableCell>
                   <TableCell>{row.entryValue ?? "N/A"}</TableCell>
-                  <TableCell>{row.tradingDays}</TableCell>
                   <TableCell>{row.averagePnl}</TableCell>
                 </TableRow>
               ))}
