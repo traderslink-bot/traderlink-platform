@@ -667,6 +667,16 @@ export class JournalAnnotationService {
     return this.rules.listReviews({ scope, ...input });
   }
 
+  listRuleReviewsForTargets(
+    scope: AccountScope,
+    input: Readonly<{
+      tradingDayIds: readonly string[];
+      roundTripIds: readonly string[];
+    }>,
+  ): readonly JournalRuleReviewRecord[] {
+    return this.rules.listReviewsForTargets({ scope, ...input });
+  }
+
   listRuleReviewsForRoundTripsWithRuleTitles(
     scope: AccountScope,
     roundTripIds: readonly string[],

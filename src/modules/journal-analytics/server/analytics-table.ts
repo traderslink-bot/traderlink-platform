@@ -14,6 +14,7 @@ import {
   divideExactDecimals,
   multiplyExactDecimals,
   percentageExactDecimals,
+  subtractExactDecimals,
 } from "./exact-analytics-math";
 import type { JournalAnalyticsPopulation } from "./analytics-population";
 import type { NormalizedJournalAnalyticsRow } from "./normalize-journal-analytics-facts";
@@ -37,6 +38,12 @@ function selectedPnl(
   moneyBasis: JournalAnalyticsMoneyBasis,
 ): string | null {
   return moneyBasis === "gross" ? row.grossPnlDecimal : row.netPnlDecimal;
+}
+
+function tradingCosts(row: NormalizedJournalAnalyticsRow): string | null {
+  return row.chargeCostDecimal === null || row.chargeCreditDecimal === null
+    ? null
+    : subtractExactDecimals(row.chargeCostDecimal, row.chargeCreditDecimal);
 }
 
 function compareNullable(
@@ -112,12 +119,34 @@ function compareRows(
       );
       comparison = order.direction === "ascending" ? comparison : -comparison;
       break;
+    case "maximum_position":
+      comparison = compareExactDecimals(
+        left.maximumPositionQuantityDecimal,
+        right.maximumPositionQuantityDecimal,
+      );
+      comparison = order.direction === "ascending" ? comparison : -comparison;
+      break;
     case "entry_notional":
       comparison = compareExactDecimals(
         left.entryNotionalDecimal,
         right.entryNotionalDecimal,
       );
       comparison = order.direction === "ascending" ? comparison : -comparison;
+      break;
+    case "execution_count":
+      comparison = left.uniqueExecutionCount - right.uniqueExecutionCount;
+      comparison = order.direction === "ascending" ? comparison : -comparison;
+      break;
+    case "trading_costs":
+      comparison = compareNullable(
+        tradingCosts(left),
+        tradingCosts(right),
+        order.direction,
+        (leftValue, rightValue) => compareExactDecimals(
+          String(leftValue),
+          String(rightValue),
+        ),
+      );
       break;
   }
   if (comparison !== 0) return comparison;
@@ -219,7 +248,14 @@ function publicRow(
     chargeCoverage: row.chargeCoverage,
     chargeCostDecimal: row.chargeCostDecimal,
     chargeCreditDecimal: row.chargeCreditDecimal,
+    tradingCostsDecimal: tradingCosts(row),
     uniqueExecutionCount: row.uniqueExecutionCount,
+    entryExecutionCount:
+      row.allocationRoleCounts.opening + row.allocationRoleCounts.flip_opening,
+    additionExecutionCount: row.allocationRoleCounts.adding,
+    reductionExecutionCount: row.allocationRoleCounts.reducing,
+    exitExecutionCount:
+      row.allocationRoleCounts.closing + row.allocationRoleCounts.flip_closing,
     enteredQuantityDecimal: row.enteredQuantityDecimal,
     maximumPositionQuantityDecimal: row.maximumPositionQuantityDecimal,
     entryNotionalDecimal: row.entryNotionalDecimal,

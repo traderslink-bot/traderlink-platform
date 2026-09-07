@@ -18,21 +18,25 @@ import {
   TRADE_EXPLORER_TRADE_SORT_OPTIONS,
   tradeExplorerMetricForMoneyBasis,
   tradeExplorerMetricForOutcome,
-  tradeExplorerTradeSortForOutcome,
   type TradeExplorerTradeSort,
 } from "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
 
-import { normalizeAnalyticsLabPlatformQuery } from "../lab/analytics-lab-platform-query";
 import type {
   AnalyticsLabPlatformPreview,
-  AnalyticsLabPlatformQuery,
 } from "../lab/analytics-lab-platform-types";
+import type { TradeExplorerQuery } from "./trade-explorer-saved-view-model";
 
 export type TradeExplorerPdfResultView =
   | "trades"
   | "days"
   | "tickers"
   | "entry_times"
+  | "exit_times"
+  | "entry_weekday"
+  | "direction"
+  | "entered_quantity"
+  | "entry_value"
+  | "entry_price"
   | "holding_time"
   | "position_size"
   | "periods";
@@ -41,7 +45,8 @@ type SortDirection = "ascending" | "descending";
 type ReportColumn = Readonly<{
   label: string;
   metricId?: string;
-  kind?: "day_path";
+  kind?: "day_path" | "first_open" | "last_close" | "symbol_count" | "literal";
+  literal?: string;
   weight?: number;
 }>;
 type ReportView = Readonly<{
@@ -70,11 +75,19 @@ const REPORT_VIEWS: Readonly<Record<Exclude<TradeExplorerPdfResultView, "trades"
     label: "Trading Days",
     firstColumnLabel: "Date",
     columns: Object.freeze([
+      { label: "First entry", kind: "first_open" as const },
+      { label: "Last exit", kind: "last_close" as const },
+      { label: "Tickers", kind: "symbol_count" as const },
       { label: "Trades", metricId: "total_trades" },
       { label: "Wins", metricId: "win_count" },
       { label: "Losses", metricId: "loss_count" },
       { label: "Net P/L", metricId: "net_pnl" },
+      { label: "Largest winner", metricId: "best_trade" },
+      { label: "Largest loser", metricId: "worst_trade" },
       { label: "Win rate", metricId: "win_rate" },
+      { label: "Max realized drawdown", metricId: "maximum_intraday_realized_drawdown" },
+      { label: "Realized recovery", metricId: "maximum_intraday_realized_recovery_from_trough" },
+      { label: "Peak-profit giveback", metricId: "maximum_peak_profit_giveback" },
       { label: "Day movement", kind: "day_path" as const, weight: 1.35 },
     ]),
   }),
@@ -89,7 +102,7 @@ const REPORT_VIEWS: Readonly<Record<Exclude<TradeExplorerPdfResultView, "trades"
       { label: "Net P/L", metricId: "net_pnl" },
       { label: "Avg P/L", metricId: "average_pnl" },
       { label: "Avg hold", metricId: "average_holding_time" },
-      { label: "Avg shares", metricId: "average_share_quantity" },
+      { label: "Avg shares entered", metricId: "average_share_quantity" },
       { label: "Avg entry value", metricId: "average_entry_notional", weight: 1.2 },
     ]),
   }),
@@ -102,7 +115,80 @@ const REPORT_VIEWS: Readonly<Record<Exclude<TradeExplorerPdfResultView, "trades"
       { label: "Net P/L", metricId: "net_pnl" },
       { label: "Avg P/L", metricId: "average_pnl" },
       { label: "Avg hold", metricId: "average_holding_time" },
-      { label: "Avg shares", metricId: "average_share_quantity" },
+      { label: "Avg shares entered", metricId: "average_share_quantity" },
+    ]),
+  }),
+  exit_times: Object.freeze({
+    label: "Exit Times",
+    firstColumnLabel: "Exit time",
+    columns: Object.freeze([
+      { label: "Trades", metricId: "total_trades" },
+      { label: "Win rate", metricId: "win_rate" },
+      { label: "Net P/L", metricId: "net_pnl" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Median P/L", metricId: "median_pnl" },
+      { label: "Avg hold", metricId: "average_holding_time" },
+    ]),
+  }),
+  entry_weekday: Object.freeze({
+    label: "Entry Weekday",
+    firstColumnLabel: "Weekday",
+    columns: Object.freeze([
+      { label: "Trades", metricId: "total_trades" },
+      { label: "Wins", metricId: "win_count" },
+      { label: "Losses", metricId: "loss_count" },
+      { label: "Win rate", metricId: "win_rate" },
+      { label: "Net P/L", metricId: "net_pnl" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Avg hold", metricId: "average_holding_time" },
+    ]),
+  }),
+  direction: Object.freeze({
+    label: "Direction",
+    firstColumnLabel: "Direction",
+    columns: Object.freeze([
+      { label: "Trades", metricId: "total_trades" },
+      { label: "Win rate", metricId: "win_rate" },
+      { label: "Net P/L", metricId: "net_pnl" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Median P/L", metricId: "median_pnl" },
+      { label: "Avg hold", metricId: "average_holding_time" },
+    ]),
+  }),
+  entered_quantity: Object.freeze({
+    label: "Entered Quantity",
+    firstColumnLabel: "Shares entered",
+    columns: Object.freeze([
+      { label: "Trades", metricId: "total_trades" },
+      { label: "Win rate", metricId: "win_rate" },
+      { label: "Net P/L", metricId: "net_pnl" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Avg entry value", metricId: "average_entry_notional" },
+      { label: "Avg hold", metricId: "average_holding_time" },
+    ]),
+  }),
+  entry_value: Object.freeze({
+    label: "Entry Value",
+    firstColumnLabel: "Entry value",
+    columns: Object.freeze([
+      { label: "Trades", metricId: "total_trades" },
+      { label: "Win rate", metricId: "win_rate" },
+      { label: "Net P/L", metricId: "net_pnl" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Avg shares entered", metricId: "average_share_quantity" },
+      { label: "Avg hold", metricId: "average_holding_time" },
+    ]),
+  }),
+  entry_price: Object.freeze({
+    label: "Entry Price",
+    firstColumnLabel: "Average entry price",
+    columns: Object.freeze([
+      { label: "Trades", metricId: "total_trades" },
+      { label: "Win rate", metricId: "win_rate" },
+      { label: "Net P/L", metricId: "net_pnl" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Avg entry value", metricId: "average_entry_notional" },
+      { label: "Avg shares entered", metricId: "average_share_quantity" },
     ]),
   }),
   holding_time: Object.freeze({
@@ -114,18 +200,18 @@ const REPORT_VIEWS: Readonly<Record<Exclude<TradeExplorerPdfResultView, "trades"
       { label: "Net P/L", metricId: "net_pnl" },
       { label: "Avg P/L", metricId: "average_pnl" },
       { label: "Avg hold", metricId: "average_holding_time" },
-      { label: "Avg shares", metricId: "average_share_quantity" },
+      { label: "Avg shares entered", metricId: "average_share_quantity" },
     ]),
   }),
   position_size: Object.freeze({
     label: "Position Size",
-    firstColumnLabel: "Maximum shares",
+    firstColumnLabel: "Maximum shares held",
     columns: Object.freeze([
       { label: "Trades", metricId: "total_trades" },
       { label: "Win rate", metricId: "win_rate" },
       { label: "Net P/L", metricId: "net_pnl" },
       { label: "Avg P/L", metricId: "average_pnl" },
-      { label: "Avg shares", metricId: "average_share_quantity" },
+      { label: "Avg shares entered", metricId: "average_share_quantity" },
       { label: "Avg entry value", metricId: "average_entry_notional", weight: 1.2 },
       { label: "Avg hold", metricId: "average_holding_time" },
     ]),
@@ -155,7 +241,8 @@ function inputRecord(input: unknown): Readonly<Record<string, unknown>> {
 
 function normalizeResultView(input: unknown): TradeExplorerPdfResultView {
   if (![
-    "trades", "days", "tickers", "entry_times", "holding_time",
+    "trades", "days", "tickers", "entry_times", "exit_times", "entry_weekday",
+    "direction", "entered_quantity", "entry_value", "entry_price", "holding_time",
     "position_size", "periods",
   ].includes(String(input))) {
     throw new TypeError("Invalid Trade Explorer PDF result view.");
@@ -179,7 +266,7 @@ function normalizeTradeSort(input: unknown): TradeExplorerTradeSort {
 
 function requireViewGrouping(
   resultView: TradeExplorerPdfResultView,
-  grouping: AnalyticsLabPlatformQuery["grouping"],
+  grouping: TradeExplorerQuery["grouping"],
 ): void {
   const matches = resultView === "trades"
     ? true
@@ -189,6 +276,18 @@ function requireViewGrouping(
         ? grouping === "instrument"
         : resultView === "entry_times"
           ? grouping === "entry_time_bucket"
+          : resultView === "exit_times"
+            ? grouping === "exit_time_bucket"
+            : resultView === "entry_weekday"
+              ? grouping === "entry_weekday"
+              : resultView === "direction"
+                ? grouping === "direction"
+                : resultView === "entered_quantity"
+                  ? grouping === "entered_quantity_bucket"
+                  : resultView === "entry_value"
+                    ? grouping === "entry_notional_bucket"
+                    : resultView === "entry_price"
+                      ? grouping === "entry_price_bucket"
           : resultView === "holding_time"
             ? grouping === "holding_duration_bucket"
             : resultView === "position_size"
@@ -249,10 +348,18 @@ function titleForMetric(result: JournalAnalyticsMetricResult | null): string {
 
 function groupColumns(
   view: ReportView,
-  query: AnalyticsLabPlatformQuery,
+  query: TradeExplorerQuery,
   selectedMetric: JournalAnalyticsMetricResult | null,
 ): readonly ReportColumn[] {
-  const columns = view.columns
+  const columns = [
+    ...view.columns,
+    ...(view.label === "Trading Days" && query.dayNoteState !== null
+      ? [{ label: "Day note", kind: "literal" as const, literal: query.dayNoteState === "present" ? "Present" : "Missing" }]
+      : []),
+    ...(view.label === "Trading Days" && query.dayRuleId !== null
+      ? [{ label: "Day rule result", kind: "literal" as const, literal: query.dayRuleStatus?.replaceAll("_", " ") ?? "Applicable" }]
+      : []),
+  ]
     .filter((column) => query.outcome === null || (
       !["win_count", "loss_count", "win_rate"].includes(column.metricId ?? "") &&
       column.kind !== "day_path"
@@ -291,9 +398,12 @@ function tradeRows(
   return Object.freeze(evidence.rows.map((trade: JournalAnalyticsRoundTripTableRow) =>
     Object.freeze([
       trade.displayedSymbol,
+      `${trade.entryLocalDate} ${formatTradeCloseTime(trade.openedAtUtc, evidence.timezone)}`,
       `${trade.closeLocalDate} ${formatTradeCloseTime(trade.closedAtUtc, evidence.timezone)}`,
       trade.direction === "long" ? "Long" : "Short",
+      trade.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade",
       formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal),
+      formatJournalAnalyticsDecimal(trade.maximumPositionQuantityDecimal),
       reportMoney(trade.averageEntryPriceDecimal ?? null, evidence.currency),
       reportMoney(trade.averageExitPriceDecimal ?? null, evidence.currency),
       reportMoney(trade.entryNotionalDecimal, evidence.currency),
@@ -302,7 +412,8 @@ function tradeRows(
         ? "N/A"
         : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`,
       formatJournalAnalyticsDuration(trade.holdingDurationMilliseconds),
-      String(trade.uniqueExecutionCount),
+      reportMoney(trade.tradingCostsDecimal, evidence.currency),
+      `${trade.uniqueExecutionCount} total; ${trade.entryExecutionCount} entry; ${trade.additionExecutionCount} add; ${trade.reductionExecutionCount} reduction; ${trade.exitExecutionCount} exit`,
     ])));
 }
 
@@ -320,7 +431,12 @@ function groupRows(
     const partitionLabel = showTimezone
       ? `${partition.currency ?? "No currency"} / ${partition.timezone ?? "No timezone"}`
       : partition.currency ?? "No currency";
-    return partition.groups.map((group) => ({ group, partitionKey, partitionLabel }));
+    return partition.groups.map((group) => ({
+      group,
+      partitionKey,
+      partitionLabel,
+      timeZone: partition.timezone ?? "UTC",
+    }));
   });
   groups.sort((left, right) => {
     if (showPartition) {
@@ -343,12 +459,20 @@ function groupRows(
     ...(showPartition ? [item.partitionLabel] : []),
     ...columns.map((column) => column.kind === "day_path"
       ? dayMovement(item.group)
-      : reportMetric(metric(item.group, column.metricId ?? ""))),
+      : column.kind === "first_open"
+        ? !item.group.facts?.firstOpenedAtUtc ? "N/A" : formatTradeCloseTime(item.group.facts.firstOpenedAtUtc, item.timeZone)
+        : column.kind === "last_close"
+          ? !item.group.facts?.lastClosedAtUtc ? "N/A" : formatTradeCloseTime(item.group.facts.lastClosedAtUtc, item.timeZone)
+          : column.kind === "symbol_count"
+            ? item.group.facts ? String(item.group.facts.uniqueSymbolCount) : "N/A"
+            : column.kind === "literal"
+              ? column.literal ?? "N/A"
+            : reportMetric(metric(item.group, column.metricId ?? ""))),
   ])));
 }
 
 function filterSummary(
-  query: AnalyticsLabPlatformQuery,
+  query: TradeExplorerQuery,
   resultView: TradeExplorerPdfResultView,
   preview: AnalyticsLabPlatformPreview,
   tradeSort: TradeExplorerTradeSort,
@@ -374,6 +498,21 @@ function filterSummary(
   if (query.tradeClassification !== null) {
     filters.push(`Trade type: ${query.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade"}`);
   }
+  if (query.tagId !== null) filters.push("Trade tag: Selected tag");
+  if (query.untaggedOnly) filters.push("Trade tag: Untagged");
+  if (query.noteState !== null) {
+    filters.push(`Trade note: ${query.noteState === "present" ? "Note present" : "No note"}`);
+  }
+  if (query.reviewIncompleteOnly) filters.push("Review workflow: Incomplete");
+  if (query.ruleId !== null) {
+    filters.push(`Trade rule: Selected exact version - ${query.ruleStatus?.replaceAll("_", " ") ?? "applicable"}`);
+  }
+  if (query.dayNoteState !== null) {
+    filters.push(`Day note: ${query.dayNoteState === "present" ? "Day note present" : "No day note"}`);
+  }
+  if (query.dayRuleId !== null) {
+    filters.push(`Day rule: Selected exact version - ${query.dayRuleStatus?.replaceAll("_", " ") ?? "applicable"}`);
+  }
   const ranges = [
     ["Holding seconds", query.minimumHoldingSeconds, query.maximumHoldingSeconds],
     ["Entered quantity", query.minimumEnteredQuantity, query.maximumEnteredQuantity],
@@ -392,7 +531,7 @@ function filterSummary(
 }
 
 function reportTable(
-  query: AnalyticsLabPlatformQuery,
+  query: TradeExplorerQuery,
   resultView: TradeExplorerPdfResultView,
   preview: AnalyticsLabPlatformPreview,
   tradeSort: TradeExplorerTradeSort,
@@ -413,11 +552,12 @@ function reportTable(
       feeNotice,
       filters: filterSummary(query, resultView, preview, tradeSort, sortDirection),
       columns: Object.freeze([
-        "Ticker", "Closed", "Direction", "Shares", "Avg entry", "Avg exit",
+        "Ticker", "Opened", "Closed", "Direction", "Trade type", "Shares entered",
+        "Maximum shares held", "Avg entry", "Avg exit",
         "Entry value", query.moneyBasis === "gross" ? "Gross P/L" : "Net P/L",
-        "Return", "Hold", "Executions",
+        "Return on entry value", "Hold", "Trading costs", "Execution structure",
       ]),
-      columnWeights: Object.freeze([0.75, 1.45, 0.72, 0.72, 0.82, 0.82, 0.95, 0.88, 0.72, 0.72, 0.72]),
+      columnWeights: Object.freeze([0.65, 1.2, 1.2, 0.65, 0.8, 0.75, 0.85, 0.75, 0.75, 0.85, 0.8, 0.8, 0.7, 0.8, 1.5]),
       rows: tradeRows(preview),
     });
   }
@@ -822,10 +962,19 @@ export async function createTradeExplorerPdfReport(
   ].sort())) {
     throw new TypeError("Invalid Trade Explorer PDF report fields.");
   }
-  const normalizedQuery = normalizeAnalyticsLabPlatformQuery(value.query);
+  const requestedTradeSort = normalizeTradeSort(value.tradeSort);
+  const {
+    normalizeTradeExplorerQueryRequest,
+    runCompleteTradeExplorerTableQuery,
+    runTradeExplorerQuery,
+  } = await import("./trade-explorer-service");
+  const normalizedRequest = normalizeTradeExplorerQueryRequest(
+    value.query,
+    requestedTradeSort,
+  );
+  const normalizedQuery = normalizedRequest.query;
   const resultView = normalizeResultView(value.resultView);
   requireViewGrouping(resultView, normalizedQuery.grouping);
-  const requestedTradeSort = normalizeTradeSort(value.tradeSort);
   const sortDirection = normalizeSortDirection(value.sortDirection);
   const query = Object.freeze({
     ...normalizedQuery,
@@ -837,14 +986,7 @@ export async function createTradeExplorerPdfReport(
       normalizedQuery.outcome,
     ),
   });
-  const tradeSort = tradeExplorerTradeSortForOutcome(
-    requestedTradeSort,
-    query.outcome,
-  );
-  const {
-    runCompleteTradeExplorerTableQuery,
-    runTradeExplorerQuery,
-  } = await import("./trade-explorer-service");
+  const tradeSort = normalizedRequest.tradeSort;
   const preview = resultView === "trades"
     ? await runCompleteTradeExplorerTableQuery(scope, query, tradeSort)
     : await runTradeExplorerQuery(scope, query, null, tradeSort);

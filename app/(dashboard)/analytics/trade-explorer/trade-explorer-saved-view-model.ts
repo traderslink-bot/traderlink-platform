@@ -7,13 +7,39 @@ export type TradeExplorerResultView =
   | "days"
   | "tickers"
   | "entry_times"
+  | "exit_times"
+  | "entry_weekday"
+  | "direction"
+  | "entered_quantity"
+  | "entry_value"
+  | "entry_price"
   | "holding_time"
   | "position_size"
   | "periods";
 
+export type TradeExplorerRuleStatus =
+  | "followed"
+  | "broken"
+  | "not_reviewed"
+  | "not_applicable";
+
+export type TradeExplorerQuery = AnalyticsLabPlatformQuery & Readonly<{
+  tagId: string | null;
+  untaggedOnly: boolean;
+  noteState: "present" | "missing" | null;
+  reviewIncompleteOnly: boolean;
+  ruleId: string | null;
+  ruleVersionId: string | null;
+  ruleStatus: TradeExplorerRuleStatus | null;
+  dayNoteState: "present" | "missing" | null;
+  dayRuleId: string | null;
+  dayRuleVersionId: string | null;
+  dayRuleStatus: TradeExplorerRuleStatus | null;
+}>;
+
 export type TradeExplorerSavedViewDefinition = Readonly<{
   viewVersion: typeof TRADE_EXPLORER_SAVED_VIEW_VERSION;
-  query: AnalyticsLabPlatformQuery;
+  query: TradeExplorerQuery;
   resultView: TradeExplorerResultView;
   tradeSort: TradeExplorerTradeSort;
   sortDirection: "descending" | "ascending";

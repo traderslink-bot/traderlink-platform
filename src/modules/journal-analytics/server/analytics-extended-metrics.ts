@@ -674,6 +674,9 @@ export function calculateExtendedJournalAnalyticsMetric(
     case "net_pnl_excluding_largest_winner": return removeExtreme(population.netRows, "net", "winner");
     case "net_pnl_excluding_largest_loser": return removeExtreme(population.netRows, "net", "loser");
     case "net_pnl_excluding_largest_winner_and_loser": return removeExtreme(population.netRows, "net", "both");
+    case "selected_pnl_excluding_largest_winner": return removeExtreme(rows, moneyBasis, "winner");
+    case "selected_pnl_excluding_largest_loser": return removeExtreme(rows, moneyBasis, "loser");
+    case "selected_pnl_excluding_largest_winner_and_loser": return removeExtreme(rows, moneyBasis, "both");
     case "largest_winner_contribution": {
       if (wins.length === 0) return unavailable("winning_trade_population_missing");
       const profit = sumExactDecimals(wins.map((row) => basisValue(row, moneyBasis)));
@@ -771,7 +774,10 @@ export function calculateExtendedJournalAnalyticsMetric(
     case "multi_day_trade_count": return complete(integer(population.grossRows.filter((row) => row.entryLocal.localDate !== row.closeLocal.localDate).length));
     case "pnl_percentile_10": return nearestRank(values, 10);
     case "pnl_percentile_25": return nearestRank(values, 25);
-    case "pnl_percentile_50": return nearestRank(values, 50);
+    // The 50th percentile is the population median. Using the exact median
+    // avoids a misleading disagreement for even-sized trade populations,
+    // where a nearest-rank value would select only the lower middle trade.
+    case "pnl_percentile_50": return median(values);
     case "pnl_percentile_75": return nearestRank(values, 75);
     case "pnl_percentile_90": return nearestRank(values, 90);
     case "population_pnl_variance": {

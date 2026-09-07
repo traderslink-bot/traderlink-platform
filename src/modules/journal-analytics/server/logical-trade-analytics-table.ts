@@ -79,6 +79,7 @@ export function toLogicalTradeAnalyticsTable(
     const grossPnlDecimal = sumDecimals(combined.map((member) => member.grossPnlDecimal))!;
     const chargeCostDecimal = sumDecimals(combined.map((member) => member.chargeCostDecimal));
     const chargeCreditDecimal = sumDecimals(combined.map((member) => member.chargeCreditDecimal));
+    const tradingCostsDecimal = sumDecimals(combined.map((member) => member.tradingCostsDecimal));
     const returnPercentDecimal = selectedPnlDecimal === null || new ExactDecimal(entryNotionalDecimal).isZero()
       ? null
       : new ExactDecimal(selectedPnlDecimal).div(entryNotionalDecimal).mul(100).toFixed();
@@ -99,7 +100,12 @@ export function toLogicalTradeAnalyticsTable(
       roundTripId: last.roundTripId,
       selectedPnlDecimal,
       tradeClassification: first.entryLocalDate === last.closeLocalDate ? "day_trade" : "multi_day_trade",
+      tradingCostsDecimal,
       uniqueExecutionCount: combined.reduce((total, member) => total + member.uniqueExecutionCount, 0),
+      entryExecutionCount: combined.reduce((total, member) => total + member.entryExecutionCount, 0),
+      additionExecutionCount: combined.reduce((total, member) => total + member.additionExecutionCount, 0),
+      reductionExecutionCount: combined.reduce((total, member) => total + member.reductionExecutionCount, 0),
+      exitExecutionCount: combined.reduce((total, member) => total + member.exitExecutionCount, 0),
       returnPercentDecimal,
     }));
   }

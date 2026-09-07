@@ -16,8 +16,14 @@ export type TradeExplorerTradeSort =
   | "hold_asc"
   | "shares_desc"
   | "shares_asc"
+  | "maximum_position_desc"
+  | "maximum_position_asc"
   | "entry_value_desc"
-  | "entry_value_asc";
+  | "entry_value_asc"
+  | "executions_desc"
+  | "executions_asc"
+  | "trading_costs_desc"
+  | "trading_costs_asc";
 
 export function canonicalTradeExplorerDecimalInput(
   value: string | null,
@@ -143,10 +149,16 @@ export const TRADE_EXPLORER_TRADE_SORT_OPTIONS: readonly Readonly<{
   Object.freeze({ label: "Lowest return first", order: Object.freeze({ field: "return_percent", direction: "ascending" }), value: "return_asc" }),
   Object.freeze({ label: "Longest hold first", order: Object.freeze({ field: "holding_duration", direction: "descending" }), value: "hold_desc" }),
   Object.freeze({ label: "Shortest hold first", order: Object.freeze({ field: "holding_duration", direction: "ascending" }), value: "hold_asc" }),
-  Object.freeze({ label: "Most shares first", order: Object.freeze({ field: "entered_quantity", direction: "descending" }), value: "shares_desc" }),
-  Object.freeze({ label: "Fewest shares first", order: Object.freeze({ field: "entered_quantity", direction: "ascending" }), value: "shares_asc" }),
+  Object.freeze({ label: "Most shares entered first", order: Object.freeze({ field: "entered_quantity", direction: "descending" }), value: "shares_desc" }),
+  Object.freeze({ label: "Fewest shares entered first", order: Object.freeze({ field: "entered_quantity", direction: "ascending" }), value: "shares_asc" }),
+  Object.freeze({ label: "Largest maximum position first", order: Object.freeze({ field: "maximum_position", direction: "descending" }), value: "maximum_position_desc" }),
+  Object.freeze({ label: "Smallest maximum position first", order: Object.freeze({ field: "maximum_position", direction: "ascending" }), value: "maximum_position_asc" }),
   Object.freeze({ label: "Highest entry value first", order: Object.freeze({ field: "entry_notional", direction: "descending" }), value: "entry_value_desc" }),
   Object.freeze({ label: "Lowest entry value first", order: Object.freeze({ field: "entry_notional", direction: "ascending" }), value: "entry_value_asc" }),
+  Object.freeze({ label: "Most executions first", order: Object.freeze({ field: "execution_count", direction: "descending" }), value: "executions_desc" }),
+  Object.freeze({ label: "Fewest executions first", order: Object.freeze({ field: "execution_count", direction: "ascending" }), value: "executions_asc" }),
+  Object.freeze({ label: "Highest trading costs first", order: Object.freeze({ field: "trading_costs", direction: "descending" }), value: "trading_costs_desc" }),
+  Object.freeze({ label: "Lowest trading costs first", order: Object.freeze({ field: "trading_costs", direction: "ascending" }), value: "trading_costs_asc" }),
 ]);
 
 export function tradeExplorerTableOrder(input: unknown): JournalAnalyticsTableOrder {

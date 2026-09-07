@@ -57,6 +57,7 @@ const supportedGroupings = new Set<JournalAnalyticsGrouping>([
   "entry_price_comparison",
   "realized_outcome",
 ]);
+const JOURNAL_ANALYTICS_MAX_ROUND_TRIP_FILTER_IDS = 50_000;
 
 const queryKeys = Object.freeze([
   "accountIds",
@@ -78,6 +79,7 @@ const queryKeys = Object.freeze([
   "outcomes",
   "provenance",
   "queryVersion",
+  "roundTripIds",
   "symbols",
   "tradeClassifications",
   "table",
@@ -98,8 +100,10 @@ export function requireJournalAnalyticsQuery(
   normalized: NormalizedJournalAnalyticsSet,
   query: JournalAnalyticsQuery,
 ): JournalAnalyticsQuery {
-  if (JSON.stringify(Object.keys(query).sort()) !==
-      JSON.stringify([...queryKeys].sort())) {
+  const legacyQueryKeys = queryKeys.filter((key) => key !== "roundTripIds");
+  const actualQueryKeys = Object.keys(query).sort();
+  if (JSON.stringify(actualQueryKeys) !== JSON.stringify([...queryKeys].sort()) &&
+      JSON.stringify(actualQueryKeys) !== JSON.stringify([...legacyQueryKeys].sort())) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "queryFields",
     });
@@ -156,6 +160,17 @@ export function requireJournalAnalyticsQuery(
   const instrumentIds = unique(query.instrumentIds, "instrumentIds");
   for (const instrumentId of instrumentIds) {
     assertCanonicalUuidV4(instrumentId, "instrumentId");
+  }
+  const roundTripIds = query.roundTripIds === undefined
+    ? undefined
+    : unique(query.roundTripIds, "roundTripIds");
+  if ((roundTripIds?.length ?? 0) > JOURNAL_ANALYTICS_MAX_ROUND_TRIP_FILTER_IDS) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      field: "roundTripIds",
+    });
+  }
+  for (const roundTripId of roundTripIds ?? []) {
+    assertCanonicalUuidV4(roundTripId, "roundTripId");
   }
   if (query.symbols.length > JOURNAL_ANALYTICS_MAX_SYMBOLS_PER_QUERY) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
@@ -296,6 +311,7 @@ export function requireJournalAnalyticsQuery(
     metricIds,
     closingDateRange: Object.freeze({ ...query.closingDateRange }),
     instrumentIds,
+    ...(roundTripIds === undefined ? {} : { roundTripIds }),
     symbols,
     directions,
     tradeClassifications,
@@ -373,6 +389,7 @@ function baseRowMatches(
     (range.maximumInclusive === null ||
       compareExactDecimals(value, range.maximumInclusive) <= 0);
   return query.accountIds.includes(row.accountId) &&
+    (query.roundTripIds === undefined || query.roundTripIds.includes(row.roundTripId)) &&
     (query.currency === null || query.currency === row.tradeCurrency) &&
     (query.instrumentIds.length === 0 ||
       query.instrumentIds.includes(row.instrumentId)) &&
@@ -406,6 +423,7 @@ function roundTripMatches(
   const source = classifyJournalAnalyticsProvenance(roundTrip.allocations);
   if (
     !query.accountIds.includes(roundTrip.accountId) ||
+    (query.roundTripIds !== undefined && !query.roundTripIds.includes(roundTrip.roundTripId)) ||
     (query.currency !== null && query.currency !== roundTrip.tradeCurrency) ||
     (query.instrumentIds.length > 0 &&
       !query.instrumentIds.includes(roundTrip.instrumentId)) ||
@@ -462,6 +480,7 @@ function unavailableMatches(
   query: JournalAnalyticsQuery,
 ): boolean {
   return query.accountIds.includes(row.accountId) &&
+    (query.roundTripIds === undefined || query.roundTripIds.includes(row.roundTripId)) &&
     (query.currency === null || query.currency === row.tradeCurrency) &&
     (query.instrumentIds.length === 0 ||
       query.instrumentIds.includes(row.instrumentId)) &&

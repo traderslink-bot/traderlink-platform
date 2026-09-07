@@ -65,6 +65,11 @@ export type JournalAnalyticsGroupResult = Readonly<{
   grouping: JournalAnalyticsGrouping;
   groupKey: string;
   label: string;
+  facts?: Readonly<{
+    firstOpenedAtUtc: string | null;
+    lastClosedAtUtc: string | null;
+    uniqueSymbolCount: number;
+  }>;
   metrics: readonly JournalAnalyticsMetricResult[];
 }>;
 
@@ -124,7 +129,12 @@ export type JournalAnalyticsRoundTripTableRow = Readonly<{
   chargeCoverage: "complete" | "unavailable";
   chargeCostDecimal: string | null;
   chargeCreditDecimal: string | null;
+  tradingCostsDecimal: string | null;
   uniqueExecutionCount: number;
+  entryExecutionCount: number;
+  additionExecutionCount: number;
+  reductionExecutionCount: number;
+  exitExecutionCount: number;
   enteredQuantityDecimal: string;
   maximumPositionQuantityDecimal: string;
   entryNotionalDecimal: string;

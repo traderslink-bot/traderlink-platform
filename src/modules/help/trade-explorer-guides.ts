@@ -11,14 +11,37 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("sort-and-rank", "Sort trades or rank groups", "Keep individual-trade sorting separate from grouped rankings.", ["trade explorer", "sort trades", "rank by", "result filter", "gross p/l", "net p/l"], [
       bullets([
         "The Trades view starts with all directions and the most recently closed trade first.",
-        "Sort trades orders individual rows by facts each trade has, such as P/L, return, hold time, shares or entry value.",
-        "Trading Days, Tickers, Entry Times, Holding Time, Position Size and Periods use Rank by to order their factual groups.",
+        "Sort trades orders individual rows by facts each trade has: close time, P/L, return on entry value, holding time, shares entered, maximum shares held, entry value, execution count or factual trading costs.",
+        "Trading-cost sorts are available only for the fee-covered Net P/L population. An unavailable fee is never treated as zero.",
+        "Trading Days, Tickers, Entry Times, Exit Times, Entry Weekday, Direction, Holding Time, Entered Quantity, Position Size, Entry Value, Entry Price and Periods use Rank by to order their factual groups.",
+        "Each grouped view offers rankings that answer useful questions for that view. For example, Holding Time is not primarily ranked by holding duration and Position Size is not primarily ranked by size.",
         "Result narrows the current Gross or Net P/L population to Wins, Losses or Flat trades.",
         "Rank by offers the Gross or Net P/L that matches the selected Result basis and hides calculations that cannot produce a meaningful order for that selection.",
         "Manually entered trades with no fee entered are included in Net P/L. Use View no-fee trades to review those entries in Workspace.",
         "When broker fee details are missing from imported trades, they are excluded from Net P/L. Trade Explorer shows the excluded count only when it is greater than zero.",
       ]),
       link("/workspace?filter=fees_not_entered", "View no-fee trades", "Review manually entered trades where no fee was entered."),
+    ]),
+    section("filter-trades", "Filter completed trades", "Build an exact Journal-only population before reviewing rows or groups.", ["trade explorer filters", "currency", "trade type", "tags", "notes", "rules", "closed date"], [
+      bullets([
+        "Closed from and Closed to use each trade's closing date in the account trading timezone.",
+        "Currency keeps money in one factual currency. Trade type separates Day trade from Multi-day trade without guessing whether a position was intended as a Swing.",
+        "More filters includes entry weekday and time, holding time, shares entered, maximum shares held and entry value.",
+        "Choose one exact saved tag or Untagged. Because one trade can have several tags, separate tag selections can overlap and their totals are not expected to add to one exclusive total.",
+        "Trade note present or missing and Review incomplete are workflow filters. Trade Explorer does not infer a setup, strategy, mistake or sentiment from note text.",
+        "A custom rule filter uses one exact immutable rule version and keeps Followed, Broken, Not reviewed and Not applicable distinct. A saved association does not prove that a tag or rule caused a result.",
+        "Day note and day-rule filters appear only in Trading Days. Preset automatic rule results remain read-only in Review.",
+      ]),
+    ]),
+    section("read-results", "Read selected and grouped results", "Use the summary, day-session results and group evidence without mixing in Trade Analyzer statistics.", ["selected trades", "trading days", "drawdown", "streaks", "concentration", "trade analyzer"], [
+      bullets([
+        "Selected trades summarizes the exact current population with trade count, P/L, average and median P/L, profit factor, P/L percentiles, population standard deviation, winner and loser contribution, streaks, execution structure and ticker/day concentration when those facts are available.",
+        "The excluding-largest-trade results show how selected P/L changes without the largest winner, largest loser or both; they do not delete or change a trade.",
+        "Trading Days shows first entry, last exit, active ticker count, completed trades, wins, losses, P/L, best and worst trade, win rate, realized drawdown, recovery, giveback and the day's realized P/L path.",
+        "Entry Times and Exit Times show full intervals in the account trading timezone. Quantity and money buckets use non-overlapping ranges.",
+        "Open an individual trade or expand Exact executions to inspect the recorded Journal evidence behind a result.",
+      ]),
+      paragraph("Trade Explorer calculates these results from completed Journal trades, executions, charges, tags, notes and saved rule reviews. It does not require Trade Analyzer access and does not use candles, MFE/MAE, VWAP, EMA, RSI, relative volume, candle patterns, market-path Green-to-Red, Level Analysis or provider data."),
     ]),
     section("review-a-trade", "Review a completed trade", "Save notes, tags and custom-rule results without changing execution facts.", ["review trade", "trade notes", "trade tags", "custom rules", "preset rules"], [
       bullets([

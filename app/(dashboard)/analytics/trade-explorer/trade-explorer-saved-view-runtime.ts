@@ -21,15 +21,15 @@ import { platformFailure } from "@/src/modules/platform/server/database/platform
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
-import type { AnalyticsLabPlatformQuery } from "../lab/analytics-lab-platform-types";
 import {
+  type TradeExplorerQuery,
   type TradeExplorerResultView,
   type TradeExplorerSavedView,
   type TradeExplorerSavedViewDefinition,
 } from "./trade-explorer-saved-view-model";
 import { normalizeTradeExplorerQueryRequest } from "./trade-explorer-service";
 
-type StoredQuery = Omit<AnalyticsLabPlatformQuery, "expectedAccountSelectionRef">;
+type StoredQuery = Omit<TradeExplorerQuery, "expectedAccountSelectionRef">;
 type StoredViewDocument = Readonly<{
   viewVersion: typeof TRADE_EXPLORER_SAVED_VIEW_VERSION;
   query: StoredQuery;
@@ -53,7 +53,9 @@ function hasExactFields(
 }
 
 function normalizeResultView(value: unknown): TradeExplorerResultView {
-  if (!["trades", "days", "tickers", "entry_times", "holding_time", "position_size", "periods"]
+  if (!["trades", "days", "tickers", "entry_times", "exit_times", "entry_weekday",
+    "direction", "entered_quantity", "entry_value", "entry_price", "holding_time",
+    "position_size", "periods"]
     .includes(String(value))) {
     platformFailure("TRADERLINK_TRADE_EXPLORER_SAVED_VIEW_INVALID", { field: "resultView" });
   }
@@ -71,7 +73,7 @@ function normalizeSortDirection(
 
 function requireViewGrouping(
   resultView: TradeExplorerResultView,
-  grouping: AnalyticsLabPlatformQuery["grouping"],
+  grouping: TradeExplorerQuery["grouping"],
 ): void {
   const matches = resultView === "trades"
     ? true
@@ -81,6 +83,18 @@ function requireViewGrouping(
         ? grouping === "instrument"
         : resultView === "entry_times"
           ? grouping === "entry_time_bucket"
+          : resultView === "exit_times"
+            ? grouping === "exit_time_bucket"
+            : resultView === "entry_weekday"
+              ? grouping === "entry_weekday"
+              : resultView === "direction"
+                ? grouping === "direction"
+                : resultView === "entered_quantity"
+                  ? grouping === "entered_quantity_bucket"
+                  : resultView === "entry_value"
+                    ? grouping === "entry_notional_bucket"
+                    : resultView === "entry_price"
+                      ? grouping === "entry_price_bucket"
           : resultView === "holding_time"
             ? grouping === "holding_duration_bucket"
             : resultView === "position_size"

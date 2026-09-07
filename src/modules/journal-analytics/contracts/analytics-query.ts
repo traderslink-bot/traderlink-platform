@@ -18,7 +18,10 @@ export type JournalAnalyticsTableSortField =
   | "return_percent"
   | "holding_duration"
   | "entered_quantity"
-  | "entry_notional";
+  | "maximum_position"
+  | "entry_notional"
+  | "execution_count"
+  | "trading_costs";
 export type JournalAnalyticsTableOrder = Readonly<{
   field: JournalAnalyticsTableSortField;
   direction: "ascending" | "descending";
@@ -79,16 +82,16 @@ export type JournalAnalyticsGrouping =
   | "realized_outcome";
 
 export const JOURNAL_ANALYTICS_ENTRY_PRICE_BANDS = Object.freeze([
-  Object.freeze({ key: "under_1", label: "Under $1.00", maximumExclusive: "1" }),
-  Object.freeze({ key: "1_to_2", label: "$1.00 to under $2.00", maximumExclusive: "2" }),
-  Object.freeze({ key: "2_to_3", label: "$2.00 to under $3.00", maximumExclusive: "3" }),
-  Object.freeze({ key: "3_to_5", label: "$3.00 to under $5.00", maximumExclusive: "5" }),
-  Object.freeze({ key: "5_and_over", label: "$5.00+", maximumExclusive: null }),
+  Object.freeze({ key: "under_1", label: "Under 1.00", maximumExclusive: "1" }),
+  Object.freeze({ key: "1_to_2", label: "1.00 to under 2.00", maximumExclusive: "2" }),
+  Object.freeze({ key: "2_to_3", label: "2.00 to under 3.00", maximumExclusive: "3" }),
+  Object.freeze({ key: "3_to_5", label: "3.00 to under 5.00", maximumExclusive: "5" }),
+  Object.freeze({ key: "5_and_over", label: "5.00 and over", maximumExclusive: null }),
 ] as const);
 
 export const JOURNAL_ANALYTICS_ENTRY_PRICE_COMPARISON_BANDS = Object.freeze([
-  Object.freeze({ key: "under_1", label: "Under $1.00", maximumExclusive: "1" }),
-  Object.freeze({ key: "1_and_over", label: "$1.00 and above", maximumExclusive: null }),
+  Object.freeze({ key: "under_1", label: "Under 1.00", maximumExclusive: "1" }),
+  Object.freeze({ key: "1_and_over", label: "1.00 and above", maximumExclusive: null }),
 ] as const);
 
 export type JournalAnalyticsQuery = Readonly<{
@@ -105,6 +108,8 @@ export type JournalAnalyticsQuery = Readonly<{
       }>;
   currency: string | null;
   instrumentIds: readonly string[];
+  /** Server-derived narrowing for account-scoped Journal annotation joins. */
+  roundTripIds?: readonly string[];
   symbols: readonly string[];
   directions: readonly JournalAnalyticsDirection[];
   tradeClassifications: readonly JournalAnalyticsTradeClassification[];

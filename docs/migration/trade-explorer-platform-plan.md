@@ -4,6 +4,14 @@ The owner-approved implementation of the previously withheld Compare and saved
 study slice is controlled by the [Trade Explorer Comparison And Rule Ideas
 Plan](trade-explorer-comparison-and-rule-ideas-plan.md).
 
+The 2026-09-06 accuracy, usefulness and entitlement-boundary update is
+controlled by the [Trade Explorer Accuracy And Utility Update Plan](trade-explorer-accuracy-and-utility-update-plan.md)
+and its [progress record](trade-explorer-accuracy-and-utility-update-progress.md).
+That newer owner direction supersedes every Analyzer-backed Explorer proposal
+in this document: Trade Analyzer statistics remain in Trade Analyzer. Explorer
+may calculate an overlapping concept only from independent canonical Journal
+and Journal Analytics facts available without Analyzer access.
+
 **Status:** Explorer 1 truthful-ordering correction and the completed-trade
 Review editor are implemented. Ordering reached its clean tenth QA pass and the
 Review editor's focused source QA is complete; owner visual/product review
@@ -11,7 +19,7 @@ remains. The owner approved construction
 of the real trade-exploration workspace on 2026-08-04 and approved the truthful
 Trades ordering plus trade-review workflow direction on 2026-08-16. This plan remains
 the full target; controls appear only when they execute against accepted Trade Tracker
-facts. Future session and analyzer fact contracts still require their own review
+facts. Future market-session fact contracts still require their own review
 before their Explorer controls are enabled.
 
 **Progress:** [Trade Explorer Progress](trade-explorer-platform-progress.md)
@@ -85,10 +93,10 @@ moving between them.
 | **Explore** | Filter completed trades, choose a metric and inspect the actual matching trades. This is the default view. |
 | **Compare** | Build two to four named periods and see their key results side by side. This is separate and optional. |
 | **Breakdowns** | Split the selected trades by ticker, weekday, entry time, market session, hold time, size, direction, day-trade status, result, tag, setup or supported rule result. Ticker is a central way to focus and explore trades, but not the default period-comparison axis. Sort each result column to find the strongest and weakest groups. |
-| **Trades** | A filterable evidence list of every completed trade behind the current comparison. Open a trade to see its executions, tags, notes and available analyzer observations. |
+| **Trades** | A filterable evidence list of every completed trade behind the current comparison. Open a trade to see its executions, tags, notes and supported Journal review facts. |
 | **Timeline** | Completed-trade and daily P/L views across the selected period, with selectable date ranges and the ability to open the exact day or trade. |
 | **Sessions** | Compare pre-market, regular-hours and post-market entries/exits. This is a focused view of the session filters and time-of-day results, not a separate calculation system. |
-| **Patterns** | Compare saved tags, setups, rule results and—when available—stored entry/exit analyzer observations. It never guesses a pattern that was not saved or observed. |
+| **Patterns** | Compare explicit saved tags and supported rule results. It never guesses a setup or pattern and never reads Trade Analyzer observations. |
 | **Saved studies** | Reopen a named comparison with its original filters, groups and selected basis. A saved study is private to the selected trading account. |
 
 The first implementation organizes results into factual table families rather
@@ -129,7 +137,6 @@ following confirmed Trade Tracker facts:
 | Trade shape | automatically derived day trade or other completed trade, entered quantity, maximum position size, entry value, holding-duration buckets |
 | Result | win/loss/flat, gross or net basis, P/L range |
 | Trade review | tags, setups, trade notes present, day review state, and rules only when their saved meaning makes the comparison factual |
-| Market analysis | entry/exit snapshots, candle observations and supported candle types only where a saved normalized analysis snapshot exists |
 
 The initial screen must make common comparisons easy without forcing a trader
 to learn filters:
@@ -217,26 +224,19 @@ Tracker detail when that route exists.
 
 The detail view may reveal execution rows on demand. It never exposes raw
 broker-statement rows, private statement filenames, broker account identifiers
-or another account's data. Evidence pagination is server-bounded and uses
+or another account's data. It also does not embed Trade Analyzer statistics; a
+separately approved navigation action may open the trade in Trade Analyzer
+without changing Explorer results or access. Evidence pagination is server-bounded and uses
 opaque cursors.
 
-### 3.6 Analyzer-backed comparisons
+### 3.6 Trade Analyzer separation
 
-The Daily Trade Tracker analyzer is a separate, currently paused Yahoo-backed
-feature. Explorer does not wait for it and does not request market data itself.
-When normalized saved analysis snapshots become available, the Explorer can
-add a clearly separated “Entry and exit analysis” area covering only the
-snapshots actually present, including:
-
-- entry/add/partial-exit/final-exit count and coverage;
-- supported price, volume, VWAP, EMA and RSI observations at each saved event;
-- selected small-cap candle-pattern observations; and
-- post-exit 5/15/30/60-minute outcomes where the stored analysis has coverage.
-
-This area shows a simple analyzed-trade/event count only when that context is
-helpful. It never claims that an absent snapshot means a condition did not
-occur, sends an on-demand Yahoo request, grades a trade, or converts a market
-observation into a trader's intent, tag or rule result.
+Trade Analyzer is a separate product area with separate access and saved
+market-data facts. Trade Explorer never reads Analyzer snapshots, candles,
+coverage, revisions or statistics and never changes its result inventory based
+on Analyzer entitlement. The complete prohibited-statistic list and the rule
+for independently calculated Journal-only results are controlled by the
+[Trade Explorer Accuracy And Utility Update Plan](trade-explorer-accuracy-and-utility-update-plan.md).
 
 ## 4. Deliberate separation of populations
 
@@ -250,7 +250,7 @@ The comparison controls must make these distinctions obvious:
 | Intentional swing / long-term / bag-holding state | Trader-authored open-position classification. It may be filtered or shown as context only after a closed-trade history contract is confirmed; it never turns an open position into realized performance. |
 | Legitimate open position | Separate inventory view only, with no realized comparison metrics. |
 | Needs Decision / excluded / superseded | Never used as a completed-trade metric. They remain in Data Decisions and are not presented in Trade Explorer. |
-| Unresolved market-analysis snapshot | The trade remains in normal Trade Tracker comparisons; it is excluded only from the related analyzer statistic. |
+| Trade Analyzer state | It has no effect on Trade Explorer inclusion, filters, statistics or saved results. |
 
 This prevents the confusing comparison of active swings against day trades
 while still allowing a trader to make a deliberate completed-trade study later.
@@ -357,7 +357,6 @@ Journal/Analytics contract before they become filterable or comparable:
 - completed review/day-context facts with a defined relationship to a trade;
 - entry and exit market-session classification using the relevant exchange
   calendar, including early closes and non-trading days;
-- analyzer snapshot indexes and coverage records;
 - closed-trade lifecycle classification from intentional open-position states;
 - exports, sharing, scheduled reports or AI summaries.
 
@@ -417,13 +416,14 @@ storage, backfill policy and verification are accepted.
    and that a saved study refreshes visibly rather than silently changing its
    definition.
 
-### Explorer 4 — analyzer-backed study area
+### Explorer 4 — independent accuracy and utility expansion
 
-1. Resume only after the Yahoo analyzer's coverage/data quality is accepted.
-2. Add saved-snapshot filters/breakdowns, simple analyzed-event counts where
-   useful and evidence links.
-3. Confirm no Explorer route creates provider work or makes a claim beyond
-   saved observations.
+1. Follow the owner-approved
+   [Trade Explorer Accuracy And Utility Update Plan](trade-explorer-accuracy-and-utility-update-plan.md).
+2. Add only results calculated from canonical Journal and Journal Analytics
+   facts without Trade Analyzer entitlement, storage, snapshots or providers.
+3. Prove the Explorer read, saved-view and export paths contain no Analyzer or
+   Level Analysis dependency.
 
 ### Explorer 5 — accessibility, scale and final acceptance
 
@@ -432,7 +432,8 @@ storage, backfill policy and verification are accepted.
 2. Run the agreed focused performance/reconciliation checks against a private
    read-only dataset and a scale fixture.
 3. Complete owner browser/product review of empty, small, large, one-currency,
-   multi-currency, unresolved-decision and analyzer-partial-coverage states.
+   multi-currency and unresolved-decision states for users with no Trade
+   Analyzer access.
 
 ## 8. Acceptance criteria
 
@@ -447,8 +448,8 @@ The Trade Explorer is ready only when all of the following are true:
 - Clicking a trade row reveals that trade's executions directly beneath it.
   Only one trade is expanded at a time, and clicking the expanded row closes
   it without navigating away from the Explorer.
-- Unresolved trades, open positions, missing fees, multi-currency money values
-  and incomplete analyzer snapshots are contained with concise `N/A` behavior,
+- Unresolved trades, open positions, missing fees and multi-currency money values
+  are contained with concise `N/A` behavior,
   not silently made into zeroes or misleading comparisons.
 - Manual, broker and corrected executions remain part of one authorized
   account-scoped ledger without being separated into user-facing categories.

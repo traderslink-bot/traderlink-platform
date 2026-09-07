@@ -16,6 +16,25 @@ on 2026-08-04 and the corrected Trades/review direction on 2026-08-16.
 
 **Controlling plan:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
 
+**Current update plan:** [Trade Explorer Accuracy And Utility Update Plan](trade-explorer-accuracy-and-utility-update-plan.md)
+with its [progress record](trade-explorer-accuracy-and-utility-update-progress.md).
+
+## 2026-09-06 accuracy and utility update planning
+
+The owner directed that Trade Analyzer statistics remain in the separate Trade
+Analyzer section because Trade Analyzer access is not universal. Trade Explorer
+may show an overlapping result only when it can calculate it independently from
+canonical Journal and Journal Analytics facts with no Analyzer entitlement,
+storage, snapshot, candle or provider dependency.
+
+The linked update plan records the complete current view/sort/rank/filter
+inventory, the QA accuracy corrections, curated view-specific rankings, six
+Journal-only breakdown views and the approved individual-trade,
+whole-population, Trading Days, tag, note and rule-result additions. The owner
+approved the complete plan and authorized implementation on 2026-09-06. A
+standalone visual mockup and separate pre-implementation visual-approval gate
+are explicitly waived; integrated rendered acceptance remains required.
+
 **PDF visual review:** [Trade Explorer PDF report mockup](trade-explorer-pdf-report-mockup.html)
 
 ## 2026-09-03 PDF typography and saved-view card refinement
@@ -566,3 +585,26 @@ surface appeared. Owner visual approval remains the next checkpoint.
 - [x] Reviewed the Trade Explorer Help guide. The visual-only convention does
   not change the documented calculations or workflow, so no guide copy changed.
 - [ ] Complete owner desktop/mobile visual review before release acceptance.
+
+## Accuracy and utility update - 2026-09-06
+
+The owner-approved update is implemented under the linked
+[accuracy and utility progress record](trade-explorer-accuracy-and-utility-update-progress.md).
+Trade Explorer now has 13 result views, 18 context-compatible individual-trade
+orders, curated per-view rankings, expanded trade/population/day facts and exact
+Journal annotation filters. Saved views, PDF, Review, exact executions, mobile
+cards, currency/timezone partitioning, Gross/Net coverage, logical-trade
+projection and Data Decisions isolation remain in place.
+
+Focused ESLint, diff whitespace, direct dependency inspection and populated
+Light-mode browser checks pass without an automated test suite. The 104-trade
+Demo evidence table independently reconciles its P/L and Profit factor, the six
+new views render populated results, Gross/Net plus All/Wins/Losses/Flat return,
+and saved-view/PDF/Review/execution/pagination/annotation workflows succeed.
+
+Rendered Dark-mode acceptance remains open. The release coordinator confirmed
+that the unrelated staged appearance deletions in the mixed canonical checkout
+are not in production, then created a clean package from the current production
+parent with the complete appearance system preserved. The owner selected a
+direct-to-production release path with no staging deployment on 2026-09-06.
+No push, merge or deployment occurred in the implementation checkout.

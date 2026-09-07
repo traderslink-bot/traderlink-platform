@@ -30,6 +30,59 @@ export type JournalAnalyticsGroupingResult = Readonly<{
   }>;
 }>;
 
+function quantityBucket(value: string): Readonly<{ key: string; label: string }> {
+  if (compareExactDecimals(value, "0") === 0) {
+    return Object.freeze({ key: "zero", label: "0 shares" });
+  }
+  const bands = [
+    ["10", "up_to_10", "Up to 10 shares"],
+    ["100", "over_10_to_100", "Over 10 to 100 shares"],
+    ["1000", "over_100_to_1000", "Over 100 to 1,000 shares"],
+    ["10000", "over_1000_to_10000", "Over 1,000 to 10,000 shares"],
+  ] as const;
+  const band = bands.find(([maximum]) =>
+    compareExactDecimals(value, maximum) <= 0);
+  return band
+    ? Object.freeze({ key: band[1], label: band[2] })
+    : Object.freeze({ key: "over_10000", label: "Over 10,000 shares" });
+}
+
+function entryValueBucket(
+  value: string,
+  currency: string,
+): Readonly<{ key: string; label: string }> {
+  if (compareExactDecimals(value, "0") === 0) {
+    return Object.freeze({ key: "zero", label: `${currency} 0` });
+  }
+  const bands = [
+    ["100", "up_to_100", "Up to 100"],
+    ["500", "over_100_to_500", "Over 100 to 500"],
+    ["1000", "over_500_to_1000", "Over 500 to 1,000"],
+    ["2500", "over_1000_to_2500", "Over 1,000 to 2,500"],
+    ["5000", "over_2500_to_5000", "Over 2,500 to 5,000"],
+    ["10000", "over_5000_to_10000", "Over 5,000 to 10,000"],
+  ] as const;
+  const band = bands.find(([maximum]) =>
+    compareExactDecimals(value, maximum) <= 0);
+  return band
+    ? Object.freeze({ key: band[1], label: `${currency} ${band[2]}` })
+    : Object.freeze({ key: "over_10000", label: `${currency} Over 10,000` });
+}
+
+function timeBucketDescriptor(
+  hour: number,
+  minute: number,
+  bucketMinutes: 5 | 15 | 30 | 60,
+): Readonly<{ key: string; label: string }> {
+  const startMinute = Math.floor(minute / bucketMinutes) * bucketMinutes;
+  const startTotal = hour * 60 + startMinute;
+  const endTotal = Math.min((24 * 60) - 1, startTotal + bucketMinutes - 1);
+  const text = (total: number) =>
+    `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+  const key = text(startTotal);
+  return Object.freeze({ key, label: `${key}–${text(endTotal)}` });
+}
+
 function groupDescriptor(
   row: NormalizedJournalAnalyticsRow,
   grouping: JournalAnalyticsGrouping,
@@ -37,20 +90,6 @@ function groupDescriptor(
   entryTimeBucketMinutes: 5 | 15 | 30 | 60,
   accountOrdinals: ReadonlyMap<string, number>,
 ): Readonly<{ key: string; label: string }> {
-  const decimalBucket = (value: string) => {
-    if (compareExactDecimals(value, "0") === 0) {
-      return Object.freeze({ key: "zero", label: "0" });
-    }
-    for (const boundary of ["10", "100", "1000", "10000"]) {
-      if (compareExactDecimals(value, boundary) <= 0) {
-        return Object.freeze({
-          key: `up_to_${boundary}`,
-          label: `Up to ${boundary}`,
-        });
-      }
-    }
-    return Object.freeze({ key: "over_10000", label: "Over 10000" });
-  };
   const isoWeek = (localDate: string) => {
     const [year, month, day] = localDate.split("-").map(Number);
     const date = new Date(Date.UTC(year, month - 1, day));
@@ -73,21 +112,17 @@ function groupDescriptor(
         label: row.displayedSymbol,
       });
     case "entry_time_bucket":
-      const bucketMinute = Math.floor(
-        row.entryLocal.minute / entryTimeBucketMinutes,
-      ) * entryTimeBucketMinutes;
-      return Object.freeze({
-        key: `${String(row.entryLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
-        label: `${String(row.entryLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
-      });
+      return timeBucketDescriptor(
+        row.entryLocal.hour,
+        row.entryLocal.minute,
+        entryTimeBucketMinutes,
+      );
     case "exit_time_bucket": {
-      const bucketMinute = Math.floor(
-        row.closeLocal.minute / entryTimeBucketMinutes,
-      ) * entryTimeBucketMinutes;
-      return Object.freeze({
-        key: `${String(row.closeLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
-        label: `${String(row.closeLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
-      });
+      return timeBucketDescriptor(
+        row.closeLocal.hour,
+        row.closeLocal.minute,
+        entryTimeBucketMinutes,
+      );
     }
     case "entry_session": {
       const minuteOfDay = row.entryLocal.hour * 60 + row.entryLocal.minute;
@@ -115,9 +150,16 @@ function groupDescriptor(
       return Object.freeze({ key: value, label: value });
     }
     case "entry_weekday":
-      return Object.freeze({ key: row.entryLocal.weekday, label: row.entryLocal.weekday });
+      return Object.freeze({
+        key: row.entryLocal.weekday,
+        label: row.entryLocal.weekday.slice(0, 1).toUpperCase() +
+          row.entryLocal.weekday.slice(1),
+      });
     case "direction":
-      return Object.freeze({ key: row.direction, label: row.direction });
+      return Object.freeze({
+        key: row.direction,
+        label: row.direction === "long" ? "Long" : "Short",
+      });
     case "account": {
       const ordinal = accountOrdinals.get(row.accountId);
       if (ordinal === undefined) {
@@ -144,11 +186,11 @@ function groupDescriptor(
       return Object.freeze({ key: "4h_or_more", label: "4 hours or more" });
     }
     case "entered_quantity_bucket":
-      return decimalBucket(row.enteredQuantityDecimal);
+      return quantityBucket(row.enteredQuantityDecimal);
     case "maximum_position_bucket":
-      return decimalBucket(row.maximumPositionQuantityDecimal);
+      return quantityBucket(row.maximumPositionQuantityDecimal);
     case "entry_notional_bucket":
-      return decimalBucket(row.entryNotionalDecimal);
+      return entryValueBucket(row.entryNotionalDecimal, row.tradeCurrency);
     case "entry_price_bucket":
     case "entry_price_comparison": {
       if (compareExactDecimals(row.enteredQuantityDecimal, "0") <= 0) {
@@ -170,7 +212,10 @@ function groupDescriptor(
           check: "analytics_entry_price_band",
         });
       }
-      return Object.freeze({ key: band.key, label: band.label });
+      return Object.freeze({
+        key: band.key,
+        label: `${row.tradeCurrency} ${band.label}`,
+      });
     }
     case "realized_outcome": {
       const value = moneyBasis === "gross" ? row.grossOutcome : row.netOutcome;
@@ -350,6 +395,22 @@ export function groupJournalAnalyticsPopulation(
         grouping,
         groupKey: group.key,
         label: group.label,
+        facts: Object.freeze({
+          firstOpenedAtUtc: group.population.grossRows.reduce<string | null>(
+            (earliest, row) => earliest === null || row.openedAtUtc < earliest
+              ? row.openedAtUtc
+              : earliest,
+            null,
+          ),
+          lastClosedAtUtc: group.population.grossRows.reduce<string | null>(
+            (latest, row) => latest === null || row.closedAtUtc > latest
+              ? row.closedAtUtc
+              : latest,
+            null,
+          ),
+          uniqueSymbolCount: new Set(group.population.grossRows.map((row) =>
+            row.displayedSymbol)).size,
+        }),
         metrics: accumulateJournalAnalyticsMetrics(
           group.population,
           metricIds,

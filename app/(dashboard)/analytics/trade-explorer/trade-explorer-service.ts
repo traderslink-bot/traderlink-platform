@@ -5,6 +5,9 @@ import Decimal from "decimal.js";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
+  assertCanonicalUuidV4,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
   currentJournalAccountSelectionRef,
   requireExpectedJournalAccountSelection,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -16,7 +19,14 @@ import {
 import type {
   JournalAnalyticsExactValue,
   JournalAnalyticsMetricResult,
+  JournalAnalyticsRoundTripTableRow,
 } from "@/src/modules/journal-analytics/contracts/analytics-result";
+import type {
+  JournalDailyNoteRecord,
+  JournalRuleRecord,
+  JournalRuleReviewRecord,
+} from "@/src/modules/journal/contracts/journal-annotation-contracts";
+import { withScopedJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import {
   TRADE_EXPLORER_DAY_STATISTIC_GROUPS,
   TRADE_EXPLORER_TRADE_STATISTIC_GROUPS,
@@ -28,11 +38,11 @@ import {
 } from "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
 import { journalAnalyticsMetricRegistry } from "@/src/modules/journal-analytics/server/analytics-metric-registry";
 import type { JournalAnalyticsService } from "@/src/modules/journal-analytics/server/analytics-service";
-import { toLogicalTradeAnalyticsTable } from "@/src/modules/journal-analytics/server/logical-trade-analytics-table";
 import {
   requireActiveJournalAnalyticsAccountId,
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { toLogicalTradeAnalyticsTable } from "@/src/modules/journal-analytics/server/logical-trade-analytics-table";
 
 import {
   analyticsLabPlatformGroupingOptions,
@@ -50,6 +60,10 @@ import {
   type TradeExplorerComparisonInput,
   type TradeExplorerComparisonResult,
 } from "./trade-explorer-comparison-model";
+import type {
+  TradeExplorerQuery,
+  TradeExplorerRuleStatus,
+} from "./trade-explorer-saved-view-model";
 
 const ExactDecimal = Decimal.clone({
   precision: 120,
@@ -66,6 +80,7 @@ const EXPLORER_METRICS = Object.freeze([
   "gross_pnl",
   "win_rate",
   "average_pnl",
+  "median_pnl",
   "profit_factor",
   "best_trade",
   "worst_trade",
@@ -74,6 +89,35 @@ const EXPLORER_METRICS = Object.freeze([
   "average_entry_notional",
   "expectancy",
   "return_on_entry_notional",
+  "trading_day_count",
+  "average_daily_pnl",
+  "median_daily_pnl",
+  "profitable_trading_day_count",
+  "losing_trading_day_count",
+  "flat_trading_day_count",
+  "pnl_percentile_10",
+  "pnl_percentile_25",
+  "pnl_percentile_50",
+  "pnl_percentile_75",
+  "pnl_percentile_90",
+  "population_pnl_standard_deviation",
+  "selected_pnl_excluding_largest_winner",
+  "selected_pnl_excluding_largest_loser",
+  "selected_pnl_excluding_largest_winner_and_loser",
+  "largest_winner_contribution",
+  "largest_loser_contribution",
+  "longest_winning_trade_streak",
+  "longest_losing_trade_streak",
+  "current_winning_trade_streak",
+  "current_losing_trade_streak",
+  "average_executions_per_trade",
+  "scale_in_trade_count",
+  "scale_out_trade_count",
+  "largest_instrument_pnl_share",
+  "largest_day_pnl_share",
+  "maximum_intraday_realized_drawdown",
+  "maximum_intraday_realized_recovery_from_trough",
+  "maximum_peak_profit_giveback",
   "green_to_red_day_count",
   "red_to_green_day_count",
 ] as const);
@@ -85,9 +129,10 @@ const EXPLORER_SELECTOR_METRIC_IDS: ReadonlySet<string> = new Set<string>([
 
 function journalQuery(
   scope: WorkspaceAccessScope,
-  input: AnalyticsLabPlatformQuery,
+  input: TradeExplorerQuery,
   afterCursor: string | null,
   asOfUtc: string,
+  roundTripIds: readonly string[] | null = null,
 ): JournalAnalyticsQuery {
   const secondsToMilliseconds = (value: string | null): number | null =>
     value === null ? null : Number(value) * 1_000;
@@ -103,6 +148,7 @@ function journalQuery(
     }),
     currency: input.currency,
     instrumentIds: Object.freeze([]),
+    ...(roundTripIds === null ? {} : { roundTripIds: Object.freeze([...roundTripIds]) }),
     symbols: Object.freeze(input.symbol === null ? [] : [input.symbol]),
     directions: Object.freeze(input.direction === null ? [] : [input.direction]),
     tradeClassifications: Object.freeze(
@@ -141,28 +187,224 @@ function normalizeEvidenceCursor(input: unknown): string | null {
   throw new TypeError("Invalid Trade Explorer evidence cursor.");
 }
 
+function hasAnnotationFilters(query: TradeExplorerQuery): boolean {
+  return query.tagId !== null || query.untaggedOnly || query.noteState !== null ||
+    query.reviewIncompleteOnly || query.ruleId !== null ||
+    query.dayNoteState !== null || query.dayRuleId !== null;
+}
+
+function completeMatchingTradeRows(
+  scope: WorkspaceAccessScope,
+  query: TradeExplorerQuery,
+  service: JournalAnalyticsService,
+  asOfUtc: string,
+): readonly JournalAnalyticsRoundTripTableRow[] {
+  const rows: JournalAnalyticsRoundTripTableRow[] = [];
+  let cursor: string | null = null;
+  const seen = new Set<string>();
+  do {
+    const pageQuery = journalQuery(scope, query, cursor, asOfUtc);
+    const page = service.getRoundTripAnalyticsTable(scope, Object.freeze({
+      ...pageQuery,
+      table: Object.freeze({ pageSize: 200, afterCursor: cursor }),
+    }), tradeExplorerTableOrder("closed_desc"));
+    rows.push(...page.rows);
+    cursor = page.continuationCursor;
+    if (cursor !== null) {
+      if (seen.has(cursor)) throw new TypeError("Trade Explorer annotation paging did not advance.");
+      seen.add(cursor);
+    }
+  } while (cursor !== null);
+  return Object.freeze(rows);
+}
+
+function ruleAppliesToTrade(
+  rule: JournalRuleRecord,
+  trade: JournalAnalyticsRoundTripTableRow,
+  target: "trade" | "day",
+): boolean {
+  if (rule.reviewScope !== target && rule.reviewScope !== "both") return false;
+  if (trade.openedAtUtc < rule.effectiveFromUtc ||
+      (rule.effectiveUntilUtc && trade.openedAtUtc >= rule.effectiveUntilUtc)) {
+    return false;
+  }
+  return !rule.activeIntervals || rule.activeIntervals.some((interval) =>
+    trade.openedAtUtc >= interval.fromUtc &&
+    (!interval.untilUtc || trade.openedAtUtc < interval.untilUtc));
+}
+
+function reviewFor(
+  reviews: readonly JournalRuleReviewRecord[],
+  rule: JournalRuleRecord,
+  targetKind: "round_trip" | "trading_day",
+  targetId: string,
+): JournalRuleReviewRecord | null {
+  return reviews.find((review) =>
+    review.ruleId === rule.ruleId &&
+    review.ruleVersionId === rule.versionId &&
+    review.targetKind === targetKind &&
+    (targetKind === "round_trip"
+      ? review.roundTripId === targetId
+      : review.tradingDayId === targetId)) ?? null;
+}
+
+function ruleFilterMatches(
+  rule: JournalRuleRecord | null,
+  review: JournalRuleReviewRecord | null,
+  applicable: boolean,
+  status: TradeExplorerRuleStatus | null,
+): boolean {
+  if (rule === null) return false;
+  if (status === null) return applicable;
+  if (status === "not_applicable") return !applicable;
+  if (!applicable) return false;
+  if (status === "not_reviewed") return review === null || review.status === "not_reviewed";
+  return review?.status === status;
+}
+
+function dailyNotePresent(note: JournalDailyNoteRecord | null): boolean {
+  return Boolean(note && [
+    note.whatWorked,
+    note.whatNeedsWork,
+    note.technicalRecap,
+    note.tomorrowsFocus,
+    note.anythingElse,
+  ].some((value) => value.trim().length > 0));
+}
+
+function annotationRoundTripIds(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  query: TradeExplorerQuery,
+  rows: readonly JournalAnalyticsRoundTripTableRow[],
+): readonly string[] {
+  return withScopedJournalAnnotations(database, scope, (annotations, account) => {
+    const rowIds = Object.freeze(rows.map((row) => row.roundTripId));
+    const tagsByTrade = annotations.listTagsForRoundTrips(account, rowIds);
+    const notesByTrade = annotations.readRoundTripNotes(account, rowIds);
+    const tradingDayByDate = new Map([...new Set(rows.map((row) => row.closeLocalDate))]
+      .map((date) => [date, annotations.resolveTradingDayId(account, date)] as const));
+    const tradingDayIds = Object.freeze([...new Set([...tradingDayByDate.values()]
+      .filter((value): value is string => value !== null))]);
+    const reviews = annotations.listRuleReviewsForTargets(account, {
+      tradingDayIds,
+      roundTripIds: rowIds,
+    });
+    const earliestOpen = rows.map((row) => row.openedAtUtc).sort()[0] ?? query.startDate;
+    const latestClose = rows.map((row) => row.closedAtUtc).sort().at(-1) ?? `${query.endDate}T23:59:59.999Z`;
+    const until = new Date(latestClose);
+    until.setMilliseconds(until.getMilliseconds() + 1);
+    const rules = rows.length === 0
+      ? Object.freeze([])
+      : annotations.listRulesForEvaluation(account, earliestOpen, until.toISOString());
+    const selectedTradeRule = query.ruleId === null
+      ? null
+      : rules.find((rule) =>
+          rule.ruleId === query.ruleId && rule.versionId === query.ruleVersionId) ?? null;
+    const selectedDayRule = query.dayRuleId === null
+      ? null
+      : rules.find((rule) =>
+          rule.ruleId === query.dayRuleId && rule.versionId === query.dayRuleVersionId) ?? null;
+    const customTradeRules = rules.filter((rule) =>
+      rule.sourceKind === "custom" && (rule.reviewScope === "trade" || rule.reviewScope === "both"));
+    const dayNotes = new Map([...tradingDayByDate.keys()].map((date) =>
+      [date, annotations.readDailyNote(account, date)] as const));
+    const dayRuleMatches = new Map([...tradingDayByDate.keys()].map((date) => {
+      if (!selectedDayRule) return [date, query.dayRuleId === null] as const;
+      const dayRows = rows.filter((row) => row.closeLocalDate === date);
+      const applicable = dayRows.some((row) =>
+        ruleAppliesToTrade(selectedDayRule, row, "day"));
+      const tradingDayId = tradingDayByDate.get(date) ?? null;
+      const review = tradingDayId === null
+        ? null
+        : reviewFor(reviews, selectedDayRule, "trading_day", tradingDayId);
+      return [date, ruleFilterMatches(
+        selectedDayRule,
+        review,
+        applicable,
+        query.dayRuleStatus,
+      )] as const;
+    }));
+
+    return Object.freeze(rows.filter((row) => {
+      const assignedTags = tagsByTrade[row.roundTripId] ?? Object.freeze([]);
+      if (query.tagId !== null && !assignedTags.some((tag) => tag.tagId === query.tagId)) return false;
+      if (query.untaggedOnly && assignedTags.length > 0) return false;
+
+      const note = notesByTrade[row.roundTripId] ?? null;
+      const notePresent = Boolean(note &&
+        (note.tradeNote.trim().length > 0 || note.technicalNote.trim().length > 0));
+      if (query.noteState === "present" && !notePresent) return false;
+      if (query.noteState === "missing" && notePresent) return false;
+
+      if (query.reviewIncompleteOnly && !customTradeRules.some((rule) => {
+        if (!ruleAppliesToTrade(rule, row, "trade")) return false;
+        const review = reviewFor(reviews, rule, "round_trip", row.roundTripId);
+        return review === null || review.status === "not_reviewed";
+      })) return false;
+
+      if (selectedTradeRule) {
+        const applicable = ruleAppliesToTrade(selectedTradeRule, row, "trade");
+        const review = reviewFor(reviews, selectedTradeRule, "round_trip", row.roundTripId);
+        if (!ruleFilterMatches(selectedTradeRule, review, applicable, query.ruleStatus)) return false;
+      } else if (query.ruleId !== null) return false;
+
+      const hasDayNote = dailyNotePresent(dayNotes.get(row.closeLocalDate) ?? null);
+      if (query.dayNoteState === "present" && !hasDayNote) return false;
+      if (query.dayNoteState === "missing" && hasDayNote) return false;
+
+      if (!(dayRuleMatches.get(row.closeLocalDate) ?? true)) return false;
+      return true;
+    }).map((row) => row.roundTripId));
+  });
+}
+
 async function execute(
   scope: WorkspaceAccessScope,
-  input: AnalyticsLabPlatformQuery,
+  input: TradeExplorerQuery,
   afterCursor: string | null = null,
   tableOrder: JournalAnalyticsTableOrder = tradeExplorerTableOrder("closed_desc"),
 ): Promise<AnalyticsLabPlatformPreview> {
   const asOfUtc = new Date().toISOString();
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, service }) =>
-    buildPreview(scope, input, afterCursor, database, service, tableOrder, asOfUtc));
+  return withJournalAnalyticsReportingDashboardRuntime(
+    scope,
+    ({ service, verifiedReadonlyDatabase }) => {
+      const roundTripIds = hasAnnotationFilters(input)
+        ? annotationRoundTripIds(
+            verifiedReadonlyDatabase,
+            scope,
+            input,
+            completeMatchingTradeRows(scope, input, service, asOfUtc),
+          )
+        : null;
+      return buildPreview(
+        scope,
+        input,
+        afterCursor,
+        service,
+        tableOrder,
+        asOfUtc,
+        roundTripIds,
+        verifiedReadonlyDatabase,
+      );
+    },
+    { prefetchAllFactSet: true },
+  );
 }
 
 function buildPreview(
   scope: WorkspaceAccessScope,
   input: AnalyticsLabPlatformQuery,
   afterCursor: string | null,
-  database: Database.Database,
   service: JournalAnalyticsService,
   tableOrder: JournalAnalyticsTableOrder,
   asOfUtc: string,
+  roundTripIds: readonly string[] | null = null,
+  verifiedReadonlyDatabase: Database.Database | null = null,
+  projectLogicalTrades = true,
 ): AnalyticsLabPlatformPreview {
   requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef);
-  const query = journalQuery(scope, input, afterCursor, asOfUtc);
+  const query = journalQuery(scope, input, afterCursor, asOfUtc, roundTripIds);
   const response = service.getAnalyticsOverview(scope, query);
   const selected = response.partitions
     .flatMap((partition) => partition.metrics)
@@ -174,7 +416,9 @@ function buildPreview(
         tableOrder,
       )
     : null;
-  const evidence = rawEvidence === null ? null : toLogicalTradeAnalyticsTable(scope, database, rawEvidence);
+  const evidence = rawEvidence !== null && verifiedReadonlyDatabase !== null && projectLogicalTrades
+    ? toLogicalTradeAnalyticsTable(scope, verifiedReadonlyDatabase, rawEvidence)
+    : rawEvidence;
   if (evidence !== null && (
     evidence.factSetRevisionSha256 !== response.factSetRevisionSha256 ||
     evidence.moneyBasis !== input.moneyBasis ||
@@ -200,7 +444,22 @@ export type TradeExplorerPageModel = Readonly<{
   minimumDate: AnalyticsLabPlatformPageModel["minimumDate"];
   maximumDate: AnalyticsLabPlatformPageModel["maximumDate"];
   groupings: readonly Readonly<{ value: AnalyticsLabPlatformQuery["grouping"]; label: string }>[];
-  initialQuery: AnalyticsLabPlatformQuery;
+  annotationOptions: Readonly<{
+    tags: readonly Readonly<{ tagId: string; name: string; assignmentCount: number }>[];
+    tradeRules: readonly Readonly<{
+      ruleId: string;
+      ruleVersionId: string;
+      title: string;
+      versionNumber: number;
+    }>[];
+    dayRules: readonly Readonly<{
+      ruleId: string;
+      ruleVersionId: string;
+      title: string;
+      versionNumber: number;
+    }>[];
+  }>;
+  initialQuery: TradeExplorerQuery;
   initialPreview: AnalyticsLabPlatformPreview;
 }>;
 
@@ -223,11 +482,60 @@ export function normalizeTradeExplorerQueryRequest(
   input: unknown,
   tradeSort: unknown,
 ): Readonly<{
-  query: AnalyticsLabPlatformQuery;
+  query: TradeExplorerQuery;
   tradeSort: TradeExplorerTradeSort;
   tableOrder: JournalAnalyticsTableOrder;
 }> {
-  const normalized = normalizeAnalyticsLabPlatformQuery(input);
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new TypeError("Invalid Trade Explorer query.");
+  }
+  const raw = input as Readonly<Record<string, unknown>>;
+  const annotationKeys = [
+    "tagId", "untaggedOnly", "noteState", "reviewIncompleteOnly",
+    "ruleId", "ruleVersionId", "ruleStatus", "dayNoteState",
+    "dayRuleId", "dayRuleVersionId", "dayRuleStatus",
+  ] as const;
+  const base = Object.fromEntries(Object.entries(raw).filter(([key]) =>
+    !annotationKeys.includes(key as (typeof annotationKeys)[number])));
+  const normalized = normalizeAnalyticsLabPlatformQuery(base);
+  const nullableUuid = (value: unknown, field: string): string | null => {
+    if (value === undefined || value === null) return null;
+    if (typeof value !== "string") throw new TypeError(`Invalid ${field}.`);
+    assertCanonicalUuidV4(value, field);
+    return value;
+  };
+  const nullableState = <T extends string>(
+    value: unknown,
+    allowed: readonly T[],
+    field: string,
+  ): T | null => {
+    if (value === undefined || value === null) return null;
+    if (typeof value !== "string" || !allowed.includes(value as T)) {
+      throw new TypeError(`Invalid ${field}.`);
+    }
+    return value as T;
+  };
+  const boolean = (value: unknown, field: string): boolean => {
+    if (value === undefined) return false;
+    if (typeof value !== "boolean") throw new TypeError(`Invalid ${field}.`);
+    return value;
+  };
+  const ruleId = nullableUuid(raw.ruleId, "ruleId");
+  const ruleVersionId = nullableUuid(raw.ruleVersionId, "ruleVersionId");
+  const ruleStatus = nullableState<TradeExplorerRuleStatus>(raw.ruleStatus, [
+    "followed", "broken", "not_reviewed", "not_applicable",
+  ], "ruleStatus");
+  const dayRuleId = nullableUuid(raw.dayRuleId, "dayRuleId");
+  const dayRuleVersionId = nullableUuid(raw.dayRuleVersionId, "dayRuleVersionId");
+  const dayRuleStatus = nullableState<TradeExplorerRuleStatus>(raw.dayRuleStatus, [
+    "followed", "broken", "not_reviewed", "not_applicable",
+  ], "dayRuleStatus");
+  if ((ruleId === null) !== (ruleVersionId === null) ||
+      (ruleStatus !== null && ruleId === null) ||
+      (dayRuleId === null) !== (dayRuleVersionId === null) ||
+      (dayRuleStatus !== null && dayRuleId === null)) {
+    throw new TypeError("A rule filter must identify one exact rule version.");
+  }
   if (!EXPLORER_SELECTOR_METRIC_IDS.has(normalized.metricId)) {
     throw new TypeError("Invalid Trade Explorer metric.");
   }
@@ -235,14 +543,31 @@ export function normalizeTradeExplorerQueryRequest(
     normalized.metricId,
     normalized.moneyBasis,
   );
-  const explorerQuery = Object.freeze({
+  const explorerQuery: TradeExplorerQuery = Object.freeze({
     ...normalized,
     metricId: tradeExplorerMetricForOutcome(basisMetricId, normalized.outcome),
+    tagId: nullableUuid(raw.tagId, "tagId"),
+    untaggedOnly: boolean(raw.untaggedOnly, "untaggedOnly"),
+    noteState: nullableState(raw.noteState, ["present", "missing"] as const, "noteState"),
+    reviewIncompleteOnly: boolean(raw.reviewIncompleteOnly, "reviewIncompleteOnly"),
+    ruleId,
+    ruleVersionId,
+    ruleStatus,
+    dayNoteState: nullableState(raw.dayNoteState, ["present", "missing"] as const, "dayNoteState"),
+    dayRuleId,
+    dayRuleVersionId,
+    dayRuleStatus,
   });
+  if (explorerQuery.tagId !== null && explorerQuery.untaggedOnly) {
+    throw new TypeError("Tag and untagged filters cannot be combined.");
+  }
   const explorerTradeSort = tradeExplorerTradeSortForOutcome(
     tradeSort ?? "closed_desc",
     explorerQuery.outcome,
   );
+  if (explorerQuery.moneyBasis !== "net" && explorerTradeSort.startsWith("trading_costs_")) {
+    throw new TypeError("Trading-cost sorting requires the fee-covered Net P/L population.");
+  }
   return Object.freeze({
     query: explorerQuery,
     tradeSort: explorerTradeSort,
@@ -261,31 +586,44 @@ export async function runCompleteTradeExplorerTableQuery(
     evidenceRows: 100 as const,
   });
   const asOfUtc = new Date().toISOString();
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, service }) => {
-    const rawFirst = service.getRoundTripAnalyticsTable(
-      scope,
-      journalQuery(scope, reportQuery, null, asOfUtc),
-      normalizedRequest.tableOrder,
-    );
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service, verifiedReadonlyDatabase }) => {
+    const roundTripIds = hasAnnotationFilters(reportQuery)
+      ? annotationRoundTripIds(
+          verifiedReadonlyDatabase,
+          scope,
+          reportQuery,
+          completeMatchingTradeRows(scope, reportQuery, service, asOfUtc),
+        )
+      : null;
     const first = buildPreview(
       scope,
       reportQuery,
       null,
-      database,
       service,
       normalizedRequest.tableOrder,
       asOfUtc,
+      roundTripIds,
+      verifiedReadonlyDatabase,
+      false,
     );
-    if (first.evidence === null || rawFirst.continuationCursor === null) {
-      return first;
+    if (first.evidence === null) return first;
+    if (first.evidence.continuationCursor === null) {
+      return Object.freeze({
+        ...first,
+        evidence: toLogicalTradeAnalyticsTable(
+          scope,
+          verifiedReadonlyDatabase,
+          first.evidence,
+        ),
+      });
     }
 
-    const rows = [...rawFirst.rows];
-    let cursor: string | null = rawFirst.continuationCursor;
+    const rows = [...first.evidence.rows];
+    let cursor: string | null = first.evidence.continuationCursor;
     while (cursor !== null) {
       const page = service.getRoundTripAnalyticsTable(
         scope,
-        journalQuery(scope, reportQuery, cursor, asOfUtc),
+        journalQuery(scope, reportQuery, cursor, asOfUtc, roundTripIds),
         normalizedRequest.tableOrder,
       );
       if (
@@ -293,25 +631,29 @@ export async function runCompleteTradeExplorerTableQuery(
         page.moneyBasis !== first.evidence.moneyBasis ||
         page.currency !== first.evidence.currency ||
         page.timezone !== first.evidence.timezone ||
-        page.totalRowCount !== rawFirst.totalRowCount
+        page.totalRowCount !== first.evidence.totalRowCount
       ) {
         throw new TypeError("Trade Explorer report rows changed while the report was generated.");
       }
       rows.push(...page.rows);
       cursor = page.continuationCursor;
     }
-    if (rows.length !== rawFirst.totalRowCount) {
+    if (rows.length !== first.evidence.totalRowCount) {
       throw new TypeError("Trade Explorer report did not include every matching trade.");
     }
     return Object.freeze({
       ...first,
-      evidence: toLogicalTradeAnalyticsTable(scope, database, Object.freeze({
-        ...rawFirst,
-        rows: Object.freeze(rows),
-        continuationCursor: null,
-      })),
+      evidence: toLogicalTradeAnalyticsTable(
+        scope,
+        verifiedReadonlyDatabase,
+        Object.freeze({
+          ...first.evidence,
+          rows: Object.freeze(rows),
+          continuationCursor: null,
+        }),
+      ),
     });
-  });
+  }, { prefetchAllFactSet: true });
 }
 
 function comparisonRecord(value: unknown): Readonly<Record<string, unknown>> {
@@ -477,13 +819,24 @@ export async function runTradeExplorerComparison(
 ): Promise<TradeExplorerComparisonResult> {
   const normalized = normalizeTradeExplorerComparison(input);
   const generatedAtUtc = new Date().toISOString();
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, service }) => {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) => {
     const groups = normalized.groups.map((group) => {
       const query = Object.freeze({
         ...group.query,
         grouping: "total" as const,
         metricId: "total_trades",
         evidenceRows: 50 as const,
+        tagId: null,
+        untaggedOnly: false,
+        noteState: null,
+        reviewIncompleteOnly: false,
+        ruleId: null,
+        ruleVersionId: null,
+        ruleStatus: null,
+        dayNoteState: null,
+        dayRuleId: null,
+        dayRuleVersionId: null,
+        dayRuleStatus: null,
       });
       return Object.freeze({
         name: group.name,
@@ -492,7 +845,6 @@ export async function runTradeExplorerComparison(
           scope,
           query,
           null,
-          database,
           service,
           tradeExplorerTableOrder("closed_desc"),
           generatedAtUtc,
@@ -537,7 +889,7 @@ export async function readTradeExplorerPageModel(
     startDate: string | null;
   }>,
 ): Promise<TradeExplorerPageModel> {
-  const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, dashboard, pnlReportingBasis, service }) => {
+  const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, pnlReportingBasis, service, verifiedReadonlyDatabase }) => {
     const calendarInput = Object.freeze({
       currency: null,
       startDate: null,
@@ -563,7 +915,7 @@ export async function readTradeExplorerPageModel(
       calendar.maximumDate;
     const symbols = Object.freeze([...new Set(currencyCalendars.flatMap((item) =>
       item.symbols))].sort());
-    const initialQuery: AnalyticsLabPlatformQuery = Object.freeze({
+    const initialQuery: TradeExplorerQuery = Object.freeze({
       expectedAccountSelectionRef: currentJournalAccountSelectionRef(scope),
       metricId: initialView?.rank === "pnl" ? `${pnlReportingBasis}_pnl` : "total_trades",
       grouping: initialView ? "instrument" : "closing_month",
@@ -588,7 +940,45 @@ export async function readTradeExplorerPageModel(
       minimumEntryNotional: null,
       maximumEntryNotional: null,
       evidenceRows: 50,
+      tagId: null,
+      untaggedOnly: false,
+      noteState: null,
+      reviewIncompleteOnly: false,
+      ruleId: null,
+      ruleVersionId: null,
+      ruleStatus: null,
+      dayNoteState: null,
+      dayRuleId: null,
+      dayRuleVersionId: null,
+      dayRuleStatus: null,
     });
+    const annotationOptions = withScopedJournalAnnotations(
+      verifiedReadonlyDatabase,
+      scope,
+      (annotations, account) => {
+        const option = (rule: JournalRuleRecord) => Object.freeze({
+          ruleId: rule.ruleId,
+          ruleVersionId: rule.versionId,
+          title: rule.title,
+          versionNumber: rule.versionNumber,
+        });
+        const rules = annotations.listRules(account)
+          .filter((rule) => rule.sourceKind === "custom" && rule.lifecycleState !== "retired");
+        return Object.freeze({
+          tags: Object.freeze(annotations.listTags(account).map((tag) => Object.freeze({
+            tagId: tag.tagId,
+            name: tag.name,
+            assignmentCount: tag.assignmentCount,
+          }))),
+          tradeRules: Object.freeze(rules
+            .filter((rule) => rule.reviewScope === "trade" || rule.reviewScope === "both")
+            .map(option)),
+          dayRules: Object.freeze(rules
+            .filter((rule) => rule.reviewScope === "day" || rule.reviewScope === "both")
+            .map(option)),
+        });
+      },
+    );
     return Object.freeze({
       expectedAccountSelectionRef: initialQuery.expectedAccountSelectionRef,
       metrics: Object.freeze(journalAnalyticsMetricRegistry.definitions
@@ -608,15 +998,17 @@ export async function readTradeExplorerPageModel(
       symbols,
       minimumDate,
       maximumDate,
+      annotationOptions,
       initialQuery,
       initialPreview: buildPreview(
         scope,
         initialQuery,
         null,
-        database,
         service,
         tradeExplorerTableOrder("closed_desc"),
         new Date().toISOString(),
+        null,
+        verifiedReadonlyDatabase,
       ),
     });
   });
