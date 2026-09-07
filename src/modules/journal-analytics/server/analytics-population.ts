@@ -34,6 +34,7 @@ import {
   classifyJournalAnalyticsProvenance,
   journalAnalyticsLocalTimeFact,
 } from "./normalize-journal-analytics-facts";
+import { journalAnalyticsEntrySession } from "./analytics-grouping";
 
 const supportedGroupings = new Set<JournalAnalyticsGrouping>([
   "total",
@@ -52,6 +53,7 @@ const supportedGroupings = new Set<JournalAnalyticsGrouping>([
   "holding_duration_bucket",
   "entered_quantity_bucket",
   "maximum_position_bucket",
+  "maximum_position_value_bucket",
   "entry_notional_bucket",
   "entry_price_bucket",
   "entry_price_comparison",
@@ -69,6 +71,7 @@ const queryKeys = Object.freeze([
   "entryNotionalRange",
   "entryTimeBucketMinutes",
   "entryTimeBuckets",
+  "entrySessions",
   "entryWeekdays",
   "groupings",
   "holdingDurationRange",
@@ -100,10 +103,15 @@ export function requireJournalAnalyticsQuery(
   normalized: NormalizedJournalAnalyticsSet,
   query: JournalAnalyticsQuery,
 ): JournalAnalyticsQuery {
-  const legacyQueryKeys = queryKeys.filter((key) => key !== "roundTripIds");
+  const acceptedQueryKeySets = [
+    queryKeys,
+    queryKeys.filter((key) => key !== "roundTripIds"),
+    queryKeys.filter((key) => key !== "entrySessions"),
+    queryKeys.filter((key) => key !== "entrySessions" && key !== "roundTripIds"),
+  ];
   const actualQueryKeys = Object.keys(query).sort();
-  if (JSON.stringify(actualQueryKeys) !== JSON.stringify([...queryKeys].sort()) &&
-      JSON.stringify(actualQueryKeys) !== JSON.stringify([...legacyQueryKeys].sort())) {
+  if (!acceptedQueryKeySets.some((keys) =>
+    JSON.stringify(actualQueryKeys) === JSON.stringify([...keys].sort()))) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "queryFields",
     });
@@ -193,6 +201,7 @@ export function requireJournalAnalyticsQuery(
   const outcomes = unique(query.outcomes, "outcomes");
   const entryWeekdays = unique(query.entryWeekdays, "entryWeekdays");
   const entryTimeBuckets = unique(query.entryTimeBuckets, "entryTimeBuckets");
+  const entrySessions = unique(query.entrySessions ?? [], "entrySessions");
   const groupings = unique(query.groupings, "groupings");
   if (
     !["gross", "net"].includes(query.moneyBasis) ||
@@ -207,6 +216,8 @@ export function requireJournalAnalyticsQuery(
       "unknown",
     ].includes(value)) ||
     outcomes.some((value) => !["win", "loss", "flat"].includes(value)) ||
+    entrySessions.some((value) =>
+      !["premarket", "regular_hours", "postmarket"].includes(value)) ||
     entryWeekdays.some((value) => ![
       "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
       "sunday",
@@ -319,6 +330,9 @@ export function requireJournalAnalyticsQuery(
     outcomes,
     entryWeekdays,
     entryTimeBuckets,
+    ...(query.entrySessions === undefined && entrySessions.length === 0
+      ? {}
+      : { entrySessions }),
     holdingDurationRange: Object.freeze({ ...query.holdingDurationRange }),
     enteredQuantityRange: Object.freeze({ ...query.enteredQuantityRange }),
     maximumPositionRange: Object.freeze({ ...query.maximumPositionRange }),
@@ -381,6 +395,10 @@ function baseRowMatches(
     row.entryLocal.minute / query.entryTimeBucketMinutes,
   ) * query.entryTimeBucketMinutes;
   const entryTimeBucket = `${String(row.entryLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`;
+  const entrySession = journalAnalyticsEntrySession(
+    row.entryLocal.hour,
+    row.entryLocal.minute,
+  );
   const inDecimalRange = (
     value: string,
     range: JournalAnalyticsQuery["enteredQuantityRange"],
@@ -403,6 +421,8 @@ function baseRowMatches(
       query.entryWeekdays.includes(row.entryLocal.weekday)) &&
     (query.entryTimeBuckets.length === 0 ||
       query.entryTimeBuckets.includes(entryTimeBucket)) &&
+    ((query.entrySessions?.length ?? 0) === 0 ||
+      query.entrySessions!.includes(entrySession as "premarket" | "regular_hours" | "postmarket")) &&
     (query.holdingDurationRange.minimumMillisecondsInclusive === null ||
       row.holdingDurationMilliseconds >=
         query.holdingDurationRange.minimumMillisecondsInclusive) &&
@@ -448,6 +468,11 @@ function roundTripMatches(
       !query.entryWeekdays.includes(openedLocal.weekday)) ||
     (query.entryTimeBuckets.length > 0 &&
       !query.entryTimeBuckets.includes(bucket)) ||
+    ((query.entrySessions?.length ?? 0) > 0 &&
+      !query.entrySessions!.includes(journalAnalyticsEntrySession(
+        openedLocal.hour,
+        openedLocal.minute,
+      ) as "premarket" | "regular_hours" | "postmarket")) ||
     query.tradeClassifications.length > 0 ||
     query.outcomes.length > 0 ||
     query.holdingDurationRange.minimumMillisecondsInclusive !== null ||
@@ -492,6 +517,7 @@ function unavailableMatches(
     query.outcomes.length === 0 &&
     query.entryWeekdays.length === 0 &&
     query.entryTimeBuckets.length === 0 &&
+    (query.entrySessions?.length ?? 0) === 0 &&
     query.holdingDurationRange.minimumMillisecondsInclusive === null &&
     query.holdingDurationRange.maximumMillisecondsInclusive === null &&
     query.enteredQuantityRange.minimumInclusive === null &&
@@ -542,6 +568,7 @@ function scopeCoverageIsExactlyAttributable(
     query.outcomes.length === 0 &&
     query.entryWeekdays.length === 0 &&
     query.entryTimeBuckets.length === 0 &&
+    (query.entrySessions?.length ?? 0) === 0 &&
     query.holdingDurationRange.minimumMillisecondsInclusive === null &&
     query.holdingDurationRange.maximumMillisecondsInclusive === null &&
     query.enteredQuantityRange.minimumInclusive === null &&
@@ -572,6 +599,9 @@ export function buildJournalAnalyticsPopulations(
       outcomes: query.outcomes,
       entryWeekdays: query.entryWeekdays,
       entryTimeBuckets: query.entryTimeBuckets,
+      ...((query.entrySessions?.length ?? 0) > 0
+        ? { entrySessions: query.entrySessions }
+        : {}),
       holdingDurationRange: query.holdingDurationRange,
       enteredQuantityRange: query.enteredQuantityRange,
       maximumPositionRange: query.maximumPositionRange,

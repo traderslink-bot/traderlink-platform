@@ -39,6 +39,7 @@ export type TradeExplorerPdfResultView =
   | "entry_price"
   | "holding_time"
   | "position_size"
+  | "position_value"
   | "periods";
 
 type SortDirection = "ascending" | "descending";
@@ -156,8 +157,8 @@ const REPORT_VIEWS: Readonly<Record<Exclude<TradeExplorerPdfResultView, "trades"
     ]),
   }),
   entered_quantity: Object.freeze({
-    label: "Entered Quantity",
-    firstColumnLabel: "Shares entered",
+    label: "Total Entry Shares",
+    firstColumnLabel: "Total entry shares",
     columns: Object.freeze([
       { label: "Trades", metricId: "total_trades" },
       { label: "Win rate", metricId: "win_rate" },
@@ -168,8 +169,8 @@ const REPORT_VIEWS: Readonly<Record<Exclude<TradeExplorerPdfResultView, "trades"
     ]),
   }),
   entry_value: Object.freeze({
-    label: "Entry Value",
-    firstColumnLabel: "Entry value",
+    label: "Total Entry Value",
+    firstColumnLabel: "Total entry value",
     columns: Object.freeze([
       { label: "Trades", metricId: "total_trades" },
       { label: "Win rate", metricId: "win_rate" },
@@ -204,14 +205,26 @@ const REPORT_VIEWS: Readonly<Record<Exclude<TradeExplorerPdfResultView, "trades"
     ]),
   }),
   position_size: Object.freeze({
-    label: "Position Size",
-    firstColumnLabel: "Maximum shares held",
+    label: "Share Size",
+    firstColumnLabel: "Peak shares held",
     columns: Object.freeze([
       { label: "Trades", metricId: "total_trades" },
       { label: "Win rate", metricId: "win_rate" },
       { label: "Net P/L", metricId: "net_pnl" },
       { label: "Avg P/L", metricId: "average_pnl" },
       { label: "Avg shares entered", metricId: "average_share_quantity" },
+      { label: "Avg entry value", metricId: "average_entry_notional", weight: 1.2 },
+      { label: "Avg hold", metricId: "average_holding_time" },
+    ]),
+  }),
+  position_value: Object.freeze({
+    label: "Position Size",
+    firstColumnLabel: "Maximum position value",
+    columns: Object.freeze([
+      { label: "Trades", metricId: "total_trades" },
+      { label: "Win rate", metricId: "win_rate" },
+      { label: "Net P/L", metricId: "net_pnl" },
+      { label: "Avg P/L", metricId: "average_pnl" },
       { label: "Avg entry value", metricId: "average_entry_notional", weight: 1.2 },
       { label: "Avg hold", metricId: "average_holding_time" },
     ]),
@@ -243,7 +256,7 @@ function normalizeResultView(input: unknown): TradeExplorerPdfResultView {
   if (![
     "trades", "days", "tickers", "entry_times", "exit_times", "entry_weekday",
     "direction", "entered_quantity", "entry_value", "entry_price", "holding_time",
-    "position_size", "periods",
+    "position_size", "position_value", "periods",
   ].includes(String(input))) {
     throw new TypeError("Invalid Trade Explorer PDF result view.");
   }
@@ -292,7 +305,9 @@ function requireViewGrouping(
             ? grouping === "holding_duration_bucket"
             : resultView === "position_size"
               ? grouping === "maximum_position_bucket"
-              : ["closing_day", "closing_iso_week", "closing_month", "closing_year"]
+              : resultView === "position_value"
+                ? grouping === "maximum_position_value_bucket"
+                : ["closing_day", "closing_iso_week", "closing_month", "closing_year"]
                   .includes(grouping);
   if (!matches) throw new TypeError("Trade Explorer PDF view and grouping do not match.");
 }
@@ -404,6 +419,7 @@ function tradeRows(
       trade.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade",
       formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal),
       formatJournalAnalyticsDecimal(trade.maximumPositionQuantityDecimal),
+      reportMoney(trade.maximumPositionValueDecimal ?? null, evidence.currency),
       reportMoney(trade.averageEntryPriceDecimal ?? null, evidence.currency),
       reportMoney(trade.averageExitPriceDecimal ?? null, evidence.currency),
       reportMoney(trade.entryNotionalDecimal, evidence.currency),
@@ -491,9 +507,12 @@ function filterSummary(
     `Result: ${query.outcome === null ? "All results" : query.outcome === "win" ? "Wins" : query.outcome === "loss" ? "Losses" : "Flat"}`,
     resultView === "trades"
       ? `Sort trades: ${tradeSortLabel}`
-      : `Rank by: ${selectedTitle} - ${sortDirection === "descending" ? "Highest first" : "Lowest first"}`,
+      : `${resultView === "days" ? "Sort days" : "Rank by"}: ${selectedTitle} - ${sortDirection === "descending" ? "Highest first" : "Lowest first"}`,
   ];
   if (query.entryWeekday !== null) filters.push(`Entry weekday: ${query.entryWeekday}`);
+  if (query.entrySession) {
+    filters.push(`Entry session: ${query.entrySession === "premarket" ? "Premarket" : query.entrySession === "regular_hours" ? "Regular hours" : "Post market"}`);
+  }
   if (query.entryTimeBucket !== null) filters.push(`Entry time: ${query.entryTimeBucket}`);
   if (query.tradeClassification !== null) {
     filters.push(`Trade type: ${query.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade"}`);
@@ -515,9 +534,9 @@ function filterSummary(
   }
   const ranges = [
     ["Holding seconds", query.minimumHoldingSeconds, query.maximumHoldingSeconds],
-    ["Entered quantity", query.minimumEnteredQuantity, query.maximumEnteredQuantity],
-    ["Maximum position", query.minimumPositionQuantity, query.maximumPositionQuantity],
-    ["Entry value", query.minimumEntryNotional, query.maximumEntryNotional],
+    ["Total entry shares", query.minimumEnteredQuantity, query.maximumEnteredQuantity],
+    ["Peak shares held", query.minimumPositionQuantity, query.maximumPositionQuantity],
+    ["Total entry value", query.minimumEntryNotional, query.maximumEntryNotional],
   ] as const;
   for (const [label, minimum, maximum] of ranges) {
     if (minimum !== null || maximum !== null) {
@@ -552,12 +571,12 @@ function reportTable(
       feeNotice,
       filters: filterSummary(query, resultView, preview, tradeSort, sortDirection),
       columns: Object.freeze([
-        "Ticker", "Opened", "Closed", "Direction", "Trade type", "Shares entered",
-        "Maximum shares held", "Avg entry", "Avg exit",
-        "Entry value", query.moneyBasis === "gross" ? "Gross P/L" : "Net P/L",
+        "Ticker", "Opened", "Closed", "Direction", "Trade type", "Total entry shares",
+        "Peak shares held", "Position size", "Avg entry", "Avg exit",
+        "Total entry value", query.moneyBasis === "gross" ? "Gross P/L" : "Net P/L",
         "Return on entry value", "Hold", "Trading costs", "Execution structure",
       ]),
-      columnWeights: Object.freeze([0.65, 1.2, 1.2, 0.65, 0.8, 0.75, 0.85, 0.75, 0.75, 0.85, 0.8, 0.8, 0.7, 0.8, 1.5]),
+      columnWeights: Object.freeze([0.65, 1.2, 1.2, 0.65, 0.8, 0.75, 0.85, 0.9, 0.75, 0.75, 0.85, 0.8, 0.8, 0.7, 0.8, 1.5]),
       rows: tradeRows(preview),
     });
   }

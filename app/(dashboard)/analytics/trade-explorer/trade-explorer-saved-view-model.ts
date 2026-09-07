@@ -15,6 +15,7 @@ export type TradeExplorerResultView =
   | "entry_price"
   | "holding_time"
   | "position_size"
+  | "position_value"
   | "periods";
 
 export type TradeExplorerRuleStatus =

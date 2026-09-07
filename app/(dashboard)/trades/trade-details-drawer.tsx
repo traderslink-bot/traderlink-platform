@@ -8,7 +8,6 @@ import {
   AccordionSummary,
   Alert,
   Box,
-  Button,
   Chip,
   CircularProgress,
   Divider,
@@ -188,6 +187,7 @@ export function TradeDetailsDrawer({
   onClose,
   open,
   roundTripId,
+  showAnalyzer = true,
 }: Readonly<{
   analyzer: Readonly<{
     currency: string;
@@ -201,6 +201,7 @@ export function TradeDetailsDrawer({
   onClose: () => void;
   open: boolean;
   roundTripId: string | null;
+  showAnalyzer?: boolean;
 }>) {
   const [state, setState] = useState<DetailState>({ status: "idle" });
   const [tab, setTab] = useState<DetailTab>(initialTab);
@@ -208,8 +209,11 @@ export function TradeDetailsDrawer({
   useEffect(() => {
     if (!open || !roundTripId) return;
     const controller = new AbortController();
-    setState({ status: "loading" });
-    setTab(initialTab);
+    queueMicrotask(() => {
+      if (controller.signal.aborted) return;
+      setState({ status: "loading" });
+      setTab(showAnalyzer ? initialTab : "details");
+    });
     void fetch(`/api/platform/journal/trade-details?roundTripId=${encodeURIComponent(roundTripId)}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -223,7 +227,7 @@ export function TradeDetailsDrawer({
       setState({ status: "error" });
     });
     return () => controller.abort();
-  }, [initialTab, open, roundTripId]);
+  }, [initialTab, open, roundTripId, showAnalyzer]);
 
   const details = state.status === "ready" ? state.details : null;
   const performance = details?.performance ?? null;
@@ -264,10 +268,10 @@ export function TradeDetailsDrawer({
         </Stack>
       </Stack>
 
-      <Tabs aria-label="Trade details sections" onChange={(_event, value: DetailTab) => setTab(value)} sx={{ borderBottom: 1, borderColor: "divider", px: 1.5 }} value={tab} variant="fullWidth">
+      {showAnalyzer ? <Tabs aria-label="Trade details sections" onChange={(_event, value: DetailTab) => setTab(value)} sx={{ borderBottom: 1, borderColor: "divider", px: 1.5 }} value={tab} variant="fullWidth">
         <Tab label="Details" value="details" />
         <Tab label="Analyzer" value="analyzer" />
-      </Tabs>
+      </Tabs> : null}
 
       {tab === "details" ? <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
         {state.status === "loading" ? <Stack spacing={1} sx={{ alignItems: "center", minHeight: 220, justifyContent: "center" }}><CircularProgress size={28} /><Typography color="text.secondary">Loading trade details…</Typography></Stack> : null}
@@ -277,12 +281,12 @@ export function TradeDetailsDrawer({
             {performance ? <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
               <Box><Typography color="text.secondary" variant="caption">Gross P/L</Typography><Typography color={resultColor} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>{resultValue}</Typography></Box>
               <Box><Typography color="text.secondary" variant="caption">Fees</Typography><Typography sx={{ fontWeight: 800 }}>{performance.chargeCoverage === "complete" ? formatJournalAnalyticsMoney(performance.chargeCostDecimal, performance.tradeCurrency) : "N/A"}</Typography></Box>
-              <Box><Typography color="text.secondary" variant="caption">Total shares</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsDecimal(performance.enteredQuantityDecimal)}</Typography></Box>
+              <Box><Typography color="text.secondary" variant="caption">Total entry shares</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsDecimal(performance.enteredQuantityDecimal)}</Typography></Box>
               <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
                 <Box><Typography color="text.secondary" variant="caption">Entry</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsMoney(performance.entryPriceDecimal, performance.tradeCurrency)}</Typography></Box>
                 <Box><Typography color="text.secondary" variant="caption">Exit</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsMoney(performance.exitPriceDecimal, performance.tradeCurrency)}</Typography></Box>
               </Box>
-              <Box><Typography color="text.secondary" variant="caption">Entry value</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsMoney(performance.entryNotionalDecimal, performance.tradeCurrency)}</Typography></Box>
+              <Box><Typography color="text.secondary" variant="caption">Total entry value</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsMoney(performance.entryNotionalDecimal, performance.tradeCurrency)}</Typography></Box>
               <Box><Typography color="text.secondary" variant="caption">Hold</Typography><Typography sx={{ fontWeight: 800 }}>{formatJournalAnalyticsDuration(performance.holdDurationMilliseconds)}</Typography></Box>
             </Box> : <Typography color="text.secondary" variant="body2">This position is still open. Completed-trade P/L and fees will appear after it is fully exited.</Typography>}
           </SurfaceSection>

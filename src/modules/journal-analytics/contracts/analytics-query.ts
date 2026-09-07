@@ -28,6 +28,10 @@ export type JournalAnalyticsTableOrder = Readonly<{
 }>;
 export type JournalAnalyticsDirection = "long" | "short";
 export type JournalAnalyticsOutcome = "win" | "loss" | "flat";
+export type JournalAnalyticsEntrySession =
+  | "premarket"
+  | "regular_hours"
+  | "postmarket";
 /**
  * A factual completed-trade classification derived from the account's trading
  * timezone. This is deliberately separate from the trader-authored style
@@ -76,6 +80,7 @@ export type JournalAnalyticsGrouping =
   | "holding_duration_bucket"
   | "entered_quantity_bucket"
   | "maximum_position_bucket"
+  | "maximum_position_value_bucket"
   | "entry_notional_bucket"
   | "entry_price_bucket"
   | "entry_price_comparison"
@@ -117,6 +122,7 @@ export type JournalAnalyticsQuery = Readonly<{
   outcomes: readonly JournalAnalyticsOutcome[];
   entryWeekdays: readonly JournalAnalyticsWeekday[];
   entryTimeBuckets: readonly string[];
+  entrySessions?: readonly JournalAnalyticsEntrySession[];
   holdingDurationRange: JournalAnalyticsDurationRange;
   enteredQuantityRange: JournalAnalyticsDecimalRange;
   maximumPositionRange: JournalAnalyticsDecimalRange;

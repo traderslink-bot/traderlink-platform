@@ -137,6 +137,7 @@ export type JournalAnalyticsRoundTripTableRow = Readonly<{
   exitExecutionCount: number;
   enteredQuantityDecimal: string;
   maximumPositionQuantityDecimal: string;
+  maximumPositionValueDecimal?: string;
   entryNotionalDecimal: string;
   averageEntryPriceDecimal?: string | null;
   averageExitPriceDecimal?: string | null;

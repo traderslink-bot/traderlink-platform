@@ -360,7 +360,7 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Session Tracker shows tags on the matching completed trade.",
             "Swing Trade Tracker shows tags on the matching supported Swing position.",
-            "Trade Explorer opens the same completed-trade tag assignment from its Review action.",
+            "Trade Explorer shows the completed trade's saved tags in Trade Details. Use Session Tracker to change them.",
             "Switching between two completed trades in one ticker switches their separate tag lists.",
             "Renaming an active tag updates its wording wherever that reusable tag appears in current views.",
           ]) }),
@@ -386,7 +386,7 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Ordinary Analytics does not currently provide tag-based totals or comparisons.",
-            "There is no Trade Explorer tag filter in the current replacement app.",
+            "Trade Explorer can filter completed trades by one exact saved tag or Untagged.",
             "Bulk assignment across many trades is not available.",
             "TraderLink and AI do not automatically add or suggest tags.",
           ]) }),
@@ -430,11 +430,11 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "A completed Day trade can save tags from its Session Tracker card.",
-            "Any confirmed completed trade shown in Trade Explorer can save tags from its Review editor.",
+            "Trade Explorer shows saved tags for a confirmed completed trade in Trade Details; Session Tracker provides the editing tools.",
             "A connected Swing position can save tags from Swing Trade Tracker.",
             "A Session Review can save up to 10 tags for the full trading day. Those tags are separate from its individual trade tags.",
             "An ordinary open-position row inside Session Tracker does not currently save a tag selection. If the position is an intentional Swing, classify it and use Swing Trade Tracker.",
-            "Other historical read-only pages can display saved tags without offering the Trade Explorer Review editor.",
+            "Other historical read-only pages can display saved tags without offering editing tools.",
           ]) }),
         ]),
       }),

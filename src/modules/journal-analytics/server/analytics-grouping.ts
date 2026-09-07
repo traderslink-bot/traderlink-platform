@@ -69,6 +69,17 @@ function entryValueBucket(
     : Object.freeze({ key: "over_10000", label: `${currency} Over 10,000` });
 }
 
+export function journalAnalyticsEntrySession(
+  hour: number,
+  minute: number,
+): "premarket" | "regular_hours" | "postmarket" | "overnight" {
+  const minuteOfDay = hour * 60 + minute;
+  if (minuteOfDay >= 4 * 60 && minuteOfDay < 9 * 60 + 30) return "premarket";
+  if (minuteOfDay >= 9 * 60 + 30 && minuteOfDay < 16 * 60) return "regular_hours";
+  if (minuteOfDay >= 16 * 60 && minuteOfDay < 20 * 60) return "postmarket";
+  return "overnight";
+}
+
 function timeBucketDescriptor(
   hour: number,
   minute: number,
@@ -125,15 +136,15 @@ function groupDescriptor(
       );
     }
     case "entry_session": {
-      const minuteOfDay = row.entryLocal.hour * 60 + row.entryLocal.minute;
-      if (minuteOfDay >= 4 * 60 && minuteOfDay < 9 * 60 + 30) {
+      const session = journalAnalyticsEntrySession(row.entryLocal.hour, row.entryLocal.minute);
+      if (session === "premarket") {
         return Object.freeze({ key: "premarket", label: "Premarket" });
       }
-      if (minuteOfDay >= 9 * 60 + 30 && minuteOfDay < 16 * 60) {
+      if (session === "regular_hours") {
         return Object.freeze({ key: "regular_hours", label: "Regular Hours" });
       }
-      if (minuteOfDay >= 16 * 60 && minuteOfDay < 20 * 60) {
-        return Object.freeze({ key: "after_hours", label: "After Hours" });
+      if (session === "postmarket") {
+        return Object.freeze({ key: "postmarket", label: "Post market" });
       }
       return Object.freeze({ key: "overnight", label: "Overnight" });
     }
@@ -189,6 +200,8 @@ function groupDescriptor(
       return quantityBucket(row.enteredQuantityDecimal);
     case "maximum_position_bucket":
       return quantityBucket(row.maximumPositionQuantityDecimal);
+    case "maximum_position_value_bucket":
+      return entryValueBucket(row.maximumPositionValueDecimal, row.tradeCurrency);
     case "entry_notional_bucket":
       return entryValueBucket(row.entryNotionalDecimal, row.tradeCurrency);
     case "entry_price_bucket":

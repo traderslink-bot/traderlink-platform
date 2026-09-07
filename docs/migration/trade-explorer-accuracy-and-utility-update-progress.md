@@ -1,12 +1,9 @@
 # Trade Explorer Accuracy And Utility Update Progress
 
-**Status:** The approved Journal-only implementation is complete and passes the
-focused source checks plus populated desktop and mobile Light-mode browser QA.
-The release coordinator has isolated the update on the current production
-parent while preserving production's complete appearance system. Final
-integrated Dark-mode verification remains open. No automated test suite, push,
-merge or deployment was run. The owner selected a direct-to-production release
-path with no staging deployment.
+**Status:** Follow-up correction in progress on 2026-09-06. The earlier
+Journal-only release remains live. The owner approved the complete correction
+inventory, waived further approval pauses and directed the verified package to
+the release coordinator for production. No automated test suite will run.
 
 **Controlling plan:** [Trade Explorer Accuracy And Utility Update Plan](trade-explorer-accuracy-and-utility-update-plan.md)
 
@@ -43,11 +40,10 @@ and exact rules for tags, notes and versioned rule reviews.
   the available populated Demo workflows.
 - [x] Complete owner-authorized focused verification without an automated test
   suite.
-- [ ] Complete rendered desktop/mobile Light/Dark acceptance.
+- [x] Complete rendered desktop/mobile Light/Dark acceptance.
 - [x] Record the owner-selected direct-to-production path with no staging
   deployment.
-- [ ] Record any separately owner-authorized Git or production-release
-  checkpoint.
+- [x] Record the owner-authorized Git and production-release checkpoint.
 
 ## Current repository boundary
 
@@ -148,28 +144,28 @@ rendered `/analytics/trade-explorer` route showed 104 completed trades.
   Mobile used the filter drawer, two-column selected-trade summaries and trade
   cards with exact-execution actions. Browser console error count was zero.
 
-### Remaining rendered gate
+### Production rendered acceptance
 
 The mixed canonical checkout could not provide truthful Dark-mode QA because
 its unrelated staged shell changes removed the appearance provider. The
-release coordinator confirmed those deletions are not in production and
+release coordinator confirmed those deletions were not in production and
 created a clean package from the current production parent with the complete
-appearance system preserved. Trade Explorer uses the shared theme tokens and
-contains no Analyzer fallback. Final desktop/mobile Dark verification now
-remains a release-candidate acceptance action rather than a source-ownership
-blocker.
+appearance system preserved. After release, signed-in production browser QA
+rendered 508 completed trades and passed in desktop and 390 x 844 mobile Light
+and Dark modes. The mobile drawer, filters, summary, actions and trade cards
+remained readable without page-level horizontal overflow after the responsive
+transition. Browser warnings and errors remained empty.
 
 ### Direct production release decision
 
 On 2026-09-06 the owner directed that Trade Explorer go directly to production
-instead of staging. No commit, push, merge, migration or deployment was
-authorized by that decision, and none occurred. Once production publication is
-separately authorized, the release must be serialized through the shared
-Railway lane and record the `main` source branch, exact remote parent and
-published SHAs, complete file allowlist, Railway deployment ID/status and
-`/api/platform/health` result. The unresolved integrated Dark-mode gate must be
-closed against the production candidate before publication where possible, or
-immediately after the direct deployment if it is genuinely production-only.
+instead of staging. The release coordinator serialized the exact allowlisted
+commit chain through `main`. Final source
+`add0c27dafd4822eb924e48a3620e15a0cffe808` deployed as Railway deployment
+`fac00386-c6ab-4e71-a2ed-7a35bcc3ba00` with status `SUCCESS`. Startup verified
+115 migrations, maintenance controls were absent and direct
+`/api/platform/health` returned HTTP 200 with `ready` / `sqlite_single_node`.
+No migration, data, staging or hosted-configuration change occurred.
 
 ### Requirement-by-requirement completion audit
 
@@ -186,6 +182,51 @@ immediately after the direct deployment if it is genuinely production-only.
 | Same inventory without Analyzer access | Page-model composition has no Analyzer entitlement input or branch, and all results are derived within the Journal reporting runtime. | Proved in source; no separate non-entitled identity fixture exists in the disposable local runtime |
 | Supporting completed trades | The Trades view retains Review, ticker links, exact execution expansion and opaque-cursor pagination for the selected aggregate population; grouped calculations reconcile their complete population before pagination and current-view PDF exports the complete matching population. | Proved |
 | Desktop/mobile Light render | Desktop tables, 390 x 844 filter drawer, selected-trade grid and mobile cards rendered against 104 Demo trades with no console error or failure surface. | Proved |
-| Desktop/mobile Dark render and owner acceptance | The production-based package preserves the complete appearance provider and contract. | Pending release-candidate verification |
+| Desktop/mobile Dark render | Signed-in production passed desktop and 390 x 844 mobile Dark rendering with readable controls/cards, no page-level horizontal overflow and no browser warnings/errors. | Proved |
 
-No commit, push, merge, deployment or production action occurred.
+Production release and post-release rendered acceptance are complete. Final
+source is `add0c27dafd4822eb924e48a3620e15a0cffe808`; Railway deployment is
+`fac00386-c6ab-4e71-a2ed-7a35bcc3ba00` with status `SUCCESS`.
+
+## 2026-09-06 owner correction checkpoint
+
+The owner approved one complete follow-up slice:
+
+- retain automatic account-local same-day Day trade classification for useful
+  historical imports, separate from intentional Swing style;
+- remove the Selected trades card;
+- repair Exit Times and Entry Price request validation;
+- rename the views to Total Entry Shares, Total Entry Value and Share Size;
+- add a separate execution-derived money-based Position Size view;
+- add Premarket, Regular Hours and Post market entry-session filtering;
+- expand Trading Days and Tickers into their contributing trades;
+- add the complete requested Trading Days sort inventory and `Sort days` label;
+- replace Trades Review actions with in-page Workspace Trade Details; and
+- reuse the same Details drawer from every expanded grouped trade row.
+
+### Follow-up delivery tracker
+
+- [x] Record and perfect the correction contract before source edits.
+- [x] Implement strict query, grouping, result and saved-view contracts.
+- [x] Implement the corrected controls, grouped expansions and Details drawer.
+- [x] Align PDF and Help copy.
+- [x] Complete focused static verification without an automated test suite.
+- [ ] Complete integrated desktop/mobile Light/Dark browser verification.
+- [ ] Create the narrow local correction commit.
+- [ ] Hand the exact allowlist to the production coordinator.
+- [ ] Record published SHA, Railway deployment and health result.
+
+Implementation now derives entry sessions and maximum position value entirely
+from Journal execution facts. Exit Times and Entry Price are accepted by the
+same strict grouping allowlist used by the request normalizer. Trading Days and
+Tickers lazy-load their completed trades in pages of up to 100, and every
+expanded trade uses the shared Trade Details drawer with its Analyzer tab
+suppressed in Trade Explorer.
+
+Focused ESLint over all changed TypeScript/TSX files and `git diff --check`
+pass. No automated test suite was run, per the project instruction. Both the
+repository-wide and narrowed TypeScript compiler passes reached the existing
+2 GB Node heap limit; memory was not raised because this computer is governed
+by the low-resource policy. The local review database path recorded by the old
+environment file is no longer present, so integrated visual proof is reserved
+for the direct production candidate after the coordinator publishes it.

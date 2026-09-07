@@ -20,6 +20,7 @@ import {
   absoluteExactDecimal,
   addExactDecimals,
   compareExactDecimals,
+  divideExactDecimals,
   multiplyExactDecimals,
   negateExactDecimal,
   subtractExactDecimals,
@@ -73,6 +74,7 @@ export type NormalizedJournalAnalyticsRow = Readonly<{
   enteredQuantityDecimal: string;
   exitQuantityDecimal: string;
   maximumPositionQuantityDecimal: string;
+  maximumPositionValueDecimal: string;
   entryNotionalDecimal: string;
   exitNotionalDecimal: string;
 }>;
@@ -419,6 +421,22 @@ function normalizeReadyClosed(
     tradingTimezone,
   );
   const source = classifyJournalAnalyticsProvenance(roundTrip.allocations);
+  const maximumPositionValueDecimal = compareExactDecimals(
+    enteredQuantityDecimal,
+    "0",
+  ) === 0
+    ? "0"
+    : divideExactDecimals(
+        multiplyExactDecimals(
+          maximumPositionQuantityDecimal,
+          entryNotionalDecimal,
+        ),
+        enteredQuantityDecimal,
+        {
+          decimalPlaces: 8,
+          roundingPolicy: "half_up_8dp",
+        },
+      ).roundedDecimal;
   const uniqueExecutionIds = Object.freeze([...new Set(
     roundTrip.allocations.map((allocation) => allocation.executionId),
   )].sort());
@@ -461,6 +479,7 @@ function normalizeReadyClosed(
     enteredQuantityDecimal,
     exitQuantityDecimal,
     maximumPositionQuantityDecimal,
+    maximumPositionValueDecimal,
     entryNotionalDecimal,
     exitNotionalDecimal,
   });

@@ -158,6 +158,7 @@ function journalQuery(
     outcomes: Object.freeze(input.outcome === null ? [] : [input.outcome]),
     entryWeekdays: Object.freeze(input.entryWeekday === null ? [] : [input.entryWeekday]),
     entryTimeBuckets: Object.freeze(input.entryTimeBucket === null ? [] : [input.entryTimeBucket]),
+    entrySessions: Object.freeze(input.entrySession == null ? [] : [input.entrySession]),
     holdingDurationRange: Object.freeze({
       minimumMillisecondsInclusive: secondsToMilliseconds(input.minimumHoldingSeconds),
       maximumMillisecondsInclusive: secondsToMilliseconds(input.maximumHoldingSeconds),
@@ -656,6 +657,46 @@ export async function runCompleteTradeExplorerTableQuery(
   }, { prefetchAllFactSet: true });
 }
 
+export async function runTradeExplorerGroupTradesQuery(
+  scope: WorkspaceAccessScope,
+  input: unknown,
+  group: unknown,
+  afterCursor?: unknown,
+): Promise<AnalyticsLabPlatformPreview> {
+  if (!group || typeof group !== "object" || Array.isArray(group)) {
+    throw new TypeError("Invalid Trade Explorer group.");
+  }
+  const value = group as Readonly<Record<string, unknown>>;
+  if (Object.keys(value).sort().join("\u0000") !== ["currency", "groupKey", "resultView"].sort().join("\u0000") ||
+      (value.resultView !== "days" && value.resultView !== "tickers") ||
+      typeof value.groupKey !== "string" ||
+      (value.currency !== null && (
+        typeof value.currency !== "string" ||
+        !/^[A-Z]{3}$/u.test(value.currency)
+      ))) {
+    throw new TypeError("Invalid Trade Explorer group.");
+  }
+  const normalized = normalizeTradeExplorerQueryRequest(input, "closed_desc").query;
+  const currency = value.currency as string | null;
+  const groupKey = value.groupKey;
+  if (value.resultView === "days" && !/^\d{4}-\d{2}-\d{2}$/u.test(groupKey)) {
+    throw new TypeError("Invalid Trade Explorer trading day.");
+  }
+  if (value.resultView === "tickers" &&
+      (groupKey.length < 1 || groupKey.length > 64 || groupKey !== groupKey.toUpperCase())) {
+    throw new TypeError("Invalid Trade Explorer ticker.");
+  }
+  return runTradeExplorerQuery(scope, Object.freeze({
+    ...normalized,
+    currency,
+    grouping: "total" as const,
+    ...(value.resultView === "days"
+      ? { startDate: groupKey, endDate: groupKey }
+      : { symbol: groupKey }),
+    evidenceRows: 100 as const,
+  }), afterCursor, "closed_desc");
+}
+
 function comparisonRecord(value: unknown): Readonly<Record<string, unknown>> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new TypeError("Invalid Trade Explorer comparison.");
@@ -927,6 +968,7 @@ export async function readTradeExplorerPageModel(
       provenance: null,
       outcome: null,
       entryWeekday: null,
+      entrySession: null,
       entryTimeBucketMinutes: 30,
       entryTimeBucket: null,
       startDate: initialView?.startDate ?? minimumDate,

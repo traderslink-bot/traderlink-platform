@@ -258,6 +258,7 @@ function publicRow(
       row.allocationRoleCounts.closing + row.allocationRoleCounts.flip_closing,
     enteredQuantityDecimal: row.enteredQuantityDecimal,
     maximumPositionQuantityDecimal: row.maximumPositionQuantityDecimal,
+    maximumPositionValueDecimal: row.maximumPositionValueDecimal,
     entryNotionalDecimal: row.entryNotionalDecimal,
     averageEntryPriceDecimal,
     averageExitPriceDecimal,

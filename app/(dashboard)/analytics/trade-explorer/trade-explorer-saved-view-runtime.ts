@@ -55,7 +55,7 @@ function hasExactFields(
 function normalizeResultView(value: unknown): TradeExplorerResultView {
   if (!["trades", "days", "tickers", "entry_times", "exit_times", "entry_weekday",
     "direction", "entered_quantity", "entry_value", "entry_price", "holding_time",
-    "position_size", "periods"]
+    "position_size", "position_value", "periods"]
     .includes(String(value))) {
     platformFailure("TRADERLINK_TRADE_EXPLORER_SAVED_VIEW_INVALID", { field: "resultView" });
   }
@@ -99,6 +99,8 @@ function requireViewGrouping(
             ? grouping === "holding_duration_bucket"
             : resultView === "position_size"
               ? grouping === "maximum_position_bucket"
+              : resultView === "position_value"
+                ? grouping === "maximum_position_value_bucket"
               : ["closing_day", "closing_iso_week", "closing_month", "closing_year"]
                   .includes(grouping);
   if (!matches) {

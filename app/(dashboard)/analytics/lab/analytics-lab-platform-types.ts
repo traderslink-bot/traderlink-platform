@@ -52,6 +52,7 @@ export type AnalyticsLabPlatformQuery = Readonly<{
     | "saturday"
     | "sunday"
     | null;
+  entrySession?: "premarket" | "regular_hours" | "postmarket" | null;
   entryTimeBucketMinutes: 5 | 15 | 30 | 60;
   entryTimeBucket: string | null;
   startDate: string;

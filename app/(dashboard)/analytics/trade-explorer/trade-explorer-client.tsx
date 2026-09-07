@@ -84,16 +84,19 @@ import type {
   AnalyticsLabPlatformQuery,
 } from "../lab/analytics-lab-platform-types";
 import { HorizontalScrollRegion } from "../../horizontal-scroll-region";
+import { TradeDetailsDrawer } from "../../trades/trade-details-drawer";
 
-import { createTradeExplorerSavedView, runTradeExplorer } from "./actions";
+import {
+  createTradeExplorerSavedView,
+  runTradeExplorer,
+  runTradeExplorerGroupTrades,
+} from "./actions";
 import type {
   TradeExplorerResultView as ExplorerResultView,
   TradeExplorerQuery,
   TradeExplorerSavedView,
   TradeExplorerSavedViewDefinition,
 } from "./trade-explorer-saved-view-model";
-import { TradeExplorerReviewEditor } from "./trade-review-editor";
-import type { TradeExplorerReviewTarget } from "./trade-review-model";
 import type { TradeExplorerPageModel } from "./trade-explorer-service";
 
 type ExplorerGroup = Readonly<{
@@ -101,6 +104,8 @@ type ExplorerGroup = Readonly<{
   label: string;
   partitionKey: string;
   partitionLabel: string;
+  currency: string | null;
+  groupKey: string;
   timeZone: string;
   group: JournalAnalyticsGroupResult;
 }>;
@@ -144,7 +149,7 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
     firstColumnLabel: "Date",
     grouping: "closing_day",
     defaultSortMetricId: "net_pnl",
-    rankMetricIds: Object.freeze(["total_trades", "net_pnl", "gross_pnl", "maximum_intraday_realized_drawdown", "maximum_intraday_realized_recovery_from_trough", "maximum_peak_profit_giveback"]),
+    rankMetricIds: Object.freeze(["total_trades", "win_count", "loss_count", "net_pnl", "gross_pnl", "best_trade", "worst_trade", "win_rate", "maximum_intraday_realized_drawdown", "maximum_intraday_realized_recovery_from_trough", "maximum_peak_profit_giveback"]),
     columns: Object.freeze([
       { label: "First entry", kind: "first_open" as const },
       { label: "Last exit", kind: "last_close" as const },
@@ -242,8 +247,8 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
     ]),
   }),
   entered_quantity: Object.freeze({
-    label: "Entered Quantity",
-    firstColumnLabel: "Shares entered",
+    label: "Total Entry Shares",
+    firstColumnLabel: "Total entry shares",
     grouping: "entered_quantity_bucket",
     defaultSortMetricId: "net_pnl",
     rankMetricIds: Object.freeze(["total_trades", "net_pnl", "gross_pnl", "average_pnl", "median_pnl", "win_rate", "profit_factor", "return_on_entry_notional", "average_holding_time"]),
@@ -257,8 +262,8 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
     ]),
   }),
   entry_value: Object.freeze({
-    label: "Entry Value",
-    firstColumnLabel: "Entry value",
+    label: "Total Entry Value",
+    firstColumnLabel: "Total entry value",
     grouping: "entry_notional_bucket",
     defaultSortMetricId: "net_pnl",
     rankMetricIds: Object.freeze(["total_trades", "net_pnl", "gross_pnl", "average_pnl", "median_pnl", "win_rate", "profit_factor", "return_on_entry_notional", "average_holding_time"]),
@@ -302,8 +307,8 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
     ]),
   }),
   position_size: Object.freeze({
-    label: "Position Size",
-    firstColumnLabel: "Maximum shares held",
+    label: "Share Size",
+    firstColumnLabel: "Peak shares held",
     grouping: "maximum_position_bucket",
     defaultSortMetricId: "net_pnl",
     rankMetricIds: Object.freeze(["total_trades", "net_pnl", "gross_pnl", "average_pnl", "median_pnl", "win_rate", "profit_factor", "return_on_entry_notional", "average_holding_time"]),
@@ -313,6 +318,21 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
       { label: "Net P/L", metricId: "net_pnl" },
       { label: "Avg P/L", metricId: "average_pnl" },
       { label: "Avg shares entered", metricId: "average_share_quantity" },
+      { label: "Avg entry value", metricId: "average_entry_notional" },
+      { label: "Avg hold", metricId: "average_holding_time" },
+    ]),
+  }),
+  position_value: Object.freeze({
+    label: "Position Size",
+    firstColumnLabel: "Maximum position value",
+    grouping: "maximum_position_value_bucket",
+    defaultSortMetricId: "net_pnl",
+    rankMetricIds: Object.freeze(["total_trades", "net_pnl", "gross_pnl", "average_pnl", "median_pnl", "win_rate", "profit_factor", "return_on_entry_notional", "average_holding_time"]),
+    columns: Object.freeze([
+      { label: "Trades", metricId: "total_trades" },
+      { label: "Win rate", metricId: "win_rate" },
+      { label: "Net P/L", metricId: "net_pnl" },
+      { label: "Avg P/L", metricId: "average_pnl" },
       { label: "Avg entry value", metricId: "average_entry_notional" },
       { label: "Avg hold", metricId: "average_holding_time" },
     ]),
@@ -582,7 +602,11 @@ export default function TradeExplorerClient({
   const [groupPageIndex, setGroupPageIndex] = useState(0);
   const [advanced, setAdvanced] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [reviewRoundTripId, setReviewRoundTripId] = useState<string | null>(null);
+  const [detailsTrade, setDetailsTrade] = useState<JournalAnalyticsRoundTripTableRow | null>(null);
+  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
+  const [expandedGroupTrades, setExpandedGroupTrades] = useState<readonly JournalAnalyticsRoundTripTableRow[]>(Object.freeze([]));
+  const [groupTradesContinuationCursor, setGroupTradesContinuationCursor] = useState<string | null>(null);
+  const [groupTradesStatus, setGroupTradesStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [reportError, setReportError] = useState<string | null>(null);
   const [isDownloadingReport, setIsDownloadingReport] = useState(false);
@@ -599,6 +623,7 @@ export default function TradeExplorerClient({
   const [expandedExecutions, setExpandedExecutions] = useState<readonly TradeExecution[]>(Object.freeze([]));
   const [executionDetailsStatus, setExecutionDetailsStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const executionRequestRef = useRef(0);
+  const groupTradesRequestRef = useRef(0);
   const previewRequestRef = useRef(0);
   const sortDirectionRevisionRef = useRef(0);
   const [isPending, startTransition] = useTransition();
@@ -627,11 +652,14 @@ export default function TradeExplorerClient({
       label: group.label,
       partitionKey,
       partitionLabel,
+      currency: partition.currency,
+      groupKey: group.groupKey,
       timeZone: partition.timezone ?? "UTC",
       group,
     }));
   }), [preview, showPartitionTimezone]);
   const activeView = appliedResultView === "trades" ? null : RESULT_VIEWS[appliedResultView];
+  const groupRowsExpandable = appliedResultView === "days" || appliedResultView === "tickers";
   const requestedView = resultView === "trades" ? null : RESULT_VIEWS[resultView];
   const statisticGroups = requestedView === null
     ? Object.freeze([])
@@ -704,43 +732,6 @@ export default function TradeExplorerClient({
           ? [Object.freeze({ label: "Profit factor", value: value(tradeSummaryPartition, "profit_factor"), valueColor: "text.primary" as const })]
           : []),
       ]);
-  const populationSummary = tradeSummaryPartition === null
-    ? Object.freeze([])
-    : Object.freeze([
-        ["Average P/L", "average_pnl"],
-        ["Median P/L", "median_pnl"],
-        ["Profit factor", "profit_factor"],
-        ["P/L percentile 10", "pnl_percentile_10"],
-        ["P/L percentile 25", "pnl_percentile_25"],
-        ["P/L percentile 50", "pnl_percentile_50"],
-        ["P/L percentile 75", "pnl_percentile_75"],
-        ["P/L percentile 90", "pnl_percentile_90"],
-        ["P/L standard deviation", "population_pnl_standard_deviation"],
-        ["P/L without largest winner", "selected_pnl_excluding_largest_winner"],
-        ["P/L without largest loser", "selected_pnl_excluding_largest_loser"],
-        ["P/L without largest winner and loser", "selected_pnl_excluding_largest_winner_and_loser"],
-        ["Largest winner share of gross profit", "largest_winner_contribution"],
-        ["Largest loser share of gross loss", "largest_loser_contribution"],
-        ["Longest winning streak", "longest_winning_trade_streak"],
-        ["Current winning streak", "current_winning_trade_streak"],
-        ["Longest losing streak", "longest_losing_trade_streak"],
-        ["Current losing streak", "current_losing_trade_streak"],
-        ["Average executions per trade", "average_executions_per_trade"],
-        ["Trades with scale-ins", "scale_in_trade_count"],
-        ["Trades with scale-outs", "scale_out_trade_count"],
-        ["Largest ticker P/L concentration", "largest_instrument_pnl_share"],
-        ["Largest trading-day P/L concentration", "largest_day_pnl_share"],
-        ["Trading days", "trading_day_count"],
-        ["Average daily P/L", "average_daily_pnl"],
-        ["Median daily P/L", "median_daily_pnl"],
-        ["Green days", "profitable_trading_day_count"],
-        ["Red days", "losing_trading_day_count"],
-        ["Flat days", "flat_trading_day_count"],
-      ].map(([label, metricId]) => Object.freeze({
-        label,
-        metricId,
-        value: value(tradeSummaryPartition, metricId),
-      })));
   const baseActiveViewColumns = activeView?.columns.filter((column) =>
     appliedQuery.outcome === null || (
       !["win_count", "loss_count", "win_rate"].includes(column.metricId ?? "") &&
@@ -804,22 +795,19 @@ export default function TradeExplorerClient({
     });
   const groupedResultsHaveUnavailable = activeView !== null && visibleGroups.some((item) =>
     displayedColumns.some((column) => groupColumnIsUnavailable(item.group, column)));
-  const reviewTargets = useMemo<readonly TradeExplorerReviewTarget[]>(() =>
-    Object.freeze((preview.evidence?.rows ?? []).map((trade) => Object.freeze({
-      closeLocalDate: trade.closeLocalDate,
-      closedAtUtc: trade.closedAtUtc,
-      direction: trade.direction,
-      displayedSymbol: trade.displayedSymbol,
-      roundTripId: trade.roundTripId,
-    }))), [preview.evidence]);
-  const reviewOpen = reviewRoundTripId !== null && reviewTargets.some((trade) =>
-    trade.roundTripId === reviewRoundTripId);
-
   function clearExpandedTrade(): void {
     executionRequestRef.current += 1;
     setExpandedRoundTripId(null);
     setExpandedExecutions(Object.freeze([]));
     setExecutionDetailsStatus("idle");
+  }
+
+  function clearExpandedGroup(): void {
+    groupTradesRequestRef.current += 1;
+    setExpandedGroupId(null);
+    setExpandedGroupTrades(Object.freeze([]));
+    setGroupTradesContinuationCursor(null);
+    setGroupTradesStatus("idle");
   }
 
   function viewLabel(view: ExplorerResultView): string {
@@ -843,7 +831,9 @@ export default function TradeExplorerClient({
       }),
       Object.freeze({ label: "View", value: viewLabel(view.resultView) }),
       Object.freeze({
-        label: view.resultView === "trades" ? "Sort" : "Rank",
+        label: view.resultView === "trades"
+          ? "Sort trades"
+          : view.resultView === "days" ? "Sort days" : "Rank by",
         value: view.resultView === "trades"
           ? tradeSortLabel
           : `${rankLabel} · ${view.sortDirection === "descending" ? "Highest first" : "Lowest first"}`,
@@ -885,6 +875,16 @@ export default function TradeExplorerClient({
       details.push(Object.freeze({
         label: "Trade type",
         value: savedQuery.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade",
+      }));
+    }
+    if (savedQuery.entrySession) {
+      details.push(Object.freeze({
+        label: "Entry session",
+        value: savedQuery.entrySession === "premarket"
+          ? "Premarket"
+          : savedQuery.entrySession === "regular_hours"
+            ? "Regular hours"
+            : "Post market",
       }));
     }
     if (savedQuery.tagId !== null || savedQuery.untaggedOnly) {
@@ -940,9 +940,9 @@ export default function TradeExplorerClient({
     }
     const ranges = [
       ["Holding seconds", savedQuery.minimumHoldingSeconds, savedQuery.maximumHoldingSeconds],
-      ["Entered quantity", savedQuery.minimumEnteredQuantity, savedQuery.maximumEnteredQuantity],
-      ["Maximum position", savedQuery.minimumPositionQuantity, savedQuery.maximumPositionQuantity],
-      ["Entry value", savedQuery.minimumEntryNotional, savedQuery.maximumEntryNotional],
+      ["Total entry shares", savedQuery.minimumEnteredQuantity, savedQuery.maximumEnteredQuantity],
+      ["Peak shares held", savedQuery.minimumPositionQuantity, savedQuery.maximumPositionQuantity],
+      ["Total entry value", savedQuery.minimumEntryNotional, savedQuery.maximumEntryNotional],
     ] as const;
     for (const [label, minimum, maximum] of ranges) {
       if (minimum !== null || maximum !== null) {
@@ -1007,6 +1007,7 @@ export default function TradeExplorerClient({
     setTradeSort(saved.tradeSort);
     setSortDirection(saved.sortDirection);
     setAdvanced(Boolean(
+      saved.query.entrySession ||
       saved.query.entryWeekday ||
       saved.query.entryTimeBucket ||
       saved.query.minimumHoldingSeconds ||
@@ -1104,6 +1105,7 @@ export default function TradeExplorerClient({
     setError(null);
     setReportError(null);
     clearExpandedTrade();
+    clearExpandedGroup();
     startTransition(async () => {
       try {
         const result = await runTradeExplorer(canonicalQuery, null, canonicalTradeSort);
@@ -1171,6 +1173,75 @@ export default function TradeExplorerClient({
     }
   }
 
+  async function toggleGroupTrades(item: ExplorerGroup): Promise<void> {
+    if (appliedResultView !== "days" && appliedResultView !== "tickers") return;
+    const requestNumber = groupTradesRequestRef.current + 1;
+    groupTradesRequestRef.current = requestNumber;
+    if (expandedGroupId === item.id) {
+      clearExpandedGroup();
+      return;
+    }
+
+    setExpandedGroupId(item.id);
+    setExpandedGroupTrades(Object.freeze([]));
+    setGroupTradesStatus("loading");
+    try {
+      const result = await runTradeExplorerGroupTrades(appliedQuery, Object.freeze({
+        currency: item.currency,
+        groupKey: item.groupKey,
+        resultView: appliedResultView,
+      }));
+      if (groupTradesRequestRef.current !== requestNumber) return;
+      if (!result.ok) {
+        if (result.refreshRequired) {
+          window.location.reload();
+          return;
+        }
+        setGroupTradesStatus("error");
+        return;
+      }
+      setExpandedGroupTrades(Object.freeze([...(result.preview.evidence?.rows ?? [])]));
+      setGroupTradesContinuationCursor(result.preview.evidence?.continuationCursor ?? null);
+      setGroupTradesStatus("ready");
+    } catch {
+      if (groupTradesRequestRef.current !== requestNumber) return;
+      setExpandedGroupTrades(Object.freeze([]));
+      setGroupTradesStatus("error");
+    }
+  }
+
+  async function loadMoreGroupTrades(item: ExplorerGroup): Promise<void> {
+    if (!groupTradesContinuationCursor || groupTradesStatus === "loading") return;
+    const requestNumber = groupTradesRequestRef.current + 1;
+    groupTradesRequestRef.current = requestNumber;
+    setGroupTradesStatus("loading");
+    try {
+      const result = await runTradeExplorerGroupTrades(appliedQuery, Object.freeze({
+        currency: item.currency,
+        groupKey: item.groupKey,
+        resultView: appliedResultView,
+      }), groupTradesContinuationCursor);
+      if (groupTradesRequestRef.current !== requestNumber) return;
+      if (!result.ok) {
+        if (result.refreshRequired) {
+          window.location.reload();
+          return;
+        }
+        setGroupTradesStatus("error");
+        return;
+      }
+      setExpandedGroupTrades((current) => Object.freeze([
+        ...current,
+        ...(result.preview.evidence?.rows ?? []),
+      ]));
+      setGroupTradesContinuationCursor(result.preview.evidence?.continuationCursor ?? null);
+      setGroupTradesStatus("ready");
+    } catch {
+      if (groupTradesRequestRef.current !== requestNumber) return;
+      setGroupTradesStatus("error");
+    }
+  }
+
   function choosePageSize(evidenceRows: 12 | 24 | 50 | 100): void {
     const nextQuery = Object.freeze({ ...query, evidenceRows });
     setQuery(nextQuery);
@@ -1217,6 +1288,74 @@ export default function TradeExplorerClient({
           View Gross P/L
         </Button>
       </Stack>
+    );
+  }
+
+  function expandedGroupTradeList(item: ExplorerGroup) {
+    if (groupTradesStatus === "loading" && expandedGroupTrades.length === 0) {
+      return <Typography color="text.secondary">Loading trades…</Typography>;
+    }
+    if (groupTradesStatus === "error" && expandedGroupTrades.length === 0) {
+      return <Alert severity="error">The trades for this row could not be loaded.</Alert>;
+    }
+    if (groupTradesStatus === "idle") return null;
+    if (expandedGroupTrades.length === 0) {
+      return <Typography color="text.secondary">No completed trades are available for this row.</Typography>;
+    }
+    return (
+      <>
+        <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+          {expandedGroupTrades.map((trade) => (
+            <Box key={trade.roundTripId} sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 1, p: 1.25 }}>
+              <Stack direction="row" sx={{ alignItems: "flex-start", gap: 1, justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ fontWeight: 900 }}>{trade.displayedSymbol}</Typography>
+                  <Typography color="text.secondary" variant="caption">
+                    {trade.entryLocalDate} to {trade.closeLocalDate} · {trade.direction === "long" ? "Long" : "Short"}
+                  </Typography>
+                </Box>
+                <Button onClick={() => setDetailsTrade(trade)} size="small" variant="outlined">Details</Button>
+              </Stack>
+              <Stack direction="row" sx={{ columnGap: 2, flexWrap: "wrap", mt: 0.75, rowGap: 0.5 }}>
+                <Typography variant="body2">Total entry shares: <Box component="span" sx={{ fontWeight: 800 }}>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</Box></Typography>
+                <Typography variant="body2">Total entry value: <Box component="span" sx={{ fontWeight: 800 }}>{money(trade.entryNotionalDecimal, item.currency)}</Box></Typography>
+                <Typography variant="body2">P/L: <Box component="span" sx={{ color: financialOutcomeColor(trade.selectedPnlDecimal), fontWeight: 900 }}>{money(trade.selectedPnlDecimal, item.currency)}</Box></Typography>
+              </Stack>
+            </Box>
+          ))}
+        </Stack>
+        <Box sx={{ display: { xs: "none", md: "block" } }}>
+          <TableContainer sx={{ maxHeight: 360 }}>
+            <Table aria-label={`${item.label} trades`} size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Ticker</TableCell><TableCell>Opened</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Total entry shares</TableCell><TableCell>Total entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell><TableCell>Details</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {expandedGroupTrades.map((trade) => (
+                  <TableRow key={trade.roundTripId}>
+                    <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
+                    <TableCell>{trade.entryLocalDate}<Typography color="text.secondary" display="block" variant="caption">{tradeCloseTime(trade.openedAtUtc, item.timeZone)}</Typography></TableCell>
+                    <TableCell>{trade.closeLocalDate}<Typography color="text.secondary" display="block" variant="caption">{tradeCloseTime(trade.closedAtUtc, item.timeZone)}</Typography></TableCell>
+                    <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
+                    <TableCell>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</TableCell>
+                    <TableCell>{money(trade.entryNotionalDecimal, item.currency)}</TableCell>
+                    <TableCell sx={{ color: financialOutcomeColor(trade.selectedPnlDecimal), fontWeight: 800 }}>{money(trade.selectedPnlDecimal, item.currency)}</TableCell>
+                    <TableCell><Button onClick={() => setDetailsTrade(trade)} size="small" variant="outlined">Details</Button></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+        {groupTradesStatus === "error" ? <Alert severity="error" sx={{ mt: 1 }}>More trades could not be loaded. Try again.</Alert> : null}
+        {groupTradesContinuationCursor ? (
+          <Button disabled={groupTradesStatus === "loading"} onClick={() => void loadMoreGroupTrades(item)} sx={{ mt: 1 }} variant="outlined">
+            {groupTradesStatus === "loading" ? "Loading more trades" : "Load more trades"}
+          </Button>
+        ) : null}
+      </>
     );
   }
 
@@ -1297,6 +1436,7 @@ export default function TradeExplorerClient({
     previewRequestRef.current = requestNumber;
     setError(null);
     clearExpandedTrade();
+    clearExpandedGroup();
     startTransition(async () => {
       try {
         const result = await runTradeExplorer(appliedQuery, cursor, appliedTradeSort);
@@ -1402,6 +1542,9 @@ export default function TradeExplorerClient({
         <SelectField idSuffix={idSuffix} label="Trade type" onChange={(next) => patch("tradeClassification", next === "all" ? null : next as AnalyticsLabPlatformQuery["tradeClassification"])} value={query.tradeClassification ?? "all"}>
           <MenuItem value="all">All trade types</MenuItem><MenuItem value="day_trade">Day trade</MenuItem><MenuItem value="multi_day_trade">Multi-day trade</MenuItem>
         </SelectField>
+        <SelectField idSuffix={idSuffix} label="Entry session" onChange={(next) => patch("entrySession", next === "all" ? null : next as NonNullable<AnalyticsLabPlatformQuery["entrySession"]>)} value={query.entrySession ?? "all"}>
+          <MenuItem value="all">All entry sessions</MenuItem><MenuItem value="premarket">Premarket</MenuItem><MenuItem value="regular_hours">Regular hours</MenuItem><MenuItem value="postmarket">Post market</MenuItem>
+        </SelectField>
         <SelectField idSuffix={idSuffix} label="Result basis" onChange={(next) => chooseMoneyBasis(next as "gross" | "net")} value={query.moneyBasis}>
           <MenuItem value="net">Net P/L</MenuItem><MenuItem value="gross">Gross P/L</MenuItem>
         </SelectField>
@@ -1416,11 +1559,12 @@ export default function TradeExplorerClient({
           <MenuItem value="exit_times">Exit Times</MenuItem>
           <MenuItem value="entry_weekday">Entry Weekday</MenuItem>
           <MenuItem value="direction">Direction</MenuItem>
-          <MenuItem value="entered_quantity">Entered Quantity</MenuItem>
-          <MenuItem value="entry_value">Entry Value</MenuItem>
+          <MenuItem value="entered_quantity">Total Entry Shares</MenuItem>
+          <MenuItem value="entry_value">Total Entry Value</MenuItem>
           <MenuItem value="entry_price">Entry Price</MenuItem>
           <MenuItem value="holding_time">Holding Time</MenuItem>
-          <MenuItem value="position_size">Position Size</MenuItem>
+          <MenuItem value="position_size">Share Size</MenuItem>
+          <MenuItem value="position_value">Position Size</MenuItem>
           <MenuItem value="periods">Periods</MenuItem>
         </SelectField>
         {resultView === "trades" ? (
@@ -1428,7 +1572,7 @@ export default function TradeExplorerClient({
             {tradeSortOptions.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
           </SelectField>
         ) : (
-          <SelectField idSuffix={idSuffix} label="Rank by" onChange={chooseStatistic} value={statisticMetricIds.includes(query.metricId) ? query.metricId : statisticMetricIds[0] ?? "total_trades"}>
+          <SelectField idSuffix={idSuffix} label={resultView === "days" ? "Sort days" : "Rank by"} onChange={chooseStatistic} value={statisticMetricIds.includes(query.metricId) ? query.metricId : statisticMetricIds[0] ?? "total_trades"}>
             {statisticGroups.map((group) => [
               <ListSubheader key={`${group.label}-heading`}>{group.label}</ListSubheader>,
               ...group.metricIds.flatMap((metricId) => {
@@ -1462,12 +1606,12 @@ export default function TradeExplorerClient({
           <TextField fullWidth label="Entry time (HH:MM)" onChange={(event) => patch("entryTimeBucket", event.target.value === "" ? null : event.target.value)} placeholder="09:30" size="small" value={query.entryTimeBucket ?? ""} />
           {exactField("Minimum hold (seconds)", query.minimumHoldingSeconds, (next) => patch("minimumHoldingSeconds", next))}
           {exactField("Maximum hold (seconds)", query.maximumHoldingSeconds, (next) => patch("maximumHoldingSeconds", next))}
-          {exactField("Minimum entered quantity", query.minimumEnteredQuantity, (next) => patch("minimumEnteredQuantity", next))}
-          {exactField("Maximum entered quantity", query.maximumEnteredQuantity, (next) => patch("maximumEnteredQuantity", next))}
-          {exactField("Minimum position size", query.minimumPositionQuantity, (next) => patch("minimumPositionQuantity", next))}
-          {exactField("Maximum position size", query.maximumPositionQuantity, (next) => patch("maximumPositionQuantity", next))}
-          {exactField("Minimum entry value", query.minimumEntryNotional, (next) => patch("minimumEntryNotional", next))}
-          {exactField("Maximum entry value", query.maximumEntryNotional, (next) => patch("maximumEntryNotional", next))}
+          {exactField("Minimum total entry shares", query.minimumEnteredQuantity, (next) => patch("minimumEnteredQuantity", next))}
+          {exactField("Maximum total entry shares", query.maximumEnteredQuantity, (next) => patch("maximumEnteredQuantity", next))}
+          {exactField("Minimum peak shares", query.minimumPositionQuantity, (next) => patch("minimumPositionQuantity", next))}
+          {exactField("Maximum peak shares", query.maximumPositionQuantity, (next) => patch("maximumPositionQuantity", next))}
+          {exactField("Minimum total entry value", query.minimumEntryNotional, (next) => patch("minimumEntryNotional", next))}
+          {exactField("Maximum total entry value", query.maximumEntryNotional, (next) => patch("maximumEntryNotional", next))}
           <SelectField idSuffix={idSuffix} label="Trade tag" onChange={chooseTagFilter} value={query.untaggedOnly ? "untagged" : query.tagId ?? "all"}>
             <MenuItem value="all">All tags</MenuItem>
             <MenuItem value="untagged">Untagged</MenuItem>
@@ -1576,7 +1720,7 @@ export default function TradeExplorerClient({
                   ) : null}
                   {selectedRankingUnavailable ? (
                     <Typography color="text.secondary" variant="body2">
-                      This Rank by result cannot be calculated for any matching group. Choose another result.
+                      This {appliedResultView === "days" ? "Sort days" : "Rank by"} result cannot be calculated for any matching group. Choose another result.
                     </Typography>
                   ) : null}
                 </Box>
@@ -1653,45 +1797,6 @@ export default function TradeExplorerClient({
               ) : null}
             </Stack>
           ) : null}
-          {populationSummary.length > 0 ? (
-            <Box
-              component="section"
-              sx={{
-                bgcolor: "action.hover",
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 1,
-                mb: 2,
-                p: 1.5,
-              }}
-            >
-              <Typography component="h3" sx={{ fontWeight: 800, mb: 1 }} variant="subtitle1">
-                Selected trades
-              </Typography>
-              <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))", xl: "repeat(6, minmax(0, 1fr))" } }}>
-                {populationSummary.map((item) => (
-                  <Box key={item.metricId} sx={{ minWidth: 0 }}>
-                    <Typography color="text.secondary" variant="caption">{item.label}</Typography>
-                    <Typography
-                      sx={{
-                        color: financialOutcomeMetricColor(
-                          item.metricId,
-                          metric(tradeSummaryPartition, item.metricId)?.value,
-                        ),
-                        fontWeight: 800,
-                        overflowWrap: "anywhere",
-                      }}
-                    >
-                      {item.value}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-              <Typography color="text.secondary" sx={{ mt: 1 }} variant="caption">
-                Percentiles use the selected trade population. Concentration is association in this history, not proof of cause.
-              </Typography>
-            </Box>
-          ) : null}
           {activeView ? (
             <>
               <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, mb: 1.5 }}>
@@ -1719,13 +1824,24 @@ export default function TradeExplorerClient({
               ) : (
                 <>
                   <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-                    {visibleGroups.map((item) => (
-                      <Box key={item.id} sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 1.5 }}>
-                        <Typography sx={{ fontWeight: 800 }}>{item.label}</Typography>
-                        {showPartitionColumn ? <Typography color="text.secondary" variant="caption">{item.partitionLabel}</Typography> : null}
+                    {visibleGroups.map((item) => {
+                      const expanded = expandedGroupId === item.id;
+                      return <Box key={item.id} sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+                        <ButtonBase
+                          aria-expanded={groupRowsExpandable ? expanded : undefined}
+                          disabled={!groupRowsExpandable}
+                          onClick={() => void toggleGroupTrades(item)}
+                          sx={{ alignItems: "center", display: "flex", justifyContent: "space-between", minHeight: 52, px: 1.5, py: 1, textAlign: "left", width: "100%" }}
+                        >
+                          <Box>
+                            <Typography sx={{ fontWeight: 800 }}>{item.label}</Typography>
+                            {showPartitionColumn ? <Typography color="text.secondary" variant="caption">{item.partitionLabel}</Typography> : null}
+                          </Box>
+                          {groupRowsExpandable ? <ExpandMoreRoundedIcon sx={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} /> : null}
+                        </ButtonBase>
                         <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1 }}>
                           {displayedColumns.map((column) => (
-                            <Box key={column.label}>
+                            <Box key={column.label} sx={{ px: 1.5, pb: 1 }}>
                               <Typography color="text.secondary" variant="caption">{column.label}</Typography>
                               <Typography sx={{ color: !column.metricId || column.kind === "day_path" ? "text.primary" : financialOutcomeMetricColor(column.metricId, metric(item.group, column.metricId)?.value), fontWeight: 700 }}>
                                 {groupColumnValue(item.group, column, item.timeZone)}
@@ -1733,26 +1849,46 @@ export default function TradeExplorerClient({
                             </Box>
                           ))}
                         </Box>
-                      </Box>
-                    ))}
+                        {expanded ? <Box sx={{ bgcolor: "action.hover", borderTop: 1, borderColor: "divider", p: 1.25 }}>{expandedGroupTradeList(item)}</Box> : null}
+                      </Box>;
+                    })}
                   </Stack>
                   <Box sx={{ display: { xs: "none", md: "block" } }}>
                     <HorizontalScrollRegion
                       label={`${activeView.label} results table`}
                       maxHeight={560}
-                      minTableWidth={Math.max(760, 220 + (showPartitionColumn ? 150 : 0) + displayedColumns.length * 150)}
+                      minTableWidth={Math.max(760, 220 + (groupRowsExpandable ? 56 : 0) + (showPartitionColumn ? 150 : 0) + displayedColumns.length * 150)}
                       stickyFirstColumn
                     >
                       <Table size="small" stickyHeader>
-                        <TableHead><TableRow><TableCell>{activeView.firstColumnLabel}</TableCell>{showPartitionColumn ? <TableCell>{partitionColumnLabel}</TableCell> : null}{displayedColumns.map((column) => <TableCell key={column.label}>{column.label}</TableCell>)}</TableRow></TableHead>
+                        <TableHead><TableRow>{groupRowsExpandable ? <TableCell aria-label="Expand row" sx={{ width: 56 }} /> : null}<TableCell>{activeView.firstColumnLabel}</TableCell>{showPartitionColumn ? <TableCell>{partitionColumnLabel}</TableCell> : null}{displayedColumns.map((column) => <TableCell key={column.label}>{column.label}</TableCell>)}</TableRow></TableHead>
                         <TableBody>
-                          {visibleGroups.map((item) => (
-                            <TableRow hover key={item.id}>
+                          {visibleGroups.map((item) => {
+                            const expanded = expandedGroupId === item.id;
+                            return <Fragment key={item.id}>
+                            <TableRow
+                              aria-expanded={groupRowsExpandable ? expanded : undefined}
+                              hover
+                              onClick={groupRowsExpandable ? () => void toggleGroupTrades(item) : undefined}
+                              selected={expanded}
+                              sx={{ cursor: groupRowsExpandable ? "pointer" : "default" }}
+                            >
+                              {groupRowsExpandable ? <TableCell>
+                                <IconButton aria-label={`${expanded ? "Hide" : "Show"} trades for ${item.label}`} onClick={(event) => { event.stopPropagation(); void toggleGroupTrades(item); }} size="small">
+                                  <ExpandMoreRoundedIcon sx={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />
+                                </IconButton>
+                              </TableCell> : null}
                               <TableCell sx={{ fontWeight: 800, textTransform: ["entry_times", "exit_times"].includes(appliedResultView) ? "none" : "capitalize" }}>{item.label}</TableCell>
                               {showPartitionColumn ? <TableCell>{item.partitionLabel}</TableCell> : null}
                               {displayedColumns.map((column) => <TableCell key={column.label} sx={{ color: !column.metricId || column.kind === "day_path" ? "text.primary" : financialOutcomeMetricColor(column.metricId, metric(item.group, column.metricId)?.value) }}>{groupColumnValue(item.group, column, item.timeZone)}</TableCell>)}
                             </TableRow>
-                          ))}
+                            {expanded ? <TableRow>
+                              <TableCell colSpan={(groupRowsExpandable ? 1 : 0) + 1 + (showPartitionColumn ? 1 : 0) + displayedColumns.length} sx={{ bgcolor: "action.hover", boxShadow: "none !important", left: "auto !important", position: "static !important", px: 2, py: 1.5 }}>
+                                {expandedGroupTradeList(item)}
+                              </TableCell>
+                            </TableRow> : null}
+                            </Fragment>;
+                          })}
                         </TableBody>
                       </Table>
                     </HorizontalScrollRegion>
@@ -1806,11 +1942,12 @@ export default function TradeExplorerClient({
                     ["Closed", `${trade.closeLocalDate} · ${tradeCloseTime(trade.closedAtUtc, tradeTimeZone)}`],
                     ["Direction", trade.direction === "long" ? "Long" : "Short"],
                     ["Trade type", trade.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade"],
-                    ["Shares entered", formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)],
-                    ["Maximum shares held", formatJournalAnalyticsDecimal(trade.maximumPositionQuantityDecimal)],
+                    ["Total entry shares", formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)],
+                    ["Peak shares held", formatJournalAnalyticsDecimal(trade.maximumPositionQuantityDecimal)],
+                    ["Position size", money(trade.maximumPositionValueDecimal ?? null, tradeCurrency)],
                     ["Average entry", trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal, tradeCurrency) : "N/A"],
                     ["Average exit", trade.averageExitPriceDecimal ? money(trade.averageExitPriceDecimal, tradeCurrency) : "N/A"],
-                    ["Entry value", money(trade.entryNotionalDecimal, tradeCurrency)],
+                    ["Total entry value", money(trade.entryNotionalDecimal, tradeCurrency)],
                     ["Return on entry value", trade.returnPercentDecimal === null || trade.returnPercentDecimal === undefined ? "N/A" : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`],
                     ["Holding time", formatJournalAnalyticsDuration(trade.holdingDurationMilliseconds)],
                     ["Trading costs", money(trade.tradingCostsDecimal, tradeCurrency)],
@@ -1825,7 +1962,7 @@ export default function TradeExplorerClient({
                             {money(trade.selectedPnlDecimal, tradeCurrency)}
                           </Typography>
                         </Box>
-                        <Button onClick={() => setReviewRoundTripId(trade.roundTripId)} size="small" variant="outlined">Review</Button>
+                        <Button onClick={() => setDetailsTrade(trade)} size="small" variant="outlined">Details</Button>
                       </Stack>
                       <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1 }}>
                         {cardFacts.map(([label, factValue]) => (
@@ -1858,7 +1995,7 @@ export default function TradeExplorerClient({
                 })}
               </Stack>
               <Box sx={{ display: { xs: "none", md: "block" } }}>
-              <HorizontalScrollRegion label="Individual trades table" maxHeight={560} minTableWidth={1900} stickyFirstColumn>
+              <HorizontalScrollRegion label="Individual trades table" maxHeight={560} minTableWidth={2100} stickyFirstColumn>
                 <Table
                   size="small"
                   stickyHeader
@@ -1870,7 +2007,7 @@ export default function TradeExplorerClient({
                     },
                   }}
                 >
-                  <TableHead><TableRow><TableCell>Ticker</TableCell><TableCell>Review</TableCell><TableCell>Opened</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Trade type</TableCell><TableCell>Shares entered</TableCell><TableCell>Maximum shares held</TableCell><TableCell>Avg entry</TableCell><TableCell>Avg exit</TableCell><TableCell>Entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell><TableCell>Return on entry value</TableCell><TableCell>Hold</TableCell><TableCell>Trading costs</TableCell><TableCell>Execution structure</TableCell></TableRow></TableHead>
+                  <TableHead><TableRow><TableCell>Ticker</TableCell><TableCell>Details</TableCell><TableCell>Opened</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Trade type</TableCell><TableCell>Total entry shares</TableCell><TableCell>Peak shares held</TableCell><TableCell>Position size</TableCell><TableCell>Avg entry</TableCell><TableCell>Avg exit</TableCell><TableCell>Total entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell><TableCell>Return on entry value</TableCell><TableCell>Hold</TableCell><TableCell>Trading costs</TableCell><TableCell>Execution structure</TableCell></TableRow></TableHead>
                   <TableBody>
                     {preview.evidence.rows.map((trade) => {
                       const expanded = expandedRoundTripId === trade.roundTripId;
@@ -1892,17 +2029,17 @@ export default function TradeExplorerClient({
                           <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
                           <TableCell>
                             <Button
-                              aria-label={`Review notes, tags and rules for ${trade.displayedSymbol} closed ${trade.closeLocalDate}`}
+                              aria-label={`View details for ${trade.displayedSymbol} closed ${trade.closeLocalDate}`}
                               onClick={(event) => {
                                 event.stopPropagation();
-                                setReviewRoundTripId(trade.roundTripId);
+                                setDetailsTrade(trade);
                               }}
                               onKeyDown={(event) => event.stopPropagation()}
                               size="small"
                               sx={{ minHeight: 36 }}
                               variant="outlined"
                             >
-                              Review
+                              Details
                             </Button>
                           </TableCell>
                           <TableCell>
@@ -1921,6 +2058,7 @@ export default function TradeExplorerClient({
                           <TableCell>{trade.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade"}</TableCell>
                           <TableCell>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</TableCell>
                           <TableCell>{formatJournalAnalyticsDecimal(trade.maximumPositionQuantityDecimal)}</TableCell>
+                          <TableCell>{money(trade.maximumPositionValueDecimal ?? null, preview.evidence?.currency ?? null)}</TableCell>
                           <TableCell>{trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</TableCell>
                           <TableCell>{trade.averageExitPriceDecimal ? money(trade.averageExitPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</TableCell>
                           <TableCell>{money(trade.entryNotionalDecimal, preview.evidence?.currency ?? null)}</TableCell>
@@ -1931,7 +2069,7 @@ export default function TradeExplorerClient({
                           <TableCell>{executionStructure(trade)}</TableCell>
                         </TableRow>
                         {expanded ? <TableRow>
-                          <TableCell colSpan={16} sx={{ backgroundColor: "action.hover", boxShadow: "none !important", left: "auto !important", position: "static !important", px: 3, py: 2, whiteSpace: "normal" }}>
+                          <TableCell colSpan={17} sx={{ backgroundColor: "action.hover", boxShadow: "none !important", left: "auto !important", position: "static !important", px: 3, py: 2, whiteSpace: "normal" }}>
                             {executionDetailsStatus === "loading" ? <Typography color="text.secondary">Loading executions…</Typography> : null}
                             {executionDetailsStatus === "error" ? <Alert severity="error">The executions could not be loaded.</Alert> : null}
                             {executionDetailsStatus === "ready" && expandedExecutions.length === 0 ? <Typography color="text.secondary">No executions are available for this trade.</Typography> : null}
@@ -2238,13 +2376,13 @@ export default function TradeExplorerClient({
           </Box>
       </Drawer>
 
-      {offlineSavedAtUtc ? null : <TradeExplorerReviewEditor
-        expectedAccountSelectionRef={model.expectedAccountSelectionRef}
-        onClose={() => setReviewRoundTripId(null)}
-        onSelectTrade={setReviewRoundTripId}
-        open={reviewOpen}
-        selectedRoundTripId={reviewRoundTripId}
-        trades={reviewTargets}
+      {offlineSavedAtUtc ? null : <TradeDetailsDrawer
+        analyzer={null}
+        initialTab="details"
+        onClose={() => setDetailsTrade(null)}
+        open={detailsTrade !== null}
+        roundTripId={detailsTrade?.roundTripId ?? null}
+        showAnalyzer={false}
       />}
 
       {error ? <Alert severity="error">{error}</Alert> : null}

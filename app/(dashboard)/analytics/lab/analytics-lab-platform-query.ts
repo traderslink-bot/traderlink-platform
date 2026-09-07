@@ -21,19 +21,23 @@ export const analyticsLabPlatformGroupingOptions = Object.freeze([
   ["closing_year", "Closing year"],
   ["entry_weekday", "Entry weekday"],
   ["entry_time_bucket", "Entry time"],
+  ["exit_time_bucket", "Exit time"],
+  ["entry_session", "Entry session"],
   ["instrument", "Ticker"],
   ["direction", "Direction"],
   ["provenance", "Execution source"],
   ["holding_duration_bucket", "Holding time"],
   ["entered_quantity_bucket", "Entered quantity"],
   ["maximum_position_bucket", "Maximum position"],
+  ["maximum_position_value_bucket", "Maximum position value"],
   ["entry_notional_bucket", "Entry notional"],
+  ["entry_price_bucket", "Entry price"],
   ["realized_outcome", "Result"],
 ] as const satisfies readonly (readonly [JournalAnalyticsGrouping, string])[]);
 
 const queryKeys = Object.freeze([
   "currency", "direction", "endDate", "entryTimeBucket",
-  "entryTimeBucketMinutes", "entryWeekday", "evidenceRows",
+  "entryTimeBucketMinutes", "entryWeekday", "entrySession", "evidenceRows",
   "expectedAccountSelectionRef", "grouping", "maximumEnteredQuantity",
   "maximumEntryNotional", "maximumHoldingSeconds", "maximumPositionQuantity",
   "metricId", "minimumEnteredQuantity", "minimumEntryNotional",
@@ -53,10 +57,10 @@ function record(value: unknown): Record<string, unknown> {
 function exactKeys(value: Record<string, unknown>): void {
   const actual = Object.keys(value).sort();
   const expected = [...queryKeys].sort();
-  const legacy = expected.filter((key) => key !== "tradeClassification");
-  const matches = (keys: readonly string[]) => actual.length === keys.length &&
-    actual.every((key, index) => key === keys[index]);
-  if (!matches(expected) && !matches(legacy)) {
+  const optional = new Set(["tradeClassification", "entrySession"]);
+  const allowed = new Set(expected);
+  if (actual.some((key) => !allowed.has(key as (typeof queryKeys)[number])) ||
+      expected.some((key) => !optional.has(key) && !actual.includes(key))) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "analyticsLabQueryFields",
     });
@@ -221,6 +225,9 @@ export function normalizeAnalyticsLabPlatformQuery(
     provenance: nullableEnum(value.provenance, ["broker_only", "manual_only", "correction_only", "mixed", "unknown"] as const, "provenance"),
     outcome: nullableEnum(value.outcome, ["win", "loss", "flat"] as const, "outcome"),
     entryWeekday: nullableEnum(value.entryWeekday, ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const, "entryWeekday"),
+    entrySession: Object.hasOwn(value, "entrySession")
+      ? nullableEnum(value.entrySession, ["premarket", "regular_hours", "postmarket"] as const, "entrySession")
+      : null,
     entryTimeBucketMinutes: entryTimeBucketMinutes as 5 | 15 | 30 | 60,
     entryTimeBucket,
     startDate,
@@ -251,6 +258,7 @@ function savedQuery(
     provenance: query.provenance,
     outcome: query.outcome,
     entryWeekday: query.entryWeekday,
+    entrySession: query.entrySession,
     entryTimeBucketMinutes: query.entryTimeBucketMinutes,
     entryTimeBucket: query.entryTimeBucket,
     startDate: query.startDate,
@@ -308,9 +316,12 @@ export function restoreAnalyticsLabSavedViewQuery(
     expectedAccountSelectionRef,
   });
   const legacySavedQuery = { ...prepared.savedQuery } as Record<string, unknown>;
-  delete legacySavedQuery.tradeClassification;
+  for (const field of ["tradeClassification", "entrySession"] as const) {
+    if (!Object.hasOwn(saved as object, field)) delete legacySavedQuery[field];
+  }
   const legacyNormalizedQueryJson = JSON.stringify(legacySavedQuery);
-  const legacyMatches = !Object.hasOwn(saved as object, "tradeClassification") &&
+  const legacyMatches = ["tradeClassification", "entrySession"].some((field) =>
+    !Object.hasOwn(saved as object, field)) &&
     prepared.payload.queryVersion === payload.queryVersion &&
     legacyNormalizedQueryJson === payload.normalizedQueryJson &&
     createHash("sha256").update(legacyNormalizedQueryJson, "utf8").digest("hex") ===

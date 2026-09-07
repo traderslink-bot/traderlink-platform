@@ -1,10 +1,9 @@
 # Trade Explorer Accuracy And Utility Update Plan
 
-**Status:** Owner approved on 2026-09-06. The Journal-only implementation and
-focused populated browser QA are complete. The owner explicitly waived a
-standalone visual mockup and pre-implementation visual-approval gate. Final
-rendered Dark-mode acceptance and an explicitly authorized production release
-remain open.
+**Status:** Owner-approved correction slice in progress on 2026-09-06. The
+earlier Journal-only release remains live while this exact follow-up is built
+and verified locally. The owner explicitly waived further approval pauses and
+directed the completed package to the production release coordinator.
 
 **Parent plan:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
 
@@ -289,12 +288,52 @@ Expand Trading Days with:
 - day-note state and exact day-rule-review coverage when those filters are
   selected.
 
-Named premarket/regular/after-hours results remain deferred until an
-instrument/exchange-aware session contract exists independently of Trade
-Analyzer. A fixed U.S. clock is not accepted as a universal market-session
-fact.
+The follow-up adds an Entry Session filter using the existing Journal Analytics
+execution-time grouping: Premarket is 04:00-09:29, Regular Hours is
+09:30-15:59 and Post market is 16:00-19:59 in the selected account's recorded
+trading timezone. Trades outside those ranges remain available under All
+sessions and are not silently assigned to one of the three named selections.
+This is an execution-time classification calculated entirely by Trade Explorer;
+it does not use Analyzer candles, market replay or provider data.
 
-### 6.5 Tags, notes and rules
+### 6.5 Owner-approved production correction slice
+
+The complete correction target is:
+
+1. Keep the factual completed-trade type behavior: a trade opened and closed
+   on the same account-local date is a Day trade; a trade crossing dates is a
+   Multi-day trade. This makes historical imports useful without requiring
+   retrospective manual labeling and remains separate from intentional Swing
+   style.
+2. Remove the `Selected trades` statistics card. Those whole-population results
+   do not update with every grouped-view selection and therefore do not belong
+   in the result table area.
+3. Repair Exit Times and Entry Price request validation so Update results
+   applies both views.
+4. Rename the View choices `Entered Quantity` to `Total Entry Shares` and
+   `Entry Value` to `Total Entry Value`.
+5. Rename the share-based Position Size view to `Share Size`, with `Peak shares
+   held` as its grouped fact. Add a separate `Position Size` money view based on
+   maximum position value. Maximum position value is maximum shares held
+   multiplied by the trade's quantity-weighted average entry price; it is
+   calculated from Journal executions only and is not a live market value.
+6. Add the Entry Session filter defined above and preserve it through saved
+   views, comparison inputs and PDF filter summaries.
+7. Make Trading Days and Tickers rows expandable. Each expansion lazily loads
+   the complete matching trade rows under the active filters and partition,
+   shows ticker/date/direction/Total Entry Shares/Total Entry Value/P&L, and
+   offers Details for each trade.
+8. Add the Trading Days sort choices Total Trades, Total Wins, Total Losses,
+   selected-basis P/L, Largest Winner, Largest Loser, Win Rate, Maximum Realized
+   Drawdown, Realized Recovery and Peak-Profit Giveback. Label the control
+   `Sort days`.
+9. Rename the Trades table `Review` column and action to `Details`. Details in
+   Trades and grouped expansions opens the existing Workspace Trade Details
+   drawer inside Trade Explorer without navigation.
+10. Preserve exact-execution expansion in Trades. Removing the table Review
+    action does not delete saved notes, tags, rules or their filters.
+
+### 6.6 Tags, notes and rules
 
 - Add tag membership filters and one-tag-at-a-time breakdowns using exact
   trader-selected tag IDs. A trade with several tags contributes to several
@@ -419,12 +458,14 @@ The update is complete only when:
 - a non-Analyzer user receives the complete Trade Explorer result inventory;
 - every aggregate opens or preserves its exact supporting completed trades;
   and
-- the owner approves the rendered desktop/mobile Light/Dark integrated result.
+- desktop/mobile Light/Dark integrated rendering passes before the direct
+  production release is declared complete; the owner instructed this follow-up
+  to continue without another visual-approval pause.
 
 ## 10. Explicitly deferred or excluded
 
 - Every Analyzer-owned statistic in Section 2.2.
-- Named market sessions without an independent exchange-aware fact contract.
+- Exchange-calendar claims, holiday/half-day inference and live session state.
 - Inferred setups, strategies, mistakes, emotions or rule results.
 - Live/unrealized P/L, live prices and external market-data calls.
 - Cross-currency money totals or implicit FX conversion.

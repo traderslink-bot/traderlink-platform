@@ -5,6 +5,7 @@ import { isTraderLinkPlatformError } from "@/src/modules/platform/server/databas
 
 import {
   runTradeExplorerComparison,
+  runTradeExplorerGroupTradesQuery,
   runTradeExplorerQuery,
 } from "./trade-explorer-service";
 import {
@@ -73,6 +74,37 @@ export async function runTradeExplorer(
           : resultsChanged
             ? "These results changed while you were paging. Choose Update results to load the latest trades."
             : "Those results could not be displayed. The table still shows your last successful results. Check the selected filters and try again.",
+    });
+  }
+}
+
+export async function runTradeExplorerGroupTrades(
+  input: unknown,
+  group: unknown,
+  afterCursor?: unknown,
+): Promise<
+  | Readonly<{ ok: true; preview: Awaited<ReturnType<typeof runTradeExplorerGroupTradesQuery>> }>
+  | Readonly<{ ok: false; message: string; refreshRequired: boolean }>
+> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    return Object.freeze({
+      ok: true as const,
+      preview: await runTradeExplorerGroupTradesQuery(scope, input, group, afterCursor),
+    });
+  } catch (error) {
+    const refreshRequired = isTraderLinkPlatformError(error) && [
+      "TRADERLINK_AUTH_SESSION_INVALID",
+      "TRADERLINK_WORKSPACE_ACCESS_DENIED",
+      "TRADERLINK_ACCOUNT_ACCESS_DENIED",
+      "TRADERLINK_ACCOUNT_SELECTION_CONFLICT",
+    ].includes(error.code);
+    return Object.freeze({
+      ok: false as const,
+      refreshRequired,
+      message: refreshRequired
+        ? "Your access or selected trading account changed. Refresh this page and try again."
+        : "The trades in this row could not be loaded. Close the row and try again.",
     });
   }
 }

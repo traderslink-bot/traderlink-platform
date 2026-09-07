@@ -97,6 +97,7 @@ export function toLogicalTradeAnalyticsTable(
       grossPnlDecimal,
       holdingDurationMilliseconds: Math.max(0, Date.parse(last.closedAtUtc) - Date.parse(first.openedAtUtc)),
       maximumPositionQuantityDecimal: maximumDecimal(combined.map((member) => member.maximumPositionQuantityDecimal)),
+      maximumPositionValueDecimal: maximumDecimal(combined.map((member) => member.maximumPositionValueDecimal ?? "0")),
       roundTripId: last.roundTripId,
       selectedPnlDecimal,
       tradeClassification: first.entryLocalDate === last.closeLocalDate ? "day_trade" : "multi_day_trade",
