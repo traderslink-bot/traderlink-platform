@@ -7,6 +7,37 @@ visual approval until the complete staging review.
 
 **Controlling plan:** [TraderLink Communities Partner Platform Plan](traderlink-communities-partner-platform-plan.md)
 
+## 2026-09-07 coaching plans and agreements revision
+
+- [x] Locked the coach-offer sequence: services, work settings, required
+  Journal access and coach-entered pricing are visible before the student
+  chooses or pays for coaching.
+- [x] Locked external payment as a server-level transaction; TraderLink may
+  display coach-supplied prices and payment instructions but does not process,
+  refund or reconcile the payment.
+- [x] Locked required Journal access separately from optional additional
+  access. Required access needs explicit student confirmation before activation
+  and cannot be silently reduced or inferred.
+- [x] Product direction approved for optional reusable plan templates and
+  custom per-student agreements assembled from TraderLink-supported coaching
+  items.
+- [x] Recorded the finalized student agreement, rather than the advertised
+  plan, as the source for generated coaching work, due dates, calendar entries,
+  item counts and follow-up periods.
+- [x] Added the visual-review
+  [Coaching Agreement Builder Mockup](traderlink-coaching-agreement-builder-mockup.html)
+  covering the starting point, coaching-item selection, conditional schedules,
+  workload preview, draft review and student-confirmation handoff.
+- [x] Added the matching
+  [Coaching Offer Comparison Mockup](traderlink-coaching-offer-comparison-mockup.html)
+  and
+  [Student Coaching Agreement Mockup](traderlink-student-coaching-agreement-v2-mockup.html)
+  inside the normal TraderLink dashboard, including exact Journal-sharing
+  requirements, optional sharing, price comparison and confirmation.
+- [ ] Owner visual approval of the agreement-builder and student-confirmation
+  composition.
+- [ ] Integrated agreement schema, work-generation rules and application UI.
+
 ## 2026-09-06 coaching operations revision
 
 - [x] Product direction approved for one Coaching Work page combining the
@@ -36,6 +67,8 @@ visual approval until the complete staging review.
 - [x] Added a true aligned desktop table and labelled mobile work cards. No
   internal `in_review` value appears in this surface.
 - [ ] Integrated shared trades and the individual review editor.
+- [ ] Owner visual approval of the
+  [Coach Trade Review Workspace Mockup](traderlink-coach-trade-review-workspace-v2-mockup.html).
 - [ ] Integrated student private coaching workspace updates.
 - [x] Focused ESLint passes for the three changed application files. The
   repository-wide TypeScript process exhausted the low-memory machine before
@@ -556,3 +589,32 @@ remain deliberately deferred until after the owner's internal-product review.
   horizontal overflow. The student hydration timestamp mismatch was repaired
   with deterministic UTC rendering.
 - [ ] Owner-review the complete expanded coaching composition on staging.
+
+## Coach plan builder and Discord coaching-role continuity - 2026-09-07
+
+**Status:** Implemented locally; staging publication not yet authorized in this slice
+
+- [x] Replaced the primitive coaching-plan form with a preset coaching-work
+  builder that records frequency, coverage period, quantity, due timing,
+  trade-selection responsibility and follow-up period for each selected item.
+- [x] Separated billing cadence from the cadence of coaching work and added
+  fixed price or quote-required pricing, currency and plan-level capacity.
+- [x] Added required Journal scopes to the plan before a student agreement is
+  activated.
+- [x] Required each published plan to select an existing Discord coaching-role
+  identifier. TraderLink verifies the role and does not represent the external
+  Discord payment as processed by TraderLink.
+- [x] Added plan-level paused-student archive timing with `Never` as the
+  default, preserving the coaching record when access changes.
+- [x] Added migration `0129` for structured plan items, required Journal scopes,
+  price terms, the required Discord role and optional archive timing.
+- [x] Derived coaching access from the most recently synchronized Discord roles
+  so access pauses when the required role is missing and restores when it
+  returns without deleting the relationship or its history.
+- [x] Added visible `Access paused` treatment for coaches and the approved
+  student-facing pause notice.
+- [x] Blocked new relationship-scoped coaching messages, review work, sessions,
+  replies and image submissions while the required role is unavailable.
+- [x] Focused ESLint passes for the changed coaching files.
+- [ ] Apply migration `0129`, publish through the serialized staging lane and
+  perform integrated desktop/mobile Light/Dark browser verification.

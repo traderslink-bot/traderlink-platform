@@ -108,9 +108,21 @@ export type TraderLinkCommunityCoachingPlan = Readonly<{
   teachingIncluded: boolean;
   priceLabel: string;
   paymentInstructions: string;
+  priceAmountMinor: number | null;
+  currency: string;
+  billingCadence: "weekly" | "monthly" | "one_time" | "custom";
+  quoteRequired: boolean;
+  requiredDiscordRoleId: string | null;
+  autoArchiveAfterDays: number | null;
+  items: readonly TraderLinkCommunityCoachingPlanItem[];
+  journalScopes: readonly Readonly<{dataScope:TraderLinkCommunityCoachingJournalScope;required:boolean}>[];
   audienceId: string;
   status: "draft" | "active" | "paused" | "archived";
 }>;
+
+export type TraderLinkCommunityCoachingItemType="trade_review"|"trading_day_review"|"performance_review"|"journal_review"|"rules_review"|"strategy_review"|"risk_review"|"goal_review"|"student_check_in"|"review_follow_up"|"private_session"|"group_lesson"|"questions"|"custom_task";
+export type TraderLinkCommunityCoachingJournalScope="trades"|"trade_notes"|"rules"|"tags"|"analytics"|"open_positions"|"journal_notes"|"images";
+export type TraderLinkCommunityCoachingPlanItem=Readonly<{planItemId:string;itemType:TraderLinkCommunityCoachingItemType;frequency:"weekly"|"every_two_weeks"|"monthly"|"once"|"custom";coveragePeriod:"single_item"|"previous_7_days"|"since_last_review"|"calendar_week"|"previous_month"|"custom";quantity:number;dueOffsetDays:number;selectionMode:"not_applicable"|"coach"|"student"|"coach_or_student";followUpDays:number;ordinal:number}>;
 
 export type TraderLinkCommunityRelationship = Readonly<{
   relationshipId: string;
@@ -123,6 +135,9 @@ export type TraderLinkCommunityRelationship = Readonly<{
   planId: string;
   planName: string;
   status: "pending" | "active" | "ended" | "declined";
+  accessStatus: "pending" | "active" | "access_paused" | "ended";
+  requiredDiscordRoleId: string | null;
+  requiredRolePresent: boolean;
   requestedAtUtc: string;
   startedAtUtc: string | null;
   endedAtUtc: string | null;

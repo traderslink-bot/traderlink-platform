@@ -975,6 +975,53 @@ Owner-approved product direction on 2026-09-06:
 
 The required pre-implementation visual contract is
 [Coaching Work and Review Workspace Mockup](traderlink-coaching-work-review-workspace-mockup.html).
+The dedicated individual-work surface is controlled by the
+[Coach Trade Review Workspace Mockup](traderlink-coach-trade-review-workspace-v2-mockup.html).
+Reusable coaching offers and per-student customization are controlled by the
+[Coaching Agreement Builder Mockup](traderlink-coaching-agreement-builder-mockup.html)
+and the student-side
+[Coaching Offer Comparison Mockup](traderlink-coaching-offer-comparison-mockup.html)
+and
+[Student Coaching Agreement Mockup](traderlink-student-coaching-agreement-v2-mockup.html).
+
+A public or reusable coaching plan is an optional starting template. The
+finalized relationship-scoped student agreement is authoritative for work
+generation. A coach may begin from a saved plan, modify a saved plan for one
+student or create a custom agreement without publishing a plan. Before an
+agreement activates, it must capture enough structured information to create
+the applicable work items, quantities, coverage periods, due dates, calendar
+entries and follow-up windows. Student-selected Journal grants remain a
+separate required confirmation and are never inferred from the coaching items.
+
+### Coaching offer, price and Journal-access contract
+
+The coach defines required Journal access while creating the offer or custom
+agreement, before the student chooses or pays for the service. The offer must
+show the coach-entered price, currency, billing period, included coaching
+items, quantities, frequency, follow-up, availability and required Journal
+access together so the student can understand and compare what is offered.
+TraderLink displays those coach-supplied commercial facts but does not process,
+refund or reconcile the external payment.
+
+The activation sequence is fixed:
+
+1. the coach selects coaching items and their work-generation settings;
+2. the coach identifies the Journal data required to deliver those items;
+3. the coach records the price and external payment instructions or link;
+4. the student reviews the price, inclusions and required access before buying;
+5. payment and the server role remain handled outside TraderLink;
+6. the coach sends the finalized student agreement;
+7. the student confirms the agreement and explicitly grants its required
+   Journal access; and
+8. TraderLink activates the agreement and generates coaching work.
+
+Required Journal access and optional additional access are separate. Required
+access is visible before purchase and must be explicitly granted before the
+agreement activates. Optional access may be granted or revoked separately.
+Declining required access leaves the agreement inactive; TraderLink must not
+silently reduce the agreed service or infer consent. A custom arrangement may
+show `Custom price` or `Quote required` until the coach records the final
+commercial terms and service settings.
 
 The coach workspace must support the coach's full service, not only isolated
 trade feedback:
@@ -1158,6 +1205,11 @@ deferred visual approval until the integrated staging review. Communities 1-7
 are now assembled under the linked progress record. The immediate boundary is
 final focused verification, integrated desktop/mobile Light/Dark QA and a safe
 staging-only publication.
+
+The coach plan builder now captures preset work, workload timing, pricing,
+required Journal scopes and the existing Discord coaching role that controls
+continued service access. Missing-role access is paused without deleting the
+coaching record and resumes when the synchronized role returns.
 
 The staging review uses isolated example data and disabled mutations where live
 Discord or billing evidence is unavailable. Real server activation, a private
