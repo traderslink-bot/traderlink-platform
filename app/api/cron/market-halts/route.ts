@@ -54,15 +54,18 @@ export async function GET(request: Request): Promise<Response> {
     let queued = 0;
     runtimeDatabase.transaction(() => {
       const repository = new MarketHaltAlertRepository(runtimeDatabase);
+      const observedHaltIds = new Set<string>();
       for (const halt of fetched.halts) {
         const result = repository.upsert({
           halt,
           observedAtUtc,
           sourceUrl: halt.source === "nyse" ? NYSE_TRADE_HALTS_CSV_URL : NASDAQ_TRADE_HALTS_RSS_URL,
         });
-        if (!result.inserted) continue;
-        created += 1;
-        queued += repository.enqueue({ halt, haltId: result.haltId, occurredAtUtc: observedAtUtc });
+        if (result.inserted) created += 1;
+        observedHaltIds.add(result.haltId);
+      }
+      for (const haltId of observedHaltIds) {
+        queued += repository.reconcileDeliveryLifecycle({ haltId, observedAtUtc });
       }
     }).immediate();
     const configuration = loadPlatformWebPushConfiguration();

@@ -19,7 +19,11 @@ function halt(overrides: Partial<MarketHalt> = {}): MarketHalt {
   });
 }
 
-function fixture(): Readonly<{ database: Database.Database; repository: MarketHaltAlertRepository }> {
+function fixture(): Readonly<{
+  database: Database.Database;
+  enableRecipient(): void;
+  repository: MarketHaltAlertRepository;
+}> {
   const database = new Database(":memory:");
   database.exec(`CREATE TABLE news_market_halt_events (
   halt_id TEXT PRIMARY KEY,
@@ -37,7 +41,35 @@ function fixture(): Readonly<{ database: Database.Database; repository: MarketHa
   first_seen_at_utc TEXT NOT NULL,
   updated_at_utc TEXT NOT NULL
 ) STRICT`);
-  return Object.freeze({ database, repository: new MarketHaltAlertRepository(database) });
+  database.exec(`CREATE TABLE news_market_halt_ticker_day_alert_sequences (
+  ticker TEXT NOT NULL, halt_date_et TEXT NOT NULL, first_halt_id TEXT NOT NULL,
+  initial_notified_at_utc TEXT NOT NULL, last_notified_quote_time_et TEXT,
+  last_notified_trade_time_et TEXT, quote_time_revision INTEGER NOT NULL,
+  trade_time_revision INTEGER NOT NULL, ended_at_utc TEXT,
+  PRIMARY KEY (ticker, halt_date_et)
+) STRICT;
+CREATE TABLE news_market_halt_preferences (user_id TEXT PRIMARY KEY, enabled INTEGER NOT NULL) STRICT;
+CREATE TABLE news_market_halt_muted_tickers (
+  user_id TEXT NOT NULL, ticker TEXT NOT NULL, muted_at_utc TEXT NOT NULL, expires_at_utc TEXT NOT NULL,
+  PRIMARY KEY (user_id, ticker)
+) STRICT;
+CREATE TABLE platform_web_push_subscriptions (
+  subscription_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, state TEXT NOT NULL
+) STRICT;
+CREATE TABLE news_market_halt_push_deliveries (
+  delivery_id TEXT PRIMARY KEY, halt_id TEXT NOT NULL, subscription_id TEXT NOT NULL,
+  notification_stage TEXT NOT NULL, notification_revision INTEGER NOT NULL,
+  notification_title TEXT NOT NULL, notification_body TEXT NOT NULL, state TEXT NOT NULL,
+  attempt_count INTEGER NOT NULL, available_at_utc TEXT NOT NULL, last_attempt_at_utc TEXT,
+  delivered_at_utc TEXT, failure_code TEXT, created_at_utc TEXT NOT NULL, updated_at_utc TEXT NOT NULL,
+  UNIQUE (halt_id, subscription_id, notification_stage, notification_revision)
+) STRICT;`);
+  const enableRecipient = () => {
+    database.prepare(`INSERT INTO news_market_halt_preferences (user_id, enabled) VALUES ('00000000-0000-4000-8000-000000000001', 1)`).run();
+    database.prepare(`INSERT INTO platform_web_push_subscriptions (subscription_id, user_id, state)
+VALUES ('00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001', 'active')`).run();
+  };
+  return Object.freeze({ database, enableRecipient, repository: new MarketHaltAlertRepository(database) });
 }
 
 describe("MarketHaltAlertRepository lifecycle reconciliation", () => {
@@ -123,6 +155,51 @@ FROM news_market_halt_events WHERE ticker = 'NINI'`).get()).toEqual({
       expect(first.inserted).toBe(true);
       expect(later.inserted).toBe(true);
       expect(later.haltId).not.toBe(first.haltId);
+    } finally {
+      database.close();
+    }
+  });
+});
+
+describe("MarketHaltAlertRepository daily delivery lifecycle", () => {
+  it("sends one staged sequence for the first ticker halt and records a later halt silently", () => {
+    const { database, enableRecipient, repository } = fixture();
+    try {
+      enableRecipient();
+      const first = repository.upsert({ halt: halt({ ticker: "FCUV" }), observedAtUtc: "2026-09-04T14:21:00.000Z", sourceUrl: "https://example.test" });
+      expect(repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:21:00.000Z" })).toBe(1);
+      const quote = repository.upsert({ halt: halt({ ticker: "FCUV", resumptionQuoteTimeEt: "10:25:00" }), observedAtUtc: "2026-09-04T14:22:00.000Z", sourceUrl: "https://example.test" });
+      expect(repository.reconcileDeliveryLifecycle({ haltId: quote.haltId, observedAtUtc: "2026-09-04T14:22:00.000Z" })).toBe(1);
+      const trade = repository.upsert({ halt: halt({ ticker: "FCUV", resumptionQuoteTimeEt: "10:25:00", resumptionTradeTimeEt: "10:30:00" }), observedAtUtc: "2026-09-04T14:23:00.000Z", sourceUrl: "https://example.test" });
+      expect(repository.reconcileDeliveryLifecycle({ haltId: trade.haltId, observedAtUtc: "2026-09-04T14:23:00.000Z" })).toBe(1);
+      const later = repository.upsert({ halt: halt({ ticker: "FCUV", haltTimeEt: "10:31:00.000" }), observedAtUtc: "2026-09-04T14:31:00.000Z", sourceUrl: "https://example.test" });
+      expect(repository.reconcileDeliveryLifecycle({ haltId: later.haltId, observedAtUtc: "2026-09-04T14:31:00.000Z" })).toBe(0);
+      expect(database.prepare(`SELECT notification_stage, notification_revision FROM news_market_halt_push_deliveries ORDER BY created_at_utc, notification_stage`).all()).toEqual([
+        { notification_stage: "initial", notification_revision: 0 },
+        { notification_stage: "quote_time", notification_revision: 1 },
+        { notification_stage: "trade_time", notification_revision: 1 },
+      ]);
+    } finally {
+      database.close();
+    }
+  });
+
+  it("sends only a trade update when both expected times first appear together and ends silently", () => {
+    const { database, enableRecipient, repository } = fixture();
+    try {
+      enableRecipient();
+      const initial = repository.upsert({ halt: halt({ ticker: "YMAT" }), observedAtUtc: "2026-09-04T14:21:00.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: initial.haltId, observedAtUtc: "2026-09-04T14:21:00.000Z" });
+      const scheduled = repository.upsert({ halt: halt({ ticker: "YMAT", resumptionQuoteTimeEt: "10:25:00", resumptionTradeTimeEt: "10:30:00" }), observedAtUtc: "2026-09-04T14:22:00.000Z", sourceUrl: "https://example.test" });
+      expect(repository.reconcileDeliveryLifecycle({ haltId: scheduled.haltId, observedAtUtc: "2026-09-04T14:22:00.000Z" })).toBe(1);
+      expect(repository.reconcileDeliveryLifecycle({ haltId: scheduled.haltId, observedAtUtc: "2026-09-04T14:31:00.000Z" })).toBe(0);
+      expect(database.prepare(`SELECT notification_stage FROM news_market_halt_push_deliveries ORDER BY created_at_utc, notification_stage`).all()).toEqual([
+        { notification_stage: "initial" },
+        { notification_stage: "trade_time" },
+      ]);
+      expect(database.prepare(`SELECT ended_at_utc FROM news_market_halt_ticker_day_alert_sequences WHERE ticker = 'YMAT'`).get()).toEqual({
+        ended_at_utc: "2026-09-04T14:31:00.000Z",
+      });
     } finally {
       database.close();
     }

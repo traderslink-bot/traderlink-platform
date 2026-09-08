@@ -42,7 +42,8 @@ The alert shows the source exchange, its actual code, and that code's plain-Engl
 
 - Nasdaq: official Trade Halt RSS only, never more frequently than Nasdaq's one-minute guideline.
 - NYSE: official current-halts CSV only. Normalize accepted NYSE reason text/codes without claiming a Nasdaq code.
-- De-duplicate a halt across sources and notify once per halt/device.
+- De-duplicate a halt across sources and notify once per halt/device. Every delivery of the same stored halt stage and revision uses the same browser notification tag, so a retry or duplicate active subscription cannot create a second visible notification on that device while a factual quote/trade-time update remains visible.
+- For a ticker and Eastern trading date, only the first recorded halt can notify. It sends the initial alert once, then only factual expected quote/trade-time updates when those official times first appear or change. If the posted expected trade time arrives without an official revision, the sequence ends silently. Later same-day halts stay recorded but do not notify, and alerts never claim a confirmed unhalt or resumption.
 - Reconcile a revised or sparse official snapshot into its existing ticker, source, reason and trading-day lifecycle. Preserve the first alert and its most complete published resumption times; a later halt after the prior published resumption boundary remains a new lifecycle. See [Halt Alert Lifecycle Reconciliation Progress](halt-alert-lifecycle-reconciliation-progress.md).
 
 ## Verification and launch

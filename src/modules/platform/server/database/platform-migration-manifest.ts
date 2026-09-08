@@ -48,6 +48,7 @@ import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/da
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
 import { newsMarketHaltDailyMutesMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes";
 import { newsMarketHaltSchedulerHealthMigration } from "@/src/modules/news/server/database/migrations/0104_news_market_halt_scheduler_health";
+import { newsMarketHaltDeliveryLifecycleMigration } from "@/src/modules/news/server/database/migrations/0121_news_market_halt_delivery_lifecycle";
 import { newsWeekAheadMigration } from "@/src/modules/news/server/database/migrations/0079_news_week_ahead";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
@@ -586,6 +587,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0120_journal_workspace_top_tickers_card.ts",
       migration: journalWorkspaceTopTickersCardMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/news/server/database/migrations/0121_news_market_halt_delivery_lifecycle.ts",
+      migration: newsMarketHaltDeliveryLifecycleMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -1027,6 +1032,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0120_journal_workspace_top_tickers_card": Object.freeze([
       "journal_workspace_top_tickers_card_preferences",
+    ]),
+    "0121_news_market_halt_delivery_lifecycle": Object.freeze([
+      "news_market_halt_ticker_day_alert_sequences",
     ]),
   });
 

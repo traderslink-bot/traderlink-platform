@@ -197,12 +197,14 @@ self.addEventListener("push", (event) => {
   }
   const notificationOptions: NotificationOptions & Readonly<{
     actions: readonly TraderLinkNotificationAction[];
+    renotify?: boolean;
   }> = {
     body,
     icon: "/icons/traderlink-192.png",
     badge: "/icons/traderlink-192.png",
     actions,
     data: { muteHaltTicker, path },
+    renotify: false,
     tag,
   };
   event.waitUntil(self.registration.showNotification(title, notificationOptions));
