@@ -246,7 +246,7 @@ export function DemoCandleExportClient() {
                   return (
                     <TableRow key={key}>
                       <TableCell>{session.date}</TableCell>
-                      <TableCell><Typography fontWeight={700}>{session.symbol}</Typography></TableCell>
+                      <TableCell><Typography sx={{ fontWeight: 700 }}>{session.symbol}</Typography></TableCell>
                       <TableCell>{renderStatus(status)}</TableCell>
                       <TableCell align="right">
                         <Button
