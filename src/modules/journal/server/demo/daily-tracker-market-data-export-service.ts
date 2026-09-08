@@ -12,7 +12,7 @@ import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker
 import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
 const MAX_PAGES = 3;
-const MIN_TOKEN_LIFETIME_MILLISECONDS = 15 * 60 * 1000;
+const MIN_TOKEN_LIFETIME_MILLISECONDS = 60_000;
 const SESSION_POLICY = "america_new_york_extended_0400_2000_v1";
 
 const ALLOWED_SESSIONS = Object.freeze(new Map<string, ReadonlySet<string>>([
