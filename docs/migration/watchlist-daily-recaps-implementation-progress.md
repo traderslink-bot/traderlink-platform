@@ -19,6 +19,11 @@
 - [x] Recorded the owner-provided private Discord channel as a server-side test
   destination only. Its identifier is not stored in source, browser state, or
   this document.
+- [x] Added the first pure deterministic draft generator. It uses only the
+  Watchlist posted price/time and later accepted prices supplied as immutable
+  evidence, rejects observations that predate the post, and never implies a
+  member trade or exit.
+- [x] Focused deterministic-draft check: 3 passed, 0 failed.
 
 ## Current implementation gate
 
@@ -38,4 +43,3 @@
 No current change sends a Discord message, changes a webhook or destination,
 starts a scheduler, disables the existing scheduler, applies a migration,
 pushes, or deploys.
-
