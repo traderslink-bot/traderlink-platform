@@ -91,7 +91,7 @@ function canonicalJson(value: unknown): string {
 }
 
 function allowedSession(input: Readonly<{ date: string; symbol: string }>): boolean {
-  return /^2026-08-(?:25|26)$/u.test(input.date) &&
+  return /^\d{4}-\d{2}-\d{2}$/u.test(input.date) &&
     /^[A-Z][A-Z0-9.-]{0,15}$/u.test(input.symbol) &&
     ALLOWED_SESSIONS.get(input.date)?.has(input.symbol) === true;
 }
