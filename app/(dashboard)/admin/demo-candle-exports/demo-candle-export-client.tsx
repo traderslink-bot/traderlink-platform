@@ -124,7 +124,7 @@ function renderStatus(status: ExportStatus) {
   }
   if (status.state === "complete") {
     return (
-      <Stack alignItems="center" direction="row" spacing={0.75}>
+      <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
         <CheckCircleRoundedIcon color="success" fontSize="small" />
         <Typography variant="body2">{status.bars} bars · {status.pages} pages</Typography>
       </Stack>
@@ -132,7 +132,7 @@ function renderStatus(status: ExportStatus) {
   }
   if (status.state === "failed") {
     return (
-      <Stack alignItems="center" direction="row" spacing={0.75}>
+      <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
         <ErrorOutlineRoundedIcon color="error" fontSize="small" />
         <Typography color="error" variant="body2">{status.message}</Typography>
       </Stack>
