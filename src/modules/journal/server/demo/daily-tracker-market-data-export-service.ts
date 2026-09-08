@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import type { NormalizedMarketCandle } from "@/src/modules/level-analysis/contracts/candle-review-contracts";
+import { hasStrictlyIncreasingCandleTimes } from "@/src/modules/level-analysis/server/daily-trade-analyzer-candle-coverage";
 import { newYorkExtendedSession } from "@/src/modules/level-analysis/server/daily-trade-analyzer-session";
 import { MoomooDailyTradeKlineMarketDataProvider } from "@/src/modules/level-analysis/server/providers/moomoo-daily-trade-kline-market-data-provider";
 import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -69,9 +70,19 @@ export type DailyTrackerMarketDataExport = Readonly<{
   temporaryExport: true;
 }>;
 
+export type DailyTrackerMarketDataExportUnavailableCategory =
+  | "provider_or_candle_unavailable"
+  | "requester_connection_unavailable"
+  | "session_candles_unavailable"
+  | "session_metadata_unavailable";
+
 export class DailyTrackerMarketDataExportDenied extends Error {}
 export class DailyTrackerMarketDataExportInvalid extends Error {}
-export class DailyTrackerMarketDataExportUnavailable extends Error {}
+export class DailyTrackerMarketDataExportUnavailable extends Error {
+  constructor(readonly category: DailyTrackerMarketDataExportUnavailableCategory = "provider_or_candle_unavailable") {
+    super(category);
+  }
+}
 
 function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -184,19 +195,20 @@ function validateSessionCoverageAndContinuity(input: Readonly<{
     input.exchangeTimezone !== "America/New_York" ||
     input.providerUtcOffsetSeconds !== expectedNewYorkUtcOffsetSeconds(input.date, session.startTime)
   ) {
-    throw new DailyTrackerMarketDataExportUnavailable();
+    throw new DailyTrackerMarketDataExportUnavailable("session_metadata_unavailable");
   }
-  const expectedCount = (session.endTime - session.startTime) / 60;
-  if (input.candles.length !== expectedCount) throw new DailyTrackerMarketDataExportUnavailable();
+  if (input.candles.length === 0 || !hasStrictlyIncreasingCandleTimes(input.candles)) {
+    throw new DailyTrackerMarketDataExportUnavailable("session_candles_unavailable");
+  }
   let prior: NormalizedMarketCandle | null = null;
-  for (const [index, candle] of input.candles.entries()) {
-    if (candle.time !== session.startTime + index * 60) {
-      throw new DailyTrackerMarketDataExportUnavailable();
+  for (const candle of input.candles) {
+    if (candle.time < session.startTime || candle.time > session.endTime) {
+      throw new DailyTrackerMarketDataExportUnavailable("session_candles_unavailable");
     }
     if (prior) {
       const ratio = Number(candle.openDecimal) / Number(prior.closeDecimal);
       if (!Number.isFinite(ratio) || ratio <= 0 || ratio >= 4 || ratio <= 0.25) {
-        throw new DailyTrackerMarketDataExportUnavailable();
+        throw new DailyTrackerMarketDataExportUnavailable("session_candles_unavailable");
       }
     }
     prior = candle;
@@ -241,7 +253,7 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
       !connection.authorizedScopes.includes("quote:read") ||
       !Number.isFinite(expiresAt) || expiresAt - Date.now() <= MIN_TOKEN_LIFETIME_MILLISECONDS
     ) {
-      throw new DailyTrackerMarketDataExportUnavailable();
+      throw new DailyTrackerMarketDataExportUnavailable("requester_connection_unavailable");
     }
     const access = new MoomooConnectionAccessService(connections);
     return Object.freeze({
