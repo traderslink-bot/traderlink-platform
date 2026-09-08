@@ -24,6 +24,10 @@
   evidence, rejects observations that predate the post, and never implies a
   member trade or exit.
 - [x] Focused deterministic-draft check: 3 passed, 0 failed.
+- [x] Added the exact editable composition-body contract. It preserves the
+  selected ticker order, refuses duplicate/gapped items and Discord mentions,
+  and leaves the fixed server-only mention footer to the final runtime step.
+- [x] Focused draft/composition checks: 6 passed, 0 failed.
 
 ## Current implementation gate
 
