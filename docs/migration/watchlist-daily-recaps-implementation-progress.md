@@ -28,6 +28,10 @@
   selected ticker order, refuses duplicate/gapped items and Discord mentions,
   and leaves the fixed server-only mention footer to the final runtime step.
 - [x] Focused draft/composition checks: 6 passed, 0 failed.
+- [x] Added the review-state contract: correction reason/note are retained,
+  posting requires an already selected recap plus a returned receipt, and a
+  posted review is immutable.
+- [x] Focused draft/composition/review checks: 9 passed, 0 failed.
 
 ## Current implementation gate
 
