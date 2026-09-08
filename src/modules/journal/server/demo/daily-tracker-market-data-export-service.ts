@@ -233,9 +233,7 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
     }
     const access = new MoomooConnectionAccessService(connections);
     return Object.freeze({
-      accessToken: () => access.accessToken(designatedScope, {
-        minimumLifetimeMilliseconds: MIN_TOKEN_LIFETIME_MILLISECONDS,
-      }),
+      accessToken: () => access.accessToken(designatedScope),
       close: () => database.close(),
     });
   } catch (error) {
