@@ -27,8 +27,12 @@
 
 ## Current implementation gate
 
-- [ ] Allocate the next Platform migration id against the current release
-  parent and add durable candidate/evidence/revision/composition storage.
+- [x] Prepared `0122_platform_watchlist_daily_recaps` against the verified
+  current-main high-water mark of `0121`. It is intentionally not yet added to
+  this stale worktree's manifest; reconciliation onto the current release
+  parent must register it before any migration can apply.
+- [ ] Add durable candidate/evidence/revision/composition storage to the
+  current Platform manifest and repository service layer.
 - [ ] Capture activation, price, AI Read, Potential Path, and removal-freeze
   evidence without modifying member-facing Watchlist behavior.
 - [ ] Add deterministic generation and the protected owner API surface.
