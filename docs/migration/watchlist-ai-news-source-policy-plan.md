@@ -31,8 +31,8 @@
 - This endpoint is protected by the existing Watchlist publisher bearer token
   and is uncached.
 - Platform may return protected canonical processed content to that runtime.
-  Any external AI-provider transmission of full article text remains a direct
-  owner decision for the runtime owner.
+  The owner confirmed on 2026-09-08 that the runtime sends that full processed
+  article to the AI request when Platform returns an eligible article.
 - No Help Center workflow changes are needed: the application has no public
   Watchlist Help guide that documents AI source selection.
 
