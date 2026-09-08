@@ -22,6 +22,8 @@ type ClaimedDeliveryRow = SubscriptionRow & Readonly<{
   attempt_count: number;
   delivery_id: string;
   halt_id: string;
+  notification_revision: number;
+  notification_stage: "initial" | "quote_time" | "trade_time";
   notification_body: string;
   notification_title: string;
   ticker: string;
@@ -59,6 +61,7 @@ SET state = 'expired', failure_code = 'alerts_disabled', updated_at_utc = ?
 )`).run(nowUtc, nowUtc);
       const row = this.database.prepare<[string], ClaimedDeliveryRow>(`SELECT
   delivery.delivery_id, delivery.attempt_count, delivery.notification_title, delivery.notification_body,
+  delivery.notification_stage, delivery.notification_revision,
   halt.halt_id,
   halt.ticker,
   subscription.subscription_id, subscription.user_id, subscription.device_ref,
@@ -85,7 +88,7 @@ WHERE delivery_id = ? AND state = 'pending'`).run(nowUtc, nowUtc, row.delivery_i
           Object.freeze({ action: "mute-halt-ticker", title: "Mute for today" }),
         ]),
         notificationBody: row.notification_body,
-        notificationTag: `market-halt:${row.halt_id}`,
+        notificationTag: `market-halt:${row.halt_id}:${row.notification_stage}:${row.notification_revision}`,
         notificationTitle: row.notification_title,
         subscription: decryptPlatformWebPushSubscription({
           configuration: this.configuration,

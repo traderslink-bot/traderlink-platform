@@ -53,6 +53,8 @@ CREATE TABLE news_market_halt_push_deliveries (
   subscription_id TEXT NOT NULL,
   notification_title TEXT NOT NULL,
   notification_body TEXT NOT NULL,
+  notification_stage TEXT NOT NULL,
+  notification_revision INTEGER NOT NULL,
   state TEXT NOT NULL,
   attempt_count INTEGER NOT NULL,
   available_at_utc TEXT NOT NULL,
@@ -99,10 +101,10 @@ CREATE TABLE news_market_halt_push_deliveries (
       encrypted.authenticationTag,
     );
     database.prepare(`INSERT INTO news_market_halt_push_deliveries (
-  delivery_id, halt_id, subscription_id, notification_title, notification_body, state,
-  attempt_count, available_at_utc, last_attempt_at_utc, delivered_at_utc, failure_code,
+  delivery_id, halt_id, subscription_id, notification_title, notification_body, notification_stage,
+  notification_revision, state, attempt_count, available_at_utc, last_attempt_at_utc, delivered_at_utc, failure_code,
   created_at_utc, updated_at_utc
-) VALUES (?, ?, ?, 'FCUV halted', 'Trading is paused.', 'pending', 0, ?, NULL, NULL, NULL, ?, ?)`).run(
+) VALUES (?, ?, ?, 'FCUV halted', 'Trading is paused.', 'initial', 0, 'pending', 0, ?, NULL, NULL, NULL, ?, ?)`).run(
       input.deliveryId,
       input.haltId,
       input.subscriptionId,
@@ -125,7 +127,7 @@ describe("MarketHaltWebPushRepository notification tags", () => {
       const first = repository.claimNext(timestamp);
       const second = repository.claimNext(timestamp);
 
-      expect(first?.notificationTag).toBe(`market-halt:${haltId}`);
+      expect(first?.notificationTag).toBe(`market-halt:${haltId}:initial:0`);
       expect(second?.notificationTag).toBe(first?.notificationTag);
       expect(first).not.toHaveProperty("haltId");
       expect(second).not.toHaveProperty("haltId");
@@ -164,8 +166,8 @@ SET state = 'pending', available_at_utc = ? WHERE delivery_id = ?`).run(timestam
       const first = repository.claimNext(timestamp);
       const second = repository.claimNext(timestamp);
 
-      expect(first?.notificationTag).toBe(`market-halt:${firstHaltId}`);
-      expect(second?.notificationTag).toBe(`market-halt:${secondHaltId}`);
+      expect(first?.notificationTag).toBe(`market-halt:${firstHaltId}:initial:0`);
+      expect(second?.notificationTag).toBe(`market-halt:${secondHaltId}:initial:0`);
       expect(second?.notificationTag).not.toBe(first?.notificationTag);
     } finally {
       database.close();

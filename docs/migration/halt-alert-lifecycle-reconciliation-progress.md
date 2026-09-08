@@ -1,6 +1,6 @@
 # Halt Alert Lifecycle Reconciliation Progress
 
-**Status:** Local duplicate-delivery safeguard in progress; production hold active
+**Status:** Local daily delivery lifecycle implementation in progress; no release authorization
 
 **Controlling plan:** [Nasdaq and NYSE Halt Alerts Plan](nasdaq-nyse-halt-alerts-plan.md)
 
@@ -32,6 +32,17 @@ Read-only production evidence found one stored FCUV halt with two successful Pus
 - [x] Add focused fixtures for same-halt duplicate deliveries, a retry, distinct re-halts, no newly exposed halt field, and the service-worker contract.
 - [ ] Run only the agreed light static checks; focused Vitest remains intentionally deferred under the owner resource policy.
 - [ ] Hold local changes for release-coordinator review; no push, Railway action, migration, configuration change, or production verification is authorized during the owner hold.
+
+## First-halt daily notification lifecycle
+
+Owner-approved notification sequence: only the first recorded halt for a ticker and Eastern trading date can notify. It may send an initial alert, then expected quote/trade-time updates only when official values first appear or change. A trade-time update is terminal once the one-minute poll reaches that unchanged expected time; no alert claims an actual unhalt or resumed trade. Later same-day halts remain stored without delivery.
+
+- [x] Owner approved minimal factual Push copy with no process explanation and no unhalt claim.
+- [x] Visual Release Coordinator reserved migration `0121_news_market_halt_delivery_lifecycle` / execution order 121.
+- [x] Add local staged delivery lifecycle, first-halt eligibility, and silent terminal logic.
+- [x] Add migration/backfill design: existing delivery records become `initial` revision 0.
+- [ ] Complete static/migration fixture review without running Vitest, build, browser, local server, or hosted migration.
+- [ ] Local commit and release-coordinator handoff remain pending separate authorization.
 
 ## Release boundary
 
