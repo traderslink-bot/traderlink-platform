@@ -16,8 +16,20 @@ const MIN_TOKEN_LIFETIME_MILLISECONDS = 15 * 60 * 1000;
 const SESSION_POLICY = "america_new_york_extended_0400_2000_v1";
 
 const ALLOWED_SESSIONS = Object.freeze(new Map<string, ReadonlySet<string>>([
+  ["2026-08-03", new Set(["RITR", "HYFM", "DFNS", "UPC"])],
+  ["2026-08-04", new Set(["AMIX", "QNME", "LSH"])],
+  ["2026-08-05", new Set(["YXT", "INLF"])],
+  ["2026-08-06", new Set(["THH", "GLMD", "MBAI", "PFSA"])],
+  ["2026-08-07", new Set(["VSTD", "YJ", "MB", "MNST"])],
+  ["2026-08-10", new Set(["NXTT", "SXTC", "ONFO", "TNON"])],
+  ["2026-08-11", new Set(["GLMD", "PFSA", "WXM"])],
+  ["2026-08-12", new Set(["BOXL", "RMCF", "OFAL", "ADTX"])],
+  ["2026-08-13", new Set(["XHG", "FGI"])],
+  ["2026-08-14", new Set(["WETO", "MDXH", "CAPR", "BANL"])],
   ["2026-08-25", new Set(["ANF", "BHVN", "BZ", "SEDG", "SMTC", "SMMT"])],
   ["2026-08-26", new Set(["YYGH", "CRE", "SOAR", "XPON", "WSHP"])],
+  ["2026-08-28", new Set(["FTFT", "FNGR", "PSQL", "CHAI"])],
+  ["2026-08-31", new Set(["AEHL", "NCRA", "GPRO"])],
 ]));
 
 type SanitizedRawPage = Readonly<{
