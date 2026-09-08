@@ -224,7 +224,7 @@ export function DemoCandleExportClient() {
             Export one session at a time in reverse date order. Each successful response downloads its own
             sanitized JSON evidence file with normalized bars and checksums.
           </Typography>
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             <Chip color="success" label={`${completed} complete`} variant={completed ? "filled" : "outlined"} />
             <Chip color="error" label={`${failed} failed`} variant={failed ? "filled" : "outlined"} />
             <Chip label={`${SESSIONS.length - completed} remaining`} variant="outlined" />
