@@ -203,7 +203,6 @@ self.addEventListener("push", (event) => {
     badge: "/icons/traderlink-192.png",
     actions,
     data: { muteHaltTicker, path },
-    renotify: false,
     tag,
   };
   event.waitUntil(self.registration.showNotification(title, notificationOptions));
