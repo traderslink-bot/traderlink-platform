@@ -41,8 +41,10 @@ technical acceptance are complete. Intermediate visual approval is not required.
 - [x] Owner chose separate Day and Swing Trade Trackers.
 - [x] Fixed one shared canonical execution ledger.
 - [x] Fixed distinct routes, navigation and Open Positions responsibilities.
-- [x] Fixed recent-entry, per-row execution date/time, preview/commit and
-      trade-level style boundaries.
+- [x] Fixed historical manual-entry, per-row execution date/time, preview/commit
+      and trade-level style boundaries. Manual entries may use any past
+      account-local date; future timestamps remain rejected and the Analyzer's
+      provider-retention policy stays separate.
 - [x] Fixed Swing daily-note and rebuild-safe identity behavior.
 - [x] Linked controlling migration documents and superseded the mixed-tracker
       language in the earlier Day Session plan.

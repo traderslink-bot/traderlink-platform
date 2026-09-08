@@ -9,7 +9,6 @@ import type {
   JournalManualWorkspaceStyle,
   JournalTradeStyle,
 } from "../../contracts/journal-manual-trade-capture-contracts";
-import { JOURNAL_MANUAL_ENTRY_RECENT_CALENDAR_DAYS } from "../../contracts/journal-manual-trade-capture-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -57,13 +56,6 @@ function localDateAt(instant: Date, timezone: string): string {
     .filter((part) => part.type !== "literal")
     .map((part) => [part.type, part.value]));
   return `${parts.year}-${parts.month}-${parts.day}`;
-}
-
-function subtractCalendarDays(value: string, days: number): string {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(Date.UTC(year!, month! - 1, day! - days))
-    .toISOString()
-    .slice(0, 10);
 }
 
 function signedQuantity(entry: JournalManualTradeEntry): string {
@@ -238,10 +230,6 @@ export class JournalManualTradePreviewService {
     const accountScope = narrowWorkspaceAccessToAccount(scope, accountId);
     const account = this.accounts.requireAccountRecord(scope, accountId);
     const today = localDateAt(this.now(), account.tradingTimezone);
-    const earliestRecentDate = subtractCalendarDays(
-      today,
-      JOURNAL_MANUAL_ENTRY_RECENT_CALENDAR_DAYS - 1,
-    );
     const affectedDates = [...new Set(input.entries.map((entry) => entry.localDate))]
       .sort();
     if (input.tracker === "workspace" && input.workspaceStyle === undefined) {
@@ -249,9 +237,7 @@ export class JournalManualTradePreviewService {
     }
     if (
       input.entries.some((entry) =>
-        entry.sourceTimezone !== account.tradingTimezone || entry.localDate > today) ||
-      (input.tracker === "day" && affectedDates.some((date) => date < earliestRecentDate)) ||
-      (input.tracker === "swing" && affectedDates.at(-1)! < earliestRecentDate)
+        entry.sourceTimezone !== account.tradingTimezone || entry.localDate > today)
     ) {
       platformFailure("TRADERLINK_MANUAL_TRADE_RECENT_ENTRY_REQUIRED");
     }

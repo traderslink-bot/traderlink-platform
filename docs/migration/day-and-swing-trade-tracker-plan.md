@@ -286,25 +286,18 @@ they do not silently alter the manual execution or upgrade fee/net-P/L coverage.
 
 ## 5. Manual trade capture versus historical import
 
-### Normal recent-entry boundary
+### Historical manual-entry boundary
 
-The first release uses an account-local trailing seven-calendar-day recent-entry
-window, including today:
+A trader may manually enter a completed or open trade for any past account-local
+trading date. Every execution retains its actual date and time; a later save
+does not make it appear contemporaneous. Future dates and future execution
+times remain rejected.
 
-- a new day trade may be entered for today or the previous six calendar days;
-- a completed swing may be entered when its closing execution is inside that
-  window, even when its opening execution is older;
-- an active swing may be entered with its true earlier opening date because it
-  is still a current position; and
-- an already tracked manual trade may receive a versioned factual correction
-  after the window; the correction does not pretend to be a new current entry.
-
-Older untracked completed activity belongs in broker statement import or a
-future separately planned historical manual-import workflow. The Day Trade
-Tracker does not expose a bulk old-trade backfill mode.
-
-The recent-entry window is one named server configuration value used by UI and
-commands. It is not duplicated as magic numbers in components.
+Historical manual entry and market-data retrieval are separate policies. The
+Daily Trade Analyzer may reuse an already-saved compatible candle session for
+any historical trade, but it must not make a provider request outside its
+separate retention window. A missing historical session therefore leaves the
+trade recorded and readable without fabricated analysis.
 
 ### Actual execution dates
 

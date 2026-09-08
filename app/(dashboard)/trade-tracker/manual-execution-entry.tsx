@@ -26,20 +26,11 @@ import {
 } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
 import { ManualTradePostEntryReview, type PreviewLogicalTradeMerge } from "./manual-trade-post-entry-review";
 
-function friendlyFailure(
-  code: string | undefined,
-  tracker: JournalManualTrackerKind,
-): string {
+function friendlyFailure(code: string | undefined): string {
   if (code === "TRADERLINK_MANUAL_TRADE_SINGLE_DAY_REQUIRED") {
     return "Enter executions for one trading day at a time.";
   }
   if (code === "TRADERLINK_MANUAL_TRADE_RECENT_ENTRY_REQUIRED") {
-    if (tracker === "day") {
-      return "You can only enter trades or executions that occurred on the same day. You cannot enter future times or dates.";
-    }
-    if (tracker === "swing") {
-      return "Check the execution dates and times. New swing entries must be current or recently closed, and future executions cannot be saved. Use Imports for older completed trades.";
-    }
     return "Check the execution date and time. Future executions cannot be saved.";
   }
   if (
@@ -200,7 +191,7 @@ export function ManualExecutionEntry({
         });
       }
       if (error instanceof ManualTradeNeedsReviewError) {
-        throw new Error(friendlyFailure(error.code, tracker));
+        throw new Error(friendlyFailure(error.code));
       }
       throw error;
     }
