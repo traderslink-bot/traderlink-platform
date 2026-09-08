@@ -1083,8 +1083,8 @@ function parseRecentNewsFilings(card: LiveWatchlistCardContent): RecentNewsFilin
           filingType: typeof candidate.filingType === "string" ? candidate.filingType : null,
         };
       })
-      .filter((article): article is RecentNewsFilingArticle =>
-        Boolean(article) &&
+      .filter((article): article is RecentNewsFilingArticle => Boolean(article))
+      .filter((article) =>
         !hasStockTitanReference(article.title) &&
         !hasStockTitanReference(article.url) &&
         !hasStockTitanReference(article.eventType) &&
