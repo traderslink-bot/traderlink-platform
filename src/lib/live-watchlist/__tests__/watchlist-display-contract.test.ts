@@ -53,6 +53,13 @@ describe("watchlist display contract", () => {
     expect(guidePageSource).toContain('forcedTheme="light"');
   });
 
+  it("never renders Stock Titan source text or links in Watchlist cards", () => {
+    expect(clientSource).toContain("function hasStockTitanReference");
+    expect(clientSource).toContain("const safeSources = read.sources.filter");
+    expect(clientSource).toContain("!hasStockTitanReference(article.url)");
+    expect(clientSource).toContain("return hasStockTitanReference(card.body) ? null");
+  });
+
   it("stacks Potential Path support above resistance on phones", () => {
     expect(cssSource).toMatch(
       /@media \(max-width: 620px\)[\s\S]*?\.watchlist-v2-nearest,[\s\S]*?\.watchlist-v2-level-columns\s*\{\s*grid-template-columns:\s*1fr;/,

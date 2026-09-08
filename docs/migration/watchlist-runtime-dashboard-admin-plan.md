@@ -9,6 +9,8 @@ runtime. This is separate from the member-facing official Watchlist route.
 
 **Usage-panel progress:** [Watchlist Usage Admin Progress](watchlist-usage-admin-progress.md)
 
+**AI article source policy:** [Watchlist AI News Source Policy Plan](watchlist-ai-news-source-policy-plan.md)
+
 ## Owner-approved layout
 
 The page is `/admin/watchlist`. For now it remains inside the established
