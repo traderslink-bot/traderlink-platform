@@ -245,41 +245,6 @@ function formatCardBody(value: string): string {
     .replace(/\\n/g, "\n");
 }
 
-function hasStockTitanReference(value: string | null | undefined): boolean {
-  return typeof value === "string" && /stock[\s_-]*titan/i.test(value);
-}
-
-function stockTitanSafeText(value: string): string | null {
-  return hasStockTitanReference(value) ? null : value;
-}
-
-function isStockTitanSource(source: TradersLinkAiReadPayload["sources"][number]): boolean {
-  return source.sourceType === "stocktitan_rss" ||
-    hasStockTitanReference(source.title) ||
-    hasStockTitanReference(source.url) ||
-    hasStockTitanReference(source.evidence?.supportingExcerpt) ||
-    hasStockTitanReference(source.evidence?.filingType);
-}
-
-function olderTradersLinkArticlePublicationDate(
-  read: TradersLinkAiReadPayload,
-  sources: TradersLinkAiReadPayload["sources"],
-): string | null {
-  const currentSessionDate = formatDate(read.dataAsOf);
-  const olderArticleSource = sources.find((source) => {
-    if (
-      source.sourceType !== "press_release_sec_database" ||
-      source.evidence?.excerptKind !== "article_summary" ||
-      !source.evidence.publishedAt
-    ) {
-      return false;
-    }
-    const publishedAt = Date.parse(source.evidence.publishedAt);
-    return Number.isFinite(publishedAt) && formatDate(publishedAt) !== currentSessionDate;
-  });
-  return olderArticleSource?.evidence?.publishedAt ?? null;
-}
-
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -566,17 +531,9 @@ function TradersLinkAiReadCard({
   const pullbackPlan = dipBuyPlanVisible
     ? deriveTradersLinkAiPullbackPlan(read)
     : null;
-  const safeSources = read.sources.filter((source) => !isStockTitanSource(source));
-  const titleOnlyCatalystSources = safeSources.filter(
+  const titleOnlyCatalystSources = read.sources.filter(
     (source) => source.evidence?.excerptKind === "article_title",
   );
-  const catalystSummary = stockTitanSafeText(read.catalystRealityCheck.summary);
-  const catalystRelevance = stockTitanSafeText(read.catalystRealityCheck.dayTradeRelevance);
-  const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read, safeSources);
-  const dilutionSummary = stockTitanSafeText(read.dilutionRisk.summary);
-  const dilutionRelevance = stockTitanSafeText(read.dilutionRisk.dayTradeRelevance);
-  const listingSummary = stockTitanSafeText(read.listingStatus.summary);
-  const listingRelevance = stockTitanSafeText(read.listingStatus.dayTradeRelevance);
 
   return (
     <article
@@ -787,17 +744,13 @@ function TradersLinkAiReadCard({
 
       <div className="watchlist-ai-read-context-grid">
         {read.catalystRealityCheck.status === "confirmed" &&
-        read.catalystRealityCheck.sourceUrls.length > 0 &&
-        (catalystSummary || catalystRelevance || titleOnlyCatalystSources.length > 0) ? (
+        read.catalystRealityCheck.sourceUrls.length > 0 ? (
           <section className="watchlist-ai-read-section">
             <div className="watchlist-ai-read-section-heading">
               <h3>Catalyst / recent news</h3>
               <span>{formatAiReadTag(read.catalystRealityCheck.status)}</span>
             </div>
-            {olderArticlePublishedAt ? (
-              <p><strong>Older article:</strong> {formatArticleDate(olderArticlePublishedAt)}</p>
-            ) : null}
-            {catalystSummary ? <p>{catalystSummary}</p> : null}
+            <p>{read.catalystRealityCheck.summary}</p>
             {titleOnlyCatalystSources.length > 0 ? (
               <ul>
                 {titleOnlyCatalystSources.map((source) => (
@@ -805,21 +758,18 @@ function TradersLinkAiReadCard({
                 ))}
               </ul>
             ) : null}
-            {catalystRelevance ? (
-              <p className="watchlist-ai-read-relevance">
-                <strong>Day-trade impact:</strong> {catalystRelevance}
-              </p>
-            ) : null}
+            <p className="watchlist-ai-read-relevance">
+              <strong>Day-trade impact:</strong> {read.catalystRealityCheck.dayTradeRelevance}
+            </p>
           </section>
         ) : null}
-        {read.externalResearchEnabled === true &&
-        (dilutionSummary || dilutionRelevance || read.dilutionRisk.companyIssuance || read.dilutionRisk.publicResale) ? (
+        {read.externalResearchEnabled === true ? (
             <section className="watchlist-ai-read-section">
               <div className="watchlist-ai-read-section-heading">
                 <h3>Dilution risk</h3>
                 <span>{formatAiReadTag(read.dilutionRisk.level)}</span>
               </div>
-              {dilutionSummary ? <p>{dilutionSummary}</p> : null}
+              <p>{read.dilutionRisk.summary}</p>
               {read.dilutionRisk.companyIssuance || read.dilutionRisk.publicResale ? (
                 <div className="watchlist-ai-read-dilution-timing">
                   <p className="watchlist-ai-read-dilution-today">
@@ -838,11 +788,9 @@ function TradersLinkAiReadCard({
                   ) : null}
                 </div>
               ) : null}
-              {dilutionRelevance ? (
-                <p className="watchlist-ai-read-relevance">
-                  <strong>Day-trade impact:</strong> {dilutionRelevance}
-                </p>
-              ) : null}
+              <p className="watchlist-ai-read-relevance">
+                <strong>Day-trade impact:</strong> {read.dilutionRisk.dayTradeRelevance}
+              </p>
             </section>
         ) : null}
       </div>
@@ -852,8 +800,7 @@ function TradersLinkAiReadCard({
       read.listingStatus.status !== "unknown" &&
       (read.listingStatus.immediacy === "near_term" ||
         read.listingStatus.immediacy === "immediate") &&
-      read.listingStatus.sourceUrls.length > 0 &&
-      (listingSummary || listingRelevance) ? (
+      read.listingStatus.sourceUrls.length > 0 ? (
         <section
           className="watchlist-ai-read-listing"
           data-immediacy={read.listingStatus.immediacy}
@@ -864,20 +811,18 @@ function TradersLinkAiReadCard({
               {formatAiReadTag(read.listingStatus.status)} · {formatAiReadTag(read.listingStatus.immediacy)}
             </span>
           </div>
-          {listingSummary ? <p>{listingSummary}</p> : null}
-          {listingRelevance ? (
-            <p>
-              <strong>Day-trade impact:</strong> {listingRelevance}
-            </p>
-          ) : null}
+          <p>{read.listingStatus.summary}</p>
+          <p>
+            <strong>Day-trade impact:</strong> {read.listingStatus.dayTradeRelevance}
+          </p>
         </section>
       ) : null}
 
-      {read.externalResearchEnabled === true && safeSources.length > 0 ? (
+      {read.externalResearchEnabled === true && read.sources.length > 0 ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-sources">
           <h3>Sources checked</h3>
           <ul>
-            {safeSources.map((source) => (
+            {read.sources.map((source) => (
               <li key={`${source.sourceType}-${source.url}`}>
                 <a href={source.url} target="_blank" rel="noreferrer">
                   {source.title}
@@ -1083,13 +1028,7 @@ function parseRecentNewsFilings(card: LiveWatchlistCardContent): RecentNewsFilin
           filingType: typeof candidate.filingType === "string" ? candidate.filingType : null,
         };
       })
-      .filter((article): article is RecentNewsFilingArticle =>
-        Boolean(article) &&
-        !hasStockTitanReference(article.title) &&
-        !hasStockTitanReference(article.url) &&
-        !hasStockTitanReference(article.eventType) &&
-        !hasStockTitanReference(article.filingType),
-      );
+      .filter((article): article is RecentNewsFilingArticle => Boolean(article));
 
     const articlesByTitleAndDay = new Map<string, RecentNewsFilingArticle>();
     for (const article of parsedArticles) {
@@ -1152,7 +1091,7 @@ function formatNewsChipLabel(value: string): string {
 function RecentNewsFilingsCard({ card }: { card: LiveWatchlistCardContent }) {
   const articles = parseRecentNewsFilings(card);
   if (articles.length === 0) {
-    return hasStockTitanReference(card.body) ? null : <pre>{formatCardBody(card.body)}</pre>;
+    return <pre>{formatCardBody(card.body)}</pre>;
   }
 
   return (

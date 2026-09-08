@@ -6,8 +6,6 @@
 
 **Usage-panel record:** [Watchlist Usage Admin Progress](watchlist-usage-admin-progress.md)
 
-**AI article source record:** [Watchlist AI News Source Policy Progress](watchlist-ai-news-source-policy-progress.md)
-
 ## Completed
 
 - [x] Confirmed the existing Watchlist runtime has the required status,

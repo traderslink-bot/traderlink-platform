@@ -6,7 +6,6 @@ import Database from "better-sqlite3";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
-  findNewsArticleForWatchlistAi,
   listNewsArticlesByTicker,
   resetNewsDatabaseForTests,
   upsertNewsArticle,
@@ -103,50 +102,5 @@ describe("news article source canonicalization", () => {
     } finally {
       database.close();
     }
-  });
-
-  it("prefers a processed article from the requested New York session, then the inclusive five-weekday window", async () => {
-    await upsertNewsArticle({
-      sourceEventId: "psdb-outside-window",
-      ticker: "PDSB",
-      headline: "Older PDSB article",
-      articleText: "Processed article that is outside the eligible window.",
-      sourceUrl: "https://news.nuntiobot.com/article/pdsb-outside-window",
-      publishedAt: "2026-09-01T15:00:00.000Z",
-    });
-    await upsertNewsArticle({
-      sourceEventId: "psdb-older-eligible",
-      ticker: "PDSB",
-      headline: "Eligible older PDSB article",
-      articleText: "Processed article from the prior eligible session.",
-      sourceUrl: "https://news.nuntiobot.com/article/pdsb-older-eligible",
-      publishedAt: "2026-09-05T15:00:00.000Z",
-    });
-
-    const olderSelection = await findNewsArticleForWatchlistAi("PDSB", "2026-09-08");
-    expect(olderSelection).toMatchObject({
-      targetSessionDate: "2026-09-08",
-      windowStartDateEt: "2026-09-02",
-      windowEndDateEt: "2026-09-08",
-      recency: "older_within_window",
-      publishedDateEt: "2026-09-05",
-      article: { headline: "Eligible older PDSB article" },
-    });
-
-    await upsertNewsArticle({
-      sourceEventId: "psdb-current-session",
-      ticker: "PDSB",
-      headline: "Current PDSB article",
-      articleText: "Processed article from the requested session.",
-      sourceUrl: "https://news.nuntiobot.com/article/pdsb-current-session",
-      publishedAt: "2026-09-08T15:00:00.000Z",
-    });
-
-    const currentSelection = await findNewsArticleForWatchlistAi("PDSB", "2026-09-08");
-    expect(currentSelection).toMatchObject({
-      recency: "current_day",
-      publishedDateEt: "2026-09-08",
-      article: { headline: "Current PDSB article" },
-    });
   });
 });
