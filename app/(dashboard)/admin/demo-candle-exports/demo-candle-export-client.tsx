@@ -56,45 +56,28 @@ const SAFE_UNAVAILABLE_CATEGORIES = new Set([
 const SESSIONS: readonly ExportSession[] = Object.freeze([
   { date: "2026-08-31", symbol: "AEHL" },
   { date: "2026-08-31", symbol: "NCRA" },
-  { date: "2026-08-31", symbol: "GPRO" },
   { date: "2026-08-28", symbol: "FTFT" },
   { date: "2026-08-28", symbol: "FNGR" },
-  { date: "2026-08-28", symbol: "PSQL" },
-  { date: "2026-08-28", symbol: "CHAI" },
   { date: "2026-08-14", symbol: "WETO" },
   { date: "2026-08-14", symbol: "MDXH" },
-  { date: "2026-08-14", symbol: "CAPR" },
-  { date: "2026-08-14", symbol: "BANL" },
   { date: "2026-08-13", symbol: "XHG" },
   { date: "2026-08-13", symbol: "FGI" },
   { date: "2026-08-12", symbol: "BOXL" },
   { date: "2026-08-12", symbol: "RMCF" },
-  { date: "2026-08-12", symbol: "OFAL" },
-  { date: "2026-08-12", symbol: "ADTX" },
-  { date: "2026-08-11", symbol: "GLMD" },
   { date: "2026-08-11", symbol: "PFSA" },
   { date: "2026-08-11", symbol: "WXM" },
-  { date: "2026-08-10", symbol: "NXTT" },
-  { date: "2026-08-10", symbol: "SXTC" },
-  { date: "2026-08-10", symbol: "ONFO" },
-  { date: "2026-08-10", symbol: "TNON" },
-  { date: "2026-08-07", symbol: "VSTD" },
+  { date: "2026-08-10", symbol: "SCKT" },
+  { date: "2026-08-10", symbol: "JWEL" },
   { date: "2026-08-07", symbol: "YJ" },
   { date: "2026-08-07", symbol: "MB" },
-  { date: "2026-08-07", symbol: "MNST" },
-  { date: "2026-08-06", symbol: "THH" },
-  { date: "2026-08-06", symbol: "GLMD" },
   { date: "2026-08-06", symbol: "MBAI" },
   { date: "2026-08-06", symbol: "PFSA" },
   { date: "2026-08-05", symbol: "YXT" },
   { date: "2026-08-05", symbol: "INLF" },
   { date: "2026-08-04", symbol: "AMIX" },
   { date: "2026-08-04", symbol: "QNME" },
-  { date: "2026-08-04", symbol: "LSH" },
   { date: "2026-08-03", symbol: "RITR" },
   { date: "2026-08-03", symbol: "HYFM" },
-  { date: "2026-08-03", symbol: "DFNS" },
-  { date: "2026-08-03", symbol: "UPC" },
 ]);
 
 const EMPTY_STATUS: ExportStatus = Object.freeze({ state: "idle" });
@@ -143,7 +126,7 @@ function renderStatus(status: ExportStatus) {
     return (
       <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
         <CheckCircleRoundedIcon color="success" fontSize="small" />
-        <Typography variant="body2">{status.bars} bars · {status.pages} pages</Typography>
+        <Typography variant="body2">{status.bars} bars � {status.pages} pages</Typography>
       </Stack>
     );
   }
@@ -189,7 +172,7 @@ export function DemoCandleExportClient() {
       const text = await response.text();
       if (!response.ok) {
         const category = unavailableCategory(text);
-        throw new Error(`HTTP ${response.status} — ${category ?? "exporter unavailable"}`);
+        throw new Error(`HTTP ${response.status} - ${category ?? "exporter unavailable"}`);
       }
       let payload: ExportPayload;
       try {
