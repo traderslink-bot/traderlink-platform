@@ -49,8 +49,8 @@ export function readOwnerMarketData(symbol?: string, date?: string, offset = 0, 
       WHERE s.provider_key = ? AND s.provider_adapter_version = ? AND s.interval = '1m'
         AND s.session_policy = ? AND (? IS NULL OR s.provider_symbol = ?)
         AND (? IS NULL OR s.trading_date_new_york = ?)
-        AND (? = 'all' OR (? = 'success' AND latest.outcome = 'ready' AND (latest.failure_reason_code IS NULL OR latest.failure_reason_code = 'saved_session_retained'))
-          OR (? = 'failed' AND (latest.outcome <> 'ready' OR (latest.failure_reason_code IS NOT NULL AND latest.failure_reason_code <> 'saved_session_retained'))))
+        AND (? = 'all' OR (? = 'success' AND latest.outcome = 'ready')
+          OR (? = 'failed' AND latest.outcome <> 'ready'))
       ORDER BY s.trading_date_new_york DESC, s.provider_symbol LIMIT 100 OFFSET ?`)
       .all(KEY, ADAPTER, POLICY, symbol ?? null, symbol ?? null, date ?? null, date ?? null, result, result, result, offset) as Array<{
         id: string; symbol: string; date: string; status: string; checksum: string | null;
@@ -60,7 +60,7 @@ export function readOwnerMarketData(symbol?: string, date?: string, offset = 0, 
       }>;
     const repository = new DailyTradeAnalyzerRepository(database);
     return rows.map(({ id, failure, ...row }) => ({ ...row, failure: ownerMarketDataMessage(failure),
-      requestStatus: row.latestOutcome === "ready" && (!failure || failure === "saved_session_retained") ? "success" : "failed",
+      requestStatus: row.latestOutcome !== "ready" ? "failed" : failure?.startsWith("partial:") ? "partial" : "success",
       attempts: (database.prepare(`SELECT market_session_set_version_id AS versionId, retrieved_at_utc AS at, outcome, failure_reason_code AS reason, requested_start_utc AS requestedStart, requested_end_utc AS requestedEnd FROM level_analysis_market_session_set_versions WHERE market_session_set_id = ? ORDER BY revision_number DESC LIMIT 20`).all(id) as Array<{ versionId: string; at: string; outcome: string; reason: string | null; requestedStart: string; requestedEnd: string }>).map(({ versionId, reason, ...attempt }) => {
         const evidence = database.prepare(`SELECT safe_counts_json AS counts FROM platform_operational_events WHERE operation_kind = 'background_job' AND operation_ref_sha256 = ? AND outcome_code = 'owner_market_data_request' LIMIT 1`).get(diagnosticRef(versionId)) as { counts: string } | undefined;
         return { ...attempt, code: reason, message: ownerMarketDataMessage(reason), diagnostics: evidence ? JSON.parse(evidence.counts) as Record<string, number> : null };
@@ -90,7 +90,7 @@ export async function requestOwnerMarketData(input: { symbol: string; date: stri
     const versionId = repository.persistMarketSession({ ...input, failureReasonCode: input.failureReasonCode ?? (input.outcome === "ready" && !promote ? "saved_session_retained" : null), promoteCurrent: false });
     new PlatformOperationalEventRepository(database).append({
       operationKind: "background_job", operationRefSha256: diagnosticRef(versionId),
-      state: input.outcome === "ready" && !input.failureReasonCode?.startsWith("partial:") ? "completed" : "failed",
+      state: input.outcome === "ready" ? "completed" : "failed",
       outcomeCode: "owner_market_data_request", applicationVersion: null, safeCounts: diagnostics,
       evidenceSha256: null, startedAtUtc: input.completedAtUtc, completedAtUtc: input.completedAtUtc, createdAtUtc: input.completedAtUtc,
     });
@@ -129,26 +129,19 @@ export async function requestOwnerMarketData(input: { symbol: string; date: stri
     } catch { return saveFailure("shared_connection_unavailable"); }
     diagnostics = { ...diagnostics, credential_available: 1 };
     const requestStarted = Math.floor(Date.now() / 60000) * 60;
-    const result = await new MoomooDailyTradeKlineMarketDataProvider(() => Promise.resolve(token), fetch, { strictOwnerSession: true, onDiagnostics: (counts) => { diagnostics = counts; } }).fetch({
+    const result = await new MoomooDailyTradeKlineMarketDataProvider(() => Promise.resolve(token), fetch, { strictOwnerSession: true, availableThrough: requestStarted, onDiagnostics: (counts) => { diagnostics = counts; } }).fetch({
       symbol: input.symbol, interval: "1m", includeExtendedHours: true,
       startTime: session.startTime, endTime: session.endTime,
     });
     if (!result.ok) {
-      if (result.partialCandles?.length && result.partialSha256) {
-        persist({ marketSessionSetId: id, candles: result.partialCandles, completedAtUtc: new Date().toISOString(),
-          coverageEndUtc: iso(session.startTime), requestedStartUtc: iso(session.startTime), requestedEndUtc: iso(session.endTime),
-          failureReasonCode: `partial:${result.failureReasonCode}`, outcome: "ready", providerExchangeTimezone: result.exchangeTimezone,
-          providerUtcOffsetSeconds: result.utcOffsetSeconds, sha256: result.partialSha256 });
-        return { ok: false as const, message: ownerMarketDataMessage(`partial:${result.failureReasonCode}`) };
-      }
       return saveFailure(result.failureReasonCode);
     }
     const promoted = persist({ marketSessionSetId: id, candles: result.candles,
-      completedAtUtc: new Date().toISOString(), coverageEndUtc: iso(Math.max(session.startTime, Math.min(session.endTime, requestStarted))),
+      completedAtUtc: new Date().toISOString(), coverageEndUtc: iso(result.partialReasonCode ? session.startTime : Math.max(session.startTime, Math.min(session.endTime, requestStarted))),
       requestedStartUtc: iso(session.startTime), requestedEndUtc: iso(session.endTime),
-      failureReasonCode: null, outcome: "ready", providerExchangeTimezone: result.exchangeTimezone,
+      failureReasonCode: result.partialReasonCode ? `partial:${result.partialReasonCode}` : null, outcome: "ready", providerExchangeTimezone: result.exchangeTimezone,
       providerUtcOffsetSeconds: result.utcOffsetSeconds, sha256: result.normalizedCandleSha256 });
-    return { ok: true as const, bars: result.candles.length, message: promoted ? "Candles saved." : ownerMarketDataMessage("saved_session_retained") };
+    return { ok: true as const, partial: !!result.partialReasonCode, bars: result.candles.length, message: result.partialReasonCode ? ownerMarketDataMessage(`partial:${result.partialReasonCode}`) : promoted ? "Candles saved." : ownerMarketDataMessage("saved_session_retained") };
   } catch {
     if (id) {
       try {

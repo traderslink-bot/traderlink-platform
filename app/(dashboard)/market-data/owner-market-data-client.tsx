@@ -13,7 +13,7 @@ type Session = {
   coverageEnd: string | null; retrievedAt: string | null; lastAttempt: string | null;
   requestedStart: string | null; requestedEnd: string | null;
   failure: string | null; candles?: SavedCandle[];
-  requestStatus: "success" | "failed";
+  requestStatus: "success" | "partial" | "failed";
   attempts: { at: string; outcome: string; message: string | null; code: string | null; requestedStart: string; requestedEnd: string; diagnostics: Record<string, number> | null }[];
 };
 const endpoint = "/api/platform/owner-market-data";
@@ -25,7 +25,7 @@ const diagnosticText = (counts: Record<string, number> | null) => {
   if (!counts) return "Connection, response and pagination details were not recorded for this older request.";
   const connection = counts.responses_received > 0 ? "Moomoo responded" : counts.requests_sent > 0 ? "Request sent; no HTTP response received" : counts.credential_available ? "Connection credential available; candle request not sent" : "Connection credential unavailable; candle request not sent";
   const code = counts.provider_code === undefined ? "not received" : String(counts.provider_code * (counts.provider_code_negative ? -1 : 1));
-  return `${connection}. HTTP: ${counts.http_status ?? "not received"}. Provider code: ${code}. Pages received: ${counts.responses_received}. Rows returned: ${counts.rows_received ?? 0}. Candles in requested window: ${counts.candles_in_window ?? 0}. Empty pages: ${counts.empty_pages ?? 0}. Pagination: ${counts.pagination_complete ? "complete" : "not completed"}.`;
+  return `${connection}. HTTP: ${counts.http_status ?? "not received"}. Provider code: ${code}. Pages received: ${counts.responses_received}. Rows returned: ${counts.rows_received ?? 0}. Candles in requested window: ${counts.candles_in_window ?? 0}. Empty pages: ${counts.empty_pages ?? 0}.${counts.future_rows_ignored === undefined ? "" : ` Future rows excluded: ${counts.future_rows_ignored}.`}${counts.invalid_rows_excluded === undefined ? "" : ` Invalid rows excluded: ${counts.invalid_rows_excluded}.`} Pagination: ${counts.pagination_complete ? "complete" : "not completed"}.`;
 };
 async function json(response: Response) {
   let result;
@@ -48,7 +48,7 @@ export function OwnerMarketDataClient() {
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0, current: "" });
-  const [results, setResults] = useState<{ label: string; ok: boolean; message: string }[]>([]);
+  const [results, setResults] = useState<{ label: string; ok: boolean; partial?: boolean; message: string }[]>([]);
   const [chart, setChart] = useState<Session | null>(null);
   const [chartLoading, setChartLoading] = useState(false);
   const stop = useRef(false);
@@ -92,7 +92,7 @@ export function OwnerMarketDataClient() {
         setProgress({ done, total, current: label });
         try {
           const result = await json(await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" }, body: JSON.stringify({ symbol, date }) }));
-          setResults((prior) => [...prior, { label, ok: result.ok, message: result.message }]);
+          setResults((prior) => [...prior, { label, ok: result.ok, partial: result.partial, message: result.message }]);
         } catch (failure) {
           setResults((prior) => [...prior, { label, ok: false, message: failure instanceof Error ? failure.message : "The application could not reach the server. Refresh inventory to check whether this request was saved." }]);
         }
@@ -129,7 +129,7 @@ export function OwnerMarketDataClient() {
       </Stack>
     </Box></DashboardPanel>
     {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
-    {!!results.length && <Stack spacing={1} aria-live="polite">{results.map((result) => <Alert key={result.label} severity={result.ok ? "success" : "error"}>{result.label}: {result.message}</Alert>)}</Stack>}
+    {!!results.length && <Stack spacing={1} aria-live="polite">{results.map((result) => <Alert key={result.label} severity={result.ok ? result.partial ? "warning" : "success" : "error"}>{result.label}: {result.message}</Alert>)}</Stack>}
     <Stack spacing={2}>
       <Typography component="h2" variant="h6">Candle requests</Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
@@ -145,7 +145,7 @@ export function OwnerMarketDataClient() {
       {sessions.map((session) => <Box key={`${session.symbol}-${session.date}`} sx={{ p: 2, border: 1, borderColor: "divider", borderRadius: 2, bgcolor: "background.paper", color: "text.primary" }}>
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))", lg: "1fr 1fr 1.4fr 1.4fr auto" }, gap: 2, alignItems: "center" }}>
           <Box><Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>{session.symbol}</Typography><Typography variant="body2">{session.date}</Typography></Box>
-          <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}><Chip size="small" color={session.requestStatus === "success" ? "success" : "error"} label={session.requestStatus === "success" ? "Successful" : "Failed"} /><Typography variant="body2">{session.bars} saved candles · 1 minute</Typography></Stack>
+          <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}><Chip size="small" color={session.requestStatus === "success" ? "success" : session.requestStatus === "partial" ? "warning" : "error"} label={session.requestStatus === "success" ? "Successful" : session.requestStatus === "partial" ? "Partial candles saved" : "Failed"} /><Typography variant="body2">{session.bars} saved candles · 1 minute</Typography></Stack>
           <Box><Typography variant="body2">Saved: {time(session.firstTime)}–{time(session.lastTime)} NY</Typography><Typography variant="body2">Saved coverage through {time(session.coverageEnd)}</Typography></Box>
           <Box><Typography variant="body2">Latest request: {time(session.attempts[0]?.requestedStart ?? null)}–{time(session.attempts[0]?.requestedEnd ?? null)} NY</Typography>{session.lastAttempt && <Typography variant="body2">{new Date(session.lastAttempt).toLocaleString()}</Typography>}</Box>
           <Button variant="outlined" disabled={!session.bars || chartLoading} onClick={() => void openChart(session)}>Open chart</Button>

@@ -1,6 +1,6 @@
 export function ownerMarketDataMessage(reason: string | null): string | null {
   if (!reason) return null;
-  if (reason.startsWith("partial:")) return `Partial candles were saved; full-session retrieval did not finish. ${ownerMarketDataMessage(reason.slice(8))}`;
+  if (reason.startsWith("partial:")) return `Available candles were saved. Coverage is incomplete. ${ownerMarketDataMessage(reason.slice(8))}`;
   const messages: Record<string, string> = {
     shared_connection_unavailable: "The shared Moomoo connection is unavailable. Reconnect it and retry.",
     moomoo_connection_unavailable: "The shared Moomoo connection is unavailable. Reconnect it and retry.",
@@ -10,6 +10,7 @@ export function ownerMarketDataMessage(reason: string | null): string | null {
     moomoo_payload_invalid: "Moomoo returned an unexpected response format.",
     moomoo_provider_rejected: "Moomoo rejected the candle request.",
     moomoo_candle_invalid: "Moomoo returned a candle with missing or invalid price, volume, or time values.",
+    moomoo_rows_excluded: "Rows with invalid or conflicting candle values were excluded; the other returned candles remain usable.",
     moomoo_duplicate_candle_conflict: "Moomoo returned conflicting candles for the same minute.",
     moomoo_returned_no_candles: "Moomoo returned no candles for this session.",
     moomoo_pagination_invalid: "Moomoo indicated more data but did not provide a usable next page.",

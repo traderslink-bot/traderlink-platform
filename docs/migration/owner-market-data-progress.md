@@ -6,6 +6,8 @@ The owner tool is deployed at `b2c282e2716b27851bc8172740c8b880599ac6c1`; Coordi
 
 [Request diagnostics and inventory repair](owner-market-data-diagnostics-repair-20260909.md) tracks the current GCDT investigation, recorded provider diagnostics, actual-request inventory, success/failure filters, compact desktop rows and readable Dark-mode text. Implementation and focused client/chart/provider types pass; production verification is pending.
 
+Diagnostics release `48cec130` is live and the GCDT September 8 full-day request and saved chart passed. September 9 exposed rejection of whole-day rows beyond the available early-morning candles. The owner explicitly removed completeness blockers: the follow-up saves available valid candles with partial coverage warnings, excludes future and invalid individual rows, and preserves ordinary Analyzer behavior. See the linked repair record for exact production evidence and pending recheck.
+
 Owner-approved scope: a separate normal-dashboard Market Data page and request form for the two established owner identities. No trade entry is required. Request symbols and dates, save full extended-session 1-minute candles, list saved sessions and failures, and open saved candles in a chart.
 
 ## Implementation checklist
