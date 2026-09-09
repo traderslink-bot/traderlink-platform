@@ -1,7 +1,7 @@
-import { readProtectedInitialOwnerDiscordSubject } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
 import { TraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import {
   authorizeOwnerDailyTrackerMarketDataExport,
   DailyTrackerMarketDataExportDenied,
@@ -66,9 +66,8 @@ export async function POST(request: Request): Promise<Response> {
   let authorized: ReturnType<typeof authorizeOwnerDailyTrackerMarketDataExport> | null = null;
   try {
     requirePlatformMutationRequest(request);
-    const configuredOwnerSubject = readProtectedInitialOwnerDiscordSubject();
-    if (!configuredOwnerSubject) return unavailable();
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
+    if (!hasWatchlistDashboardNavigationAccess(identity)) return rejected();
     const activeAuthorization = authorizeOwnerDailyTrackerMarketDataExport(identity);
     authorized = activeAuthorization;
     const input = await readRequest(request);

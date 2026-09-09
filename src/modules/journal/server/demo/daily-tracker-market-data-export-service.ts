@@ -7,7 +7,6 @@ import { hasStrictlyIncreasingCandleTimes } from "@/src/modules/level-analysis/s
 import { newYorkExtendedSession } from "@/src/modules/level-analysis/server/daily-trade-analyzer-session";
 import { MoomooDailyTradeKlineMarketDataProvider } from "@/src/modules/level-analysis/server/providers/moomoo-daily-trade-kline-market-data-provider";
 import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { SharedAnalyzerAllowanceRepository } from "@/src/modules/level-analysis/server/shared-analyzer-allowance-repository";
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -191,33 +190,13 @@ export type AuthorizedDailyTrackerMarketDataExport = Readonly<{
   close: () => void;
 }>;
 
-function isDesignatedSharedAnalyzerRequester(
-  identity: TraderLinkPlatformRequestIdentity,
-  designated: NonNullable<ReturnType<SharedAnalyzerAllowanceRepository["designatedScope"]>>,
-): boolean {
-  return identity.scope.userId === designated.userId &&
-    identity.scope.workspaceId === designated.workspaceId;
-}
-
 export function authorizeOwnerDailyTrackerMarketDataExport(
   identity: TraderLinkPlatformRequestIdentity,
 ): AuthorizedDailyTrackerMarketDataExport {
   const database = openReadonlyPlatformDatabase();
   try {
-    // This temporary export may use only the same designated server-side Moomoo
-    // scope that the ordinary shared Trade Analyzer uses. It never authorizes
-    // another account's connection or makes the credential visible to the caller.
-    const designated = new SharedAnalyzerAllowanceRepository(database).designatedScope();
-    if (!designated || !isDesignatedSharedAnalyzerRequester(identity, designated)) {
-      throw new DailyTrackerMarketDataExportDenied();
-    }
-    const designatedScope = Object.freeze({
-      ...designated,
-      activeAccountId: designated.accountId,
-      allowedAccountIds: Object.freeze([designated.accountId]),
-    });
     const connections = new MoomooConnectionRepository(database);
-    const connection = connections.find(designatedScope);
+    const connection = connections.find(identity.scope);
     const expiresAt = Date.parse(connection?.accessTokenExpiresAtUtc ?? "");
     if (
       !connection || connection.state !== "active" ||
@@ -228,7 +207,7 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
     }
     const access = new MoomooConnectionAccessService(connections);
     return Object.freeze({
-      accessToken: () => access.accessToken(designatedScope),
+      accessToken: () => access.accessToken(identity.scope),
       close: () => database.close(),
     });
   } catch (error) {
