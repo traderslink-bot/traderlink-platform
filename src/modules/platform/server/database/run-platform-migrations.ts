@@ -38,9 +38,9 @@ function safeMigrationDriverMessage(error: unknown): string {
 
 export function verifyCompletedPlatformDatabase(
   database: Database.Database,
-  manifestInput?: readonly PlatformMigration[],
+  manifestInput: readonly PlatformMigration[] = platformMigrationManifest,
 ): PlatformMigrationRunResult {
-  const manifest = validatePlatformMigrationManifest(manifestInput ?? platformMigrationManifest);
+  const manifest = validatePlatformMigrationManifest(manifestInput);
   const tables = listPlatformUserTableNames(database);
   if (tables.length === 0) platformFailure("TRADERLINK_PLATFORM_DATABASE_EMPTY");
   if (!platformMigrationRegistryExists(database)) {
@@ -52,20 +52,7 @@ export function verifyCompletedPlatformDatabase(
     database,
     expectedPlatformTableNamesForPrefix(rows.length),
   );
-  // Temporary release/recovery carrier: only these two exact, fully verified
-  // schema states are compatible with the unchanged application. Explicit
-  // manifest callers (maintenance/backup verification) remain strictly complete.
-  // Remove this predecessor allowance after the guarded Demo migration succeeds.
-  const reviewedDemoPredecessor = manifestInput === undefined &&
-    manifest.length === 117 &&
-    manifest.at(-1)?.migrationId === "0122_journal_demo_august_provenance_guard" &&
-    manifest.at(-1)?.executionOrder === 122 &&
-    manifest.at(-2)?.migrationId === "0121_news_market_halt_delivery_lifecycle" &&
-    manifest.at(-2)?.executionOrder === 121 &&
-    rows.length === 116 &&
-    rows.at(-1)?.migration_id === "0121_news_market_halt_delivery_lifecycle" &&
-    rows.at(-1)?.execution_order === 121;
-  if (rows.length !== manifest.length && !reviewedDemoPredecessor) {
+  if (rows.length !== manifest.length) {
     platformFailure("TRADERLINK_PLATFORM_MIGRATIONS_PENDING", {
       appliedMigrationCount: rows.length,
       requiredMigrationCount: manifest.length,
