@@ -1,5 +1,8 @@
 # Press Release Dashboard Progress
 
+- [x] Mark opted-in press-release Push messages high urgency while retaining
+      their 24-hour delivery lifetime and ordinary notification defaults.
+
 **Status:** Implementation active
 
 **Controlling plan:** [Press Release Dashboard Plan](press-release-dashboard-plan.md)

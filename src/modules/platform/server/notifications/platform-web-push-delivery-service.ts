@@ -74,8 +74,8 @@ export class PlatformWebPushDeliveryService {
           version: 3,
         })),
         {
-          TTL: 24 * 60 * 60,
-          urgency: "normal",
+          TTL: delivery.timeToLiveSeconds ?? 24 * 60 * 60,
+          urgency: delivery.urgency ?? "normal",
         },
       );
       this.repository.delivered({

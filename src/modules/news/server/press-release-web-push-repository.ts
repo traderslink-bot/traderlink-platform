@@ -16,6 +16,8 @@ import type { PlatformWebPushEncryptionConfiguration } from "../../platform/serv
 import type { PlatformWebPushClaimedDelivery } from "../../platform/server/notifications/platform-web-push-repository";
 import { decryptPlatformWebPushSubscription } from "../../platform/server/notifications/platform-web-push-subscription-crypto";
 
+const PRESS_RELEASE_PUSH_TTL_SECONDS = 24 * 60 * 60;
+
 type SubscriptionRow = Readonly<{
   authentication_tag: string;
   ciphertext: string;
@@ -184,6 +186,8 @@ WHERE delivery_id = ? AND state = 'pending'`).run(nowUtc, nowUtc, row.delivery_i
           userId: row.user_id,
         }),
         subscriptionRef: row.subscription_id,
+        timeToLiveSeconds: PRESS_RELEASE_PUSH_TTL_SECONDS,
+        urgency: "high",
       });
     }).immediate();
   }

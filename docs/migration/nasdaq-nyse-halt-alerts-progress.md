@@ -10,12 +10,14 @@
 - [x] Owner selected opt-in Halt alerts, same-day ticker mutes, Select all controls, and live deployment.
 - [x] Add durable event, preference, mute and delivery records.
 - [x] Add official Nasdaq RSS and NYSE CSV polling with normalization.
+- [x] Canonicalize cross-source halt dates and exclude Nasdaq-listed rows from the consolidated NYSE file so one Nasdaq halt cannot create a second NYSE-labeled ticker-day alert.
 - [x] Send exact alert content through the existing Push service worker.
 - [x] Add Account Push setup and Help alignment.
 - [x] Add the detailed Halt Alerts guide under the Tools Help section, linked from Notifications and imports.
 - [x] Replace permanent settings-page ticker mutes with a **Mute for today** notification action and 8:00 PM Eastern expiry.
 - [x] Add the left-navigation Halt Alerts drawer with same-day ticker mutes and mobile close controls.
 - [x] Add the owner-approved delivery-readiness status below the toggle. See [Halt Alert Status Indicator Progress](halt-alert-status-indicator-progress.md).
+- [x] Mark halt-alert Push messages high urgency with a two-minute transport lifetime while leaving ordinary Platform notifications at normal urgency.
 - [ ] Refresh the drawer layout with the owner-approved Halt alerts, Muted Tickers and device-install sections.
 - [ ] Complete focused verification and owner visual approval.
 - [ ] Deploy, activate the one-minute hosted schedule, and confirm real device Push.

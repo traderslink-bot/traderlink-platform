@@ -60,6 +60,8 @@ export type PlatformWebPushClaimedDelivery = Readonly<{
   notificationTitle?: string;
   subscription: PlatformWebPushSubscriptionInput;
   subscriptionRef: string;
+  timeToLiveSeconds?: number;
+  urgency?: "very-low" | "low" | "normal" | "high";
 }>;
 
 function digest(domain: string, value: string): string {

@@ -7,6 +7,8 @@ import type { PlatformWebPushClaimedDelivery } from "../../platform/server/notif
 import { decryptPlatformWebPushSubscription } from "../../platform/server/notifications/platform-web-push-subscription-crypto";
 import { assertCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
 
+const MARKET_HALT_PUSH_TTL_SECONDS = 2 * 60;
+
 type SubscriptionRow = Readonly<{
   authentication_tag: string;
   ciphertext: string;
@@ -38,6 +40,9 @@ export class MarketHaltWebPushRepository {
   claimNext(nowUtc: string): PlatformWebPushClaimedDelivery | null {
     assertCanonicalUtcTimestamp(nowUtc, "marketHaltWebPushClaimedAt");
     const staleBefore = new Date(Date.parse(nowUtc) - 5 * 60_000).toISOString();
+    const staleAlertBefore = new Date(
+      Date.parse(nowUtc) - MARKET_HALT_PUSH_TTL_SECONDS * 1_000,
+    ).toISOString();
     return this.database.transaction(() => {
       this.database.prepare(`UPDATE news_market_halt_push_deliveries
 SET state = 'failed', failure_code = 'delivery_failed', updated_at_utc = ?
@@ -45,6 +50,9 @@ WHERE state = 'sending' AND last_attempt_at_utc <= ? AND attempt_count >= 5`).ru
       this.database.prepare(`UPDATE news_market_halt_push_deliveries
 SET state = 'pending', available_at_utc = ?, updated_at_utc = ?
 WHERE state = 'sending' AND last_attempt_at_utc <= ? AND attempt_count < 5`).run(nowUtc, nowUtc, staleBefore);
+      this.database.prepare(`UPDATE news_market_halt_push_deliveries
+SET state = 'expired', failure_code = 'delivery_stale', updated_at_utc = ?
+WHERE state = 'pending' AND created_at_utc <= ?`).run(nowUtc, staleAlertBefore);
       this.database.prepare(`UPDATE news_market_halt_push_deliveries
 SET state = 'expired', failure_code = 'alerts_disabled', updated_at_utc = ?
     WHERE state = 'pending' AND (
@@ -103,6 +111,8 @@ WHERE delivery_id = ? AND state = 'pending'`).run(nowUtc, nowUtc, row.delivery_i
           userId: row.user_id,
         }),
         subscriptionRef: row.subscription_id,
+        timeToLiveSeconds: MARKET_HALT_PUSH_TTL_SECONDS,
+        urgency: "high",
       });
     }).immediate();
   }

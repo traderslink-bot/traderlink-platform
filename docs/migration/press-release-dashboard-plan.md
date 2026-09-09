@@ -102,6 +102,9 @@ TradersLink logo asset as the article header.
 - Platform owns the encrypted device subscription and shared Web Push
   transport. News owns press-release delivery attempts, which do not appear in
   the ordinary account/trading notification bell or `/notifications` list.
+- Press-release Push messages use high transport urgency for opted-in traders
+  and retain the existing 24-hour delivery lifetime. Other Platform
+  notification categories retain their existing transport priority.
 - Press Release dashboard reads are user-scoped and require the existing
   Premium Discord access decision. Loopback local-development owner access
   remains available for review.

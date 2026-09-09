@@ -36,12 +36,14 @@ The alert shows the source exchange, its actual code, and that code's plain-Engl
 - Both Discord messages and Push notifications get their own **Select all** control while retaining individual choices.
 - A **Mute for today** action on a halt notification mutes that ticker through 8:00 PM Eastern. It automatically returns the ticker's alerts that evening.
 - The existing Platform encrypted Web Push transport delivers the alert. The protected `/api/cron/market-halts` endpoint polls Nasdaq and NYSE once a minute after owner UI approval; the Railway scheduler calls it over HTTPS and sends real Push alerts.
+- Halt-alert Push messages use high transport urgency and expire after two minutes so Android can wake promptly without displaying a stale halt alert later. Other Platform notification categories retain their existing transport priority.
 - The scheduler stores privacy-safe run outcomes (time and official-source availability only) so the authenticated drawer can show actual readiness; it never stores a user, subscription or Push endpoint in this health record. See [Halt Alert Status Indicator Progress](halt-alert-status-indicator-progress.md).
 
 ## Source rules
 
 - Nasdaq: official Trade Halt RSS only, never more frequently than Nasdaq's one-minute guideline.
-- NYSE: official current-halts CSV only. Normalize accepted NYSE reason text/codes without claiming a Nasdaq code.
+- NYSE: official current-halts CSV only. Accept only NYSE-family exchange rows from its consolidated list, and normalize accepted NYSE reason text/codes without claiming a Nasdaq code.
+- Normalize every source's Eastern halt date to `YYYY-MM-DD` before event identity or ticker-day delivery reconciliation.
 - De-duplicate a halt across sources and notify once per halt/device. Every delivery of the same stored halt stage and revision uses the same browser notification tag, so a retry or duplicate active subscription cannot create a second visible notification on that device while a factual quote/trade-time update remains visible.
 - For a ticker and Eastern trading date, only the first recorded halt can notify. It sends the initial alert once, then only factual expected quote/trade-time updates when those official times first appear or change. If the posted expected trade time arrives without an official revision, the sequence ends silently. Later same-day halts stay recorded but do not notify, and alerts never claim a confirmed unhalt or resumption.
 - Reconcile a revised or sparse official snapshot into its existing ticker, source, reason and trading-day lifecycle. Preserve the first alert and its most complete published resumption times; a later halt after the prior published resumption boundary remains a new lifecycle. See [Halt Alert Lifecycle Reconciliation Progress](halt-alert-lifecycle-reconciliation-progress.md).
