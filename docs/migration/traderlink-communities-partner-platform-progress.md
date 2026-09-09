@@ -718,3 +718,28 @@ remain deliberately deferred until after the owner's internal-product review.
   content in their server-provided snapshot.
 - [ ] Publish this slice to staging and complete rendered desktop/mobile
   Light/Dark verification.
+
+## Integrated trade-review workspace correction - 2026-09-08
+
+**Status:** Corrective integration active; staging replacement pending
+
+- [x] Recorded that the optional review-section slice incorrectly replaced
+  rather than extended the owner-approved V2 trade-review workspace.
+- [x] Restored Find trades, To review and Saved views as the controlling trade
+  workflow.
+- [x] Restored search and date controls, right-side selection boxes, Select all,
+  Add to review, Remove selected and Remove all.
+- [x] Kept student-selected trades out of Find trades and placed them directly
+  into To review with Student labels.
+- [x] Restored the focused per-trade review editor, factual trade summary,
+  Trade Details, Chart, image/action controls and Save trade review behavior.
+- [x] Saving a trade review moves it from To review to Saved and advances the
+  editor to the next queued trade. Saved reviews remain reopenable and editable.
+- [x] Restored Student Journal drawers, Review agreement, Review progress and
+  the separate Review and send confirmation page.
+- [x] Preserved the newly approved optional overall-review sections after the
+  trade workflow instead of using them as its replacement.
+- [x] Kept desktop trade rows aligned as a table and used compact trade cards on
+  mobile.
+- [ ] Complete focused verification, publish the correction to staging and
+  compare the rendered result against both approved mockups before reporting it.
