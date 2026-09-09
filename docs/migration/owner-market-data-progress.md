@@ -1,5 +1,11 @@
 # Owner Market Data
 
+## Current September 9 repair
+
+The owner tool is deployed at `b2c282e2716b27851bc8172740c8b880599ac6c1`; Coordinator reported Railway `31959fd7-9f1e-49db-85b7-b773b3e7d352` successful and health ready. Earlier pending-release statements below are historical.
+
+[Request diagnostics and inventory repair](owner-market-data-diagnostics-repair-20260909.md) tracks the current GCDT investigation, recorded provider diagnostics, actual-request inventory, success/failure filters, compact desktop rows and readable Dark-mode text. Implementation and focused client/chart/provider types pass; production verification is pending.
+
 Owner-approved scope: a separate normal-dashboard Market Data page and request form for the two established owner identities. No trade entry is required. Request symbols and dates, save full extended-session 1-minute candles, list saved sessions and failures, and open saved candles in a chart.
 
 ## Implementation checklist

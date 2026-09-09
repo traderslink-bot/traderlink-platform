@@ -20,11 +20,12 @@ export function GET(request: Request) {
   const symbol = query.get("symbol") || undefined;
   const date = query.get("date") || undefined;
   const offset = Number(query.get("offset") ?? "0");
-  if ([...query.keys()].some((key) => !["symbol", "date", "offset"].includes(key) || query.getAll(key).length !== 1) ||
+  const result = query.get("result") ?? "all";
+  if (!["all", "success", "failed"].includes(result) || [...query.keys()].some((key) => !["symbol", "date", "offset", "result"].includes(key) || query.getAll(key).length !== 1) ||
     !Number.isSafeInteger(offset) || offset < 0 ||
     (symbol && !validOwnerMarketRequest({ symbol, date: date ?? "2000-01-01" })) ||
     (date && !validOwnerMarketRequest({ symbol: symbol ?? "A", date }))) return reply({ message: "Invalid inventory filter." }, 400);
-  try { return reply({ sessions: readOwnerMarketData(symbol, date, offset) }); }
+  try { return reply({ sessions: readOwnerMarketData(symbol, date, offset, result) }); }
   catch { return reply({ message: "The application could not read saved market data." }, 503); }
 }
 export async function POST(request: Request) {

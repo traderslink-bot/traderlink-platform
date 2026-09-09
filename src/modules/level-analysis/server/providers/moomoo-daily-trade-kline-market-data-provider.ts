@@ -128,11 +128,13 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
   constructor(
     private readonly accessToken: () => Promise<string>,
     private readonly request: typeof fetch = fetch,
-    private readonly options: Readonly<{ strictOwnerSession?: boolean }> = {},
+    private readonly options: Readonly<{ strictOwnerSession?: boolean; onDiagnostics?: (counts: Readonly<Record<string, number>>) => void }> = {},
   ) {}
 
   async fetch(input: MarketDataRequest): Promise<MarketDataProviderResult & { partialCandles?: readonly NormalizedMarketCandle[]; partialSha256?: string }> {
     const candles = new Map<number, NormalizedMarketCandle>();
+    const diagnostics: Record<string, number> = { credential_available: 0, requests_sent: 0, responses_received: 0, rows_received: 0, empty_pages: 0, pagination_complete: 0 };
+    const report = () => this.options.onDiagnostics?.({ ...diagnostics, candles_in_window: candles.size });
     const requestedUtc = (seconds: number): string | null => Number.isSafeInteger(seconds) && seconds > 0
       ? new Date(seconds * 1000).toISOString() : null;
     const failed = (code: "coverage_unavailable" | "invalid_payload" | "provider_unavailable",
@@ -143,6 +145,7 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
         symbol: input.symbol, ...details,
       });
       const partial = this.options.strictOwnerSession ? [...candles.values()].sort((a, b) => a.time - b.time) : [];
+      report();
       return { ...unavailable(code, failureReasonCode), ...(partial.length ? {
         partialCandles: partial,
         partialSha256: createHash("sha256").update(`${JSON.stringify(partial)}\n`, "utf8").digest("hex"),
@@ -155,6 +158,7 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
     let token: string;
     try {
       token = await this.accessToken();
+      diagnostics.credential_available = 1;
     } catch {
       return failed("provider_unavailable", "moomoo_connection_unavailable");
     }
@@ -171,10 +175,13 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
       if (cursor) query.set("next_time", cursor);
       let response: Response;
       try {
+        diagnostics.requests_sent += 1;
         response = await this.request(
           `${MOOMOO_API_ORIGIN}/api/v1.0/quote/US.${encodeURIComponent(input.symbol)}/history-kline?${query}`,
           { cache: "no-store", ...(this.options.strictOwnerSession ? { signal: AbortSignal.timeout(30_000) } : {}), headers: { Accept: "application/json", Authorization: `Bearer ${token}` } },
         );
+        diagnostics.responses_received += 1;
+        diagnostics.http_status = response.status;
       } catch {
         return failed("provider_unavailable", "moomoo_request_failed", { page: page + 1 });
       }
@@ -189,6 +196,10 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
       }
       if (!response.ok) return failed("provider_unavailable", "moomoo_http_unavailable",
         { httpStatus: response.status, page: page + 1 });
+      if (payload && Number.isSafeInteger(payload.ret_code)) {
+        diagnostics.provider_code = Math.abs(Number(payload.ret_code));
+        diagnostics.provider_code_negative = Number(payload.ret_code) < 0 ? 1 : 0;
+      }
       if (this.options.strictOwnerSession) {
         if (!payload || typeof payload !== "object" || typeof payload.ret_code !== "number") return failed("invalid_payload", "moomoo_payload_invalid");
         if (payload.ret_code !== 0) return failed("provider_unavailable", "moomoo_provider_rejected");
@@ -202,6 +213,8 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
         });
       }
       metadata = providerMetadata(payload.data.kline_list);
+      diagnostics.rows_received += payload.data.kline_list.length;
+      if (!payload.data.kline_list.length) diagnostics.empty_pages += 1;
       for (const value of payload.data.kline_list) {
         if (this.options.strictOwnerSession && value && typeof value === "object") {
           const row = value as Record<string, unknown>;
@@ -221,7 +234,7 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
       }
       const next = payload.data.next_time;
       if (this.options.strictOwnerSession) {
-        if (payload.pagination?.has_more === false) { exhausted = true; break; }
+        if (payload.pagination?.has_more === false) { exhausted = true; diagnostics.pagination_complete = 1; break; }
         if (payload.pagination?.has_more !== true || (typeof next !== "number" && typeof next !== "string") || String(next).trim() === "" || seenCursors.has(String(next))) return failed("invalid_payload", "moomoo_pagination_invalid");
         cursor = String(next);
         seenCursors.add(cursor);
@@ -235,6 +248,7 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
     if (this.options.strictOwnerSession && !exhausted) return failed("provider_unavailable", "moomoo_pagination_incomplete");
     const normalized = Object.freeze([...candles.values()].sort((left, right) => left.time - right.time));
     if (normalized.length === 0) return failed("coverage_unavailable", "moomoo_returned_no_candles");
+    report();
     return Object.freeze({
       ok: true,
       candles: normalized,

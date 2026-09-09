@@ -1,6 +1,7 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { PlatformOperationalEventRepository } from "@/src/modules/platform/server/administration/platform-operational-event-repository";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
@@ -14,6 +15,7 @@ import { ownerMarketDataMessage } from "../owner-market-data-messages";
 const KEY = "moomoo_history_kline";
 const ADAPTER = "moomoo_history_kline_v1";
 const POLICY = "america_new_york_extended_0400_2000_v1";
+const diagnosticRef = (versionId: string) => createHash("sha256").update(`owner-market-data:${versionId}`).digest("hex");
 
 export function validOwnerMarketRequest(value: unknown): value is { symbol: string; date: string } {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
@@ -25,7 +27,7 @@ export function validOwnerMarketRequest(value: unknown): value is { symbol: stri
 }
 
 /** Public market facts only. Authorization is mandatory in the page/API before calling. */
-export function readOwnerMarketData(symbol?: string, date?: string, offset = 0) {
+export function readOwnerMarketData(symbol?: string, date?: string, offset = 0, result = "all") {
   const database = openReadonlyPlatformDatabase();
   try {
     const rows = database.prepare(`SELECT s.market_session_set_id AS id, s.provider_symbol AS symbol,
@@ -41,14 +43,16 @@ export function readOwnerMarketData(symbol?: string, date?: string, offset = 0) 
         WHERE c.market_session_set_version_id = s.current_version_id) AS bars
       FROM level_analysis_market_session_sets s
       LEFT JOIN level_analysis_market_session_set_versions v ON v.market_session_set_version_id = s.current_version_id
-      LEFT JOIN level_analysis_market_session_set_versions latest ON latest.market_session_set_id = s.market_session_set_id
+      INNER JOIN level_analysis_market_session_set_versions latest ON latest.market_session_set_id = s.market_session_set_id
         AND latest.revision_number = (SELECT MAX(x.revision_number) FROM level_analysis_market_session_set_versions x
           WHERE x.market_session_set_id = s.market_session_set_id)
       WHERE s.provider_key = ? AND s.provider_adapter_version = ? AND s.interval = '1m'
         AND s.session_policy = ? AND (? IS NULL OR s.provider_symbol = ?)
         AND (? IS NULL OR s.trading_date_new_york = ?)
+        AND (? = 'all' OR (? = 'success' AND latest.outcome = 'ready' AND (latest.failure_reason_code IS NULL OR latest.failure_reason_code = 'saved_session_retained'))
+          OR (? = 'failed' AND (latest.outcome <> 'ready' OR (latest.failure_reason_code IS NOT NULL AND latest.failure_reason_code <> 'saved_session_retained'))))
       ORDER BY s.trading_date_new_york DESC, s.provider_symbol LIMIT 100 OFFSET ?`)
-      .all(KEY, ADAPTER, POLICY, symbol ?? null, symbol ?? null, date ?? null, date ?? null, offset) as Array<{
+      .all(KEY, ADAPTER, POLICY, symbol ?? null, symbol ?? null, date ?? null, date ?? null, result, result, result, offset) as Array<{
         id: string; symbol: string; date: string; status: string; checksum: string | null;
         retrievedAt: string | null; requestedStart: string | null; requestedEnd: string | null;
         coverageEnd: string | null; firstTime: number | null; lastTime: number | null;
@@ -56,7 +60,11 @@ export function readOwnerMarketData(symbol?: string, date?: string, offset = 0) 
       }>;
     const repository = new DailyTradeAnalyzerRepository(database);
     return rows.map(({ id, failure, ...row }) => ({ ...row, failure: ownerMarketDataMessage(failure),
-      attempts: (database.prepare(`SELECT retrieved_at_utc AS at, outcome, failure_reason_code AS reason FROM level_analysis_market_session_set_versions WHERE market_session_set_id = ? ORDER BY revision_number DESC LIMIT 20`).all(id) as Array<{ at: string; outcome: string; reason: string | null }>).map(({ reason, ...attempt }) => ({ ...attempt, message: ownerMarketDataMessage(reason) })),
+      requestStatus: row.latestOutcome === "ready" && (!failure || failure === "saved_session_retained") ? "success" : "failed",
+      attempts: (database.prepare(`SELECT market_session_set_version_id AS versionId, retrieved_at_utc AS at, outcome, failure_reason_code AS reason, requested_start_utc AS requestedStart, requested_end_utc AS requestedEnd FROM level_analysis_market_session_set_versions WHERE market_session_set_id = ? ORDER BY revision_number DESC LIMIT 20`).all(id) as Array<{ versionId: string; at: string; outcome: string; reason: string | null; requestedStart: string; requestedEnd: string }>).map(({ versionId, reason, ...attempt }) => {
+        const evidence = database.prepare(`SELECT safe_counts_json AS counts FROM platform_operational_events WHERE operation_kind = 'background_job' AND operation_ref_sha256 = ? AND outcome_code = 'owner_market_data_request' LIMIT 1`).get(diagnosticRef(versionId)) as { counts: string } | undefined;
+        return { ...attempt, code: reason, message: ownerMarketDataMessage(reason), diagnostics: evidence ? JSON.parse(evidence.counts) as Record<string, number> : null };
+      }),
       ...(symbol && date ? { candles: repository.readCurrentCandles(id) } : {}),
     }));
   } finally { database.close(); }
@@ -69,6 +77,7 @@ export async function requestOwnerMarketData(input: { symbol: string; date: stri
   const repository = new DailyTradeAnalyzerRepository(database);
   const iso = (seconds: number) => new Date(seconds * 1000).toISOString();
   let id: string | undefined;
+  let diagnostics: Readonly<Record<string, number>> = { credential_available: 0, requests_sent: 0, responses_received: 0 };
   // The normal worker owns its leases. Restore the exact value inside the same
   // immediate transaction because persistMarketSession clears it even for evidence.
   const persist = (input: Parameters<DailyTradeAnalyzerRepository["persistMarketSession"]>[0]) => database.transaction(() => {
@@ -79,6 +88,12 @@ export async function requestOwnerMarketData(input: { symbol: string; date: stri
     const promote = input.outcome === "ready" && current.every((candle) => incomingTimes.has(candle.time)) &&
       (!existingEnd || input.coverageEndUtc >= existingEnd);
     const versionId = repository.persistMarketSession({ ...input, failureReasonCode: input.failureReasonCode ?? (input.outcome === "ready" && !promote ? "saved_session_retained" : null), promoteCurrent: false });
+    new PlatformOperationalEventRepository(database).append({
+      operationKind: "background_job", operationRefSha256: diagnosticRef(versionId),
+      state: input.outcome === "ready" && !input.failureReasonCode?.startsWith("partial:") ? "completed" : "failed",
+      outcomeCode: "owner_market_data_request", applicationVersion: null, safeCounts: diagnostics,
+      evidenceSha256: null, startedAtUtc: input.completedAtUtc, completedAtUtc: input.completedAtUtc, createdAtUtc: input.completedAtUtc,
+    });
     if (promote) database.prepare(`UPDATE level_analysis_market_session_sets SET current_version_id = ?, current_coverage_end_utc = ?, current_status = 'ready' WHERE market_session_set_id = ?`).run(versionId, input.coverageEndUtc, id!);
     database.prepare("UPDATE level_analysis_market_session_sets SET lease_expires_at_utc = ? WHERE market_session_set_id = ?").run(before.lease, id!);
     return promote;
@@ -112,8 +127,9 @@ export async function requestOwnerMarketData(input: { symbol: string; date: stri
         ...scope, allowedAccountIds: [scope.accountId], activeAccountId: scope.accountId,
       });
     } catch { return saveFailure("shared_connection_unavailable"); }
+    diagnostics = { ...diagnostics, credential_available: 1 };
     const requestStarted = Math.floor(Date.now() / 60000) * 60;
-    const result = await new MoomooDailyTradeKlineMarketDataProvider(() => Promise.resolve(token), fetch, { strictOwnerSession: true }).fetch({
+    const result = await new MoomooDailyTradeKlineMarketDataProvider(() => Promise.resolve(token), fetch, { strictOwnerSession: true, onDiagnostics: (counts) => { diagnostics = counts; } }).fetch({
       symbol: input.symbol, interval: "1m", includeExtendedHours: true,
       startTime: session.startTime, endTime: session.endTime,
     });

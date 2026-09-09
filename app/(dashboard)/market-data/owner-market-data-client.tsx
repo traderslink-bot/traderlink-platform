@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Alert, Box, Button, Chip, Dialog, DialogContent, DialogTitle, LinearProgress, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, Dialog, DialogContent, DialogTitle, LinearProgress, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 import type { SavedCandle } from "./saved-market-data-chart";
 import { DashboardPanel } from "@/app/dashboard-template";
@@ -13,13 +13,20 @@ type Session = {
   coverageEnd: string | null; retrievedAt: string | null; lastAttempt: string | null;
   requestedStart: string | null; requestedEnd: string | null;
   failure: string | null; candles?: SavedCandle[];
-  attempts: { at: string; outcome: string; message: string | null }[];
+  requestStatus: "success" | "failed";
+  attempts: { at: string; outcome: string; message: string | null; code: string | null; requestedStart: string; requestedEnd: string; diagnostics: Record<string, number> | null }[];
 };
 const endpoint = "/api/platform/owner-market-data";
 const time = (value: number | string | null) => value === null ? "—" : new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", hour12: false,
 }).format(new Date(typeof value === "number" ? value * 1000 : value));
 const split = (value: string) => [...new Set(value.trim().split(/[\s,;]+/u).filter(Boolean))];
+const diagnosticText = (counts: Record<string, number> | null) => {
+  if (!counts) return "Connection, response and pagination details were not recorded for this older request.";
+  const connection = counts.responses_received > 0 ? "Moomoo responded" : counts.requests_sent > 0 ? "Request sent; no HTTP response received" : counts.credential_available ? "Connection credential available; candle request not sent" : "Connection credential unavailable; candle request not sent";
+  const code = counts.provider_code === undefined ? "not received" : String(counts.provider_code * (counts.provider_code_negative ? -1 : 1));
+  return `${connection}. HTTP: ${counts.http_status ?? "not received"}. Provider code: ${code}. Pages received: ${counts.responses_received}. Rows returned: ${counts.rows_received ?? 0}. Candles in requested window: ${counts.candles_in_window ?? 0}. Empty pages: ${counts.empty_pages ?? 0}. Pagination: ${counts.pagination_complete ? "complete" : "not completed"}.`;
+};
 async function json(response: Response) {
   let result;
   try { result = await response.json(); }
@@ -34,6 +41,7 @@ export function OwnerMarketDataClient() {
   const [dates, setDates] = useState("");
   const [filter, setFilter] = useState("");
   const [filterDate, setFilterDate] = useState("");
+  const [resultFilter, setResultFilter] = useState("all");
   const [sessions, setSessions] = useState<Session[]>([]);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -51,14 +59,14 @@ export function OwnerMarketDataClient() {
     const requestNumber = ++inventoryRequest.current;
     setLoading(true);
     try {
-      const query = new URLSearchParams({ offset: String(offset) });
+      const query = new URLSearchParams({ offset: String(offset), result: resultFilter });
       if (filter.trim()) query.set("symbol", filter.trim().toUpperCase());
       if (filterDate) query.set("date", filterDate);
       const result = await json(await fetch(`${endpoint}?${query}`, { cache: "no-store" }));
       if (requestNumber === inventoryRequest.current) setSessions(result.sessions);
     } catch (failure) { if (requestNumber === inventoryRequest.current) setError(failure instanceof Error ? failure.message : "Could not read saved sessions."); }
     finally { if (requestNumber === inventoryRequest.current) setLoading(false); }
-  }, [filter, filterDate, offset]);
+  }, [filter, filterDate, offset, resultFilter]);
   useEffect(() => {
     latestRefresh.current = refresh;
     const timer = setTimeout(() => { void refresh(); }, 350);
@@ -103,7 +111,7 @@ export function OwnerMarketDataClient() {
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Could not open saved chart."); }
     finally { setChartLoading(false); }
   }
-  return <Stack spacing={3}>
+  return <Stack spacing={3} sx={{ color: "text.primary", "& .MuiTypography-root": { color: "text.primary" } }}>
     <Typography variant="h4" component="h1">Market Data</Typography>
     <DashboardPanel><Box component="form" onSubmit={(event) => { event.preventDefault(); void run(); }}>
       <Stack spacing={2}>
@@ -123,28 +131,28 @@ export function OwnerMarketDataClient() {
     {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
     {!!results.length && <Stack spacing={1} aria-live="polite">{results.map((result) => <Alert key={result.label} severity={result.ok ? "success" : "error"}>{result.label}: {result.message}</Alert>)}</Stack>}
     <Stack spacing={2}>
-      <Typography component="h2" variant="h6">Saved sessions</Typography>
+      <Typography component="h2" variant="h6">Candle requests</Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <TextField size="small" label="Filter ticker" value={filter} onChange={(event) => { setOffset(0); setFilter(event.target.value); }} />
         <TextField size="small" type="date" label="Filter date" slotProps={{ inputLabel: { shrink: true } }} value={filterDate} onChange={(event) => { setOffset(0); setFilterDate(event.target.value); }} />
+        <TextField select size="small" label="Latest request" value={resultFilter} sx={{ minWidth: 180 }} onChange={(event) => { setOffset(0); setResultFilter(event.target.value); }}>
+          <MenuItem value="all">All requests</MenuItem><MenuItem value="success">Successful requests</MenuItem><MenuItem value="failed">Failed requests</MenuItem>
+        </TextField>
         <Button onClick={() => void refresh()} disabled={loading}>Refresh inventory</Button>
       </Stack>
       {loading && <LinearProgress aria-label="Loading inventory" />}
-      {!loading && !sessions.length && <Typography color="text.secondary">No saved sessions match these filters.</Typography>}
-      {sessions.map((session) => <Box key={`${session.symbol}-${session.date}`} sx={{ p: 2, border: 1, borderColor: "divider", borderRadius: 2, bgcolor: "background.paper" }}>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}>
-          <Stack spacing={1}>
-            <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>{session.symbol} · {session.date}</Typography>
-            <Stack direction="row" spacing={1}><Chip size="small" label={`${session.bars} candles`} /><Chip size="small" label="1 minute" /></Stack>
-            <Typography variant="body2">Saved candles: {time(session.firstTime)}–{time(session.lastTime)} New York</Typography>
-            <Typography variant="body2" color="text.secondary">Request window: {time(session.requestedStart)}–{time(session.requestedEnd)} · Coverage through {time(session.coverageEnd)}</Typography>
-            {session.lastAttempt && <Typography variant="body2" color="text.secondary">Last attempt: {new Date(session.lastAttempt).toLocaleString()}</Typography>}
-          </Stack>
+      {!loading && !sessions.length && <Typography color="text.secondary">No candle requests match these filters.</Typography>}
+      {sessions.map((session) => <Box key={`${session.symbol}-${session.date}`} sx={{ p: 2, border: 1, borderColor: "divider", borderRadius: 2, bgcolor: "background.paper", color: "text.primary" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))", lg: "1fr 1fr 1.4fr 1.4fr auto" }, gap: 2, alignItems: "center" }}>
+          <Box><Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>{session.symbol}</Typography><Typography variant="body2">{session.date}</Typography></Box>
+          <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}><Chip size="small" color={session.requestStatus === "success" ? "success" : "error"} label={session.requestStatus === "success" ? "Successful" : "Failed"} /><Typography variant="body2">{session.bars} saved candles · 1 minute</Typography></Stack>
+          <Box><Typography variant="body2">Saved: {time(session.firstTime)}–{time(session.lastTime)} NY</Typography><Typography variant="body2">Saved coverage through {time(session.coverageEnd)}</Typography></Box>
+          <Box><Typography variant="body2">Latest request: {time(session.attempts[0]?.requestedStart ?? null)}–{time(session.attempts[0]?.requestedEnd ?? null)} NY</Typography>{session.lastAttempt && <Typography variant="body2">{new Date(session.lastAttempt).toLocaleString()}</Typography>}</Box>
           <Button variant="outlined" disabled={!session.bars || chartLoading} onClick={() => void openChart(session)}>Open chart</Button>
-        </Stack>
+        </Box>
         {session.failure && <Alert severity="warning" sx={{ mt: 2 }}>{session.failure}{session.bars > 0 ? " Saved candles remain available." : ""}</Alert>}
         <Box component="details" sx={{ mt: 2 }}><Typography component="summary" sx={{ cursor: "pointer" }}>Request history (latest 20)</Typography>
-          <Stack spacing={1} sx={{ mt: 1 }}>{session.attempts.map((attempt, index) => <Typography variant="body2" key={`${attempt.at}-${index}`}>{new Date(attempt.at).toLocaleString()}: {attempt.message ?? (attempt.outcome === "ready" ? "Candles saved." : "Request unavailable.")}</Typography>)}</Stack>
+          <Stack spacing={1.5} sx={{ mt: 1 }}>{session.attempts.map((attempt, index) => <Box key={`${attempt.at}-${index}`}><Typography variant="body2">{new Date(attempt.at).toLocaleString()}: {attempt.message ?? (attempt.outcome === "ready" ? "Candles saved." : "Request unavailable.")}</Typography><Typography variant="body2">Request: {session.date}, {time(attempt.requestedStart)}–{time(attempt.requestedEnd)} New York. Result code: {attempt.code ?? attempt.outcome}.</Typography><Typography variant="body2">{diagnosticText(attempt.diagnostics)}</Typography></Box>)}</Stack>
         </Box>
       </Box>)}
       <Stack direction="row" spacing={1}><Button disabled={!offset || loading} onClick={() => setOffset(Math.max(0, offset - 100))}>Previous</Button><Button disabled={sessions.length < 100 || loading} onClick={() => setOffset(offset + 100)}>Next</Button></Stack>
