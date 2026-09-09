@@ -188,10 +188,10 @@ const DAY_TRADE_RECIPES = Object.freeze(new Map<string, readonly TradeRecipe[]>(
 export type JournalDemoVerifiedMarketSessionInput = Readonly<{
   bars: readonly NormalizedMarketCandle[];
   date: string;
-  daySourceSha256: string;
-  evidenceFileSha256: string;
+  daySourceSha256?: string;
+  evidenceFileSha256?: string;
   normalizedBarsSha256: string;
-  rawPagesSha256: string;
+  rawPagesSha256?: string;
   symbol: string;
 }>;
 
@@ -216,6 +216,7 @@ export type JournalDemoDerivedExecutionFact = Readonly<{
 }>;
 
 export type JournalDemoDerivedTradeFact = Readonly<{
+  demoReview?: Readonly<{ note: string; entryRuleBroken: boolean; riskRuleBroken: boolean }>;
   direction: "long";
   executions: readonly JournalDemoDerivedExecutionFact[];
   packTradeKey: string;

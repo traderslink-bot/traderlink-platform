@@ -8,6 +8,14 @@
 
 **Fixed Demo clock progress:** [Demo Fixed Clock Progress](demo-fixed-clock-progress.md)
 
+**2026-09-09 local implementation:** The owner approved the
+[August candle-led trade proposal](demo-august-trade-proposal-20260909.md), excluding
+MBAI/PFSA Aug 6 and PFSA Aug 11 without replacements. The
+[implementation record](demo-august-implementation-20260909.md) tracks 63 additional
+trades, existing-session demo activation and preserved deletion opt-outs. Source
+implementation and targeted static checks are complete; runtime acceptance is
+pending. Production publication is explicitly on hold. Preserve Aug 17–27 facts.
+
 ## Outcome
 
 A genuinely new TraderLink user receives one isolated **Demo Trade Tracker**

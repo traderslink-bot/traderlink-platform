@@ -20,6 +20,7 @@ import { materializeJournalDemoAnalyzerFacts } from "./journal-demo-analyzer-mat
 import type { JournalDemoDerivedTradeFact, JournalDemoFinancialPackSource } from "./journal-demo-financial-pack-source";
 import type { JournalDemoVerifiedMarketDaysInput } from "./journal-demo-financial-pack-source";
 import type { JournalDemoExecutionProvenanceFact, JournalDemoFinancialPack } from "./journal-demo-pack-contract";
+import { JOURNAL_DEMO_CURRENT_VERSION_ID } from "./journal-demo-current-version";
 
 const DEMO_PACK_VERSION_IDS = Object.freeze({
   1: "750b9d83-d7de-49a0-ae89-0383ad20f21b",
@@ -30,6 +31,7 @@ const DEMO_PACK_VERSION_IDS = Object.freeze({
   6: "c1231afb-0850-4e4c-8a6f-24429ddaf1f9",
   7: "d2aef844-a400-4339-925d-9ce7a41f0cad",
   8: "6c34a046-7fd9-4e61-a34d-7af0eb0c83f6",
+  9: JOURNAL_DEMO_CURRENT_VERSION_ID,
 });
 const DEMO_PRESET_RULE_EFFECTIVE_AT = new Date("2026-08-16T00:00:00.000Z");
 const DEMO_TRADE_NOTE = "Took the first entry after the pullback held above VWAP and volume started coming back in. I liked the setup but entered a little earlier than I should have instead of waiting for the break over the previous candle high. Sold part into the first push and held the rest looking for a move through HOD. When momentum stalled I gave back more than necessary before exiting. Good idea overall, but I could have managed the second half better.";
@@ -148,6 +150,9 @@ function materializeAnnotations(input: Readonly<{
     new JournalAnnotationRepository(input.database), new JournalRuleRepository(input.database),
   );
   const existingRules = annotations.listRules(input.scope);
+  const august = input.trades.some(trade => trade.demoReview !== undefined);
+  const presetEffectiveAt = august ? new Date("2026-08-01T00:00:00.000Z") : DEMO_PRESET_RULE_EFFECTIVE_AT;
+  const presetTitle = (title: string) => august ? `August demo: ${title}` : title;
   const entryRule = existingRules.find((rule) => rule.sourceKind === "custom" && rule.title === "Wait for confirmation") ?? annotations.createRule(input.scope, {
     sourceKind: "custom", title: "Wait for confirmation", statement: "Enter only after the planned confirmation.",
     category: "entry_process", reviewScope: "both", isFocus: true, configuration: {}, now: input.timestamp,
@@ -156,26 +161,26 @@ function materializeAnnotations(input: Readonly<{
     sourceKind: "custom", title: "Respect planned risk", statement: "Keep size and exits inside the trade plan.",
     category: "risk_process", reviewScope: "both", isFocus: true, configuration: {}, now: input.timestamp,
   });
-  const maximumTradesRule = existingRules.find((rule) => rule.templateKey === "maximum_trades_per_day") ?? annotations.createRule(input.scope, {
+  const maximumTradesRule = existingRules.find((rule) => rule.templateKey === "maximum_trades_per_day" && (!august || rule.title === presetTitle("Maximum completed trades per day"))) ?? annotations.createRule(input.scope, {
     sourceKind: "template", templateKey: "maximum_trades_per_day",
-    title: "Maximum completed trades per day",
+    title: presetTitle("Maximum completed trades per day"),
     statement: "Review completed trades after the selected daily trade limit.",
     category: "day", reviewScope: "day", isFocus: false,
-    configuration: { maximumTrades: "6" }, now: DEMO_PRESET_RULE_EFFECTIVE_AT,
+    configuration: { maximumTrades: "6" }, now: presetEffectiveAt,
   });
-  const cutoffRule = existingRules.find((rule) => rule.templateKey === "no_new_trades_after_time") ?? annotations.createRule(input.scope, {
+  const cutoffRule = existingRules.find((rule) => rule.templateKey === "no_new_trades_after_time" && (!august || rule.title === presetTitle("No new trades after a selected time"))) ?? annotations.createRule(input.scope, {
     sourceKind: "template", templateKey: "no_new_trades_after_time",
-    title: "No new trades after a selected time",
+    title: presetTitle("No new trades after a selected time"),
     statement: "Review trades whose factual entry begins at or after the selected cutoff.",
     category: "trade", reviewScope: "trade", isFocus: false,
-    configuration: { cutoffTime: "10:00:00" }, now: DEMO_PRESET_RULE_EFFECTIVE_AT,
+    configuration: { cutoffTime: "10:00:00" }, now: presetEffectiveAt,
   });
-  const maximumAttemptsRule = existingRules.find((rule) => rule.templateKey === "maximum_attempts_per_ticker") ?? annotations.createRule(input.scope, {
+  const maximumAttemptsRule = existingRules.find((rule) => rule.templateKey === "maximum_attempts_per_ticker" && (!august || rule.title === presetTitle("Maximum ticker attempts per day"))) ?? annotations.createRule(input.scope, {
     sourceKind: "template", templateKey: "maximum_attempts_per_ticker",
-    title: "Maximum ticker attempts per day",
+    title: presetTitle("Maximum ticker attempts per day"),
     statement: "Review flat-to-flat attempts after the selected per-ticker limit.",
     category: "trade_day", reviewScope: "both", isFocus: false,
-    configuration: { maximumAttempts: "2" }, now: DEMO_PRESET_RULE_EFFECTIVE_AT,
+    configuration: { maximumAttempts: "2" }, now: presetEffectiveAt,
   });
   for (const [index, trade] of input.trades.entries()) {
     const roundTripId = currentRoundTripId(
@@ -183,17 +188,18 @@ function materializeAnnotations(input: Readonly<{
       input.scope,
       firstExecutionVersionId({ ...input, trade }),
     );
-    const broken = index % 4 === 1 || index % 5 === 0;
+    const broken = trade.demoReview?.entryRuleBroken ?? (index % 4 === 1 || index % 5 === 0);
     annotations.saveTradeReview(input.scope, {
       roundTripId,
       note: { expectedRevision: null,
-        tradeNote: broken ? "Demo review: the plan was broken; size or timing needs tighter discipline." : "Demo review: followed the planned process and documented the management decision." },
+        tradeNote: trade.demoReview?.note ?? (broken ? "Demo review: the plan was broken; size or timing needs tighter discipline." : "Demo review: followed the planned process and documented the management decision.") },
       tags: { expectedTagIds: [], tagIds: [], presetKeys: broken
         ? ["setup_breakout", "process_broke_rule", "entry_early"]
-        : ["setup_pullback", "process_followed_plan", "exit_scaled_out"] },
+        : trade.demoReview ? ["setup_breakout", "process_followed_plan", ...(trade.executions.filter(e => e.side === "sell").length > 1 ? ["exit_scaled_out"] : [])]
+          : ["setup_pullback", "process_followed_plan", "exit_scaled_out"] },
       ruleReviews: [
         { ruleId: entryRule.ruleId, ruleVersionId: entryRule.versionId, expectedRevision: null, status: broken ? "broken" : "followed" },
-        { ruleId: riskRule.ruleId, ruleVersionId: riskRule.versionId, expectedRevision: null, status: index % 3 === 0 ? "broken" : "followed" },
+        { ruleId: riskRule.ruleId, ruleVersionId: riskRule.versionId, expectedRevision: null, status: (trade.demoReview?.riskRuleBroken ?? (index % 3 === 0)) ? "broken" : "followed" },
       ],
       now: input.timestamp,
     });
@@ -288,18 +294,32 @@ function materializeDemoNotes(input: Readonly<{
     input.database, input.scope, firstExecutionVersionId({ ...input, trade }),
   ));
   const currentNotes = annotations.readRoundTripNotes(input.scope, roundTripIds);
-  for (const roundTripId of roundTripIds) {
+  for (const [index, roundTripId] of roundTripIds.entries()) {
+    const note = input.trades[index]?.demoReview?.note ?? DEMO_TRADE_NOTE;
     const current = currentNotes[roundTripId] ?? null;
-    if (current?.tradeNote === DEMO_TRADE_NOTE) continue;
+    if (current?.tradeNote === note) continue;
     annotations.saveRoundTripNote(input.scope, {
       expectedRevision: current?.revision ?? null,
       technicalNote: current?.technicalNote ?? "",
-      tradeNote: DEMO_TRADE_NOTE,
+      tradeNote: note,
       now: input.timestamp,
       roundTripId,
     });
   }
   for (const date of [...new Set(input.trades.map((trade) => trade.tradingDateNewYork))]) {
+    const dayTrades = input.trades.filter(trade => trade.tradingDateNewYork === date);
+    if (dayTrades.some(trade => trade.demoReview)) {
+      const current = annotations.readDailyNote(input.scope, date);
+      annotations.saveDailyNote(input.scope, {
+        expectedRevision: current?.revision ?? null, now: input.timestamp, tradingDate: date,
+        whatWorked: `Reviewed ${dayTrades.length} closed demo trades in ${[...new Set(dayTrades.map(t => t.symbol))].join(" and ")}. The successful trades captured meaningful momentum moves.`,
+        whatNeedsWork: "Review chased entries, profit giveback and the risk held through recoveries. A profitable recovery does not prove the drawdown was well managed.",
+        technicalRecap: "All executions use saved one-minute Moomoo candle prices. Compare the actual entries, adds and exits with the price path in the Analyzer.",
+        tomorrowsFocus: "Wait for the planned entry, keep position size deliberate and act on the exit plan.",
+        anythingElse: "Synthetic demo review with modeled execution fees. Review followed and broken preset/custom rules alongside the trades.",
+      });
+      continue;
+    }
     const current = annotations.readDailyNote(input.scope, date);
     if (current && current.whatWorked === DEMO_DAILY_NOTE.whatWorked &&
       current.whatNeedsWork === DEMO_DAILY_NOTE.whatNeedsWork &&
@@ -510,7 +530,7 @@ export function createJournalDemoFinancialPack(
     source.corporateActionReview !== "not_applicable_synthetic_journal_only") {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "demoCorporateActionReview" });
   }
-  const demoPackVersionId = DEMO_PACK_VERSION_IDS[manifestSource.packVersion as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8];
+  const demoPackVersionId = DEMO_PACK_VERSION_IDS[manifestSource.packVersion as keyof typeof DEMO_PACK_VERSION_IDS];
   if (!demoPackVersionId) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "demoPackVersion" });
   }

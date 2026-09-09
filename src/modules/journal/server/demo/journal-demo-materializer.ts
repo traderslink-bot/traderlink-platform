@@ -3,6 +3,7 @@ import type Database from "better-sqlite3";
 import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4, createCanonicalUtcTimestamp, createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { JournalAccountRepository } from "../accounts/journal-account-repository";
 import { JournalDemoAccountRepository } from "./journal-demo-account-repository";
+import { JOURNAL_DEMO_CURRENT_VERSION_ID } from "./journal-demo-current-version";
 import {
   assertJournalDemoExecutionProvenanceFacts,
   assertJournalDemoFinancialPack,
@@ -41,7 +42,7 @@ export class JournalDemoMaterializer {
     }
     const existing = demos.findAccountForUser({ workspaceId: input.workspaceId, userId: input.createdForUserId });
     if (existing) return this.upgradeExistingLocked({ demos, existing, input });
-    const pack = (this.dependencies.resolvePack ?? resolveCurrentJournalDemoFinancialPack)();
+    const pack = this.dependencies.resolvePack ? this.dependencies.resolvePack() : resolveCurrentJournalDemoFinancialPack(this.database);
     if (!pack) return Object.freeze({ accountId: null, state: "unavailable" });
     const validatedPack = assertJournalDemoFinancialPack(pack);
     const createId = this.dependencies.createId ?? createCanonicalUuidV4;
@@ -87,9 +88,16 @@ export class JournalDemoMaterializer {
     existing: Readonly<{ accountId: string; demoPackVersionId: string }>;
     input: Readonly<{ baseCurrency: string; createdForUserId: string; tradingTimezone: string; workspaceId: string }>;
   }>): JournalDemoMaterializationResult {
-    const pack = (this.dependencies.resolveUpgradePack ?? resolveJournalDemoUpgradePack)(
-      input.existing.demoPackVersionId,
-    );
+    if (!this.dependencies.resolveUpgradePack && (input.existing.demoPackVersionId === JOURNAL_DEMO_CURRENT_VERSION_ID ||
+      input.demos.findPackApplication({ accountId: input.existing.accountId, workspaceId: input.input.workspaceId,
+        demoPackVersionId: JOURNAL_DEMO_CURRENT_VERSION_ID }))) {
+      return Object.freeze({ accountId: input.existing.accountId, state: "materialized" });
+    }
+    const pack = this.dependencies.resolveUpgradePack
+      ? this.dependencies.resolveUpgradePack(input.existing.demoPackVersionId)
+      : resolveJournalDemoUpgradePack(input.existing.demoPackVersionId, {
+        database: this.database, accountId: input.existing.accountId, workspaceId: input.input.workspaceId,
+      });
     if (!pack) return Object.freeze({ accountId: input.existing.accountId, state: "materialized" });
     const validatedPack = assertJournalDemoFinancialPack(pack);
     if (input.existing.demoPackVersionId === validatedPack.manifest.demoPackVersionId) {

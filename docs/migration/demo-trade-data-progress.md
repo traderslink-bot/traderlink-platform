@@ -6,6 +6,15 @@
 
 **Fixed Demo clock:** [Demo Fixed Clock Progress](demo-fixed-clock-progress.md)
 
+## 2026-09-09 local August update
+
+- [x] Owner-approved 63-trade addition implemented with 187 exact executions.
+- [x] Existing-session activation and persistent deletion opt-out checks implemented.
+- [x] Targeted static diagnostics and exact source P/L calculation completed.
+- [ ] Database/browser runtime acceptance and idempotent replay.
+- Production release is on explicit owner HOLD.
+- [Full implementation record and corrected totals](demo-august-implementation-20260909.md).
+
 ## Accepted product decisions
 
 - [x] A genuinely new empty workspace receives one isolated Demo Trade Tracker.

@@ -14,6 +14,8 @@ import { PlatformNotificationRepository } from "@/src/modules/platform/server/no
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalAccountService } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
+import { JOURNAL_DEMO_CURRENT_VERSION_ID } from "@/src/modules/journal/server/demo/journal-demo-current-version";
+import { DemoSessionActivation } from "./demo-session-activation";
 import { PwaLifecycle } from "./pwa/pwa-lifecycle";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
@@ -65,12 +67,20 @@ async function TraderLinkPlatformDashboardFrameContent({
   const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
   const readAtUtc = createCanonicalUtcTimestamp();
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
+    const demos = new JournalDemoAccountRepository(database);
+    const demo = demos.findAccountForUser(scope);
+    const demoActivationPending = identity.mode === "platform_session" && scope.workspaceRole === "owner" &&
+      demos.findLifecycleForUser(scope)?.state !== "cleared" &&
+      (!demo || (demo.demoPackVersionId !== JOURNAL_DEMO_CURRENT_VERSION_ID && !demos.findPackApplication({
+        accountId: demo.accountId, workspaceId: scope.workspaceId, demoPackVersionId: JOURNAL_DEMO_CURRENT_VERSION_ID,
+      })));
     const activeAccount = scope.activeAccountId
       ? new JournalAccountService(new JournalAccountRepository(database))
         .requireAccountRecord(scope, scope.activeAccountId)
       : null;
     const marketHaltAlerts = new MarketHaltAlertRepository(database);
     return Object.freeze({
+      demoActivationPending,
       activeAccount,
       activeDemoAccount: new JournalDemoAccountRepository(database).findActiveAccount(scope),
       appearance: new PlatformUserPreferenceRepository(database).getActiveWorkspaceAppearance(scope),
@@ -120,6 +130,7 @@ async function TraderLinkPlatformDashboardFrameContent({
           accountSelectionRef={accountSelectionRef}
           offlineScopeRef={offlineScopeRef}
         />
+          {dashboardContext.demoActivationPending ? <DemoSessionActivation scopeRef={offlineScopeRef} /> : null}
       </>
     </DashboardMuiProviders>
   );

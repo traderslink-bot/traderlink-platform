@@ -10,6 +10,7 @@ import {
 import { readJournalDemoImmutableMarketDataPack } from "./journal-demo-immutable-market-data-pack";
 import { createJournalDemoV2JournalOnlyPackSource } from "./journal-demo-v2-journal-only-pack-source";
 import { createJournalDemoV4PerformancePackSource } from "./journal-demo-v4-performance-pack-source";
+import { resolveJournalDemoAugustPack } from "./journal-demo-august-pack";
 
 import {
   assertCanonicalUuidV4,
@@ -254,8 +255,9 @@ function resolveVersionFourSources(): Readonly<{
   });
 }
 
-export function resolveCurrentJournalDemoFinancialPack(): JournalDemoFinancialPack | null {
+export function resolveCurrentJournalDemoFinancialPack(database?: Database.Database): JournalDemoFinancialPack | null {
   const resolved = resolveVersionFourSources();
+  if (database) return resolveJournalDemoAugustPack({ database, base: resolved.fullSource, verifiedMarketDays: resolved.verifiedMarketDays });
   const versionEightFullSource = reversionSource(resolved.fullSource, 8);
   return createJournalDemoFinancialPack(
     versionEightFullSource,
@@ -265,8 +267,12 @@ export function resolveCurrentJournalDemoFinancialPack(): JournalDemoFinancialPa
 }
 
 /** Applies missing immutable facts without rewriting prior demo records. */
-export function resolveJournalDemoUpgradePack(existingDemoPackVersionId: string): JournalDemoFinancialPack | null {
+export function resolveJournalDemoUpgradePack(existingDemoPackVersionId: string, context?: Readonly<{
+  database: Database.Database; accountId: string; workspaceId: string;
+}>): JournalDemoFinancialPack | null {
   const resolved = resolveVersionFourSources();
+  if (context) return resolveJournalDemoAugustPack({ database: context.database, base: resolved.fullSource,
+    verifiedMarketDays: resolved.verifiedMarketDays, existing: context });
   const versionEightFullSource = reversionSource(resolved.fullSource, 8);
   if (existingDemoPackVersionId === "750b9d83-d7de-49a0-ae89-0383ad20f21b") {
     return createJournalDemoFinancialPack(
