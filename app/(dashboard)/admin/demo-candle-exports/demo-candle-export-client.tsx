@@ -126,7 +126,7 @@ function renderStatus(status: ExportStatus) {
     return (
       <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
         <CheckCircleRoundedIcon color="success" fontSize="small" />
-        <Typography variant="body2">{status.bars} bars � {status.pages} pages</Typography>
+        <Typography variant="body2">{status.bars} bars · {status.pages} pages</Typography>
       </Stack>
     );
   }
@@ -172,7 +172,7 @@ export function DemoCandleExportClient() {
       const text = await response.text();
       if (!response.ok) {
         const category = unavailableCategory(text);
-        throw new Error(`HTTP ${response.status} - ${category ?? "exporter unavailable"}`);
+        throw new Error(`HTTP ${response.status} — ${category ?? "exporter unavailable"}`);
       }
       let payload: ExportPayload;
       try {
