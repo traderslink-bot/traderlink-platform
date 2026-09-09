@@ -1526,6 +1526,8 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
   const companyInfoCard = symbol.cards.companyInfo;
   const highRiskWarning = buildWatchlistHighRiskWarning({
     country: companyInfoCard?.metadata?.country,
+    aiReadCard: tradersLinkAiReadCard,
+    referenceTime: symbol.updatedAt,
   });
 
   return (
