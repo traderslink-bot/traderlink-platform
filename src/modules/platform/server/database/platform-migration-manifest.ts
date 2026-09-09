@@ -19,7 +19,6 @@ import { journalDemoTradeDataMigration } from "@/src/modules/journal/server/data
 import { journalDemoPackApplicationsMigration } from "@/src/modules/journal/server/database/migrations/0096_journal_demo_pack_applications";
 import { journalDemoMaterializerProvenanceGuardMigration } from "@/src/modules/journal/server/database/migrations/0097_journal_demo_materializer_provenance_guard";
 import { journalDemoLifecycleMigration } from "@/src/modules/journal/server/database/migrations/0098_journal_demo_lifecycle";
-import { journalDemoAugustProvenanceGuardMigration } from "@/src/modules/journal/server/database/migrations/0122_journal_demo_august_provenance_guard";
 import { journalWorkspaceTradeLibraryProjectionMigration } from "@/src/modules/journal/server/database/migrations/0100_journal_workspace_trade_library_projection";
 import { workspaceTradeLibrarySortFactsMigration } from "@/src/modules/journal/server/database/migrations/0101_workspace_trade_library_sort_facts";
 import { workspaceTradeLibraryHoldDurationMigration } from "@/src/modules/journal/server/database/migrations/0102_workspace_trade_library_hold_duration";
@@ -591,10 +590,6 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/news/server/database/migrations/0121_news_market_halt_delivery_lifecycle.ts",
       migration: newsMarketHaltDeliveryLifecycleMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0122_journal_demo_august_provenance_guard.ts",
-      migration: journalDemoAugustProvenanceGuardMigration,
     }),
   ]);
 
