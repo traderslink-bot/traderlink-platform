@@ -525,3 +525,7 @@ not create a separate Daily Tracker product or impose a 60-minute page delay.
 Execution importing, broker account mapping, historical fill backfill,
 notifications/inbox UI, overnight support, provider-supplied non-one-minute candles, scanner
 data, and Yahoo fallback are outside this slice.
+
+## Execution correction repair — 2026-09-08
+
+Owner requested all flagged executions be editable together before analysis restarts, with saved candle reuse deducting zero usage. See [repair progress](analyzer-execution-correction-progress.md).

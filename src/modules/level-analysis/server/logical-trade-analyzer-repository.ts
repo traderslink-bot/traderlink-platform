@@ -67,6 +67,25 @@ function newYorkDate(timestamp: string): string | null {
 export class LogicalTradeAnalyzerRepository {
   constructor(private readonly database: Database.Database) {}
 
+  hasPriorAnalysis(scope: AccountScope, logicalTradeId: string): boolean {
+    return Boolean(this.database.prepare(`SELECT 1 FROM journal_logical_trade_daily_analyses
+WHERE user_id = ? AND workspace_id = ? AND account_id = ? AND logical_trade_id = ?`).get(
+      scope.userId, scope.workspaceId, scope.accountId, logicalTradeId,
+    ));
+  }
+
+  hasSavedCoverage(target: LogicalTradeAnalyzerTarget, desiredCoverageEndUtc: string): boolean {
+    return Boolean(this.database.prepare(`SELECT 1 FROM level_analysis_market_session_sets session
+WHERE provider_key = 'moomoo_history_kline' AND provider_adapter_version = 'moomoo_history_kline_v1'
+ AND provider_symbol = ? AND exchange_identity = 'unknown' AND trading_date_new_york = ?
+ AND interval = '1m' AND session_policy = 'america_new_york_extended_0400_2000_v1'
+ AND current_status = 'ready' AND current_coverage_end_utc >= ?
+ AND EXISTS (SELECT 1 FROM level_analysis_market_session_candles candle
+   WHERE candle.market_session_set_version_id = session.current_version_id)`).get(
+      target.providerSymbol, target.tradingDateNewYork, desiredCoverageEndUtc,
+    ));
+  }
+
   alreadyRequested(scope: AccountScope, logicalTradeVersionId: string): boolean {
     return Boolean(this.database.prepare(`SELECT 1 FROM level_analysis_logical_trade_jobs
 WHERE workspace_id = ? AND account_id = ? AND logical_trade_version_id = ?

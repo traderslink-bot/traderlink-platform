@@ -72,6 +72,7 @@ import type {
 import { PositionStyleControl } from "../position-style-control";
 import { SwingPositionPlanEditor } from "../swing-position-plan-editor";
 import { ManualExecutionEditDialog } from "../manual-execution-edit-dialog";
+import { WorkspaceAtomicTradeEditDrawer } from "../../workspace/workspace-atomic-trade-edit-drawer";
 import {
   useTradeTrackerHasUnsavedChangesExcept,
   useTradeTrackerNavigationGuard,
@@ -1929,6 +1930,8 @@ function TradeReview({
   const tradeLabelColor = pnlColor(roundTrip.netPnl) === "success.main" ? "success" : "error";
   const [mobileRulesOpen, setMobileRulesOpen] = useState(true);
   const [mobileExecutionsOpen, setMobileExecutionsOpen] = useState(false);
+  const correctionRouter = useRouter();
+  const [correctionEditorOpen, setCorrectionEditorOpen] = useState(false);
   const [mismatchConfirmationState, setMismatchConfirmationState] = useState<
     "idle" | "saving" | "confirmed" | "error"
   >(analyzer?.mismatchBrokerConfirmed ? "confirmed" : "idle");
@@ -2552,20 +2555,27 @@ function TradeReview({
                     ? `Market data for the ${timeLabel(mismatch.executedAt, roundTrip.timezone)} candle ranged from ${price(mismatch.candleLow, currency)} to ${price(mismatch.candleHigh, currency)}.`
                     : `Market data did not contain the ${timeLabel(mismatch.executedAt, roundTrip.timezone)} candle.`}
                 </Typography>
-                {!readOnly && execution?.manualEdit ? (
-                  <Box sx={{ mt: 0.5 }}>
-                    <ManualExecutionEditDialog
-                      execution={execution}
-                      expectedAccountSelectionRef={expectedAccountSelectionRef}
-                    />
-                  </Box>
-                ) : null}
               </Box>
               );
             })}
             <Typography variant="body2">
-              Check the execution time and price, then edit and resubmit the trade.
+              Edit all incorrect executions, then save the trade together. Analysis uses saved candles first and does not use an Analyzer allowance when those candles cover the trade.
             </Typography>
+            {!readOnly && executions.some((execution) => execution.manualEdit) ? (
+              <>
+                <Button onClick={() => setCorrectionEditorOpen(true)} variant="contained" sx={{ alignSelf: "flex-start" }}>
+                  Edit executions
+                </Button>
+                <WorkspaceAtomicTradeEditDrawer
+                  expectedAccountSelectionRef={expectedAccountSelectionRef}
+                  journalTarget={null}
+                  open={correctionEditorOpen}
+                  roundTripId={roundTrip.roundTripKey}
+                  onClose={() => setCorrectionEditorOpen(false)}
+                  onSaved={() => { setCorrectionEditorOpen(false); correctionRouter.refresh(); }}
+                />
+              </>
+            ) : null}
             {readOnly ? null : (
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
                 <Button

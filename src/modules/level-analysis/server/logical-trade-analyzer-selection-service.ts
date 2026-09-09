@@ -33,12 +33,13 @@ export class LogicalTradeAnalyzerSelectionService {
       if (this.analyzer.alreadyRequested(scope, target.logicalTradeVersionId)) return "already_requested";
       const availability = this.allowances.availability(scope.userId, now);
       if (!availability.enabled) return "disabled";
-      if (availability.selectableAvailable <= 0) return "usage_exhausted";
       const session = newYorkExtendedSession(target.tradingDateNewYork);
       const desiredEnd = session
         ? dailyTradeFirstResultCoverageEnd(session, target.finalExitAtUtc)
         : null;
       if (desiredEnd === null) return "not_eligible";
+      const savedCoverage = this.analyzer.hasSavedCoverage(target, new Date(desiredEnd * 1000).toISOString());
+      if (!savedCoverage && availability.selectableAvailable <= 0) return "usage_exhausted";
       const queued = this.analyzer.queue({
         scope,
         target,
@@ -46,6 +47,7 @@ export class LogicalTradeAnalyzerSelectionService {
         now,
       });
       if (!queued.created) return "already_requested";
+      if (savedCoverage) return "queued";
       const reservation = this.allowances.reserve({ userId: scope.userId, jobId: queued.jobId, now });
       if (!reservation) {
         this.analyzer.expireUnreservedJob(queued.jobId, now);
@@ -65,12 +67,15 @@ export class LogicalTradeAnalyzerSelectionService {
       const refresh = this.logicalTrades.refreshAfterJournalRebuild(scope, affectedRoundTripIds, now);
       const queued: string[] = [];
       for (const trade of refresh.refreshed) {
-        if (!trade.logicalTradeId || !this.allowances.hasAvailableCorrection(trade.logicalTradeId)) continue;
+        if (!trade.logicalTradeId) continue;
+        const correctionAvailable = this.allowances.hasAvailableCorrection(trade.logicalTradeId);
         const target = this.analyzer.target(scope, trade);
         if (!target || this.analyzer.alreadyRequested(scope, target.logicalTradeVersionId)) continue;
         const session = newYorkExtendedSession(target.tradingDateNewYork);
         const desiredEnd = session ? dailyTradeFirstResultCoverageEnd(session, target.finalExitAtUtc) : null;
         if (desiredEnd === null) continue;
+        const savedCoverage = this.analyzer.hasSavedCoverage(target, new Date(desiredEnd * 1000).toISOString());
+        if (!correctionAvailable && !(savedCoverage && this.analyzer.hasPriorAnalysis(scope, trade.logicalTradeId))) continue;
         const job = this.analyzer.queue({
           scope,
           target,
@@ -78,7 +83,7 @@ export class LogicalTradeAnalyzerSelectionService {
           now,
         });
         if (!job.created) continue;
-        if (!this.allowances.claimCorrection({
+        if (!savedCoverage && !this.allowances.claimCorrection({
           logicalTradeId: trade.logicalTradeId,
           jobId: job.jobId,
           userId: scope.userId,

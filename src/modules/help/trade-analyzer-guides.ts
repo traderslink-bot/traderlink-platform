@@ -549,6 +549,15 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         ],
       },
       {
+        id: "execution-corrections",
+        title: "Correct executions together",
+        summary: "Edit all flagged executions before submitting the corrected trade.",
+        keywords: ["corrections", "saved candles", "allowance"],
+        blocks: [
+          { kind: "paragraph", text: "Choose Edit executions in the correction notice, update all incorrect rows, then review and save the trade together. Analyzer runs after the complete correction is saved. Saved candle coverage is reused without deducting Analyzer usage. If the corrected trade needs a different market-data window, a new request may be required." },
+        ],
+      },
+      {
         id: "supported-sessions",
         title: "Supported sessions and unavailable states",
         summary: "Recognize incomplete or unavailable evidence without invented replacements.",
