@@ -12,7 +12,6 @@ import { MoomooConnectionAccessService } from "@/src/modules/platform/server/bro
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
-const MAX_PAGES = 3;
 const MIN_TOKEN_LIFETIME_MILLISECONDS = 60_000;
 const SESSION_POLICY = "america_new_york_extended_0400_2000_v1";
 
@@ -154,24 +153,6 @@ function sanitizeRawPayload(value: unknown): Readonly<Record<string, unknown>> {
   });
 }
 
-function recordRawCandleTimes(
-  page: Readonly<Record<string, unknown>>,
-  times: Set<number>,
-): void {
-  const data = page.data as Readonly<Record<string, unknown>>;
-  const klineList = data.kline_list;
-  if (!Array.isArray(klineList)) throw new DailyTrackerMarketDataExportUnavailable();
-  for (const entry of klineList) {
-    const milliseconds = Number((entry as Readonly<Record<string, unknown>>).time_key);
-    if (!Number.isSafeInteger(milliseconds) || milliseconds <= 0 || milliseconds % 1000 !== 0) {
-      throw new DailyTrackerMarketDataExportUnavailable();
-    }
-    const seconds = milliseconds / 1000;
-    if (times.has(seconds)) throw new DailyTrackerMarketDataExportUnavailable();
-    times.add(seconds);
-  }
-}
-
 function expectedNewYorkUtcOffsetSeconds(date: string, sessionStartTime: number): number {
   const [yearText = "", monthText = "", dayText = ""] = date.split("-");
   if (!/^\d{4}$/u.test(yearText) || !/^\d{2}$/u.test(monthText) || !/^\d{2}$/u.test(dayText)) {
@@ -274,9 +255,7 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
   const session = newYorkExtendedSession(input.date);
   if (!session) throw new DailyTrackerMarketDataExportInvalid();
   const rawPages: SanitizedRawPage[] = [];
-  const rawCandleTimes = new Set<number>();
   const provider = new MoomooDailyTradeKlineMarketDataProvider(input.authorized.accessToken, async (request, init) => {
-    if (rawPages.length >= MAX_PAGES) throw new DailyTrackerMarketDataExportUnavailable();
     const response = await fetch(request, init);
     const responseBody = await response.clone().text();
     let parsed: unknown;
@@ -286,7 +265,6 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
       throw new DailyTrackerMarketDataExportUnavailable();
     }
     const sanitizedResponse = sanitizeRawPayload(parsed);
-    recordRawCandleTimes(sanitizedResponse, rawCandleTimes);
     rawPages.push(Object.freeze({
       httpStatus: response.status,
       page: rawPages.length + 1,

@@ -46,6 +46,12 @@ type VerifiedExportPayload = ExportPayload & Readonly<{
 }>;
 
 const EXPORT_ENDPOINT = "/api/admin/journal/demo-daily-tracker-market-data/export";
+const SAFE_UNAVAILABLE_CATEGORIES = new Set([
+  "provider_or_candle_unavailable",
+  "requester_connection_unavailable",
+  "session_candles_unavailable",
+  "session_metadata_unavailable",
+]);
 
 const SESSIONS: readonly ExportSession[] = Object.freeze([
   { date: "2026-08-31", symbol: "AEHL" },
@@ -118,6 +124,17 @@ function downloadEvidence(text: string, session: ExportSession): void {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1_000);
 }
 
+function unavailableCategory(text: string): string | null {
+  try {
+    const payload = JSON.parse(text) as Readonly<{ category?: unknown }>;
+    return typeof payload.category === "string" && SAFE_UNAVAILABLE_CATEGORIES.has(payload.category)
+      ? payload.category
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function renderStatus(status: ExportStatus) {
   if (status.state === "requesting") {
     return <Chip color="primary" label="Requesting" size="small" />;
@@ -171,7 +188,8 @@ export function DemoCandleExportClient() {
       });
       const text = await response.text();
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status} — exporter unavailable`);
+        const category = unavailableCategory(text);
+        throw new Error(`HTTP ${response.status} — ${category ?? "exporter unavailable"}`);
       }
       let payload: ExportPayload;
       try {
