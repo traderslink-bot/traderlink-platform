@@ -161,21 +161,23 @@ function materializeAnnotations(input: Readonly<{
     sourceKind: "custom", title: "Respect planned risk", statement: "Keep size and exits inside the trade plan.",
     category: "risk_process", reviewScope: "both", isFocus: true, configuration: {}, now: input.timestamp,
   });
-  const maximumTradesRule = existingRules.find((rule) => rule.templateKey === "maximum_trades_per_day" && (!august || rule.title === presetTitle("Maximum completed trades per day"))) ?? annotations.createRule(input.scope, {
+  // A template has one active rule per account, regardless of its display title.
+  // Reuse its settings and effective date during upgrades; never replace its history.
+  const maximumTradesRule = existingRules.find((rule) => rule.templateKey === "maximum_trades_per_day" && rule.lifecycleState !== "retired") ?? annotations.createRule(input.scope, {
     sourceKind: "template", templateKey: "maximum_trades_per_day",
     title: presetTitle("Maximum completed trades per day"),
     statement: "Review completed trades after the selected daily trade limit.",
     category: "day", reviewScope: "day", isFocus: false,
     configuration: { maximumTrades: "6" }, now: presetEffectiveAt,
   });
-  const cutoffRule = existingRules.find((rule) => rule.templateKey === "no_new_trades_after_time" && (!august || rule.title === presetTitle("No new trades after a selected time"))) ?? annotations.createRule(input.scope, {
+  const cutoffRule = existingRules.find((rule) => rule.templateKey === "no_new_trades_after_time" && rule.lifecycleState !== "retired") ?? annotations.createRule(input.scope, {
     sourceKind: "template", templateKey: "no_new_trades_after_time",
     title: presetTitle("No new trades after a selected time"),
     statement: "Review trades whose factual entry begins at or after the selected cutoff.",
     category: "trade", reviewScope: "trade", isFocus: false,
     configuration: { cutoffTime: "10:00:00" }, now: presetEffectiveAt,
   });
-  const maximumAttemptsRule = existingRules.find((rule) => rule.templateKey === "maximum_attempts_per_ticker" && (!august || rule.title === presetTitle("Maximum ticker attempts per day"))) ?? annotations.createRule(input.scope, {
+  const maximumAttemptsRule = existingRules.find((rule) => rule.templateKey === "maximum_attempts_per_ticker" && rule.lifecycleState !== "retired") ?? annotations.createRule(input.scope, {
     sourceKind: "template", templateKey: "maximum_attempts_per_ticker",
     title: presetTitle("Maximum ticker attempts per day"),
     statement: "Review flat-to-flat attempts after the selected per-ticker limit.",
