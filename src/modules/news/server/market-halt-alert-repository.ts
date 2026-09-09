@@ -33,6 +33,8 @@ function normalizeTicker(value: string): string {
 }
 
 const sparseHaltLifecycleToleranceSeconds = 2 * 60;
+const initialHaltMaximumAgeSeconds = 2 * 60;
+const initialHaltClockSkewToleranceSeconds = 30;
 
 type ExistingHaltLifecycle = Readonly<{
   halt_id: string;
@@ -111,6 +113,16 @@ function expectedTradeTimeReached(event: StoredHaltEvent, observedAtUtc: string)
   const tradeSeconds = easternTimeSeconds(event.resumption_trade_time_et);
   if (!eventDate || !observed || tradeSeconds === null) return false;
   return observed.date > eventDate || (observed.date === eventDate && observed.seconds >= tradeSeconds);
+}
+
+function initialHaltIsTimely(event: StoredHaltEvent, observedAtUtc: string): boolean {
+  const eventDate = easternTradingDate(event.halt_date_et);
+  const observed = observedEasternDateTime(observedAtUtc);
+  const haltSeconds = easternTimeSeconds(event.halt_time_et);
+  if (!eventDate || !observed || haltSeconds === null || observed.date !== eventDate) return false;
+  const ageSeconds = observed.seconds - haltSeconds;
+  return ageSeconds >= -initialHaltClockSkewToleranceSeconds &&
+    ageSeconds <= initialHaltMaximumAgeSeconds;
 }
 
 function exchangeName(source: "nasdaq" | "nyse"): string {
@@ -306,6 +318,7 @@ LIMIT 1`).get(event.ticker, event.halt_date_et);
 FROM news_market_halt_ticker_day_alert_sequences
 WHERE ticker = ? AND halt_date_et = ?`).get(event.ticker, event.halt_date_et);
     if (!sequence) {
+      if (!initialHaltIsTimely(event, input.observedAtUtc)) return 0;
       const count = this.enqueueStage({
         event,
         occurredAtUtc: input.observedAtUtc,

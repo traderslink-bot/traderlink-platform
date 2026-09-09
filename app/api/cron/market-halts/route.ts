@@ -13,6 +13,28 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+type MarketHaltSchedulerStage =
+  | "database_open"
+  | "health_begin"
+  | "source_fetch"
+  | "reconcile"
+  | "push_configuration"
+  | "push_delivery"
+  | "health_complete";
+
+function boundedErrorCode(error: unknown): string {
+  const values = [
+    error && typeof error === "object" && "code" in error ? error.code : null,
+    error instanceof Error && error.cause && typeof error.cause === "object" && "code" in error.cause
+      ? error.cause.code
+      : null,
+  ];
+  const code = values.find((value): value is string => typeof value === "string" && /^(?:E|SQLITE_)[A-Z0-9_]{1,55}$/u.test(value));
+  if (code) return code;
+  if (error instanceof DOMException && error.name === "TimeoutError") return "TIMEOUT";
+  return "UNCLASSIFIED";
+}
+
 function authorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET?.trim();
   const supplied = request.headers.get("authorization");
@@ -28,13 +50,16 @@ export async function GET(request: Request): Promise<Response> {
   let schedulerHealth: MarketHaltSchedulerHealthRepository | null = null;
   let schedulerRunId: string | null = null;
   let sources: Awaited<ReturnType<typeof fetchOfficialMarketHalts>>["sources"] | undefined;
+  let stage: MarketHaltSchedulerStage = "database_open";
   try {
     const runtimeDatabase = openPlatformDatabase({ mode: "runtime" });
     database = runtimeDatabase;
+    stage = "health_begin";
     const health = new MarketHaltSchedulerHealthRepository(runtimeDatabase);
     const runId = health.begin();
     schedulerHealth = health;
     schedulerRunId = runId;
+    stage = "source_fetch";
     const fetched = await fetchOfficialMarketHalts();
     sources = fetched.sources;
     const unavailableSources = fetched.sources.filter((source) => !source.available);
@@ -52,6 +77,7 @@ export async function GET(request: Request): Promise<Response> {
     const observedAtUtc = createCanonicalUtcTimestamp();
     let created = 0;
     let queued = 0;
+    stage = "reconcile";
     runtimeDatabase.transaction(() => {
       const repository = new MarketHaltAlertRepository(runtimeDatabase);
       const observedHaltIds = new Set<string>();
@@ -68,14 +94,21 @@ export async function GET(request: Request): Promise<Response> {
         queued += repository.reconcileDeliveryLifecycle({ haltId, observedAtUtc });
       }
     }).immediate();
+    stage = "push_configuration";
     const configuration = loadPlatformWebPushConfiguration();
+    stage = "push_delivery";
     const delivered = await new PlatformWebPushDeliveryService(
       new MarketHaltWebPushRepository(runtimeDatabase, configuration.encryption),
       configuration,
     ).runAvailable(100);
+    stage = "health_complete";
     health.complete({ runId, sources: fetched.sources });
     return Response.json({ created, delivered, ok: true, queued, sources: fetched.sources });
-  } catch {
+  } catch (error) {
+    console.error("market_halt_scheduler_failed", {
+      errorCode: boundedErrorCode(error),
+      stage,
+    });
     if (schedulerHealth && schedulerRunId) schedulerHealth.fail({ runId: schedulerRunId, sources });
     return Response.json({ ok: false }, { status: 503 });
   } finally {
