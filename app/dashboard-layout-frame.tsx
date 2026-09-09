@@ -1,3 +1,4 @@
+import { hasOwnerMarketDataAccess } from "@/src/modules/level-analysis/server/owner-market-data-access";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
@@ -60,6 +61,7 @@ async function TraderLinkPlatformDashboardFrameContent({
   const scope = identity.scope;
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const scannerEarlyAccess = hasScannerEarlyAccess(identity);
+  const ownerMarketDataAccess = hasOwnerMarketDataAccess(identity);
   const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
   const readAtUtc = createCanonicalUtcTimestamp();
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
@@ -109,7 +111,8 @@ async function TraderLinkPlatformDashboardFrameContent({
           pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
           scannerEarlyAccess={scannerEarlyAccess}
           watchlistMemberNavigationAccess
-          watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
+          ownerMarketDataAccess={ownerMarketDataAccess}
+        watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
         >
           {children}
         </TraderLinkPlatformDashboardTemplate>

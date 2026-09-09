@@ -4,6 +4,8 @@
 
 **Progress:** [Demo Trade Data Progress](demo-trade-data-progress.md)
 
+**Owner candle acquisition:** [Owner Market Data progress](owner-market-data-progress.md)
+
 **Fixed Demo clock progress:** [Demo Fixed Clock Progress](demo-fixed-clock-progress.md)
 
 ## Outcome

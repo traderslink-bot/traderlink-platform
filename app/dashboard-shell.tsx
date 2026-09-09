@@ -376,6 +376,7 @@ export function DashboardShell({
   pressReleaseUnreadCounts = null,
   scannerEarlyAccess = false,
   watchlistMemberNavigationAccess = false,
+  ownerMarketDataAccess = false,
   watchlistAdminNavigationAccess = false,
 }: {
   children: ReactNode;
@@ -386,6 +387,7 @@ export function DashboardShell({
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
   scannerEarlyAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
+  ownerMarketDataAccess?: boolean;
   watchlistAdminNavigationAccess?: boolean;
 }) {
   const theme = useTheme();
@@ -421,7 +423,8 @@ export function DashboardShell({
             !isDashboardNavigationItem(item) || (
               (item.href !== "/scanner" || scannerEarlyAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
-              (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess)
+              (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess) &&
+              (item.href !== "/market-data" || ownerMarketDataAccess)
             ))),
         }),
       }));
