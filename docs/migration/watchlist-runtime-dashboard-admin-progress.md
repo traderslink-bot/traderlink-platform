@@ -90,3 +90,11 @@ is allowed.
 The Watchlist correction scope remains in active owner iteration. This record
 does not request a release, deployment, restart, provider call, or hosted
 configuration change.
+
+## Country warning and ticker notices release reconciliation
+
+Owner-approved country-only warning and exact ticker-notice placements reconciled
+onto fa7c1eaf4d0e7b5f177d12061f2c46f4c3177621. Existing source-policy links
+and notes are preserved; mixed Stock Titan work and Recaps are excluded.
+Static syntax/diff checks only; no test, build, server or hosted action.
+Integrated desktop/mobile Light/Dark rendered QA remains outstanding.

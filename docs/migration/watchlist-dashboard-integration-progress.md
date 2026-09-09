@@ -8,6 +8,8 @@
 
 ## Scope
 
+Ticker detail notice placement: [implementation record](watchlist-ticker-analysis-notices-progress.md).
+
 - [x] Render the official Watchlist route family in the signed-in Dashboard
   shell while preserving `/watchlist`, `/watchlist/[symbol]`,
   `/watchlist/archive`, `/watchlist/archive/[archiveId]`, and
