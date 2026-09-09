@@ -176,6 +176,12 @@ export type TraderLinkCommunityTradeReview = Readonly<{
   title: string;
   studentContext: string;
   coachFeedback: string;
+  wentWell: string;
+  needsWork: string;
+  nextFocus: string;
+  coachPrivateNotes: string;
+  previousFocusStatus: "not_evaluated"|"improving"|"still_struggling"|"achieved"|"replaced"|null;
+  previousFocusAssessment: string;
   status: "requested" | "in_review" | "completed" | "cancelled";
   requestedAtUtc: string;
   completedAtUtc: string | null;

@@ -1030,6 +1030,21 @@ prescribe the coach's method or judge whether the coach's preferred analysis is
 appropriate. A coach may explain their approach in the plan description,
 including a focus on risk, setups, indicators or another coaching method.
 
+### Optional review sections and continuing focus
+
+The coach review workspace supports Review, What went well, What needs work,
+Next focus and private Coach notes. These are optional working sections, not a
+required TraderLink coaching method. Empty sections are omitted completely from
+the student's delivered review. Private Coach notes are never included in the
+student view.
+
+When a completed review contains Next focus, the next review for that coaching
+relationship presents it to the coach as Previous focus. The coach may record
+the student's progress as Not evaluated, Improving, Still struggling, Achieved
+or Replaced and add an optional progress assessment. That assessment may be
+included in the delivered review when completed. Review-template defaults are a
+later settings slice and must remain coach-controlled.
+
 Structured plans use the measurement that matches the service instead of a
 generic `Items` field on every selection:
 

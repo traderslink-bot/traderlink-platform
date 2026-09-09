@@ -653,7 +653,7 @@ remain deliberately deferred until after the owner's internal-product review.
 
 ## Coaching measurement and custom-freedom decision - 2026-09-07
 
-**Status:** Builder refinement implemented locally; staging release pending
+**Status:** Builder refinement released to staging; owner review pending
 
 - [x] Rejected a generic item count for every coaching service.
 - [x] Defined trade reviews by trades and trading-day reviews by trading days
@@ -687,7 +687,34 @@ remain deliberately deferred until after the owner's internal-product review.
   minutes, optional timeline and trading-day review depth are durable facts.
 - [x] Focused ESLint and the disposable Communities repository proof pass with
   zero foreign-key violations.
-- [ ] Publish migration `0130` and the refined builder to staging, then complete
-  rendered desktop/mobile Light/Dark verification.
+- [x] Published migration `0130` and the refined builder to staging at
+  `d83de0171858d116a251c30220237db92dbb8128`. Railway deployment
+  `6e9a71cc-07f9-45bb-b489-417465b27fde` reached `SUCCESS`; health was HTTP 200,
+  `ready`, `sqlite_single_node` and 125 migrations.
 - [ ] Build the finalized relationship-scoped coach/student agreement flow
   from these persisted plan terms.
+
+## Optional review sections and continuing focus - 2026-09-08
+
+**Status:** Integrated review workspace implementation active; staging pending
+
+- [x] Added optional Review, What went well, What needs work and Next focus
+  sections to the coach's individual review workspace.
+- [x] Added private Coach notes that are never returned in the student review.
+- [x] Omitted every empty optional section from the student's review instead of
+  displaying empty headings or fields.
+- [x] Kept draft review content out of the student-facing review until the coach
+  completes the review.
+- [x] Carried the latest prior Next focus into the next review as Previous focus.
+- [x] Added Not evaluated, Improving, Still struggling, Achieved and Replaced
+  progress choices with an optional assessment.
+- [x] Preserved coach freedom: none of these sections is mandatory and review
+  template defaults remain a later coach-settings slice.
+- [x] Added migration `0131` for durable optional review sections and continuing
+  focus progress.
+- [x] Focused ESLint, syntax checking, the disposable Communities repository
+  proof and Git whitespace validation pass. The repository proof also confirms
+  that students receive neither private Coach notes nor unfinished draft review
+  content in their server-provided snapshot.
+- [ ] Publish this slice to staging and complete rendered desktop/mobile
+  Light/Dark verification.
