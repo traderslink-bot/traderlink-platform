@@ -45,7 +45,7 @@ type GeneratedLevelsResult = Readonly<{
 
 function generatedLevelsSummary(savedMap: SavedStockLevelsMap): string {
   const { map } = savedMap;
-  return `${map.symbol} levels generated when price was ${formatPrice(map.referencePrice)} on ${generatedAt(map.calculatedAt)}`;
+  return `${map.symbol} levels generated on ${generatedAt(map.calculatedAt)}; reference price ${formatPrice(map.referencePrice)} as of ${generatedAt(map.referencePriceAsOf)}`;
 }
 
 function PotentialPathCard({ map }: { map: SavedStockLevelsMap["map"] }) {
@@ -57,7 +57,7 @@ function PotentialPathCard({ map }: { map: SavedStockLevelsMap["map"] }) {
       guideContent={<HelpOutlineRoundedIcon fontSize="small" />}
       guideHref="https://traderslink.pro/watchlist/how-it-works"
       headerLabel="Support and Resistance"
-      priceNote={`price was ${formatPrice(map.referencePrice)} when levels were generated on ${generatedAt(map.calculatedAt)}`}
+      priceNote={`Reference price ${formatPrice(map.referencePrice)} as of ${generatedAt(map.referencePriceAsOf)}; levels generated on ${generatedAt(map.calculatedAt)}`}
       priceNoteOwnLine
       showKickerHelp={false}
       showMeta={false}

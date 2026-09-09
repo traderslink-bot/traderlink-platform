@@ -7,6 +7,14 @@
 
 **Related owner administration:** [Stock Levels Admin Activity Plan](stock-levels-admin-activity-plan.md)
 
+## Owner-approved correction - 2026-09-09
+
+This correction supersedes the earlier quote, same-day context, timestamp, and result-cache provisions below: current price uses EODHD first and Yahoo on failure/invalid/stale data; historical daily/4h candles remain EODHD-only, with no same-day inputs to the level engine. Price observation and calculation times are displayed separately. Static Support/Resistance sides follow reference price. New requests re-resolve price rather than reusing a 15-minute generated result; successful calculations retain the existing quota policy and owner exemption.
+
+- [x] Local repair implemented.
+- [ ] Hosted release and rendered acceptance.
+- Progress: [Stock Levels price repair](stock-levels-price-repair-2026-09-09.md).
+
 ## Product contract
 
 This plan records the complete owner-approved first version. It is not a
