@@ -114,11 +114,11 @@ function providerMetadata(items: readonly unknown[]): Readonly<{
   if (!first || typeof first !== "object" || Array.isArray(first)) {
     return Object.freeze({ exchangeTimezone: "America/New_York", utcOffsetSeconds: null });
   }
-  const offsetMinutes = (first as Record<string, unknown>).time_zone;
+  const offsetHours = (first as Record<string, unknown>).time_zone;
   return Object.freeze({
     exchangeTimezone: "America/New_York",
-    utcOffsetSeconds: Number.isInteger(offsetMinutes) && Number(offsetMinutes) >= -840 && Number(offsetMinutes) <= 840
-      ? Number(offsetMinutes) * 60
+    utcOffsetSeconds: Number.isInteger(offsetHours) && Number(offsetHours) >= -14 && Number(offsetHours) <= 14
+      ? Number(offsetHours) * 60 * 60
       : null,
   });
 }
