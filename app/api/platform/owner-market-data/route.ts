@@ -7,6 +7,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers });
+// This application runs one persistent Node process. Keep owner requests serial
+// even across tabs or when a disconnected client leaves a request running.
+let ownerRequestQueue: Promise<void> = Promise.resolve();
 function authorized(request: Request): boolean {
   try { return hasOwnerMarketDataAccess(requireTraderLinkPlatformRequestIdentity(request.headers)); }
   catch { return false; }
@@ -30,6 +33,13 @@ export async function POST(request: Request) {
   let input: unknown;
   try { input = await request.json(); } catch { return reply({ message: "Enter a valid symbol and date." }, 400); }
   if (!validOwnerMarketRequest(input)) return reply({ message: "Enter a valid symbol and date." }, 400);
-  try { return reply(await requestOwnerMarketData(input)); }
-  catch { return reply({ ok: false, message: "The application could not save this request. Its failure history may be unavailable." }, 503); }
+  const validated = input;
+  const operation = ownerRequestQueue.then(async () => {
+    // A queued request must still be authorized when it actually starts.
+    if (!authorized(request)) return reply({ message: "Access denied." }, 403);
+    try { return reply(await requestOwnerMarketData(validated)); }
+    catch { return reply({ ok: false, message: "The application could not save this request. Its failure history may be unavailable." }, 503); }
+  });
+  ownerRequestQueue = operation.then(() => undefined, () => undefined);
+  return operation;
 }

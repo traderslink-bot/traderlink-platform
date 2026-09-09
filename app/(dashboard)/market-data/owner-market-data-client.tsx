@@ -11,6 +11,7 @@ const SavedMarketDataChart = dynamic(() => import("./saved-market-data-chart").t
 type Session = {
   symbol: string; date: string; bars: number; firstTime: number | null; lastTime: number | null;
   coverageEnd: string | null; retrievedAt: string | null; lastAttempt: string | null;
+  requestedStart: string | null; requestedEnd: string | null;
   failure: string | null; candles?: SavedCandle[];
   attempts: { at: string; outcome: string; message: string | null }[];
 };
@@ -20,7 +21,10 @@ const time = (value: number | string | null) => value === null ? "—" : new Int
 }).format(new Date(typeof value === "number" ? value * 1000 : value));
 const split = (value: string) => [...new Set(value.trim().split(/[\s,;]+/u).filter(Boolean))];
 async function json(response: Response) {
-  const result = await response.json();
+  let result;
+  try { result = await response.json(); }
+  catch { throw new Error("The application returned an unreadable response. Refresh the inventory to check whether the request was saved."); }
+  if (!result || typeof result !== "object") throw new Error("The application returned an unexpected response.");
   if (!response.ok) throw new Error(result.message ?? "The application request failed.");
   return result;
 }
@@ -41,18 +45,25 @@ export function OwnerMarketDataClient() {
   const [chartLoading, setChartLoading] = useState(false);
   const stop = useRef(false);
   const inFlight = useRef(false);
+  const inventoryRequest = useRef(0);
+  const latestRefresh = useRef<() => Promise<void>>(async () => {});
   const refresh = useCallback(async () => {
+    const requestNumber = ++inventoryRequest.current;
     setLoading(true);
     try {
       const query = new URLSearchParams({ offset: String(offset) });
       if (filter.trim()) query.set("symbol", filter.trim().toUpperCase());
       if (filterDate) query.set("date", filterDate);
       const result = await json(await fetch(`${endpoint}?${query}`, { cache: "no-store" }));
-      setSessions(result.sessions);
-    } catch (failure) { setError(failure instanceof Error ? failure.message : "Could not read saved sessions."); }
-    finally { setLoading(false); }
+      if (requestNumber === inventoryRequest.current) setSessions(result.sessions);
+    } catch (failure) { if (requestNumber === inventoryRequest.current) setError(failure instanceof Error ? failure.message : "Could not read saved sessions."); }
+    finally { if (requestNumber === inventoryRequest.current) setLoading(false); }
   }, [filter, filterDate, offset]);
-  useEffect(() => { const timer = setTimeout(() => { void refresh(); }, 350); return () => clearTimeout(timer); }, [refresh]);
+  useEffect(() => {
+    latestRefresh.current = refresh;
+    const timer = setTimeout(() => { void refresh(); }, 350);
+    return () => { clearTimeout(timer); inventoryRequest.current += 1; };
+  }, [refresh]);
   useEffect(() => () => { stop.current = true; }, []);
 
   async function run() {
@@ -78,7 +89,7 @@ export function OwnerMarketDataClient() {
           setResults((prior) => [...prior, { label, ok: false, message: failure instanceof Error ? failure.message : "The application could not reach the server. Refresh inventory to check whether this request was saved." }]);
         }
         done += 1; setProgress({ done, total, current: "" });
-        await refresh();
+        await latestRefresh.current();
       }
     } finally { inFlight.current = false; setRunning(false); }
   }
@@ -126,7 +137,7 @@ export function OwnerMarketDataClient() {
             <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>{session.symbol} · {session.date}</Typography>
             <Stack direction="row" spacing={1}><Chip size="small" label={`${session.bars} candles`} /><Chip size="small" label="1 minute" /></Stack>
             <Typography variant="body2">Saved candles: {time(session.firstTime)}–{time(session.lastTime)} New York</Typography>
-            <Typography variant="body2" color="text.secondary">Request window: 04:00–20:00 · Elapsed coverage through {time(session.coverageEnd)}</Typography>
+            <Typography variant="body2" color="text.secondary">Request window: {time(session.requestedStart)}–{time(session.requestedEnd)} · Coverage through {time(session.coverageEnd)}</Typography>
             {session.lastAttempt && <Typography variant="body2" color="text.secondary">Last attempt: {new Date(session.lastAttempt).toLocaleString()}</Typography>}
           </Stack>
           <Button variant="outlined" disabled={!session.bars || chartLoading} onClick={() => void openChart(session)}>Open chart</Button>

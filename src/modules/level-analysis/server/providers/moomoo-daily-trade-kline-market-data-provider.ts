@@ -178,6 +178,9 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
       } catch {
         return failed("provider_unavailable", "moomoo_request_failed", { page: page + 1 });
       }
+      if (this.options.strictOwnerSession && !response.ok) {
+        return failed("provider_unavailable", "moomoo_http_unavailable", { httpStatus: response.status, page: page + 1 });
+      }
       let payload: MoomooPayload;
       try {
         payload = await response.json() as MoomooPayload;
@@ -218,7 +221,7 @@ export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvid
       }
       const next = payload.data.next_time;
       if (this.options.strictOwnerSession) {
-        if (payload.pagination?.has_more === false || (payload.pagination?.has_more === undefined && (next === undefined || next === null || next === ""))) { exhausted = true; break; }
+        if (payload.pagination?.has_more === false) { exhausted = true; break; }
         if (payload.pagination?.has_more !== true || (typeof next !== "number" && typeof next !== "string") || String(next).trim() === "" || seenCursors.has(String(next))) return failed("invalid_payload", "moomoo_pagination_invalid");
         cursor = String(next);
         seenCursors.add(cursor);

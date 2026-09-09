@@ -31,6 +31,8 @@ Help review: this is an owner-only operations page; ordinary user Analyzer/Help 
 
 ### Source verification and review surface
 
+[September 9 QA record](owner-market-data-qa-20260909.md) records the focused build correction and subsequent source QA fixes, including truthful shared-session coverage, pagination, request ordering and stale-response handling.
+
 Twelve TypeScript/TSX files passed syntax transpilation; the exact-parent patch passed `git diff --check`. This is not a full type check, runtime test, or visual acceptance.
 
 [Visual review preview](owner-market-data-preview.html) is a standalone, dependency-free composition preview with Light/Dark and empty/saved/failed/partial/loading states. It has no real account or candle data, and is not the running application.
