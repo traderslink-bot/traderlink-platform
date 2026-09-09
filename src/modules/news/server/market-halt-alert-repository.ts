@@ -39,8 +39,14 @@ const initialHaltClockSkewToleranceSeconds = 30;
 type ExistingHaltLifecycle = Readonly<{
   halt_id: string;
   halt_time_et: string;
+  issue_name: string;
+  market: string;
+  reason_code: string;
+  reason_description: string;
   resumption_quote_time_et: string | null;
   resumption_trade_time_et: string | null;
+  source: "nasdaq" | "nyse";
+  source_url: string;
 }>;
 
 type StoredHaltEvent = Readonly<{
@@ -251,21 +257,27 @@ WHERE user_id = ? AND ticker = ?`).run(input.scope.userId, ticker);
     sourceUrl: string;
   }>): Readonly<{ haltId: string; inserted: boolean }> {
     assertCanonicalUtcTimestamp(input.observedAtUtc, "marketHaltObservedAt");
-    const existing = this.database.prepare<[string, string, string, string], ExistingHaltLifecycle>(`SELECT
-  halt_id, halt_time_et, resumption_quote_time_et, resumption_trade_time_et
+    const existing = this.database.prepare<[string, string], ExistingHaltLifecycle>(`SELECT
+  halt_id, halt_time_et, issue_name, market, reason_code, reason_description,
+  resumption_quote_time_et, resumption_trade_time_et, source, source_url
 FROM news_market_halt_events
-WHERE source = ? AND halt_date_et = ? AND ticker = ? AND reason_code = ?
+WHERE halt_date_et = ? AND ticker = ?
 ORDER BY halt_time_et DESC, updated_at_utc DESC`).all(
-      input.halt.source,
       input.halt.haltDateEt,
       input.halt.ticker,
-      input.halt.reasonCode,
     ).find((candidate) => isSameHaltLifecycle(candidate, input.halt));
     if (existing) {
+      const incomingSourceIsPreferred = existing.source === input.halt.source || input.halt.source === "nasdaq";
       this.database.prepare(`UPDATE news_market_halt_events SET
-reason_description = ?, resumption_quote_time_et = COALESCE(?, resumption_quote_time_et),
+source = ?, issue_name = ?, market = ?, reason_code = ?, reason_description = ?, source_url = ?,
+resumption_quote_time_et = COALESCE(?, resumption_quote_time_et),
 resumption_trade_time_et = COALESCE(?, resumption_trade_time_et), updated_at_utc = ? WHERE halt_id = ?`).run(
-        input.halt.reasonDescription,
+        incomingSourceIsPreferred ? input.halt.source : existing.source,
+        incomingSourceIsPreferred ? input.halt.issueName : existing.issue_name,
+        incomingSourceIsPreferred ? input.halt.market : existing.market,
+        incomingSourceIsPreferred ? input.halt.reasonCode : existing.reason_code,
+        incomingSourceIsPreferred ? input.halt.reasonDescription : existing.reason_description,
+        incomingSourceIsPreferred ? input.sourceUrl : existing.source_url,
         input.halt.resumptionQuoteTimeEt,
         input.halt.resumptionTradeTimeEt,
         input.observedAtUtc,

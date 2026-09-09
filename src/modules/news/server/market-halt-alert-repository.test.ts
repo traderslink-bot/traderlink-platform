@@ -39,7 +39,8 @@ function fixture(): Readonly<{
   resumption_trade_time_et TEXT,
   source_url TEXT NOT NULL,
   first_seen_at_utc TEXT NOT NULL,
-  updated_at_utc TEXT NOT NULL
+  updated_at_utc TEXT NOT NULL,
+  UNIQUE (halt_date_et, halt_time_et, ticker)
 ) STRICT`);
   database.exec(`CREATE TABLE news_market_halt_ticker_day_alert_sequences (
   ticker TEXT NOT NULL, halt_date_et TEXT NOT NULL, first_halt_id TEXT NOT NULL,
@@ -128,6 +129,63 @@ FROM news_market_halt_events`).all()).toEqual([{
 FROM news_market_halt_events WHERE ticker = 'NINI'`).get()).toEqual({
         resumption_quote_time_et: "10:05:00",
         resumption_trade_time_et: "10:10:00",
+      });
+    } finally {
+      database.close();
+    }
+  });
+
+  it("updates a halt reason without inserting the same exchange event twice", () => {
+    const { database, repository } = fixture();
+    try {
+      const first = repository.upsert({
+        halt: halt({ reasonCode: "T1", reasonDescription: "News pending", ticker: "HAO" }),
+        observedAtUtc: "2026-09-04T14:21:00.000Z",
+        sourceUrl: "https://example.test/nasdaq.xml",
+      });
+      const revised = repository.upsert({
+        halt: halt({ reasonCode: "T2", reasonDescription: "News released", ticker: "HAO" }),
+        observedAtUtc: "2026-09-04T14:22:00.000Z",
+        sourceUrl: "https://example.test/nasdaq.xml",
+      });
+
+      expect(revised).toEqual({ haltId: first.haltId, inserted: false });
+      expect(database.prepare(`SELECT source, reason_code, reason_description
+FROM news_market_halt_events WHERE ticker = 'HAO'`).get()).toEqual({
+        reason_code: "T2",
+        reason_description: "News released",
+        source: "nasdaq",
+      });
+    } finally {
+      database.close();
+    }
+  });
+
+  it("merges a secondary exchange copy into the Nasdaq lifecycle", () => {
+    const { database, repository } = fixture();
+    try {
+      const first = repository.upsert({
+        halt: halt({ ticker: "RIBBU" }),
+        observedAtUtc: "2026-09-04T14:21:00.000Z",
+        sourceUrl: "https://example.test/nasdaq.xml",
+      });
+      const secondary = repository.upsert({
+        halt: halt({
+          market: "NYSE Arca",
+          reasonCode: "NYSE LULD",
+          reasonDescription: "Volatility trading pause",
+          source: "nyse",
+          ticker: "RIBBU",
+        }),
+        observedAtUtc: "2026-09-04T14:21:30.000Z",
+        sourceUrl: "https://example.test/nyse.csv",
+      });
+
+      expect(secondary).toEqual({ haltId: first.haltId, inserted: false });
+      expect(database.prepare(`SELECT COUNT(*) AS count FROM news_market_halt_events WHERE ticker = 'RIBBU'`).get()).toEqual({ count: 1 });
+      expect(database.prepare(`SELECT source, reason_code FROM news_market_halt_events WHERE ticker = 'RIBBU'`).get()).toEqual({
+        reason_code: "LUDP",
+        source: "nasdaq",
       });
     } finally {
       database.close();
