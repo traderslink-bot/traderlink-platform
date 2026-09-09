@@ -2,6 +2,9 @@ import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
 import additions from "./packs/august-2026-additions.json";
+import redAdditions from "./packs/august-2026-red-additions.json";
+import { correctJournalDemoFeeVersions } from "./journal-demo-fee-correction";
+import { materializeJournalDemoAnalyzerFacts } from "./journal-demo-analyzer-materializer";
 import { createJournalDemoFinancialPack } from "./journal-demo-canonical-fact-materializer";
 import type { JournalDemoDerivedTradeFact, JournalDemoFinancialPackSource, JournalDemoVerifiedMarketDaysInput, JournalDemoVerifiedMarketSessionInput } from "./journal-demo-financial-pack-source";
 import type { NormalizedMarketCandle } from "@/src/modules/level-analysis/contracts/candle-review-contracts";
@@ -31,8 +34,8 @@ export function resolveJournalDemoAugustPack(input: Readonly<{
   verifiedMarketDays: JournalDemoVerifiedMarketDaysInput;
   existing?: Readonly<{ accountId: string; workspaceId: string }>;
 }>) {
-  const trades = additions.trades as unknown as readonly JournalDemoDerivedTradeFact[];
-  if (trades.length !== 63 || additions.sessions.length !== 21) throw new Error("demo_august_inventory_invalid");
+  const trades = [...additions.trades, ...redAdditions.trades] as unknown as readonly JournalDemoDerivedTradeFact[];
+  if (trades.length !== 66 || redAdditions.trades.some(t => t.executions.length !== 2 || t.executions[0]!.side !== "buy" || t.executions[1]!.side !== "sell") || additions.sessions.length !== 21) throw new Error("demo_august_inventory_invalid");
   const sessions: JournalDemoVerifiedMarketSessionInput[] = additions.sessions.map((entry) => {
     const candidate = entry as unknown as { date: string; symbol: string; normalizedBarsSha256: string; bars?: readonly NormalizedMarketCandle[] };
     const bars = candidate.bars ?? readSavedBars(input.database, candidate.date, candidate.symbol, candidate.normalizedBarsSha256);
@@ -61,13 +64,15 @@ export function resolveJournalDemoAugustPack(input: Readonly<{
     }
     if (!position.isZero()) throw new Error("demo_august_position_open");
   }
-  const allTrades = [...input.base.trades, ...trades];
+  const allTrades = [...input.base.trades, ...trades].map(trade => ({...trade,
+    executions: trade.executions.map(execution => ({...execution,
+      executionFeeDecimal: new Decimal(execution.executionFeeDecimal).abs().neg().toString()}))}));
   const manifest = (selected: readonly JournalDemoDerivedTradeFact[]): JournalDemoFinancialPackSource => {
     const marketDataManifestSha256 = hash([input.base.marketDataManifestSha256, additions.sessions.map(s => [s.date, s.symbol, s.normalizedBarsSha256])]);
-    const sourceEvidenceManifestSha256 = hash([input.base.sourceEvidenceManifestSha256, additions.trades]);
-    return { corporateActionReview: "required_before_materialization", packKey: "daily_tracker_demo", packVersion: 9,
+    const sourceEvidenceManifestSha256 = hash([input.base.sourceEvidenceManifestSha256, additions.trades, redAdditions.trades, "modeled_fees_are_costs_v10"]);
+    return { corporateActionReview: "required_before_materialization", packKey: "daily_tracker_demo", packVersion: 10,
       marketDataManifestSha256, sourceEvidenceManifestSha256, trades: selected,
-      derivedFactManifestSha256: hash({ packVersion: 9, marketDataManifestSha256, sourceEvidenceManifestSha256, trades: selected }) };
+      derivedFactManifestSha256: hash({ packVersion: 10, marketDataManifestSha256, sourceEvidenceManifestSha256, trades: selected }) };
   };
   let missing = allTrades;
   if (input.existing) {
@@ -84,9 +89,22 @@ export function resolveJournalDemoAugustPack(input: Readonly<{
     });
   }
   const full = manifest(allTrades), source = manifest(missing);
-  const analyzer = manifest(missing.filter(t => t.executions.every(e => e.analysisPolicy === "analyzer_backed")));
-  return createJournalDemoFinancialPack(source, {
+  const analyzer = manifest(allTrades.filter(t => t.executions.every(e => e.analysisPolicy === "analyzer_backed")));
+  const verified = {
     sourceEvidenceManifestSha256: full.sourceEvidenceManifestSha256,
     sessions: [...input.verifiedMarketDays.sessions, ...sessions],
-  }, analyzer.trades.length ? analyzer : null, full, source);
+  };
+  // Trade annotations are created for missing facts only; do not overwrite prior daily notes.
+  const pack = createJournalDemoFinancialPack(source, verified, null, full, manifest([]));
+  return {...pack, materializeCanonicalFacts: (context: Parameters<typeof pack.materializeCanonicalFacts>[0]) => {
+    const existingProvenance = input.existing ? correctJournalDemoFeeVersions(context.database, {
+      workspaceId: context.workspaceId, accountId: context.accountId,
+      userId: context.createdForUserId, workspaceRole: "owner",
+    }, full) : [];
+    const result = pack.materializeCanonicalFacts(context);
+    if (analyzer.trades.length) materializeJournalDemoAnalyzerFacts({...context,
+      executionProvenance: [...existingProvenance, ...result.executionProvenance],
+      source: analyzer, verifiedMarketDays: verified});
+    return result;
+  }};
 }

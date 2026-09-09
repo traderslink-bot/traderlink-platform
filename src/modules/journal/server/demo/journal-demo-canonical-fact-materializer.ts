@@ -31,7 +31,8 @@ const DEMO_PACK_VERSION_IDS = Object.freeze({
   6: "c1231afb-0850-4e4c-8a6f-24429ddaf1f9",
   7: "d2aef844-a400-4339-925d-9ce7a41f0cad",
   8: "6c34a046-7fd9-4e61-a34d-7af0eb0c83f6",
-  9: JOURNAL_DEMO_CURRENT_VERSION_ID,
+  9: "d65a9ce3-7b4d-4a36-92a8-80e961c6a909",
+  10: JOURNAL_DEMO_CURRENT_VERSION_ID,
 });
 const DEMO_PRESET_RULE_EFFECTIVE_AT = new Date("2026-08-16T00:00:00.000Z");
 const DEMO_TRADE_NOTE = "Took the first entry after the pullback held above VWAP and volume started coming back in. I liked the setup but entered a little earlier than I should have instead of waiting for the break over the previous candle high. Sold part into the first push and held the rest looking for a move through HOD. When momentum stalled I gave back more than necessary before exiting. Good idea overall, but I could have managed the second half better.";

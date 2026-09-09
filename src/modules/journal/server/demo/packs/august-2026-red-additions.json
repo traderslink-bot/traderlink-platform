@@ -1,0 +1,109 @@
+{
+  "trades": [
+    {
+      "direction": "long",
+      "symbol": "YXT",
+      "tradingDateNewYork": "2026-08-05",
+      "packTradeKey": "august_red_20260805_yxt",
+      "executions": [
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-05T20:05:00.000Z",
+          "marketCandleTimeUtcSeconds": 1785960300,
+          "packExecutionKey": "august_red_20260805_yxt_fill_1",
+          "priceDecimal": "21.4363",
+          "quantityDecimal": "422",
+          "side": "buy",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        },
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-05T20:27:00.000Z",
+          "marketCandleTimeUtcSeconds": 1785961620,
+          "packExecutionKey": "august_red_20260805_yxt_fill_2",
+          "priceDecimal": "17.17",
+          "quantityDecimal": "422",
+          "side": "sell",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        }
+      ],
+      "demoReview": {
+        "entryRuleBroken": false,
+        "riskRuleBroken": true,
+        "note": "Held the entire 422-share position through an unrealized gain of $1,584.06 (+17.51%). Took no partial profits. The trade turned red and was closed in full for a loss without returning to breakeven before exit. Review the missed profit opportunity and failure to protect the position."
+      }
+    },
+    {
+      "direction": "long",
+      "symbol": "WETO",
+      "tradingDateNewYork": "2026-08-14",
+      "packTradeKey": "august_red_20260814_weto",
+      "executions": [
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-14T12:28:00.000Z",
+          "marketCandleTimeUtcSeconds": 1786710480,
+          "packExecutionKey": "august_red_20260814_weto_fill_1",
+          "priceDecimal": "10.37",
+          "quantityDecimal": "1241",
+          "side": "buy",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        },
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-14T14:22:00.000Z",
+          "marketCandleTimeUtcSeconds": 1786717320,
+          "packExecutionKey": "august_red_20260814_weto_fill_2",
+          "priceDecimal": "8.92",
+          "quantityDecimal": "1241",
+          "side": "sell",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        }
+      ],
+      "demoReview": {
+        "entryRuleBroken": false,
+        "riskRuleBroken": true,
+        "note": "Held the entire 1241-share position through an unrealized gain of $3,201.78 (+24.88%). Took no partial profits. The trade turned red and was closed in full for a loss without returning to breakeven before exit. Review the missed profit opportunity and failure to protect the position."
+      }
+    },
+    {
+      "direction": "long",
+      "symbol": "FTFT",
+      "tradingDateNewYork": "2026-08-28",
+      "packTradeKey": "august_red_20260828_ftft",
+      "executions": [
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-28T20:23:00.000Z",
+          "marketCandleTimeUtcSeconds": 1787948580,
+          "packExecutionKey": "august_red_20260828_ftft_fill_1",
+          "priceDecimal": "1.93",
+          "quantityDecimal": "4619",
+          "side": "buy",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        },
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-28T20:55:00.000Z",
+          "marketCandleTimeUtcSeconds": 1787950500,
+          "packExecutionKey": "august_red_20260828_ftft_fill_2",
+          "priceDecimal": "1.5403",
+          "quantityDecimal": "4619",
+          "side": "sell",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        }
+      ],
+      "demoReview": {
+        "entryRuleBroken": false,
+        "riskRuleBroken": true,
+        "note": "Held the entire 4619-share position through an unrealized gain of $2,124.74 (+23.83%). Took no partial profits. The trade turned red and was closed in full for a loss without returning to breakeven before exit. Review the missed profit opportunity and failure to protect the position."
+      }
+    }
+  ]
+}

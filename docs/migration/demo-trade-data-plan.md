@@ -111,3 +111,5 @@ and Daily Trade Analyzer workers expire such jobs before claiming them. New
 Discord provisioning attempts the isolated demo transaction only after the
 authenticated identity/workspace is committed; an unavailable pack falls back
 to one ordinary Primary Journal without corrupting the valid session.
+
+Version 10 approved slice: implementation complete; [release handoff](demo-v10-release-handoff-20260909.md). Three no-profit-taking green-to-red trades and append-only Demo fee correction; production acceptance pending.
