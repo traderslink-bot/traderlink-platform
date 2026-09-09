@@ -6,8 +6,6 @@
 
 **Usage-panel record:** [Watchlist Usage Admin Progress](watchlist-usage-admin-progress.md)
 
-**AI article source record:** [Watchlist AI News Source Policy Progress](watchlist-ai-news-source-policy-progress.md)
-
 ## Completed
 
 - [x] Confirmed the existing Watchlist runtime has the required status,
@@ -18,6 +16,8 @@
   is the correct authorization boundary.
 
 ## In progress
+
+- [x] Correct the member Watchlist high-risk warning to be country-only. It no longer infers, suppresses on, or describes same-day catalyst status.
 
 - [x] Reject the partial React control recreation after owner review found that
   it omitted most runtime controls.
