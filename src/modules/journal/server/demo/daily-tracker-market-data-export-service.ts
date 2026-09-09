@@ -57,7 +57,7 @@ export type DailyTrackerMarketDataExport = Readonly<{
   session: Readonly<{
     bars: readonly NormalizedMarketCandle[];
     corporateActionReview: "required_for_final_pack_acceptance";
-    priceContinuityGuard: "unadjusted_price_ratio_0.25_to_4_exclusive_v1";
+    priceContinuityGuard: "not_applied_provider_candles_preserved_v1";
     exchangeTimezone: string;
     normalizedCandleSha256: string;
     pageCount: number;
@@ -181,18 +181,10 @@ function validateSessionCoverageAndContinuity(input: Readonly<{
   if (input.candles.length === 0 || !hasStrictlyIncreasingCandleTimes(input.candles)) {
     throw new DailyTrackerMarketDataExportUnavailable("session_candles_unavailable");
   }
-  let prior: NormalizedMarketCandle | null = null;
   for (const candle of input.candles) {
     if (candle.time < session.startTime || candle.time > session.endTime) {
       throw new DailyTrackerMarketDataExportUnavailable("session_candles_unavailable");
     }
-    if (prior) {
-      const ratio = Number(candle.openDecimal) / Number(prior.closeDecimal);
-      if (!Number.isFinite(ratio) || ratio <= 0 || ratio >= 4 || ratio <= 0.25) {
-        throw new DailyTrackerMarketDataExportUnavailable("session_candles_unavailable");
-      }
-    }
-    prior = candle;
   }
 }
 
@@ -311,7 +303,7 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
       exchangeTimezone: result.exchangeTimezone,
       normalizedCandleSha256: result.normalizedCandleSha256,
       pageCount: rawPages.length,
-      priceContinuityGuard: "unadjusted_price_ratio_0.25_to_4_exclusive_v1" as const,
+      priceContinuityGuard: "not_applied_provider_candles_preserved_v1" as const,
       provider: "moomoo_history_kline" as const,
       providerAdapterVersion: "moomoo_history_kline_v1",
       providerUtcOffsetSeconds: result.utcOffsetSeconds,
