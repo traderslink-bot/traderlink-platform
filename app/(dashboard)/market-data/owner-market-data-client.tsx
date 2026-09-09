@@ -121,9 +121,9 @@ export function OwnerMarketDataClient() {
       {loading && <LinearProgress aria-label="Loading inventory" />}
       {!loading && !sessions.length && <Typography color="text.secondary">No saved sessions match these filters.</Typography>}
       {sessions.map((session) => <Box key={`${session.symbol}-${session.date}`} sx={{ p: 2, border: 1, borderColor: "divider", borderRadius: 2, bgcolor: "background.paper" }}>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ sm: "center" }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}>
           <Stack spacing={1}>
-            <Typography component="h3" variant="subtitle1" fontWeight={700}>{session.symbol} · {session.date}</Typography>
+            <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>{session.symbol} · {session.date}</Typography>
             <Stack direction="row" spacing={1}><Chip size="small" label={`${session.bars} candles`} /><Chip size="small" label="1 minute" /></Stack>
             <Typography variant="body2">Saved candles: {time(session.firstTime)}–{time(session.lastTime)} New York</Typography>
             <Typography variant="body2" color="text.secondary">Request window: 04:00–20:00 · Elapsed coverage through {time(session.coverageEnd)}</Typography>
