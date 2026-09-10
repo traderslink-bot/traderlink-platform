@@ -75,6 +75,33 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       }),
     ]),
   }),
+  Object.freeze({
+    slug: "daily-watchlist-recaps",
+    title: "Daily Watchlist Recaps",
+    description: "Generate, edit and post an owner-reviewed Watchlist recap.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "build-recap",
+        title: "Build a recap",
+        summary: "Generate natural-sentence results from the Watchlist analysis and later price action.",
+        keywords: Object.freeze(["Daily Recaps", "Watchlist", "pullback", "breakout", "Discord"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "steps", items: Object.freeze([
+            Object.freeze({ title: "1. Choose the date", text: "Open Admin Watchlist, choose Daily Recaps and select the New York trading date." }),
+            Object.freeze({ title: "2. Generate drafts", text: "Generate one ticker or all Watchlist posts for the date. A normal move receives a potential-gain recap. Pullback recovery, breakout levels and setup invalidation are included when those analysis paths occurred." }),
+            Object.freeze({ title: "3. Edit and select", text: "Edit every ticker recap as needed, then choose Add to recap or Don't use. Flag for audit records an app issue without blocking editing, selection or posting." }),
+            Object.freeze({ title: "4. Review the final post", text: "Edit the entire combined Discord post. Save final post keeps your text across refreshes without posting. Use selected recaps replaces that body with the currently selected ticker recaps after confirmation. Select Post to Discord when ready and confirm the final action." }),
+          ]) }),
+          Object.freeze({ kind: "paragraph", text: "A stock does not have to reach its regular pullback area to produce a recovery recap. The recap can describe the actual dip and run, stating that price turned before reaching the area. Deep recoveries are not generated as successful analysis stories. A later dip does not erase an earlier completed run; if a higher run follows a break below the regular area, the recap uses the posted-price potential gain." }),
+          Object.freeze({ kind: "paragraph", text: "When an initial move is followed by a successful regular pullback and another run, the recap can describe both moves with separate percentages. The later run does not have to exceed the earlier high." }),
+          Object.freeze({ kind: "paragraph", text: "A saved final body keeps its original ticker associations when selections change. Use selected recaps replaces both the body and its associated tickers; editing the final wording does not change those associations." }),
+          Object.freeze({ kind: "callout", title: "Post history", text: "Post history keeps the submitted text and delivery status. Retry post reuses that saved attempt. If delivery is uncertain, check Discord and confirm either that the unconfirmed message is absent or supply its Discord message link. The app then continues any remaining messages." }),
+          Object.freeze({ kind: "callout", title: "Stored recap data", text: "The Stored recap data card shows drafts, posts, audit flags, oldest date and approximate storage. After 30 days, manual cleanup can remove eligible supporting price evidence while keeping posted text, receipts and open audit flags." }),
+          Object.freeze({ kind: "paragraph", text: "A saved audit note never prevents editing or posting. Repeated posting attempts use a durable receipt so the same approved request cannot create duplicate Discord posts." }),
+        ]),
+      }),
+    ]),
+  }),
 ]);
 
 export function tradersLinkAppGuideBySlug(slug: string): HelpGuide | undefined {

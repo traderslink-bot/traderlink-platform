@@ -8,7 +8,7 @@ import {
 import { TRADERLINK_PLATFORM_JOURNAL_UPLOAD_STAGING_ROOT_ENV } from "@/src/modules/journal/server/imports/journal-upload-staging";
 
 import { TRADERLINK_PLATFORM_DB_PATH_ENV } from "../database/platform-database-config";
-import { readAppliedPlatformMigrations } from "../database/platform-migration-registry";
+import { platformMigrationManifest } from "../database/platform-migration-manifest";
 import { openReadonlyPlatformDatabase } from "../database/open-readonly-platform-database";
 import {
   requirePlatformSingleNodeSqliteStorage,
@@ -123,15 +123,10 @@ export function verifyPlatformHostedRuntimeReadiness(
   requireProtectedBackupRoot(environment, backupRoot);
 
   const database = openReadonlyPlatformDatabase({ databasePath, environment });
-  let migrationCount: number;
-  try {
-    migrationCount = readAppliedPlatformMigrations(database).length;
-  } finally {
-    database.close();
-  }
+  database.close();
 
   return Object.freeze({
-    migrationCount,
+    migrationCount: platformMigrationManifest.length,
     status: "ready" as const,
     storage: TRADERLINK_PLATFORM_SQLITE_SINGLE_NODE_BACKEND,
   });

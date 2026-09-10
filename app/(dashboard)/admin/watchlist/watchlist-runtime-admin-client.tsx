@@ -8,14 +8,16 @@ import Button from "@mui/material/Button";
 const MINIMUM_FRAME_HEIGHT = 900;
 
 export function WatchlistRuntimeAdminClient({
+  dailyRecapsPanel,
   usagePanel,
 }: {
+  dailyRecapsPanel: ReactNode;
   usagePanel: ReactNode;
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [height, setHeight] = useState(MINIMUM_FRAME_HEIGHT);
-  const [selectedSection, setSelectedSection] = useState<"runtime" | "usage">("runtime");
+  const [selectedSection, setSelectedSection] = useState<"runtime" | "usage" | "recaps">("runtime");
 
   const resizeFrame = useCallback(() => {
     const frameDocument = frameRef.current?.contentDocument;
@@ -65,12 +67,15 @@ export function WatchlistRuntimeAdminClient({
 
   return (
     <>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+        <Button onClick={() => setSelectedSection("runtime")} variant={selectedSection === "runtime" ? "contained" : "outlined"}>Watchlist controls</Button>
+        <Button onClick={() => setSelectedSection("usage")} variant={selectedSection === "usage" ? "contained" : "outlined"}>Usage</Button>
+        <Button onClick={() => setSelectedSection("recaps")} variant={selectedSection === "recaps" ? "contained" : "outlined"}>Daily Recaps</Button>
+      </Box>
       <Box hidden={selectedSection !== "usage"}>
         {usagePanel}
-        <Button onClick={() => setSelectedSection("runtime")} sx={{ mt: 2 }} variant="outlined">
-          Watchlist controls
-        </Button>
       </Box>
+      <Box hidden={selectedSection !== "recaps"}>{dailyRecapsPanel}</Box>
       <Box
         aria-hidden={selectedSection !== "runtime"}
         component="iframe"

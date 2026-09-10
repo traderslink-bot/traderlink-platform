@@ -5,6 +5,7 @@ import {
   broadcastLiveWatchlistUpdate,
 } from "@/src/lib/live-watchlist/live-watchlist-events";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import { recordWatchlistDailyRecapEvidence } from "@/src/modules/watchlist/server/daily-recaps/watchlist-daily-recap-evidence-recorder";
 import type {
   LiveWatchlistCardPatch,
   LiveWatchlistHealthPatch,
@@ -13,6 +14,16 @@ import type {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function captureDailyRecapEvidence(state: Awaited<ReturnType<LiveWatchlistStore["upsertPatch"]>>): void {
+  try {
+    recordWatchlistDailyRecapEvidence(state);
+  } catch (error) {
+    // Daily Recaps is an owner-reviewed optional record. Never prevent the
+    // existing publisher from updating the member-facing Watchlist.
+    console.error("watchlist_daily_recap_evidence_capture_failed", error);
+  }
+}
 
 function expectedToken(): string | null {
   return process.env.TRADERSLINK_WATCHLIST_PUBLISHER_TOKEN?.trim() || null;
@@ -186,6 +197,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (isTickerDataPatch(body)) {
     const state = await new LiveWatchlistStore().upsertTickerData(body);
+    captureDailyRecapEvidence(state);
     broadcastLiveWatchlistUpdate(state);
     return NextResponse.json({ ok: true, symbol: state.symbol, state });
   }
@@ -195,6 +207,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const state = await new LiveWatchlistStore().upsertPatch(body);
+  captureDailyRecapEvidence(state);
   broadcastLiveWatchlistUpdate(state);
   return NextResponse.json({ ok: true, symbol: state.symbol, state });
 }

@@ -8,6 +8,8 @@ import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/se
 
 import { WatchlistRuntimeAdminClient } from "./watchlist-runtime-admin-client";
 import { WatchlistUsageAdminPanel } from "./watchlist-usage-admin-panel";
+import { WatchlistDailyRecapsAdminPanel } from "./watchlist-daily-recaps-admin-panel";
+import { readDailyRecapFinalItems, readDailyRecapFinalDraft, readDailyRecapOwnerCandidates, readDailyRecapStorageSummary, readDailyRecapPostHistory } from "@/src/modules/watchlist/server/daily-recaps/daily-recap-owner-service";
 
 export const metadata: Metadata = {
   description: "Manage the private TradersLink Watchlist runtime.",
@@ -26,9 +28,22 @@ export default async function WatchlistRuntimeAdminPage() {
   } catch {
     usage = null;
   }
+  const dateParts = new Intl.DateTimeFormat("en-CA", { day: "2-digit", month: "2-digit", timeZone: "America/New_York", year: "numeric" }).formatToParts(new Date());
+  const part = (type: string) => dateParts.find((value) => value.type === type)?.value ?? "";
+  const recapDate = `${part("year")}-${part("month")}-${part("day")}`;
+  let recapCandidates = [];
+  let recapStorage = null;
+  let recapPosts: ReturnType<typeof readDailyRecapPostHistory> = [];
+  let finalDraft: string | null = null;
+  let finalItems: ReturnType<typeof readDailyRecapFinalItems> = [];
+  try { finalItems = readDailyRecapFinalItems(recapDate, identity.scope.userId); } catch { finalItems = []; }
+  try { finalDraft = readDailyRecapFinalDraft(recapDate, identity.scope.userId); } catch { finalDraft = null; }
+  try { recapCandidates = [...readDailyRecapOwnerCandidates(recapDate)]; } catch { recapCandidates = []; }
+  try { recapStorage = readDailyRecapStorageSummary(); } catch { recapStorage = null; }
+  try { recapPosts = readDailyRecapPostHistory(recapDate, identity.scope.userId); } catch { recapPosts = []; }
   return (
     <DashboardPage>
-      <WatchlistRuntimeAdminClient usagePanel={<WatchlistUsageAdminPanel usage={usage} />} />
+      <WatchlistRuntimeAdminClient dailyRecapsPanel={<WatchlistDailyRecapsAdminPanel initialFinalItems={finalItems} initialFinalDraft={finalDraft} initialDate={recapDate} initialCandidates={recapCandidates} initialStorage={recapStorage} initialPosts={recapPosts} />} usagePanel={<WatchlistUsageAdminPanel usage={usage} />} />
     </DashboardPage>
   );
 }
