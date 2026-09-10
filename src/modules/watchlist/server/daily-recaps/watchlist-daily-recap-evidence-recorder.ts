@@ -96,6 +96,7 @@ function statePostedPrice(state: LiveWatchlistSymbolState): number | null {
  */
 export function recordWatchlistDailyRecapEvidence(state: LiveWatchlistSymbolState): void {
   if (!state.firstPostedAt || !validTimestamp(state.firstPostedAt)) return;
+  const firstPostedAt = state.firstPostedAt;
   const postedPrice = statePostedPrice(state);
   const observedPrice = state.latestPrice;
   const observedAt = state.latestPriceObservedAt ?? state.updatedAt;
@@ -108,13 +109,13 @@ export function recordWatchlistDailyRecapEvidence(state: LiveWatchlistSymbolStat
   candidate_id, lifecycle_state, high_accepted_price_text, high_accepted_at_ms,
   low_accepted_price_text, low_accepted_at_ms
 FROM platform_watchlist_recap_candidates
-WHERE symbol = ? AND first_posted_at_ms = ?`).get(state.symbol, state.firstPostedAt);
+WHERE symbol = ? AND first_posted_at_ms = ?`).get(state.symbol, firstPostedAt);
       if (candidate?.lifecycle_state === "removed") return;
       if (!candidate) {
         // A later quote is never substituted for the original publication price.
         if (!postedPrice) return;
         const candidateId = createCanonicalUuidV4();
-        const initialObservedAt = Math.max(state.firstPostedAt, observedAt);
+        const initialObservedAt = Math.max(firstPostedAt, observedAt);
         database.prepare(`INSERT INTO platform_watchlist_recap_candidates (
   candidate_id, symbol, new_york_date, first_posted_at_ms,
   first_posted_price_text, first_accepted_price_text, first_accepted_at_ms,
@@ -124,7 +125,7 @@ WHERE symbol = ? AND first_posted_at_ms = ?`).get(state.symbol, state.firstPoste
   high_after_low_price_text, high_after_low_at_ms,
   lifecycle_state, frozen_at_ms, removed_at_ms, created_at_ms, updated_at_ms
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, 'active', NULL, NULL, ?, ?)`)
-          .run(candidateId, state.symbol, newYorkDate(state.firstPostedAt), state.firstPostedAt,
+          .run(candidateId, state.symbol, newYorkDate(firstPostedAt), firstPostedAt,
             decimal(postedPrice), decimal(observedPrice), initialObservedAt,
             decimal(observedPrice), initialObservedAt,
             decimal(observedPrice), initialObservedAt,

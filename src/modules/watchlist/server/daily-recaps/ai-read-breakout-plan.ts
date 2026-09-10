@@ -16,6 +16,7 @@ export function breakoutPlanFromAiRead(
 ): DailyRecapBreakoutPlan | null {
   if (!Number.isSafeInteger(publishedAtMs) || publishedAtMs <= 0) return null;
   if (!validPrice(read.mustClear.price) || !validPrice(read.breakoutContinuation.price)) return null;
+  const breakoutTriggerPrice = read.breakoutContinuation.price;
   const v4Levels = read.version === 4
     ? [
       read.forwardPlan.nearestRealistic,
@@ -23,10 +24,10 @@ export function breakoutPlanFromAiRead(
       read.forwardPlan.strongExpansion,
       read.forwardPlan.extremeMomentum,
       ...read.forwardPlan.additionalObservedOutcomes,
-    ].filter((horizon) => horizon.available && validPrice(horizon.price)).map((horizon) => horizon.price)
+    ].filter((horizon) => horizon.available).map((horizon) => horizon.price).filter(validPrice)
     : read.targets.map((target) => target.price).filter(validPrice);
   const nextLevelPrices = [...new Set(v4Levels)]
-    .filter((price) => price >= read.breakoutContinuation.price)
+    .filter((price) => price >= breakoutTriggerPrice)
     .sort((left, right) => left - right);
   return Object.freeze({
     breakoutTriggerPrice: read.breakoutContinuation.price,
