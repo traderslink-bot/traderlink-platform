@@ -153,7 +153,7 @@ export function OfflineAnalyticsRouteSurface({ kind, partitionKey, pathname }: {
         <TimingAnalyticsClient chartData={model.chartData} completedTradeCount={model.completedTradeCount} moneyBasis={model.moneyBasis} timezone={model.timezone} />
       ) : null}
       {model.kind === "analytics-execution" ? (
-        <ExecutionAnalyticsClient chartData={model.chartData} currency={model.currency} moneyBasis={model.moneyBasis} offline priceComparison={model.priceComparison} priceInsights={model.priceInsights} priceResults={model.priceResults} rows={model.rows} />
+        <ExecutionAnalyticsClient chartData={model.chartData} currency={model.currency} moneyBasis={model.moneyBasis} offline priceComparison={model.priceComparison} priceInsights={model.priceInsights} priceResults={model.priceResults} priceResultsByDirection={model.priceResultsByDirection} rows={model.rows} />
       ) : null}
       {model.kind === "trade-analyzer-trades" ? (
         <AnalyzedTradesIndex

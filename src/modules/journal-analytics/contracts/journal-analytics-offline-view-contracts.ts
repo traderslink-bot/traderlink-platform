@@ -28,7 +28,7 @@ export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION =
 export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS: Readonly<
   Record<JournalAnalyticsOfflineRouteKind, string>
 > = Object.freeze({
-  "analytics-execution": "journal-analytics:execution:v2",
+  "analytics-execution": "journal-analytics:execution:v3",
   "analytics-overview": "journal-analytics:overview:current",
   "analytics-results": "journal-analytics:results:current",
   "analytics-timing": "journal-analytics:timing:current",
@@ -85,6 +85,7 @@ export type JournalAnalyticsExecutionOfflineViewModel = Readonly<{
   priceComparison: EntryPriceComparison;
   priceInsights: EntryPriceInsights;
   priceResults: readonly EntryPriceResult[];
+  priceResultsByDirection?: Readonly<Record<"long" | "short", readonly EntryPriceResult[]>>;
   rows: readonly ExecutionTradeRow[];
   version: 1;
 }>;

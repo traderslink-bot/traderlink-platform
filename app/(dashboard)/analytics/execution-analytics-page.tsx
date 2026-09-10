@@ -46,7 +46,7 @@ import { FeatureHelpLink } from "../feature-help-link";
 const CHART_GROUPINGS = ["entered_quantity_bucket", "maximum_position_bucket", "holding_duration_bucket"] as const satisfies readonly JournalAnalyticsGrouping[];
 const GROUPINGS = [...CHART_GROUPINGS, "entry_price_bucket", "entry_price_comparison"] as const satisfies readonly JournalAnalyticsGrouping[];
 function metricsFor(moneyBasis: "gross" | "net") {
-  return [moneyBasis === "gross" ? "gross_pnl" : "net_pnl", "win_rate", "included_count", "win_count", "loss_count", "average_pnl"] as const;
+  return [moneyBasis === "gross" ? "gross_pnl" : "net_pnl", "win_rate", "included_count", "win_count", "loss_count", "average_pnl", "average_trade_return", "median_trade_return"] as const;
 }
 const ENTRY_PRICE_MINIMUM_TOTAL_TRADES = 30;
 
@@ -60,8 +60,8 @@ function metricNumber(value: JournalAnalyticsExactValue | null): number | null {
 }
 
 function metricDecimal(value: JournalAnalyticsExactValue | null): string | null {
-  if (value === null || value.kind !== "decimal") return null;
-  return value.valueDecimal;
+  if (value === null) return null;
+  return value.kind === "decimal" ? value.valueDecimal : value.kind === "rational" ? value.roundedDecimal : null;
 }
 
 function entryPriceResults(
@@ -77,6 +77,9 @@ function entryPriceResults(
     return Object.freeze({
       averagePnl: read("average_pnl") ? formatJournalAnalyticsMetric(read("average_pnl")!) : "N/A",
       averagePnlDecimal: metricDecimal(read("average_pnl")?.value ?? null),
+      averageReturn: read("average_trade_return") ? formatJournalAnalyticsMetric(read("average_trade_return")!) : "Unavailable",
+      averageReturnDecimal: metricDecimal(read("average_trade_return")?.value ?? null),
+      medianReturn: read("median_trade_return") ? formatJournalAnalyticsMetric(read("median_trade_return")!) : "Unavailable",
       entryPriceBand: band.label,
       key: band.key,
       losses: metricNumber(read("loss_count")?.value ?? null),
@@ -227,10 +230,14 @@ export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: R
     const pnlMetricId = moneyBasis === "gross" ? "gross_pnl" : "net_pnl";
     const chartQuery = buildJournalAnalyticsDashboardQuery(scope, { closingDateRange, groupings: GROUPINGS, metricIds: metricsFor(moneyBasis), moneyBasis });
     const charts = service.getExecutionAnalytics(scope, chartQuery);
+    const directionCharts = Object.freeze({
+      long: service.getExecutionAnalytics(scope, { ...chartQuery, groupings: ["entry_price_bucket"], directions: ["long"] }),
+      short: service.getExecutionAnalytics(scope, { ...chartQuery, groupings: ["entry_price_bucket"], directions: ["short"] }),
+    });
     const currency = charts.partitions[0]?.currency ?? null;
     const rawTrades = currency === null ? null : service.getRoundTripAnalyticsTable(scope, buildJournalAnalyticsDashboardQuery(scope, { closingDateRange, currency, metricIds: ["included_count"], moneyBasis, pageSize: 200 }));
     const trades = rawTrades === null ? null : toLogicalTradeAnalyticsTable(scope, database, rawTrades);
-    return Object.freeze({ charts, moneyBasis, pnlMetricId, trades });
+    return Object.freeze({ charts, directionCharts, moneyBasis, pnlMetricId, trades });
   });
   const chartData = Object.freeze(Object.fromEntries(CHART_GROUPINGS.map((grouping) => {
     const points = result.charts.partitions.flatMap((partition) => partition.groups
@@ -247,6 +254,10 @@ export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: R
     return [grouping, Object.freeze(points)];
   }))) as ExecutionChartData;
   const priceResults = entryPriceResults(result.charts, result.pnlMetricId);
+  const priceResultsByDirection = Object.freeze({
+    long: entryPriceResults(result.directionCharts.long, result.pnlMetricId),
+    short: entryPriceResults(result.directionCharts.short, result.pnlMetricId),
+  });
   const priceComparison = entryPriceComparison(result.charts);
   const priceInsights = entryPriceInsights(priceResults);
   const rows: readonly ExecutionTradeRow[] = result.trades?.rows.map((row) => ({ averageEntry: money(row.averageEntryPriceDecimal ?? null, result.trades?.currency ?? null), averageEntryValue: Number(row.averageEntryPriceDecimal ?? 0), averageExit: money(row.averageExitPriceDecimal ?? null, result.trades?.currency ?? null), averageExitValue: Number(row.averageExitPriceDecimal ?? 0), closed: timestamp(row.closedAtUtc, result.trades?.timezone ?? "UTC"), closedValue: row.closedAtUtc, direction: row.direction, executions: row.uniqueExecutionCount, maximumPosition: formatJournalAnalyticsDecimal(row.maximumPositionQuantityDecimal, 2, true), maximumPositionValue: Number(row.maximumPositionQuantityDecimal), netPnl: money(row.selectedPnlDecimal, result.trades?.currency ?? null), netPnlDecimal: row.selectedPnlDecimal, netPnlValue: Number(row.selectedPnlDecimal ?? 0), opened: timestamp(row.openedAtUtc, result.trades?.timezone ?? "UTC"), openedValue: row.openedAtUtc, roundTripId: row.roundTripId, ticker: row.displayedSymbol, tradeType: row.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade", tradeTypeValue: row.tradeClassification, holdTime: duration(row.holdingDurationMilliseconds), holdTimeValue: row.holdingDurationMilliseconds })) ?? [];
@@ -259,7 +270,8 @@ export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: R
     priceComparison,
     priceInsights,
     priceResults,
+    priceResultsByDirection,
     rows,
   });
-  return <><OfflineSavedViewCapture accountTimezone={result.trades?.timezone ?? result.charts.partitions[0]?.timezone ?? null} calculationVersion={`journal-analytics-${result.charts.registryVersion}`} coverage={journalAnalyticsOfflineRouteCoverage("analytics-execution")} generatedAtUtc={result.charts.generatedAtUtc} model={offlineModel} pathname="/analytics/execution" queryIdentity={`range:${selectedRange.kind}:${selectedRange.startDate ?? "all"}:${selectedRange.endDate ?? "all"}:basis:${result.moneyBasis}`} reportingCurrency={currency} routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION} viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-execution"]} /><DashboardPage><Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}><Box><DashboardAppearanceText lightColor="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</DashboardAppearanceText><Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Trade Breakdown</Typography><DashboardAppearanceText lightColor="text.secondary" sx={{ mt: 0.5 }}>See how your completed trades were entered, sized, held, and exited.</DashboardAppearanceText></Box><FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" /></Box><Box sx={{ alignItems: { sm: "center" }, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 0.5 }}><OverviewDateRangeControl href="/analytics/execution" value={selectedRange} /><FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" /></Box><ExecutionAnalyticsClient chartData={chartData} currency={currency} moneyBasis={result.moneyBasis} priceComparison={priceComparison} priceInsights={priceInsights} priceResults={priceResults} rows={rows} /></DashboardPage></>;
+  return <><OfflineSavedViewCapture accountTimezone={result.trades?.timezone ?? result.charts.partitions[0]?.timezone ?? null} calculationVersion={`journal-analytics-${result.charts.registryVersion}`} coverage={journalAnalyticsOfflineRouteCoverage("analytics-execution")} generatedAtUtc={result.charts.generatedAtUtc} model={offlineModel} pathname="/analytics/execution" queryIdentity={`range:${selectedRange.kind}:${selectedRange.startDate ?? "all"}:${selectedRange.endDate ?? "all"}:basis:${result.moneyBasis}`} reportingCurrency={currency} routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION} viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-execution"]} /><DashboardPage><Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}><Box><DashboardAppearanceText lightColor="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</DashboardAppearanceText><Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Trade Breakdown</Typography><DashboardAppearanceText lightColor="text.secondary" sx={{ mt: 0.5 }}>See how your completed trades were entered, sized, held, and exited.</DashboardAppearanceText></Box><FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" /></Box><ExecutionAnalyticsClient dateControls={<Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}><OverviewDateRangeControl href="/analytics/execution" showCaption={false} value={selectedRange} /><FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" /></Box>} chartData={chartData} currency={currency} moneyBasis={result.moneyBasis} priceComparison={priceComparison} priceInsights={priceInsights} priceResults={priceResults} priceResultsByDirection={priceResultsByDirection} rows={rows} /></DashboardPage></>;
 }

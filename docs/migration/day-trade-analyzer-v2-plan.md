@@ -17,6 +17,10 @@ completed work is placed online through a separately authorized release.
 
 **Release QA:** [September 9 source-based review](day-trade-analyzer-september-9-qa.md)
 
+**Separate execution follow-up:** [Entry-price return comparison](entry-price-return-comparison-progress.md)
+
+**Tooltip follow-up:** [Scaling Out plain-language review](scaling-out-tooltip-review-progress.md)
+
 **Data audit:** [Day Trade Analyzer Version 2 Data Audit](day-trade-analyzer-v2-data-audit.md)
 
 **Visual review:** [Day Trade Analyzer Version 2 Mockup](day-trade-analyzer-v2-mockup.html)
@@ -456,6 +460,12 @@ No push, merge, deployment, hosted migration, configuration change or hosted
 data write is authorized by this plan.
 
 ## Acceptance
+
+Count-card follow-up: [Day Analyzer count-card repair](day-analyzer-count-card-repair-progress.md) — local styling fixes; count-logic findings handed to Build owner-only Market Data at owner request.
+
+Green-to-red correction: [Zero-profit classification repair](green-to-red-zero-profit-repair-progress.md) — implemented locally; publication and integrated browser verification pending.
+
+Pagination follow-up: [Analyzed Trades pagination repair](analyzed-trades-pagination-repair-progress.md) — source correction implemented; browser verification and release pending.
 
 - Exact account/workspace isolation and current round-trip-version matching.
 - Every result obeys the selected closing-date range.

@@ -23,6 +23,7 @@ import {
   maximumExactDecimal,
   medianExactDecimals,
   minimumExactDecimal,
+  multiplyExactDecimals,
   percentageExactDecimals,
   sumExactDecimals,
 } from "./exact-analytics-math";
@@ -146,6 +147,23 @@ function calculateMetric(
       return median === null
         ? unavailable("zero_eligible_trade_denominator")
         : Object.freeze({ state: "complete", value: Object.freeze({ kind: "rational" as const, ...median }), limitationReasonCodes: Object.freeze([]) });
+    }
+    case "average_trade_return":
+    case "median_trade_return": {
+      const selectedRows = moneyBasis === "gross" ? population.grossRows : population.netRows;
+      if (selectedRows.length === 0) return unavailable("zero_eligible_trade_denominator");
+      if (selectedRows.some((row) => compareExactDecimals(row.entryNotionalDecimal, "0") <= 0)) {
+        return unavailable("entry_notional_denominator_missing");
+      }
+      // Retain twelve decimal places per trade before the population calculation.
+      const returns = selectedRows.map((row) => divideExactDecimals(
+        multiplyExactDecimals(moneyBasis === "gross" ? row.grossPnlDecimal : row.netPnlDecimal!, "100"),
+        row.entryNotionalDecimal, { decimalPlaces: 12, roundingPolicy: "half_up_12dp" },
+      ).roundedDecimal);
+      const value = metricId === "average_trade_return"
+        ? divideExactDecimals(sumExactDecimals(returns), String(returns.length), { decimalPlaces: 2, roundingPolicy: "half_up_2dp" })
+        : medianExactDecimals(returns)!;
+      return Object.freeze({ state: nonEmptyState(population, selectedUsesNet), value: Object.freeze({ kind: "rational" as const, ...value }), limitationReasonCodes: selectedLimitations });
     }
     case "average_pnl":
     case "expectancy":

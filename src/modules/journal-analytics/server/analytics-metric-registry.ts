@@ -10,6 +10,8 @@ import {
 } from "./analytics-capability-manifest";
 
 export const JOURNAL_ANALYTICS_FIRST_SLICE_METRIC_IDS = Object.freeze([
+  "average_trade_return",
+  "median_trade_return",
   "candidate_count",
   "included_count",
   "excluded_count",
@@ -99,6 +101,8 @@ const firstSliceDefinitions = Object.freeze([
   metric({ metricId: "average_gross_pnl", title: "Average gross P/L", description: "Gross P/L divided by ready-closed Stock trade count.", valueKind: "money", unit: "trade_currency", requiredFacts: ["ready_closed_stock_cash_effect"], moneyBasis: "gross", zeroDenominatorPolicy: "unavailable_zero_eligible_trades" }),
   metric({ metricId: "median_gross_pnl", title: "Median gross P/L", description: "Exact sorted median gross P/L.", valueKind: "money", unit: "trade_currency", requiredFacts: ["ready_closed_stock_cash_effect"], moneyBasis: "gross", zeroDenominatorPolicy: "unavailable_zero_eligible_trades" }),
   metric({ metricId: "average_pnl", title: "Average P/L", description: "Selected-basis P/L divided by selected-basis eligible closed trades.", valueKind: "money", unit: "trade_currency", requiredFacts: ["selected_basis_pnl"], moneyBasis: "selectable", zeroDenominatorPolicy: "unavailable_zero_eligible_trades" }),
+  metric({ metricId: "average_trade_return", title: "Average trade return", description: "Equal-weight mean of each selected-basis trade P/L divided by its entry notional.", valueKind: "percentage", unit: "percent", requiredFacts: ["selected_basis_pnl"], moneyBasis: "selectable", zeroDenominatorPolicy: "unavailable_zero_eligible_trades" }),
+  metric({ metricId: "median_trade_return", title: "Median trade return", description: "Middle selected-basis trade return; average of the middle two for an even population.", valueKind: "percentage", unit: "percent", requiredFacts: ["selected_basis_pnl"], moneyBasis: "selectable", zeroDenominatorPolicy: "unavailable_zero_eligible_trades" }),
   metric({ metricId: "median_pnl", title: "Median P/L", description: "Exact sorted median selected-basis P/L.", valueKind: "money", unit: "trade_currency", requiredFacts: ["selected_basis_pnl"], moneyBasis: "selectable", zeroDenominatorPolicy: "unavailable_zero_eligible_trades" }),
   metric({ metricId: "best_trade", title: "Best trade P/L", description: "Maximum selected-basis P/L with deterministic close-time and stable-ID ties.", valueKind: "money", unit: "trade_currency", requiredFacts: ["selected_basis_pnl"], moneyBasis: "selectable", zeroDenominatorPolicy: "unavailable_zero_eligible_trades" }),
   metric({ metricId: "worst_trade", title: "Worst trade P/L", description: "Minimum selected-basis P/L with deterministic close-time and stable-ID ties.", valueKind: "money", unit: "trade_currency", requiredFacts: ["selected_basis_pnl"], moneyBasis: "selectable", zeroDenominatorPolicy: "unavailable_zero_eligible_trades" }),

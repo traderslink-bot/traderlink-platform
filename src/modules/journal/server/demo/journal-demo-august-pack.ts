@@ -95,10 +95,13 @@ export function resolveJournalDemoAugustPack(input: Readonly<{
   }
   const full = manifest(allTrades), source = manifest(missing);
   const revisedTrades = allTrades.map(trade => revisions.find(revised => revised.packTradeKey === trade.packTradeKey) ?? trade);
-  const revisedSource = { ...full, packVersion: 11, trades: revisedTrades,
+  const revisedSource = { ...full, packVersion: 12, trades: revisedTrades,
     sourceEvidenceManifestSha256: hash([full.sourceEvidenceManifestSha256, revisions, "demo_v11_above_twenty_percent_revision"]),
-    derivedFactManifestSha256: hash([full.derivedFactManifestSha256, revisions, 11]) };
-  const analyzer = { ...revisedSource, trades: (missing.length ? revisedTrades : revisions)
+    derivedFactManifestSha256: hash([full.derivedFactManifestSha256, revisions, 12]) };
+  // Rebuilding an instrument chain also versions its otherwise unchanged trades.
+  // Refresh every affected symbol, not only the two edited trade records.
+  const analyzer = { ...revisedSource, trades: revisedTrades
+    .filter(t => missing.length > 0 || revisions.some(revised => revised.symbol === t.symbol))
     .filter(t => t.executions.every(e => e.analysisPolicy === "analyzer_backed")) };
   const verified = {
     sourceEvidenceManifestSha256: full.sourceEvidenceManifestSha256,
@@ -107,7 +110,7 @@ export function resolveJournalDemoAugustPack(input: Readonly<{
   // Trade annotations are created for missing facts only; do not overwrite prior daily notes.
   const pack = createJournalDemoFinancialPack(source, verified, null, full, manifest([]));
   return {...pack, manifest: { ...pack.manifest, demoPackVersionId: JOURNAL_DEMO_CURRENT_VERSION_ID,
-    packVersion: 11, materializerVersion: "demo_canonical_journal_v11", manifestSha256: revisedSource.derivedFactManifestSha256 },
+    packVersion: 12, materializerVersion: "demo_canonical_journal_v12", manifestSha256: revisedSource.derivedFactManifestSha256 },
     materializeCanonicalFacts: (context: Parameters<typeof pack.materializeCanonicalFacts>[0]) => {
     const existingProvenance = input.existing ? correctJournalDemoFeeVersions(context.database, {
       workspaceId: context.workspaceId, accountId: context.accountId,

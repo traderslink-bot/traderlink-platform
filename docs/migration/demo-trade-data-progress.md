@@ -71,3 +71,5 @@
 Version 10: source implementation complete; 170 trades / 817 executions / 5 red days expected. Coordinator reserved migration 0132; [exact handoff and pending production QA](demo-v10-release-handoff-20260909.md). No local tests/build/staging or provider requests.
 
 Version11 source complete:four append-only execution corrections,two notes,saved Analyzer refresh; no migration. All3peaks above20%,WETO27.34%,YXT49.93%. [Release handoff](demo-v11-release-handoff-20260909.md); production acceptance pending; owner controls browser.
+
+Version12 repairs stale saved Analyzer references after version11whole-instrument rebuild. RefreshallsevenYXT/WETOanalyses; no execution/P-L change forversion11accounts. [Record](demo-v12-analyzer-refresh-repair-20260910.md).

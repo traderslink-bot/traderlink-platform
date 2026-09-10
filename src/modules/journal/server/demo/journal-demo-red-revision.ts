@@ -30,6 +30,11 @@ export function reviseJournalDemoRedTrades(input: Readonly<{
       const prior = original.executions.find(item => item.packExecutionKey === fact.packExecutionKey);
       if (!mapping || !prior) throw new Error("demo_v11_revision_mapping_missing");
       let current = executions.currentVersion(mapping.executionId, input.scope.workspaceId, input.scope.accountId);
+      // Later packs can refresh derived analyses without repeating approved corrections.
+      if (current && current.executionVersionId === mapping.executionVersionId &&
+        current.side === fact.side && current.priceDecimal === fact.priceDecimal &&
+        current.quantityDecimal === fact.quantityDecimal && current.executedAtUtc === fact.executedAtUtc &&
+        current.feesDecimal === "-0.5") continue;
       if (!current || current.executionVersionId !== mapping.executionVersionId || current.side !== fact.side ||
         current.priceDecimal !== prior.priceDecimal || current.quantityDecimal !== prior.quantityDecimal ||
         current.executedAtUtc !== prior.executedAtUtc || current.feesDecimal !== "-0.5") {
@@ -54,10 +59,10 @@ export function reviseJournalDemoRedTrades(input: Readonly<{
         executionFactSha256: createHash("sha256").update(JSON.stringify(current)).digest("hex") });
     }
   }
-  const results = new JournalRoundTripService(new JournalRoundTripRepository(input.database))
+  const results = changed.length ? new JournalRoundTripService(new JournalRoundTripRepository(input.database))
     .rebuildAffectedExecutionChains(input.scope, changed, {
       kind: "maintenance", maintenanceReasonCode: "demo_pack_materialization", now,
-    });
+    }) : [];
   if (results.some(result => result.needsDecisionCount !== 0 || result.readyClosedCount === 0)) {
     throw new Error("demo_v11_revision_rebuild_invalid");
   }
@@ -74,6 +79,7 @@ export function reviseJournalDemoRedTrades(input: Readonly<{
     if (rows.length !== 1) throw new Error("demo_v11_revision_trade_missing");
     const roundTripId = rows[0]!.round_trip_id;
     const note = annotations.readRoundTripNotes(input.scope,[roundTripId])[roundTripId];
+    if (note?.tradeNote === trade.demoReview!.note) continue;
     annotations.saveRoundTripNote(input.scope, { roundTripId, expectedRevision: note?.revision ?? null,
       technicalNote: note?.technicalNote ?? "", tradeNote: trade.demoReview!.note, now });
   }

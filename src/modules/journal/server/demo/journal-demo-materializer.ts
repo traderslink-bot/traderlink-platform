@@ -128,7 +128,8 @@ export class JournalDemoMaterializer {
       executionProvenance: assertJournalDemoExecutionProvenanceFacts(
         materialized.executionProvenance,
         { allowEmpty: validatedPack.manifest.packVersion === 3 ||
-          (validatedPack.manifest.packVersion === 11 && validatedPack.manifest.demoPackVersionId === JOURNAL_DEMO_CURRENT_VERSION_ID) },
+          (validatedPack.manifest.packVersion === 11 && validatedPack.manifest.demoPackVersionId === "a2703b8c-41a7-48ac-8a1c-62f7695ed6f1") ||
+          (validatedPack.manifest.packVersion === 12 && validatedPack.manifest.demoPackVersionId === JOURNAL_DEMO_CURRENT_VERSION_ID) },
       ),
       manifest: validatedPack.manifest, accountId: input.existing.accountId, createId,
       workspaceId: input.input.workspaceId,

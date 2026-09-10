@@ -484,18 +484,18 @@ function ScalingOutTable({
   return <Stack spacing={1.25}>
     <HorizontalScrollRegion label="Scaling out trades" minTableWidth={1780} stickyFirstColumn>
       <Table size="small"><TableHead><TableRow>
-        <TableCell><ColumnHeading help="Ticker symbol for this analyzed user-defined trade." label="Trade" /></TableCell>
-        <TableCell><ColumnHeading help="The sustained profit level this trade held and the number of consecutive one-minute candle closes required to qualify." label="Level" /></TableCell>
-        <TableCell align="right"><ColumnHeading align="right" help="Shares sold through profitable partial exits after the level qualified and before the first red point or final exit." label="Profit shares" /></TableCell>
-        <TableCell align="right"><ColumnHeading align="right" help="The largest number of shares open at one time during the trade." label="Max shares" /></TableCell>
-        <TableCell align="right"><ColumnHeading align="right" help="Percentage of the maximum position removed through profitable scale-outs after the level qualified." label="Reduced" /></TableCell>
-        <TableCell align="right"><ColumnHeading align="right" help="Shares still open after the last profitable scale-out. When no scale-out occurred, this is the number open at the qualifying close." label="Shares left" /></TableCell>
-        <TableCell align="right"><ColumnHeading align="right" help="Exact Gross profit secured through profitable partial exits after the level qualified." label="Profit taken" /></TableCell>
-        <TableCell align="right"><ColumnHeading align="right" help={`Calculated ${basisLabel} profit available at the qualifying candle close.`} label="Opportunity" /></TableCell>
-        <TableCell align="right"><ColumnHeading align="right" help={`Completed trade ${basisLabel} profit or loss.`} label="Final P/L" /></TableCell>
-        <TableCell align="right"><ColumnHeading align="right" help={`Calculated ${basisLabel} profit opportunity minus the completed trade's ${basisLabel} profit or loss.`} label="Opportunity gap" /></TableCell>
-        <TableCell><ColumnHeading help="Compares the scale-out with the recorded prices of later exits when exact quantity matching is available." label="Later exits" /></TableCell>
-        <TableCell><ColumnHeading help="Open the trade's complete one-minute analysis." label="Analysis" /></TableCell>
+        <TableCell><ColumnHeading help="The stock for this saved trade. Its entries and exits stay together, even if you opened and closed the position more than once." label="Trade" /></TableCell>
+        <TableCell><ColumnHeading help="The gain level the trade held long enough to meet this table’s rule. The number of closes tells you how many one-minute candles in a row had to close at or above that level. This sustained-level table uses different rules from the zone chart above." label="Level" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="How many shares you closed for a profit through partial exits after meeting this table’s gain-and-time rule, before the trade first turned red afterward or finished." label="Profit shares" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="The most shares you had open at any one time during this trade." label="Max shares" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="Profit shares divided by Max shares. This compares shares closed through the qualifying profitable partial exits with your largest open position. Adds or re-entries can make it different from the percentage of your original shares sold." label="Reduced" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="Shares left after the last profitable partial exit counted here. If there was no such exit, this shows shares open when the trade first met this table’s gain-and-time rule." label="Shares left" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help="Profit you took through the partial exits counted here, before fees. These exits happened after the trade met this table’s gain-and-time rule and before it first turned red afterward or finished." label="Profit taken" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help={`What the trade could have made by closing its open shares at the candle close that first met this table’s gain-and-time rule, including earlier realized gains and losses. Shown as ${basisLabel} P/L.`} label="Opportunity" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help={`What the whole trade finally made or lost, shown as ${basisLabel} P/L.`} label="Final P/L" /></TableCell>
+        <TableCell align="right"><ColumnHeading align="right" help={`The opportunity shown here minus the trade’s final ${basisLabel} P/L. A positive amount means the opportunity was higher; a negative amount means the trade finished with more.`} label="Opportunity gap" /></TableCell>
+        <TableCell><ColumnHeading help="Compares the profit from the shares you scaled out with what those same shares would have made at the recorded later exit prices. A comparison is shown only when the shares can be matched." label="Later exits" /></TableCell>
+        <TableCell><ColumnHeading help="Open this trade’s full one-minute analysis." label="Analysis" /></TableCell>
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => {
         const meaningful = meaningfulByTrade.get(row.roundTripId);
         return <TableRow hover key={row.roundTripId}>
@@ -505,7 +505,7 @@ function ScalingOutTable({
         <TableCell align="right" sx={{ color: financialOutcomeColor(row.profitSecuredGrossDecimal), fontWeight: 750 }}>{money(row.profitSecuredGrossDecimal, currency)}</TableCell>
         <TableCell align="right" sx={{ color: financialOutcomeColor(meaningful?.calculatedPotentialPnlDecimal ?? null), fontWeight: 750 }}>{money(meaningful?.calculatedPotentialPnlDecimal ?? null, currency)}</TableCell>
         <TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 750 }}>{money(row.actualPnlDecimal, currency)}</TableCell>
-        <TableCell align="right" sx={{ color: potentialDifferenceColor(meaningful?.differenceDecimal ?? null), fontWeight: 750 }}>{money(meaningful?.differenceDecimal ?? null, currency)}</TableCell>
+        <TableCell align="right" sx={{ color: financialOutcomeColor(meaningful?.differenceDecimal ?? null), fontWeight: 750 }}>{money(meaningful?.differenceDecimal ?? null, currency)}</TableCell>
         <TableCell sx={{ maxWidth: 300, minWidth: 240, whiteSpace: "normal" }}>{row.profitProtection.status === "avoided_additional_loss"
           ? `${money(row.profitProtection.avoidedAdditionalLossDecimal, currency)} additional loss avoided versus the recorded later exits.`
           : row.profitProtection.status === "gave_up_additional_profit"
@@ -693,12 +693,12 @@ function AnalyzedTradeCountCard({
           describeChild
           title={'This page only displays trades that were analyzed by TradersLink "Trade Analyzer" feature.'}
         >
-          <Stack component="span" direction="row" spacing={0.4} sx={{ alignItems: "center", width: "fit-content" }}>
-            <Typography color="warning.main" component="span" sx={{ fontSize: "1.125rem" }} variant="caption">Results include analyzed trades only</Typography>
+          <Stack component="span" direction="row" spacing={0.4} sx={{ alignItems: "center", minWidth: 0 }}>
+            <Typography component="span" sx={{ color: "warning.main", fontSize: "1.125rem", whiteSpace: "normal", overflowWrap: "anywhere" }} variant="caption">Results include analyzed trades only</Typography>
             <InfoOutlinedIcon sx={{ color: "text.secondary", fontSize: 14 }} />
           </Stack>
         </Tooltip>
-        <Typography color="warning.main" component="div" sx={{ fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>{count}</Typography>
+        <Typography component="div" sx={{ color: "warning.main", fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>{count}</Typography>
       </CardContent>
     </CardActionArea>
   </Card>;

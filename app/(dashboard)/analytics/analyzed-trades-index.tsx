@@ -98,19 +98,22 @@ export function AnalyzedTradesIndex({
   const [ticker, setTicker] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [cursors, setCursors] = useState<Record<number, string | null>>({ 1: null });
+  const [cursors, setCursors] = useState<Record<number, string | null>>({
+    1: null,
+    2: initialPage?.continuationCursor ?? null,
+  });
   const [result, setResult] = useState<DailyTradeAnalyzedTradePage | null>(initialPage);
   const [state, setState] = useState<"idle" | "loading" | "ready" | "error">(initialPage ? "ready" : "idle");
 
   useEffect(() => {
-    if (offline) return;
+    if (offline || draftTicker.trim() === ticker) return;
     const timeout = window.setTimeout(() => {
       setTicker(draftTicker.trim());
       setPage(1);
       setCursors({ 1: null });
     }, 250);
     return () => window.clearTimeout(timeout);
-  }, [draftTicker, offline]);
+  }, [draftTicker, offline, ticker]);
 
   const cursor = cursors[page] ?? null;
 
@@ -137,6 +140,7 @@ export function AnalyzedTradesIndex({
       signal: controller.signal,
     }).then(async (response) => {
       const payload = await response.json() as PageResponse;
+      if (controller.signal.aborted) return;
       if (!response.ok || payload.status !== "ready" || !payload.page) {
         throw new Error("Analyzed trades are unavailable.");
       }
@@ -167,6 +171,7 @@ export function AnalyzedTradesIndex({
           width: "100%",
           "& .MuiCardContent-root > .MuiStack-root .MuiTypography-caption": { color: "warning.main", fontSize: "1.125rem" },
           "& .MuiCardContent-root > .MuiStack-root .MuiTypography-root:not(.MuiTypography-caption)": { color: "warning.main" },
+          "& .MuiCardContent-root > .MuiTypography-caption": { display: "block", whiteSpace: "normal", overflowWrap: "anywhere" },
         }}>
           <DashboardMetricCard
             caption="Ready analyzer records in the selected period"

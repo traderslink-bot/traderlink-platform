@@ -54,11 +54,11 @@ export function ProfitZoneComparison({ records, rows, currency, timezone, totalT
   const selectedRecords = selected?.included ?? [];
   const currentPage = boundedPage(page, selectedRecords.length, pageSize);
   const headings = [
-    ["Zone", "Each zone is a separate exit scenario. Do not add zone totals together."],
-    ["Trades", "Included trades as a percentage of all selected analyzed trades. A recorded price must be inside this exact band; skipped bands are excluded."],
-    ["Potential profit", "Gross P/L if all open shares were closed at the first recorded price inside this band, including all earlier realized gains and losses. Later buys and re-entries in the saved trade are excluded. Uses a completed one-minute candle close or an exact exit price, not the highest price in the band."],
-    ["Actual P/L", "Final Gross P/L of these exact same saved trades, including their later executions."],
-    ["Difference", "Potential profit minus actual P/L. A positive amount means the scenario was higher; a negative amount means the actual trade earned more."],
+    ["Zone", "Each row asks what your trades could have made if you closed the open shares at the first recorded price inside that band. The same trade can appear in several rows, so do not add the rows together."],
+    ["Trades", "How many of your selected trades have a recorded price inside this band. The percentage is out of all selected analyzed trades. Trades must also meet any minimum time at +20% you selected. If the recorded prices skip a band, that trade is not included in its comparison."],
+    ["Potential profit", "What the trade could have made by closing all shares still open at the first recorded price inside this band, before fees. Earlier realized gains and losses are included; later buys and re-entries are not. The price comes from a one-minute candle close or an actual exit—not the highest price in the band."],
+    ["Actual P/L", "What these same trades actually made or lost before fees, including all their later buys and exits."],
+    ["Difference", "Potential profit minus what the trade actually made or lost. A positive number means this exit scenario was higher. A negative number means the actual trade did better."],
   ];
   if (records.some((record) => record.comparisonGrossPnlDecimal === undefined)) {
     return <Typography color="text.secondary">Reconnect to update this comparison.</Typography>;
@@ -72,9 +72,9 @@ export function ProfitZoneComparison({ records, rows, currency, timezone, totalT
           <TableCell><Button size="small" aria-expanded={level === zone.lowerBoundPercent} onClick={() => { setLevel(level === zone.lowerBoundPercent ? null : zone.lowerBoundPercent); setPage(1); }}
             startIcon={<KeyboardArrowDownRoundedIcon sx={{ transform: level === zone.lowerBoundPercent ? "rotate(180deg)" : "none" }} />}>{zoneLabel(zone.lowerBoundPercent, zone.upperBoundPercent)}</Button></TableCell>
           <TableCell><Typography sx={{ fontWeight: 850 }}>{percent(totalTradeCount ? included.length / totalTradeCount * 100 : null)}</Typography><Typography variant="caption" color="text.secondary">{included.length} of {totalTradeCount} trades</Typography></TableCell>
-          <TableCell sx={{ fontWeight: 850 }}>{included.length ? money(potential.toFixed(), currency) : "—"}</TableCell>
-          <TableCell>{included.length ? money(actual.toFixed(), currency) : "—"}</TableCell>
-          <TableCell sx={{ fontWeight: 850 }}>{included.length ? money(difference.toFixed(), currency) : "—"}</TableCell>
+          <TableCell sx={{ fontWeight: 850, color: financialOutcomeColor(currency && included.length ? potential.toFixed() : null) }}>{included.length ? money(potential.toFixed(), currency) : "—"}</TableCell>
+          <TableCell sx={{ color: financialOutcomeColor(currency && included.length ? actual.toFixed() : null) }}>{included.length ? money(actual.toFixed(), currency) : "—"}</TableCell>
+          <TableCell sx={{ fontWeight: 850, color: financialOutcomeColor(currency && included.length ? difference.toFixed() : null) }}>{included.length ? money(difference.toFixed(), currency) : "—"}</TableCell>
         </TableRow>)}</TableBody>
       </Table>
     </HorizontalScrollRegion>
@@ -83,16 +83,16 @@ export function ProfitZoneComparison({ records, rows, currency, timezone, totalT
       {selectedRecords.length === 0 ? <Typography variant="body2" color="text.secondary">No recorded in-band prices for this comparison.</Typography> : <>
         <HorizontalScrollRegion label="Zone exit comparison trade details" minTableWidth={880}>
           <Table size="small"><TableHead><TableRow>{[
-            ["Trade", "Each saved trade counts once in this zone."],
-            ["Price / time", "First recorded price inside the band, its date and time, and shares open before the hypothetical exit. Price uses the displayed reporting currency."],
-            ...headings.slice(2), ["Details", "Open the existing Trade Details drawer on this page."],
+            ["Trade", "The trades included in this zone comparison. Each saved trade appears once, even if it contains several buys and sells."],
+            ["Price / time", "The price and time used for this trade’s comparison, plus how many shares were still open. This is the first recorded price inside the band. The price is shown in the page’s reporting currency."],
+            ...headings.slice(2), ["Details", "Open this trade’s details without leaving the page."],
           ].map(([label, help]) => <TableCell key={label}><TableHeading label={label!} help={help!} /></TableCell>)}</TableRow></TableHead>
             <TableBody>{paginatedRows(selectedRecords, currentPage, pageSize).map((record) => <TableRow key={record.tradeId}>
               <TableCell sx={{ fontWeight: 800 }}>{record.symbol}<Typography variant="caption" component="div" color="text.secondary">{record.closeDate}</Typography></TableCell>
               <TableCell>{money(record.comparisonPriceDecimal, currency)}<Typography variant="caption" component="div" color="text.secondary">{record.comparisonAtUtcSeconds == null ? "Unavailable" : reachTime(record.comparisonAtUtcSeconds, timezone)}</Typography><Typography variant="caption" component="div">{shares(record.comparisonQuantityDecimal)} shares</Typography></TableCell>
-              <TableCell>{money(record.comparisonGrossPnlDecimal, currency)}</TableCell>
-              <TableCell>{money(record.finalGrossPnlDecimal, currency)}</TableCell>
-              <TableCell>{money(new Decimal(record.comparisonGrossPnlDecimal!).minus(record.finalGrossPnlDecimal).toFixed(), currency)}</TableCell>
+              <TableCell sx={{ color: financialOutcomeColor(currency ? record.comparisonGrossPnlDecimal : null) }}>{money(record.comparisonGrossPnlDecimal, currency)}</TableCell>
+              <TableCell sx={{ color: financialOutcomeColor(currency ? record.finalGrossPnlDecimal : null) }}>{money(record.finalGrossPnlDecimal, currency)}</TableCell>
+              <TableCell sx={{ color: financialOutcomeColor(currency ? new Decimal(record.comparisonGrossPnlDecimal!).minus(record.finalGrossPnlDecimal).toFixed() : null) }}>{money(new Decimal(record.comparisonGrossPnlDecimal!).minus(record.finalGrossPnlDecimal).toFixed(), currency)}</TableCell>
               <TableCell><Button size="small" disabled={offline} onClick={() => setDetailsTrade(record)}>Details</Button></TableCell>
             </TableRow>)}</TableBody>
           </Table>
@@ -249,9 +249,8 @@ export function ProfitZoneAnalysis({
   const entryOrderHelp = direction === "long"
     ? "The time it took the trade to reach this zone from the first buy order."
     : "The time it took the trade to reach this zone from the first short-sale order.";
-  const exitTypeHelp = direction === "long"
-    ? "Tracks how profit-taking trades were exited. Partial = selling under 100% of shares in one execution and the remainder in following executions. Full exit = selling 100% of shares in one execution with no earlier scale-out. The indented percentage and count show partial-exit trades whose remaining position also closed in this zone."
-    : "Tracks how profitable short trades were exited. Partial = buying back under 100% of shares in one execution and the remainder in following executions. Full exit = buying back 100% of shares in one execution with no earlier scale-out. The indented percentage and count show partial-exit trades whose remaining position also closed in this zone.";
+  const exitAction = direction === "long" ? "selling" : "buying back";
+  const exitTypeHelp = `How the trades that took profit here exited. Partial means ${exitAction} shares in stages, including the final exit after an earlier scale-out. Full exit means ${exitAction} the whole position in one order with no earlier scale-out. The percentages split the profit-taking trades, not all trades that reached the zone, and add up to 100% apart from rounding. A trade with both types in this zone is counted under Partial only. Dollars show each group’s profit taken here before fees. Closed here is part of the Partial group: its percentage is out of partial-exit trades, and its dollars are profit from their position-closing exits here.`;
   return <Stack spacing={1.75}>
     <Box sx={{ borderRadius: 2.5 }}>
       <Typography color="text.secondary" sx={{ display: { md: "none" }, mb: 0.5 }} variant="caption">Swipe horizontally to view all columns.</Typography>
@@ -271,13 +270,13 @@ export function ProfitZoneAnalysis({
         zIndex: 2,
       }}>
         {[
-          ["Zone", "Ten-point gain range."],
-          ["Reached", "Share of all analyzed user-defined trades that reached this level. A trade can appear in several zones; scaling out does not remove it while shares remain open and the price reaches a higher zone."],
-          ["Profit taken", "Percentage and count of zone-reaching trades with a profitable exit here, plus the profitable shares sold and exact combined Gross profit. A trade can take partial profit and continue into higher zones."],
+          ["Zone", "The gain on shares still open, compared with their average entry price. For example, 20%–29.99% starts at a 20% gain and ends just below 30%. The top band includes gains of 100% or more."],
+          ["Reached", "How many of your selected trades reached this zone’s starting gain or higher. The percentage is out of all selected analyzed trades. If you set a minimum time at +20%, the trade must meet it too. A fast move can pass through several levels. Taking partial profit does not remove a trade if shares remain open."],
+          ["Profit taken", "Of the trades that reached this zone, how many took some profit inside it. The dollars are the combined profit from those profitable exits, before fees—not the value of the shares sold. A trade can take partial profit here and still continue higher."],
           ["Exit type", exitTypeHelp],
-          ["Missed opportunity", "Trades with no profit taken in this zone that dropped below it before reaching the next zone. Dollars sum each trade's highest potential Gross profit on the shares still open before that first drop. The percentage uses all trades that reached this zone. Recovered means the open position later returned to this zone or higher. Recovered and never-recovered dollars split the total opportunity before the drop; they do not measure how many dollars came back. Later red losses are final Gross P/L from these same missed-opportunity trades. Zone amounts overlap and should not be added together."],
-          ["Next move", "All trades that took no profit in this zone, including those that continued higher. No profit here uses all trades that reached the zone. The three movement percentages use only those no-profit trades and total 100%. They describe the first move after reaching the zone; a trade that dropped can later recover."],
-          ["Time in zone", "Median completed one-minute candles inside this exact zone."],
+          ["Missed opportunity", "Trades that took no profit in this zone and dropped below it before reaching the next level. The dollars add up their highest potential profit on the shares still open in this zone before that first drop, before fees. The percentage is out of all trades that reached the zone. Recovered means the position returned to this level or higher before it closed. The recovered and never-recovered dollar amounts split that earlier opportunity; they are not the dollars recovered. Any red-loss amount is what those trades finally lost. The same trade can contribute to several zones, so do not add zone totals together."],
+          ["Next move", "What happened first to the trades that took no profit here: they reached the next level, dropped below this zone, or closed while still in it. These three percentages are out of the no-profit group and add up to 100%, apart from rounding. A trade can drop first and recover later. A later re-entry does not continue the closed position’s path. Exited in zone does not include trades that took profit here."],
+          ["Time in zone", "The middle value of the trades’ total time in this zone, based on one-minute candle closes while shares were open. With an even number of trades, it averages the two middle values. Leaving and returning adds to each trade’s total. This is time inside the band, not time spent above its starting level."],
         ].map(([label, help], index) => <Box
           key={label}
           sx={{
@@ -361,12 +360,12 @@ export function ProfitZoneAnalysis({
                 <Typography color="text.secondary" sx={{ px: 1.25, py: 0.85 }} variant="caption">{tradeCount(zoneRecords.length)} reached this zone · Profit-taking trades first, then largest missed opportunities</Typography>
                 {zoneRecords.length === 0 ? <Typography color="text.secondary" sx={{ borderTop: 1, borderColor: "divider", p: 1.25 }} variant="body2">No analyzed trades reached this zone in the selected date range.</Typography> : <>
                   <Box sx={{ borderTop: 1, borderColor: "divider", color: "text.secondary", display: "grid", fontSize: { xs: "0.69rem", md: "0.8rem" }, fontWeight: 800, gap: 1, gridTemplateColumns: "minmax(120px, 0.9fr) minmax(220px, 1.55fr) minmax(190px, 1.35fr) minmax(130px, 0.85fr) minmax(105px, 0.7fr) 112px", letterSpacing: "0.035em", px: 1.25, py: 0.65, textTransform: "uppercase" }}>
-                    <Box sx={{ bgcolor: { xs: "background.paper", md: "transparent" }, left: 0, position: { xs: "sticky", md: "static" }, zIndex: 2 }}><TableHeading help="Ticker and the date and time this trade first reached the zone." label="Trade" /></Box>
-                    <TableHeading help="Profit taken here and this trade's opportunity. Missed opportunity is the highest potential Gross profit before a drop below the zone, when no profit was taken here and the next zone had not yet been reached. Otherwise Zone opportunity is shown. Sold so far and shares left use the last zone exit, or first zone reach when there was no exit." label="Zone activity" />
-                    <TableHeading help="Where this trade moved after reaching the zone: into the next zone, below this zone, or out of the position." label="Next move" />
-                    <TableHeading help={`${entryOrderHelp} Also shows the trade's total active time inside this exact zone.`} label="Timing" />
-                    <TableHeading help="Completed trade profit or loss before broker fees." label="Final P/L" />
-                    <TableHeading help="Open the complete Trade Details drawer without leaving Scaling Out." label="Details" />
+                    <Box sx={{ bgcolor: { xs: "background.paper", md: "transparent" }, left: 0, position: { xs: "sticky", md: "static" }, zIndex: 2 }}><TableHeading help="The stock and when this trade first reached the zone’s starting gain or higher. The time comes from a one-minute candle close or an actual exit." label="Trade" /></Box>
+                    <TableHeading help="Profit taken in this zone and the opportunity for this trade, before fees. Missed opportunity applies when no profit was taken here and the position dropped below the zone before reaching the next level. Otherwise, Zone opportunity shows the calculated open-share profit capped at this band’s top, except for 100%+. Sold so far and shares left are measured after the last exit in this zone, or when the level was first reached if there was no exit here." label="Zone activity" />
+                    <TableHeading help="Where this position went after first reaching the level: higher, below the zone, or closed. A drop can be followed by a recovery. Once the position closes, a later re-entry is not counted as its continuation." label="Next move" />
+                    <TableHeading help={`${entryOrderHelp} In zone adds up its one-minute candle closes inside this band while shares were open, including returns to the zone.`} label="Timing" />
+                    <TableHeading help="What the whole trade finally made or lost before broker fees—not just the profit taken in this zone." label="Final P/L" />
+                    <TableHeading help="Open this trade’s details without leaving Scaling Out." label="Details" />
                   </Box>
                   <Stack sx={{ "& > *": { borderTop: 1, borderColor: "divider" } }}>
                     {visibleRecords.map((record) => {
