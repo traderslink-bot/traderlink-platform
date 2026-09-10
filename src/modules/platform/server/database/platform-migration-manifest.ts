@@ -110,6 +110,7 @@ import { platformWatchlistUsagePresenceSignalsMigration } from "./migrations/009
 import { platformMoomooOAuthPendingAttemptsMigration } from "./migrations/0094_platform_moomoo_oauth_pending_attempts";
 import { platformAppearancePreferencesMigration } from "./migrations/0103_platform_appearance_preferences";
 import { platformDefaultDarkAppearanceMigration } from "./migrations/0110_platform_default_dark_appearance";
+import { platformWatchlistDailyRecapsMigration } from "./migrations/0133_platform_watchlist_daily_recaps";
 import { platformPnlReportingPreferenceMigration } from "./migrations/0115_platform_pnl_reporting_preference";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
@@ -601,6 +602,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0132_journal_demo_v10_provenance_guard.ts",
       migration: journalDemoV10ProvenanceGuardMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0133_platform_watchlist_daily_recaps.ts",
+      migration: platformWatchlistDailyRecapsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -1045,6 +1050,17 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0121_news_market_halt_delivery_lifecycle": Object.freeze([
       "news_market_halt_ticker_day_alert_sequences",
+    ]),
+    "0133_platform_watchlist_daily_recaps": Object.freeze([
+      "platform_watchlist_recap_candidates",
+      "platform_watchlist_recap_evidence_revisions",
+      "platform_watchlist_recap_draft_revisions",
+      "platform_watchlist_recap_reviews",
+      "platform_watchlist_recap_corrections",
+      "platform_watchlist_recap_compositions",
+      "platform_watchlist_recap_composition_items",
+      "platform_watchlist_recap_composition_revisions",
+      "platform_watchlist_recap_post_attempts",
     ]),
   });
 

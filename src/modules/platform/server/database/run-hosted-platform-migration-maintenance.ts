@@ -146,7 +146,7 @@ export async function runHostedPlatformMigrationMaintenance(
   const checkpointRoot = join(backupRoot(databasePath, environment), "migrations", migrationId, timestamp);
   const prefixManifest = platformMigrationManifest.slice(0, -1);
 
-  await createAndRestoreVerifyPlatformDatabaseBackup({
+  const backupEvidence = await createAndRestoreVerifyPlatformDatabaseBackup({
     sourcePath: databasePath,
     backupPath: join(checkpointRoot, "backup.sqlite"),
     restoreVerificationPath: join(checkpointRoot, "restore-verification.sqlite"),
@@ -168,6 +168,21 @@ export async function runHostedPlatformMigrationMaintenance(
       });
     },
   });
+
+  console.info(JSON.stringify({
+    event: "hosted_migration_backup_verified",
+    migrationId,
+    predecessorCount: backupEvidence.source.migrationRows.length,
+    checkpoint: timestamp,
+    exactRegistryMatch: backupEvidence.exactRegistryMatch,
+    exactTableCountsMatch: backupEvidence.exactTableCountsMatch,
+    pageGeometryMatch: backupEvidence.pageGeometryMatch,
+    backupRestoreFileIdentityMatch: backupEvidence.backupRestoreFileIdentityMatch,
+    recoveryAuthority: backupEvidence.recoveryAuthority.status,
+    backupFileSha256: backupEvidence.backup.fileSha256,
+    sourceSchemaSha256: backupEvidence.source.actualSchemaSha256,
+    backupFileSizeBytes: backupEvidence.backup.fileSizeBytes,
+  }));
 
   const initialized = initializeTraderLinkPlatformDatabase({
     databasePath,
