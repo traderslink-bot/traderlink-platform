@@ -1,5 +1,12 @@
 # Watchlist ticker analysis notices
 
+## Owner-approved top-notice follow-up — 2026-09-10
+
+Append only: "If a full analysis is not available, the support and resistance
+levels shown can still help you plan your setup." Exact production parent
+01301a061496368bb5660eef1e82ddf01f0ac907; no layout, lower/listing notice,
+data, migration, runtime or configuration changes. Rendered acceptance pending.
+
 Status: source implementation updated; rendered acceptance and release pending.
 
 - Owner replaced the top-left ticker-detail guidance with the approved active

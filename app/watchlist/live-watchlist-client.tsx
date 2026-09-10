@@ -1537,7 +1537,8 @@ function WatchlistDetailEntryGuidanceNotice() {
         Watchlist posts highlight active stocks attracting volume and attention—they are not
         signals to rush into a trade. Wait for your setup and use the pullback, breakout, and
         failure levels. A break below the failure level invalidates the momentum idea. The
-        posted price reflects the price at the time of analysis.
+        posted price reflects the price at the time of analysis. If a full analysis is not
+        available, the support and resistance levels shown can still help you plan your setup.
       </p>
     </section>
   );
