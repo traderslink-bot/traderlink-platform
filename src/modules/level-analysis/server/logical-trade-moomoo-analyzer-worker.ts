@@ -123,7 +123,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
         this.logical.persistResult({ analyzed: null, marketSessionSetVersionId: sessionVersionId,
           now: startedAt, scope: job.scope, status: "provider_unavailable", target: job.target });
         this.logical.finish(job.jobId, "provider_unavailable", startedAt);
-        this.notifications?.notifyFailure({ occurredAt: startedAt, scope: job.scope, target: job.target });
+        this.notifications?.notifySharedConnectionFailure({ occurredAt: startedAt, scope: job.scope, target: job.target });
         return true;
       }
       setDiagnosticStage("begin_moomoo_acquisition");

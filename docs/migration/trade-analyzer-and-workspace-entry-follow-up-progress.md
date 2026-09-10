@@ -54,6 +54,9 @@ Related plan:
   alert the TradersLink owner and enqueue that owner's confirmed email delivery.
   Each address is resolved from its confirmed account destination; no email
   address or credential is stored in page code.
+- Release QA corrected the provider-creation failure path to use that same
+  shared-connection notification flow, so every direct shared Moomoo failure
+  follows the two-owner alert contract.
 - `git diff --check` passes. This assigned low-resource worktree has no
   installed dependencies, so targeted lint/type and rendered staging review
   remain the next checkpoint; no server, provider request, migration or
