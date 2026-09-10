@@ -3,6 +3,8 @@ import "server-only";
 type RuntimeMethod = "GET" | "POST";
 
 type RuntimeRawRequest = Readonly<{
+  /** Supplied only by the owner-authorized server route, never browser headers. */
+  reviewActor?: string;
   body?: string;
   contentType?: string;
   method: RuntimeMethod;
@@ -52,11 +54,13 @@ export async function requestWatchlistRuntimeRaw(
       cache: "no-store",
       headers: {
         authorization: `Bearer ${configuration.token}`,
+        ...(request.reviewActor ? { "x-traderslink-review-actor": request.reviewActor } : {}),
         ...(request.body
           ? { "content-type": request.contentType ?? "application/json" }
           : {}),
       },
       method: request.method,
+      redirect: request.reviewActor ? "error" : "follow",
       signal: AbortSignal.timeout(180_000),
     });
     return Object.freeze({
