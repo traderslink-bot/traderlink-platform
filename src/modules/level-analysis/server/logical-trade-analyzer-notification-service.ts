@@ -62,13 +62,23 @@ export class LogicalTradeAnalyzerNotificationService {
     this.create({ ...input, kind: "failure" });
     const designated = new SharedAnalyzerAllowanceRepository(this.database).designatedScope();
     if (!designated) return;
-    new PlatformNotificationRepository(this.database).create({
+    const scope = workspaceScope(designated);
+    const notifications = new PlatformNotificationRepository(this.database);
+    const preferences = notifications.readPreferences(scope);
+    if (!preferences.emailCategories.includes("broker_connection")) {
+      notifications.replaceEmailCategories({
+        categories: Object.freeze([...preferences.emailCategories, "broker_connection"]),
+        scope,
+        updatedAtUtc: createCanonicalUtcTimestamp(input.occurredAt),
+      });
+    }
+    notifications.create({
       category: "broker_connection",
       destinationPath: "/account/trading",
       journalAccountId: designated.accountId,
       kind: "broker_connection_reauthorization_required",
       occurredAtUtc: createCanonicalUtcTimestamp(input.occurredAt),
-      scope: workspaceScope(designated),
+      scope,
       sourceEventKey: `shared_moomoo_analyzer_failed_${input.target.logicalTradeVersionId}`,
       summary: "The Moomoo connection used by Trade Analyzer needs attention before more market-data updates can run.",
       title: "Shared Moomoo connection needs attention",

@@ -48,10 +48,12 @@ Related plan:
   quote-data permission, no provider response since selection/reconnection,
   a latest provider failure, and a successful provider response. It does not
   claim live provider health merely because a connection is selected.
-- A shared-provider failure now also creates a deduplicated in-app alert for
-  the designated connection owner. Existing terminal Analyzer failure handling
-  continues to alert the TradersLink owner and enqueue that owner's confirmed
-  email delivery; no email address or credential is stored in page code.
+- A shared-provider failure now also creates a deduplicated in-app alert and
+  enables the existing broker-connection email category for the designated
+  connection owner. Existing terminal Analyzer failure handling continues to
+  alert the TradersLink owner and enqueue that owner's confirmed email delivery.
+  Each address is resolved from its confirmed account destination; no email
+  address or credential is stored in page code.
 - `git diff --check` passes. This assigned low-resource worktree has no
   installed dependencies, so targeted lint/type and rendered staging review
   remain the next checkpoint; no server, provider request, migration or
