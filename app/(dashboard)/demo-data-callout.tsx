@@ -261,7 +261,7 @@ export function DemoDataCallout({
           Viewing Demo Data
         </Typography>
         <Typography sx={{ color: demoBodyColor }} variant="body2">
-          Your account has been preloaded with demo data so you can explore the dashboard and see how everything looks with real trading activity. Demo account is permanently set to Aug 21st
+          Your account has been preloaded with demo data so you can explore the dashboard and see how everything looks with real trading activity. The demo contains August trades only. You can explore the available trading days throughout August, and the Session Tracker opens to August 27 by default.
         </Typography>
         <Typography sx={{ color: demoBodyColor }} variant="body2">
           Take a tour, explore the features, and get familiar with the platform. When you&apos;re ready, you can start adding your own trades.
