@@ -1,0 +1,74 @@
+{
+  "trades": [
+    {
+      "direction": "long",
+      "symbol": "YXT",
+      "tradingDateNewYork": "2026-08-05",
+      "packTradeKey": "august_red_20260805_yxt",
+      "executions": [
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-05T18:48:00.000Z",
+          "marketCandleTimeUtcSeconds": 1785955680,
+          "packExecutionKey": "august_red_20260805_yxt_fill_1",
+          "priceDecimal": "21.43",
+          "quantityDecimal": "301",
+          "side": "buy",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        },
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-05T20:57:00.000Z",
+          "marketCandleTimeUtcSeconds": 1785963420,
+          "packExecutionKey": "august_red_20260805_yxt_fill_2",
+          "priceDecimal": "15.45",
+          "quantityDecimal": "301",
+          "side": "sell",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        }
+      ],
+      "demoReview": {
+        "entryRuleBroken": false,
+        "riskRuleBroken": true,
+        "note": "Held the entire 301-share position through an unrealized gain of $3,220.70 (+49.93%). Took no partial profits. After the profitable peak, the trade turned red and was closed in full for a loss without returning to breakeven before exit. Review the missed profit opportunity and failure to protect the position."
+      }
+    },
+    {
+      "direction": "long",
+      "symbol": "WETO",
+      "tradingDateNewYork": "2026-08-14",
+      "packTradeKey": "august_red_20260814_weto",
+      "executions": [
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-14T12:06:00.000Z",
+          "marketCandleTimeUtcSeconds": 1786709160,
+          "packExecutionKey": "august_red_20260814_weto_fill_1",
+          "priceDecimal": "10.17",
+          "quantityDecimal": "1440",
+          "side": "buy",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        },
+        {
+          "analysisPolicy": "analyzer_backed",
+          "executionFeeDecimal": "-0.5",
+          "executedAtUtc": "2026-08-14T14:22:00.000Z",
+          "marketCandleTimeUtcSeconds": 1786717320,
+          "packExecutionKey": "august_red_20260814_weto_fill_2",
+          "priceDecimal": "8.92",
+          "quantityDecimal": "1440",
+          "side": "sell",
+          "source": "synthetic_demo_derived_from_verified_moomoo_1m"
+        }
+      ],
+      "demoReview": {
+        "entryRuleBroken": false,
+        "riskRuleBroken": true,
+        "note": "Held the entire 1440-share position through an unrealized gain of $4,003.20 (+27.34%). Took no partial profits. After the profitable peak, the trade turned red and was closed in full for a loss without returning to breakeven before exit. Review the missed profit opportunity and failure to protect the position."
+      }
+    }
+  ]
+}

@@ -113,3 +113,5 @@ authenticated identity/workspace is committed; an unavailable pack falls back
 to one ordinary Primary Journal without corrupting the valid session.
 
 Version 10 approved slice: implementation complete; [release handoff](demo-v10-release-handoff-20260909.md). Three no-profit-taking green-to-red trades and append-only Demo fee correction; production acceptance pending.
+
+Version11 pair approved; implementation complete and [Coordinator release handoff](demo-v11-release-handoff-20260909.md) prepared. Production acceptance pending.

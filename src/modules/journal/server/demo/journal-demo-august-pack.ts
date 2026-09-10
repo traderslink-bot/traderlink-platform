@@ -3,6 +3,10 @@ import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
 import additions from "./packs/august-2026-additions.json";
 import redAdditions from "./packs/august-2026-red-additions.json";
+import redRevision from "./packs/august-2026-red-revision-v11.json";
+import { reviseJournalDemoRedTrades } from "./journal-demo-red-revision";
+import { JournalDemoAccountRepository } from "./journal-demo-account-repository";
+import { JOURNAL_DEMO_CURRENT_VERSION_ID } from "./journal-demo-current-version";
 import { correctJournalDemoFeeVersions } from "./journal-demo-fee-correction";
 import { materializeJournalDemoAnalyzerFacts } from "./journal-demo-analyzer-materializer";
 import { createJournalDemoFinancialPack } from "./journal-demo-canonical-fact-materializer";
@@ -48,7 +52,8 @@ export function resolveJournalDemoAugustPack(input: Readonly<{
     return { date: candidate.date, symbol: candidate.symbol, bars, normalizedBarsSha256: candidate.normalizedBarsSha256 };
   });
   const keys = new Set<string>();
-  for (const trade of trades) {
+  const revisions = redRevision.trades as unknown as readonly JournalDemoDerivedTradeFact[];
+  for (const trade of [...trades.filter(t => !revisions.some(r => r.packTradeKey === t.packTradeKey)), ...revisions]) {
     const session = sessions.find(s => s.date === trade.tradingDateNewYork && s.symbol === trade.symbol);
     let position = new Decimal(0), previousTime = 0;
     for (const [index, execution] of trade.executions.entries()) {
@@ -89,22 +94,41 @@ export function resolveJournalDemoAugustPack(input: Readonly<{
     });
   }
   const full = manifest(allTrades), source = manifest(missing);
-  const analyzer = manifest(allTrades.filter(t => t.executions.every(e => e.analysisPolicy === "analyzer_backed")));
+  const revisedTrades = allTrades.map(trade => revisions.find(revised => revised.packTradeKey === trade.packTradeKey) ?? trade);
+  const revisedSource = { ...full, packVersion: 11, trades: revisedTrades,
+    sourceEvidenceManifestSha256: hash([full.sourceEvidenceManifestSha256, revisions, "demo_v11_above_twenty_percent_revision"]),
+    derivedFactManifestSha256: hash([full.derivedFactManifestSha256, revisions, 11]) };
+  const analyzer = { ...revisedSource, trades: (missing.length ? revisedTrades : revisions)
+    .filter(t => t.executions.every(e => e.analysisPolicy === "analyzer_backed")) };
   const verified = {
     sourceEvidenceManifestSha256: full.sourceEvidenceManifestSha256,
     sessions: [...input.verifiedMarketDays.sessions, ...sessions],
   };
   // Trade annotations are created for missing facts only; do not overwrite prior daily notes.
   const pack = createJournalDemoFinancialPack(source, verified, null, full, manifest([]));
-  return {...pack, materializeCanonicalFacts: (context: Parameters<typeof pack.materializeCanonicalFacts>[0]) => {
+  return {...pack, manifest: { ...pack.manifest, demoPackVersionId: JOURNAL_DEMO_CURRENT_VERSION_ID,
+    packVersion: 11, materializerVersion: "demo_canonical_journal_v11", manifestSha256: revisedSource.derivedFactManifestSha256 },
+    materializeCanonicalFacts: (context: Parameters<typeof pack.materializeCanonicalFacts>[0]) => {
     const existingProvenance = input.existing ? correctJournalDemoFeeVersions(context.database, {
       workspaceId: context.workspaceId, accountId: context.accountId,
       userId: context.createdForUserId, workspaceRole: "owner",
     }, full) : [];
-    const result = pack.materializeCanonicalFacts(context);
+    // Retain the immutable v10 batch contract for missing original facts. A v10
+    // account needs only corrections and must not create an empty import batch.
+    if (missing.length) new JournalDemoAccountRepository(context.database).ensurePackVersion({
+      createdAtUtc: new Date().toISOString(), manifest: pack.manifest,
+    });
+    const result = missing.length ? pack.materializeCanonicalFacts(context) : { executionProvenance: [] };
+    const correctedProvenance = reviseJournalDemoRedTrades({ database: context.database,
+      scope: { workspaceId: context.workspaceId, accountId: context.accountId, userId: context.createdForUserId, workspaceRole: "owner" },
+      original: redAdditions.trades as unknown as readonly JournalDemoDerivedTradeFact[], revised: revisions,
+      provenance: [...existingProvenance, ...result.executionProvenance] });
     if (analyzer.trades.length) materializeJournalDemoAnalyzerFacts({...context,
-      executionProvenance: [...existingProvenance, ...result.executionProvenance],
+      executionProvenance: correctedProvenance,
       source: analyzer, verifiedMarketDays: verified});
-    return result;
+    return { executionProvenance: result.executionProvenance.map(fact =>
+      correctedProvenance.find(current => current.packExecutionKey === fact.packExecutionKey) ?? fact),
+      materializedFactManifestSha256: revisedSource.derivedFactManifestSha256,
+      materializedMarketDataManifestSha256: full.marketDataManifestSha256 };
   }};
 }
