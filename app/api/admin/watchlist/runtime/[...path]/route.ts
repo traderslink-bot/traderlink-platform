@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 type SupportedMethod = "GET" | "POST";
 
 const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/queue",
   "/api/watchlist/analysis-review/settings",
   "/api/watchlist/analysis-review",
   "/api/watchlist/analysis-review/preview",
