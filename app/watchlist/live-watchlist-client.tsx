@@ -109,7 +109,7 @@ function formatPrice(value: number | null): string {
 }
 
 function aiReadStatusLabel(
-  symbol: LiveWatchlistSymbolState,
+  symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus">,
   hasPublishedRead: boolean,
 ): string | null {
   if (symbol.marketDataStatus === "halted") {
@@ -493,7 +493,7 @@ function shouldShowTradersLinkAiLiveVolumeConfirmation(args: {
   return args.volume.label === "expanding" || args.volume.label === "strong";
 }
 
-function TradersLinkAiReadCard({
+export function TradersLinkAiReadCard({
   card,
   symbol,
   livePrice,
@@ -501,7 +501,7 @@ function TradersLinkAiReadCard({
   dipBuyPlanVisible = true,
 }: {
   card: LiveWatchlistCardContent;
-  symbol: LiveWatchlistSymbolState;
+  symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus">;
   livePrice: number | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
@@ -878,7 +878,7 @@ function TradersLinkAiReadStatusCard({
   symbol,
 }: {
   status: "analyzing" | "failed";
-  symbol?: LiveWatchlistSymbolState;
+  symbol?: Pick<LiveWatchlistSymbolState, "marketDataStatus">;
 }) {
   return (
     <article
