@@ -3807,7 +3807,7 @@ main.bg-zinc-950 .text-zinc-500 {
   grid-column: 1 / -1;
 }
 
-.watchlist-content-card[data-card-label="TradersLink AI Read"] {
+.watchlist-content-card[data-card-label="TradersLink Analysis"] {
   grid-column: 1 / -1;
 }
 
@@ -3816,6 +3816,14 @@ main.bg-zinc-950 .text-zinc-500 {
 }
 
 .watchlist-content-card[data-card-label="Company Info"] {
+  grid-column: 2;
+}
+
+.watchlist-card-grid[data-potential-gain-hidden="true"] .watchlist-content-card[data-card-label="Company Info"] {
+  grid-column: 1;
+}
+
+.watchlist-card-grid[data-potential-gain-hidden="true"] .watchlist-notice-card {
   grid-column: 2;
 }
 
@@ -5058,12 +5066,17 @@ main.bg-zinc-950 .text-zinc-500 {
 
   .watchlist-context-card-stack,
   .watchlist-content-card[data-card-label="Potential Path Levels"],
-  .watchlist-content-card[data-card-label="TradersLink AI Read"],
+  .watchlist-content-card[data-card-label="TradersLink Analysis"],
   .watchlist-content-card[data-card-label="Technical Context"],
   .watchlist-content-card[data-card-label="Trader Read"],
   .watchlist-content-card[data-card-label="Full Ladder"],
   .watchlist-content-card[data-card-label="Company Info"],
   .watchlist-content-card[data-card-label="Known Recent News / SEC Filings"] {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .watchlist-card-grid[data-potential-gain-hidden="true"] .watchlist-notice-card {
     grid-column: auto;
     grid-row: auto;
   }

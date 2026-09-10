@@ -98,7 +98,7 @@ const detailCardHelpText: Record<string, string> = {
     "Basic company and risk context for the ticker. Use it to understand what the company is and whether there are higher-risk profile flags.",
   "Known Recent News / SEC Filings":
     "Recent company news and SEC filings that may explain attention or volatility. Always open the source before relying on the headline.",
-  "TradersLink AI Read":
+  "TradersLink Analysis":
     "An AI-assisted day-trade preparation read derived from full-session price action across premarket, regular hours, and after-hours. Optional catalyst, SEC, dilution, and web-research context appears only when that admin setting is enabled.",
 };
 
@@ -581,10 +581,10 @@ function TradersLinkAiReadCard({
   return (
     <article
       className="academy-card watchlist-content-card watchlist-ai-read-card"
-      data-card-label="TradersLink AI Read"
+      data-card-label="TradersLink Analysis"
     >
       <div className="academy-card-topline">
-        <WatchlistCardKicker label="TradersLink AI Read" />
+        <WatchlistCardKicker label="TradersLink Analysis" />
       </div>
       {aiReadStatusLabel(symbol, true) ? (
         <p className="watchlist-ai-read-status" data-market-data-status={symbol.marketDataStatus}>
@@ -944,11 +944,11 @@ function TradersLinkAiReadStatusCard({
   return (
     <article
       className="academy-card watchlist-content-card watchlist-ai-read-card"
-      data-card-label="TradersLink AI Read"
+      data-card-label="TradersLink Analysis"
       data-ai-read-status={status}
     >
       <div className="academy-card-topline">
-        <WatchlistCardKicker label="TradersLink AI Read" />
+        <WatchlistCardKicker label="TradersLink Analysis" />
       </div>
       {symbol && aiReadStatusLabel(symbol, false) ? (
         <p className="watchlist-ai-read-status" data-market-data-status={symbol.marketDataStatus}>
@@ -1530,6 +1530,19 @@ function WatchlistAnalysisNotice() {
   );
 }
 
+function WatchlistDetailEntryGuidanceNotice() {
+  return (
+    <section className="academy-card watchlist-notice-card" aria-label="Watchlist entry guidance">
+      <p>
+        Watchlist posts highlight active stocks attracting volume and attention—they are not
+        signals to rush into a trade. Wait for your setup and use the pullback, breakout, and
+        failure levels. A break below the failure level invalidates the momentum idea. The
+        posted price reflects the price at the time of analysis.
+      </p>
+    </section>
+  );
+}
+
 function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) {
   const liveClosestLevelsCard = closestLevelsCardFromState(symbol);
   const closestLevelsCard = liveClosestLevelsCard ?? symbol.cards.nearestSupportResistance;
@@ -1542,7 +1555,10 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
   });
 
   return (
-    <section className="watchlist-card-grid">
+    <section
+      className="watchlist-card-grid"
+      data-potential-gain-hidden={symbol.potentialGainCardVisible === false ? "true" : undefined}
+    >
       {highRiskWarning ? (
         <aside className="watchlist-high-risk-warning" aria-label="High risk warning">
           <h2>High Risk</h2>
@@ -1939,7 +1955,7 @@ export function LiveWatchlistDetailClient({
               <h1 className="academy-title">{symbol.symbol}</h1>
               <WatchlistLifecycleBadge symbol={symbol} />
             </div>
-            <WatchlistAnalysisNotice />
+            <WatchlistDetailEntryGuidanceNotice />
           </div>
           <Link href="/watchlist" className="academy-card-action watchlist-back-action">
             Back to watchlist
