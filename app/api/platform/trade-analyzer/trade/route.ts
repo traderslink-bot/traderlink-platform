@@ -1,6 +1,7 @@
 import { analyzerFiveMinuteContext, analyzerMetrics, getReplacementDailyTradeAnalyzerReplay, scaleDaySessionTradeAnalyzer } from
   "@/app/(dashboard)/trade-tracker/trade-tracker-platform-data";
 import Decimal from "decimal.js";
+import { readAnalyzerWrittenReviewContext } from "@/src/modules/level-analysis/server/analyzer-written-review-context";
 import { withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { journalReportingCurrencyMultiplier } from
@@ -209,7 +210,8 @@ export async function GET(request: Request): Promise<Response> {
           ? journalReportingCurrencyMultiplier(sourceCurrency, sourceDate, reportingContext)
           : "1";
         return Object.freeze({
-          analysis: scaleDaySessionTradeAnalyzer(source, multiplier),
+          analysis: { ...scaleDaySessionTradeAnalyzer(source, multiplier),
+            reviewContext: source.reviewContext ?? readAnalyzerWrittenReviewContext(verifiedReadonlyDatabase, scope) },
           profitProtection: scaleProfitProtectionOutcome(profitProtection, multiplier),
         });
       },

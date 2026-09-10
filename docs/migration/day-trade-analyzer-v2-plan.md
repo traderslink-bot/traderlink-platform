@@ -7,6 +7,8 @@ completed work is placed online through a separately authorized release.
 
 **Progress:** [Day Trade Analyzer Version 2 Progress](day-trade-analyzer-v2-progress.md)
 
+**Written card refresh:** [Scope and progress](analyzer-written-card-progress.md)
+
 **Green-to-red clarification:** [Red-trade comparison and recovery wording](day-trade-analyzer-red-comparison-progress.md)
 
 **Active follow-up:** [Profit Zones Progress](day-trade-analyzer-profit-zones-progress.md)

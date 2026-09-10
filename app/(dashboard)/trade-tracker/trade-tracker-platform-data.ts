@@ -2,6 +2,7 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
+import { readAnalyzerWrittenReviewContext } from "@/src/modules/level-analysis/server/analyzer-written-review-context";
 
 import {
   acceptedRsi14,
@@ -743,6 +744,10 @@ ORDER BY candle_time_utc_seconds`);
           ? "no_coverage"
           : analysis.status,
       });
+    }
+    if (result.size > 0) {
+      const reviewContext = readAnalyzerWrittenReviewContext(database, scope);
+      for (const [key, analysis] of result) result.set(key, { ...analysis, reviewContext });
     }
     return result;
   };

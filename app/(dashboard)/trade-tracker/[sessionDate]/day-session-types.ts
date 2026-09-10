@@ -31,6 +31,7 @@ export type DaySessionRoundTrip = {
 };
 
 export type DaySessionTradeAnalyzer = {
+  reviewContext?: { basis: "gross" | "net"; analyzedTradeCount: number | null };
   availableAtUtc?: string | null;
   detailLoaded?: boolean;
   detailVersionRef?: string | null;
