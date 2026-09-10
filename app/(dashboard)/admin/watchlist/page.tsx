@@ -22,7 +22,7 @@ export const revalidate = 0;
 export default async function WatchlistRuntimeAdminPage() {
   const identity = await requireTraderLinkPlatformPageIdentity();
   if (!hasWatchlistDashboardNavigationAccess(identity)) notFound();
-  let usage = null;
+  let usage: ReturnType<typeof readWatchlistUsageAdminSnapshot> | null = null;
   try {
     usage = readWatchlistUsageAdminSnapshot();
   } catch {
@@ -31,8 +31,8 @@ export default async function WatchlistRuntimeAdminPage() {
   const dateParts = new Intl.DateTimeFormat("en-CA", { day: "2-digit", month: "2-digit", timeZone: "America/New_York", year: "numeric" }).formatToParts(new Date());
   const part = (type: string) => dateParts.find((value) => value.type === type)?.value ?? "";
   const recapDate = `${part("year")}-${part("month")}-${part("day")}`;
-  let recapCandidates = [];
-  let recapStorage = null;
+  let recapCandidates: ReturnType<typeof readDailyRecapOwnerCandidates> = [];
+  let recapStorage: ReturnType<typeof readDailyRecapStorageSummary> | null = null;
   let recapPosts: ReturnType<typeof readDailyRecapPostHistory> = [];
   let finalDraft: string | null = null;
   let finalItems: ReturnType<typeof readDailyRecapFinalItems> = [];
