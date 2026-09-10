@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 type SupportedMethod = "GET" | "POST";
 
 const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/settings",
   "/api/watchlist/analysis-review",
   "/api/watchlist/analysis-review/preview",
   "/api/ai-clean-read",
@@ -21,6 +22,7 @@ const GET_PATHS = new Set([
 ]);
 
 const POST_PATHS = new Set([
+  "/api/watchlist/analysis-review/settings",
   "/api/watchlist/analysis-review/save",
   "/api/watchlist/analysis-review/approve",
   "/api/watchlist/analysis-review/retry-discord",
