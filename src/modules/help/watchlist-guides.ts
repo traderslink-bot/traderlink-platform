@@ -1,0 +1,37 @@
+import type { HelpGuide } from "./help-guide-types";
+
+export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
+  slug: "analysis", title: "Read Watchlist analysis",
+  description: "Understand the posted price, setup areas and analysis updates.",
+  sections: [{
+    id: "setups", title: "TradersLink Analysis", summary: "Read the setup that fits your trading style.",
+    keywords: ["watchlist", "pullback", "breakout", "failure", "posted price"],
+    blocks: [{ kind: "paragraph", text: "Watchlist posts highlight active stocks attracting volume and attention—they are not signals to rush into a trade. Wait for your setup and use the pullback, breakout, and failure levels. A break below the failure level invalidates the momentum idea. The posted price reflects the price at the time of analysis." },
+      { kind: "paragraph", text: "An analysis can include shallow and deep pullback areas, breakout continuation, where price could go next, and a separate recovery setup. Not every section is available for every ticker. An omitted setup does not mean the remaining analysis was rejected. If no analysis is displayed, available support and resistance levels still provide price context." }],
+  }, {
+    id: "updates", title: "Price and analysis updates", summary: "Live data and a new analysis are separate updates.",
+    keywords: ["live price", "analysis time", "refresh"],
+    blocks: [{ kind: "paragraph", text: "Price and market data can continue updating while the published analysis remains unchanged. Read the analysis timestamp and reference price; a live price change does not mean a new analysis has been generated." }],
+  }],
+}, {
+  slug: "owner-review", title: "Review and publish Watchlist analysis",
+  description: "Owner controls for drafts, approval, delivery and audit export.",
+  sections: [{
+    id: "approval", title: "Analysis Review", summary: "Review a saved analysis before publishing it.",
+    keywords: ["owner", "admin", "approve", "draft", "Discord"],
+    blocks: [{ kind: "steps", items: [
+      { title: "Open the draft", text: "In Watchlist Admin, use Analysis Review to select a ticker. When review is required, the new post stays private while analysis is prepared and reviewed." },
+      { title: "Edit and save", text: "Edit the available analysis text and prices, add or remove supported rows, or hide a section. Save draft preserves your edited version separately from the original. Editing does not request another AI analysis." },
+      { title: "Preview and approve", text: "Preview the saved version. Website preview shows the analysis card; Discord preview shows the saved message text. Approve and publish authorizes that saved version. If you edit again, save and preview again before approval." },
+    ] }, { kind: "paragraph", text: "Website and Discord delivery are tracked separately. If delivery needs attention, inspect its status before retrying. An uncertain delivery must not be treated as a confirmed failure or blindly resent." }],
+  }, {
+    id: "controls", title: "Generation controls", summary: "Choose review and automatic follow-up behavior.",
+    keywords: ["automatic updates", "manual refresh", "session", "cost"],
+    blocks: [{ kind: "paragraph", text: "Automatic follow-up AI requests are off by default. Turning them off preserves their settings for later and does not stop live price/data updates. Manual refresh remains available and requests a new analysis." },
+      { kind: "paragraph", text: "Review before publishing applies to new activations when analysis generation is enabled for that session. If generation is off for the session, the post follows the normal publishing path. Changing review settings does not silently approve a post already waiting for review." }],
+  }, {
+    id: "audit", title: "Export audit", summary: "Select the generation you want to inspect.",
+    keywords: ["original", "edited", "audit", "failed request"],
+    blocks: [{ kind: "paragraph", text: "Export audit downloads the selected generation's available request/response diagnostics and saved review history, including original, edited and approved versions when present. Failed generations can also be selected. Missing or unavailable diagnostics are labelled; older requests are not reconstructed. Export does not automatically share the file with Codex or anyone else." }],
+  }],
+}];

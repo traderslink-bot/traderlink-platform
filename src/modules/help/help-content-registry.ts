@@ -19,6 +19,7 @@ import { TRADE_TAGS_HELP_GUIDES } from "./trade-tags-guides";
 import { TRADERSLINK_APP_HELP_GUIDES } from "./traderslink-app-guides";
 import { TOOLS_HELP_GUIDES } from "./tools-guides";
 import { STOCK_LEVELS_HELP_GUIDES } from "./stock-levels-guides";
+import { WATCHLIST_HELP_GUIDES } from "./watchlist-guides";
 
 export type HelpNavigationItem = Readonly<{
   depth?: 0 | 1;
@@ -179,6 +180,8 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
   ...guideNavigationItems("/help/tools", TOOLS_HELP_GUIDES, "tools"),
   Object.freeze({ href: "/help/stock-levels", icon: "tools", label: "Stock Levels", summary: "Request and read a factual support and resistance map." }),
   ...guideNavigationItems("/help/stock-levels", STOCK_LEVELS_HELP_GUIDES, "tools"),
+  Object.freeze({ href: "/help/watchlist", icon: "tools", label: "Watchlist", summary: "Read analysis and manage owner review and publication." }),
+  ...guideNavigationItems("/help/watchlist", WATCHLIST_HELP_GUIDES, "tools"),
   Object.freeze({
     href: "/help/traderslink-app",
     icon: "tools",
@@ -397,6 +400,7 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
   ...guideSearchRecords("tools", "Tools", "/help/tools", TOOLS_HELP_GUIDES),
   Object.freeze({ href: "/help/stock-levels", id: "stock-levels", keywords: Object.freeze(["stock levels", "support", "resistance", "full ladder"]), section: "Overview", summary: "Request and read a factual support and resistance map.", title: "Stock Levels" }),
   ...guideSearchRecords("stock-levels", "Stock Levels", "/help/stock-levels", STOCK_LEVELS_HELP_GUIDES),
+  ...guideSearchRecords("watchlist", "Watchlist", "/help/watchlist", WATCHLIST_HELP_GUIDES),
   Object.freeze({
     href: "/help/traderslink-app",
     id: "traderslink-app-overview",
