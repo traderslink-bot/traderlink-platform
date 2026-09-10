@@ -73,7 +73,7 @@ function sum(
 }
 
 function zoneLabelFromBounds(lower: number, upper: number | null): string {
-  return upper === null ? `${lower}%+` : `${lower}–under ${upper}%`;
+  return upper === null ? `${lower}%+` : `${lower}%–under ${upper}%`;
 }
 
 function zoneLabel(row: TradeAnalysisGreenToRedOpportunityRow): string {
@@ -147,26 +147,28 @@ function Metric({
 
 function DamagePanel({
   currency,
+  emptyMessage,
   rows,
   title,
-  totalReached,
+  totalTurnedRed,
 }: {
   currency: string | null;
+  emptyMessage?: string;
   rows: readonly TradeAnalysisGreenToRedOpportunityRow[];
   title: string;
-  totalReached: number;
+  totalTurnedRed: number;
 }) {
   return <Box>
     <Typography sx={{ fontWeight: 850 }}>{title}</Typography>
     <Typography sx={{ fontSize: "1.05rem", fontWeight: 800 }}>
-      {percent(rate(rows.length, totalReached))} · {rows.length} of {totalReached}
+      {percent(rate(rows.length, totalTurnedRed))} · {rows.length} of {totalTurnedRed}
     </Typography>
-    <Stack spacing={0.2} sx={{ mt: 0.4 }}>
+    {rows.length === 0 && emptyMessage ? <Typography color="text.secondary" sx={{ mt: 0.4 }} variant="body2">{emptyMessage}</Typography> : <Stack spacing={0.2} sx={{ mt: 0.4 }}>
       <Typography color="text.secondary" variant="body2">Maximum profit opportunity: {money(sum(rows, (row) => row.maximumGrossProfitOpportunityDecimal), currency)}</Typography>
       <Typography color="text.secondary" variant="body2">Profit taken: {money(sum(rows, (row) => row.profitSecuredGrossDecimal), currency)}</Typography>
       <Typography color="text.secondary" variant="body2">Final Gross loss: {money(sum(rows, (row) => row.finalGrossPnlDecimal), currency)}</Typography>
       <Typography color="text.secondary" variant="body2">Opportunity not retained: {money(sum(rows, (row) => row.profitOpportunityToFinalDifferenceDecimal), currency)}</Typography>
-    </Stack>
+    </Stack>}
   </Box>;
 }
 
@@ -245,17 +247,18 @@ export function GreenToRedAnalysis({
     <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
       <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", mb: 1.25 }}>
         <Typography sx={{ fontWeight: 850 }}>Profit opportunity that finished red</Typography>
-        <Tooltip arrow title="Compares the maximum Gross profit opportunity, profit actually taken, final Gross loss, and opportunity not retained for trades that finished below $0."><IconButton aria-label="Explain profit opportunity that finished red" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+        <Tooltip arrow title="Percentages in this section use only trades that turned red after reaching +20%. No profit taken and Some profit taken show those that finished red. Recovery also includes trades that recovered but later finished red, so these groups can overlap."><IconButton aria-label="Explain profit opportunity that finished red" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
       </Stack>
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(3, minmax(0, 1fr))" } }}>
-        <DamagePanel currency={currency} rows={noProfitEndedRedRows} title="No profit taken" totalReached={rows.length} />
-        <Box sx={{ borderColor: "divider", borderLeft: { md: 1 }, pl: { md: 1.5 } }}><DamagePanel currency={currency} rows={someProfitEndedRedRows} title="Some profit taken" totalReached={rows.length} /></Box>
+        <DamagePanel currency={currency} emptyMessage="No trades finished red without taking some profit." rows={noProfitEndedRedRows} title="No profit taken" totalTurnedRed={turnedRedRows.length} />
+        <Box sx={{ borderColor: "divider", borderLeft: { md: 1 }, pl: { md: 1.5 } }}><DamagePanel currency={currency} rows={someProfitEndedRedRows} title="Some profit taken" totalTurnedRed={turnedRedRows.length} /></Box>
         <Box sx={{ borderColor: "divider", borderLeft: { md: 1 }, pl: { md: 1.5 } }}>
           <Typography sx={{ fontWeight: 850 }}>Recovered after turning red</Typography>
-          <Typography sx={{ fontSize: "1.05rem", fontWeight: 800 }}>{percent(rate(recoveredRows.length, turnedRedRows.length))} · {recoveredRows.length} of {turnedRedRows.length}</Typography>
+          <Typography sx={{ fontSize: "1.05rem", fontWeight: 800 }}>{percent(rate(recoveredRows.length, turnedRedRows.length))} · {recoveredRows.length} of {turnedRedRows.length} recovered after turning red</Typography>
           <Stack spacing={0.2} sx={{ mt: 0.4 }}>
-            <Typography color="text.secondary" variant="body2">Finished at or above $0: {recoveredFinishedGreenRows.length} · {money(sum(recoveredFinishedGreenRows, (row) => row.finalGrossPnlDecimal), currency)}</Typography>
-            <Typography color="text.secondary" variant="body2">Finished below $0: {recoveredFinishedRedRows.length} · {money(sum(recoveredFinishedRedRows, (row) => row.finalGrossPnlDecimal), currency)}</Typography>
+            <Typography color="text.secondary" variant="body2">{recoveredFinishedGreenRows.length} finished {recoveredFinishedGreenRows.some((row) => new Decimal(row.finalGrossPnlDecimal).isZero()) ? "green or flat" : "green"} · {money(sum(recoveredFinishedGreenRows, (row) => row.finalGrossPnlDecimal), currency)}</Typography>
+            <Typography color="text.secondary" variant="body2">{recoveredFinishedRedRows.length} recovered but later finished red · {money(sum(recoveredFinishedRedRows, (row) => row.finalGrossPnlDecimal), currency)}</Typography>
+            <Typography color="text.secondary" variant="body2">{turnedRedRows.length - recoveredRows.length} never recovered</Typography>
           </Stack>
         </Box>
       </Box>
@@ -305,7 +308,6 @@ export function GreenToRedAnalysis({
         </TextField>
       </Stack>
       {filteredRows.length === 0 ? <Typography color="text.secondary">No trades match this filter.</Typography> : <Stack spacing={1}>
-        <TradeAnalyzerTablePagination alwaysVisible onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={filteredRows.length} />
         <HorizontalScrollRegion label="Green-to-red trade records" minTableWidth={1540} stickyFirstColumn>
           <Table size="small"><TableHead><TableRow>
             <TableCell><HelpLabel help="The saved analyzed trade. Multiple executions and round trips remain part of the same trade when the trader grouped them together." label="Trade" /></TableCell>
@@ -329,6 +331,7 @@ export function GreenToRedAnalysis({
             <TableCell><Button disabled={offline} onClick={() => setDetailsTrade(row)} size="small" variant="outlined">Details</Button></TableCell>
           </TableRow>)}</TableBody></Table>
         </HorizontalScrollRegion>
+        <TradeAnalyzerTablePagination alwaysVisible onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={filteredRows.length} />
       </Stack>}
     </Box>
     <TradeDetailsDrawer analyzer={detailsTrade && currency ? { currency, direction: detailsTrade.direction, executionCount: detailsTrade.executionCount, gainLossDecimal: detailsTrade.finalGrossPnlDecimal, symbol: detailsTrade.symbol, timezone } : null} initialTab="details" onClose={() => setDetailsTrade(null)} open={detailsTrade !== null} roundTripId={detailsTrade?.roundTripId ?? null} />

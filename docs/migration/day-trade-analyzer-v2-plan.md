@@ -7,7 +7,15 @@ completed work is placed online through a separately authorized release.
 
 **Progress:** [Day Trade Analyzer Version 2 Progress](day-trade-analyzer-v2-progress.md)
 
+**Green-to-red clarification:** [Red-trade comparison and recovery wording](day-trade-analyzer-red-comparison-progress.md)
+
 **Active follow-up:** [Profit Zones Progress](day-trade-analyzer-profit-zones-progress.md)
+
+**Expanded zone lists:** [Pagination and opportunity review](day-trade-analyzer-zone-pagination-progress.md)
+
+**Zone exit comparison:** [Potential versus actual profit](day-trade-analyzer-zone-comparison-progress.md)
+
+**Release QA:** [September 9 source-based review](day-trade-analyzer-september-9-qa.md)
 
 **Data audit:** [Day Trade Analyzer Version 2 Data Audit](day-trade-analyzer-v2-data-audit.md)
 
@@ -356,16 +364,23 @@ profit and their combined Gross profit. A separate Exit Type column directly
 after it contains the exclusive Partial exits and Full exits percentage-and-
 dollar split. Its percentage denominator is the profit-taking trades in that
 zone, not all trades reaching the zone.
-Missed Opportunity shows the complementary population: zone-reaching trades
-with no profitable exit in that zone, their percentage of reached trades and
-their combined exact-zone Gross Opportunity. Next Move uses only that missed-
-opportunity population and partitions its first recorded outcome into reached
-the next zone, dropped below the current zone or exited from the zone. These are
-exclusive outcomes whose rates total 100%; a later recovery remains visible in
-the exact trade record.
+Missed Opportunity shows zone-reaching trades with no profitable exit in that
+zone which dropped below it before reaching the next zone. Its dollar total
+sums the highest open-share Gross opportunity before each trade's first drop,
+using actual prices and quantities at those observations. Its percentage uses
+all trades reaching the zone. Later above-zone observations, re-entries and
+additional shares must not inflate the earlier missed opportunity. Show how
+many returned to the zone or higher before that position closed. Split the
+pre-drop opportunity dollars between recovered and never-recovered trades,
+with compact count-and-dollar lines in the existing column.
+Next Move retains all trades with no profitable exit in the zone, including
+those that continued higher. Its three exclusive first-movement rates use
+that no-profit group and total 100%. Keep the no-profit count and its share of
+reached trades visible. Each record identifies a recovery after an initial
+drop; reaching the next zone directly is not a missed opportunity here.
 The ladder also gives the explicit trade counts behind Profit Taken and every
 Next Move outcome, promotes missed-opportunity Gross dollars, and shows the
-combined final Gross loss when no-profit trades later end red. Reached states
+combined final Gross loss when missed-opportunity trades later end red. Reached states
 how many trades advanced to the next zone and how many did not, so the trader
 does not need to subtract the next row mentally. Profitable shares sold provide
 scale context beside the realized dollars.

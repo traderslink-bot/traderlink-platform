@@ -25,6 +25,7 @@ export function TradeAnalyzerTablePagination({
   onPageSizeChange,
   page,
   pageSize,
+  pageSizeOptions = TRADE_ANALYZER_PAGE_SIZES,
   rowCount,
 }: {
   alwaysVisible?: boolean;
@@ -32,6 +33,7 @@ export function TradeAnalyzerTablePagination({
   onPageSizeChange: (pageSize: number) => void;
   page: number;
   pageSize: number;
+  pageSizeOptions?: readonly number[];
   rowCount: number;
 }) {
   if (!alwaysVisible && rowCount <= 10) return null;
@@ -56,7 +58,7 @@ export function TradeAnalyzerTablePagination({
           size="small"
           value={pageSize}
         >
-          {TRADE_ANALYZER_PAGE_SIZES.map((size) => (
+          {pageSizeOptions.map((size) => (
             <MenuItem key={size} value={size}>{size}</MenuItem>
           ))}
         </TextField>

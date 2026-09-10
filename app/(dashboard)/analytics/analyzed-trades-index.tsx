@@ -162,7 +162,12 @@ export function AnalyzedTradesIndex({
   return (
     <Stack spacing={1.5}>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "flex-end" }, justifyContent: "space-between" }}>
-        <Box sx={{ maxWidth: 240, width: "100%" }}>
+        <Box sx={{
+          maxWidth: 240,
+          width: "100%",
+          "& .MuiCardContent-root > .MuiStack-root .MuiTypography-caption": { color: "warning.main", fontSize: "1.125rem" },
+          "& .MuiCardContent-root > .MuiStack-root .MuiTypography-root:not(.MuiTypography-caption)": { color: "warning.main" },
+        }}>
           <DashboardMetricCard
             caption="Ready analyzer records in the selected period"
             label="Analyzed trades"
@@ -180,21 +185,6 @@ export function AnalyzedTradesIndex({
           value={draftTicker}
         />
       </Stack>
-      {currency && !offline ? (
-        <TradeAnalyzerTablePagination
-          onPageChange={(nextPage) => {
-            if (nextPage < page || (cursors[nextPage] ?? null) !== null) setPage(nextPage);
-          }}
-          onPageSizeChange={(nextSize) => {
-            setPageSize(nextSize);
-            setPage(1);
-            setCursors({ 1: null });
-          }}
-          page={page}
-          pageSize={pageSize}
-          rowCount={result?.totalRowCount ?? 0}
-        />
-      ) : null}
       {resolvedState === "loading" && !result ? (
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", py: 4 }}>
           <CircularProgress size={20} />
@@ -261,6 +251,21 @@ export function AnalyzedTradesIndex({
               </TableBody>
             </Table>
           </HorizontalScrollRegion>
+      ) : null}
+      {currency && !offline ? (
+        <TradeAnalyzerTablePagination
+          onPageChange={(nextPage) => {
+            if (nextPage < page || (cursors[nextPage] ?? null) !== null) setPage(nextPage);
+          }}
+          onPageSizeChange={(nextSize) => {
+            setPageSize(nextSize);
+            setPage(1);
+            setCursors({ 1: null });
+          }}
+          page={page}
+          pageSize={pageSize}
+          rowCount={result?.totalRowCount ?? 0}
+        />
       ) : null}
     </Stack>
   );

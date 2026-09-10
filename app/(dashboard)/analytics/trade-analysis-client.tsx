@@ -48,7 +48,7 @@ import { CandlePatternOccurrenceExplorer } from "./candle-pattern-occurrence-exp
 import { GreenToRedAnalysis } from "./green-to-red-analysis";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
-import { ProfitZoneAnalysis } from "./profit-zone-analysis";
+import { ProfitZoneAnalysis, ProfitZoneComparison } from "./profit-zone-analysis";
 import { TradeAnalysisRangeAndBasisControls } from "./trade-analysis-range-and-basis-controls";
 import {
   boundedPage,
@@ -417,13 +417,13 @@ function MfeMaeTable({
         <MenuItem value="all">Entries and adds</MenuItem><MenuItem value="Entry">Entries</MenuItem><MenuItem value="Add">Adds</MenuItem>
       </TextField>
     </Stack>
-    <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(nextSize) => { setPageSize(nextSize); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
     {rows.length === 0 ? <Typography color="text.secondary">No measured entries or adds match these filters.</Typography> :
       <HorizontalScrollRegion label="Measured entries and adds table" minTableWidth={1420} stickyFirstColumn><Table size="small"><TableHead><TableRow>
         <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">{direction === "long" ? "Price rise per share after entry" : "Price drop per share after entry"}</TableCell><TableCell align="right">{direction === "long" ? "Price drop per share after entry" : "Price rise per share after entry"}</TableCell><TableCell align="right">{direction === "long" ? "Price rise %" : "Price drop %"}</TableCell><TableCell align="right">{direction === "long" ? "Price drop %" : "Price rise %"}</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.executionSequence}`}>
         <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${row.trackerDate}` : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
       </TableRow>)}</TableBody></Table></HorizontalScrollRegion>}
+    <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(nextSize) => { setPageSize(nextSize); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
   </Stack>;
 }
 
@@ -482,7 +482,6 @@ function ScalingOutTable({
   ), [meaningfulRows]);
   if (rows.length === 0) return <Typography color="text.secondary">No trades in this selection held one of the sustained profit levels.</Typography>;
   return <Stack spacing={1.25}>
-    <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
     <HorizontalScrollRegion label="Scaling out trades" minTableWidth={1780} stickyFirstColumn>
       <Table size="small"><TableHead><TableRow>
         <TableCell><ColumnHeading help="Ticker symbol for this analyzed user-defined trade." label="Trade" /></TableCell>
@@ -515,11 +514,12 @@ function ScalingOutTable({
               ? "No gross difference at the recorded later exit prices."
               : row.profitProtection.status === "comparison_unavailable"
                 ? "Exact later-exit comparison unavailable."
-                : "No single-reduction comparison."}</TableCell>
+              : "No single-reduction comparison."}</TableCell>
         <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${row.trackerDate}` : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">Full analysis</Button></TableCell>
       </TableRow>;
       })}</TableBody></Table>
     </HorizontalScrollRegion>
+    <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
   </Stack>;
 }
 
@@ -534,10 +534,12 @@ function EventPathTable({
   kinds,
   model,
   offline,
+  paginationAtBottom = false,
 }: {
   currency: string | null;
   direction: "long" | "short";
   kinds: readonly TradeAnalysisEventPathRow["eventKind"][];
+  paginationAtBottom?: boolean;
   model: DailyTradeLongTermAnalyticsV2Model;
   offline: boolean;
 }) {
@@ -582,7 +584,7 @@ function EventPathTable({
   };
   return <Stack spacing={1.25}>
     <TextField label="Ticker" onChange={(event) => { setTicker(event.target.value); setPage(1); }} size="small" sx={{ maxWidth: { sm: 220 } }} value={ticker} />
-    <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={grouped.length} />
+    {!paginationAtBottom ? <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={grouped.length} /> : null}
     <HorizontalScrollRegion label="Saved event price paths" minTableWidth={1540} stickyFirstColumn>
       <Table size="small"><TableHead><TableRow><TableCell>Ticker</TableCell><TableCell>Execution</TableCell><TableCell>Executed</TableCell><TableCell>Session</TableCell><TableCell align="right">Execution price</TableCell>{[5, 15, 30, 60].map((minutes) => <TableCell align="right" key={minutes}>High / low within {minutes} min</TableCell>)}<TableCell /></TableRow></TableHead>
         <TableBody>{visibleRows.map(({ event, paths }) => <TableRow hover key={`${event.roundTripId}-${event.eventSequence}`}><TableCell sx={{ fontWeight: 850 }}>{event.symbol}</TableCell><TableCell>{event.eventKind}</TableCell><TableCell>{executionDateTime(event.executedAtUtc, model.timezone)}</TableCell><TableCell>{event.session}</TableCell><TableCell align="right">{money(event.eventPriceDecimal, currency)}</TableCell>{[5, 15, 30, 60].map((minutes) => {
@@ -594,6 +596,7 @@ function EventPathTable({
         })}<TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${event.trackerDate}` : `/trade-tracker/${event.trackerDate}?${new URLSearchParams({ interval: "1m", trade: event.roundTripId }).toString()}`} size="small" variant="outlined">Full analysis</Button></TableCell></TableRow>)}</TableBody>
       </Table>
     </HorizontalScrollRegion>
+    {paginationAtBottom ? <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={grouped.length} /> : null}
   </Stack>;
 }
 
@@ -691,11 +694,11 @@ function AnalyzedTradeCountCard({
           title={'This page only displays trades that were analyzed by TradersLink "Trade Analyzer" feature.'}
         >
           <Stack component="span" direction="row" spacing={0.4} sx={{ alignItems: "center", width: "fit-content" }}>
-            <Typography color="text.secondary" component="span" variant="caption">Results include analyzed trades only</Typography>
+            <Typography color="warning.main" component="span" sx={{ fontSize: "1.125rem" }} variant="caption">Results include analyzed trades only</Typography>
             <InfoOutlinedIcon sx={{ color: "text.secondary", fontSize: 14 }} />
           </Stack>
         </Tooltip>
-        <Typography component="div" sx={{ fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>{count}</Typography>
+        <Typography color="warning.main" component="div" sx={{ fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>{count}</Typography>
       </CardContent>
     </CardActionArea>
   </Card>;
@@ -988,6 +991,9 @@ export function TradeAnalysisClient({
 
       {view === "scaling-out" ? <Section defaultExpanded description="Profit-taking behavior on trades that held a meaningful-profit level, including profitable partial exits before reversal and qualifying trades where no shares were sold before a red finish." helpHref="/help/trade-analyzer/scaling-out#behavior" title="Scaling behavior">
         <Stack spacing={2.25}>
+          <Typography variant="h6">Potential profit vs actual profit</Typography>
+          <ProfitZoneComparison records={profitZoneRecords} rows={profitZoneRows} currency={model.currency} timezone={model.timezone} totalTradeCount={profitZoneDirectionCounts[activeDirection]} offline={offline}
+            key={`${evidenceQuery.rangeKind}:${evidenceQuery.startDate ?? "all"}:${evidenceQuery.endDate ?? "all"}:${activeDirection}:${profitZoneMinimumHoldMinutes}`} />
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
             <DashboardMetricCard caption={`Completed ${directionLabel} trades with a qualifying sustained profit level${model.moneyBasis === "net" ? " and complete saved fee facts" : ""}`} label="Qualifying trades" value={String(scalingRows.length)} />
             <DashboardMetricCard caption="Share of qualifying trades with at least one profitable partial exit after the sustained-profit level and before the first red point or final exit" label="Scaled out while green" value={`${directionScalingSummary.scaledOut} · ${percent(scalingRows.length === 0 ? null : directionScalingSummary.scaledOut / scalingRows.length * 100)}`} />
@@ -1106,7 +1112,7 @@ export function TradeAnalysisClient({
       </Section> : null}
 
       {view === "mfe-mae" ? <Section defaultExpanded description={`The highest and lowest saved prices from each ${directionLabel} entry or add through 5, 15, 30 and 60 minutes. The execution price is the starting point.`} helpHref="/help/trade-analyzer/mfe-mae#timed-paths" title="Price path after entry">
-        <EventPathTable currency={model.currency} direction={activeDirection} kinds={["Initial entry", "Add"]} model={model} offline={offline} />
+        <EventPathTable currency={model.currency} direction={activeDirection} kinds={["Initial entry", "Add"]} model={model} offline={offline} paginationAtBottom />
       </Section> : null}
 
       {view === "mfe-mae" ? <Section description="The individual saved candle observations behind these results. Ticker and execution filters apply before pagination." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions">

@@ -220,16 +220,23 @@ export type TradeAnalysisScalingOutRow = Readonly<{
 }>;
 
 export type TradeAnalysisProfitZoneRecord = Readonly<{
+  comparisonGrossPnlDecimal: string | null;
+  comparisonPriceDecimal: string | null;
+  comparisonQuantityDecimal: string | null;
+  comparisonAtUtcSeconds: number | null;
   closeDate: string;
   cumulativeQuantitySoldDecimal: string;
   direction: "long" | "short";
   executionCount: number;
   finalGrossPnlDecimal: string;
+  firstDropBelowZoneAtUtcSeconds: number | null;
+  firstRecoveryToZoneAtUtcSeconds: number | null;
   firstReachedAtUtcSeconds: number;
   firstReachSource: "completed_close" | "exit";
   longestConsecutiveMinutesAtOrAbove: number;
   lowerBoundPercent: number;
   maximumProfitOpportunityInZoneGrossDecimal: string;
+  missedOpportunityGrossDecimal: string;
   minutesFromEntryToFirstReach: number;
   observedOutcome: "dropped_before_next" | "exited_before_next" | "reached_next";
   partialProfitTakenAfterNextGrossDecimal: string;
@@ -264,6 +271,14 @@ export type TradeAnalysisProfitZoneSummaryRow = Readonly<{
   medianCompletedMinutesInZone: number | null;
   medianHoldingMinutes: number | null;
   medianLongestConsecutiveMinutesAtOrAbove: number | null;
+  missedOpportunityTradeCount: number;
+  missedOpportunityRateOfReachedPercent: number | null;
+  missedOpportunityGrossDecimal: string;
+  missedOpportunityRecoveredTradeCount: number;
+  missedOpportunityRecoveredGrossDecimal: string;
+  missedOpportunityNeverRecoveredGrossDecimal: string;
+  missedOpportunityEndedRedTradeCount: number;
+  missedOpportunityEndedRedGrossLossDecimal: string;
   noProfitDroppedBelowFirstRatePercent: number | null;
   noProfitDroppedBelowFirstTradeCount: number;
   noProfitEndedRedGrossLossDecimal: string;
@@ -938,6 +953,9 @@ function scaleScenario(
         zone.maximumProfitOpportunityInZoneGrossDecimal,
         multiplier,
       ),
+      missedOpportunityGrossDecimal: scaledDecimal(zone.missedOpportunityGrossDecimal, multiplier)!,
+      comparisonGrossPnlDecimal: scaledDecimal(zone.comparisonGrossPnlDecimal, multiplier),
+      comparisonPriceDecimal: scaledDecimal(zone.comparisonPriceDecimal, multiplier),
       profitAvailableAtLevelGrossDecimal: scaledDecimal(zone.profitAvailableAtLevelGrossDecimal, multiplier),
       profitTakenInZoneGrossDecimal: scaledDecimal(zone.profitTakenInZoneGrossDecimal, multiplier)!,
       profitableFullExitInZoneGrossDecimal: scaledDecimal(
@@ -1465,6 +1483,10 @@ function profitZoneSummaryRows(
       record.observedOutcome === "exited_before_next");
     const noProfitEndedRed = noProfit.filter((record) =>
       new Decimal(record.finalGrossPnlDecimal).lt(0));
+    const missedOpportunity = noProfit.filter((record) => new Decimal(record.missedOpportunityGrossDecimal).gt(0));
+    const missedOpportunityRecovered = missedOpportunity.filter((record) => record.firstRecoveryToZoneAtUtcSeconds !== null);
+    const missedOpportunityNeverRecovered = missedOpportunity.filter((record) => record.firstRecoveryToZoneAtUtcSeconds === null);
+    const missedOpportunityEndedRed = missedOpportunity.filter((record) => new Decimal(record.finalGrossPnlDecimal).lt(0));
     const reachedNext = upperBoundPercent === null
       ? []
       : zoneRecords.filter((record) => record.reachedNextLevel);
@@ -1487,6 +1509,14 @@ function profitZoneSummaryRows(
       medianHoldingMinutes: medianNumbers(zoneRecords.map((record) => record.totalHoldingMinutes)),
       medianLongestConsecutiveMinutesAtOrAbove: medianNumbers(zoneRecords.map((record) =>
         record.longestConsecutiveMinutesAtOrAbove)),
+      missedOpportunityTradeCount: missedOpportunity.length,
+      missedOpportunityRateOfReachedPercent: percentage(missedOpportunity.length, zoneRecords.length),
+      missedOpportunityGrossDecimal: sumDecimals(missedOpportunity.map((record) => record.missedOpportunityGrossDecimal)) ?? "0",
+      missedOpportunityRecoveredTradeCount: missedOpportunityRecovered.length,
+      missedOpportunityRecoveredGrossDecimal: sumDecimals(missedOpportunityRecovered.map((record) => record.missedOpportunityGrossDecimal)) ?? "0",
+      missedOpportunityNeverRecoveredGrossDecimal: sumDecimals(missedOpportunityNeverRecovered.map((record) => record.missedOpportunityGrossDecimal)) ?? "0",
+      missedOpportunityEndedRedTradeCount: missedOpportunityEndedRed.length,
+      missedOpportunityEndedRedGrossLossDecimal: sumDecimals(missedOpportunityEndedRed.map((record) => record.finalGrossPnlDecimal)) ?? "0",
       noProfitDroppedBelowFirstRatePercent: percentage(noProfitDroppedBelowFirst.length, noProfit.length),
       noProfitDroppedBelowFirstTradeCount: noProfitDroppedBelowFirst.length,
       noProfitEndedRedGrossLossDecimal: sumDecimals(noProfitEndedRed.map((record) =>
@@ -1802,15 +1832,22 @@ export function buildDailyTradeLongTermAnalytics(
       return [Object.freeze({
         closeDate: trade.closeLocalDate,
         cumulativeQuantitySoldDecimal: zone.cumulativeQuantitySoldDecimal,
+        comparisonGrossPnlDecimal: zone.comparisonGrossPnlDecimal,
+        comparisonPriceDecimal: zone.comparisonPriceDecimal,
+        comparisonQuantityDecimal: zone.comparisonQuantityDecimal,
+        comparisonAtUtcSeconds: zone.comparisonAtUtcSeconds,
         direction: trade.direction,
         executionCount: trade.executionCount,
         finalGrossPnlDecimal: trade.scenario.calculatedFinalGrossResultDecimal,
+        firstDropBelowZoneAtUtcSeconds: zone.firstDropBelowZoneAtUtcSeconds,
+        firstRecoveryToZoneAtUtcSeconds: zone.firstRecoveryToZoneAtUtcSeconds,
         firstReachedAtUtcSeconds: zone.firstReachedAtUtcSeconds,
         firstReachSource: zone.firstReachSource,
         longestConsecutiveMinutesAtOrAbove: zone.longestConsecutiveMinutesAtOrAbove,
         lowerBoundPercent: zone.lowerBoundPercent,
         maximumProfitOpportunityInZoneGrossDecimal:
           zone.maximumProfitOpportunityInZoneGrossDecimal,
+        missedOpportunityGrossDecimal: zone.missedOpportunityGrossDecimal,
         minutesFromEntryToFirstReach: zone.minutesFromEntryToFirstReach,
         observedOutcome: zone.observedOutcome,
         partialProfitTakenAfterNextGrossDecimal: zone.partialProfitTakenAfterNextGrossDecimal,
