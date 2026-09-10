@@ -27,12 +27,11 @@ export function pressReleaseEasternTime(value: string, includeDate = false): str
 }
 
 export function pressReleaseType(article: PressReleaseArticle): string {
-  if (article.routeTag === "default" || article.routeTag === "spike") return "News Scanner";
-  if (article.routeTag === "market_cap_under_30m") return "Under $30M";
-  if (article.routeTag === "market_cap_30m_to_50m") return "$30M–$50M";
-  if (article.routeTag === "market_cap_50m_to_100m") return "$50M–$100M";
-  const value = article.eventType?.replace(/[_-]+/gu, " ").trim();
-  return value ? value.replace(/\b\w/gu, (letter) => letter.toUpperCase()) : "News";
+  const value = article.eventType?.toLowerCase().replace(/[_-]+/gu, " ").trim();
+  if (value?.includes("sec") || value?.includes("filing")) return "SEC filing";
+  if (value?.includes("press release")) return "Press release";
+  if (value) return value.replace(/\b\w/gu, (letter) => letter.toUpperCase());
+  return "News";
 }
 
 function DetailSection({ items, title }: Readonly<{ items: readonly string[]; title: string }>) {
@@ -63,15 +62,15 @@ export function PressReleaseArticleDrawer({ article, onClose }: Readonly<{
         <Tooltip title="Close article"><IconButton aria-label="Close article" onClick={onClose}><CloseRoundedIcon /></IconButton></Tooltip>
       </Stack>
       <Typography component="h2" variant="h2">{article.headline}</Typography>
-      {article.summary ? <Box><Typography component="h3" sx={{ fontWeight: 800 }} variant="subtitle2">AI summary</Typography><Typography sx={{ mt: 1, whiteSpace: "pre-wrap" }} variant="body2">{article.summary}</Typography></Box> : null}
+      {!article.summaryUnavailable && article.summary ? <Box><Typography component="h3" sx={{ fontWeight: 800 }} variant="subtitle2">AI summary</Typography><Typography sx={{ mt: 1, whiteSpace: "pre-wrap" }} variant="body2">{article.summary}</Typography></Box> : null}
       <Divider />
-      <DetailSection items={article.positives} title="Positives" />
-      <DetailSection items={article.negatives} title="Negatives" />
+      {article.summaryUnavailable ? null : <DetailSection items={article.positives} title="Positives" />}
+      {article.summaryUnavailable ? null : <DetailSection items={article.negatives} title="Negatives" />}
       <DetailSection items={article.riskFlags} title="Risk flags" />
       <DetailSection items={article.supportResistanceLevels} title="Support and resistance" />
       <Divider />
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-        <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={article.publicPath} variant="contained">Open article page</Button>
+        <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={article.summaryUnavailable && article.sourceUrl && /^https?:\/\//iu.test(article.sourceUrl) ? article.sourceUrl : article.publicPath} variant="contained">{article.summaryUnavailable ? "Open source article" : "Open article page"}</Button>
         <Button component={NextLink} href="/account/trading#pwa-app" variant="outlined">Set up the TradersLink app</Button>
       </Stack>
     </Stack> : null}

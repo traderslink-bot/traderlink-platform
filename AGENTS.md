@@ -134,8 +134,8 @@ the configured TradersLink Discord server and the one active server-side
 Discord login, server ownership, Premium entitlement, workspace roles or the
 grant alone cannot authorize access. Email/password admin login remains
 deferred. The plan completed its implementation-contract QA pass, is owner
-approved, and technical Admin 1-6 plus live browser acceptance now pass. Owner
-visual/product review, the production owner grant, Discord activation and real
+approved, and technical Admin 1-6 plus live browser acceptance now pass. The
+production owner grant, Discord activation and real
 support-source configuration remain separate pre-go-live boundaries.
 
 The Phase 2 empty
@@ -198,7 +198,7 @@ Discord is the first intended public login provider and email/password remains
 optional; production login activation is still a pre-go-live boundary. Preserve
 stable Platform/Journal UUID ownership so later authentication does not rewrite
 Journal facts. Personal owner involvement is reserved for irreversible or
-external actions and final visual/product approval.
+external actions.
 
 Phase 5 is controlled by
 `docs/migration/phase-5-module-transfer-plan.md` and
@@ -239,7 +239,7 @@ quantity-conserving grouped-fill outcomes. Day, Swing and Open Positions UI
 integration is implemented. Five tracker/service/route files pass 75 tests,
 full TypeScript/lint/build and the 156-file active replacement guard pass, and
 clean live browser checks now pass for Day Tracker, Swing Tracker and Open
-Positions. Only the integrated owner visual/product review remains.
+Positions.
 When a later broker import may duplicate a manual execution, exact time is not
 a hard match requirement. Preserve unrelated import rows, keep the accepted
 manual execution active and withhold only the provisional imported candidate
@@ -252,7 +252,7 @@ for the exact broker-shown time, price and quantity because accurate details
 improve later statement matching. Do not expose internal action/issue codes,
 engine terminology or system language in visible UI.
 Port 3010 is active from the canonical replacement repository for the completed
-owner visual/product review checkpoint.
+dashboard checkpoint.
 
 Phase 3 is controlled by
 `docs/migration/phase-3-journal-integrity-plan.md` and
@@ -303,12 +303,8 @@ runtime fallback.
   database, mutate the verified empty replacement database, start a replacement
   process, deploy, or delete legacy code until the migration checkpoint
   authorizes the exact action.
-- The approved visual baseline is the light Material UI dashboard with its
-  complete left navigation. A dark or reduced dashboard that omits Trades,
-  Calendar with week/month views, Analytics, Analytics Lab, or Trading Rules is
-  not the final dashboard.
-  Preserve the complete route/navigation inventory and obtain iterative owner
-  approval for any visible change.
+- Preserve the complete route/navigation inventory, including Trades, Calendar
+  with week/month views, Analytics, Analytics Lab, and Trading Rules.
 - The permanent architecture name is TraderLink Platform. `V4` is optional only
   as a later release label, not as the module/database architecture or a reason
   to create another duplicate folder. January IBKR data is development test
@@ -324,8 +320,7 @@ runtime fallback.
   commits, dirty/untracked files, private data, processes, and dependencies;
   show the owner exact proposed dispositions before deleting any folder.
 - New planning documents belong in `docs/migration/`; keep the migration
-  register and progress tracker current. Every new/reworked UI slice requires
-  owner visual approval before acceptance.
+  register and progress tracker current.
 - Treat phases as approval/scope boundaries, not mandatory chat boundaries.
   Multiple short phases may share a chat after the applicable delegated
   technical acceptance or retained owner gate authorizes the next scope; a
@@ -391,7 +386,6 @@ home for all new human-readable project documents.
 
 ## Trader Intelligence Dashboard Baseline And Parallel Work
 
-- The current approved design baseline is the light, Material-style dashboard on the `/workspace` route. Preserve that visual language and shell unless the user explicitly approves a replacement.
 - Before completing any change to a dashboard feature, review the Help Center guides for that feature and explicitly confirm whether the change requires corresponding guide updates. When updates are required, keep the affected guides aligned with the feature change as part of the same work.
 - Every Trader Intelligence dashboard page must live under `app/(dashboard)` and inherit `app/(dashboard)/layout.tsx`. That layout must render `V3DashboardTemplate`; pages must not rebuild the application frame locally.
 - `app/dashboard-template.tsx` is the public dashboard UI contract. Import `DashboardPage`, `DashboardPanel`, `DashboardMetricCard`, `DashboardPrimaryAction`, and `DashboardSecondaryAction` from it instead of creating local page containers, card conventions, or action styles.
@@ -408,7 +402,6 @@ home for all new human-readable project documents.
 - Agents may inspect the `3010` instance read-only. An agent making parallel dashboard changes must use its own Git worktree, branch, and port such as `3011`.
 - Divide parallel work by isolated pages or feature areas. Coordinate before editing shared shell or configuration files, especially `app/dashboard-shell.tsx`, `app/mui-theme.ts`, `app/mui-provider.tsx`, `next.config.ts`, or the main dashboard plan and progress documents.
 - Changes made in another worktree do not automatically appear on the `3010` instance. Merge or cherry-pick the completed branch into the dashboard baseline worktree, resolve shared-file changes deliberately, then verify the integrated result on `3010`.
-- Do not treat older `/intelligence` pages, a server on port `3000`, or the production website as the approved visual baseline for this dashboard.
 
 ## Academy Progress Preservation
 

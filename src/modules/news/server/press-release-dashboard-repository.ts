@@ -102,6 +102,11 @@ function supportResistanceLevels(metadata: Record<string, unknown>): readonly st
 
 function rowToArticle(row: ArticleRow): PressReleaseArticle {
   const metadata = parseRecord(row.metadata_json);
+  const summaryUnavailable = !row.summary?.trim()
+    || ["headline_only_fallback", "businesswire_headline_only", "sec_unreadable_fallback", "market_cap_stale_skip"].includes(String(metadata.articleSourceMode || ""))
+    || row.event_type === "press_release_unreadable"
+    || row.summary.startsWith("Full article text is currently unavailable.")
+    || row.summary.startsWith("Summary could not be generated.");
   return Object.freeze({
     articleText: row.article_text,
     eventType: row.event_type,
@@ -116,7 +121,8 @@ function rowToArticle(row: ArticleRow): PressReleaseArticle {
     riskFlags: parseStrings(row.risk_flags_json),
     routeTag: row.route_tag,
     sourceUrl: row.source_url,
-    summary: row.summary,
+    summary: summaryUnavailable ? null : row.summary,
+    summaryUnavailable,
     supportResistanceLevels: supportResistanceLevels(metadata),
     ticker: row.ticker,
   });

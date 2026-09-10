@@ -55,6 +55,7 @@ export type PressReleaseArticle = Readonly<{
   routeTag: string | null;
   sourceUrl: string | null;
   summary: string | null;
+  summaryUnavailable: boolean;
   supportResistanceLevels: readonly string[];
   ticker: string;
 }>;

@@ -5,6 +5,10 @@ import {
   type NewsArticleInput,
   upsertNewsArticle,
 } from "@/src/lib/news/news-article-store";
+import {
+  formatFinnhubMarketCap,
+  getFinnhubCompanyProfile,
+} from "@/src/lib/news/finnhub-company-profile";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { loadPlatformWebPushConfiguration } from "@/src/modules/platform/server/notifications/platform-web-push-configuration";
 import { PlatformWebPushDeliveryService } from "@/src/modules/platform/server/notifications/platform-web-push-delivery-service";
@@ -54,6 +58,35 @@ function authorizePublisher(request: Request): PublisherAuthorization {
     : "unauthorized";
 }
 
+async function enrichMissingMarketCap(
+  input: NewsArticleInput,
+): Promise<NewsArticleInput> {
+  const metadata = input.metadata ?? {};
+  const suppliedMarketCap =
+    typeof metadata.marketCap === "string" ? metadata.marketCap.trim() : "";
+  const suppliedMarketCapValue = Number(metadata.marketCapValue);
+  if (
+    suppliedMarketCap ||
+    (Number.isFinite(suppliedMarketCapValue) && suppliedMarketCapValue > 0)
+  ) {
+    return input;
+  }
+
+  const profile = await getFinnhubCompanyProfile(input.ticker);
+  const marketCap = formatFinnhubMarketCap(profile?.marketCapitalization ?? null);
+  if (!profile?.marketCapitalization || !marketCap) return input;
+
+  return {
+    ...input,
+    metadata: {
+      ...metadata,
+      marketCap,
+      marketCapValue: profile.marketCapitalization * 1_000_000,
+      marketCapSource: "finnhub_company_profile",
+    },
+  };
+}
+
 export async function POST(request: Request): Promise<Response> {
   const authorization = authorizePublisher(request);
   if (authorization === "unconfigured") {
@@ -76,7 +109,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
-    const article = await upsertNewsArticle(input);
+    const article = await upsertNewsArticle(await enrichMissingMarketCap(input));
     const articlePath = `/news/${encodeURIComponent(
       article.ticker,
     )}/${encodeURIComponent(article.slug)}`;
