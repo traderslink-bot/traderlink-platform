@@ -309,6 +309,7 @@ export type TradersLinkAiReadListingContext = {
 };
 
 type TradersLinkAiReadPayloadBase = {
+  ownerHiddenSections?: string[];
   symbol: string;
   generatedAt: number;
   dataAsOf: number;

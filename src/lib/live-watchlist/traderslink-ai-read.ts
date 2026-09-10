@@ -611,6 +611,8 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
     return null;
   }
 
+  if (value.ownerHiddenSections !== undefined && (!Array.isArray(value.ownerHiddenSections) || value.ownerHiddenSections.some((key) => typeof key !== "string" || !["currentRead", "needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation", "targets", "downsideCheckpoints", "shallow", "deep", "failureRecovery", "catalystRealityCheck", "dilutionRisk", "listingStatus", "riskSummary"].includes(key)))) return null;
+
   const allowedSourceUrls = new Set(
     (value.sources as TradersLinkAiReadSource[]).map((source) => source.url),
   );

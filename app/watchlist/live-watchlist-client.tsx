@@ -425,21 +425,18 @@ function TradersLinkAiPullbackScenarioBlock({
         </div>
         <div>
           <dt>Required confirmation</dt>
-          <dd>{scenario.confirmation}</dd>
+          <dd>${formatPrice(scenario.confirmationPrice)} {scenario.confirmation}</dd>
         </div>
         <div>
           <dt>Invalidation</dt>
           <dd>${formatPrice(scenario.invalidationPrice)}</dd>
         </div>
-        <div>
+        {scenario.firstObjectivePrice !== null && <div>
           <dt>First objective</dt>
-          <dd>
-            {scenario.firstObjectivePrice === null
-              ? "No defensible objective mapped"
-              : `$${formatPrice(scenario.firstObjectivePrice)}`}
-          </dd>
-        </div>
+          <dd>${formatPrice(scenario.firstObjectivePrice)}</dd>
+        </div>}
       </dl>
+      {scenario.rationale.trim() ? <p>{scenario.rationale}</p> : null}
     </div>
   );
 }
@@ -513,7 +510,11 @@ function TradersLinkAiReadCard({
   if (!read) {
     return <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />;
   }
-  const downsideCheckpoints = read.downsideCheckpoints ?? [];
+  const hidden = new Set(read.ownerHiddenSections ?? []);
+  const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
+  const showShallow = (read.version === 3 || read.version === 4) && !hidden.has("shallow") && Boolean(read.pullbackPlans.shallow);
+  const showDeep = (read.version === 3 || read.version === 4) && !hidden.has("deep") && Boolean(read.pullbackPlans.deep);
+  const showRecovery = (read.version === 3 || read.version === 4) && !hidden.has("failureRecovery") && Boolean(read.failureRecovery);
   const currentLivePrice = livePrice ?? read.currentPrice;
   const momentumSetupFailed = read.momentumFailure.price !== null &&
     currentLivePrice <= read.momentumFailure.price;
@@ -551,7 +552,8 @@ function TradersLinkAiReadCard({
         </div>
       </div>
 
-      {liveVolumeContext && shouldShowTradersLinkAiLiveVolumeConfirmation({
+      {!hidden.has("currentRead") && read.currentRead.trim() ? <p>{read.currentRead}</p> : null}
+      {!hidden.has("momentumFailure") && !hidden.has("shallow") && !hidden.has("deep") && liveVolumeContext && shouldShowTradersLinkAiLiveVolumeConfirmation({
         read,
         livePrice: currentLivePrice,
         volume: liveVolumeContext,
@@ -563,20 +565,20 @@ function TradersLinkAiReadCard({
         />
       ) : null}
       <div className="watchlist-ai-read-level-grid">
-        <TradersLinkAiReadLevelBlock heading="Needs to hold" level={read.needsToHold} />
-        <TradersLinkAiReadLevelBlock
+        {!hidden.has("needsToHold") && <TradersLinkAiReadLevelBlock heading="Needs to hold" level={read.needsToHold} />}
+        {!hidden.has("cautionBelow") && <TradersLinkAiReadLevelBlock
           heading="Caution below"
           level={read.cautionBelow}
-        />
-        <TradersLinkAiReadLevelBlock heading="Momentum failure" level={read.momentumFailure} />
-        <TradersLinkAiReadLevelBlock heading="Must clear" level={read.mustClear} />
-        <TradersLinkAiReadLevelBlock
+        />}
+        {!hidden.has("momentumFailure") && <TradersLinkAiReadLevelBlock heading="Momentum failure" level={read.momentumFailure} />}
+        {!hidden.has("mustClear") && <TradersLinkAiReadLevelBlock heading="Must clear" level={read.mustClear} />}
+        {!hidden.has("breakoutContinuation") && <TradersLinkAiReadLevelBlock
           heading="Breakout continuation"
           level={read.breakoutContinuation}
-        />
+        />}
       </div>
 
-      {read.version === 4 ? (
+      {read.version === 4 && !hidden.has("targets") ? (
         <section className="watchlist-ai-read-section">
           <h3>Where the trade could go next</h3>
           <p>Conditional day-trade paths, not predictions. Each farther branch requires the prior area to hold.</p>
@@ -587,7 +589,7 @@ function TradersLinkAiReadCard({
             <TradersLinkAiForwardHorizonBlock heading="Extreme momentum" horizon={read.forwardPlan.extremeMomentum} livePrice={currentLivePrice} />
           </ol>
         </section>
-      ) : read.targets.length > 0 ? (
+      ) : read.version !== 4 && !hidden.has("targets") && read.targets.length > 0 ? (
         <section className="watchlist-ai-read-section">
           <h3>Where the trade could go next</h3>
           <ol className="watchlist-ai-read-targets">
@@ -603,10 +605,10 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {(read.version === 3 || read.version === 4) && dipBuyPlanVisible ? (
+      {(read.version === 3 || read.version === 4) && dipBuyPlanVisible && (showShallow || showDeep) ? (
         <section className="watchlist-ai-read-section">
           <h3>Pullback entry plans</h3>
-          {momentumSetupFailed ? (
+          {momentumSetupFailed && !hidden.has("momentumFailure") && showRecovery ? (
             <p className="watchlist-ai-read-plan-warning">
               The original momentum setup is invalid below the momentum-failure boundary. Use the
               failure and recovery plan; do not treat either pullback zone as active.
@@ -614,7 +616,7 @@ function TradersLinkAiReadCard({
           ) : null}
           {read.pullbackPlans.shallow || read.pullbackPlans.deep ? (
             <div className="watchlist-ai-read-scenario-grid">
-              {read.pullbackPlans.shallow ? (
+              {showShallow && read.pullbackPlans.shallow ? (
                 <TradersLinkAiPullbackScenarioBlock
                   heading="Shallow pullback — momentum retest"
                   description="For traders seeking a controlled retest while momentum remains intact."
@@ -622,7 +624,7 @@ function TradersLinkAiReadCard({
                   livePrice={currentLivePrice}
                 />
               ) : null}
-              {read.pullbackPlans.deep ? (
+              {showDeep && read.pullbackPlans.deep ? (
                 <TradersLinkAiPullbackScenarioBlock
                   heading="Deep pullback — reset setup"
                   description="For traders waiting for the accelerated move to unwind into its base."
@@ -635,7 +637,7 @@ function TradersLinkAiReadCard({
             <p>No evidence-backed pullback entry plan is available for this read.</p>
           )}
         </section>
-      ) : pullbackPlan ? (
+      ) : read.version === 2 && pullbackPlan && !hidden.has("shallow") && !hidden.has("deep") ? (
         <section className="watchlist-ai-read-section">
           <h3>Potential pullback</h3>
           <p>
@@ -662,14 +664,14 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {(read.version === 3 || read.version === 4) && (downsideCheckpoints.length > 0 || read.failureRecovery) ? (
+      {(read.version === 3 || read.version === 4) && (downsideCheckpoints.length > 0 || showRecovery) ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-downside">
           <h3>Failure and recovery</h3>
-          <p>
+          {!hidden.has("momentumFailure") && <p>
             The original momentum setup is invalid below {read.momentumFailure.price === null
               ? "the published momentum-failure boundary"
               : `$${formatPrice(read.momentumFailure.price)}`}.
-          </p>
+          </p>}
           {downsideCheckpoints.length > 0 ? (
             <>
               <p>Lower structural checkpoints exposed after that failure:</p>
@@ -687,8 +689,8 @@ function TradersLinkAiReadCard({
               </ol>
             </>
           ) : null}
-          {read.failureRecovery ? (
-            <dl className="watchlist-ai-read-scenario-items">
+          {showRecovery && read.failureRecovery ? (
+            <><dl className="watchlist-ai-read-scenario-items">
               <div>
                 <dt>Recovery-watch area</dt>
                 <dd>${formatPrice(read.failureRecovery.recoveryZoneLow)}-${formatPrice(read.failureRecovery.recoveryZoneHigh)}</dd>
@@ -698,19 +700,16 @@ function TradersLinkAiReadCard({
                 <dd>${formatPrice(read.failureRecovery.firstReclaimPrice)} after a new base forms</dd>
               </div>
               <div>
-                <dt>Restores original bullish thesis</dt>
+                <dt>Recovery setup established above</dt>
                 <dd>${formatPrice(read.failureRecovery.setupRestorePrice)}</dd>
               </div>
-              <div>
+              {read.failureRecovery.firstObjectivePrice !== null && <div>
                 <dt>First recovery objective</dt>
-                <dd>{read.failureRecovery.firstObjectivePrice === null
-                  ? "No defensible objective mapped"
-                  : `$${formatPrice(read.failureRecovery.firstObjectivePrice)}`}</dd>
-              </div>
+                <dd>${formatPrice(read.failureRecovery.firstObjectivePrice)}</dd>
+              </div>}
             </dl>
-          ) : (
-            <p>A recovery attempt is unavailable until a lower base and explicit reclaim are established.</p>
-          )}
+            {read.failureRecovery.rationale.trim() ? <p>{read.failureRecovery.rationale}</p> : null}</>
+          ) : null}
         </section>
       ) : downsideCheckpoints.length > 0 ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-downside">
@@ -732,7 +731,7 @@ function TradersLinkAiReadCard({
       ) : null}
 
       <div className="watchlist-ai-read-context-grid">
-        {read.catalystRealityCheck.status === "confirmed" &&
+        {!hidden.has("catalystRealityCheck") && read.catalystRealityCheck.status === "confirmed" &&
         read.catalystRealityCheck.sourceUrls.length > 0 ? (
           <section className="watchlist-ai-read-section">
             <div className="watchlist-ai-read-section-heading">
@@ -752,7 +751,7 @@ function TradersLinkAiReadCard({
             </p>
           </section>
         ) : null}
-        {read.externalResearchEnabled === true ? (
+        {!hidden.has("dilutionRisk") && read.externalResearchEnabled === true ? (
             <section className="watchlist-ai-read-section">
               <div className="watchlist-ai-read-section-heading">
                 <h3>Dilution risk</h3>
@@ -784,7 +783,7 @@ function TradersLinkAiReadCard({
         ) : null}
       </div>
 
-      {read.externalResearchEnabled === true &&
+      {!hidden.has("listingStatus") && read.externalResearchEnabled === true &&
        read.listingStatus.status !== "none" &&
       read.listingStatus.status !== "unknown" &&
       (read.listingStatus.immediacy === "near_term" ||
@@ -831,6 +830,12 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
+      {!hidden.has("riskSummary") && read.riskSummary.length > 0 ? (
+        <section className="watchlist-ai-read-section">
+          <h3>Risk notes</h3>
+          <ul>{read.riskSummary.map((risk, index) => <li key={index}>{risk}</li>)}</ul>
+        </section>
+      ) : null}
       <p className="watchlist-ai-read-meta">
         Market data as of {formatDateTime(read.dataAsOf)}. Generated {formatDateTime(read.generatedAt)}.
         AI-assisted preparation only; live price action and risk controls remain decisive. AI can make
