@@ -9,6 +9,23 @@ function integer(value: number, maximum = 1_000_000): number {
   return value;
 }
 
+type SharedConnectionStatus = Readonly<{
+  label: string | null;
+  lastProviderAttemptAtUtc: string | null;
+  message: string;
+  state: "not_configured" | "needs_reconnection" | "missing_quote_data" | "not_checked" | "working" | "provider_unavailable";
+}>;
+
+function authorizedForQuoteData(serializedScopes: string | null): boolean {
+  if (!serializedScopes) return false;
+  try {
+    const scopes: unknown = JSON.parse(serializedScopes);
+    return Array.isArray(scopes) && scopes.includes("quote:read");
+  } catch {
+    return false;
+  }
+}
+
 export class SharedAnalyzerAdministrationRepository {
   constructor(private readonly database: Database.Database, private readonly scope: JournalAdminScope) {}
 
@@ -39,9 +56,50 @@ ORDER BY lower(user.display_name), user.user_id`).all() as readonly {
       user_id: string; display_name: string; daily_limit: number | null; period_limit: number | null;
     }[];
     const designated = this.database.prepare(`SELECT designated_user_id, designated_workspace_id,
- designated_account_id FROM level_analysis_shared_analyzer_settings
+ designated_account_id, updated_at_utc FROM level_analysis_shared_analyzer_settings
 WHERE settings_key = 'beta'`).get() as { designated_user_id: string | null;
-      designated_workspace_id: string | null; designated_account_id: string | null } | undefined;
+      designated_workspace_id: string | null; designated_account_id: string | null;
+      updated_at_utc: string } | undefined;
+    const sharedConnectionRow = this.database.prepare(`SELECT connection.connection_state,
+ connection.authorized_scopes, connection.updated_at_utc AS connection_updated_at_utc,
+ user.display_name AS user_label, account.display_name AS account_label
+FROM platform_broker_connections connection
+JOIN platform_users user ON user.user_id = connection.user_id
+JOIN journal_accounts account ON account.workspace_id = connection.workspace_id
+ AND account.account_id = ?
+WHERE connection.user_id = ? AND connection.workspace_id = ?
+  AND connection.provider = 'moomoo'
+LIMIT 1`).get(
+      designated?.designated_account_id ?? "",
+      designated?.designated_user_id ?? "",
+      designated?.designated_workspace_id ?? "",
+    ) as Readonly<{
+      connection_state: "active" | "reauthorization_required" | "revoked";
+      authorized_scopes: string;
+      connection_updated_at_utc: string;
+      user_label: string;
+      account_label: string;
+    }> | undefined;
+    const latestProviderAttempt = this.database.prepare(`SELECT outcome, occurred_at_utc
+FROM (
+  SELECT outcome, completed_at_utc AS occurred_at_utc, acquisition_id AS sequence_id
+  FROM level_analysis_analyzer_acquisitions
+  WHERE completed_at_utc IS NOT NULL
+  UNION ALL
+  SELECT status AS outcome, updated_at_utc AS occurred_at_utc, logical_trade_analysis_id AS sequence_id
+  FROM journal_logical_trade_daily_analyses
+  WHERE status = 'provider_unavailable'
+)
+ORDER BY occurred_at_utc DESC, sequence_id DESC
+LIMIT 1`).get() as Readonly<{
+      outcome: "ready" | "no_coverage" | "provider_unavailable";
+      occurred_at_utc: string;
+    }> | undefined;
+    const sharedConnection = this.sharedConnectionStatus({
+      configuredAtUtc: designated?.updated_at_utc ?? null,
+      connection: sharedConnectionRow ?? null,
+      latestProviderAttempt: latestProviderAttempt ?? null,
+    });
     return Object.freeze({ settings, usage: Object.freeze({ total: usage.total,
       charged: usage.charged ?? 0, waived: usage.waived ?? 0, rolling: usage.rolling ?? 0 }),
       designatedConnection: designated?.designated_user_id && designated.designated_workspace_id && designated.designated_account_id
@@ -49,11 +107,62 @@ WHERE settings_key = 'beta'`).get() as { designated_user_id: string | null;
       connections: Object.freeze(connections.map((item) => Object.freeze({
         userId: item.user_id, workspaceId: item.workspace_id, accountId: item.account_id,
         label: `${item.user_label} · ${item.account_label}`,
-      }))), users: Object.freeze(users.map((item) => Object.freeze({
+      }))), sharedConnection, users: Object.freeze(users.map((item) => Object.freeze({
         userId: item.user_id, label: item.display_name,
         dailyOverride: item.daily_limit, periodOverride: item.period_limit,
         availability: allowance.availability(item.user_id, now),
       }))) });
+  }
+
+  private sharedConnectionStatus(input: Readonly<{
+    configuredAtUtc: string | null;
+    connection: Readonly<{
+      connection_state: "active" | "reauthorization_required" | "revoked";
+      authorized_scopes: string;
+      connection_updated_at_utc: string;
+      user_label: string;
+      account_label: string;
+    }> | null;
+    latestProviderAttempt: Readonly<{
+      outcome: "ready" | "no_coverage" | "provider_unavailable";
+      occurred_at_utc: string;
+    }> | null;
+  }>): SharedConnectionStatus {
+    if (!input.configuredAtUtc) {
+      return Object.freeze({ label: null, lastProviderAttemptAtUtc: null,
+        message: "No shared Moomoo connection is selected for Trade Analyzer.", state: "not_configured" });
+    }
+    if (!input.connection) {
+      return Object.freeze({ label: null, lastProviderAttemptAtUtc: input.latestProviderAttempt?.occurred_at_utc ?? null,
+        message: "The selected shared Moomoo connection is no longer available. Select an active connection before Trade Analyzer can request market data.", state: "needs_reconnection" });
+    }
+    const label = `${input.connection.user_label} · ${input.connection.account_label}`;
+    if (input.connection.connection_state !== "active") {
+      return Object.freeze({ label, lastProviderAttemptAtUtc: input.latestProviderAttempt?.occurred_at_utc ?? null,
+        message: "This connection needs to be reconnected before Trade Analyzer can request market data.", state: "needs_reconnection" });
+    }
+    if (!authorizedForQuoteData(input.connection.authorized_scopes)) {
+      return Object.freeze({ label, lastProviderAttemptAtUtc: input.latestProviderAttempt?.occurred_at_utc ?? null,
+        message: "This connection is active but does not have the quote-data permission Trade Analyzer needs.", state: "missing_quote_data" });
+    }
+    const lastProviderAttemptAtUtc = input.latestProviderAttempt?.occurred_at_utc ?? null;
+    const connectionReadyAt = Math.max(
+      Date.parse(input.configuredAtUtc),
+      Date.parse(input.connection.connection_updated_at_utc),
+    );
+    if (!input.latestProviderAttempt || Date.parse(input.latestProviderAttempt.occurred_at_utc) < connectionReadyAt) {
+      return Object.freeze({ label, lastProviderAttemptAtUtc,
+        message: "This connection is ready for quote data, but Trade Analyzer has not recorded a provider response since it was selected or reconnected.", state: "not_checked" });
+    }
+    if (input.latestProviderAttempt.outcome === "provider_unavailable") {
+      return Object.freeze({ label, lastProviderAttemptAtUtc,
+        message: "The latest shared Moomoo provider request failed. The connection owner and TradersLink owner were notified.", state: "provider_unavailable" });
+    }
+    return Object.freeze({ label, lastProviderAttemptAtUtc,
+      message: input.latestProviderAttempt.outcome === "no_coverage"
+        ? "Moomoo responded to the latest request, but did not have data for that requested session."
+        : "Moomoo responded successfully to the latest shared Trade Analyzer request.",
+      state: "working" });
   }
 
   saveSettings(input: Readonly<{

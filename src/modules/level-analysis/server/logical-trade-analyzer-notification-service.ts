@@ -7,6 +7,7 @@ import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/datab
 import { notifyJournalOwnerOfDailyTradeAnalyzerFailure } from "@/src/modules/platform/server/notifications/platform-journal-owner-alert-service";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import type { LogicalTradeAnalyzerTarget } from "./logical-trade-analyzer-repository";
+import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
 
 function workspaceScope(scope: AccountScope): WorkspaceAccessScope {
   return Object.freeze({ activeAccountId: scope.accountId,
@@ -54,5 +55,23 @@ export class LogicalTradeAnalyzerNotificationService {
 
   notifyFailure(input: Readonly<{ occurredAt: Date; scope: AccountScope; target: LogicalTradeAnalyzerTarget }>): void {
     this.create({ ...input, kind: "failure" });
+  }
+
+  /** Alerts the owner of the designated shared Moomoo connection without exposing it to the requesting trader. */
+  notifySharedConnectionFailure(input: Readonly<{ occurredAt: Date; scope: AccountScope; target: LogicalTradeAnalyzerTarget }>): void {
+    this.create({ ...input, kind: "failure" });
+    const designated = new SharedAnalyzerAllowanceRepository(this.database).designatedScope();
+    if (!designated) return;
+    new PlatformNotificationRepository(this.database).create({
+      category: "broker_connection",
+      destinationPath: "/account/trading",
+      journalAccountId: designated.accountId,
+      kind: "broker_connection_reauthorization_required",
+      occurredAtUtc: createCanonicalUtcTimestamp(input.occurredAt),
+      scope: workspaceScope(designated),
+      sourceEventKey: `shared_moomoo_analyzer_failed_${input.target.logicalTradeVersionId}`,
+      summary: "The Moomoo connection used by Trade Analyzer needs attention before more market-data updates can run.",
+      title: "Shared Moomoo connection needs attention",
+    });
   }
 }

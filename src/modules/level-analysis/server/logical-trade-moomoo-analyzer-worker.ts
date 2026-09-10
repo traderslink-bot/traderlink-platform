@@ -56,7 +56,10 @@ export class LogicalTradeMoomooAnalyzerWorker {
         this.logical.persistResult({ analyzed: null, marketSessionSetVersionId: null,
           now: this.now(), scope: job.scope, status: "provider_unavailable", target: job.target });
         this.logical.finish(job.jobId, "provider_unavailable", this.now());
-        this.notifications?.notifyFailure({ occurredAt: this.now(), scope: job.scope, target: job.target });
+        const notification = diagnosticStage === "create_moomoo_provider" || diagnosticStage === "fetch_moomoo_candles"
+          ? this.notifications?.notifySharedConnectionFailure.bind(this.notifications)
+          : this.notifications?.notifyFailure.bind(this.notifications);
+        notification?.({ occurredAt: this.now(), scope: job.scope, target: job.target });
       } else {
         this.logical.reschedule(job.jobId, new Date(this.now().getTime() + 60_000), this.now());
       }
@@ -107,7 +110,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
         this.logical.persistResult({ analyzed: null, marketSessionSetVersionId: sessionVersionId,
           now: startedAt, scope: job.scope, status: "provider_unavailable", target: job.target });
         this.logical.finish(job.jobId, "provider_unavailable", startedAt);
-        this.notifications?.notifyFailure({ occurredAt: startedAt, scope: job.scope, target: job.target });
+        this.notifications?.notifySharedConnectionFailure({ occurredAt: startedAt, scope: job.scope, target: job.target });
         return true;
       }
       let provider: MarketDataProvider;
@@ -154,7 +157,10 @@ export class LogicalTradeMoomooAnalyzerWorker {
         this.logical.persistResult({ analyzed: null, marketSessionSetVersionId: sessionVersionId,
           now: completedAt, scope: job.scope, status: outcome, target: job.target });
         this.logical.finish(job.jobId, outcome, completedAt);
-        this.notifications?.notifyFailure({ occurredAt: completedAt, scope: job.scope, target: job.target });
+        (outcome === "provider_unavailable"
+          ? this.notifications?.notifySharedConnectionFailure.bind(this.notifications)
+          : this.notifications?.notifyFailure.bind(this.notifications)
+        )?.({ occurredAt: completedAt, scope: job.scope, target: job.target });
         return true;
       }
       current = result.candles;

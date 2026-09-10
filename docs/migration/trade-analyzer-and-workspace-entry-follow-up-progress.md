@@ -39,6 +39,24 @@ Related plan:
   avoids unsaved changes, checks document visibility, and cleans up both its
   timer and visibility listener.
 
+## Shared Moomoo connection status — 2026-09-10
+
+- The private Trade Analyzer administration page now identifies the exact
+  designated shared Moomoo user and Journal account outside the editable
+  selector.
+- Its health state distinguishes no selection, reconnect required, missing
+  quote-data permission, no provider response since selection/reconnection,
+  a latest provider failure, and a successful provider response. It does not
+  claim live provider health merely because a connection is selected.
+- A shared-provider failure now also creates a deduplicated in-app alert for
+  the designated connection owner. Existing terminal Analyzer failure handling
+  continues to alert the TradersLink owner and enqueue that owner's confirmed
+  email delivery; no email address or credential is stored in page code.
+- `git diff --check` passes. This assigned low-resource worktree has no
+  installed dependencies, so targeted lint/type and rendered staging review
+  remain the next checkpoint; no server, provider request, migration or
+  notification was triggered during this source-only work.
+
 ## 2026-09-04 shared Moomoo acquisition regression repair
 
 - Production review of valid IMRN and CDTG submissions exposed a regression in
