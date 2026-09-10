@@ -1,0 +1,101 @@
+/* Focused synthetic QA only: no database, provider, app server or test runner. */
+const fs = require("node:fs");
+const vm = require("node:vm");
+const assert = require("node:assert/strict");
+const ts = require("typescript");
+const Decimal = require("decimal.js");
+let savedTrades = [];
+const logical = new Map();
+function compile(file, suffix = "") {
+  const module = { exports: {} };
+  const source = ts.transpileModule(fs.readFileSync(file, "utf8") + suffix, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText;
+  vm.runInNewContext(source, { module, exports: module.exports, require: (name) => {
+    if (name === "decimal.js") return Decimal;
+    if (name.endsWith("daily-trade-entry-exit-math")) return math;
+    if (name.endsWith("journal-logical-trade-repository")) return { JournalLogicalTradeRepository: class { list() { return savedTrades; } } };
+    if (name.endsWith("logical-trade-analyzer-repository")) return { LogicalTradeAnalyzerRepository: class { readCurrentByRoundTrip(_scope, id) { return logical.get(id); } } };
+    if (name.endsWith("journal-profit-protection-outcome-service") || name.endsWith("daily-trade-path-materialization-repository") || name.endsWith("daily-trade-v2-scenario-analyzer")) return {};
+    throw new Error(`Unexpected dependency: ${name}`);
+  } }, { filename: file });
+  return module.exports;
+}
+const math = compile("src/modules/level-analysis/server/daily-trade-entry-exit-math.ts");
+const service = compile("src/modules/level-analysis/server/daily-trade-long-term-analytics-service.ts", "\nexport { buildEntryExitProjection, parseEvent, entryPathFromSavedCandles };\n");
+let checks = 0;
+const equal = (actual, expected) => { assert.equal(actual, expected); checks += 1; };
+const event = (kind, sequence, minute, price, quantity, day = "2026-09-02") => ({
+  event: { eventId: `e-${sequence}`, kind, sequence, executedAtUtc: `${day}T13:${minute}:00Z`, priceDecimal: String(price), quantityDecimal: String(quantity), feesDecimal: "-1" },
+  metrics: { vwapDistance: { signedDistancePercent: 0 }, ema9Distance: { signedDistancePercent: 0 } }, indicators: { relativeVolume: 1 },
+});
+const eventsA = [event("entry", 1, "30", 1, 100, "2026-08-31"), event("partial_exit", 2, "31", 1.4, 50, "2026-08-31"), event("final_exit", 3, "32", 1.2, 50, "2026-08-31"), event("entry", 4, "40", 1, 100), event("final_exit", 5, "42", 0.9, 100)];
+const eventsB = [event("entry", 1, "30", 1, 50), event("add", 2, "30", 1, 50), event("final_exit", 3, "31", 1.5, 100)];
+const eventsC = [event("entry", 1, "30", 1, 100), event("final_exit", 2, "31", 1, 100)];
+eventsA[2].event.kind = "temporary_flat";
+const raw = (snapshots) => snapshots.map((snapshot) => service.parseEvent({ event_kind: snapshot.event.kind === "temporary_flat" ? "final_exit" : snapshot.event.kind, snapshot_json: JSON.stringify(snapshot) }));
+const candle = (minute, high = "1.5", low = "0.8") => ({ candle_time_utc_seconds: Date.parse(`2026-09-02T13:${minute}:00Z`) / 1000, high_decimal: high, low_decimal: low, close_decimal: "1" });
+const aCandles = [candle("41")];
+equal(math.entryExitPeakProfit(raw(eventsA), aCandles, "long", "gross"), "80");
+equal(math.entryExitPeakProfit(raw(eventsA), aCandles, "long", "net"), "76");
+equal(math.entryExitPeakProfit(raw(eventsA), [], "long", "gross"), null);
+equal(math.entryExitPeakProfit(raw(eventsC), [], "long", "gross"), "0");
+equal(math.entryExitPeakProfit(raw(eventsC).map((e) => ({ ...e, feesDecimal: null })), [], "long", "net"), null);
+const short = [event("entry", 1, "30", 2, 100), event("final_exit", 2, "32", 1.5, 100)];
+equal(math.entryExitPeakProfit(raw(short), [candle("31", "3", "1")], "short", "gross"), "100");
+const path = { minutesAfterEvent: 5, observedAtCandleTime: null, oppositeDirectionMoveDecimal: null, tradeDirectionMoveDecimal: null };
+const pathCandles = new Map(["31", "32", "33", "34", "35"].map((m) => { const c = candle(m, m === "35" ? "100" : "2"); return [c.candle_time_utc_seconds, c]; }));
+equal(service.entryPathFromSavedCandles(raw(eventsC)[0], path, "long", pathCandles).tradeDirectionMoveDecimal, "1");
+pathCandles.delete(candle("33").candle_time_utc_seconds);
+equal(service.entryPathFromSavedCandles(raw(eventsC)[0], path, "long", pathCandles).tradeDirectionMoveDecimal, null);
+const member = (id) => ({ roundTripId: id, roundTripVersionId: `v-${id}` });
+const saved = (id, ids) => ({ logicalTradeId: id, members: ids.map(member), tradeStyle: "day", lifecycleState: "active", direction: "long", symbol: "SAME", openedAtUtc: "2026-08-31T13:30:00Z", closedAtUtc: "2026-09-02T13:42:00Z" });
+savedTrades = [saved("trade-a", ["a1", "a2"]), saved("trade-b", ["b"]), saved("trade-c", ["c"])];
+logical.set("a1", { status: "ready", analyzed: { eventSnapshots: eventsA }, candles: aCandles.map((c) => ({ time: c.candle_time_utc_seconds, highDecimal: c.high_decimal, lowDecimal: c.low_decimal, closeDecimal: c.close_decimal })) });
+const facts = new Map([["b", { events: raw(eventsB), savedCandles: [], roundTripVersionId: "v-b" }], ["c", { events: raw(eventsC), savedCandles: [], roundTripVersionId: "v-c" }]]);
+const row = (id, pnl, closeLocalDate = "2026-09-02") => ({ roundTripId: id, displayedSymbol: "SAME", direction: "long", openedAtUtc: "2026-08-31T13:30:00Z", closedAtUtc: `${closeLocalDate}T13:42:00Z`, entryLocalDate: "2026-08-31", closeLocalDate, tradeClassification: "day_trade", selectedPnlDecimal: pnl, grossPnlDecimal: pnl, entryNotionalDecimal: "100", holdingDurationMilliseconds: 60000 });
+const rows = [row("a1", "30", "2026-08-31"), row("a2", "-10"), row("b", "50"), row("c", "0")];
+const scope = { activeAccountId: "account", allowedAccountIds: ["account"], userId: "user", workspaceId: "workspace", workspaceRole: "owner" };
+const run = (input = rows, basis = "gross", rates = new Map(), dates = { startDate: "2026-09-02", endDate: "2026-09-02" }) => service.buildEntryExitProjection({}, scope, input, facts, basis, "America/New_York", rates, dates);
+let result = run();
+equal(result.analyzedTradeCount, 3);
+equal(result.trades.length, 3);
+equal(result.trades.find((t) => t.roundTripId === "a1").actualPnlDecimal, "20");
+equal(result.trades.find((t) => t.roundTripId === "a1").capturedPercent, 25);
+equal(result.executionContextRows.filter((r) => r.roundTripId === "a1").length, 5);
+equal(result.executionContextRows.filter((r) => r.roundTripId === "a1").every((r) => r.actualPnlDecimal === "20"), true);
+equal(result.executionContextRows.filter((r) => r.eventKind === "Final exit" && r.isLastTradeExit && new Decimal(r.executionGrossPnlDecimal).gt(0)).length, 1);
+const group = result.entryContextByDirection.long.vwap.find((g) => g.label.startsWith("Initial entry"));
+equal(group.tradeCount, 3);
+equal(group.occurrenceCount, 4);
+equal(group.totalPnlDecimal, "70");
+equal(group.averageReturnPercent, 20);
+equal(result.holdingDurationByDirection.long[0].tradeCount, 3);
+equal(result.entryContextByDirection.long.vwap.find((g) => g.label.startsWith("Add")).tradeCount, 1);
+equal(run(rows, "gross", new Map(), { startDate: "2026-08-31", endDate: "2026-08-31" }).trades.length, 0);
+const netRows = rows.map((r) => ({ ...r, selectedPnlDecimal: ({ a1: "27", a2: "-12", b: "47", c: "-2" })[r.roundTripId] }));
+equal(run(netRows, "net").trades.find((t) => t.roundTripId === "a1").actualPnlDecimal, "15");
+equal(run(netRows, "net").trades.find((t) => t.roundTripId === "a1").capturedPercent, new Decimal(15).div(76).mul(100).toNumber());
+const doubled = rows.map((r) => ({ ...r, selectedPnlDecimal: new Decimal(r.selectedPnlDecimal).mul(2).toString(), entryNotionalDecimal: "200" }));
+const converted = run(doubled, "gross", new Map(rows.map((r) => [r.roundTripId, "2"])));
+equal(converted.trades.find((t) => t.roundTripId === "a1").capturedPercent, 25);
+equal(converted.trades.find((t) => t.roundTripId === "a1").actualPnlDecimal, "40");
+const missing = run(rows.map((r) => r.roundTripId === "a2" ? { ...r, selectedPnlDecimal: null } : r));
+equal(missing.entryExitExcludedTradeCount, 1);
+equal(missing.trades.some((t) => t.roundTripId === "a1"), false);
+const noFinancials = run(rows.map((r) => ({ ...r, selectedPnlDecimal: null })));
+equal(noFinancials.directionTradeCounts.long, 3);
+equal(noFinancials.directionTradeCounts.short, 0);
+equal(noFinancials.entryExitExcludedTradeCount, 3);
+equal(noFinancials.trades.length, 0);
+equal(run(doubled, "gross", new Map(rows.map((r) => [r.roundTripId, r.roundTripId === "a1" ? "2.0" : "2"]))).entryExitExcludedTradeCount, 0);
+equal(run(rows, "gross", new Map([["a1", "2"], ["a2", "3"]])).entryExitExcludedTradeCount, 1);
+facts.set("c", { ...facts.get("c"), roundTripVersionId: "stale" });
+equal(run().analyzedTradeCount, 2);
+const held = [event("entry", 1, "30", 1, 100), event("final_exit", 2, "32", 0.5, 100)];
+equal(math.entryExitPeakProfit(raw(held), [candle("31", "1.4", "0.9")], "long", "gross"), "40");
+equal(100 - new Decimal(-50).div(40).mul(100).toNumber(), 225);
+const beforeMutation = JSON.stringify(eventsA);
+math.entryExitPeakProfit(raw(eventsA), aCandles, "long", "gross");
+equal(JSON.stringify(eventsA), beforeMutation);
+console.log(`PASS: ${checks} focused Entry/Exit numeric and identity checks; synthetic data only.`);

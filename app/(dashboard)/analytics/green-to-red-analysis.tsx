@@ -148,20 +148,25 @@ function Metric({
 function DamagePanel({
   currency,
   emptyMessage,
+  help,
   rows,
   title,
-  totalTurnedRed,
+  totalFinishedRed,
 }: {
   currency: string | null;
   emptyMessage?: string;
+  help: string;
   rows: readonly TradeAnalysisGreenToRedOpportunityRow[];
   title: string;
-  totalTurnedRed: number;
+  totalFinishedRed: number;
 }) {
   return <Box>
-    <Typography sx={{ fontWeight: 850 }}>{title}</Typography>
+    <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
+      <Typography sx={{ fontWeight: 850 }}>{title}</Typography>
+      <Tooltip arrow title={help}><IconButton aria-label={`Explain ${title}`} size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+    </Stack>
     <Typography sx={{ fontSize: "1.05rem", fontWeight: 800 }}>
-      {percent(rate(rows.length, totalTurnedRed))} · {rows.length} of {totalTurnedRed}
+      {percent(rate(rows.length, totalFinishedRed))} · {rows.length} of {totalFinishedRed}
     </Typography>
     {rows.length === 0 && emptyMessage ? <Typography color="text.secondary" sx={{ mt: 0.4 }} variant="body2">{emptyMessage}</Typography> : <Stack spacing={0.2} sx={{ mt: 0.4 }}>
       <Typography color="text.secondary" variant="body2">Maximum profit opportunity: {money(sum(rows, (row) => row.maximumGrossProfitOpportunityDecimal), currency)}</Typography>
@@ -213,7 +218,7 @@ export function GreenToRedAnalysis({
   totalTradeCount: number;
 }) {
   const [detailsTrade, setDetailsTrade] = useState<TradeAnalysisGreenToRedOpportunityRow | null>(null);
-  const [filter, setFilter] = useState<EvidenceFilter>("all");
+  const [filter, setFilter] = useState<EvidenceFilter>("finished_red");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const endedRedRows = useMemo(() => rows.filter((row) => new Decimal(row.finalGrossPnlDecimal).isNegative()), [rows]);
@@ -224,7 +229,7 @@ export function GreenToRedAnalysis({
   const recoveredRows = useMemo(() => turnedRedRows.filter((row) => row.recoveredAfterTurningRed), [turnedRedRows]);
   const recoveredFinishedGreenRows = useMemo(() => recoveredRows.filter((row) => !new Decimal(row.finalGrossPnlDecimal).isNegative()), [recoveredRows]);
   const recoveredFinishedRedRows = useMemo(() => recoveredRows.filter((row) => new Decimal(row.finalGrossPnlDecimal).isNegative()), [recoveredRows]);
-  const peakZoneOutcomes = useMemo(() => buildPeakZoneOutcomes(rows), [rows]);
+  const peakZoneOutcomes = useMemo(() => buildPeakZoneOutcomes(endedRedRows), [endedRedRows]);
   const filteredRows = useMemo(() => rows.filter((row) => {
     if (filter === "turned_red") return row.firstRedAfterTwentyAtUtcSeconds !== null;
     if (filter === "finished_red") return new Decimal(row.finalGrossPnlDecimal).isNegative();
@@ -236,57 +241,63 @@ export function GreenToRedAnalysis({
   const directionLabel = direction === "long" ? "long" : "short";
 
   return <Stack spacing={1.75}>
-    <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(5, minmax(0, 1fr))" } }}>
-      <Metric detail={`${rows.length} of ${totalTradeCount} completed ${directionLabel} trades`} help="A trade is included when the stock price moved 20% or more in the trade's profitable direction while shares were still open. There is no time requirement." label="Reached +20%" value={percent(rate(rows.length, totalTradeCount))} />
-      <Metric detail={`Across the ${rows.length} trades that reached +20%`} help="The sum of each trade's largest calculated Gross profit opportunity while shares were still open." label="Profit opportunity" tone={financialOutcomeColor(sum(rows, (row) => row.maximumGrossProfitOpportunityDecimal))} value={money(sum(rows, (row) => row.maximumGrossProfitOpportunityDecimal), currency)} />
-      <Metric detail={`${profitTakenRows.length} of ${rows.length} trades took some profit`} help="Exact Gross profit realized on profitable exit executions in the trades that reached +20%." label="Profit taken" tone={financialOutcomeColor(sum(rows, (row) => row.profitSecuredGrossDecimal))} value={money(sum(rows, (row) => row.profitSecuredGrossDecimal), currency)} />
-      <Metric detail={`${turnedRedRows.length} of ${rows.length} trades that reached +20%`} help="Trades whose total Gross P/L later moved below $0. A later favorable candle or exit may show that the trade recovered." label="Turned red" value={percent(rate(turnedRedRows.length, rows.length))} />
-      <Metric detail={`${percent(rate(endedRedRows.length, rows.length))} · ${endedRedRows.length} of ${rows.length} trades`} help="Combined realized Gross loss from trades that reached +20% or more but finished below $0. The percentage uses all trades that reached +20%." label="Finished red" tone={financialOutcomeColor(sum(endedRedRows, (row) => row.finalGrossPnlDecimal))} value={money(sum(endedRedRows, (row) => row.finalGrossPnlDecimal), currency)} />
+    <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" } }}>
+      <Metric detail={`${rows.length} of ${totalTradeCount} completed ${directionLabel} trades`} help="The share price reached a gain of at least 20% compared with the average entry price of the shares still held. For longs, that means a price rise; for shorts, a price drop. No minimum time is required. The percentage uses the analyzed trades in your selected date range and direction." label="Reached +20%" value={percent(rate(rows.length, totalTradeCount))} />
+      <Metric detail={`${endedRedRows.length} of ${rows.length} trades that reached +20%`} help="The percentage of trades that reached +20% or more but finished with a Gross loss. Temporary recoveries followed by red finishes are included once." label="Finished red" value={percent(rate(endedRedRows.length, rows.length))} />
+      <Metric detail={`From those same ${endedRedRows.length} finished-red trades`} help="Combined Gross profit opportunity from only the trades that reached +20% and finished red. Each amount includes realized P/L plus potential profit on shares still held at that trade's highest percentage gain. Both this card and Actual losses use exactly the same trades." label="Profit opportunity before the loss" value={money(sum(endedRedRows, (row) => row.maximumGrossProfitOpportunityDecimal), currency)} />
+      <Metric detail={`${percent(rate(endedRedRows.length, rows.length))} · ${endedRedRows.length} of ${rows.length} trades`} help="The final Gross loss from the same trades shown in Profit opportunity before the loss. This is money actually lost before broker fees. Any earlier profit taken is already included in final P/L; do not subtract it again." label="Actual losses" tone={financialOutcomeColor(sum(endedRedRows, (row) => row.finalGrossPnlDecimal))} value={money(sum(endedRedRows, (row) => row.finalGrossPnlDecimal), currency)} />
     </Box>
 
     <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
       <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", mb: 1.25 }}>
         <Typography sx={{ fontWeight: 850 }}>Profit opportunity that finished red</Typography>
-        <Tooltip arrow title="Percentages in this section use only trades that turned red after reaching +20%. No profit taken and Some profit taken show those that finished red. Recovery also includes trades that recovered but later finished red, so these groups can overlap."><IconButton aria-label="Explain profit opportunity that finished red" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+        <Tooltip arrow title="Looks only at trades that reached +20% and finished with a Gross loss. The two groups separate them by whether they took any profit: $0 goes in No profit taken; more than $0 goes in Some profit taken. Their percentages use only trades that finished red. Profit opportunity + realized loss adds the earlier opportunity to the size of the final loss. Recovery can be temporary: a trade that recovered and finished red is already counted in the finished-red groups, not an extra trade."><IconButton aria-label="Explain profit opportunity that finished red" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
       </Stack>
-      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(3, minmax(0, 1fr))" } }}>
-        <DamagePanel currency={currency} emptyMessage="No trades finished red without taking some profit." rows={noProfitEndedRedRows} title="No profit taken" totalTurnedRed={turnedRedRows.length} />
-        <Box sx={{ borderColor: "divider", borderLeft: { md: 1 }, pl: { md: 1.5 } }}><DamagePanel currency={currency} rows={someProfitEndedRedRows} title="Some profit taken" totalTurnedRed={turnedRedRows.length} /></Box>
-        <Box sx={{ borderColor: "divider", borderLeft: { md: 1 }, pl: { md: 1.5 } }}>
-          <Typography sx={{ fontWeight: 850 }}>Recovered after turning red</Typography>
+      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" } }}>
+        <DamagePanel currency={currency} emptyMessage="No trades finished red without taking some profit." help="Trades that reached +20% but finished with a Gross loss without taking any profit. Their profitable exits total $0. The percentage uses only trades that reached +20% and finished red, not all analyzed trades." rows={noProfitEndedRedRows} title="No profit taken" totalFinishedRed={endedRedRows.length} />
+        <Box sx={{ borderColor: "divider", borderLeft: { md: 1 }, pl: { md: 1.5 } }}><DamagePanel currency={currency} help="Trades that reached +20% and took more than $0 in profit, but still finished with a Gross loss overall. Profit taken adds their profitable exits; Final Gross loss includes their losing exits too. Profit may have been taken before or after the trade turned red. The percentage uses only trades that reached +20% and finished red." emptyMessage="No finished-red trades took any profit." rows={someProfitEndedRedRows} title="Some profit taken" totalFinishedRed={endedRedRows.length} /></Box>
+    </Box>
+    </Paper>
+
+    <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
+          <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
+            <Typography sx={{ fontWeight: 850 }}>Recovered after turning red</Typography>
+            <Tooltip arrow title="Trades whose total Gross P/L returned above $0 after turning red. The percentage uses all trades that turned red after reaching +20%. Recovery does not mean the trade finished green: the lines below separate those that finished green from those that later finished red again. Those red finishes are already included in the finished-red groups, so do not add them again."><IconButton aria-label="Explain Recovered after turning red" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+          </Stack>
           <Typography sx={{ fontSize: "1.05rem", fontWeight: 800 }}>{percent(rate(recoveredRows.length, turnedRedRows.length))} · {recoveredRows.length} of {turnedRedRows.length} recovered after turning red</Typography>
           <Stack spacing={0.2} sx={{ mt: 0.4 }}>
             <Typography color="text.secondary" variant="body2">{recoveredFinishedGreenRows.length} finished {recoveredFinishedGreenRows.some((row) => new Decimal(row.finalGrossPnlDecimal).isZero()) ? "green or flat" : "green"} · {money(sum(recoveredFinishedGreenRows, (row) => row.finalGrossPnlDecimal), currency)}</Typography>
             <Typography color="text.secondary" variant="body2">{recoveredFinishedRedRows.length} recovered but later finished red · {money(sum(recoveredFinishedRedRows, (row) => row.finalGrossPnlDecimal), currency)}</Typography>
             <Typography color="text.secondary" variant="body2">{turnedRedRows.length - recoveredRows.length} never recovered</Typography>
           </Stack>
-        </Box>
+        </Paper>
+    <Box component="details" sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: 1.5 }}>
+      <Box component="summary" sx={{ cursor: "pointer", fontWeight: 850, minHeight: 32, "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 3 } }}>All trades that reached +20%</Box>
+      <Typography color="text.secondary" variant="body2" sx={{ my: 1 }}>Broader context across all {rows.length} trades, including those that finished green.</Typography>
+      <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(3, minmax(0, 1fr))" } }}>
+      <Metric detail={`Across the ${rows.length} trades that reached +20%`} help="Adds each trade's Gross profit opportunity at its highest percentage gain. Each amount includes profit or loss already realized, plus the potential profit on shares still held at that price. Broker fees are not deducted." label="Profit opportunity" tone={financialOutcomeColor(sum(rows, (row) => row.maximumGrossProfitOpportunityDecimal))} value={money(sum(rows, (row) => row.maximumGrossProfitOpportunityDecimal), currency)} />
+      <Metric detail={`${profitTakenRows.length} of ${rows.length} trades took some profit`} help="Adds the Gross gains from profitable exits in trades that reached +20%, including partial and full exits. Losing exits are not subtracted here; they are included in Final Gross P/L. A trade counts as taking profit only when it secured more than $0." label="Profit taken" tone={financialOutcomeColor(sum(rows, (row) => row.profitSecuredGrossDecimal))} value={money(sum(rows, (row) => row.profitSecuredGrossDecimal), currency)} />
+      <Metric detail={`${turnedRedRows.length} of ${rows.length} trades that reached +20%`} help="Trades that reached +20% and later had a total Gross P/L below $0, including realized P/L and the value of shares still held. Some recovered; others finished red. The percentage uses all trades that reached +20%." label="Turned red" value={percent(rate(turnedRedRows.length, rows.length))} />
       </Box>
-    </Paper>
+    </Box>
 
     <Box>
       <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", mb: 0.75 }}>
         <Typography sx={{ fontWeight: 850 }}>Outcomes by highest profit zone</Typography>
-        <Tooltip arrow title="Each trade appears once in the highest 10% price-gain zone it reached while shares were open. These are not cumulative reached-zone totals."><IconButton aria-label="Explain outcomes by highest profit zone" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+        <Tooltip arrow title="Groups only finished-red trades by the highest percentage gain they reached while shares were held. A trade that peaked at +47% appears only in the 40%–under 50% row, not every lower zone. The final zone includes gains of 100% or more."><IconButton aria-label="Explain outcomes by highest profit zone" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
       </Stack>
-      {peakZoneOutcomes.length === 0 ? <Typography color="text.secondary">No trades in this selection reached +20%.</Typography> : <HorizontalScrollRegion label="Highest profit zone outcomes" minTableWidth={1120} stickyFirstColumn>
+      {peakZoneOutcomes.length === 0 ? <Typography color="text.secondary">No trades that reached +20% finished red in this selection.</Typography> : <HorizontalScrollRegion label="Highest profit zone outcomes" minTableWidth={940} stickyFirstColumn>
         <Table size="small"><TableHead><TableRow>
-          <TableCell><HelpLabel help="The highest non-overlapping 10% gain zone reached by each trade while shares were open." label="Highest zone" /></TableCell>
-          <TableCell align="right"><HelpLabel help="Trades whose highest gain ended in this zone, shown as a count and percentage of all trades that reached +20%." label="Trades" /></TableCell>
-          <TableCell align="right"><HelpLabel help="Combined maximum calculated Gross profit opportunity for these trades." label="Profit opportunity" /></TableCell>
-          <TableCell align="right"><HelpLabel help="Combined Gross profit realized on profitable exit executions in these trades." label="Profit taken" /></TableCell>
-          <TableCell align="right"><HelpLabel help="Trades whose total Gross P/L moved below $0 after first reaching +20%. The percentage uses trades in this row." label="Turned red" /></TableCell>
-          <TableCell align="right"><HelpLabel help="Trades that completed below $0. The percentage uses trades in this row." label="Finished red" /></TableCell>
-          <TableCell align="right"><HelpLabel help="Combined final Gross P/L for every trade in this row." label="Final Gross P/L" /></TableCell>
-          <TableCell align="right"><HelpLabel help="Combined maximum Gross profit opportunity minus combined final Gross P/L." label="Not retained" /></TableCell>
-          <TableCell align="right"><HelpLabel help="Middle amount of completed one-minute candle time each trade spent inside its highest zone." label="Median in zone" /></TableCell>
+          <TableCell><HelpLabel help="The highest gain band the trade reached while shares were held. For example, +30% belongs in 30%–under 40%, not 20%–under 30%. Gains of 100% or more share the top band." label="Highest zone" /></TableCell>
+          <TableCell align="right"><HelpLabel help="Finished-red trades whose highest percentage gain was in this band. The percentage uses all finished-red trades that reached +20%. Each trade appears in one row." label="Finished red" /></TableCell>
+          <TableCell align="right"><HelpLabel help="Adds these trades' Gross profit opportunities at their highest percentage gains, including realized P/L plus potential profit on shares still held. These are whole-trade amounts, not profit earned only inside this band." label="Profit opportunity" /></TableCell>
+          <TableCell align="right"><HelpLabel help="Combined final Gross losses from the same finished-red trades used for this row’s profit opportunity." label="Actual losses" /></TableCell>
+          <TableCell align="right"><HelpLabel help="The difference between these trades' combined profit opportunity and their combined final Gross P/L. For example, an $800 opportunity followed by a $300 loss gives a $1,100 difference. It is not $1,100 of profit opportunity." label="Not retained" /></TableCell>
+          <TableCell align="right"><HelpLabel help="The middle value when these trades' times in their highest bands are ordered from shortest to longest. Time counts one-minute candle closes inside the band, including returns to it. It does not measure exact seconds spent there." label="Median in zone" /></TableCell>
         </TableRow></TableHead><TableBody>{peakZoneOutcomes.map((zone) => <TableRow hover key={zone.lowerBoundPercent}>
           <TableCell sx={{ fontWeight: 850 }}>{zoneLabelFromBounds(zone.lowerBoundPercent, zone.upperBoundPercent)}</TableCell>
-          <TableCell align="right"><Typography component="div" sx={{ fontWeight: 750 }} variant="body2">{zone.tradeCount} · {percent(rate(zone.tradeCount, rows.length))}</Typography></TableCell>
+          <TableCell align="right"><Typography component="div" sx={{ fontWeight: 750 }} variant="body2">{zone.tradeCount} · {percent(rate(zone.tradeCount, endedRedRows.length))}</Typography></TableCell>
           <TableCell align="right" sx={{ color: financialOutcomeColor(zone.profitOpportunityDecimal), fontWeight: 750 }}>{money(zone.profitOpportunityDecimal, currency)}</TableCell>
-          <TableCell align="right" sx={{ color: financialOutcomeColor(zone.profitTakenDecimal), fontWeight: 750 }}>{money(zone.profitTakenDecimal, currency)}</TableCell>
-          <TableCell align="right">{zone.turnedRedCount} · {percent(rate(zone.turnedRedCount, zone.tradeCount))}</TableCell>
-          <TableCell align="right">{zone.endedRedCount} · {percent(rate(zone.endedRedCount, zone.tradeCount))}</TableCell>
           <TableCell align="right" sx={{ color: financialOutcomeColor(zone.finalGrossPnlDecimal), fontWeight: 750 }}>{money(zone.finalGrossPnlDecimal, currency)}</TableCell>
           <TableCell align="right" sx={{ fontWeight: 750 }}>{money(zone.opportunityNotRetainedDecimal, currency)}</TableCell>
           <TableCell align="right">{minutes(zone.medianTimeInZoneMinutes)}</TableCell>
@@ -298,7 +309,7 @@ export function GreenToRedAnalysis({
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", mb: 0.75 }}>
         <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
           <Typography sx={{ fontWeight: 850 }}>Exact +20% trade records</Typography>
-          <Tooltip arrow title="Every saved analyzed trade that reached +20% is available here. Filter the same exact records by what happened afterward."><IconButton aria-label="Explain exact plus 20 percent trade records" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+          <Tooltip arrow title="The individual trades behind the summaries above, within your selected dates and direction. The table opens with Finished red selected. Use Show to inspect all +20% trades, trades that turned red, or recoveries. This filter changes this table only. Details opens the trade on this page."><IconButton aria-label="Explain exact plus 20 percent trade records" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
         </Stack>
         <TextField label="Show" onChange={(event) => { setFilter(event.target.value as EvidenceFilter); setPage(1); }} select size="small" sx={{ minWidth: 190 }} value={filter}>
           <MenuItem value="all">All +20% trades</MenuItem>
@@ -310,14 +321,14 @@ export function GreenToRedAnalysis({
       {filteredRows.length === 0 ? <Typography color="text.secondary">No trades match this filter.</Typography> : <Stack spacing={1}>
         <HorizontalScrollRegion label="Green-to-red trade records" minTableWidth={1540} stickyFirstColumn>
           <Table size="small"><TableHead><TableRow>
-            <TableCell><HelpLabel help="The saved analyzed trade. Multiple executions and round trips remain part of the same trade when the trader grouped them together." label="Trade" /></TableCell>
-            <TableCell><HelpLabel help="When an exact exit or a completed one-minute candle first showed a gain of at least 20% while shares remained open." label="Reached +20%" /></TableCell>
-            <TableCell align="right"><HelpLabel help="The largest price gain while shares remained open, with the stock price per share and time it occurred." label="Maximum gain" /></TableCell>
-            <TableCell><HelpLabel help="The highest non-overlapping 10% gain zone reached and completed one-minute candle time spent in that zone." label="Peak zone" /></TableCell>
-            <TableCell><HelpLabel help="The first later completed minute whose adverse price extreme, or an exact exit price, put total trade Gross P/L below $0. Same-candle high/low order is never assumed." label="Turned red" /></TableCell>
-            <TableCell align="right"><HelpLabel help="Gross profit realized on profitable exit executions in this trade." label="Profit taken" /></TableCell>
-            <TableCell align="right"><HelpLabel help="The trade's completed Gross P/L, without deducting broker fees." label="Final Gross P/L" /></TableCell>
-            <TableCell align="right"><HelpLabel help="Maximum Gross profit opportunity minus final Gross P/L. A red finish can make this larger than the earlier profit opportunity." label="Opportunity not retained" /></TableCell>
+            <TableCell><HelpLabel help="The trade as you saved it, with its closing date and number of executions. If you grouped several round trips into one trade, they stay together here." label="Trade" /></TableCell>
+            <TableCell><HelpLabel help="When a saved one-minute candle or an exit price first showed a gain of at least 20% on the shares held. A candle high or low can qualify; it does not have to close at +20%. Candle times use the end of that minute, not the exact second the price was hit. Held shows the trade's total holding time." label="Reached +20%" /></TableCell>
+            <TableCell align="right"><HelpLabel help="The highest percentage gain reached while shares were held, with the share price and time. The dollar opportunity combines realized P/L with the potential profit on shares still held at that price. Candle-based times identify the minute, not the exact second of the peak." label="Maximum gain" /></TableCell>
+            <TableCell><HelpLabel help="The band containing the trade's highest percentage gain. Time counts one-minute candle closes inside that band, including later returns. Under 1 min means no full minute was counted there, not that the app measured how many seconds it lasted." label="Peak zone" /></TableCell>
+            <TableCell><HelpLabel help="When the trade first went below $0 Gross after reaching +20%, and how long that took. Recovery means it later returned above $0; Finished green or Finished red tells you how it ended. Never recovered means it did not return above $0 afterward in its saved price path. Candle highs and lows from the same minute are not treated as a known sequence." label="Turned red" /></TableCell>
+            <TableCell align="right"><HelpLabel help="Gross gains secured through profitable exits in this trade, including partial and full exits. The count is profitable exit executions, not separate trades. $0 means no profit was taken. Losing exits are included in Final Gross P/L." label="Profit taken" /></TableCell>
+            <TableCell align="right"><HelpLabel help="The trade's final profit or loss from all its exits, before broker fees. Green is a profit; red is a loss." label="Final Gross P/L" /></TableCell>
+            <TableCell align="right"><HelpLabel help="The trade's profit opportunity minus its final Gross P/L. An $800 opportunity and a $300 profit leave a $500 difference. An $800 opportunity and a $300 loss give a $1,100 difference: the opportunity plus the loss." label="Opportunity not retained" /></TableCell>
             <TableCell />
           </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={row.tradeId}>
             <TableCell><Typography component="div" sx={{ fontWeight: 850 }} variant="body2">{row.symbol}</Typography><Typography color="text.secondary" component="div" variant="caption">{row.closeDate} · {row.executionCount} {row.executionCount === 1 ? "execution" : "executions"}</Typography></TableCell>

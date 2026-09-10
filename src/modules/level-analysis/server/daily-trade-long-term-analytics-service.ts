@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import { entryExitPeakProfit } from "./daily-trade-entry-exit-math";
 import type Database from "better-sqlite3";
 
 import type { JournalAnalyticsRoundTripTableRow } from "@/src/modules/journal-analytics/contracts/analytics-result";
@@ -84,6 +85,9 @@ type EventFact = Readonly<{
 }>;
 
 type AnalyzerFact = Readonly<{
+  roundTripVersionId: string;
+  savedCandles: readonly CandleRow[];
+  candleTimes: ReadonlySet<number>;
   events: readonly EventFact[];
   malformedSnapshotCount: number;
   path: NonNullable<ReturnType<typeof readDailyTradePathMaterialization>>["path"];
@@ -157,7 +161,7 @@ export type TradeAnalysisTradeRow = Readonly<{
 }>;
 
 export type TradeAnalysisExcursionRow = Readonly<{
-  actualPnlDecimal: string;
+  actualPnlDecimal: string | null;
   adverseMoveDecimal: string;
   adverseMovePercent: number;
   closeDate: string;
@@ -360,6 +364,7 @@ export type TradeAnalysisEventPathRow = Readonly<{
 }>;
 
 export type TradeAnalysisExecutionContextRow = Readonly<{
+  isLastTradeExit?: boolean;
   actualPnlDecimal: string;
   atr14Percent: number | null;
   candleLocationPercent: number | null;
@@ -394,6 +399,7 @@ type TradeAnalysisGreenToRedDamage = Readonly<{
 }>;
 
 export type DailyTradeLongTermAnalyticsModel = Readonly<{
+  entryExitExcludedTradeCount?: number;
   analyzedExecutionCount: number;
   analyzedTradeCount: number;
   averageAdditionalOpportunityDecimal: string | null;
@@ -703,6 +709,7 @@ function parseEvent(row: SnapshotRow): EventFact | null {
 function readAnalyzerFacts(
   database: Database.Database,
   scope: WorkspaceAccessScope,
+  currentOnly = false,
 ): ReadonlyMap<string, AnalyzerFact> {
   const accountId = scope.activeAccountId;
   if (!accountId || !scope.allowedAccountIds.includes(accountId)) return new Map();
@@ -731,6 +738,12 @@ WHERE analysis.workspace_id = ? AND analysis.account_id = ?
       AND candle.candle_time_utc_seconds = snapshot.candle_time_utc_seconds
     WHERE snapshot.daily_trade_analysis_version_id = version.daily_trade_analysis_version_id
   )
+${currentOnly ? `  AND EXISTS (SELECT 1 FROM journal_round_trips current_trade
+    WHERE current_trade.workspace_id = analysis.workspace_id
+      AND current_trade.account_id = analysis.account_id
+      AND current_trade.round_trip_id = analysis.round_trip_id
+      AND current_trade.current_version_id = analysis.round_trip_version_id
+      AND current_trade.lifecycle_state = 'active')` : ""}
 ORDER BY analysis.round_trip_id`).all(scope.workspaceId, accountId);
   const snapshots = database.prepare<[string], SnapshotRow>(`SELECT event_kind, snapshot_json
 FROM journal_round_trip_daily_trade_analysis_event_snapshots
@@ -756,8 +769,13 @@ ORDER BY candle_time_utc_seconds`);
     if (!path || path.roundTripVersionId !== analysis.round_trip_version_id) continue;
     const rows = snapshots.all(analysis.daily_trade_analysis_version_id);
     const parsed = rows.map(parseEvent);
-    const parsedEvents = Object.freeze(parsed.filter((event): event is EventFact => event !== null));
     const savedCandles = candles.all(analysis.market_session_set_version_id);
+    const candlesByTime = new Map(savedCandles.map((candle) => [candle.candle_time_utc_seconds, candle]));
+    const parsedEvents = Object.freeze(parsed.filter((event): event is EventFact => event !== null).map((event) =>
+      event.eventKind === "entry" || event.eventKind === "add"
+        ? Object.freeze({ ...event, postEventPaths: Object.freeze(event.postEventPaths.map((path) =>
+          entryPathFromSavedCandles(event, path, analysis.direction, candlesByTime))) })
+        : event));
     const savedPostExitPaths = Object.freeze(postExitPaths.all(analysis.daily_trade_analysis_version_id));
     const scenario = analyzeDailyTradeV2Scenario({
       candles: savedCandles.map((candle) => Object.freeze({
@@ -792,6 +810,9 @@ ORDER BY candle_time_utc_seconds`);
       roundTripId: analysis.round_trip_id,
     });
     result.set(analysis.round_trip_id, Object.freeze({
+      roundTripVersionId: analysis.round_trip_version_id,
+      savedCandles,
+      candleTimes: new Set(savedCandles.map((candle) => candle.candle_time_utc_seconds)),
       events: parsedEvents,
       malformedSnapshotCount: parsed.filter((event) => event === null).length,
       path: path.path,
@@ -801,6 +822,81 @@ ORDER BY candle_time_utc_seconds`);
       roundTripId: analysis.round_trip_id,
       scenario,
     }));
+  }
+  return result;
+}
+
+function hasEveryCandle(times: ReadonlySet<number>, first: number, last: number): boolean {
+  if (!Number.isFinite(first) || !Number.isFinite(last)) return false;
+  if (last >= first && (last - first) / 60 + 1 > times.size) return false;
+  for (let time = first; time <= last; time += 60) {
+    if (!times.has(time)) return false;
+  }
+  return true;
+}
+
+function hasExcursionCoverage(event: EventFact, fact: AnalyzerFact): boolean {
+  const finalExit = [...fact.events].reverse().find((candidate) => candidate.eventKind === "final_exit");
+  if (!finalExit || Date.parse(finalExit.executedAtUtc) < Date.parse(event.executedAtUtc)) return false;
+  // Match the saved calculation: interior minute candles plus the exact final exit price.
+  const first = Math.floor(Date.parse(event.executedAtUtc) / 60_000) * 60 + 60;
+  const last = Math.floor(Date.parse(finalExit.executedAtUtc) / 60_000) * 60 - 60;
+  return hasEveryCandle(fact.candleTimes, first, last);
+}
+
+function hasEventPathCoverage(event: EventFact, path: EventPathFact, fact: AnalyzerFact): boolean {
+  const minute = Math.floor(Date.parse(event.executedAtUtc) / 60_000) * 60;
+  return hasEveryCandle(fact.candleTimes, minute + 60, minute + path.minutesAfterEvent * 60 - 60);
+}
+
+function entryPathFromSavedCandles(
+  event: EventFact,
+  path: EventPathFact,
+  direction: "long" | "short",
+  candles: ReadonlyMap<number, CandleRow>,
+): EventPathFact {
+  const minute = Math.floor(Date.parse(event.executedAtUtc) / 60_000) * 60;
+  const last = minute + path.minutesAfterEvent * 60 - 60;
+  const unavailable = Object.freeze({ ...path, observedAtCandleTime: null,
+    oppositeDirectionMoveDecimal: null, tradeDirectionMoveDecimal: null });
+  if (!Number.isFinite(minute) || path.minutesAfterEvent - 1 > candles.size) return unavailable;
+  const price = new Decimal(event.priceDecimal);
+  let favorable = new Decimal(0);
+  let adverse = new Decimal(0);
+  // Candle timestamps mark their start. Exclude the execution minute (unknown
+  // fill ordering) and the candle starting at the endpoint (not yet completed).
+  // Recompute before reporting-currency scaling, including previously saved paths.
+  for (let time = minute + 60; time <= last; time += 60) {
+    const candle = candles.get(time);
+    if (!candle) return unavailable;
+    const high = new Decimal(candle.high_decimal);
+    const low = new Decimal(candle.low_decimal);
+    favorable = Decimal.max(favorable, direction === "long" ? high.minus(price) : price.minus(low));
+    adverse = Decimal.max(adverse, direction === "long" ? price.minus(low) : high.minus(price));
+  }
+  return Object.freeze({ ...path, observedAtCandleTime: last,
+    oppositeDirectionMoveDecimal: adverse.toString(), tradeDirectionMoveDecimal: favorable.toString() });
+}
+
+function savedTradePnlByRoundTrip(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  rows: readonly JournalAnalyticsRoundTripTableRow[],
+): ReadonlyMap<string, string | null> {
+  const result = new Map<string, string | null>();
+  const accountId = scope.activeAccountId;
+  if (!accountId || !scope.allowedAccountIds.includes(accountId)) return result;
+  const rowsById = new Map(rows.map((row) => [row.roundTripId, row]));
+  const trades = new JournalLogicalTradeRepository(database).list({
+    accountId, userId: scope.userId, workspaceId: scope.workspaceId, workspaceRole: scope.workspaceRole,
+  });
+  for (const trade of trades) {
+    if (trade.tradeStyle !== "day" || trade.lifecycleState !== "active") continue;
+    const amounts = trade.members.map((member) => rowsById.get(member.roundTripId)?.selectedPnlDecimal ?? null);
+    // Never present a subset of a user-defined trade as its complete result.
+    const pnl = amounts.some((amount) => amount === null) ? null
+      : sumDecimals(amounts as string[]);
+    for (const member of trade.members) result.set(member.roundTripId, pnl);
   }
   return result;
 }
@@ -1071,9 +1167,11 @@ type Joined = Readonly<{
   v2Opportunity: string | null;
 }>;
 
+type ResultTrade = Pick<Joined, "actualPnl" | "additional" | "returnPercent" | "journal"> & Readonly<{ resultId?: string }>;
+
 function breakdownRow(
   label: string,
-  rows: readonly Joined[],
+  rows: readonly ResultTrade[],
   occurrenceCount = rows.length,
   averageValue: number | null = null,
 ): TradeAnalysisBreakdownRow {
@@ -1164,10 +1262,10 @@ type EventExecutionFinancials = Readonly<{
   grossPnlDecimal: string | null;
 }>;
 
-type EventJoined = Readonly<{
+type EventJoined<T = Joined> = Readonly<{
   event: EventFact;
   financials: EventExecutionFinancials;
-  trade: Joined;
+  trade: T;
 }>;
 
 function executionFinancials(
@@ -1231,7 +1329,7 @@ function excursionBreakdown(
 }
 
 function eventBreakdown(
-  events: readonly EventJoined[],
+  events: readonly EventJoined<ResultTrade>[],
   definitions: readonly Readonly<{ label: string; test: (value: number) => boolean }>[],
   read: (event: EventFact) => number | null,
 ): readonly TradeAnalysisBreakdownRow[] {
@@ -1240,7 +1338,7 @@ function eventBreakdown(
       const value = read(event);
       return value !== null && definition.test(value);
     });
-    const trades = new Map(selected.map(({ trade }) => [trade.journal.roundTripId, trade]));
+    const trades = new Map(selected.map(({ trade }) => [trade.resultId ?? trade.journal.roundTripId, trade]));
     const tradeRows = [...trades.values()];
     const values = selected.flatMap(({ event }) => {
       const value = read(event);
@@ -1251,7 +1349,7 @@ function eventBreakdown(
 }
 
 function eventKindBreakdown(
-  events: readonly EventJoined[],
+  events: readonly EventJoined<ResultTrade>[],
   kinds: readonly Readonly<{ kind: EventFact["eventKind"]; label: string }>[],
   definitions: readonly Readonly<{ label: string; test: (value: number) => boolean }>[],
   read: (event: EventFact) => number | null,
@@ -1310,7 +1408,7 @@ const CANDLE_LOCATION_BUCKETS = Object.freeze([
   { label: "Top 20% of candle", test: (value: number) => value > 0.8 && value <= 1 },
 ]);
 
-function exitRows(events: readonly EventJoined[]): readonly TradeAnalysisBreakdownRow[] {
+function exitRows(events: readonly EventJoined<ResultTrade>[]): readonly TradeAnalysisBreakdownRow[] {
   const definitions = Object.freeze([
     { label: "No measured giveback", test: (value: number) => value === 0 },
     { label: "Under 10% giveback", test: (value: number) => value > 0 && value < 10 },
@@ -1371,7 +1469,7 @@ function behaviorRows(
   ].filter((row) => row.tradeCount > 0));
 }
 
-function holdingDurationRows(joined: readonly Joined[]): readonly TradeAnalysisBreakdownRow[] {
+function holdingDurationRows(joined: readonly ResultTrade[]): readonly TradeAnalysisBreakdownRow[] {
   const definitions = [
     { label: "0-5 minutes", minimum: 0, maximum: 5 },
     { label: "6-15 minutes", minimum: 5, maximum: 15 },
@@ -1394,7 +1492,7 @@ function holdingDurationRows(joined: readonly Joined[]): readonly TradeAnalysisB
   }));
 }
 
-function entryTimeRows(joined: readonly Joined[], timezone: string): readonly TradeAnalysisBreakdownRow[] {
+function entryTimeRows(joined: readonly ResultTrade[], timezone: string): readonly TradeAnalysisBreakdownRow[] {
   const formatter = new Intl.DateTimeFormat("en-US", {
     hour: "2-digit",
     hour12: false,
@@ -1656,6 +1754,149 @@ function analyzedScenarioTrades(input: Readonly<{
   }));
 }
 
+type EntryExitTrade = ResultTrade & Readonly<{
+  events: readonly EventFact[];
+  peak: string | null;
+}>;
+
+function buildEntryExitProjection(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  journalRows: readonly JournalAnalyticsRoundTripTableRow[],
+  analyzer: ReadonlyMap<string, AnalyzerFact>,
+  moneyBasis: "gross" | "net",
+  timezone: string,
+  multipliers: ReadonlyMap<string, string>,
+  selection: Readonly<{ startDate: string | null; endDate: string | null }>,
+) {
+  const accountId = scope.activeAccountId;
+  if (!accountId || !scope.allowedAccountIds.includes(accountId)) throw new Error("Entry/exit account is unavailable");
+  const accountScope = { accountId, userId: scope.userId, workspaceId: scope.workspaceId, workspaceRole: scope.workspaceRole };
+  const rowsById = new Map(journalRows.map((row) => [row.roundTripId, row]));
+  const logicalAnalyzer = new LogicalTradeAnalyzerRepository(database);
+  const trades: EntryExitTrade[] = [];
+  let eligible = 0;
+  let analyzed = 0;
+  const analyzedDirectionCounts = { long: 0, short: 0 };
+  for (const savedTrade of new JournalLogicalTradeRepository(database).list(accountScope)) {
+    if (savedTrade.tradeStyle !== "day" || savedTrade.lifecycleState !== "active") continue;
+    const representative = savedTrade.members[0];
+    const finalMember = savedTrade.members.at(-1);
+    const first = representative ? rowsById.get(representative.roundTripId) : undefined;
+    const last = finalMember ? rowsById.get(finalMember.roundTripId) : undefined;
+    if (!first || !last || (selection.startDate && last.closeLocalDate < selection.startDate) ||
+      (selection.endDate && last.closeLocalDate > selection.endDate)) continue;
+    eligible += 1;
+    const logical = savedTrade.logicalTradeId ? logicalAnalyzer.readCurrentByRoundTrip(accountScope, first.roundTripId) : null;
+    const candidate = savedTrade.members.length === 1 ? analyzer.get(first.roundTripId) : undefined;
+    const single = candidate?.roundTripVersionId === representative?.roundTripVersionId ? candidate : undefined;
+    const sourceEvents = logical?.status === "ready" && logical.analyzed
+      ? logical.analyzed.eventSnapshots.map((snapshot) => parseEvent({
+        // A temporary flat closes this position, but is not the saved trade's
+        // last exit. Keep its execution and distinguish the last exit below.
+        event_kind: snapshot.event.kind === "temporary_flat" ? "final_exit" : snapshot.event.kind,
+        snapshot_json: JSON.stringify(snapshot),
+      }))
+      : single?.events ?? [];
+    const candles: readonly CandleRow[] = logical?.status === "ready" && logical.analyzed
+      ? logical.candles.map((candle) => ({ candle_time_utc_seconds: candle.time, high_decimal: candle.highDecimal, low_decimal: candle.lowDecimal, close_decimal: candle.closeDecimal }))
+      : single?.savedCandles ?? [];
+    if (sourceEvents.length === 0) continue;
+    analyzed += 1;
+    analyzedDirectionCounts[savedTrade.direction] += 1;
+    // Combined trades need their combined analysis; no reconstruction by ticker.
+    if (sourceEvents.some((event) => event === null)) continue;
+    const members = savedTrade.members.map((member) => rowsById.get(member.roundTripId));
+    if (members.some((member) => !member || member.selectedPnlDecimal === null)) continue;
+    const complete = members as JournalAnalyticsRoundTripTableRow[];
+    const rates = new Set(complete.map((member) => new Decimal(multipliers.get(member.roundTripId) ?? "1").toString()));
+    // Avoid mixing differently converted execution prices with one whole-trade peak.
+    if (rates.size !== 1) continue;
+    const multiplier = [...rates][0]!;
+    const rawEvents = (sourceEvents as readonly EventFact[]).slice().sort((a, b) => a.eventSequence - b.eventSequence);
+    if (new Set(rawEvents.map((event) => event.eventSequence)).size !== rawEvents.length ||
+      rawEvents.some((event) => !new Decimal(event.priceDecimal).isFinite() || !new Decimal(event.quantityDecimal).isFinite())) continue;
+    const rawPeak = entryExitPeakProfit(rawEvents, candles, savedTrade.direction, moneyBasis);
+    const candleMap = new Map(candles.map((candle) => [candle.candle_time_utc_seconds, candle]));
+    const events = rawEvents.map((event) => ({
+      ...event,
+      priceDecimal: scaledDecimal(event.priceDecimal, multiplier)!,
+      givebackDecimal: scaledDecimal(event.givebackDecimal, multiplier),
+      priorFavorableExtremePriceDecimal: scaledDecimal(event.priorFavorableExtremePriceDecimal, multiplier),
+      postEventPaths: ([5, 15, 30, 60] as const).map((minutesAfterEvent) => {
+        const path = entryPathFromSavedCandles(event, { minutesAfterEvent, observedAtCandleTime: null, tradeDirectionMoveDecimal: null, oppositeDirectionMoveDecimal: null }, savedTrade.direction, candleMap);
+        return { ...path, tradeDirectionMoveDecimal: scaledDecimal(path.tradeDirectionMoveDecimal, multiplier), oppositeDirectionMoveDecimal: scaledDecimal(path.oppositeDirectionMoveDecimal, multiplier) };
+      }),
+    }));
+    const actualPnl = sumDecimals(complete.map((member) => member.selectedPnlDecimal!))!;
+    const peak = scaledDecimal(rawPeak, multiplier);
+    const notional = sumDecimals(complete.map((member) => member.entryNotionalDecimal))!;
+    const journal = { ...first, closedAtUtc: savedTrade.closedAtUtc, closeLocalDate: last.closeLocalDate,
+      openedAtUtc: savedTrade.openedAtUtc,
+      holdingDurationMilliseconds: complete.reduce((total, member) => total + member.holdingDurationMilliseconds, 0) };
+    trades.push({ actualPnl, additional: additionalOpportunity(actualPnl, peak), events, journal, peak,
+      resultId: savedTrade.logicalTradeId ?? first.roundTripId,
+      returnPercent: new Decimal(notional).gt(0) ? new Decimal(actualPnl).div(notional).mul(100).toNumber() : null });
+  }
+  const events: EventJoined<EntryExitTrade>[] = trades.flatMap((trade) => {
+    const financials = executionFinancials(trade.events, trade.journal.direction);
+    return trade.events.map((event) => ({ event, trade, financials: financials.get(event.eventSequence) ?? { grossPnlDecimal: null } }));
+  });
+  const entryEvents = events.filter(({ event }) => event.eventKind === "entry" || event.eventKind === "add");
+  const exitEvents = events.filter(({ event }) => event.eventKind === "partial_exit" || event.eventKind === "final_exit");
+  const contextFor = (selected: readonly EventJoined<EntryExitTrade>[], direction: "long" | "short", kinds: typeof ENTRY_EVENT_KINDS | typeof EXIT_EVENT_KINDS): TradeAnalysisExecutionContext => {
+    const rows = selected.filter(({ trade }) => trade.journal.direction === direction);
+    return {
+      atr14Percent: eventKindBreakdown(rows, kinds, ONE_MINUTE_ATR_BUCKETS, (event) => event.atr14Percent),
+      candleLocation: eventKindBreakdown(rows, kinds, CANDLE_LOCATION_BUCKETS, (event) => event.candleLocationRatio),
+      ema9: eventKindBreakdown(rows, kinds, DISTANCE_BUCKETS, (event) => event.ema9DistancePercent),
+      ema9FiveMinute: eventKindBreakdown(rows, kinds, DISTANCE_BUCKETS, (event) => event.fiveMinuteEma9DistancePercent),
+      relativeVolume: eventKindBreakdown(rows, kinds, RELATIVE_VOLUME_BUCKETS, (event) => event.relativeVolume),
+      vwap: eventKindBreakdown(rows, kinds, DISTANCE_BUCKETS, (event) => event.vwapDistancePercent),
+    };
+  };
+  const executionContextRows: TradeAnalysisExecutionContextRow[] = events.map(({ event, trade, financials }) => ({
+    actualPnlDecimal: trade.actualPnl, atr14Percent: event.atr14Percent, candleLocationPercent: event.candleLocationRatio === null ? null : event.candleLocationRatio * 100,
+    closeDate: trade.journal.closeLocalDate, direction: trade.journal.direction, ema9DistancePercent: event.ema9DistancePercent, ema9FiveMinuteDistancePercent: event.fiveMinuteEma9DistancePercent,
+    eventKind: eventKindLabel(event.eventKind), executionGrossPnlDecimal: financials.grossPnlDecimal, eventPriceDecimal: event.priceDecimal,
+    eventSequence: event.eventSequence, executedAtUtc: event.executedAtUtc, relativeVolume: event.relativeVolume, returnPercent: trade.returnPercent,
+    roundTripId: trade.journal.roundTripId, session: tradingSession(event.executedAtUtc, timezone), symbol: trade.journal.displayedSymbol,
+    trackerDate: trade.journal.entryLocalDate, vwapDistancePercent: event.vwapDistancePercent,
+    isLastTradeExit: event.eventSequence === trade.events.at(-1)?.eventSequence,
+  }));
+  const eventPaths: TradeAnalysisEventPathRow[] = events.flatMap(({ event, trade }) => event.postEventPaths.map((path) => ({
+    adverseMoveDecimal: path.oppositeDirectionMoveDecimal, favorableMoveDecimal: path.tradeDirectionMoveDecimal,
+    closeDate: trade.journal.closeLocalDate, direction: trade.journal.direction, eventKind: eventKindLabel(event.eventKind), eventPriceDecimal: event.priceDecimal,
+    eventSequence: event.eventSequence, executedAtUtc: event.executedAtUtc, minutesAfterEvent: path.minutesAfterEvent, observedAtCandleTime: path.observedAtCandleTime,
+    roundTripId: trade.journal.roundTripId, session: tradingSession(event.executedAtUtc, timezone), symbol: trade.journal.displayedSymbol, trackerDate: trade.journal.entryLocalDate,
+  })));
+  const tradeRows: TradeAnalysisTradeRow[] = trades.map((trade) => ({
+    actualPnlDecimal: trade.actualPnl, additionalOpportunityDecimal: trade.additional, capturedPercent: capturedPercent(trade.actualPnl, trade.peak),
+    closeDate: trade.journal.closeLocalDate, direction: trade.journal.direction, executionCount: trade.events.length,
+    finalExitPriceDecimal: trade.events.at(-1)?.priceDecimal ?? null, greenToRedStatus: "unavailable", malformedSnapshotCount: 0,
+    peakToExitMinutes: null, postExitThirtyMinuteMoveDecimal: null, postExitThirtyMinutePriceDecimal: null,
+    returnPercent: trade.returnPercent, roundTripId: trade.journal.roundTripId, sustainedOpportunityDecimal: null,
+    symbol: trade.journal.displayedSymbol, trackerDate: trade.journal.entryLocalDate,
+  }));
+  const recordOrder = (left: { closeDate: string; symbol: string; roundTripId: string }, right: { closeDate: string; symbol: string; roundTripId: string }) =>
+    right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol) || left.roundTripId.localeCompare(right.roundTripId);
+  tradeRows.sort(recordOrder);
+  executionContextRows.sort((left, right) => recordOrder(left, right) || left.eventSequence - right.eventSequence);
+  eventPaths.sort((left, right) => recordOrder(left, right) || left.eventSequence - right.eventSequence || left.minutesAfterEvent - right.minutesAfterEvent);
+  const byDirection = <T,>(read: (direction: "long" | "short") => T) => ({ long: read("long"), short: read("short") });
+  return {
+    analyzedTradeCount: analyzed, analyzedExecutionCount: events.length, eligibleDayTradeCount: eligible,
+    entryExitExcludedTradeCount: analyzed - trades.length,
+    directionTradeCounts: analyzedDirectionCounts,
+    trades: tradeRows, executionContextRows, eventPaths,
+    entryContextByDirection: byDirection((direction) => contextFor(entryEvents, direction, ENTRY_EVENT_KINDS)),
+    exitExecutionContextByDirection: byDirection((direction) => contextFor(exitEvents, direction, EXIT_EVENT_KINDS)),
+    exitContextByDirection: byDirection((direction) => exitRows(exitEvents.filter(({ trade }) => trade.journal.direction === direction))),
+    entryTimeByDirection: byDirection((direction) => entryTimeRows(trades.filter((trade) => trade.journal.direction === direction), timezone)),
+    holdingDurationByDirection: byDirection((direction) => holdingDurationRows(trades.filter((trade) => trade.journal.direction === direction))),
+  };
+}
+
 export function buildDailyTradeLongTermAnalytics(
   database: Database.Database,
   scope: WorkspaceAccessScope,
@@ -1665,8 +1906,9 @@ export function buildDailyTradeLongTermAnalytics(
   timezone = "America/New_York",
   reportingMultiplierByRoundTrip: ReadonlyMap<string, string> = new Map(),
   profitZoneMinimumHoldMinutes = 0,
+  entryExitSelection?: Readonly<{ startDate: string | null; endDate: string | null }>,
 ): DailyTradeLongTermAnalyticsV2Model {
-  const analyzer = readAnalyzerFacts(database, scope);
+  const analyzer = readAnalyzerFacts(database, scope, entryExitSelection !== undefined);
   const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade");
   const scenarioTrades = analyzedScenarioTrades({
     analyzerByRoundTripId: analyzer,
@@ -1714,10 +1956,12 @@ export function buildDailyTradeLongTermAnalytics(
     const value = capturedPercent(row.actualPnl, row.opportunity);
     return value === null ? [] : [value];
   });
-  const measuredEntryExcursions = entryEvents.filter(({ event }) =>
-    event.excursionFavorableDecimal !== null && event.excursionAdverseDecimal !== null);
+  const measuredEntryExcursions = entryEvents.filter(({ event, trade }) =>
+    event.excursionFavorableDecimal !== null && event.excursionAdverseDecimal !== null &&
+    hasExcursionCoverage(event, trade.analyzer));
+  const savedTradePnl = savedTradePnlByRoundTrip(database, scope, journalRows);
   const excursionRows = Object.freeze(measuredEntryExcursions.map(({ event, trade }): TradeAnalysisExcursionRow => Object.freeze({
-    actualPnlDecimal: trade.actualPnl,
+    actualPnlDecimal: savedTradePnl.get(trade.journal.roundTripId) ?? null,
     adverseMoveDecimal: event.excursionAdverseDecimal!,
     adverseMovePercent: excursionPercent(event.excursionAdverseDecimal!, event.priceDecimal),
     closeDate: trade.journal.closeLocalDate,
@@ -1879,14 +2123,14 @@ export function buildDailyTradeLongTermAnalytics(
   });
   const eventPathRows = Object.freeze(allEvents.flatMap(({ event, trade }): TradeAnalysisEventPathRow[] =>
     event.postEventPaths.map((path) => Object.freeze({
-      adverseMoveDecimal: path.oppositeDirectionMoveDecimal,
+      adverseMoveDecimal: (event.eventKind === "entry" || event.eventKind === "add") && !hasEventPathCoverage(event, path, trade.analyzer) ? null : path.oppositeDirectionMoveDecimal,
       closeDate: trade.journal.closeLocalDate,
       direction: trade.journal.direction,
       eventKind: eventKindLabel(event.eventKind),
       eventPriceDecimal: event.priceDecimal,
       eventSequence: event.eventSequence,
       executedAtUtc: event.executedAtUtc,
-      favorableMoveDecimal: path.tradeDirectionMoveDecimal,
+      favorableMoveDecimal: (event.eventKind === "entry" || event.eventKind === "add") && !hasEventPathCoverage(event, path, trade.analyzer) ? null : path.tradeDirectionMoveDecimal,
       minutesAfterEvent: path.minutesAfterEvent,
       observedAtCandleTime: path.observedAtCandleTime,
       roundTripId: trade.journal.roundTripId,
@@ -2148,5 +2392,6 @@ export function buildDailyTradeLongTermAnalytics(
       });
     }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol))),
     winRatePercent: percentage(joined.filter((row) => new Decimal(row.actualPnl).gt(0)).length, joined.length),
+    ...(entryExitSelection ? buildEntryExitProjection(database, scope, journalRows, analyzer, moneyBasis, timezone, reportingMultiplierByRoundTrip, entryExitSelection) : {}),
   });
 }

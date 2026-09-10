@@ -56,3 +56,12 @@ rendered and live-account numerical verification remain pending.
 - Focused TypeScript, ESLint and whitespace checks pass. Fixed unavailable icon
   import to the established HelpOutlineRounded variant. No rendered acceptance
   or production release claimed.
+
+## Highest / lowest highlight tooltips
+
+- Added accessible information icons beside both average-return highlight labels.
+- Plain-language help explains percentage-return ranking, equal trade weighting,
+  selected date/direction and Gross/Net basis, ties, and reading median/count
+  alongside the average. Lowest return is not necessarily a loss.
+- Labels, ranking calculations and existing table explanation are unchanged.
+- Focused ESLint and diff checks pass. Local only; rendered verification pending.

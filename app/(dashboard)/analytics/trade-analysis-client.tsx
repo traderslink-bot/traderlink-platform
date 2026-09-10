@@ -159,6 +159,7 @@ function BreakdownTable({
   currency,
   moneyBasis,
   showOccurrences = true,
+  explainColumns = false,
 }: {
   rows: readonly TradeAnalysisBreakdownRow[];
   valueLabel?: string;
@@ -167,16 +168,18 @@ function BreakdownTable({
   currency: string | null;
   moneyBasis: "gross" | "net";
   showOccurrences?: boolean;
+  explainColumns?: boolean;
 }) {
+  const heading = (label: string, help: string) => explainColumns ? <ColumnHeading label={label} help={help} /> : label;
   if (rows.length === 0) return <Typography color="text.secondary">Not enough analyzed evidence is available for this breakdown.</Typography>;
   return (
       <HorizontalScrollRegion label="Trade analysis comparison table" minTableWidth={valueLabel ? 1160 : 1040} stickyFirstColumn>
         <Table size="small">
           <TableHead><TableRow>
-            <TableCell>Group</TableCell>{showOccurrences ? <TableCell align="right">Executions</TableCell> : null}<TableCell align="right">Trades</TableCell>
-            <TableCell align="right">{moneyBasis === "gross" ? "Gross" : "Net"} total</TableCell><TableCell align="right">Avg {moneyBasis} result</TableCell><TableCell align="right">Median {moneyBasis} result</TableCell>
-            <TableCell align="right">Win rate</TableCell><TableCell align="right">Avg return</TableCell>
-            {valueLabel ? <TableCell align="right">{valueLabel}</TableCell> : null}
+            <TableCell>{heading("Group", "Executions grouped by their type and the price, volume or indicator band shown. A trade can appear in more than one band.")}</TableCell>{showOccurrences ? <TableCell align="right">{heading("Executions", "The number of recorded fills in this group. Multiple fills can belong to the same trade.")}</TableCell> : null}<TableCell align="right">{heading("Trades", "Distinct analyzed saved trades represented in this row, counted once within the group. Do not add counts across groups; a trade can appear in several.")}</TableCell>
+            <TableCell align="right">{heading(`${moneyBasis === "gross" ? "Gross" : "Net"} total`, "Combined final P/L of the trades in this group, not just profit from these particular executions. Gross is before fees; Net deducts recorded fees. Trades can repeat across groups.")}</TableCell><TableCell align="right">{heading(`Avg ${moneyBasis} result`, "The group's combined final P/L divided by its trade count. Large wins or losses can pull this average up or down.")}</TableCell><TableCell align="right">{heading(`Median ${moneyBasis} result`, "The middle final P/L after sorting the group's trades. With an even count, it is the average of the two middle amounts.")}</TableCell>
+            <TableCell align="right">{heading("Win rate", "The percentage of trades in this group that finished with positive P/L under your Gross/Net selection. Breakeven trades are not wins.")}</TableCell><TableCell align="right">{heading("Avg return", "The average recorded percentage return across trades with a return value. Each trade has equal weight, regardless of size.")}</TableCell>
+            {valueLabel ? <TableCell align="right">{heading(valueLabel, valueLabel === "Avg volume multiple" ? "Average execution-candle volume divided by the average volume of up to 20 prior one-minute candles. At least five prior candles are required. 2x means twice that recent average, not twice daily volume." : valueLabel === "Avg ATR" ? "Average saved 14-period one-minute Average True Range, expressed as a percentage of the execution price. It describes recent price movement, not your profit or loss." : valueLabel === "Avg candle position" ? "Average execution-price location inside its completed one-minute candle: 0% is the low and 100% is the high. The candle may continue after the fill." : "The average saved measurement across qualifying executions in this group.")}</TableCell> : null}
           </TableRow></TableHead>
           <TableBody>{rows.map((row) => (
             <TableRow hover key={row.label}>
@@ -204,6 +207,7 @@ type ContextResult = Readonly<{
 
 type ContextSummaryFactor = Readonly<{
   factor: string;
+  help?: string;
   rows: readonly TradeAnalysisBreakdownRow[];
 }>;
 
@@ -260,13 +264,13 @@ function EntryExitContextSummary({
   return <HorizontalScrollRegion label="Entry and exit context summary" minTableWidth={920} stickyFirstColumn>
     <Table size="small">
       <TableHead><TableRow>
-        <TableCell>Factor</TableCell>
+        <TableCell><ColumnHeading label="Factor" help="The condition used to group records, such as entry time, distance from VWAP or holding time. The other columns pick groups within that factor; they do not rank the factors against each other." /></TableCell>
         <TableCell><ColumnHeading help={`The group with the highest positive combined ${basis} P/L.`} label={`Largest ${basis} gain`} /></TableCell>
         <TableCell><ColumnHeading help={`The group with the highest average ${basis} P/L. Use the trade count to judge how much data supports it.`} label={`Highest avg ${basis} P/L`} /></TableCell>
         <TableCell><ColumnHeading help={`The group with the largest combined ${basis} loss.`} label={`Largest ${basis} loss`} /></TableCell>
       </TableRow></TableHead>
       <TableBody>{factors.map((factor) => <TableRow hover key={factor.factor}>
-        <TableCell sx={{ fontWeight: 850 }}>{factor.factor}</TableCell>
+        <TableCell sx={{ fontWeight: 850 }}>{factor.help ? <ColumnHeading label={factor.factor} help={factor.help} /> : factor.factor}</TableCell>
         <TableCell><ContextResultCell currency={currency} result={selectContextResult(factor.rows, "largest-gain")} /></TableCell>
         <TableCell><ContextResultCell currency={currency} result={selectContextResult(factor.rows, "average")} /></TableCell>
         <TableCell><ContextResultCell currency={currency} result={selectContextResult(factor.rows, "largest-loss")} /></TableCell>
@@ -297,12 +301,12 @@ function Section({
     <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", width: "fit-content" }}>
       <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{title}</Typography>
       {titleHelp ? <Tooltip arrow describeChild title={titleHelp}>
-        <Box aria-label={`Explain ${title}`} component="span" sx={{ color: "text.secondary", display: "inline-flex" }}>
+        <Box aria-label={`Explain ${title}`} component="span" tabIndex={0} sx={{ color: "text.secondary", display: "inline-flex" }}>
           <InfoOutlinedIcon sx={{ fontSize: 17 }} />
         </Box>
       </Tooltip> : null}
     </Stack>
-    <Typography color="text.secondary" variant="body2">{description}</Typography>
+    {description ? <Typography color="text.secondary" variant="body2">{description}</Typography> : null}
   </Box>;
   if (!collapsible) {
     return <Paper sx={{ borderRadius: 2, overflow: "hidden" }} variant="outlined">
@@ -391,6 +395,30 @@ function ProfitZoneHeaderControls({
   </Stack>;
 }
 
+function ExplainedMetric({ label, value, help, wrapText = false, tone = "text.primary" }: {
+  label: string; value: string; help: string; tone?: "success.main" | "error.main" | "text.primary";
+  wrapText?: boolean;
+}) {
+  const card = <DashboardMetricCard caption="" hideCaption label={label} value={value} valueColor={tone} action={
+    <Tooltip arrow title={help}><IconButton aria-label={`Explain ${label}`} size="small"><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton></Tooltip>
+  } />;
+  return wrapText ? <Box sx={{ minWidth: 0, height: "100%", "& > .MuiCard-root": { height: "100%" }, "& .MuiTypography-root": { whiteSpace: "normal", overflowWrap: "anywhere" } }}>{card}</Box> : card;
+}
+
+function EntryAddComparison({ rows }: { rows: readonly TradeAnalysisExcursionRow[] }) {
+  return <HorizontalScrollRegion label="Initial entries versus adds" minTableWidth={600} stickyFirstColumn>
+    <Table size="small"><TableHead><TableRow>
+      <TableCell><ColumnHeading label="Entry type" help="Initial entries and later adds are measured separately from each execution's own price until the final exit. A trade with several buys contributes several measurements." /></TableCell>
+      <TableCell align="right"><ColumnHeading label="Measured" help="Entries or adds with the required saved candles. Missing measurements are not treated as zero." /></TableCell>
+      <TableCell align="right"><ColumnHeading label="Median MFE %" help="The middle maximum gain after these entries or adds. Each execution has equal weight, regardless of shares bought." /></TableCell>
+      <TableCell align="right"><ColumnHeading label="Median MAE %" help="The middle maximum price drop for longs or price rise for shorts after these entries or adds. Each execution has equal weight. This is price movement, not realized loss." /></TableCell>
+    </TableRow></TableHead><TableBody>{(["Entry", "Add"] as const).map((kind) => {
+      const selected = rows.filter((row) => row.eventKind === kind);
+      return <TableRow key={kind}><TableCell>{kind === "Entry" ? "Initial entries" : "Adds"}</TableCell><TableCell align="right">{selected.length}</TableCell><TableCell align="right" sx={{ color: "success.main" }}>{percent(median(selected.map((row) => row.favorableMovePercent)))}</TableCell><TableCell align="right" sx={{ color: "error.main" }}>{percent(median(selected.map((row) => row.adverseMovePercent)))}</TableCell></TableRow>;
+    })}</TableBody></Table>
+  </HorizontalScrollRegion>;
+}
+
 function MfeMaeTable({
   direction,
   model,
@@ -419,7 +447,7 @@ function MfeMaeTable({
     </Stack>
     {rows.length === 0 ? <Typography color="text.secondary">No measured entries or adds match these filters.</Typography> :
       <HorizontalScrollRegion label="Measured entries and adds table" minTableWidth={1420} stickyFirstColumn><Table size="small"><TableHead><TableRow>
-        <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">{direction === "long" ? "Price rise per share after entry" : "Price drop per share after entry"}</TableCell><TableCell align="right">{direction === "long" ? "Price drop per share after entry" : "Price rise per share after entry"}</TableCell><TableCell align="right">{direction === "long" ? "Price rise %" : "Price drop %"}</TableCell><TableCell align="right">{direction === "long" ? "Price drop %" : "Price rise %"}</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
+<TableCell><ColumnHeading label="Ticker" help="The stock for this saved entry or add." /></TableCell><TableCell><ColumnHeading label="Type" help="Entry is the opening buy or short entry; Add increases an existing position." /></TableCell><TableCell><ColumnHeading label="Closed" help="The date the position closed. Each row measures a separate entry or add within that position." /></TableCell><TableCell align="right"><ColumnHeading label="Entry price" help="The price per share of this execution, not the average entry price of the whole position." /></TableCell><TableCell align="right"><ColumnHeading label="MFE per share" help="Maximum Favorable Excursion: the biggest price rise after a long entry, or price drop after a short entry, until the final exit. Dollars are per share, not whole-position profit." /></TableCell><TableCell align="right"><ColumnHeading label="MAE per share" help="Maximum Adverse Excursion: the biggest price drop after a long entry, or price rise after a short entry, until the final exit. Dollars are per share, not realized loss." /></TableCell><TableCell align="right"><ColumnHeading label="MFE %" help="The maximum profitable price move divided by this execution's entry price, shown as a percentage." /></TableCell><TableCell align="right"><ColumnHeading label="MAE %" help="The maximum losing price move divided by this execution's entry price, shown as a positive percentage describing the size of the decline." /></TableCell><TableCell align="right"><ColumnHeading label="Time to exit" help="Time from this entry or add to the final exit, rounded to the nearest minute. It is not time spent at the best or worst price." /></TableCell><TableCell align="right"><ColumnHeading label="Trade P/L" help="The whole trade's final profit or loss from all its executions, not the result of this individual entry or add. Gross is before broker fees; Net deducts recorded fees. This follows your Gross/Net selection. Unavailable means the full trade is not covered by this selection or its required fee records are missing. The same trade result can appear on several rows—do not add those repeated amounts together." /></TableCell><TableCell />
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.executionSequence}`}>
         <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${row.trackerDate}` : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
       </TableRow>)}</TableBody></Table></HorizontalScrollRegion>}
@@ -531,6 +559,7 @@ type GroupedEventPath = Readonly<{
 function EventPathTable({
   currency,
   direction,
+  explainColumns = false,
   kinds,
   model,
   offline,
@@ -538,6 +567,7 @@ function EventPathTable({
 }: {
   currency: string | null;
   direction: "long" | "short";
+  explainColumns?: boolean;
   kinds: readonly TradeAnalysisEventPathRow["eventKind"][];
   paginationAtBottom?: boolean;
   model: DailyTradeLongTermAnalyticsV2Model;
@@ -559,7 +589,6 @@ function EventPathTable({
       .filter(({ event }) => event.symbol.toUpperCase().includes(ticker.trim().toUpperCase()))
       .map((value): GroupedEventPath => Object.freeze({ event: value.event, paths: value.paths }));
   }, [direction, kinds, model.eventPaths, ticker]);
-  if (grouped.length === 0) return <Typography color="text.secondary">No saved 5-, 15-, 30- or 60-minute paths are available for this selection.</Typography>;
   const currentPage = boundedPage(page, grouped.length, pageSize);
   const visibleRows = paginatedRows(grouped, currentPage, pageSize);
   const pathPrices = (row: TradeAnalysisEventPathRow | undefined): Readonly<{
@@ -570,7 +599,7 @@ function EventPathTable({
   }> | null => {
     if (!row || row.favorableMoveDecimal === null || row.adverseMoveDecimal === null) return null;
     const eventPrice = new Decimal(row.eventPriceDecimal);
-    if (!eventPrice.isPositive()) return null;
+    if (!eventPrice.gt(0)) return null;
     const favorableMove = new Decimal(row.favorableMoveDecimal);
     const adverseMove = new Decimal(row.adverseMoveDecimal);
     const high = direction === "long" ? eventPrice.plus(favorableMove) : eventPrice.plus(adverseMove);
@@ -584,9 +613,19 @@ function EventPathTable({
   };
   return <Stack spacing={1.25}>
     <TextField label="Ticker" onChange={(event) => { setTicker(event.target.value); setPage(1); }} size="small" sx={{ maxWidth: { sm: 220 } }} value={ticker} />
+    {grouped.length === 0 ? <Typography color="text.secondary">No saved price paths match this selection. You can clear or change the ticker above.</Typography> : <>
     {!paginationAtBottom ? <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={grouped.length} /> : null}
     <HorizontalScrollRegion label="Saved event price paths" minTableWidth={1540} stickyFirstColumn>
-      <Table size="small"><TableHead><TableRow><TableCell>Ticker</TableCell><TableCell>Execution</TableCell><TableCell>Executed</TableCell><TableCell>Session</TableCell><TableCell align="right">Execution price</TableCell>{[5, 15, 30, 60].map((minutes) => <TableCell align="right" key={minutes}>High / low within {minutes} min</TableCell>)}<TableCell /></TableRow></TableHead>
+      <Table size="small"><TableHead><TableRow>
+        {[
+          ["Ticker", "The stock for this execution."],
+          ["Execution", "Initial entry opens a position; Add increases it; Partial exit reduces it; Final exit closes the remaining shares. Each row starts from its own execution price."],
+          ["Executed", "The recorded date and time of this execution. All four time windows use this execution as their starting point."],
+          ["Session", "Whether the execution happened in premarket, regular hours or after-hours, using the account timezone."],
+          ["Execution price", "The price per share of this execution, used to calculate the percentage moves in this row."],
+        ].map(([label, help], index) => <TableCell align={index === 4 ? "right" : "left"} key={label}>{explainColumns ? <ColumnHeading label={label!} help={help!} /> : label}</TableCell>)}
+        {[5, 15, 30, 60].map((minutes) => <TableCell align="right" key={minutes}>{explainColumns ? <ColumnHeading label={`High / low · ${minutes} min`} help={kinds.includes("Final exit") ? `The saved ${minutes}-minute price path after this exit, with high and low shown relative to its execution price. Only complete one-minute candles after the execution minute and completed by the window end are included. A partial exit may leave shares open. Any missing required minute makes the path unavailable, not zero. Larger windows overlap the smaller ones; do not add their moves together.` : `The saved high and low for the ${minutes}-minute path after this execution, with percentage changes from its price. Only full one-minute candles after the execution minute and completed by the window's end are included. These windows can continue after you exit; they are not while-held MFE/MAE. Unavailable means a saved value or a required minute is missing. Larger windows include the shorter ones.`} /> : <>High / low within {minutes} min</>}</TableCell>)}<TableCell />
+      </TableRow></TableHead>
         <TableBody>{visibleRows.map(({ event, paths }) => <TableRow hover key={`${event.roundTripId}-${event.eventSequence}`}><TableCell sx={{ fontWeight: 850 }}>{event.symbol}</TableCell><TableCell>{event.eventKind}</TableCell><TableCell>{executionDateTime(event.executedAtUtc, model.timezone)}</TableCell><TableCell>{event.session}</TableCell><TableCell align="right">{money(event.eventPriceDecimal, currency)}</TableCell>{[5, 15, 30, 60].map((minutes) => {
           const prices = pathPrices(paths.get(minutes));
           return <TableCell align="right" key={minutes}>{prices ? <Box>
@@ -597,6 +636,7 @@ function EventPathTable({
       </Table>
     </HorizontalScrollRegion>
     {paginationAtBottom ? <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={grouped.length} /> : null}
+    </>}
   </Stack>;
 }
 
@@ -636,7 +676,7 @@ function ExecutionContextTable({
     <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
     {rows.length === 0 ? <Typography color="text.secondary">No executions match these filters.</Typography> : <HorizontalScrollRegion label="Exact execution context records" minTableWidth={1740} stickyFirstColumn>
       <Table size="small"><TableHead><TableRow>
-        <TableCell>Ticker</TableCell><TableCell>Execution</TableCell><TableCell>Executed</TableCell><TableCell>Session</TableCell><TableCell align="right">Price</TableCell><TableCell align="right">From Session VWAP (execution candle)</TableCell><TableCell align="right">From EMA 9 (execution 1m candle)</TableCell><TableCell align="right">From EMA 9 (last completed 5m candle)</TableCell><TableCell align="right">Execution 1m volume multiple</TableCell><TableCell align="right">Execution 1m ATR 14</TableCell><TableCell align="right">Position in completed 1m candle</TableCell><TableCell align="right">{model.moneyBasis === "gross" ? "Gross" : "Net"} trade result</TableCell><TableCell align="right">Trade return</TableCell><TableCell />
+        <TableCell><ColumnHeading label="Ticker" help="The stock for this execution." /></TableCell><TableCell><ColumnHeading label="Execution" help="Initial entry opens a position; Add increases it; Partial exit reduces it; Final exit closes the remaining shares." /></TableCell><TableCell><ColumnHeading label="Executed" help="Recorded execution date and time, displayed in your account timezone." /></TableCell><TableCell><ColumnHeading label="Session" help="Premarket, regular hours or after-hours, based on the execution time and account timezone." /></TableCell><TableCell align="right"><ColumnHeading label="Price" help="The actual recorded execution price per share." /></TableCell><TableCell align="right"><ColumnHeading label="VWAP distance" help="Percentage above (+) or below (−) Session VWAP on the completed one-minute execution candle." /></TableCell><TableCell align="right"><ColumnHeading label="EMA 9 · 1 min" help="Percentage above (+) or below (−) EMA 9 on the completed one-minute execution candle." /></TableCell><TableCell align="right"><ColumnHeading label="EMA 9 · 5 min" help="Percentage above (+) or below (−) EMA 9 on the last completed five-minute candle at the execution." /></TableCell><TableCell align="right"><ColumnHeading label="Volume multiple" help="Completed execution-candle volume divided by the average of up to 20 prior one-minute candles, requiring at least five. 2x means twice that recent average." /></TableCell><TableCell align="right"><ColumnHeading label="ATR 14" help="Saved 14-period one-minute Average True Range as a percentage of the execution price. This is recent price volatility, not trade P/L." /></TableCell><TableCell align="right"><ColumnHeading label="Candle position" help="Execution-price location inside the completed one-minute candle: 0% at the low and 100% at the high." /></TableCell><TableCell align="right"><ColumnHeading label={`${model.moneyBasis === "gross" ? "Gross" : "Net"} P/L`} help="Final P/L of the saved trade containing this execution, including all of its round trips, not profit from this fill alone. Gross is before broker fees; Net deducts recorded fees. This result repeats across the trade's executions, so do not add these rows." /></TableCell><TableCell align="right"><ColumnHeading label="Return" help="The saved trade's final P/L divided by the combined entry cost of its round trips. This follows Gross/Net and is not the price move after this individual execution." /></TableCell><TableCell />
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.eventSequence}`}>
         <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell>{executionDateTime(row.executedAtUtc, model.timezone)}</TableCell><TableCell>{row.session}</TableCell><TableCell align="right">{money(row.eventPriceDecimal, model.currency)}</TableCell><TableCell align="right">{signedPercent(row.vwapDistancePercent)}</TableCell><TableCell align="right">{signedPercent(row.ema9DistancePercent)}</TableCell><TableCell align="right">{signedPercent(row.ema9FiveMinuteDistancePercent)}</TableCell><TableCell align="right">{row.relativeVolume === null ? "Unavailable" : `${row.relativeVolume.toFixed(1)}x`}</TableCell><TableCell align="right">{percent(row.atr14Percent)}</TableCell><TableCell align="right">{percent(row.candleLocationPercent)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.returnPercent) }}>{percent(row.returnPercent)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${row.trackerDate}` : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">Full analysis</Button></TableCell>
       </TableRow>)}</TableBody></Table>
@@ -818,22 +858,17 @@ export function TradeAnalysisClient({
     const addedTradeIds = new Set(executions.filter((row) => row.eventKind === "Add").map((row) => row.roundTripId));
     const partialExitTradeIds = new Set(executions.filter((row) => row.eventKind === "Partial exit").map((row) => row.roundTripId));
     const greenFinalExitTradeIds = new Set(executions.filter((row) =>
-      row.eventKind === "Final exit" && row.executionGrossPnlDecimal !== null &&
-      new Decimal(row.executionGrossPnlDecimal).isPositive()).map((row) => row.roundTripId));
+      row.eventKind === "Final exit" && row.isLastTradeExit !== false && row.executionGrossPnlDecimal !== null &&
+      new Decimal(row.executionGrossPnlDecimal).gt(0)).map((row) => row.roundTripId));
     const averageTradePnl = (rows: typeof trades): string | null => rows.length === 0
       ? null
       : rows.reduce((sum, row) => sum.plus(row.actualPnlDecimal), new Decimal(0)).div(rows.length).toString();
     const profitablePartialExitGross = executions.filter((row) =>
       row.eventKind === "Partial exit" && row.executionGrossPnlDecimal !== null &&
-      new Decimal(row.executionGrossPnlDecimal).isPositive()).reduce((sum, row) =>
+      new Decimal(row.executionGrossPnlDecimal).gt(0)).reduce((sum, row) =>
         sum.plus(row.executionGrossPnlDecimal!), new Decimal(0));
-    const profitGivebackPercentages = trades.flatMap((row) => {
-      if (row.additionalOpportunityDecimal === null) return [];
-      const potential = new Decimal(row.actualPnlDecimal).plus(row.additionalOpportunityDecimal);
-      return potential.isPositive()
-        ? [new Decimal(row.additionalOpportunityDecimal).div(potential).mul(100).toNumber()]
-        : [];
-    });
+    const profitGivebackPercentages = trades.flatMap((row) => row.capturedPercent === null
+      ? [] : [Math.max(0, 100 - row.capturedPercent)]);
     return Object.freeze({
       addedAveragePnl: averageTradePnl(trades.filter((row) => addedTradeIds.has(row.roundTripId))),
       addedTradeCount: addedTradeIds.size,
@@ -850,8 +885,8 @@ export function TradeAnalysisClient({
     Object.freeze({ factor: "Session VWAP", rows: model.entryContextByDirection[activeDirection].vwap }),
     Object.freeze({ factor: "EMA 9", rows: model.entryContextByDirection[activeDirection].ema9 }),
     Object.freeze({ factor: "Relative volume", rows: model.entryContextByDirection[activeDirection].relativeVolume }),
-    Object.freeze({ factor: "Holding time", rows: model.holdingDurationByDirection[activeDirection] }),
-    Object.freeze({ factor: "Exit giveback", rows: model.exitContextByDirection[activeDirection] }),
+    Object.freeze({ factor: "Holding time", help: "Total time a position was open across the saved trade's round trips. Time spent flat between round trips is excluded.", rows: model.holdingDurationByDirection[activeDirection] }),
+    Object.freeze({ factor: "Exit giveback", help: "The price move from the prior favorable price extreme to an exit, as a percentage of that extreme price. This groups executions by stock-price giveback. It is different from the top card, which measures the share of potential trade profit not retained.", rows: model.exitContextByDirection[activeDirection] }),
   ]), [activeDirection, model.entryContextByDirection, model.entryTimeByDirection, model.exitContextByDirection, model.holdingDurationByDirection]);
   const capabilityQuery = useMemo(() => {
     const params = new URLSearchParams();
@@ -952,7 +987,7 @@ export function TradeAnalysisClient({
         </Stack>
       ) : null}
 
-      {view === "green-to-red" ? <Section defaultExpanded description="What happened after user-defined trades reached a gain of 20% or more while shares were open." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Green-to-red trades">
+      {view === "green-to-red" ? <Section defaultExpanded description="What happened after user-defined trades reached a gain of 20% or more while shares were open." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Green-to-red trades" titleHelp="See how often trades offered a gain of at least 20%, how much profit you took, and which trades later turned red or finished at a loss. This page uses your saved Trade Analyzer candles and executions for the selected dates and direction, with no minimum time above +20%. Amounts use Gross P/L, before broker fees. Profit opportunity combines realized P/L with potential profit on shares still held at the trade's highest percentage gain. Use the summaries and individual records to review profit-taking and risk management. A recovery can be temporary, so check whether the trade finished green or red.">
         <GreenToRedAnalysis
           currency={model.currency}
           direction={activeDirection}
@@ -1018,32 +1053,34 @@ export function TradeAnalysisClient({
 
       {view === "entry-exit" ? <Section
         collapsible={false}
-        description="A quick view of entry, scaling and exit behavior before the detailed records."
+        description=""
+        titleHelp="A summary of adds, partial exits, profitable final exits and profit given back for the selected dates and direction. Use the context table to find which entry and exit conditions accompanied stronger or weaker completed results, then open the detailed sections below. Each saved trade counts once, even when it contains multiple round trips. The selected dates use the trade's final closing date."
         helpHref="/help/trade-analyzer/entry-exit-analysis"
         title="Entry and exit snapshot"
       >
         <Stack spacing={2.25}>
+          {model.entryExitExcludedTradeCount ? <Typography color="text.secondary" variant="body2">{model.entryExitExcludedTradeCount} analyzed trades lack complete matching execution, fee or currency data for these results. They remain in the analyzed count but are excluded from the comparisons below.</Typography> : null}
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" } }}>
-            <DashboardMetricCard
-              caption={`Avg ${moneyBasisLabel} P/L ${money(entryExitSnapshot.addedAveragePnl, model.currency)} vs ${money(entryExitSnapshot.noAddAveragePnl, model.currency)} without adds`}
+            <ExplainedMetric wrapText
+              help={`Saved trades with at least one add: an execution that increased shares already held. Each saved trade counts once, even with several adds. Average ${moneyBasisLabel} P/L with adds: ${money(entryExitSnapshot.addedAveragePnl, model.currency)}; without adds: ${money(entryExitSnapshot.noAddAveragePnl, model.currency)}. These are completed trade results, not profit caused by adding.`}
               label="Trades with adds"
               value={`${entryExitSnapshot.addedTradeCount} of ${entryExitSnapshot.tradeCount} · ${percent(entryExitSnapshot.tradeCount === 0 ? null : entryExitSnapshot.addedTradeCount / entryExitSnapshot.tradeCount * 100)}`}
             />
-            <DashboardMetricCard
-              caption={`Gross profit secured on profitable partial exits: ${money(entryExitSnapshot.partialExitGrossPnl, model.currency)}`}
+            <ExplainedMetric wrapText
+              help={`Saved trades with an exit that reduced shares without closing the position, whether that exit made or lost money. Each trade counts once. Profitable partial exits secured ${money(entryExitSnapshot.partialExitGrossPnl, model.currency)} in gross profit; this amount excludes losing partial exits and broker fees.`}
               label="Trades with partial exits"
               value={`${entryExitSnapshot.partialExitTradeCount} of ${entryExitSnapshot.tradeCount} · ${percent(entryExitSnapshot.tradeCount === 0 ? null : entryExitSnapshot.partialExitTradeCount / entryExitSnapshot.tradeCount * 100)}`}
             />
-            <DashboardMetricCard
-              caption={`Final exit sold ${activeDirection === "long" ? "above" : "below"} the trade's average entry price`}
+            <ExplainedMetric wrapText
+              help="Saved trades whose last exit made a gross profit on the shares closed by that execution. Earlier exits or round trips may have made or lost money, so this does not necessarily mean the whole trade finished profitable. Final exit means closing the remaining shares, including after earlier partial exits."
               label="Exited while green"
               value={`${entryExitSnapshot.greenFinalExitTradeCount} of ${entryExitSnapshot.tradeCount} · ${percent(entryExitSnapshot.tradeCount === 0 ? null : entryExitSnapshot.greenFinalExitTradeCount / entryExitSnapshot.tradeCount * 100)}`}
             />
-            <DashboardMetricCard
-              caption="Median share of each trade's calculated peak profit opportunity not retained in final P/L"
+            <ExplainedMetric wrapText
+              help="The middle percentage of calculated peak profit opportunity not retained in final P/L. For each eligible trade, the gap between opportunity and final P/L is divided by opportunity, then the middle percentage is shown. For example, $100 opportunity and $60 final profit gives 40% back. Finishing at a loss can put this above 100%. Opportunity and final P/L both follow your Gross/Net selection. Opportunity includes profit already secured plus potential profit on shares still held, using saved candle highs for longs and lows for shorts. Candles containing executions are excluded because their price order is unknown. Missing candles or nonpositive opportunities are excluded. This is a share of potential profit, not a percentage drop in the stock price."
               label="Median profit given back"
               value={percent(entryExitSnapshot.medianProfitGivebackPercent)}
-              valueColor={entryExitSnapshot.medianProfitGivebackPercent === null || entryExitSnapshot.medianProfitGivebackPercent === 0 ? "text.primary" : "error.main"}
+              tone={entryExitSnapshot.medianProfitGivebackPercent === null || entryExitSnapshot.medianProfitGivebackPercent === 0 ? "text.primary" : "error.main"}
             />
           </Box>
           <Box>
@@ -1054,23 +1091,23 @@ export function TradeAnalysisClient({
         </Stack>
       </Section> : null}
 
-      {view === "entry-exit" ? <Section defaultExpanded description={`Saved ${directionLabel} executions and the market session in which each occurred.`} helpHref="/help/trade-analyzer/entry-exit-analysis#execution-mix" title="Execution mix">
+      {view === "entry-exit" ? <Section defaultExpanded description="" titleHelp="Counts your recorded initial entries, adds, partial exits and final exits for this selection. These are execution counts, not a count of saved trades. Several executions, and even multiple opening-to-flat positions, can belong to one saved trade." helpHref="/help/trade-analyzer/entry-exit-analysis#execution-mix" title="Execution mix">
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
-          <DashboardMetricCard caption="Executions that opened a flat position" label="Initial entries" value={String(directionEventCounts.initialEntries)} />
-          <DashboardMetricCard caption="Executions that increased an open position" label="Adds" value={String(directionEventCounts.adds)} />
-          <DashboardMetricCard caption="Executions that reduced but did not close the position" label="Partial exits" value={String(directionEventCounts.partialExits)} />
-          <DashboardMetricCard caption="Executions that returned the position to flat" label="Final exits" value={String(directionEventCounts.finalExits)} />
+          <ExplainedMetric wrapText help="Executions that opened a position from zero shares. A later re-entry can be another initial entry within the same saved trade." label="Initial entries" value={String(directionEventCounts.initialEntries)} />
+          <ExplainedMetric wrapText help="Executions that increased a position already open. This counts fills, not the number of shares bought or the number of trades." label="Adds" value={String(directionEventCounts.adds)} />
+          <ExplainedMetric wrapText help="Executions that reduced shares but left the position open. They count whether that exit was profitable, breakeven or losing." label="Partial exits" value={String(directionEventCounts.partialExits)} />
+          <ExplainedMetric wrapText help="Executions that closed all remaining shares and left the position flat. This can be the last part of a scale-out, not necessarily a single full-size exit." label="Final exits" value={String(directionEventCounts.finalExits)} />
         </Box>
       </Section> : null}
 
-      {view === "entry-exit" ? <Section description={`Initial entries and adds are separated in every row. Volume compares the execution's 1-minute candle with up to 20 preceding 1-minute candles and requires at least 5. A trade can appear in more than one row when its executions occurred in different bands.`} helpHref="/help/trade-analyzer/entry-exit-analysis#entry-execution-context" title="Entry execution context">
+      {view === "entry-exit" ? <Section description="" titleHelp="Compare the completed results of saved trades entered or added to at different distances from Session VWAP and EMA 9, and under different volume and volatility conditions. Entries and adds are separated. Indicators from the completed execution candle can include prices or volume after the fill. A trade can appear in several groups, so their totals must not be added together." helpHref="/help/trade-analyzer/entry-exit-analysis#entry-execution-context" title="Entry execution context">
         <Stack spacing={2.5}>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from Session VWAP on the completed execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.vwap} /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from EMA 9 on the completed 1-minute execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.ema9} /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from EMA 9 on the last completed 5-minute candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.ema9FiveMinute} /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Completed 1-minute execution-candle volume compared with prior candles</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.relativeVolume} valueLabel="Avg volume multiple" valueSuffix="x" /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>ATR 14 on the completed 1-minute execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.atr14Percent} valueLabel="Avg ATR" valueSuffix="%" /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Execution price inside the completed 1-minute candle range</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.candleLocation} valueLabel="Avg candle position" valueMultiplier={100} valueSuffix="%" /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="Session VWAP distance" help="How far the execution price was above (+) or below (−) Session VWAP on its completed one-minute candle. The percentage uses VWAP as the reference. VWAP combines price and volume through that session." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.vwap} /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="EMA 9 · 1 minute" help="How far the execution price was above (+) or below (−) the 9-period exponential moving average on the completed one-minute execution candle. This candle can finish after the execution." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.ema9} /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="EMA 9 · 5 minutes" help="Execution-price distance from the EMA 9 on the last completed five-minute candle available at the execution. This is a separate timeframe from the one-minute EMA." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.ema9FiveMinute} /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="Relative volume · 1 minute" help="The completed execution candle's volume divided by average volume over up to 20 preceding one-minute candles. At least five prior candles are required. This measures recent candle activity, not full-day relative volume." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.relativeVolume} valueLabel="Avg volume multiple" valueSuffix="x" /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="ATR 14 · 1 minute" help="Saved 14-period Average True Range as a percentage of the execution price. It describes recent one-minute price movement, including gaps, rather than the size of your position or profit." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.atr14Percent} valueLabel="Avg ATR" valueSuffix="%" /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="Position in candle" help="Where the execution price sits between its completed one-minute candle's low (0%) and high (100%). The candle can continue after the fill, so this is a review of the completed candle, not only what was known at the time." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={entryContext.candleLocation} valueLabel="Avg candle position" valueMultiplier={100} valueSuffix="%" /></Box>
           <Box>
             <Typography sx={{ fontWeight: 800, mb: 0.25 }}>Exact entry and add records</Typography>
             <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">Signed distances show above (+) or below (−) the saved indicator. Candle position runs from 0% at the candle low to 100% at the candle high.</Typography>
@@ -1079,14 +1116,14 @@ export function TradeAnalysisClient({
         </Stack>
       </Section> : null}
 
-      {view === "entry-exit" ? <Section description={`Partial exits and final exits are separated in every row. Each row reports the completed results of the trades containing those exits; a trade can appear in more than one row when its exits occurred in different bands.`} helpHref="/help/trade-analyzer/entry-exit-analysis#exit-execution-context" title="Exit execution context">
+      {view === "entry-exit" ? <Section description="" titleHelp="Compare the completed results of saved trades with partial or final exits in each indicator, volume and volatility band. These results belong to the whole saved trade, not just the exit shown. Partial exits leave shares open; final exits close the remaining shares. A trade can appear in several groups." helpHref="/help/trade-analyzer/entry-exit-analysis#exit-execution-context" title="Exit execution context">
         <Stack spacing={2.5}>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from Session VWAP on the completed execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.vwap} /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from EMA 9 on the completed 1-minute execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.ema9} /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Distance from EMA 9 on the last completed 5-minute candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.ema9FiveMinute} /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Completed 1-minute execution-candle volume compared with prior candles</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.relativeVolume} valueLabel="Avg volume multiple" valueSuffix="x" /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>ATR 14 on the completed 1-minute execution candle</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.atr14Percent} valueLabel="Avg ATR" valueSuffix="%" /></Box>
-          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Execution price inside the completed 1-minute candle range</Typography><BreakdownTable currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.candleLocation} valueLabel="Avg candle position" valueMultiplier={100} valueSuffix="%" /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="Session VWAP distance" help="How far the execution price was above (+) or below (−) Session VWAP on its completed one-minute candle. The percentage uses VWAP as the reference. VWAP combines price and volume through that session." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.vwap} /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="EMA 9 · 1 minute" help="How far the execution price was above (+) or below (−) the 9-period exponential moving average on the completed one-minute execution candle. This candle can finish after the execution." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.ema9} /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="EMA 9 · 5 minutes" help="Execution-price distance from the EMA 9 on the last completed five-minute candle available at the execution. This is a separate timeframe from the one-minute EMA." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.ema9FiveMinute} /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="Relative volume · 1 minute" help="The completed execution candle's volume divided by average volume over up to 20 preceding one-minute candles. At least five prior candles are required. This measures recent candle activity, not full-day relative volume." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.relativeVolume} valueLabel="Avg volume multiple" valueSuffix="x" /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="ATR 14 · 1 minute" help="Saved 14-period Average True Range as a percentage of the execution price. It describes recent one-minute price movement, including gaps, rather than the size of your position or profit." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.atr14Percent} valueLabel="Avg ATR" valueSuffix="%" /></Box>
+          <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}><ColumnHeading label="Position in candle" help="Where the execution price sits between its completed one-minute candle's low (0%) and high (100%). The candle can continue after the fill, so this is a review of the completed candle, not only what was known at the time." /></Typography><BreakdownTable explainColumns currency={model.currency} moneyBasis={model.moneyBasis} rows={exitContext.candleLocation} valueLabel="Avg candle position" valueMultiplier={100} valueSuffix="%" /></Box>
           <Box>
             <Typography sx={{ fontWeight: 800, mb: 0.25 }}>Exact partial and final exit records</Typography>
             <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">Signed distances show above (+) or below (−) the saved indicator. Candle position runs from 0% at the candle low to 100% at the candle high.</Typography>
@@ -1095,30 +1132,35 @@ export function TradeAnalysisClient({
         </Stack>
       </Section> : null}
 
-      {view === "entry-exit" ? <Section description="The highest and lowest saved prices from each partial or final exit through 5, 15, 30 and 60 minutes. The execution price is the starting point. This is later price history, not a claim that those prices could have been captured." helpHref="/help/trade-analyzer/entry-exit-analysis#after-exit" title="Price reached after exits">
-        <EventPathTable currency={model.currency} direction={activeDirection} kinds={["Partial exit", "Final exit"]} model={model} offline={offline} />
+      {view === "entry-exit" ? <Section description="" titleHelp="See how prices moved after each partial or final exit, using that execution price as the starting point. A partial exit may leave shares open. The Analyzer requests one-minute candles through 30 minutes after the last exit; longer windows depend on available saved data. These are later price ranges, not additional realized profit." helpHref="/help/trade-analyzer/entry-exit-analysis#after-exit" title="Price reached after exits">
+        <EventPathTable explainColumns currency={model.currency} direction={activeDirection} kinds={["Partial exit", "Final exit"]} model={model} offline={offline} />
       </Section> : null}
 
-      {view === "mfe-mae" ? <Section defaultExpanded description={`Maximum Favorable Excursion (MFE) and Maximum Adverse Excursion (MAE) after each ${directionLabel} entry or add while the position remained open. Dollar amounts are per share.`} helpHref="/help/trade-analyzer/mfe-mae#overview" title="Room after entry · MFE / MAE">
-        <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
-          <DashboardMetricCard caption="Entries and adds with saved one-minute candle coverage" label="Measured executions" value={String(directionExcursions.length)} />
-          <DashboardMetricCard caption={`Maximum Favorable Excursion (MFE): average ${favorableMoneyLabel}`} label={`Average ${favorableMoveLabel} per share · MFE`} value={money(directionMovement.averageFavorableMoney?.toString() ?? null, model.currency)} valueColor="success.main" />
-          <DashboardMetricCard caption={`Maximum Favorable Excursion (MFE): middle ${favorableMoneyLabel}`} label={`Median ${favorableMoveLabel} per share · MFE`} value={money(directionMovement.medianFavorableMoney?.toString() ?? null, model.currency)} valueColor="success.main" />
-          <DashboardMetricCard caption={`Maximum Adverse Excursion (MAE): average ${adverseMoneyLabel}`} label={`Average ${adverseMoveLabel} per share · MAE`} value={money(directionMovement.averageAdverseMoney?.toString() ?? null, model.currency)} valueColor="error.main" />
-          <DashboardMetricCard caption={`Maximum Adverse Excursion (MAE): middle ${adverseMoneyLabel}`} label={`Median ${adverseMoveLabel} per share · MAE`} value={money(directionMovement.medianAdverseMoney?.toString() ?? null, model.currency)} valueColor="error.main" />
-          <DashboardMetricCard caption={`Average ${favorableMoneyLabel} relative to execution price`} label={`Average ${favorableMoveLabel} % · MFE`} value={percent(directionMovement.averageFavorablePercent)} valueColor="success.main" />
-          <DashboardMetricCard caption={`Average ${adverseMoneyLabel} relative to execution price`} label={`Average ${adverseMoveLabel} % · MAE`} value={percent(directionMovement.averageAdversePercent)} valueColor="error.main" />
-        </Box>
+      {view === "mfe-mae" ? <Section defaultExpanded description={`MFE and MAE measure price movement after each ${directionLabel} entry or add until the final exit. Dollars are per share.`} helpHref="/help/trade-analyzer/mfe-mae#overview" title="Room after entry · MFE / MAE" titleHelp="Review how much upside and downside followed your entries and adds while the position was open. Each execution starts from its own price and carries equal weight in the summaries. MFE is the largest profitable price move; MAE is the largest losing price move. Neither is a realized trade profit or loss. Measurements use saved one-minute candles and the final exit price. The entry and exit candles' full ranges are excluded because their highs and lows may have occurred outside your holding period.">
+        <Stack spacing={1.5}>
+          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" } }}>
+            <ExplainedMetric label="Measured entries / adds" value={String(directionExcursions.length)} help="The number of entries and adds with usable MFE/MAE measurements. A trade can contribute more than one row. Any missing required minute excludes that measurement rather than counting it as zero. A position that opens and closes in the same minute can use its exact exit price without an interior candle." />
+            <ExplainedMetric label="Median MFE %" value={percent(directionMovement.medianFavorablePercent)} tone="success.main" help="The middle maximum profitable price move across measured entries and adds, as a percentage of each execution price. Half the measurements are at or below this value and half at or above it." />
+            <ExplainedMetric label="Median MAE %" value={percent(directionMovement.medianAdversePercent)} tone="error.main" help="The middle maximum losing price move across measured entries and adds, as a percentage of each execution price. The value describes the size of the move; it is not a realized loss." />
+            <ExplainedMetric label="Average MFE %" value={percent(directionMovement.averageFavorablePercent)} tone="success.main" help="Adds the maximum profitable percentage move for each measured entry or add, then divides by the number of measurements. Each execution counts equally. Large moves can pull the average above the median." />
+            <ExplainedMetric label="Average MAE %" value={percent(directionMovement.averageAdversePercent)} tone="error.main" help="Adds the maximum losing percentage move for each measured entry or add, then divides by the number of measurements. Each execution counts equally; this is not weighted by position size." />
+            <ExplainedMetric label="Average MFE per share" value={money(directionMovement.averageFavorableMoney?.toString() ?? null, model.currency)} tone="success.main" help={`Average ${favorableMoneyLabel}. Each measurement is the largest ${favorableMoveLabel} from that execution's price until the final exit. These are dollars per share, not total trade profit.`} />
+            <ExplainedMetric label="Median MFE per share" value={money(directionMovement.medianFavorableMoney?.toString() ?? null, model.currency)} tone="success.main" help={`The middle ${favorableMoneyLabel} when the measured maximum moves are ordered by size. Dollars are per share. Percentage measurements make it easier to compare stocks at different prices.`} />
+            <ExplainedMetric label="Average MAE per share" value={money(directionMovement.averageAdverseMoney?.toString() ?? null, model.currency)} tone="error.main" help={`Average ${adverseMoneyLabel}. Each measurement is the largest ${adverseMoveLabel} from that execution's price until the final exit. This is price movement per share, not realized loss.`} />
+            <ExplainedMetric label="Median MAE per share" value={money(directionMovement.medianAdverseMoney?.toString() ?? null, model.currency)} tone="error.main" help={`The middle ${adverseMoneyLabel} when measured maximum moves are ordered by size. Dollars are per share, not the amount lost on the position.`} />
+          </Box>
+          <Typography color="text.secondary" variant="body2">Measurements with missing required candles are excluded. Entries and adds count separately; the figures are not whole-trade profit or loss.</Typography>
+          <EntryAddComparison rows={directionExcursions} />
+        </Stack>
       </Section> : null}
 
-      {view === "mfe-mae" ? <Section defaultExpanded description={`The highest and lowest saved prices from each ${directionLabel} entry or add through 5, 15, 30 and 60 minutes. The execution price is the starting point.`} helpHref="/help/trade-analyzer/mfe-mae#timed-paths" title="Price path after entry">
-        <EventPathTable currency={model.currency} direction={activeDirection} kinds={["Initial entry", "Add"]} model={model} offline={offline} paginationAtBottom />
+      {view === "mfe-mae" ? <Section defaultExpanded description="Price movement within 5, 15, 30 and 60 minutes of each entry or add. These windows can continue after your final exit." helpHref="/help/trade-analyzer/mfe-mae#timed-paths" title="Price path after entry" titleHelp="Unlike the MFE/MAE summary, these fixed time windows do not stop at your exit. They start from each execution's price and use its saved one-minute price path. The Analyzer requests candles through 30 minutes after the final exit, so longer windows may be unavailable. Missing required candles also make a window unavailable. The windows overlap: 15 minutes includes the first 5 minutes, rather than showing only minutes 5 to 15.">
+        <EventPathTable currency={model.currency} direction={activeDirection} explainColumns kinds={["Initial entry", "Add"]} model={model} offline={offline} paginationAtBottom />
       </Section> : null}
 
-      {view === "mfe-mae" ? <Section description="The individual saved candle observations behind these results. Ticker and execution filters apply before pagination." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions">
+      {view === "mfe-mae" ? <Section description="Each row is an entry or add, measured until the final exit. Table filters do not change the summaries above." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions" titleHelp="See the entries and adds behind the MFE/MAE summary. Each starts at its own execution price, uses the interior one-minute candle ranges and final exit price, and excludes prices after the position closes. Use the ticker and execution filters to inspect these rows. Trade P/L is the whole trade's final result and may repeat across multiple rows.">
         <MfeMaeTable direction={activeDirection} model={model} offline={offline} />
       </Section> : null}
-
       {view === "candle-patterns" ? <Section defaultExpanded description="The ten most frequently observed candle patterns." helpHref="/help/trade-analyzer/candle-patterns#ranked-patterns" title="Most observed patterns">
         <PatternRanking groups={patternGroups} />
       </Section> : null}

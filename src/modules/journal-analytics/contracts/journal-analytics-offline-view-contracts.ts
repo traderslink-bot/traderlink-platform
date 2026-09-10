@@ -34,10 +34,10 @@ export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS: Readonly<
   "analytics-timing": "journal-analytics:timing:current",
   "trade-analyzer-candle-patterns": "journal-analytics:trade-analyzer:candle-patterns:v2",
   "trade-analyzer-day": "journal-analytics:trade-analyzer:day:v2",
-  "trade-analyzer-entry-exit": "journal-analytics:trade-analyzer:entry-exit:v2",
+  "trade-analyzer-entry-exit": "journal-analytics:trade-analyzer:entry-exit:v3",
   "trade-analyzer-green-to-red": "journal-analytics:trade-analyzer:green-to-red:v2",
   "trade-analyzer-scaling-out": "journal-analytics:trade-analyzer:scaling-out:v3",
-  "trade-analyzer-mfe-mae": "journal-analytics:trade-analyzer:mfe-mae:v2",
+  "trade-analyzer-mfe-mae": "journal-analytics:trade-analyzer:mfe-mae:v3",
   "trade-analyzer-trades": "journal-analytics:trade-analyzer:trades:current",
 });
 

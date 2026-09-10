@@ -247,7 +247,9 @@ export async function TradeAnalysisPage({
     if (currency !== null) do {
       const response = analytics.getRoundTripAnalyticsTable(scope, buildJournalAnalyticsDashboardQuery(scope, {
         afterCursor: cursor,
-        closingDateRange: closingRange(dateRange),
+        // Entry/Exit selects by the saved trade's final close below, keeping all
+        // earlier round trips in that trade available for its complete results.
+        closingDateRange: view === "entry-exit" ? { kind: "all_available" } : closingRange(dateRange),
         currency,
         metricIds: ["included_count"],
         moneyBasis,
@@ -280,6 +282,7 @@ export async function TradeAnalysisPage({
         timezone,
         multipliers,
         selectedProfitZoneMinimumHoldMinutes,
+        view === "entry-exit" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
       ),
     });
   }));

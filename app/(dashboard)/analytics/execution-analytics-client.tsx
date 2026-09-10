@@ -127,7 +127,12 @@ function EntryPriceResults({ moneyBasis, results, resultsByDirection }: {
     const value = (highest ? ranked[0] : ranked.at(-1))?.averageReturnDecimal;
     const matches = value == null ? [] : ranked.filter((row) => new Decimal(row.averageReturnDecimal!).equals(value));
     return <Box sx={{ borderLeft: 3, borderColor: "divider", pl: 1.25 }}>
-      <Typography color="text.secondary" variant="body2">{highest ? "Highest average return" : "Lowest average return"}{matches.length > 1 ? " · tied" : ""}</Typography>
+      <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
+        <Typography color="text.secondary" variant="body2">{highest ? "Highest average return" : "Lowest average return"}{matches.length > 1 ? " · tied" : ""}</Typography>
+        <Tooltip arrow title={`${highest ? "The entry-price band with the highest average percentage return" : "The entry-price band with the lowest average percentage return"} for the selected dates and trade direction. Each trade's ${moneyBasis === "gross" ? "Gross" : "Net"} P/L is divided by its entry cost, then those percentage returns are averaged. Each trade counts equally; this is not ranked by total dollars or win rate. ${highest ? "A few unusually large gains can lift the average." : "Lowest does not necessarily mean a loss—the band may still be profitable."} Check the median and trade count alongside it. Equal averages are shown as tied.`}>
+          <IconButton aria-label={`Explain ${highest ? "highest" : "lowest"} average return`} size="small" sx={{ p: 0.25, flexShrink: 0 }}><InfoOutlinedIcon sx={{ fontSize: 14 }} /></IconButton>
+        </Tooltip>
+      </Stack>
       {matches.map((row) => <Box key={row.key} sx={{ mt: 0.5 }}>
         <Typography sx={{ fontSize: { xs: 17, sm: 18 }, fontWeight: 850 }}>{row.entryPriceBand}</Typography>
         <Typography variant="body2" sx={{ color: financialOutcomeColor(row.averageReturnDecimal ?? null) }}>{row.averageReturn} average · {row.medianReturn} median · {row.tradeCountDisplay} trades</Typography>

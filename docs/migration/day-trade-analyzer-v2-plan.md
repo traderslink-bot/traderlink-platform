@@ -461,6 +461,12 @@ data write is authorized by this plan.
 
 ## Acceptance
 
+Room after entry: [Readability and coverage follow-up](mfe-mae-readability-coverage-progress.md) — owner-approved median percentage metrics, entry/add comparison, explanatory tooltips and saved-candle coverage guards implemented locally. Focused QA corrections also implemented: recoverable empty search, completed-minute timed-window endpoint and complete saved-trade P/L. Rendered acceptance pending.
+
+Entry & Exit: [Tooltip coverage and compact cards](entry-exit-tooltip-coverage-progress.md) plus [saved-trade correction and deeper QA](entry-exit-saved-trade-qa-report.md) — explanatory coverage, clipped-caption correction, saved-trade identity/P/L, final-exit classification, basis-aligned giveback and candle-window corrections implemented locally. 38 focused synthetic checks pass. Rendered acceptance pending.
+
+Tooltip follow-up: [Green-to-red tooltip review](green-to-red-tooltip-review-progress.md) — readable descriptions aligned with current calculations; integrated rendering pending.
+
 Count-card follow-up: [Day Analyzer count-card repair](day-analyzer-count-card-repair-progress.md) — local styling fixes; count-logic findings handed to Build owner-only Market Data at owner request.
 
 Green-to-red correction: [Zero-profit classification repair](green-to-red-zero-profit-repair-progress.md) — implemented locally; publication and integrated browser verification pending.
@@ -480,3 +486,5 @@ Pagination follow-up: [Analyzed Trades pagination repair](analyzed-trades-pagina
 - Route navigation and offline page rendering use the same page model.
 - Help copy remains deferred until the owner accepts the pages.
 - Desktop/mobile Light/Dark rendered owner acceptance.
+
+Green-to-red loss-focus follow-up: [Implementation and verification record](green-to-red-loss-focus-progress.md). Local implementation complete; integrated visual acceptance and publication pending.
