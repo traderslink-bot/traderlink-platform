@@ -11,6 +11,15 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+- Fixed diagnostic retention marking every validation phase complete. Only
+  transport failure, explicit failed validation or saved prepared payload now
+  creates a completion marker. Intermediate optional-section, valid-core and
+  usage records remain protected from expiry/space reclamation. Seven focused
+  audit-store cases and strict module TypeScript pass, using disposable stores.
+  Owner revision directories are not enumerated by diagnostic cleanup. Missing
+  terminal artifacts/capacity recovery and operational indexing remain open;
+  no live retained diagnostics were deleted or modified.
+
 - Export/inspector now reports separate captured-record counts for input,
   response, validation, prepared payload and transport error. Counts are derived
   only after exact selected-generation/ticker diagnostic identity checks. A
