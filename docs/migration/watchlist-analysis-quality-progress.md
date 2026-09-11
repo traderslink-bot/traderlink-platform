@@ -11,6 +11,25 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Addressable checkpoint retention
+
+- New top-level upside/downside schemas and prompt now require id/dependsOn.
+  Dependency validation runs before normalization removes metadata. Rejected
+  levels remove dependent successors; explicit independent levels remain.
+- Legacy text-invalid sequences retain earlier valid checkpoints and omit the
+  unresolved tail. Existing legacy price-only normalization remains unchanged
+  when there is no text omission or dependency metadata. No guessed English IDs.
+- Converted the known-gap test to partial acceptance and verified both legacy
+  omission and explicit independent-level retention through the service, one
+  request per generation. Pure tests cover both directions, mixed identities,
+  duplicates and forward references. Original rejected rows/reasons are audited.
+- Inspector and Published with omissions accounting include this stage; owner
+  replacements still clear the recorded omissions without AI evidence checks.
+  Code fingerprint scope increases to eight modules. Help is aligned.
+- Forty-six service/dependency/fingerprint checks passed, followed by the
+  service/inspector integration check. Strict service TypeScript passed.
+  Complete cross-scenario prose dependencies and full live acceptance remain open.
+
 ### Legacy checkpoint dependency gap reproduced
 
 - Source trace confirms top-level `targets` and `downsideCheckpoints` use the

@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+The legacy checkpoint text reproduction is now partial-publication acceptance.
+New explicit top-level checkpoint dependencies retain independent levels and
+remove dependent ones. Older text-invalid sequences omit the unresolved tail;
+legacy price-only normalization stays unchanged. Service and pure checks pass.
+Full cross-scenario narrative/reference coverage remains unproven.
+
 Known gap reproduced: legacy top-level upside/downside checkpoints with valid
 synthetic observed prices but invalid volume text still reject the entire read
 with one request. The characterization asserts current rejection, NOT desired
