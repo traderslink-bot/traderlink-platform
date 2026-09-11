@@ -3,7 +3,7 @@
 import "flag-icons/css/flag-icons.min.css";
 
 import Link from "next/link";
-import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 
 import type {
   LiveWatchlistArchiveSnapshot,
@@ -507,12 +507,14 @@ export function TradersLinkAiReadCard({
   livePrice,
   liveVolumeContext,
   dipBuyPlanVisible = true,
+  renderSectionEditor,
 }: {
   card: LiveWatchlistCardContent;
   symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus">;
   livePrice: number | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
+  renderSectionEditor?: (sections: readonly string[]) => ReactNode;
 }) {
   const parsedRead = parseTradersLinkAiRead(card.body);
   if (!parsedRead) {
@@ -562,6 +564,7 @@ export function TradersLinkAiReadCard({
         </div>
       </div>
 
+      {renderSectionEditor?.(["bias", "currentRead"])}
       {!hidden.has("currentRead") && read.currentRead.trim() ? <p>{read.currentRead}</p> : null}
       {!hidden.has("momentumFailure") && !hidden.has("shallow") && !hidden.has("deep") && liveVolumeContext && shouldShowTradersLinkAiLiveVolumeConfirmation({
         read,
@@ -582,12 +585,13 @@ export function TradersLinkAiReadCard({
           ["mustClear", "Must clear", read.mustClear],
           ["breakoutContinuation", "Breakout continuation", read.breakoutContinuation],
         ] as const;
-        const visible = levels.filter(([key, , level]) => !hidden.has(key) && (level.price !== null || level.rationale.trim()));
+        const visible = levels.filter(([key, , level]) => Boolean(renderSectionEditor) || (!hidden.has(key) && (level.price !== null || level.rationale.trim())));
         return visible.length ? <div className="watchlist-ai-read-level-grid">
-          {visible.map(([key, heading, level]) => <TradersLinkAiReadLevelBlock key={key} heading={heading} level={level} />)}
+          {visible.map(([key, heading, level]) => renderSectionEditor ? <div key={key}>{renderSectionEditor([key])}{!hidden.has(key) && (level.price !== null || level.rationale.trim()) ? <TradersLinkAiReadLevelBlock heading={heading} level={level} /> : null}</div> : <TradersLinkAiReadLevelBlock key={key} heading={heading} level={level} />)}
         </div> : null;
       })()}
 
+      {renderSectionEditor?.(["targets"])}
       {read.version === 4 && !hidden.has("targets") ? (
         <section className="watchlist-ai-read-section">
           <h3>Where the trade could go next</h3>
@@ -615,6 +619,7 @@ export function TradersLinkAiReadCard({
         </section>
       ) : null}
 
+      {renderSectionEditor?.(["shallow", "deep"])}
       {(read.version === 3 || read.version === 4) && dipBuyPlanVisible && (showShallow || showDeep) ? (
         <section className="watchlist-ai-read-section">
           <h3>Pullback setups</h3>
@@ -674,6 +679,7 @@ export function TradersLinkAiReadCard({
         </section>
       ) : null}
 
+      {renderSectionEditor?.(["downsideCheckpoints", "failureRecovery"])}
       {(read.version === 3 || read.version === 4) && (downsideCheckpoints.length > 0 || showRecovery) ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-downside">
           <h3>Failure and recovery</h3>
@@ -741,6 +747,7 @@ export function TradersLinkAiReadCard({
       ) : null}
 
       <div className="watchlist-ai-read-context-grid">
+        {renderSectionEditor?.(["catalystRealityCheck"])}
         {!hidden.has("catalystRealityCheck") && read.catalystRealityCheck.status === "confirmed" &&
         read.catalystRealityCheck.sourceUrls.length > 0 ? (
           <section className="watchlist-ai-read-section">
@@ -764,6 +771,7 @@ export function TradersLinkAiReadCard({
             </p>
           </section>
         ) : null}
+        {renderSectionEditor?.(["dilutionRisk"])}
         {!hidden.has("dilutionRisk") && read.externalResearchEnabled === true ? (
             <section className="watchlist-ai-read-section">
               <div className="watchlist-ai-read-section-heading">
@@ -796,6 +804,7 @@ export function TradersLinkAiReadCard({
         ) : null}
       </div>
 
+      {renderSectionEditor?.(["listingStatus"])}
       {!hidden.has("listingStatus") && read.externalResearchEnabled === true &&
        read.listingStatus.status !== "none" &&
       read.listingStatus.status !== "unknown" &&
@@ -843,6 +852,7 @@ export function TradersLinkAiReadCard({
         </section>
       ) : null}
 
+      {renderSectionEditor?.(["riskSummary"])}
       {!hidden.has("riskSummary") && read.riskSummary.length > 0 ? (
         <section className="watchlist-ai-read-section">
           <h3>Risk notes</h3>

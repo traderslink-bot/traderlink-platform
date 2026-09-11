@@ -381,8 +381,9 @@ export function deriveTradersLinkAiPullbackPlan(
 }
 
 function isEvidenceIds(value: unknown): value is string[] {
+  // Owner-saved setups deliberately clear generated evidence IDs. Evidence
+  // validation belongs to generation; the display parser must accept [] here.
   return Array.isArray(value) &&
-    value.length > 0 &&
     value.length <= 6 &&
     value.every((item) => typeof item === "string" && item.trim().length > 0);
 }
