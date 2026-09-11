@@ -2,10 +2,26 @@
 
 Status: not release-ready. This is the controlling remaining-work checklist,
 not a replacement for the approved [plan](watchlist-analysis-quality-plan.md).
+Current release integration: [exact runtime manifest and Platform port instructions](watchlist-analysis-production-integration-handoff.md).
 The [acceptance inventory](watchlist-analysis-quality-acceptance-checkpoint.md)
 retains the complete scope; the long progress log is chronological evidence.
 
 ## Current local boundary
+
+### September 11 owner release authorization
+
+The owner now authorizes releasing the actual analysis/review/edit feature in
+the overnight quiet window, followed by a bounded private historical replay.
+Use September 10 Watchlist additions first; older saved additions may be used
+only where useful. Start with at most three representative one-call cases;
+do not run a broad model experiment or repeated speculative retries. Historical
+replay must use one aligned cutoff, not current overnight data or future candles.
+No Discord test delivery or ordinary-user test publication is authorized.
+The historical replay path is not yet implemented or proven. This authorization
+does not establish deployment readiness or authorize replacing newer main
+features with the old candidate checkout. Release-lane/current-parent confirmation
+has been requested from Visible release coordinator, task
+`01a06184-ecea-78a3-999f-cd2ac249be61`. Keep infrastructure relocation separate.
 
 - Runtime source: `b71ff214ab38daa0f967232c9aab49dd975786e7`.
 - Platform source before this record: `d5c088f9a24be20964a58d6111fba85637230554`.
