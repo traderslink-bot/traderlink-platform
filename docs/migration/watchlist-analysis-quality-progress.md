@@ -11,6 +11,14 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+- Added display-only published omission reconciliation for recorded optional
+  section/objective/overview and checkpoint-normalization removals. It follows
+  the approved draft's parent chain to its own immutable original; natural
+  optional absence does not count. Owner restoration and hiding are reflected
+  without restricting edits or publication. Nine focused manager/pure checks
+  and scoped helper TypeScript pass. Breakout-selection/outer-extension decisions,
+  broader ambiguity handling and rendered status acceptance remain open.
+
 - Integrated runtime-manager strict TypeScript check passed with the 512 MiB
   cap. Found/fixed completed-generation-without-draft status falling through to
   an older Published label. It now reports Analysis storage needs attention.
