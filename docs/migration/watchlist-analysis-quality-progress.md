@@ -11,6 +11,23 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Removed-ticker review gate checkpoint
+
+- Ordinary re-addition previously inherited `publicationReview` from the
+  inactive entry. That stale required gate could block normal publication when
+  the new admission had AI OFF. The normal direct/queued paths now detach that
+  old gate before thread creation; no review history files are changed or removed.
+- The 72-case OFF matrix now includes 36 inactive, previously held re-additions
+  alongside 36 fresh additions. Seven selected manager checks pass, and strict
+  manager TypeScript passes. The six private workflow cases were then extended
+  with a real prior approved cycle: each creates a different unapproved cycle
+  while historical original/approval data remains unchanged and accessible.
+  All six extended cases pass (mocked AI and delivery only).
+- This proves the local admission gate behavior, not hosted cache invalidation,
+  concurrent removal/publication races, or old public-card replacement. Those
+  remain in the acceptance inventory. No production actions occurred.
+
+
 ### Admission-time generation decision checkpoint
 
 - Confirmed a gap: ordinary activation scheduled its initial request after

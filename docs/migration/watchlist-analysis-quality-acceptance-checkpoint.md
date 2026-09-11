@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Removed-entry admission checks now cover an old held gate on 36 normal OFF
+re-additions, plus six ON private workflows starting with an old approved cycle.
+Normal re-addition detaches the old gate; private re-addition creates a fresh
+unapproved cycle and preserves the old history. Focused mocks and strict manager
+TypeScript pass. Hosted stale-card/cache and concurrent removal remain unproven.
+
 Admission-time metadata now persists the original session/time and generation
 permission. Eight selected mocked checks pass, including 72 OFF-admission
 combinations with/without a settings/date change during preparation, six private
