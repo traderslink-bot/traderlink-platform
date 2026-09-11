@@ -564,19 +564,19 @@ export function TradersLinkAiReadCard({
           volume={liveVolumeContext}
         />
       ) : null}
-      <div className="watchlist-ai-read-level-grid">
-        {!hidden.has("needsToHold") && <TradersLinkAiReadLevelBlock heading="Needs to hold" level={read.needsToHold} />}
-        {!hidden.has("cautionBelow") && <TradersLinkAiReadLevelBlock
-          heading="Caution below"
-          level={read.cautionBelow}
-        />}
-        {!hidden.has("momentumFailure") && <TradersLinkAiReadLevelBlock heading="Momentum failure" level={read.momentumFailure} />}
-        {!hidden.has("mustClear") && <TradersLinkAiReadLevelBlock heading="Must clear" level={read.mustClear} />}
-        {!hidden.has("breakoutContinuation") && <TradersLinkAiReadLevelBlock
-          heading="Breakout continuation"
-          level={read.breakoutContinuation}
-        />}
-      </div>
+      {(() => {
+        const levels = [
+          ["needsToHold", "Needs to hold", read.needsToHold],
+          ["cautionBelow", "Caution below", read.cautionBelow],
+          ["momentumFailure", "Momentum failure", read.momentumFailure],
+          ["mustClear", "Must clear", read.mustClear],
+          ["breakoutContinuation", "Breakout continuation", read.breakoutContinuation],
+        ] as const;
+        const visible = levels.filter(([key, , level]) => !hidden.has(key) && (level.price !== null || level.rationale.trim()));
+        return visible.length ? <div className="watchlist-ai-read-level-grid">
+          {visible.map(([key, heading, level]) => <TradersLinkAiReadLevelBlock key={key} heading={heading} level={level} />)}
+        </div> : null;
+      })()}
 
       {read.version === 4 && !hidden.has("targets") ? (
         <section className="watchlist-ai-read-section">

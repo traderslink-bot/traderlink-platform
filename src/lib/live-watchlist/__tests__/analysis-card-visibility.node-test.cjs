@@ -61,3 +61,16 @@ test("absent scenarios and objectives produce no empty placeholders", () => {
   read.ownerHiddenSections = ["unknown-section"];
   assert.equal(helper.parseTradersLinkAiRead(JSON.stringify(read)), null);
 });
+
+test("omitted breakout levels leave no empty headings while owner explanation remains", () => {
+  const read = JSON.parse(fixture());
+  read.mustClear = { label: "", price: null, rationale: "" };
+  read.breakoutContinuation = { label: "", price: null, rationale: "" };
+  assert.doesNotMatch(render(read), /Must clear|Breakout continuation/);
+  assert.match(render(read), /Needs to hold/);
+  read.mustClear.rationale = "Owner explanation without a fixed price.";
+  assert.match(render(read), /Owner explanation without a fixed price/);
+  for (const key of ["needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation"]) read[key] = { label: "", price: null, rationale: "" };
+  const tree = Card({ card: { body: JSON.stringify(read) }, symbol: {}, livePrice: read.currentPrice });
+  assert.doesNotMatch(JSON.stringify(tree), /watchlist-ai-read-level-grid/);
+});
