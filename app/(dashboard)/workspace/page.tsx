@@ -52,7 +52,9 @@ const WORKSPACE_METRICS = [
 ] as const;
 
 type WorkspaceTimingName = "dashboard_runtime" | "identity" |
-  "legacy_demo_guard" | "rule_results_card";
+  "legacy_demo_guard" | "rule_results_annotations" | "rule_results_card" |
+  "rule_results_custom_and_aggregation" | "rule_results_models" |
+  "rule_results_presets";
 type WorkspaceTimings = Map<WorkspaceTimingName, number>;
 const workspaceTimingStateKey = "__traderlinkWorkspaceTimingState" as const;
 type WorkspaceTimingProcessState = typeof globalThis & {
@@ -198,7 +200,18 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
       const ruleResultsCardPreference = new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope);
       const ruleResultsCard = ruleResultsCardPreference.showInWorkspace
         ? measureWorkspacePhase(timings, "rule_results_card", () =>
-          readWorkspaceRuleResultsCardFromRuntime(database, scope, sourceDashboard, dates))
+          readWorkspaceRuleResultsCardFromRuntime(
+            database,
+            scope,
+            sourceDashboard,
+            dates,
+            (result) => {
+              timings.set("rule_results_annotations", result.annotations);
+              timings.set("rule_results_custom_and_aggregation", result.customAndAggregation);
+              timings.set("rule_results_models", result.models);
+              timings.set("rule_results_presets", result.presets);
+            },
+          ))
         : undefined;
       const query = buildJournalAnalyticsDashboardQuery(scope, {
         closingDateRange: dates.startDate && dates.endDate

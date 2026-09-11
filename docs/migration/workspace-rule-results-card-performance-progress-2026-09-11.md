@@ -1,6 +1,6 @@
 # Workspace Rules card performance progress — September 11, 2026
 
-Status: implementation candidate ready for focused verification and coordinated release.
+Status: repair released and browser-verified; focused internal timing is the next measurement-only slice.
 
 ## Measured cause
 
@@ -22,3 +22,9 @@ Production commit `141d74c7cce1b1775d81251b12c07841d48b4862` measured a 3057 ms 
 - Behavior comparison between the full Rules Results projection and the dedicated card projection, including preset violations, custom day/trade reviews, rule versions, date filtering, and empty results.
 - Release-coordinator review from the exact production parent and complete file allowlist.
 - Hosted Workspace behavior and timing comparison after Railway reports healthy.
+
+## Production result
+
+The repair was released at `240bc0f880451b217f5ae8c0f7a0718ff0f55e28` through Railway deployment `98d9ef7c-f50e-4e82-9bbe-1f5e3bd774da`. The settled signed-in All-time Workspace request completed in 1666 ms at the server and 2070 ms in the browser. Before the repair, the comparable browser navigation took 6030 ms and the server request took 3206 ms. The Rules card fell from 1664.7 ms to 945.8 ms while remaining visibly correct; the complete page rendered with no framework error overlay or captured console error.
+
+The Rules card remains 60.1% of the settled measured server work. The next measurement records exclusive numeric durations for source-model materialization, rule/review database reads, preset evaluation, and custom-rule/card aggregation in the existing throttled Workspace timing log. It does not change rule results, call order, visible copy, or storage.

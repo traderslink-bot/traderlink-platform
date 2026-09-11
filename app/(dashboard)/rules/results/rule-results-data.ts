@@ -118,6 +118,17 @@ type WorkspaceBrokenRule = Readonly<{
   ruleId: string;
 }>;
 
+export type WorkspaceRuleResultsCardTimings = Readonly<{
+  annotations: number;
+  customAndAggregation: number;
+  models: number;
+  presets: number;
+}>;
+
+function elapsedMilliseconds(started: number): number {
+  return performance.now() - started;
+}
+
 function workspaceRuleResultsCardFromBrokenRules(
   brokenRules: readonly WorkspaceBrokenRule[],
 ): WorkspaceRuleResultsCard {
@@ -142,7 +153,13 @@ export function readWorkspaceRuleResultsCardFromRuntime(
   scope: WorkspaceAccessScope,
   dashboard: JournalDashboardReadModelService,
   dateRange: RuleResultsDateRange = { endDate: null, startDate: null },
+  onTiming?: (timings: WorkspaceRuleResultsCardTimings) => void,
 ): WorkspaceRuleResultsCard {
+  let annotations = 0;
+  let customAndAggregation = 0;
+  let models = 0;
+  let presets = 0;
+  let started = performance.now();
   const latest = dashboard.getTradingDay(scope, {
     currency: null,
     requestedDate: null,
@@ -150,28 +167,36 @@ export function readWorkspaceRuleResultsCardFromRuntime(
   const dates = latest.availableTradingDates.filter((date) =>
     (!dateRange.startDate || date >= dateRange.startDate) &&
     (!dateRange.endDate || date <= dateRange.endDate));
+  models += elapsedMilliseconds(started);
 
-  return withScopedJournalAnnotations(database, scope, (service, account) => {
+  const card = withScopedJournalAnnotations(database, scope, (service, account) => {
     const broken: WorkspaceBrokenRule[] = [];
     for (const date of dates) {
+      started = performance.now();
       const model = dashboard.getTradingDay(scope, {
         currency: null,
         requestedDate: date,
       });
+      models += elapsedMilliseconds(started);
       const rangeStart = `${date}T00:00:00.000Z`;
       const rangeEndDate = new Date(rangeStart);
       rangeEndDate.setUTCDate(rangeEndDate.getUTCDate() + 2);
+      started = performance.now();
       const rules = service.listRulesForEvaluation(
         account,
         rangeStart,
         rangeEndDate.toISOString(),
       );
+      annotations += elapsedMilliseconds(started);
+      started = performance.now();
       const trades = model.tickers.flatMap((ticker) =>
         ticker.roundTrips.map((trade) => Object.freeze({
           entryAt: trade.entryAtUtc,
           id: trade.roundTripId,
         })));
+      models += elapsedMilliseconds(started);
 
+      started = performance.now();
       for (const result of evaluateJournalPresetRules(rules, model, new Set())) {
         if (result.status !== "broken") continue;
         const rule = rules.find((candidate) =>
@@ -179,12 +204,16 @@ export function readWorkspaceRuleResultsCardFromRuntime(
           candidate.versionId === result.ruleVersionId);
         if (rule) broken.push(Object.freeze({ date, label: rule.title, ruleId: rule.ruleId }));
       }
+      presets += elapsedMilliseconds(started);
 
+      started = performance.now();
       const tradingDayId = service.resolveTradingDayId(account, date);
       const reviews = tradingDayId ? service.listRuleReviews(account, {
         roundTripIds: trades.map((trade) => trade.id),
         tradingDayId,
       }) : [];
+      annotations += elapsedMilliseconds(started);
+      started = performance.now();
       for (const rule of rules.filter((candidate) => candidate.sourceKind === "custom")) {
         const eligibleTargetIds = new Set<string>();
         if (tradingDayId && (rule.reviewScope === "day" || rule.reviewScope === "both")) {
@@ -209,10 +238,20 @@ export function readWorkspaceRuleResultsCardFromRuntime(
           broken.push(Object.freeze({ date, label: rule.title, ruleId: rule.ruleId }));
         }
       }
+      customAndAggregation += elapsedMilliseconds(started);
     }
 
-    return workspaceRuleResultsCardFromBrokenRules(broken);
+    started = performance.now();
+    const result = workspaceRuleResultsCardFromBrokenRules(broken);
+    customAndAggregation += elapsedMilliseconds(started);
+    return result;
   });
+  try {
+    onTiming?.(Object.freeze({ annotations, customAndAggregation, models, presets }));
+  } catch {
+    // Timing diagnostics must never alter the Rules card result.
+  }
+  return card;
 }
 
 export async function readRuleResults(
