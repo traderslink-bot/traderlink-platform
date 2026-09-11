@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Legacy continuation now requires numeric observation support and omits locally
+when unsupported. Candidate/level explanations no longer require tape keywords
+in addition to their real evidence. Forty-eight service/breakout tests and strict
+TypeScript pass, including independent deep-setup retention. Legacy tolerance,
+full text/dependency attribution and economic calibration remain open.
+
 Must-clear now has observed/confirmation-above anchor validation and local
 omission. The service proves a bad pivot does not remove an independent deep
 setup. Forty-three service/core tests, subsequent missing-explanation checks

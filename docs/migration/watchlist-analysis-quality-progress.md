@@ -11,6 +11,30 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Legacy continuation evidence and keyword-independent explanation checkpoint
+
+- Legacy generation responses without candidate metadata now require direct
+  price-observation support for continuation. Missing support/explanation omits
+  that branch and dependent content through the same section-local path. New
+  candidate responses retain their existing explicit anchor/ID validation.
+- Removed the remaining keyword requirement from final level explanations and
+  candidate explanation checks. Nonempty explanations remain required, while
+  evidence is validated numerically; including words like rejection or holds is
+  no longer a substitute for that evidence or a requirement for a valid anchor.
+- Tests prove a 999 legacy continuation is omitted while the independent deep
+  setup remains, and an anchored candidate with no tape-keyword phrasing still
+  publishes. Existing synthetic default/premarket fixtures had claimed 1.68 and
+  0.3658 observed highs without supplying them; their mock candle packets now
+  explicitly include those hypothetical observations and wording identifies the
+  daily source. These are synthetic fixtures, not reconstructed live ticker data.
+- Forty-eight service/breakout tests and strict service TypeScript pass. Mock
+  generation checks retain one call per generation. No provider, live-setting,
+  migration or production action occurred. Owner editing is unchanged.
+- Legacy observation tolerance, complete unsupported-text/dependency attribution,
+  microcap economic calibration, integrated public rendering and remaining
+  acceptance gates stay open. Existing partial-omission Help remains applicable.
+
+
 ### Must-clear evidence and local omission checkpoint
 
 - Added strict internal `mustClearEvidence` schema/prompt with observed-level
