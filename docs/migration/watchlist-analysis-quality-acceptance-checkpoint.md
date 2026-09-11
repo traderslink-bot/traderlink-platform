@@ -7,6 +7,11 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Breakout text is now checked before primary/alternate selection; legacy breakout
+text uses the dependency-removal path. Candidate objective text is checked before
+ID-based retention. Forty-six service/panel tests and strict service TypeScript
+pass. Legacy target/downside text and full cross-section dependencies remain open.
+
 Optional shallow/deep/recovery volume and premarket-high text failures now omit
 their own scenario with an exact audit reason. Forty service checks and strict
 TypeScript pass; core rejection remains intact. Complete optional-field and

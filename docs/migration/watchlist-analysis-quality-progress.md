@@ -11,6 +11,23 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Breakout text selection and dependent objective checkpoint
+
+- Primary and alternate breakout labels/explanations now pass the shared level
+  text checks before selection. A bad primary can yield to the supported
+  alternate in the same response; bad text in both does not reject independent
+  pullbacks. Existing core terminology checks remain unchanged in substance.
+- Legacy continuation and must-clear text failures enter the existing breakout
+  dependency-removal path, with exact original level/reason in the audit.
+  Dependent confirmations are omitted; independent deep setups remain.
+- Candidate-specific upside label/condition checks run before dependency-ID
+  retention. A bad optional objective cannot reject the selected breakout.
+- Forty-six focused service/panel checks and strict service TypeScript pass.
+  Every successful generation fixture asserts one mocked provider request.
+  Help and inspector wording are aligned; no live action occurred.
+- Remaining: legacy target/downside text attribution, complete cross-section
+  dependencies and full acceptance inventory. This is not release approval.
+
 ### Scenario-local volume and premarket-claim checks
 
 - Shared text checks now run independently for each scenario explanation and
