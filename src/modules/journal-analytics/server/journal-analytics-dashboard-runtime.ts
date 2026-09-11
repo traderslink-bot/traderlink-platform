@@ -410,6 +410,7 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
   operation: (runtime: Readonly<{
     database: ReturnType<typeof openReadonlyPlatformDatabase>;
     dashboard: JournalDashboardRuntimeReader;
+    sourceDashboard: JournalDashboardReadModelService;
     pnlReportingBasis: PlatformPnlReportingBasis;
     reportingCurrency: PlatformReportingCurrency;
     reportingContext: JournalReportingCurrencyContext;
@@ -449,10 +450,11 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
       sourceCurrencyByRoundTrip: preparation.snapshot.sourceCurrencyByRoundTrip,
       sourceDateByRoundTrip: preparation.snapshot.sourceDateByRoundTrip,
     });
+    const sourceFacts = prefetchedFactSet
+      ? new PrefetchedJournalAnalyticsFactSetReader(source, scope, prefetchedFactSet)
+      : source;
     const facts = createJournalReportingCurrencyFactSetReader(
-      prefetchedFactSet
-        ? new PrefetchedJournalAnalyticsFactSetReader(source, scope, prefetchedFactSet)
-        : source,
+      sourceFacts,
       reportingContext,
     );
     const normalizeFacts = createJournalAnalyticsNormalizer();
@@ -469,6 +471,10 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
       service: new JournalAnalyticsService(
         facts,
         preparation.snapshot.reportingCurrency,
+        normalizeFacts,
+      ),
+      sourceDashboard: new JournalDashboardReadModelService(
+        sourceFacts,
         normalizeFacts,
       ),
       verifiedReadonlyDatabase: database,

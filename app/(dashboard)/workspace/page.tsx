@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
 import { recoverLegacyDemoWorkspaceTradeLibraryProjection } from "@/src/modules/journal-analytics/server/workspace-trade-library-demo-projection-recovery";
 import { WorkspaceDashboard } from "./workspace-dashboard";
-import { readRuleResults, workspaceRuleResultsCard } from "../rules/results/rule-results-data";
+import { readWorkspaceRuleResultsCardFromRuntime } from "../rules/results/rule-results-data";
 import { readWorkspaceTradeLibrary } from "./workspace-trade-library";
 import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, WorkspaceTradeLibrarySort } from "./workspace-trade-library";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
@@ -168,11 +168,11 @@ export default async function WorkspacePage({
   }
   measureWorkspacePhase(timings, "legacy_demo_guard", () =>
     recoverLegacyDemoWorkspaceTradeLibraryProjection(scope));
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, topTickersCard, tradeLibrary } = await measureWorkspacePhaseAsync(
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCard, ruleResultsCardPreference, topTickersCard, tradeLibrary } = await measureWorkspacePhaseAsync(
     timings,
     "dashboard_runtime",
     () => withJournalAnalyticsReportingDashboardRuntime(
-    scope, ({ database, dashboard, pnlReportingBasis, service }) => {
+    scope, ({ database, dashboard, pnlReportingBasis, service, sourceDashboard }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
 SELECT base_currency, trading_timezone
@@ -195,6 +195,11 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
       const dates = customRangeValid
         ? Object.freeze({ endDate: queryParameters.endDate!, startDate: queryParameters.startDate! })
         : periodDateRange;
+      const ruleResultsCardPreference = new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope);
+      const ruleResultsCard = ruleResultsCardPreference.showInWorkspace
+        ? measureWorkspacePhase(timings, "rule_results_card", () =>
+          readWorkspaceRuleResultsCardFromRuntime(database, scope, sourceDashboard, dates))
+        : undefined;
       const query = buildJournalAnalyticsDashboardQuery(scope, {
         closingDateRange: dates.startDate && dates.endDate
           ? { endDate: dates.endDate, kind: "inclusive_closing_date", startDate: dates.startDate }
@@ -212,9 +217,8 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         periodStartDate: periodDateRange.startDate,
         pnlReportingBasis,
         prScannerCardPreference: new JournalWorkspacePrScannerCardPreferenceService(database).read(scope),
-        ruleResultsCardPreference: new JournalWorkspaceRuleResultsCardPreferenceService(database).read(scope),
-        ruleResultsEndDate: dates.endDate,
-        ruleResultsStartDate: dates.startDate,
+        ruleResultsCard,
+        ruleResultsCardPreference,
         response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
         reviewSummary: readWorkspaceReviewSummary(
           database,
@@ -237,6 +241,11 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     { prefetchAllFactSet: period === "all" && !(queryParameters.startDate && queryParameters.endDate) },
     ),
   );
+  const ruleResultsCardMs = timings.get("rule_results_card") ?? 0;
+  const combinedDashboardRuntimeMs = timings.get("dashboard_runtime");
+  if (combinedDashboardRuntimeMs !== undefined && ruleResultsCardMs > 0) {
+    timings.set("dashboard_runtime", Math.max(0, combinedDashboardRuntimeMs - ruleResultsCardMs));
+  }
   const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
     ? currentJournalAccountSelectionRef(scope)
     : undefined;
@@ -268,13 +277,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     analyticsMetrics,
     reviewSummary,
   });
-  const ruleResultsCard = ruleResultsCardPreference.showInWorkspace
-    ? await measureWorkspacePhaseAsync(timings, "rule_results_card", async () =>
-      workspaceRuleResultsCard(await readRuleResults(scope, {
-        endDate: ruleResultsEndDate,
-        startDate: ruleResultsStartDate,
-      })))
-    : undefined;
   logSlowWorkspaceRequest(timings, pageStarted);
   return (
     <>

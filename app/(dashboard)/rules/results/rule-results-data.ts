@@ -1,5 +1,6 @@
 import "server-only";
 
+import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -7,7 +8,11 @@ import {
   withJournalAnalyticsDashboardRuntime,
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { withReadonlyJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
+import type { JournalDashboardReadModelService } from "@/src/modules/journal-analytics/server/journal-dashboard-read-model-service";
+import {
+  withReadonlyJournalAnnotations,
+  withScopedJournalAnnotations,
+} from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import { evaluateJournalPresetRules } from "@/src/modules/journal/server/annotations/journal-preset-rule-evaluator";
 
 export type RuleResultEvent = Readonly<{
@@ -107,14 +112,106 @@ function summarize(events: readonly RuleResultEvent[]): readonly RuleResultSumma
   }).sort((left, right) => left.label.localeCompare(right.label)));
 }
 
-export function workspaceRuleResultsCard(view: RuleResultsView): WorkspaceRuleResultsCard {
-  const broken = view.events
-    .filter((event) => event.result === "Broken")
-    .sort((left, right) => right.date.localeCompare(left.date) || left.label.localeCompare(right.label));
-  const titles = [...new Set(broken.map((event) => event.label))].slice(0, 3);
+type WorkspaceBrokenRule = Readonly<{
+  date: string;
+  label: string;
+  ruleId: string;
+}>;
+
+function workspaceRuleResultsCardFromBrokenRules(
+  brokenRules: readonly WorkspaceBrokenRule[],
+): WorkspaceRuleResultsCard {
+  const broken = [...brokenRules].sort((left, right) =>
+    right.date.localeCompare(left.date) || left.label.localeCompare(right.label));
   return Object.freeze({
-    brokenRuleCount: new Set(broken.map((event) => event.ruleId)).size,
-    recentBrokenRuleTitles: Object.freeze(titles),
+    brokenRuleCount: new Set(broken.map((item) => item.ruleId)).size,
+    recentBrokenRuleTitles: Object.freeze(
+      [...new Set(broken.map((item) => item.label))].slice(0, 3),
+    ),
+  });
+}
+
+export function workspaceRuleResultsCard(view: RuleResultsView): WorkspaceRuleResultsCard {
+  return workspaceRuleResultsCardFromBrokenRules(
+    view.events.filter((event) => event.result === "Broken"),
+  );
+}
+
+export function readWorkspaceRuleResultsCardFromRuntime(
+  database: Database.Database,
+  scope: WorkspaceAccessScope,
+  dashboard: JournalDashboardReadModelService,
+  dateRange: RuleResultsDateRange = { endDate: null, startDate: null },
+): WorkspaceRuleResultsCard {
+  const latest = dashboard.getTradingDay(scope, {
+    currency: null,
+    requestedDate: null,
+  });
+  const dates = latest.availableTradingDates.filter((date) =>
+    (!dateRange.startDate || date >= dateRange.startDate) &&
+    (!dateRange.endDate || date <= dateRange.endDate));
+
+  return withScopedJournalAnnotations(database, scope, (service, account) => {
+    const broken: WorkspaceBrokenRule[] = [];
+    for (const date of dates) {
+      const model = dashboard.getTradingDay(scope, {
+        currency: null,
+        requestedDate: date,
+      });
+      const rangeStart = `${date}T00:00:00.000Z`;
+      const rangeEndDate = new Date(rangeStart);
+      rangeEndDate.setUTCDate(rangeEndDate.getUTCDate() + 2);
+      const rules = service.listRulesForEvaluation(
+        account,
+        rangeStart,
+        rangeEndDate.toISOString(),
+      );
+      const trades = model.tickers.flatMap((ticker) =>
+        ticker.roundTrips.map((trade) => Object.freeze({
+          entryAt: trade.entryAtUtc,
+          id: trade.roundTripId,
+        })));
+
+      for (const result of evaluateJournalPresetRules(rules, model, new Set())) {
+        if (result.status !== "broken") continue;
+        const rule = rules.find((candidate) =>
+          candidate.ruleId === result.ruleId &&
+          candidate.versionId === result.ruleVersionId);
+        if (rule) broken.push(Object.freeze({ date, label: rule.title, ruleId: rule.ruleId }));
+      }
+
+      const tradingDayId = service.resolveTradingDayId(account, date);
+      const reviews = tradingDayId ? service.listRuleReviews(account, {
+        roundTripIds: trades.map((trade) => trade.id),
+        tradingDayId,
+      }) : [];
+      for (const rule of rules.filter((candidate) => candidate.sourceKind === "custom")) {
+        const eligibleTargetIds = new Set<string>();
+        if (tradingDayId && (rule.reviewScope === "day" || rule.reviewScope === "both")) {
+          eligibleTargetIds.add(tradingDayId);
+        }
+        if (rule.reviewScope === "trade" || rule.reviewScope === "both") {
+          for (const trade of trades) {
+            if (trade.entryAt >= rule.effectiveFromUtc &&
+                (!rule.effectiveUntilUtc || trade.entryAt < rule.effectiveUntilUtc) &&
+                (!rule.activeIntervals || rule.activeIntervals.some((interval) =>
+                  trade.entryAt >= interval.fromUtc &&
+                  (!interval.untilUtc || trade.entryAt < interval.untilUtc)))) {
+              eligibleTargetIds.add(trade.id);
+            }
+          }
+        }
+        if (reviews.some((review) =>
+          review.ruleId === rule.ruleId &&
+          review.ruleVersionId === rule.versionId &&
+          review.status === "broken" &&
+          eligibleTargetIds.has(review.tradingDayId ?? review.roundTripId ?? ""))) {
+          broken.push(Object.freeze({ date, label: rule.title, ruleId: rule.ruleId }));
+        }
+      }
+    }
+
+    return workspaceRuleResultsCardFromBrokenRules(broken);
   });
 }
 
