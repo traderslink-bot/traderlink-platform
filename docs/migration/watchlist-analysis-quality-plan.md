@@ -16,6 +16,7 @@ deployment, real generation requests, live runtime changes or a new migration.
 
 Progress: [Analysis Quality Progress](watchlist-analysis-quality-progress.md).
 Acceptance inventory: [Current checkpoint](watchlist-analysis-quality-acceptance-checkpoint.md).
+Source prerequisite: [Article-source reconciliation](watchlist-analysis-source-reconciliation.md).
 Related: [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md).
 
 ## Product objective

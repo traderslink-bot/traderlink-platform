@@ -11,6 +11,19 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Article-source lineage gap verified
+
+- Runtime GitHub main was read-only verified at 7f121a2, matching the cached ref.
+  Three main commits contain the canonical article-source fix absent from this
+  analysis branch. The existing local-script/cache path is not acceptance of
+  the owner-required authenticated TradersLink-first behavior.
+- Inspected the canonical lookup, manager/service changes, public-content
+  exclusion and tests. Reuse this existing work through selective integration;
+  do not rebuild it or overwrite newer analysis changes in shared files.
+- Added the [exact reconciliation record](watchlist-analysis-source-reconciliation.md)
+  with SHA evidence, runtime file list, Platform route gap and next mocked gates.
+  This is source reconciliation evidence, not deployed-state verification.
+
 ### Final-assembly checkpoint dependency recheck
 
 - Retain private raw dependency metadata until optional-section cleanup ends.

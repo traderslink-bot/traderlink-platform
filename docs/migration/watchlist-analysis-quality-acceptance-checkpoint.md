@@ -7,6 +7,13 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Release prerequisite: this branch lacks three authenticated article-source
+commits present on read-only-verified runtime GitHub main 7f121a2. See the
+[source reconciliation record](watchlist-analysis-source-reconciliation.md).
+Earlier local analysis tests do not prove TradersLink-first source selection.
+The Platform worktree also lacks the route present in its main history. No
+live deployment state is inferred from these source facts.
+
 Declared top-level checkpoint dependencies are now rechecked after optional
 section cleanup. The integrated fixture removes a child of a later-removed
 checkpoint while preserving an independent checkpoint and deep pullback, handles
