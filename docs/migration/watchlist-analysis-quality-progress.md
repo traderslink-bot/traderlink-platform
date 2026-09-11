@@ -11,6 +11,19 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Operations count and grouping correction
+
+- Fixed detail counts that narrowed to the latest failed generation while the
+  view showed full ticker history. Counts now cover the returned ticker history.
+- Run-only preparation events join their generation when the run has exactly
+  one generation identity; ambiguous identities remain separate. Interruption
+  events with generation IDs join that operation without another request count.
+- One manager fixture proves five requests/attempts after the fifth fails; two
+  actual page-function tests prove grouping and ambiguity handling. Scoped
+  manager TypeScript passes. Synthetic evidence does not reconstruct live PDSB.
+- Full DOM interaction, inactive history, pagination and live acceptance remain
+  open. No local server, external requests or hosted actions were used.
+
 ### Interrupted generation outcome retained in run history
 
 - Startup already preserved an interrupted-generation failure after outbox
