@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Delayed live-data replay now has local proof: inactive tickers reject live
+patches; new admission timestamps reject older cards/quotes while current
+activation publication and live updates continue. Ten selected manager tests
+and strict TypeScript pass. Remote in-flight ordering and public read/cache
+integration remain open; stale held cards are not automatically deleted.
+
 Delayed-removal outbox restart proof now passes: active re-additions and removals
 predating their admission are held, unrelated updates proceed, and later valid
 removals deliver. Obsolete queue records remain unacknowledged. In-flight remote

@@ -11,6 +11,28 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Delayed live-data replay checkpoint
+
+- Review approval alone allowed legacy queued live data to publish after
+  removal. Manager authorization now requires an active ticker or the normal
+  `activating` preparation state for non-removal patches. For new admissions,
+  payload timestamps must not predate the saved admission decision. Approval
+  probes and legacy rows without admission metadata remain compatible.
+- Disposable outbox restart coverage queues both a card and a quote while
+  offline, removes the ticker, then re-adds it. Neither old payload sends;
+  a current activation card and current live quote do send. Existing quote
+  coalescing replaces the old queued quote with the new one; the stale card
+  remains held. The initial assertion incorrectly expected both old records
+  retained and was corrected without changing coalescing behavior.
+- Ten selected manager tests pass: both replay scenarios, the 72-case OFF
+  admission matrix, legacy replacement workflow, and six private re-addition
+  workflows. Strict manager TypeScript passes. No actual HTTP/AI/Discord call,
+  migration, deployment or live setting change occurred.
+- Already-in-flight remote writes and public read/cache integration remain
+  open; dispatch-time checks do not prove remote ordering. No Help copy or
+  owner control change is needed for this stale-data transport correction.
+
+
 ### Delayed removal versus re-addition checkpoint
 
 - The manager now rejects deactivation patches while a ticker is active, and
