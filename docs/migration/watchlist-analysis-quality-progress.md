@@ -11,6 +11,13 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+- Integrated runtime-manager strict TypeScript check passed with the 512 MiB
+  cap. Found/fixed completed-generation-without-draft status falling through to
+  an older Published label. It now reports Analysis storage needs attention.
+  The manager fixture injects an actual draft-save failure after a mock provider
+  result: old draft hash preserved, zero analysis publication, one request only,
+  automatic repeats held. Selected fixture passes; no real storage was damaged.
+
 - Documentation preservation checkpoint: reviewed and registered the controlling
   plan, this chronological history, and the separate cutover plan in local Git.
   Removed the obsolete runtime-workspace authorization instruction; preserved
