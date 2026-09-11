@@ -457,6 +457,10 @@ conditions and no restriction on owner-edited recap posting.
 
 ## Next gate
 
+Use the [consolidated closeout checklist](watchlist-analysis-quality-closeout.md)
+for remaining work and retained authority gates. It does not reduce this plan's
+requirements or authorize additional feature scope.
+
 Implementation is owner approved and underway. Finish the complete acceptance
 inventory and reconcile narrow source ownership before the release handoff;
 the progress record identifies verified slices and remaining gaps.

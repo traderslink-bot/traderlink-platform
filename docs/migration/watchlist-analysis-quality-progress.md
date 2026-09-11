@@ -11,6 +11,17 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Consolidated closeout after owner duration concern
+
+- Added the [closeout checklist](watchlist-analysis-quality-closeout.md) with
+  five bounded work groups and separate live-authority gates. Preserve the full
+  approved scope without turning speculative refinements into new requirements.
+- Re-ran the three focused owner-edit/review-store/publication-preview files:
+  20 checks pass, one worker, temporary files and mocked delivery only. Their
+  integrated acceptance remains required; a rewrite is not indicated.
+- Next is explicit fixture mapping plus integrated approval/delivery proof,
+  followed by audit/member/recap verification and a consolidated release package.
+
 ### Inactive and removed ticker audit history
 
 - The audit API filtered all events through active Watchlist symbols, making
