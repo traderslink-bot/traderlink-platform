@@ -11,6 +11,18 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+- Extended revision-aligned omission status to rejected/absent breakout,
+  selected-branch target removals, optional outer-daily omission and narrative
+  explicitly removed by branch selection. A valid backup alone is not an
+  omission; unused-primary target errors do not count against the alternate.
+  Point/risk removals accumulate across stages. Owner-supplied replacement
+  entries reconcile counts without reapplying generator price restrictions.
+  Six pure reconciliation checks plus 34 service checks (40 total) and strict
+  service/helper TypeScript pass. Service now captures omitted branch narrative
+  explicitly, avoiding inference from absent overview fields in older records.
+  Rendered integration, legacy incomplete metadata and broader claim/dependency
+  quality remain separate acceptance concerns.
+
 - Added display-only published omission reconciliation for recorded optional
   section/objective/overview and checkpoint-normalization removals. It follows
   the approved draft's parent chain to its own immutable original; natural
