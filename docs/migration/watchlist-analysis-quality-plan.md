@@ -467,6 +467,27 @@ conditions and no restriction on owner-edited recap posting.
 
 ## Next gate
 
+### Owner-required whole-Watchlist quality checkpoint — September 11
+
+Test every ticker in the current Watchlist, not a chosen representative subset.
+Success means a generalizable professional method for active micro/low-float
+day-trading stocks with meaningful market participation. These ticker cases
+are coverage evidence, not separate product rules or individual optimization
+targets. Do not introduce ticker-specific thresholds, exceptions or expected
+prices to make the test set pass. Assess shared behavior across expansion,
+consolidation, pullback, failed spike, breakdown and recovery structures.
+A fresh authenticated Admin console read at approximately 11:37 AM ET confirmed
+nine active Main Session symbols: TNON, FTFT, TRUG, AENT, FEIM, BDRX, SURG,
+SXTC and PCLA, with no active Top Regular or Post-Market symbols. Reconcile the
+inventory again before closing the checkpoint if the owner adds more symbols.
+Keep FEIM's original failure and manual refresh distinct. For each symbol,
+retain the request/reference time, actual input coverage, raw first response,
+post-validation output and candle-grounded assessment of pullback, breakout,
+hold, failure, recovery and next levels. A validator pass or saved-subset
+rebuild alone is not a complete analysis-quality test. Three successful trials
+do not satisfy this checkpoint. The existing daily $5 private API QA cap and
+separate release gate remain in force.
+
 Use the [consolidated closeout checklist](watchlist-analysis-quality-closeout.md)
 for remaining work and retained authority gates. It does not reduce this plan's
 requirements or authorize additional feature scope.

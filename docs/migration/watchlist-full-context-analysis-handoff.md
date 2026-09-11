@@ -1,7 +1,11 @@
 # Watchlist full-context analysis — local handoff
 
-September 11, 2026. Local revision verified; not deployed or a production
-acceptance claim. Do not send or release until the owner authorizes the gate.
+September 11, 2026. Local revision checkpoint recorded; expanded whole-Watchlist
+quality acceptance is IN PROGRESS and this handoff is not release-ready.
+The owner requires every current ticker to receive a complete analysis test,
+not just the three prior paid cases. See the plan's whole-Watchlist checkpoint.
+Not deployed or a production acceptance claim. Do not send or release until
+the owner authorizes the gate.
 
 ## Source identity
 
@@ -135,10 +139,53 @@ No shared public type, database schema, entitlement or recap logic was changed;
 5. Back up the release's persistent data under its existing guarded procedure;
    retain preceding exact SHAs for rollback. Verify health before resuming
    additions. Never overwrite or downgrade already approved draft/version data.
-6. Three historical cases establish bounded model-quality evidence, not a
-   guarantee for every ticker or market condition. Missing provider coverage
-   stays explicit. No further speculative model testing is required to spend
-   the remaining allowance; the owner retains the $5 stopping condition.
+6. The whole-list follow-up below supersedes the original three-case checkpoint.
+   Missing provider coverage stays explicit. The owner retains the $5 stopping
+   condition; remaining allowance is not a requirement to spend it.
+
+## September 11 whole-list follow-up — local runtime checkpoint only
+
+Runtime commit `02e5ee6a62169e015749c6bb906d0631087723ed`, parent
+`ac5fdaa1cbf60fd4cc52f406378c6383281858d0`. Not pushed or deployed.
+Exact additional allowlist:
+
+- `src/lib/ai/traderslink-ai-read-market-context.ts`
+- `src/lib/ai/traderslink-ai-read-price-action.ts`
+- `src/lib/ai/traderslink-ai-read-section-validation.ts`
+- `src/lib/ai/traderslink-ai-read-service.ts`
+- `src/lib/monitoring/manual-watchlist-runtime-manager.ts`
+- `src/scripts/audit-ai-packet-context.ts`
+- `src/scripts/prepare-ai-context-replay.ts`
+- `src/scripts/validate-ai-context-replay.ts`
+- `src/tests/traderslink-ai-read-market-context.test.ts`
+- `src/tests/traderslink-ai-read-section-validation.test.ts`
+- `src/tests/traderslink-ai-read-service.test.ts`
+
+Corrections preserve exact scenario precision, distinguish recent one-minute
+coverage from the wider observed session expansion, admit corroborated historical
+bases, match all supplied intraday evidence without widening tolerances, retain
+non-overlapping pullbacks without percentage buffers, and distinguish surpassed
+premarket pivots from claims about the current high. Owner review/edit/approval
+and live publication controls were not modified by this follow-up.
+
+Verification: 45 service tests, 31 context/section tests, scoped strict TypeScript
+for the four changed AI modules, and `git diff --check` pass. All ten Terra
+morning captures retain an overview and analysis after temporal-text correction;
+ten Luna captures retain an analysis, with two remaining overview omissions.
+These represent all nine symbols plus both FEIM captures, not ticker-specific
+rules. Separate midday TRUG first responses also retain analysis for both models;
+Terra returns a deep-only pullback without an omission. No production model
+setting was changed. Private QA accounting is $1.90986467, below $5.
+
+The Platform precision-only checkpoint includes five client hunks plus its
+field-specific regression and the three analysis plan/progress/handoff records.
+Ten focused card/preview checks pass against the exact staged client. Older
+title/notice/layout/CSS edits are excluded and remain in the working tree.
+
+Remaining before final local handoff: consolidated semantic acceptance review
+and final manifest/docs reconciliation. All hosted gates above remain. No full build, migration,
+publication, approval or Discord test was performed. Private packets, responses,
+ledger and experiment runners remain untracked and are excluded from commits.
 
 See the [progress record](watchlist-full-context-analysis-progress.md) and
 [research](watchlist-microcap-analysis-research.md) for rationale and limitations.

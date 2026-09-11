@@ -110,6 +110,12 @@ function formatPrice(value: number | null): string {
   return value >= 1 ? value.toFixed(2) : value.toFixed(4);
 }
 
+function formatScenarioPrice(value: number | null): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "n/a";
+  return value.toLocaleString("en-US", { useGrouping: false,
+    minimumFractionDigits: value >= 1 ? 2 : 4, maximumFractionDigits: 8 });
+}
+
 function aiReadStatusLabel(
   symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus">,
   hasPublishedRead: boolean,
@@ -394,7 +400,7 @@ function DilutionTimingRow({
 function pullbackPlanStateCopy(plan: TradersLinkAiPullbackPlan): string {
   switch (plan.state) {
     case "watch":
-      return `Price is above this area. A usable pullback requires buyers to defend $${formatPrice(plan.zoneLow)}-$${formatPrice(plan.zoneHigh)}; the first touch alone is not confirmation.`;
+      return `Price is above this area. A usable pullback requires buyers to defend $${formatScenarioPrice(plan.zoneLow)}-$${formatScenarioPrice(plan.zoneHigh)}; the first touch alone is not confirmation.`;
     case "testing":
       return `Price is testing the mapped pullback area. Confirmation requires a rejection of lower prices and a reclaim of $${formatPrice(plan.reclaimPrice)}.`;
     case "reclaim_required":
@@ -423,19 +429,19 @@ function TradersLinkAiPullbackScenarioBlock({
       <dl className="watchlist-ai-read-scenario-items">
         <div>
           <dt>Zone</dt>
-          <dd>${formatPrice(scenario.zoneLow)}-${formatPrice(scenario.zoneHigh)}</dd>
+          <dd>${formatScenarioPrice(scenario.zoneLow)}-${formatScenarioPrice(scenario.zoneHigh)}</dd>
         </div>
         <div>
           <dt>Required confirmation</dt>
-          <dd>${formatPrice(scenario.confirmationPrice)} {scenario.confirmation}</dd>
+          <dd>${formatScenarioPrice(scenario.confirmationPrice)} {scenario.confirmation}</dd>
         </div>
         <div>
           <dt>Invalidation</dt>
-          <dd>${formatPrice(scenario.invalidationPrice)}</dd>
+          <dd>${formatScenarioPrice(scenario.invalidationPrice)}</dd>
         </div>
         {scenario.firstObjectivePrice !== null && <div>
           <dt>First objective</dt>
-          <dd>${formatPrice(scenario.firstObjectivePrice)}</dd>
+          <dd>${formatScenarioPrice(scenario.firstObjectivePrice)}</dd>
         </div>}
       </dl>
       {scenario.rationale.trim() ? <p>{scenario.rationale}</p> : null}
@@ -647,13 +653,13 @@ export function TradersLinkAiReadCard({
           <p>
             AI-mapped pullback area: {" "}
             <strong>
-              ${formatPrice(pullbackPlan.zoneLow)}-${formatPrice(pullbackPlan.zoneHigh)}
+              ${formatScenarioPrice(pullbackPlan.zoneLow)}-${formatScenarioPrice(pullbackPlan.zoneHigh)}
             </strong>.
           </p>
           <p>{pullbackPlanStateCopy(pullbackPlan)}</p>
           <p>
             This area comes from the AI Read&apos;s caution and needs-to-hold boundaries. Acceptance
-            below ${formatPrice(pullbackPlan.zoneLow)} weakens the active pullback thesis.
+            below ${formatScenarioPrice(pullbackPlan.zoneLow)} weakens the active pullback thesis.
           </p>
           <p>
             Momentum failure: acceptance below ${formatPrice(pullbackPlan.invalidationPrice)}{" "}
@@ -697,19 +703,19 @@ export function TradersLinkAiReadCard({
             <><dl className="watchlist-ai-read-scenario-items">
               <div>
                 <dt>Recovery-watch area</dt>
-                <dd>${formatPrice(read.failureRecovery.recoveryZoneLow)}-${formatPrice(read.failureRecovery.recoveryZoneHigh)}</dd>
+                <dd>${formatScenarioPrice(read.failureRecovery.recoveryZoneLow)}-${formatScenarioPrice(read.failureRecovery.recoveryZoneHigh)}</dd>
               </div>
               <div>
                 <dt>First recovery reclaim</dt>
-                <dd>${formatPrice(read.failureRecovery.firstReclaimPrice)} after a new base forms</dd>
+                <dd>${formatScenarioPrice(read.failureRecovery.firstReclaimPrice)} after a new base forms</dd>
               </div>
               <div>
                 <dt>Recovery setup established above</dt>
-                <dd>${formatPrice(read.failureRecovery.setupRestorePrice)}</dd>
+                <dd>${formatScenarioPrice(read.failureRecovery.setupRestorePrice)}</dd>
               </div>
               {read.failureRecovery.firstObjectivePrice !== null && <div>
                 <dt>First recovery objective</dt>
-                <dd>${formatPrice(read.failureRecovery.firstObjectivePrice)}</dd>
+                <dd>${formatScenarioPrice(read.failureRecovery.firstObjectivePrice)}</dd>
               </div>}
             </dl>
             {read.failureRecovery.rationale.trim() ? <p>{read.failureRecovery.rationale}</p> : null}</>

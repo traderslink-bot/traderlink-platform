@@ -133,3 +133,13 @@ test("omitted breakout levels leave no empty headings while owner explanation re
   const tree = Card({ card: { body: JSON.stringify(read) }, symbol: {}, livePrice: read.currentPrice });
   assert.doesNotMatch(JSON.stringify(tree), /watchlist-ai-read-level-grid/);
 });
+
+test("scenario display preserves sub-cent separation from invalidation", () => {
+  const read = JSON.parse(fixture());
+  read.currentPrice = 2.97;
+  read.pullbackPlans.shallow = null;
+  Object.assign(read.pullbackPlans.deep, {zoneLow:2.252,zoneHigh:2.28,confirmationPrice:2.28,invalidationPrice:2.25});
+  const text = render(read);
+  assert.match(text, /Zone\s+\$\s*2\.252\s*-\$\s*2\.28(?:\s|$)/);
+  assert.match(text, /Invalidation\s+\$\s*2\.25(?:\s|$)/);
+});
