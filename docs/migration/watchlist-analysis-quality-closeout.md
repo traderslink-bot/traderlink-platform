@@ -52,6 +52,14 @@ Do not defer an explicit plan requirement by calling it optional.
 
 ## Next action
 
+Core orchestration checkpoint: six direct/queued × premarket/regular/postmarket
+manager cases pass with explicit mocked article lookup. They cover private
+admission, approval, owner-restored breakout, exact edited payload, stale and
+duplicate approval, rejected/uncertain Discord delivery, receipt handling and
+no extra AI calls on delivery retries. The website wrapper and transports are
+mocked; complete rendered/hosted publication is not proven. Reuse this evidence
+rather than repeating or rewriting this manager flow.
+
 Transport/format fixture checkpoint: refusal, malformed JSON, truncated JSON
 and incomplete-with-parseable-JSON now assert one request, failed validation
 capture and no prepared publication. The service now rejects provider status

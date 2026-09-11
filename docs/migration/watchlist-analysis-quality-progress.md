@@ -11,6 +11,19 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Core approval-flow checkpoint
+
+- Added an explicit no-network article lookup to the existing six-session/method
+  manager cases and ran those cases only. They pass private admission, approval,
+  owner-edited replacement, duplicate/stale approval and delivery/receipt retry
+  checks without extra AI calls. Website wrapper and transport remain mocked.
+- Saved the one-line ResponsesApiResponse status typing correction. The first
+  previous type check exposed that missing declaration; the subsequent scoped
+  TypeScript check passed after correction. No runtime behavior added by typing.
+- Core manager orchestration is locally evidenced; actual rendered UI and
+  hosted end-to-end publication remain separate gates, not reasons to rewrite
+  this passing slice or expand general Watchlist cleanup.
+
 ### Named response-format fixtures closed
 
 - Added refusal, malformed JSON, truncated output and incomplete-with-valid-JSON
