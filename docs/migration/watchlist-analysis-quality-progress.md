@@ -11,6 +11,29 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### One-minute checkpoint evidence and future reference checkpoint
+
+- Checkpoint observation matching now includes supplied one-minute candles,
+  with the existing positive/finite OHLC, time cutoff and conflicting-duplicate
+  safeguards. Evidence identifies its one-minute source. This preserves useful
+  finer-grained observations without inventing a five-minute match or spending
+  another request. Existing intraday/daily matching remains available.
+- Twelve mocked generation cases cover upside/downside one-minute observations,
+  identical duplicates, future bars, malformed OHLC and conflicting duplicates
+  in both orders. A failing future-bar case exposed a separate reference-price
+  issue: general candle normalization allowed five minutes of clock tolerance
+  and reference selection could choose that future bar. Reference selection
+  now explicitly filters against its reference time for both 1m and 5m.
+- All 35 service checks passed after the correction; one additional direct
+  reference-selection test then passed for both timeframes, including the
+  fallback when only a future bar is supplied. Strict service TypeScript passed.
+  No live/provider experiment was performed. This is not a calibration claim
+  for every microcap setup or a fix for conflicting reference duplicates.
+- Core-level evidence, tolerance calibration and final narrative dependencies
+  remain open. No owner-edit restrictions, new UI or Help workflow were added;
+  no hosted action, migration or production configuration changed.
+
+
 ### Upside price-evidence checkpoint
 
 - Confirmed that `TAPE_EVIDENCE_LANGUAGE` previously let upside prices pass

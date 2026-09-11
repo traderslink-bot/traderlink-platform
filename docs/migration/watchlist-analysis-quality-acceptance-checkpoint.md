@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+One-minute observations now participate in checkpoint evidence; future,
+malformed and conflicting bars are excluded by that matcher. Reference-price
+selection separately rejects future 1m/5m bars. The 35-check service suite and
+one subsequent direct reference test pass, as does strict TypeScript. Core
+evidence, tolerance calibration and conflicting-reference selection remain open.
+
 Upside objectives no longer pass solely on tape-like wording: candidate,
 normalization and final-validation paths require a price observation. All 34
 service checks and strict TypeScript pass; a matching farther observed daily
