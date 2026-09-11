@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Upside objectives no longer pass solely on tape-like wording: candidate,
+normalization and final-validation paths require a price observation. All 34
+service checks and strict TypeScript pass; a matching farther observed daily
+high still survives. Core-level lexical bypass, one-minute coverage, supplied
+map provenance and complete narrative/dependency acceptance remain open.
+
 Delayed live-data replay now has local proof: inactive tickers reject live
 patches; new admission timestamps reject older cards/quotes while current
 activation publication and live updates continue. Ten selected manager tests

@@ -11,6 +11,30 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Upside price-evidence checkpoint
+
+- Confirmed that `TAPE_EVIDENCE_LANGUAGE` previously let upside prices pass
+  solely because their labels/conditions said words such as holds or daily high.
+  Removed that bypass from ordinary upside normalization, candidate-dependent
+  objective validation, and the final upside assertion. A matched prior close
+  or eligible candle observation is now required for those prices.
+- Unsupported points are omitted locally, without a second request or loss of
+  independent core/pullback sections. Candidate dependency checks still remove
+  dependents of an invalid objective. The full original response and recorded
+  normalization/selection decisions remain available for owner review/editing.
+- One fixture incorrectly relied on a 2.20 daily-high assertion with no matching
+  price observation. It now proves rejection without that observation and
+  acceptance after adding a real matching candle to the mock input. Earlier
+  1.80 word-only expectations were corrected to omission; observed farther 2.30
+  resistance remains retained. All 34 service checks and strict service
+  TypeScript pass, using mocked providers only.
+- This does not close core-level word-only validation, one-minute evidence
+  coverage, observation tolerance calibration, supplied-map-only provenance,
+  or complete prose/dependency acceptance. Do not claim all setup-quality
+  checks complete. No change to owner edits, model choice, hosted settings or
+  provider costs was made. Existing Help already explains partial omissions.
+
+
 ### Delayed live-data replay checkpoint
 
 - Review approval alone allowed legacy queued live data to publish after
