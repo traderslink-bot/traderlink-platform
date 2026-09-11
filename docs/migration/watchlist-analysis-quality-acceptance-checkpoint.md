@@ -7,6 +7,11 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Private request diagnostics now include a scoped seven-module code fingerprint
+and optional validated Railway commit, alongside existing prompt/schema/body
+hashes. Three focused identity/request checks pass. Missing modules are explicit;
+this is not whole-runtime or live release provenance acceptance.
+
 Breakout text is now checked before primary/alternate selection; legacy breakout
 text uses the dependency-removal path. Candidate objective text is checked before
 ID-based retention. Forty-six service/panel tests and strict service TypeScript

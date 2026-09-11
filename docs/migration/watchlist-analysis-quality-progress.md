@@ -11,6 +11,22 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Scoped code provenance in private request diagnostics
+
+- Confirmed exact request/response, prompt/schema hashes and model already exist.
+  Added the missing scoped code fingerprint: seven explicit analysis module
+  files read once at service load, individual hashes, aggregate and source/dist
+  format. A validated Railway commit is separate and otherwise unavailable.
+- Missing modules expose partial coverage with no aggregate hash. No paths,
+  source contents, credentials or extra request fields are exported. No Git
+  subprocess, package scan, dependency change or new storage system is used.
+- Three focused code-identity/request checks pass, including deterministic
+  hashes, changed source, missing module and actual outgoing-body parity.
+  The persistence skill guided metadata completeness; existing private storage
+  and owner-approved retention remain controlling.
+- This does not identify every runtime dependency or prove hosted source/build
+  reconciliation. Full audit capacity/index/recovery acceptance remains open.
+
 ### Breakout text selection and dependent objective checkpoint
 
 - Primary and alternate breakout labels/explanations now pass the shared level

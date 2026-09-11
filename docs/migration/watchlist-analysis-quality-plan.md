@@ -262,6 +262,14 @@ code/prompt/schema hashes, validation issues, normalized published payload and
 cost. Preserve all stages under one generation ID. Full content is owner-only,
 never embedded in the public Watchlist payload or browser logs.
 
+Code provenance records a SHA-256 manifest of the seven explicit analysis
+modules (service, packet builder, observations, core/section validators,
+breakout selection and fingerprint module) as read beside the service at load.
+Source versus compiled format is explicit; a missing module makes the aggregate
+unavailable. The validated Railway commit, when supplied, is recorded separately.
+This is not a whole-runtime/dependency or immutable loaded-bytecode attestation;
+release reconciliation still establishes the exact deployed source and build.
+
 Proposed diagnostic storage: runtime durable volume, per-generation bounded artifacts with
 atomic writes and a small metadata index. Retain full artifacts 14 days with a
 256 MiB total cap and 2 MiB per artifact; prune oldest completed artifacts only.
