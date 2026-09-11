@@ -263,11 +263,13 @@ for (const failure of ["worker_failed", "malformed"]) {
   harness.setNow(60_000);
   harness.verify();
   harness.workers[0].emit("message", failure === "malformed" ? {} : {
+    dataGeneration: 1,
     generation: 0,
     status: failure,
   });
   harness.verify();
   assert.deepEqual(harness.calls, ["full", "light", "full"]);
+  assert.equal(harness.logs.warn[0][1].outcome, "worker_failed");
 }
 
 for (const failure of ["error", "exit", "timeout"]) {

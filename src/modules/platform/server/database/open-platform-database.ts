@@ -267,7 +267,14 @@ function startPlatformRuntimeQuickCheck(
     };
     if (
       workerResult.dataGeneration !== dataGeneration ||
-      workerResult.generation !== generation ||
+      workerResult.generation !== generation
+    ) {
+      state.requiresFullVerification = true;
+      logPlatformRuntimeQuickCheckOutcome(state, "worker_failed", startedAt);
+    } else if (status === "worker_failed") {
+      state.requiresFullVerification = true;
+      logPlatformRuntimeQuickCheckOutcome(state, "worker_failed", startedAt);
+    } else if (
       workerResult.structureBefore !== expectedStructureFingerprint ||
       workerResult.structureAfter !== expectedStructureFingerprint
     ) {
