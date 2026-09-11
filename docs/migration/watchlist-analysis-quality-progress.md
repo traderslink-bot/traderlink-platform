@@ -11,6 +11,18 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Inactive and removed ticker audit history
+
+- The audit API filtered all events through active Watchlist symbols, making
+  the existing Inactive filter ineffective and hiding removed-ticker history.
+  It now retains ledger history independently of current Watchlist membership,
+  with exact normalized symbol filtering for a requested ticker.
+- Current entries include inactive tickers; removed tickers are not recreated.
+  Their detail lifecycle says No current entry instead of incorrectly Active.
+- Two focused manager checks and scoped TypeScript pass, including retained
+  five-request counts, inactive history and removed-ticker retrieval. No live
+  data or monitoring behavior changed; DOM/pagination acceptance remains open.
+
 ### Operations count and grouping correction
 
 - Fixed detail counts that narrowed to the latest failed generation while the
