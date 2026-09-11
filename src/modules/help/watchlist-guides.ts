@@ -25,12 +25,17 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
       { title: "Preview and approve", text: "Preview the saved version. Website preview shows the analysis card; Discord preview shows the saved message text. Approve and publish authorizes that saved version. If you edit again, save and preview again before approval." },
     ] }, { kind: "paragraph", text: "If a breakout was omitted from a draft, its editing fields remain available. Enter your corrected price and explanation, enable Show this section if needed, then save and preview. Price-order warnings do not rewrite or block your correction. The original and your saved version remain separate." },
       { kind: "paragraph", text: "A generation may provide a primary breakout and an optional supported backup in the same AI request. Only the selected breakout appears in the draft; you can edit it before approval. Candidate selection and omission reasons are kept in the audit." },
-      { kind: "paragraph", text: "Website and Discord delivery are tracked separately. If delivery needs attention, inspect its status before retrying. An uncertain delivery must not be treated as a confirmed failure or blindly resent." }],
+      { kind: "paragraph", text: "Website and Discord delivery are tracked separately. If delivery needs attention, inspect its status before retrying. An uncertain delivery must not be treated as a confirmed failure or blindly resent." },
+      { kind: "paragraph", text: "If an approved message appeared in Discord but its delivery is awaiting confirmation, select that message part, enter its Discord message ID, and choose Verify existing message. Verification checks the existing message against the approved text and records a matching receipt; it does not send a message. After successful verification, Retry Discord delivery can finish any remaining parts without resending confirmed parts. A message that cannot be verified stays unresolved." }],
   }, {
     id: "controls", title: "Generation controls", summary: "Choose review and automatic follow-up behavior.",
     keywords: ["automatic updates", "manual refresh", "session", "cost"],
     blocks: [{ kind: "paragraph", text: "Automatic follow-up AI requests are off by default. Turning them off preserves their settings for later and does not stop live price/data updates. Manual refresh remains available and requests a new analysis." },
       { kind: "paragraph", text: "Review before publishing applies to new activations when analysis generation is enabled for that session. If generation is off for the session, the post follows the normal publishing path. Changing review settings does not silently approve a post already waiting for review." }],
+  }, {
+    id: "inspect-request", title: "Inspect request", summary: "Open available request records in Watchlist Admin.",
+    keywords: ["request", "input packet", "response", "omission", "validation"],
+    blocks: [{ kind: "paragraph", text: "Choose an Audit generation, then Inspect request. Expand the available input packet, AI response, validation results or saved versions. Missing diagnostics are labelled. Very large sections are shortened on screen for performance; Export audit contains the full available record. Inspecting does not generate or publish analysis." }],
   }, {
     id: "audit", title: "Export audit", summary: "Select the generation you want to inspect.",
     keywords: ["original", "edited", "audit", "failed request"],

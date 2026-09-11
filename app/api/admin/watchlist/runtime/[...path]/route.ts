@@ -29,6 +29,7 @@ const POST_PATHS = new Set([
   "/api/watchlist/analysis-review/save",
   "/api/watchlist/analysis-review/approve",
   "/api/watchlist/analysis-review/retry-discord",
+  "/api/watchlist/analysis-review/verify-discord",
   "/api/ai-clean-read/comments",
   "/api/ai-clean-read/generate",
   "/api/discord/clear-watchlist-channel",
