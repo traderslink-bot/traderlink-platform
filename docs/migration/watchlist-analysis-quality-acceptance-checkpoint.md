@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Declared top-level checkpoint dependencies are now rechecked after optional
+section cleanup. The integrated fixture removes a child of a later-removed
+checkpoint while preserving an independent checkpoint and deep pullback, handles
+a malformed row, and records only the new omission. Forty-four service/dependency
+checks pass; broader narrative and live acceptance remain incomplete.
+
 The legacy checkpoint text reproduction is now partial-publication acceptance.
 New explicit top-level checkpoint dependencies retain independent levels and
 remove dependent ones. Older text-invalid sequences omit the unresolved tail;

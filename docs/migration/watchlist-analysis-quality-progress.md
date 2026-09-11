@@ -11,6 +11,21 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Final-assembly checkpoint dependency recheck
+
+- Retain private raw dependency metadata until optional-section cleanup ends.
+  Recheck declared prerequisites against the remaining checkpoints and actual
+  root level before the final trade-map assertion. Keep normalized public text
+  and prices unchanged for retained rows; expose no internal IDs.
+- Integration fixture removes a breakout-related downside checkpoint, then
+  proves its child disappears while a separate root-backed checkpoint and deep
+  pullback remain. A malformed null row is handled without a crash. The final
+  audit counts only newly removed rows, not earlier removals a second time.
+- Forty-four focused service/dependency checks pass with mocked providers and
+  one-call assertions. Complete cross-scenario narrative attribution and live
+  acceptance remain open. Existing Help already describes dependency removal;
+  no visible copy change was needed for this correction.
+
 ### Addressable checkpoint retention
 
 - New top-level upside/downside schemas and prompt now require id/dependsOn.
