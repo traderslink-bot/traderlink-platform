@@ -11,6 +11,29 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Admission-time generation decision checkpoint
+
+- Confirmed a gap: ordinary activation scheduled its initial request after
+  awaited preparation using current settings, without retaining the OFF
+  admission decision. Saved `aiReadAdmission` now records the original time,
+  session and initial-generation permission for direct, queued and private
+  additions. Public admission methods replace caller-supplied metadata.
+- An OFF admission cannot receive an activation-triggered request after a
+  settings/session change. Manual refresh and separately enabled follow-ups
+  retain their current permission checks. Existing legacy rows remain compatible;
+  malformed admission records cannot authorize an initial request.
+- Existing Watchlist state persistence saves/reloads this metadata; no migration,
+  hosted storage, live setting or provider call was introduced. Help aligned.
+- Eight selected mocked checks passed with one worker: 72 direct/queued,
+  Main/Top Regular, master/session OFF combinations including settings/date
+  changes during preparation; six private-admission workflow cases; one
+  save/reload and malformed-state case. Scoped strict manager TypeScript passed.
+- The first test invocation's final result was not retained; its exact process
+  was confirmed absent before the completed verification above. No process
+  was stopped. Existing-cache/removal/re-add and full startup acceptance remain
+  open; this checkpoint does not claim those scenarios or production readiness.
+
+
 - Corrected an OFF-admission QA weakness: the earlier fixture implicitly had
   review mode OFF because no review store was supplied. The revised fixture
   explicitly enables review mode and asserts it, then exercises direct/queued

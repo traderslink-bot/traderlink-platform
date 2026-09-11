@@ -293,6 +293,9 @@ features for later use; do not delete them.
   later switch change must not silently release an already-held draft, generate
   it twice, or retroactively hide an already-published ticker. Recheck model
   permission before dispatch; a held item remains available for owner review.
+  The admission metadata and OFF-to-ON preparation-race checkpoint are recorded
+  in [Progress](watchlist-analysis-quality-progress.md); complete restart and
+  removal/re-add acceptance remains part of the full inventory.
 - An AI failure remains private as `Needs attention`; allow owner correction
   and an explicit manual refresh, not automatic paid correction or publication.
 - This workflow is reversible. Preserve the normal auto-publication path for

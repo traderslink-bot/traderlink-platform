@@ -7,6 +7,13 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Admission-time metadata now persists the original session/time and generation
+permission. Eight selected mocked checks pass, including 72 OFF-admission
+combinations with/without a settings/date change during preparation, six private
+workflow cases, and disk reload/malformed-state coverage. Scoped strict manager
+TypeScript passes. Removal/re-add, full startup and live visibility proof remain
+open; this is not a production acceptance claim.
+
 Latest narrow runtime correction: `e0801cc` holds legacy public ticker
 replacements for review. Ten selected manager/policy checks passed with mocked
 providers; scoped review-policy/store and Platform Help TypeScript checks passed.
