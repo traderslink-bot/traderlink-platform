@@ -11,6 +11,16 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Named response-format fixtures closed
+
+- Added refusal, malformed JSON, truncated output and incomplete-with-valid-JSON
+  fixtures. Every case records failed validation, produces no prepared payload
+  and makes exactly one provider call. Explicit incomplete status now rejects
+  even when its partial draft can be parsed.
+- All 43 focused service tests and scoped strict TypeScript pass. The closeout
+  checklist records this exact completed case without claiming the remaining
+  calibration/dependency or integrated publication gates are finished.
+
 ### Consolidated closeout after owner duration concern
 
 - Added the [closeout checklist](watchlist-analysis-quality-closeout.md) with

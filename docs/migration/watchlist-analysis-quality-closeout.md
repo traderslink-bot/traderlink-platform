@@ -52,6 +52,13 @@ Do not defer an explicit plan requirement by calling it optional.
 
 ## Next action
 
+Transport/format fixture checkpoint: refusal, malformed JSON, truncated JSON
+and incomplete-with-parseable-JSON now assert one request, failed validation
+capture and no prepared publication. The service now rejects provider status
+incomplete before parsing a seemingly complete draft. All 43 service tests pass
+at this checkpoint, plus scoped TypeScript. This closes that named response-
+format case; it does not close microcap calibration or branch dependencies.
+
 Finish the fixture-to-requirement mapping and integrated approval/delivery check
 before another cosmetic or speculative refinement. Record each exit in this
 file and the acceptance inventory; do not substitute repeated small success
