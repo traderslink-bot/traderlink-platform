@@ -11,6 +11,16 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Deterministic analysis acceptance checkpoint
+
+- Inspected and ran the three focused candidate/section/dependency test files:
+  25 checks pass. No new production changes were needed for these cases.
+- Closeout now maps the verified structural cases and distinguishes partial
+  owner-provided FTFT/TNON/AEON excerpts from actual complete model packets.
+  Live model-quality acceptance cannot be claimed from synthetic candles.
+- General Watchlist cleanup remains out of the active closeout. Continue with
+  compatibility/release preparation and explicitly retained live gates.
+
 ### Core approval-flow checkpoint
 
 - Added an explicit no-network article lookup to the existing six-session/method

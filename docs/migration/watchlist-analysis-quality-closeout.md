@@ -52,6 +52,21 @@ Do not defer an explicit plan requirement by calling it optional.
 
 ## Next action
 
+Candidate/section checkpoint: 25 focused price-action, section-validation and
+checkpoint-dependency tests pass. Inspected coverage includes observed bases,
+broader impulse origin, reference-buffer separation, sparse volume, exact
+candidate precision, overlapping zones, independent deep retention, optional
+objective omission and recovery ordering. This closes those deterministic cases;
+it is not proof that a live model chooses professionally adequate setups.
+
+Historical input boundary: the owner's TNON excerpt supplies reference 3.93,
+shallow 3.82–3.91, deep 3.69–3.78 and failure/recovery 3.36. FTFT supplies the
+shallow-not-below-reference rejection but no full input/output. AEON was named
+as added that day without an analysis packet. These are partial user-provided
+excerpts, not complete fixtures. Do not generate fictional candles or treat
+suggested alternative zones as recorded market structure. Actual model-quality
+acceptance must use newly captured complete packets under separate authority.
+
 Core orchestration checkpoint: six direct/queued × premarket/regular/postmarket
 manager cases pass with explicit mocked article lookup. They cover private
 admission, approval, owner-restored breakout, exact edited payload, stale and
