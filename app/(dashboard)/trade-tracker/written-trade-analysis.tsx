@@ -8,7 +8,7 @@ import Decimal from "decimal.js";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { DaySessionTradeAnalyzer } from "./[sessionDate]/day-session-types";
 import { analyzerProgressMessage } from "./analyzer-progress-messages";
-import { buildWrittenTradeReview } from "./analyzer-written-review-model";
+import { buildWrittenTradeReview, type WrittenReviewFill } from "./analyzer-written-review-model";
 import { tradeSummaryPoints } from "./analyzer-trade-summary";
 
 function Help({ label, text }: { label: string; text: string }) {
@@ -24,8 +24,16 @@ function amount(value: string, currency: string) {
   return `${number.isNegative() && !number.isZero() ? "-" : ""}${symbol}${formatJournalAnalyticsDecimal(number.abs().toFixed(2))}`;
 }
 
-export function WrittenTradeAnalysis({ analysis, direction, currency, timezone, children }: {
-  analysis: DaySessionTradeAnalyzer; direction: "long" | "short"; currency: string; timezone: string; children?: ReactNode;
+export function ExecutionPositionDetails({ fill, currency }: { fill: WrittenReviewFill; currency: string }) {
+  return <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap", alignItems: "center", minWidth: 0 }}>
+    <Typography variant="caption" sx={{ fontWeight: 700 }}>{fill.label}</Typography>
+    <Typography variant="caption" color="text.secondary">· {formatJournalAnalyticsDecimal(fill.remaining)} shares remaining</Typography>
+    {fill.grossPnl !== null ? <Typography variant="caption" sx={{ color: pnlColor(fill.grossPnl), fontWeight: 700 }}>· Gross exit P/L: {amount(fill.grossPnl, currency)}<Help label="Gross exit P/L" text="Profit or loss from this exit only, before fees. Calculated from the shares sold or covered and their average entry cost immediately before this exit—not the final P/L of the whole trade." /></Typography> : null}
+  </Stack>;
+}
+
+export function WrittenTradeAnalysis({ analysis, direction, currency, timezone, children, timeframe = "1m", hideExecutionDetails = false }: {
+  analysis: DaySessionTradeAnalyzer; direction: "long" | "short"; currency: string; timezone: string; children?: ReactNode; timeframe?: "1m" | "5m"; hideExecutionDetails?: boolean;
 }) {
   const review = useMemo(() => buildWrittenTradeReview(analysis, direction), [analysis, direction]);
   const count = analysis.reviewContext?.analyzedTradeCount;
@@ -46,11 +54,11 @@ export function WrittenTradeAnalysis({ analysis, direction, currency, timezone, 
       {count != null && count < 100 ? <LinearProgress aria-label={`${count} of 100 analyzed trades`} value={Math.min(100, Math.max(0, count))} variant="determinate" sx={{ mt: 1.25, height: 5, borderRadius: 3 }} /> : null}
       {count != null && count >= 100 ? <Button href="/analytics/trade-analyzer/day" size="small" sx={{ mt: 0.75, px: 0 }}>View your analysis pages</Button> : null}
     </Box>
-    <Box><Heading title="Trade summary" help="The key entry, exit and green-to-red findings for this saved trade. Entry references use the saved one-minute candle context, including the execution minute, not a claim about what was known before the fill. Peak opportunity includes realized P/L plus the value of shares still held. Profitable-exit amounts are gross, before losing exits and fees; final Trade P/L combines all exits using your selected basis. Price movement after the final exit is not included in this summary." />
+    <Box><Heading title="Trade summary" help={`The key entry, exit and green-to-red findings for this saved trade. ${timeframe === "5m" ? "EMA 9 uses the last completed 5-minute candle before the entry." : "EMA 9 uses the saved one-minute candle containing the entry, including that minute's completed data."} VWAP is session-based through the execution minute. Profit-path timing and peak opportunity retain one-minute closes and exact executions when you change chart timeframe. Peak opportunity includes realized P/L plus the value of shares still held. Profitable-exit amounts are gross, before losing exits and fees; final Trade P/L combines all exits using your selected basis. Price movement after the final exit is not included.`} />
       <Typography variant="caption" color="text.secondary">{review?.basis === "net" ? "Net P/L · entered fees included" : "Gross P/L · before fees"}</Typography>
       {review && final ? <>
         <Typography variant="h6" sx={{ mt: 0.75, fontWeight: 850, color: pnlColor(review.finalPnl) }}>{final.isZero() ? "Finished at breakeven." : `Finished with a ${amount(final.abs().toFixed(), currency)} ${final.lt(0) ? "loss" : "profit"}.`}</Typography>
-        <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2.25, display: "grid", gap: 0.65 }}>{tradeSummaryPoints(analysis, review, value => amount(value, currency)).map(point => <Typography component="li" variant="body2" key={point}>{point}</Typography>)}</Box>
+        <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2.25, display: "grid", gap: 0.65 }}>{tradeSummaryPoints(analysis, review, value => amount(value, currency), timeframe).map(point => <Typography component="li" variant="body2" key={point}>{point}</Typography>)}</Box>
       </> : null}
     </Box>
     {!review ? <Alert severity="info">The saved executions are not complete enough to calculate this trade’s P/L story.</Alert> : <>
@@ -62,7 +70,7 @@ export function WrittenTradeAnalysis({ analysis, direction, currency, timezone, 
         ].map(metric => <Box key={metric.label} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5, minWidth: 0 }}><Heading title={metric.label} help={metric.help} /><Typography variant="h6" sx={{ fontWeight: 850, color: metric.label === "Peak to exit" ? "text.primary" : pnlColor(metric.value) }}>{amount(metric.value, currency)}</Typography><Typography variant="caption" color="text.secondary">{metric.detail}</Typography></Box>)}
       </Box>
       {review.basis === "net" && !review.feesComplete ? <Typography variant="caption" color="text.secondary">Some fees were left blank. Net P/L deducts only the fees entered.<Help label="missing fees" text="A blank fee does not remove your trade. If you do not track fees, choose Gross P/L in Account settings. Entered zero fees remain valid." /></Typography> : null}
-      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: longest ? "repeat(3, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))" }, alignItems: "start" }}>
         <Box><Heading title="Entries and exits" help="These are the saved executions inside this trade, in time order. A full exit sells or covers the entire position in one execution without an earlier scale-out in that position. A final scale-out closes what remained after earlier partial exits. A later re-entry can still belong to the same saved trade." />
           <Typography variant="body2">{review.entryCount} opening {review.entryCount === 1 ? "execution" : "executions"} · {review.exitCount} closing {review.exitCount === 1 ? "execution" : "executions"}</Typography>
           <Typography variant="body2" sx={{ mt: 0.5 }}>{review.fills.filter(fill => fill.grossPnl !== null).map(fill => fill.label).filter((label, index, all) => all.indexOf(label) === index).join(" · ")}</Typography>
@@ -79,17 +87,17 @@ export function WrittenTradeAnalysis({ analysis, direction, currency, timezone, 
             </>}
           </Stack>
         </Box>
-      </Box>
       {longest ? <Box><Heading title="Longest profit window" help="The longest uninterrupted run of one-minute closes at or above half of this trade’s highest profitable candle-close P/L. Windows break when a close falls below that level or a minute is missing. Ties use the number of closes, then the higher peak. Duration is from the first qualifying close to the last; a single close has no measured duration. This is separate from the adjustable +20% filter on Scaling Out." />
         <Typography variant="body2">{longest.durationMinutes === 0 ? "One completed close" : `${longest.durationMinutes} minute${longest.durationMinutes === 1 ? "" : "s"}`} · {time(longest.startedAtUtcSeconds)}–{time(longest.endedAtUtcSeconds)}</Typography>
         <Typography variant="body2">Trade P/L ranged from <Box component="span" sx={{ color: pnlColor(longest.lowestPnlDecimal), fontWeight: 700 }}>{amount(longest.lowestPnlDecimal, currency)}</Box> to <Box component="span" sx={{ color: pnlColor(longest.peakPnlDecimal), fontWeight: 700 }}>{amount(longest.peakPnlDecimal, currency)}</Box>.</Typography>
       </Box> : null}
-      <Accordion disableGutters elevation={0} sx={{ border: 1, borderColor: "divider", borderRadius: 1, "&:before": { display: "none" } }}>
+      </Box>
+      {!hideExecutionDetails ? <Accordion disableGutters elevation={0} sx={{ border: 1, borderColor: "divider", borderRadius: 1, "&:before": { display: "none" } }}>
         <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}><Typography variant="body2" sx={{ fontWeight: 800 }}>Execution details · {review.fills.length}</Typography></AccordionSummary>
         <AccordionDetails><Typography variant="caption" color="text.secondary">Exit P/L below is gross profit or loss for that execution. It uses the average cost of the shares held immediately before the exit.</Typography><Stack spacing={1.25} sx={{ mt: 1 }}>
           {review.fills.map(fill => <Box key={fill.id} sx={{ borderBottom: 1, borderColor: "divider", pb: 1 }}><Typography variant="body2" sx={{ fontWeight: 700 }}>{fill.label}</Typography><Typography variant="caption" color="text.secondary">{time(fill.time)}</Typography><Typography variant="body2">{formatJournalAnalyticsDecimal(fill.quantity)} shares @ {amount(fill.price, currency)} · {formatJournalAnalyticsDecimal(fill.remaining)} remaining</Typography>{fill.grossPnl !== null ? <Typography variant="body2" sx={{ color: pnlColor(fill.grossPnl), fontWeight: 700 }}>Gross exit P/L: {amount(fill.grossPnl, currency)}</Typography> : null}</Box>)}
         </Stack></AccordionDetails>
-      </Accordion>
+      </Accordion> : null}
       {path?.firstRedAtUtcSeconds != null ? <Accordion disableGutters elevation={0} sx={{ border: 1, borderColor: "divider", "&:before": { display: "none" } }}><AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}><Typography variant="body2" sx={{ fontWeight: 800 }}>Position changes around first red</Typography></AccordionSummary><AccordionDetails><Stack spacing={0.5}>
         <Typography variant="body2">At the peak before first turning red: {path.positionQuantityAtPeakDecimal === null ? "N/A" : formatJournalAnalyticsDecimal(path.positionQuantityAtPeakDecimal)} shares held.</Typography>
         <Typography variant="body2">At the first red point: {path.positionQuantityAtRedDecimal === null ? "N/A" : formatJournalAnalyticsDecimal(path.positionQuantityAtRedDecimal)} shares held.</Typography>

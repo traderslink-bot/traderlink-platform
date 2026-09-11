@@ -1,5 +1,6 @@
 "use client";
-import { WrittenTradeAnalysis } from "../written-trade-analysis";
+import { ExecutionPositionDetails, WrittenTradeAnalysis } from "../written-trade-analysis";
+import { buildWrittenTradeReview } from "../analyzer-written-review-model";
 
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -1692,6 +1693,9 @@ function TradeReview({
   );
   const finalExit = { patterns: analyzer?.events.find((event) => event.kind === "final_exit")?.patterns ?? [] };
   const analysisTimeframe = analysisInterval === "5m" ? "5m" : "1m";
+  const executionReview = useMemo(() => analyzer ? buildWrittenTradeReview(analyzer, roundTrip.direction) : null, [analyzer, roundTrip.direction]);
+  const reviewFillById = useMemo(() => new Map(executionReview?.fills.map(fill => [fill.id, fill]) ?? []), [executionReview]);
+  const executionDetailsInRows = Boolean(executionReview && executionReview.fills.every(fill => executions.some(execution => execution.analysisEventKey === fill.id)));
   const analysisSections = analyzer
     ? combinedTradeAnalysisSections(roundTrip, analyzer, currency, analysisTimeframe)
     : [];
@@ -1899,6 +1903,7 @@ function TradeReview({
               expectedAccountSelectionRef={expectedAccountSelectionRef}
             />
           )}
+          {execution.analysisEventKey && reviewFillById.has(execution.analysisEventKey) ? <Box sx={{ gridColumn: "1 / -1", minWidth: 0, pb: 0.25 }}><ExecutionPositionDetails fill={reviewFillById.get(execution.analysisEventKey)!} currency={currency} /></Box> : null}
         </Box>
       ))}
     </Stack>
@@ -2401,7 +2406,7 @@ function TradeReview({
                   The selected execution is highlighted on the complete trade chart.
                 </Typography>
               ) : null}
-              <WrittenTradeAnalysis analysis={analyzer} currency={currency} timezone={roundTrip.timezone} direction={roundTrip.direction}>
+              <WrittenTradeAnalysis analysis={analyzer} currency={currency} timezone={roundTrip.timezone} direction={roundTrip.direction} timeframe={analysisTimeframe} hideExecutionDetails={executionDetailsInRows}>
                 <Stack spacing={1.25} sx={{ minWidth: 0, pr: { xs: 0, md: 2 } }}>
                   <Typography sx={{ fontWeight: 900 }} variant="body1">
                     {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})

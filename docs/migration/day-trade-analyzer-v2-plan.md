@@ -9,6 +9,8 @@ completed work is placed online through a separately authorized release.
 
 **Written card refresh:** [Scope and progress](analyzer-written-card-progress.md)
 
+**Written card follow-up:** [Interval context and execution rows](analyzer-interval-execution-layout-progress.md) — implementation complete; rendered owner review pending.
+
 **Green-to-red clarification:** [Red-trade comparison and recovery wording](day-trade-analyzer-red-comparison-progress.md)
 
 **Active follow-up:** [Profit Zones Progress](day-trade-analyzer-profit-zones-progress.md)

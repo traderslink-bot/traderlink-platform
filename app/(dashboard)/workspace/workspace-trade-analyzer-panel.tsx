@@ -101,6 +101,17 @@ function weightedReferenceText(events: readonly AnalyzerEvent[], reference: "ema
   return relation === "at" ? `at ${label}` : `${price(String(Math.abs(distance)), currency)} (${Math.abs(percent).toFixed(2)}%) ${relation} ${label}`;
 }
 
+function fiveMinuteEmaText(events: readonly AnalyzerEvent[], currency: string): string | null {
+  const distance = weightedAverage(events, event => {
+    const value = event.fiveMinuteContext?.completedBeforeExecution?.ema9Distance?.signedDistance;
+    return value == null ? null : Number(value);
+  });
+  const percent = weightedAverage(events, event => event.fiveMinuteContext?.completedBeforeExecution?.ema9Distance?.signedDistancePercent ?? null);
+  if (distance === null || percent === null) return null;
+  const reference = "the 5-minute EMA 9 from the last completed candle";
+  return distance === 0 ? `at ${reference}` : `${price(String(Math.abs(distance)), currency)} (${Math.abs(percent).toFixed(2)}%) ${distance > 0 ? "above" : "below"} ${reference}`;
+}
+
 function combinedActivityText(events: readonly AnalyzerEvent[], label: string, currency: string): string | null {
   const candles = new Map<number, AnalyzerEvent>();
   for (const event of events) if (event.candleTime !== null && event.metrics.available) candles.set(event.candleTime, event);
@@ -129,7 +140,7 @@ function closestPatternLine(events: readonly AnalyzerEvent[], timeframe: Analyze
   return selected ? `${prefix}: ${patternText(selected.pattern, selected.event.kind, timezone)}` : null;
 }
 
-function combinedTradeAnalysisSections(analysis: DaySessionTradeAnalyzer, currency: string, timezone: string): TradeAnalysisSection[] {
+function combinedTradeAnalysisSections(analysis: DaySessionTradeAnalyzer, currency: string, timezone: string, timeframe: "1m" | "5m"): TradeAnalysisSection[] {
   const entries = analysis.events.filter((event) => event.kind === "entry" || event.kind === "add");
   const exits = analysis.events.filter((event) => event.kind === "partial_exit" || event.kind === "temporary_flat" || event.kind === "final_exit");
   if (entries.length === 0) return [];
@@ -137,26 +148,26 @@ function combinedTradeAnalysisSections(analysis: DaySessionTradeAnalyzer, curren
   const exitQuantity = exits.reduce((total, event) => total + Number(event.quantity), 0);
   const averageEntry = weightedAverage(entries, (event) => Number(event.price));
   const averageExit = weightedAverage(exits, (event) => Number(event.price));
-  const entryReferences = [weightedReferenceText(entries, "vwapDistance", "session VWAP through each execution minute", currency), weightedReferenceText(entries, "ema9Distance", "1-minute EMA 9", currency)].filter((line): line is string => line !== null);
-  const exitReferences = [weightedReferenceText(exits, "vwapDistance", "session VWAP through each execution minute", currency), weightedReferenceText(exits, "ema9Distance", "1-minute EMA 9", currency)].filter((line): line is string => line !== null);
-  const entryEdge = weightedAverage(entries, (event) => event.metrics.executionEdgeDistance === null ? null : Number(event.metrics.executionEdgeDistance));
+  const entryReferences = [weightedReferenceText(entries, "vwapDistance", "session VWAP through each execution minute", currency), timeframe === "5m" ? fiveMinuteEmaText(entries, currency) : weightedReferenceText(entries, "ema9Distance", "1-minute EMA 9", currency)].filter((line): line is string => line !== null);
+  const exitReferences = [weightedReferenceText(exits, "vwapDistance", "session VWAP through each execution minute", currency), timeframe === "5m" ? fiveMinuteEmaText(exits, currency) : weightedReferenceText(exits, "ema9Distance", "1-minute EMA 9", currency)].filter((line): line is string => line !== null);
+  const entryEdge = weightedAverage(entries, (event) => { const value = timeframe === "5m" ? event.fiveMinuteContext?.containingCandle?.executionEdgeDistance : event.metrics.executionEdgeDistance; return value == null ? null : Number(value); });
   const exitGiveback = weightedAverage(exits, (event) => event.metrics.givebackFromPriorFavorableExtreme === null ? null : Number(event.metrics.givebackFromPriorFavorableExtreme));
-  const exitEdge = weightedAverage(exits, (event) => event.metrics.executionEdgeDistance === null ? null : Number(event.metrics.executionEdgeDistance));
+  const exitEdge = weightedAverage(exits, (event) => { const value = timeframe === "5m" ? event.fiveMinuteContext?.containingCandle?.executionEdgeDistance : event.metrics.executionEdgeDistance; return value == null ? null : Number(value); });
   const entryLines = [
     averageEntry === null ? `${entries.length} opening execution${entries.length === 1 ? "" : "s"} established ${compactNumber(entryQuantity)} shares.` : `${entries.length} opening execution${entries.length === 1 ? "" : "s"} established ${compactNumber(entryQuantity)} shares at a quantity-weighted average of ${price(String(averageEntry), currency)}${eventSpanMinutes(entries) > 0 ? ` over ${eventSpanMinutes(entries)} minutes` : ""}.`,
     entryReferences.length > 0 ? `Across the entry fills, the quantity-weighted execution was ${entryReferences.join(" and ")}.` : null,
-    entryEdge === null ? null : `Average entry precision was ${price(String(entryEdge), currency)} from each fill's favorable edge inside its own 1-minute candle.`,
+    entryEdge === null ? null : `Average entry precision was ${price(String(entryEdge), currency)} from each fill's favorable edge inside its own ${timeframe === "5m" ? "5-minute" : "1-minute"} candle.`,
     combinedActivityText(entries, "Entry", currency),
   ].filter((line): line is string => line !== null);
   const exitLines = [
     exits.length === 0 ? "No reducing execution is available." : `${exits.length} exit execution${exits.length === 1 ? "" : "s"} closed ${compactNumber(exitQuantity)} shares${averageExit === null ? "" : ` at a quantity-weighted average of ${price(String(averageExit), currency)}`}${eventSpanMinutes(exits) > 0 ? ` over ${eventSpanMinutes(exits)} minutes` : ""}.`,
     exitReferences.length > 0 ? `Across the exit fills, the quantity-weighted execution was ${exitReferences.join(" and ")}.` : null,
     exitGiveback === null ? null : `Across the exits, the average giveback was ${price(String(exitGiveback), currency)} per share from the most favorable earlier completed 1-minute candle price. Larger exit fills carry more weight in this average.`,
-    exitEdge === null ? null : `Average exit precision was ${price(String(exitEdge), currency)} from each fill's favorable edge inside its own 1-minute candle.`,
+    exitEdge === null ? null : `Average exit precision was ${price(String(exitEdge), currency)} from each fill's favorable edge inside its own ${timeframe === "5m" ? "5-minute" : "1-minute"} candle.`,
     combinedActivityText(exits, "Exit", currency),
   ].filter((line): line is string => line !== null);
-  const patternLines = [closestPatternLine(entries, "1m", timezone, "Entry"), closestPatternLine(exits, "1m", timezone, "Exit")].filter((line): line is string => line !== null);
-  return [{ lines: entryLines, title: "Combined entry" }, { lines: exitLines, title: "Combined exit" }, { lines: patternLines, title: "1-minute candle patterns" }].filter((section) => section.lines.length > 0);
+  const patternLines = [closestPatternLine(entries, timeframe, timezone, "Entry"), closestPatternLine(exits, timeframe, timezone, "Exit")].filter((line): line is string => line !== null);
+  return [{ lines: entryLines, title: "Combined entry" }, { lines: exitLines, title: "Combined exit" }, { lines: patternLines, title: `${timeframe === "5m" ? "5-minute" : "1-minute"} candle patterns` }].filter((section) => section.lines.length > 0);
 }
 
 function AnalysisBulletList({ color, lines, variant = "body2" }: Readonly<{ color?: string; lines: readonly string[]; variant?: "body2" | "caption" }>) {
@@ -168,9 +179,10 @@ function AnalysisSection({ section }: Readonly<{ section: TradeAnalysisSection }
 }
 
 
-function FullAnalysisEvidence({ analysis, currency, timezone, direction }: Readonly<{ analysis: DaySessionTradeAnalyzer; currency: string; timezone: string; direction: "long" | "short" }>) {
-  const sections = combinedTradeAnalysisSections(analysis, currency, timezone);
-  return <Box sx={{ borderTop: 1, borderColor: "divider", p: { xs: 1.5, md: 2 } }}><WrittenTradeAnalysis analysis={analysis} currency={currency} timezone={timezone} direction={direction}><Stack spacing={1.25}>{sections.map(section => <AnalysisSection key={section.title} section={section} />)}</Stack></WrittenTradeAnalysis></Box>;
+function FullAnalysisEvidence({ analysis, currency, timezone, direction, interval }: Readonly<{ analysis: DaySessionTradeAnalyzer; currency: string; timezone: string; direction: "long" | "short"; interval: DailyTradeChartInterval }>) {
+  const timeframe = interval === "5m" ? "5m" : "1m";
+  const sections = combinedTradeAnalysisSections(analysis, currency, timezone, timeframe);
+  return <Box sx={{ borderTop: 1, borderColor: "divider", p: { xs: 1.5, md: 2 } }}><WrittenTradeAnalysis analysis={analysis} currency={currency} timezone={timezone} direction={direction} timeframe={timeframe}><Stack spacing={1.25}>{sections.map(section => <AnalysisSection key={section.title} section={section} />)}</Stack></WrittenTradeAnalysis></Box>;
 }
 
 export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCount, gainLossDecimal, onClose, open, roundTripId, symbol, timezone }: WorkspaceTradeAnalyzerPanelProps) {
@@ -232,5 +244,5 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
     } finally { setRequesting(false); }
   }
   const message = unavailableMessage(loadState);
-  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { maxWidth: "none", width: "100vw" } } }}><Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: { xs: 1.25, md: 2 } }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><InsightsRoundedIcon color="primary" /><Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Trade Analyzer</Typography><Typography color="text.secondary" variant="body2">{symbol} · {direction === "long" ? "Long" : "Short"} · {executionCount} execution{executionCount === 1 ? "" : "s"}</Typography></Box></Stack><IconButton aria-label="Close Trade Analyzer" onClick={onClose}><CloseRoundedIcon /></IconButton></Stack></Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>{loadState === "loading" ? <Stack spacing={1} sx={{ alignItems: "center", justifyContent: "center", minHeight: 320, p: 3 }}><CircularProgress /><Typography color="text.secondary" variant="body2">Loading saved chart analysis…</Typography></Stack> : null}{message && loadState !== "loading" ? <Stack spacing={1.5} sx={{ p: { xs: 1.5, md: 2 } }}><Alert severity={loadState === "error" ? "error" : "info"}>{message}</Alert>{availability ? <><Typography variant="body2">{availability.dailyAvailable} available today</Typography><Typography variant="body2">{availability.periodAvailable} available this period · resets in {availability.daysUntilReset} days</Typography><Button disabled={requesting} onClick={() => void requestAnalysis()} sx={{ alignSelf: "flex-start" }} variant="contained">Analyze Trade</Button>{availability.selectableAvailable <= 0 ? <Typography color="error.main" variant="body2">You have used all available Trade Analyzer uses.</Typography> : null}</> : null}<Button onClick={() => void loadAnalysis()} sx={{ alignSelf: "flex-start" }} variant="outlined">Try again</Button></Stack> : null}{analysis?.status === "execution_mismatch" && loadState !== "loading" ? <Stack spacing={1} sx={{ p: { xs: 1.5, md: 2 } }}><Alert severity="warning">Review the execution details and correct the highlighted time or price before Analyzer runs again.</Alert>{analysis.executionMismatches.map((mismatch) => <Typography key={mismatch.executionId} variant="body2">{mismatch.side.toUpperCase()} · {mismatch.executedAt} · entered {mismatch.enteredPrice} · candle {mismatch.candleLow}–{mismatch.candleHigh}</Typography>)}</Stack> : null}{analysis && analysis.status !== "execution_mismatch" && loadState !== "loading" ? <><DailyTradeAnalyzerChart analysis={analysis} currency={currency} direction={direction} interval={interval} onIntervalChange={setInterval} selectedEventId={null} symbol={symbol} tradeLabelColor={panelOutcomeColor(gainLossDecimal)} tradeNumber={1} /><FullAnalysisEvidence analysis={analysis} currency={currency} timezone={timezone} direction={direction} /></> : null}</Box></Stack></Drawer>;
+  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { maxWidth: "none", width: "100vw" } } }}><Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: { xs: 1.25, md: 2 } }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><InsightsRoundedIcon color="primary" /><Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Trade Analyzer</Typography><Typography color="text.secondary" variant="body2">{symbol} · {direction === "long" ? "Long" : "Short"} · {executionCount} execution{executionCount === 1 ? "" : "s"}</Typography></Box></Stack><IconButton aria-label="Close Trade Analyzer" onClick={onClose}><CloseRoundedIcon /></IconButton></Stack></Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>{loadState === "loading" ? <Stack spacing={1} sx={{ alignItems: "center", justifyContent: "center", minHeight: 320, p: 3 }}><CircularProgress /><Typography color="text.secondary" variant="body2">Loading saved chart analysis…</Typography></Stack> : null}{message && loadState !== "loading" ? <Stack spacing={1.5} sx={{ p: { xs: 1.5, md: 2 } }}><Alert severity={loadState === "error" ? "error" : "info"}>{message}</Alert>{availability ? <><Typography variant="body2">{availability.dailyAvailable} available today</Typography><Typography variant="body2">{availability.periodAvailable} available this period · resets in {availability.daysUntilReset} days</Typography><Button disabled={requesting} onClick={() => void requestAnalysis()} sx={{ alignSelf: "flex-start" }} variant="contained">Analyze Trade</Button>{availability.selectableAvailable <= 0 ? <Typography color="error.main" variant="body2">You have used all available Trade Analyzer uses.</Typography> : null}</> : null}<Button onClick={() => void loadAnalysis()} sx={{ alignSelf: "flex-start" }} variant="outlined">Try again</Button></Stack> : null}{analysis?.status === "execution_mismatch" && loadState !== "loading" ? <Stack spacing={1} sx={{ p: { xs: 1.5, md: 2 } }}><Alert severity="warning">Review the execution details and correct the highlighted time or price before Analyzer runs again.</Alert>{analysis.executionMismatches.map((mismatch) => <Typography key={mismatch.executionId} variant="body2">{mismatch.side.toUpperCase()} · {mismatch.executedAt} · entered {mismatch.enteredPrice} · candle {mismatch.candleLow}–{mismatch.candleHigh}</Typography>)}</Stack> : null}{analysis && analysis.status !== "execution_mismatch" && loadState !== "loading" ? <><DailyTradeAnalyzerChart analysis={analysis} currency={currency} direction={direction} interval={interval} onIntervalChange={setInterval} selectedEventId={null} symbol={symbol} tradeLabelColor={panelOutcomeColor(gainLossDecimal)} tradeNumber={1} /><FullAnalysisEvidence analysis={analysis} currency={currency} timezone={timezone} direction={direction} interval={interval} /></> : null}</Box></Stack></Drawer>;
 }
