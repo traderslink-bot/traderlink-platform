@@ -11,6 +11,24 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Legacy checkpoint dependency gap reproduced
+
+- Source trace confirms top-level `targets` and `downsideCheckpoints` use the
+  three-field TARGET_SCHEMA (label, price, condition); normalization removes
+  extra identities. Only candidate-specific breakout objectives currently have
+  explicit `id`/`dependsOn` retention.
+- Added a known-gap characterization with observed synthetic 2.20 upside and
+  0.85 downside prices. An invalid volume claim still rejects the whole result
+  in each legacy array, with one provider call. This passing characterization
+  is NOT acceptance of that behavior; it must become partial-retention proof
+  when the dependency implementation is completed.
+- Next implementation needs addressable top-level checkpoints and dependency
+  validation before normalization discards metadata, plus explicit handling for
+  old responses without identities. Do not erase a conditional paragraph and
+  silently present its price as independent, or infer IDs from English text.
+- Existing source/model behavior is unchanged by this diagnostic checkpoint.
+  Help needs no change. Full section-local acceptance remains incomplete.
+
 ### Queued automatic OFF race proof
 
 - Added a focused real-coalescer test: queue twice while ON, switch OFF before

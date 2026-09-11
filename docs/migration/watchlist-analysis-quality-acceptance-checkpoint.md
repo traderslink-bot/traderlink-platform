@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Known gap reproduced: legacy top-level upside/downside checkpoints with valid
+synthetic observed prices but invalid volume text still reject the entire read
+with one request. The characterization asserts current rejection, NOT desired
+acceptance. Their three-field schema has no dependency identities; normalization
+would discard extras. Addressable checkpoint/dependency handling remains required.
+
 Queued automatic ON-to-OFF dispatch now has real-coalescer proof in all three
 enabled sessions: one dispatch for duplicate scheduling, zero mocked AI/research
 calls and manual eligibility preserved. Three targeted manager checks pass.
