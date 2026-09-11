@@ -11,6 +11,19 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Queued automatic OFF race proof
+
+- Added a focused real-coalescer test: queue twice while ON, switch OFF before
+  the 250 ms dispatch, and await that actual dispatch. All three enabled market
+  sessions yield one coalesced dispatch, no provider/research call and no pending
+  timer; manual refresh remains eligible. Each test is bounded to three seconds.
+- Three selected manager checks pass together: queued OFF race, interrupted
+  restart and existing automatic-OFF trigger/session matrix. No production
+  implementation changed for this checkpoint; the dispatch guard already works.
+- Broader scheduler integration, live data delivery and actual re-enabled
+  review/publication remain open. Help already describes this OFF behavior and
+  needs no wording change for this additional proof.
+
 ### Interrupted generation restart guard
 
 - Startup already replays publication receipts before clearing orphaned pending

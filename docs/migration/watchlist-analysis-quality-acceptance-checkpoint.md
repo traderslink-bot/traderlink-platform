@@ -7,6 +7,11 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Queued automatic ON-to-OFF dispatch now has real-coalescer proof in all three
+enabled sessions: one dispatch for duplicate scheduling, zero mocked AI/research
+calls and manual eligibility preserved. Three targeted manager checks pass.
+Full scheduler/live-data/re-enabled-publication integration remains open.
+
 An orphaned pending generation now retains an interrupted-request failure after
 outbox replay, preventing a fresh activation request under automatic-OFF. Two
 targeted manager tests pass, including two starts over persisted fake state,
