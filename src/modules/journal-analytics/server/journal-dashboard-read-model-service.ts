@@ -41,6 +41,11 @@ import {
   type NormalizedJournalAnalyticsSet,
 } from "./normalize-journal-analytics-facts";
 
+export type JournalRuleEvaluationDayReadModel = Pick<
+  JournalTradingDayReadModel,
+  "coverage" | "date" | "tickers"
+>;
+
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const INCREASING_ROLES = new Set<JournalAnalyticsAllocationFact["allocationRole"]>([
   "opening",
@@ -744,6 +749,63 @@ export class JournalDashboardReadModelService {
       asOfUtc,
       factSetRevisionSha256: factSet.sourceRevisionSha256,
     });
+  }
+
+  getRuleEvaluationTradingDays(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      currency: string | null;
+      endDate: string | null;
+      startDate: string | null;
+    }>,
+  ): readonly JournalRuleEvaluationDayReadModel[] {
+    if (input.startDate !== null) assertDate(input.startDate, "startDate");
+    if (input.endDate !== null) assertDate(input.endDate, "endDate");
+    if (input.startDate && input.endDate && input.startDate > input.endDate) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "dateRange",
+      });
+    }
+    const { factSet, normalized } = this.read(scope);
+    const dates = allTradingDates(factSet, normalized).filter((date) =>
+      (!input.startDate || date >= input.startDate) &&
+      (!input.endDate || date <= input.endDate));
+    const availableCurrencies = [...new Set(factSet.roundTrips.map((roundTrip) =>
+      roundTrip.tradeCurrency))].sort();
+    const requestedCurrencyUnavailable = input.currency !== null &&
+      !availableCurrencies.includes(input.currency);
+    const currency = input.currency !== null && !requestedCurrencyUnavailable
+      ? input.currency
+      : availableCurrencies[0] ?? null;
+    const rowsByDate = new Map<string, NormalizedJournalAnalyticsRow[]>();
+    if (currency !== null) {
+      for (const row of normalized.realizedRows) {
+        if (row.tradeCurrency !== currency) continue;
+        const rows = rowsByDate.get(row.closeLocal.localDate) ?? [];
+        rows.push(row);
+        rowsByDate.set(row.closeLocal.localDate, rows);
+      }
+    }
+    const baseCoverage = coverage(normalized);
+    const modelCoverage: JournalDashboardCoverage = Object.freeze({
+      ...baseCoverage,
+      limitationReasonCodes: Object.freeze([
+        ...new Set([
+          ...baseCoverage.limitationReasonCodes,
+          ...(availableCurrencies.length > 1
+            ? ["money_partitioned_by_currency"]
+            : []),
+          ...(requestedCurrencyUnavailable
+            ? ["requested_currency_unavailable"]
+            : []),
+        ]),
+      ].sort()),
+    });
+    return Object.freeze(dates.map((date) => Object.freeze({
+      coverage: modelCoverage,
+      date,
+      tickers: tradingDayTickers(rowsByDate.get(date) ?? []),
+    })));
   }
 
   getTradingDay(

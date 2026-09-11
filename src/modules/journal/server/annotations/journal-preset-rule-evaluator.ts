@@ -38,6 +38,10 @@ export type JournalPresetRuleEvidence = Readonly<{
 }>;
 
 type EligibleTrade = JournalTradingDayRoundTrip;
+type JournalRuleEvaluationDayReadModel = Pick<
+  JournalTradingDayReadModel,
+  "coverage" | "date" | "tickers"
+>;
 
 const ExactDecimal = Decimal.clone({
   precision: 160,
@@ -81,7 +85,7 @@ function ruleAppliesToTrade(rule: JournalRuleRecord, trade: EligibleTrade): bool
 }
 
 function eligibleDayTrades(
-  model: JournalTradingDayReadModel,
+  model: JournalRuleEvaluationDayReadModel,
   swingRoundTripIds: ReadonlySet<string>,
 ): readonly EligibleTrade[] {
   return Object.freeze(model.tickers
@@ -656,7 +660,7 @@ function evaluateTemplate(
 
 export function evaluateJournalPresetRules(
   rules: readonly JournalRuleRecord[],
-  model: JournalTradingDayReadModel,
+  model: JournalRuleEvaluationDayReadModel,
   swingRoundTripIds: ReadonlySet<string>,
 ): readonly JournalPresetRuleResult[] {
   const trades = eligibleDayTrades(model, swingRoundTripIds);

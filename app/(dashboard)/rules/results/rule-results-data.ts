@@ -151,7 +151,7 @@ export function workspaceRuleResultsCard(view: RuleResultsView): WorkspaceRuleRe
 export function readWorkspaceRuleResultsCardFromRuntime(
   database: Database.Database,
   scope: WorkspaceAccessScope,
-  dashboard: JournalDashboardReadModelService,
+  dashboard: Pick<JournalDashboardReadModelService, "getRuleEvaluationTradingDays">,
   dateRange: RuleResultsDateRange = { endDate: null, startDate: null },
   onTiming?: (timings: WorkspaceRuleResultsCardTimings) => void,
 ): WorkspaceRuleResultsCard {
@@ -160,24 +160,17 @@ export function readWorkspaceRuleResultsCardFromRuntime(
   let models = 0;
   let presets = 0;
   let started = performance.now();
-  const latest = dashboard.getTradingDay(scope, {
+  const dayModels = dashboard.getRuleEvaluationTradingDays(scope, {
     currency: null,
-    requestedDate: null,
+    endDate: dateRange.endDate,
+    startDate: dateRange.startDate,
   });
-  const dates = latest.availableTradingDates.filter((date) =>
-    (!dateRange.startDate || date >= dateRange.startDate) &&
-    (!dateRange.endDate || date <= dateRange.endDate));
   models += elapsedMilliseconds(started);
 
   const card = withScopedJournalAnnotations(database, scope, (service, account) => {
     const broken: WorkspaceBrokenRule[] = [];
-    for (const date of dates) {
-      started = performance.now();
-      const model = dashboard.getTradingDay(scope, {
-        currency: null,
-        requestedDate: date,
-      });
-      models += elapsedMilliseconds(started);
+    for (const model of dayModels) {
+      const date = model.date;
       const rangeStart = `${date}T00:00:00.000Z`;
       const rangeEndDate = new Date(rangeStart);
       rangeEndDate.setUTCDate(rangeEndDate.getUTCDate() + 2);
