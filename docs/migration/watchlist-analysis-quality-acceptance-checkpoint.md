@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Audit retention no longer trusts completion-marker presence alone. Bounded
+saved-event inspection recovers missing markers and preserves resumed unfinished
+captures under age/capacity pressure. Ten focused tests and scoped TypeScript
+pass; this does not establish large-history performance or full operations-card
+outcome completeness.
+
 The canonical article-source changes are now selectively integrated locally:
 runtime `21cb7fe` plus contract correction `f7388d5`, Platform `76677b66d`.
 A combined test executes the actual Platform selector/route and runtime lookup

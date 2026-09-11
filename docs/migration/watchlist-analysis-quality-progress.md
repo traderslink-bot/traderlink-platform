@@ -11,6 +11,19 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Audit completion-marker recovery
+
+- Found missing markers could make completed diagnostics permanently unprunable,
+  while stale markers could allow eviction of a resumed unfinished capture.
+- Retention/capacity cleanup now verifies bounded saved events before deletion;
+  a latest request without a later terminal event remains protected. Missing
+  markers no longer prevent reclaiming genuinely completed diagnostics.
+- Ten focused audit tests and scoped strict TypeScript pass, including restart,
+  age/capacity recovery, retained unfinished input and unrelated owner history.
+  Tests use temporary directories only. No live audit files were read or pruned.
+- Large-history cost, operations-card completeness and full interruption outcome
+  integration remain open. Existing retention limits and Help behavior unchanged.
+
 ### Stock Titan display slice isolated and verified
 
 - Reconciled the existing source-suppression changes separately from the dirty
