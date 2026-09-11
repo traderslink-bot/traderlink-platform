@@ -11,6 +11,19 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Interrupted generation outcome retained in run history
+
+- Startup already preserved an interrupted-generation failure after outbox
+  replay, but did not record that outcome in the run ledger. Added a generation-
+  linked startup/missing event before clearing pending state, with a stable
+  dedupe key and explicit unknown provider outcome rather than claimed rejection.
+- The focused two-start manager test now uses a real temporary run ledger and
+  verifies one durable interruption event, zero provider calls and retained
+  manual refresh. Scoped strict manager TypeScript and diff checks pass.
+- Operations-card rendering/grouping, interrupted requests without persisted
+  pending state, and complete historical attempt counts still require proof.
+  No live data, settings, servers or publications changed.
+
 ### Audit completion-marker recovery
 
 - Found missing markers could make completed diagnostics permanently unprunable,

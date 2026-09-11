@@ -7,6 +7,11 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Startup now records a durable generation-linked missing outcome for an orphaned
+pending generation after publication replay. A two-start manager fixture proves
+one ledger event, zero new AI calls and retained manual access. Complete UI
+history grouping and interruptions without pending state remain unverified.
+
 Audit retention no longer trusts completion-marker presence alone. Bounded
 saved-event inspection recovers missing markers and preserves resumed unfinished
 captures under age/capacity pressure. Ten focused tests and scoped TypeScript
