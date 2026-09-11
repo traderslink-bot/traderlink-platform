@@ -41,12 +41,26 @@ export function verifyCompletedPlatformDatabase(
   database: Database.Database,
   manifestInput: readonly PlatformMigration[] = platformMigrationManifest,
 ): PlatformMigrationRunResult {
-  return measurePlatformRequestPhase("integrity", () => verifyCompletedPlatformDatabaseUnmeasured(database, manifestInput));
+  return measurePlatformRequestPhase("integrity", () => verifyCompletedPlatformDatabaseUnmeasured(database, manifestInput, true));
+}
+
+/**
+ * Revalidates every runtime invariant affected by ordinary data writes. The
+ * process-level runtime guard schedules the unchanged full SQLite quick check
+ * separately so it cannot block the main server event loop.
+ */
+export function verifyPlatformDatabaseAfterDataChange(
+  database: Database.Database,
+  manifestInput: readonly PlatformMigration[] = platformMigrationManifest,
+): PlatformMigrationRunResult {
+  return measurePlatformRequestPhase("integrity", () =>
+    verifyCompletedPlatformDatabaseUnmeasured(database, manifestInput, false));
 }
 
 function verifyCompletedPlatformDatabaseUnmeasured(
   database: Database.Database,
   manifestInput: readonly PlatformMigration[],
+  includeQuickCheck: boolean,
 ): PlatformMigrationRunResult {
   const manifest = measurePlatformRequestPhase("integrity_manifest", () => validatePlatformMigrationManifest(manifestInput));
   const finalRow = measurePlatformRequestPhase("integrity_registry", () => {
@@ -73,7 +87,9 @@ function verifyCompletedPlatformDatabaseUnmeasured(
   });
   const digest = measurePlatformRequestPhase("integrity_schema", () => requirePlatformSchemaDigest(database, finalRow.post_schema_sha256));
   measurePlatformRequestPhase("integrity_foreign_keys", () => requirePlatformForeignKeyCheck(database));
-  measurePlatformRequestPhase("integrity_quick_check", () => requirePlatformQuickCheck(database));
+  if (includeQuickCheck) {
+    measurePlatformRequestPhase("integrity_quick_check", () => requirePlatformQuickCheck(database));
+  }
   return Object.freeze({
     appliedMigrationIds: Object.freeze([]),
     finalSchemaSha256: digest,
