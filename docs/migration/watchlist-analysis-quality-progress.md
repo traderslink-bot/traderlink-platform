@@ -11,6 +11,15 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Article authority reaches optional web search
+
+- Preserved the authenticated source status through the manager to the private
+  AI packet. Requests block Stock Titan's domain unless no-eligible is explicit
+  and no processed article is supplied. Other optional research remains intact.
+- Forty-two service checks pass (including eight authority/content combinations),
+  plus three manager checks and scoped strict TypeScript. All providers mocked;
+  no live enforcement claim. Full source-output/display audit remains open.
+
 ### Combined Platform/runtime article proof
 
 - Added a producer/consumer test using the actual Platform selector and route

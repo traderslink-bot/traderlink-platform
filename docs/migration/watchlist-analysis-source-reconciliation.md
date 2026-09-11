@@ -28,6 +28,24 @@ the newer main implementation instead of recreating a competing selector.
 
 ## Runtime integration checkpoint
 
+### Web-search authority preservation
+
+- The manager now carries authenticated officialArticleSourceStatus through RSS
+  fallback into the private request. Empty research alone does not authorize
+  Stock Titan web search; a processed article also overrides contradictory
+  no-eligible metadata conservatively.
+- Optional web research remains enabled under its existing setting. When Stock
+  Titan fallback is unauthorized, the request includes web_search filters with
+  blocked_domains stocktitan.net and an explicit prompt restriction. Other
+  sources remain available for risk/filing gaps; no second request is introduced.
+- Verified the field against [OpenAI web search domain filtering](https://developers.openai.com/api/docs/guides/tools-web-search#domain-filtering).
+  This checkpoint proves outgoing request configuration, not live provider
+  enforcement or exhaustive suppression of mirrors and copied attribution.
+- Forty-two focused service checks pass, including eight status/content
+  combinations and one-request assertions. Three real-manager mocked cases
+  verify status propagation; strict scoped manager TypeScript passes.
+  Existing Watchlist Help has no article-source workflow text to change.
+
 Local runtime checkpoint: `21cb7fe` (nine-file allowlist below; not published).
 
 - Selectively integrated the existing canonical lookup and RSS authorization,
