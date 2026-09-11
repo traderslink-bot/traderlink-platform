@@ -11,6 +11,16 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Readable generated-level audit checks
+
+- Inspect request now explains recorded core and must-clear anchors and failed
+  checks, including decisions retained with the original after diagnostics expire.
+- The screen explicitly distinguishes checks of the generated analysis from
+  subsequent owner edits. Failed checks do not display a success-looking anchor.
+- Eight focused panel/export tests and scoped strict panel TypeScript pass.
+  Help is aligned. No server, paid request, publication or deployment occurred;
+  full acceptance remains incomplete.
+
 ### Legacy continuation evidence and keyword-independent explanation checkpoint
 
 - Legacy generation responses without candidate metadata now require direct

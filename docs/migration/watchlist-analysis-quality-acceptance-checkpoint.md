@@ -7,6 +7,11 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Generated core and must-clear decisions now have readable audit entries, with
+explicit separation from owner edits and retained-original fallback. Eight
+focused panel/export tests and scoped strict TypeScript pass. This does not
+establish rendered live acceptance or close the remaining full-feature inventory.
+
 Legacy continuation now requires numeric observation support and omits locally
 when unsupported. Candidate/level explanations no longer require tape keywords
 in addition to their real evidence. Forty-eight service/breakout tests and strict
