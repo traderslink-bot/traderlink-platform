@@ -7,6 +7,11 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Delayed-removal outbox restart proof now passes: active re-additions and removals
+predating their admission are held, unrelated updates proceed, and later valid
+removals deliver. Obsolete queue records remain unacknowledged. In-flight remote
+ordering and delayed live-card/ticker-data replay remain unverified.
+
 Reviewed-ticker removal is now content-free and remains permitted by the
 publication guard while new data stays held. Six policy and two manager/HTTP
 mocked checks plus strict TypeScript pass. Delayed outbox removal versus newer

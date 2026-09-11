@@ -11,6 +11,25 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Delayed removal versus re-addition checkpoint
+
+- The manager now rejects deactivation patches while a ticker is active, and
+  rejects removals older than its latest saved admission time (legacy fallback:
+  activation time). This check also covers old snapshot-bearing removal patches,
+  not just the new content-free form. Runtime HTTP and outbox checks both use
+  the manager policy before dispatch.
+- A real disposable outbox restart test proves an old queued removal cannot
+  remove a re-added ticker; unrelated publication continues. After that ticker
+  is removed again, the old removal stays blocked while a newer removal sends.
+  The obsolete queue record remains retained and unacknowledged. No queue
+  cleanup/deletion or new retention policy was introduced.
+- Two focused manager/removal replay checks and strict manager TypeScript pass.
+  These are mocked transports, not proof against a request already accepted by
+  the remote server. Delayed live-card/ticker-data replay and in-flight server
+  ordering remain separate open acceptance items. No UI/Help change is needed
+  for this transport correction; no hosted action occurred.
+
+
 ### Content-free reviewed-ticker removal checkpoint
 
 - Inspection found that ordinary website removal built a level snapshot and
