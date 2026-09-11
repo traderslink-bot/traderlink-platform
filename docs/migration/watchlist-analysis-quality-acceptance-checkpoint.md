@@ -7,6 +7,11 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Optional shallow/deep/recovery volume and premarket-high text failures now omit
+their own scenario with an exact audit reason. Forty service checks and strict
+TypeScript pass; core rejection remains intact. Complete optional-field and
+cross-scenario dependency coverage remains open, as does live quality acceptance.
+
 Generated core and must-clear decisions now have readable audit entries, with
 explicit separation from owner edits and retained-original fallback. Eight
 focused panel/export tests and scoped strict TypeScript pass. This does not

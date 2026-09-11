@@ -11,6 +11,22 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Scenario-local volume and premarket-claim checks
+
+- Shared text checks now run independently for each scenario explanation and
+  confirmation. Invalid volume/operational-volume or current-premarket-high
+  claims omit that optional shallow, deep or recovery scenario, preserving an
+  independently valid setup. Undeclared overview/risk prose is removed intact.
+- Audit retains the exact omitted scenario, field path and reason; the owner
+  inspector labels this text-check omission. Core claims remain rejecting.
+- Forty focused service tests pass, including all three optional scenario
+  paths, one-call assertions, conflicting confirmation/rationale, and bad core.
+  Scoped strict service TypeScript passes. Test packets are synthetic.
+- The premarket-high checker intentionally only has an authoritative value
+  during premarket; this checkpoint does not claim broader-session coverage.
+  Full cross-scenario dependencies, other optional fields and claim semantics
+  remain open. No live settings, paid calls or publication changed.
+
 ### Readable generated-level audit checks
 
 - Inspect request now explains recorded core and must-clear anchors and failed
