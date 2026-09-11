@@ -774,3 +774,24 @@ whole-Watchlist acceptance described below.
 - Final semantic acceptance remains open. In particular, distinguish model
   selection quality from the mechanical retention results; do not claim
   professional calibration merely because the validator accepts the response.
+
+### Paired assessment and preservation closeout
+
+- Completed [paired quality assessment](watchlist-analysis-paired-quality-assessment.md)
+  against the frozen inputs and responses, with all nine symbols and midday
+  TRUG represented. Recommend Terra for the initial reviewed trial; no live
+  setting changed and no automatic second-call fallback introduced.
+- Platform precision checkpoint saved at
+  `e0bdd4dfff20203ab56fc56382354846e2dc8fc9`, parent `c110782d`.
+- Fresh owner-edit/store/preview tests pass 22/22. Ten selected manager tests
+  pass for ON private admission across all sessions/direct and queued paths,
+  OFF normal publication, held replacement, automatic OFF and queued recheck.
+  All destinations/providers are mocked; no real publication was attempted.
+- Actual local recap draft consumes posted/high/latest price facts, not changed
+  scenario fields. Richer analysis-based recap implementation is absent here;
+  do not claim live richer recap proof from this source. Nullable saved scenario
+  identities and shared types remain unchanged for integration.
+- Remaining hosted acceptance is explicit in the handoff: exact-parent
+  integration, output-cap setting, selected model, backup, build/health,
+  desktop/mobile preview and controlled initial/replacement publication.
+  No permission to execute those gates is inferred from local completion.

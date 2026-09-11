@@ -16,6 +16,7 @@ deployment, real generation requests, live runtime changes or a new migration.
 
 Progress: [Analysis Quality Progress](watchlist-analysis-quality-progress.md).
 Current September 11 reset: [Full-context analysis revision](watchlist-full-context-analysis-progress.md).
+Completed bounded paired review: [Whole-list quality assessment](watchlist-analysis-paired-quality-assessment.md).
 The owner rejects treating the existing template/selection behavior as the
 quality baseline. First-pass professional micro/nano-cap analysis, not merely
 validation success or owner repair, is the acceptance target. The September 11

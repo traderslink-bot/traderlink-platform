@@ -182,8 +182,22 @@ field-specific regression and the three analysis plan/progress/handoff records.
 Ten focused card/preview checks pass against the exact staged client. Older
 title/notice/layout/CSS edits are excluded and remain in the working tree.
 
-Remaining before final local handoff: consolidated semantic acceptance review
-and final manifest/docs reconciliation. All hosted gates above remain. No full build, migration,
+The [consolidated semantic assessment](watchlist-analysis-paired-quality-assessment.md)
+records all nine symbols, both FEIM captures and midday TRUG. Platform follow-up
+commit is `e0bdd4dfff20203ab56fc56382354846e2dc8fc9`, parent
+`c110782d5df64d1808f899c1c092946ba06b286f`. Its exact five-file allowlist is:
+`app/watchlist/live-watchlist-client.tsx` (precision hunks only),
+`src/lib/live-watchlist/__tests__/analysis-card-visibility.node-test.cjs`,
+`docs/migration/watchlist-analysis-quality-plan.md`,
+`docs/migration/watchlist-full-context-analysis-progress.md`, and this handoff.
+
+Additional preservation checkpoint: 22 owner-edit/store/preview tests and ten
+selected manager tests pass, including direct/queued admission in all three
+sessions, normal OFF paths, held replacements and automatic-update OFF guards.
+Recommend Terra for the initial reviewed trial based on the paired assessment;
+do not introduce automatic fallback calls. The live selection is unchanged.
+
+All hosted gates above remain. No full build, migration,
 publication, approval or Discord test was performed. Private packets, responses,
 ledger and experiment runners remain untracked and are excluded from commits.
 
