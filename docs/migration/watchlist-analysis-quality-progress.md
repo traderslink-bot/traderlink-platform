@@ -11,6 +11,30 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Shared unambiguous price-observation checkpoint
+
+- Added one price-observation filter used by reference selection, model-packet
+  candle normalization, checkpoint matching and breakout evidence construction.
+  Positive finite ordered OHLC and an at-or-before reference timestamp are
+  required. Conflicting OHLC at the same timeframe/timestamp excludes that
+  observation regardless of volume or input order; identical price duplicates
+  remain usable. Packet volume selection among identical prices retains the
+  existing highest-reported-volume behavior.
+- This closes the differing duplicate/future handling between these paths.
+  Breakout evidence now checks the complete OHLC, not only high/low. Its old
+  high/low-only synthetic fixtures were completed with explicit valid OHLC;
+  invalid range/conflict cases remain invalid. No historical market facts were
+  manufactured or altered.
+- 56 service/price-action/breakout checks passed with one worker. A subsequent
+  direct packet/catalog consistency check passed; strict service TypeScript
+  passed. All generation checks use mocks, and no additional provider call,
+  hosted configuration, new persistence store or migration was introduced.
+- This is groundwork for core evidence, not its completion: proposed thresholds
+  may differ legitimately from observed anchors. The core lexical bypass,
+  explicit observed-versus-derived threshold contract, economic tolerance and
+  complete narrative dependency checks remain open. Help workflow is unchanged.
+
+
 ### One-minute checkpoint evidence and future reference checkpoint
 
 - Checkpoint observation matching now includes supplied one-minute candles,

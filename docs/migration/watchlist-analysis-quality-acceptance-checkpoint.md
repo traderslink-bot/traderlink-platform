@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Reference, packet normalization, checkpoint and breakout paths now share
+unambiguous OHLC/time filtering. Conflicting prices cannot win by volume/order.
+56 focused checks plus a subsequent packet/catalog consistency check and strict
+TypeScript pass. Core observed-versus-derived threshold validation, tolerance
+calibration and full narrative dependencies remain open.
+
 One-minute observations now participate in checkpoint evidence; future,
 malformed and conflicting bars are excluded by that matcher. Reference-price
 selection separately rejects future 1m/5m bars. The 35-check service suite and
