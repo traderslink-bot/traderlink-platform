@@ -11,6 +11,14 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+- Export/inspector now reports separate captured-record counts for input,
+  response, validation, prepared payload and transport error. Counts are derived
+  only after exact selected-generation/ticker diagnostic identity checks. A
+  zero explicitly means no available record, not no provider activity. Missing
+  response/prepared stages can no longer hide behind a generic available label.
+  Eight focused export/panel checks and strict scoped TypeScript pass. Existing
+  API-attempt counts/cost and permanent original validation remain separate.
+
 - Extended revision-aligned omission status to rejected/absent breakout,
   selected-branch target removals, optional outer-daily omission and narrative
   explicitly removed by branch selection. A valid backup alone is not an
