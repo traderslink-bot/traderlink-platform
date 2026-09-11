@@ -31,7 +31,7 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
     id: "controls", title: "Generation controls", summary: "Choose review and automatic follow-up behavior.",
     keywords: ["automatic updates", "manual refresh", "session", "cost"],
     blocks: [{ kind: "paragraph", text: "Automatic follow-up AI requests are off by default. Turning them off preserves their settings for later and does not stop live price/data updates. Manual refresh remains available and requests a new analysis." },
-      { kind: "paragraph", text: "Review before publishing applies to new activations when analysis generation is enabled for that session. If generation is off for the session, the post follows the normal publishing path. Changing review settings does not silently approve a post already waiting for review." }],
+      { kind: "paragraph", text: "Review before publishing applies to new activations when analysis generation is enabled for that session. If generation is off for the session, the post follows the normal publishing path. With review enabled, replacement analyses also wait for approval, including refreshes of older public tickers. The existing public analysis and live data remain available. Changing review settings does not silently approve a post already waiting for review." }],
   }, {
     id: "inspect-request", title: "Inspect request", summary: "Open available request records in Watchlist Admin.",
     keywords: ["request", "input packet", "response", "omission", "validation"],

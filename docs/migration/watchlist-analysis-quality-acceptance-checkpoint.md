@@ -7,6 +7,11 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Latest narrow runtime correction: `e0801cc` holds legacy public ticker
+replacements for review. Ten selected manager/policy checks passed with mocked
+providers; scoped review-policy/store and Platform Help TypeScript checks passed.
+This does not close the broader acceptance gaps below.
+
 Runtime checkpoint inspected: `e2caba5`, canonical
 `levels-system-post-mtf-handoff-stability`. Platform checkpoint: `d79b6a575`
 in the assigned `e70f` worktree. Preserve unrelated Platform working changes.
@@ -40,7 +45,7 @@ intentional mocked storage-failure cases, not production storage observations.
 | Permanent original/edit/approval records | Separate append-only review storage; edit/export checks pass | Complete storage-failure/concurrency and large-history acceptance; diagnostic expiry must never delete revisions |
 | Review/edit/preview/approve | Owner editing preserves provenance and corrections; stale/version checks recorded in Progress | Integrated complete editor inventory, unsaved-error handling and website/Discord parity |
 | Initial private admission | Real manager methods with fake providers: direct/queued ON/ON private workflow passes all three sessions; 18 Main/Top Regular direct OFF combinations publish normally with zero AI calls; HTTP guard blocks pending card and quote/data transport | Live listing/detail/API and existing-cache/re-add concealment, queued OFF cases, full process startup and switch/session transition races |
-| Replacement review | Existing approved revision remains independently stored during later draft | Legacy already-public ticker adoption, replacement publication and re-enabled automation acceptance |
+| Replacement review | Existing approved revision remains independently stored during later draft; legacy public manual refresh now creates a durable replacement-only review before dispatch, without historical approval fabrication; focused policy/restart and manager checks pass | Full replacement publication and re-enabled automation acceptance; actual public-render retention proof |
 | Automatic updates default OFF | Persisted control and trigger guards exist; focused quote/no-follow-up evidence in Progress | Full restart/deferred/visibility/startup/boundary matrix, ON restoration and preserved subordinate settings |
 | Delivery durability | Verified multipart method/store flow: confirmed part skipped, uncertain part held, receipt verified, remaining part only sent | Full process startup, publisher integration, audience mentions/links, removal/re-add races and hosted acceptance |
 | Owner history and operation results | Request/version history, inspection, export, readable omissions and distinct recorded attempt/cost summaries exist (`748ec14`) | Required Published-with-omissions outcome, completeness reporting for partial diagnostic capture and integrated operation detail display |
