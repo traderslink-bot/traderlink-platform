@@ -901,6 +901,115 @@ export async function listNewsArticlesByTicker(
     : listNewsArticlesByTickerNeon(ticker, limit);
 }
 
+const WATCHLIST_AI_TIME_ZONE = "America/New_York";
+const watchlistAiDateFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: WATCHLIST_AI_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+export interface WatchlistAiNewsArticleSelection {
+  article: NewsArticle & { articleText: string };
+  targetSessionDate: string;
+  windowStartDateEt: string;
+  windowEndDateEt: string;
+  includedWeekdaysEt: string[];
+  recency: "current_day" | "older_within_window";
+  publishedDateEt: string;
+}
+
+function parseCalendarDate(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+    ? parsed
+    : null;
+}
+
+function formatCalendarDate(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
+function articlePublishedDateEt(value: string): string | null {
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) {
+    return null;
+  }
+  const parts = watchlistAiDateFormatter.formatToParts(parsed);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+  return year && month && day ? `${year}-${month}-${day}` : null;
+}
+
+function eligibleWeekdaysEndingOn(targetSessionDate: string): string[] | null {
+  const cursor = parseCalendarDate(targetSessionDate);
+  if (!cursor || cursor.getUTCDay() === 0 || cursor.getUTCDay() === 6) {
+    return null;
+  }
+
+  const dates: string[] = [];
+  while (dates.length < 5) {
+    const day = cursor.getUTCDay();
+    if (day !== 0 && day !== 6) {
+      dates.push(formatCalendarDate(cursor));
+    }
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  return dates;
+}
+
+export function isWatchlistAiTargetSessionDate(value: string): boolean {
+  return eligibleWeekdaysEndingOn(value) !== null;
+}
+
+/**
+ * Returns the single newest canonical TradersLink article eligible for a
+ * Watchlist AI read. The bounded 100-row lookup is deliberate: only the
+ * current canonical article revision is eligible, and no history or raw
+ * publisher payload is exposed to the Watchlist runtime.
+ */
+export async function findNewsArticleForWatchlistAi(
+  ticker: string,
+  targetSessionDate: string,
+): Promise<WatchlistAiNewsArticleSelection | null> {
+  const includedWeekdaysEt = eligibleWeekdaysEndingOn(targetSessionDate);
+  if (!includedWeekdaysEt) {
+    throw new TypeError("targetSessionDate must be a real YYYY-MM-DD date.");
+  }
+
+  const articles = await listNewsArticlesByTicker(ticker, 100);
+  const eligibleDates = new Set(includedWeekdaysEt);
+  for (const article of articles) {
+    const publishedDateEt = articlePublishedDateEt(article.publishedAt);
+    const processedContent = article.articleText;
+    if (
+      !publishedDateEt ||
+      !eligibleDates.has(publishedDateEt) ||
+      !article.headline.trim() ||
+      !processedContent?.trim()
+    ) {
+      continue;
+    }
+    return {
+      article: { ...article, articleText: processedContent },
+      targetSessionDate,
+      windowStartDateEt: includedWeekdaysEt[includedWeekdaysEt.length - 1]!,
+      windowEndDateEt: includedWeekdaysEt[0]!,
+      includedWeekdaysEt,
+      recency: publishedDateEt === targetSessionDate
+        ? "current_day"
+        : "older_within_window",
+      publishedDateEt,
+    };
+  }
+
+  return null;
+}
+
 async function listRecentNewsArticlesSqlite(limit = 50): Promise<NewsArticle[]> {
   const db = await getSqliteDatabase();
   const rows = db

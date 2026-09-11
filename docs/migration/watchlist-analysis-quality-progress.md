@@ -11,6 +11,19 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Platform article contract reconciliation
+
+- Restored the canonical authenticated endpoint and News selector locally,
+  preserving unrelated UI changes. Source inspection found numeric revision and
+  descending weekday output incompatible with runtime validation; corrected the
+  runtime to accept the actual contract with strict weekday membership.
+- Corrected a Saturday fixture; four runtime lookup checks and two actual
+  Platform selector/route Node checks pass, with scoped runtime TypeScript.
+  Database access was mocked and no Vitest, server or live action occurred.
+- Display/source-policy completion, database integration and the full acceptance
+  inventory remain open. Next.js route guidance confirmed awaited params and
+  uncached authenticated handler behavior; no visible UI changed in this slice.
+
 ### Canonical article integration and manager proof
 
 - Integrated the existing main article-source implementation selectively into

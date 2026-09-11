@@ -1,7 +1,8 @@
 # Watchlist analysis source reconciliation
 
 Status: runtime source selectively integrated and focused checks passed;
-Platform reconciliation and complete acceptance remain required before release.
+Platform endpoint/store integrated locally; display reconciliation and complete
+acceptance remain required before release.
 
 Controlling plan: [Analysis Quality](watchlist-analysis-quality-plan.md).
 
@@ -70,9 +71,29 @@ historical range or absorb unrelated source differences.
 
 ## Platform boundary and next proof
 
+### Endpoint/store integration and contract correction
+
+- Selectively restored the canonical route/store from `34fcc57c6`; other source
+  differences in those files were absent. Preserved the mixed Watchlist UI file.
+- Found a real producer/consumer mismatch: Platform emits descending weekdays
+  and numeric revision, while runtime required ascending weekdays and a string.
+  Runtime now accepts either weekday ordering, validates unique weekday members,
+  and converts positive integer revisions to the existing private string field.
+- Corrected the original Platform test's Saturday fixture to Friday. Runtime
+  fixtures now use actual Platform response types/order and reject weekend or
+  duplicate membership, invalid revisions and weekend article publication.
+- Two focused Node tests execute the actual selector and route with a mocked
+  database-read boundary, proving date selection, authentication-before-lookup,
+  unavailable versus no-eligible, no-store and private-field exclusion. Four
+  runtime lookup tests and strict scoped TypeScript pass. No database, Vitest,
+  local server, external API or migration was used.
+- These tests do not prove database ordering or deployed routing. The canonical
+  display changes already overlap preserved dirty UI; inspect and reconcile
+  separately, without absorbing unrelated notices/layout changes.
+
 Platform Git history contains `34fcc57c6` for the canonical authenticated route
 `app/api/news/watchlist-ai-source/[ticker]/route.ts` and News store selection.
-That route is absent from this assigned worktree. Its locally stored origin/main
+That route was absent at the initial comparison. Its locally stored origin/main
 contains that feature, but this checkpoint did not verify Platform's remote or
 Railway tip. Reconcile its exact current route/store/display changes separately,
 preserving mixed Watchlist UI edits already in this worktree.
