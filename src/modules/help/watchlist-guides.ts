@@ -23,7 +23,9 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
       { title: "Open the draft", text: "In Watchlist Admin, use Analysis Review to select a ticker. When review is required, the new post stays private while analysis is prepared and reviewed." },
       { title: "Edit and save", text: "Edit the available analysis text and prices, add or remove supported rows, or hide a section. Save draft preserves your edited version separately from the original. Editing does not request another AI analysis." },
       { title: "Preview and approve", text: "Preview the saved version. Website preview shows the analysis card; Discord preview shows the saved message text. Approve and publish authorizes that saved version. If you edit again, save and preview again before approval." },
-    ] }, { kind: "paragraph", text: "Website and Discord delivery are tracked separately. If delivery needs attention, inspect its status before retrying. An uncertain delivery must not be treated as a confirmed failure or blindly resent." }],
+    ] }, { kind: "paragraph", text: "If a breakout was omitted from a draft, its editing fields remain available. Enter your corrected price and explanation, enable Show this section if needed, then save and preview. Price-order warnings do not rewrite or block your correction. The original and your saved version remain separate." },
+      { kind: "paragraph", text: "A generation may provide a primary breakout and an optional supported backup in the same AI request. Only the selected breakout appears in the draft; you can edit it before approval. Candidate selection and omission reasons are kept in the audit." },
+      { kind: "paragraph", text: "Website and Discord delivery are tracked separately. If delivery needs attention, inspect its status before retrying. An uncertain delivery must not be treated as a confirmed failure or blindly resent." }],
   }, {
     id: "controls", title: "Generation controls", summary: "Choose review and automatic follow-up behavior.",
     keywords: ["automatic updates", "manual refresh", "session", "cost"],
@@ -32,6 +34,6 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
   }, {
     id: "audit", title: "Export audit", summary: "Select the generation you want to inspect.",
     keywords: ["original", "edited", "audit", "failed request"],
-    blocks: [{ kind: "paragraph", text: "Export audit downloads the selected generation's available request/response diagnostics and saved review history, including original, edited and approved versions when present. Failed generations can also be selected. Missing or unavailable diagnostics are labelled; older requests are not reconstructed. Export does not automatically share the file with Codex or anyone else." }],
+    blocks: [{ kind: "paragraph", text: "Export audit downloads the selected generation's available request/response diagnostics and saved review history, including original, edited and approved versions when present. Failed generations can also be selected. Use Ticker history to inspect earlier saved histories, including before a ticker was removed and added again. Historical records are read only; select a request there to export its saved analysis and revisions. Review ticker returns to the current review. Missing or unavailable diagnostics are labelled; older requests are not reconstructed. Export does not automatically share the file with Codex or anyone else." }],
   }],
 }];
