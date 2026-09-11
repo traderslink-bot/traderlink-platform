@@ -11,6 +11,35 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Core observed-level versus derived-threshold checkpoint
+
+- Replaced the needs-to-hold/caution/failure wording-only evidence check with
+  numeric anchor validation. New strict generation schema/prompt requests
+  `coreEvidence`: anchor price, observed-level or lower-threshold basis, and
+  explanation. Lower decision thresholds can differ from traded prices without
+  being falsely called observed levels. Existing core ordering and scenario
+  validation still apply; unsupported anchors and unexplained/incorrectly
+  directed thresholds reject that generation without another paid request.
+- Legacy generated responses without metadata must match observed prices
+  directly; missing metadata is not an evidence bypass. Previously persisted
+  member cards and owner editing are unchanged. Proof/decisions are captured by
+  the existing permanent original-validation callback and temporary diagnostics,
+  not exposed as a public card property.
+- Three premarket fixtures relied on unobserved proposed thresholds and were
+  updated to declare that derivation from their actual supplied 0.325 low,
+  without changing the levels or inserting market data. Forty service/core
+  checks passed. A subsequent service integration check also passed: unsupported
+  legacy threshold fails, explicitly anchored threshold succeeds, unsupported
+  anchor fails, and exactly three requests occur for those three generations.
+  Strict service TypeScript passed.
+- Core numeric provenance is not proof of trading merit or every textual claim.
+  Anchor matching currently uses the existing observation tolerance; joint
+  microcap selection/calibration, explicit source IDs, and whole-card narrative
+  dependency checks remain open. Must-clear/legacy breakout validation remains
+  a separate acceptance boundary. No UI control/Help workflow change, owner-edit
+  restriction, live setting, migration, paid call or deployment occurred.
+
+
 ### Shared unambiguous price-observation checkpoint
 
 - Added one price-observation filter used by reference selection, model-packet

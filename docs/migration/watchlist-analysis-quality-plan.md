@@ -210,6 +210,18 @@ rules so a bad added point cannot invalidate an otherwise publishable card.
 
 ## Microcap input and setup selection
 
+Core evidence implementation contract: generation responses provide internal
+`coreEvidence` for needs-to-hold, caution and momentum failure. Each cites a
+supported anchor and distinguishes an observed level from an explained lower
+decision threshold. Derived thresholds need not equal traded candle prices;
+ordering, positive values and coherent scenario checks still apply. Older
+response formats without this metadata must pass direct price-observation
+matching, not wording alone. These checks apply to generated content, never
+retroactive owner-edit restrictions. Exact proof and issues are retained in
+generation/review diagnostics rather than added as public card fields. Breakout
+candidate evidence remains its separate existing contract. See Progress for
+verification and remaining tolerance/semantic calibration boundaries.
+
 - Freeze one reference quote/time and the exact input candle set for generation.
   Candidate construction, prompt, validation and published price must all use
   that same reference, not separate live prices sampled during the request.

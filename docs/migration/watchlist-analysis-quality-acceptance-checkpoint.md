@@ -7,6 +7,13 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Needs-to-hold/caution/failure now distinguish observed levels from explicitly
+anchored lower thresholds. Legacy responses require numeric observation matches;
+words alone no longer satisfy these three core fields. Forty service/core checks
+plus a subsequent one-request/provenance integration case and strict TypeScript
+pass. Anchor tolerance/semantic calibration, legacy breakout/must-clear checks
+and complete narrative dependencies remain open.
+
 Reference, packet normalization, checkpoint and breakout paths now share
 unambiguous OHLC/time filtering. Conflicting prices cannot win by volume/order.
 56 focused checks plus a subsequent packet/catalog consistency check and strict
