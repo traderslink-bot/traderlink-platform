@@ -11,6 +11,15 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+- Corrected an OFF-admission QA weakness: the earlier fixture implicitly had
+  review mode OFF because no review store was supplied. The revised fixture
+  explicitly enables review mode and asserts it, then exercises direct/queued
+  additions across three sessions, Main/Top Regular and OFF/ON, ON/OFF, OFF/OFF
+  (36 combinations). All complete normal publication with zero AI calls.
+  Queued manual adds return an acknowledgement before completion; test now awaits
+  the actual pending activation promise and reads final store state. No runtime
+  behavior change was needed. One focused matrix test passed; no live calls.
+
 - Fixed diagnostic retention marking every validation phase complete. Only
   transport failure, explicit failed validation or saved prepared payload now
   creates a completion marker. Intermediate optional-section, valid-core and
