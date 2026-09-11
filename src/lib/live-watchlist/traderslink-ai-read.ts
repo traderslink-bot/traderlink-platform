@@ -1,3 +1,23 @@
+export function olderTradersLinkArticlePublicationDate(read: TradersLinkAiReadPayload): string | null {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  const dateKey = (timestamp: number) => {
+    const parts = formatter.formatToParts(timestamp);
+    return ["year", "month", "day"].map(part => parts.find(value => value.type === part)!.value).join("-");
+  };
+  if (!Number.isFinite(read.dataAsOf)) return null;
+  const analysisDate = dateKey(read.dataAsOf);
+  const cited = new Set(read.catalystRealityCheck.sourceUrls);
+  for (const source of read.sources) {
+    if (source.sourceType !== "press_release_sec_database" || !cited.has(source.url) ||
+      !source.evidence?.publishedAt || source.evidence.excerptKind !== "article_summary") continue;
+    const publishedAt = Date.parse(source.evidence.publishedAt);
+    if (Number.isFinite(publishedAt) && dateKey(publishedAt) < analysisDate) return source.evidence.publishedAt;
+  }
+  return null;
+}
+
 import type {
   LiveWatchlistVolumeContext,
   TradersLinkAiReadBias,
@@ -610,6 +630,8 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
   ) {
     return null;
   }
+
+  if (value.ownerHiddenSections !== undefined && (!Array.isArray(value.ownerHiddenSections) || value.ownerHiddenSections.some((key) => typeof key !== "string" || !["currentRead", "needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation", "targets", "downsideCheckpoints", "shallow", "deep", "failureRecovery", "catalystRealityCheck", "dilutionRisk", "listingStatus", "riskSummary"].includes(key)))) return null;
 
   const allowedSourceUrls = new Set(
     (value.sources as TradersLinkAiReadSource[]).map((source) => source.url),

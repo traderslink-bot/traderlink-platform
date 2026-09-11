@@ -16,6 +16,7 @@ import type {
   TradersLinkAiReadForwardHorizon,
   TradersLinkAiReadPayload,
   TradersLinkAiReadPullbackScenario,
+  TradersLinkAiReadSource,
 } from "@/src/lib/live-watchlist/live-watchlist-types";
 import {
   formatMarketDataStatusLabel,
@@ -35,6 +36,7 @@ import {
   describeTradersLinkAiLiveVolumeContext,
   formatAiReadSession,
   parseTradersLinkAiRead,
+  olderTradersLinkArticlePublicationDate,
   resolveTradersLinkAiPullbackScenarioState,
   type TradersLinkAiPullbackPlan,
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
@@ -110,7 +112,7 @@ function formatPrice(value: number | null): string {
 }
 
 function aiReadStatusLabel(
-  symbol: LiveWatchlistSymbolState,
+  symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus">,
   hasPublishedRead: boolean,
 ): string | null {
   if (symbol.marketDataStatus === "halted") {
@@ -243,41 +245,6 @@ function formatCardBody(value: string): string {
     .replace(/`n/g, "\n")
     .replace(/\\r\\n/g, "\n")
     .replace(/\\n/g, "\n");
-}
-
-function hasStockTitanReference(value: string | null | undefined): boolean {
-  return typeof value === "string" && /stock[\s_-]*titan/i.test(value);
-}
-
-function stockTitanSafeText(value: string): string | null {
-  return hasStockTitanReference(value) ? null : value;
-}
-
-function isStockTitanSource(source: TradersLinkAiReadPayload["sources"][number]): boolean {
-  return source.sourceType === "stocktitan_rss" ||
-    hasStockTitanReference(source.title) ||
-    hasStockTitanReference(source.url) ||
-    hasStockTitanReference(source.evidence?.supportingExcerpt) ||
-    hasStockTitanReference(source.evidence?.filingType);
-}
-
-function olderTradersLinkArticlePublicationDate(
-  read: TradersLinkAiReadPayload,
-  sources: TradersLinkAiReadPayload["sources"],
-): string | null {
-  const currentSessionDate = formatDate(read.dataAsOf);
-  const olderArticleSource = sources.find((source) => {
-    if (
-      source.sourceType !== "press_release_sec_database" ||
-      source.evidence?.excerptKind !== "article_summary" ||
-      !source.evidence.publishedAt
-    ) {
-      return false;
-    }
-    const publishedAt = Date.parse(source.evidence.publishedAt);
-    return Number.isFinite(publishedAt) && formatDate(publishedAt) !== currentSessionDate;
-  });
-  return olderArticleSource?.evidence?.publishedAt ?? null;
 }
 
 function escapeRegExp(value: string): string {
@@ -471,21 +438,18 @@ function TradersLinkAiPullbackScenarioBlock({
         </div>
         <div>
           <dt>Required confirmation</dt>
-          <dd>{scenario.confirmation}</dd>
+          <dd>${formatPrice(scenario.confirmationPrice)} {scenario.confirmation}</dd>
         </div>
         <div>
           <dt>Invalidation</dt>
           <dd>${formatPrice(scenario.invalidationPrice)}</dd>
         </div>
-        <div>
+        {scenario.firstObjectivePrice !== null && <div>
           <dt>First objective</dt>
-          <dd>
-            {scenario.firstObjectivePrice === null
-              ? "No defensible objective mapped"
-              : `$${formatPrice(scenario.firstObjectivePrice)}`}
-          </dd>
-        </div>
+          <dd>${formatPrice(scenario.firstObjectivePrice)}</dd>
+        </div>}
       </dl>
+      {scenario.rationale.trim() ? <p>{scenario.rationale}</p> : null}
     </div>
   );
 }
@@ -542,7 +506,7 @@ function shouldShowTradersLinkAiLiveVolumeConfirmation(args: {
   return args.volume.label === "expanding" || args.volume.label === "strong";
 }
 
-function TradersLinkAiReadCard({
+export function TradersLinkAiReadCard({
   card,
   symbol,
   livePrice,
@@ -550,33 +514,31 @@ function TradersLinkAiReadCard({
   dipBuyPlanVisible = true,
 }: {
   card: LiveWatchlistCardContent;
-  symbol: LiveWatchlistSymbolState;
+  symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus">;
   livePrice: number | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
 }) {
-  const read = parseTradersLinkAiRead(card.body);
-  if (!read) {
+  const parsedRead = parseTradersLinkAiRead(card.body);
+  if (!parsedRead) {
     return <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />;
   }
-  const downsideCheckpoints = read.downsideCheckpoints ?? [];
+  const read = sanitizeTradersLinkAiReadForDisplay(parsedRead);
+  const hidden = new Set(read.ownerHiddenSections ?? []);
+  const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read);
+  const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
+  const showShallow = (read.version === 3 || read.version === 4) && !hidden.has("shallow") && Boolean(read.pullbackPlans.shallow);
+  const showDeep = (read.version === 3 || read.version === 4) && !hidden.has("deep") && Boolean(read.pullbackPlans.deep);
+  const showRecovery = (read.version === 3 || read.version === 4) && !hidden.has("failureRecovery") && Boolean(read.failureRecovery);
   const currentLivePrice = livePrice ?? read.currentPrice;
   const momentumSetupFailed = read.momentumFailure.price !== null &&
     currentLivePrice <= read.momentumFailure.price;
   const pullbackPlan = dipBuyPlanVisible
     ? deriveTradersLinkAiPullbackPlan(read)
     : null;
-  const safeSources = read.sources.filter((source) => !isStockTitanSource(source));
-  const titleOnlyCatalystSources = safeSources.filter(
+  const titleOnlyCatalystSources = read.sources.filter(
     (source) => source.evidence?.excerptKind === "article_title",
   );
-  const catalystSummary = stockTitanSafeText(read.catalystRealityCheck.summary);
-  const catalystRelevance = stockTitanSafeText(read.catalystRealityCheck.dayTradeRelevance);
-  const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read, safeSources);
-  const dilutionSummary = stockTitanSafeText(read.dilutionRisk.summary);
-  const dilutionRelevance = stockTitanSafeText(read.dilutionRisk.dayTradeRelevance);
-  const listingSummary = stockTitanSafeText(read.listingStatus.summary);
-  const listingRelevance = stockTitanSafeText(read.listingStatus.dayTradeRelevance);
 
   return (
     <article
@@ -605,7 +567,8 @@ function TradersLinkAiReadCard({
         </div>
       </div>
 
-      {liveVolumeContext && shouldShowTradersLinkAiLiveVolumeConfirmation({
+      {!hidden.has("currentRead") && read.currentRead.trim() ? <p>{read.currentRead}</p> : null}
+      {!hidden.has("momentumFailure") && !hidden.has("shallow") && !hidden.has("deep") && liveVolumeContext && shouldShowTradersLinkAiLiveVolumeConfirmation({
         read,
         livePrice: currentLivePrice,
         volume: liveVolumeContext,
@@ -616,21 +579,21 @@ function TradersLinkAiReadCard({
           volume={liveVolumeContext}
         />
       ) : null}
-      <div className="watchlist-ai-read-level-grid">
-        <TradersLinkAiReadLevelBlock heading="Needs to hold" level={read.needsToHold} />
-        <TradersLinkAiReadLevelBlock
-          heading="Caution below"
-          level={read.cautionBelow}
-        />
-        <TradersLinkAiReadLevelBlock heading="Momentum failure" level={read.momentumFailure} />
-        <TradersLinkAiReadLevelBlock heading="Must clear" level={read.mustClear} />
-        <TradersLinkAiReadLevelBlock
-          heading="Breakout continuation"
-          level={read.breakoutContinuation}
-        />
-      </div>
+      {(() => {
+        const levels = [
+          ["needsToHold", "Needs to hold", read.needsToHold],
+          ["cautionBelow", "Caution below", read.cautionBelow],
+          ["momentumFailure", "Momentum failure", read.momentumFailure],
+          ["mustClear", "Must clear", read.mustClear],
+          ["breakoutContinuation", "Breakout continuation", read.breakoutContinuation],
+        ] as const;
+        const visible = levels.filter(([key, , level]) => !hidden.has(key) && (level.price !== null || level.rationale.trim()));
+        return visible.length ? <div className="watchlist-ai-read-level-grid">
+          {visible.map(([key, heading, level]) => <TradersLinkAiReadLevelBlock key={key} heading={heading} level={level} />)}
+        </div> : null;
+      })()}
 
-      {read.version === 4 ? (
+      {read.version === 4 && !hidden.has("targets") ? (
         <section className="watchlist-ai-read-section">
           <h3>Where the trade could go next</h3>
           <p>Conditional day-trade paths, not predictions. Each farther branch requires the prior area to hold.</p>
@@ -641,7 +604,7 @@ function TradersLinkAiReadCard({
             <TradersLinkAiForwardHorizonBlock heading="Extreme momentum" horizon={read.forwardPlan.extremeMomentum} livePrice={currentLivePrice} />
           </ol>
         </section>
-      ) : read.targets.length > 0 ? (
+      ) : read.version !== 4 && !hidden.has("targets") && read.targets.length > 0 ? (
         <section className="watchlist-ai-read-section">
           <h3>Where the trade could go next</h3>
           <ol className="watchlist-ai-read-targets">
@@ -657,10 +620,10 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {(read.version === 3 || read.version === 4) && dipBuyPlanVisible ? (
+      {(read.version === 3 || read.version === 4) && dipBuyPlanVisible && (showShallow || showDeep) ? (
         <section className="watchlist-ai-read-section">
           <h3>Pullback entry plans</h3>
-          {momentumSetupFailed ? (
+          {momentumSetupFailed && !hidden.has("momentumFailure") && showRecovery ? (
             <p className="watchlist-ai-read-plan-warning">
               The original momentum setup is invalid below the momentum-failure boundary. Use the
               failure and recovery plan; do not treat either pullback zone as active.
@@ -668,7 +631,7 @@ function TradersLinkAiReadCard({
           ) : null}
           {read.pullbackPlans.shallow || read.pullbackPlans.deep ? (
             <div className="watchlist-ai-read-scenario-grid">
-              {read.pullbackPlans.shallow ? (
+              {showShallow && read.pullbackPlans.shallow ? (
                 <TradersLinkAiPullbackScenarioBlock
                   heading="Shallow pullback — momentum retest"
                   description="For traders seeking a controlled retest while momentum remains intact."
@@ -676,7 +639,7 @@ function TradersLinkAiReadCard({
                   livePrice={currentLivePrice}
                 />
               ) : null}
-              {read.pullbackPlans.deep ? (
+              {showDeep && read.pullbackPlans.deep ? (
                 <TradersLinkAiPullbackScenarioBlock
                   heading="Deep pullback — reset setup"
                   description="For traders waiting for the accelerated move to unwind into its base."
@@ -689,7 +652,7 @@ function TradersLinkAiReadCard({
             <p>No evidence-backed pullback entry plan is available for this read.</p>
           )}
         </section>
-      ) : pullbackPlan ? (
+      ) : read.version === 2 && pullbackPlan && !hidden.has("shallow") && !hidden.has("deep") ? (
         <section className="watchlist-ai-read-section">
           <h3>Potential pullback</h3>
           <p>
@@ -716,14 +679,14 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {(read.version === 3 || read.version === 4) && (downsideCheckpoints.length > 0 || read.failureRecovery) ? (
+      {(read.version === 3 || read.version === 4) && (downsideCheckpoints.length > 0 || showRecovery) ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-downside">
           <h3>Failure and recovery</h3>
-          <p>
+          {!hidden.has("momentumFailure") && <p>
             The original momentum setup is invalid below {read.momentumFailure.price === null
               ? "the published momentum-failure boundary"
               : `$${formatPrice(read.momentumFailure.price)}`}.
-          </p>
+          </p>}
           {downsideCheckpoints.length > 0 ? (
             <>
               <p>Lower structural checkpoints exposed after that failure:</p>
@@ -741,8 +704,8 @@ function TradersLinkAiReadCard({
               </ol>
             </>
           ) : null}
-          {read.failureRecovery ? (
-            <dl className="watchlist-ai-read-scenario-items">
+          {showRecovery && read.failureRecovery ? (
+            <><dl className="watchlist-ai-read-scenario-items">
               <div>
                 <dt>Recovery-watch area</dt>
                 <dd>${formatPrice(read.failureRecovery.recoveryZoneLow)}-${formatPrice(read.failureRecovery.recoveryZoneHigh)}</dd>
@@ -752,19 +715,16 @@ function TradersLinkAiReadCard({
                 <dd>${formatPrice(read.failureRecovery.firstReclaimPrice)} after a new base forms</dd>
               </div>
               <div>
-                <dt>Restores original bullish thesis</dt>
+                <dt>Recovery setup established above</dt>
                 <dd>${formatPrice(read.failureRecovery.setupRestorePrice)}</dd>
               </div>
-              <div>
+              {read.failureRecovery.firstObjectivePrice !== null && <div>
                 <dt>First recovery objective</dt>
-                <dd>{read.failureRecovery.firstObjectivePrice === null
-                  ? "No defensible objective mapped"
-                  : `$${formatPrice(read.failureRecovery.firstObjectivePrice)}`}</dd>
-              </div>
+                <dd>${formatPrice(read.failureRecovery.firstObjectivePrice)}</dd>
+              </div>}
             </dl>
-          ) : (
-            <p>A recovery attempt is unavailable until a lower base and explicit reclaim are established.</p>
-          )}
+            {read.failureRecovery.rationale.trim() ? <p>{read.failureRecovery.rationale}</p> : null}</>
+          ) : null}
         </section>
       ) : downsideCheckpoints.length > 0 ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-downside">
@@ -786,18 +746,17 @@ function TradersLinkAiReadCard({
       ) : null}
 
       <div className="watchlist-ai-read-context-grid">
-        {read.catalystRealityCheck.status === "confirmed" &&
-        read.catalystRealityCheck.sourceUrls.length > 0 &&
-        (catalystSummary || catalystRelevance || titleOnlyCatalystSources.length > 0) ? (
+        {!hidden.has("catalystRealityCheck") && read.catalystRealityCheck.status === "confirmed" &&
+        read.catalystRealityCheck.sourceUrls.length > 0 ? (
           <section className="watchlist-ai-read-section">
             <div className="watchlist-ai-read-section-heading">
               <h3>Catalyst / recent news</h3>
               <span>{formatAiReadTag(read.catalystRealityCheck.status)}</span>
             </div>
+            <p>{read.catalystRealityCheck.summary}</p>
             {olderArticlePublishedAt ? (
               <p><strong>Older article:</strong> {formatArticleDate(olderArticlePublishedAt)}</p>
             ) : null}
-            {catalystSummary ? <p>{catalystSummary}</p> : null}
             {titleOnlyCatalystSources.length > 0 ? (
               <ul>
                 {titleOnlyCatalystSources.map((source) => (
@@ -805,21 +764,18 @@ function TradersLinkAiReadCard({
                 ))}
               </ul>
             ) : null}
-            {catalystRelevance ? (
-              <p className="watchlist-ai-read-relevance">
-                <strong>Day-trade impact:</strong> {catalystRelevance}
-              </p>
-            ) : null}
+            <p className="watchlist-ai-read-relevance">
+              <strong>Day-trade impact:</strong> {read.catalystRealityCheck.dayTradeRelevance}
+            </p>
           </section>
         ) : null}
-        {read.externalResearchEnabled === true &&
-        (dilutionSummary || dilutionRelevance || read.dilutionRisk.companyIssuance || read.dilutionRisk.publicResale) ? (
+        {!hidden.has("dilutionRisk") && read.externalResearchEnabled === true ? (
             <section className="watchlist-ai-read-section">
               <div className="watchlist-ai-read-section-heading">
                 <h3>Dilution risk</h3>
                 <span>{formatAiReadTag(read.dilutionRisk.level)}</span>
               </div>
-              {dilutionSummary ? <p>{dilutionSummary}</p> : null}
+              <p>{read.dilutionRisk.summary}</p>
               {read.dilutionRisk.companyIssuance || read.dilutionRisk.publicResale ? (
                 <div className="watchlist-ai-read-dilution-timing">
                   <p className="watchlist-ai-read-dilution-today">
@@ -838,22 +794,19 @@ function TradersLinkAiReadCard({
                   ) : null}
                 </div>
               ) : null}
-              {dilutionRelevance ? (
-                <p className="watchlist-ai-read-relevance">
-                  <strong>Day-trade impact:</strong> {dilutionRelevance}
-                </p>
-              ) : null}
+              <p className="watchlist-ai-read-relevance">
+                <strong>Day-trade impact:</strong> {read.dilutionRisk.dayTradeRelevance}
+              </p>
             </section>
         ) : null}
       </div>
 
-      {read.externalResearchEnabled === true &&
+      {!hidden.has("listingStatus") && read.externalResearchEnabled === true &&
        read.listingStatus.status !== "none" &&
       read.listingStatus.status !== "unknown" &&
       (read.listingStatus.immediacy === "near_term" ||
         read.listingStatus.immediacy === "immediate") &&
-      read.listingStatus.sourceUrls.length > 0 &&
-      (listingSummary || listingRelevance) ? (
+      read.listingStatus.sourceUrls.length > 0 ? (
         <section
           className="watchlist-ai-read-listing"
           data-immediacy={read.listingStatus.immediacy}
@@ -864,20 +817,18 @@ function TradersLinkAiReadCard({
               {formatAiReadTag(read.listingStatus.status)} · {formatAiReadTag(read.listingStatus.immediacy)}
             </span>
           </div>
-          {listingSummary ? <p>{listingSummary}</p> : null}
-          {listingRelevance ? (
-            <p>
-              <strong>Day-trade impact:</strong> {listingRelevance}
-            </p>
-          ) : null}
+          <p>{read.listingStatus.summary}</p>
+          <p>
+            <strong>Day-trade impact:</strong> {read.listingStatus.dayTradeRelevance}
+          </p>
         </section>
       ) : null}
 
-      {read.externalResearchEnabled === true && safeSources.length > 0 ? (
+      {read.externalResearchEnabled === true && read.sources.length > 0 ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-sources">
           <h3>Sources checked</h3>
           <ul>
-            {safeSources.map((source) => (
+            {read.sources.map((source) => (
               <li key={`${source.sourceType}-${source.url}`}>
                 <a href={source.url} target="_blank" rel="noreferrer">
                   {source.title}
@@ -897,6 +848,12 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
+      {!hidden.has("riskSummary") && read.riskSummary.length > 0 ? (
+        <section className="watchlist-ai-read-section">
+          <h3>Risk notes</h3>
+          <ul>{read.riskSummary.map((risk, index) => <li key={index}>{risk}</li>)}</ul>
+        </section>
+      ) : null}
       <p className="watchlist-ai-read-meta">
         Market data as of {formatDateTime(read.dataAsOf)}. Generated {formatDateTime(read.generatedAt)}.
         AI-assisted preparation only; live price action and risk controls remain decisive. AI can make
@@ -939,7 +896,7 @@ function TradersLinkAiReadStatusCard({
   symbol,
 }: {
   status: "analyzing" | "failed";
-  symbol?: LiveWatchlistSymbolState;
+  symbol?: Pick<LiveWatchlistSymbolState, "marketDataStatus">;
 }) {
   return (
     <article
@@ -1050,6 +1007,90 @@ function cleanLevelMapCardBody(card: LiveWatchlistCardContent): string {
     .trim();
 }
 
+const STOCK_TITAN_REFERENCE_PATTERN = /stock[\s._+-]*titan/i;
+const STOCK_TITAN_URL_PATTERN = /https?:\/\/[^\s"'<>()]*stock[\s._+-]*titan[^\s"'<>()]*/gi;
+const STOCK_TITAN_TEXT_PATTERN = /stock[\s._+-]*titan(?:\.[\w-]+)?/gi;
+
+function decodeDisplayText(value: string): string {
+  // Decode only valid encoded spans; malformed escapes elsewhere must not hide
+  // an attribution. Each changed pass shortens the string, so nesting is finite.
+  let decoded = value;
+  while (true) {
+    const next = decoded.replace(/(?:%[0-9a-f]{2})+/gi, (span) => {
+      try { return decodeURIComponent(span); } catch { return span; }
+    });
+    if (next === decoded) return decoded;
+    decoded = next;
+  }
+}
+
+function containsStockTitanReference(value: unknown): boolean {
+  return typeof value === "string" && STOCK_TITAN_REFERENCE_PATTERN.test(decodeDisplayText(value));
+}
+
+function removeStockTitanReference(value: string): string {
+  if (!containsStockTitanReference(value)) return value;
+  return decodeDisplayText(value)
+    .replace(STOCK_TITAN_URL_PATTERN, "")
+    .replace(STOCK_TITAN_TEXT_PATTERN, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function sourceReferencesStockTitan(source: TradersLinkAiReadSource): boolean {
+  return source.sourceType === "stocktitan_rss" || [
+    source.title,
+    source.url,
+    source.evidence?.supportingExcerpt,
+    source.evidence?.filingType,
+  ].some(containsStockTitanReference);
+}
+
+function sanitizeTradersLinkAiReadForDisplay(
+  read: TradersLinkAiReadPayload,
+): TradersLinkAiReadPayload {
+  const sources = read.sources.filter((source) => !sourceReferencesStockTitan(source));
+  const allowedSourceUrls = new Set(sources.map((source) => source.url));
+  const visibleSourceUrls = (urls: string[]) => urls.filter((url) => allowedSourceUrls.has(url));
+
+  return {
+    ...read,
+    currentRead: removeStockTitanReference(read.currentRead),
+    riskSummary: read.riskSummary.map(removeStockTitanReference),
+    sources,
+    catalystRealityCheck: {
+      ...read.catalystRealityCheck,
+      summary: removeStockTitanReference(read.catalystRealityCheck.summary),
+      dayTradeRelevance: removeStockTitanReference(read.catalystRealityCheck.dayTradeRelevance),
+      sourceUrls: visibleSourceUrls(read.catalystRealityCheck.sourceUrls),
+    },
+    dilutionRisk: {
+      ...read.dilutionRisk,
+      summary: removeStockTitanReference(read.dilutionRisk.summary),
+      dayTradeRelevance: removeStockTitanReference(read.dilutionRisk.dayTradeRelevance),
+      sourceUrls: visibleSourceUrls(read.dilutionRisk.sourceUrls),
+      companyIssuance: read.dilutionRisk.companyIssuance
+        ? {
+          ...read.dilutionRisk.companyIssuance,
+          summary: removeStockTitanReference(read.dilutionRisk.companyIssuance.summary),
+        }
+        : undefined,
+      publicResale: read.dilutionRisk.publicResale
+        ? {
+          ...read.dilutionRisk.publicResale,
+          summary: removeStockTitanReference(read.dilutionRisk.publicResale.summary),
+        }
+        : undefined,
+    },
+    listingStatus: {
+      ...read.listingStatus,
+      summary: removeStockTitanReference(read.listingStatus.summary),
+      dayTradeRelevance: removeStockTitanReference(read.listingStatus.dayTradeRelevance),
+      sourceUrls: visibleSourceUrls(read.listingStatus.sourceUrls),
+    },
+  };
+}
+
 type RecentNewsFilingArticle = {
   title: string;
   url: string;
@@ -1058,11 +1099,22 @@ type RecentNewsFilingArticle = {
   filingType: string | null;
 };
 
-function parseRecentNewsFilings(card: LiveWatchlistCardContent): RecentNewsFilingArticle[] {
+type ParsedRecentNewsFilings = {
+  parsed: boolean;
+  articles: RecentNewsFilingArticle[];
+};
+
+function recentNewsArticleReferencesStockTitan(article: RecentNewsFilingArticle): boolean {
+  return [article.title, article.url, article.eventType, article.filingType].some(
+    containsStockTitanReference,
+  );
+}
+
+function parseRecentNewsFilings(card: LiveWatchlistCardContent): ParsedRecentNewsFilings {
   try {
     const parsed = JSON.parse(card.body) as { articles?: unknown };
     if (!Array.isArray(parsed.articles)) {
-      return [];
+      return { parsed: false, articles: [] };
     }
 
     const parsedArticles = parsed.articles
@@ -1084,12 +1136,7 @@ function parseRecentNewsFilings(card: LiveWatchlistCardContent): RecentNewsFilin
         };
       })
       .filter((article): article is RecentNewsFilingArticle => Boolean(article))
-      .filter((article) =>
-        !hasStockTitanReference(article.title) &&
-        !hasStockTitanReference(article.url) &&
-        !hasStockTitanReference(article.eventType) &&
-        !hasStockTitanReference(article.filingType),
-      );
+      .filter((article) => !recentNewsArticleReferencesStockTitan(article));
 
     const articlesByTitleAndDay = new Map<string, RecentNewsFilingArticle>();
     for (const article of parsedArticles) {
@@ -1111,16 +1158,24 @@ function parseRecentNewsFilings(card: LiveWatchlistCardContent): RecentNewsFilin
       }
     }
 
-    return [...articlesByTitleAndDay.values()].sort((left, right) => {
-      const leftMs = left.publishedAt ? Date.parse(left.publishedAt) : NaN;
-      const rightMs = right.publishedAt ? Date.parse(right.publishedAt) : NaN;
-      if (!Number.isFinite(leftMs)) return 1;
-      if (!Number.isFinite(rightMs)) return -1;
-      return rightMs - leftMs;
-    });
+    return {
+      parsed: true,
+      articles: [...articlesByTitleAndDay.values()].sort((left, right) => {
+        const leftMs = left.publishedAt ? Date.parse(left.publishedAt) : NaN;
+        const rightMs = right.publishedAt ? Date.parse(right.publishedAt) : NaN;
+        if (!Number.isFinite(leftMs)) return 1;
+        if (!Number.isFinite(rightMs)) return -1;
+        return rightMs - leftMs;
+      }),
+    };
   } catch {
-    return [];
+    return { parsed: false, articles: [] };
   }
+}
+
+function shouldRenderRecentNewsFilingsCard(card: LiveWatchlistCardContent): boolean {
+  const parsed = parseRecentNewsFilings(card);
+  return parsed.parsed ? parsed.articles.length > 0 : !containsStockTitanReference(card.body);
 }
 
 function formatArticleDate(value: string | null): string {
@@ -1150,10 +1205,12 @@ function formatNewsChipLabel(value: string): string {
 }
 
 function RecentNewsFilingsCard({ card }: { card: LiveWatchlistCardContent }) {
-  const articles = parseRecentNewsFilings(card);
-  if (articles.length === 0) {
-    return hasStockTitanReference(card.body) ? null : <pre>{formatCardBody(card.body)}</pre>;
+  const parsed = parseRecentNewsFilings(card);
+  if (!parsed.parsed) {
+    return <pre>{formatCardBody(card.body)}</pre>;
   }
+  const articles = parsed.articles;
+  if (articles.length === 0) return null;
 
   return (
     <div className="watchlist-news-list">
@@ -1550,6 +1607,9 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
   const traderReadCard = symbol.cards.liveTraderRead;
   const tradersLinkAiReadCard = symbol.cards.tradersLinkAiRead;
   const recentNewsFilingsCard = symbol.cards.recentNewsFilings;
+  const showRecentNewsFilingsCard = recentNewsFilingsCard
+    ? shouldRenderRecentNewsFilingsCard(recentNewsFilingsCard)
+    : false;
   const companyInfoCard = symbol.cards.companyInfo;
   const highRiskWarning = buildWatchlistHighRiskWarning({
     country: companyInfoCard?.metadata?.country,
@@ -1586,7 +1646,7 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
       ) : symbol.tradersLinkAiReadCardVisible !== false ? (
         <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />
       ) : null}
-      {recentNewsFilingsCard ? (
+      {recentNewsFilingsCard && showRecentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
           label="Known Recent News / SEC Filings"
           card={recentNewsFilingsCard}

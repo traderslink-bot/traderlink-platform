@@ -1,6 +1,8 @@
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { requestWatchlistRuntimeRaw } from "@/src/modules/watchlist/server/runtime/watchlist-runtime-admin-client";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
+import { requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -8,6 +10,12 @@ export const runtime = "nodejs";
 type SupportedMethod = "GET" | "POST";
 
 const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/export",
+  "/api/watchlist/analysis-review/history",
+  "/api/watchlist/analysis-review/queue",
+  "/api/watchlist/analysis-review/settings",
+  "/api/watchlist/analysis-review",
+  "/api/watchlist/analysis-review/preview",
   "/api/ai-clean-read",
   "/api/runtime/ai-read-audit",
   "/api/runtime/day-trade-adapter",
@@ -17,6 +25,11 @@ const GET_PATHS = new Set([
 ]);
 
 const POST_PATHS = new Set([
+  "/api/watchlist/analysis-review/settings",
+  "/api/watchlist/analysis-review/save",
+  "/api/watchlist/analysis-review/approve",
+  "/api/watchlist/analysis-review/retry-discord",
+  "/api/watchlist/analysis-review/verify-discord",
   "/api/ai-clean-read/comments",
   "/api/ai-clean-read/generate",
   "/api/discord/clear-watchlist-channel",
@@ -79,8 +92,19 @@ async function relay(
   const allowed = method === "GET" ? GET_PATHS.has(pathname) : POST_PATHS.has(pathname);
   if (!allowed) return Response.json({ code: "not_found" }, { status: 404 });
 
+  let reviewActor: string | undefined;
+  if (pathname === "/api/watchlist/analysis-review" || pathname.startsWith("/api/watchlist/analysis-review/")) {
+    try {
+      if (method === "POST") requireJournalAdminMutationRequest(request);
+      reviewActor = withJournalAdminDatabase(request.headers, (_database, scope) => `platform-owner:${scope.userId}`);
+    } catch {
+      return Response.json({ code: "not_found" }, { status: 404, headers: { "cache-control": "private, no-store" } });
+    }
+  }
+
   const incomingUrl = new URL(request.url);
   const result = await requestWatchlistRuntimeRaw({
+    reviewActor,
     body: method === "POST" ? await request.text() : undefined,
     contentType: request.headers.get("content-type") ?? undefined,
     method,

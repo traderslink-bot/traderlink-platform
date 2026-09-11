@@ -4,6 +4,15 @@ import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import dynamic from "next/dynamic";
+import type { LiveWatchlistCardContent } from "@/src/lib/live-watchlist/live-watchlist-types";
+import { readAnalysisReviewPreview } from "@/src/lib/live-watchlist/analysis-review-preview";
+
+const AnalysisPreviewCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then((module) => module.TradersLinkAiReadCard));
 
 const MINIMUM_FRAME_HEIGHT = 900;
 
@@ -18,6 +27,9 @@ export function WatchlistRuntimeAdminClient({
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [height, setHeight] = useState(MINIMUM_FRAME_HEIGHT);
   const [selectedSection, setSelectedSection] = useState<"runtime" | "usage" | "recaps">("runtime");
+  const [analysisPreview, setAnalysisPreview] = useState<{
+    card: LiveWatchlistCardContent; dipBuyPlanVisible: boolean;
+  } | null>(null);
 
   const resizeFrame = useCallback(() => {
     const frameDocument = frameRef.current?.contentDocument;
@@ -54,12 +66,11 @@ export function WatchlistRuntimeAdminClient({
     const onMessage = (event: MessageEvent<unknown>) => {
       if (event.origin !== window.location.origin || event.source !== frameRef.current?.contentWindow) return;
       if (!event.data || typeof event.data !== "object") return;
-      const message = event.data as { source?: unknown; type?: unknown };
-      if (
-        message.source !== "traderslink-watchlist-admin" ||
-        message.type !== "open-usage"
-      ) return;
-      selectUsage();
+      const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown };
+      if (message.source !== "traderslink-watchlist-admin") return;
+      if (message.type === "open-usage") { selectUsage(); return; }
+      const nextPreview = readAnalysisReviewPreview(message);
+      if (nextPreview) setAnalysisPreview(nextPreview);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
@@ -67,6 +78,13 @@ export function WatchlistRuntimeAdminClient({
 
   return (
     <>
+      <Dialog open={analysisPreview !== null} onClose={() => setAnalysisPreview(null)} fullWidth maxWidth="lg" aria-labelledby="analysis-preview-title">
+        <DialogTitle id="analysis-preview-title">Website analysis preview</DialogTitle>
+        <DialogContent>
+          {analysisPreview ? <AnalysisPreviewCard card={analysisPreview.card} symbol={{}} livePrice={null} dipBuyPlanVisible={analysisPreview.dipBuyPlanVisible} /> : null}
+        </DialogContent>
+        <DialogActions><Button onClick={() => setAnalysisPreview(null)}>Close</Button></DialogActions>
+      </Dialog>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
         <Button onClick={() => setSelectedSection("runtime")} variant={selectedSection === "runtime" ? "contained" : "outlined"}>Watchlist controls</Button>
         <Button onClick={() => setSelectedSection("usage")} variant={selectedSection === "usage" ? "contained" : "outlined"}>Usage</Button>

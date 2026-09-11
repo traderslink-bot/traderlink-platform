@@ -13,6 +13,7 @@ import { PAID_PLAN_HELP_GUIDES } from "./paid-plan-guides";
 import { QUICK_TRADE_ENTRY_HELP_GUIDES } from "./quick-trade-entry-guides";
 import { SWING_TRADE_TRACKER_HELP_GUIDES } from "./swing-trade-tracker-guides";
 import { STOCK_LEVELS_HELP_GUIDES } from "./stock-levels-guides";
+import { WATCHLIST_HELP_GUIDES } from "./watchlist-guides";
 import { TOOLS_HELP_GUIDES } from "./tools-guides";
 import { TRADE_ANALYZER_HELP_GUIDES } from "./trade-analyzer-guides";
 import { TRADE_EXPLORER_HELP_GUIDES } from "./trade-explorer-guides";
@@ -56,6 +57,7 @@ export const PUBLIC_HELP_COLLECTIONS: readonly PublicHelpCollection[] = Object.f
   collection("paid-plan", "Paid plan and billing", "Connect Whop, manage the wider TraderLink paid plan and fix access problems.", PAID_PLAN_HELP_GUIDES),
   collection("tools", "Tools", "Learn how to use TraderLink tools such as Halt Alerts.", TOOLS_HELP_GUIDES),
   collection("stock-levels", "Stock Levels", "Request and read a factual support and resistance map.", STOCK_LEVELS_HELP_GUIDES),
+  collection("watchlist", "Watchlist", "Read analysis and manage owner review and publication.", WATCHLIST_HELP_GUIDES),
   collection("traderslink-app", "TradersLink app", "Install TradersLink, use saved pages and trade entry offline, manage device storage and choose push alerts.", TRADERSLINK_APP_HELP_GUIDES),
   collection("notifications-and-imports", "Notifications and imports", "Find updates, choose Discord messages and finish a statement that needs help.", NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES),
 ]);
