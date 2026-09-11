@@ -14,6 +14,11 @@ Follow-up `5f0f8a2` separates automatic request eligibility from live-data
 permission; pending/failed replacement requests cannot automatically repeat.
 This does not close the broader acceptance gaps below.
 
+Runtime `379d422` persists original validation decisions and makes them available
+to the owner inspector without temporary diagnostics. Checkpoint: 45 service/store
+tests, eight inspector/export tests and strict service/store TypeScript passed;
+the selected manager provenance case passed separately. Mocks only, no live calls.
+
 Runtime checkpoint inspected: `e2caba5`, canonical
 `levels-system-post-mtf-handoff-stability`. Platform checkpoint: `d79b6a575`
 in the assigned `e70f` worktree. Preserve unrelated Platform working changes.
@@ -44,7 +49,7 @@ intentional mocked storage-failure cases, not production storage observations.
 | Primary/backup breakout in one response | Candidate and service checks; one selected branch; original response retained | Integrated owner rendering and complete dependent-text coverage |
 | TradersLink-first research | Existing service/source behavior retained; unsupported context normalization tests pass | Confirm runtime article-selection and fallback contract end to end; historical missing packets cannot be reconstructed |
 | Exact request/response audit | Capture round-trip, bounded artifacts, visible capacity/oversize/corruption results pass | Review complete metadata/hash/cost capture and operational capacity/index behavior |
-| Permanent original/edit/approval records | Separate append-only review storage; edit/export checks pass | Complete storage-failure/concurrency and large-history acceptance; diagnostic expiry must never delete revisions |
+| Permanent original/edit/approval records | Separate append-only review storage; edit/export checks pass; original validation decisions now persist independently of temporary diagnostics and remain inspectable after diagnostic loss | Complete storage-failure/concurrency and large-history acceptance; diagnostic expiry must never delete revisions |
 | Review/edit/preview/approve | Owner editing preserves provenance and corrections; stale/version checks recorded in Progress | Integrated complete editor inventory, unsaved-error handling and website/Discord parity |
 | Initial private admission | Real manager methods with fake providers: direct/queued ON/ON private workflow passes all three sessions; 18 Main/Top Regular direct OFF combinations publish normally with zero AI calls; HTTP guard blocks pending card and quote/data transport | Live listing/detail/API and existing-cache/re-add concealment, queued OFF cases, full process startup and switch/session transition races |
 | Replacement review | Existing approved revision remains independently stored during later draft; legacy public manual refresh now creates a durable replacement-only review before dispatch, without historical approval fabrication; focused policy/restart and manager checks pass | Full replacement publication and re-enabled automation acceptance; actual public-render retention proof |
