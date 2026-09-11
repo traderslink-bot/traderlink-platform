@@ -142,10 +142,14 @@
     try {
       response = await fetch("/api/platform/pwa/scope", {
         cache: "no-store",
+        signal: AbortSignal.timeout(15_000),
         credentials: "include",
       });
     } catch {
-      return null;
+      throw new Error("offline_scope_retry_required");
+    }
+    if (response.status >= 500 || response.status === 429 || response.status === 408) {
+      throw new Error("offline_scope_retry_required");
     }
     const body = await readJson(response);
     if (
@@ -168,6 +172,7 @@
         idempotencyKey: record.idempotencyKey,
       }),
       cache: "no-store",
+        signal: AbortSignal.timeout(15_000),
       credentials: "include",
       headers: {
         "content-type": "application/json",
@@ -178,7 +183,7 @@
     const body = await readJson(response);
     if (!response.ok || body?.status !== "ready" || !body.result) {
       return {
-        kind: response.status >= 500 ? "retry" : "review",
+        kind: response.status >= 500 || response.status === 408 || response.status === 429 || response.ok ? "retry" : "review",
         code: body?.code,
       };
     }
@@ -202,6 +207,7 @@
           expectedAccountSelectionRef: record.accountSelectionRef,
         }),
         cache: "no-store",
+        signal: AbortSignal.timeout(15_000),
         credentials: "include",
         headers: {
           "content-type": "application/json",
@@ -217,7 +223,7 @@
       !previewBody.preview
     ) {
       return {
-        kind: previewResponse.status >= 500 ? "retry" : "review",
+        kind: previewResponse.status >= 500 || previewResponse.status === 408 || previewResponse.status === 429 || previewResponse.ok ? "retry" : "review",
         code: previewBody?.code,
       };
     }
@@ -247,6 +253,7 @@
             tracker: record.tracker,
           }),
           cache: "no-store",
+        signal: AbortSignal.timeout(15_000),
           credentials: "include",
           headers: {
             "content-type": "application/json",
@@ -265,7 +272,7 @@
       !commitBody.result
     ) {
       return {
-        kind: commitResponse.status >= 500 ? "retry_after_commit" : "review",
+        kind: commitResponse.status >= 500 || commitResponse.status === 408 || commitResponse.status === 429 || commitResponse.ok ? "retry_after_commit" : "review",
         code: commitBody?.code,
       };
     }
@@ -282,33 +289,36 @@
     }
   }
 
+  async function claimRecord(ref, partitionKey) {
+    const database = await openDatabase();
+    try {
+      const transaction = database.transaction(OUTBOX_STORE, "readwrite");
+      const store = transaction.objectStore(OUTBOX_STORE);
+      const record = await requestResult(store.get(ref));
+      const staleSync = record?.state === "syncing" &&
+        Date.now() - Date.parse(record.updatedAtUtc) > STALE_SYNC_MS;
+      if (!record || record.partitionKey !== partitionKey || !record.entries || !record.idempotencyKey ||
+          record.state === "saved_to_traderlink" || record.state === "needs_review" ||
+          (record.state === "syncing" && !staleSync)) return null;
+      const claimed = { ...record, state: "syncing", issue: null, attempts: record.attempts + 1,
+        duplicateResolution: record.duplicateResolution || "review_required", updatedAtUtc: new Date().toISOString() };
+      store.put(claimed);
+      await transactionComplete(transaction);
+      return claimed;
+    } finally {
+      database.close();
+    }
+  }
+
   async function syncCurrentScopeOutbox() {
     const scope = await currentScope();
     if (!scope) return;
     const key = `${scope.offlineScopeRef}:${scope.accountSelectionRef}`;
     const records = await listPartition(key);
+    let needsRetry = false;
     for (const record of records) {
-      const staleSync = record.state === "syncing" &&
-        Date.now() - Date.parse(record.updatedAtUtc) > STALE_SYNC_MS;
-      if (
-        !record.entries ||
-        !record.idempotencyKey ||
-        record.state === "saved_to_traderlink" ||
-        record.state === "needs_review" ||
-        (record.state === "syncing" && !staleSync)
-      ) {
-        continue;
-      }
-      const claimed = {
-        ...record,
-        state: "syncing",
-        issue: null,
-        attempts: record.attempts + 1,
-        duplicateResolution:
-          record.duplicateResolution || "review_required",
-        updatedAtUtc: new Date().toISOString(),
-      };
-      await putRecord(claimed);
+      const claimed = await claimRecord(record.ref, key);
+      if (!claimed) continue;
 
       let outcome;
       try {
@@ -341,6 +351,7 @@
           updatedAtUtc,
         });
       } else {
+        needsRetry = true;
         await putRecord({
           ...claimed,
           state: "saved_on_device",
@@ -352,6 +363,7 @@
       }
     }
     await notifyClients();
+    if (needsRetry) throw new Error("offline_trade_sync_retry_required");
   }
 
   worker.traderLinkPwaTradeSync = Object.freeze({ syncCurrentScopeOutbox });

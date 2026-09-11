@@ -3,7 +3,7 @@
 import "flag-icons/css/flag-icons.min.css";
 
 import Link from "next/link";
-import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 
 import type {
   LiveWatchlistArchiveSnapshot,
@@ -41,6 +41,7 @@ import {
   type TradersLinkAiPullbackPlan,
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
 import { WatchlistPotentialPathCardArticle } from "./potential-path-levels-card";
+import { createVisibleWatchlistStream, createWatchlistRefreshController } from "@/src/lib/live-watchlist/watchlist-refresh-controller";
 
 const watchlistDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -512,12 +513,14 @@ export function TradersLinkAiReadCard({
   livePrice,
   liveVolumeContext,
   dipBuyPlanVisible = true,
+  renderSectionEditor,
 }: {
   card: LiveWatchlistCardContent;
   symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus">;
   livePrice: number | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
+  renderSectionEditor?: (sections: readonly string[]) => ReactNode;
 }) {
   const parsedRead = parseTradersLinkAiRead(card.body);
   if (!parsedRead) {
@@ -567,6 +570,7 @@ export function TradersLinkAiReadCard({
         </div>
       </div>
 
+      {renderSectionEditor?.(["bias", "currentRead"])}
       {!hidden.has("currentRead") && read.currentRead.trim() ? <p>{read.currentRead}</p> : null}
       {!hidden.has("momentumFailure") && !hidden.has("shallow") && !hidden.has("deep") && liveVolumeContext && shouldShowTradersLinkAiLiveVolumeConfirmation({
         read,
@@ -587,12 +591,13 @@ export function TradersLinkAiReadCard({
           ["mustClear", "Must clear", read.mustClear],
           ["breakoutContinuation", "Breakout continuation", read.breakoutContinuation],
         ] as const;
-        const visible = levels.filter(([key, , level]) => !hidden.has(key) && (level.price !== null || level.rationale.trim()));
+        const visible = levels.filter(([key, , level]) => Boolean(renderSectionEditor) || (!hidden.has(key) && (level.price !== null || level.rationale.trim())));
         return visible.length ? <div className="watchlist-ai-read-level-grid">
-          {visible.map(([key, heading, level]) => <TradersLinkAiReadLevelBlock key={key} heading={heading} level={level} />)}
+          {visible.map(([key, heading, level]) => renderSectionEditor ? <div key={key}>{renderSectionEditor([key])}{!hidden.has(key) && (level.price !== null || level.rationale.trim()) ? <TradersLinkAiReadLevelBlock heading={heading} level={level} /> : null}</div> : <TradersLinkAiReadLevelBlock key={key} heading={heading} level={level} />)}
         </div> : null;
       })()}
 
+      {renderSectionEditor?.(["targets"])}
       {read.version === 4 && !hidden.has("targets") ? (
         <section className="watchlist-ai-read-section">
           <h3>Where the trade could go next</h3>
@@ -620,6 +625,7 @@ export function TradersLinkAiReadCard({
         </section>
       ) : null}
 
+      {renderSectionEditor?.(["shallow", "deep"])}
       {(read.version === 3 || read.version === 4) && dipBuyPlanVisible && (showShallow || showDeep) ? (
         <section className="watchlist-ai-read-section">
           <h3>Pullback entry plans</h3>
@@ -679,6 +685,7 @@ export function TradersLinkAiReadCard({
         </section>
       ) : null}
 
+      {renderSectionEditor?.(["downsideCheckpoints", "failureRecovery"])}
       {(read.version === 3 || read.version === 4) && (downsideCheckpoints.length > 0 || showRecovery) ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-downside">
           <h3>Failure and recovery</h3>
@@ -746,6 +753,7 @@ export function TradersLinkAiReadCard({
       ) : null}
 
       <div className="watchlist-ai-read-context-grid">
+        {renderSectionEditor?.(["catalystRealityCheck"])}
         {!hidden.has("catalystRealityCheck") && read.catalystRealityCheck.status === "confirmed" &&
         read.catalystRealityCheck.sourceUrls.length > 0 ? (
           <section className="watchlist-ai-read-section">
@@ -769,6 +777,7 @@ export function TradersLinkAiReadCard({
             </p>
           </section>
         ) : null}
+        {renderSectionEditor?.(["dilutionRisk"])}
         {!hidden.has("dilutionRisk") && read.externalResearchEnabled === true ? (
             <section className="watchlist-ai-read-section">
               <div className="watchlist-ai-read-section-heading">
@@ -801,6 +810,7 @@ export function TradersLinkAiReadCard({
         ) : null}
       </div>
 
+      {renderSectionEditor?.(["listingStatus"])}
       {!hidden.has("listingStatus") && read.externalResearchEnabled === true &&
        read.listingStatus.status !== "none" &&
       read.listingStatus.status !== "unknown" &&
@@ -848,6 +858,7 @@ export function TradersLinkAiReadCard({
         </section>
       ) : null}
 
+      {renderSectionEditor?.(["riskSummary"])}
       {!hidden.has("riskSummary") && read.riskSummary.length > 0 ? (
         <section className="watchlist-ai-read-section">
           <h3>Risk notes</h3>
@@ -1713,10 +1724,10 @@ export function LiveWatchlistIndexClient({
     let cancelled = false;
     let pollTimer: number | null = null;
 
-    async function refresh() {
-      const response = await fetch("/api/live-watchlist", { credentials: "same-origin" });
+    const refreshController = createWatchlistRefreshController(async (signal) => {
+      const response = await fetch("/api/live-watchlist", { credentials: "same-origin", signal });
       if (!response.ok) {
-        return;
+        throw new Error("watchlist_refresh_unavailable");
       }
       const payload = (await response.json()) as LiveWatchlistStatePayload;
       if (!cancelled) {
@@ -1728,9 +1739,10 @@ export function LiveWatchlistIndexClient({
         setMarketDataStatus(payload.marketDataStatus);
         setMarketDataUpdatedAt(payload.marketDataUpdatedAt);
       }
-    }
+    });
+    const refresh = () => refreshController.refresh();
 
-    const stream = new EventSource("/api/live-watchlist/stream");
+    const stream = createVisibleWatchlistStream();
     stream.addEventListener("ready", () => {
       void refresh();
     });
@@ -1764,6 +1776,7 @@ export function LiveWatchlistIndexClient({
 
     return () => {
       cancelled = true;
+      refreshController.dispose();
       stream.close();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (pollTimer !== null) {
@@ -1925,10 +1938,10 @@ export function LiveWatchlistDetailClient({
   useEffect(() => {
     let pollTimer: number | null = null;
     let cancelled = false;
-    async function refresh() {
-      const response = await fetch(`/api/live-watchlist/symbols/${initialSymbol.symbol}`);
+    const refreshController = createWatchlistRefreshController(async (signal) => {
+      const response = await fetch(`/api/live-watchlist/symbols/${initialSymbol.symbol}`, { signal });
       if (!response.ok) {
-        return;
+        throw new Error("watchlist_refresh_unavailable");
       }
       const payload = (await response.json()) as {
         marketDataStatus: LiveWatchlistMarketDataStatus;
@@ -1938,8 +1951,9 @@ export function LiveWatchlistDetailClient({
         setSymbol((current) => reconcileLiveWatchlistSymbolState(current, payload.symbol));
         setMarketDataStatus(payload.marketDataStatus);
       }
-    }
-    const stream = new EventSource("/api/live-watchlist/stream");
+    });
+    const refresh = () => refreshController.refresh();
+    const stream = createVisibleWatchlistStream();
     stream.addEventListener("ready", () => {
       void refresh();
     });
@@ -1973,6 +1987,7 @@ export function LiveWatchlistDetailClient({
 
     return () => {
       cancelled = true;
+      refreshController.dispose();
       stream.close();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (pollTimer !== null) {

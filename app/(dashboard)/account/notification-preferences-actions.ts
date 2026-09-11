@@ -133,6 +133,7 @@ export async function sendNotificationDeliveryTest(): Promise<
         const emailSelected = preferences.emailCategories.includes(testCategory) && emailStatus.state === "confirmed";
         if (!discordSelected && !emailSelected) return false;
         notifications.create({
+          webPushDelivery: false,
           category: testCategory,
           destinationPath: "/account/preferences",
           journalAccountId: null,

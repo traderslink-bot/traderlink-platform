@@ -246,7 +246,7 @@ async function requestWithNetworkBoundary(
   init: RequestInit,
 ): Promise<Response> {
   try {
-    return await fetch(input, init);
+    return await fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(15_000) });
   } catch {
     throw new ManualTradeNetworkError(stage);
   }
@@ -257,7 +257,9 @@ function reviewOrNetworkFailure(
   code: string | undefined,
   stage: ManualTradeNetworkError["stage"],
 ): never {
-  if (response.status >= 500) throw new ManualTradeNetworkError(stage);
+  if (response.status >= 500 || response.status === 408 || response.status === 429 || response.ok) {
+    throw new ManualTradeNetworkError(stage);
+  }
   throw new ManualTradeNeedsReviewError(code);
 }
 
@@ -559,7 +561,12 @@ async function claimRecord(
   force: boolean,
   duplicateResolution?: JournalManualTradeOfflineDuplicateResolution,
 ): Promise<ManualTradeOutboxRecord | null> {
-  const current = await getRecord(ref);
+  const database = await openDatabase();
+  try {
+  // Foreground tabs and the service worker must claim through the same atomic IDB transaction.
+  const transaction = database.transaction(OUTBOX_STORE, "readwrite");
+  const store = transaction.objectStore(OUTBOX_STORE);
+  const current = await requestResult(store.get(ref)) as ManualTradeOutboxRecord | undefined;
   if (!current || !current.entries || !current.idempotencyKey) return null;
   const staleSync = current.state === "syncing" &&
     Date.now() - Date.parse(current.updatedAtUtc) > STALE_SYNC_MS;
@@ -579,8 +586,13 @@ async function claimRecord(
       duplicateResolution ?? current.duplicateResolution ?? "review_required",
     updatedAtUtc: new Date().toISOString(),
   });
-  await putRecord(claimed);
+  store.put(claimed);
+  await transactionComplete(transaction);
+  notifyOutboxChanged();
   return claimed;
+  } finally {
+    database.close();
+  }
 }
 
 export async function syncManualTradeOutboxRecord(

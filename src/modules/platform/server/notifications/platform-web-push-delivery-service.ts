@@ -16,6 +16,7 @@ export type PlatformWebPushDeliveryRepository = Readonly<{
   unavailable(input: Readonly<{
     deliveryRef: string;
     expired: boolean;
+    failureCode?: string;
     retryAtUtc: string | null;
     subscriptionRef: string;
     timestamp: string;
@@ -25,7 +26,8 @@ export type PlatformWebPushDeliveryRepository = Readonly<{
 function statusCode(error: unknown): number | null {
   if (!error || typeof error !== "object") return null;
   const value = (error as { statusCode?: unknown }).statusCode;
-  return typeof value === "number" && Number.isInteger(value) ? value : null;
+  return typeof value === "number" && Number.isInteger(value) && value >= 100 && value <= 599
+    ? value : null;
 }
 
 export class PlatformWebPushDeliveryService {
@@ -76,6 +78,7 @@ export class PlatformWebPushDeliveryService {
         {
           TTL: delivery.timeToLiveSeconds ?? 24 * 60 * 60,
           urgency: delivery.urgency ?? "normal",
+          timeout: 15_000,
         },
       );
       this.repository.delivered({
@@ -92,6 +95,7 @@ export class PlatformWebPushDeliveryService {
       this.repository.unavailable({
         deliveryRef: delivery.deliveryRef,
         expired,
+        failureCode: code === null ? "provider_network_error" : `provider_http_${code}`,
         retryAtUtc: retryable
           ? new Date(Date.now() + delayMs).toISOString()
           : null,
@@ -105,7 +109,8 @@ export class PlatformWebPushDeliveryService {
   async runAvailable(maximum: number): Promise<number> {
     const limit = Number.isInteger(maximum) ? Math.min(Math.max(maximum, 0), 100) : 0;
     let processed = 0;
-    while (processed < limit && await this.runOne()) processed += 1;
+    const deadline = Date.now() + 20_000;
+    while (processed < limit && Date.now() < deadline && await this.runOne()) processed += 1;
     return processed;
   }
 }

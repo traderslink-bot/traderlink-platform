@@ -19,6 +19,7 @@ type PushConfigResponse = Readonly<{
 
 type PushSubscriptionStatusResponse = Readonly<{
   status?: string;
+  reason?: string;
 }>;
 
 export type PreparedPlatformWebPush = Readonly<{
@@ -45,8 +46,55 @@ function supported(): boolean {
 }
 
 async function registration(): Promise<ServiceWorkerRegistration> {
-  await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
-  return await navigator.serviceWorker.ready;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      (async () => {
+        await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
+        return await navigator.serviceWorker.ready;
+      })(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("The app could not connect to notifications. Try again.")), 15_000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export type PlatformWebPushDiagnostics = Readonly<{
+  status: "active" | "needs_restore";
+  reason: string;
+  registrationLabel: string | null;
+  lastProviderAcceptedAtUtc: string | null;
+  phoneDisplay: "unknown";
+  testState?: string;
+  recent: readonly Readonly<{
+    queue: string; state: string; attempts: number; lastAttemptAtUtc: string | null;
+    providerAcceptedAtUtc: string | null; failureCode: string | null;
+  }>[];
+}>;
+
+export async function readPlatformWebPushDiagnostics(test = false): Promise<PlatformWebPushDiagnostics | null> {
+  if (!supported()) return null;
+  const subscription = await (await registration()).pushManager.getSubscription();
+  if (!subscription) return null;
+  const response = await fetch("/api/platform/pwa/push/subscription", {
+    method: "POST", credentials: "same-origin", cache: "no-store",
+    headers: { "content-type": "application/json", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" },
+    body: JSON.stringify({ endpoint: subscription.endpoint, operation: test ? "test" : "status" }),
+    signal: AbortSignal.timeout(test ? 30_000 : 15_000),
+  });
+  if (response.status === 429) throw new Error("Wait one minute before sending another test.");
+  if (response.status === 409) throw new Error("Restore notifications on this device before sending a test.");
+  if (!response.ok) throw new Error(test
+    ? "The test result could not be confirmed. Check this device before trying again."
+    : "This device could not be checked. Try again when you are online.");
+  const result = await response.json() as PlatformWebPushDiagnostics;
+  if (result.status !== "active" && result.status !== "needs_restore") {
+    throw new Error("This device's notification status could not be confirmed.");
+  }
+  return { ...result, registrationLabel: null, lastProviderAcceptedAtUtc: null, phoneDisplay: "unknown", recent: [] };
 }
 
 export async function readPlatformWebPushBrowserState(): Promise<PlatformWebPushBrowserState> {
@@ -60,6 +108,7 @@ async function pushConfiguration(): Promise<string> {
   const response = await fetch("/api/platform/pwa/push/config", {
     cache: "no-store",
     credentials: "same-origin",
+    signal: AbortSignal.timeout(15_000),
   });
   const body = await response.json() as PushConfigResponse;
   if (!response.ok || body.status !== "ready" || typeof body.applicationServerKey !== "string") {
@@ -86,6 +135,10 @@ export async function readPlatformWebPushSubscriptionStatus(): Promise<"active" 
   if (!supported()) throw new Error("Push notifications are not supported in this browser.");
   const subscription = await (await registration()).pushManager.getSubscription();
   if (!subscription) return "needs_restore";
+  return (await subscriptionStatus(subscription)).status as "active" | "needs_restore";
+}
+
+async function subscriptionStatus(subscription: PushSubscription): Promise<PushSubscriptionStatusResponse> {
   const response = await fetch("/api/platform/pwa/push/subscription", {
     body: JSON.stringify({ endpoint: subscription.endpoint, operation: "status" }),
     cache: "no-store",
@@ -95,12 +148,13 @@ export async function readPlatformWebPushSubscriptionStatus(): Promise<"active" 
       [PLATFORM_MUTATION_REQUEST_HEADER]: "1",
     },
     method: "POST",
+    signal: AbortSignal.timeout(15_000),
   });
   const body = await response.json() as PushSubscriptionStatusResponse;
   if (!response.ok || (body.status !== "active" && body.status !== "needs_restore")) {
     throw new Error("Push notification status could not be confirmed.");
   }
-  return body.status;
+  return body;
 }
 
 async function activatePlatformWebPush(
@@ -118,30 +172,57 @@ async function activatePlatformWebPush(
   }
   let subscription = await prepared.workerRegistration.pushManager.getSubscription();
   let created = false;
+  // Refresh configuration at activation: a previously prepared key may have rotated.
+  const currentKey = applicationServerKey(await pushConfiguration());
+  if (subscription) {
+    const browserKey = subscription.options.applicationServerKey;
+    const keyMatches = browserKey !== null &&
+      browserKey.byteLength === currentKey.byteLength &&
+      new Uint8Array(browserKey).every((value, index) => value === currentKey[index]);
+    const expired = subscription.expirationTime !== null && subscription.expirationTime <= Date.now();
+    const server = await subscriptionStatus(subscription);
+    const recreate = expired || !keyMatches ||
+      (server.status === "needs_restore" && server.reason !== "registration_missing");
+    if (recreate) {
+      if (!await subscription.unsubscribe()) {
+        throw new Error("The previous push connection could not be removed. Try again.");
+      }
+      subscription = null;
+    }
+  }
   if (!subscription) {
     subscription = await prepared.workerRegistration.pushManager.subscribe({
-      applicationServerKey: applicationServerKey(prepared.applicationServerKey),
+      applicationServerKey: currentKey,
       userVisibleOnly: true,
     });
     created = true;
   }
-  const response = await fetch("/api/platform/pwa/push/subscription", {
-    body: JSON.stringify({
-      ...(categories ? { categories } : {}),
-      subscription: subscription.toJSON(),
-    }),
-    credentials: "same-origin",
-    headers: {
-      "content-type": "application/json",
-      [PLATFORM_MUTATION_REQUEST_HEADER]: "1",
-    },
-    method: "POST",
-  });
-  if (!response.ok) {
-    if (created) await subscription.unsubscribe();
-    throw new Error(response.status === 503
-      ? "Push notifications are not available yet."
-      : "Push notifications could not be enabled. Try again.");
+  try {
+    const response = await fetch("/api/platform/pwa/push/subscription", {
+      body: JSON.stringify({
+        ...(categories ? { categories } : {}),
+        subscription: subscription.toJSON(),
+      }),
+      credentials: "same-origin",
+      headers: {
+        "content-type": "application/json",
+        [PLATFORM_MUTATION_REQUEST_HEADER]: "1",
+      },
+      method: "POST",
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) {
+      throw new Error(response.status === 503
+        ? "Push notifications are not available yet."
+        : "Push notifications could not be enabled. Try again.");
+    }
+  } catch (error) {
+    if (created) {
+      // Includes network rejection, not only a non-2xx HTTP response.
+      try { await subscription.unsubscribe(); } catch { /* Preserve the registration error. */ }
+    }
+    announcePlatformWebPushStateChanged();
+    throw error;
   }
   announcePlatformWebPushStateChanged();
 }

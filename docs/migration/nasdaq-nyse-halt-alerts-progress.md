@@ -19,6 +19,7 @@
 - [x] Add the owner-approved delivery-readiness status below the toggle. See [Halt Alert Status Indicator Progress](halt-alert-status-indicator-progress.md).
 - [x] Mark halt-alert Push messages high urgency with a two-minute transport lifetime while leaving ordinary Platform notifications at normal urgency.
 - [x] Reject a first halt alert discovered more than two minutes after the exchange timestamp so a stale source row cannot be presented as a new phone alert.
+- [x] Exclude symbols longer than four characters at both official-feed parsers before halt events or Push deliveries can be created.
 - [ ] Refresh the drawer layout with the owner-approved Halt alerts, Muted Tickers and device-install sections.
 - [ ] Complete focused verification and owner visual approval.
 - [ ] Deploy, activate the one-minute hosted schedule, and confirm real device Push.

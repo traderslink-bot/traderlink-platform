@@ -5,6 +5,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import {
   PLATFORM_OFFLINE_PROJECTION_CONTRACT_VERSION,
   platformOfflineRouteMode,
+  platformOfflineRouteCanStoreProjection,
 } from "@/src/modules/platform/contracts/platform-offline-projection-contracts";
 
 export type OfflineProjectionContext = Readonly<{
@@ -147,6 +148,10 @@ export function scheduleOfflineProjectionContextRead(
     scope: OfflineProjectionRequestScope;
   }>,
 ): () => void {
+  if (!platformOfflineRouteCanStoreProjection(input.pathname)) {
+    input.onContext(null);
+    return () => undefined;
+  }
   const key = requestKey(input.pathname, input.scope);
   currentRequestKey = navigator.onLine ? key : null;
   if (!currentRequestKey || currentContext?.key !== key) currentContext = null;

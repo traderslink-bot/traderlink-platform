@@ -11,6 +11,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import dynamic from "next/dynamic";
 import type { LiveWatchlistCardContent } from "@/src/lib/live-watchlist/live-watchlist-types";
 import { readAnalysisReviewPreview } from "@/src/lib/live-watchlist/analysis-review-preview";
+import { readInlineAnalysisMessage } from "@/src/lib/live-watchlist/analysis-inline-edit";
+import { WatchlistAnalysisEditor } from "./watchlist-analysis-editor";
 
 const AnalysisPreviewCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then((module) => module.TradersLinkAiReadCard));
 
@@ -27,6 +29,7 @@ export function WatchlistRuntimeAdminClient({
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [height, setHeight] = useState(MINIMUM_FRAME_HEIGHT);
   const [selectedSection, setSelectedSection] = useState<"runtime" | "usage" | "recaps">("runtime");
+  const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
   const [analysisPreview, setAnalysisPreview] = useState<{
     card: LiveWatchlistCardContent; dipBuyPlanVisible: boolean;
   } | null>(null);
@@ -69,6 +72,8 @@ export function WatchlistRuntimeAdminClient({
       const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown };
       if (message.source !== "traderslink-watchlist-admin") return;
       if (message.type === "open-usage") { selectUsage(); return; }
+      const symbol = readInlineAnalysisMessage(message);
+      if (symbol) { setEditingSymbol(current => current ?? symbol); return; }
       const nextPreview = readAnalysisReviewPreview(message);
       if (nextPreview) setAnalysisPreview(nextPreview);
     };
@@ -78,6 +83,7 @@ export function WatchlistRuntimeAdminClient({
 
   return (
     <>
+      {editingSymbol && <WatchlistAnalysisEditor key={editingSymbol} symbol={editingSymbol} onClose={() => setEditingSymbol(null)} onSaved={() => frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-editor", type: "saved" }, window.location.origin)} />}
       <Dialog open={analysisPreview !== null} onClose={() => setAnalysisPreview(null)} fullWidth maxWidth="lg" aria-labelledby="analysis-preview-title">
         <DialogTitle id="analysis-preview-title">Website analysis preview</DialogTitle>
         <DialogContent>

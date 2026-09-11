@@ -22,7 +22,6 @@ import {
   removePlatformOfflinePartition,
   type PlatformOfflineStorageSummary,
 } from "@/src/modules/platform/client/pwa/offline-projection-store";
-import { disablePlatformWebPush } from "@/src/modules/platform/client/pwa/platform-web-push";
 import { InstallTradersLinkPwaMethods } from "@/app/pwa/install-traderslink-pwa-card";
 
 function formatBytes(bytes: number): string {
@@ -77,7 +76,6 @@ export function OfflineDataSettings({
   async function remove(): Promise<void> {
     setWorking(true);
     try {
-      await disablePlatformWebPush().catch(() => undefined);
       await removePlatformOfflinePartition(partitionKey);
       setConfirmOpen(false);
       setMessage("Offline data was removed from this device.");
@@ -136,7 +134,7 @@ export function OfflineDataSettings({
         <DialogContent>
           <Stack spacing={1.25}>
             <Typography>
-              This removes saved page copies and offline trade entries for the current Trade Tracker account, and turns off push notifications on this device.
+              This removes saved page copies and offline trade entries for the current Trade Tracker account. Push notifications remain connected.
             </Typography>
             {pendingTradeCount > 0 ? (
               <Alert severity="warning">

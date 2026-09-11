@@ -4,7 +4,7 @@ import type Database from "better-sqlite3";
 
 import type { PlatformWebPushEncryptionConfiguration } from "../../platform/server/notifications/platform-web-push-configuration";
 import type { PlatformWebPushClaimedDelivery } from "../../platform/server/notifications/platform-web-push-repository";
-import { decryptPlatformWebPushSubscription } from "../../platform/server/notifications/platform-web-push-subscription-crypto";
+import { readClaimedWebPushSubscription } from "../../platform/server/notifications/platform-web-push-claim-subscription";
 import { assertCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
 
 const MARKET_HALT_PUSH_TTL_SECONDS = 2 * 60;
@@ -43,78 +43,84 @@ export class MarketHaltWebPushRepository {
     const staleAlertBefore = new Date(
       Date.parse(nowUtc) - MARKET_HALT_PUSH_TTL_SECONDS * 1_000,
     ).toISOString();
-    return this.database.transaction(() => {
-      this.database.prepare(`UPDATE news_market_halt_push_deliveries
-SET state = 'failed', failure_code = 'delivery_failed', updated_at_utc = ?
-WHERE state = 'sending' AND last_attempt_at_utc <= ? AND attempt_count >= 5`).run(nowUtc, staleBefore);
-      this.database.prepare(`UPDATE news_market_halt_push_deliveries
-SET state = 'pending', available_at_utc = ?, updated_at_utc = ?
-WHERE state = 'sending' AND last_attempt_at_utc <= ? AND attempt_count < 5`).run(nowUtc, nowUtc, staleBefore);
-      this.database.prepare(`UPDATE news_market_halt_push_deliveries
+    for (let quarantined = 0; quarantined < 100; quarantined += 1) {
+      const result = this.database.transaction(() => {
+        this.database.prepare(`UPDATE news_market_halt_push_deliveries
+  SET state = 'failed', failure_code = 'delivery_failed', updated_at_utc = ?
+  WHERE state = 'sending' AND last_attempt_at_utc <= ? AND attempt_count >= 5`).run(nowUtc, staleBefore);
+        this.database.prepare(`UPDATE news_market_halt_push_deliveries
+  SET state = 'pending', available_at_utc = ?, updated_at_utc = ?
+  WHERE state = 'sending' AND last_attempt_at_utc <= ? AND attempt_count < 5`).run(nowUtc, nowUtc, staleBefore);
+        this.database.prepare(`UPDATE news_market_halt_push_deliveries
 SET state = 'expired', failure_code = 'delivery_stale', updated_at_utc = ?
 WHERE state = 'pending' AND created_at_utc <= ?`).run(nowUtc, staleAlertBefore);
-      this.database.prepare(`UPDATE news_market_halt_push_deliveries
-SET state = 'expired', failure_code = 'alerts_disabled', updated_at_utc = ?
-    WHERE state = 'pending' AND (
-  NOT EXISTS (SELECT 1 FROM news_market_halt_preferences preference
-    JOIN platform_web_push_subscriptions subscription ON subscription.user_id = preference.user_id
-    WHERE subscription.subscription_id = news_market_halt_push_deliveries.subscription_id
-      AND preference.enabled = 1)
-  OR EXISTS (SELECT 1 FROM news_market_halt_muted_tickers muted
-    JOIN platform_web_push_subscriptions subscription ON subscription.user_id = muted.user_id
-    JOIN news_market_halt_events halt ON halt.halt_id = news_market_halt_push_deliveries.halt_id
-    WHERE subscription.subscription_id = news_market_halt_push_deliveries.subscription_id
-      AND muted.ticker = halt.ticker
-      AND muted.expires_at_utc > ?)
-)`).run(nowUtc, nowUtc);
-      const row = this.database.prepare<[string], ClaimedDeliveryRow>(`SELECT
-  delivery.delivery_id, delivery.attempt_count, delivery.notification_title, delivery.notification_body,
-  delivery.notification_stage, delivery.notification_revision,
-  halt.halt_id,
-  halt.ticker,
-  subscription.subscription_id, subscription.user_id, subscription.device_ref,
-  subscription.endpoint_hash, subscription.key_version, subscription.initialization_vector,
-  subscription.ciphertext, subscription.authentication_tag
-FROM news_market_halt_push_deliveries delivery
-JOIN platform_web_push_subscriptions subscription ON subscription.subscription_id = delivery.subscription_id
-JOIN news_market_halt_events halt ON halt.halt_id = delivery.halt_id
-WHERE delivery.state = 'pending' AND delivery.available_at_utc <= ?
-  AND subscription.state = 'active'
-ORDER BY delivery.available_at_utc, delivery.created_at_utc
-      LIMIT 1`).get(nowUtc);
-      if (!row) return null;
-      const claimed = this.database.prepare(`UPDATE news_market_halt_push_deliveries
-SET state = 'sending', attempt_count = attempt_count + 1, last_attempt_at_utc = ?, updated_at_utc = ?
-WHERE delivery_id = ? AND state = 'pending'`).run(nowUtc, nowUtc, row.delivery_id);
-      if (claimed.changes !== 1) return null;
-      return Object.freeze({
-        attemptCount: row.attempt_count + 1,
-        deliveryRef: row.delivery_id,
-        destinationPath: "/account/preferences#push-notifications",
-        muteHaltTicker: row.ticker,
-        notificationActions: Object.freeze([
-          Object.freeze({ action: "mute-halt-ticker", title: "Mute for today" }),
-        ]),
-        notificationBody: row.notification_body,
-        notificationTag: `market-halt:${row.halt_id}:${row.notification_stage}:${row.notification_revision}`,
-        notificationTitle: row.notification_title,
-        subscription: decryptPlatformWebPushSubscription({
-          configuration: this.configuration,
-          deviceRef: row.device_ref,
-          encrypted: {
-            authenticationTag: row.authentication_tag,
-            ciphertext: row.ciphertext,
-            initializationVector: row.initialization_vector,
-            keyVersion: row.key_version,
-          },
-          endpointHash: row.endpoint_hash,
-          userId: row.user_id,
-        }),
-        subscriptionRef: row.subscription_id,
-        timeToLiveSeconds: MARKET_HALT_PUSH_TTL_SECONDS,
-        urgency: "high",
-      });
-    }).immediate();
+        this.database.prepare(`UPDATE news_market_halt_push_deliveries
+  SET state = 'expired', failure_code = 'alerts_disabled', updated_at_utc = ?
+      WHERE state = 'pending' AND (
+    NOT EXISTS (SELECT 1 FROM news_market_halt_preferences preference
+      JOIN platform_web_push_subscriptions subscription ON subscription.user_id = preference.user_id
+      WHERE subscription.subscription_id = news_market_halt_push_deliveries.subscription_id
+        AND preference.enabled = 1)
+    OR EXISTS (SELECT 1 FROM news_market_halt_muted_tickers muted
+      JOIN platform_web_push_subscriptions subscription ON subscription.user_id = muted.user_id
+      JOIN news_market_halt_events halt ON halt.halt_id = news_market_halt_push_deliveries.halt_id
+      WHERE subscription.subscription_id = news_market_halt_push_deliveries.subscription_id
+        AND muted.ticker = halt.ticker
+        AND muted.expires_at_utc > ?)
+  )`).run(nowUtc, nowUtc);
+        const row = this.database.prepare<[string], ClaimedDeliveryRow>(`SELECT
+    delivery.delivery_id, delivery.attempt_count, delivery.notification_title, delivery.notification_body,
+    delivery.notification_stage, delivery.notification_revision,
+    halt.halt_id,
+    halt.ticker,
+    subscription.subscription_id, subscription.user_id, subscription.device_ref,
+    subscription.endpoint_hash, subscription.key_version, subscription.initialization_vector,
+    subscription.ciphertext, subscription.authentication_tag
+  FROM news_market_halt_push_deliveries delivery
+  JOIN platform_web_push_subscriptions subscription ON subscription.subscription_id = delivery.subscription_id
+  JOIN news_market_halt_events halt ON halt.halt_id = delivery.halt_id
+  WHERE delivery.state = 'pending' AND delivery.available_at_utc <= ?
+    AND subscription.state = 'active'
+  ORDER BY delivery.available_at_utc, delivery.created_at_utc
+        LIMIT 1`).get(nowUtc);
+        if (!row) return null;
+        const claimed = this.database.prepare(`UPDATE news_market_halt_push_deliveries
+  SET state = 'sending', attempt_count = attempt_count + 1, last_attempt_at_utc = ?, updated_at_utc = ?
+  WHERE delivery_id = ? AND state = 'pending'`).run(nowUtc, nowUtc, row.delivery_id);
+        if (claimed.changes !== 1) return null;
+        const subscription = readClaimedWebPushSubscription(this.database, row.subscription_id, nowUtc, {
+            configuration: this.configuration,
+            deviceRef: row.device_ref,
+            encrypted: {
+              authenticationTag: row.authentication_tag,
+              ciphertext: row.ciphertext,
+              initializationVector: row.initialization_vector,
+              keyVersion: row.key_version,
+            },
+            endpointHash: row.endpoint_hash,
+            userId: row.user_id,
+          });
+        if (!subscription) return undefined;
+        return Object.freeze({
+          attemptCount: row.attempt_count + 1,
+          deliveryRef: row.delivery_id,
+          destinationPath: "/account/preferences#push-notifications",
+          muteHaltTicker: row.ticker,
+          notificationActions: Object.freeze([
+            Object.freeze({ action: "mute-halt-ticker", title: "Mute for today" }),
+          ]),
+          notificationBody: row.notification_body,
+          notificationTag: `market-halt:${row.halt_id}:${row.notification_stage}:${row.notification_revision}`,
+          notificationTitle: row.notification_title,
+          subscription,
+          subscriptionRef: row.subscription_id,
+          timeToLiveSeconds: MARKET_HALT_PUSH_TTL_SECONDS,
+          urgency: "high",
+        });
+      }).immediate();
+      if (result !== undefined) return result;
+    }
+    return null;
   }
 
   delivered(input: Readonly<{ deliveryRef: string; subscriptionRef: string; timestamp: string }>): void {
@@ -134,6 +140,7 @@ SET last_success_at_utc = ?, updated_at_utc = ? WHERE subscription_id = ?`).run(
   unavailable(input: Readonly<{
     deliveryRef: string;
     expired: boolean;
+    failureCode?: string;
     retryAtUtc: string | null;
     subscriptionRef: string;
     timestamp: string;
@@ -145,7 +152,7 @@ SET last_success_at_utc = ?, updated_at_utc = ? WHERE subscription_id = ?`).run(
 WHERE delivery_id = ? AND state = 'sending'`).run(
         state,
         input.retryAtUtc,
-        input.expired ? "subscription_expired" : input.retryAtUtc ? "delivery_retry" : "delivery_failed",
+        input.failureCode ?? (input.expired ? "subscription_expired" : input.retryAtUtc ? "delivery_retry" : "delivery_failed"),
         input.timestamp,
         input.deliveryRef,
       );

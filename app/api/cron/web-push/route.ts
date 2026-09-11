@@ -28,25 +28,35 @@ export async function GET(request: Request): Promise<Response> {
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
     const configuration = loadPlatformWebPushConfiguration();
-    const platformProcessed = await new PlatformWebPushDeliveryService(
-      new PlatformWebPushRepository(database, configuration.encryption),
-      configuration,
-    ).runOne();
-    const marketHaltProcessed = await new PlatformWebPushDeliveryService(
-      new MarketHaltWebPushRepository(database, configuration.encryption),
-      configuration,
-    ).runOne();
-    const pressReleaseProcessed = await new PlatformWebPushDeliveryService(
-      new PressReleaseWebPushRepository(database, configuration.encryption),
-      configuration,
-    ).runAvailable(100);
-    const remoteProcessed = await new PlatformRemoteNotificationDeliveryService(
-      new PlatformRemoteNotificationDeliveryRepository(database),
-    ).runAvailable(20);
+    const queues = await Promise.allSettled([
+      new PlatformWebPushDeliveryService(
+        new PlatformWebPushRepository(database, configuration.encryption),
+        configuration,
+      ).runAvailable(20),
+      new PlatformWebPushDeliveryService(
+        new MarketHaltWebPushRepository(database, configuration.encryption),
+        configuration,
+      ).runAvailable(20),
+      new PlatformWebPushDeliveryService(
+        new PressReleaseWebPushRepository(database, configuration.encryption),
+        configuration,
+      ).runAvailable(100),
+      new PlatformRemoteNotificationDeliveryService(
+        new PlatformRemoteNotificationDeliveryRepository(database),
+      ).runAvailable(20),
+    ]);
+    const names = ["platform", "marketHalt", "pressRelease", "remote"] as const;
+    const failedQueues = names.filter((_, index) => queues[index].status === "rejected");
     return Response.json({
-      ok: true,
-      processed: platformProcessed || marketHaltProcessed || pressReleaseProcessed > 0 || remoteProcessed > 0,
-    });
+      ok: failedQueues.length === 0,
+      processed: queues.some((queue) => queue.status === "fulfilled" && queue.value > 0),
+      failedQueues,
+      // Processed counts include retries and failures; they are not receipts.
+      processedByQueue: Object.fromEntries(names.map((name, index) => {
+        const queue = queues[index];
+        return [name, queue.status === "fulfilled" ? queue.value : null];
+      })),
+    }, { status: failedQueues.length ? 503 : 200 });
   } catch {
     return Response.json({ ok: false }, { status: 503 });
   } finally {

@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { measurePlatformRequestPhase } from "../observability/platform-request-timing";
 
 import {
   expectedPlatformTableNamesForPrefix,
@@ -39,6 +40,13 @@ function safeMigrationDriverMessage(error: unknown): string {
 export function verifyCompletedPlatformDatabase(
   database: Database.Database,
   manifestInput: readonly PlatformMigration[] = platformMigrationManifest,
+): PlatformMigrationRunResult {
+  return measurePlatformRequestPhase("integrity", () => verifyCompletedPlatformDatabaseUnmeasured(database, manifestInput));
+}
+
+function verifyCompletedPlatformDatabaseUnmeasured(
+  database: Database.Database,
+  manifestInput: readonly PlatformMigration[],
 ): PlatformMigrationRunResult {
   const manifest = validatePlatformMigrationManifest(manifestInput);
   const tables = listPlatformUserTableNames(database);

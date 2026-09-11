@@ -231,6 +231,7 @@ export function OfflineProjectionCapture({
       pathname,
       scope: requestScope,
     });
+    if (!platformOfflineRouteCanStoreProjection(pathname)) return cancelCapture;
     const refreshCapture = () => {
       cancelCapture();
       cancelCapture = scheduleOfflineProjectionContextRead({

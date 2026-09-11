@@ -35,6 +35,27 @@ function text(value) {
 }
 function render(read) { return text(Card({ card: { body: JSON.stringify(read) }, symbol: { marketDataStatus: "live" }, livePrice: read.currentPrice })); }
 
+test("owner inline hooks include every hidden and omitted editable section without changing member rendering", () => {
+  const read = JSON.parse(fixture());
+  read.pullbackPlans.shallow = null; read.pullbackPlans.deep = null;
+  read.ownerHiddenSections = ["mustClear", "currentRead", "targets"];
+  const visited = [];
+  const tree = Card({ card: { body: JSON.stringify(read) }, symbol: {}, livePrice: null,
+    renderSectionEditor: keys => { visited.push(...keys); return null; } });
+  text(tree);
+  for (const key of ["bias", "currentRead", "needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation", "targets", "shallow", "deep", "downsideCheckpoints", "failureRecovery", "catalystRealityCheck", "dilutionRisk", "listingStatus", "riskSummary"]) assert.ok(visited.includes(key), key);
+  assert.doesNotMatch(render(read), /Edit bias|Show this section|Save and close/);
+});
+
+test("saved owner pullbacks and recovery render without claiming generated evidence", () => {
+  const read = JSON.parse(fixture());
+  for (const scenario of [read.pullbackPlans.shallow, read.pullbackPlans.deep, read.failureRecovery]) if (scenario) scenario.evidenceIds = [];
+  assert.ok(helper.parseTradersLinkAiRead(JSON.stringify(read)));
+  assert.match(render(read), /trade preparation/);
+  read.pullbackPlans.shallow.evidenceIds = [''];
+  assert.equal(helper.parseTradersLinkAiRead(JSON.stringify(read)), null);
+});
+
 test("Stock Titan sources and encoded attribution do not appear in catalyst or recent-news cards", () => {
   for (const name of ["Stock Titan", "stocktitan.net", "stock_titan", "stock%74itan", "stock%2574itan"]) {
     const read = JSON.parse(fixture());

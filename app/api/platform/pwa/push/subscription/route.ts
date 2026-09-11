@@ -8,6 +8,7 @@ import {
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { loadPlatformWebPushEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-web-push-configuration";
 import { PlatformWebPushRepository } from "@/src/modules/platform/server/notifications/platform-web-push-repository";
+import { runPlatformWebPushDeviceTest } from "@/src/modules/platform/server/notifications/platform-web-push-device-test";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,10 +32,18 @@ async function body(request: Request): Promise<SubscriptionMutation> {
   }
   const raw = await request.text();
   if (raw.length < 2 || raw.length > 20_000) throw new Error("push_request_invalid");
-  return JSON.parse(raw) as SubscriptionMutation;
+  const parsed: unknown = JSON.parse(raw);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("push_request_invalid");
+  return parsed as SubscriptionMutation;
 }
 
 function errorResponse(error: unknown): Response {
+  if (error instanceof Error && error.message === "push_test_rate_limited") {
+    return Response.json({ status: "rate_limited" }, { headers: { ...HEADERS, "retry-after": "60" }, status: 429 });
+  }
+  if (error instanceof Error && error.message === "push_test_restore_required") {
+    return Response.json({ status: "needs_restore" }, { headers: HEADERS, status: 409 });
+  }
   const configuration = isTraderLinkPlatformError(error) &&
     error.code === "TRADERLINK_WEB_PUSH_CONFIGURATION_INVALID";
   const invalid = isTraderLinkPlatformError(error) &&
@@ -57,14 +66,19 @@ export async function POST(request: Request): Promise<Response> {
     requirePlatformMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const input = await body(request);
-    if (input.operation === "status") {
+    if (input.operation === "test") {
+      return Response.json(await runPlatformWebPushDeviceTest(scope, input.endpoint), { headers: HEADERS });
+    }
+    if (input.operation === "status" || input.operation === "diagnostics") {
       const status = withPlatformDatabase({ mode: "runtime" }, (database) =>
         new PlatformWebPushRepository(
           database,
           loadPlatformWebPushEncryptionConfiguration(),
-        ).status({ endpoint: input.endpoint, scope })
+        ).diagnostics({ endpoint: input.endpoint, scope, includeRecent: input.operation === "diagnostics" })
       );
-      return Response.json({ status }, { headers: HEADERS });
+      return Response.json(input.operation === "diagnostics" ? status : {
+        status: status.status, reason: status.reason,
+      }, { headers: HEADERS });
     }
     const categories = Array.isArray(input.categories) ? input.categories : null;
     withPlatformDatabase({ mode: "runtime" }, (database) => database.transaction(() => {

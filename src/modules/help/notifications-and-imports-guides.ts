@@ -153,6 +153,8 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
           Object.freeze({ kind: "paragraph", text: "A press release alert opens the signed-in Press Releases page and shows that article in the details drawer. Reading it marks the article as read across every Press Releases channel where it appears." }),
           Object.freeze({ kind: "paragraph", text: "The installed app keeps the warning visible while Push is off, the phone's subscription is no longer active, or TradersLink cannot confirm its status. Enable and Restore reuse your saved alert choices; they do not select new alert categories or send a test notification." }),
           Object.freeze({ kind: "paragraph", text: "Push notifications are separate from the Notifications page and Discord messages. Turning push off on one device does not remove in-app updates or change your Discord choices." }),
+          Object.freeze({ kind: "paragraph", text: "Under Test notifications, choose Send test notification. Check your notifications and tap the test to open TradersLink. The test goes only to the device you are using. It does not change your alert choices or send a Discord message or email. Wait one minute between tests." }),
+          Object.freeze({ kind: "paragraph", text: "Android may show Chrome as the sender for the installed app. Your alert choices apply to all your connected devices; turning notifications off disconnects only the device you are using." }),
         ]),
       }),
     ]),

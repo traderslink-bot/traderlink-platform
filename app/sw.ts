@@ -35,6 +35,7 @@ function safeDestinationPath(value: unknown): string {
     value.length <= 512 &&
     value.startsWith("/") &&
     !value.startsWith("//") &&
+    !/[\u0000-\u001f\u007f]/u.test(value) &&
     !value.includes("\\") &&
     !value.includes("://")
     ? value
@@ -60,7 +61,7 @@ const offlineNavigationPlugin: SerwistPlugin = {
     if (url.pathname === "/offline") {
       return serwist.matchPrecache("/offline");
     }
-    const intendedPath = safeDestinationPath(url.pathname);
+    const intendedPath = safeDestinationPath(url.pathname + url.search);
     const offlineUrl = new URL("/offline", self.location.origin);
     offlineUrl.searchParams.set("path", intendedPath);
     return Response.redirect(offlineUrl.href, 302);
@@ -135,7 +136,7 @@ const serwist = new Serwist({
       handler: new NetworkOnly({ plugins: [offlineNavigationPlugin] }),
     },
   ],
-  skipWaiting: true,
+  skipWaiting: false,
 });
 
 self.addEventListener("fetch", (event) => {
@@ -148,7 +149,7 @@ self.addEventListener("fetch", (event) => {
   ) {
     event.respondWith(
       fetch(request).then(async (response) => {
-        await clearCurrentOfflineScope();
+        if (response.ok) await clearCurrentOfflineScope();
         return response;
       }),
     );
@@ -218,15 +219,29 @@ self.addEventListener("notificationclick", (event) => {
     : safeDestinationPath(event.notification.data?.path);
   event.waitUntil(
     self.clients.matchAll({ includeUncontrolled: true, type: "window" })
+      .catch(() => [])
       .then(async (clients) => {
-        const existingClient = clients.find((client) => "focus" in client);
-        if (existingClient) {
-          await existingClient.navigate(path);
-          return existingClient.focus();
+        const destination = new URL(path, self.location.origin).href;
+        const candidates = clients
+          .filter((client) => new URL(client.url).origin === self.location.origin)
+          .sort((left, right) => Number(right.url === destination) - Number(left.url === destination));
+        for (const client of candidates) {
+          try {
+            const navigated = client.url === destination ? client : await client.navigate(destination);
+            if (navigated) return await navigated.focus();
+          } catch {
+            // A closed window or failed focus must not discard the notification tap.
+          }
         }
-        return self.clients.openWindow(path);
+        return self.clients.openWindow(destination);
       }),
   );
 });
 
 serwist.addEventListeners();
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "traderlink:activate-update") {
+    event.waitUntil(self.skipWaiting());
+  }
+});

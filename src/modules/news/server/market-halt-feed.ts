@@ -28,7 +28,7 @@ const nyseReasonMap: readonly [RegExp, string, string][] = Object.freeze([
 ]);
 function clean(value: string): string { return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gu, "$1").replace(/&amp;/gu, "&").replace(/&lt;/gu, "<").replace(/&gt;/gu, ">").replace(/&quot;/gu, '"').replace(/&#39;/gu, "'").replace(/\s+/gu, " ").trim(); }
 function xmlTag(item: string, name: string): string | null { const match = item.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, "iu")); return match ? clean(match[1]) || null : null; }
-function validTicker(value: string | null): value is string { return !!value && /^[A-Z0-9.-]{1,24}$/u.test(value); }
+function validTicker(value: string | null): value is string { return !!value && /^[A-Z0-9.-]{1,4}$/u.test(value); }
 function errorCode(value: unknown): string | null { return value && typeof value === "object" && "code" in value && typeof value.code === "string" ? value.code : null; }
 function networkFailureCode(error: unknown): MarketHaltSourceFailureCode {
   const code = errorCode(error) ?? (error instanceof Error ? errorCode(error.cause) : null) ?? "";

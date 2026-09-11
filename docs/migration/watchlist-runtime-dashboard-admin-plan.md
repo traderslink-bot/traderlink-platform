@@ -154,3 +154,8 @@ surface.
   fetch` before it is accepted.
 - The usage panel records only the defined Platform-owned client-confirmed
   visit events and does not send data to the Watchlist runtime or providers.
+
+## Main-row review workflow
+
+The September 11 owner-approved additive workflow is tracked in
+[Main Watchlist analysis review](watchlist-inline-review-progress.md).

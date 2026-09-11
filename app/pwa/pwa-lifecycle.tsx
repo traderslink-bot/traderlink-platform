@@ -24,6 +24,7 @@ import {
   type ManualTradeOutboxRecord,
 } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
 import { TradersLinkPwaInstallPrompt } from "./traderslink-pwa-install-prompt-dialog";
+import { PwaUpdateNotice } from "./pwa-update-notice";
 
 function subscribeToConnectionChange(onStoreChange: () => void): () => void {
   window.addEventListener("online", onStoreChange);
@@ -87,6 +88,9 @@ export function PwaLifecycle({
         router.refresh();
       }
       await refreshOutbox();
+    } catch {
+      // Preserve pending entries and allow the foreground/reconnect retry to try again.
+      await refreshOutbox();
     } finally {
       syncing.current = false;
     }
@@ -120,6 +124,15 @@ export function PwaLifecycle({
   useEffect(() => {
     if (online) void runSync();
   }, [online, runSync]);
+
+  const hasPendingEntries = outbox.some((entry) => entry.state === "saved_on_device" || entry.state === "syncing");
+  useEffect(() => {
+    if (!online || !hasPendingEntries) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void runSync();
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [online, hasPendingEntries, runSync]);
 
   useEffect(() => {
     const onResume = () => {
@@ -161,6 +174,7 @@ export function PwaLifecycle({
   return (
     <>
       <TradersLinkPwaInstallPrompt />
+      <PwaUpdateNotice paused={showOfflineNotice} />
       {showOfflineNotice ? (
         <Paper
           aria-live="polite"

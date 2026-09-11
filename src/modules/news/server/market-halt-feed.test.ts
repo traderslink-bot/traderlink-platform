@@ -5,8 +5,8 @@ describe("market halt feed normalization", () => {
     const halts = parseNasdaqTradeHalts(`<item>
       <ndaq:HaltDate>09/09/2026</ndaq:HaltDate>
       <ndaq:HaltTime>12:09:41.166</ndaq:HaltTime>
-      <ndaq:IssueSymbol>RIBBU</ndaq:IssueSymbol>
-      <ndaq:IssueName>Ribbon Acquisition Corp Unit</ndaq:IssueName>
+      <ndaq:IssueSymbol>RIBB</ndaq:IssueSymbol>
+      <ndaq:IssueName>Ribbon Communications Inc</ndaq:IssueName>
       <ndaq:Market>NASDAQ</ndaq:Market>
       <ndaq:ReasonCode>LUDP</ndaq:ReasonCode>
       <ndaq:ResumptionQuoteTime>12:09:41</ndaq:ResumptionQuoteTime>
@@ -16,6 +16,36 @@ describe("market halt feed normalization", () => {
     expect(halts).toHaveLength(1);
     expect(halts[0]?.haltDateEt).toBe("2026-09-09");
     expect(halts[0]?.source).toBe("nasdaq");
+  });
+
+  it("excludes halt symbols longer than four characters from both feeds", () => {
+    const nasdaqHalts = parseNasdaqTradeHalts(`<item>
+      <ndaq:HaltDate>09/11/2026</ndaq:HaltDate>
+      <ndaq:HaltTime>10:15:00</ndaq:HaltTime>
+      <ndaq:IssueSymbol>RFAIU</ndaq:IssueSymbol>
+      <ndaq:IssueName>RF Acquisition Corp II Unit</ndaq:IssueName>
+      <ndaq:Market>NASDAQ</ndaq:Market>
+      <ndaq:ReasonCode>LUDP</ndaq:ReasonCode>
+    </item>`);
+    const nyseHalts = parseNyseTradeHalts(`Halt Date,Halt Time,Symbol,Name,Market,Reason,Resume Date,Resume Time
+2026-09-11,10:15:00,ABCDE,Example Unit,NYSE American,LULD Pause,,`);
+
+    expect(nasdaqHalts).toHaveLength(0);
+    expect(nyseHalts).toHaveLength(0);
+  });
+
+  it("keeps four-character halt symbols eligible", () => {
+    const halts = parseNasdaqTradeHalts(`<item>
+      <ndaq:HaltDate>09/11/2026</ndaq:HaltDate>
+      <ndaq:HaltTime>10:15:00</ndaq:HaltTime>
+      <ndaq:IssueSymbol>QSER</ndaq:IssueSymbol>
+      <ndaq:IssueName>Four Character Example</ndaq:IssueName>
+      <ndaq:Market>NASDAQ</ndaq:Market>
+      <ndaq:ReasonCode>LUDP</ndaq:ReasonCode>
+    </item>`);
+
+    expect(halts).toHaveLength(1);
+    expect(halts[0]?.ticker).toBe("QSER");
   });
 
   it("keeps NYSE-family rows and excludes Nasdaq rows from the consolidated NYSE file", () => {

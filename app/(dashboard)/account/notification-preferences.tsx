@@ -9,6 +9,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState, useTransition } from "react";
+import { PushDeviceDiagnostics } from "@/app/pwa/push-device-diagnostics";
 
 import {
   PLATFORM_NOTIFICATION_CATEGORIES,
@@ -69,11 +70,6 @@ function pushMessageSeverity(message: string): "error" | "info" | "success" | "w
   return "error";
 }
 
-function runsAsInstalledApp(): boolean {
-  const iosNavigator = navigator as Navigator & { standalone?: boolean };
-  return window.matchMedia("(display-mode: standalone)").matches || iosNavigator.standalone === true;
-}
-
 export function NotificationPreferences({
   initialDiscordDmCategories,
   initialEmailCategories,
@@ -105,7 +101,6 @@ export function NotificationPreferences({
   const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [pushPreparation, setPushPreparation] = useState<PreparedPlatformWebPush | null>(null);
   const [pushServiceUnavailable, setPushServiceUnavailable] = useState(false);
-  const [installedApp, setInstalledApp] = useState(false);
   const [working, startTransition] = useTransition();
 
   useEffect(() => {
@@ -116,7 +111,6 @@ export function NotificationPreferences({
     }
 
     refreshPushState();
-    setInstalledApp(runsAsInstalledApp());
     window.addEventListener("focus", refreshPushState);
     void preparePlatformWebPush()
       .then((prepared) => {
@@ -387,9 +381,7 @@ export function NotificationPreferences({
       ) : null}
       {pushState === "denied" ? (
         <Alert severity="warning">
-          Push notifications are turned off for TradersLink on this device. {installedApp
-            ? "Open Windows Settings, go to System then Notifications, select TradersLink, and turn notifications on. If your computer lists Chrome instead, allow Chrome notifications. Return to TradersLink when that is done."
-            : "Open this browser&apos;s site notification settings, allow TradersLink notifications, then return here."}
+          Push notifications are turned off for TradersLink on this device. Allow TradersLink in your browser or device notification settings. On Android, also check Chrome notifications if your phone lists Chrome as the sender. Return here after changing the setting.
         </Alert>
       ) : null}
       {pushServiceUnavailable && pushState !== "unsupported" && pushState !== "denied" ? (
@@ -442,6 +434,7 @@ export function NotificationPreferences({
           {pushMessage}
         </Alert>
       ) : null}
+      <PushDeviceDiagnostics />
     </Stack>
   );
 }

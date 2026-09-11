@@ -124,6 +124,8 @@ LIMIT ?`).all(scope.workspaceId, scope.userId, limit);
   }
 
   create(input: Readonly<{
+    webPushDelivery?: boolean;
+    remoteDelivery?: boolean;
     category: unknown;
     destinationPath: unknown;
     journalAccountId: string | null;
@@ -189,7 +191,7 @@ WHERE notification.workspace_id = ? AND notification.recipient_user_id = ?
 ) VALUES (?, ?, NULL, ?)`).run(notificationId, input.scope.userId, input.occurredAtUtc);
     });
     insert();
-    try {
+    if (input.webPushDelivery !== false) try {
       new PlatformWebPushRepository(
         this.database,
         loadPlatformWebPushEncryptionConfiguration(),
@@ -202,7 +204,7 @@ WHERE notification.workspace_id = ? AND notification.recipient_user_id = ?
     } catch {
       // In-app notifications remain authoritative when hosted Web Push is not configured.
     }
-    try {
+    if (input.remoteDelivery !== false) try {
       new PlatformRemoteNotificationDeliveryRepository(this.database).enqueueNotification({
         category,
         notificationRef: notificationId,
