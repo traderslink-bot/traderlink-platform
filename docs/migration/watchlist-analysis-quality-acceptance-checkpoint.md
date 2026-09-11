@@ -7,6 +7,11 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Reviewed-ticker removal is now content-free and remains permitted by the
+publication guard while new data stays held. Six policy and two manager/HTTP
+mocked checks plus strict TypeScript pass. Delayed outbox removal versus newer
+activation/approval, hosted archives and live cache proof remain outstanding.
+
 Removed-entry admission checks now cover an old held gate on 36 normal OFF
 re-additions, plus six ON private workflows starting with an old approved cycle.
 Normal re-addition detaches the old gate; private re-addition creates a fresh

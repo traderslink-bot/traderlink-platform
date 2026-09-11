@@ -11,6 +11,26 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Content-free reviewed-ticker removal checkpoint
+
+- Inspection found that ordinary website removal built a level snapshot and
+  then used the same publication guard as new data. A held review could block
+  removal; bypassing the guard for any deactivation would instead risk exposing
+  that private snapshot. Reviewed-ticker removal now emits only symbol, removed
+  status, timestamp and empty cards. Previously published data remains the
+  website archive source; private prepared levels are not read for this patch.
+- Policy permits only this exact content-free removal shape even with missing
+  review evidence. Attached cards, prices, extra fields and live status do not
+  receive the exception. Runtime manager and configured HTTP publisher share
+  the same policy. No Platform schema or hosted changes were needed.
+- Six policy tests plus two focused manager/HTTP mocked transport checks pass;
+  strict manager TypeScript passes. This is not an end-to-end hosted cache or
+  archive proof. Delayed outbox removal versus a newer activation/approval and
+  full concurrent removal/publication still require acceptance review.
+- Help already says reviewed drafts stay private and covers Watchlist removal;
+  no new owner control or user-facing workflow was introduced here.
+
+
 ### Removed-ticker review gate checkpoint
 
 - Ordinary re-addition previously inherited `publicationReview` from the
