@@ -611,7 +611,7 @@ export function TradersLinkAiReadCard({
 
       {(read.version === 3 || read.version === 4) && dipBuyPlanVisible && (showShallow || showDeep) ? (
         <section className="watchlist-ai-read-section">
-          <h3>Pullback entry plans</h3>
+          <h3>Pullback setups</h3>
           {momentumSetupFailed && !hidden.has("momentumFailure") && showRecovery ? (
             <p className="watchlist-ai-read-plan-warning">
               The original momentum setup is invalid below the momentum-failure boundary. Use the
@@ -622,7 +622,7 @@ export function TradersLinkAiReadCard({
             <div className="watchlist-ai-read-scenario-grid">
               {showShallow && read.pullbackPlans.shallow ? (
                 <TradersLinkAiPullbackScenarioBlock
-                  heading="Shallow pullback — momentum retest"
+                  heading="Pullback"
                   description="For traders seeking a controlled retest while momentum remains intact."
                   scenario={read.pullbackPlans.shallow}
                   livePrice={currentLivePrice}
@@ -630,7 +630,7 @@ export function TradersLinkAiReadCard({
               ) : null}
               {showDeep && read.pullbackPlans.deep ? (
                 <TradersLinkAiPullbackScenarioBlock
-                  heading="Deep pullback — reset setup"
+                  heading={showShallow ? "Deeper pullback" : "Pullback"}
                   description="For traders waiting for the accelerated move to unwind into its base."
                   scenario={read.pullbackPlans.deep}
                   livePrice={currentLivePrice}

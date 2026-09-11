@@ -15,6 +15,16 @@ analysis card and downstream recap compatibility. It does not authorize
 deployment, real generation requests, live runtime changes or a new migration.
 
 Progress: [Analysis Quality Progress](watchlist-analysis-quality-progress.md).
+Current September 11 reset: [Full-context analysis revision](watchlist-full-context-analysis-progress.md).
+The owner rejects treating the existing template/selection behavior as the
+quality baseline. First-pass professional micro/nano-cap analysis, not merely
+validation success or owner repair, is the acceptance target. The September 11
+record governs the renewed data-first work and preserved audit samples.
+September 11 local revision checkpoint: complete; see the
+[source handoff and retained release gates](watchlist-full-context-analysis-handoff.md).
+The owner authorized bounded real API experiments under a $5 daily cap;
+this supersedes the earlier no-real-generation planning boundary for those
+private experiments only. No production release is implied.
 Acceptance inventory: [Current checkpoint](watchlist-analysis-quality-acceptance-checkpoint.md).
 Source prerequisite: [Article-source reconciliation](watchlist-analysis-source-reconciliation.md).
 Related: [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md).

@@ -2,6 +2,12 @@
 
 Status: incomplete; not a release approval.
 
+Latest analysis revision: [full-context local handoff](watchlist-full-context-analysis-handoff.md).
+The research-led packet/schema/section/display slice has local verification and
+three revised real first-response cases. The handoff distinguishes that completed
+local checkpoint from the hosted/browser/publication gates in this inventory;
+it does not claim those gates passed or authorize deployment.
+
 Controlling local plan: [Analysis Quality Plan](watchlist-analysis-quality-plan.md).
 Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 

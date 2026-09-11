@@ -2,6 +2,13 @@
 
 Status: not release-ready. This is the controlling remaining-work checklist,
 not a replacement for the approved [plan](watchlist-analysis-quality-plan.md).
+
+September 11 research-led analysis revision: the local source checkpoint and
+bounded real-model trials are now recorded in the
+[full-context handoff](watchlist-full-context-analysis-handoff.md). That handoff
+is the current manifest for this revision; older source SHAs and intermediate
+local gaps below are chronological context. Hosted acceptance and release
+authority remain separate. No new deployment is claimed.
 Current release integration: [exact runtime manifest and Platform port instructions](watchlist-analysis-production-integration-handoff.md).
 The [acceptance inventory](watchlist-analysis-quality-acceptance-checkpoint.md)
 retains the complete scope; the long progress log is chronological evidence.

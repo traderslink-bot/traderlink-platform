@@ -95,14 +95,14 @@ test("cited older TradersLink article is dated without marking same-day or unrel
 test("member card omits owner-hidden sections without modifying stored analysis", () => {
   const read = JSON.parse(fixture());
   const ordinary = render(read);
-  assert.match(ordinary, /Shallow pullback/);
-  assert.match(ordinary, /Deep pullback/);
+  assert.match(ordinary, /Pullback/);
+  assert.match(ordinary, /Deeper pullback/);
   assert.match(ordinary, /one-minute breakout shelf held repeated tests/);
   assert.match(ordinary, /Recovery setup established above/);
   read.ownerHiddenSections = ["shallow", "deep", "failureRecovery", "downsideCheckpoints", "needsToHold", "targets", "currentRead", "riskSummary"];
   const original = JSON.stringify(read);
   const hidden = render(read);
-  assert.doesNotMatch(hidden, /Shallow pullback|Deep pullback|Pullback entry plans|Failure and recovery|Where the trade could go next|Needs to hold|Constructive while support holds|Thin liquidity/);
+  assert.doesNotMatch(hidden, /Deeper pullback|Pullback setups|Failure and recovery|Where the trade could go next|Needs to hold|Constructive while support holds|Thin liquidity/);
   assert.match(hidden, /Momentum failure/);
   assert.equal(JSON.stringify(read), original);
 });
@@ -112,10 +112,11 @@ test("absent scenarios and objectives produce no empty placeholders", () => {
   read.pullbackPlans.shallow = null; read.pullbackPlans.deep.firstObjectivePrice = null;
   read.failureRecovery = null; read.downsideCheckpoints = [];
   const result = render(read);
-  assert.match(result, /Deep pullback/);
+  assert.match(result, /Pullback/);
+  assert.doesNotMatch(result, /Deeper pullback/);
   assert.doesNotMatch(result, /Shallow pullback|No defensible objective|First objective|recovery attempt is unavailable/);
   read.pullbackPlans.deep = null;
-  assert.doesNotMatch(render(read), /Pullback entry plans|Potential pullback|No evidence-backed pullback/);
+  assert.doesNotMatch(render(read), /Pullback setups|Potential pullback|No evidence-backed pullback/);
   read.ownerHiddenSections = ["unknown-section"];
   assert.equal(helper.parseTradersLinkAiRead(JSON.stringify(read)), null);
 });
