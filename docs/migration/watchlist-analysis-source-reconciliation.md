@@ -91,6 +91,11 @@ historical range or absorb unrelated source differences.
 
 ### Endpoint/store integration and contract correction
 
+The missing older-article label is now locally restored for cited processed
+sources using New York date comparison. Four component-tree checks pass against
+the precise staged UI slice as well as the working tree; unrelated UI changes
+remain separate. Stock Titan display suppression still needs full reconciliation.
+
 Local checkpoints: Platform `76677b66d`, runtime `f7388d5`.
 
 - Added cross-repository proof that executes the actual Platform selector and

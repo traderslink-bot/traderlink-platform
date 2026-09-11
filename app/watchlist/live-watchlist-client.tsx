@@ -35,6 +35,7 @@ import {
   describeTradersLinkAiLiveVolumeContext,
   formatAiReadSession,
   parseTradersLinkAiRead,
+  olderTradersLinkArticlePublicationDate,
   resolveTradersLinkAiPullbackScenarioState,
   type TradersLinkAiPullbackPlan,
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
@@ -511,6 +512,7 @@ export function TradersLinkAiReadCard({
     return <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />;
   }
   const hidden = new Set(read.ownerHiddenSections ?? []);
+  const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read);
   const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
   const showShallow = (read.version === 3 || read.version === 4) && !hidden.has("shallow") && Boolean(read.pullbackPlans.shallow);
   const showDeep = (read.version === 3 || read.version === 4) && !hidden.has("deep") && Boolean(read.pullbackPlans.deep);
@@ -739,6 +741,9 @@ export function TradersLinkAiReadCard({
               <span>{formatAiReadTag(read.catalystRealityCheck.status)}</span>
             </div>
             <p>{read.catalystRealityCheck.summary}</p>
+            {olderArticlePublishedAt ? (
+              <p><strong>Older article:</strong> {formatArticleDate(olderArticlePublishedAt)}</p>
+            ) : null}
             {titleOnlyCatalystSources.length > 0 ? (
               <ul>
                 {titleOnlyCatalystSources.map((source) => (

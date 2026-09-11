@@ -11,6 +11,18 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Cited older-article date restored
+
+- Added the missing Older article date label to the catalyst card, only for a
+  cited canonical processed source from an earlier New York calendar date.
+  Same-day UTC rollover, absent citations and unrelated sources do not label it.
+- Four component-tree checks pass against both the mixed working UI and the
+  exact staged five-line UI change; scoped helper TypeScript passes. This is
+  source/component proof, not a rendered desktop/mobile acceptance claim.
+- Existing notices/layout/naming and source-suppression edits remain unstaged
+  and separate. No new local server or hosted action. Display suppression QA
+  and broader source-output policy remain open.
+
 ### Article authority reaches optional web search
 
 - Preserved the authenticated source status through the manager to the private

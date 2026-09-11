@@ -34,6 +34,23 @@ function text(value) {
 }
 function render(read) { return text(Card({ card: { body: JSON.stringify(read) }, symbol: { marketDataStatus: "live" }, livePrice: read.currentPrice })); }
 
+test("cited older TradersLink article is dated without marking same-day or unrelated sources old", () => {
+  const read = JSON.parse(fixture());
+  read.dataAsOf = Date.parse("2026-09-08T15:00:00Z");
+  read.catalystRealityCheck.status = "confirmed";
+  read.catalystRealityCheck.sourceUrls = ["https://traderslink.pro/news/mock"];
+  read.dilutionRisk.sourceUrls = [];
+  read.listingStatus.sourceUrls = [];
+  read.sources = [{ sourceType: "press_release_sec_database", title: "Processed news", url: "https://traderslink.pro/news/mock",
+    evidence: { ...read.sources[0].evidence, publishedAt: "2026-09-04T15:00:00Z", excerptKind: "article_summary", supportingExcerpt: "Processed news", filingType: null } }];
+  assert.match(render(read), /Older article:/);
+  read.sources[0].evidence.publishedAt = "2026-09-09T00:00:00Z"; // Still Sept 8 in New York.
+  assert.doesNotMatch(render(read), /Older article:/);
+  read.sources[0].evidence.publishedAt = "2026-09-04T15:00:00Z";
+  read.catalystRealityCheck.sourceUrls = [];
+  assert.doesNotMatch(render(read), /Older article:/);
+});
+
 test("member card omits owner-hidden sections without modifying stored analysis", () => {
   const read = JSON.parse(fixture());
   const ordinary = render(read);
