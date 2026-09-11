@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Must-clear now has observed/confirmation-above anchor validation and local
+omission. The service proves a bad pivot does not remove an independent deep
+setup. Forty-three service/core tests, subsequent missing-explanation checks
+and strict TypeScript pass. Legacy continuation and full text/dependency
+attribution remain open; no live quality or release acceptance is claimed.
+
 Declared core anchors now use numerical display precision rather than
 candle-width tolerance. Explicit derived thresholds remain supported. All 42
 core/service checks and strict TypeScript pass. Legacy formats retain their

@@ -11,6 +11,29 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Must-clear evidence and local omission checkpoint
+
+- Added strict internal `mustClearEvidence` schema/prompt with observed-level
+  or confirmation-above basis. Declared anchors use numerical observation
+  precision. Legacy responses must match observed prices directly instead of
+  passing on tape-like wording. Unsupported evidence or a missing explanation
+  omits the breakout branch and dependent content, not independent valid setups.
+- Proof and reasons use the existing captured/permanent validation decision
+  path. Internal evidence does not become a public card property or constrain
+  owner edits. The earlier pivot remains distinct from breakout continuation.
+- Synthetic base/premarket fixtures now explicitly declare their proposed
+  confirmation thresholds rather than claim they were tested prices. No market
+  observations or levels were added. A service case proves unsupported
+  must-clear evidence clears that branch but keeps the valid deep setup.
+- Forty-three service/core tests passed, followed by four focused core tests
+  including missing explanation. Strict service TypeScript passed. Audit
+  assertions were updated for the additional evidence record: seven captured
+  records are still one AI request, not seven calls. No live actions occurred.
+- Legacy continuation evidence, complete unsupported-text attribution, economic
+  calibration and remaining acceptance inventory are still open. No new Help
+  workflow/UI control was introduced; existing partial-omission guidance applies.
+
+
 ### Declared core-anchor numerical precision checkpoint
 
 - Declared core anchors now match unambiguous candle OHLC/prior close using

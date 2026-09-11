@@ -222,6 +222,13 @@ generation/review diagnostics rather than added as public card fields. Breakout
 candidate evidence remains its separate existing contract. See Progress for
 verification and remaining tolerance/semantic calibration boundaries.
 
+`mustClearEvidence` separately anchors the earlier improvement pivot as an
+observed price or an explained confirmation above it. Unsupported/missing
+evidence or explanation omits that breakout branch and dependent content while
+preserving complete independent scenarios. New declared anchors use numerical
+price precision; legacy responses require direct observation matching. This
+does not rename must-clear as the later breakout continuation or restrict edits.
+
 - Freeze one reference quote/time and the exact input candle set for generation.
   Candidate construction, prompt, validation and published price must all use
   that same reference, not separate live prices sampled during the request.
