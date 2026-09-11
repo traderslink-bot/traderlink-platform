@@ -16,6 +16,7 @@ import type {
   TradersLinkAiReadForwardHorizon,
   TradersLinkAiReadPayload,
   TradersLinkAiReadPullbackScenario,
+  TradersLinkAiReadSource,
 } from "@/src/lib/live-watchlist/live-watchlist-types";
 import {
   formatMarketDataStatusLabel,
@@ -507,10 +508,11 @@ export function TradersLinkAiReadCard({
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
 }) {
-  const read = parseTradersLinkAiRead(card.body);
-  if (!read) {
+  const parsedRead = parseTradersLinkAiRead(card.body);
+  if (!parsedRead) {
     return <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />;
   }
+  const read = sanitizeTradersLinkAiReadForDisplay(parsedRead);
   const hidden = new Set(read.ownerHiddenSections ?? []);
   const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read);
   const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
@@ -994,6 +996,90 @@ function cleanLevelMapCardBody(card: LiveWatchlistCardContent): string {
     .trim();
 }
 
+const STOCK_TITAN_REFERENCE_PATTERN = /stock[\s._+-]*titan/i;
+const STOCK_TITAN_URL_PATTERN = /https?:\/\/[^\s"'<>()]*stock[\s._+-]*titan[^\s"'<>()]*/gi;
+const STOCK_TITAN_TEXT_PATTERN = /stock[\s._+-]*titan(?:\.[\w-]+)?/gi;
+
+function decodeDisplayText(value: string): string {
+  // Decode only valid encoded spans; malformed escapes elsewhere must not hide
+  // an attribution. Each changed pass shortens the string, so nesting is finite.
+  let decoded = value;
+  while (true) {
+    const next = decoded.replace(/(?:%[0-9a-f]{2})+/gi, (span) => {
+      try { return decodeURIComponent(span); } catch { return span; }
+    });
+    if (next === decoded) return decoded;
+    decoded = next;
+  }
+}
+
+function containsStockTitanReference(value: unknown): boolean {
+  return typeof value === "string" && STOCK_TITAN_REFERENCE_PATTERN.test(decodeDisplayText(value));
+}
+
+function removeStockTitanReference(value: string): string {
+  if (!containsStockTitanReference(value)) return value;
+  return decodeDisplayText(value)
+    .replace(STOCK_TITAN_URL_PATTERN, "")
+    .replace(STOCK_TITAN_TEXT_PATTERN, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function sourceReferencesStockTitan(source: TradersLinkAiReadSource): boolean {
+  return source.sourceType === "stocktitan_rss" || [
+    source.title,
+    source.url,
+    source.evidence?.supportingExcerpt,
+    source.evidence?.filingType,
+  ].some(containsStockTitanReference);
+}
+
+function sanitizeTradersLinkAiReadForDisplay(
+  read: TradersLinkAiReadPayload,
+): TradersLinkAiReadPayload {
+  const sources = read.sources.filter((source) => !sourceReferencesStockTitan(source));
+  const allowedSourceUrls = new Set(sources.map((source) => source.url));
+  const visibleSourceUrls = (urls: string[]) => urls.filter((url) => allowedSourceUrls.has(url));
+
+  return {
+    ...read,
+    currentRead: removeStockTitanReference(read.currentRead),
+    riskSummary: read.riskSummary.map(removeStockTitanReference),
+    sources,
+    catalystRealityCheck: {
+      ...read.catalystRealityCheck,
+      summary: removeStockTitanReference(read.catalystRealityCheck.summary),
+      dayTradeRelevance: removeStockTitanReference(read.catalystRealityCheck.dayTradeRelevance),
+      sourceUrls: visibleSourceUrls(read.catalystRealityCheck.sourceUrls),
+    },
+    dilutionRisk: {
+      ...read.dilutionRisk,
+      summary: removeStockTitanReference(read.dilutionRisk.summary),
+      dayTradeRelevance: removeStockTitanReference(read.dilutionRisk.dayTradeRelevance),
+      sourceUrls: visibleSourceUrls(read.dilutionRisk.sourceUrls),
+      companyIssuance: read.dilutionRisk.companyIssuance
+        ? {
+          ...read.dilutionRisk.companyIssuance,
+          summary: removeStockTitanReference(read.dilutionRisk.companyIssuance.summary),
+        }
+        : undefined,
+      publicResale: read.dilutionRisk.publicResale
+        ? {
+          ...read.dilutionRisk.publicResale,
+          summary: removeStockTitanReference(read.dilutionRisk.publicResale.summary),
+        }
+        : undefined,
+    },
+    listingStatus: {
+      ...read.listingStatus,
+      summary: removeStockTitanReference(read.listingStatus.summary),
+      dayTradeRelevance: removeStockTitanReference(read.listingStatus.dayTradeRelevance),
+      sourceUrls: visibleSourceUrls(read.listingStatus.sourceUrls),
+    },
+  };
+}
+
 type RecentNewsFilingArticle = {
   title: string;
   url: string;
@@ -1002,11 +1088,22 @@ type RecentNewsFilingArticle = {
   filingType: string | null;
 };
 
-function parseRecentNewsFilings(card: LiveWatchlistCardContent): RecentNewsFilingArticle[] {
+type ParsedRecentNewsFilings = {
+  parsed: boolean;
+  articles: RecentNewsFilingArticle[];
+};
+
+function recentNewsArticleReferencesStockTitan(article: RecentNewsFilingArticle): boolean {
+  return [article.title, article.url, article.eventType, article.filingType].some(
+    containsStockTitanReference,
+  );
+}
+
+function parseRecentNewsFilings(card: LiveWatchlistCardContent): ParsedRecentNewsFilings {
   try {
     const parsed = JSON.parse(card.body) as { articles?: unknown };
     if (!Array.isArray(parsed.articles)) {
-      return [];
+      return { parsed: false, articles: [] };
     }
 
     const parsedArticles = parsed.articles
@@ -1027,7 +1124,8 @@ function parseRecentNewsFilings(card: LiveWatchlistCardContent): RecentNewsFilin
           filingType: typeof candidate.filingType === "string" ? candidate.filingType : null,
         };
       })
-      .filter((article): article is RecentNewsFilingArticle => Boolean(article));
+      .filter((article): article is RecentNewsFilingArticle => Boolean(article))
+      .filter((article) => !recentNewsArticleReferencesStockTitan(article));
 
     const articlesByTitleAndDay = new Map<string, RecentNewsFilingArticle>();
     for (const article of parsedArticles) {
@@ -1049,16 +1147,24 @@ function parseRecentNewsFilings(card: LiveWatchlistCardContent): RecentNewsFilin
       }
     }
 
-    return [...articlesByTitleAndDay.values()].sort((left, right) => {
-      const leftMs = left.publishedAt ? Date.parse(left.publishedAt) : NaN;
-      const rightMs = right.publishedAt ? Date.parse(right.publishedAt) : NaN;
-      if (!Number.isFinite(leftMs)) return 1;
-      if (!Number.isFinite(rightMs)) return -1;
-      return rightMs - leftMs;
-    });
+    return {
+      parsed: true,
+      articles: [...articlesByTitleAndDay.values()].sort((left, right) => {
+        const leftMs = left.publishedAt ? Date.parse(left.publishedAt) : NaN;
+        const rightMs = right.publishedAt ? Date.parse(right.publishedAt) : NaN;
+        if (!Number.isFinite(leftMs)) return 1;
+        if (!Number.isFinite(rightMs)) return -1;
+        return rightMs - leftMs;
+      }),
+    };
   } catch {
-    return [];
+    return { parsed: false, articles: [] };
   }
+}
+
+function shouldRenderRecentNewsFilingsCard(card: LiveWatchlistCardContent): boolean {
+  const parsed = parseRecentNewsFilings(card);
+  return parsed.parsed ? parsed.articles.length > 0 : !containsStockTitanReference(card.body);
 }
 
 function formatArticleDate(value: string | null): string {
@@ -1088,10 +1194,12 @@ function formatNewsChipLabel(value: string): string {
 }
 
 function RecentNewsFilingsCard({ card }: { card: LiveWatchlistCardContent }) {
-  const articles = parseRecentNewsFilings(card);
-  if (articles.length === 0) {
+  const parsed = parseRecentNewsFilings(card);
+  if (!parsed.parsed) {
     return <pre>{formatCardBody(card.body)}</pre>;
   }
+  const articles = parsed.articles;
+  if (articles.length === 0) return null;
 
   return (
     <div className="watchlist-news-list">
@@ -1461,6 +1569,9 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
   const traderReadCard = symbol.cards.liveTraderRead;
   const tradersLinkAiReadCard = symbol.cards.tradersLinkAiRead;
   const recentNewsFilingsCard = symbol.cards.recentNewsFilings;
+  const showRecentNewsFilingsCard = recentNewsFilingsCard
+    ? shouldRenderRecentNewsFilingsCard(recentNewsFilingsCard)
+    : false;
   const companyInfoCard = symbol.cards.companyInfo;
   const highRiskWarning = buildWatchlistHighRiskWarning({
     country: companyInfoCard?.metadata?.country,
@@ -1496,7 +1607,7 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
       ) : symbol.tradersLinkAiReadCardVisible !== false ? (
         <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />
       ) : null}
-      {recentNewsFilingsCard ? (
+      {recentNewsFilingsCard && showRecentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
           label="Known Recent News / SEC Filings"
           card={recentNewsFilingsCard}

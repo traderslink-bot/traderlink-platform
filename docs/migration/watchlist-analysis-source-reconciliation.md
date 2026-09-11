@@ -91,10 +91,15 @@ historical range or absorb unrelated source differences.
 
 ### Endpoint/store integration and contract correction
 
+Stock Titan suppression has now been isolated from existing notices/layout
+changes. Seven focused component-tree checks pass against the exact staged UI,
+including nested encoding, link removal and preservation of saved/owner text.
+This is not exhaustive text-format or rendered desktop/mobile proof.
+
 The missing older-article label is now locally restored for cited processed
 sources using New York date comparison. Four component-tree checks pass against
 the precise staged UI slice as well as the working tree; unrelated UI changes
-remain separate. Stock Titan display suppression still needs full reconciliation.
+remain separate. Live display verification remains pending.
 
 Local checkpoints: Platform `76677b66d`, runtime `f7388d5`.
 

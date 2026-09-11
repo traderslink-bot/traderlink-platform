@@ -21,7 +21,8 @@ const helper = load(fs.readFileSync(path.join(root, "src/lib/live-watchlist/trad
 const source = process.env.WATCHLIST_TEST_GIT_INDEX === "1"
   ? execFileSync("git", ["show", ":app/watchlist/live-watchlist-client.tsx"], { cwd: root, encoding: "utf8" })
   : fs.readFileSync(path.join(root, "app/watchlist/live-watchlist-client.tsx"), "utf8");
-const Card = load(source + "\nexport { TradersLinkAiReadCard };", { "@/src/lib/live-watchlist/traderslink-ai-read": helper }).TradersLinkAiReadCard;
+const components = load(source + "\nexport { TradersLinkAiReadCard, RecentNewsFilingsCard, shouldRenderRecentNewsFilingsCard };", { "@/src/lib/live-watchlist/traderslink-ai-read": helper });
+const Card = components.TradersLinkAiReadCard;
 const fixtureSource = fs.readFileSync(path.join(__dirname, "traderslink-ai-read.test.ts"), "utf8");
 const fixtureAst = ts.createSourceFile("fixture.ts", fixtureSource, ts.ScriptTarget.Latest, true);
 const fixtures = fixtureAst.statements.filter((node) => ts.isFunctionDeclaration(node) && ["validBody", "validV3Body"].includes(node.name?.text)).map((node) => node.getText(fixtureAst)).join("\n");
@@ -33,6 +34,46 @@ function text(value) {
   return typeof value.type === "function" ? text(value.type(value.props)) : text(value.props?.children);
 }
 function render(read) { return text(Card({ card: { body: JSON.stringify(read) }, symbol: { marketDataStatus: "live" }, livePrice: read.currentPrice })); }
+
+test("Stock Titan sources and encoded attribution do not appear in catalyst or recent-news cards", () => {
+  for (const name of ["Stock Titan", "stocktitan.net", "stock_titan", "stock%74itan", "stock%2574itan"]) {
+    const read = JSON.parse(fixture());
+    read.externalResearchEnabled = true;
+    read.currentRead = `Company news via ${name}.`;
+    read.riskSummary = [`Reference ${name}`];
+    read.catalystRealityCheck.summary = `Company event reported by ${name}.`;
+    read.sources[0].title = name;
+    const rendered = render(read);
+    assert.doesNotMatch(rendered, /stock|titan|%2574|%74/i);
+    const news = { body: JSON.stringify({ articles: [{ title: name, url: "https://example.test/article" }] }) };
+    assert.equal(components.shouldRenderRecentNewsFilingsCard(news), false);
+    assert.equal(components.RecentNewsFilingsCard({ card: news }), null);
+  }
+});
+
+test("source suppression preserves unrelated owner text", () => {
+  const read = JSON.parse(fixture());
+  read.currentRead = "A+B remains the setup; reference https://example.test/a%20b.";
+  assert.match(render(read), /A\+B remains the setup; reference https:\/\/example.test\/a%20b\./);
+});
+
+test("Stock Titan source links are removed without mutating the saved read", () => {
+  const read = JSON.parse(fixture());
+  read.externalResearchEnabled = true;
+  const originalUrl = read.sources[0].url;
+  const hiddenUrl = "https://www.stocktitan.net/news/mock";
+  read.sources[0].url = hiddenUrl;
+  read.sources[0].title = "Company update";
+  for (const context of [read.catalystRealityCheck, read.dilutionRisk, read.listingStatus]) {
+    context.sourceUrls = context.sourceUrls.map(url => url === originalUrl ? hiddenUrl : url);
+  }
+  const saved = JSON.stringify(read);
+  const tree = Card({ card: { body: saved }, symbol: {}, livePrice: read.currentPrice });
+  assert.doesNotMatch(JSON.stringify(tree), /stocktitan/i);
+  assert.equal(JSON.stringify(read), saved);
+  const malformedNews = { body: "Details at https://stock%2574itan.net/news/mock" };
+  assert.equal(components.shouldRenderRecentNewsFilingsCard(malformedNews), false);
+});
 
 test("cited older TradersLink article is dated without marking same-day or unrelated sources old", () => {
   const read = JSON.parse(fixture());

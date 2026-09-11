@@ -11,6 +11,21 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Stock Titan display slice isolated and verified
+
+- Reconciled the existing source-suppression changes separately from the dirty
+  notices/naming/layout work. Catalyst/source rows and parsed recent-news entries
+  exclude Stock Titan references; all-filtered or attributed malformed news
+  cards are hidden by their parent gate.
+- Component QA found nested percent-encoding could bypass suppression and
+  unrelated owner text was decoded (including plus signs). Corrected detection
+  to decode valid spans repeatedly while leaving unrelated display text exact.
+- Seven component-tree checks pass against the precise staged slice: ordinary,
+  separator and encoded variants, source-link removal, malformed news parent
+  gating, unchanged stored read, preserved owner text and previous date/setup
+  behavior. No browser/server or live changes; exhaustive attribution formats
+  and rendered desktop/mobile verification remain unproven.
+
 ### Cited older-article date restored
 
 - Added the missing Older article date label to the catalyst card, only for a
