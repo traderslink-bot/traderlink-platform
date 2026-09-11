@@ -51,6 +51,62 @@ const WORKSPACE_METRICS = [
   ["Worst trade", "worst_trade", ""],
 ] as const;
 
+type WorkspaceTimingName = "dashboard_runtime" | "identity" |
+  "legacy_demo_guard" | "rule_results_card";
+type WorkspaceTimings = Map<WorkspaceTimingName, number>;
+const workspaceTimingStateKey = "__traderlinkWorkspaceTimingState" as const;
+type WorkspaceTimingProcessState = typeof globalThis & {
+  [workspaceTimingStateKey]: { lastWarningAt: number } | undefined;
+};
+
+function readWorkspaceTimingClock(): number {
+  return performance.now();
+}
+
+function measureWorkspacePhase<T>(
+  timings: WorkspaceTimings,
+  name: WorkspaceTimingName,
+  operation: () => T,
+): T {
+  const started = readWorkspaceTimingClock();
+  try { return operation(); }
+  finally { timings.set(name, readWorkspaceTimingClock() - started); }
+}
+
+async function measureWorkspacePhaseAsync<T>(
+  timings: WorkspaceTimings,
+  name: WorkspaceTimingName,
+  operation: () => Promise<T>,
+): Promise<T> {
+  const started = readWorkspaceTimingClock();
+  try { return await operation(); }
+  finally { timings.set(name, readWorkspaceTimingClock() - started); }
+}
+
+function logSlowWorkspaceRequest(
+  timings: WorkspaceTimings,
+  started: number,
+): void {
+  const totalMs = readWorkspaceTimingClock() - started;
+  if (totalMs < 1_000) return;
+  const processState = globalThis as WorkspaceTimingProcessState;
+  const state = (processState[workspaceTimingStateKey] ??= { lastWarningAt: 0 });
+  const now = Date.now();
+  if (now - state.lastWarningAt < 60_000) return;
+  try {
+    console.info("TraderLink slow Workspace request.", {
+      phases: Object.fromEntries(Array.from(timings, ([name, duration]) => [
+        name,
+        Number(duration.toFixed(1)),
+      ])),
+      totalMs: Number(totalMs.toFixed(1)),
+    });
+    state.lastWarningAt = now;
+  } catch {
+    // Timing diagnostics must never alter Workspace behavior.
+  }
+}
+
 function workspaceMetricId(
   metricId: (typeof WORKSPACE_METRICS)[number][1],
   moneyBasis: "gross" | "net",
@@ -90,13 +146,19 @@ export default async function WorkspacePage({
 }: {
   searchParams: Promise<{ endDate?: string; filter?: string; gettingStarted?: string; group?: string; period?: string; searchTicker?: string; sort?: string; startDate?: string }>;
 }) {
+  const pageStarted = readWorkspaceTimingClock();
+  const timings: WorkspaceTimings = new Map();
   const queryParameters = await searchParams;
   const period = workspacePeriod(queryParameters.period);
   const filter: WorkspaceTradeLibraryFilter = queryParameters.filter === "open" || queryParameters.filter === "swing" || queryParameters.filter === "closed" || queryParameters.filter === "fees_not_entered" ? queryParameters.filter : "all";
   const group: WorkspaceTradeLibraryGroup = queryParameters.group === "day" || queryParameters.group === "ticker" ? queryParameters.group : "none";
   const allowedSorts: readonly WorkspaceTradeLibrarySort[] = ["newest", "oldest", "ticker_asc", "ticker_desc", "direction_asc", "direction_desc", "status_asc", "status_desc", "position", "position_asc", "buy_quantity", "buy_quantity_asc", "entry", "entry_asc", "exit", "exit_asc", "entry_value", "entry_value_asc", "hold", "hold_asc", "pnl_high", "pnl_low"];
   const sort: WorkspaceTradeLibrarySort = allowedSorts.includes(queryParameters.sort as WorkspaceTradeLibrarySort) ? queryParameters.sort as WorkspaceTradeLibrarySort : "newest";
-  const identity = await requireTraderLinkPlatformServerComponentPageIdentity();
+  const identity = await measureWorkspacePhaseAsync(
+    timings,
+    "identity",
+    () => requireTraderLinkPlatformServerComponentPageIdentity(),
+  );
   const scope = identity.scope;
   if (!scope.activeAccountId) {
     // Preserve the existing read-before-redirect failure boundary.
@@ -104,8 +166,12 @@ export default async function WorkspacePage({
     await cookies();
     redirect("/account/trading");
   }
-  recoverLegacyDemoWorkspaceTradeLibraryProjection(scope);
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, topTickersCard, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
+  measureWorkspacePhase(timings, "legacy_demo_guard", () =>
+    recoverLegacyDemoWorkspaceTradeLibraryProjection(scope));
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCardPreference, ruleResultsEndDate, ruleResultsStartDate, topTickersCard, tradeLibrary } = await measureWorkspacePhaseAsync(
+    timings,
+    "dashboard_runtime",
+    () => withJournalAnalyticsReportingDashboardRuntime(
     scope, ({ database, dashboard, pnlReportingBasis, service }) => {
       const demoClock = readJournalDemoScopeClockFromDatabase(database, scope);
       const account = database.prepare(`
@@ -169,6 +235,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
       });
     },
     { prefetchAllFactSet: period === "all" && !(queryParameters.startDate && queryParameters.endDate) },
+    ),
   );
   const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
     ? currentJournalAccountSelectionRef(scope)
@@ -202,11 +269,13 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     reviewSummary,
   });
   const ruleResultsCard = ruleResultsCardPreference.showInWorkspace
-    ? workspaceRuleResultsCard(await readRuleResults(scope, {
-      endDate: ruleResultsEndDate,
-      startDate: ruleResultsStartDate,
-    }))
+    ? await measureWorkspacePhaseAsync(timings, "rule_results_card", async () =>
+      workspaceRuleResultsCard(await readRuleResults(scope, {
+        endDate: ruleResultsEndDate,
+        startDate: ruleResultsStartDate,
+      })))
     : undefined;
+  logSlowWorkspaceRequest(timings, pageStarted);
   return (
     <>
       <WorkspaceOfflineViewCapture
