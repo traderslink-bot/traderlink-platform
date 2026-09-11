@@ -1,6 +1,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
-type TimingName = "auth" | "watchlist" | "json" | "integrity";
+type TimingName = "auth" | "watchlist" | "json" | "integrity"
+  | "integrity_manifest" | "integrity_registry" | "integrity_schema"
+  | "integrity_foreign_keys" | "integrity_quick_check";
 type Measurements = Map<TimingName, { duration: number; count: number }>;
 const context = new AsyncLocalStorage<Measurements>();
 

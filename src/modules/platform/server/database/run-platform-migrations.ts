@@ -48,29 +48,32 @@ function verifyCompletedPlatformDatabaseUnmeasured(
   database: Database.Database,
   manifestInput: readonly PlatformMigration[],
 ): PlatformMigrationRunResult {
-  const manifest = validatePlatformMigrationManifest(manifestInput);
-  const tables = listPlatformUserTableNames(database);
-  if (tables.length === 0) platformFailure("TRADERLINK_PLATFORM_DATABASE_EMPTY");
-  if (!platformMigrationRegistryExists(database)) {
-    platformFailure("TRADERLINK_PLATFORM_UNMANAGED_SCHEMA");
-  }
-  const rows = readAppliedPlatformMigrations(database);
-  validateAppliedPlatformMigrationPrefix(rows, manifest);
-  requireOnlyExpectedPlatformTables(
-    database,
-    expectedPlatformTableNamesForPrefix(rows.length),
-  );
-  if (rows.length !== manifest.length) {
-    platformFailure("TRADERLINK_PLATFORM_MIGRATIONS_PENDING", {
-      appliedMigrationCount: rows.length,
-      requiredMigrationCount: manifest.length,
-    });
-  }
-  const finalRow = rows.at(-1);
-  if (!finalRow) platformFailure("TRADERLINK_PLATFORM_DATABASE_EMPTY");
-  const digest = requirePlatformSchemaDigest(database, finalRow.post_schema_sha256);
-  requirePlatformForeignKeyCheck(database);
-  requirePlatformQuickCheck(database);
+  const manifest = measurePlatformRequestPhase("integrity_manifest", () => validatePlatformMigrationManifest(manifestInput));
+  const finalRow = measurePlatformRequestPhase("integrity_registry", () => {
+    const tables = listPlatformUserTableNames(database);
+    if (tables.length === 0) platformFailure("TRADERLINK_PLATFORM_DATABASE_EMPTY");
+    if (!platformMigrationRegistryExists(database)) {
+      platformFailure("TRADERLINK_PLATFORM_UNMANAGED_SCHEMA");
+    }
+    const rows = readAppliedPlatformMigrations(database);
+    validateAppliedPlatformMigrationPrefix(rows, manifest);
+    requireOnlyExpectedPlatformTables(
+      database,
+      expectedPlatformTableNamesForPrefix(rows.length),
+    );
+    if (rows.length !== manifest.length) {
+      platformFailure("TRADERLINK_PLATFORM_MIGRATIONS_PENDING", {
+        appliedMigrationCount: rows.length,
+        requiredMigrationCount: manifest.length,
+      });
+    }
+    const finalRow = rows.at(-1);
+    if (!finalRow) platformFailure("TRADERLINK_PLATFORM_DATABASE_EMPTY");
+    return finalRow;
+  });
+  const digest = measurePlatformRequestPhase("integrity_schema", () => requirePlatformSchemaDigest(database, finalRow.post_schema_sha256));
+  measurePlatformRequestPhase("integrity_foreign_keys", () => requirePlatformForeignKeyCheck(database));
+  measurePlatformRequestPhase("integrity_quick_check", () => requirePlatformQuickCheck(database));
   return Object.freeze({
     appliedMigrationIds: Object.freeze([]),
     finalSchemaSha256: digest,
