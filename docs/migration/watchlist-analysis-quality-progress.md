@@ -11,6 +11,21 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Interrupted generation restart guard
+
+- Startup already replays publication receipts before clearing orphaned pending
+  generations. It now also retains an existing failure or records an interrupted
+  request failure, instead of making the ticker look eligible for a fresh
+  activation request while automatic updates are OFF.
+- The focused manager test uses the actual start/replay path and a second
+  manager start over the saved state. Eight activation/follow-up triggers remain
+  unavailable and dispatch returns without a mocked AI call; manual refresh
+  remains eligible. Two targeted manager tests pass, including the existing
+  automatic-OFF/session matrix. No live runtime or provider was used.
+- The failure is only added for generations still pending after replay;
+  acknowledged publications are not reclassified by this loop. Full scheduler,
+  hosted restart and delivery acceptance remain outstanding.
+
 ### Scoped code provenance in private request diagnostics
 
 - Confirmed exact request/response, prompt/schema hashes and model already exist.

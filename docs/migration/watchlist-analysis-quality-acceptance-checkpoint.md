@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+An orphaned pending generation now retains an interrupted-request failure after
+outbox replay, preventing a fresh activation request under automatic-OFF. Two
+targeted manager tests pass, including two starts over persisted fake state,
+zero mocked provider calls and retained manual eligibility. Full scheduler and
+hosted restart acceptance remain open.
+
 Private request diagnostics now include a scoped seven-module code fingerprint
 and optional validated Railway commit, alongside existing prompt/schema/body
 hashes. Three focused identity/request checks pass. Missing modules are explicit;
