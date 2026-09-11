@@ -35,7 +35,7 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
   }, {
     id: "inspect-request", title: "Inspect request", summary: "Open available request records in Watchlist Admin.",
     keywords: ["request", "input packet", "response", "omission", "validation"],
-    blocks: [{ kind: "paragraph", text: "Choose an Audit generation, then Inspect request. Expand the available input packet, AI response, validation results or saved versions. Missing diagnostics are labelled. Very large sections are shortened on screen for performance; Export audit contains the full available record. Inspecting does not generate or publish analysis." }],
+    blocks: [{ kind: "paragraph", text: "Choose an Audit generation, then Inspect request. Analysis checks summarize recorded section omissions, optional objective omissions and breakout selection. Expand the validation records for full reasons and prices, or inspect the input packet, AI response and saved versions. Missing diagnostics are labelled. Very large sections are shortened on screen for performance; Export audit contains the full available record. Inspecting does not generate or publish analysis." }],
   }, {
     id: "audit", title: "Export audit", summary: "Select the generation you want to inspect.",
     keywords: ["original", "edited", "audit", "failed request"],
