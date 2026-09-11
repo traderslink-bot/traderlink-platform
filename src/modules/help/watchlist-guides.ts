@@ -20,7 +20,7 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
     id: "approval", title: "Analysis Review", summary: "Review a saved analysis before publishing it.",
     keywords: ["owner", "admin", "approve", "draft", "Discord"],
     blocks: [{ kind: "steps", items: [
-      { title: "Open the draft", text: "In Watchlist Admin, use Analysis Review to select a ticker. When review is required, the new post stays private while analysis is prepared and reviewed." },
+      { title: "Open the draft", text: "In Watchlist Admin, use Analysis Review to select a ticker. When review is required, the new post stays private while analysis is prepared and reviewed. If a replacement is preparing or has failed, the review list shows that newer result; the previous saved version remains available." },
       { title: "Edit and save", text: "Edit the available analysis text and prices, add or remove supported rows, or hide a section. Save draft preserves your edited version separately from the original. Editing does not request another AI analysis." },
       { title: "Preview and approve", text: "Preview the saved version. Website preview shows the analysis card; Discord preview shows the saved message text. Approve and publish authorizes that saved version. If you edit again, save and preview again before approval." },
     ] }, { kind: "paragraph", text: "If a breakout was omitted from a draft, its editing fields remain available. Enter your corrected price and explanation, enable Show this section if needed, then save and preview. Price-order warnings do not rewrite or block your correction. The original and your saved version remain separate." },
