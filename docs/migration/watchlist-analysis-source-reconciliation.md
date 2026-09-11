@@ -73,6 +73,16 @@ historical range or absorb unrelated source differences.
 
 ### Endpoint/store integration and contract correction
 
+Local checkpoints: Platform `76677b66d`, runtime `f7388d5`.
+
+- Added cross-repository proof that executes the actual Platform selector and
+  authenticated route, then feeds that Response directly into the actual
+  runtime lookup. Current, older, none and unavailable scenarios pass, preserving
+  one article and exact content/revision/recency. Storage/network remain mocked.
+  The three-test Node file passes with WATCHLIST_RUNTIME_ROOT explicitly set to
+  the assigned canonical runtime. Without that variable the cross-repository
+  case is explicitly skipped, not counted as producer/consumer evidence.
+
 - Selectively restored the canonical route/store from `34fcc57c6`; other source
   differences in those files were absent. Preserved the mixed Watchlist UI file.
 - Found a real producer/consumer mismatch: Platform emits descending weekdays

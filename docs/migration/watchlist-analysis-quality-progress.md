@@ -11,6 +11,17 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Combined Platform/runtime article proof
+
+- Added a producer/consumer test using the actual Platform selector and route
+  response directly through the actual runtime lookup. Current-day, older,
+  no-eligible and unavailable cases pass with storage/network mocked.
+- Three focused Node tests pass with the assigned runtime path explicitly
+  provided; the combined case is visibly skipped when that path is absent.
+- Corrected the acceptance record's stale claim that these source integrations
+  were missing. Database behavior, display reconciliation, full provider policy
+  and live acceptance remain unproven. No UI/Help workflow changed here.
+
 ### Platform article contract reconciliation
 
 - Restored the canonical authenticated endpoint and News selector locally,

@@ -89,3 +89,41 @@ test("actual route authenticates before lookup and returns only canonical articl
   assert.equal((await route.GET(request(), context)).status, 503);
   assert.equal(calls, before);
 });
+
+test("Platform route response is consumed by the actual runtime lookup", {
+  skip: !process.env.WATCHLIST_RUNTIME_ROOT && "Set WATCHLIST_RUNTIME_ROOT to the assigned runtime checkout",
+}, async () => {
+  const runtimeSource = fs.readFileSync(path.join(process.env.WATCHLIST_RUNTIME_ROOT,
+    "src/lib/live-watchlist/official-watchlist-article-source.ts"), "utf8");
+  const runtime = load(runtimeSource, { process: { env: {} }, setTimeout, clearTimeout, AbortController,
+    fetch: () => { throw new Error("Real network is forbidden in this test"); } });
+  const routeSource = fs.readFileSync(path.join(root, "app/api/news/watchlist-ai-source/[ticker]/route.ts"), "utf8");
+  for (const scenario of ["current", "older", "none", "unavailable"]) {
+    const selection = selector(scenario === "none" ? [] : [article(scenario === "older" ? "2026-09-04" : "2026-09-08")]);
+    const route = load(routeSource, { process: { env: { TRADERSLINK_WATCHLIST_PUBLISHER_TOKEN: "mock-token" } },
+      console: { error() {} }, require: (name) => {
+        if (name === "node:crypto") return require(name);
+        assert.equal(name, "@/src/lib/news/news-article-store");
+        return scenario === "unavailable" ? { ...selection, findNewsArticleForWatchlistAi: async () => { throw new Error("Mock storage failure"); } } : selection;
+      } });
+    let requests = 0;
+    const lookup = runtime.createOfficialWatchlistArticleSourceLookup({
+      env: { TRADERSLINK_WATCHLIST_INGEST_URL: "https://app.traderslink.pro/api/live-watchlist/ingest",
+        TRADERSLINK_WATCHLIST_PUBLISHER_TOKEN: "mock-token" },
+      fetchImpl: async (url, init) => {
+        requests++;
+        assert.equal(init.redirect, "error");
+        return route.GET(new Request(url, init), { params: Promise.resolve({ ticker: "PDSB" }) });
+      },
+    });
+    const result = await lookup({ symbol: "PDSB", targetSessionDate: "2026-09-08" });
+    assert.equal(requests, 1);
+    assert.equal(result.status, scenario === "none" ? "no_eligible_article" : scenario === "unavailable" ? "lookup_unavailable" : "eligible");
+    if (result.status === "eligible") {
+      assert.equal(result.research.articles.length, 1);
+      assert.equal(result.research.articles[0].processedContent, "Processed content");
+      assert.equal(result.research.articles[0].revision, "4");
+      assert.equal(result.research.articles[0].recency, scenario === "older" ? "older_within_window" : "current_day");
+    }
+  }
+});

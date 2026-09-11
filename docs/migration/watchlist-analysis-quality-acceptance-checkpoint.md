@@ -7,12 +7,15 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
-Release prerequisite: this branch lacks three authenticated article-source
-commits present on read-only-verified runtime GitHub main 7f121a2. See the
-[source reconciliation record](watchlist-analysis-source-reconciliation.md).
-Earlier local analysis tests do not prove TradersLink-first source selection.
-The Platform worktree also lacks the route present in its main history. No
-live deployment state is inferred from these source facts.
+The canonical article-source changes are now selectively integrated locally:
+runtime `21cb7fe` plus contract correction `f7388d5`, Platform `76677b66d`.
+A combined test executes the actual Platform selector/route and runtime lookup
+with only storage/network mocked. Current-day, older eligible, no-eligible and
+unavailable responses pass through the real producer/consumer contract. Three
+focused Node tests pass with the assigned runtime path explicitly provided.
+See the [source reconciliation record](watchlist-analysis-source-reconciliation.md).
+Display reconciliation, full provider source policy, database integration and
+live verification remain open. No deployed state is inferred from these checks.
 
 Declared top-level checkpoint dependencies are now rechecked after optional
 section cleanup. The integrated fixture removes a child of a later-removed
