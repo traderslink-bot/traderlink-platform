@@ -7,6 +7,12 @@ Chronological evidence: [Progress](watchlist-analysis-quality-progress.md).
 
 ## Current evidence boundary
 
+Declared core anchors now use numerical display precision rather than
+candle-width tolerance. Explicit derived thresholds remain supported. All 42
+core/service checks and strict TypeScript pass. Legacy formats retain their
+existing observation-tolerance path; semantic calibration and source-ID
+provenance remain separate open acceptance items.
+
 Needs-to-hold/caution/failure now distinguish observed levels from explicitly
 anchored lower thresholds. Legacy responses require numeric observation matches;
 words alone no longer satisfy these three core fields. Forty service/core checks

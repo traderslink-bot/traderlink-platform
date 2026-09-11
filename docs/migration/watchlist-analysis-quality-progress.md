@@ -11,6 +11,25 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Declared core-anchor numerical precision checkpoint
+
+- Declared core anchors now match unambiguous candle OHLC/prior close using
+  existing two/four-decimal numerical precision only. A wide candle cannot
+  enlarge the matching radius. Explicit lower-threshold derivation remains
+  valid; no arbitrary minimum percentage or new owner-edit restriction was added.
+- Legacy response formats without `coreEvidence` retain their existing direct
+  observation-tolerance compatibility path. This distinction is intentional;
+  it does not mean new declared anchors can use that wider tolerance.
+- Tests prove wide candles do not authorize a different anchor, rounding-level
+  differences remain accepted, and future/conflicting observations are excluded.
+  The service rejects a claimed 0.94 anchor when the supplied low is 0.95 while
+  still accepting an explained 0.91 threshold derived from 0.95. Forty-two
+  core/service tests and strict service TypeScript pass with mocked providers.
+- Semantic setup quality, explicit source IDs, legacy breakout/must-clear
+  grounding and broader calibration remain open. No UI/Help workflow change,
+  live request, migration, deployment or hosted configuration occurred.
+
+
 ### Core observed-level versus derived-threshold checkpoint
 
 - Replaced the needs-to-hold/caution/failure wording-only evidence check with
