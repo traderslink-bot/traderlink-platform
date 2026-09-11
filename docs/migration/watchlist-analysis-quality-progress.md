@@ -11,6 +11,19 @@ without inspecting source. No live completion is claimed by local test results.
 
 ## Latest local checkpoint bookkeeping
 
+### Canonical article integration and manager proof
+
+- Integrated the existing main article-source implementation selectively into
+  the runtime, preserving newer analysis/review/admission logic. Each generation
+  gets the authenticated source result; only explicit no-eligible permits RSS.
+- Three mocked manager cases pass across two manual refreshes each, proving
+  fresh article revisions, unavailable-source fallback denial, and held drafts.
+  Forty-eight source/RSS/service checks pass, including private-content exclusion
+  from public news serialization. Strict manager TypeScript also passes.
+- No live calls, settings, servers or releases. Platform route/store source
+  reconciliation, complete source-policy audit and full acceptance remain open.
+  See the [reconciliation record](watchlist-analysis-source-reconciliation.md).
+
 ### Article-source lineage gap verified
 
 - Runtime GitHub main was read-only verified at 7f121a2, matching the cached ref.
