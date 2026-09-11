@@ -25,6 +25,8 @@ completed work is placed online through a separately authorized release.
 
 **Tooltip follow-up:** [Scaling Out plain-language review](scaling-out-tooltip-review-progress.md)
 
+**Tooltip interaction:** [Mobile persistence and touch-target repair](analyzer-tooltip-interaction-progress.md)
+
 **Data audit:** [Day Trade Analyzer Version 2 Data Audit](day-trade-analyzer-v2-data-audit.md)
 
 **Visual review:** [Day Trade Analyzer Version 2 Mockup](day-trade-analyzer-v2-mockup.html)

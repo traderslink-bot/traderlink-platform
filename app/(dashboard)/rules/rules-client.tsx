@@ -45,6 +45,7 @@ import {
   DashboardPanel,
 } from "../../dashboard-template";
 import { FeatureHelpLink } from "../feature-help-link";
+import { AnalyzerHelpTooltip } from "../analytics/analyzer-help-tooltip";
 import type {
   TradingRulesDashboardView,
   TradingRulesTemplateView,
@@ -771,17 +772,23 @@ export function RulesClient({
         }}
       >
         <DashboardMetricCard
-          caption="Currently in force"
+          action={<AnalyzerHelpTooltip label="active rules" text="Rules that are currently in force." />}
+          caption=""
+          hideCaption
           label="Active rules"
           value={String(activeRules.length + activeManualRules.length)}
         />
         <DashboardMetricCard
-          caption="Available to check against your trades"
+          action={<AnalyzerHelpTooltip label="rule library" text="Rule templates available to check against your trades." />}
+          caption=""
+          hideCaption
           label="Rule library"
           value={String(view.templates.length)}
         />
         <DashboardMetricCard
-          caption="Shown with each eligible Day trade"
+          action={<AnalyzerHelpTooltip label="preset checks" text="Automatic checks shown with each eligible Day trade." />}
+          caption=""
+          hideCaption
           label="Preset checks"
           value="Automatic"
         />

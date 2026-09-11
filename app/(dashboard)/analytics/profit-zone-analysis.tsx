@@ -1,14 +1,11 @@
 "use client";
 
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Collapse from "@mui/material/Collapse";
-import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
@@ -28,6 +25,7 @@ import type {
 import { TradeDetailsDrawer } from "../trades/trade-details-drawer";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import { boundedPage, paginatedRows, TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
+import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 
 const ZONE_PAGE_SIZES = Object.freeze([20, 50, 100]);
 
@@ -157,11 +155,7 @@ function TableHeading({
     sx={{ alignItems: "center", justifyContent: "flex-start" }}
   >
     <Typography component="span" sx={{ fontSize: "inherit", fontWeight: "inherit" }}>{label}</Typography>
-    <Tooltip arrow title={help}>
-      <IconButton aria-label={`Explain ${label}`} size="small" sx={{ color: "text.secondary", p: 0.25 }}>
-        <InfoOutlinedIcon sx={{ fontSize: 15 }} />
-      </IconButton>
-    </Tooltip>
+    <AnalyzerHelpTooltip label={label} text={help} />
   </Stack>;
 }
 

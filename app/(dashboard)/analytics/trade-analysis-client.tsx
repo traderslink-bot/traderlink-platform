@@ -1,7 +1,6 @@
 "use client";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -12,7 +11,6 @@ import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
 import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -22,7 +20,6 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Decimal from "decimal.js";
 import Link from "next/link";
@@ -55,6 +52,7 @@ import {
   paginatedRows,
   TradeAnalyzerTablePagination,
 } from "./trade-analyzer-table-pagination";
+import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 
 export type TradeAnalysisView = "day" | "entry-exit" | "mfe-mae" | "green-to-red" | "scaling-out" | "candle-patterns" | "trades";
 
@@ -89,11 +87,7 @@ function ColumnHeading({
     sx={{ alignItems: "center", justifyContent: align === "right" ? "flex-end" : "flex-start" }}
   >
     <Typography component="span" sx={{ fontSize: "inherit", fontWeight: "inherit" }}>{label}</Typography>
-    <Tooltip arrow title={help}>
-      <IconButton aria-label={`Explain ${label}`} size="small" sx={{ color: "text.secondary", p: 0.25 }}>
-        <InfoOutlinedIcon sx={{ fontSize: 15 }} />
-      </IconButton>
-    </Tooltip>
+    <AnalyzerHelpTooltip label={label} text={help} />
   </Stack>;
 }
 
@@ -300,11 +294,7 @@ function Section({
   const heading = <Box sx={{ minWidth: 0 }}>
     <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", width: "fit-content" }}>
       <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{title}</Typography>
-      {titleHelp ? <Tooltip arrow describeChild title={titleHelp}>
-        <Box aria-label={`Explain ${title}`} component="span" tabIndex={0} sx={{ color: "text.secondary", display: "inline-flex" }}>
-          <InfoOutlinedIcon sx={{ fontSize: 17 }} />
-        </Box>
-      </Tooltip> : null}
+      {titleHelp ? <AnalyzerHelpTooltip label={title} text={titleHelp} /> : null}
     </Stack>
     {description ? <Typography color="text.secondary" variant="body2">{description}</Typography> : null}
   </Box>;
@@ -369,9 +359,7 @@ function ProfitZoneHeaderControls({
             <MenuItem value="15">15 minutes</MenuItem>
             <MenuItem value="custom">Custom</MenuItem>
           </TextField>
-          <Tooltip arrow title="Choose how long a trade must stay at or above +20% before it is included in this chart. Time is counted with consecutive completed 1-minute candle closes while the trade is active. Any reach keeps the current behavior. Once a trade qualifies, its complete journey through every higher zone remains in the chart. Reached percentages still use all analyzed trades in the selected date range.">
-            <IconButton aria-label="Explain minimum time at plus 20 percent" size="small" sx={{ color: "text.secondary", p: 0.35 }}><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton>
-          </Tooltip>
+          <AnalyzerHelpTooltip label="minimum time at plus 20 percent" text="Choose how long a trade must stay at or above +20% before it is included in this chart. Time is counted with consecutive completed 1-minute candle closes while the trade is active. Any reach keeps the current behavior. Once a trade qualifies, its complete journey through every higher zone remains in the chart. Reached percentages still use all analyzed trades in the selected date range." />
         </Box>
         {selection === "custom" ? <TextField
           disabled={disabled}
@@ -399,9 +387,7 @@ function ExplainedMetric({ label, value, help, wrapText = false, tone = "text.pr
   label: string; value: string; help: string; tone?: "success.main" | "error.main" | "text.primary";
   wrapText?: boolean;
 }) {
-  const card = <DashboardMetricCard caption="" hideCaption label={label} value={value} valueColor={tone} action={
-    <Tooltip arrow title={help}><IconButton aria-label={`Explain ${label}`} size="small"><InfoOutlinedIcon sx={{ fontSize: 16 }} /></IconButton></Tooltip>
-  } />;
+  const card = <DashboardMetricCard caption="" hideCaption label={label} value={value} valueColor={tone} action={<AnalyzerHelpTooltip label={label} text={help} />} />;
   return wrapText ? <Box sx={{ minWidth: 0, height: "100%", "& > .MuiCard-root": { height: "100%" }, "& .MuiTypography-root": { whiteSpace: "normal", overflowWrap: "anywhere" } }}>{card}</Box> : card;
 }
 
@@ -726,21 +712,15 @@ function AnalyzedTradeCountCard({
   count: number;
 }) {
   return <Card sx={{ maxWidth: { xs: "100%", sm: 240 }, width: "100%" }} variant="outlined">
-    <CardActionArea component={Link} href={`/analytics/trade-analyzer/day/trades?${capabilityQuery}`}>
-      <CardContent>
-        <Tooltip
-          arrow
-          describeChild
-          title={'This page only displays trades that were analyzed by TradersLink "Trade Analyzer" feature.'}
-        >
-          <Stack component="span" direction="row" spacing={0.4} sx={{ alignItems: "center", minWidth: 0 }}>
-            <Typography component="span" sx={{ color: "warning.main", fontSize: "1.125rem", whiteSpace: "normal", overflowWrap: "anywhere" }} variant="caption">Results include analyzed trades only</Typography>
-            <InfoOutlinedIcon sx={{ color: "text.secondary", fontSize: 14 }} />
-          </Stack>
-        </Tooltip>
-        <Typography component="div" sx={{ color: "warning.main", fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>{count}</Typography>
-      </CardContent>
-    </CardActionArea>
+    <CardContent>
+      <Stack direction="row" spacing={0.4} sx={{ alignItems: "flex-start", minWidth: 0 }}>
+        <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+          <Typography component="span" sx={{ color: "warning.main", fontSize: "1.125rem", whiteSpace: "normal", overflowWrap: "anywhere" }} variant="caption">Results include analyzed trades only</Typography>
+          <Typography aria-label="View analyzed trades" component={Link} href={`/analytics/trade-analyzer/day/trades?${capabilityQuery}`} sx={{ alignSelf: "flex-start", color: "warning.main", fontSize: "1.75rem", fontWeight: 800, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>{count}</Typography>
+        </Stack>
+        <AnalyzerHelpTooltip label="results include analyzed trades only" text={'This page only displays trades that were analyzed by TradersLink "Trade Analyzer" feature.'} />
+      </Stack>
+    </CardContent>
   </Card>;
 }
 
@@ -957,15 +937,15 @@ export function TradeAnalysisClient({
       {view === "day" ? <Stack spacing={1.25}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Selected-period records</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
-          <DashboardMetricCard caption={`${model.eligibleDayTradeCount} completed day trades checked`} label="Analyzer coverage" value={percent(model.coveragePercent)} />
-          <DashboardMetricCard caption={`Combined completed ${moneyBasisLabel} P/L`} label={`${moneyBasisLabel} trade P/L`} value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
-          <DashboardMetricCard caption="Trades that held a meaningful profit level for its required number of completed 1-minute closes" label="Meaningful-profit scenarios" value={String(model.meaningfulProfit.tradeCount)} />
-          <DashboardMetricCard caption={model.directionTradeCounts.long > 0 && model.directionTradeCounts.short > 0
+          <ExplainedMetric help={`${model.eligibleDayTradeCount} completed day trades were checked by Trade Analyzer in the selected period.`} label="Analyzer coverage" value={percent(model.coveragePercent)} />
+          <ExplainedMetric help={`Combined completed ${moneyBasisLabel} P/L for the selected period.`} label={`${moneyBasisLabel} trade P/L`} value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} tone={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
+          <ExplainedMetric help="Trades that held a meaningful profit level for its required number of completed 1-minute closes." label="Meaningful-profit scenarios" value={String(model.meaningfulProfit.tradeCount)} />
+          <ExplainedMetric help={model.directionTradeCounts.long > 0 && model.directionTradeCounts.short > 0
             ? `${model.directionTradeCounts.long} long · ${model.directionTradeCounts.short} short`
             : model.directionTradeCounts.long > 0
               ? `${model.directionTradeCounts.long} long ${model.directionTradeCounts.long === 1 ? "trade" : "trades"}`
               : `${model.directionTradeCounts.short} short ${model.directionTradeCounts.short === 1 ? "trade" : "trades"}`} label="Trade direction" value={model.directionTradeCounts.long > 0 && model.directionTradeCounts.short > 0 ? "Long / Short" : model.directionTradeCounts.long > 0 ? "Long only" : "Short only"} />
-          <DashboardMetricCard caption="Average percentage result for these trades" label="Average return" value={percent(model.averageReturnPercent)} valueColor={financialOutcomeColor(model.averageReturnPercent)} />
+          <ExplainedMetric help="Average percentage result across these analyzed trades." label="Average return" value={percent(model.averageReturnPercent)} tone={financialOutcomeColor(model.averageReturnPercent)} />
         </Box>
       </Stack> : null}
 
@@ -1030,10 +1010,10 @@ export function TradeAnalysisClient({
           <ProfitZoneComparison records={profitZoneRecords} rows={profitZoneRows} currency={model.currency} timezone={model.timezone} totalTradeCount={profitZoneDirectionCounts[activeDirection]} offline={offline}
             key={`${evidenceQuery.rangeKind}:${evidenceQuery.startDate ?? "all"}:${evidenceQuery.endDate ?? "all"}:${activeDirection}:${profitZoneMinimumHoldMinutes}`} />
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
-            <DashboardMetricCard caption={`Completed ${directionLabel} trades with a qualifying sustained profit level${model.moneyBasis === "net" ? " and complete saved fee facts" : ""}`} label="Qualifying trades" value={String(scalingRows.length)} />
-            <DashboardMetricCard caption="Share of qualifying trades with at least one profitable partial exit after the sustained-profit level and before the first red point or final exit" label="Scaled out while green" value={`${directionScalingSummary.scaledOut} · ${percent(scalingRows.length === 0 ? null : directionScalingSummary.scaledOut / scalingRows.length * 100)}`} />
-            <DashboardMetricCard caption="Share of qualifying trades with no profitable partial exit after the sustained-profit level and before the first red point or final exit" label="No scale-out while green" value={`${directionScalingSummary.noScale} · ${percent(scalingRows.length === 0 ? null : directionScalingSummary.noScale / scalingRows.length * 100)}`} />
-            <DashboardMetricCard caption="Share of no-scale trades whose completed result finished below zero" label="No scale-out, ended red" value={`${directionScalingSummary.noScaleEndedRed} · ${percent(directionScalingSummary.noScale === 0 ? null : directionScalingSummary.noScaleEndedRed / directionScalingSummary.noScale * 100)}`} />
+            <ExplainedMetric help={`Completed ${directionLabel} trades with a qualifying sustained profit level${model.moneyBasis === "net" ? " and complete saved fee facts" : ""}.`} label="Qualifying trades" value={String(scalingRows.length)} />
+            <ExplainedMetric help="Share of qualifying trades with at least one profitable partial exit after the sustained-profit level and before the first red point or final exit." label="Scaled out while green" value={`${directionScalingSummary.scaledOut} · ${percent(scalingRows.length === 0 ? null : directionScalingSummary.scaledOut / scalingRows.length * 100)}`} />
+            <ExplainedMetric help="Share of qualifying trades with no profitable partial exit after the sustained-profit level and before the first red point or final exit." label="No scale-out while green" value={`${directionScalingSummary.noScale} · ${percent(scalingRows.length === 0 ? null : directionScalingSummary.noScale / scalingRows.length * 100)}`} />
+            <ExplainedMetric help="Share of no-scale trades whose completed result finished below zero." label="No scale-out, ended red" value={`${directionScalingSummary.noScaleEndedRed} · ${percent(directionScalingSummary.noScale === 0 ? null : directionScalingSummary.noScaleEndedRed / directionScalingSummary.noScale * 100)}`} />
           </Box>
           <ScalingOutTable currency={model.currency} meaningfulRows={meaningfulProfitRows} moneyBasis={model.moneyBasis} offline={offline} rows={scalingRows} />
           <Typography color="text.secondary" variant="body2">Profit taken on partial exits is shown as exact Gross realized P/L for the shares sold at those executions. Final trade P/L is also Gross.</Typography>
@@ -1043,9 +1023,9 @@ export function TradeAnalysisClient({
       {view === "scaling-out" && directionScalingSummary.noScaleEndedRed > 0 ? <Section defaultExpanded description="The qualifying trades where no shares were sold for a profit and the completed result finished below zero." helpHref="/help/trade-analyzer/scaling-out#ended-red" title="No scale-out before a red finish">
         <Stack spacing={2.25}>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(3, minmax(0, 1fr))" } }}>
-            <DashboardMetricCard caption={`${directionScalingSummary.noScaleEndedRed} qualifying ${directionLabel} trades`} label={`Calculated ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.noScaleEndedRedPotential, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.noScaleEndedRedPotential)} />
-            <DashboardMetricCard caption={`Final ${moneyBasisLabel} P/L from the completed trades`} label={`Final ${moneyBasisLabel} trade P/L`} value={money(meaningfulSummary.noScaleEndedRedActual, model.currency)} valueColor={financialOutcomeColor(meaningfulSummary.noScaleEndedRedActual)} />
-            <DashboardMetricCard caption={`Calculated ${moneyBasisLabel} profit opportunity minus final ${moneyBasisLabel} trade P/L`} label={`Additional ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.noScaleEndedRedDifference, model.currency)} valueColor={potentialDifferenceColor(meaningfulSummary.noScaleEndedRedDifference)} />
+            <ExplainedMetric help={`${directionScalingSummary.noScaleEndedRed} qualifying ${directionLabel} trades contributed to this calculated opportunity.`} label={`Calculated ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.noScaleEndedRedPotential, model.currency)} tone={financialOutcomeColor(meaningfulSummary.noScaleEndedRedPotential)} />
+            <ExplainedMetric help={`Final ${moneyBasisLabel} P/L from the completed trades.`} label={`Final ${moneyBasisLabel} trade P/L`} value={money(meaningfulSummary.noScaleEndedRedActual, model.currency)} tone={financialOutcomeColor(meaningfulSummary.noScaleEndedRedActual)} />
+            <ExplainedMetric help={`Calculated ${moneyBasisLabel} profit opportunity minus final ${moneyBasisLabel} trade P/L.`} label={`Additional ${moneyBasisLabel} profit opportunity`} value={money(meaningfulSummary.noScaleEndedRedDifference, model.currency)} tone={potentialDifferenceColor(meaningfulSummary.noScaleEndedRedDifference)} />
           </Box>
           <ScalingOutTable currency={model.currency} meaningfulRows={meaningfulProfitRows} moneyBasis={model.moneyBasis} offline={offline} rows={noScaleEndedRedRows} />
         </Stack>

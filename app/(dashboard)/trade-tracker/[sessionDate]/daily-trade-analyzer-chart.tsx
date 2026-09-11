@@ -10,7 +10,6 @@ import {
   Stack,
   ToggleButton,
   ToggleButtonGroup,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -27,6 +26,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { calculateIndicatorPoints } from "@/src/lib/trade-candle-analysis/indicator-context";
+import { AnalyzerHelpTooltip } from "../../analytics/analyzer-help-tooltip";
 import {
   candlePatternName,
   candlePatternShortName,
@@ -913,17 +913,10 @@ export function DailyTradeAnalyzerChart({
           <Typography sx={{ color: chartTheme.controlText, display: { xs: "none", md: "block" }, fontSize: "0.66rem", fontWeight: 800 }}>
             {chartInterval === "1h" ? "1h chart only" : `Pattern context: ${chartInterval}`}
           </Typography>
-        ) : (
-          <Tooltip title="Moomoo did not return complete turnover data for this chart.">
-            <Typography
-              aria-label="VWAP unavailable because Moomoo did not return complete turnover data for this chart"
-              component="span"
-              sx={{ color: "error.main", cursor: "help", fontSize: "0.66rem", fontWeight: 850 }}
-            >
-              VWAP unavailable
-            </Typography>
-          </Tooltip>
-        )}
+        ) : <Stack direction="row" spacing={0.2} sx={{ alignItems: "center" }}>
+          <Typography component="span" sx={{ color: "error.main", fontSize: "0.66rem", fontWeight: 850 }}>VWAP unavailable</Typography>
+          <AnalyzerHelpTooltip label="VWAP unavailable" text="Moomoo did not return complete turnover data for this chart." />
+        </Stack>}
         {exactTurnoverAvailable && layers.vwap ? (
           <Typography sx={{ color: chartSemanticColors.vwap, display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
             - Session VWAP

@@ -26,6 +26,7 @@ import { DashboardMetricCard } from "@/app/dashboard-template";
 
 import type { OverviewDateRange } from "./overview-date-range-control";
 import { TradeAnalysisRangeAndBasisControls } from "./trade-analysis-range-and-basis-controls";
+import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 import { TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 
@@ -171,10 +172,11 @@ export function AnalyzedTradesIndex({
           width: "100%",
           "& .MuiCardContent-root > .MuiStack-root .MuiTypography-caption": { color: "warning.main", fontSize: "1.125rem" },
           "& .MuiCardContent-root > .MuiStack-root .MuiTypography-root:not(.MuiTypography-caption)": { color: "warning.main" },
-          "& .MuiCardContent-root > .MuiTypography-caption": { display: "block", whiteSpace: "normal", overflowWrap: "anywhere" },
         }}>
           <DashboardMetricCard
-            caption="Ready analyzer records in the selected period"
+            action={<AnalyzerHelpTooltip label="analyzed trades" text="Ready Trade Analyzer records in the selected period." />}
+            caption=""
+            hideCaption
             label="Analyzed trades"
             value={String(result?.totalRowCount ?? 0)}
           />

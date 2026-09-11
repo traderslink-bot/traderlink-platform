@@ -1,8 +1,7 @@
 "use client";
 
-import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, IconButton, LinearProgress, Stack, Tooltip, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, LinearProgress, Stack, Typography } from "@mui/material";
 import { useMemo, type ReactNode } from "react";
 import Decimal from "decimal.js";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
@@ -10,9 +9,10 @@ import type { DaySessionTradeAnalyzer } from "./[sessionDate]/day-session-types"
 import { analyzerProgressMessage } from "./analyzer-progress-messages";
 import { buildWrittenTradeReview, type WrittenReviewFill } from "./analyzer-written-review-model";
 import { tradeSummaryPoints } from "./analyzer-trade-summary";
+import { AnalyzerHelpTooltip } from "../analytics/analyzer-help-tooltip";
 
 function Help({ label, text }: { label: string; text: string }) {
-  return <Tooltip arrow describeChild enterTouchDelay={0} title={text}><IconButton aria-label={`About ${label}`} size="small" sx={{ color: "text.secondary", ml: 0.25 }}><HelpOutlineRoundedIcon sx={{ fontSize: 17 }} /></IconButton></Tooltip>;
+  return <AnalyzerHelpTooltip label={label} text={text} />;
 }
 function Heading({ title, help }: { title: string; help: string }) {
   return <Typography component="h3" variant="subtitle2" sx={{ fontWeight: 800 }}>{title}<Help label={title} text={help} /></Typography>;

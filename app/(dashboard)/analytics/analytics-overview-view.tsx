@@ -15,20 +15,21 @@ import { financialSummaryMetricColor } from "@/src/modules/journal-analytics/pre
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 import { FeatureHelpLink } from "../feature-help-link";
+import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 import { MonthlyPnlChart, type MonthlyPnlChartRow } from "./monthly-pnl-chart";
 import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
 
 export function analyticsOverviewMetrics(moneyBasis: JournalAnalyticsMoneyBasis) {
   return [
-  { id: moneyBasis === "gross" ? "gross_pnl" : "net_pnl", label: `${moneyBasis === "gross" ? "Gross" : "Net"} P/L`, caption: "All completed trades" },
-  { id: "win_rate", label: "Win rate", caption: "Completed trades that were profitable" },
-  { id: "profit_factor", label: "Profit factor", caption: `${moneyBasis === "gross" ? "Gross" : "Net"} wins divided by ${moneyBasis} losses` },
-  { id: "expectancy", label: "Expectancy", caption: `Average ${moneyBasis} result per trade` },
-  { id: "average_winning_trade", label: "Average win", caption: "Average profitable trade" },
-  { id: "average_losing_trade", label: "Average loss", caption: "Average losing trade" },
-  { id: "best_trade", label: "Largest win", caption: "Best single trade" },
-  { id: "worst_trade", label: "Largest loss", caption: "Worst single trade" },
-  { id: "total_trades", label: "Completed trades", caption: "All closed trades" },
+  { id: moneyBasis === "gross" ? "gross_pnl" : "net_pnl", label: `${moneyBasis === "gross" ? "Gross" : "Net"} P/L`, help: `Your combined ${moneyBasis} profit or loss across completed trades in the selected dates.` },
+  { id: "win_rate", label: "Win rate", help: "The share of completed trades in the selected dates that finished profitable." },
+  { id: "profit_factor", label: "Profit factor", help: `${moneyBasis === "gross" ? "Gross" : "Net"} winning results divided by ${moneyBasis} losing results. Above 1 means the combined wins were larger than the combined losses.` },
+  { id: "expectancy", label: "Expectancy", help: `Your average ${moneyBasis} result per completed trade in the selected dates.` },
+  { id: "average_winning_trade", label: "Average win", help: `Your average ${moneyBasis} profit across completed winning trades in the selected dates.` },
+  { id: "average_losing_trade", label: "Average loss", help: `Your average ${moneyBasis} loss across completed losing trades in the selected dates.` },
+  { id: "best_trade", label: "Largest win", help: `Your highest ${moneyBasis} profit on one completed trade in the selected dates.` },
+  { id: "worst_trade", label: "Largest loss", help: `Your largest ${moneyBasis} loss on one completed trade in the selected dates.` },
+  { id: "total_trades", label: "Completed trades", help: "Every closed trade included in the selected dates." },
   ] as const;
 }
 
@@ -71,7 +72,7 @@ function OverviewPartition({ moneyBasis, partition, showCurrency }: { moneyBasis
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
         {analyticsOverviewMetrics(moneyBasis).map((definition) => {
           const metric = metricFor(partition.metrics, definition.id);
-          return <DashboardMetricCard caption={definition.caption} key={definition.id} label={definition.label} value={metric ? formatJournalAnalyticsMetric(metric) : "Unavailable"} valueColor={financialSummaryMetricColor(definition.id, metric?.value)} />;
+          return <DashboardMetricCard action={<AnalyzerHelpTooltip label={definition.label} text={definition.help} />} caption="" hideCaption key={definition.id} label={definition.label} value={metric ? formatJournalAnalyticsMetric(metric) : "Unavailable"} valueColor={financialSummaryMetricColor(definition.id, metric?.value)} />;
         })}
       </Box>
       <MonthlyPnlChartForPartition moneyBasis={moneyBasis} partition={partition} />

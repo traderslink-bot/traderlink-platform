@@ -1,9 +1,7 @@
 "use client";
 
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -13,7 +11,6 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Decimal from "decimal.js";
 import { useMemo, useState } from "react";
@@ -30,6 +27,7 @@ import {
   paginatedRows,
   TradeAnalyzerTablePagination,
 } from "./trade-analyzer-table-pagination";
+import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 
 type EvidenceFilter = "all" | "finished_red" | "recovered" | "turned_red";
 
@@ -110,11 +108,7 @@ function median(values: readonly number[]): number {
 function HelpLabel({ help, label }: { help: string; label: string }) {
   return <Stack component="span" direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
     <span>{label}</span>
-    <Tooltip arrow title={help}>
-      <Box aria-label={`Explain ${label}`} component="span" sx={{ color: "text.secondary", display: "inline-flex" }}>
-        <InfoOutlinedIcon sx={{ fontSize: 14 }} />
-      </Box>
-    </Tooltip>
+    <AnalyzerHelpTooltip label={label} text={help} />
   </Stack>;
 }
 
@@ -134,11 +128,7 @@ function Metric({
   return <Paper variant="outlined" sx={{ borderRadius: 2, minWidth: 0, p: 1.35 }}>
     <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
       <Typography color="text.secondary" sx={{ fontSize: "0.72rem", fontWeight: 800, letterSpacing: "0.035em", textTransform: "uppercase" }}>{label}</Typography>
-      <Tooltip arrow title={help}>
-        <IconButton aria-label={`Explain ${label}`} size="small" sx={{ color: "text.secondary", ml: "auto", p: 0.3 }}>
-          <InfoOutlinedIcon sx={{ fontSize: 15 }} />
-        </IconButton>
-      </Tooltip>
+      <Box sx={{ ml: "auto" }}><AnalyzerHelpTooltip label={label} text={help} /></Box>
     </Stack>
     <Typography sx={{ color: tone, fontSize: "1.18rem", fontVariantNumeric: "tabular-nums", fontWeight: 850, lineHeight: 1.25 }}>{value}</Typography>
     <Typography color="text.secondary" sx={{ display: "block", mt: 0.25 }} variant="caption">{detail}</Typography>
@@ -163,7 +153,7 @@ function DamagePanel({
   return <Box>
     <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
       <Typography sx={{ fontWeight: 850 }}>{title}</Typography>
-      <Tooltip arrow title={help}><IconButton aria-label={`Explain ${title}`} size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+      <AnalyzerHelpTooltip label={title} text={help} />
     </Stack>
     <Typography sx={{ fontSize: "1.05rem", fontWeight: 800 }}>
       {percent(rate(rows.length, totalFinishedRed))} · {rows.length} of {totalFinishedRed}
@@ -251,7 +241,7 @@ export function GreenToRedAnalysis({
     <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
       <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", mb: 1.25 }}>
         <Typography sx={{ fontWeight: 850 }}>Profit opportunity that finished red</Typography>
-        <Tooltip arrow title="Looks only at trades that reached +20% and finished with a Gross loss. The two groups separate them by whether they took any profit: $0 goes in No profit taken; more than $0 goes in Some profit taken. Their percentages use only trades that finished red. Profit opportunity + realized loss adds the earlier opportunity to the size of the final loss. Recovery can be temporary: a trade that recovered and finished red is already counted in the finished-red groups, not an extra trade."><IconButton aria-label="Explain profit opportunity that finished red" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+        <AnalyzerHelpTooltip label="profit opportunity that finished red" text="Looks only at trades that reached +20% and finished with a Gross loss. The two groups separate them by whether they took any profit: $0 goes in No profit taken; more than $0 goes in Some profit taken. Their percentages use only trades that finished red. Profit opportunity + realized loss adds the earlier opportunity to the size of the final loss. Recovery can be temporary: a trade that recovered and finished red is already counted in the finished-red groups, not an extra trade." />
       </Stack>
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" } }}>
         <DamagePanel currency={currency} emptyMessage="No trades finished red without taking some profit." help="Trades that reached +20% but finished with a Gross loss without taking any profit. Their profitable exits total $0. The percentage uses only trades that reached +20% and finished red, not all analyzed trades." rows={noProfitEndedRedRows} title="No profit taken" totalFinishedRed={endedRedRows.length} />
@@ -262,7 +252,7 @@ export function GreenToRedAnalysis({
     <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
           <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
             <Typography sx={{ fontWeight: 850 }}>Recovered after turning red</Typography>
-            <Tooltip arrow title="Trades whose total Gross P/L returned above $0 after turning red. The percentage uses all trades that turned red after reaching +20%. Recovery does not mean the trade finished green: the lines below separate those that finished green from those that later finished red again. Those red finishes are already included in the finished-red groups, so do not add them again."><IconButton aria-label="Explain Recovered after turning red" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+            <AnalyzerHelpTooltip label="Recovered after turning red" text="Trades whose total Gross P/L returned above $0 after turning red. The percentage uses all trades that turned red after reaching +20%. Recovery does not mean the trade finished green: the lines below separate those that finished green from those that later finished red again. Those red finishes are already included in the finished-red groups, so do not add them again." />
           </Stack>
           <Typography sx={{ fontSize: "1.05rem", fontWeight: 800 }}>{percent(rate(recoveredRows.length, turnedRedRows.length))} · {recoveredRows.length} of {turnedRedRows.length} recovered after turning red</Typography>
           <Stack spacing={0.2} sx={{ mt: 0.4 }}>
@@ -284,7 +274,7 @@ export function GreenToRedAnalysis({
     <Box>
       <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", mb: 0.75 }}>
         <Typography sx={{ fontWeight: 850 }}>Outcomes by highest profit zone</Typography>
-        <Tooltip arrow title="Groups only finished-red trades by the highest percentage gain they reached while shares were held. A trade that peaked at +47% appears only in the 40%–under 50% row, not every lower zone. The final zone includes gains of 100% or more."><IconButton aria-label="Explain outcomes by highest profit zone" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+        <AnalyzerHelpTooltip label="outcomes by highest profit zone" text="Groups only finished-red trades by the highest percentage gain they reached while shares were held. A trade that peaked at +47% appears only in the 40%–under 50% row, not every lower zone. The final zone includes gains of 100% or more." />
       </Stack>
       {peakZoneOutcomes.length === 0 ? <Typography color="text.secondary">No trades that reached +20% finished red in this selection.</Typography> : <HorizontalScrollRegion label="Highest profit zone outcomes" minTableWidth={940} stickyFirstColumn>
         <Table size="small"><TableHead><TableRow>
@@ -309,7 +299,7 @@ export function GreenToRedAnalysis({
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", mb: 0.75 }}>
         <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
           <Typography sx={{ fontWeight: 850 }}>Exact +20% trade records</Typography>
-          <Tooltip arrow title="The individual trades behind the summaries above, within your selected dates and direction. The table opens with Finished red selected. Use Show to inspect all +20% trades, trades that turned red, or recoveries. This filter changes this table only. Details opens the trade on this page."><IconButton aria-label="Explain exact plus 20 percent trade records" size="small" sx={{ color: "text.secondary", p: 0.3 }}><InfoOutlinedIcon sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+          <AnalyzerHelpTooltip label="exact plus 20 percent trade records" text="The individual trades behind the summaries above, within your selected dates and direction. The table opens with Finished red selected. Use Show to inspect all +20% trades, trades that turned red, or recoveries. This filter changes this table only. Details opens the trade on this page." />
         </Stack>
         <TextField label="Show" onChange={(event) => { setFilter(event.target.value as EvidenceFilter); setPage(1); }} select size="small" sx={{ minWidth: 190 }} value={filter}>
           <MenuItem value="all">All +20% trades</MenuItem>
