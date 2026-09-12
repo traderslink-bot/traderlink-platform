@@ -20,6 +20,7 @@ export type JournalAnalyticsOfflineRouteKind =
   | "trade-analyzer-green-to-red"
   | "trade-analyzer-scaling-out"
   | "trade-analyzer-candle-patterns"
+  | "trade-analyzer-trend-momentum"
   | "trade-analyzer-trades";
 
 export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION =
@@ -33,6 +34,7 @@ export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS: Readonly<
   "analytics-results": "journal-analytics:results:current",
   "analytics-timing": "journal-analytics:timing:current",
   "trade-analyzer-candle-patterns": "journal-analytics:trade-analyzer:candle-patterns:v2",
+  "trade-analyzer-trend-momentum": "journal-analytics:trade-analyzer:trend-momentum:v1",
   "trade-analyzer-day": "journal-analytics:trade-analyzer:day:v2",
   "trade-analyzer-entry-exit": "journal-analytics:trade-analyzer:entry-exit:v3",
   "trade-analyzer-green-to-red": "journal-analytics:trade-analyzer:green-to-red:v2",
@@ -99,7 +101,8 @@ export type JournalTradeAnalyzerOfflineViewModel = Readonly<{
     | "trade-analyzer-mfe-mae"
     | "trade-analyzer-green-to-red"
     | "trade-analyzer-scaling-out"
-    | "trade-analyzer-candle-patterns";
+    | "trade-analyzer-candle-patterns"
+    | "trade-analyzer-trend-momentum";
   model: DailyTradeLongTermAnalyticsV2Model;
   version: 1;
   view: Exclude<TradeAnalysisView, "trades">;
@@ -126,6 +129,7 @@ const ANALYZER_KIND_BY_VIEW: Readonly<
   Record<Exclude<TradeAnalysisView, "trades">, JournalTradeAnalyzerOfflineViewModel["kind"]>
 > = Object.freeze({
   "candle-patterns": "trade-analyzer-candle-patterns",
+  "trend-momentum": "trade-analyzer-trend-momentum",
   day: "trade-analyzer-day",
   "entry-exit": "trade-analyzer-entry-exit",
   "green-to-red": "trade-analyzer-green-to-red",
@@ -173,6 +177,19 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
   };
   const model = Object.freeze({
     ...input.model,
+    ...(input.model.trendMomentum ? { trendMomentum: {
+      ...input.model.trendMomentum,
+      records: input.model.trendMomentum.records.map((row) => ({ ...row,
+        tradeId: localRef(row.tradeId), representativeRoundTripId: localRef(row.representativeRoundTripId),
+        executionId: localRef(row.executionId), context: row.context ? { ...row.context, eventId: localRef(row.context.eventId) } : null,
+      })),
+      trades: input.model.trendMomentum.trades.map((trade) => ({ ...trade,
+        tradeId: localRef(trade.tradeId), representativeRoundTripId: localRef(trade.representativeRoundTripId),
+        indicators: trade.indicators ? { ...trade.indicators,
+          executions: trade.indicators.executions.map((event) => ({ ...event, eventId: localRef(event.eventId) })),
+        } : null,
+      })),
+    } } : {}),
     eventPaths: Object.freeze(input.model.eventPaths.map((row) => Object.freeze({
       ...row,
       roundTripId: localRef(row.roundTripId),

@@ -12,6 +12,7 @@ export type TradeIndicatorPoint = Readonly<{
   availableAt: number;
   close: number;
   historyBars: number;
+  unchangedCloseBars: number;
   ema9: number | null;
   ema20: number | null;
   rsi14: number | null;
@@ -28,7 +29,9 @@ export function calculateTradeIndicatorSeries(
   let ema20: number | null = null;
   let gains = 0;
   let losses = 0;
+  let unchangedCloseBars = 0;
   return Object.freeze(bars.map((bar, index) => {
+    unchangedCloseBars = index > 0 && bar.close === bars[index - 1].close ? unchangedCloseBars + 1 : 1;
     seed += bar.close;
     if (index === 8) ema9 = seed / 9;
     else if (index > 8 && ema9 !== null) ema9 += (bar.close - ema9) * (2 / 10);
@@ -53,7 +56,7 @@ export function calculateTradeIndicatorSeries(
       throw new Error("trade_indicator_numeric_overflow");
     }
     return Object.freeze({ time: bar.time, availableAt: bar.time + (interval === "1m" ? 60 : 300),
-      close: bar.close, historyBars: index + 1, ema9, ema20, rsi14 });
+      close: bar.close, historyBars: index + 1, unchangedCloseBars, ema9, ema20, rsi14 });
   }));
 }
 
@@ -64,6 +67,22 @@ export type TradeSessionVwap = Readonly<{
   bars: number;
   lastBarClosedAt: number | null;
 }>;
+
+/** Linear pass for chart/event observations; same turnover method as snapshots. */
+export function tradeSessionVwapValues(input: IndicatorHistoryInput, session: IndicatorHistoryRange): ReadonlyMap<number, number | null> {
+  const values = new Map<number, number | null>();
+  let volume = 0, turnover = 0, valid = true;
+  for (const bar of aggregateIndicatorHistory(input, "1m")) {
+    if (bar.time < session.start || bar.time + 60 > session.endExclusive) continue;
+    volume += bar.volume;
+    if (bar.turnover == null) valid = false;
+    else turnover += bar.turnover;
+    const covered = hasCompletedIndicatorCoverage(input.completedRanges, session.start, bar.time + 60);
+    values.set(bar.time + 60, valid && covered && volume > 0 && Number.isFinite(turnover) && Number.isFinite(volume)
+      ? turnover / volume : null);
+  }
+  return values;
+}
 
 /** One-minute session calculation, independent of rolling-indicator warm-up. */
 export function calculateTradeSessionVwap(

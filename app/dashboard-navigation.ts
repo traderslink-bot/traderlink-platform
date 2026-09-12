@@ -175,6 +175,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "marketCharts" as const,
           depth: 2 as const,
         }),
+        Object.freeze({ href: "/analytics/trade-analyzer/day/trend-momentum", label: "Trend & Momentum", icon: "marketCharts" as const, depth: 2 as const }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/trades",
           label: "Your analyzed trades",
@@ -280,6 +281,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/trade-analyzer/day/green-to-red": "Green to red",
     "/analytics/trade-analyzer/day/scaling-out": "Scaling out",
     "/analytics/trade-analyzer/day/candle-patterns": "Candle patterns",
+    "/analytics/trade-analyzer/day/trend-momentum": "Trend & Momentum",
     "/analytics/trade-analyzer/day/trades": "Your analyzed trades",
     "/analytics/trade-explorer": "Trade Explorer",
     "/analytics/trade-explorer/compare": "Compare Trades",
@@ -318,6 +320,7 @@ export type DashboardHelpTarget = Readonly<{
 const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: string }>[] =
   Object.freeze([
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle patterns" }),
+    Object.freeze({ route: "/analytics/trade-analyzer/day/trend-momentum", href: "/help/trade-analyzer/trend-momentum", label: "Trend & Momentum" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/green-to-red", href: "/help/trade-analyzer/green-to-red-analysis", label: "Green to red" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/scaling-out", href: "/help/trade-analyzer/day-trade-analysis", label: "Scaling out" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/entry-exit", href: "/help/trade-analyzer/entry-exit-analysis", label: "Entries and exits" }),

@@ -44,7 +44,8 @@ export function tradeIndicatorContextAt(input: Readonly<{
   if (!current) return null;
   const prior = input.series[index - 3];
   const eligible = (point: TradeIndicatorPoint | undefined, name: "ema9" | "ema20" | "rsi14") =>
-    point && point.historyBars >= policy.minimumBars[name] ? point[name] : null;
+    point && point.historyBars >= policy.minimumBars[name] &&
+      !(name === "rsi14" && point.unchangedCloseBars >= policy.minimumBars.rsi14) ? point[name] : null;
   const ema9 = eligible(current, "ema9");
   const ema20 = eligible(current, "ema20");
   const rsi14 = eligible(current, "rsi14");
@@ -77,6 +78,8 @@ export function tradeIndicatorContextAt(input: Readonly<{
     lookbackSpanSeconds: span,
     spacing,
     ema9, ema20, rsi14,
+    rsiUnavailableReason: current.unchangedCloseBars >= policy.minimumBars.rsi14 ? "no_recent_price_change"
+      : rsi14 === null ? "insufficient_history" : null,
     ema9ChangePercent, ema20ChangePercent, rsiChangePoints, separationPercent, separationChange,
     ema9Direction: direction(ema9ChangePercent, policy.emaChangePercent),
     ema20Direction: direction(ema20ChangePercent, policy.emaChangePercent),

@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import type { TrendMomentumProjection } from "../../../lib/trade-candle-analysis/trend-momentum-analytics";
 import { entryExitPeakProfit } from "./daily-trade-entry-exit-math";
 import type Database from "better-sqlite3";
 
@@ -399,6 +400,7 @@ type TradeAnalysisGreenToRedDamage = Readonly<{
 }>;
 
 export type DailyTradeLongTermAnalyticsModel = Readonly<{
+  trendMomentum?: TrendMomentumProjection;
   entryExitExcludedTradeCount?: number;
   analyzedExecutionCount: number;
   analyzedTradeCount: number;

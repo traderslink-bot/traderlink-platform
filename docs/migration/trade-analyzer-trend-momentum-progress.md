@@ -2,6 +2,91 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Initial Trend & Momentum page integration - 2026-09-12
+
+- Combined checkpoint: all 43 focused tests pass in one 512MB-capped process
+  (history/math, episodes, grouping, basic rendering, worker, in-memory storage,
+  selection and mocked provider). No real market-data request was made by this run.
+
+- Added `/analytics/trade-analyzer/day/trend-momentum` through the existing
+  authenticated shared page, navigation and overview capability links. New
+  optional model field reads saved logical-trade evidence only. Existing pages'
+  financial projections are unchanged. Selected reporting P/L stays lossless.
+- Initial view includes timeframe/execution selection, EMA alignment/direction
+  and RSI group results, first-event recovery/horizon summary, separate earlier
+  coverage groups, paginated all-occurrence records and full-analysis links.
+  All card/table headings use existing tap-persistent plain-language tooltips;
+  table scroll containers and surfaces use existing shared theme components.
+- Added Help guide and offline route/model integration. Offline indicator
+  trade/execution references are replaced with local references, including
+  nested event contexts. No raw provider payload is sent to this page.
+- Next.js skill guided async route props and server/client separation. React
+  skill review replaced barrel imports and repeated group-array copying.
+- Eight changed UI/contracts roots pass strict targeted TypeScript diagnostics
+  using explicit installed React type paths. Initial compiler attempt used an
+  incorrect React resolution path; no source errors remained after correcting
+  that check configuration. Two server-render fixtures pass for unavailable
+  and empty views, controls/tooltips and exclusive horizon columns.
+- Required dashboard-template Vitest file ran single-worker: 3 pass, 4 fail.
+  Failures concern unchanged legacy assertions: layout now uses shared Frame;
+  shell no longer owns navigation imports; route enumerator misses Watchlist
+  and dynamic News routes; a Help-link comment mentions DashboardShell. Read-only
+  inspection confirms new route exists and no new local shell was introduced.
+  Do not report that architecture suite green or edit unrelated shell to satisfy
+  stale assumptions. Baseline guard reconciliation remains an acceptance note.
+- Not complete: full execution evidence/filter design (VWAP, RSI direction,
+  separation and conditioning), event-presence/ambiguous timing coverage,
+  first-reclaim/combined conditions, equivalent Green-to-Red/Scaling comparison
+  anchors, other existing-page enrichments, individual cards/charts,
+  real saved-ticker calibration, populated interaction/render and offline tests,
+  final regression and committed handoff. No server started or deployment made.
+
+## Combined evidence calculation checkpoint - 2026-09-12
+
+- Owner confirmed continuing under the existing single goal without routine
+  approval pauses; all necessary tests are authorized. Production release is
+  still a separate decision. No local server or hosted database changes.
+- Added pure execution/whole-trade projection and first-event study summaries.
+  Repeated executions count one logical trade and one selected-basis P/L;
+  unavailable P/L remains unavailable. First-event selection happens before
+  context filters. Unknown recovery is excluded from the known-outcome rate.
+- Added a read-only scoped saved-analysis service for the upcoming shared UI.
+  It respects logical trade membership and selected reporting P/L, retains
+  unavailable analysis, and makes no provider requests. Not yet wired to pages.
+- Found and fixed missed crossings on the first held close: valid completed
+  context already known at entry now supplies the preceding side. Missing entry
+  context still cannot invent an event.
+- Latest single-process run passes 12 tests: seven episode, three aggregation,
+  two synthetic convergence. Strict selected-root TypeScript check passes for
+  the new analytics module and saved-evidence service (not a full app check).
+- Remaining: page integration, cross-page comparison anchors and UI/Help/offline,
+  real saved-ticker calibration, final verification and narrow commit handoff.
+  Goal remains active; this is not completion or deployment evidence.
+
+## Convergence edge case and during-trade calculation - 2026-09-12
+
+- Synthetic convergence compares 100-bar EMA9 and 200-bar EMA20/RSI against
+  2000-bar references across rising/falling/volatile penny/slower/flat sequences.
+  Worst relative EMA errors: 3.60e-11 and 2.36e-10; RSI error 0.0000253 points.
+  This is synthetic calibration, not the remaining saved-ticker corpus proof.
+- Found a flat-tail RSI exception: recent flat initialization gives 50 while
+  longer Wilder history can retain 100. Context now marks RSI unavailable when
+  its full required history window has unchanged closes; raw numerical output is
+  preserved. Reason is explicit and no overbought/oversold band is assigned.
+- Added during-trade loss/reclaim episodes for EMA9/20 and VWAP, short mirroring,
+  neutral-side retention, session/coverage interruption, EMA and RSI midpoint
+  crossings, per-clock-horizon observations and until-closure movement.
+- Connected episode calculation to existing Decimal position states: temporary
+  flat periods delimit cycles, not saved trades. Zero-duration/unknown cycle
+  timing stays unavailable. Session VWAP event observations use a linear prefix
+  calculation and covered as-of lookup, including sparse five-minute buckets.
+- Six episode fixtures and two convergence fixtures pass; foundation and worker
+  regressions pass together (23 tests in that checkpoint). Earlier 14 selection/
+  storage/provider/service fixtures remain passing from their last runs.
+- Still pending: complete first-event aggregate selection and timing-ambiguity
+  presentation, current saved-ticker corpus, cross-page comparison projection,
+  chart/UI/Help/offline work and complete final regression. Not release-ready.
+
 ## Selection and worker checkpoint - 2026-09-12
 
 - Explicit Analyze now checks cached indicator readiness before deciding that

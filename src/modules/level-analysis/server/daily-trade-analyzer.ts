@@ -466,6 +466,20 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
   const fiveMinuteCandles = aggregateCompleteExecutionTimeframeCandles(candles, "5m");
   const fiveMinuteIndicatorPoints = calculateIndicatorPoints(fiveMinuteCandles, { vwapSource: "turnover" });
   const states = positionStates(events);
+  const positionCycles: { openedAt: number; closedAt: number; closingPrice: number }[] = [];
+  let cycleOpenedAt: number | null = null;
+  let timingUnavailable = false;
+  if (input.trendMomentum) for (const event of events) {
+    const state = states.get(event.eventId)!;
+    const at = Date.parse(event.executedAtUtc) / 1000;
+    if (state.quantityBefore.isZero() && state.quantityAfter.gt(0)) cycleOpenedAt = at;
+    if (state.quantityBefore.gt(0) && state.quantityAfter.isZero()) {
+      if (cycleOpenedAt === null || !Number.isFinite(at) || at <= cycleOpenedAt) timingUnavailable = true;
+      else positionCycles.push({ openedAt: cycleOpenedAt, closedAt: at, closingPrice: Number(event.priceDecimal) });
+      cycleOpenedAt = null;
+    }
+  }
+  if (cycleOpenedAt !== null) timingUnavailable = true;
   const eventSnapshots = Object.freeze(events.map((event) => {
     const state = states.get(event.eventId);
     if (!state) throw new Error("daily_trade_event_position_state_missing");
@@ -500,6 +514,8 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
     events,
   });
   return Object.freeze({ eventSnapshots, finalExitPaths, greenToRed,
-    ...(input.trendMomentum ? { trendMomentum: analyzeTradeExecutionIndicators(input.trendMomentum, events) } : {}),
+    ...(input.trendMomentum ? { trendMomentum: analyzeTradeExecutionIndicators({
+      ...input.trendMomentum, direction: input.direction, positionCycles, timingUnavailable,
+    }, events) } : {}),
   });
 }

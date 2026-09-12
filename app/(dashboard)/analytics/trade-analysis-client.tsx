@@ -53,8 +53,9 @@ import {
   TradeAnalyzerTablePagination,
 } from "./trade-analyzer-table-pagination";
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
+import { TrendMomentumAnalysis } from "./trend-momentum-analysis";
 
-export type TradeAnalysisView = "day" | "entry-exit" | "mfe-mae" | "green-to-red" | "scaling-out" | "candle-patterns" | "trades";
+export type TradeAnalysisView = "day" | "entry-exit" | "mfe-mae" | "green-to-red" | "scaling-out" | "candle-patterns" | "trades" | "trend-momentum";
 
 function money(value: string | null, currency: string | null): string {
   if (value === null || currency === null) return "Unavailable";
@@ -671,6 +672,7 @@ function ExecutionContextTable({
 }
 
 const CAPABILITIES = Object.freeze([
+  Object.freeze({ href: "/analytics/trade-analyzer/day/trend-momentum", title: "Trend & Momentum", description: "Compare EMA 9, EMA 20, RSI and Session VWAP at executions and during your trades." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/green-to-red", title: "Green to Red", description: "See trades that reached +20% or more and what happened before they finished." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/scaling-out", title: "Scaling Out", description: "See profit-taking after a sustained profit level—and qualifying trades with no profitable scale-out before a red finish." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/entry-exit", title: "Entries & Exits", description: "Review entries, adds and exits against Session VWAP, EMA 9 and later saved prices." }),
@@ -750,7 +752,10 @@ export function TradeAnalysisClient({
   const [patternPageSize, setPatternPageSize] = useState(10);
   const greenToRedDirectionCounts = model.greenToRedOpportunity.tradeCountsByDirection ?? model.directionTradeCounts;
   const profitZoneDirectionCounts = model.profitZones.tradeCountsByDirection ?? model.directionTradeCounts;
-  const visibleDirectionCounts = view === "green-to-red"
+  const visibleDirectionCounts = view === "trend-momentum" && model.trendMomentum
+    ? { long: model.trendMomentum.trades.filter((t) => t.direction === "long").length,
+        short: model.trendMomentum.trades.filter((t) => t.direction === "short").length }
+    : view === "green-to-red"
     ? greenToRedDirectionCounts
     : view === "scaling-out"
       ? profitZoneDirectionCounts
@@ -917,7 +922,7 @@ export function TradeAnalysisClient({
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-start" } }}>
           <AnalyzedTradeCountCard
             capabilityQuery={capabilityQuery}
-            count={view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
+            count={view === "trend-momentum" ? model.trendMomentum?.trades.filter((trade) => trade.direction === activeDirection && trade.indicators !== null).length ?? 0 : view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
           />
           {view !== "day" ? <DirectionControl activeDirection={activeDirection} counts={visibleDirectionCounts} onChange={(direction) => {
             setSelectedDirection(direction);
@@ -934,6 +939,7 @@ export function TradeAnalysisClient({
         /> : null}
       </Stack>
 
+      {view === "trend-momentum" ? <TrendMomentumAnalysis projection={model.trendMomentum} direction={activeDirection} currency={model.currency} timezone={model.timezone} offline={offline} /> : null}
       {view === "day" ? <Stack spacing={1.25}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Selected-period records</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>

@@ -2,6 +2,22 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
+    slug: "trend-momentum", title: "Trend & Momentum",
+    description: "Review EMA 9, EMA 20, RSI and Session VWAP alongside your saved trade decisions.",
+    sections: [{ id: "execution-context", title: "Execution context",
+      summary: "Compare indicator conditions known at your entries, adds and exits.",
+      keywords: ["EMA 9", "EMA 20", "RSI", "VWAP", "trend", "momentum"], blocks: [
+        { kind: "paragraph", text: "Choose one-minute or five-minute candles and an execution type. EMA 9 and EMA 20 describe shorter and longer recent price direction. Their alignment and changing separation describe the relationship between the averages. RSI describes recent upward versus downward momentum; above 70 and below 30 are commonly called overbought and oversold, but neither requires an immediate reversal." },
+        { kind: "paragraph", text: "Indicator context uses completed candles available before the execution, not the unfinished candle containing it. Earlier candle history is requested when needed during analysis and reused when available. Less frequently traded candles remain separate from regularly spaced candles. A missing candle alone does not prove low volume or a provider fault." },
+        { kind: "paragraph", text: "A user-defined trade can contain multiple entries, exits and opening-to-flat positions. Each comparison counts its completed P/L once per group. Groups can overlap. Unavailable P/L is excluded from the average, not silently treated as zero or replaced with another reporting basis." },
+      ] }, { id: "during-trade", title: "During the trade", summary: "Inspect recorded losses and returns across a reference while you held shares.",
+      keywords: ["reclaim", "EMA loss", "first event", "coverage"], blocks: [
+        { kind: "paragraph", text: "For long trades, a recorded loss moves from above to below the chosen reference; a return moves back above. Short trades use the reverse. Neutral closes do not create extra events. The headline comparison uses the first qualifying event in the entire saved trade, before conditions are filtered. The event table also includes later occurrences." },
+        { kind: "paragraph", text: "Earlier incomplete history is shown separately. Recovery may still be observed, may have no recorded return before position closure, or may be unknown because observation was interrupted. Unknown recovery is excluded from the return-rate denominator." },
+        { kind: "paragraph", text: "Five-, 15-, 30- and 60-minute follow-through uses actual clock time and the exact available one-minute endpoint. Positions closed before or at that time are separate from still-open observations. These are stock-price changes, not your trade profit. Saved offline views retain the same comparisons without making new market-data requests." },
+      ] }],
+  },
+  {
     slug: "overview",
     title: "Overview",
     description: "Learn what the Trade Analyzer does, where it appears and which account details make its results accurate.",

@@ -34,12 +34,14 @@ import type { OverviewDateRange } from "./overview-date-range-control";
 import { AnalyzedTradesIndex } from "./analyzed-trades-index";
 import { TradeAnalysisClient, type TradeAnalysisView } from "./trade-analysis-client";
 import { TradeAnalyzerHelpLink } from "./trade-analyzer-help-link";
+import { readTrendMomentumAnalytics } from "@/src/modules/level-analysis/server/trend-momentum-analytics-service";
 
 const VIEW_DETAILS: Readonly<Record<TradeAnalysisView, Readonly<{
   helpHref: string;
   title: string;
 }>>> = Object.freeze({
   day: Object.freeze({ helpHref: "/help/trade-analyzer/day-trade-analysis", title: "Day Trade Analysis" }),
+  "trend-momentum": Object.freeze({ helpHref: "/help/trade-analyzer/trend-momentum", title: "Trend & Momentum" }),
   "entry-exit": Object.freeze({ helpHref: "/help/trade-analyzer/entry-exit-analysis", title: "Entries and exits" }),
   "mfe-mae": Object.freeze({ helpHref: "/help/trade-analyzer/mfe-mae", title: "Room after entry" }),
   "green-to-red": Object.freeze({ helpHref: "/help/trade-analyzer/green-to-red-analysis", title: "Green to red" }),
@@ -249,7 +251,7 @@ export async function TradeAnalysisPage({
         afterCursor: cursor,
         // Entry/Exit selects by the saved trade's final close below, keeping all
         // earlier round trips in that trade available for its complete results.
-        closingDateRange: view === "entry-exit" ? { kind: "all_available" } : closingRange(dateRange),
+        closingDateRange: view === "entry-exit" || view === "trend-momentum" ? { kind: "all_available" } : closingRange(dateRange),
         currency,
         metricIds: ["included_count"],
         moneyBasis,
@@ -273,7 +275,7 @@ export async function TradeAnalysisPage({
     return Object.freeze({
       generatedAtUtc: overview.generatedAtUtc,
       calculationVersion: overview.registryVersion,
-      model: buildDailyTradeLongTermAnalytics(
+      model: Object.freeze({ ...buildDailyTradeLongTermAnalytics(
         database,
         scope,
         Object.freeze(rows),
@@ -282,8 +284,9 @@ export async function TradeAnalysisPage({
         timezone,
         multipliers,
         selectedProfitZoneMinimumHoldMinutes,
-        view === "entry-exit" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
-      ),
+        view === "entry-exit" || view === "trend-momentum" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
+      ), ...(view === "trend-momentum" ? { trendMomentum: readTrendMomentumAnalytics({ database, scope, journalRows: rows,
+        startDate: dateRange.startDate, endDate: dateRange.endDate }) } : {}) }),
     });
   }));
   const evidenceQuery = Object.freeze({
