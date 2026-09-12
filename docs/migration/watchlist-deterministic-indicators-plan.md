@@ -12,6 +12,8 @@ Parent: [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-adm
 
 Progress: [Indicators Progress](watchlist-deterministic-indicators-progress.md)
 
+Independent reference checkpoint: [2026-09-12 reference QA](watchlist-indicators-independent-reference-qa-20260912.md) records 153/153 third-party-library comparisons and all-nine external daily cross-checks. Exact configured intraday chart parity remains login/feed-basis limited; no formula discrepancy found.
+
 ## 1. Outcome and complete scope
 
 Replace the old ticker-detail Technical Context presentation with a fresh **Indicators** card. Give members useful, continuously updated, deterministic interpretations of market data for active micro/nano-cap day-trading stocks. Values alone are insufficient: explain what each indicator suggests and the evidence behind that description.

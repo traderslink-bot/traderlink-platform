@@ -28,6 +28,13 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Independent reference QA — 2026-09-12
+
+- Owner-requested read-only comparison against pinned third-party technicalindicators 3.1.0: **153/153 passed**, all nine tickers/four frames plus VWAP. No app engine reuse in the reference calculation; raw inputs streamed, not committed.
+- All nine Daily RSI14/EMA20 values compared with public TradingView Technicals: maximum observed differences 0.091470 RSI point/$0.004950 EMA20; no RSI condition disagreement. Cross-feed observations, not identical-candle parity.
+- Exact custom intraday chart comparison is login/feed-basis limited. PCLA regular-session diagnostic substantially reduced the EMA discrepancy; remaining differences are not labeled an app defect or an exact pass.
+- No app/Help change, provider candle request, AI/Discord call, ticker activation or deployment. Added two bounded standalone QA scripts and the [full reference QA record](watchlist-indicators-independent-reference-qa-20260912.md). Market-open/full approval remain separate checks.
+
 ### Completed correction and hosted retest — 2026-09-12
 
 - Local fix `f64bc1c22956228e1233d1273f1a71f03c80238b` released by Coordinator as `f97ab1ceecf30c411d605f1dd5ed3af31246dead`, parent `7aa9c2ca0bbaa32822bafe520dabfa6277294e51`. Deployment `48e17688-049d-40c9-a9df-db7cd783ad1d` SUCCESS; 119 migrations unchanged, one writer/correct volume, health ready.
