@@ -41,6 +41,7 @@ import {
   type TradersLinkAiPullbackPlan,
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
 import { WatchlistPotentialPathCardArticle } from "./potential-path-levels-card";
+import { WatchlistIndicatorsCard } from "./watchlist-indicators-card";
 
 const watchlistDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -1613,7 +1614,6 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
           card={tradersLinkAiReadCard}
           symbol={symbol}
           livePrice={symbol.latestPrice}
-          liveVolumeContext={symbol.liveVolumeContext}
           dipBuyPlanVisible={symbol.tradersLinkAiReadDipBuyPlanVisible !== false}
         />
       ) : symbol.tradersLinkAiReadCardVisible !== false &&
@@ -1623,6 +1623,7 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
       ) : symbol.tradersLinkAiReadCardVisible !== false ? (
         <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />
       ) : null}
+      <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.firstPostedAt}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} livePrice={symbol.latestPrice} />
       {recentNewsFilingsCard && showRecentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
           label="Known Recent News / SEC Filings"

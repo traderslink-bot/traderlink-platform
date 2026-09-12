@@ -10,15 +10,21 @@ import { watchlistIndicatorAuditStore } from "./indicator-audit-runtime";
 
 type Access = Readonly<{ token: string; requestScope: string }>;
 // Credentials exist only inside the authorized operation; they never enter snapshots or audit records.
-const operationAccess = new Map<string, Access>();
-const consumerAccess = new Map<string, Access>();
-const pending = new Map<string, Promise<WatchlistIndicatorSnapshot>>();
-let service: IndicatorRefreshService | null = null;
+type RuntimeState = { operationAccess: Map<string, Access>; consumerAccess: Map<string, Access>;
+  pending: Map<string, Promise<WatchlistIndicatorSnapshot>>; service: IndicatorRefreshService | null };
+const processState = globalThis as typeof globalThis & { __watchlistIndicatorsV1?: RuntimeState };
+const state = processState.__watchlistIndicatorsV1 ??= { operationAccess: new Map(), consumerAccess: new Map(), pending: new Map(), service: null };
+const { operationAccess, consumerAccess, pending } = state;
+
+/** Read-only member path: does not initialize a worker or request provider data. */
+export function readCachedWatchlistIndicators(symbol: string, activationId: string): WatchlistIndicatorSnapshot | null {
+  return state.service?.current(symbol, activationId) ?? null;
+}
 
 export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
-  if (!service) {
-    const coordinator = new IndicatorRequestCoordinator({ audit: event => service?.recordTransport(event) });
-    service = new IndicatorRefreshService({ calendar: calendar as IndicatorCalendar,
+  if (!state.service) {
+    const coordinator = new IndicatorRequestCoordinator({ audit: event => state.service?.recordTransport(event) });
+    state.service = new IndicatorRefreshService({ calendar: calendar as IndicatorCalendar,
       record: record => {
         const access = operationAccess.get(`${record.symbol}:${record.activationId}`);
         if (access && record.outcome === "queued") consumerAccess.set(record.id, access);
@@ -37,10 +43,10 @@ export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
           ...(input.provider === "moomoo" ? { accessToken: access!.token } : {}) });
       },
     });
-    try { void watchlistIndicatorAuditStore().reconcileRestart(service.runtimeInstanceId).catch(() => {}); }
+    try { void watchlistIndicatorAuditStore().reconcileRestart(state.service.runtimeInstanceId).catch(() => {}); }
     catch { /* Owner audit reports storage unavailability separately. */ }
   }
-  return service;
+  return state.service;
 }
 
 /** Invoke from the single Watchlist scheduler, never from a member page request. */

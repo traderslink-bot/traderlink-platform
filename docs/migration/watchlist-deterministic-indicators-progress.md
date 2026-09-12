@@ -28,6 +28,17 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Member card and cached endpoint — 2026-09-12
+
+- Refresh/audit-access integration checkpoint saved locally at `d1ac923be`; no push/deployment.
+- Added the ticker-detail Indicators card with always-visible 1m/5m/15m summaries, 1m/5m/15m/Daily detail tabs, default 5m, versioned local preference and keyboard tab navigation. Trend, Momentum, RSI, VWAP, Moving averages, Volume and ATR have deterministic values/explanations. Unknown values remain independent dashes.
+- Card uses existing Watchlist card styling and a scoped responsive CSS module. It reuses the existing live price for the VWAP comparison. Only candle data-through Last updated timestamps appear for members, including separate VWAP timing; provider details stay out of the member payload and UI.
+- Added a read-only cached-data endpoint under the ticker route. Existing Watchlist authorization and published activation identity are checked before reading the cache. It never starts the worker or calls a provider; positive nested-field projection excludes audit IDs, provider/scope/raw error data. The server runtime singleton now shares the same process cache across route bundles.
+- Added the card to the actual ticker detail component and removed only that component's old Live 5-minute confirmation prop so live volume moves into Indicators. The old calculations, static AI analysis, listing-page behavior, owner previews and Discord producers remain untouched. Pre-existing notice/layout edits in the same file are preserved and must not be staged with this slice.
+- Sixteen focused DOM assertions passed against the actual React card, with no server/provider calls: inventory, saved selection, keyboard focus, oversold context, quote comparison, privacy, retained failure state, access-loss clearing and polling cleanup. Fourteen actual member-route assertions passed for authorization, concealment, exact activation and nested output privacy. Presentation/member contracts pass focused strict TypeScript checks.
+- React/Next guidance used for type-only client contracts, optional versioned localStorage, guarded effect cleanup and server-only provider access. These checks are not a rendered browser/CSS visual acceptance claim.
+- Still required before acceptance: scheduler and existing-runtime request sharing, dedicated audit UI and complete menu reconciliation (including newer Daily Recaps), Help, real-provider/ticker coverage and full integrated low-resource checkpoint. The card currently has no scheduled hosted data source until that integration is completed; do not call it live/ready.
+
 ### Refresh service and owner audit route — 2026-09-12
 
 - Added the actual owner-only `/api/admin/watchlist/indicator-audit` GET route and persistent-volume store binding. Authorization runs before storage lookup; retained calculation downloads are no-store attachments and expired input returns an explicit 410 state. The actual handler passed 18 focused injected-auth/storage assertions without touching live data.
