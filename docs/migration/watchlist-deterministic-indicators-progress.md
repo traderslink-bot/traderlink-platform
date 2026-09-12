@@ -28,6 +28,15 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Shared-request coordination checkpoint — 2026-09-12
+
+- Calculation foundation saved in narrow local commit `f2cd1ea6e`; no push or deployment. Unrelated pre-existing source/docs edits remain unstaged.
+- Added pure injectable `indicator-request-coordinator.ts`: two-request pool, normalized-request coalescing, unique transport attempt IDs, abort/timeouts, one bounded transient retry, provider/connection-scoped cooldown, independent Yahoo scope, one recovery probe, and audit-write exception isolation.
+- Added and ran `node src/scripts/verify-watchlist-indicator-requests.mjs`: offline coalescing, shared throttle, independent fallback scope, accepted-empty recovery, bounded retries/concurrency and audit-write failure scenarios passed. Provider adapters and actual transport integration are not yet wired; these results do not prove live Moomoo/Yahoo behavior.
+- Focused strict single-file TypeScript check passed for the coordinator. No Vitest, broad tests, server, provider or AI requests.
+- Integration discovery: the existing Moomoo route maps provider errors to generic 503 and its underlying provider catches HTTP/transport details. New indicator-specific transport must preserve sanitized rate-limit/outcome evidence without changing the existing AI route's behavior. Do not count a multi-page provider fetch as one actual HTTP call.
+- Next: indicator-specific provider adapter/history contract and persistent audit storage, followed by member/admin UI integration. Existing request coordinator is not active in hosted workers yet. Exact session calendar coverage, same-day VWAP completeness and historical native intervals must be verified rather than guessed.
+
 ### Single-goal execution — calculation checkpoint, 2026-09-12
 
 - Owner explicitly set one active goal for completing implementation, focused verification and clean release handoff; production remains separately gated.
