@@ -28,6 +28,14 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### One-minute provider convention and pagination correction — 2026-09-12
+
+- Resolved the prior one-minute ambiguity empirically. Existing production bridge passes Moomoo timestamps unchanged. TRUG's Friday regular-session comparison against Yahoo matched 238 of 390 OHLC tuples within 0.00011 when Moomoo labels were shifted back one minute, versus zero matches with no shift or a forward shift. Together with all nine complete 04:01–20:00 ET sequences, this supports Moomoo Web API one-minute end labels. Cross-provider differences in remaining tuples are not treated as price parity.
+- New Indicators parser converts Moomoo 1m end labels to internal interval starts before request-bound filtering. Daily labels, Yahoo timestamps and existing AI/chart bridge consumers are unchanged. Native Moomoo 5m/15m conventions remain a separate unverified acceptance item; the one-minute result is not proof of their behavior.
+- Fixed pagination to follow a valid documented next_time cursor even without a generic pagination.has_more envelope. Explicit zero terminates; missing cursor and missing envelope remain unconfirmed; contradictory completion/cursor or malformed cursor rejects. Existing ten-attempt budget remains unchanged. Reference: https://open.moomoo.com/api/quote/basic-data/history-kline.
+- Reran all nine Friday histories through the actual new one-minute parser: TRUG, TNON, AENT, FTFT, FEIM, BDRX, SURG, SXTC, PCLA each retained 960 1m / 192 derived 5m / 64 derived 15m bars, zero unknown missing minutes, and independently verified full-session HLC3-volume VWAP arithmetic. This is historical bridge/calculation proof, not native higher-frame transport or hosted UI proof.
+- Focused history-adapter checks now pass 62 assertions, including cursor-only pagination and 1m/Daily timestamp separation. Strict focused provider TypeScript and whitespace checks pass. No AI, ticker add/approval, Discord publication, deployment, migration or local server.
+
 ### Restart recovery and nine-symbol historical checkpoint — 2026-09-12
 
 - Added bounded recovery from the latest matching immutable calculation snapshot. Restore validates activation, formula/calendar version, retained seed and replayed results before exposing cached values. Missing, expired or inconsistent evidence falls back to normal warm-up rather than substituting an unrelated snapshot.

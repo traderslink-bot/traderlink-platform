@@ -10,6 +10,8 @@ const request = { symbol: "TNON", timeframe: "1m", start, end };
 let assertions = 0;
 function equal(actual, expected) { assert.deepEqual(actual, expected); assertions++; }
 equal(parseMoomooIndicatorPage(payload([row(end - minute), row(start)])).data.bars.map(b => b.start), [start, end - minute]);
+equal(parseMoomooIndicatorPage(payload([row(start + minute)]), "1m").data.bars[0].start, start);
+equal(parseMoomooIndicatorPage(payload([row(start)]), "1d").data.bars[0].start, start);
 equal(parseMoomooIndicatorPage(payload([row(start), row(start, 4)])).reason, "invalid_data");
 equal(parseMoomooIndicatorPage(payload([{ ...row(start), close: null }])).reason, "invalid_data");
 equal(parseMoomooIndicatorPage(payload([])).usable, false);
@@ -17,6 +19,10 @@ equal(parseMoomooIndicatorPage({ ret_code: -7 }).reason, "no_data");
 equal(parseMoomooIndicatorPage({ ret_code: -3 }).requestAccepted, true);
 equal(parseMoomooIndicatorPage({}).reason, "invalid_data");
 equal(parseMoomooIndicatorPage({ ret_code: 0, data: { kline_list: [row(start)] } }).data.hasMore, null);
+equal(parseMoomooIndicatorPage({ ret_code: 0, data: { kline_list: [row(end - minute)], next_time: end - 2 * minute } }).data.hasMore, true);
+equal(parseMoomooIndicatorPage({ ret_code: 0, data: { kline_list: [row(start)], next_time: 0 } }).data.hasMore, false);
+equal(parseMoomooIndicatorPage(payload([row(start)], false, end - minute)).reason, "invalid_data");
+equal(parseMoomooIndicatorPage({ ret_code: 0, data: { kline_list: [row(start)], next_time: "bad" } }).reason, "invalid_data");
 equal(parseMoomooIndicatorPage(payload([], true, start)).reason, "invalid_data");
 const scaled = payload([row(start)]); scaled.data.volume_precision = 2;
 equal(parseMoomooIndicatorPage(scaled).data.bars[0].volume, 1);
@@ -46,11 +52,17 @@ const fetched = await fetchIndicatorHistory({ ...base, fetcher: async (url, opti
   urls.push(url);
   equal(options.headers.Authorization, "Bearer secret-fixture-never-printed");
   equal(options.redirect, "error");
-  return Response.json(urls.length === 1 ? payload([row(end - minute)], true, end - 2 * minute) : payload([row(start)]));
+  return Response.json(urls.length === 1 ? payload([row(end)], true, end - 2 * minute) : payload([row(start + minute)]));
 } });
 equal(fetched.outcome, "complete"); equal(fetched.pages, 2); equal(fetched.transportIds.length, 2);
 equal(base.budget.attemptsRemaining, 8);
 equal(new URL(urls[1]).searchParams.get("end"), String(end - 2 * minute));
+let cursorPages = 0;
+const cursorOnly = await fetchIndicatorHistory({ ...base, scope: "cursor-only", budget: createIndicatorHistoryBudget(), fetcher: async () => {
+  cursorPages++;
+  return Response.json({ ret_code: 0, data: { kline_list: [row(cursorPages === 1 ? end : start + minute)], next_time: cursorPages === 1 ? end - 2 * minute : 0 } });
+} });
+equal(cursorPages, 2); equal(cursorOnly.outcome, "complete"); equal(cursorOnly.bars.length, 2);
 assert.ok(!JSON.stringify(events).includes("secret-fixture")); assertions++;
 assert.ok(!JSON.stringify(events).includes("private-connection")); assertions++;
 

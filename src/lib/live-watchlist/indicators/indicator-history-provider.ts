@@ -62,7 +62,7 @@ function sortedUnique(bars: readonly IndicatorHistoryBar[]): readonly IndicatorH
 }
 
 /** No raw vendor errors, symbols from payloads, account IDs or credentials enter results. */
-export function parseMoomooIndicatorPage(payload: unknown): IndicatorTransportResult<IndicatorHistoryPage> {
+export function parseMoomooIndicatorPage(payload: unknown, timeframe?: IndicatorTimeframe): IndicatorTransportResult<IndicatorHistoryPage> {
   const root = object(payload), data = object(root?.data);
   if (!root || typeof root.ret_code !== "number" || !Number.isInteger(root.ret_code)) return invalid();
   if (root?.ret_code !== 0) {
@@ -77,17 +77,27 @@ export function parseMoomooIndicatorPage(payload: unknown): IndicatorTransportRe
   for (const value of data.kline_list) {
     const row = object(value);
     if (!row) return invalid();
-    const normalized = bar(row.time_key, [row.open, row.high, row.low, row.close, row.volume], Number(precision));
+    // Verified against nine complete extended sessions and TRUG/Yahoo OHLC
+    // alignment: Web API 1m labels the interval END. Internally bars use START.
+    // Daily date labels are not shifted; other native frames require separate proof.
+    const timestamp = numeric(row.time_key);
+    const normalized = bar(timestamp === null ? null : timestamp - (timeframe === "1m" ? 60_000 : 0),
+      [row.open, row.high, row.low, row.close, row.volume], Number(precision));
     if (!normalized) return invalid();
     bars.push(normalized);
   }
   const unique = sortedUnique(bars);
   if (!unique) return invalid();
   const pagination = object(root.pagination);
-  const hasMore = typeof pagination?.has_more === "boolean" ? pagination.has_more : null;
   // Endpoint docs specify data.next_time; general pagination docs also describe extra.next_time.
-  const next = numeric(data.next_time ?? object(root.extra)?.next_time);
+  const rawNext = data.next_time ?? object(root.extra)?.next_time;
+  const next = numeric(rawNext);
+  if (rawNext != null && (next === null || !Number.isSafeInteger(next) || next < 0)) return invalid();
   const nextEnd = next !== null && Number.isSafeInteger(next) && next > 0 ? next : null;
+  // A documented continuation cursor establishes another page even without the
+  // generic pagination envelope. Missing both remains unknown, never complete.
+  const hasMore = typeof pagination?.has_more === "boolean" ? pagination.has_more : nextEnd !== null ? true : next === 0 ? false : null;
+  if (hasMore === false && nextEnd !== null) return invalid();
   if (hasMore === true && (nextEnd === null || unique.length === 0)) return invalid();
   return { ok: true, usable: unique.length > 0, requestAccepted: true, data: { bars: unique, hasMore, nextEnd } };
 }
@@ -188,7 +198,8 @@ export async function requestIndicatorHistoryPage(input: Readonly<{
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
   let payload: unknown;
   try { payload = JSON.parse(new TextDecoder().decode(bytes)); } catch { return invalid(); }
-  return input.provider === "moomoo" ? parseMoomooIndicatorPage(payload) : parseYahooIndicatorPage(payload);
+  const timeframe = ({ "1": "1m", "6": "5m", "7": "15m", "2": "1d" } as const)[url.searchParams.get("ktype") as "1" | "6" | "7" | "2"];
+  return input.provider === "moomoo" ? parseMoomooIndicatorPage(payload, timeframe) : parseYahooIndicatorPage(payload);
 }
 
 /** Every HTTP page/retry passes through the shared coordinator, not one opaque multi-page call. */

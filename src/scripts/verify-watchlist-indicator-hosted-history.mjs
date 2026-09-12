@@ -16,6 +16,7 @@ const token = environment.TRADERSLINK_WATCHLIST_PUBLISHER_TOKEN?.trim(); if (!to
 const { calculateIndicatorHistory, calculateSessionVwap } = await import("../lib/live-watchlist/indicators/indicator-engine.ts");
 const { aggregateIndicatorMinutes } = await import("../lib/live-watchlist/indicators/indicator-aggregation.ts");
 const { normalizeIndicatorSessions, indicatorTradingDay, indicatorVwapCoverage } = await import("../lib/live-watchlist/indicators/indicator-sessions.ts");
+const { parseMoomooIndicatorPage } = await import("../lib/live-watchlist/indicators/indicator-history-provider.ts");
 const calendar = JSON.parse(await readFile(new URL("../modules/coach/server/market-calendar/us-equities-review-calendar.v1.json", import.meta.url), "utf8"));
 const date = process.env.TRADERLINK_INDICATOR_HISTORY_DATE ?? "2026-09-11", day = indicatorTradingDay(calendar, date);
 if (!day || day.postClose > Date.now()) throw Error("A verified completed historical session is required.");
@@ -28,8 +29,14 @@ for (const symbol of ["TRUG", "TNON", "AENT", "FTFT", "FEIM", "BDRX", "SURG", "S
     const payload = await response.json();
     assert.equal(payload.status, "ready"); assert.equal(payload.provider, "moomoo_open_api");
     assert.ok(Array.isArray(payload.candles) && payload.candles.length <= 1440);
-    const one = normalizeIndicatorSessions({ calendar, timeframe: "1m", completedThrough: day.postClose, bars: payload.candles.map(bar => ({ start: Number(bar.timestamp),
-      open: Number(bar.open), high: Number(bar.high), low: Number(bar.low), close: Number(bar.close), volume: bar.volume === null ? null : Number(bar.volume) })) }).candles;
+    // Exercise the production Indicators parser, not a test-only timestamp correction.
+    const parsedBars = [];
+    for (let index = 0; index < payload.candles.length; index += 370) {
+      const parsed = parseMoomooIndicatorPage({ ret_code: 0, data: { kline_list: payload.candles.slice(index, index + 370).map(bar => ({
+        time_key: bar.timestamp, open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: bar.volume })) } }, "1m");
+      assert.equal(parsed.ok, true); parsedBars.push(...parsed.data.bars);
+    }
+    const one = normalizeIndicatorSessions({ calendar, timeframe: "1m", completedThrough: day.postClose, bars: parsedBars }).candles;
     const frames = { "1m": one, "5m": [], "15m": [] };
     for (const [key, start, end] of [["pre", day.preOpen, day.regularOpen], ["regular", day.regularOpen, day.regularClose], ["post", day.regularClose, day.postClose]]) {
       const sessionBars = one.filter(bar => bar.start >= start && bar.end <= end);
