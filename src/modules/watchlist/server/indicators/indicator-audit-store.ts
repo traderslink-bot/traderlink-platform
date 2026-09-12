@@ -17,13 +17,14 @@ const MAX_CATEGORY_FILES = 10_000;
 export type IndicatorRefreshAudit = Readonly<{
   id: string; instanceId: string; symbol: string; activationId: string; queuedAt: number;
   startedAt: number | null; finishedAt: number | null;
-  outcome: "queued" | "running" | "published" | "partial" | "retained" | "unavailable" | "superseded" | "interrupted_unknown";
+  outcome: "queued" | "running" | "published" | "partial" | "retained" | "unavailable" | "superseded" | "interrupted_unknown"
+    | "cache_hit" | "coalesced" | "session_closed" | "calendar_unavailable";
   calculationId: string | null;
   attempts: readonly IndicatorRequestAudit[];
   timeframes: readonly Readonly<{
     timeframe: IndicatorTimeframe; provider: "moomoo" | "yahoo" | null;
     primaryOutcome: string; fallbackOutcome: string | null; acceptedBars: number; through: number | null;
-    missingMinutes: number; excludedBars: number; calculationRevision: string | null;
+    missingMinutes: number; missingVolumeBars?: number; excludedBars: number; calculationRevision: string | null;
   }>[];
 }>;
 export type IndicatorCalculationEvidence = Readonly<{
@@ -66,7 +67,7 @@ function safeSummary(value: IndicatorRefreshAudit): IndicatorRefreshAudit {
       httpStatus: event.httpStatus, retryAfterMs: event.retryAfterMs })),
     timeframes: value.timeframes.slice(0, 4).map(frame => ({ timeframe: frame.timeframe, provider: frame.provider,
       primaryOutcome: frame.primaryOutcome, fallbackOutcome: frame.fallbackOutcome, acceptedBars: frame.acceptedBars,
-      through: frame.through, missingMinutes: frame.missingMinutes, excludedBars: frame.excludedBars, calculationRevision: frame.calculationRevision })),
+      through: frame.through, missingMinutes: frame.missingMinutes, missingVolumeBars: frame.missingVolumeBars, excludedBars: frame.excludedBars, calculationRevision: frame.calculationRevision })),
   };
 }
 

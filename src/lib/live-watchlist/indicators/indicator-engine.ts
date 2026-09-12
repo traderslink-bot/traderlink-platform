@@ -9,7 +9,7 @@ export type IndicatorCandle = Readonly<{
   high: number;
   low: number;
   close: number;
-  volume: number;
+  volume: number | null;
   /** Exchange-calendar-derived date plus premarket/regular/postmarket identifier. */
   sessionKey: string;
 }>;
@@ -60,7 +60,7 @@ export type IndicatorResult = Readonly<{
   ema9SlopeAtr: number | null;
   ema20SlopeAtr: number | null;
   trend: TrendState | null;
-  volume: number;
+  volume: number | null;
   volumeChangePercent: number | null;
   volumeBaselineBars: number;
   volumeRatio: number | null;
@@ -82,8 +82,8 @@ export function createIndicatorCheckpoint(timeframe: IndicatorTimeframe, seriesK
 function validateCandle(c: IndicatorCandle, completedThrough: number): void {
   if (![c.start, c.end, completedThrough].every(Number.isSafeInteger) || c.start <= 0 ||
       c.end <= c.start || c.end > completedThrough || !c.sessionKey ||
-      ![c.open, c.high, c.low, c.close, c.volume].every(Number.isFinite) ||
-      Math.min(c.open, c.high, c.low, c.close) <= 0 || c.volume < 0 ||
+      ![c.open, c.high, c.low, c.close].every(Number.isFinite) ||
+      Math.min(c.open, c.high, c.low, c.close) <= 0 || (c.volume !== null && (!Number.isFinite(c.volume) || c.volume < 0)) ||
       c.low > Math.min(c.open, c.close) || c.high < Math.max(c.open, c.close) || c.low > c.high) {
     throw new Error("watchlist_indicator_invalid_or_incomplete_candle");
   }
@@ -171,10 +171,12 @@ export function advanceIndicator(
   const atrBaseline = priorAtrs.length === 20 && priorAtrs.every(v => v !== null)
     ? mean(priorAtrs as number[]) : null;
   const atrRatio = point.atr !== null && atrBaseline !== null && atrBaseline > 0 ? point.atr / atrBaseline : null;
-  const volumeBars = previous.timeframe === "1d" ? previous.volumeBars
+  const sessionVolumeBars = previous.timeframe === "1d" ? previous.volumeBars
     : previous.volumeBars.filter(bar => bar.sessionKey === candle.sessionKey);
-  const volumeBaseline = volumeBars.length >= 10 ? mean(volumeBars.map(bar => bar.volume)) : null;
-  const volumeRatio = volumeBaseline !== null && volumeBaseline > 0 ? candle.volume / volumeBaseline : null;
+  const lastMissingVolume = sessionVolumeBars.map(bar => bar.volume).lastIndexOf(null);
+  const volumeBars = sessionVolumeBars.slice(lastMissingVolume + 1);
+  const volumeBaseline = volumeBars.length >= 10 ? mean(volumeBars.map(bar => bar.volume!)) : null;
+  const volumeRatio = candle.volume !== null && volumeBaseline !== null && volumeBaseline > 0 ? candle.volume / volumeBaseline : null;
   const priorVolume = volumeBars.at(-1)?.volume;
   const result: IndicatorResult = {
     version: WATCHLIST_INDICATOR_VERSION, timeframe: previous.timeframe, dataThrough: candle.end,
@@ -184,7 +186,7 @@ export function advanceIndicator(
     volatility: atrRatio === null ? null : atrRatio >= 1.1 ? "expanding" : atrRatio <= 0.9 ? "contracting" : "steady",
     ...classifyTrend(point, old, candle.close),
     volume: candle.volume, volumeBaselineBars: volumeBars.length,
-    volumeChangePercent: priorVolume !== undefined && priorVolume > 0 ? 100 * (candle.volume - priorVolume) / priorVolume : null,
+    volumeChangePercent: candle.volume !== null && priorVolume != null && priorVolume > 0 ? 100 * (candle.volume - priorVolume) / priorVolume : null,
     volumeRatio,
     volumeState: volumeRatio === null ? null : volumeRatio >= 1.4 ? "above_baseline" : volumeRatio <= 0.75 ? "below_baseline" : "near_baseline",
   };
@@ -227,6 +229,7 @@ export function calculateSessionVwap(input: SessionVwapInput): Readonly<{ value:
   let dataThrough: number | null = null;
   for (const candle of input.candles) {
     validateCandle(candle, input.completedThrough);
+    if (candle.volume === null) return { value: null, dataThrough: null };
     if (candle.end - candle.start !== 60_000 || candle.start < input.sessionStart || candle.end > input.sessionEnd ||
         (dataThrough !== null && candle.start < dataThrough)) {
       throw new Error("watchlist_indicator_invalid_vwap_series");

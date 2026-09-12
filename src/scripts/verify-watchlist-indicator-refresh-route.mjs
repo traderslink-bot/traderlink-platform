@@ -12,8 +12,12 @@ const source = await readFile(new URL("../../app/api/live-watchlist/indicators/r
 const dependencies = {
   "node:crypto": { createHash, timingSafeEqual },
   "next/server": { after: callback => callbacks.push(callback) },
-  "@/src/lib/live-watchlist/live-watchlist-store": { LiveWatchlistStore: class { async getSymbol() { reads++; if (storageFailure) throw Error("private-path"); return ticker; } } },
+  "@/src/lib/live-watchlist/live-watchlist-store": { LiveWatchlistStore: class {
+    async getSymbol() { reads++; if (storageFailure) throw Error("private-path"); return ticker; }
+    async listSymbols() { return { symbols: ticker ? [{ ...ticker, symbol: "TNON" }] : [] }; }
+  } },
   "@/src/modules/watchlist/server/indicators/indicator-refresh-runtime": {
+    reconcileWatchlistIndicatorPopulation: active => { assert.equal(typeof active.get, "function"); },
     readSharedWatchlistIndicatorCandles: (symbol, activationId) => { cacheReads++; assert.equal(symbol, "TNON"); assert.equal(activationId, `TNON:${activatedAt}`); return null; },
     refreshWatchlistIndicators: async (...args) => refreshes.push(args),
   },

@@ -31,7 +31,10 @@ const yahoo = { chart: { result: [{ meta: { exchangeTimezoneName: "America/New_Y
   indicators: { quote: [{ open: [3], high: [3.1], low: [2.9], close: [3], volume: [100] }] } }] } };
 equal(parseYahooIndicatorPage(yahoo).data.bars[0].start, start);
 yahoo.chart.result[0].indicators.quote[0].volume = [null];
-equal(parseYahooIndicatorPage(yahoo).reason, "invalid_data");
+equal(parseYahooIndicatorPage(yahoo).data.bars[0].volume, null);
+equal(parseYahooIndicatorPage(yahoo).data.bars[0].close, 3);
+equal(parseMoomooIndicatorPage(payload([{ ...row(start), volume: null }])).data.bars[0].volume, null);
+equal(parseMoomooIndicatorPage(payload([{ ...row(start), volume: "not-volume" }])).reason, "invalid_data");
 for (const key of ["open", "high", "low", "close", "volume"]) yahoo.chart.result[0].indicators.quote[0][key] = [null];
 equal(parseYahooIndicatorPage(yahoo).data.hasMore, null);
 

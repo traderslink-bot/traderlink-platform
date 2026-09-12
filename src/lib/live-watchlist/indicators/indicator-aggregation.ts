@@ -35,8 +35,8 @@ export function aggregateIndicatorMinutes(input: Readonly<{
   for (const c of input.candles) {
     if (!Number.isSafeInteger(c.start) || c.start % 60_000 !== 0 || c.end !== c.start + 60_000 ||
         c.start < session.start || c.end > session.end || c.sessionKey !== session.key ||
-        ![c.open, c.high, c.low, c.close, c.volume].every(Number.isFinite) ||
-        Math.min(c.open, c.high, c.low, c.close) <= 0 || c.volume < 0 ||
+        ![c.open, c.high, c.low, c.close].every(Number.isFinite) ||
+        Math.min(c.open, c.high, c.low, c.close) <= 0 || (c.volume !== null && (!Number.isFinite(c.volume) || c.volume < 0)) ||
         c.high < Math.max(c.open, c.close) || c.low > Math.min(c.open, c.close) || c.high < c.low ||
         byStart.has(c.start)) {
       throw new Error("watchlist_indicator_invalid_aggregation_candle");
@@ -68,7 +68,7 @@ export function aggregateIndicatorMinutes(input: Readonly<{
     candles.push({ start, end, sessionKey: session.key,
       open: members[0].open, close: members.at(-1)!.close,
       high: Math.max(...members.map(c => c.high)), low: Math.min(...members.map(c => c.low)),
-      volume: members.reduce((sum, c) => sum + c.volume, 0),
+      volume: members.some(c => c.volume === null) ? null : members.reduce((sum, c) => sum + c.volume!, 0),
     });
   }
   return { candles, missingMinutes, incompleteBuckets };

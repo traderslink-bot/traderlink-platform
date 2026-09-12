@@ -81,7 +81,7 @@ export default function WatchlistIndicatorAuditPanel() {
           <Typography variant="body2">Started: {time(record.startedAt)}. Finished: {time(record.finishedAt)}.</Typography>
           <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>Refresh: {record.id}. Runtime instance: {record.instanceId}. Activation: {record.activationId}.</Typography>
           {record.timeframes.map(frame => <Typography variant="body2" key={frame.timeframe} sx={{ my: 1 }}>
-            {frame.timeframe === "1d" ? "Daily" : frame.timeframe}: {label(frame.provider)} · Moomoo: {label(frame.primaryOutcome)} · Yahoo fallback: {label(frame.fallbackOutcome)} · {frame.acceptedBars} accepted bars · Through {time(frame.through)} · {frame.missingMinutes} unknown missing minutes · {frame.excludedBars} excluded bars · Revision {frame.calculationRevision ?? "—"}
+            {frame.timeframe === "1d" ? "Daily" : frame.timeframe}: {label(frame.provider)} · Moomoo: {label(frame.primaryOutcome)} · Yahoo fallback: {label(frame.fallbackOutcome)} · {frame.acceptedBars} accepted bars · Through {time(frame.through)} · {frame.missingMinutes} unknown missing minutes · Missing volume: {frame.missingVolumeBars ?? "not recorded"} · {frame.excludedBars} excluded bars · Revision {frame.calculationRevision ?? "—"}
           </Typography>)}
           <details><summary>Provider requests and retries</summary>
             {record.attempts.length === 0 ? <Typography variant="body2">No provider transport events recorded for this refresh.</Typography> : record.attempts.map((event, index) => <Typography variant="body2" key={`${event.transportId}:${event.kind}:${index}`} sx={{ my: 1, overflowWrap: "anywhere" }}>

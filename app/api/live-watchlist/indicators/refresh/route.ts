@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { after } from "next/server";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
-import { readSharedWatchlistIndicatorCandles, refreshWatchlistIndicators } from "@/src/modules/watchlist/server/indicators/indicator-refresh-runtime";
+import { readSharedWatchlistIndicatorCandles, reconcileWatchlistIndicatorPopulation, refreshWatchlistIndicators } from "@/src/modules/watchlist/server/indicators/indicator-refresh-runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,7 +51,10 @@ export async function POST(request: Request): Promise<Response> {
     after(async () => {
       // Recheck after response: activation may change while a background operation is queued.
       try {
-        const current = await new LiveWatchlistStore().getSymbol(symbol);
+        const population = await new LiveWatchlistStore().listSymbols();
+        const active = population.symbols.filter(ticker => ticker.status !== "deactivated" && ticker.firstPostedAt && Number.isSafeInteger(ticker.firstPostedAt));
+        reconcileWatchlistIndicatorPopulation(new Map(active.map(ticker => [ticker.symbol, `${ticker.symbol}:${ticker.firstPostedAt}`])));
+        const current = active.find(ticker => ticker.symbol === symbol);
         if (current && current.status !== "deactivated" && current.firstPostedAt === activatedAt) {
           await refreshWatchlistIndicators(symbol, activationId);
         }

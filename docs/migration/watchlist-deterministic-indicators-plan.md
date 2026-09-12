@@ -168,6 +168,7 @@ Price distance percentages should use `100 × (price - level) / level`, with pos
 - A late-added ticker needs session history to calculate session VWAP; do not start accumulation at Watchlist addition time and call it the full-session VWAP.
 - If session history is incomplete, withhold the affected VWAP interpretation while keeping unrelated valid rows.
 - Handle holidays, early closes, halts, newly listed symbols, reverse splits and changing price scales. No mixing differently adjusted series within an indicator window.
+- Missing volume is nullable, never zero-filled: valid OHLC can still support EMA/RSI/ATR. Volume comparisons restart their known-volume baseline after a missing-volume bar; session VWAP remains unavailable if a required minute's volume is unknown. Record missing-volume counts separately from missing candles. This contract was confirmed against saved owner packets during implementation.
 
 ## 6. Provider, refresh and long-term resource policy
 
@@ -204,6 +205,8 @@ Give each ticker activation/session a generation identity. Cancel obsolete work 
 Before promising all timeframes, verify the application's actual Moomoo bridge and Yahoo adapter, not just general vendor documentation. Record supported intervals, prior-day one-minute access, extended-hours coverage, lookback limits, pagination, adjustment basis, timestamp semantics and completed-bar behavior. Test a bounded representative response for each required capability. If one provider cannot satisfy a timeframe/session, retain a valid prior snapshot or show the affected field unavailable; do not silently substitute daily candles for intraday history. Document the fallback behavior per timeframe and ensure summaries are not comparing incompatible sessions or price adjustments.
 
 Active monitoring follows existing Watchlist eligibility/session boundaries, independent of whether a member page is open or AI generation is enabled. Do not request unsupported market-closed/overnight windows continuously. Exact session scheduling must be documented after inspecting current runtime behavior; changing existing publisher schedules is not implicit authorization.
+
+Indicators-specific closed-session rule: permit one completion/history pass for the latest verified extended-session close, then reuse it throughout that closed interval (including weekends) until the next supported session opens. Unknown calendar coverage does not initiate candle requests. The existing publisher's own schedule is unchanged. Reconcile the calculation population against currently published activation identities so removed tickers do not accumulate indefinitely in its bounded cache.
 
 No claimed Moomoo quota is assumed: the owner has not encountered a limit. Monitor measured call volume, latency and failures and adjust after actual use. A price-movement-triggered scheduler is deferred; it is not required for this version.
 

@@ -17,7 +17,7 @@ export type WatchlistIndicatorSnapshot = Readonly<{
 type Slot = { provider: IndicatorProvider; adjustment: string; series: IndicatorSeries };
 export type IndicatorSharedCandles = Readonly<{ provider: IndicatorProvider; dataThrough: number; candles: readonly IndicatorCandle[] }>;
 type Ticker = { activationId: string; slots: Map<IndicatorTimeframe, Slot>; snapshot: WatchlistIndicatorSnapshot;
-  sharedFiveMinute: IndicatorSharedCandles | null; refreshedAt: number };
+  sharedFiveMinute: IndicatorSharedCandles | null; refreshedAt: number; closedBoundary: number | null };
 type Load = (input: Readonly<{ provider: IndicatorProvider; request: IndicatorHistoryRequest; budget: IndicatorHistoryBudget;
   consumer: string; sufficientHistory: Readonly<{ minimumBars: number; coverFrom: number }> }>) => Promise<IndicatorHistoryOutcome>;
 const FRAMES: readonly IndicatorTimeframe[] = ["1m", "5m", "15m", "1d"];
@@ -53,20 +53,53 @@ export class IndicatorRefreshService {
     return ticker?.activationId === activationId ? structuredClone(ticker.sharedFiveMinute) : null;
   }
   deactivate(symbol: string): void { this.tickers.delete(symbol); }
+  reconcilePopulation(active: ReadonlyMap<string, string>): void {
+    for (const [symbol, ticker] of this.tickers) if (active.get(symbol) !== ticker.activationId) this.tickers.delete(symbol);
+  }
+  private decision(symbol: string, ticker: Ticker, outcome: "cache_hit" | "coalesced" | "session_closed" | "calendar_unavailable"): void {
+    const id = this.id(), now = this.now();
+    this.record({ id, instanceId: this.instanceId, symbol, activationId: ticker.activationId, queuedAt: now,
+      startedAt: null, finishedAt: now, outcome, calculationId: ticker.snapshot.calculationId, attempts: [], timeframes: [] });
+    this.records.delete(id);
+  }
+  /** null is an open supported session; undefined means the calendar cannot establish a boundary. */
+  private closedBoundary(now: number): number | null | undefined {
+    const date = indicatorMarketDate(now), day = indicatorTradingDay(this.options.calendar, date);
+    if (day === undefined) return undefined;
+    if (day && now >= day.preOpen && now < day.postClose) return null;
+    const noon = Date.parse(`${date}T12:00:00Z`);
+    for (let offset = 0; offset <= 10; offset++) {
+      const candidate = indicatorTradingDay(this.options.calendar, new Date(noon - offset * 86_400_000).toISOString().slice(0, 10));
+      if (candidate && candidate.postClose <= now) return candidate.postClose;
+    }
+    return undefined;
+  }
   refresh(symbol: string, activationId: string): Promise<WatchlistIndicatorSnapshot> {
     if (!/^[A-Z][A-Z0-9.-]{0,15}$/u.test(symbol) || !/^[A-Za-z0-9:_-]{1,100}$/u.test(activationId)) return Promise.reject(Error("indicator_refresh_identity_invalid"));
     const key = `${symbol}:${activationId}`;
     const running = this.inflight.get(key);
-    if (running) return running.then(snapshot => structuredClone(snapshot));
+    if (running) {
+      const ticker = this.tickers.get(symbol);
+      if (ticker?.activationId === activationId) this.decision(symbol, ticker, "coalesced");
+      return running.then(snapshot => structuredClone(snapshot));
+    }
     let ticker = this.tickers.get(symbol);
     if (!ticker || ticker.activationId !== activationId) {
       if (!ticker && this.tickers.size >= 64) return Promise.reject(Error("indicator_refresh_population_limit"));
-      ticker = { activationId, slots: new Map(), refreshedAt: 0, sharedFiveMinute: null,
+      ticker = { activationId, slots: new Map(), refreshedAt: 0, closedBoundary: null, sharedFiveMinute: null,
         snapshot: { version: "indicators-v1", symbol, activationId, calculationId: null, timeframes: {}, vwap: { value: null, dataThrough: null } } };
       this.tickers.set(symbol, ticker);
     }
-    if (this.now() - ticker.refreshedAt < 120_000) return Promise.resolve(structuredClone(ticker.snapshot));
-    const operation = this.perform(symbol, ticker).finally(() => { this.inflight.delete(key); });
+    if (this.now() - ticker.refreshedAt < 120_000) {
+      this.decision(symbol, ticker, "cache_hit"); return Promise.resolve(structuredClone(ticker.snapshot));
+    }
+    const boundary = this.closedBoundary(this.now());
+    if (boundary === undefined || (boundary !== null && ticker.closedBoundary === boundary)) {
+      this.decision(symbol, ticker, boundary === undefined ? "calendar_unavailable" : "session_closed");
+      return Promise.resolve(structuredClone(ticker.snapshot));
+    }
+    // One completion/warm-up pass after close, not perpetual weekend or unsupported overnight fetches.
+    const operation = this.perform(symbol, ticker).finally(() => { ticker.closedBoundary = boundary; this.inflight.delete(key); });
     this.inflight.set(key, operation);
     return operation.then(snapshot => structuredClone(snapshot));
   }
@@ -134,7 +167,8 @@ export class IndicatorRefreshService {
         }
         const retained = selected ?? existing, snapshot = retained?.series.snapshot();
         frameAudit.push({ timeframe, provider: retained?.provider ?? null, primaryOutcome, fallbackOutcome, acceptedBars: accepted,
-          through: snapshot?.result?.dataThrough ?? null, missingMinutes: 0, excludedBars: excluded, calculationRevision: snapshot ? String(snapshot.revision) : null });
+          through: snapshot?.result?.dataThrough ?? null, missingMinutes: 0, missingVolumeBars: snapshot?.candles.filter(c => c.volume === null).length ?? 0,
+          excludedBars: excluded, calculationRevision: snapshot ? String(snapshot.revision) : null });
       }
       if (this.tickers.get(symbol) !== ticker) {
         this.record({ ...this.records.get(id)!, timeframes: frameAudit, finishedAt: this.now(), outcome: "superseded" });

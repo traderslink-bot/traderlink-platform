@@ -26,6 +26,10 @@ export function readSharedWatchlistIndicatorCandles(symbol: string, activationId
   return state.service?.sharedFiveMinute(symbol, activationId) ?? null;
 }
 
+export function reconcileWatchlistIndicatorPopulation(active: ReadonlyMap<string, string>): void {
+  state.service?.reconcilePopulation(active);
+}
+
 export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
   if (!state.service) {
     const coordinator = new IndicatorRequestCoordinator({ audit: event => state.service?.recordTransport(event) });

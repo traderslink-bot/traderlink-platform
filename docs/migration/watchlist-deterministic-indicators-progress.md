@@ -28,6 +28,15 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Captured-data and lifecycle QA — 2026-09-12
+
+- Owner additionally authorized adding Watchlist tickers for testing, noting Saturday market closure. No ticker was added in this checkpoint; no approval, Discord post or paid AI request was triggered.
+- Located actual saved request packets inside the three private owner exports (JSON embedded in request text), not merely saved analysis prose. Completed coverage: TRUG 59 one-minute / 104 five-minute / 50 daily bars; SXTC 59 / 89 / 173; PCLA 59 / 89 / 173. Complete three-bar five-minute groups provide 34 / 29 / 29 fifteen-minute fixtures. Daily export date labels were explicitly normalized to the matching trading session; bars outside verified calendar coverage and incomplete bars were not counted.
+- Real TRUG evidence exposed 30 five-minute bars with valid OHLC but unavailable volume. Fixed the new Indicators input contract to retain price-based EMA/RSI/ATR while keeping unknown volume nullable; no zero volume or synthetic candle is invented. Volume baseline restarts after an unknown-volume bar; VWAP remains unavailable without all required volume. Parsers, aggregation, engine and admin missing-volume counts are aligned. Existing AI data packets, runtime candle types and Potential Path formulas were not changed.
+- Independent captured-data verifier passed 54 EMA/RSI/ATR and incomplete-VWAP assertions on actual TRUG/SXTC/PCLA packets. These packets do NOT contain full-session one-minute history, so they do not prove session VWAP parity. Equivalent captures for TNON/AENT/FTFT/FEIM/BDRX/SURG are absent from this selected local sample; synthetic nine-symbol tests remain separate evidence.
+- Added closed-session gating: one history/completion pass for the latest verified session close, then no repeated weekend/unsupported overnight candle requests; unknown calendar coverage is explicit. Added cache-hit/closed/coalesced decision audit outcomes and current published activation population reconciliation, preventing removed tickers from permanently filling the 64-ticker cache.
+- Focused results: foundation 64 assertions; history adapter 53; refresh service 60; authenticated POST 25; strict pure refresh-service, member card and admin TypeScript checks passed. No full suite/build/server/provider call/deployment. Remaining restart restoration, older-seed/corporate-action handling and final source/live acceptance are still open.
+
 ### Owner audit and unified navigation checkpoint — 2026-09-12
 
 - Shared connection commits: Platform `6f5457f19`; canonical runtime `54be739`. Local records only; neither is released.

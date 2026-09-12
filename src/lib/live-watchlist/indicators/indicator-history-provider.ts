@@ -4,7 +4,7 @@ import type { IndicatorRequestCoordinator, IndicatorProvider, IndicatorRequestFa
 
 /** Provider timestamps are milliseconds; exchange-session completion is applied downstream. */
 export type IndicatorHistoryBar = Readonly<{
-  start: number; open: number; high: number; low: number; close: number; volume: number;
+  start: number; open: number; high: number; low: number; close: number; volume: number | null;
 }>;
 export type IndicatorHistoryRequest = Readonly<{
   symbol: string; timeframe: IndicatorTimeframe; start: number; end: number;
@@ -40,10 +40,11 @@ function numeric(value: unknown): number | null {
 }
 function bar(start: unknown, values: readonly unknown[], volumePrecision = 0): IndicatorHistoryBar | null {
   const timestamp = numeric(start), fields = values.map(numeric);
-  if (timestamp === null || !Number.isSafeInteger(timestamp) || timestamp <= 0 || timestamp % 60_000 !== 0 || fields.some(n => n === null)) return null;
-  const [open, high, low, close, rawVolume] = fields as number[];
-  const volume = rawVolume / 10 ** volumePrecision;
-  if (Math.min(open, high, low, close) <= 0 || volume < 0 || !Number.isFinite(volume)
+  if (timestamp === null || !Number.isSafeInteger(timestamp) || timestamp <= 0 || timestamp % 60_000 !== 0 || fields.slice(0, 4).some(n => n === null)) return null;
+  const [open, high, low, close] = fields as number[];
+  if (values[4] != null && fields[4] === null) return null;
+  const volume = fields[4] === null ? null : fields[4] / 10 ** volumePrecision;
+  if (Math.min(open, high, low, close) <= 0 || (volume !== null && (volume < 0 || !Number.isFinite(volume)))
     || high < Math.max(open, close, low) || low > Math.min(open, close)) return null;
   return { start: timestamp, open, high, low, close, volume };
 }
