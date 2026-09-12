@@ -84,4 +84,9 @@ now += 120_000; await service.refresh("TNON", "TNON:one"); equal(calls.length, c
 now += 86_400_000; await service.refresh("TNON", "TNON:one"); equal(calls.length, closedCalls);
 service.reconcilePopulation(new Map([["TNON", "TNON:one"]]));
 equal(service.current("AENT", "AENT:one"), null); equal(service.current("TNON", "TNON:one") !== null, true);
+failure = "none";
+const closedWarmup = await service.refresh("AENT", "AENT:weekend");
+equal(closedWarmup.vwap.value !== null, true); equal(closedWarmup.vwap.dataThrough, day.postClose);
+const weekendCalls = calls.length;
+now += 120_000; await service.refresh("AENT", "AENT:weekend"); equal(calls.length, weekendCalls);
 console.log(`PASS: ${assertions} offline refresh integration assertions across nine named ticker fixtures: four frames, session VWAP, completed Daily caching, two-minute reuse, retained timestamps on failure, explicit Yahoo fallback, immutable prior evidence and activation isolation. These are synthetic fixtures, not live market-data acceptance.`);

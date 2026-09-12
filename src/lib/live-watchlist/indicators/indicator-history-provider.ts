@@ -212,14 +212,51 @@ export async function requestIndicatorHistoryPage(input: Readonly<{
   return input.provider === "moomoo" ? parseMoomooIndicatorPage(payload, timeframe) : parseYahooIndicatorPage(payload);
 }
 
-/** Every HTTP page/retry passes through the shared coordinator, not one opaque multi-page call. */
-export async function fetchIndicatorHistory(input: Readonly<{
+type HistoryFetchInput = Readonly<{
   provider: IndicatorProvider; request: IndicatorHistoryRequest; coordinator: IndicatorRequestCoordinator;
   scope: string; consumer: string; budget: IndicatorHistoryBudget; accessToken?: string; fetcher?: typeof fetch;
   nextEnd?: number | null;
   /** Stop older paging once warm-up and the requested session start are both covered. */
   sufficientHistory?: Readonly<{ minimumBars: number; coverFrom: number }>;
-}>): Promise<IndicatorHistoryOutcome> {
+}>;
+
+function newYorkDayStart(time: number): number {
+  const date = newYorkDate(time), noon = Date.parse(`${date}T12:00:00Z`);
+  const offset = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", timeZoneName: "shortOffset" })
+    .formatToParts(noon).find(part => part.type === "timeZoneName")?.value;
+  const match = /^GMT([+-])(\d{1,2})(?::(\d{2}))?$/u.exec(offset ?? "");
+  if (!match) throw Error("indicator_history_timezone_unavailable");
+  const minutes = (Number(match[2]) * 60 + Number(match[3] ?? 0)) * (match[1] === "+" ? 1 : -1);
+  return Date.parse(`${date}T00:00:00Z`) - minutes * 60_000;
+}
+
+/** Moomoo may truncate multi-day 1m to the oldest 1,000 rows with has_more=false.
+ * Read bounded single dates newest-first so current-session VWAP is never starved. */
+export async function fetchIndicatorHistory(input: HistoryFetchInput): Promise<IndicatorHistoryOutcome> {
+  if (input.provider !== "moomoo" || input.request.timeframe !== "1m" || input.nextEnd != null
+    || newYorkDate(input.request.start) === newYorkDate(input.request.end - 1)) return fetchIndicatorHistoryRange(input);
+  indicatorHistoryUrl(input.provider, input.request); // Validate the original overall bound first.
+  let end = input.request.end, pages = 0;
+  const bars: IndicatorHistoryBar[] = [], transportIds: string[] = [];
+  const finish = (outcome: IndicatorHistoryOutcome["outcome"], retryAt?: number): IndicatorHistoryOutcome => ({
+    provider: "moomoo", adjustment: "moomoo-forward", bars: sortedUnique(bars) ?? [], transportIds, pages,
+    outcome, nextEnd: end > input.request.start ? end : null, ...(retryAt === undefined ? {} : { retryAt }),
+  });
+  while (end > input.request.start && input.budget.attemptsRemaining > 0) {
+    const start = Math.max(input.request.start, newYorkDayStart(end - 1));
+    const result = await fetchIndicatorHistoryRange({ ...input, request: { ...input.request, start, end }, sufficientHistory: undefined });
+    bars.push(...result.bars); pages += result.pages; transportIds.push(...result.transportIds);
+    if (!["complete", "no_data"].includes(result.outcome)) return finish(result.outcome, result.retryAt);
+    end = start;
+    const unique = sortedUnique(bars), sufficient = input.sufficientHistory;
+    if (!unique) return { ...finish("invalid_data"), bars: [] };
+    if (sufficient && unique.length >= sufficient.minimumBars && unique[0].start <= sufficient.coverFrom) return finish("sufficient_history");
+  }
+  return finish(end > input.request.start ? "budget_exhausted" : bars.length ? "complete" : "no_data");
+}
+
+/** Every HTTP page/retry passes through the shared coordinator, not one opaque multi-page call. */
+async function fetchIndicatorHistoryRange(input: HistoryFetchInput): Promise<IndicatorHistoryOutcome> {
   let nextEnd = input.nextEnd ?? null, pages = 0;
   const bars: IndicatorHistoryBar[] = [], transportIds: string[] = [];
   const finish = (outcome: IndicatorHistoryOutcome["outcome"], retryAt?: number): IndicatorHistoryOutcome => ({

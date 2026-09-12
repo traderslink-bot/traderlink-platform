@@ -140,7 +140,10 @@ export class IndicatorRefreshService {
     return true;
   }
   private async perform(symbol: string, ticker: Ticker): Promise<WatchlistIndicatorSnapshot> {
-    const id = this.id(), now = this.now(), day = indicatorTradingDay(this.options.calendar, indicatorMarketDate(now));
+    const id = this.id(), now = this.now(), closed = this.closedBoundary(now);
+    // A cold start while closed still describes the last completed trading session.
+    // Candle timestamps stay historical; this does not manufacture weekend activity.
+    const day = indicatorTradingDay(this.options.calendar, indicatorMarketDate(closed == null ? now : closed - 1));
     const budget = { moomoo: createIndicatorHistoryBudget(), yahoo: createIndicatorHistoryBudget() };
     this.record({ id, instanceId: this.instanceId, symbol, activationId: ticker.activationId, queuedAt: now,
       startedAt: null, finishedAt: null, outcome: "queued", calculationId: null, attempts: [], timeframes: [] });

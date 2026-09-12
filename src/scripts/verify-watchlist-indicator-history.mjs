@@ -97,4 +97,21 @@ const repeatedCursor = await fetchIndicatorHistory({ ...base, scope: "cursor", b
   fetcher: async () => Response.json(payload([row(end - minute)], true, end - minute)) });
 equal(repeatedCursor.outcome, "invalid_data"); equal(repeatedCursor.pages, 2);
 
-console.log(`PASS: ${assertions} offline history-adapter assertions (native timeframes, strict OHLCV, pagination, HTTP budget, shared retry, throttle evidence and sanitization). No network requests.`);
+const friday = Date.parse("2026-09-11T08:00:00Z"), thursday = friday - 86400000;
+const dayUrls = [];
+const datedFetcher = async url => {
+  const date = new URL(url).searchParams.get("start"); dayUrls.push(date);
+  const dayStart = date === "2026-09-11" ? friday : thursday;
+  return Response.json(payload(Array.from({ length: 960 }, (_, i) => row(dayStart + (i + 1) * minute))));
+};
+const fullDay = await fetchIndicatorHistory({ ...base, scope: "dated-full", budget: createIndicatorHistoryBudget(),
+  request: { symbol: "TRUG", timeframe: "1m", start: thursday, end: friday + 960 * minute },
+  sufficientHistory: { minimumBars: 250, coverFrom: friday }, fetcher: datedFetcher });
+equal(dayUrls, ["2026-09-11"]); equal(fullDay.bars.length, 960); equal(fullDay.outcome, "sufficient_history");
+dayUrls.length = 0;
+const earlyDay = await fetchIndicatorHistory({ ...base, scope: "dated-early", budget: createIndicatorHistoryBudget(),
+  request: { symbol: "TRUG", timeframe: "1m", start: thursday, end: friday + 30 * minute },
+  sufficientHistory: { minimumBars: 250, coverFrom: friday }, fetcher: datedFetcher });
+equal(dayUrls, ["2026-09-11", "2026-09-10"]); equal(earlyDay.bars.length, 990);
+equal(earlyDay.bars.at(-1).start, friday + 29 * minute); equal(earlyDay.transportIds.length, 2);
+console.log(`PASS: ${assertions} offline history-adapter assertions (native timeframes, strict OHLCV, newest-date warm-up, pagination, HTTP budget, shared retry, throttle evidence and sanitization). No network requests.`);

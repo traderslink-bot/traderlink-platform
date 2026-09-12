@@ -28,6 +28,14 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Full native matrix and newest-day correction — 2026-09-12
+
+- Ran the current pure provider/coordinator/refresh/series/session/engine modules in memory in the guarded read-only production diagnostic, with no audit-file persistence. All nine requested symbols were included. The initial run showed 1m multi-day responses truncated to the oldest 1,000 bars while reporting completion; 5m/15m/Daily succeeded for seven symbols, while the final two had provider failures whose codes were not captured in that first run. Do not describe that run as passing or infer a confirmed rate limit.
+- Changed Moomoo 1m acquisition to bounded single dates, newest first. Fetch older dates only when requested warm-up/coverage needs them, using the same total attempt/retry budgets. Added current-day-only and early-session/prior-day fixtures. History verifier passes 77 assertions.
+- Reran the complete matrix with 1.1 seconds between diagnostic transport calls: TRUG, TNON, AENT, FTFT, FEIM, BDRX, SURG, SXTC and PCLA all passed four-frame readiness and independent full-session VWAP arithmetic. Each used four successful native Moomoo requests (36 total), retaining 960 1m, 768 5m, 576 15m and 174 calendar-covered Daily bars. Intraday dataThrough was Friday 20:00 ET, Daily Friday 16:00 ET. The spacing is diagnostic configuration, not a claim of a measured provider limit or a production scheduler change.
+- Corrected closed-market cold warm-up to use the last completed trading session for VWAP, with historical timestamps and no repeated closed-session requests. Three focused assertions added; refresh verifier passes 70 assertions. This last lifecycle correction was verified offline after the native matrix.
+- Native multi-symbol acquisition/calculation evidence is now present. Integrated current-main conflict resolution, runtime/UI acceptance, final preservation checks and the complete release handoff remain open. No database writes, AI, ticker publication, Discord, migration, deployment, app restart or local preview server.
+
 ### Native hosted capability correction — 2026-09-12
 
 - Established a read-only SSH diagnostic path on the existing production container without installing, deploying, starting a server or writing files. The isolated Node process reuses the compiled publisher route/owner selection, wraps better-sqlite3 with readonly/fileMustExist/query_only, blocks OAuth and every non-history network call, and permits only three serial historical quote calls per invocation. Credentials stay inside the process. The existing app process is unchanged.
