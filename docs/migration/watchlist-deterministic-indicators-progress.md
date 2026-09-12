@@ -28,6 +28,17 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Provider history and session integration checkpoint — 2026-09-12
+
+- Added concrete, injectable Moomoo/Yahoo HTTP history adapters, not active hosted scheduling yet. Each page/retry uses the shared coordinator; all timeframe calls share a ten-attempt and one-transient-retry provider budget per logical refresh.
+- Verified the current Moomoo **Web API** documentation: native 1m/5m/15m/Daily use `ktype=1/6/7/2`; history is capped at 370 bars per page and `next_time` is passed as the following page's `end`. This is distinct from OpenD SDK enums and from the existing AI bridge's paging shape. Existing AI code remains unchanged.
+- Added strict OHLCV/duplicate validation, bounded response bytes, native timeframe queries, explicit provider adjustment provenance, incomplete pagination outcomes, secret-free HTTP status/Retry-After evidence and abort propagation. Provider variants must never be spliced into one series without a rebuild.
+- Added calendar-driven normalization using the existing verified calendar snapshot as input, without importing Coach runtime services. Completed-bar filtering, native timeframe alignment, holiday/early-close/DST boundaries and exact minute-by-minute same-day VWAP coverage are separate from pagination success.
+- Ran 50 offline history-adapter assertions and focused strict TypeScript checks successfully. Live authenticated provider behavior, missing/no-trade coverage, all-ticker parity and runtime wiring still require verification. No live network market-data calls, AI calls, migration, server or deployment.
+- Current integration work: persist refresh/calculation audit and cached histories; connect the authenticated Platform/provider boundary to the canonical Watchlist runtime; then wire member card and unified admin navigation. UI and complete feature acceptance remain outstanding.
+
+Provider source: [Moomoo History K-Line](https://open.moomoo.com/api/quote/basic-data/history-kline), [Moomoo pagination](https://open.moomoo.com/zh-cn/api/quote/pagination). Documentation retrieved 2026-09-12. Unavailable rate-limit documentation is not replaced with guessed vendor error codes: explicit HTTP 429 is recorded as throttling; other failures retain their actual sanitized category.
+
 ### Shared-request coordination checkpoint — 2026-09-12
 
 - Calculation foundation saved in narrow local commit `f2cd1ea6e`; no push or deployment. Unrelated pre-existing source/docs edits remain unstaged.
@@ -107,4 +118,4 @@ Owner navigation clarification: detailed auditing belongs in a separate **Indica
 - [ ] Narrow verified implementation commits and authorized coordinator handoff.
 - [ ] Authorized hosted verification, owner visual acceptance and release outcome.
 
-Next step: review this plan; no feature work is represented as already complete.
+Next step: finish the integrated provider/runtime, audit and UI slice. The plan is approved and implementation is underway; the complete feature is not yet ready for release.

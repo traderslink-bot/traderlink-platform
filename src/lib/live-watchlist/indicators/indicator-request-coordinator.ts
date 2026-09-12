@@ -18,6 +18,8 @@ export type IndicatorRequestAudit = Readonly<{
   elapsedMs?: number;
   outcome?: string;
   retryAt?: number;
+  httpStatus?: number;
+  retryAfterMs?: number;
 }>;
 type ScopeState = { retryAt: number; delay: number; recovering: boolean; probing: boolean };
 type Queued = { execute: () => Promise<void> };
@@ -28,6 +30,8 @@ export type IndicatorRequest<T> = Readonly<{
   /** Identity of actual normalized provider request, including symbol/range/adjustment. */
   requestKey: string;
   consumer: string;
+  /** A logical multi-page refresh can spend its single retry on only one page. */
+  maxAttempts?: 1 | 2;
   execute: (signal: AbortSignal) => Promise<IndicatorTransportResult<T>>;
 }>;
 
@@ -74,10 +78,12 @@ export class IndicatorRequestCoordinator {
       });
     }
     let resolve!: (value: IndicatorCoordinatedResult<T>) => void;
-    const pending = new Promise<IndicatorCoordinatedResult<T>>(done => { resolve = done; });
+    let reject!: (reason: unknown) => void;
+    const pending = new Promise<IndicatorCoordinatedResult<T>>((done, fail) => { resolve = done; reject = fail; });
     this.inflight.set(key, pending as Promise<IndicatorCoordinatedResult<unknown>>);
     this.queue.push({ execute: async () => {
       try { resolve(await this.perform(request)); }
+      catch (error) { reject(error); }
       finally { this.inflight.delete(key); }
     } });
     this.pump();
@@ -102,7 +108,8 @@ export class IndicatorRequestCoordinator {
   private async perform<T>(request: IndicatorRequest<T>): Promise<IndicatorCoordinatedResult<T>> {
     const scopeKey = this.scopeKey(request);
     const ids: string[] = [];
-    for (let attempt = 0; attempt < 2; attempt++) {
+    const maxAttempts = request.maxAttempts ?? 2;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const scope = this.scopes.get(scopeKey);
       if (scope && this.now() < scope.retryAt) return this.defer(request, "backoff", scope.retryAt, ids);
       if (scope?.probing) return this.defer(request, "recovery_probe", this.now() + 120_000, ids);
@@ -132,7 +139,8 @@ export class IndicatorRequestCoordinator {
       }
       this.record({ kind: "finished", provider: request.provider, consumer: request.consumer, transportId,
         at: this.now(), elapsedMs: Math.max(0, this.now() - startedAt),
-        outcome: result.ok ? result.usable ? "usable_success" : "accepted_without_usable_data" : result.reason });
+        outcome: result.ok ? result.usable ? "usable_success" : "accepted_without_usable_data" : result.reason,
+        ...(!result.ok ? { httpStatus: result.httpStatus, retryAfterMs: result.retryAfterMs } : {}) });
 
       const current = this.scopes.get(scopeKey);
       if (!result.ok && result.reason === "rate_limited") {
@@ -140,7 +148,7 @@ export class IndicatorRequestCoordinator {
         const instructed = result.retryAfterMs;
         const wait = instructed !== undefined && Number.isFinite(instructed) && instructed >= 0 ? instructed : delay;
         this.scopes.set(scopeKey, { delay, retryAt: this.now() + wait, recovering: true, probing: false });
-      } else if (scope?.recovering) {
+      } else if (scope?.recovering && current === scope) {
         if (result.requestAccepted) this.scopes.delete(scopeKey);
         else if (!result.ok && ["no_data", "partial_data", "invalid_data", "invalid_request"].includes(result.reason)) {
           scope.retryAt = this.now() + 120_000; // Inconclusive symbol probe, not increased global throttling.
@@ -149,7 +157,7 @@ export class IndicatorRequestCoordinator {
           scope.retryAt = this.now() + scope.delay;
         }
       }
-      if (attempt === 0 && !result.ok && ["transport_error", "timeout", "provider_error"].includes(result.reason)) {
+      if (attempt + 1 < maxAttempts && !result.ok && ["transport_error", "timeout", "provider_error"].includes(result.reason)) {
         await this.sleep(2_000);
         continue;
       }
