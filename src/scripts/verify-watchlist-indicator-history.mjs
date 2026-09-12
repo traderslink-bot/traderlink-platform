@@ -12,6 +12,10 @@ function equal(actual, expected) { assert.deepEqual(actual, expected); assertion
 equal(parseMoomooIndicatorPage(payload([row(end - minute), row(start)])).data.bars.map(b => b.start), [start, end - minute]);
 equal(parseMoomooIndicatorPage(payload([row(start + minute)]), "1m").data.bars[0].start, start);
 equal(parseMoomooIndicatorPage(payload([row(start)]), "1d").data.bars[0].start, start);
+equal(parseMoomooIndicatorPage(payload([row(start + 5 * minute)]), "5m").data.bars[0].start, start);
+equal(parseMoomooIndicatorPage(payload([row(start + 15 * minute)]), "15m").data.bars[0].start, start);
+equal(parseMoomooIndicatorPage(payload(Array.from({ length: 960 }, (_, i) => row(start + (i + 1) * minute))), "1m").data.bars.length, 960);
+equal(parseMoomooIndicatorPage(payload(Array.from({ length: 12001 }, (_, i) => row(start + (i + 1) * minute))), "1m").reason, "invalid_data");
 equal(parseMoomooIndicatorPage(payload([row(start), row(start, 4)])).reason, "invalid_data");
 equal(parseMoomooIndicatorPage(payload([{ ...row(start), close: null }])).reason, "invalid_data");
 equal(parseMoomooIndicatorPage(payload([])).usable, false);
@@ -30,6 +34,7 @@ for (const [timeframe, ktype] of [["1m", "1"], ["5m", "6"], ["15m", "7"], ["1d",
   const url = new URL(indicatorHistoryUrl("moomoo", { ...request, timeframe }));
   equal(url.searchParams.get("ktype"), ktype);
   equal(url.searchParams.get("autype"), "1");
+  equal(url.searchParams.get("end"), timeframe === "1d" ? "2026-09-11" : "2026-09-12");
 }
 equal(new URL(indicatorHistoryUrl("moomoo", request, end - minute)).searchParams.get("end"), String(end - minute));
 assert.throws(() => indicatorHistoryUrl("moomoo", { ...request, symbol: "../bad" })); assertions++;

@@ -70,18 +70,20 @@ export function parseMoomooIndicatorPage(payload: unknown, timeframe?: Indicator
       : root?.ret_code === -7 || root?.ret_code === -8 ? "no_data" : "provider_error";
     return { ok: false, reason, requestAccepted: [-3, -7, -8].includes(Number(root?.ret_code)) };
   }
-  if (!Array.isArray(data?.kline_list) || data.kline_list.length > 370) return invalid();
+  // Hosted Web API can return a complete intraday date range despite num=370.
+  // Retain the decoded-byte cap and a bounded row cap instead of rejecting valid sessions.
+  if (!Array.isArray(data?.kline_list) || data.kline_list.length > (timeframe && timeframe !== "1d" ? 12_000 : 370)) return invalid();
   const precision = data.volume_precision ?? 0;
   if (!Number.isInteger(precision) || Number(precision) < 0 || Number(precision) > 8) return invalid();
   const bars: IndicatorHistoryBar[] = [];
   for (const value of data.kline_list) {
     const row = object(value);
     if (!row) return invalid();
-    // Verified against nine complete extended sessions and TRUG/Yahoo OHLC
-    // alignment: Web API 1m labels the interval END. Internally bars use START.
-    // Daily date labels are not shifted; other native frames require separate proof.
+    // Hosted native 1m/5m/15m cover 04:00–20:00 with the interval END label.
+    // Internally bars use START. Daily trading-date labels are not shifted.
     const timestamp = numeric(row.time_key);
-    const normalized = bar(timestamp === null ? null : timestamp - (timeframe === "1m" ? 60_000 : 0),
+    const duration = timeframe ? { "1m": 60_000, "5m": 300_000, "15m": 900_000, "1d": 0 }[timeframe] : 0;
+    const normalized = bar(timestamp === null ? null : timestamp - duration,
       [row.open, row.high, row.low, row.close, row.volume], Number(precision));
     if (!normalized) return invalid();
     bars.push(normalized);
@@ -138,6 +140,11 @@ function newYorkDate(milliseconds: number): string {
   const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
 }
+function followingDate(date: string): string {
+  const value = new Date(`${date}T12:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + 1);
+  return value.toISOString().slice(0, 10);
+}
 export function indicatorHistoryUrl(provider: IndicatorProvider, input: IndicatorHistoryRequest, nextEnd: number | null = null): string {
   if (!/^[A-Z][A-Z0-9.-]{0,15}$/u.test(input.symbol) || !["1m", "5m", "15m", "1d"].includes(input.timeframe)
     || !Number.isSafeInteger(input.start) || !Number.isSafeInteger(input.end) || input.start <= 0 || input.end <= input.start
@@ -146,7 +153,10 @@ export function indicatorHistoryUrl(provider: IndicatorProvider, input: Indicato
   if (provider === "moomoo") {
     // These are Web API enum values, NOT OpenD SDK enum values.
     const ktype = { "1m": "1", "5m": "6", "15m": "7", "1d": "2" }[input.timeframe];
-    const query = new URLSearchParams({ start: newYorkDate(input.start), end: nextEnd === null ? newYorkDate(input.end - 1) : String(nextEnd),
+    // Native intraday date end is exclusive: same-date start/end returns no bars.
+    // Request through the following NY date, then retain only the exact time window.
+    const endDate = newYorkDate(input.end - 1);
+    const query = new URLSearchParams({ start: newYorkDate(input.start), end: nextEnd === null ? (input.timeframe === "1d" ? endDate : followingDate(endDate)) : String(nextEnd),
       ktype, autype: "1", extended_time: input.timeframe === "1d" ? "0" : "1", num: "370" });
     return `https://webapi.moomoo.com/api/v1.0/quote/US.${encodeURIComponent(input.symbol)}/history-kline?${query}`;
   }

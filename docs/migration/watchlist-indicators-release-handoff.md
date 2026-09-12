@@ -1,6 +1,6 @@
 # Watchlist Indicators — pre-release handoff
 
-Status: **Not release-ready.** Local implementation checkpoints exist; native Moomoo higher-timeframe acceptance and integrated hosted acceptance are outstanding. This document is not authorization to publish, and has not been sent to another chat.
+Status: **Not release-ready.** Local implementation checkpoints exist; native Moomoo capability/timestamp behavior is now established by a read-only hosted diagnostic. End-to-end new-adapter multi-symbol acceptance and integrated hosted acceptance remain outstanding. This document is not authorization to publish, and has not been sent to another chat.
 
 Controlling [plan](watchlist-deterministic-indicators-plan.md) and [progress](watchlist-deterministic-indicators-progress.md).
 
@@ -78,8 +78,8 @@ This handoff document itself is an additional documentation-only allowlist entry
 ## Evidence and remaining gates
 
 - Exact per-check results and limitations are in progress. Nine actual Friday histories verify one-minute conversion, derived 5m/15m calculations and full-session HLC3-volume VWAP arithmetic. They do not prove native 5m/15m/Daily transport, real throttling, chart-reference VWAP parity or hosted rendering.
-- Native Moomoo 5m/15m timestamp convention remains unverified. Do not publish assumed start-labelled native bars just because the one-minute path now passes. Daily date/adjustment and prior-history behavior also require native-provider acceptance.
-- The existing authenticated production bridge only exposes 1m; it cannot run the new multi-timeframe adapter before its code is available server-side. Railway is linked from the canonical runtime folder, not this worktree. No project link or variable was changed.
+- Native Moomoo 5m/15m end labels and exclusive intraday end-date boundary were established through the isolated read-only compiled-route diagnostic, and corrected in the new adapter. Daily returned 251 NY-date-labelled bars. Whole new-adapter execution and multi-symbol native numerical parity remain to be checked.
+- The existing public authenticated bridge only exposes 1m. A separate isolated Node diagnostic can reuse its compiled owner selection with forced read-only SQLite and a history-only network guard; this does not modify the app process or deploy an endpoint. Railway is linked from the canonical runtime folder, not this worktree. No project link or variable was changed.
 - No database migration is introduced. Audit files use the existing persistent storage boundary, with separate retention/byte limits. Verify directory permissions and one-writer deployment behavior during authorized hosted acceptance.
 - Preserve manual Analysis refresh, review/approval/editing, Discord publication, EODHD updates and Potential Path ATR. The shared bridge changes candle polling, not AI-generation settings or publishing authority.
 - Before release: settle native-provider evidence, resolve the two files against then-current main, run focused integrated checks, verify member/admin rendering on the authorized hosted environment (no local preview server), and obtain separate owner deployment approval through the serialized release process.

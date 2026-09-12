@@ -28,6 +28,13 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Native hosted capability correction — 2026-09-12
+
+- Established a read-only SSH diagnostic path on the existing production container without installing, deploying, starting a server or writing files. The isolated Node process reuses the compiled publisher route/owner selection, wraps better-sqlite3 with readonly/fileMustExist/query_only, blocks OAuth and every non-history network call, and permits only three serial historical quote calls per invocation. Credentials stay inside the process. The existing app process is unchanged.
+- First invocation: same-date intraday start/end returned zero native 5m/15m bars; Daily returned 251 bars with NY-midnight date labels, ending September 11. Second invocation with the next-date end returned TRUG 960 1m, 192 5m and 64 15m bars, despite num=370. All native intraday frames use end labels: first 04:01/04:05/04:15 ET, last 20:00 ET. Responses use open/high/low/close, explicit has_more=false, no positive next cursor.
+- Corrected new adapter intraday end-date handling, native 5m/15m end-to-start conversion, and parser row cap (12,000 intraday rows, existing 4 MB decoded response cap; Daily 370). Exact requested time bounds still filter the response. Existing AI/chart bridge behavior is untouched.
+- Focused provider verification now passes 70 assertions and strict TypeScript. Six actual provider requests total across these two diagnostic invocations; no AI, ticker publication, Discord, database write, migration, deployment or restart. Native timestamps/date boundary are no longer unknown; end-to-end new-adapter multi-symbol verification and integrated release acceptance remain outstanding.
+
 ### Current release-parent rehearsal — 2026-09-12
 
 - Verified remote main at `2a40e87b964574f1b525f3f3f1cb8fce7f24468a`; existing Railway production metadata reports that same SHA on main. No deployment/configuration changes.
