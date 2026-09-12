@@ -15,6 +15,12 @@ import { readInlineAnalysisMessage } from "@/src/lib/live-watchlist/analysis-inl
 import { WatchlistAnalysisEditor } from "./watchlist-analysis-editor";
 
 const AnalysisPreviewCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then((module) => module.TradersLinkAiReadCard));
+const IndicatorAuditPanel = dynamic(() => import("./watchlist-indicator-audit-panel"));
+const RUNTIME_SECTIONS = [
+  ["watchlist", "Watchlist"], ["runtime", "Runtime"], ["market-data", "Market Data"],
+  ["ai-controls", "AI Controls"], ["live-website-controls", "Live Website Controls"],
+  ["automatic-low-float-selection", "Automatic Low-Float Selection"],
+] as const;
 
 const MINIMUM_FRAME_HEIGHT = 900;
 
@@ -22,13 +28,24 @@ export function WatchlistRuntimeAdminClient({
   dailyRecapsPanel,
   usagePanel,
 }: {
-  dailyRecapsPanel: ReactNode;
+  dailyRecapsPanel?: ReactNode;
   usagePanel: ReactNode;
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [height, setHeight] = useState(MINIMUM_FRAME_HEIGHT);
-  const [selectedSection, setSelectedSection] = useState<"runtime" | "usage" | "recaps">("runtime");
+  const [selectedSection, setSelectedSection] = useState<"runtime" | "usage" | "recaps" | "indicator-audit">("runtime");
+  const [runtimeSection, setRuntimeSection] = useState<string>("watchlist");
+  const [auditOpened, setAuditOpened] = useState(false);
+  const runtimeSectionRef = useRef(runtimeSection);
+  const selectRuntimeSection = useCallback((section: string) => {
+    if (!RUNTIME_SECTIONS.some(([id]) => id === section)) return;
+    runtimeSectionRef.current = section; setRuntimeSection(section); setSelectedSection("runtime");
+    frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-admin-wrapper", type: "select-section", section }, window.location.origin);
+  }, []);
+  const syncNavigation = useCallback(() => {
+    frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-admin-wrapper", type: "select-section", section: runtimeSectionRef.current }, window.location.origin);
+  }, []);
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
   const [analysisPreview, setAnalysisPreview] = useState<{
     card: LiveWatchlistCardContent; dipBuyPlanVisible: boolean;
@@ -45,6 +62,7 @@ export function WatchlistRuntimeAdminClient({
   }, []);
 
   const handleLoad = useCallback(() => {
+    syncNavigation();
     resizeObserverRef.current?.disconnect();
     resizeFrame();
     const frameDocument = frameRef.current?.contentDocument;
@@ -53,7 +71,7 @@ export function WatchlistRuntimeAdminClient({
     observer.observe(frameDocument.documentElement);
     if (frameDocument.body) observer.observe(frameDocument.body);
     resizeObserverRef.current = observer;
-  }, [resizeFrame]);
+  }, [resizeFrame, syncNavigation]);
 
   const selectUsage = useCallback(() => {
     setSelectedSection("usage");
@@ -71,7 +89,10 @@ export function WatchlistRuntimeAdminClient({
       if (!event.data || typeof event.data !== "object") return;
       const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown };
       if (message.source !== "traderslink-watchlist-admin") return;
+      if (message.type === "navigation-ready") { syncNavigation(); return; }
       if (message.type === "open-usage") { selectUsage(); return; }
+      if (message.type === "open-recaps" && dailyRecapsPanel) { setSelectedSection("recaps"); return; }
+      if (message.type === "open-indicator-audit") { setAuditOpened(true); setSelectedSection("indicator-audit"); return; }
       const symbol = readInlineAnalysisMessage(message);
       if (symbol) { setEditingSymbol(current => current ?? symbol); return; }
       const nextPreview = readAnalysisReviewPreview(message);
@@ -79,7 +100,7 @@ export function WatchlistRuntimeAdminClient({
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [selectUsage]);
+  }, [selectUsage, syncNavigation, dailyRecapsPanel]);
 
   return (
     <>
@@ -91,15 +112,17 @@ export function WatchlistRuntimeAdminClient({
         </DialogContent>
         <DialogActions><Button onClick={() => setAnalysisPreview(null)}>Close</Button></DialogActions>
       </Dialog>
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
-        <Button onClick={() => setSelectedSection("runtime")} variant={selectedSection === "runtime" ? "contained" : "outlined"}>Watchlist controls</Button>
-        <Button onClick={() => setSelectedSection("usage")} variant={selectedSection === "usage" ? "contained" : "outlined"}>Usage</Button>
-        <Button onClick={() => setSelectedSection("recaps")} variant={selectedSection === "recaps" ? "contained" : "outlined"}>Daily Recaps</Button>
+      <Box component="nav" aria-label="Watchlist Admin sections" sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+        {RUNTIME_SECTIONS.map(([id, title]) => <Button key={id} onClick={() => selectRuntimeSection(id)} aria-current={selectedSection === "runtime" && runtimeSection === id ? "page" : undefined} variant={selectedSection === "runtime" && runtimeSection === id ? "contained" : "outlined"}>{title}</Button>)}
+        <Button onClick={selectUsage} aria-current={selectedSection === "usage" ? "page" : undefined} variant={selectedSection === "usage" ? "contained" : "outlined"}>Usage</Button>
+        {dailyRecapsPanel && <Button onClick={() => setSelectedSection("recaps")} aria-current={selectedSection === "recaps" ? "page" : undefined} variant={selectedSection === "recaps" ? "contained" : "outlined"}>Daily Recaps</Button>}
+        <Button onClick={() => { setAuditOpened(true); setSelectedSection("indicator-audit"); }} aria-current={selectedSection === "indicator-audit" ? "page" : undefined} variant={selectedSection === "indicator-audit" ? "contained" : "outlined"}>Indicator Audit</Button>
       </Box>
       <Box hidden={selectedSection !== "usage"}>
         {usagePanel}
       </Box>
       <Box hidden={selectedSection !== "recaps"}>{dailyRecapsPanel}</Box>
+      <Box hidden={selectedSection !== "indicator-audit"}>{auditOpened && <IndicatorAuditPanel />}</Box>
       <Box
         aria-hidden={selectedSection !== "runtime"}
         component="iframe"
