@@ -4,6 +4,12 @@
 
 **Progress:** [Trade Analyzer Analysis Pages Progress](trade-analyzer-analysis-pages-progress.md)
 
+**Approved deterministic indicator extension (2026-09-12), in progress:**
+[Trend & Momentum plan](trade-analyzer-trend-momentum-plan.md) and
+[progress](trade-analyzer-trend-momentum-progress.md). Implementation authorized;
+preserves the newer Version 2 page/grouping contracts identified in that plan.
+This link does not mark the extension complete or released.
+
 **Evidence population correction:** [Trade Analyzer Candle-backed Population Progress](trade-analyzer-candle-backed-population-progress.md)
 
 **Related plans:**
