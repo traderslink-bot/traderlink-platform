@@ -28,6 +28,16 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Owner audit and unified navigation checkpoint — 2026-09-12
+
+- Shared connection commits: Platform `6f5457f19`; canonical runtime `54be739`. Local records only; neither is released.
+- Added lazy owner-only Indicator Audit panel: bounded 50-record pages, deduplicated displayed transport counts, refresh/request/fallback/timeframe details, coverage limits, exact calculation availability and explicit expired-input state with owner-initiated JSON export. No automatic polling or provider calls from the audit panel. Only one record's details render and one input lookup runs at a time. Authorization loss clears displayed history.
+- Added one complete wrapper navigation contract for all six existing runtime sections, Usage, the existing Daily Recaps panel when supplied, and Indicator Audit. Origin/source-checked handshake hides the iframe's redundant navigation only after the wrapper takes control; standalone fallback remains. Iframe and owner forms remain mounted during section changes. Existing analysis preview/editor handlers remain intact.
+- Important source reconciliation gap: this assigned page does not supply Daily Recaps, while cached `origin/main` already does. The wrapper now accepts and preserves that same `dailyRecapsPanel` prop and verifies all nine buttons when it is provided. The older page was NOT overwritten and no replacement Recaps backend was fabricated. Reconcile onto the actual recap-enabled release parent before acceptance; eight buttons in this older local page are not evidence that the full navigation requirement is finished.
+- Updated Watchlist Help with timeframes, seed-dependent dashes, extended-hours VWAP, RSI/EMA/ATR/volume interpretation, timestamps, shared refresh, audit coverage and export. These docs are part of the unreleased slice, not a claim that the hosted feature changed.
+- Checks: 21 focused DOM assertions against actual admin components and injection (mock shell/MUI boundary); strict focused TypeScript with actual React/MUI and audit contracts passed. No browser/local server, broad suite, build, AI request, hosted mutation or release.
+- Remaining: release-parent source reconciliation including Recaps, real-data/provider/correction acceptance, remaining audit/runtime lifecycle guarantees, and authorized hosted visual/final verification. Full goal remains active.
+
 ### Shared runtime bridge checkpoint — 2026-09-12
 
 - Owner explicitly authorized the narrow canonical runtime connection after the environment initially rejected the outside-workspace edit. Supporting runtime is `levels-system-post-mtf-handoff-stability`, not the deprecated `levels-system` folder. No local 3010 server was running or started; no hosted changes were made.

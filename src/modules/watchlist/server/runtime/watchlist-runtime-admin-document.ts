@@ -184,6 +184,16 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
       block.dataset.traderslinkWatchlistAdminSection = sectionId;
     });
     activate("watchlist");
+    // The wrapper owns the single complete menu. Keep this fallback menu when opened standalone.
+    window.addEventListener("message", (event) => {
+      if (event.origin !== window.location.origin || event.source !== window.parent || window.parent === window) return;
+      const message = event.data;
+      if (!message || message.source !== "traderslink-watchlist-admin-wrapper" || message.type !== "select-section") return;
+      if (!sectionDefinitions.some((section) => section.id === message.section && section.id !== "usage")) return;
+      navigation.style.display = "none";
+      activate(message.section);
+    });
+    if (window.parent !== window) window.parent.postMessage({ source: "traderslink-watchlist-admin", type: "navigation-ready" }, window.location.origin);
   };
 
   if (document.readyState === "loading") {
