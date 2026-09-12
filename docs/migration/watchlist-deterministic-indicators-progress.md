@@ -28,6 +28,12 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Current release-parent rehearsal — 2026-09-12
+
+- Verified remote main at `2a40e87b964574f1b525f3f3f1cb8fce7f24468a`; existing Railway production metadata reports that same SHA on main. No deployment/configuration changes.
+- Disposable-index three-way patch check identified two conflicts: admin wrapper and ticker detail. Existing Daily Recaps page/backend must remain from main. Recorded exact resolution intent and the complete 45-file implementation allowlist in the [pre-release handoff](watchlist-indicators-release-handoff.md).
+- The handoff is explicitly not release-ready and has not been sent. Native higher-timeframe provider verification and integrated acceptance remain open. No working-tree or branch integration, broad tests, local server or hosted mutation was performed.
+
 ### One-minute provider convention and pagination correction — 2026-09-12
 
 - Resolved the prior one-minute ambiguity empirically. Existing production bridge passes Moomoo timestamps unchanged. TRUG's Friday regular-session comparison against Yahoo matched 238 of 390 OHLC tuples within 0.00011 when Moomoo labels were shifted back one minute, versus zero matches with no shift or a forward shift. Together with all nine complete 04:01–20:00 ET sequences, this supports Moomoo Web API one-minute end labels. Cross-provider differences in remaining tuples are not treated as price parity.
