@@ -18,7 +18,7 @@ export type IndicatorRefreshAudit = Readonly<{
   id: string; instanceId: string; symbol: string; activationId: string; queuedAt: number;
   startedAt: number | null; finishedAt: number | null;
   outcome: "queued" | "running" | "published" | "partial" | "retained" | "unavailable" | "superseded" | "interrupted_unknown"
-    | "cache_hit" | "coalesced" | "session_closed" | "calendar_unavailable";
+    | "cache_hit" | "coalesced" | "session_closed" | "calendar_unavailable" | "closed_retry_wait" | "closed_retry_exhausted";
   calculationId: string | null;
   attempts: readonly IndicatorRequestAudit[];
   timeframes: readonly Readonly<{

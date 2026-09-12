@@ -2,7 +2,7 @@
 
 Date: 2026-09-12
 
-Status: Owner authorized implementation on 2026-09-12. Calculation, shared runtime bridge, member card and owner audit slices have local implementation checkpoints. Restart recovery and historical-data QA are underway. Native-provider timestamp/session acceptance, current-release-parent navigation reconciliation and hosted acceptance remain incomplete. Deployment requires separate authorization. See the linked progress record for exact evidence and limitations.
+Status: Owner authorized correction, deployment and post-deployment retesting of the two production QA findings. Narrow trailing-quote and closed-session recovery fixes pass focused checks locally; Coordinator deployment and another nine-ticker hosted QA are next. Acceptance is not complete. See [production QA](watchlist-indicators-production-qa-20260912.md) and the linked progress record.
 
 Revision: Owner-approved planning clarification after QA, 2026-09-12. Keep two-minute Moomoo refresh initially; the existing one-minute poll is Yahoo-oriented, not proof of Moomoo capacity. Fetch sufficient history without an AI-token constraint. The technical gates below must be resolved before implementation acceptance.
 
@@ -206,7 +206,7 @@ Before promising all timeframes, verify the application's actual Moomoo bridge a
 
 Active monitoring follows existing Watchlist eligibility/session boundaries, independent of whether a member page is open or AI generation is enabled. Do not request unsupported market-closed/overnight windows continuously. Exact session scheduling must be documented after inspecting current runtime behavior; changing existing publisher schedules is not implicit authorization.
 
-Indicators-specific closed-session rule: permit one completion/history pass for the latest verified extended-session close, then reuse it throughout that closed interval (including weekends) until the next supported session opens. Unknown calendar coverage does not initiate candle requests. The existing publisher's own schedule is unchanged. Reconcile the calculation population against currently published activation identities so removed tickers do not accumulate indefinitely in its bounded cache.
+Indicators-specific closed-session rule: permit one completion/history pass for the latest verified extended-session close. If it fails or is partial, retry unsuccessful frames after two minutes, then after ten minutes (at most three passes total per ticker/closed boundary per process). Retain successfully checked frames without refetching them on those recovery passes. Audit waiting and exhausted recovery separately from completed-session reuse. After success or exhaustion, no perpetual weekend polling; the next supported session resumes normal refresh. Unknown calendar coverage does not initiate candle requests. The existing publisher's own schedule is unchanged. Reconcile the calculation population against currently published activation identities so removed tickers do not accumulate indefinitely in its bounded cache.
 
 No claimed Moomoo quota is assumed: the owner has not encountered a limit. Monitor measured call volume, latency and failures and adjust after actual use. A price-movement-triggered scheduler is deferred; it is not required for this version.
 

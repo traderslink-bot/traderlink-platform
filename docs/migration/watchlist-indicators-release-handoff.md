@@ -79,6 +79,10 @@ This handoff document itself is an additional documentation-only allowlist entry
 
 Subsequent allowlist additions: `src/scripts/verify-watchlist-indicator-native-hosted.cjs`, `src/scripts/verify-watchlist-indicator-integration.mjs`, `src/scripts/watchlist-indicator-verification-source.mjs`. Reproduce the full final list from the base to the final handoff commit; never include dirty working-tree files.
 
+## Production QA follow-up — 2026-09-12
+
+Owner now authorizes the F1/F2 correction release and post-deployment retest. Narrow correction diff is based on local `23ba09f252a5c95899212bff627584fef17d8bfa`; application changes are only `indicator-history-provider.ts`, `indicator-refresh-service.ts` and the audit outcome type. Two focused verification scripts, Help, plan/progress and QA/handoff records accompany it. No migration, dependency, config, runtime-service, Discord or AI behavior change. Coordinator must reconcile only these changes onto the exact then-current main; do not publish the older worktree tree or any dirty files. Production retest reuses the existing explicitly opted-in website-only acceptance helper, not the review/Discord approval action.
+
 ## Evidence and remaining gates
 
 - Exact per-check results and limitations are in progress. Nine actual Friday histories verify one-minute conversion, derived 5m/15m calculations and full-session HLC3-volume VWAP arithmetic. They do not prove native 5m/15m/Daily transport, real throttling, chart-reference VWAP parity or hosted rendering.

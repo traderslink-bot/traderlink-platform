@@ -28,6 +28,13 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Owner-authorized QA corrections — 2026-09-12
+
+- Implemented F1: exclude only a terminal, strictly newer, seconds-level, flat-OHLC, zero-volume Yahoo quote after valid historical bars; preserve candle timestamps and reject other malformed rows. Propagate excluded-point count to existing timeframe audit.
+- Implemented F2: one initial closed-session pass plus two delayed recovery passes (2m then 10m), retaining successful frames. Separate closed retry wait/exhausted outcomes; never mark a partial snapshot complete. Session/activation change resumes the appropriate normal lifecycle.
+- Focused checks passed: history parser/transport 90, refresh/recovery 84, file audit 24, actual refresh POST 25, actual member GET 14 assertions; strict provider/service/audit TypeScript passed. No Vitest, broad suite, local server/build, AI request or runtime/config/schema modification.
+- Help and controlling plan updated. Reserved serialized Platform release with Coordinator; exact commit/allowlist follows. Post-deployment nine-ticker retest and further Watchlist QA are required, not yet passed.
+
 ### Current-main integration and focused acceptance checkpoint — 2026-09-12
 
 - Added a reproducible temporary-index integration verifier pinned to remote parent `2a40e87b964574f1b525f3f3f1cb8fce7f24468a` and application feature tip `6397ce01aab7c0ddc4065612c7b403b65c2c57ba`. It resolves exactly the two expected conflicts, rejects unexpected conflict/changed-path sets, and leaves the checkout, canonical index and all refs untouched. Result tree: `8e9c35dcd0db4f3e5118b9e6a74d757cf0f186c8`, 47 changed files, zero unmerged entries.
