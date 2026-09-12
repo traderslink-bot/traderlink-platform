@@ -29,6 +29,10 @@ const evidence = { id: randomUUID(), refreshId: completed.id, createdAt: now, sy
   algorithmVersion: "indicators-v1", calendarId: "test-calendar", timeframes: [], vwap: null };
 equal(await restarted.saveCalculation(evidence), true);
 equal((await restarted.calculation(evidence.id)).evidence, evidence);
+restarted.enqueue({ ...completed, calculationId: evidence.id }); await restarted.flush();
+equal((await restarted.latestCalculation("TNON", "TNON:activation-1")).id, evidence.id);
+equal(await restarted.latestCalculation("TNON", "TNON:old"), null);
+equal((await new IndicatorAuditStore(directory, () => now).latestCalculation("TNON", "TNON:activation-1")).id, evidence.id);
 equal(await restarted.saveCalculation({ ...evidence, symbol: "TRUG" }), false);
 equal((await restarted.calculation(evidence.id)).evidence.symbol, "TNON");
 equal((await restarted.calculation(randomUUID())).status, "expired_or_unavailable");

@@ -9,6 +9,7 @@ registerHooks({ resolve(specifier, context, next) {
   }
 } });
 const { IndicatorSeries } = await import("../lib/live-watchlist/indicators/indicator-series.ts");
+const { indicatorHistoryRebuildReason } = await import("../lib/live-watchlist/indicators/indicator-history-rebuild.ts");
 const { advanceIndicator, createIndicatorCheckpoint } = await import("../lib/live-watchlist/indicators/indicator-engine.ts");
 let assertions = 0;
 const equal = (a, b) => { assert.deepEqual(a, b); assertions++; };
@@ -31,6 +32,14 @@ const saved = series.snapshot();
 checkpoint = saved.initialCheckpoint;
 for (const candle of saved.candles) ({ checkpoint, result } = advanceIndicator(checkpoint, candle, candles.at(-1).end));
 equal(saved.result, result); equal(saved.checkpoint, checkpoint);
+const persisted = JSON.parse(JSON.stringify(saved));
+equal(indicatorHistoryRebuildReason(saved, [candles[0]]), "older_seed_history");
+equal(indicatorHistoryRebuildReason(saved, saved.candles.slice(-5).map(c => ({ ...c, open: c.open * 10, high: c.high * 10, low: c.low * 10, close: c.close * 10 }))), "price_history_rebased");
+equal(indicatorHistoryRebuildReason(saved, [corrected]), null);
+const restored = IndicatorSeries.restore({ ...persisted, maximumBars: 40, completedThrough: candles.at(-1).end });
+equal(restored.snapshot().checkpoint, saved.checkpoint); equal(restored.snapshot().result, saved.result);
+assert.throws(() => IndicatorSeries.restore({ ...persisted, initialCheckpoint: null, completedThrough: candles.at(-1).end })); assertions++;
+assert.throws(() => IndicatorSeries.restore({ ...persisted, result: { ...persisted.result, close: 999 }, completedThrough: candles.at(-1).end })); assertions++;
 equal(update([candles[0]]).outcome, "seed_history_required");
 equal(series.update({ activationId: "old", expectedRevision: saved.revision, candles: [], completedThrough: 0, continuous: () => true }).outcome, "superseded");
 equal(series.update({ activationId: "one", expectedRevision: 0, candles: [], completedThrough: 0, continuous: () => true }).outcome, "superseded");

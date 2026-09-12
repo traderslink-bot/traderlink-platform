@@ -10,7 +10,7 @@ registerHooks({ resolve(specifier, context, next) {
 const { IndicatorRefreshService } = await import("../lib/live-watchlist/indicators/indicator-refresh-service.ts");
 const { indicatorTradingDay } = await import("../lib/live-watchlist/indicators/indicator-sessions.ts");
 const calendar = JSON.parse(await readFile(new URL("../modules/coach/server/market-calendar/us-equities-review-calendar.v1.json", import.meta.url), "utf8"));
-let now = Date.parse("2026-09-11T14:30:00Z"), calls = [], failure = "none", assertions = 0;
+let now = Date.parse("2026-09-11T14:30:00Z"), calls = [], failure = "none", assertions = 0, priceScale = 1;
 const audits = [], evidence = [];
 const day = indicatorTradingDay(calendar, "2026-09-11");
 const daily = [];
@@ -28,7 +28,7 @@ const service = new IndicatorRefreshService({ calendar, now: () => now, record: 
     const times = timeframe === "1d" ? daily : Array.from({ length: Math.floor((now - day.preOpen) / duration) }, (_, i) => day.preOpen + i * duration);
     const bars = times.filter(start => start >= input.request.start && start < input.request.end).map(start => {
       const i = timeframe === "1d" ? daily.indexOf(start) : (start - day.preOpen) / duration;
-      return { start, open: 3 + i / 100, high: 3.1 + i / 100, low: 2.9 + i / 100, close: 3.02 + i / 100, volume: 100 + i };
+      return { start, open: (3 + i / 100) * priceScale, high: (3.1 + i / 100) * priceScale, low: (2.9 + i / 100) * priceScale, close: (3.02 + i / 100) * priceScale, volume: 100 + i };
     });
     return { ...base, outcome: "complete", bars };
   } });
@@ -66,6 +66,17 @@ service.deactivate("TRUG"); equal(service.current("TRUG", "TRUG:one"), null);
 equal(service.sharedFiveMinute("TRUG", "TRUG:one"), null);
 const oldEvidence = evidence[0];
 equal(oldEvidence.symbol, "TRUG"); equal(oldEvidence.timeframes.find(frame => frame.timeframe === "1m").provider, "moomoo");
+const restartedService = new IndicatorRefreshService({ calendar, now: () => now, record: () => {}, saveCalculation: async () => true, load: async () => { throw Error("Restore must not request data"); } });
+equal(restartedService.restore("TRUG", "TRUG:one", oldEvidence), true);
+equal(restartedService.current("TRUG", "TRUG:one").calculationId, oldEvidence.id);
+equal(restartedService.current("TRUG", "TRUG:one").timeframes["1m"], oldEvidence.timeframes.find(frame => frame.timeframe === "1m").result);
+equal(restartedService.restore("TNON", "TNON:one", oldEvidence), false);
+now += 120_000; failure = "none"; priceScale = 10;
+const beforeRebase = service.current("TNON", "TNON:one");
+await service.refresh("TNON", "TNON:one");
+equal(audits.at(-1).timeframes.filter(frame => frame.rebuildReason === "price_history_rebased").length, 4);
+equal(Math.abs(service.current("TNON", "TNON:one").timeframes["1d"].ema20 - beforeRebase.timeframes["1d"].ema20 * 10) < 1e-10, true);
+equal(service.current("TNON", "TNON:one").calculationId !== beforeRebase.calculationId, true);
 now = Date.parse("2026-09-12T14:30:00Z"); failure = "both";
 await service.refresh("TNON", "TNON:one");
 const closedCalls = calls.length;

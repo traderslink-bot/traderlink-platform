@@ -28,6 +28,15 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Restart recovery and nine-symbol historical checkpoint — 2026-09-12
+
+- Added bounded recovery from the latest matching immutable calculation snapshot. Restore validates activation, formula/calendar version, retained seed and replayed results before exposing cached values. Missing, expired or inconsistent evidence falls back to normal warm-up rather than substituting an unrelated snapshot.
+- Added older-seed and common overlapping OHLC-rescaling detection, bounded same-provider history rebuild and Daily basis recheck. Audit records correction counts, gap resets and rebuild reasons. The uniform-rescale fixture is not proof of every possible corporate-action pattern.
+- Focused checks passed: 25 series, 67 refresh and 24 audit assertions; strict focused admin TypeScript passed. These use isolated fixtures and temporary audit storage, not the production database.
+- Read-only existing production candle bridge returned Friday history for all nine symbols: TRUG, TNON, AENT, FTFT, FEIM, BDRX, SURG, SXTC and PCLA. Independent EMA checks and RSI/ATR readiness passed for normalized 1m and locally derived 5m/15m data. Each produced 959 / 191 / 63 completed bars under the current start-time convention. This does not validate the new native multi-timeframe adapter.
+- Important unresolved finding: all nine have one missing normalized session minute, so full-session VWAP remains unavailable, not verified. A separate TRUG boundary probe returned 960 raw timestamps from 2026-09-11 08:01Z through 2026-09-12 00:00Z. This is consistent with end-labelled candles, but the provider documentation inspected only calls the field a K-line timestamp. Do not silently shift timestamps or claim VWAP acceptance until the provider convention is established. The historical verifier reports this coverage result explicitly.
+- No ticker additions, AI requests, approvals, Discord posts, hosted settings changes, migrations, deployment, local server or broad suite. Existing production behavior remains unchanged. Next: settle the provider timestamp convention and native-frame evidence, then complete release-parent and hosted acceptance checks.
+
 ### Captured-data and lifecycle QA — 2026-09-12
 
 - Owner additionally authorized adding Watchlist tickers for testing, noting Saturday market closure. No ticker was added in this checkpoint; no approval, Discord post or paid AI request was triggered.

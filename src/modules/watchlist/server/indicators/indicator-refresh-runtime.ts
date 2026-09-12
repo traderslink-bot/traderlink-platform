@@ -65,15 +65,23 @@ export function refreshWatchlistIndicators(symbol: string, activationId: string)
   if (existing) return existing;
   const runtime = watchlistIndicatorRefreshService();
   let entered = false;
-  const operation = withWatchlistIndicatorMoomooAccess(async access => {
-    entered = true; operationAccess.set(key, access);
-    try { return await runtime.refresh(symbol, activationId); }
-    finally { operationAccess.delete(key); }
-  }).catch(error => {
-    if (entered) throw error;
-    // No connected/authorized Moomoo quote source: record that primary failure and try Yahoo.
-    return runtime.refresh(symbol, activationId);
-  }).finally(() => { pending.delete(key); operationAccess.delete(key); });
+  const operation = (async () => {
+    if (!runtime.current(symbol, activationId)) {
+      try {
+        const evidence = await watchlistIndicatorAuditStore().latestCalculation(symbol, activationId);
+        if (evidence) runtime.restore(symbol, activationId, evidence);
+      } catch { /* Missing/invalid replay inputs require a fresh warm-up; no invented checkpoint. */ }
+    }
+    return withWatchlistIndicatorMoomooAccess(async access => {
+      entered = true; operationAccess.set(key, access);
+      try { return await runtime.refresh(symbol, activationId); }
+      finally { operationAccess.delete(key); }
+    }).catch(error => {
+      if (entered) throw error;
+      // No connected/authorized Moomoo quote source: record that primary failure and try Yahoo.
+      return runtime.refresh(symbol, activationId);
+    });
+  })().finally(() => { pending.delete(key); operationAccess.delete(key); });
   pending.set(key, operation);
   return operation;
 }

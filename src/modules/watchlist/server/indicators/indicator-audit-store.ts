@@ -25,6 +25,7 @@ export type IndicatorRefreshAudit = Readonly<{
     timeframe: IndicatorTimeframe; provider: "moomoo" | "yahoo" | null;
     primaryOutcome: string; fallbackOutcome: string | null; acceptedBars: number; through: number | null;
     missingMinutes: number; missingVolumeBars?: number; excludedBars: number; calculationRevision: string | null;
+    correctedBars?: number; addedBars?: number; gapReset?: boolean; rebuildReason?: string | null;
   }>[];
 }>;
 export type IndicatorCalculationEvidence = Readonly<{
@@ -67,7 +68,8 @@ function safeSummary(value: IndicatorRefreshAudit): IndicatorRefreshAudit {
       httpStatus: event.httpStatus, retryAfterMs: event.retryAfterMs })),
     timeframes: value.timeframes.slice(0, 4).map(frame => ({ timeframe: frame.timeframe, provider: frame.provider,
       primaryOutcome: frame.primaryOutcome, fallbackOutcome: frame.fallbackOutcome, acceptedBars: frame.acceptedBars,
-      through: frame.through, missingMinutes: frame.missingMinutes, missingVolumeBars: frame.missingVolumeBars, excludedBars: frame.excludedBars, calculationRevision: frame.calculationRevision })),
+      through: frame.through, missingMinutes: frame.missingMinutes, missingVolumeBars: frame.missingVolumeBars, excludedBars: frame.excludedBars,
+      correctedBars: frame.correctedBars, addedBars: frame.addedBars, gapReset: frame.gapReset, rebuildReason: frame.rebuildReason, calculationRevision: frame.calculationRevision })),
   };
 }
 
@@ -211,6 +213,14 @@ export class IndicatorAuditStore {
       if (evidence.id !== id) return { status: "expired_or_unavailable" };
       return { status: "retained", evidence };
     } catch { this.failures++; return { status: "expired_or_unavailable" }; }
+  }
+  /** Bounded warm-start lookup. Older/unretained inputs cause fresh acquisition, not a guessed seed. */
+  async latestCalculation(symbol: string, activationId: string): Promise<IndicatorCalculationEvidence | null> {
+    const recent = await this.history({ limit: 100 });
+    const record = recent.records.find(row => row.symbol === symbol && row.activationId === activationId && row.calculationId);
+    if (!record?.calculationId) return null;
+    const result = await this.calculation(record.calculationId);
+    return result.status === "retained" && result.evidence.symbol === symbol && result.evidence.activationId === activationId ? result.evidence : null;
   }
   async reconcileRestart(instanceId: string): Promise<void> {
     validId(instanceId);

@@ -2,7 +2,7 @@
 
 Date: 2026-09-12
 
-Status: Owner authorized implementation on 2026-09-12. Isolated calculation foundation started; provider integration, UI, audit storage, behavioral verification and release remain incomplete. Deployment requires separate authorization.
+Status: Owner authorized implementation on 2026-09-12. Calculation, shared runtime bridge, member card and owner audit slices have local implementation checkpoints. Restart recovery and historical-data QA are underway. Native-provider timestamp/session acceptance, current-release-parent navigation reconciliation and hosted acceptance remain incomplete. Deployment requires separate authorization. See the linked progress record for exact evidence and limitations.
 
 Revision: Owner-approved planning clarification after QA, 2026-09-12. Keep two-minute Moomoo refresh initially; the existing one-minute poll is Yahoo-oriented, not proof of Moomoo capacity. Fetch sufficient history without an AI-token constraint. The technical gates below must be resolved before implementation acceptance.
 

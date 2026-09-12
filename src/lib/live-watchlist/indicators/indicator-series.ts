@@ -24,6 +24,30 @@ export class IndicatorSeries {
   }
   snapshot(): IndicatorSeriesSnapshot { return structuredClone(this.state); }
 
+  /** Replay persisted inputs before accepting restored state; never silently reseed an evicted window. */
+  static restore(input: Readonly<{ activationId: string; seriesKey: string; timeframe: IndicatorTimeframe;
+    initialCheckpoint: IndicatorCheckpoint | null; candles: readonly IndicatorCandle[]; result: IndicatorResult | null;
+    completedThrough: number; maximumBars?: number }>): IndicatorSeries {
+    const seed = input.initialCheckpoint;
+    if (!seed || seed.version !== "indicators-v1" || seed.seriesKey !== input.seriesKey || seed.timeframe !== input.timeframe
+      || !Number.isSafeInteger(seed.count) || seed.count < 0 || (seed.count > 0 && !seed.last)
+      || !Array.isArray(seed.points) || seed.points.length > 20 || !Array.isArray(seed.volumeBars) || seed.volumeBars.length > 20
+      || !Array.isArray(input.candles) || input.candles.length === 0 || input.candles.length > 2048 || !input.result) {
+      throw Error("indicator_restore_inputs_invalid");
+    }
+    const finiteTree = (value: unknown, depth = 0): boolean => depth <= 8 && (typeof value === "number" ? Number.isFinite(value)
+      : value && typeof value === "object" ? Object.values(value).every(child => finiteTree(child, depth + 1)) : true);
+    if (!finiteTree(seed)) throw Error("indicator_restore_checkpoint_invalid");
+    const series = new IndicatorSeries(input), checkpoint = structuredClone(seed);
+    series.state = { ...series.state, initialCheckpoint: checkpoint, checkpoint };
+    const restored = series.update({ activationId: input.activationId, expectedRevision: 0, candles: input.candles,
+      completedThrough: input.completedThrough, continuous: () => true });
+    if (restored.outcome !== "updated" || JSON.stringify(restored.snapshot.result) !== JSON.stringify(input.result)) {
+      throw Error("indicator_restore_replay_mismatch");
+    }
+    return series;
+  }
+
   update(input: Readonly<{
     activationId: string; expectedRevision: number; candles: readonly IndicatorCandle[]; completedThrough: number;
     /** True only for adjacent bars or an established closed/no-trade interval, not an unknown gap. */

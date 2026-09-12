@@ -1,4 +1,5 @@
 import { IndicatorSeries } from "./indicator-series";
+import { indicatorHistoryRebuildReason } from "./indicator-history-rebuild";
 import { calculateSessionVwap } from "./indicator-engine";
 import { createIndicatorHistoryBudget } from "./indicator-history-provider";
 import { indicatorMarketDate, indicatorTradingDay, indicatorVwapCoverage, normalizeIndicatorSessions } from "./indicator-sessions";
@@ -14,7 +15,7 @@ export type WatchlistIndicatorSnapshot = Readonly<{
   timeframes: Readonly<Partial<Record<IndicatorTimeframe, IndicatorResult>>>;
   vwap: Readonly<{ value: number | null; dataThrough: number | null }>;
 }>;
-type Slot = { provider: IndicatorProvider; adjustment: string; series: IndicatorSeries };
+type Slot = { provider: IndicatorProvider; adjustment: string; series: IndicatorSeries; checkedMarketDate?: string };
 export type IndicatorSharedCandles = Readonly<{ provider: IndicatorProvider; dataThrough: number; candles: readonly IndicatorCandle[] }>;
 type Ticker = { activationId: string; slots: Map<IndicatorTimeframe, Slot>; snapshot: WatchlistIndicatorSnapshot;
   sharedFiveMinute: IndicatorSharedCandles | null; refreshedAt: number; closedBoundary: number | null };
@@ -55,6 +56,29 @@ export class IndicatorRefreshService {
   deactivate(symbol: string): void { this.tickers.delete(symbol); }
   reconcilePopulation(active: ReadonlyMap<string, string>): void {
     for (const [symbol, ticker] of this.tickers) if (active.get(symbol) !== ticker.activationId) this.tickers.delete(symbol);
+  }
+  restore(symbol: string, activationId: string, evidence: IndicatorCalculationEvidence): boolean {
+    if (this.tickers.has(symbol) || this.tickers.size >= 64 || evidence.symbol !== symbol || evidence.activationId !== activationId
+      || evidence.algorithmVersion !== "indicators-v1" || evidence.calendarId !== this.options.calendar.calendarId
+      || !Number.isSafeInteger(evidence.createdAt) || evidence.createdAt > this.now()
+      || !Array.isArray(evidence.timeframes) || evidence.timeframes.length === 0 || evidence.timeframes.length > 4) return false;
+    try {
+      const slots = new Map<IndicatorTimeframe, Slot>(), timeframes: Partial<Record<IndicatorTimeframe, IndicatorResult>> = {};
+      for (const frame of evidence.timeframes as IndicatorCalculationEvidence["timeframes"]) {
+        if (!FRAMES.includes(frame.timeframe) || slots.has(frame.timeframe) || !["moomoo", "yahoo"].includes(frame.provider)) return false;
+        const series = IndicatorSeries.restore({ ...frame, activationId, completedThrough: evidence.createdAt });
+        slots.set(frame.timeframe, { provider: frame.provider, adjustment: frame.adjustment, series });
+        timeframes[frame.timeframe] = series.snapshot().result!;
+      }
+      const vwap = evidence.vwap ? calculateSessionVwap({ candles: evidence.vwap.candles, sessionStart: evidence.vwap.start,
+        sessionEnd: evidence.vwap.end, completedThrough: evidence.createdAt, coverageComplete: evidence.vwap.coverageComplete }) : { value: null, dataThrough: null };
+      if (evidence.vwap && vwap.value !== evidence.vwap.value) return false;
+      const five = slots.get("5m"), fiveSnapshot = five?.series.snapshot();
+      this.tickers.set(symbol, { activationId, slots, refreshedAt: 0, closedBoundary: null,
+        sharedFiveMinute: five && fiveSnapshot?.result ? { provider: five.provider, dataThrough: fiveSnapshot.result.dataThrough, candles: fiveSnapshot.candles.slice(-250) } : null,
+        snapshot: { version: "indicators-v1", symbol, activationId, calculationId: evidence.id, timeframes, vwap } });
+      return true;
+    } catch { return false; }
   }
   private decision(symbol: string, ticker: Ticker, outcome: "cache_hit" | "coalesced" | "session_closed" | "calendar_unavailable"): void {
     const id = this.id(), now = this.now();
@@ -122,7 +146,7 @@ export class IndicatorRefreshService {
       startedAt: null, finishedAt: null, outcome: "queued", calculationId: null, attempts: [], timeframes: [] });
     this.record({ ...this.records.get(id)!, startedAt: this.now(), outcome: "running" });
     const frameAudit: IndicatorRefreshAudit["timeframes"][number][] = [];
-    let changed = false;
+    let changed = false, priceBasisRebased = false;
     let completedDailyClose: number | null = null;
     const marketNoon = Date.parse(`${indicatorMarketDate(now)}T12:00:00Z`);
     for (let offset = 0; offset <= 10; offset++) {
@@ -134,13 +158,15 @@ export class IndicatorRefreshService {
         const existing = ticker.slots.get(timeframe);
         const cached = existing?.series.snapshot();
         // A completed Daily candle changes at most once per market date; retry failures separately.
-        if (timeframe === "1d" && cached?.result && completedDailyClose !== null && cached.result.dataThrough >= completedDailyClose) {
+        if (timeframe === "1d" && !priceBasisRebased && cached?.result && completedDailyClose !== null && cached.result.dataThrough >= completedDailyClose
+          && (!day || existing?.checkedMarketDate === day.date)) {
           frameAudit.push({ timeframe, provider: existing!.provider, primaryOutcome: "cached_daily", fallbackOutcome: null,
             acceptedBars: 0, through: cached.result.dataThrough, missingMinutes: 0, excludedBars: 0, calculationRevision: String(cached.revision) });
           continue;
         }
         let primaryOutcome = "unavailable", fallbackOutcome: string | null = null, selected: Slot | undefined;
-        let accepted = 0, excluded = 0;
+        let accepted = 0, excluded = 0, correctedBars = 0, addedBars = 0, gapReset = false;
+        let rebuildReason: string | null = null;
         for (const provider of ["moomoo", "yahoo"] as const) {
           const sameProvider = existing?.provider === provider;
           const last = sameProvider ? cached?.checkpoint.last : null;
@@ -153,22 +179,42 @@ export class IndicatorRefreshService {
           catch { if (provider === "moomoo") primaryOutcome = "provider_unavailable"; else fallbackOutcome = "provider_unavailable"; continue; }
           if (provider === "moomoo") primaryOutcome = fetched.outcome; else fallbackOutcome = fetched.outcome;
           if (!["complete", "sufficient_history"].includes(fetched.outcome)) continue;
-          const normalized = normalizeIndicatorSessions({ bars: fetched.bars, timeframe, calendar: this.options.calendar, completedThrough: now });
+          let normalized = normalizeIndicatorSessions({ bars: fetched.bars, timeframe, calendar: this.options.calendar, completedThrough: now });
           excluded += Object.values(normalized.excluded).reduce((sum, count) => sum + count, 0);
           if (!normalized.candles.length) continue;
           const seriesKey = `${provider}:${symbol}:${timeframe}:${fetched.adjustment}`;
-          const series = sameProvider && cached?.seriesKey === seriesKey ? existing!.series
+          const reason = sameProvider && cached?.seriesKey === seriesKey ? indicatorHistoryRebuildReason(cached, normalized.candles) : null;
+          if (reason) {
+            rebuildReason = reason;
+            if (reason === "price_history_rebased") priceBasisRebased = true;
+            // Do not combine an old seed with a changed price scale or corrections before that seed.
+            // Refetch a complete preferred warm-up on the same bounded logical request budget.
+            let full: IndicatorHistoryOutcome;
+            try { full = await this.options.load({ provider, request: { symbol, timeframe, start: now - initialDays * 86_400_000, end: now },
+              budget: budget[provider], consumer: id, sufficientHistory: { minimumBars: 250, coverFrom: timeframe === "1m" && day ? day.preOpen : now } }); }
+            catch { if (provider === "moomoo") primaryOutcome = "rebuild_unavailable"; else fallbackOutcome = "rebuild_unavailable"; continue; }
+            if (!["complete", "sufficient_history"].includes(full.outcome) || full.adjustment !== fetched.adjustment) {
+              if (provider === "moomoo") primaryOutcome = `rebuild_${full.outcome}`; else fallbackOutcome = `rebuild_${full.outcome}`;
+              continue;
+            }
+            normalized = normalizeIndicatorSessions({ bars: full.bars, timeframe, calendar: this.options.calendar, completedThrough: now });
+            if (!normalized.candles.length) continue;
+          }
+          const series = !reason && sameProvider && cached?.seriesKey === seriesKey ? existing!.series
             : new IndicatorSeries({ activationId: ticker.activationId, seriesKey, timeframe });
           const update = series.update({ activationId: ticker.activationId, expectedRevision: series.snapshot().revision,
             candles: normalized.candles, completedThrough: now, continuous: (a, b) => this.continuous(a, b) });
           if (update.outcome === "seed_history_required" || update.outcome === "superseded") continue;
           accepted = normalized.candles.length; changed ||= update.outcome === "updated";
-          selected = { series, provider, adjustment: fetched.adjustment }; ticker.slots.set(timeframe, selected); break;
+          correctedBars = update.correctedBars; addedBars = update.addedBars; gapReset = update.gapReset;
+          if (!rebuildReason && correctedBars) rebuildReason = "candle_correction";
+          if (!rebuildReason && cached?.candles[0] && normalized.candles[0].start < cached.candles[0].start) rebuildReason = "history_backfill";
+          selected = { series, provider, adjustment: fetched.adjustment, checkedMarketDate: indicatorMarketDate(now) }; ticker.slots.set(timeframe, selected); break;
         }
         const retained = selected ?? existing, snapshot = retained?.series.snapshot();
         frameAudit.push({ timeframe, provider: retained?.provider ?? null, primaryOutcome, fallbackOutcome, acceptedBars: accepted,
           through: snapshot?.result?.dataThrough ?? null, missingMinutes: 0, missingVolumeBars: snapshot?.candles.filter(c => c.volume === null).length ?? 0,
-          excludedBars: excluded, calculationRevision: snapshot ? String(snapshot.revision) : null });
+          excludedBars: excluded, correctedBars, addedBars, gapReset, rebuildReason, calculationRevision: snapshot ? String(snapshot.revision) : null });
       }
       if (this.tickers.get(symbol) !== ticker) {
         this.record({ ...this.records.get(id)!, timeframes: frameAudit, finishedAt: this.now(), outcome: "superseded" });
