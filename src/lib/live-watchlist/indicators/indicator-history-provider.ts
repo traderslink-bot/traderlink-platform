@@ -21,7 +21,7 @@ export type IndicatorHistoryOutcome = Readonly<{
   bars: readonly IndicatorHistoryBar[];
   transportIds: readonly string[];
   pages: number;
-  outcome: "complete" | "pagination_unconfirmed" | "budget_exhausted" | "deferred" | IndicatorRequestFailure;
+  outcome: "complete" | "sufficient_history" | "pagination_unconfirmed" | "budget_exhausted" | "deferred" | IndicatorRequestFailure;
   nextEnd: number | null;
   retryAt?: number;
 }>;
@@ -195,6 +195,8 @@ export async function fetchIndicatorHistory(input: Readonly<{
   provider: IndicatorProvider; request: IndicatorHistoryRequest; coordinator: IndicatorRequestCoordinator;
   scope: string; consumer: string; budget: IndicatorHistoryBudget; accessToken?: string; fetcher?: typeof fetch;
   nextEnd?: number | null;
+  /** Stop older paging once warm-up and the requested session start are both covered. */
+  sufficientHistory?: Readonly<{ minimumBars: number; coverFrom: number }>;
 }>): Promise<IndicatorHistoryOutcome> {
   let nextEnd = input.nextEnd ?? null, pages = 0;
   const bars: IndicatorHistoryBar[] = [], transportIds: string[] = [];
@@ -215,7 +217,14 @@ export async function fetchIndicatorHistory(input: Readonly<{
     pages++;
     const page = response.result.data;
     bars.push(...page.bars.filter(candle => candle.start >= input.request.start && candle.start < input.request.end));
-    if (!sortedUnique(bars)) { bars.length = 0; return finish("invalid_data"); }
+    const uniqueBars = sortedUnique(bars);
+    if (!uniqueBars) { bars.length = 0; return finish("invalid_data"); }
+    const sufficient = input.sufficientHistory;
+    if (sufficient && Number.isInteger(sufficient.minimumBars) && sufficient.minimumBars >= 1
+      && uniqueBars.length >= sufficient.minimumBars && uniqueBars[0].start <= sufficient.coverFrom) {
+      nextEnd = page.nextEnd;
+      return finish("sufficient_history");
+    }
     if (page.hasMore === false) { nextEnd = null; return finish(bars.length ? "complete" : "no_data"); }
     if (page.hasMore === null) return finish("pagination_unconfirmed");
     if (page.nextEnd !== null && page.nextEnd <= input.request.start) { nextEnd = null; return finish(bars.length ? "complete" : "no_data"); }

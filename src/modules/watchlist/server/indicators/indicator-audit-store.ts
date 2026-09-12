@@ -17,7 +17,7 @@ const MAX_CATEGORY_FILES = 10_000;
 export type IndicatorRefreshAudit = Readonly<{
   id: string; instanceId: string; symbol: string; activationId: string; queuedAt: number;
   startedAt: number | null; finishedAt: number | null;
-  outcome: "queued" | "running" | "published" | "partial" | "unavailable" | "superseded" | "interrupted_unknown";
+  outcome: "queued" | "running" | "published" | "partial" | "retained" | "unavailable" | "superseded" | "interrupted_unknown";
   calculationId: string | null;
   attempts: readonly IndicatorRequestAudit[];
   timeframes: readonly Readonly<{

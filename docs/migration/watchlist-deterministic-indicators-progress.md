@@ -28,6 +28,18 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Refresh service and owner audit route — 2026-09-12
+
+- Added the actual owner-only `/api/admin/watchlist/indicator-audit` GET route and persistent-volume store binding. Authorization runs before storage lookup; retained calculation downloads are no-store attachments and expired input returns an explicit 410 state. The actual handler passed 18 focused injected-auth/storage assertions without touching live data.
+- Added bounded correction/replay series state: exact starting checkpoints survive rolling cache limits; older corrections require seed history; stale activation/revision updates cannot publish; invalid updates are atomic. Eighteen offline assertions and a focused strict TypeScript check passed.
+- Added `IndicatorRefreshService` joining provider history, calendar normalization, calculations, same-day VWAP, cache, per-refresh audit and immutable evidence. Initial history paging stops after sufficient warm-up/session coverage; subsequent updates reuse history, completed Daily reads are cached, and failures retain previous timestamps. Calendar-day memoization avoids repeatedly constructing time-zone/session boundaries for every bar.
+- Added the server-only runtime binding to the existing owner Moomoo connection. It obtains access once for a logical ticker operation, scopes provider admission internally, removes credentials when the operation finishes and uses Yahoo when primary connection access is unavailable. No credential is included in a calculation result or audit entry. The legacy AI fetch function remains unchanged.
+- The actual access callback additionally passed 14 focused injected-repository checks: exactly one configured connection, post-refresh quote permission, opaque admission scope and database cleanup on success/failure. These checks do not prove current production connection health.
+- Forty-nine offline refresh-integration assertions passed across all nine named ticker fixtures (TRUG, TNON, AENT, FTFT, FEIM, BDRX, SURG, SXTC, PCLA). These are synthetic OHLCV integration fixtures, **not** real multi-ticker/provider acceptance. History/session checks also passed after integration changes.
+- Authoritative source reconciliation: local worktree still lacks the newer `origin/main` Daily Recaps panel/owner service. Do not overwrite the released recap-enabled wrapper with this older page or claim menu completion from a stub. Preserve/reconcile the current main integration in the release lane; source/menu reconciliation is still required.
+- Next: wire the single runtime scheduler and existing candle consumers; connect the member cache endpoint/card and lazy owner audit view; reconcile the complete admin menu; then Help and end-to-end checkpoint. This service is not yet called by a hosted scheduler and is not live.
+- Open QA before acceptance: provider correction/adjustment-basis changes and complete older-history rebuild, concrete no-trade/provider coverage, request sharing with existing runtime consumers, true audit publication/transport counts, instance startup/recovery and all real-ticker fixtures. Preserve the complete plan; passing pure checks does not close these gates.
+
 ### Audit persistence checkpoint — 2026-09-12
 
 - Provider/session adapters saved locally at `42ef3bd28`. Session checkpoint additionally passed 22 offline assertions; shared coordinator checks still pass. No push/deployment.

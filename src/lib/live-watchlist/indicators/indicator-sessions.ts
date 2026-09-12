@@ -33,6 +33,17 @@ function wallTime(date: string, time: string): number {
 
 /** null = closed; undefined = calendar does not establish this date. No guessed future holidays. */
 export function indicatorTradingDay(calendar: IndicatorCalendar, date: string): IndicatorTradingDay | null | undefined {
+  let dates = dayCache.get(calendar);
+  if (!dates) { dates = new Map(); dayCache.set(calendar, dates); }
+  if (dates.has(date)) return dates.get(date);
+  const result = calculateTradingDay(calendar, date);
+  if (dates.size >= 1024) dates.delete(dates.keys().next().value!);
+  dates.set(date, result);
+  return result;
+}
+// Calendar snapshots are immutable/versioned. Replacing the snapshot also replaces its cache.
+const dayCache = new WeakMap<IndicatorCalendar, Map<string, IndicatorTradingDay | null | undefined>>();
+function calculateTradingDay(calendar: IndicatorCalendar, date: string): IndicatorTradingDay | null | undefined {
   if (calendar.timezone !== "America/New_York" || calendar.coverage.verificationStatus !== "verified"
     || date < calendar.coverage.startDate || date > calendar.coverage.endDate) return undefined;
   const noon = wallTime(date, "12:00"), weekday = new Date(noon).getUTCDay();
