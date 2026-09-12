@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { readIndicatorVerificationSource } from "./watchlist-indicator-verification-source.mjs";
 const dependencies = createRequire(process.env.TRADERLINK_FOCUSED_DEPENDENCY_PACKAGE ?? new URL("../../package.json", import.meta.url));
 const ts = dependencies("typescript"), { JSDOM } = dependencies("jsdom");
 const dom = new JSDOM("<div id='root'></div>", { url: "https://fixture.invalid/admin/watchlist", pretendToBeVisual: true });
@@ -16,7 +16,7 @@ const common = { react: React, "react/jsx-runtime": dependencies("react/jsx-runt
   "@mui/material/Box": element("div"), "@mui/material/Button": element("button"), "@mui/material/Typography": element("p"),
   "@/app/dashboard-template": { DashboardPanel: ({ title, children }) => React.createElement("div", null, React.createElement("h2", null, title), children) } };
 async function evaluate(file, extra = {}) {
-  const source = await readFile(new URL(file, import.meta.url), "utf8");
+  const source = await readIndicatorVerificationSource(new URL(file, import.meta.url));
   const compiled = ts.transpileModule(source, { fileName: file, compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const module = { exports: {} }, imports = { ...common, ...extra };
   new Function("require", "module", "exports", compiled)(name => { assert.ok(Object.hasOwn(imports, name), name); return imports[name]; }, module, module.exports);
@@ -60,7 +60,7 @@ await click("Daily Recaps"); equal(document.querySelector('input[value="unsaved 
 await click("Watchlist"); equal(document.querySelector('input[value="unsaved recap"]').value, "unsaved recap"); equal(document.querySelector("iframe"), iframe);
 await React.act(async () => wrapperRoot.unmount()); dom.window.close();
 
-const documentSource = await readFile(new URL("../modules/watchlist/server/runtime/watchlist-runtime-admin-document.ts", import.meta.url), "utf8");
+const documentSource = await readIndicatorVerificationSource(new URL("../modules/watchlist/server/runtime/watchlist-runtime-admin-document.ts", import.meta.url));
 const injection = documentSource.match(/const SECTION_NAVIGATION_INJECTION = String.raw`([\s\S]*?)`;/u)[1];
 const script = injection.match(/<script[^>]*>([\s\S]*?)<\/script>/u)[1];
 const frame = new JSDOM('<main><form id="watchlist-form"><input value="unsaved ticker"></form><section><h2>Runtime Config</h2></section><section><h2>Active Tickers by Watchlist</h2></section></main>', { url: "https://fixture.invalid/api/admin/watchlist/console", runScripts: "outside-only" });

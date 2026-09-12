@@ -28,6 +28,14 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Current-main integration and focused acceptance checkpoint — 2026-09-12
+
+- Added a reproducible temporary-index integration verifier pinned to remote parent `2a40e87b964574f1b525f3f3f1cb8fce7f24468a` and application feature tip `6397ce01aab7c0ddc4065612c7b403b65c2c57ba`. It resolves exactly the two expected conflicts, rejects unexpected conflict/changed-path sets, and leaves the checkout, canonical index and all refs untouched. Result tree: `8e9c35dcd0db4f3e5118b9e6a74d757cf0f186c8`, 47 changed files, zero unmerged entries.
+- Verified current-main Daily Recaps page/panel/backend, Analysis editor and Potential Path card are byte-identical in that integrated tree. Detail-page integration is limited to the import, removal of the overlapping volume prop at its one invocation, and Indicators card insertion. No full older detail-page replacement.
+- Added immutable-tree input to member/admin DOM verifiers. Integrated-tree checks passed 21 admin plus 16 member-card interaction assertions, including the nine-section menu and mounted form/iframe preservation. These are DOM fixtures, not CSS/browser visual acceptance.
+- Final focused checkpoint reran actual-handler tests: owner audit 18, member GET 14, publisher POST 25, Moomoo access 14, canonical runtime bridge 24 assertions. Both card and admin strict focused TypeScript checks passed. No full build, broad suite, local preview, hosted feature mutation or publication.
+- Remaining acceptance requires the approved integrated feature to be available in a hosted preview/release lane: actual browser rendering and real scheduler/bridge/audit-file persistence. Existing production does not contain this feature; the isolated market-data diagnostic cannot prove those deployed behaviors. Separate owner authorization is required before publishing/deploying. Handoff remains local and unsent.
+
 ### Full native matrix and newest-day correction — 2026-09-12
 
 - Ran the current pure provider/coordinator/refresh/series/session/engine modules in memory in the guarded read-only production diagnostic, with no audit-file persistence. All nine requested symbols were included. The initial run showed 1m multi-day responses truncated to the oldest 1,000 bars while reporting completion; 5m/15m/Daily succeeded for seven symbols, while the final two had provider failures whose codes were not captured in that first run. Do not describe that run as passing or infer a confirmed rate limit.
@@ -209,10 +217,10 @@ Owner navigation clarification: detailed auditing belongs in a separate **Indica
 
 - [ ] Review and finalize detailed plan, numerical defaults and exact replacement inventory.
 - [ ] Owner UI layout/copy approval before UI implementation.
-- [ ] Runtime calculations, bounded shared refresh and versioned payload.
-- [ ] Platform Indicators card and existing admin diagnostics integration.
-- [ ] Focused numerical, multi-ticker, provider and request-count verification.
-- [ ] Watchlist Help updates and regression evidence.
+- [x] Local runtime calculations, bounded shared refresh and versioned payload; hosted integration acceptance remains below.
+- [x] Local Platform Indicators card and owner audit/navigation implementation, reconciled in the verified current-main tree.
+- [x] Focused numerical, nine-ticker native provider and request-count checks; actual deployed scheduling remains below.
+- [x] Watchlist Help updates and focused preservation evidence.
 - [ ] Narrow verified implementation commits and authorized coordinator handoff.
 - [ ] Authorized hosted verification, owner visual acceptance and release outcome.
 

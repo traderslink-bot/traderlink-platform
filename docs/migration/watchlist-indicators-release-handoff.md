@@ -1,13 +1,13 @@
 # Watchlist Indicators — pre-release handoff
 
-Status: **Not release-ready.** Native Moomoo acquisition through the new pure adapter/refresh modules now passes the nine-symbol matrix in a read-only hosted diagnostic. Current-main conflict resolution and integrated hosted runtime/UI acceptance remain outstanding. This document is not authorization to publish, and has not been sent to another chat.
+Status: **Prepared for the hosted acceptance gate, not production acceptance.** Native Moomoo acquisition passes the nine-symbol matrix. The current-main integration tree has zero conflicts and passes focused member/admin DOM checks. Actual hosted runtime/UI acceptance requires separate publication/deployment authority. This document is not authorization to publish, and has not been sent to another chat.
 
 Controlling [plan](watchlist-deterministic-indicators-plan.md) and [progress](watchlist-deterministic-indicators-progress.md).
 
 ## Exact source boundary, checked 2026-09-12
 
 - Platform feature base: `907971dc6ce49bc41054ef8cee0354ea7c3f8ea6`.
-- Platform implementation tip: `aca2213a8f11058e20ae549e9102eb6639c60a7a` (this handoff documentation is recorded afterward).
+- Application implementation tip: `6397ce01aab7c0ddc4065612c7b403b65c2c57ba`; later integration-verifier/documentation commits must accompany it.
 - Remote `main`: `2a40e87b964574f1b525f3f3f1cb8fce7f24468a`, verified by `git ls-remote`; the normal Windows TLS backend failed, then the OpenSSL backend succeeded without disabling TLS verification.
 - Railway production metadata reports branch `main`, the same commit, deployment `e05a861c-803d-404d-91d5-b32c459f738b`, running instance. This is existing-deployment metadata, not a new deployment result. Recheck health and deployment status at release time.
 - Supporting canonical runtime local commit: `54be739`, based on `fb85207`, in `levels-system-post-mtf-handoff-stability`. Runtime files: `src/lib/market-data/platform-watchlist-indicator-loader.ts`, `src/lib/monitoring/manual-watchlist-runtime-manager.ts`, `src/runtime/manual-watchlist-server.ts`, `docs/watchlist-indicator-shared-refresh-progress-2026-09-12.md`. Do not deploy the deprecated sibling runtime.
@@ -15,6 +15,8 @@ Controlling [plan](watchlist-deterministic-indicators-plan.md) and [progress](wa
 ## Integration rehearsal and exact conflict resolution intent
 
 A disposable Git index based on the confirmed remote parent checked the committed feature diff with `git apply --cached --check --3way`. Two files reported conflicts. Exit code zero was **not** treated as a conflict-free result. No working-tree, branch, published ref or hosted service was changed.
+
+The later `verify-watchlist-indicator-integration.mjs --temporary-index` rehearsal resolves the following two conflicts and verifies preservation, producing tree `8e9c35dcd0db4f3e5118b9e6a74d757cf0f186c8` (47 changed files, zero unmerged entries). With `TRADERLINK_INDICATOR_VERIFY_TREE` set to this tree, member/admin DOM verifiers pass 16/21 assertions. This is an integration tree, not a release commit or hosted proof. A changed parent must be reconciled again, not assumed equivalent.
 
 1. `app/(dashboard)/admin/watchlist/watchlist-runtime-admin-client.tsx`: preserve the current parent's Daily Recaps prop, panel, editor, preview and iframe lifecycle. Add the six runtime section buttons, Usage, Daily Recaps and lazy Indicator Audit in one navigation; retain origin/source-checked child handshake. The implementation-tip file differs from the confirmed parent only in this intended navigation/audit scope, including optional-prop compatibility for the older local page.
 2. `app/watchlist/live-watchlist-client.tsx`: apply only the Indicators import, remove only `liveVolumeContext={symbol.liveVolumeContext}` from the detail-page Analysis card invocation, and insert the Indicators card after Analysis/status and before recent news. Preserve all current-parent notices, company-card layout, owner-edited Analysis rendering and other changes. Do not replace this entire file from the feature worktree.
@@ -74,6 +76,8 @@ src/scripts/verify-watchlist-indicator-sessions.mjs
 ```
 
 This handoff document itself is an additional documentation-only allowlist entry.
+
+Subsequent allowlist additions: `src/scripts/verify-watchlist-indicator-native-hosted.cjs`, `src/scripts/verify-watchlist-indicator-integration.mjs`, `src/scripts/watchlist-indicator-verification-source.mjs`. Reproduce the full final list from the base to the final handoff commit; never include dirty working-tree files.
 
 ## Evidence and remaining gates
 

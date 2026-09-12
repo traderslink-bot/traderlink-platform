@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { readIndicatorVerificationSource } from "./watchlist-indicator-verification-source.mjs";
 const dependencies = createRequire(process.env.TRADERLINK_FOCUSED_DEPENDENCY_PACKAGE ?? new URL("../../package.json", import.meta.url));
 const ts = dependencies("typescript"), { JSDOM } = dependencies("jsdom");
 const dom = new JSDOM("<!doctype html><div id='root'></div>", { url: "https://fixture.invalid/watchlist/TNON", pretendToBeVisual: true });
@@ -9,7 +9,7 @@ Object.defineProperty(globalThis, "navigator", { configurable: true, value: dom.
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const React = dependencies("react"), { createRoot } = dependencies("react-dom/client");
 async function evaluate(path, imports) {
-  const source = await readFile(new URL(path, import.meta.url), "utf8");
+  const source = await readIndicatorVerificationSource(new URL(path, import.meta.url));
   const compiled = ts.transpileModule(source, { fileName: path, compilerOptions: { jsx: ts.JsxEmit.ReactJSX,
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
   const module = { exports: {} };
