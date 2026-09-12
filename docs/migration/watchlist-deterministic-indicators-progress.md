@@ -28,6 +28,15 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Production closed-market acceptance — 2026-09-12
+
+- Owner authorized all available closed-market testing, including Friday tickers. Coordinator released Platform `7aa9c2ca0bbaa32822bafe520dabfa6277294e51` and runtime `5a2ba66961775a6c8a3fb6ffd93209ddcf0a1514`; both deployments/health passed per Coordinator. No new deployment or settings change in this QA run.
+- Tested all nine actual Friday symbols with temporary website-only test entries; all saved reviews stayed held and no Discord/OpenAI requests were made. Restored original inactive visibility/card contents afterward; public count is zero again.
+- **Not accepted:** 28/36 frames populated (three complete tickers, six partial). Actual saved production EMA9/20, RSI14, ATR14 and VWAP inputs/results passed 121 independent numerical comparisons. Initial 67 provider requests did not grow during later cached/closed cycles or member navigation.
+- Found actual Yahoo appended-quote parsing defect and unconditional closed-boundary completion preventing failed-frame recovery. Provider errors during burst warm-up need vendor-code evidence before calling them throttling. Weekend VWAP copy also needs neutral session wording.
+- Verified all nine rendered member cards, desktop/mobile tabs/layout, protected admin audit/export, pagination and direct Daily Recaps navigation. Normal approve-and-send was deliberately not invoked because it sends Discord.
+- Full evidence, exact matrix, restoration and proposed narrow corrections: [Production QA](watchlist-indicators-production-qa-20260912.md). No feature fixes applied in this QA turn; do not mark the project goal complete.
+
 ### Owner release authorization and dispatch — 2026-09-12
 
 - Owner explicitly approved the controlled production deployment after being told hosted acceptance is a production deployment, not a separate local test environment.

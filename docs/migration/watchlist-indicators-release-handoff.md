@@ -79,6 +79,10 @@ This handoff document itself is an additional documentation-only allowlist entry
 
 Subsequent allowlist additions: `src/scripts/verify-watchlist-indicator-native-hosted.cjs`, `src/scripts/verify-watchlist-indicator-integration.mjs`, `src/scripts/watchlist-indicator-verification-source.mjs`. Reproduce the full final list from the base to the final handoff commit; never include dirty working-tree files.
 
+## Production QA follow-up — 2026-09-12
+
+Owner-authorized release completed through Coordinator. Closed-market acceptance ran on all nine Friday tickers and **did not pass**: Yahoo's appended trailing quote invalidates otherwise usable historical candles, and a partial closed-session warm-up never retries failed frames. See [production QA](watchlist-indicators-production-qa-20260912.md) for deployed SHAs, 121 numerical comparisons, real provider outcomes, browser/access checks and completed test-state restoration. No feature correction or further release is included in this documentation/test checkpoint. The original pre-release gates below are historical, not the current deployment status.
+
 ## Evidence and remaining gates
 
 - Exact per-check results and limitations are in progress. Nine actual Friday histories verify one-minute conversion, derived 5m/15m calculations and full-session HLC3-volume VWAP arithmetic. They do not prove native 5m/15m/Daily transport, real throttling, chart-reference VWAP parity or hosted rendering.
