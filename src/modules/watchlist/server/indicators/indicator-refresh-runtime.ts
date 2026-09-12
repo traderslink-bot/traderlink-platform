@@ -21,6 +21,11 @@ export function readCachedWatchlistIndicators(symbol: string, activationId: stri
   return state.service?.current(symbol, activationId) ?? null;
 }
 
+/** Authenticated runtime-only reuse; provider provenance is not part of the member payload. */
+export function readSharedWatchlistIndicatorCandles(symbol: string, activationId: string) {
+  return state.service?.sharedFiveMinute(symbol, activationId) ?? null;
+}
+
 export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
   if (!state.service) {
     const coordinator = new IndicatorRequestCoordinator({ audit: event => state.service?.recordTransport(event) });

@@ -43,6 +43,11 @@ for (const symbol of symbols) {
 }
 equal(calls.length, 36);
 const previous = service.current("TRUG", "TRUG:one");
+const shared = service.sharedFiveMinute("TRUG", "TRUG:one");
+equal(shared.provider, "moomoo"); equal(shared.dataThrough, previous.timeframes["5m"].dataThrough);
+equal(service.sharedFiveMinute("TRUG", "old-activation"), null);
+shared.candles[0].close = 999;
+equal(service.sharedFiveMinute("TRUG", "TRUG:one").candles[0].close !== 999, true);
 await Promise.all([service.refresh("TRUG", "TRUG:one"), service.refresh("TRUG", "TRUG:one")]);
 equal(calls.length, 36);
 now += 120_000; failure = "both";
@@ -55,8 +60,10 @@ const fallback = await service.refresh("TRUG", "TRUG:one");
 equal(fallback.timeframes["1m"].dataThrough, now);
 equal(audits.at(-1).timeframes.find(frame => frame.timeframe === "1m").provider, "yahoo");
 equal(evidence.at(-1).timeframes.find(frame => frame.timeframe === "1m").provider, "yahoo");
+equal(service.sharedFiveMinute("TRUG", "TRUG:one").provider, "yahoo");
 equal(service.current("TRUG", "old-activation"), null);
 service.deactivate("TRUG"); equal(service.current("TRUG", "TRUG:one"), null);
+equal(service.sharedFiveMinute("TRUG", "TRUG:one"), null);
 const oldEvidence = evidence[0];
 equal(oldEvidence.symbol, "TRUG"); equal(oldEvidence.timeframes.find(frame => frame.timeframe === "1m").provider, "moomoo");
 console.log(`PASS: ${assertions} offline refresh integration assertions across nine named ticker fixtures: four frames, session VWAP, completed Daily caching, two-minute reuse, retained timestamps on failure, explicit Yahoo fallback, immutable prior evidence and activation isolation. These are synthetic fixtures, not live market-data acceptance.`);

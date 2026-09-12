@@ -28,6 +28,15 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Shared runtime bridge checkpoint — 2026-09-12
+
+- Owner explicitly authorized the narrow canonical runtime connection after the environment initially rejected the outside-workspace edit. Supporting runtime is `levels-system-post-mtf-handoff-stability`, not the deprecated `levels-system` folder. No local 3010 server was running or started; no hosted changes were made.
+- Added publisher-authenticated Platform refresh POST with bounded request body, timing-safe credential comparison, exact published activation check and background refresh through Next `after`. Member GET remains cached/read-only. Review-pending, deactivated and superseded activations do not initiate this provider path.
+- Added an immutable published five-minute window for the existing runtime consumer; it cannot inspect partially refreshed slots. Audit store now shares one process singleton across route bundles, matching the calculation cache.
+- In the canonical runtime, added only the authenticated shared-candle loader, factory option and changes to the existing poll. Two-minute polling replaces the old one-minute cadence when connected, with sequential ticker calls and 500 ms spacing. Moomoo/Yahoo provenance is preserved. Shared warming/provider failure never triggers a duplicate legacy fetch; bridge unavailability retains the original Yahoo path. No AI trigger, approval, Discord setting or Potential Path formula was edited.
+- Focused checks: actual Platform POST 25 assertions; refresh service 55 assertions across nine synthetic named fixtures; actual runtime loader/changed methods 24 assertions; strict standalone runtime loader TypeScript passed. These are offline checks, not live Moomoo or production proof.
+- Deployment compatibility: Platform endpoint must be available before expecting the new runtime path; older Platform remains compatible through the existing candle fallback. Neither repository has been pushed, deployed, restarted or migrated. Dedicated audit UI/navigation, Help, real-data/final acceptance and current-release-parent reconciliation remain unfinished.
+
 ### Member card and cached endpoint — 2026-09-12
 
 - Refresh/audit-access integration checkpoint saved locally at `d1ac923be`; no push/deployment.

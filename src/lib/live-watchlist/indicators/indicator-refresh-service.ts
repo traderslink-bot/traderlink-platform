@@ -15,7 +15,9 @@ export type WatchlistIndicatorSnapshot = Readonly<{
   vwap: Readonly<{ value: number | null; dataThrough: number | null }>;
 }>;
 type Slot = { provider: IndicatorProvider; adjustment: string; series: IndicatorSeries };
-type Ticker = { activationId: string; slots: Map<IndicatorTimeframe, Slot>; snapshot: WatchlistIndicatorSnapshot; refreshedAt: number };
+export type IndicatorSharedCandles = Readonly<{ provider: IndicatorProvider; dataThrough: number; candles: readonly IndicatorCandle[] }>;
+type Ticker = { activationId: string; slots: Map<IndicatorTimeframe, Slot>; snapshot: WatchlistIndicatorSnapshot;
+  sharedFiveMinute: IndicatorSharedCandles | null; refreshedAt: number };
 type Load = (input: Readonly<{ provider: IndicatorProvider; request: IndicatorHistoryRequest; budget: IndicatorHistoryBudget;
   consumer: string; sufficientHistory: Readonly<{ minimumBars: number; coverFrom: number }> }>) => Promise<IndicatorHistoryOutcome>;
 const FRAMES: readonly IndicatorTimeframe[] = ["1m", "5m", "15m", "1d"];
@@ -45,6 +47,11 @@ export class IndicatorRefreshService {
     const ticker = this.tickers.get(symbol);
     return ticker?.activationId === activationId ? structuredClone(ticker.snapshot) : null;
   }
+  /** Published window only: consumers never see partially refreshed calculation slots. */
+  sharedFiveMinute(symbol: string, activationId: string): IndicatorSharedCandles | null {
+    const ticker = this.tickers.get(symbol);
+    return ticker?.activationId === activationId ? structuredClone(ticker.sharedFiveMinute) : null;
+  }
   deactivate(symbol: string): void { this.tickers.delete(symbol); }
   refresh(symbol: string, activationId: string): Promise<WatchlistIndicatorSnapshot> {
     if (!/^[A-Z][A-Z0-9.-]{0,15}$/u.test(symbol) || !/^[A-Za-z0-9:_-]{1,100}$/u.test(activationId)) return Promise.reject(Error("indicator_refresh_identity_invalid"));
@@ -54,7 +61,7 @@ export class IndicatorRefreshService {
     let ticker = this.tickers.get(symbol);
     if (!ticker || ticker.activationId !== activationId) {
       if (!ticker && this.tickers.size >= 64) return Promise.reject(Error("indicator_refresh_population_limit"));
-      ticker = { activationId, slots: new Map(), refreshedAt: 0,
+      ticker = { activationId, slots: new Map(), refreshedAt: 0, sharedFiveMinute: null,
         snapshot: { version: "indicators-v1", symbol, activationId, calculationId: null, timeframes: {}, vwap: { value: null, dataThrough: null } } };
       this.tickers.set(symbol, ticker);
     }
@@ -156,6 +163,9 @@ export class IndicatorRefreshService {
         try { await this.options.saveCalculation(evidence); } catch { /* Missing replay stays explicit by immutable ID. */ }
       }
       ticker.snapshot = { version: "indicators-v1", symbol, activationId: ticker.activationId, calculationId, timeframes, vwap };
+      const fiveMinute = ticker.slots.get("5m"), fiveMinuteSeries = fiveMinute?.series.snapshot();
+      ticker.sharedFiveMinute = fiveMinute && fiveMinuteSeries?.result ? { provider: fiveMinute.provider,
+        dataThrough: fiveMinuteSeries.result.dataThrough, candles: fiveMinuteSeries.candles.slice(-250) } : null;
       ticker.refreshedAt = now;
       this.record({ ...this.records.get(id)!, timeframes: frameAudit, calculationId, finishedAt: this.now(),
         outcome: Object.keys(timeframes).length === 0 ? "unavailable" : frameAudit.every(frame => frame.acceptedBars === 0) ? "retained"
