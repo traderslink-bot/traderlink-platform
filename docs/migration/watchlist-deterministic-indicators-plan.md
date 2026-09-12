@@ -2,7 +2,7 @@
 
 Date: 2026-09-12
 
-Status: Owner authorized correction, deployment and post-deployment retesting of the two production QA findings. Narrow trailing-quote and closed-session recovery fixes pass focused checks locally; Coordinator deployment and another nine-ticker hosted QA are next. Acceptance is not complete. See [production QA](watchlist-indicators-production-qa-20260912.md) and the linked progress record.
+Status: The two production QA corrections are deployed and passed the all-nine closed-market production retest on 2026-09-12: 36/36 timeframes and 153 independent numerical comparisons; actual Yahoo fallback and delayed single-frame recovery verified. Temporary public entries restored. Market-open new-candle/capacity and external chart-reference parity remain separate acceptance checks. See [production QA](watchlist-indicators-production-qa-20260912.md) and the linked progress record.
 
 Revision: Owner-approved planning clarification after QA, 2026-09-12. Keep two-minute Moomoo refresh initially; the existing one-minute poll is Yahoo-oriented, not proof of Moomoo capacity. Fetch sufficient history without an AI-token constraint. The technical gates below must be resolved before implementation acceptance.
 

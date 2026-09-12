@@ -1,5 +1,9 @@
 # Watchlist Indicators — pre-release handoff
 
+## Correction release and acceptance completed — 2026-09-12
+
+Coordinator published local fix `f64bc1c22956228e1233d1273f1a71f03c80238b` as `f97ab1ceecf30c411d605f1dd5ed3af31246dead` on parent `7aa9c2ca0bbaa32822bafe520dabfa6277294e51`, configured branch `main`. Deployment `48e17688-049d-40c9-a9df-db7cd783ad1d` SUCCESS, one RUNNING writer/correct volume, unchanged 119 migrations; production health independently returned HTTP 200/ready after testing. No runtime-service/config/migration/AI/Discord change. All-nine retest passed 36/36 frames and 153 numerical comparisons, including actual fallback quote exclusion and one-frame closed recovery. Temporary website entries restored; details in [production QA](watchlist-indicators-production-qa-20260912.md). The historical handoff below is retained, not the current deployment status. Market-open and external chart parity remain separate acceptance boundaries.
+
 Status: **Owner authorized controlled production deployment and hosted acceptance on 2026-09-12.** After an explicit explanation that hosted acceptance means a production deployment, the owner replied: “You have my approval.” Handoff was sent to the Visible release coordinator, thread `01a06184-ecea-78a3-999f-cd2ac249be61`, with final local handoff SHA `0092a43761e81c692dd05457a0512272116687d3`. Coordinator owns serialized integration, release, health/rollback checks and hosted acceptance. This is authorization and dispatch evidence, not deployment completion.
 
 Controlling [plan](watchlist-deterministic-indicators-plan.md) and [progress](watchlist-deterministic-indicators-progress.md).

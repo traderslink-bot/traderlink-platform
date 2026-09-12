@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const symbols = ['TRUG','TNON','AENT','FTFT','FEIM','BDRX','SURG','SXTC','PCLA'];
-const backupPath = '/tmp/watchlist-indicator-acceptance-20260912.json';
+const backupPath = '/tmp/watchlist-indicator-acceptance-20260912-postfix.json';
 const mode = process.argv[2];
 if (!['publish','inspect','audit','yahoo','restore'].includes(mode)) throw Error('Explicit acceptance mode required');
 if (new Date().toISOString().slice(0,10) !== '2026-09-12') throw Error('Acceptance authorization date expired');
@@ -44,7 +44,8 @@ async function main() {
     const path=require('node:path'),zlib=require('node:zlib');
     const root=path.join(path.dirname(process.env.TRADERLINK_PLATFORM_DB_PATH),'watchlist-indicator-audit');
     const names=fs.readdirSync(root).filter(n=>/^\d{13}_[a-f0-9-]{36}\.json$/.test(n));
-    const records=names.map(n=>JSON.parse(fs.readFileSync(path.join(root,n),'utf8'))).filter(r=>symbols.includes(r.symbol));
+    const since=JSON.parse(fs.readFileSync(backupPath,'utf8')).createdAt;
+    const records=names.map(n=>JSON.parse(fs.readFileSync(path.join(root,n),'utf8'))).filter(r=>symbols.includes(r.symbol)&&r.queuedAt>=since);
     const transports=new Set(records.flatMap(r=>r.attempts.map(a=>a.transportId).filter(Boolean)));
     console.log(JSON.stringify({recordCount:records.length,distinctTransportRequests:transports.size,outcomes:records.reduce((a,r)=>(a[r.outcome]=(a[r.outcome]||0)+1,a),{})}));
     for (const symbol of symbols) {

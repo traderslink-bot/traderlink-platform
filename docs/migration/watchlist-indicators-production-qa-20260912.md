@@ -1,8 +1,39 @@
 # Watchlist Indicators Production QA — 2026-09-12
 
-Status: **Executed; acceptance not passed.** Two functional recovery findings remain. No feature fixes or additional deployment performed in this QA run.
+Status: **F1/F2 corrections deployed and closed-market retest passed.** The initial failed run below remains historical evidence. Full-feature market-open and external chart-reference checks remain open.
 
-Correction follow-up: Owner subsequently authorized fixing, deploying and retesting. F1/F2 are now corrected locally with focused regression checks (90 history, 84 refresh/recovery, 24 audit, 25 refresh-route and 14 member-route assertions plus strict types). The original QA record below remains unchanged as before-fix evidence; hosted post-fix results will be recorded separately. No claim of production correction yet.
+## Post-correction production retest
+
+- Local fix: `f64bc1c22956228e1233d1273f1a71f03c80238b`. Published by Coordinator on `main`: `f97ab1ceecf30c411d605f1dd5ed3af31246dead`, parent `7aa9c2ca0bbaa32822bafe520dabfa6277294e51`.
+- Railway deployment `48e17688-049d-40c9-a9df-db7cd783ad1d` SUCCESS; Coordinator verified one RUNNING writer, correct volume and 119 unchanged migrations. Independent production health returned 200, ready, sqlite_single_node, migrationCount 119. Supporting runtime unchanged.
+- All-nine test started approximately 3:02 PM ET, using the same owner-authorized website-only method. Separate private postfix backup preserves the earlier test backup. Acceptance helper filters audit records to this run's start; old records are not counted as new success.
+
+| Ticker | 1m | 5m | 15m | Daily | Numerical checks |
+| --- | --- | --- | --- | --- | --- |
+| TRUG | Moomoo | Moomoo | Yahoo | Yahoo | 17 passed |
+| TNON | Moomoo | Moomoo | Yahoo | Yahoo | 17 passed |
+| AENT | Moomoo | Moomoo | Moomoo, delayed recovery | Yahoo | 17 passed |
+| FTFT | Moomoo | Moomoo | Moomoo | Yahoo | 17 passed |
+| FEIM | Moomoo | Moomoo | Moomoo | Yahoo | 17 passed |
+| BDRX | Moomoo | Moomoo | Moomoo | Yahoo | 17 passed |
+| SURG | Moomoo | Moomoo | Yahoo | Yahoo | 17 passed |
+| SXTC | Moomoo | Moomoo | Yahoo | Yahoo | 17 passed |
+| PCLA | Moomoo | Moomoo | Yahoo | Yahoo | 17 passed |
+
+- **36/36 available frames; 153 numerical comparisons passed** against retained actual inputs (EMA9/20, RSI14, ATR14 plus each ticker's HLC3-volume VWAP). Persisted valid pre-deployment calculations were restored where applicable, not misreported as a cold rebuild. Intraday ends Friday 8 PM ET; Daily ends Friday 4 PM ET.
+- **F1 hosted proof:** TRUG/TNON/SURG/SXTC/PCLA Yahoo 15m fallback each excluded exactly one terminal quote and retained 510/504/533/472/394 actual candles respectively. Strict malformed-row regression checks also remain passing.
+- **F2 hosted proof:** AENT's initial 15m recheck returned Moomoo provider_error/Yahoo pagination_unconfirmed and retained its valid earlier 15m result. At 3:05 PM ET the normal scheduled cycle retried only that frame successfully with Moomoo; 1m/5m/Daily each recorded `cached_closed_frame`. Eight other tickers recorded `session_closed`. This is actual deployed recovery, not a forced provider outage or fabricated fixture. The further ten-minute retry/exhaustion branch is covered by focused deterministic tests, not forced on production.
+- Final arithmetic audit checkpoint: 36 records, 70 distinct transport requests (69 initial, exactly one recovery), 10 published, 10 cache_hit, 16 session_closed. Later scheduled no-fetch decisions may add metadata without provider requests.
+- Member pages for all nine show populated cards; all four TRUG tabs switch outputs and timestamps, saved timeframe selection persists across ticker navigation. Provider identities remain admin-only. Mobile 390px has no document overflow; indicator tabs and summaries visible. Viewport restored afterward. One full-page screenshot timed out; normal viewport screenshot succeeded, no app failure inferred.
+- Admin has the unified nine-section navigation, directly reachable Daily Recaps, expanded Yahoo fallback evidence and retained calculation export. Older refreshes correctly pages to older records with counts scoped to the displayed page; it does not append indefinitely. This clarifies the earlier run's pagination wording.
+- Anonymous audit and actual calculation export returned concealed 404/private-no-store; anonymous member indicator endpoint returned 401/private-no-store.
+- Add/Activate is enabled and activation counters are zero. Nine existing review statuses and generation controls remain intact. No normal edit/save/approve/Discord operation performed. A browser-tool iframe-targeting limitation prevented a new preview-interaction verification; do not claim the preview was re-tested successfully.
+- **Cleanup passed:** all nine restored inactive with original card objects and `firstPostedAt` asserted against the private baseline. Public browser shows 0 active. Review-before-publishing remains checked; automatic AI updates remains unchecked; today's AI spend remains $0.0000. Seven drafts ready, TRUG previous-version fallback and SURG held failure unchanged. No runtime settings or Discord calls, no AI requests, no original owner-tab navigation.
+- Remaining nonblocking observations: existing weekend VWAP wording and limited Moomoo vendor-error diagnostics, existing ticker-bottom notice work outside this correction. Market-open new-candle/capacity behaviour, independent external chart-reference parity and a new normal two-destination approval test are not established by this run.
+
+## Historical initial run and local correction checkpoint
+
+Before deployment, owner-authorized F1/F2 corrections passed focused regression checks (90 history, 84 refresh/recovery, 24 audit, 25 refresh-route and 14 member-route assertions plus strict types). The original failed QA record below remains as before-fix evidence; its outstanding F1/F2 items are superseded by the successful post-correction retest above.
 
 Controlling [plan](watchlist-deterministic-indicators-plan.md) and [progress](watchlist-deterministic-indicators-progress.md).
 

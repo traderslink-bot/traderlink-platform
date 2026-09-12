@@ -28,6 +28,15 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Completed correction and hosted retest — 2026-09-12
+
+- Local fix `f64bc1c22956228e1233d1273f1a71f03c80238b` released by Coordinator as `f97ab1ceecf30c411d605f1dd5ed3af31246dead`, parent `7aa9c2ca0bbaa32822bafe520dabfa6277294e51`. Deployment `48e17688-049d-40c9-a9df-db7cd783ad1d` SUCCESS; 119 migrations unchanged, one writer/correct volume, health ready.
+- All nine Friday tickers now supply all four frames (36/36). All nine retained calculation snapshots pass 153 independent EMA/RSI/ATR/VWAP comparisons. Five actual Yahoo 15m fallbacks excluded their terminal quote and retained historical candles.
+- Actual AENT 15m recheck initially failed while its prior valid result stayed visible; one delayed Moomoo request recovered it. Audit shows its other three frames `cached_closed_frame`; other eight tickers made no further provider requests. Total 69 initial + 1 recovery requests at the final audit checkpoint.
+- Repeated member/admin browser, mobile, navigation, audit/export and anonymous access checks. Normal approval/send was deliberately not invoked; browser automation could not target the iframe preview reliably, so no new preview-interaction pass is claimed.
+- All nine temporary website-only entries restored inactive with original cards and first-posted timestamps asserted. Browser shows 0 public active, existing nine review states preserved, review gate on and automatic AI updates off. No AI/Discord calls. Viewport reset and owner's original tab preserved.
+- Correction task complete; full-feature market-open capacity/new-candle behaviour and independent external chart-reference parity remain open. Detailed evidence and pre-existing nonblocking observations remain in the production QA report. Help includes the bounded recovery policy.
+
 ### Owner-authorized QA corrections — 2026-09-12
 
 - Implemented F1: exclude only a terminal, strictly newer, seconds-level, flat-OHLC, zero-volume Yahoo quote after valid historical bars; preserve candle timestamps and reject other malformed rows. Propagate excluded-point count to existing timeframe audit.
