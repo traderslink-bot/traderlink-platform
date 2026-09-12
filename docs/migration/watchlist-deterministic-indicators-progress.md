@@ -28,6 +28,15 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Audit persistence checkpoint — 2026-09-12
+
+- Provider/session adapters saved locally at `42ef3bd28`. Session checkpoint additionally passed 22 offline assertions; shared coordinator checks still pass. No push/deployment.
+- Added bounded asynchronous file-backed `IndicatorAuditStore`, with separate metadata/calculation caps, paginated owner-history contracts, immutable compressed calculation files, oldest-first completed-record expiry and restart reconciliation to `interrupted_unknown`. No new Platform database migration is needed for this store.
+- Added explicit 10,000-file-per-category safety bound to the plan; retained age can be shorter than 14 days under either storage bound. Directory inventory is loaded once, with sequential filesystem IO, and maintained by the single writer instead of rescanning file sizes on every ticker refresh. Audit failures stay isolated from data delivery.
+- Offline audit fixture run passed 21 assertions covering persistence, pagination, restart state, immutable calculation lookup, traversal rejection, bounded queue, retention and expiry counters surviving restart. Focused strict TypeScript check passed. Fixtures used a small OS temporary directory only, not app data.
+- Added an uncommitted server-only Indicator Moomoo access callback using the existing configured-owner/exactly-one-connection boundary and post-refresh quote-scope verification. The existing AI fetch function and route are unchanged. This callback is not yet called by a worker and its integration remains unfinished.
+- Still required: audit API authorization/export integration, provider/history cache and logical-refresh worker, canonical runtime sharing, member card, unified admin menu, Help, complete focused/runtime checks and owner/release acceptance. No claim of live readiness.
+
 ### Provider history and session integration checkpoint — 2026-09-12
 
 - Added concrete, injectable Moomoo/Yahoo HTTP history adapters, not active hosted scheduling yet. Each page/retry uses the shared coordinator; all timeframe calls share a ten-attempt and one-transient-retry provider budget per logical refresh.
