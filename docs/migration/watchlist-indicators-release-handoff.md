@@ -1,6 +1,6 @@
 # Watchlist Indicators — pre-release handoff
 
-Status: **Prepared for the hosted acceptance gate, not production acceptance.** Native Moomoo acquisition passes the nine-symbol matrix. The current-main integration tree has zero conflicts and passes focused member/admin DOM checks. Actual hosted runtime/UI acceptance requires separate publication/deployment authority. This document is not authorization to publish, and has not been sent to another chat.
+Status: **Owner authorized controlled production deployment and hosted acceptance on 2026-09-12.** After an explicit explanation that hosted acceptance means a production deployment, the owner replied: “You have my approval.” Handoff was sent to the Visible release coordinator, thread `01a06184-ecea-78a3-999f-cd2ac249be61`, with final local handoff SHA `0092a43761e81c692dd05457a0512272116687d3`. Coordinator owns serialized integration, release, health/rollback checks and hosted acceptance. This is authorization and dispatch evidence, not deployment completion.
 
 Controlling [plan](watchlist-deterministic-indicators-plan.md) and [progress](watchlist-deterministic-indicators-progress.md).
 

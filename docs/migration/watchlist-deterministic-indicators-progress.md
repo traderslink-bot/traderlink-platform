@@ -28,6 +28,12 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Owner release authorization and dispatch — 2026-09-12
+
+- Owner explicitly approved the controlled production deployment after being told hosted acceptance is a production deployment, not a separate local test environment.
+- Sent final local SHA `0092a43761e81c692dd05457a0512272116687d3`, supporting runtime commit `54be739`, complete allowlist derivation, integration conflicts/resolution evidence, native matrix results and hosted acceptance checklist to Visible release coordinator `01a06184-ecea-78a3-999f-cd2ac249be61`.
+- Coordinator must reverify current main/service/lane and preserve all unrelated features; no implicit runtime-environment move. Await actual published SHA, deployment/health and live acceptance results. No deployment performed by this thread and no completion claimed.
+
 ### Current-main integration and focused acceptance checkpoint — 2026-09-12
 
 - Added a reproducible temporary-index integration verifier pinned to remote parent `2a40e87b964574f1b525f3f3f1cb8fce7f24468a` and application feature tip `6397ce01aab7c0ddc4065612c7b403b65c2c57ba`. It resolves exactly the two expected conflicts, rejects unexpected conflict/changed-path sets, and leaves the checkout, canonical index and all refs untouched. Result tree: `8e9c35dcd0db4f3e5118b9e6a74d757cf0f186c8`, 47 changed files, zero unmerged entries.
