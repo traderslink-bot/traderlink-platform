@@ -11,6 +11,7 @@ export type IndicatorHistoryRequest = Readonly<{
 }>;
 export type IndicatorHistoryPage = Readonly<{
   bars: readonly IndicatorHistoryBar[];
+  excludedPoints?: number;
   /** null means the provider did not establish pagination completion. */
   hasMore: boolean | null;
   nextEnd: number | null;
@@ -24,6 +25,7 @@ export type IndicatorHistoryOutcome = Readonly<{
   outcome: "complete" | "sufficient_history" | "pagination_unconfirmed" | "budget_exhausted" | "deferred" | IndicatorRequestFailure;
   nextEnd: number | null;
   retryAt?: number;
+  excludedPoints?: number;
 }>;
 /** Shared by all timeframe calls belonging to ONE provider's logical ticker refresh. */
 export type IndicatorHistoryBudget = { attemptsRemaining: number; retriesRemaining: number };
@@ -120,11 +122,20 @@ export function parseYahooIndicatorPage(payload: unknown): IndicatorTransportRes
   if (!fields.every(field => Array.isArray(field) && field.length === timestamps.length)) return invalid();
   const bars: IndicatorHistoryBar[] = [];
   // Null/missing bars are withheld, never treated as zero-volume or manufactured OHLC.
-  let missing = false;
+  let missing = false, excludedPoints = 0;
   for (let i = 0; i < result.timestamp.length; i++) {
     const values = (fields as unknown[][]).map(field => field[i]);
     if (values.every(value => value === null)) { missing = true; continue; }
     const timestamp = numeric(result.timestamp[i]);
+    // Yahoo appends a last-trade quote after the candle array. A seconds-level,
+    // flat, zero-volume terminal quote is not a candle: retain the actual history
+    // without rounding that quote into a fabricated bar. Any other bad row fails.
+    const price = numeric(values[0]), priorTimestamp = i > 0 ? numeric(result.timestamp[i - 1]) : null;
+    if (i === result.timestamp.length - 1 && bars.length > 0 && timestamp !== null
+      && Number.isSafeInteger(timestamp) && timestamp % 60 !== 0 && priorTimestamp !== null && timestamp > priorTimestamp
+      && price !== null && price > 0 && values.slice(0, 4).every(value => numeric(value) === price) && numeric(values[4]) === 0) {
+      excludedPoints++; continue;
+    }
     const normalized = bar(timestamp === null ? null : timestamp * 1000, values);
     if (!normalized) return invalid();
     bars.push(normalized);
@@ -132,7 +143,7 @@ export function parseYahooIndicatorPage(payload: unknown): IndicatorTransportRes
   const unique = sortedUnique(bars);
   if (!unique) return invalid();
   return { ok: true, usable: unique.length > 0, requestAccepted: true,
-    data: { bars: unique, hasMore: missing ? null : false, nextEnd: null } };
+    data: { bars: unique, hasMore: missing ? null : false, nextEnd: null, excludedPoints } };
 }
 
 function newYorkDate(milliseconds: number): string {
@@ -257,11 +268,11 @@ export async function fetchIndicatorHistory(input: HistoryFetchInput): Promise<I
 
 /** Every HTTP page/retry passes through the shared coordinator, not one opaque multi-page call. */
 async function fetchIndicatorHistoryRange(input: HistoryFetchInput): Promise<IndicatorHistoryOutcome> {
-  let nextEnd = input.nextEnd ?? null, pages = 0;
+  let nextEnd = input.nextEnd ?? null, pages = 0, excludedPoints = 0;
   const bars: IndicatorHistoryBar[] = [], transportIds: string[] = [];
   const finish = (outcome: IndicatorHistoryOutcome["outcome"], retryAt?: number): IndicatorHistoryOutcome => ({
     provider: input.provider, adjustment: input.provider === "moomoo" ? "moomoo-forward" : "yahoo-chart-native",
-    bars: sortedUnique(bars) ?? [], transportIds, pages, outcome, nextEnd, ...(retryAt === undefined ? {} : { retryAt }),
+    bars: sortedUnique(bars) ?? [], transportIds, pages, outcome, nextEnd, excludedPoints, ...(retryAt === undefined ? {} : { retryAt }),
   });
   while (input.budget.attemptsRemaining > 0) {
     const url = indicatorHistoryUrl(input.provider, input.request, nextEnd);
@@ -275,6 +286,7 @@ async function fetchIndicatorHistoryRange(input: HistoryFetchInput): Promise<Ind
     if (!response.result.ok) return finish(response.result.reason);
     pages++;
     const page = response.result.data;
+    excludedPoints += page.excludedPoints ?? 0;
     bars.push(...page.bars.filter(candle => candle.start >= input.request.start && candle.start < input.request.end));
     const uniqueBars = sortedUnique(bars);
     if (!uniqueBars) { bars.length = 0; return finish("invalid_data"); }

@@ -15,10 +15,11 @@ export type WatchlistIndicatorSnapshot = Readonly<{
   timeframes: Readonly<Partial<Record<IndicatorTimeframe, IndicatorResult>>>;
   vwap: Readonly<{ value: number | null; dataThrough: number | null }>;
 }>;
-type Slot = { provider: IndicatorProvider; adjustment: string; series: IndicatorSeries; checkedMarketDate?: string };
+type Slot = { provider: IndicatorProvider; adjustment: string; series: IndicatorSeries; checkedMarketDate?: string; checkedClosedBoundary?: number };
 export type IndicatorSharedCandles = Readonly<{ provider: IndicatorProvider; dataThrough: number; candles: readonly IndicatorCandle[] }>;
 type Ticker = { activationId: string; slots: Map<IndicatorTimeframe, Slot>; snapshot: WatchlistIndicatorSnapshot;
-  sharedFiveMinute: IndicatorSharedCandles | null; refreshedAt: number; closedBoundary: number | null };
+  sharedFiveMinute: IndicatorSharedCandles | null; refreshedAt: number; closedBoundary: number | null;
+  closedRecovery?: { boundary: number; attempts: number; nextAt: number } };
 type Load = (input: Readonly<{ provider: IndicatorProvider; request: IndicatorHistoryRequest; budget: IndicatorHistoryBudget;
   consumer: string; sufficientHistory: Readonly<{ minimumBars: number; coverFrom: number }> }>) => Promise<IndicatorHistoryOutcome>;
 const FRAMES: readonly IndicatorTimeframe[] = ["1m", "5m", "15m", "1d"];
@@ -80,7 +81,7 @@ export class IndicatorRefreshService {
       return true;
     } catch { return false; }
   }
-  private decision(symbol: string, ticker: Ticker, outcome: "cache_hit" | "coalesced" | "session_closed" | "calendar_unavailable"): void {
+  private decision(symbol: string, ticker: Ticker, outcome: "cache_hit" | "coalesced" | "session_closed" | "calendar_unavailable" | "closed_retry_wait" | "closed_retry_exhausted"): void {
     const id = this.id(), now = this.now();
     this.record({ id, instanceId: this.instanceId, symbol, activationId: ticker.activationId, queuedAt: now,
       startedAt: null, finishedAt: now, outcome, calculationId: ticker.snapshot.calculationId, attempts: [], timeframes: [] });
@@ -122,8 +123,28 @@ export class IndicatorRefreshService {
       this.decision(symbol, ticker, boundary === undefined ? "calendar_unavailable" : "session_closed");
       return Promise.resolve(structuredClone(ticker.snapshot));
     }
-    // One completion/warm-up pass after close, not perpetual weekend or unsupported overnight fetches.
-    const operation = this.perform(symbol, ticker).finally(() => { ticker.closedBoundary = boundary; this.inflight.delete(key); });
+    if (boundary !== null) {
+      if (ticker.closedRecovery?.boundary !== boundary) ticker.closedRecovery = { boundary, attempts: 0, nextAt: 0 };
+      const recovery = ticker.closedRecovery;
+      if (recovery.attempts >= 3 || this.now() < recovery.nextAt) {
+        this.decision(symbol, ticker, recovery.attempts >= 3 ? "closed_retry_exhausted" : "closed_retry_wait");
+        return Promise.resolve(structuredClone(ticker.snapshot));
+      }
+      recovery.attempts++;
+    } else ticker.closedRecovery = undefined;
+    // At most one warm-up plus two recovery passes per closed boundary. Successful
+    // frames are retained; failed frames retry after 2m, then 10m, never all weekend.
+    const operation = this.perform(symbol, ticker).finally(() => {
+      if (boundary !== null) {
+        const complete = FRAMES.every(frame => ticker!.slots.get(frame)?.checkedClosedBoundary === boundary
+          && ticker!.snapshot.timeframes[frame] && ticker!.snapshot.timeframes[frame]?.dataThrough === ticker!.slots.get(frame)?.series.snapshot().result?.dataThrough);
+        if (complete) ticker!.closedBoundary = boundary;
+        else if (ticker!.closedRecovery?.boundary === boundary) {
+          ticker!.closedRecovery.nextAt = this.now() + (ticker!.closedRecovery.attempts === 1 ? 120_000 : 600_000);
+        }
+      }
+      this.inflight.delete(key);
+    });
     this.inflight.set(key, operation);
     return operation.then(snapshot => structuredClone(snapshot));
   }
@@ -160,9 +181,14 @@ export class IndicatorRefreshService {
       for (const timeframe of FRAMES) {
         const existing = ticker.slots.get(timeframe);
         const cached = existing?.series.snapshot();
+        if (closed != null && !priceBasisRebased && existing?.checkedClosedBoundary === closed && cached?.result) {
+          frameAudit.push({ timeframe, provider: existing.provider, primaryOutcome: "cached_closed_frame", fallbackOutcome: null,
+            acceptedBars: 0, through: cached.result.dataThrough, missingMinutes: 0, excludedBars: 0, calculationRevision: String(cached.revision) });
+          continue;
+        }
         // A completed Daily candle changes at most once per market date; retry failures separately.
         if (timeframe === "1d" && !priceBasisRebased && cached?.result && completedDailyClose !== null && cached.result.dataThrough >= completedDailyClose
-          && (!day || existing?.checkedMarketDate === day.date)) {
+          && closed == null && (!day || existing?.checkedMarketDate === day.date)) {
           frameAudit.push({ timeframe, provider: existing!.provider, primaryOutcome: "cached_daily", fallbackOutcome: null,
             acceptedBars: 0, through: cached.result.dataThrough, missingMinutes: 0, excludedBars: 0, calculationRevision: String(cached.revision) });
           continue;
@@ -181,6 +207,7 @@ export class IndicatorRefreshService {
             sufficientHistory: { minimumBars: last ? 1 : 250, coverFrom } }); }
           catch { if (provider === "moomoo") primaryOutcome = "provider_unavailable"; else fallbackOutcome = "provider_unavailable"; continue; }
           if (provider === "moomoo") primaryOutcome = fetched.outcome; else fallbackOutcome = fetched.outcome;
+          excluded += fetched.excludedPoints ?? 0;
           if (!["complete", "sufficient_history"].includes(fetched.outcome)) continue;
           let normalized = normalizeIndicatorSessions({ bars: fetched.bars, timeframe, calendar: this.options.calendar, completedThrough: now });
           excluded += Object.values(normalized.excluded).reduce((sum, count) => sum + count, 0);
@@ -212,7 +239,8 @@ export class IndicatorRefreshService {
           correctedBars = update.correctedBars; addedBars = update.addedBars; gapReset = update.gapReset;
           if (!rebuildReason && correctedBars) rebuildReason = "candle_correction";
           if (!rebuildReason && cached?.candles[0] && normalized.candles[0].start < cached.candles[0].start) rebuildReason = "history_backfill";
-          selected = { series, provider, adjustment: fetched.adjustment, checkedMarketDate: indicatorMarketDate(now) }; ticker.slots.set(timeframe, selected); break;
+          selected = { series, provider, adjustment: fetched.adjustment, checkedMarketDate: indicatorMarketDate(now),
+            ...(closed == null ? {} : { checkedClosedBoundary: closed }) }; ticker.slots.set(timeframe, selected); break;
         }
         const retained = selected ?? existing, snapshot = retained?.series.snapshot();
         frameAudit.push({ timeframe, provider: retained?.provider ?? null, primaryOutcome, fallbackOutcome, acceptedBars: accepted,

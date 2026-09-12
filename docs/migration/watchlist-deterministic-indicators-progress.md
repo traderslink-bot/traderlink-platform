@@ -28,6 +28,13 @@ Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-determinis
 
 ## Remaining implementation checkpoints
 
+### Owner-authorized QA corrections — 2026-09-12
+
+- Implemented F1: exclude only a terminal, strictly newer, seconds-level, flat-OHLC, zero-volume Yahoo quote after valid historical bars; preserve candle timestamps and reject other malformed rows. Propagate excluded-point count to existing timeframe audit.
+- Implemented F2: one initial closed-session pass plus two delayed recovery passes (2m then 10m), retaining successful frames. Separate closed retry wait/exhausted outcomes; never mark a partial snapshot complete. Session/activation change resumes the appropriate normal lifecycle.
+- Focused checks passed: history parser/transport 90, refresh/recovery 84, file audit 24, actual refresh POST 25, actual member GET 14 assertions; strict provider/service/audit TypeScript passed. No Vitest, broad suite, local server/build, AI request or runtime/config/schema modification.
+- Help and controlling plan updated. Reserved serialized Platform release with Coordinator; exact commit/allowlist follows. Post-deployment nine-ticker retest and further Watchlist QA are required, not yet passed.
+
 ### Production closed-market acceptance — 2026-09-12
 
 - Owner authorized all available closed-market testing, including Friday tickers. Coordinator released Platform `7aa9c2ca0bbaa32822bafe520dabfa6277294e51` and runtime `5a2ba66961775a6c8a3fb6ffd93209ddcf0a1514`; both deployments/health passed per Coordinator. No new deployment or settings change in this QA run.

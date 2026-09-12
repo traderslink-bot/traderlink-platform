@@ -80,8 +80,12 @@ equal(service.current("TNON", "TNON:one").calculationId !== beforeRebase.calcula
 now = Date.parse("2026-09-12T14:30:00Z"); failure = "both";
 await service.refresh("TNON", "TNON:one");
 const closedCalls = calls.length;
-now += 120_000; await service.refresh("TNON", "TNON:one"); equal(calls.length, closedCalls); equal(audits.at(-1).outcome, "session_closed");
-now += 86_400_000; await service.refresh("TNON", "TNON:one"); equal(calls.length, closedCalls);
+now += 120_000; await service.refresh("TNON", "TNON:one"); equal(calls.length > closedCalls, true);
+const retryCalls = calls.length;
+now += 120_000; await service.refresh("TNON", "TNON:one"); equal(calls.length, retryCalls); equal(audits.at(-1).outcome, "closed_retry_wait");
+now += 600_000; await service.refresh("TNON", "TNON:one"); equal(calls.length > retryCalls, true);
+const exhaustedCalls = calls.length;
+now += 86_400_000; await service.refresh("TNON", "TNON:one"); equal(calls.length, exhaustedCalls);equal(audits.at(-1).outcome,'closed_retry_exhausted');
 service.reconcilePopulation(new Map([["TNON", "TNON:one"]]));
 equal(service.current("AENT", "AENT:one"), null); equal(service.current("TNON", "TNON:one") !== null, true);
 failure = "none";
@@ -89,4 +93,25 @@ const closedWarmup = await service.refresh("AENT", "AENT:weekend");
 equal(closedWarmup.vwap.value !== null, true); equal(closedWarmup.vwap.dataThrough, day.postClose);
 const weekendCalls = calls.length;
 now += 120_000; await service.refresh("AENT", "AENT:weekend"); equal(calls.length, weekendCalls);
+
+let recoveryNow=Date.parse('2026-09-12T14:00:00Z'), fail15=true;
+const recoveryCalls=[],recoveryAudits=[];
+const recoveryService=new IndicatorRefreshService({calendar,now:()=>recoveryNow,record:r=>recoveryAudits.push(r),saveCalculation:async()=>true,
+  load:async input=>{
+    recoveryCalls.push(input.request.timeframe);
+    const frame=input.request.timeframe,base={provider:input.provider,adjustment:input.provider==='moomoo'?'moomoo-forward':'yahoo-chart-native',pages:1,transportIds:[],nextEnd:null};
+    if(frame==='15m'&&fail15)return {...base,bars:[],outcome:'provider_error'};
+    const duration={'1m':60000,'5m':300000,'15m':900000}[frame];
+    const times=frame==='1d'?[...new Set([...daily,day.regularOpen])]:Array.from({length:(day.postClose-day.preOpen)/duration},(_,i)=>day.preOpen+i*duration);
+    return {...base,outcome:'complete',bars:times.map((start,i)=>({start,open:3+i/100,high:3.1+i/100,low:2.9+i/100,close:3.02+i/100,volume:100+i}))};
+  }});
+const partial=await recoveryService.refresh('FEIM','FEIM:recovery');equal(Object.keys(partial.timeframes).length,3);
+equal(recoveryCalls,['1m','5m','15m','15m','1d']);
+fail15=false;recoveryNow+=119999;await recoveryService.refresh('FEIM','FEIM:recovery');equal(recoveryCalls.length,5);
+recoveryNow++;const recovered=await recoveryService.refresh('FEIM','FEIM:recovery');
+equal(recoveryCalls,['1m','5m','15m','15m','1d','15m']);equal(Object.keys(recovered.timeframes).length,4);
+equal(recovered.timeframes['1m'],partial.timeframes['1m']);equal(recovered.timeframes['5m'],partial.timeframes['5m']);
+equal(recoveryAudits.at(-1).timeframes.filter(f=>f.primaryOutcome==='cached_closed_frame').length,3);
+recoveryNow+=600000;await recoveryService.refresh('FEIM','FEIM:recovery');equal(recoveryCalls.length,6);equal(recoveryAudits.at(-1).outcome,'session_closed');
+recoveryService.reconcilePopulation(new Map());equal(recoveryService.current('FEIM','FEIM:recovery'),null);
 console.log(`PASS: ${assertions} offline refresh integration assertions across nine named ticker fixtures: four frames, session VWAP, completed Daily caching, two-minute reuse, retained timestamps on failure, explicit Yahoo fallback, immutable prior evidence and activation isolation. These are synthetic fixtures, not live market-data acceptance.`);

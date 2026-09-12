@@ -49,10 +49,31 @@ equal(parseMoomooIndicatorPage(payload([{ ...row(start), volume: "not-volume" }]
 for (const key of ["open", "high", "low", "close", "volume"]) yahoo.chart.result[0].indicators.quote[0][key] = [null];
 equal(parseYahooIndicatorPage(yahoo).data.hasMore, null);
 
+// Actual production-shaped Yahoo trailing quote, not a completed candle.
+const terminalQuote = { chart: { result: [{ meta: { exchangeTimezoneName: "America/New_York" },
+  timestamp: [1789170300,1789171120], indicators: { quote: [{ open:[87,87.2],high:[87.3,87.2],low:[86.9,87.2],close:[87.1,87.2],volume:[253,0] }] } }] } };
+equal(parseYahooIndicatorPage(terminalQuote).data.bars.length,1);
+equal(parseYahooIndicatorPage(terminalQuote).data.bars[0].start,1789170300000);
+equal(parseYahooIndicatorPage(terminalQuote).data.excludedPoints,1);
+equal(parseYahooIndicatorPage(terminalQuote).data.hasMore,false);
+for (const alter of [
+  x=>x.timestamp.reverse(),
+  x=>x.indicators.quote[0].volume[1]=1,
+  x=>x.indicators.quote[0].close[1]=88,
+  x=>x.timestamp.push(1789171200),
+  x=>x.indicators.quote[0].high[0]=80,
+]) { const bad=structuredClone(terminalQuote);alter(bad.chart.result[0]);equal(parseYahooIndicatorPage(bad).reason,'invalid_data'); }
+const onlyQuote=structuredClone(terminalQuote);onlyQuote.chart.result[0].timestamp.shift();
+for(const field of Object.values(onlyQuote.chart.result[0].indicators.quote[0]))field.shift();
+equal(parseYahooIndicatorPage(onlyQuote).reason,'invalid_data');
+
 const events = [], urls = [];
 const coordinator = new IndicatorRequestCoordinator({ sleep: async () => {}, audit: e => events.push(e) });
 const base = { provider: "moomoo", request, scope: "private-connection", consumer: "refresh:test", coordinator,
   accessToken: "secret-fixture-never-printed", budget: createIndicatorHistoryBudget() };
+const yahooQuoteHistory=await fetchIndicatorHistory({...base,provider:'yahoo',scope:'trailing-quote',budget:createIndicatorHistoryBudget(),
+  request:{symbol:'FEIM',timeframe:'15m',start:1789170000000,end:1789171200000},fetcher:async()=>Response.json(terminalQuote)});
+equal(yahooQuoteHistory.outcome,'complete');equal(yahooQuoteHistory.excludedPoints,1);equal(yahooQuoteHistory.bars.length,1);
 const fetched = await fetchIndicatorHistory({ ...base, fetcher: async (url, options) => {
   urls.push(url);
   equal(options.headers.Authorization, "Bearer secret-fixture-never-printed");

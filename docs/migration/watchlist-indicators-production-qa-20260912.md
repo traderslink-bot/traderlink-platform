@@ -2,6 +2,8 @@
 
 Status: **Executed; acceptance not passed.** Two functional recovery findings remain. No feature fixes or additional deployment performed in this QA run.
 
+Correction follow-up: Owner subsequently authorized fixing, deploying and retesting. F1/F2 are now corrected locally with focused regression checks (90 history, 84 refresh/recovery, 24 audit, 25 refresh-route and 14 member-route assertions plus strict types). The original QA record below remains unchanged as before-fix evidence; hosted post-fix results will be recorded separately. No claim of production correction yet.
+
 Controlling [plan](watchlist-deterministic-indicators-plan.md) and [progress](watchlist-deterministic-indicators-progress.md).
 
 ## Deployment under test

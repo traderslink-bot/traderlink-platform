@@ -81,6 +81,8 @@ Subsequent allowlist additions: `src/scripts/verify-watchlist-indicator-native-h
 
 ## Production QA follow-up — 2026-09-12
 
+Owner now authorizes the F1/F2 correction release and post-deployment retest. Narrow correction diff is based on local `23ba09f252a5c95899212bff627584fef17d8bfa`; application changes are only `indicator-history-provider.ts`, `indicator-refresh-service.ts` and the audit outcome type. Two focused verification scripts, Help, plan/progress and QA/handoff records accompany it. No migration, dependency, config, runtime-service, Discord or AI behavior change. Coordinator must reconcile only these changes onto the exact then-current main; do not publish the older worktree tree or any dirty files. Production retest reuses the existing explicitly opted-in website-only acceptance helper, not the review/Discord approval action.
+
 Owner-authorized release completed through Coordinator. Closed-market acceptance ran on all nine Friday tickers and **did not pass**: Yahoo's appended trailing quote invalidates otherwise usable historical candles, and a partial closed-session warm-up never retries failed frames. See [production QA](watchlist-indicators-production-qa-20260912.md) for deployed SHAs, 121 numerical comparisons, real provider outcomes, browser/access checks and completed test-state restoration. No feature correction or further release is included in this documentation/test checkpoint. The original pre-release gates below are historical, not the current deployment status.
 
 ## Evidence and remaining gates
