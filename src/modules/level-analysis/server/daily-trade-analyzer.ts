@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import { analyzeTradeExecutionIndicators } from "@/src/lib/trade-candle-analysis/trend-momentum-executions";
 
 import type { TradeCandle } from "@/src/lib/trade-candle-analysis/candle-analysis";
 import {
@@ -498,5 +499,7 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
     direction: input.direction,
     events,
   });
-  return Object.freeze({ eventSnapshots, finalExitPaths, greenToRed });
+  return Object.freeze({ eventSnapshots, finalExitPaths, greenToRed,
+    ...(input.trendMomentum ? { trendMomentum: analyzeTradeExecutionIndicators(input.trendMomentum, events) } : {}),
+  });
 }

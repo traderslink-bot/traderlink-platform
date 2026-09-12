@@ -8,6 +8,12 @@ completed-close scenarios and Scaling Out page.
 
 **Progress:** [Trade Analyzer Analysis Pages Progress](trade-analyzer-analysis-pages-progress.md)
 
+**Approved deterministic indicator extension (2026-09-12), in progress:**
+[Trend & Momentum plan](trade-analyzer-trend-momentum-plan.md) and
+[progress](trade-analyzer-trend-momentum-progress.md). Implementation authorized;
+preserves the newer Version 2 page/grouping contracts identified in that plan.
+This link does not mark the extension complete or released.
+
 **Plain-language presentation:** [Trade Analyzer Plain-Language Insights Progress](trade-analyzer-plain-language-insights-progress.md)
 
 **Final-exit first review:** Per-trade evidence may state the saved

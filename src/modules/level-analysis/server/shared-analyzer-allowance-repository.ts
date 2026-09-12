@@ -160,10 +160,15 @@ GROUP BY reset_kind`).all(userId, cycle.allowance_cycle_id) as
     const charged = this.database.prepare(`SELECT
  sum(CASE WHEN reservation.daily_new_york_date = ? AND acquisition.started_at_utc > ? THEN 1 ELSE 0 END) AS daily_used,
  sum(CASE WHEN acquisition.started_at_utc > ? THEN 1 ELSE 0 END) AS period_used
-FROM level_analysis_analyzer_acquisitions acquisition
+FROM (
+ SELECT reservation_id, charged_user_id, min(started_at_utc) AS started_at_utc
+ FROM level_analysis_analyzer_acquisitions
+ WHERE charge_kind = 'user_charged'
+ GROUP BY reservation_id, charged_user_id
+) acquisition
 JOIN level_analysis_analyzer_reservations reservation
  ON reservation.reservation_id = acquisition.reservation_id
-WHERE acquisition.charged_user_id = ? AND acquisition.charge_kind = 'user_charged'
+WHERE acquisition.charged_user_id = ?
  AND reservation.allowance_cycle_id = ?`).get(date, dailyReset, periodReset, userId, cycle.allowance_cycle_id) as
       { daily_used: number | null; period_used: number | null };
     const active = this.database.prepare(`SELECT
@@ -227,14 +232,44 @@ SET status = 'released', updated_at_utc = ?
 WHERE logical_trade_job_id = ? AND status = 'active'`).run(timestamp, jobId);
   }
 
+  hasHistoryReservation(jobId: string, now: Date): boolean {
+    return Boolean(this.database.prepare(`SELECT 1 FROM level_analysis_analyzer_reservations reservation
+WHERE logical_trade_job_id = ? AND status IN ('active', 'consumed') AND expires_at_utc >= ?
+ AND (SELECT count(*) FROM level_analysis_analyzer_acquisitions acquisition
+      WHERE acquisition.reservation_id = reservation.reservation_id) < 34`).get(jobId, createCanonicalUtcTimestamp(now)));
+  }
+
   beginAcquisition(input: Readonly<{
     jobId: string;
     marketSessionSetId: string;
     now: Date;
+    /** Internal history continuation of the same job; never a new user analysis. */
+    historyContinuation?: boolean;
   }>): Readonly<{ acquisitionId: string; chargeKind: "user_charged" | "correction_waived" }> | null {
     return this.immediate(() => {
-      const reservation = this.reservation(input.jobId, input.now);
+      let reservation = this.reservation(input.jobId, input.now);
+      if (!reservation && input.historyContinuation) {
+        const prior = this.database.prepare(`SELECT reservation.reservation_id, reservation.user_id, reservation.correction_waiver
+FROM level_analysis_analyzer_reservations reservation
+JOIN level_analysis_logical_trade_jobs job ON job.logical_trade_job_id = reservation.logical_trade_job_id
+WHERE reservation.logical_trade_job_id = ? AND reservation.status = 'consumed'
+ AND reservation.expires_at_utc >= ? AND job.status = 'leased'
+ AND job.user_id = reservation.user_id
+ AND EXISTS (SELECT 1 FROM level_analysis_analyzer_acquisitions acquisition
+   WHERE acquisition.reservation_id = reservation.reservation_id)
+ORDER BY reservation.created_at_utc DESC LIMIT 1`).get(
+          input.jobId, createCanonicalUtcTimestamp(input.now),
+        ) as { reservation_id: string; user_id: string; correction_waiver: number } | undefined;
+        if (prior) reservation = Object.freeze({ reservationId: prior.reservation_id,
+          userId: prior.user_id, correctionWaiver: prior.correction_waiver === 1 });
+      }
       if (!reservation) return null;
+      if (input.historyContinuation) {
+        const attempts = this.database.prepare(`SELECT count(*) AS count FROM level_analysis_analyzer_acquisitions
+WHERE reservation_id = ?`).get(reservation.reservationId) as { count: number };
+        // Ten earlier ranges plus the current range, at most three attempts each.
+        if (attempts.count >= 34) return null;
+      }
       const settings = this.settings();
       if (!settings.enabled || !settings.designatedConnectionConfigured) return null;
       const expiredLeaseBefore = new Date(input.now.getTime() - 5 * 60 * 1000).toISOString();

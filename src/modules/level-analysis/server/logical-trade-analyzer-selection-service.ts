@@ -4,12 +4,14 @@ import type { SharedAnalyzerAvailability, SharedAnalyzerSelectionOutcome } from 
 import { dailyTradeFirstResultCoverageEnd, newYorkExtendedSession } from "./daily-trade-analyzer-session";
 import { LogicalTradeAnalyzerRepository } from "./logical-trade-analyzer-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
+import type { TrendMomentumHistoryRepository } from "./trend-momentum-history-repository";
 
 export class LogicalTradeAnalyzerSelectionService {
   constructor(
     private readonly logicalTrades: JournalLogicalTradeService,
     private readonly analyzer: LogicalTradeAnalyzerRepository,
     private readonly allowances: SharedAnalyzerAllowanceRepository,
+    private readonly indicatorHistory?: TrendMomentumHistoryRepository,
   ) {}
 
   availability(scope: AccountScope, now: Date = new Date()): SharedAnalyzerAvailability | null {
@@ -47,9 +49,15 @@ export class LogicalTradeAnalyzerSelectionService {
         now,
       });
       if (!queued.created) return "already_requested";
-      if (savedCoverage) return "queued";
+      const savedIndicators = savedCoverage && (!this.indicatorHistory ||
+        this.indicatorHistory.hasSufficientEvidence(scope, target.providerSymbol, target.tradingDateNewYork,
+          Math.min(...target.events.map((event) => Date.parse(event.executedAtUtc) / 1000)), desiredEnd));
+      // Core-only cached recomputation remains usable when no allowance is left.
+      // An explicit Analyze with available allowance can acquire missing history.
+      if (savedIndicators || (savedCoverage && availability.selectableAvailable <= 0)) return "queued";
       const reservation = this.allowances.reserve({ userId: scope.userId, jobId: queued.jobId, now });
       if (!reservation) {
+        if (savedCoverage) return "queued";
         this.analyzer.expireUnreservedJob(queued.jobId, now);
         return "usage_exhausted";
       }

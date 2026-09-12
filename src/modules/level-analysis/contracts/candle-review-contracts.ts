@@ -32,6 +32,8 @@ export type MarketDataRequest = Readonly<{
 export type MarketDataProviderResult =
   | Readonly<{
       ok: true;
+      /** Optional provider proof; absence never proves complete range coverage. */
+      requestCoverage?: "complete" | "partial";
       candles: readonly NormalizedMarketCandle[];
       exchangeTimezone: string | null;
       utcOffsetSeconds: number | null;
@@ -39,6 +41,7 @@ export type MarketDataProviderResult =
     }>
   | Readonly<{
       ok: false;
+      requestCoverage?: "complete" | "partial";
       code: "coverage_unavailable" | "invalid_payload" | "provider_unavailable";
       failureReasonCode: string;
       exchangeTimezone: string | null;

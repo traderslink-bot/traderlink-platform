@@ -1,4 +1,5 @@
 import type { NormalizedMarketCandle } from "./candle-review-contracts";
+import type { TradeExecutionIndicatorInput, TradeExecutionIndicatorResult } from "../../../lib/trade-candle-analysis/trend-momentum-executions";
 
 export const DAILY_TRADE_ANALYZER_CONTRACT_VERSION = "daily_trade_analyzer_v2" as const;
 export const DAILY_TRADE_ANALYZER_POST_EXIT_MINUTES = Object.freeze([5, 15, 30, 60] as const);
@@ -204,12 +205,15 @@ export type DailyTradeGreenToRedAnalysis = Readonly<{
 }>;
 
 export type DailyTradeAnalyzerResult = Readonly<{
+  trendMomentumUnavailableReason?: "history_unavailable";
+  trendMomentum?: TradeExecutionIndicatorResult;
   eventSnapshots: readonly DailyTradeAnalyzerEventSnapshot[];
   finalExitPaths: readonly DailyTradeAnalyzerPostExitPath[];
   greenToRed: DailyTradeGreenToRedAnalysis;
 }>;
 
 export type DailyTradeAnalyzerInput = Readonly<{
+  trendMomentum?: TradeExecutionIndicatorInput;
   candles: readonly NormalizedMarketCandle[];
   dailyRanges: readonly number[];
   direction: DailyTradeAnalyzerDirection;
