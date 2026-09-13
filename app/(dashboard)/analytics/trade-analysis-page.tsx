@@ -1,4 +1,5 @@
 import "server-only";
+import { readSavedTradeMovement } from "@/src/modules/level-analysis/server/trend-momentum-movement-service";
 
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -252,7 +253,7 @@ export async function TradeAnalysisPage({
         afterCursor: cursor,
         // Entry/Exit selects by the saved trade's final close below, keeping all
         // earlier round trips in that trade available for its complete results.
-        closingDateRange: view === "entry-exit" || view === "trend-momentum" ? { kind: "all_available" } : closingRange(dateRange),
+        closingDateRange: view === "entry-exit" || view === "trend-momentum" || view === "mfe-mae" ? { kind: "all_available" } : closingRange(dateRange),
         currency,
         metricIds: ["included_count"],
         moneyBasis,
@@ -273,10 +274,7 @@ export async function TradeAnalysisPage({
           )] as const]
         : [];
     }));
-    return Object.freeze({
-      generatedAtUtc: overview.generatedAtUtc,
-      calculationVersion: overview.registryVersion,
-      model: Object.freeze({ ...buildDailyTradeLongTermAnalytics(
+    const baseModel = buildDailyTradeLongTermAnalytics(
         database,
         scope,
         Object.freeze(rows),
@@ -286,7 +284,15 @@ export async function TradeAnalysisPage({
         multipliers,
         selectedProfitZoneMinimumHoldMinutes,
         view === "entry-exit" || view === "trend-momentum" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
-      ), ...(["day", "entry-exit", "trend-momentum", "green-to-red", "scaling-out"].includes(view) ? { trendMomentum: readTrendMomentumAnalytics({ database, scope, journalRows: rows,
+        view === "mfe-mae",
+      );
+    return Object.freeze({
+      generatedAtUtc: overview.generatedAtUtc,
+      calculationVersion: overview.registryVersion,
+      model: Object.freeze({ ...baseModel,
+        ...(view === "mfe-mae" ? readSavedTradeMovement({ database, scope, journalRows: rows, legacy: baseModel, multipliers,
+          startDate: dateRange.startDate, endDate: dateRange.endDate }) : {}),
+        ...(["day", "entry-exit", "trend-momentum", "green-to-red", "scaling-out"].includes(view) ? { trendMomentum: readTrendMomentumAnalytics({ database, scope, journalRows: rows,
         startDate: dateRange.startDate, endDate: dateRange.endDate }) } : {}) }),
     });
   }));

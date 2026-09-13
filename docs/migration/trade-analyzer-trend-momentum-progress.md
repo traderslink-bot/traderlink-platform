@@ -2,6 +2,48 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Room After Entry saved-trade correction in progress - 2026-09-12
+
+- Connected Room After Entry to current saved logical-trade results. Fetches
+  complete member rows before final-close date selection, counts each saved
+  trade once, preserves null whole-trade P/L, and does not fall back to separate
+  member results for unavailable grouped analyses. Existing single-member
+  compatibility remains; no Journal facts or financial formulas were changed.
+- MFE/MAE now recompute each opening execution's movement through its next
+  position closure, including the exact closing fill and interior candle ranges.
+  Temporary-flat gaps cannot inflate a prior entry. Fixed timed paths retain
+  their existing independent horizon. Re-entry is distinguished in path rows.
+  Shared aggregate movement fields derive from the same measured rows.
+- Eight focused projection/service tests pass, covering grouping, date boundary,
+  partial member rejection, missing P/L, unavailable grouped results, account
+  isolation, sparse windows, conversion, short moves and flat-gap exclusion.
+  Six selected source/UI/test TypeScript roots pass. Single-member fallback
+  now requests only current active round-trip versions. Whitespace check passes.
+  Updated Room After Entry Help and tooltips. Page visual/offline acceptance,
+  optional indicator filters and broader trade-identity audit remain pending.
+
+## Restart recovery and owner-authorized trade-identity audit - 2026-09-12
+
+- Verified HEAD 6369346b1 and both unfinished movement source changes survived
+  the computer restart in the assigned current worktree. No reset, migration,
+  provider request, local server or hosted action was performed.
+- Owner explicitly authorized correcting Room After Entry and other Analyzer
+  pages only where inspection confirms an outdated round-trip-only path.
+  Round-trip source records remain intact; canonical user-defined trade identity
+  must control grouped results and trade counts. Do not rewrite already-correct
+  paths merely because their underlying inputs include round-trip records.
+- Confirmed Room After Entry measures legacy joined per-round-trip snapshots
+  while its P/L lookup already resolves saved trade totals. Its measurements,
+  IDs, counts, date selection and detail navigation require consistent review.
+  Entries/Exits has a logical-result override; Green-to-Red and Scaling scenario
+  calculations have logical-trade readers. Their other summaries and drilldowns
+  still require separate inspection before declaring them correct.
+- Added three passing focused movement projection tests: interior-candle timing,
+  missing-window containment, re-entry labeling, missing P/L preservation,
+  reporting conversion, and short-direction movement. This helper is not yet
+  connected to the page; page correction and full acceptance remain incomplete.
+
+
 ## Exact execution-filter snapshot boundary - 2026-09-12
 
 - New completed Analyzer results embed compact EMA-alignment/RSI-band context

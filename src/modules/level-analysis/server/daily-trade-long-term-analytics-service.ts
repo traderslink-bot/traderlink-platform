@@ -355,7 +355,7 @@ export type TradeAnalysisEventPathRow = Readonly<{
   adverseMoveDecimal: string | null;
   closeDate: string;
   direction: "long" | "short";
-  eventKind: "Add" | "Final exit" | "Initial entry" | "Partial exit";
+  eventKind: "Add" | "Final exit" | "Initial entry" | "Re-entry" | "Partial exit";
   eventPriceDecimal: string;
   eventSequence: number;
   executedAtUtc: string;
@@ -1915,8 +1915,9 @@ export function buildDailyTradeLongTermAnalytics(
   reportingMultiplierByRoundTrip: ReadonlyMap<string, string> = new Map(),
   profitZoneMinimumHoldMinutes = 0,
   entryExitSelection?: Readonly<{ startDate: string | null; endDate: string | null }>,
+  currentSnapshotsOnly = false,
 ): DailyTradeLongTermAnalyticsV2Model {
-  const analyzer = readAnalyzerFacts(database, scope, entryExitSelection !== undefined);
+  const analyzer = readAnalyzerFacts(database, scope, currentSnapshotsOnly || entryExitSelection !== undefined);
   const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade");
   const scenarioTrades = analyzedScenarioTrades({
     analyzerByRoundTripId: analyzer,

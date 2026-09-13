@@ -247,10 +247,12 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       {
         id: "overview",
         title: "Room after entry",
-        summary: "Compare the largest measured move in your favor and against you after each entry or add.",
+        summary: "Compare the largest measured move in your favor and against you after each entry, re-entry or add.",
         keywords: ["mfe", "mae", "favorable movement", "adverse movement", "one-minute candles"],
         blocks: [
           { kind: "paragraph", text: "Maximum favorable excursion (MFE) is the largest measured price movement in the trade's favor after an entry or add and before the position becomes flat. Maximum adverse excursion (MAE) is the largest measured movement against it over that same interval." },
+          { kind: "paragraph", text: "The page follows the trades you saved, including a trade made from several round trips. A re-entry starts another measurement. Movement while you hold no position does not inflate the earlier entry's MFE or MAE. Trade P/L remains the result for your whole saved trade, while movement is measured per share from each execution. The selected date range uses the saved trade's final closing date." },
+          { kind: "paragraph", text: "The separate 5, 15, 30 and 60-minute price paths keep running for their stated time window, even after you close the position. Missing required candles leave that measurement unavailable. If a grouped trade does not yet have its combined analysis, the page does not replace it with separate results for its round trips." },
           { kind: "table", columns: ["Card", "Meaning"], rows: [
             ["Move in your favor", "The average and typical price movement per share in the trade's favor across the complete measured population."],
             ["Move against you", "The average and typical price movement per share against the trade across the complete measured population."],
