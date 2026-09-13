@@ -113,6 +113,7 @@ import { platformDefaultDarkAppearanceMigration } from "./migrations/0110_platfo
 import { platformWatchlistDailyRecapsMigration } from "./migrations/0133_platform_watchlist_daily_recaps";
 import { dailyTradeAnalyzerTrendMomentumHistoryMigration } from "@/src/modules/level-analysis/server/database/migrations/0134_daily_trade_analyzer_trend_momentum_history";
 import { dailyTradeAnalyzerManualRetryRequestsMigration } from "@/src/modules/level-analysis/server/database/migrations/0135_daily_trade_analyzer_manual_retry_requests";
+import { sharedTradeAnalyzerOwnerExemptionsMigration } from "@/src/modules/level-analysis/server/database/migrations/0136_shared_trade_analyzer_owner_exemptions";
 import { platformPnlReportingPreferenceMigration } from "./migrations/0115_platform_pnl_reporting_preference";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
@@ -616,6 +617,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/level-analysis/server/database/migrations/0135_daily_trade_analyzer_manual_retry_requests.ts",
       migration: dailyTradeAnalyzerManualRetryRequestsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0136_shared_trade_analyzer_owner_exemptions.ts",
+      migration: sharedTradeAnalyzerOwnerExemptionsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -624,6 +629,9 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0136_shared_trade_analyzer_owner_exemptions": Object.freeze([
+      "level_analysis_owner_exemption_events", "level_analysis_owner_exempt_acquisitions",
+    ]),
     "0134_daily_trade_analyzer_trend_momentum_history": Object.freeze([
       "level_analysis_indicator_history_requests",
     ]),
