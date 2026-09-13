@@ -67,6 +67,8 @@ export function analyzeTradeExecutionIndicators(
     if (!input.positionCycles || input.timingUnavailable || !input.direction) return null;
     const observations = interval === "1m" ? chartSeries.oneMinute : chartSeries.fiveMinute;
     return analyzeIndicatorEpisodes({ observations, oneMinuteCloses: one.map((p) => ({ at: p.availableAt, close: p.close })),
+      contextAt: (at) => tradeIndicatorContextAt({ series: interval === "1m" ? one : five, at, interval,
+        completedRanges: input.history.completedRanges, resetTimes: input.resetTimes, policy: input.policies[interval] }),
       cycles: input.positionCycles, completedRanges: input.history.completedRanges,
       resetTimes: input.resetTimes, direction: input.direction });
   };

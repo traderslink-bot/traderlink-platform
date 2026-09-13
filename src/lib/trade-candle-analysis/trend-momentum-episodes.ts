@@ -1,4 +1,5 @@
 import { hasCompletedIndicatorCoverage, type IndicatorHistoryRange } from "./trend-momentum-history";
+import type { tradeIndicatorContextAt } from "./trend-momentum-context";
 
 export type IndicatorObservation = Readonly<{ at: number; close: number; ema9: number | null;
   ema20: number | null; vwap: number | null; rsi14: number | null }>;
@@ -25,6 +26,7 @@ export function analyzeIndicatorEpisodes(input: Readonly<{
   completedRanges: readonly IndicatorHistoryRange[];
   resetTimes: readonly number[];
   direction: "long" | "short";
+  contextAt?: (at: number) => ReturnType<typeof tradeIndicatorContextAt>;
 }>) {
   const observations = input.observations;
   if (observations.some((o, i) => !Number.isFinite(o.at) || !Number.isFinite(o.close) || o.close <= 0 ||
@@ -114,20 +116,37 @@ export function analyzeIndicatorEpisodes(input: Readonly<{
     }
   });
   const endpoint = new Map(input.oneMinuteCloses.map((o) => [o.at, o.close]));
-  const enriched = episodes.map((episode) => {
-    const cycle = input.cycles[episode.cycle];
+  const followThrough = (cycleIndex: number, from: number, fromPrice: number) => {
+    const cycle = input.cycles[cycleIndex];
     const horizons = ([5, 15, 30, 60] as const).map((minutes) => {
-      const at = episode.at + minutes * 60;
+      const at = from + minutes * 60;
       const price = endpoint.get(at);
       const status = cycle.closedAt < at ? "closed_before_horizon" : cycle.closedAt === at ? "closed_at_horizon"
-        : !Number.isFinite(price) || price! <= 0 || interrupted(episode.at, at) ? "endpoint_unavailable" : "measured";
+        : !Number.isFinite(price) || price! <= 0 || interrupted(from, at) ? "endpoint_unavailable" : "measured";
       return Object.freeze({ minutes, status,
-        changePerShare: status === "measured" ? price! - episode.price : null,
-        changePercent: status === "measured" ? 100 * (price! - episode.price) / episode.price : null });
+        changePerShare: status === "measured" ? price! - fromPrice : null,
+        changePercent: status === "measured" ? 100 * (price! - fromPrice) / fromPrice : null });
     });
-    return Object.freeze({ ...episode, horizons: Object.freeze(horizons),
-      untilClosure: Object.freeze({ at: cycle.closedAt, changePerShare: cycle.closingPrice - episode.price,
-        changePercent: 100 * (cycle.closingPrice - episode.price) / episode.price }) });
+    return { horizons: Object.freeze(horizons),
+      untilClosure: Object.freeze({ at: cycle.closedAt, changePerShare: cycle.closingPrice - fromPrice,
+        changePercent: 100 * (cycle.closingPrice - fromPrice) / fromPrice }) };
+  };
+  const byTime = new Map(observations.map((observation) => [observation.at, observation]));
+  const studyContext = (at: number) => {
+    const observation = byTime.get(at)!;
+    return { context: input.contextAt?.(at) ?? null, ema20Side: side(observation.close, observation.ema20),
+      vwapSide: side(observation.close, observation.vwap), rsi14: observation.rsi14 };
+  };
+  // Optional fields retain compatibility with previously saved loss-only evidence.
+  const enriched: (Episode & ReturnType<typeof followThrough> & {
+    lossContext?: ReturnType<typeof studyContext>;
+    reclaimStudy?: ReturnType<typeof followThrough> & ReturnType<typeof studyContext> & { at: number; price: number };
+  })[] = episodes.map((episode) => {
+    const reclaimStudy = episode.recovery === "observed_reclaim" && episode.reclaimedAt !== null && episode.reclaimPrice !== null
+      ? { at: episode.reclaimedAt, price: episode.reclaimPrice, ...studyContext(episode.reclaimedAt),
+        ...followThrough(episode.cycle, episode.reclaimedAt, episode.reclaimPrice) } : undefined;
+    return Object.freeze({ ...episode, ...followThrough(episode.cycle, episode.at, episode.price),
+      lossContext: studyContext(episode.at), ...(reclaimStudy ? { reclaimStudy } : {}) });
   });
   return Object.freeze({ episodes: Object.freeze(enriched),
     crossings: Object.freeze(crossings.map((c) => Object.freeze(c))),

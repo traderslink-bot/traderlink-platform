@@ -60,3 +60,28 @@ test("the first held close can lose the valid side already known at entry", () =
   const missing = run([o(1, 9.8), o(2, 10.2)]);
   assert.equal(missing.episodes.filter((e) => e.reference === "ema9").length, 0);
 });
+
+test("reclaim follow-through starts at its own price and time, not the earlier loss", () => {
+  const result = run([o(0, 10.1), o(1, 9.9), o(3, 10.2)], {
+    oneMinuteCloses: [o(6, 10.3), o(8, 10.7)],
+  });
+  const episode = result.episodes.find((row) => row.reference === "ema9")!;
+  assert.ok(Math.abs(episode.horizons[0].changePerShare! - 0.4) < 1e-10);
+  assert.equal(episode.reclaimStudy?.at, base + 180);
+  assert.equal(episode.reclaimStudy?.price, 10.2);
+  assert.ok(Math.abs(episode.reclaimStudy!.horizons[0].changePerShare! - 0.5) < 1e-10);
+  assert.ok(Math.abs(episode.reclaimStudy!.untilClosure.changePerShare - 0.3) < 1e-10);
+  assert.equal(episode.reclaimStudy?.ema20Side, "above");
+  assert.equal(episode.reclaimStudy?.rsi14, 55);
+});
+
+test("reclaim horizon respects closure and interrupted observation independently of the loss horizon", () => {
+  const observed = [o(0, 10.1), o(1, 9.9), o(3, 10.2)];
+  const closed = run(observed, { cycles: [{ openedAt: base, closedAt: base + 480, closingPrice: 10.5 }] });
+  assert.equal(closed.episodes[0].reclaimStudy?.horizons[0].status, "closed_at_horizon");
+  const interrupted = run(observed, { oneMinuteCloses: [o(8, 10.7)], resetTimes: [base + 300] });
+  assert.equal(interrupted.episodes[0].reclaimStudy?.horizons[0].status, "endpoint_unavailable");
+  assert.equal(interrupted.episodes[0].recovery, "observed_reclaim");
+  const unresolved = run([o(0, 10.1), o(1, 9.9)]);
+  assert.equal(unresolved.episodes[0].reclaimStudy, undefined);
+});

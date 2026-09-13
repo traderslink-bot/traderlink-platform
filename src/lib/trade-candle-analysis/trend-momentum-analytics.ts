@@ -116,3 +116,16 @@ export function summarizeIndicatorStudy(rows: ReturnType<typeof selectIndicatorS
     observed, noRecorded, unknown, recordedReclaimRate: observed + noRecorded ? 100 * observed / (observed + noRecorded) : null,
     horizons };
 }
+
+/** Select by reclaim time before applying conditions; never replace missing context with a later event. */
+export function selectIndicatorReclaimStudy(projection: TrendMomentumProjection,
+  interval: "1m" | "5m", reference: "ema9" | "ema20" | "vwap", firstOnly: boolean) {
+  const frame = interval === "1m" ? "oneMinute" : "fiveMinute";
+  return projection.trades.flatMap((trade) => {
+    const reclaimed = [...(trade.indicators?.duringTrade?.[frame]?.episodes ?? [])]
+      .filter((episode) => episode.reference === reference && episode.recovery === "observed_reclaim" && episode.reclaimedAt !== null)
+      .sort((a, b) => a.reclaimedAt! - b.reclaimedAt! || a.cycle - b.cycle);
+    return (firstOnly ? reclaimed.slice(0, 1) : reclaimed).map((episode) => ({ trade, episode,
+      observation: episode.reclaimStudy ?? null }));
+  });
+}

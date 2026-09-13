@@ -31,12 +31,21 @@ test("reporting currency scales all price fields but never RSI, percentages or t
   assert.equal(result.chartSeries.oneMinute[30].ema20, source.chartSeries.oneMinute[30].ema20! * 2);
   assert.equal(result.chartSeries.oneMinute[30].rsi14, source.chartSeries.oneMinute[30].rsi14);
   assert.ok(source.duringTrade.oneMinute!.episodes.length > 0);
+  assert.ok(source.duringTrade.oneMinute!.episodes.some((episode) => episode.reclaimStudy));
   result.duringTrade.oneMinute!.episodes.forEach((episode, i) => {
     const old = source.duringTrade.oneMinute!.episodes[i];
     assert.equal(episode.price, old.price * 2);
     assert.equal(episode.untilClosure.changePerShare, old.untilClosure.changePerShare * 2);
     assert.equal(episode.untilClosure.changePercent, old.untilClosure.changePercent);
     assert.equal(episode.reclaimedAt, old.reclaimedAt);
+    if (old.reclaimStudy) {
+      assert.equal(episode.reclaimStudy!.price, old.reclaimStudy.price * 2);
+      assert.equal(episode.reclaimStudy!.untilClosure.changePerShare, old.reclaimStudy.untilClosure.changePerShare * 2);
+      assert.equal(episode.reclaimStudy!.untilClosure.changePercent, old.reclaimStudy.untilClosure.changePercent);
+      assert.equal(episode.reclaimStudy!.context?.rsi14, old.reclaimStudy.context?.rsi14);
+      assert.equal(episode.reclaimStudy!.at, old.reclaimStudy.at);
+      assert.equal(episode.reclaimStudy!.context!.ema20, old.reclaimStudy.context!.ema20! * 2);
+    }
   });
   assert.equal(JSON.stringify(source), before);
   assert.equal(scaleTradeIndicatorResult(source, "1"), source);

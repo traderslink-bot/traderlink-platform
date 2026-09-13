@@ -2,6 +2,28 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Independently anchored reclaim evidence - 2026-09-13
+
+- Added optional saved reclaim-study evidence: exact observed reclaim time and
+  price, same-observation EMA/RSI context and VWAP side, its own 5/15/30/60-minute
+  endpoints and until-position-closure change. Loss follow-through is unchanged.
+- Reused the existing context calculation/policies only at episode observations;
+  no second indicator formula, provider call, AI request or full per-bar context
+  payload was introduced. Reporting converts new price-valued fields while
+  preserving RSI, percentages, direction labels and timestamps.
+- First-reclaim selection sorts observed reclaims across every saved-trade
+  position cycle before condition filtering. Older saved episodes without the
+  added context remain the first observation with missing context; a later
+  occurrence cannot silently replace them. Optional fields preserve old reads.
+- Seventeen focused episode/analytics/reporting tests pass, including independent
+  loss/reclaim endpoints, exact closure, interruption, missing older context,
+  multi-cycle selection and currency conversion. Six selected TypeScript roots
+  have zero diagnostics; whitespace check passes.
+- UI event selector, combined during-trade conditions, complete/unknown event
+  presence and headline/occurrence presentation remain next. No visible card
+  layout changed, so Help UI instructions stay unchanged until that integration.
+  Remaining final goal/acceptance gates are still open. Nothing deployed.
+
 ## Allocation-backed Scaling verification - 2026-09-13
 
 - Added real SQLite allocation-join tests for long and short grouped-trade

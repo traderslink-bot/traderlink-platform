@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { analyzeIndicatorEpisodes } from "./trend-momentum-episodes";
-import { buildTrendMomentumProjection, selectIndicatorStudy, summarizeIndicatorRecords, summarizeIndicatorStudy,
+import { buildTrendMomentumProjection, selectIndicatorStudy, selectIndicatorReclaimStudy, summarizeIndicatorRecords, summarizeIndicatorStudy,
   type TrendMomentumRecord, type TrendMomentumProjection } from "./trend-momentum-analytics";
 
 const record = (tradeId: string, pnlDecimal: string | null, executionId: string): TrendMomentumRecord => ({
@@ -9,6 +9,26 @@ const record = (tradeId: string, pnlDecimal: string | null, executionId: string)
   closeDate: "2026-09-11", trackerDate: "2026-09-11", executionKind: "initial_entry",
   executedAtUtc: "2026-09-11T14:00:00Z", executionSequence: 1, context: null,
   executionPriceDecimal: "10",
+});
+
+test("first reclaim stays first across position cycles even when its older saved context is missing", () => {
+  const at = 1_800_000_000;
+  const during = analyzeIndicatorEpisodes({
+    observations: [[0, 10.2], [1, 9.8], [3, 10.2], [6, 10.2], [7, 9.8], [9, 10.3]].map(([minute, close]) =>
+      ({ at: at + minute * 60, close, ema9: 10, ema20: 9, vwap: null, rsi14: 55 })),
+    oneMinuteCloses: [], cycles: [{ openedAt: at, closedAt: at + 240, closingPrice: 10.2 },
+      { openedAt: at + 360, closedAt: at + 600, closingPrice: 10.4 }],
+    completedRanges: [{ start: at, endExclusive: at + 600 }], resetTimes: [], direction: "long",
+  });
+  const projection = { trades: [{ tradeId: "combined", indicators: { duringTrade: { oneMinute: {
+    ...during, episodes: during.episodes.map((episode) => episode.cycle === 0 ? { ...episode, reclaimStudy: undefined } : episode),
+  } } } }] } as unknown as TrendMomentumProjection;
+  assert.equal(selectIndicatorReclaimStudy(projection, "1m", "ema9", false).length, 2);
+  const first = selectIndicatorReclaimStudy(projection, "1m", "ema9", true);
+  assert.equal(first.length, 1);
+  assert.equal(first[0].episode.reclaimedAt, at + 180);
+  assert.equal(first[0].observation, null);
+  assert.equal(first.filter((row) => row.observation !== null).length, 0);
 });
 test("whole-trade outcomes count once despite repeated executions and preserve unknown Net", () => {
   const result = summarizeIndicatorRecords([record("a", "10.25", "1"), record("a", "10.25", "2"),
