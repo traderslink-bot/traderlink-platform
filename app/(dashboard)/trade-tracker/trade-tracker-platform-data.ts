@@ -2,6 +2,7 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
+import { scaleTradeIndicatorResult } from "@/src/lib/trade-candle-analysis/trend-momentum-reporting";
 import { readAnalyzerWrittenReviewContext } from "@/src/modules/level-analysis/server/analyzer-written-review-context";
 
 import {
@@ -482,6 +483,8 @@ function logicalAnalyzerView(saved: LogicalTradeAnalyzerSavedResult | null): Day
       favorableMove: path.favorableMoveDecimal, minutesAfterExit: path.minutesAfterExit,
       observedAt: path.observedAtCandleTime,
     })), greenToRed: saved.analyzed.greenToRed, mismatchBrokerConfirmed: false,
+    trendMomentum: saved.analyzed.trendMomentum,
+    trendMomentumUnavailableReason: saved.analyzed.trendMomentumUnavailableReason,
     status: saved.status === "ready" ? "ready" : "pending" };
 }
 
@@ -860,6 +863,7 @@ export function scaleDaySessionTradeAnalyzer(
   });
   return Object.freeze({
     ...analyzer,
+    ...(analyzer.trendMomentum ? { trendMomentum: scaleTradeIndicatorResult(analyzer.trendMomentum, multiplier) } : {}),
     candles: analyzer.candles.map((candle) => Object.freeze({
       ...candle,
       close: scaleReportingDecimal(candle.close, multiplier)!,

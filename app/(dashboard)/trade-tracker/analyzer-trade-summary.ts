@@ -6,11 +6,19 @@ import type { buildWrittenTradeReview } from "./analyzer-written-review-model";
 export function tradeSummaryPoints(analysis: DaySessionTradeAnalyzer, review: NonNullable<ReturnType<typeof buildWrittenTradeReview>>, money: (value: string) => string, timeframe: "1m" | "5m" = "1m"): string[] {
   const first = [...analysis.events].sort((a, b) => Date.parse(a.executedAt) - Date.parse(b.executedAt) || a.sequence - b.sequence)
     .find(event => event.kind === "entry" || event.kind === "add");
-  const references = ([
+  const saved = analysis.trendMomentum?.executions.find((event) => event.eventId === first?.eventId);
+  const context = saved?.[timeframe === "1m" ? "oneMinute" : "fiveMinute"];
+  const distance = (reference: number | null | undefined) => first && reference != null
+    ? new Decimal(first.price).minus(reference).toFixed() : undefined;
+  const referenceValues = analysis.trendMomentum ? [
+    [distance(saved?.sessionVwap?.value), "session VWAP from completed minutes before entry"],
+    [distance(context?.ema9), `${timeframe === "1m" ? "1-minute" : "5-minute"} EMA 9 from the last completed candle`],
+  ] : [
     [first?.metrics?.vwapDistance?.signedDistance, 'session VWAP'],
     [timeframe === '5m' ? first?.fiveMinuteContext?.completedBeforeExecution?.ema9Distance?.signedDistance : first?.metrics?.ema9Distance?.signedDistance,
       timeframe === '5m' ? '5-minute EMA 9 from the last completed candle' : '1-minute EMA 9'],
-  ] as const).flatMap(([distance, label]) => {
+  ];
+  const references = referenceValues.flatMap(([distance, label]) => {
     if (distance == null) return [];
     if (!Number.isFinite(Number(distance)) || distance.trim() === '') return [];
     const value = new Decimal(distance);
@@ -18,7 +26,8 @@ export function tradeSummaryPoints(analysis: DaySessionTradeAnalyzer, review: No
   });
   const adds = review.fills.filter(fill => fill.label === "Added shares").length;
   const reentries = review.fills.filter(fill => fill.label === "Re-entered").length;
-  const entry = `${references.length ? `Your first entry was ${references.join(' and ')}` : 'You opened the position'}.${adds ? ` You added ${adds === 1 ? 'once' : `${adds} times`}.` : ''}${timeframe === '5m' && !first?.fiveMinuteContext?.completedBeforeExecution?.ema9Distance ? ' The saved 5-minute EMA 9 is unavailable for that entry.' : ''}${reentries ? ` You re-entered ${reentries === 1 ? 'once' : `${reentries} times`} within this saved trade.` : ''}`;
+  const emaUnavailable = analysis.trendMomentum ? context?.ema9 == null : timeframe === "5m" && !first?.fiveMinuteContext?.completedBeforeExecution?.ema9Distance;
+  const entry = `${references.length ? `Your first entry was ${references.join(' and ')}` : 'You opened the position'}.${adds ? ` You added ${adds === 1 ? 'once' : `${adds} times`}.` : ''}${emaUnavailable ? ` The saved ${timeframe === "1m" ? "1-minute" : "5-minute"} EMA 9 is unavailable for that entry.` : ''}${reentries ? ` You re-entered ${reentries === 1 ? 'once' : `${reentries} times`} within this saved trade.` : ''}`;
   const exits = review.fills.filter(fill => fill.grossPnl !== null);
   const partials = exits.filter(fill => new Decimal(fill.remaining).gt(0)).length;
   const profit = exits.reduce((sum, fill) => sum.plus(Decimal.max(0, fill.grossPnl!)), new Decimal(0));

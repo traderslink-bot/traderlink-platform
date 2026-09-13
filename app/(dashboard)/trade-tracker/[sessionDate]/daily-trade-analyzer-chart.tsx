@@ -18,6 +18,7 @@ import {
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
+  LineStyle,
   createChart,
   type IChartApi,
   type MouseEventParams,
@@ -26,6 +27,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { calculateIndicatorPoints } from "@/src/lib/trade-candle-analysis/indicator-context";
+import { savedTradeIndicatorChart } from "@/src/lib/trade-candle-analysis/trend-momentum-chart";
 import { AnalyzerHelpTooltip } from "../../analytics/analyzer-help-tooltip";
 import {
   candlePatternName,
@@ -38,7 +40,7 @@ import type { DaySessionTradeAnalyzer } from "./day-session-types";
 
 export type DailyTradeChartInterval = "1m" | "5m" | "15m" | "1h";
 type ChartRangeMode = "all_candles" | "around_trade";
-type ChartLayer = "candlePatterns" | "ema" | "executions" | "rules" | "volume" | "vwap";
+type ChartLayer = "candlePatterns" | "ema" | "executions" | "rules" | "volume" | "vwap" | "rsi";
 type ChartLayerVisibility = Readonly<Record<ChartLayer, boolean>>;
 
 type ChartCandle = DaySessionTradeAnalyzer["candles"][number];
@@ -98,6 +100,7 @@ const DEFAULT_CHART_LAYERS: ChartLayerVisibility = Object.freeze({
   rules: true,
   volume: true,
   vwap: true,
+  rsi: false,
 });
 
 function zoomChartTimeScale(
@@ -446,6 +449,11 @@ export function DailyTradeAnalyzerChart({
     [analysis, chartInterval],
   );
   const visiblePatternKinds = [...new Set(chartPatterns.map((pattern) => pattern.kind))];
+  const savedFrame = chartInterval === "1m" ? analysis.trendMomentum?.chartSeries?.oneMinute
+    : chartInterval === "5m" ? analysis.trendMomentum?.chartSeries?.fiveMinute : undefined;
+  const vwapAvailable = analysis.trendMomentum ? savedFrame?.some((point) => point.vwap !== null) ?? false : exactTurnoverAvailable;
+  const emaAvailable = analysis.trendMomentum ? savedFrame?.some((point) => point.ema9 !== null || point.ema20 !== null) ?? false : true;
+  const rsiAvailable = savedFrame?.some((point) => point.rsi14 !== null) ?? false;
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(document.fullscreenElement === frameRef.current);
@@ -530,11 +538,12 @@ export function DailyTradeAnalyzerChart({
       time: candle.time as Time,
     })));
 
-    const indicators = calculateIndicatorPoints(
+    const savedIndicators = savedTradeIndicatorChart(analysis.trendMomentum, chartInterval, numericCandles.map((candle) => candle.time));
+    const indicators = savedIndicators ? [] : calculateIndicatorPoints(
       numericCandles,
       { vwapSource: "turnover" },
     );
-    if (exactTurnoverAvailable && layers.vwap) {
+    if (vwapAvailable && layers.vwap) {
       const vwap = chart.addSeries(LineSeries, {
         color: chartSemanticColors.vwap,
         crosshairMarkerVisible: false,
@@ -543,22 +552,28 @@ export function DailyTradeAnalyzerChart({
         priceLineVisible: false,
         title: "Session VWAP",
       });
-      vwap.setData(indicators.flatMap((point) =>
+      vwap.setData(savedIndicators ? savedIndicators.vwap.map((point) => ({ ...point, time: point.time as Time })) : indicators.flatMap((point) =>
         point.vwap === null ? [] : [{ time: point.time as Time, value: point.vwap }],
       ));
     }
-    if (layers.ema) {
+    if (layers.ema && emaAvailable) {
       const ema9 = chart.addSeries(LineSeries, {
         color: chartSemanticColors.ema,
         crosshairMarkerVisible: false,
         lastValueVisible: false,
         lineWidth: 2,
         priceLineVisible: false,
-        title: `${chartInterval} EMA 9`,
+        title: `${chartInterval} EMA 9${savedIndicators ? "" : " (older calculation)"}`,
       });
-      ema9.setData(indicators.flatMap((point) =>
+      ema9.setData(savedIndicators ? savedIndicators.ema9.map((point) => ({ ...point, time: point.time as Time })) : indicators.flatMap((point) =>
         point.ema9 === null ? [] : [{ time: point.time as Time, value: point.ema9 }],
       ));
+      if (savedIndicators) {
+        const ema20 = chart.addSeries(LineSeries, { color: chartSemanticColors.ema, lineStyle: LineStyle.Dashed,
+          crosshairMarkerVisible: false, lastValueVisible: false, lineWidth: 2, priceLineVisible: false,
+          title: `${chartInterval} EMA 20` });
+        ema20.setData(savedIndicators.ema20.map((point) => ({ ...point, time: point.time as Time })));
+      }
     }
 
     if (layers.volume) {
@@ -572,6 +587,16 @@ export function DailyTradeAnalyzerChart({
         value: Number(candle.volume),
       })));
       chart.panes()[1]?.setHeight(92);
+    }
+    if (layers.rsi && rsiAvailable && savedIndicators) {
+      const pane = layers.volume ? 2 : 1;
+      const rsi = chart.addSeries(LineSeries, { color: chartSemanticColors.vwap, lineWidth: 2,
+        priceLineVisible: false, title: `${chartInterval} RSI 14`,
+        priceFormat: { type: "price", precision: 1, minMove: 0.1 } }, pane);
+      rsi.setData(savedIndicators.rsi14.map((point) => ({ ...point, time: point.time as Time })));
+      for (const level of [30, 50, 70]) rsi.createPriceLine({ price: level, color: chartTheme.text,
+        lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: String(level) });
+      chart.panes()[pane]?.setHeight(110);
     }
 
     const sideSequence = { BUY: 0, SELL: 0 };
@@ -752,7 +777,7 @@ export function DailyTradeAnalyzerChart({
       eventCandleIndexesRef.current = new Map();
       chart.remove();
     };
-  }, [analysis, annotationAppearance, chartInterval, chartPatternColors, chartPatterns, chartSemanticColors, chartTheme, currency, direction, exactTurnoverAvailable, isFullscreen, layers, rangeMode, rangeRevision, ruleEvidence]);
+  }, [analysis, annotationAppearance, chartInterval, chartPatternColors, chartPatterns, chartSemanticColors, chartTheme, currency, direction, emaAvailable, vwapAvailable, rsiAvailable, isFullscreen, layers, rangeMode, rangeRevision, ruleEvidence]);
 
   useEffect(() => {
     selectedEventIdRef.current = selectedEventId;
@@ -821,12 +846,13 @@ export function DailyTradeAnalyzerChart({
       unavailableReason: "No candle patterns are available for this timeframe.",
     },
     {
-      available: exactTurnoverAvailable,
+      available: vwapAvailable,
       label: "VWAP",
       layer: "vwap",
-      unavailableReason: "Complete turnover data is required for Session VWAP.",
+      unavailableReason: "Saved Session VWAP requires complete session data and a supported indicator timeframe.",
     },
-    { available: true, label: "EMA", layer: "ema" },
+    { available: emaAvailable, label: analysis.trendMomentum ? "EMA 9 & EMA 20" : "EMA 9 (older calculation)", layer: "ema", unavailableReason: "Saved EMA history is unavailable for this timeframe." },
+    { available: rsiAvailable, label: "RSI 14", layer: "rsi", unavailableReason: "Saved RSI history is unavailable for this timeframe." },
   ];
 
   return (
@@ -909,22 +935,22 @@ export function DailyTradeAnalyzerChart({
           onZoomIn={() => zoomFromControl(CHART_ZOOM_IN_FACTOR)}
           onZoomOut={() => zoomFromControl(CHART_ZOOM_OUT_FACTOR)}
         />
-        {exactTurnoverAvailable ? (
+        {vwapAvailable ? (
           <Typography sx={{ color: chartTheme.controlText, display: { xs: "none", md: "block" }, fontSize: "0.66rem", fontWeight: 800 }}>
             {chartInterval === "1h" ? "1h chart only" : `Pattern context: ${chartInterval}`}
           </Typography>
         ) : <Stack direction="row" spacing={0.2} sx={{ alignItems: "center" }}>
           <Typography component="span" sx={{ color: "error.main", fontSize: "0.66rem", fontWeight: 850 }}>VWAP unavailable</Typography>
-          <AnalyzerHelpTooltip label="VWAP unavailable" text="Moomoo did not return complete turnover data for this chart." />
+          <AnalyzerHelpTooltip label="VWAP unavailable" text="Saved Session VWAP is unavailable for this timeframe or session coverage." />
         </Stack>}
-        {exactTurnoverAvailable && layers.vwap ? (
+        {vwapAvailable && layers.vwap ? (
           <Typography sx={{ color: chartSemanticColors.vwap, display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
             - Session VWAP
           </Typography>
         ) : null}
-        {layers.ema ? (
+        {layers.ema && emaAvailable ? (
           <Typography sx={{ color: chartSemanticColors.ema, display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
-            - {chartInterval} EMA 9
+            - {chartInterval} {analysis.trendMomentum ? "EMA 9 / EMA 20 dashed" : "EMA 9 (older calculation)"}
           </Typography>
         ) : null}
       </Stack>

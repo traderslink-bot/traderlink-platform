@@ -2,6 +2,42 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Individual trade context and chart alignment - 2026-09-12
+
+- Connected saved indicator context through both logical-analysis presentation
+  paths: Session Tracker data and scoped trade-detail API. The shared written
+  trade view now includes an execution selector, timeframe-aligned EMA9/20,
+  RSI14 and session VWAP card, bar age/lookback span and per-indicator reasons.
+  Partial availability does not hide the existing P/L story.
+- Trade summary uses the same new pre-execution context when present; it never
+  substitutes conflicting older values when a new indicator is unavailable.
+  Older analysis is retained and its different candle timing is labeled in Help.
+- Reporting conversion scales only price-valued fields, including episode
+  per-share changes. Percentages, RSI, times and source evidence stay unchanged.
+- Saved result now retains compact session-only 1m/5m indicator chart series
+  calculated with the same warmed history. Chart uses these series, shows EMA20
+  dashed alongside EMA9, offers an optional RSI pane, and emits whitespace for
+  unavailable values. Unsupported 15m/1h indicator context is not substituted
+  with 1m/5m output; existing candle/pattern/interaction controls remain intact.
+  Older chart EMA is explicitly identified as an older calculation.
+- Chart skill used; installed lightweight-charts 5.2.0 typings verify v5
+  addSeries, LineStyle and createPriceLine APIs. Existing chart color scheme is
+  retained, including the existing light plotting surface in Navy Dark; rendered
+  appearance/interaction acceptance is still pending, not claimed by typechecks.
+- Combined analysis projection deliberately excludes chart arrays to avoid
+  duplicating every trade's full chart in group-page/offline payloads. Individual
+  daily offline contract already excludes Analyzer detail; that boundary remains.
+- Four new fixtures pass: currency invariants, chart/execution equality and
+  unsupported timeframe, partial card rendering, and no legacy summary fallback.
+  Foundation/worker regression passes in the same 19-test process. Six initial
+  individual/API roots and five subsequent chart/core roots pass targeted strict
+  TypeScript checks, not a full application build.
+- Remaining full scope: aggregate filters/cohorts/statistics/URL and bounded
+  supporting evidence, equivalent cross-page comparison anchors, other-page
+  enrichment, outcome notification/copy audit, real saved-trade calibration,
+  populated browser/interaction/offline acceptance and final release handoff.
+  No hosted change, local server or real provider request in this checkpoint.
+
 ## Initial Trend & Momentum page integration - 2026-09-12
 
 - Combined checkpoint: all 43 focused tests pass in one 512MB-capped process

@@ -51,20 +51,25 @@ export function analyzeTradeExecutionIndicators(
     }
     return vwapEntries[low - 1]?.[1] ?? null;
   };
-  const during = (interval: "1m" | "5m") => {
-    if (!input.positionCycles || input.timingUnavailable || !input.direction) return null;
+  const chart = (interval: "1m" | "5m") => {
     const series = interval === "1m" ? one : five;
-    const observations = series.filter((point) => point.availableAt >= input.session.start).map((point) => {
+    return series.filter((point) => point.time >= input.session.start && point.availableAt <= input.session.endExclusive).map((point) => {
       const context = tradeIndicatorContextAt({ series, at: point.availableAt, interval,
         completedRanges: input.history.completedRanges, resetTimes: input.resetTimes, policy: input.policies[interval] })!;
-      return { at: point.availableAt, close: point.close, ema9: context.ema9, ema20: context.ema20,
+      return { time: point.time, at: point.availableAt, close: point.close, ema9: context.ema9, ema20: context.ema20,
         rsi14: context.rsi14, vwap: vwapAt(point.availableAt) };
     });
+  };
+  const chartSeries = Object.freeze({ oneMinute: Object.freeze(chart("1m")), fiveMinute: Object.freeze(chart("5m")) });
+  const during = (interval: "1m" | "5m") => {
+    if (!input.positionCycles || input.timingUnavailable || !input.direction) return null;
+    const observations = interval === "1m" ? chartSeries.oneMinute : chartSeries.fiveMinute;
     return analyzeIndicatorEpisodes({ observations, oneMinuteCloses: one.map((p) => ({ at: p.availableAt, close: p.close })),
       cycles: input.positionCycles, completedRanges: input.history.completedRanges,
       resetTimes: input.resetTimes, direction: input.direction });
   };
   return Object.freeze({ calculationVersion: TRADE_INDICATOR_CALCULATION_VERSION,
+    chartSeries,
     historyOutcome: input.historyOutcome ?? "complete",
     timingUnavailable: input.timingUnavailable ?? false,
     duringTrade: Object.freeze({ oneMinute: during("1m"), fiveMinute: during("5m") }),

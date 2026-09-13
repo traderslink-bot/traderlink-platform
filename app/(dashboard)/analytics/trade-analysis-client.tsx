@@ -922,7 +922,7 @@ export function TradeAnalysisClient({
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-start" } }}>
           <AnalyzedTradeCountCard
             capabilityQuery={capabilityQuery}
-            count={view === "trend-momentum" ? model.trendMomentum?.trades.filter((trade) => trade.direction === activeDirection && trade.indicators !== null).length ?? 0 : view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
+            count={view === "trend-momentum" ? model.directionTradeCounts[activeDirection] : view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
           />
           {view !== "day" ? <DirectionControl activeDirection={activeDirection} counts={visibleDirectionCounts} onChange={(direction) => {
             setSelectedDirection(direction);
