@@ -165,7 +165,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
         (outcome === "provider_unavailable"
           ? this.notifications?.notifySharedConnectionFailure.bind(this.notifications)
           : this.notifications?.notifyFailure.bind(this.notifications)
-        )?.({ occurredAt: completedAt, scope: job.scope, target: job.target });
+        )?.({ occurredAt: completedAt, scope: job.scope, target: job.target, failureReason: outcome });
         return true;
       }
       current = result.candles;

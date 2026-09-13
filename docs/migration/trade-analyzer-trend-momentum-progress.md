@@ -2,6 +2,27 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Failure-notice and preference audit - 2026-09-13
+
+- Found and removed a notification-service mutation that automatically enabled
+  broker-connection email after shared Moomoo failure. The existing scoped
+  notification creation remains; saved delivery preferences are no longer changed.
+- Passed the worker's existing no-coverage/provider-unavailable distinction to
+  the failure notice. Uses the approved neutral insufficient-candle wording or
+  retrieval-failure wording, never inferring proven low volume from missing bars.
+- Five focused tests pass: wording, an AST guard against notification preference
+  writes, and worker pending/history-failure/success behavior. Three selected
+  TypeScript roots have zero diagnostics. AST guard is architectural evidence,
+  not a live email-delivery test. No hosted actions or notification sent.
+- Dedup currently uses logicalTradeVersionId and kind. Repository queue reuses
+  the same job for a version/window; claimNext can requeue terminal failures
+  when shared-session evidence becomes ready. Therefore do not change dedup to
+  attemptCount or jobId without tracing manual request identity. New user-request
+  retry and meaningful-outcome-change requirements remain open, as does terminal
+  card copy alignment. Core-analysis preservation is covered by worker tests.
+- Help reviewed: current provider/coverage explanations remain accurate; no new
+  user controls. Full browser/corpus/source/release acceptance remains pending.
+
 ## Until-position-closure presentation - 2026-09-13
 
 - Plan section at lines 483 onward required closing-fill movement independently

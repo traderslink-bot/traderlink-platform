@@ -9,6 +9,12 @@ import { PlatformNotificationRepository } from "@/src/modules/platform/server/no
 import type { LogicalTradeAnalyzerTarget } from "./logical-trade-analyzer-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
 
+export function logicalTradeFailureNotice(reason: "no_coverage" | "provider_unavailable" = "provider_unavailable") {
+  return { title: "Trade Analyzer needs review", summary: reason === "no_coverage"
+    ? "Not enough candle data to analyze this trade. This can happen when a stock trades very little."
+    : "We couldn't retrieve the candle data. Please try again later." };
+}
+
 function workspaceScope(scope: AccountScope): WorkspaceAccessScope {
   return Object.freeze({ activeAccountId: scope.accountId,
     allowedAccountIds: Object.freeze([scope.accountId]), userId: scope.userId,
@@ -19,12 +25,12 @@ export class LogicalTradeAnalyzerNotificationService {
   constructor(private readonly database: Database.Database) {}
 
   private create(input: Readonly<{ occurredAt: Date; scope: AccountScope;
-    target: LogicalTradeAnalyzerTarget; kind: "ready" | "correction" | "failure" }>): void {
+    target: LogicalTradeAnalyzerTarget; kind: "ready" | "correction" | "failure"; failureReason?: "no_coverage" | "provider_unavailable" }>): void {
     const content = input.kind === "ready"
       ? { summary: "Your Trade Analyzer update is ready to review.", title: "Trade Analyzer is ready" }
       : input.kind === "correction"
         ? { summary: "Check the highlighted execution time and price, then edit and resubmit the trade.", title: "Trade Analyzer needs a correction" }
-        : { summary: "Market data was unavailable for this trade. Review the execution details, then try the analysis again.", title: "Trade Analyzer needs review" };
+        : logicalTradeFailureNotice(input.failureReason);
     new PlatformNotificationRepository(this.database).create({
       category: "chart_update",
       destinationPath: `/trade-tracker/${input.target.tradingDateNewYork}?trade=${input.target.representativeRoundTripId}`,
@@ -53,25 +59,17 @@ export class LogicalTradeAnalyzerNotificationService {
     this.create({ ...input, kind: "correction" });
   }
 
-  notifyFailure(input: Readonly<{ occurredAt: Date; scope: AccountScope; target: LogicalTradeAnalyzerTarget }>): void {
+  notifyFailure(input: Readonly<{ occurredAt: Date; scope: AccountScope; target: LogicalTradeAnalyzerTarget; failureReason?: "no_coverage" | "provider_unavailable" }>): void {
     this.create({ ...input, kind: "failure" });
   }
 
   /** Alerts the owner of the designated shared Moomoo connection without exposing it to the requesting trader. */
-  notifySharedConnectionFailure(input: Readonly<{ occurredAt: Date; scope: AccountScope; target: LogicalTradeAnalyzerTarget }>): void {
+  notifySharedConnectionFailure(input: Readonly<{ occurredAt: Date; scope: AccountScope; target: LogicalTradeAnalyzerTarget; failureReason?: "no_coverage" | "provider_unavailable" }>): void {
     this.create({ ...input, kind: "failure" });
     const designated = new SharedAnalyzerAllowanceRepository(this.database).designatedScope();
     if (!designated) return;
     const scope = workspaceScope(designated);
     const notifications = new PlatformNotificationRepository(this.database);
-    const preferences = notifications.readPreferences(scope);
-    if (!preferences.emailCategories.includes("broker_connection")) {
-      notifications.replaceEmailCategories({
-        categories: Object.freeze([...preferences.emailCategories, "broker_connection"]),
-        scope,
-        updatedAtUtc: createCanonicalUtcTimestamp(input.occurredAt),
-      });
-    }
     notifications.create({
       category: "broker_connection",
       destinationPath: "/account/trading",
