@@ -2,6 +2,9 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+Current source/remaining hosted acceptance:
+[Exact handoff](trade-analyzer-current-acceptance-handoff.md).
+
 ## Post-retry regression and scale checkpoint
 
 - Complete focused Trend & Momentum run: 27 files, 124 tests passed at bab42b4cc

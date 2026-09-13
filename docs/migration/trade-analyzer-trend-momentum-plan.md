@@ -4,6 +4,9 @@ Status: Implementation authorized 2026-09-12. Owner subsequently approved all
 required testing and completing the planned work without routine approval stops,
 including planned UI implementation. Production release remains separately gated.
 
+Latest source checkpoint and remaining acceptance:
+[Current handoff](trade-analyzer-current-acceptance-handoff.md).
+
 ## Owner clarification: saved data, retries and fetch window
 
 Download-window slice implemented locally: five worker tests and two changed-root
