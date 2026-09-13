@@ -13,7 +13,7 @@ const source = () => ({ database: { prepare: () => { throw new Error("group_must
 const trade = { logicalTradeId: "group", tradeStyle: "day", lifecycleState: "active", direction: "long", members: [{ roundTripId: "one" }, { roundTripId: "two" }] };
 const event = { eventId: "event", sequence: 1, kind: "entry", executedAtUtc: "2026-09-11T14:00:30Z" };
 const at = Date.parse(event.executedAtUtc) / 1000;
-const ready = { status: "ready", analysisVersionId: "revision-2", analyzed: { eventSnapshots: [{ event, patterns: [{ availableAtExecution: true, timeframe: "1m", candlesBeforeExecution: 1, kind: "hammer", knownAtTime: at - 30, time: at - 90 }] }] } };
+const ready = { status: "ready", candles: [{ time: at - 30 }], analysisVersionId: "revision-2", analyzed: { eventSnapshots: [{ event, patterns: [{ availableAtExecution: true, timeframe: "1m", candlesBeforeExecution: 1, kind: "hammer", knownAtTime: at - 30, time: at - 90 }] }] } };
 
 test("pattern population binds current grouped result revision and whole-trade P/L after final-close selection", (t) => {
   t.mock.method(JournalLogicalTradeRepository.prototype, "list", () => [trade]);

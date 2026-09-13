@@ -1,4 +1,6 @@
 import Decimal from "decimal.js";
+import { readSavedPatternPopulation } from "./trend-momentum-pattern-service";
+import { savedTradeDaySummary } from "./saved-trade-day-summary";
 import type { TrendMomentumProjection } from "../../../lib/trade-candle-analysis/trend-momentum-analytics";
 import { readExecutionIndicatorFilterContext, type ExecutionIndicatorFilterContext } from "../../../lib/trade-candle-analysis/trend-momentum-execution-filter";
 import { entryExitPeakProfit } from "./daily-trade-entry-exit-math";
@@ -1918,8 +1920,9 @@ export function buildDailyTradeLongTermAnalytics(
   profitZoneMinimumHoldMinutes = 0,
   entryExitSelection?: Readonly<{ startDate: string | null; endDate: string | null }>,
   currentSnapshotsOnly = false,
+  daySelection?: Readonly<{ startDate: string | null; endDate: string | null }>,
 ): DailyTradeLongTermAnalyticsV2Model {
-  const analyzer = readAnalyzerFacts(database, scope, currentSnapshotsOnly || entryExitSelection !== undefined);
+  const analyzer = readAnalyzerFacts(database, scope, currentSnapshotsOnly || entryExitSelection !== undefined || daySelection !== undefined);
   const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade");
   const scenarioTrades = analyzedScenarioTrades({
     analyzerByRoundTripId: analyzer,
@@ -1950,6 +1953,10 @@ export function buildDailyTradeLongTermAnalytics(
       v2Opportunity,
     })];
   }));
+  const dayPopulation = daySelection ? readSavedPatternPopulation({ database, scope, journalRows,
+    ...daySelection, includePatterns: false }) : null;
+  const daySummary = dayPopulation ? savedTradeDaySummary(dayPopulation.trades,
+    dayPopulation.eligibleDayTradeCount, scenarioTrades, moneyBasis) : null;
   const allEvents: readonly EventJoined[] = Object.freeze(joined.flatMap((trade) => {
     const financialsBySequence = executionFinancials(trade.analyzer.events, trade.journal.direction);
     return trade.analyzer.events.map((event) => Object.freeze({
@@ -2321,7 +2328,7 @@ export function buildDailyTradeLongTermAnalytics(
       totalActualPnlDecimal: sumDecimals(meaningfulProfitRows.map((row) => row.actualPnlDecimal)),
       totalDifferenceDecimal: sumDecimals(meaningfulProfitRows.map((row) => row.differenceDecimal)),
       totalPotentialPnlDecimal: sumDecimals(meaningfulProfitRows.map((row) => row.calculatedPotentialPnlDecimal)),
-      tradeCount: meaningfulProfitRows.length,
+      tradeCount: daySummary?.meaningfulProfitTradeCount ?? meaningfulProfitRows.length,
     }),
     moneyBasis,
     opportunityTradeCount: joined.filter((row) => row.opportunity !== null).length,
@@ -2330,7 +2337,7 @@ export function buildDailyTradeLongTermAnalytics(
       averagePeakToFinalGivebackDecimal: averageDecimals(joined.flatMap((row) =>
         row.analyzer.path.peakToFinalReversalDecimal === null ? [] : [row.analyzer.path.peakToFinalReversalDecimal])),
       medianCapturedPercent: medianNumbers(capturedValues),
-      totalActualPnlDecimal: sumDecimals(joined.map((row) => row.actualPnl)),
+      totalActualPnlDecimal: daySummary ? daySummary.totalActualPnlDecimal : sumDecimals(joined.map((row) => row.actualPnl)),
       totalAdditionalOpportunityDecimal: sumDecimals(joined.flatMap((row) => row.additional === null ? [] : [row.additional])),
       totalPotentialPnlDecimal: sumDecimals(joined.map((row) =>
         new Decimal(row.actualPnl).plus(row.additional ?? 0).toString())),
@@ -2406,5 +2413,11 @@ export function buildDailyTradeLongTermAnalytics(
     }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol))),
     winRatePercent: percentage(joined.filter((row) => new Decimal(row.actualPnl).gt(0)).length, joined.length),
     ...(entryExitSelection ? buildEntryExitProjection(database, scope, journalRows, analyzer, moneyBasis, timezone, reportingMultiplierByRoundTrip, entryExitSelection) : {}),
+    ...(daySummary ? {
+      analyzedTradeCount: daySummary.analyzedTradeCount, analyzedExecutionCount: daySummary.analyzedExecutionCount,
+      eligibleDayTradeCount: daySummary.eligibleDayTradeCount, coveragePercent: daySummary.coveragePercent,
+      directionTradeCounts: daySummary.directionTradeCounts, averagePnlDecimal: daySummary.averagePnlDecimal,
+      averageReturnPercent: daySummary.averageReturnPercent,
+    } : {}),
   });
 }

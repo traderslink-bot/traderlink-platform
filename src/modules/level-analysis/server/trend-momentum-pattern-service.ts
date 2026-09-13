@@ -29,7 +29,7 @@ export function readSavedPatternPopulation(input: Readonly<{
     if ((input.startDate && last.closeLocalDate < input.startDate) || (input.endDate && last.closeLocalDate > input.endDate)) continue;
     eligibleDayTradeCount++;
     const current = trade.logicalTradeId ? analyzer.readCurrentByRoundTrip(accountScope, first.roundTripId) : null;
-    let analyzed: SavedPatternTrade["analyzed"] | null = current?.status === "ready" ? current.analyzed : null;
+    let analyzed: SavedPatternTrade["analyzed"] | null = current?.status === "ready" && current.candles.length > 0 ? current.analyzed : null;
     let analysisVersionId = current?.analysisVersionId;
     if (!current && trade.members.length === 1) {
       const saved = database.prepare(`SELECT version.daily_trade_analysis_version_id AS version_id, snapshot.snapshot_json
@@ -40,6 +40,10 @@ JOIN journal_round_trip_daily_trade_analysis_versions version ON version.daily_t
 JOIN journal_round_trip_daily_trade_analysis_event_snapshots snapshot ON snapshot.daily_trade_analysis_version_id = version.daily_trade_analysis_version_id
 WHERE analysis.workspace_id = ? AND analysis.account_id = ? AND analysis.round_trip_id = ? AND analysis.round_trip_version_id = ?
  AND analysis.status = 'ready' AND version.status = 'ready'
+ AND EXISTS (SELECT 1 FROM journal_round_trip_daily_trade_analysis_event_snapshots backed
+ JOIN level_analysis_market_session_candles candle ON candle.market_session_set_version_id = version.market_session_set_version_id
+ AND candle.candle_time_utc_seconds = backed.candle_time_utc_seconds
+ WHERE backed.daily_trade_analysis_version_id = version.daily_trade_analysis_version_id)
 ORDER BY json_extract(snapshot.snapshot_json, '$.event.sequence')`).all(scope.workspaceId, accountId, first.roundTripId, trade.members[0]!.roundTripVersionId) as { version_id: string; snapshot_json: string }[];
       if (saved.length) {
         try {

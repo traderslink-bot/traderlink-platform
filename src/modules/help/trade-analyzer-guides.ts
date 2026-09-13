@@ -460,6 +460,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: [
           { kind: "paragraph", text: "The Analyzed trades card counts only current saved results with an execution snapshot linked to its saved market candle. Select it to inspect the exact trade replays behind the summaries." },
           { kind: "paragraph", text: "The Day overview's Trend & Momentum card separately shows how many saved user-defined trades have added indicator context. It includes long and short trades in the selected period and does not reduce the main analyzed-trade count when indicator history is missing." },
+          { kind: "paragraph", text: "Day summary cards count each trade you defined once, even when it includes multiple round trips. The selected dates use the trade's final close and retain its earlier entries and exits. P/L combines its members; average return gives each saved trade equal weight. Missing financial results are excluded from financial averages, not treated as zero." },
           { kind: "paragraph", text: "An active paid plan is required to create new analysis. Analysis completed while paid remains readable after cancellation." },
         ],
       },

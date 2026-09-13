@@ -21,8 +21,10 @@ CREATE TABLE journal_logical_trade_daily_analyses(workspace_id, account_id, logi
 CREATE TABLE journal_logical_trade_daily_analysis_versions(logical_trade_analysis_id, revision_number, logical_trade_analysis_version_id, result_json, evidence_candles_json, execution_mismatches_json);
 CREATE TABLE level_analysis_logical_trade_jobs(workspace_id, account_id, logical_trade_id, logical_trade_version_id, status, created_at_utc, desired_coverage_end_utc);
 CREATE TABLE journal_round_trip_daily_trade_analyses(workspace_id, account_id, round_trip_id, round_trip_version_id, daily_trade_analysis_id, current_revision, status);
-CREATE TABLE journal_round_trip_daily_trade_analysis_versions(daily_trade_analysis_id, revision_number, daily_trade_analysis_version_id, status);
-CREATE TABLE journal_round_trip_daily_trade_analysis_event_snapshots(daily_trade_analysis_version_id, snapshot_json);
+CREATE TABLE journal_round_trip_daily_trade_analysis_versions(daily_trade_analysis_id, revision_number, daily_trade_analysis_version_id, status, market_session_set_version_id);
+CREATE TABLE journal_round_trip_daily_trade_analysis_event_snapshots(daily_trade_analysis_version_id, snapshot_json, candle_time_utc_seconds);
+CREATE TABLE level_analysis_market_session_candles(market_session_set_version_id, candle_time_utc_seconds);
+INSERT INTO level_analysis_market_session_candles VALUES ('session', 100);
 INSERT INTO journal_instruments VALUES ('workspace', 'instrument', 'TEST');
 INSERT INTO journal_logical_trades VALUES ('workspace', 'account', 'group', 1, 'active');
 INSERT INTO journal_logical_trade_versions VALUES ('workspace', 'account', 'group-v1', 'day');
@@ -36,10 +38,10 @@ INSERT INTO journal_logical_trade_daily_analyses VALUES ('workspace', 'account',
       .run(`${id}-v1`, `${date}T14:00:30Z`, `${date}T15:00:00Z`);
     database.prepare("INSERT INTO journal_active_logical_trade_memberships VALUES ('workspace', 'account', ?, 'group', 'group-v1', ?)").run(id, index + 1);
     database.prepare("INSERT INTO journal_round_trip_daily_trade_analyses VALUES ('workspace', 'account', ?, ?, ?, 1, 'ready')").run(id, `${id}-v1`, `legacy-${id}`);
-    database.prepare("INSERT INTO journal_round_trip_daily_trade_analysis_versions VALUES (?, 1, ?, 'ready')").run(`legacy-${id}`, `legacy-${id}-v1`);
-    database.prepare("INSERT INTO journal_round_trip_daily_trade_analysis_event_snapshots VALUES (?, ?)").run(`legacy-${id}-v1`, JSON.stringify(snapshot));
+    database.prepare("INSERT INTO journal_round_trip_daily_trade_analysis_versions VALUES (?, 1, ?, 'ready', 'session')").run(`legacy-${id}`, `legacy-${id}-v1`);
+    database.prepare("INSERT INTO journal_round_trip_daily_trade_analysis_event_snapshots VALUES (?, ?, 100)").run(`legacy-${id}-v1`, JSON.stringify(snapshot));
   }
-  for (const revision of [1, 2]) database.prepare("INSERT INTO journal_logical_trade_daily_analysis_versions VALUES ('analysis', ?, ?, ?, '[]', '[]')")
+  for (const revision of [1, 2]) database.prepare(`INSERT INTO journal_logical_trade_daily_analysis_versions VALUES ('analysis', ?, ?, ?, '[{"time":100}]', '[]')`)
     .run(revision, `analysis-v${revision}`, JSON.stringify({ eventSnapshots: [snapshot] }));
   const input = { database,
     scope: { activeAccountId: "account", allowedAccountIds: ["account", "other"], workspaceId: "workspace", userId: "user", workspaceRole: "owner" },
@@ -104,5 +106,17 @@ test("SQL saved population retains missing P/L without manufacturing a zero resu
     assert.equal(result.analyzedTradeCount, 1);
     assert.equal(result.trades[0].pnlDecimal, null);
     assert.equal(result.trades[0].returnPercentDecimal, null);
+  } finally { f.database.close(); }
+});
+
+test("SQL population requires saved candle evidence for current grouped and legacy results", () => {
+  const f = fixture();
+  try {
+    f.database.exec("UPDATE journal_logical_trade_daily_analysis_versions SET evidence_candles_json='[]'");
+    assert.equal(f.read().analyzedTradeCount, 0);
+    f.database.exec("DELETE FROM journal_active_logical_trade_memberships");
+    assert.equal(f.read().analyzedTradeCount, 1);
+    f.database.exec("DELETE FROM level_analysis_market_session_candles");
+    assert.equal(f.read().analyzedTradeCount, 0);
   } finally { f.database.close(); }
 });

@@ -242,7 +242,7 @@ export async function TradeAnalysisPage({
         afterCursor: cursor,
         // Entry/Exit selects by the saved trade's final close below, keeping all
         // earlier round trips in that trade available for its complete results.
-        closingDateRange: ["entry-exit", "trend-momentum", "mfe-mae", "candle-patterns"].includes(view) ? { kind: "all_available" } : closingRange(dateRange),
+        closingDateRange: ["day", "entry-exit", "trend-momentum", "mfe-mae", "candle-patterns"].includes(view) ? { kind: "all_available" } : closingRange(dateRange),
         currency,
         metricIds: ["included_count"],
         moneyBasis,
@@ -276,6 +276,7 @@ export async function TradeAnalysisPage({
         selectedProfitZoneMinimumHoldMinutes,
         view === "entry-exit" || view === "trend-momentum" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
         view === "mfe-mae",
+        view === "day" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
       );
     return Object.freeze({
       generatedAtUtc: overview.generatedAtUtc,

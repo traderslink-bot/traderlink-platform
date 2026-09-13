@@ -2,6 +2,29 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Day displayed-summary correction - 2026-09-13
+
+- Confirmed and replaced the Day page's round-trip-derived displayed trade
+  count, execution count, coverage, direction counts, P/L and average return
+  with the current saved-trade population. Fetch retains every member before
+  final-close selection. The existing card layout and offline model fields
+  remain unchanged; the server sends the corrected values to both.
+- Meaningful-profit count uses saved-trade scenarios within that same selected
+  population, deduplicated by saved ID. Existing qualification, two-cent
+  financial reconciliation and Net fee-completeness rules are preserved.
+- Preserved the old reader's candle-backed readiness boundary in the shared
+  population: current grouped results require saved candle evidence; standalone
+  legacy results require an execution snapshot linked to their saved candle
+  session. Added a real SQLite regression for missing evidence.
+- Ten focused Day/population/SQL tests pass; six selected source/page/test
+  TypeScript roots have zero diagnostics. Diff whitespace check passes.
+  Help now explains saved-trade weighting and final-close date selection.
+- This corrects the Day fields actually displayed, not every legacy unused
+  model field. Green-to-Red/Scaling ancillary summaries and date selection,
+  remaining during-trade controls, corpus/provider calibration, populated
+  browser/offline acceptance and final release gates remain outstanding.
+  No local server, hosted writes, migration application or deployment.
+
 ## Saved-population SQL checkpoint - 2026-09-13
 
 - Added four disposable in-memory SQLite integration tests using the real
