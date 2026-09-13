@@ -2,6 +2,27 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Post-retry regression and scale checkpoint
+
+- Complete focused Trend & Momentum run: 27 files, 124 tests passed at bab42b4cc
+  using a single 512-MB Node process; no local server or live provider request.
+- Added a separate 500-saved-trade/10,000-execution projection fixture. Six
+  aggregate tests pass. Counts reconcile to 500 trades and P/L is included once
+  per trade; chart arrays and duplicate execution-context arrays stay excluded.
+  Synthetic serialized payload is 5,085,362 bytes. This is measured scale evidence,
+  not a mobile-transfer or real full-history payload performance approval.
+- Static presentation matrix now includes long/short, 1m/5m, Net reporting,
+  offline, reclaim and interim-closure selections. Every rendered table heading
+  retains its explanation control; reclaim never displays a biased return rate.
+  Static markup is not keyboard, touch or visual browser acceptance.
+- Reviewed outcome/condition/supporting-table copy against count, P/L, returned-
+  candle direction and completed-candle timestamp contracts. Existing population
+  explanations remain; full rendered-copy and interactive acceptance are open.
+- Coordinator confirmed normal staging is reserved for Coach/Communities.
+  Continue source/disposable acceptance only. Hosted acceptance must use a later
+  owner-authorized isolated preview or guarded production release; do not alter
+  staging or apply 0134/0135 now. No new owner decision is needed for local work.
+
 ## Bounded free retry source checkpoint
 
 - Added coordinator-allocated 0135 source-only migration for durable manual

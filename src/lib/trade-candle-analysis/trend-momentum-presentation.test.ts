@@ -8,6 +8,28 @@ import { buildIndicatorSupportingPage } from "./trend-momentum-cohorts";
 import type { TrendMomentumProjection } from "./trend-momentum-analytics";
 import { TrendMomentumSupportingTrades } from "../../../app/(dashboard)/analytics/trend-momentum-supporting-trades";
 
+for (const direction of ["long", "short"] as const) {
+  for (const interval of ["1m", "5m"] as const) {
+    test(`explanation headings survive ${direction} ${interval} Net offline reclaim selection`, () => {
+      const html = renderToStaticMarkup(createElement(TrendMomentumAnalysis, {
+        projection: buildTrendMomentumProjection([]), currency: "USD", direction,
+        timezone: "America/New_York", moneyBasis: "net", offline: true,
+        queryString: `indicator_interval=${interval}&indicator_event=reclaim&indicator_coverage=incomplete&indicator_execution=position_close`,
+      }));
+      assert.ok(html.includes('value="'+interval+'"'));
+      assert.ok(html.includes('value="position_close"'));
+      assert.ok(html.includes("Explain Average Net P/L"));
+      assert.ok(html.includes(direction === "long" ? "Return above reference" : "Return below reference"));
+      assert.ok(html.includes("includes observed returns only"));
+      assert.ok(!html.includes("Recorded return rate:"));
+      assert.ok(!html.includes("NaN"));
+      const headers = [...html.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)];
+      assert.ok(headers.length >= 50);
+      for (const [,header] of headers) assert.match(header,/aria-label="Explain [^"]+"/);
+    });
+  }
+}
+
 test("unavailable saved indicator view renders an explicit message", () => {
   const html = renderToStaticMarkup(createElement(TrendMomentumAnalysis, {
     projection: undefined, currency: "USD", direction: "long", timezone: "America/New_York",

@@ -51,6 +51,27 @@ test("first reclaim stays first across position cycles even when its older saved
   assert.equal(first[0].observation, null);
   assert.equal(first.filter((row) => row.observation !== null).length, 0);
 });
+
+test("large saved-trade population preserves counts and excludes chart payloads", () => {
+  const executedAtUtc = "2026-09-11T14:00:00Z";
+  const contexts = Array.from({ length: 20 }, (_, i) => ({ eventId: `event-${i}`, executedAtUtc,
+    oneMinute: { alignment: "above", rsiBand: "above_70", historyBars: 200 }, fiveMinute: null, sessionVwap: null }));
+  const analysis = { eventSnapshots: contexts.map((event, sequence) => ({ event: { eventId:event.eventId,executedAtUtc,sequence,
+    kind:sequence===0?"entry":"add",priceDecimal:"10" } })), trendMomentum: { executions:contexts,
+      duringTrade:{oneMinute:null,fiveMinute:null},chartSeries:{oneMinute:[{chartOnlyEvidence:true}],fiveMinute:[]} } };
+  const rows = Array.from({length:500},(_,i)=>({...record(`trade-${i}`,"5",`initial-${i}`),analysis})) as unknown as Parameters<typeof buildTrendMomentumProjection>[0];
+  const projection = buildTrendMomentumProjection(rows);
+  assert.equal(projection.trades.length,500);
+  assert.equal(projection.records.length,10000);
+  const summary = summarizeIndicatorRecords(projection.records);
+  assert.equal(summary.tradeCount,500);
+  assert.equal(summary.totalPnlDecimal,"2500");
+  const serialized = JSON.stringify(projection);
+  assert.doesNotMatch(serialized,/chartOnlyEvidence|chartSeries/);
+  assert.ok(projection.trades.every(trade=>trade.indicators?.executions.length===0));
+  assert.equal(analysis.trendMomentum.executions.length,20);
+  console.info("Synthetic 500-trade / 10000-execution projection bytes:",Buffer.byteLength(serialized));
+});
 test("whole-trade outcomes count once despite repeated executions and preserve unknown Net", () => {
   const result = summarizeIndicatorRecords([record("a", "10.25", "1"), record("a", "10.25", "2"),
     record("b", "-2.25", "3"), record("c", null, "4")]);
