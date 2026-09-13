@@ -22,6 +22,7 @@ test("empty selection renders controls, explanatory column controls and exclusiv
     "Explain Average trade P/L", "Explain Closed before", "Explain Closed at this time", "Explain Missing endpoint",
     "Explain Timing unavailable", "No saved initial entry indicator records", "Combined conditions",
     "Required indicator data missing", "Explain Median trade P/L", "Explain RSI range"]) assert.ok(html.includes(text), text);
+  for (const text of ["EMA 9 &amp; EMA 20", "Session VWAP", "Explain Average Gross P/L", "Explain Median Gross P/L"]) assert.ok(html.includes(text), text);
   assert.ok(!html.includes("NaN"));
 });
 

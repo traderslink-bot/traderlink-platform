@@ -2,6 +2,24 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Indicator-specific comparison tables - 2026-09-12
+
+- Added separate EMA 9 & EMA 20, RSI and Session VWAP sections with saved-URL
+  axis selections. Each includes distinct trades/executions, wins/losses/
+  breakevens, known-outcome counts, win rate, total/average/median selected-basis
+  P/L and average return. Gross/Net labels remain explicit.
+- EMA/RSI direction and EMA separation tables partition observation spacing
+  and candle freshness, and show elapsed span and age. Unavailable evidence
+  stays a visible group. VWAP uses the same execution-price predicate as the
+  combined-condition filter, not a separate interpretation.
+- Changed the execution option to the approved Interim position closure label.
+  No execution classifications, Journal outcomes or Watchlist behavior changed.
+- Thirteen focused cohort/aggregation/static-render checks pass; five selected
+  TypeScript roots have zero diagnostics; whitespace check passes. Help updated.
+- Across-session classification, full band-to-detail reconciliation, cross-page
+  integrations, server payload scaling, provider corpus and complete browser/
+  offline acceptance remain outstanding. This is not final feature acceptance.
+
 ## Supporting execution drilldown - 2026-09-12
 
 - Added server-built supporting pages from the same current scoped projection.

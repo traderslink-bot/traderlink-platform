@@ -27,16 +27,20 @@ export function parseIndicatorConditions(query: Pick<URLSearchParams, "get">): I
   return result;
 }
 
-export function indicatorRecordMatch(record: TrendMomentumRecord, interval: "1m" | "5m", filters: IndicatorConditionFilters): boolean | null {
+export function indicatorRecordValues(record: TrendMomentumRecord, interval: "1m" | "5m") {
   const context = record.context?.[interval === "1m" ? "oneMinute" : "fiveMinute"];
   const vwap = record.context?.sessionVwap?.value;
   const delta = vwap != null && vwap > 0 && new Decimal(record.executionPriceDecimal).isFinite()
     ? new Decimal(record.executionPriceDecimal).minus(vwap).div(vwap).mul(100).toNumber() : null;
-  const values = { alignment: context?.alignment ?? null, ema9Direction: context?.ema9Direction ?? null,
+  return { alignment: context?.alignment ?? null, ema9Direction: context?.ema9Direction ?? null,
     ema20Direction: context?.ema20Direction ?? null, separation: context?.separation ?? null,
     rsiBand: context?.rsiBand ?? null, rsiDirection: context?.rsiDirection ?? null,
     vwapSide: delta === null ? null : delta > 0.02 ? "above" : delta < -0.02 ? "below" : "near",
     spacing: context?.spacing === "standard" || context?.spacing === "sparse" ? context.spacing : null };
+}
+
+export function indicatorRecordMatch(record: TrendMomentumRecord, interval: "1m" | "5m", filters: IndicatorConditionFilters): boolean | null {
+  const values = indicatorRecordValues(record, interval);
   const selected = (Object.keys(filters) as (keyof IndicatorConditionFilters)[]).filter((key) => filters[key] !== "any");
   // Complete context is required to call a trade a nonmatch, even if another
   // known condition already fails. Missing context is not a control group.
@@ -98,3 +102,30 @@ export function buildIndicatorSupportingPage(projection: TrendMomentumProjection
     rows: rows.slice((page - 1) * selected.pageSize, page * selected.pageSize) };
 }
 export type IndicatorSupportingPage = ReturnType<typeof buildIndicatorSupportingPage>;
+
+export type IndicatorComparisonAxis = Exclude<keyof IndicatorConditionFilters, "spacing">;
+export function groupIndicatorRecords(records: readonly TrendMomentumRecord[], interval: "1m" | "5m", axis: IndicatorComparisonAxis) {
+  const grouped = new Map<string, { value: string | null; spacing: string | null; freshness: string;
+    records: TrendMomentumRecord[]; spans: number[]; ages: number[] }>();
+  const directionAxis = axis === "ema9Direction" || axis === "ema20Direction" || axis === "rsiDirection" || axis === "separation";
+  for (const record of records) {
+    const context = record.context?.[interval === "1m" ? "oneMinute" : "fiveMinute"];
+    const value = indicatorRecordValues(record, interval)[axis];
+    const spacing = directionAxis ? context?.spacing ?? "unavailable" : null;
+    // Session VWAP has its own source window, not the EMA/RSI bar freshness.
+    const freshness = axis === "vwapSide" ? "session" : !context ? "unavailable"
+      : context.currentWordingEligible ? "current" : "older";
+    const key = JSON.stringify([value, spacing, freshness]);
+    const group = grouped.get(key) ?? { value, spacing, freshness, records: [], spans: [], ages: [] };
+    group.records.push(record);
+    if (context?.lookbackSpanSeconds != null) group.spans.push(context.lookbackSpanSeconds);
+    if (context?.ageSeconds != null && axis !== "vwapSide") group.ages.push(context.ageSeconds);
+    grouped.set(key, group);
+  }
+  const extent = (values: number[]) => values.length ? values.reduce((result, value) => ({ min: Math.min(result.min, value), max: Math.max(result.max, value) }), { min: values[0], max: values[0] }) : null;
+  return { tradeCount: new Set(records.map((row) => row.tradeId)).size,
+    coveredTradeCount: new Set(records.filter((row) => indicatorRecordValues(row, interval)[axis] !== null).map((row) => row.tradeId)).size,
+    rows: [...grouped].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, group]) => ({ key,
+      value: group.value, spacing: group.spacing, freshness: group.freshness,
+      spanSeconds: extent(group.spans), ageSeconds: extent(group.ages), summary: summarizeIndicatorRecords(group.records) })) };
+}

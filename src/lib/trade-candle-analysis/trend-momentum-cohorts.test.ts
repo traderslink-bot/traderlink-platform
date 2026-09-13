@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildIndicatorCohorts, buildIndicatorSupportingPage, DEFAULT_INDICATOR_FILTERS, parseIndicatorConditions } from "./trend-momentum-cohorts";
+import { buildIndicatorCohorts, buildIndicatorSupportingPage, groupIndicatorRecords, DEFAULT_INDICATOR_FILTERS, parseIndicatorConditions } from "./trend-momentum-cohorts";
 import type { TrendMomentumProjection, TrendMomentumRecord } from "./trend-momentum-analytics";
 
 function record(tradeId: string, executionId: string, alignment: string | null, rsiBand: string | null): TrendMomentumRecord {
@@ -56,4 +56,37 @@ test("supporting pages keep complete counts and stable execution ties with bound
   const changed = buildIndicatorSupportingPage({ ...projection, records: records.slice(0, 1) }, query, "long");
   assert.equal(changed.page, 1);
   assert.equal(changed.totalRows, 1);
+});
+
+test("indicator comparisons partition observation span and freshness without duplicating trade P/L", () => {
+  const make = (tradeId: string, executionId: string, spacing: string, recent: boolean, span: number) => ({
+    ...record(tradeId, executionId, "above", "above_70"), context: { oneMinute: {
+      alignment: "above", ema9Direction: "rising", rsiBand: "above_70", spacing,
+      currentWordingEligible: recent, ageSeconds: recent ? 30 : 900, lookbackSpanSeconds: span,
+    } },
+  }) as unknown as TrendMomentumRecord;
+  const rows = [make("a", "a1", "standard", true, 180), make("a", "a2", "standard", true, 180),
+    make("b", "b1", "sparse", true, 600), make("c", "c1", "standard", false, 180)];
+  const result = groupIndicatorRecords(rows, "1m", "ema9Direction");
+  assert.equal(result.tradeCount, 3);
+  assert.equal(result.coveredTradeCount, 3);
+  assert.equal(result.rows.length, 3);
+  const standard = result.rows.find((row) => row.spacing === "standard" && row.freshness === "current")!;
+  assert.equal(standard.summary.tradeCount, 1);
+  assert.equal(standard.summary.occurrenceCount, 2);
+  assert.equal(standard.summary.totalPnlDecimal, "10");
+  assert.deepEqual(standard.spanSeconds, { min: 180, max: 180 });
+  const unavailable = groupIndicatorRecords(rows, "5m", "ema9Direction");
+  assert.equal(unavailable.coveredTradeCount, 0);
+  assert.equal(unavailable.rows[0].value, null);
+  assert.equal(unavailable.rows[0].summary.tradeCount, 3);
+});
+
+test("VWAP comparison uses the execution price and preserves unavailable session evidence", () => {
+  const rows = [record("a", "a", null, null), { ...record("b", "b", null, null), executionPriceDecimal: "10.01" },
+    { ...record("c", "c", null, null), context: null }];
+  const result = groupIndicatorRecords(rows, "5m", "vwapSide");
+  assert.equal(result.coveredTradeCount, 2);
+  assert.deepEqual(new Set(result.rows.map((row) => row.value)), new Set(["near", "above", null]));
+  assert.ok(result.rows.every((row) => row.freshness === "session"));
 });

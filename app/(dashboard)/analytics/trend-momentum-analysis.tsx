@@ -22,9 +22,10 @@ import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import { paginatedRows, TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
 import { parseIndicatorConditions, buildIndicatorSupportingPage, type IndicatorSupportingPage } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
 import { TrendMomentumConditions } from "./trend-momentum-conditions";
+import { TrendMomentumBandComparison } from "./trend-momentum-band-comparison";
 
 const kinds: Record<IndicatorExecutionKind, string> = { initial_entry: "Initial entry", re_entry: "Re-entry",
-  add: "Add", partial_exit: "Partial exit", position_close: "Position close", final_exit: "Final exit" };
+  add: "Add", partial_exit: "Partial exit", position_close: "Interim position closure", final_exit: "Final exit" };
 const percent = (value: number | null) => value === null ? "Unavailable" : `${value.toFixed(1)}%`;
 const labels: Record<string, string> = {
   rising: "Rising", falling: "Falling", little_change: "Little change", above: "Above", below: "Below",
@@ -44,10 +45,11 @@ function Section({ title, help, children }: { title: string; help: string; child
   </Accordion>;
 }
 
-export function TrendMomentumAnalysis({ projection, direction, currency, timezone, offline = false, queryString, onQueryChange, supportingPage }: {
+export function TrendMomentumAnalysis({ projection, direction, currency, timezone, offline = false, queryString, onQueryChange, supportingPage, moneyBasis = "gross" }: {
   projection: TrendMomentumProjection | undefined; direction: "long" | "short"; currency: string | null;
   timezone: string; offline?: boolean; queryString?: string; onQueryChange?: (query: string) => void;
   supportingPage?: IndicatorSupportingPage;
+  moneyBasis?: "gross" | "net";
 }) {
   const [localQuery, setLocalQuery] = useState("");
   const query = new URLSearchParams(queryString ?? localQuery);
@@ -57,6 +59,10 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
   const requestedReference = query.get("indicator_reference");
   const reference = requestedReference === "ema20" || requestedReference === "vwap" ? requestedReference : "ema9";
   const coverage = query.get("indicator_coverage") === "incomplete" ? "incomplete" : "complete";
+  const requestedEmaAxis = query.get("indicator_emaComparison");
+  const emaAxis = requestedEmaAxis === "ema9Direction" || requestedEmaAxis === "ema20Direction" || requestedEmaAxis === "separation" ? requestedEmaAxis : "alignment";
+  const rsiAxis = query.get("indicator_rsiComparison") === "rsiDirection" ? "rsiDirection" : "rsiBand";
+  const basisLabel = moneyBasis === "net" ? "Net" : "Gross";
   const changeQuery = (key: string, value: string) => {
     const next = new URLSearchParams(query);
     next.set(`indicator_${key}`, value);
@@ -116,7 +122,20 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
         {!records.length ? <Typography color="text.secondary">No saved {kinds[kind].toLowerCase()} indicator records for this selection.</Typography> : null}
       </Stack>
     </Section>
+    <Section title="EMA 9 & EMA 20" help="Compare the averages' alignment, direction or changing separation with completed trade results. Direction uses three returned candles. Regular and sparse observation spans stay separate, as do recent and older completed candles. These describe your saved trades, not an entry signal.">
+      <TrendMomentumBandComparison records={records} interval={interval} axes={["alignment", "ema9Direction", "ema20Direction", "separation"]}
+        axis={emaAxis} onAxisChange={(value) => changeQuery("emaComparison", value)} money={money} basisLabel={basisLabel} />
+    </Section>
+    <Section title="RSI" help="Compare RSI range or direction with your completed trade outcomes. Above 70 is commonly called overbought and below 30 oversold, but strong moves can stay there. RSI direction is not combined across different observation spans or older and recent candles.">
+      <TrendMomentumBandComparison records={records} interval={interval} axes={["rsiBand", "rsiDirection"]}
+        axis={rsiAxis} onAxisChange={(value) => changeQuery("rsiComparison", value)} money={money} basisLabel={basisLabel} />
+    </Section>
+    <Section title="Session VWAP" help="Compare your actual execution price with the volume-weighted price available from the same session. Near means within 0.02%. Unknown session history stays unavailable; it is not treated as below or above VWAP.">
+      <TrendMomentumBandComparison records={records} interval={interval} axes={["vwapSide"]}
+        axis="vwapSide" onAxisChange={() => {}} money={money} basisLabel={basisLabel} />
+    </Section>
     <Section title="Combined conditions" help="Choose conditions that must all be present at one execution. A matching trade is counted once. A trade is nonmatching only when all required indicator data is available for its selected executions and none matches. Results describe your saved trades, not a forecast.">
+      <Typography variant="body2" color="text.secondary">Completed {basisLabel} trade outcomes</Typography>
       <TrendMomentumConditions projection={selected} interval={interval} kind={kind} filters={parseIndicatorConditions(query)} onChange={changeQuery} money={money}
         query={query} direction={direction} timezone={timezone} offline={offline}
         supportingPage={offline ? buildIndicatorSupportingPage(selected, query, direction) : supportingPage} />

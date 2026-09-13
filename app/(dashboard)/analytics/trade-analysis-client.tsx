@@ -944,6 +944,7 @@ export function TradeAnalysisClient({
 
       {view === "trend-momentum" ? <TrendMomentumAnalysis projection={model.trendMomentum} direction={activeDirection} currency={model.currency} timezone={model.timezone} offline={offline}
         supportingPage={indicatorSupportingPage}
+        moneyBasis={model.moneyBasis}
         queryString={offline ? undefined : searchParams.toString()} onQueryChange={offline ? undefined : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} /> : null}
       {view === "day" ? <Stack spacing={1.25}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Selected-period records</Typography>
