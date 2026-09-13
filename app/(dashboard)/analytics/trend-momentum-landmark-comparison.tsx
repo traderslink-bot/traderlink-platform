@@ -55,7 +55,7 @@ export function TrendMomentumLandmarkComparison({ mode, projection, greenRows, z
           {(zones.length ? zones : [20]).map((value) => <MenuItem key={value} value={value}>+{value}%</MenuItem>)}</TextField>}
       <TextField select size="small" label="Indicator" value={axis} onChange={(e) => change("landmark_axis", e.target.value)}>{Object.entries(axes).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</TextField>
     </Stack>
-    <Stack direction="row" sx={{ alignItems: "center" }}><Typography variant="body2">{result.coveredTradeCount} of {result.tradeCount} qualifying trades have this indicator context saved.</Typography>
+    <Stack direction="row" sx={{ alignItems: "center" }}><Typography variant="body2">{result.coveredTradeCount} of {result.tradeCount} qualifying analyzed trades have data for this comparison.</Typography>
       <AnalyzerHelpTooltip label="Indicator coverage" text="The existing financial comparison decides which trades qualify. Missing indicator history remains visible and does not remove those trades. Candle-extreme points use only indicators completed before that minute; exact exit fills use their execution time." /></Stack>
     <TrendMomentumOutcomeTable money={money} basisLabel={moneyBasis === "net" ? "Net" : "Gross"} observations rows={result.rows.map((row) => ({ ...row,
       label: <Stack><Typography variant="body2">{row.value === null ? "Indicator unavailable" : words[row.value] ?? "Unavailable"} · {row.outcome}</Typography>

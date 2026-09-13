@@ -1,6 +1,7 @@
 "use client";
 
 import { AnalyzerDisclosureSection as Section } from "./analyzer-disclosure-section";
+import { analyzedIndicatorPopulation } from "@/src/lib/trade-candle-analysis/trend-momentum-display-population";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
@@ -71,10 +72,12 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
   const setCoverage = (value: string) => changeQuery("coverage", value);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const selected = useMemo(() => projection ? { ...projection,
-    trades: projection.trades.filter((t) => t.direction === direction),
-    records: projection.records.filter((r) => r.direction === direction),
-  } : null, [projection, direction]);
+  const selected = useMemo(() => {
+    if (!projection) return null;
+    const analyzed = analyzedIndicatorPopulation(projection);
+    return { ...analyzed, trades: analyzed.trades.filter((t) => t.direction === direction),
+      records: analyzed.records.filter((r) => r.direction === direction) };
+  }, [projection, direction]);
   const records = selected?.records.filter((r) => r.executionKind === kind) ?? [];
   const frame = interval === "1m" ? "oneMinute" : "fiveMinute";
   const money = (value: string | null) => value === null || currency === null ? "Unavailable"
@@ -106,7 +109,6 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
       <TextField select size="small" label="Candle timeframe" value={interval} onChange={(e) => { setInterval(e.target.value as "1m" | "5m"); setPage(1); }}>
         <MenuItem value="1m">1 minute</MenuItem><MenuItem value="5m">5 minutes</MenuItem>
       </TextField>
-      <Typography sx={{ color: "text.secondary" }}>{selected.trades.filter((t) => t.indicators !== null).length} of {selected.trades.length} trades have saved indicator context.</Typography>
     </Stack>
     <Section title="Execution context" help="Compare completed whole-trade results with the indicator conditions known at each execution. Only candles completed before the execution are used. One trade may appear in more than one group; do not add the groups together. Missing history does not remove the trade's other analysis.">
       <Stack spacing={1.5}>
@@ -127,15 +129,15 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
       </Stack>
     </Section>
     <Section title="EMA 9 & EMA 20" help="Compare the averages' alignment, direction or changing separation with completed trade results. Direction uses three returned candles. Regular and sparse observation spans stay separate, as do recent and older completed candles. These describe your saved trades, not an entry signal.">
-      <TrendMomentumBandComparison records={records} interval={interval} axes={["alignment", "ema9Direction", "ema20Direction", "separation"]}
+      <TrendMomentumBandComparison analyzedTradeCount={selected.trades.length} records={records} interval={interval} axes={["alignment", "ema9Direction", "ema20Direction", "separation"]}
         axis={emaAxis} onAxisChange={(value) => changeQuery("emaComparison", value)} money={money} basisLabel={basisLabel} />
     </Section>
     <Section title="RSI" help="Compare RSI range or direction with your completed trade outcomes. Above 70 is commonly called overbought and below 30 oversold, but strong moves can stay there. RSI direction is not combined across different observation spans or older and recent candles.">
-      <TrendMomentumBandComparison records={records} interval={interval} axes={["rsiBand", "rsiDirection"]}
+      <TrendMomentumBandComparison analyzedTradeCount={selected.trades.length} records={records} interval={interval} axes={["rsiBand", "rsiDirection"]}
         axis={rsiAxis} onAxisChange={(value) => changeQuery("rsiComparison", value)} money={money} basisLabel={basisLabel} />
     </Section>
     <Section title="Session VWAP" help="Compare your actual execution price with the volume-weighted price available from the same session. Near means within 0.02%. Unknown session history stays unavailable; it is not treated as below or above VWAP.">
-      <TrendMomentumBandComparison records={records} interval={interval} axes={["vwapSide"]}
+      <TrendMomentumBandComparison analyzedTradeCount={selected.trades.length} records={records} interval={interval} axes={["vwapSide"]}
         axis="vwapSide" onAxisChange={() => {}} money={money} basisLabel={basisLabel} />
     </Section>
     <Section title="Combined conditions" help="Choose conditions that must all be present at one execution. A matching trade is counted once. A trade is nonmatching only when all required indicator data is available for its selected executions and none matches. Results describe your saved trades, not a forecast.">

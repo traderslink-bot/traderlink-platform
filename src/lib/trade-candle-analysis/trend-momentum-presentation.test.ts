@@ -13,7 +13,7 @@ import { buildIndicatorSupportingPage } from "./trend-momentum-cohorts";
 import type { TrendMomentumProjection } from "./trend-momentum-analytics";
 import { TrendMomentumSupportingTrades } from "../../../app/(dashboard)/analytics/trend-momentum-supporting-trades";
 
-test("standalone saved-context caption emits its theme text color in both appearances", async () => {
+test("analyzed execution-count caption emits its theme text color in both appearances", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT",true);
   vi.stubGlobal("ResizeObserver",class { observe() {} unobserve() {} disconnect() {} });
   try {
@@ -26,7 +26,7 @@ test("standalone saved-context caption emits its theme text color in both appear
     await act(async()=>root.render(createElement(CacheProvider,{value:cache},createElement(ThemeProvider,{theme},createElement(TrendMomentumAnalysis,{
       projection:buildTrendMomentumProjection([]),currency:"USD",direction:"long",timezone:"America/New_York",
     })))));
-    const caption=[...container.querySelectorAll("p")].find(el=>el.textContent==="0 of 0 trades have saved indicator context.");
+    const caption=[...container.querySelectorAll("p")].find(el=>el.textContent==="0 of 0 analyzed trades have the selected execution type.");
     assert.ok(caption, "Expected coverage caption");
     const expected=document.createElement("span");expected.style.color=theme.palette.text.secondary;
     assert.equal(getComputedStyle(caption).color,expected.style.color, "Caption must emit its own theme color");

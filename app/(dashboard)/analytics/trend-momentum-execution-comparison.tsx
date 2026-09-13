@@ -8,6 +8,7 @@ import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import type { IndicatorExecutionKind, TrendMomentumProjection } from "@/src/lib/trade-candle-analysis/trend-momentum-analytics";
 import { TrendMomentumBandComparison } from "./trend-momentum-band-comparison";
+import { analyzedIndicatorPopulation } from "@/src/lib/trade-candle-analysis/trend-momentum-display-population";
 
 const kinds: Record<IndicatorExecutionKind, string> = { initial_entry: "Initial entry", add: "Add", re_entry: "Re-entry",
   partial_exit: "Partial exit", position_close: "Interim position closure", final_exit: "Final exit" };
@@ -37,7 +38,7 @@ export function TrendMomentumExecutionComparison({ projection, direction, money,
       <TextField select size="small" label="Execution" value={kind} onChange={(event) => change("execution", event.target.value)}>{Object.entries(kinds).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</TextField>
       <TextField select size="small" label="Candle timeframe" value={interval} onChange={(event) => change("interval", event.target.value)}><MenuItem value="1m">1 minute</MenuItem><MenuItem value="5m">5 minutes</MenuItem></TextField>
     </Stack>
-    <TrendMomentumBandComparison records={records} interval={interval} axes={["alignment", "rsiBand"]} axis={axis}
+    <TrendMomentumBandComparison analyzedTradeCount={projection ? analyzedIndicatorPopulation(projection).trades.filter((trade) => trade.direction === direction).length : 0} records={records} interval={interval} axes={["alignment", "rsiBand"]} axis={axis}
       onAxisChange={(value) => change("entry_axis", value)} money={money} basisLabel={moneyBasis === "net" ? "Net" : "Gross"} />
     <Typography color="text.secondary" variant="body2">Trades without the added indicator history stay unavailable here. Their other saved analysis remains readable.</Typography>
     <Button variant="outlined" href={`/analytics/trade-analyzer/day/trend-momentum${offline ? "" : `?${detailQuery}`}`}>{offline ? "Open saved Trend & Momentum" : "Detailed indicator comparisons"}</Button>

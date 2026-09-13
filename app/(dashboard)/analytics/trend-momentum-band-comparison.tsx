@@ -17,7 +17,8 @@ const words: Record<string, string> = { above: "Above", below: "Below", close: "
 const range = (value: { min: number; max: number } | null, divisor = 1) => value === null ? "Unavailable"
   : value.min === value.max ? `${(value.min / divisor).toFixed(1)}` : `${(value.min / divisor).toFixed(1)}–${(value.max / divisor).toFixed(1)}`;
 
-export function TrendMomentumBandComparison({ records, interval, axes, axis, onAxisChange, money, basisLabel }: {
+export function TrendMomentumBandComparison({ records, interval, axes, axis, onAxisChange, money, basisLabel, analyzedTradeCount }: {
+  analyzedTradeCount: number;
   records: readonly TrendMomentumRecord[]; interval: "1m" | "5m"; axes: readonly IndicatorComparisonAxis[];
   axis: IndicatorComparisonAxis; onAxisChange: (value: string) => void; money: (value: string | null) => string; basisLabel: "Gross" | "Net";
 }) {
@@ -26,7 +27,7 @@ export function TrendMomentumBandComparison({ records, interval, axes, axis, onA
     {axes.length > 1 ? <TextField select size="small" label="Compare" value={axis} onChange={(event) => onAxisChange(event.target.value)} sx={{ maxWidth: 320 }}>
       {axes.map((value) => <MenuItem key={value} value={value}>{names[value]}</MenuItem>)}
     </TextField> : null}
-    <Typography variant="body2">{groups.coveredTradeCount} of {groups.tradeCount} trades have at least one known {names[axis].toLowerCase()} observation at the selected execution type.</Typography>
+    <Typography variant="body2">{groups.coveredTradeCount} of {analyzedTradeCount} analyzed trades have data for this comparison.</Typography>
     <TrendMomentumOutcomeTable basisLabel={basisLabel} money={money} rows={groups.rows.map((row) => ({ ...row, label: <Stack>
       <Typography variant="body2">{row.value === null ? "Indicator unavailable" : words[row.value] ?? "Unavailable"}</Typography>
       {row.spacing ? <Typography variant="caption" color="text.secondary">{words[row.spacing] ?? "Unavailable"} · observation span: {range(row.spanSeconds, 60)} minutes</Typography> : null}

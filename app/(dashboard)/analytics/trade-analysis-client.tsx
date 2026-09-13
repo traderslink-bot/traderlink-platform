@@ -1,6 +1,7 @@
 "use client";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { analyzedIndicatorPopulation } from "@/src/lib/trade-candle-analysis/trend-momentum-display-population";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -766,9 +767,10 @@ export function TradeAnalysisClient({
   const [patternPageSize, setPatternPageSize] = useState(10);
   const greenToRedDirectionCounts = model.greenToRedOpportunity.tradeCountsByDirection ?? model.directionTradeCounts;
   const profitZoneDirectionCounts = model.profitZones.tradeCountsByDirection ?? model.directionTradeCounts;
-  const visibleDirectionCounts = view === "trend-momentum" && model.trendMomentum
-    ? { long: model.trendMomentum.trades.filter((t) => t.direction === "long").length,
-        short: model.trendMomentum.trades.filter((t) => t.direction === "short").length }
+  const indicatorPopulation = useMemo(() => model.trendMomentum ? analyzedIndicatorPopulation(model.trendMomentum) : undefined, [model.trendMomentum]);
+  const visibleDirectionCounts = view === "trend-momentum" && indicatorPopulation
+    ? { long: indicatorPopulation.trades.filter((t) => t.direction === "long").length,
+        short: indicatorPopulation.trades.filter((t) => t.direction === "short").length }
     : view === "green-to-red"
     ? greenToRedDirectionCounts
     : view === "scaling-out"
@@ -938,7 +940,7 @@ export function TradeAnalysisClient({
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-start" } }}>
           <AnalyzedTradeCountCard
             capabilityQuery={capabilityQuery}
-            count={view === "trend-momentum" ? model.directionTradeCounts[activeDirection] : view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
+            count={view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
           />
           {view !== "day" ? <DirectionControl activeDirection={activeDirection} counts={visibleDirectionCounts} onChange={(direction) => {
             setSelectedDirection(direction);
@@ -962,7 +964,7 @@ export function TradeAnalysisClient({
       {view === "day" && model.trendMomentum ? <Section title="Trend & Momentum" description="" helpHref="/help/trade-analyzer/trend-momentum"
         titleHelp="Saved EMA 9, EMA 20, RSI and session VWAP context for user-defined trades in this selection. Missing indicator history does not reduce the main Analyzer count." collapsible={false}>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
-          <Typography variant="body2">{model.trendMomentum.trades.filter((trade) => trade.indicators !== null).length} of {model.trendMomentum.trades.length} saved user-defined trades have indicator context.</Typography>
+          <Typography variant="body2">{indicatorPopulation?.indicatorTradeCount ?? 0} of {indicatorPopulation?.analyzedTradeCount ?? 0} analyzed trades have indicator data for these comparisons.</Typography>
           <Button variant="outlined" href={`/analytics/trade-analyzer/day/trend-momentum${offline ? "" : `?${searchParams.toString()}`}`}>{offline ? "Open saved comparisons" : "View comparisons"}</Button>
         </Stack>
       </Section> : null}

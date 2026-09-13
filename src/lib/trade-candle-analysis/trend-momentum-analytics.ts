@@ -20,6 +20,7 @@ export type TrendMomentumProjection = Readonly<{
   records: readonly TrendMomentumRecord[];
   trades: readonly Readonly<Omit<TrendMomentumTrade, "analysis"> & {
     indicators: Omit<TradeExecutionIndicatorResult, "chartSeries"> | null; unavailableReason: string | null;
+    analyzed?: boolean;
   }>[];
 }>;
 
@@ -51,7 +52,7 @@ export function buildTrendMomentumProjection(trades: readonly TrendMomentumTrade
     indicatorTradeCount: trades.filter((t) => t.analysis?.trendMomentum != null).length,
     records: Object.freeze(records),
     trades: Object.freeze(trades.map(({ analysis, ...identity }) => Object.freeze({
-      ...identity, indicators: analysis?.trendMomentum ? {
+      ...identity, analyzed: analysis !== null, indicators: analysis?.trendMomentum ? {
         calculationVersion: analysis.trendMomentum.calculationVersion,
         historyOutcome: analysis.trendMomentum.historyOutcome,
         timingUnavailable: analysis.trendMomentum.timingUnavailable,

@@ -77,7 +77,7 @@ export function TrendMomentumConditions({ projection, interval, kind, filters, o
         })}
       </TableBody></Table>
     </HorizontalScrollRegion>
-    <Typography variant="body2" color="text.secondary">{cohorts.outsideTradeIds.length} trades have no saved execution of this type and are outside this comparison. Missing required indicator data is kept separate from nonmatching results.</Typography>
+    <Typography variant="body2" sx={{ color: "text.secondary" }}>{projection.trades.length - cohorts.outsideTradeIds.length} of {projection.trades.length} analyzed trades have the selected execution type.</Typography>
     <TrendMomentumSupportingTrades page={supportingPage} query={query} direction={direction} timezone={timezone} offline={offline} onChange={onChange} money={money} />
   </Stack>;
 }
