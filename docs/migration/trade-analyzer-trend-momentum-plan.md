@@ -7,6 +7,9 @@ including planned UI implementation. Production release remains separately gated
 Progress: [Planning and implementation record](trade-analyzer-trend-momentum-progress.md).
 Latest payload checkpoint: redundant aggregate execution contexts removed;
 29 focused tests pass. Full scale and rendered acceptance remain open.
+Numerical checkpoint: 16 foundation/convergence tests pass, including independent
+formula references, 1m/5m price-scale invariance and sparse-bucket observations.
+Actual provider adjustment/reference and rendered acceptance remain open.
 Parent: [Trade Analyzer Analysis Pages Plan](trade-analyzer-analysis-pages-plan.md).
 
 Feasibility update: the progress record now includes the verified production

@@ -2,6 +2,22 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Numerical acceptance scale and sparse-bucket checks - 2026-09-13
+
+- Reused the existing independent closed-form EMA and Wilder RSI references;
+  the convergence test alone is not independent formula verification.
+- Added 1m/5m price-scale checks at 0.001, 0.1, 10 and 100 factors. EMA/VWAP
+  scale with prices while RSI remains invariant; warm-up nulls remain null.
+  Prices and volumes use a consistent adjustment basis. This does not verify
+  actual provider split flags or normalize mixed adjusted/unadjusted data.
+- Added sparse 5m observations with alternate empty buckets: exact returned
+  bucket times, completion times and counts, and identical numerical values
+  to the equivalent sequence of observed closes. No empty candles invented.
+- Foundation plus convergence: 16 tests passed in one 512-MB process; diff
+  whitespace check passed. No runtime/UI edits, provider requests or charges.
+- Live provider/reference comparison and actual rendered acceptance are still
+  open. This evidence does not replace those requirements. Help unchanged.
+
 ## Aggregate payload duplication check - 2026-09-13
 
 - Removed the unused second execution-context array from newly built aggregate

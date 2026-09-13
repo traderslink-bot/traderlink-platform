@@ -134,6 +134,53 @@ test("Wilder RSI matches independently weighted gains and losses on mixed prices
   }
 });
 
+test("penny prices and consistently adjusted history retain EMA, RSI and VWAP scale relationships", () => {
+  const original = mixedCloses.map((close, i) => ({ ...bar(i, close), volume: 100 + i,
+    turnover: close * (100 + i) }));
+  const end = start + original.length * 60;
+  const session = { start, endExclusive: end };
+  for (const interval of ["1m", "5m"] as const) {
+    const baseline = calculateTradeIndicatorSeries(input(original, end), interval);
+    for (const factor of [0.001, 0.1, 10, 100] as const) {
+      // All historical prices share one adjustment basis; this does not model
+      // a raw split discontinuity or claim to verify provider adjustment flags.
+      const adjusted = original.map(c => ({ ...c, open: c.open * factor,
+        high: c.high * factor, low: c.low * factor, close: c.close * factor,
+        volume: c.volume / factor, turnover: c.turnover }));
+      const result = calculateTradeIndicatorSeries(input(adjusted, end), interval);
+      assert.equal(result.length, baseline.length);
+      result.forEach((point, i) => {
+        for (const key of ["ema9", "ema20"] as const) {
+          if (baseline[i][key] === null) assert.equal(point[key], null);
+          else near(point[key]! / factor, baseline[i][key]!);
+        }
+        if (baseline[i].rsi14 === null) assert.equal(point.rsi14, null);
+        else near(point.rsi14, baseline[i].rsi14!);
+      });
+      near(calculateTradeSessionVwap(input(adjusted, end), session).value! / factor,
+        calculateTradeSessionVwap(input(original, end), session).value!);
+    }
+  }
+});
+
+test("sparse five-minute history uses returned bucket closes without synthetic empty buckets", () => {
+  const closes = mixedCloses.slice(0, 60);
+  // One real candle in each observed bucket, with alternate buckets empty.
+  const sparse = closes.map((close, i) => bar(i * 10 + 2, close));
+  const end = start + 600 * 60;
+  const actual = calculateTradeIndicatorSeries(input(sparse, end), "5m");
+  const compact = calculateTradeIndicatorSeries(input(closes.map((c, i) => bar(i, c)), end), "1m");
+  assert.equal(actual.length, closes.length);
+  actual.forEach((point, i) => {
+    assert.equal(point.time, start + i * 600);
+    assert.equal(point.availableAt, start + i * 600 + 300);
+    assert.equal(point.historyBars, i + 1);
+    for (const key of ["ema9", "ema20", "rsi14"] as const) {
+      assert.equal(point[key], compact[i][key]);
+    }
+  });
+});
+
 test("execution enrichment preserves identities and excludes future candles from both timeframes and VWAP", () => {
   const history = input(Array.from({ length: 60 }, (_, i) => bar(i, i < 30 ? 10 : 500)));
   const policy = { version: "fixture", minimumBars: { ema9: 9, ema20: 20, rsi14: 15 },
