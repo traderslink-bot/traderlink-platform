@@ -23,7 +23,7 @@ import { paginatedRows, TradeAnalyzerTablePagination } from "./trade-analyzer-ta
 import { parseIndicatorConditions, buildIndicatorSupportingPage, type IndicatorSupportingPage } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
 import { TrendMomentumConditions } from "./trend-momentum-conditions";
 import { TrendMomentumBandComparison } from "./trend-momentum-band-comparison";
-import { buildDuringStudy, summarizeDuringStudy } from "@/src/lib/trade-candle-analysis/trend-momentum-during-study";
+import { buildDuringStudy, summarizeDuringStudy, duringStudyTradeQuery } from "@/src/lib/trade-candle-analysis/trend-momentum-during-study";
 import { INDICATOR_FILTER_OPTIONS } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
 
 const kinds: Record<IndicatorExecutionKind, string> = { initial_entry: "Initial entry", re_entry: "Re-entry",
@@ -184,7 +184,7 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
           {[ ["Group", "Each trade is classified using its first selected event, before conditions are applied."], ["Trades", "Saved trades counted once in this group."], [`${basisLabel} P/L`, "Combined known completed results; missing P/L is not zero."], ["Average return", "Each saved trade with a known percentage result receives equal weight."] ].map(([label, help]) => <TableCell key={label}><Heading label={label} help={help} /></TableCell>)}
         </TableRow></TableHead><TableBody>{(["matching", "nonmatching", "unknown"] as const).map((group) => {
           const totals = summarizeDuringStudy(studyGroups?.[group] ?? [], studyEvent);
-          return <TableRow key={group}><TableCell>{group === "matching" ? "Matching conditions" : group === "nonmatching" ? "Not matching" : "Context unavailable"}</TableCell><TableCell>{totals.tradeCount}</TableCell><TableCell>{money(totals.totalPnlDecimal)} ({totals.pnlTradeCount} with P/L)</TableCell><TableCell>{percent(totals.averageReturnPercent)}</TableCell></TableRow>;
+          return <TableRow key={group}><TableCell>{group === "matching" ? "Matching conditions" : group === "nonmatching" ? "Not matching" : "Context unavailable"}{!offline ? <Button size="small" href={`/analytics/trade-analyzer/day/trades?${duringStudyTradeQuery(query, direction, group)}`}>View trades</Button> : null}</TableCell><TableCell>{totals.tradeCount}</TableCell><TableCell>{money(totals.totalPnlDecimal)} ({totals.pnlTradeCount} with P/L)</TableCell><TableCell>{percent(totals.averageReturnPercent)}</TableCell></TableRow>;
         })}</TableBody></Table></HorizontalScrollRegion>
         <Typography>{summary.tradeCount} trades · {summary.observed} recorded returns · {summary.noRecorded} without a recorded return before closing · {summary.unknown} unknown</Typography>
         {studyEvent === "loss" ? <Stack direction="row"><Typography>Recorded return rate: {percent(summary.recordedReclaimRate)}</Typography><AnalyzerHelpTooltip label="recorded return rate" text="Recorded returns divided by episodes with known recovery outcomes. Unknown outcomes are excluded. Earlier incomplete history stays in its own selection even if a later return was observed." /></Stack> : <Typography color="text.secondary">This comparison includes observed returns only. It does not estimate how often a lost reference was recovered.</Typography>}

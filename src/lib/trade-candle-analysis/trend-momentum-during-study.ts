@@ -1,5 +1,25 @@
 import { selectIndicatorStudy, selectIndicatorReclaimStudy, summarizeIndicatorRecords, type TrendMomentumProjection } from "./trend-momentum-analytics";
-import type { IndicatorConditionFilters } from "./trend-momentum-cohorts";
+import { parseIndicatorConditions, type IndicatorConditionFilters } from "./trend-momentum-cohorts";
+
+export function duringStudySelection(query: Pick<URLSearchParams, "get">) {
+  const reference = query.get("indicator_reference"), side = query.get("indicator_ema20Side"), group = query.get("indicator_during_group");
+  return {
+    interval: query.get("indicator_interval") === "5m" ? "5m" : "1m",
+    reference: reference === "ema20" || reference === "vwap" ? reference : "ema9",
+    event: query.get("indicator_event") === "reclaim" ? "reclaim" : "loss",
+    ema20Side: side === "above" || side === "below" || side === "neutral" ? side : "any",
+    coverage: query.get("indicator_coverage") === "incomplete" ? "incomplete" : "complete",
+    group: group === "nonmatching" || group === "unknown" ? group : "matching",
+    filters: parseIndicatorConditions({ get: (key) => query.get(key.replace("indicator_", "indicator_during_")) }),
+  } as const;
+}
+
+export function duringStudyTradeQuery(query: URLSearchParams, direction: "long" | "short", group: "matching" | "nonmatching" | "unknown") {
+  const next = new URLSearchParams(query);
+  next.set("indicator_study", "during"); next.set("indicator_during_group", group); next.set("direction", direction);
+  for (const key of ["cursor", "page", "indicator_page"]) next.delete(key);
+  return next.toString();
+}
 
 type Episode = ReturnType<typeof selectIndicatorStudy>[number]["episode"];
 export type DuringStudySelection = Readonly<{

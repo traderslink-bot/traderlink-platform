@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { SavedPatternTrade } from "../../../lib/trade-candle-analysis/trend-momentum-patterns";
 import { buildTrendMomentumProjection, type IndicatorExecutionKind } from "../../../lib/trade-candle-analysis/trend-momentum-analytics";
 import { buildIndicatorCohorts, indicatorSupportingSelection } from "../../../lib/trade-candle-analysis/trend-momentum-cohorts";
+import { buildDuringStudy, duringStudySelection } from "../../../lib/trade-candle-analysis/trend-momentum-during-study";
 import type { DailyTradeAnalyzedTradePage } from "./daily-trade-analysis-evidence-service";
 import { platformFailure } from "../../platform/server/database/platform-migration-contract";
 
@@ -20,12 +21,15 @@ export function pageSavedAnalyzedTrades(trades: readonly SavedPatternTrade[], in
   const hasIndicators = [...input.query.keys()].some((key) => key.startsWith("indicator_"));
   const scoped = trades.filter((trade) => (!direction || trade.direction === direction) && trade.symbol.toUpperCase().includes(input.ticker.trim().toUpperCase()));
   const projection = buildTrendMomentumProjection(scoped.map(({ analyzed, ...trade }) => ({ ...trade, analysis: analyzed })));
-  const group = hasIndicators ? buildIndicatorCohorts(projection, selected.interval, selected.kind, selected.filters)[selected.group] : null;
+  const duringSelection = input.query.get("indicator_study") === "during" ? duringStudySelection(input.query) : null;
+  const duringRows = duringSelection ? buildDuringStudy(projection, duringSelection)[duringSelection.coverage][duringSelection.group] : null;
+  const duringByTrade = new Map(duringRows?.map((row) => [row.trade.tradeId, row]));
+  const group = hasIndicators && !duringSelection ? buildIndicatorCohorts(projection, selected.interval, selected.kind, selected.filters)[selected.group] : null;
   const byTrade = new Map<string, typeof projection.records[number][]>();
   for (const record of group?.rows ?? []) { const found = byTrade.get(record.tradeId) ?? []; found.push(record); byTrade.set(record.tradeId, found); }
-  const rows = scoped.filter((trade) => !group || byTrade.has(trade.tradeId)).sort((a, b) => b.closedAtUtc.localeCompare(a.closedAtUtc) || b.tradeId.localeCompare(a.tradeId));
+  const rows = scoped.filter((trade) => duringSelection ? duringByTrade.has(trade.tradeId) : !group || byTrade.has(trade.tradeId)).sort((a, b) => b.closedAtUtc.localeCompare(a.closedAtUtc) || b.tradeId.localeCompare(a.tradeId));
   const signature = createHash("sha256").update(JSON.stringify([input.scopeIdentity, direction, hasIndicators,
-    selected.interval, selected.kind, selected.group, selected.filters, ["start", "end", "basis"].map((key) => input.query.get(key)), input.pageSize, input.ticker, input.timezone,
+    selected.interval, selected.kind, selected.group, selected.filters, duringSelection, ["start", "end", "basis"].map((key) => input.query.get(key)), input.pageSize, input.ticker, input.timezone,
     rows.map((trade) => [trade.tradeId, trade.analysisVersionId, trade.pnlDecimal, trade.returnPercentDecimal])])).digest("hex");
   let start = 0;
   if (input.cursor) {
@@ -39,6 +43,7 @@ export function pageSavedAnalyzedTrades(trades: readonly SavedPatternTrade[], in
   const page = rows.slice(start, start + input.pageSize);
   const conditions = Object.entries(selected.filters).filter(([, value]) => value !== "any").map(([key, value]) => `${fieldLabels[key]}: ${values[value]}`).join("; ");
   return { timezone: input.timezone, totalRowCount: rows.length,
+    ...(duringSelection ? { indicatorSummary: `During the trade · ${duringSelection.event === "loss" ? "First reference loss" : "First return across reference"} · ${duringSelection.reference === "vwap" ? "Session VWAP" : duringSelection.reference === "ema9" ? "EMA 9" : "EMA 20"} · ${duringSelection.interval === "1m" ? "1 minute" : "5 minutes"} · ${duringSelection.coverage === "complete" ? "Complete earlier history" : "Incomplete earlier history"} · ${duringSelection.group === "matching" ? "Matching conditions" : duringSelection.group === "unknown" ? "Context unavailable" : "Not matching"}` } : {}),
     ...(group ? { indicatorSummary: `${selected.group === "matching" ? "Matching trades" : selected.group === "unknown" ? "Required indicator context unavailable" : "Non-matching trades"} · ${labels[selected.kind]} · ${selected.interval === "1m" ? "1 minute" : "5 minutes"}${conditions ? ` · ${conditions}` : ""}` } : {}),
     continuationCursor: start + page.length < rows.length ? Buffer.from(JSON.stringify({ signature, trade: page.at(-1)!.tradeId })).toString("base64url") : null,
     rows: page.map((trade) => {
@@ -47,6 +52,7 @@ export function pageSavedAnalyzedTrades(trades: readonly SavedPatternTrade[], in
         openedAtUtc: trade.openedAtUtc, closedAtUtc: trade.closedAtUtc, executionCount: events.length,
         firstExecutionId: matching?.[0]?.executionId ?? events[0]?.event.eventId ?? null,
         resultDecimal: trade.pnlDecimal, returnPercentDecimal: trade.returnPercentDecimal,
+        ...(duringSelection ? { whyIncluded: `The first recorded ${duringSelection.event === "loss" ? "loss" : "return"} ${duringSelection.group === "matching" ? "matched all selected conditions" : duringSelection.group === "unknown" ? "had missing required indicator context" : "did not match the selected conditions"}. Later events do not replace it.` } : {}),
         ...(group ? { whyIncluded: selected.group === "matching" ? `${matching?.length ?? 0} ${labels[selected.kind]} execution(s) matched all selected conditions.` : selected.group === "unknown" ? `Required context was missing for at least one ${labels[selected.kind]}; none was a confirmed match.` : `No ${labels[selected.kind]} matched; the required indicator context was available.` } : {}) };
     }) };
 }

@@ -2,6 +2,26 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## During-trade supporting navigation - 2026-09-13
+
+- Confirmed Analyzed Trades previously interpreted every indicator query as
+  an execution comparison. Added explicit during-study selection and links
+  from matching/nonmatching/unknown groups, preserving direction, timeframe,
+  event, reference, same-event conditions and earlier-history coverage.
+- The list uses the same first-event study function as the table, counts each
+  saved trade once and explains inclusion. Pagination signatures include the
+  during selection; changed conditions cannot reuse an earlier cursor.
+  Execution links explicitly clear the during marker when switching studies.
+- Eleven focused index/during tests pass: first versus later event, missing
+  context, incomplete history, independent reclaim, timeframe isolation,
+  pagination, existing execution filters and offline privacy. Five selected
+  TypeScript roots have zero diagnostics. Updated Help; reviewed TSX changes
+  using React guidance. Actual online click-through/browser acceptance remains
+  unproven. No server, new market-data request, deployment or migration.
+- Previous-turn saved-trade regression also passed all 24 movement/filter,
+  period, Day-summary and allocation-backed Scaling tests. Full goal remains
+  active, including remaining outcomes, corpus and final acceptance gates.
+
 ## Offline selection restoration checkpoint - 2026-09-13
 
 - Confirmed the offline client previously initialized comparison/filter state

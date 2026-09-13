@@ -67,6 +67,7 @@ export function TrendMomentumConditions({ projection, interval, kind, filters, o
         {(["matching", "nonmatching", "unknown"] as const).map((key) => {
           const result = cohorts[key].summary;
           const tradeQuery = new URLSearchParams(query); tradeQuery.set("indicator_group", key); tradeQuery.set("indicator_execution", kind); tradeQuery.set("indicator_interval", interval); tradeQuery.set("direction", direction);
+          tradeQuery.delete("indicator_study"); tradeQuery.delete("cursor");
           for (const [field, value] of Object.entries(filters)) tradeQuery.set(`indicator_${field}`, value);
           return <TableRow key={key}><TableCell>{key === "matching" ? "Matches conditions" : key === "nonmatching" ? "Does not match" : "Required indicator data missing"}{!offline ? <Button size="small" href={`/analytics/trade-analyzer/day/trades?${tradeQuery}`}>View trades</Button> : null}</TableCell>
             <TableCell>{result.tradeCount}</TableCell><TableCell>{result.occurrenceCount}</TableCell><TableCell>{result.pnlTradeCount}</TableCell>
