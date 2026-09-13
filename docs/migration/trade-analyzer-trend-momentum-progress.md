@@ -9,6 +9,25 @@ Current source/remaining hosted acceptance:
 
 ### Resumed live acceptance and Analyzer request correction
 
+- Coordinator released whole-trade refresh at
+  0277d4fdc2db4bae1a5263c46651e333c7866bcc / Railway
+  f3e96ae9-e59f-4526-adde-c6ff7b907350 SUCCESS, app/proxy ready/121.
+  One controlled fake-trade edit now replaces stale mismatch with populated
+  EMA9/EMA20, RSI and session-VWAP execution context. No separate Analyzer POST
+  was submitted. Timeframe, independent numeric and allowance checks remain open.
+- Live edit inspection found rounded input prefill was submitted as a changed
+  price even when another field was edited. Preserve approved two-decimal UI;
+  retain original stored price unless Price onChange explicitly marks it edited.
+  Intentional keyboard/paste input uses exact typed value, new rows use draft
+  price, and reopen resets edit tracking. Four focused tests pass and three
+  changed files lint clean. No table/summary formatting or financial formulas
+  changed. Help copy remains correct; no new user action or label introduced.
+- Exemption migration/repository draft is separate and unregistered/unapplied.
+  Two in-memory tests prove populated immutable retry graph preservation,
+  ordinary fourth-retry rejection, explicit grant/revoke and complete rollback.
+  Runtime/UI integration, full migration registration and verified identity
+  application are unfinished; do not release draft files with the price fix.
+
 - Live whole-trade correction acceptance exposed stale Analyzer linkage. Owner
   confirms both named accounts contain disposable fake trades and permits all
   normal test edits. Corrected only the selected test trade's two prices through

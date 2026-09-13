@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { submittedWorkspaceTradePrice, updateWorkspaceTradeDraftField } from "./workspace-trade-edit-price";
 
 import { TradeExplorerReviewEditor } from "../analytics/trade-explorer/trade-review-editor";
 import type { TradeExplorerReviewTarget } from "../analytics/trade-explorer/trade-review-model";
@@ -37,6 +38,7 @@ type Snapshot = Readonly<{
   tradeCurrency: string; tradeStyle: TradeStyle | null;
 }>;
 type DraftRow = {
+  originalPriceDecimal?: string | null; priceEdited?: boolean;
   kind: "existing" | "new"; executionRef?: string; clientRowRef: string; removed: boolean;
   localDate: string; localTime: string; sourceTimezone: string; normalizedSymbol: string;
   tradeCurrency: string; side: Side; quantityDecimal: string; priceDecimal: string; feesDecimal: string;
@@ -51,7 +53,8 @@ function failureMessage(code: unknown): string {
 }
 function rowFromExecution(execution: Execution, index: number): DraftRow {
   return { kind: "existing", executionRef: execution.editRef, clientRowRef: `trade-row-${index + 1}`,
-    removed: false, localDate: execution.localDate, localTime: execution.localTime,
+    removed: false, originalPriceDecimal: execution.priceDecimal, priceEdited: false,
+    localDate: execution.localDate, localTime: execution.localTime,
     sourceTimezone: execution.sourceTimezone, normalizedSymbol: execution.normalizedSymbol,
     tradeCurrency: execution.tradeCurrency, side: execution.side, quantityDecimal: execution.quantityDecimal,
     priceDecimal: execution.priceDecimal === null
@@ -123,12 +126,12 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
         row.normalizedSymbol !== baseline.normalizedSymbol ||
         row.tradeCurrency !== baseline.tradeCurrency || row.side !== baseline.side ||
         row.quantityDecimal !== baseline.quantityDecimal ||
-        row.priceDecimal !== baseline.priceDecimal || row.feesDecimal !== baseline.feesDecimal;
+        submittedWorkspaceTradePrice(row) !== (saved.priceDecimal ?? "") || row.feesDecimal !== baseline.feesDecimal;
     });
   }, [rows, snapshot, tradeStyle]);
   const update = <K extends keyof DraftRow>(clientRowRef: string, key: K, value: DraftRow[K]) => {
     setPreview(null);
-    setRows((current) => current.map((row) => row.clientRowRef === clientRowRef ? { ...row, [key]: value } : row));
+    setRows((current) => current.map((row) => row.clientRowRef === clientRowRef ? updateWorkspaceTradeDraftField(row, key, value) : row));
   };
   const payload = () => ({
     snapshotRef: snapshot?.snapshotRef,
@@ -138,7 +141,7 @@ export function WorkspaceAtomicTradeEditDrawer({ expectedAccountSelectionRef, jo
       ...(row.removed ? {} : { entry: { clientRowRef: row.clientRowRef, localDate: row.localDate,
         localTime: canonicalTime(row.localTime), sourceTimezone: row.sourceTimezone,
         normalizedSymbol: row.normalizedSymbol, tradeCurrency: row.tradeCurrency, side: row.side,
-        quantityDecimal: row.quantityDecimal, priceDecimal: row.priceDecimal, feesDecimal: row.feesDecimal } }),
+        quantityDecimal: row.quantityDecimal, priceDecimal: submittedWorkspaceTradePrice(row), feesDecimal: row.feesDecimal } }),
     } : { kind: "new", entry: { clientRowRef: row.clientRowRef, localDate: row.localDate,
       localTime: canonicalTime(row.localTime), sourceTimezone: row.sourceTimezone,
       normalizedSymbol: row.normalizedSymbol, tradeCurrency: row.tradeCurrency, side: row.side,
