@@ -1,6 +1,7 @@
 "use client";
 
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -65,7 +66,9 @@ export function TrendMomentumConditions({ projection, interval, kind, filters, o
       </TableCell>)}</TableRow></TableHead><TableBody>
         {(["matching", "nonmatching", "unknown"] as const).map((key) => {
           const result = cohorts[key].summary;
-          return <TableRow key={key}><TableCell>{key === "matching" ? "Matches conditions" : key === "nonmatching" ? "Does not match" : "Required indicator data missing"}</TableCell>
+          const tradeQuery = new URLSearchParams(query); tradeQuery.set("indicator_group", key); tradeQuery.set("indicator_execution", kind); tradeQuery.set("indicator_interval", interval); tradeQuery.set("direction", direction);
+          for (const [field, value] of Object.entries(filters)) tradeQuery.set(`indicator_${field}`, value);
+          return <TableRow key={key}><TableCell>{key === "matching" ? "Matches conditions" : key === "nonmatching" ? "Does not match" : "Required indicator data missing"}{!offline ? <Button size="small" href={`/analytics/trade-analyzer/day/trades?${tradeQuery}`}>View trades</Button> : null}</TableCell>
             <TableCell>{result.tradeCount}</TableCell><TableCell>{result.occurrenceCount}</TableCell><TableCell>{result.pnlTradeCount}</TableCell>
             <TableCell>{result.wins} / {result.losses} / {result.breakevens}</TableCell><TableCell>{percent(result.winRatePercent)}</TableCell>
             <TableCell>{money(result.totalPnlDecimal)}</TableCell><TableCell>{money(result.averagePnlDecimal)}</TableCell><TableCell>{money(result.medianPnlDecimal)}</TableCell>

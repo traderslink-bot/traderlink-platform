@@ -40,6 +40,7 @@ export type DailyTradePatternOccurrencePage = Readonly<{
 }>;
 
 export type DailyTradeAnalyzedTradeRow = Readonly<{
+  whyIncluded?: string;
   closedAtUtc: string;
   direction: "long" | "short";
   executionCount: number;
@@ -53,6 +54,7 @@ export type DailyTradeAnalyzedTradeRow = Readonly<{
 }>;
 
 export type DailyTradeAnalyzedTradePage = Readonly<{
+  indicatorSummary?: string;
   continuationCursor: string | null;
   rows: readonly DailyTradeAnalyzedTradeRow[];
   timezone: string;

@@ -2,6 +2,29 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Analyzed Trades saved identity and condition restoration - 2026-09-13
+
+- Confirmed the index and API were still round-trip-only. Connected both to
+  the shared current saved-trade population, without doing pattern extraction
+  for index requests. Whole-trade result, first entry/final close, execution
+  count and canonical trade ID stay together; grouped members do not become
+  separate index rows. Date selection retains all members of an included trade.
+- Trend condition groups link to the matching/nonmatching/unknown trade list.
+  Index requests restore timeframe, execution kind, direction and conditions;
+  the banner and per-row explanation identify the inclusion reason. The full
+  analysis link focuses a supporting execution and retains its timeframe.
+- Added plain trader-facing tooltips to every labeled index column. Offline
+  preserves the selection explanation but strips IDs/cursors; capture identity
+  includes conditions. Updated Help and removed a stale description of a
+  30-minute column that was already absent from the inspected index.
+- Eighteen focused index/cohort/analytics/pattern tests pass. Nine selected
+  source/UI/API TypeScript roots pass. Shared indicator records now require
+  exact execution timestamp binding, with a regression for mismatched context.
+- Still pending: populated browser/index/API acceptance, shared legacy-reader
+  SQL integration, remaining Day/other aggregate identity audit, remaining
+  during-trade comparisons, provider calibration and full final goal gates.
+  Nothing was published and no database/provider action was performed.
+
 ## Candle Patterns page/evidence integration - 2026-09-13
 
 - Connected page summaries and occurrence API to the shared saved-trade

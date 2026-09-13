@@ -6,7 +6,7 @@ import { platformFailure } from "../../platform/server/database/platform-migrati
 
 type Runtime = Parameters<Parameters<typeof withJournalAnalyticsReportingDashboardRuntime>[1]>[0];
 export function withSavedPatternRuntime<T>(scope: WorkspaceAccessScope,
-  input: { basis: string | null; startDate: string | null; endDate: string | null },
+  input: { basis: string | null; startDate: string | null; endDate: string | null; includePatterns?: boolean },
   operation: (value: ReturnType<typeof readSavedPatternPopulation> & { timezone: string; runtime: Runtime }) => T,
 ) {
   const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
@@ -25,6 +25,6 @@ export function withSavedPatternRuntime<T>(scope: WorkspaceAccessScope,
       rows.push(...page.rows); cursor = page.continuationCursor; timezone = page.timezone;
     } while (cursor !== null);
     return operation({ ...readSavedPatternPopulation({ database: runtime.verifiedReadonlyDatabase, scope, journalRows: rows,
-      startDate: input.startDate, endDate: input.endDate }), timezone, runtime });
+      startDate: input.startDate, endDate: input.endDate, includePatterns: input.includePatterns }), timezone, runtime });
   });
 }

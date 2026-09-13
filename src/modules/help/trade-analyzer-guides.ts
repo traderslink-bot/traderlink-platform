@@ -529,6 +529,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["ticker filter", "ticker search", "page 1"],
         blocks: [
           { kind: "paragraph", text: "Ticker search matches the displayed symbol and returns the list to page 1. The shared date range, Account reporting currency and Gross or Net choice continue to apply. Green-to-red-specific outcome and opportunity filters live on the Green-to-red page." },
+          { kind: "paragraph", text: "View trades from a Trend & Momentum condition group restores that group's timeframe, execution type and conditions here. The banner names the selection, and each trade explains why it appears. Matching, non-matching and missing-context trades stay separate. Change indicator conditions returns to the comparison with the same selection." },
         ],
       },
       {
@@ -538,15 +539,14 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["trade table", "ticker", "direction", "entry time", "exit time", "executions", "full analysis"],
         blocks: [
           { kind: "table", columns: ["Column", "Meaning"], rows: [
-            ["Date / Ticker / Direction", "Local trade date, displayed symbol and Long or Short direction."],
+            ["Date / Ticker / Direction", "Final closing date of your saved trade, displayed symbol and Long or Short direction. Several round trips grouped as one trade count once."],
             ["Entry time / Exit time", "First entry and final exit in the selected account's trading timezone."],
             ["Gross or Net result", "Actual saved trade result under the selected basis."],
             ["Return", "Percentage result when a supported denominator is available."],
-            ["First review: 30 minutes after final exit", "For a long trade, shows whether price rose after the sale; for a short trade, whether price fell after the cover. The row uses the saved 30-minute post-exit observation only. It says unavailable when that observation is not saved and does not substitute a later 60-minute update."],
-            ["Executions", "Number of saved entry, add, partial-exit and final-exit snapshots."],
-            ["View full analysis", "Opens the exact Session Tracker trade and focuses its saved analysis."],
+            ["Executions", "All saved executions in your trade, including re-entries and interim position closures."],
+            ["View full analysis", "Opens the exact saved trade. When indicator conditions are selected, it focuses a supporting execution at the selected one-minute or five-minute interval."],
           ] },
-          { kind: "paragraph", text: "A positive per-share amount is the favorable movement recorded after the final exit. A zero result means price did not move beyond the final-exit price in that favorable direction. A negative result means the saved 30-minute high for a long sale remained below the sell price, or the saved 30-minute low for a short cover remained above the cover price." },
+          { kind: "paragraph", text: "Each row uses the whole saved trade's selected result once. Missing financial results remain unavailable. The indicator inclusion note describes the selected execution conditions, not a separate trade or a separate profit calculation." },
           { kind: "paragraph", text: "The directory intentionally keeps Green-to-red opportunity, capture and reversal columns off this page. Open the full analysis for entry, exit, pattern and Green-to-red context, or use the Green-to-red page for those cross-trade comparisons." },
           { kind: "paragraph", text: "On a phone, swipe the contained table sideways to read every column without shrinking it into unreadable text." },
         ],

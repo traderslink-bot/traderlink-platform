@@ -12,6 +12,7 @@ export function readSavedPatternPopulation(input: Readonly<{
   database: Database.Database; scope: WorkspaceAccessScope;
   journalRows: readonly JournalAnalyticsRoundTripTableRow[];
   startDate: string | null; endDate: string | null;
+  includePatterns?: boolean;
 }>) {
   const { database, scope } = input, accountId = scope.activeAccountId;
   if (!accountId || !scope.allowedAccountIds.includes(accountId)) throw new Error("Pattern account is unavailable");
@@ -28,7 +29,7 @@ export function readSavedPatternPopulation(input: Readonly<{
     if ((input.startDate && last.closeLocalDate < input.startDate) || (input.endDate && last.closeLocalDate > input.endDate)) continue;
     eligibleDayTradeCount++;
     const current = trade.logicalTradeId ? analyzer.readCurrentByRoundTrip(accountScope, first.roundTripId) : null;
-    let analyzed: Pick<DailyTradeAnalyzerResult, "eventSnapshots"> | null = current?.status === "ready" ? current.analyzed : null;
+    let analyzed: SavedPatternTrade["analyzed"] | null = current?.status === "ready" ? current.analyzed : null;
     let analysisVersionId = current?.analysisVersionId;
     if (!current && trade.members.length === 1) {
       const saved = database.prepare(`SELECT version.daily_trade_analysis_version_id AS version_id, snapshot.snapshot_json
@@ -55,8 +56,9 @@ ORDER BY json_extract(snapshot.snapshot_json, '$.event.sequence')`).all(scope.wo
     const notional = complete.reduce((sum, member) => sum.plus(member.entryNotionalDecimal), new Decimal(0));
     trades.push({ tradeId: trade.logicalTradeId ?? first.roundTripId, representativeRoundTripId: first.roundTripId,
       analysisVersionId, symbol: first.displayedSymbol, direction: trade.direction, closeDate: last.closeLocalDate,
+      openedAtUtc: trade.openedAtUtc, closedAtUtc: trade.closedAtUtc,
       trackerDate: first.entryLocalDate, pnlDecimal: pnl, returnPercentDecimal: pnl !== null && notional.gt(0) ? new Decimal(pnl).div(notional).mul(100).toFixed() : null, analyzed });
   }
-  return { observations: savedPatternObservations(trades), eligibleDayTradeCount, analyzedTradeCount: trades.length,
+  return { trades, observations: input.includePatterns === false ? [] : savedPatternObservations(trades), eligibleDayTradeCount, analyzedTradeCount: trades.length,
     directionTradeCounts: { long: trades.filter((trade) => trade.direction === "long").length, short: trades.filter((trade) => trade.direction === "short").length } };
 }

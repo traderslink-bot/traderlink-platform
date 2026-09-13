@@ -6,8 +6,9 @@ import { matchesExecutionIndicatorFilter, readExecutionIndicatorFilterContext, t
 export type SavedPatternTrade = Readonly<{
   tradeId: string; analysisVersionId: string; representativeRoundTripId: string;
   symbol: string; direction: "long" | "short"; closeDate: string; trackerDate: string;
+  openedAtUtc: string; closedAtUtc: string;
   pnlDecimal: string | null; returnPercentDecimal: string | null;
-  analyzed: Pick<DailyTradeAnalyzerResult, "eventSnapshots">;
+  analyzed: Pick<DailyTradeAnalyzerResult, "eventSnapshots" | "trendMomentum" | "trendMomentumUnavailableReason">;
 }>;
 export type SavedPatternObservation = Omit<SavedPatternTrade, "analyzed"> & Readonly<{
   occurrenceKey: string; eventId: string; eventSequence: number;

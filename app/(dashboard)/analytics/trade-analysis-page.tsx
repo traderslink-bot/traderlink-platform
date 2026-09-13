@@ -1,4 +1,6 @@
 import "server-only";
+import { withSavedPatternRuntime } from "@/src/modules/level-analysis/server/trend-momentum-pattern-runtime";
+import { pageSavedAnalyzedTrades } from "@/src/modules/level-analysis/server/trend-momentum-analyzed-trades";
 import { readSavedPatternPopulation } from "@/src/modules/level-analysis/server/trend-momentum-pattern-service";
 import { summarizeSavedPatterns } from "@/src/lib/trade-candle-analysis/trend-momentum-patterns";
 import { readSavedTradeMovement } from "@/src/modules/level-analysis/server/trend-momentum-movement-service";
@@ -25,10 +27,7 @@ import {
 import { journalReportingCurrencyMultiplier } from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
 import {
   buildDailyTradeLongTermAnalytics,
-  readDailyTradeAnalysisCurrencies,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
-import { readDailyTradeAnalyzedTrades } from "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
-import { reportDailyTradeAnalyzedTrades } from "@/src/modules/level-analysis/server/daily-trade-analysis-reporting";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
@@ -170,29 +169,15 @@ export async function TradeAnalysisPage({
         ));
 
   if (view === "trades") {
-    const tradeIndex = await withJournalAnalyticsReportingDashboardRuntime(
-      scope,
-      ({ reportingContext }) => withReadonlyPlatformDatabase({}, (database) => {
-        const availableCurrencies = readDailyTradeAnalysisCurrencies(database, scope);
-        const currency = availableCurrencies.length > 0
-          ? new PlatformUserPreferenceRepository(database)
-              .getActiveUserReportingCurrency(scope.userId)
-          : null;
-        const page = currency === null ? null : reportDailyTradeAnalyzedTrades(
-          readDailyTradeAnalyzedTrades(database, scope, {
-            afterCursor: null,
-            currency,
-            endDate: dateRange.endDate,
-            moneyBasis,
-            pageSize: 25,
-            startDate: dateRange.startDate,
-            ticker: "",
-          }),
-          reportingContext,
-        );
-        return Object.freeze({ currency, page });
-      }),
-    );
+    const indicatorQuery = new URLSearchParams(Object.entries(searchParams).flatMap(([key, value]) => typeof value === "string" && (key.startsWith("indicator_") || ["direction", "range", "start", "end", "basis"].includes(key)) ? [[key, value]] : []));
+    indicatorQuery.set("basis", moneyBasis);
+    if (dateRange.startDate && dateRange.endDate) { indicatorQuery.set("start", dateRange.startDate); indicatorQuery.set("end", dateRange.endDate); }
+    else { indicatorQuery.delete("start"); indicatorQuery.delete("end"); }
+    const tradeIndex = await withSavedPatternRuntime(scope, { basis: moneyBasis, startDate: dateRange.startDate, endDate: dateRange.endDate, includePatterns: false }, ({ trades, timezone, runtime }) => ({
+      currency: runtime.reportingCurrency,
+      page: pageSavedAnalyzedTrades(trades, { query: indicatorQuery, timezone, scopeIdentity: `${scope.workspaceId}:${scope.activeAccountId}:${runtime.reportingCurrency}`,
+        pageSize: 25, cursor: null, ticker: "" }),
+    }));
     const offlineModel = createJournalAnalyzedTradesOfflineViewModel({
       currency: tradeIndex.currency,
       dateRange,
@@ -208,7 +193,7 @@ export async function TradeAnalysisPage({
         generatedAtUtc={new Date().toISOString()}
         model={offlineModel}
         pathname={baseHref}
-        queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}`}
+        queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}:conditions:${indicatorQuery.toString()}`}
         reportingCurrency={tradeIndex.currency}
         routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["trade-analyzer-trades"]}
@@ -220,6 +205,8 @@ export async function TradeAnalysisPage({
             <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
           </Stack>
           <AnalyzedTradesIndex
+            key={indicatorQuery.toString()}
+            indicatorQuery={indicatorQuery.toString()}
             currency={tradeIndex.currency}
             dateRange={dateRange}
             endDate={dateRange.endDate}

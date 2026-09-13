@@ -6,7 +6,7 @@ export type TrendMomentumTrade = Readonly<{
   tradeId: string; representativeRoundTripId: string; symbol: string; direction: "long" | "short";
   closeDate: string; trackerDate: string; pnlDecimal: string | null;
   returnPercentDecimal?: string | null;
-  analysis: DailyTradeAnalyzerResult | null;
+  analysis: Pick<DailyTradeAnalyzerResult, "eventSnapshots" | "trendMomentum" | "trendMomentumUnavailableReason"> | null;
 }>;
 export type IndicatorExecutionKind = "initial_entry" | "re_entry" | "add" | "partial_exit" | "position_close" | "final_exit";
 export type TrendMomentumRecord = Readonly<Omit<TrendMomentumTrade, "analysis"> & {
@@ -33,9 +33,11 @@ export function buildTrendMomentumProjection(trades: readonly TrendMomentumTrade
       const event = snapshot.event;
       const kind = event.kind === "entry" ? entries++ === 0 ? "initial_entry" : "re_entry"
         : event.kind === "temporary_flat" ? "position_close" : event.kind;
+      const candidate = contexts.get(event.eventId);
       records.push(Object.freeze({ ...identity, executionId: event.eventId, executionKind: kind,
         executionPriceDecimal: event.priceDecimal,
-        executedAtUtc: event.executedAtUtc, executionSequence: event.sequence, context: contexts.get(event.eventId) ?? null }));
+        executedAtUtc: event.executedAtUtc, executionSequence: event.sequence,
+        context: candidate?.executedAtUtc === event.executedAtUtc ? candidate : null }));
     }
   }
   return Object.freeze({
