@@ -12,6 +12,9 @@ formula references, 1m/5m price-scale invariance and sparse-bucket observations.
 Actual provider adjustment/reference and rendered acceptance remain open.
 Section-help checkpoint: seven nested help buttons corrected; 10 scoped tests
 and targeted lint pass. Full tooltip inventory and browser acceptance remain open.
+Individual card now shares the corrected disclosure; eight reporting/presentation
+tests and five changed-root type/lint checks pass. Default combined table headings
+all render help controls; full text inventory and browser interaction remain open.
 Parent: [Trade Analyzer Analysis Pages Plan](trade-analyzer-analysis-pages-plan.md).
 
 Feasibility update: the progress record now includes the verified production

@@ -2,6 +2,24 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Individual section help and shared disclosure - 2026-09-13
+
+- Continued tooltip audit found the individual Trend & Momentum card also put
+  its help button inside AccordionSummary. Extracted the prior corrected wrapper
+  into AnalyzerDisclosureSection and used it in both individual/combined views.
+  Preserved content, exact help text, selected execution and default expansion.
+- Reporting/presentation: eight tests pass, including individual 1m/5m markup
+  without nested buttons and help controls on every rendered table heading in
+  the default combined page (more than 50 headings). This does not establish
+  complete tooltip-copy inventory or every view's browser behavior.
+- Five changed source/test roots: zero TypeScript diagnostics and zero targeted
+  lint errors/warnings. React skill review: module-scope reusable component,
+  unconditional hooks, stable useId, functional state update, direct imports,
+  no new fetch/effect or serialization. No new dependency or local server.
+- Help text unchanged. Full copy inventory, actual touch/keyboard/visual and
+  offline browser acceptance remain open, along with hosted calibration and
+  the previously recorded retry-accounting decision. No hosted actions.
+
 ## Section help markup correction - 2026-09-13
 
 - Tooltip audit found seven help IconButtons nested inside AccordionSummary

@@ -1,14 +1,11 @@
 "use client";
 
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
+import { AnalyzerDisclosureSection } from "../analytics/analyzer-disclosure-section";
 import Box from "@mui/material/Box";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useState } from "react";
 import type { DaySessionTradeAnalyzer } from "./[sessionDate]/day-session-types";
 import { AnalyzerHelpTooltip } from "../analytics/analyzer-help-tooltip";
@@ -31,9 +28,8 @@ export function TradeIndicatorContext({ analysis, timeframe, currency, timezone 
     `${index + 1}. ${{ entry: "Entry", add: "Add", partial_exit: "Partial exit", temporary_flat: "Position close", final_exit: "Final exit" }[candidate.kind]} · ${time(Date.parse(candidate.executedAt) / 1000)}`;
   const title = (name: string, help: string) => <Stack direction="row" sx={{ alignItems: "center" }}><Typography variant="subtitle2">{name}</Typography><AnalyzerHelpTooltip label={name} text={help} /></Stack>;
   const vwapSide = vwap?.value != null && event ? 100 * (Number(event.price) - vwap.value) / vwap.value : null;
-  return <Accordion defaultExpanded disableGutters variant="outlined">
-    <AccordionSummary expandIcon={<ExpandMoreIcon />}>{title("Trend & Momentum", "Indicator conditions from completed candles available before each execution. Changing the chart timeframe changes EMA and RSI to the matching timeframe. Session VWAP always uses this session's completed one-minute data. These descriptions do not grade the trade or predict its next move.")}</AccordionSummary>
-    <AccordionDetails><Stack spacing={1.5}>
+  return <AnalyzerDisclosureSection title="Trend & Momentum" help="Indicator conditions from completed candles available before each execution. Changing the chart timeframe changes EMA and RSI to the matching timeframe. Session VWAP always uses this session's completed one-minute data. These descriptions do not grade the trade or predict its next move.">
+    <Stack spacing={1.5}>
       {!analysis.trendMomentum ? <Typography color="text.secondary">{analysis.trendMomentumUnavailableReason
         ? "Earlier candle history could not be retrieved. The available trade analysis is still shown."
         : "This saved analysis does not include the newer indicator history. Analyze the trade again to request it."}</Typography> : <>
@@ -64,6 +60,6 @@ export function TradeIndicatorContext({ analysis, timeframe, currency, timezone 
         {context ? <Typography variant="caption" color="text.secondary">{context.spacing === "standard" ? "Regularly spaced candles" : context.spacing === "sparse" ? "Less frequently traded candles" : "Direction comparison unavailable across this history interruption"}{context.lookbackSpanSeconds != null ? ` · Direction lookback spans ${(context.lookbackSpanSeconds / 60).toFixed(1)} minutes` : ""}. {context.currentWordingEligible ? "" : "The last available candle was older than the current-context window; these are the last recorded values."}</Typography> : null}
         {analysis.trendMomentum.timingUnavailable ? <Typography color="text.secondary" variant="body2">Some position timings could not be ordered reliably. During-trade indicator crossings are unavailable; execution context remains available where candle history permits.</Typography> : null}
       </>}
-    </Stack></AccordionDetails>
-  </Accordion>;
+    </Stack>
+  </AnalyzerDisclosureSection>;
 }

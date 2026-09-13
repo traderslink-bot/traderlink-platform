@@ -81,6 +81,16 @@ test("individual card switches saved timeframe and retains partial indicator ava
   assert.match(five, /Session VWAP/);
   assert.match(one, /Last completed candle/);
   assert.ok(!one.includes("NaN"));
+  for (const html of [one, five]) {
+    let depth = 0;
+    for (const match of html.matchAll(/<button\b[^>]*>|<\/button>/g)) {
+      if (match[0].startsWith("</")) depth--;
+      else { assert.equal(depth, 0, "Individual indicator card nests a button"); depth++; }
+    }
+    assert.equal(depth, 0);
+    assert.match(html, /aria-expanded="true"/);
+    assert.match(html, /aria-label="Explain Trend &amp; Momentum"/);
+  }
 });
 
 test("trade summary uses the same new context and never substitutes conflicting legacy values", () => {

@@ -24,6 +24,9 @@ test("empty selection renders controls, explanatory column controls and exclusiv
     "Required indicator data missing", "Explain Median trade P/L", "Explain RSI range"]) assert.ok(html.includes(text), text);
   for (const text of ["EMA 9 &amp; EMA 20", "Session VWAP", "Explain Average Gross P/L", "Explain Median Gross P/L"]) assert.ok(html.includes(text), text);
   assert.ok(!html.includes("NaN"));
+  const headers = [...html.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)];
+  assert.ok(headers.length >= 50, "Expected the integrated comparison tables");
+  for (const [, header] of headers) assert.match(header, /aria-label="Explain [^"]+"/, "Table heading has no explanation control");
   let buttonDepth = 0;
   for (const match of html.matchAll(/<button\b[^>]*>|<\/button>/g)) {
     if (match[0].startsWith("</")) buttonDepth--;
