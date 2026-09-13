@@ -111,6 +111,7 @@ import { platformMoomooOAuthPendingAttemptsMigration } from "./migrations/0094_p
 import { platformAppearancePreferencesMigration } from "./migrations/0103_platform_appearance_preferences";
 import { platformDefaultDarkAppearanceMigration } from "./migrations/0110_platform_default_dark_appearance";
 import { platformWatchlistDailyRecapsMigration } from "./migrations/0133_platform_watchlist_daily_recaps";
+import { dailyTradeAnalyzerTrendMomentumHistoryMigration } from "@/src/modules/level-analysis/server/database/migrations/0134_daily_trade_analyzer_trend_momentum_history";
 import { platformPnlReportingPreferenceMigration } from "./migrations/0115_platform_pnl_reporting_preference";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
@@ -606,6 +607,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0133_platform_watchlist_daily_recaps.ts",
       migration: platformWatchlistDailyRecapsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0134_daily_trade_analyzer_trend_momentum_history.ts",
+      migration: dailyTradeAnalyzerTrendMomentumHistoryMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -614,6 +619,9 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0134_daily_trade_analyzer_trend_momentum_history": Object.freeze([
+      "level_analysis_indicator_history_requests",
+    ]),
     "0001_platform_identity": Object.freeze([
       "platform_users",
       "platform_workspaces",
