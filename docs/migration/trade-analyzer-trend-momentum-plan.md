@@ -43,7 +43,9 @@ audit identities. Never edit an applied migration or erase retry history.
 Before hosted application, verify both target identities, migration preservation,
 ordinary-user caps, exempt requests past both quotas and three retries, active
 duplicate prevention, shared pacing and accurate UI. Coordinator owns migration
-allocation and guarded application. This requirement is not yet implemented.
+allocation and guarded application. Source implementation and local checkpoint
+are complete; production migration, both verified grants and live acceptance
+remain pending. See the owner-exemption handoff in the progress record.
 
 ### Demo completion requirement
 

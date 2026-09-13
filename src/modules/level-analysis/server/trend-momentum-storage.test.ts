@@ -51,6 +51,8 @@ test("0134 creates immutable completed history evidence with explicit job and ac
 function accountingFixture() {
   const db = new Database(":memory:");
   db.exec(`
+    CREATE TABLE level_analysis_owner_exemption_events(exemption_event_id,user_id,enabled,created_at_utc);
+    CREATE TABLE level_analysis_owner_exempt_acquisitions(acquisition_id,exemption_event_id);
     CREATE TABLE level_analysis_shared_analyzer_settings(settings_key, enabled, default_daily_limit, default_period_limit, global_rolling_24h_limit, request_spacing_seconds, designated_user_id, designated_workspace_id, designated_account_id, revision);
     INSERT INTO level_analysis_shared_analyzer_settings VALUES ('beta',1,10,100,120,0,'user','workspace','account',1);
     CREATE TABLE level_analysis_user_allowance_cycles(allowance_cycle_id,user_id,starts_on_new_york_date,ends_on_new_york_date,created_at_utc);

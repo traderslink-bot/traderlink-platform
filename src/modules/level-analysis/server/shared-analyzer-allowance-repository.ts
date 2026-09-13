@@ -1,5 +1,7 @@
 import type Database from "better-sqlite3";
 import { ManualAnalyzerRetryRepository } from "./manual-analyzer-retry-repository";
+import { AnalyzerOwnerExemptionRepository } from "./analyzer-owner-exemption-repository";
+import { hasSharedAnalyzerAllowance } from "../contracts/shared-analyzer-beta-contracts";
 
 import type { SharedAnalyzerAvailability, SharedAnalyzerSettings } from "../contracts/shared-analyzer-beta-contracts";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -142,6 +144,10 @@ WHERE user_id = ? ORDER BY starts_on_new_york_date LIMIT 1`).get(userId) as
   availability(userId: string, now: Date = new Date()): SharedAnalyzerAvailability {
     const date = newYorkDate(now);
     const settings = this.settings();
+    if (new AnalyzerOwnerExemptionRepository(this.database).activeEventId(userId)) {
+      return Object.freeze({ enabled: settings.enabled, unlimited: true,
+        dailyAvailable: null, periodAvailable: null, selectableAvailable: null, daysUntilReset: 0 });
+    }
     const override = this.database.prepare(`SELECT daily_limit, period_limit
 FROM level_analysis_user_allowance_overrides WHERE user_id = ?`).get(userId) as
       | { daily_limit: number | null; period_limit: number | null }
@@ -207,7 +213,7 @@ WHERE user_id = ? AND allowance_cycle_id = ? AND status = 'active'
   reserve(input: Readonly<{ userId: string; jobId: string; now: Date; correctionWaiver?: boolean }>): string | null {
     return this.immediate(() => {
       const availability = this.availability(input.userId, input.now);
-      if (!input.correctionWaiver && (!availability.enabled || availability.selectableAvailable <= 0)) return null;
+      if (!availability.enabled || (!input.correctionWaiver && !hasSharedAnalyzerAllowance(availability))) return null;
       const cycle = this.ensureCycle(input.userId, input.now);
       const timestamp = createCanonicalUtcTimestamp(input.now);
       const reservationId = createCanonicalUuidV4();
@@ -292,6 +298,8 @@ WHERE reservation_id = ?`).get(reservation.reservationId) as { count: number };
       }
       const settings = this.settings();
       if (!settings.enabled || !settings.designatedConnectionConfigured) return null;
+      const exemptions = new AnalyzerOwnerExemptionRepository(this.database);
+      const exemptionEventId = exemptions.activeEventId(retry?.user_id ?? reservation!.userId);
       const expiredLeaseBefore = new Date(input.now.getTime() - 5 * 60 * 1000).toISOString();
       this.database.prepare(`UPDATE level_analysis_analyzer_acquisitions
 SET completed_at_utc = ?, outcome = 'provider_unavailable'
@@ -303,8 +311,10 @@ WHERE completed_at_utc IS NULL LIMIT 1`).get();
       if (active) return null;
       const since = new Date(input.now.getTime() - 24 * 60 * 60 * 1000).toISOString();
       const globalUsed = this.database.prepare(`SELECT count(*) AS count
-FROM level_analysis_analyzer_acquisitions WHERE started_at_utc >= ?`).get(since) as { count: number };
-      if (globalUsed.count >= settings.globalRolling24HourLimit) return null;
+FROM level_analysis_analyzer_acquisitions acquisition WHERE started_at_utc >= ?
+ AND NOT EXISTS (SELECT 1 FROM level_analysis_owner_exempt_acquisitions exemption
+ WHERE exemption.acquisition_id=acquisition.acquisition_id)`).get(since) as { count: number };
+      if (!exemptionEventId && globalUsed.count >= settings.globalRolling24HourLimit) return null;
       const prior = this.database.prepare(`SELECT started_at_utc
 FROM level_analysis_analyzer_acquisitions ORDER BY started_at_utc DESC LIMIT 1`).get() as
         | { started_at_utc: string }
@@ -312,7 +322,7 @@ FROM level_analysis_analyzer_acquisitions ORDER BY started_at_utc DESC LIMIT 1`)
       if (prior && Date.parse(prior.started_at_utc) + settings.requestSpacingSeconds * 1000 > input.now.getTime()) {
         return null;
       }
-      const chargeKind = retry || reservation!.correctionWaiver ? "correction_waived" as const : "user_charged" as const;
+      const chargeKind = retry || exemptionEventId || reservation!.correctionWaiver ? "correction_waived" as const : "user_charged" as const;
       const acquisitionId = createCanonicalUuidV4();
       this.database.prepare(`INSERT INTO level_analysis_analyzer_acquisitions (
  acquisition_id, market_session_set_id, charged_user_id, reservation_id,
@@ -322,6 +332,7 @@ FROM level_analysis_analyzer_acquisitions ORDER BY started_at_utc DESC LIMIT 1`)
         retry ? null : reservation!.reservationId, chargeKind, createCanonicalUtcTimestamp(input.now),
       );
       if (retry) this.database.prepare("INSERT INTO level_analysis_manual_retry_acquisitions(acquisition_id,retry_request_id) VALUES(?,?)").run(acquisitionId, retry.retry_request_id);
+      if (exemptionEventId) exemptions.recordAcquisition(acquisitionId, exemptionEventId);
       if (!retry) this.database.prepare(`UPDATE level_analysis_analyzer_reservations
 SET status = 'consumed', updated_at_utc = ?
 WHERE reservation_id = ? AND status = 'active'`).run(

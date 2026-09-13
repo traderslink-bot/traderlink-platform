@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { AnalyzerOwnerExemptionRepository } from "./analyzer-owner-exemption-repository";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUuidV4, createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 
@@ -14,7 +15,8 @@ export class ManualAnalyzerRetryRepository {
   constructor(private readonly database: Database.Database) {}
 
   available(scope: AccountScope, tradeId: string, now: Date): boolean {
-    return this.count(scope, tradeId, now) < MANUAL_ANALYZER_RETRIES_PER_DAY;
+    return Boolean(new AnalyzerOwnerExemptionRepository(this.database).activeEventId(scope.userId)) ||
+      this.count(scope, tradeId, now) < MANUAL_ANALYZER_RETRIES_PER_DAY;
   }
 
   private count(scope: AccountScope, tradeId: string, now: Date): number {
@@ -32,7 +34,8 @@ WHERE logical_trade_job_id=? AND user_id=? AND workspace_id=? AND account_id=? A
         jobId, scope.userId, scope.workspaceId, scope.accountId) as { logical_trade_id: string; logical_trade_version_id: string } | undefined;
       if (!job) return null;
       const count = this.count(scope, job.logical_trade_id, now);
-      if (count >= MANUAL_ANALYZER_RETRIES_PER_DAY) return null;
+      if (count >= MANUAL_ANALYZER_RETRIES_PER_DAY &&
+          !new AnalyzerOwnerExemptionRepository(this.database).activeEventId(scope.userId)) return null;
       const id = createCanonicalUuidV4();
       this.database.prepare(`INSERT INTO level_analysis_manual_retry_requests
 (retry_request_id,logical_trade_job_id,user_id,workspace_id,account_id,logical_trade_id,logical_trade_version_id,new_york_date,daily_ordinal,created_at_utc)

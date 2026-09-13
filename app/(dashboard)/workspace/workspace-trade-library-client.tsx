@@ -1,4 +1,5 @@
 "use client";
+import type { SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
@@ -304,9 +305,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
   const [savedTrades, setSavedTrades] = useState<readonly WorkspaceTradeLibraryRow[]>([]);
   const [savedReviewComplete, setSavedReviewComplete] = useState(false);
   const [savedReviewError, setSavedReviewError] = useState<string | null>(null);
-  const [analyzerUses, setAnalyzerUses] = useState<Readonly<{
-    enabled: boolean; dailyAvailable: number; periodAvailable: number; selectableAvailable: number; daysUntilReset: number;
-  }> | null>(null);
+  const [analyzerUses, setAnalyzerUses] = useState<SharedAnalyzerAvailability | null>(null);
   const [analyzerUsesStatus, setAnalyzerUsesStatus] = useState<"loading" | "ready" | "unavailable">("loading");
   const [analyzerError, setAnalyzerError] = useState<string | null>(null);
   const [analyzerSuccess, setAnalyzerSuccess] = useState<string | null>(null);
@@ -525,8 +524,8 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
             <Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography>
             {analyzerUsesStatus === "loading" ? <Typography color="text.secondary" variant="body2">Loading…</Typography> : null}
             {analyzerUsesStatus === "ready" && analyzerUses?.enabled ? <>
-              <Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today</Typography>
-              <Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available in 30 days · resets in {analyzerUses.daysUntilReset} days</Typography>
+              <Typography color="text.secondary" variant="body2">{analyzerUses.unlimited ? "Unlimited" : `${Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today`}</Typography>
+              {!analyzerUses.unlimited ? <Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available in 30 days · resets in {analyzerUses.daysUntilReset} days</Typography> : null}
             </> : null}
             {analyzerUsesStatus === "unavailable" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
               <Typography color="error.main" variant="body2">Analyzer usage could not be loaded.</Typography>

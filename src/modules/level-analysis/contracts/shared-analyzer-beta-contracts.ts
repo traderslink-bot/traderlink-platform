@@ -1,10 +1,21 @@
 export type SharedAnalyzerAvailability = Readonly<{
   enabled: boolean;
+  daysUntilReset: number;
+} & ({
+  unlimited: true;
+  dailyAvailable: null;
+  periodAvailable: null;
+  selectableAvailable: null;
+} | {
+  unlimited?: false;
   dailyAvailable: number;
   periodAvailable: number;
   selectableAvailable: number;
-  daysUntilReset: number;
-}>;
+})>;
+
+export function hasSharedAnalyzerAllowance(value: SharedAnalyzerAvailability): boolean {
+  return value.enabled && (value.unlimited === true || value.selectableAvailable > 0);
+}
 
 export type SharedAnalyzerSettings = Readonly<{
   enabled: boolean;

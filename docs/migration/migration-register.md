@@ -1,5 +1,19 @@
 # TraderLink Platform Migration Register
 
+## Analyzer owner exemptions: 0136 allocated and source-registered, unapplied
+
+Coordinator exclusively reserved `0136_shared_trade_analyzer_owner_exemptions`
+after exact predecessor `0135_daily_trade_analyzer_manual_retry_requests`.
+Adds append-only per-user grant/revocation events and immutable acquisition-to-
+grant audit links. Rebuilds the three existing retry tables as one FK graph to
+allow ordinals above three only for users with an explicit active grant. Keeps
+all prior rows, identities and acquisition/history links; leaves 0135 unchanged.
+Migration itself grants nobody access. Verified stable identities for This Guy
+and TradersLink must be granted separately under owner authority after guarded
+backup/predecessor/application/health checks. Every other user keeps current caps.
+Only disposable in-memory fixtures have applied 0136. No hosted application is
+authorized by this registration alone. Coordinator owns the guarded release.
+
 ## Analyzer manual retries: allocated, source-only
 
 Coordinator reserved `0135_daily_trade_analyzer_manual_retry_requests` after

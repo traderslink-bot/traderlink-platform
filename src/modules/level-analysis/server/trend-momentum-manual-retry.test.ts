@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "vitest";
 import Database from "better-sqlite3";
 import { dailyTradeAnalyzerManualRetryRequestsMigration as migration } from "./database/migrations/0135_daily_trade_analyzer_manual_retry_requests";
+import { sharedTradeAnalyzerOwnerExemptionsMigration } from "./database/migrations/0136_shared_trade_analyzer_owner_exemptions";
 import { ManualAnalyzerRetryRepository, analyzerRetryDate } from "./manual-analyzer-retry-repository";
 import { dailyTradeAnalyzerTrendMomentumHistoryMigration as historyMigration } from "./database/migrations/0134_daily_trade_analyzer_trend_momentum_history";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
@@ -56,6 +57,9 @@ CREATE TABLE level_analysis_analyzer_acquisitions(acquisition_id TEXT PRIMARY KE
   for(let n=0;n<4;n++) db.prepare("INSERT INTO level_analysis_logical_trade_jobs VALUES(?,?,?,?,?,?,'queued',?)").run(id(10+n),scope.userId,scope.workspaceId,scope.accountId,id(4),id(20+n),id(5));
   historyMigration.statements.forEach(sql=>db.exec(sql));
   migration.statements.forEach(sql=>db.exec(sql));
+  db.exec("CREATE TABLE platform_users(user_id TEXT PRIMARY KEY, status TEXT DEFAULT 'active')");
+  db.prepare("INSERT INTO platform_users(user_id) VALUES(?)").run(scope.userId);
+  sharedTradeAnalyzerOwnerExemptionsMigration.statements.forEach(sql=>db.exec(sql));
   return db;
 }
 

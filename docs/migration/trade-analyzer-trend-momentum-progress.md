@@ -1,5 +1,67 @@
 # Trade Analyzer Trend & Momentum Progress
 
+## Owner-exemption source handoff - 2026-09-13
+
+- Explicit grants now bypass personal daily/period/manual-retry quantity limits
+  and the ordinary global usage ceiling. Every exempt acquisition keeps its
+  normal provider audit row plus an immutable link to the exact active grant.
+  Such acquisitions are excluded from ordinary quota totals. The service switch,
+  single active provider acquisition, short spacing, duplicate-job protection,
+  per-request attempt bounds and account isolation remain in force.
+- Unlimited is explicit JSON-safe state with null finite counters, not a large
+  fake balance. The existing Workspace, Analyzer drawer, manual-entry review and
+  Admin allowance displays handle it. Help is aligned. No new layout, privilege,
+  broker permission or ordinary Demo entitlement was added.
+- Six-file checkpoint passed 36 tests; subsequent first-download coverage and
+  stricter one-reservation-per-job fixtures pass the final seven-test exemption
+  file. Ten backend/UI changed-root TypeScript checks had zero diagnostics.
+  Changed-file lint: zero errors, three existing warnings in unchanged hooks
+  and the existing unused WorkspaceExecutionEditForm. Diff whitespace is clean.
+  React/Next.js boundary review keeps only serializable allowance data in UI.
+- Registered migration: `0136_shared_trade_analyzer_owner_exemptions`, order 136,
+  canonical checksum `8e107e8dbe67f8b81f2c59b9184e6223eeae3e357e0a7058237dfa29cbcbde7f`.
+  Exact predecessor: `0135_daily_trade_analyzer_manual_retry_requests`, order135,
+  checksum `d00e39e47a829009a88a17d4b803d3451c6b2b2b3a8f7794e82d03f024febd91`.
+  The resulting manifest has122 entries. Migration grants nobody automatically.
+- Grant mechanism: AnalyzerOwnerExemptionRepository.set requires the existing
+  server-verified Journal owner-admin scope with manage_users and a stable active
+  Platform user UUID. Resolve This Guy and TradersLink from authenticated/admin
+  identity evidence, not display-name matching; append actor/user/time/grant
+  events. No grant has been applied. No UUIDs or credentials belong in the handoff.
+- Coordinator gate: verify then-current main parent and live121/predecessor,
+  pause writes under the existing single-writer guard, create and verify a
+  restorable predecessor backup, apply only0136 in one transaction, compare the
+  three copied retry tables exactly, run FK/integrity and app/proxy health checks,
+  then separately grant the two verified identities and test both plus an
+  ordinary account. In-memory tests prove row preservation and transaction
+  rollback; they do not replace a hosted backup/restore check.
+- Rollback compatibility: old source cannot be assumed compatible with the new
+  manifest/schema or ordinals above three. Prefer a forward fix or revoke the
+  grants. A full rollback needs the matched predecessor code AND verified
+  pre-migration backup under the writer guard, with any newer writes preserved
+  and reconciled first. Never delete migration/grant/retry evidence to downgrade.
+- Timestamp release is separately live at ebe73498575ec3e2b0f8d5b4328397b30a7c9483,
+  Railway919c1fcd-5552-4f82-84d3-761dff0c4e26 SUCCESS; coordinator reports hosted
+  compile/TypeScript/pages and app/proxy ready/sqlite_single_node/121. Its hosted
+  saved-only refresh/calibration is still pending. No0136 migration, grant,
+  provider request or Demo mutation has been performed by this task.
+
+## Local timestamp handoff and owner-exemption foundation - 2026-09-13
+
+- Timestamp correction committed as 7282fdaf02ef646e827a2e09dc6cee51907dd657,
+  parent bf863e1503286c1a10b88f677f7dc2a8c289b5c0. The exact 19-file allowlist
+  and verification/compatibility details were sent to the existing visible
+  release coordinator. No push/deploy/provider call or applied migration by
+  this task. Hosted timestamp acceptance remains pending release evidence.
+- The separate unregistered 0136 draft now has four passing in-memory tests:
+  populated retry-graph preservation, transactional migration rollback,
+  per-user grant/idempotency/revocation/unauthorized rejection, and atomic
+  acquisition links requiring the current matching grant. Draft-file lint passes.
+- The exemption repository requires its acquisition audit link to be written
+  inside the same transaction as the acquisition. Runtime allowance/retry gates,
+  Unlimited presentation, migration registration, verified target-user grants,
+  and hosted acceptance are still outstanding. No exemptions have been granted.
+
 ## Timestamp checkpoint follow-up - 2026-09-13
 
 - Owned-slice checkpoint: 28 files / 143 tests; 139 passed, four drilldown

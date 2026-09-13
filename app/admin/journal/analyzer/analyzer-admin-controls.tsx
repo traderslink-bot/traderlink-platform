@@ -1,4 +1,5 @@
 "use client";
+import type { SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 
 import { useActionState } from "react";
 import { Alert, Box, Button, FormControlLabel, MenuItem, Stack, Switch, TextField } from "@mui/material";
@@ -29,14 +30,14 @@ export function AnalyzerSettingsControl({ model }: { model: Readonly<{
 
 export function AnalyzerUserControl({ users }: { users: readonly Readonly<{
   userId: string; label: string; dailyOverride: number | null; periodOverride: number | null;
-  availability: Readonly<{ dailyAvailable: number; periodAvailable: number; daysUntilReset: number }>;
+  availability: SharedAnalyzerAvailability;
 }>[] }) {
   const [overrideState, overrideAction, overridePending] = useActionState(async (_: ActionState, form: FormData): Promise<ActionState> => saveAnalyzerOverride(form), initial);
   const [resetState, resetAction, resetPending] = useActionState(async (_: ActionState, form: FormData): Promise<ActionState> => resetAnalyzerUsage(form), initial);
   return <Stack spacing={2}>
     <Box action={overrideAction} component="form"><Stack spacing={1.25}>
       {!overrideState.ok ? <Alert severity="error">{overrideState.message}</Alert> : null}
-      <TextField label="User" name="userId" required select>{users.map((user) => <MenuItem key={user.userId} value={user.userId}>{user.label} · {user.availability.dailyAvailable} today · {user.availability.periodAvailable} / {user.availability.daysUntilReset} days</MenuItem>)}</TextField>
+      <TextField label="User" name="userId" required select>{users.map((user) => <MenuItem key={user.userId} value={user.userId}>{user.label} · {user.availability.unlimited ? "Unlimited" : `${user.availability.dailyAvailable} today · ${user.availability.periodAvailable} / ${user.availability.daysUntilReset} days`}</MenuItem>)}</TextField>
       <TextField label="Daily override" name="dailyLimit" type="number" />
       <TextField label="30-day override" name="periodLimit" type="number" />
       <Button disabled={overridePending} type="submit" variant="outlined">Save user allowance</Button>

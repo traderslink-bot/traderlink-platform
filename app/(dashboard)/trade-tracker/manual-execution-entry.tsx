@@ -1,4 +1,5 @@
 "use client";
+import type { SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -119,9 +120,7 @@ export function ManualExecutionEntry({
           ]
       : [],
   );
-  const [analyzerUses, setAnalyzerUses] = useState<Readonly<{
-    enabled: boolean; dailyAvailable: number; periodAvailable: number; selectableAvailable: number; daysUntilReset: number;
-  }> | null>(null);
+  const [analyzerUses, setAnalyzerUses] = useState<SharedAnalyzerAvailability | null>(null);
   const [analyzerGroupRefs, setAnalyzerGroupRefs] = useState<readonly string[]>([]);
   const [logicalTradeMerges, setLogicalTradeMerges] = useState<readonly PreviewLogicalTradeMerge[]>([]);
   const [reviewError, setReviewError] = useState<string | null>(null);

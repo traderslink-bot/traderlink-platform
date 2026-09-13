@@ -1,6 +1,7 @@
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type { JournalLogicalTradeService } from "@/src/modules/journal/server/logical-trades/journal-logical-trade-service";
 import type { SharedAnalyzerAvailability, SharedAnalyzerSelectionOutcome } from "../contracts/shared-analyzer-beta-contracts";
+import { hasSharedAnalyzerAllowance } from "../contracts/shared-analyzer-beta-contracts";
 import { dailyTradeFirstResultCoverageEnd, newYorkExtendedSession } from "./daily-trade-analyzer-session";
 import { LogicalTradeAnalyzerRepository } from "./logical-trade-analyzer-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
@@ -51,7 +52,7 @@ export class LogicalTradeAnalyzerSelectionService {
       const savedIndicators = savedCoverage && (!this.indicatorHistory ||
         this.indicatorHistory.hasSufficientEvidence(scope, target.providerSymbol, target.tradingDateNewYork,
           Math.min(...target.events.map((event) => Date.parse(event.executedAtUtc) / 1000)), desiredEnd));
-      if (!savedCoverage && !retry && availability.selectableAvailable <= 0) return "usage_exhausted";
+      if (!savedCoverage && !retry && !hasSharedAnalyzerAllowance(availability)) return "usage_exhausted";
       if (retry && !savedIndicators && !this.allowances.manualRetryAvailable(scope, target.logicalTradeId, now)) return "retry_limit_reached";
       const queued = this.analyzer.queue({
         scope,
@@ -64,7 +65,7 @@ export class LogicalTradeAnalyzerSelectionService {
       if (!queued.created) return "already_requested";
       // Core-only cached recomputation remains usable when no allowance is left.
       // An explicit Analyze with available allowance can acquire missing history.
-      if (savedIndicators || (!retry && savedCoverage && availability.selectableAvailable <= 0)) return "queued";
+      if (savedIndicators || (!retry && savedCoverage && !hasSharedAnalyzerAllowance(availability))) return "queued";
       if (retry) {
         if (!this.allowances.recordManualRetry(scope, queued.jobId, now)) throw new Error("manual_retry_reservation_failed");
         return "queued";

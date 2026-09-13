@@ -15,7 +15,7 @@ describe("static platform migration file contract", () => {
       })),
     );
     expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
-      "0135_daily_trade_analyzer_manual_retry_requests",
+      "0136_shared_trade_analyzer_owner_exemptions",
     );
   });
 
