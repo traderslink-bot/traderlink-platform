@@ -2,6 +2,26 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Shared-connection identity and calibration boundary - 2026-09-13
+
+- Read-only production check confirmed the configured shared Moomoo user differs
+  from the single active journal_administration grant user. The grant user has
+  no Moomoo connection; the designated user has an active quote:read connection,
+  but its stored access-token expiry does not cover the next five minutes.
+- Reported the two human-readable account labels privately to the owner for
+  confirmation. No identifiers, credentials or private trade data from the
+  designated user were read or exported. No designation was changed.
+- Earlier two-record corpus is explicitly the operator-grant user's corpus,
+  not proof of the real owner's complete personal trade history. Do not expand
+  private-corpus reads to the designated user without confirming authorization.
+- Normal access service refreshes expiring credentials and persists the result.
+  Do not invoke it against a read-only connection and risk refreshing before
+  persistence fails. Testing needs the established single-writer refresh path,
+  not an improvised credential update or configuration change.
+- No provider request, token refresh, service restart, migration or deployment
+  performed. Calibration awaits account confirmation/normal credential access;
+  retry-accounting choice and remaining source/browser gates remain open.
+
 ## Current owner corpus revalidation - 2026-09-13
 
 - Confirmed production SSH works with Node v24.21.0. Explicit production
