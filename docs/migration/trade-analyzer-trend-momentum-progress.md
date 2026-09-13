@@ -2,6 +2,17 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Tooltip source inventory checkpoint - 2026-09-13
+
+- Indexed all 19 changed TSX files and their explanation ownership in the
+  [tooltip source inventory](trade-analyzer-tooltip-source-inventory.md).
+  Recorded exact-template locations, dynamic variants and current static proof.
+- Full inline extraction exceeded Windows command argument length before write;
+  used a compact index without raising resource limits or creating temp files.
+- Index explicitly leaves per-card/column rendered-copy reconciliation and
+  actual keyboard/touch/theme/offline acceptance open. No new completeness claim.
+- Documentation only; no redundant tests, provider call or hosted operation.
+
 ## Individual section help and shared disclosure - 2026-09-13
 
 - Continued tooltip audit found the individual Trend & Momentum card also put

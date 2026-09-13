@@ -5,6 +5,7 @@ required testing and completing the planned work without routine approval stops,
 including planned UI implementation. Production release remains separately gated.
 
 Progress: [Planning and implementation record](trade-analyzer-trend-momentum-progress.md).
+Tooltip audit: [Source inventory and outstanding review](trade-analyzer-tooltip-source-inventory.md).
 Latest payload checkpoint: redundant aggregate execution contexts removed;
 29 focused tests pass. Full scale and rendered acceptance remain open.
 Numerical checkpoint: 16 foundation/convergence tests pass, including independent
