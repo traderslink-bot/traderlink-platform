@@ -322,6 +322,10 @@ boundary.
 
 ## Swing-trade expansion
 
+Owner-requested setup now has a separate
+[Swing Trade Analyzer plan](swing-trade-analyzer-plan.md) and progress record.
+The proposal is not an implemented Swing runtime or accepted UI.
+
 Swing trades do not join the day-trade population. A future Swing Trade
 Analysis landing mirrors the capability navigation but uses swing-appropriate
 holding periods, multi-session opportunity/risk, gaps and higher timeframes.
