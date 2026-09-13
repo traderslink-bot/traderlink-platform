@@ -151,7 +151,7 @@ function logicalAnalyzerView(
     trendMomentum: saved.analyzed.trendMomentum,
     trendMomentumUnavailableReason: saved.analyzed.trendMomentumUnavailableReason,
     mismatchBrokerConfirmed: false,
-    status: saved.status === "ready" ? "ready" : "pending",
+    status: saved.status === "ready" && !saved.availableAtUtc ? "ready" : "pending",
   };
 }
 
@@ -218,7 +218,7 @@ export async function GET(request: Request): Promise<Response> {
         });
       },
     );
-    if (!result || (!roundTripVersionId && result.analysis.status !== "ready" && result.analysis.status !== "pending")) {
+    if (!result) {
       return Response.json({ status: "unavailable" }, {
         status: 404,
         headers: { "cache-control": "no-store" },

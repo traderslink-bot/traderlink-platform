@@ -12,13 +12,15 @@ export async function POST(request: Request): Promise<Response> {
   try {
     requirePlatformMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const body = await request.json() as { roundTripId?: unknown };
+    const body = await request.json() as { roundTripId?: unknown; refreshIndicators?: unknown };
     if (typeof body.roundTripId !== "string" || !UUID_PATTERN.test(body.roundTripId)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "roundTripId" });
     }
     const result = withWritableJournalIntegrityRuntime(scope, (journal) => {
       const account = journal.tradeStyles.accountScope(scope);
-      const outcome = journal.logicalTradeAnalyzer.select(account, body.roundTripId as string);
+      const outcome = journal.logicalTradeAnalyzer.select(account, body.roundTripId as string, new Date(), {
+        refreshIndicators: body.refreshIndicators === true,
+      });
       return Object.freeze({ outcome, availability: journal.logicalTradeAnalyzer.availability(account) });
     });
     return Response.json({ ...result, status: "ready" }, { headers: { "cache-control": "no-store" } });

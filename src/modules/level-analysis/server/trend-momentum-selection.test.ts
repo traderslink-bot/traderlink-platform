@@ -3,6 +3,36 @@ import { test } from "vitest";
 import { LogicalTradeAnalyzerSelectionService } from "./logical-trade-analyzer-selection-service";
 
 for (const fixture of [
+  { name: "explicit older-result refresh", explicit: true, hasIndicators: false, active: false, outcome: "queued" },
+  { name: "ordinary request preserves completed result", explicit: false, hasIndicators: false, active: false, outcome: "already_requested" },
+  { name: "current indicators cannot be refreshed as older history", explicit: true, hasIndicators: true, active: false, outcome: "already_requested" },
+  { name: "duplicate pending refresh does not queue again", explicit: true, hasIndicators: false, active: true, outcome: "already_requested" },
+]) test(fixture.name, () => {
+  let retries = 0;
+  const target = { logicalTradeId: "trade", logicalTradeVersionId: "version", providerSymbol: "TEST",
+    tradingDateNewYork: "2026-09-11", finalExitAtUtc: "2026-09-11T15:00:00.000Z",
+    events: [{ executedAtUtc: "2026-09-11T14:00:00.000Z" }] };
+  const analyzer = {
+    target: () => target,
+    readCurrentByRoundTrip: () => ({ status: "ready", analyzed: fixture.hasIndicators ? { trendMomentum: {} } : {} }),
+    alreadyRequested: (_scope: unknown, _version: string, refresh: boolean) => fixture.active || !refresh,
+    hasSavedCoverage: () => true, hasPriorAnalysis: () => true,
+    queue: (input: { refreshCompleted: boolean }) => { assert.equal(input.refreshCompleted, true); return { created: true, jobId: "job" }; },
+  };
+  const allowances = { isDemo: () => false, immediate: (fn: () => unknown) => fn(),
+    availability: () => ({ enabled: true, selectableAvailable: 0 }),
+    manualRetryAvailable: () => true, recordManualRetry: () => { retries++; return "retry"; },
+    reserve: () => assert.fail("Older-result refresh must not reserve paid usage") };
+  type Args = ConstructorParameters<typeof LogicalTradeAnalyzerSelectionService>;
+  const service = new LogicalTradeAnalyzerSelectionService(
+    { ensureMaterialized: () => ({}) } as unknown as Args[0], analyzer as unknown as Args[1],
+    allowances as unknown as Args[2], { hasSufficientEvidence: () => false } as unknown as Args[3]);
+  assert.equal(service.select({ userId: "u", workspaceId: "w", accountId: "a", workspaceRole: "owner" },
+    "member", new Date("2026-09-13T15:00:00Z"), { refreshIndicators: fixture.explicit }), fixture.outcome);
+  assert.equal(retries, fixture.outcome === "queued" ? 1 : 0);
+});
+
+for (const fixture of [
   { name: "provider retry is free at zero allowance", cached: false, allowed: true, existing: false, outcome: "queued", retryRequests: 1 },
   { name: "saved-only retry bypasses exhausted daily retry cap", cached: true, allowed: false, existing: false, outcome: "queued", retryRequests: 0 },
   { name: "provider retry stops at the daily cap", cached: false, allowed: false, existing: false, outcome: "retry_limit_reached", retryRequests: 0 },

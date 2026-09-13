@@ -26,13 +26,18 @@ export class LogicalTradeAnalyzerSelectionService {
     scope: AccountScope,
     roundTripId: string,
     now: Date = new Date(),
+    options: Readonly<{ refreshIndicators?: boolean }> = {},
   ): SharedAnalyzerSelectionOutcome {
     if (this.allowances.isDemo(scope)) return "demo_unavailable";
     return this.allowances.immediate(() => {
       const trade = this.logicalTrades.ensureMaterialized(scope, roundTripId, now);
       const target = this.analyzer.target(scope, trade);
       if (!target) return "not_eligible";
-      if (this.analyzer.alreadyRequested(scope, target.logicalTradeVersionId)) return "already_requested";
+      const saved = options.refreshIndicators
+        ? this.analyzer.readCurrentByRoundTrip(scope, roundTripId) : null;
+      const refreshCompleted = Boolean(saved?.status === "ready" &&
+        saved.analyzed && !saved.analyzed.trendMomentum);
+      if (this.analyzer.alreadyRequested(scope, target.logicalTradeVersionId, refreshCompleted)) return "already_requested";
       const availability = this.allowances.availability(scope.userId, now);
       if (!availability.enabled) return "disabled";
       const session = newYorkExtendedSession(target.tradingDateNewYork);
@@ -53,6 +58,7 @@ export class LogicalTradeAnalyzerSelectionService {
         desiredCoverageEndUtc: new Date(desiredEnd * 1000).toISOString(),
         now,
         retryTerminal: true,
+        refreshCompleted,
       });
       if (!queued.created) return "already_requested";
       // Core-only cached recomputation remains usable when no allowance is left.

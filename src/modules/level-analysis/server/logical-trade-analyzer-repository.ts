@@ -87,11 +87,11 @@ WHERE provider_key = 'moomoo_history_kline' AND provider_adapter_version = 'moom
     ));
   }
 
-  alreadyRequested(scope: AccountScope, logicalTradeVersionId: string): boolean {
+  alreadyRequested(scope: AccountScope, logicalTradeVersionId: string, refreshCompleted = false): boolean {
     return Boolean(this.database.prepare(`SELECT 1 FROM level_analysis_logical_trade_jobs
 WHERE workspace_id = ? AND account_id = ? AND logical_trade_version_id = ?
- AND status IN ('queued', 'leased', 'completed') LIMIT 1`).get(
-      scope.workspaceId, scope.accountId, logicalTradeVersionId,
+ AND (status IN ('queued', 'leased') OR (status = 'completed' AND ? = 0)) LIMIT 1`).get(
+      scope.workspaceId, scope.accountId, logicalTradeVersionId, refreshCompleted ? 1 : 0,
     ));
   }
 
@@ -285,6 +285,7 @@ WHERE version.workspace_id = ? AND version.account_id = ? AND version.logical_tr
     desiredCoverageEndUtc: string;
     now: Date;
     retryTerminal?: boolean;
+    refreshCompleted?: boolean;
   }>): Readonly<{ jobId: string; created: boolean }> {
     const timestamp = createCanonicalUtcTimestamp(input.now);
     this.database.prepare(`INSERT INTO level_analysis_market_session_sets (
@@ -316,8 +317,9 @@ FROM level_analysis_logical_trade_jobs WHERE workspace_id = ? AND account_id = ?
     if (existing) {
       const retried = input.retryTerminal ? this.database.prepare(`UPDATE level_analysis_logical_trade_jobs
 SET status='queued',attempt_count=0,next_attempt_at_utc=?,completed_at_utc=NULL,lease_expires_at_utc=NULL,updated_at_utc=?
-WHERE logical_trade_job_id=? AND status IN ('no_coverage','provider_unavailable','expired')`).run(
-        timestamp,timestamp,existing.logical_trade_job_id).changes === 1 : false;
+WHERE logical_trade_job_id=? AND (status IN ('no_coverage','provider_unavailable','expired')
+ OR (status='completed' AND ?=1))`).run(
+        timestamp,timestamp,existing.logical_trade_job_id,input.refreshCompleted ? 1 : 0).changes === 1 : false;
       return Object.freeze({ jobId: existing.logical_trade_job_id, created: retried });
     }
     const jobId = createCanonicalUuidV4();

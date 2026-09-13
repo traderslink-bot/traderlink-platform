@@ -12,7 +12,7 @@ const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12,"0")}
 const scope = { userId:id(1),workspaceId:id(2),accountId:id(3),workspaceRole:"owner" as const };
 const now = new Date("2026-09-13T16:00:00.000Z");
 
-test("requeue preserves job identity and creation date, and duplicate queue cannot mint a retry", () => {
+for (const retryStatus of ["provider_unavailable", "completed"]) test(retryStatus + " requeue preserves job identity and prevents duplicate retries", () => {
   const db = fixture();
   try {
     for (const column of ["desired_coverage_end_utc TEXT", "attempt_count INTEGER", "next_attempt_at_utc TEXT", "completed_at_utc TEXT", "lease_expires_at_utc TEXT", "created_at_utc TEXT", "updated_at_utc TEXT"]) {
@@ -21,11 +21,16 @@ test("requeue preserves job identity and creation date, and duplicate queue cann
     db.exec(`CREATE TABLE level_analysis_market_session_sets(market_session_set_id TEXT PRIMARY KEY,provider_key,provider_adapter_version,provider_symbol,exchange_identity,trading_date_new_york,interval,session_policy,current_version_id,current_coverage_end_utc,current_status,lease_expires_at_utc,created_at_utc,updated_at_utc,
 UNIQUE(provider_key,provider_adapter_version,provider_symbol,exchange_identity,trading_date_new_york,interval,session_policy));`);
     const originalCreated = "2026-09-11T15:00:00.000Z";
-    db.prepare("UPDATE level_analysis_logical_trade_jobs SET status='provider_unavailable',attempt_count=3,created_at_utc=?,desired_coverage_end_utc=? WHERE logical_trade_job_id=?").run(originalCreated,originalCreated,id(10));
+    db.prepare("UPDATE level_analysis_logical_trade_jobs SET status=?,attempt_count=3,created_at_utc=?,desired_coverage_end_utc=? WHERE logical_trade_job_id=?").run(retryStatus,originalCreated,originalCreated,id(10));
     const repository = new LogicalTradeAnalyzerRepository(db);
     const retries = new ManualAnalyzerRetryRepository(db);
     const target = { logicalTradeId:id(4),logicalTradeVersionId:id(20),providerSymbol:"TEST",tradingDateNewYork:"2026-09-11" } as Parameters<typeof repository.queue>[0]["target"];
-    const input = {scope,target,desiredCoverageEndUtc:originalCreated,now,retryTerminal:true};
+    const input = {scope,target,desiredCoverageEndUtc:originalCreated,now,retryTerminal:true,refreshCompleted:retryStatus === "completed"};
+    if (retryStatus === "completed") {
+      assert.equal(repository.alreadyRequested(scope,id(20)),true);
+      assert.equal(repository.alreadyRequested(scope,id(20),true),false);
+      assert.equal(repository.queue({...input,refreshCompleted:false}).created,false);
+    }
     const accepted = db.transaction(() => {
       const queued = repository.queue(input);
       assert.equal(queued.created,true);

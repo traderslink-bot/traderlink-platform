@@ -9,6 +9,28 @@ Current source/remaining hosted acceptance:
 
 ### Resumed live acceptance and Analyzer request correction
 
+- Header correction released by coordinator at 6a35d65d752f9665a2349b12ec03835ac364d5e8,
+  Railway 2bd70d14-5b7d-4f02-8e15-2fc667193d0a SUCCESS; health ready/121.
+  Same FFAI popup POST now returns 200/queued, one allowance reservation
+  10 to 9 daily and 96 to 95 period. Subsequent result became HTTP 404; no resubmit.
+- Confirmed read route suppressed terminal/correction outcomes and old ready
+  results lacked an indicator refresh action. Announced exact correction to owner:
+  expose existing outcomes and allow explicit older-indicator refresh without
+  changing trade facts, keeping saved revisions and existing free retry caps.
+  Source correction complete; 28 tests across four focused suites pass and
+  changed-file lint has zero errors. Actual GET tests cover pending, unavailable
+  provider, missing coverage, expired, execution mismatch and absent result.
+  Repository/selection tests protect completed modern results, explicit older
+  refresh only, duplicate queue identity and capped/free retry accounting.
+  Help is aligned. No local server/build or additional provider request.
+  Coordinator full type/build/release gate and live recheck remain required.
+- Actual This Guy Chrome: seven Day sidebar pages load without app errors.
+  Both saved GCDT Session Tracker and combined Trend & Momentum remain rendered
+  after genuinely offline reloads (navigator.onLine false); combined page shows
+  Offline and all 72 table headers. Network and viewport restored afterward.
+- Owner added required Demo refresh/acceptance; source materializer located.
+  Demo source/derived-data update is not yet implemented or verified.
+
 - Owner supplied a normal production Chrome session: This Guy, Discord signed
   in, Primary Journal. Account page shows Moomoo Connected; execution imports are
   disabled and unchanged. Connection badge is not provider-success evidence.

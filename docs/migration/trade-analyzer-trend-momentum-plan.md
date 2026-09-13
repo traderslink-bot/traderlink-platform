@@ -14,6 +14,17 @@ release and live provider/retry/numeric/offline acceptance remain open. See the
 
 ## Owner clarification: saved data, retries and fetch window
 
+### Demo completion requirement
+
+Owner explicitly requires Demo analyzed trades to demonstrate the updated
+Analyzer, including individual indicator context, chart overlays and combined
+Day pages. Refresh derived analysis through the established Demo materializer;
+preserve canonical saved-trade grouping, immutable execution facts, financial
+results, owner opt-outs and the fixed Demo date. Verify current analyzed-trade
+counts and repeated-refresh idempotency. Acquire missing verified history only
+through the authorized provider path; do not invent candles or enable ordinary
+Demo users to consume provider allowance. This is a required completion gate.
+
 Download-window slice implemented locally: five worker tests and two changed-root
 type checks pass. Bounded free retries are implemented locally with 0135;
 integration acceptance and real Moomoo verification remain open.
