@@ -2,6 +2,35 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
+    slug: "trend-momentum", title: "Trend & Momentum",
+    description: "Review EMA 9, EMA 20, RSI and Session VWAP alongside your saved trade decisions.",
+    sections: [{ id: "execution-context", title: "Execution context",
+      summary: "Compare indicator conditions known at your entries, adds and exits.",
+      keywords: ["EMA 9", "EMA 20", "RSI", "VWAP", "trend", "momentum"], blocks: [
+        { kind: "paragraph", text: "Choose one-minute or five-minute candles and an execution type. EMA 9 and EMA 20 describe shorter and longer recent price direction. Their alignment and changing separation describe the relationship between the averages. RSI describes recent upward versus downward momentum; above 70 and below 30 are commonly called overbought and oversold, but neither requires an immediate reversal." },
+        { kind: "paragraph", text: "Indicator context uses completed candles available before the execution, not the unfinished candle containing it. Earlier candle history is requested when needed during analysis and reused when available. Less frequently traded candles remain separate from regularly spaced candles. A missing candle alone does not prove low volume or a provider fault." },
+        { kind: "paragraph", text: "EMA 9 & EMA 20, RSI and Session VWAP each have a separate comparison table. Choose EMA alignment, either average's direction, changing EMA spacing, RSI range or RSI direction. Tables show the selected Gross or Net outcome, including wins, losses, breakevens, average and median P/L, average return and known-data counts. Direction comparisons keep regularly spaced, sparse and interrupted observations separate. Candle age shows how recent the observation was; the direction span shows how much clock time its three-candle comparison covered." },
+        { kind: "paragraph", text: "A user-defined trade can contain multiple entries, exits and opening-to-flat positions. Each comparison counts its completed P/L once per group. The Execution context groups can overlap. Unavailable P/L is excluded from the average, not silently treated as zero or replaced with another reporting basis." },
+        { kind: "paragraph", text: "Combined conditions requires all chosen conditions at the same execution. A trade matches if at least one execution of the selected type meets them all. Otherwise it is nonmatching only when every selected execution has the required indicator data; missing data stays in a separate group. These three groups do not overlap. Trades without that execution type are counted outside the comparison." },
+        { kind: "paragraph", text: "Online filter selections stay in the page address. The table includes known-P/L counts, wins, losses, breakevens, total, average and median trade P/L, and average trade return. Average return gives each trade equal weight and uses its P/L divided by total entry value. Newly saved offline views reopen with their comparison and indicator filter choices. You can change these choices within the saved view without requesting new candles; older saved views open with the default choices." },
+        { kind: "paragraph", text: "Supporting trades shows the executions behind the selected comparison group, 25 at a time by default. View details expands the saved EMA, RSI and VWAP values, last completed candle, candle age and direction observation span. The whole-trade P/L repeats when a trade has several executions; do not add those rows together. Full analysis opens the saved trade and chart." },
+      ] }, { id: "comparison-points", title: "Indicators at the comparison point", summary: "Compare the same point across qualifying trades.",
+      keywords: ["scaling out", "first zone", "green to red", "first 20", "recovery"], blocks: [
+        { kind: "paragraph", text: "On Green to red, choose First +20% to compare indicator conditions before later red or no-later-red outcomes. First red after +20% considers only trades that turned red and compares later recorded recovery. On Scaling out, every trade uses its first arrival at the chosen profit zone, whether or not it later took profit there." },
+        { kind: "paragraph", text: "A move found from a candle's high or low may have happened anywhere within that minute. Its indicator context therefore stops before the minute began. An exact exit-fill comparison uses the execution time. Last completed close vs VWAP compares two prices known before the point, not an assumed buy or sell." },
+        { kind: "paragraph", text: "The existing financial comparison still decides which trades qualify. Missing saved indicator context remains an unavailable group rather than removing a trade or changing its financial result. Choosing a comparison never requests new candles or AI analysis." },
+      ] }, { id: "during-trade", title: "During the trade", summary: "Inspect recorded losses and returns across a reference while you held shares.",
+      keywords: ["reclaim", "EMA loss", "first event", "coverage"], blocks: [
+        { kind: "paragraph", text: "Until position closure compares the selected event price with the actual closing-fill price for that held position. The summary averages the first selected event from each trade; Recorded events shows individual closing times and price changes per share and as a percentage. Partial exits do not end the window, and a later re-entry is not included. This is stock-price movement, not trade P/L. Missing measurements stay unavailable and do not enter the average." },
+        { kind: "paragraph", text: "View trades opens the saved trades behind a during-trade group, with the same event, timeframe, conditions and earlier-history choice. Each trade appears once, with a note explaining its inclusion. Change indicator conditions returns to the comparison with those choices preserved. These links require an online connection; offline comparisons continue to use the saved view." },
+        { kind: "paragraph", text: "Choose the reference and Event, then select any EMA, RSI, VWAP or candle-spacing conditions. Close vs EMA 20 lets you study an EMA 9 loss while price remains above EMA 20. All conditions use the same first event. Matching conditions, Not matching and Context unavailable are separate groups; their completed trade results count each saved trade once." },
+        { kind: "paragraph", text: "For long trades, a recorded loss moves from above to below the chosen reference; a return moves back above. Short trades use the reverse. Neutral closes do not create extra events. The headline comparison uses the first qualifying event in the entire saved trade, before conditions are filtered. The event table also includes later occurrences." },
+        { kind: "paragraph", text: "Earlier incomplete history is shown separately. Recovery may still be observed, may have no recorded return before position closure, or may be unknown because observation was interrupted. Unknown recovery is excluded from the return-rate denominator." },
+        { kind: "paragraph", text: "Trades with complete history and no recorded selected event are separate from trades whose event history could not be checked. A return-only study includes observed returns, so it does not show a return rate. Older saved reads without return-specific context stay unavailable rather than borrowing the earlier loss's price or a later event." },
+        { kind: "paragraph", text: "Five-, 15-, 30- and 60-minute follow-through uses actual clock time and the exact available one-minute endpoint. Positions closed before or at that time are separate from still-open observations. These are stock-price changes, not your trade profit. Saved offline views retain the same comparisons without making new market-data requests." },
+      ] }],
+  },
+  {
     slug: "overview",
     title: "Overview",
     description: "Learn what the Trade Analyzer does, where it appears and which account details make its results accurate.",
@@ -61,6 +90,8 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Turnover", "The traded dollar value supplied by Moomoo for the candle. It helps compare activity across differently priced stocks."],
           ] },
           { kind: "paragraph", text: "Hover or select the chart to inspect a candle. Saved server-side candles are reused when another eligible replay needs the same symbol, date and interval." },
+          { kind: "paragraph", text: "When a new day-trade candle download is needed, it starts at 4:00 AM Eastern and runs through the latest completed minute, up to 8:00 PM for that trading date. A download for a past day therefore covers the full extended session. Sufficient saved candles are reused without downloading the rest of the day just because time has passed. Entry indicators still use only candles completed before the entry, and each study keeps its own measurement window." },
+          { kind: "paragraph", text: "Analysis using sufficient saved candles is free, including your first analysis, even when no Analyzer uses remain. A retry that needs another candle download is also free, limited to three per saved trade each New York calendar day. Correcting that trade does not reset its daily retry limit. Saved-candle-only analysis does not use a retry slot, and selecting trades does not spend a use." },
         ],
       },
       {
@@ -124,6 +155,14 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     title: "Entries and exits",
     description: "See what happened after you entered and how you left your recorded trades.",
     sections: [
+      {
+        id: "indicator-executions", title: "Indicator context at executions",
+        summary: "Compare EMA alignment and RSI at your saved entries and exits.",
+        keywords: ["EMA 9", "EMA 20", "RSI", "initial entry", "add", "partial exit"], blocks: [
+          { kind: "paragraph", text: "Choose one-minute or five-minute candles and an execution type: initial entry, add, re-entry, partial exit, interim position closure or final exit. The comparison uses indicators known at that execution and counts each whole-trade outcome once within a group. Older distance-only analysis is not substituted when the added indicator history is unavailable." },
+          { kind: "paragraph", text: "Detailed indicator comparisons opens Trend & Momentum with your date range, Gross/Net basis, direction, timeframe and execution type preserved. You can combine conditions there and inspect supporting executions." },
+        ],
+      },
       {
         id: "individual-executions",
         title: "Highlight one execution",
@@ -214,10 +253,12 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       {
         id: "overview",
         title: "Room after entry",
-        summary: "Compare the largest measured move in your favor and against you after each entry or add.",
+        summary: "Compare the largest measured move in your favor and against you after each entry, re-entry or add.",
         keywords: ["mfe", "mae", "favorable movement", "adverse movement", "one-minute candles"],
         blocks: [
           { kind: "paragraph", text: "Maximum favorable excursion (MFE) is the largest measured price movement in the trade's favor after an entry or add and before the position becomes flat. Maximum adverse excursion (MAE) is the largest measured movement against it over that same interval." },
+          { kind: "paragraph", text: "The page follows the trades you saved, including a trade made from several round trips. A re-entry starts another measurement. Movement while you hold no position does not inflate the earlier entry's MFE or MAE. Trade P/L remains the result for your whole saved trade, while movement is measured per share from each execution. The selected date range uses the saved trade's final closing date." },
+          { kind: "paragraph", text: "The separate 5, 15, 30 and 60-minute price paths keep running for their stated time window, even after you close the position. Missing required candles leave that measurement unavailable. If a grouped trade does not yet have its combined analysis, the page does not replace it with separate results for its round trips." },
           { kind: "table", columns: ["Card", "Meaning"], rows: [
             ["Move in your favor", "The average and typical price movement per share in the trade's favor across the complete measured population."],
             ["Move against you", "The average and typical price movement per share against the trade across the complete measured population."],
@@ -229,10 +270,11 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       {
         id: "comparisons",
         title: "Comparisons",
-        summary: "Separate original entries, adds, longs and shorts without turning observation into a trading rule.",
+        summary: "Compare entries and adds by direction, EMA alignment and RSI range.",
         keywords: ["entries", "adds", "long", "short", "comparison"],
         blocks: [
           { kind: "paragraph", text: "The four comparison rows reuse the same measured execution facts. They show the count plus average movement in your favor and against you in price and percentage terms. They describe the observed sample and do not prescribe a stop, target or adding strategy." },
+          { kind: "paragraph", text: "Indicator filters apply to the movement cards, timed price paths and measured-execution table together. Choose one-minute or five-minute indicator context, EMA9 relative to EMA20, and an RSI range. Both conditions must match the same saved context before the execution. Price movement itself still uses one-minute candles. Any keeps rows without added indicator history; selecting a condition separates missing context from actual non-matches. The displayed coverage counts each execution once, not once for every time window." },
         ],
       },
       {
@@ -267,6 +309,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           ] },
           { kind: "paragraph", text: "A sustained opportunity uses completed-close windows instead of treating a one-second spike as an easy exit. Potential and missed values describe recorded market opportunity; actual P/L remains the money earned or lost." },
           { kind: "paragraph", text: "Time held after the profit peak groups trades by peak-to-exit duration. Every row shows distinct trades, sample-supported rates and average actual, potential and missed results for the complete cohort." },
+          { kind: "paragraph", text: "Indicators at the comparison point adds EMA, RSI and VWAP comparisons at first +20%, or at first red after +20% for recovery comparisons. Every trade uses the same selected point. Indicator coverage does not change the existing financial totals." },
         ],
       },
       {
@@ -357,10 +400,12 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Execution", "Whether the saved occurrence relates to an entry/add or partial/final exit."],
             ["Location", "Exact execution candle or completed candle before execution."],
             ["Occurrences", "Number of detected execution occurrences."],
-            ["Trades", "Number of distinct analyzed trades represented."],
-            ["Win rate / Avg return / Avg result", "Actual Trade Tracker outcome statistics for the complete represented trade group."],
+            ["Trades", "Number of distinct saved trades represented, including trades you grouped from several round trips. Each trade's result counts once within that comparison row."],
+            ["Win rate / Avg return / Avg result", "Actual Trade Tracker results among trades with the required result available. A smaller with P/L count identifies missing selected financial results, not losing trades."],
           ] },
           { kind: "paragraph", text: "When more than 10 pattern groups exist, Results per page offers 10, 25, 50 or 100. Showing X-Y of Z and Previous/Next change only the visible pattern groups, never their complete calculations." },
+          { kind: "paragraph", text: "Indicator filters compare patterns using the EMA9/EMA20 alignment and RSI range saved before each execution. The selected indicator timeframe does not change the pattern timeframe or its execution timing label. These conditions apply to the rankings, comparison rows and occurrence browser together. Any retains observations without added indicator history; a selected condition separates missing context from actual non-matches." },
+          { kind: "paragraph", text: "Date selection uses the saved trade's final closing date and includes all of its executions. Different comparison rows may contain the same trade, so do not add their trade counts or P/L together. Offline, these indicator filters use the already-saved observations without fetching new data." },
         ],
       },
       {
@@ -372,6 +417,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           { kind: "paragraph", text: "Select View occurrences on a pattern card to open its exact saved execution occurrences without losing your place in the pattern list. The occurrence browser uses a right drawer on desktop and a full-width drawer on mobile. Ticker, timeframe, execution and location filters apply before the server returns a page. Results per page offers 10, 25, 50 or 100 and defaults to 25." },
           { kind: "paragraph", text: "The occurrence browser keeps the complete table on every screen. On a phone, swipe it sideways to read all columns, then select View chart to open the chosen chart full screen. Desktop opens that chart in a second right drawer. Only the selected chart is loaded, so a long history does not create dozens of hidden chart instances." },
           { kind: "paragraph", text: "The replay focuses the selected execution at the saved 1-minute or 5-minute timeframe. Previous and Next move through the visible occurrence page. Open Session Tracker keeps the exact trade, execution and interval selected for the full review." },
+          { kind: "paragraph", text: "Evidence links refer to the exact saved analysis revision. If that result changes, reload the occurrence list rather than viewing a different result through the old link. Position closures before a later re-entry remain part of the same saved trade and are labeled separately from its final exit." },
           { kind: "callout", title: "Context, not a signal", text: "The chart helps explain the completed candle context around a recorded execution. It does not predict what the same pattern will do next." },
         ],
       },
@@ -403,8 +449,17 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
     slug: "day-trade-analysis",
     title: "Day Trade Analysis",
-    description: "Use the long-term landing page, shared filters, coverage and four focused Analyzer capability pages.",
+    description: "Use the long-term landing page, shared filters, coverage and focused Analyzer pages.",
     sections: [
+      {
+        id: "scaling-indicator-context", title: "Scaling out indicator context",
+        summary: "Compare indicator conditions at first arrival in a profit zone.",
+        keywords: ["scaling out", "EMA", "RSI", "VWAP", "profit zone"], blocks: [
+          { kind: "paragraph", text: "On Scaling out, expand Indicators at the comparison point and choose a zone, timeframe and indicator. Trades with and without recorded profit taking are both classified at their first arrival in that zone. Missing indicator context remains visible. The existing Gross financial results and profit-taking classifications are unchanged." },
+          { kind: "paragraph", text: "Green-to-Red and Scaling out select saved trades by their final closing date. If a trade includes earlier round trips, those entries and exits remain part of its analysis even when they occurred before the selected date range." },
+          { kind: "paragraph", text: "Scaling behavior counts each saved trade once and uses its combined result. Where one partial exit supports an exact later-exit comparison, the difference is preserved while the displayed totals include the whole saved trade. Multiple partial exits or uncertain allocations do not receive an invented comparison." },
+        ],
+      },
       {
         id: "eligibility-coverage",
         title: "Analyzed trades",
@@ -412,6 +467,8 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["analyzed trades", "supporting trades", "paid plan", "historical imports"],
         blocks: [
           { kind: "paragraph", text: "The Analyzed trades card counts only current saved results with an execution snapshot linked to its saved market candle. Select it to inspect the exact trade replays behind the summaries." },
+          { kind: "paragraph", text: "The Day overview's Trend & Momentum card separately shows how many saved user-defined trades have added indicator context. It includes long and short trades in the selected period and does not reduce the main analyzed-trade count when indicator history is missing." },
+          { kind: "paragraph", text: "Day summary cards count each trade you defined once, even when it includes multiple round trips. The selected dates use the trade's final close and retain its earlier entries and exits. P/L combines its members; average return gives each saved trade equal weight. Missing financial results are excluded from financial averages, not treated as zero." },
           { kind: "paragraph", text: "An active paid plan is required to create new analysis. Analysis completed while paid remains readable after cancellation." },
         ],
       },
@@ -481,6 +538,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["ticker filter", "ticker search", "page 1"],
         blocks: [
           { kind: "paragraph", text: "Ticker search matches the displayed symbol and returns the list to page 1. The shared date range, Account reporting currency and Gross or Net choice continue to apply. Green-to-red-specific outcome and opportunity filters live on the Green-to-red page." },
+          { kind: "paragraph", text: "View trades from a Trend & Momentum condition group restores that group's timeframe, execution type and conditions here. The banner names the selection, and each trade explains why it appears. Matching, non-matching and missing-context trades stay separate. Change indicator conditions returns to the comparison with the same selection." },
         ],
       },
       {
@@ -490,15 +548,14 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["trade table", "ticker", "direction", "entry time", "exit time", "executions", "full analysis"],
         blocks: [
           { kind: "table", columns: ["Column", "Meaning"], rows: [
-            ["Date / Ticker / Direction", "Local trade date, displayed symbol and Long or Short direction."],
+            ["Date / Ticker / Direction", "Final closing date of your saved trade, displayed symbol and Long or Short direction. Several round trips grouped as one trade count once."],
             ["Entry time / Exit time", "First entry and final exit in the selected account's trading timezone."],
             ["Gross or Net result", "Actual saved trade result under the selected basis."],
             ["Return", "Percentage result when a supported denominator is available."],
-            ["First review: 30 minutes after final exit", "For a long trade, shows whether price rose after the sale; for a short trade, whether price fell after the cover. The row uses the saved 30-minute post-exit observation only. It says unavailable when that observation is not saved and does not substitute a later 60-minute update."],
-            ["Executions", "Number of saved entry, add, partial-exit and final-exit snapshots."],
-            ["View full analysis", "Opens the exact Session Tracker trade and focuses its saved analysis."],
+            ["Executions", "All saved executions in your trade, including re-entries and interim position closures."],
+            ["View full analysis", "Opens the exact saved trade. When indicator conditions are selected, it focuses a supporting execution at the selected one-minute or five-minute interval."],
           ] },
-          { kind: "paragraph", text: "A positive per-share amount is the favorable movement recorded after the final exit. A zero result means price did not move beyond the final-exit price in that favorable direction. A negative result means the saved 30-minute high for a long sale remained below the sell price, or the saved 30-minute low for a short cover remained above the cover price." },
+          { kind: "paragraph", text: "Each row uses the whole saved trade's selected result once. Missing financial results remain unavailable. The indicator inclusion note describes the selected execution conditions, not a separate trade or a separate profit calculation." },
           { kind: "paragraph", text: "The directory intentionally keeps Green-to-red opportunity, capture and reversal columns off this page. Open the full analysis for entry, exit, pattern and Green-to-red context, or use the Green-to-red page for those cross-trade comparisons." },
           { kind: "paragraph", text: "On a phone, swipe the contained table sideways to read every column without shrinking it into unreadable text." },
         ],
@@ -536,7 +593,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: [
           { kind: "paragraph", text: "For a newly completed same-day trade, Trade Analyzer collects market data through 30 minutes after the final exit's one-minute candle before creating its first completed result. Seconds do not change that readiness time. The blue collection notice gives the expected Eastern Time. You can leave the page while it completes; when the result is ready, TradersLink adds an in-app update and uses the notification channels you have configured." },
           { kind: "paragraph", text: "A later finalized-session update can add the 60-minute observation when that market data is available. You do not have to wait for it before reviewing the first completed result. When the extended-hours session closes before a full 30 minutes can form, the collection notice identifies the shorter available market-data window." },
-          { kind: "paragraph", text: "If the required market data cannot be collected after its bounded retries, TraderLink records an unavailable state rather than leaving the trade on a collecting message. It never fills missing future candles with zeroes or guesses." },
+          { kind: "paragraph", text: "If the required market data cannot be collected after its bounded retries, TraderLink records an unavailable state rather than leaving the trade on a collecting message. The card distinguishes too few available candles from a failed data request. Sparse candles alone do not prove low trading volume. It never fills missing future candles with zeroes or guesses." },
         ],
       },
       {

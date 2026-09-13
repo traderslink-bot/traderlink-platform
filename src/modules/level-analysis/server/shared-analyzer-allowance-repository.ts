@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { ManualAnalyzerRetryRepository } from "./manual-analyzer-retry-repository";
 
 import type { SharedAnalyzerAvailability, SharedAnalyzerSettings } from "../contracts/shared-analyzer-beta-contracts";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -47,6 +48,13 @@ function daysBetween(start: string, end: string): number {
 
 export class SharedAnalyzerAllowanceRepository {
   constructor(private readonly database: Database.Database) {}
+
+  manualRetryAvailable(scope: AccountScope, tradeId: string, now: Date): boolean {
+    return new ManualAnalyzerRetryRepository(this.database).available(scope, tradeId, now);
+  }
+  recordManualRetry(scope: AccountScope, jobId: string, now: Date): string | null {
+    return new ManualAnalyzerRetryRepository(this.database).record(scope, jobId, now);
+  }
 
   immediate<T>(operation: () => T): T {
     return this.database.inTransaction ? operation() : this.database.transaction(operation).immediate();
@@ -160,10 +168,15 @@ GROUP BY reset_kind`).all(userId, cycle.allowance_cycle_id) as
     const charged = this.database.prepare(`SELECT
  sum(CASE WHEN reservation.daily_new_york_date = ? AND acquisition.started_at_utc > ? THEN 1 ELSE 0 END) AS daily_used,
  sum(CASE WHEN acquisition.started_at_utc > ? THEN 1 ELSE 0 END) AS period_used
-FROM level_analysis_analyzer_acquisitions acquisition
+FROM (
+ SELECT reservation_id, charged_user_id, min(started_at_utc) AS started_at_utc
+ FROM level_analysis_analyzer_acquisitions
+ WHERE charge_kind = 'user_charged'
+ GROUP BY reservation_id, charged_user_id
+) acquisition
 JOIN level_analysis_analyzer_reservations reservation
  ON reservation.reservation_id = acquisition.reservation_id
-WHERE acquisition.charged_user_id = ? AND acquisition.charge_kind = 'user_charged'
+WHERE acquisition.charged_user_id = ?
  AND reservation.allowance_cycle_id = ?`).get(date, dailyReset, periodReset, userId, cycle.allowance_cycle_id) as
       { daily_used: number | null; period_used: number | null };
     const active = this.database.prepare(`SELECT
@@ -171,6 +184,7 @@ WHERE acquisition.charged_user_id = ? AND acquisition.charge_kind = 'user_charge
  count(*) AS period_used
 FROM level_analysis_analyzer_reservations
 WHERE user_id = ? AND allowance_cycle_id = ? AND status = 'active'
+ AND correction_waiver = 0
  AND expires_at_utc >= ?`).get(
       date, userId, cycle.allowance_cycle_id, createCanonicalUtcTimestamp(now),
     ) as { daily_used: number | null; period_used: number };
@@ -227,14 +241,50 @@ SET status = 'released', updated_at_utc = ?
 WHERE logical_trade_job_id = ? AND status = 'active'`).run(timestamp, jobId);
   }
 
+  hasHistoryReservation(jobId: string, now: Date): boolean {
+    const retries = new ManualAnalyzerRetryRepository(this.database);
+    const retry = retries.active(jobId, now);
+    if (retry) return retries.acquisitions(retry.retry_request_id) < 34;
+    return Boolean(this.database.prepare(`SELECT 1 FROM level_analysis_analyzer_reservations reservation
+WHERE logical_trade_job_id = ? AND status IN ('active', 'consumed') AND expires_at_utc >= ?
+ AND (SELECT count(*) FROM level_analysis_analyzer_acquisitions acquisition
+      WHERE acquisition.reservation_id = reservation.reservation_id) < 34`).get(jobId, createCanonicalUtcTimestamp(now)));
+  }
+
   beginAcquisition(input: Readonly<{
     jobId: string;
     marketSessionSetId: string;
     now: Date;
+    /** Internal history continuation of the same job; never a new user analysis. */
+    historyContinuation?: boolean;
   }>): Readonly<{ acquisitionId: string; chargeKind: "user_charged" | "correction_waived" }> | null {
     return this.immediate(() => {
-      const reservation = this.reservation(input.jobId, input.now);
-      if (!reservation) return null;
+      const retries = new ManualAnalyzerRetryRepository(this.database);
+      const retry = retries.active(input.jobId, input.now);
+      let reservation = this.reservation(input.jobId, input.now);
+      if (!retry && !reservation && input.historyContinuation) {
+        const prior = this.database.prepare(`SELECT reservation.reservation_id, reservation.user_id, reservation.correction_waiver
+FROM level_analysis_analyzer_reservations reservation
+JOIN level_analysis_logical_trade_jobs job ON job.logical_trade_job_id = reservation.logical_trade_job_id
+WHERE reservation.logical_trade_job_id = ? AND reservation.status = 'consumed'
+ AND reservation.expires_at_utc >= ? AND job.status = 'leased'
+ AND job.user_id = reservation.user_id
+ AND EXISTS (SELECT 1 FROM level_analysis_analyzer_acquisitions acquisition
+   WHERE acquisition.reservation_id = reservation.reservation_id)
+ORDER BY reservation.created_at_utc DESC LIMIT 1`).get(
+          input.jobId, createCanonicalUtcTimestamp(input.now),
+        ) as { reservation_id: string; user_id: string; correction_waiver: number } | undefined;
+        if (prior) reservation = Object.freeze({ reservationId: prior.reservation_id,
+          userId: prior.user_id, correctionWaiver: prior.correction_waiver === 1 });
+      }
+      if (!retry && !reservation) return null;
+      if (retry && retries.acquisitions(retry.retry_request_id) >= 34) return null;
+      if (!retry && reservation && input.historyContinuation) {
+        const attempts = this.database.prepare(`SELECT count(*) AS count FROM level_analysis_analyzer_acquisitions
+WHERE reservation_id = ?`).get(reservation.reservationId) as { count: number };
+        // Ten earlier ranges plus the current range, at most three attempts each.
+        if (attempts.count >= 34) return null;
+      }
       const settings = this.settings();
       if (!settings.enabled || !settings.designatedConnectionConfigured) return null;
       const expiredLeaseBefore = new Date(input.now.getTime() - 5 * 60 * 1000).toISOString();
@@ -257,19 +307,20 @@ FROM level_analysis_analyzer_acquisitions ORDER BY started_at_utc DESC LIMIT 1`)
       if (prior && Date.parse(prior.started_at_utc) + settings.requestSpacingSeconds * 1000 > input.now.getTime()) {
         return null;
       }
-      const chargeKind = reservation.correctionWaiver ? "correction_waived" as const : "user_charged" as const;
+      const chargeKind = retry || reservation!.correctionWaiver ? "correction_waived" as const : "user_charged" as const;
       const acquisitionId = createCanonicalUuidV4();
       this.database.prepare(`INSERT INTO level_analysis_analyzer_acquisitions (
  acquisition_id, market_session_set_id, charged_user_id, reservation_id,
  charge_kind, started_at_utc, completed_at_utc, outcome
 ) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL)`).run(
-        acquisitionId, input.marketSessionSetId, reservation.userId,
-        reservation.reservationId, chargeKind, createCanonicalUtcTimestamp(input.now),
+        acquisitionId, input.marketSessionSetId, retry?.user_id ?? reservation!.userId,
+        retry ? null : reservation!.reservationId, chargeKind, createCanonicalUtcTimestamp(input.now),
       );
-      this.database.prepare(`UPDATE level_analysis_analyzer_reservations
+      if (retry) this.database.prepare("INSERT INTO level_analysis_manual_retry_acquisitions(acquisition_id,retry_request_id) VALUES(?,?)").run(acquisitionId, retry.retry_request_id);
+      if (!retry) this.database.prepare(`UPDATE level_analysis_analyzer_reservations
 SET status = 'consumed', updated_at_utc = ?
 WHERE reservation_id = ? AND status = 'active'`).run(
-        createCanonicalUtcTimestamp(input.now), reservation.reservationId,
+        createCanonicalUtcTimestamp(input.now), reservation!.reservationId,
       );
       return Object.freeze({ acquisitionId, chargeKind });
     });

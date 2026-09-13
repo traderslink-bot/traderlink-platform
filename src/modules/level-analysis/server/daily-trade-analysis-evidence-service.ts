@@ -18,7 +18,7 @@ export type DailyTradePatternOccurrenceRow = Readonly<{
   candlesBeforeExecution: 0 | 1 | 2;
   currency: string;
   direction: "long" | "short";
-  eventKind: "entry" | "add" | "partial_exit" | "final_exit";
+  eventKind: "entry" | "add" | "partial_exit" | "temporary_flat" | "final_exit";
   executedAtUtc: string;
   executionId: string;
   occurrenceRef: string;
@@ -40,6 +40,7 @@ export type DailyTradePatternOccurrencePage = Readonly<{
 }>;
 
 export type DailyTradeAnalyzedTradeRow = Readonly<{
+  whyIncluded?: string;
   closedAtUtc: string;
   direction: "long" | "short";
   executionCount: number;
@@ -53,6 +54,7 @@ export type DailyTradeAnalyzedTradeRow = Readonly<{
 }>;
 
 export type DailyTradeAnalyzedTradePage = Readonly<{
+  indicatorSummary?: string;
   continuationCursor: string | null;
   rows: readonly DailyTradeAnalyzedTradeRow[];
   timezone: string;

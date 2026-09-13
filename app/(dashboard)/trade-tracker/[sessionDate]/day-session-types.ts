@@ -31,10 +31,13 @@ export type DaySessionRoundTrip = {
 };
 
 export type DaySessionTradeAnalyzer = {
+  trendMomentum?: import("@/src/lib/trade-candle-analysis/trend-momentum-executions").TradeExecutionIndicatorResult;
+  trendMomentumUnavailableReason?: "history_unavailable";
   reviewContext?: { basis: "gross" | "net"; analyzedTradeCount: number | null };
   availableAtUtc?: string | null;
   detailLoaded?: boolean;
   detailVersionRef?: string | null;
+  analysisRevisionRef?: string | null;
   candles: Array<{
     close: string;
     high: string;

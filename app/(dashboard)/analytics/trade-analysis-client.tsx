@@ -25,6 +25,9 @@ import Decimal from "decimal.js";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { filterSavedTradeMovement, readMovementFilters } from "@/src/lib/trade-candle-analysis/trend-momentum-movement-filter";
+import { MovementIndicatorFilters } from "./trend-momentum-movement-filters";
+import { summarizeSavedPatterns } from "@/src/lib/trade-candle-analysis/trend-momentum-patterns";
 
 import { DashboardMetricCard } from "@/app/dashboard-template";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
@@ -53,8 +56,11 @@ import {
   TradeAnalyzerTablePagination,
 } from "./trade-analyzer-table-pagination";
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
+import { TrendMomentumAnalysis } from "./trend-momentum-analysis";
+import { TrendMomentumLandmarkComparison } from "./trend-momentum-landmark-comparison";
+import { TrendMomentumExecutionComparison } from "./trend-momentum-execution-comparison";
 
-export type TradeAnalysisView = "day" | "entry-exit" | "mfe-mae" | "green-to-red" | "scaling-out" | "candle-patterns" | "trades";
+export type TradeAnalysisView = "day" | "entry-exit" | "mfe-mae" | "green-to-red" | "scaling-out" | "candle-patterns" | "trades" | "trend-momentum";
 
 function money(value: string | null, currency: string | null): string {
   if (value === null || currency === null) return "Unavailable";
@@ -671,6 +677,7 @@ function ExecutionContextTable({
 }
 
 const CAPABILITIES = Object.freeze([
+  Object.freeze({ href: "/analytics/trade-analyzer/day/trend-momentum", title: "Trend & Momentum", description: "Compare EMA 9, EMA 20, RSI and Session VWAP at executions and during your trades." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/green-to-red", title: "Green to Red", description: "See trades that reached +20% or more and what happened before they finished." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/scaling-out", title: "Scaling Out", description: "See profit-taking after a sustained profit level—and qualifying trades with no profitable scale-out before a red finish." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/entry-exit", title: "Entries & Exits", description: "Review entries, adds and exits against Session VWAP, EMA 9 and later saved prices." }),
@@ -725,11 +732,15 @@ function AnalyzedTradeCountCard({
 }
 
 export function TradeAnalysisClient({
+  initialSelectionQuery = "",
+  indicatorSupportingPage,
   evidenceQuery,
-  model,
+  model: sourceModel,
   offline = false,
   view,
 }: {
+  initialSelectionQuery?: string;
+  indicatorSupportingPage?: import("@/src/lib/trade-candle-analysis/trend-momentum-cohorts").IndicatorSupportingPage;
   evidenceQuery: Readonly<{
     currency: string | null;
     endDate: string | null;
@@ -746,11 +757,19 @@ export function TradeAnalysisClient({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [offlineMovementQuery, setOfflineMovementQuery] = useState(initialSelectionQuery);
+  const movementQuery = offline ? offlineMovementQuery : searchParams.toString();
+  const filteredMovement = useMemo(() => view === "mfe-mae" ? filterSavedTradeMovement(sourceModel, readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel, movementQuery]);
+  const filteredPatterns = useMemo(() => view === "candle-patterns" && sourceModel.patternObservations ? summarizeSavedPatterns(sourceModel.patternObservations, readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel.patternObservations, movementQuery]);
+  const model = filteredMovement ? { ...sourceModel, ...filteredMovement } : filteredPatterns ? { ...sourceModel, patterns: filteredPatterns.rows } : sourceModel;
   const [patternPage, setPatternPage] = useState(1);
   const [patternPageSize, setPatternPageSize] = useState(10);
   const greenToRedDirectionCounts = model.greenToRedOpportunity.tradeCountsByDirection ?? model.directionTradeCounts;
   const profitZoneDirectionCounts = model.profitZones.tradeCountsByDirection ?? model.directionTradeCounts;
-  const visibleDirectionCounts = view === "green-to-red"
+  const visibleDirectionCounts = view === "trend-momentum" && model.trendMomentum
+    ? { long: model.trendMomentum.trades.filter((t) => t.direction === "long").length,
+        short: model.trendMomentum.trades.filter((t) => t.direction === "short").length }
+    : view === "green-to-red"
     ? greenToRedDirectionCounts
     : view === "scaling-out"
       ? profitZoneDirectionCounts
@@ -759,7 +778,9 @@ export function TradeAnalysisClient({
     ? evidenceQuery.direction
     : visibleDirectionCounts.long > 0 ? "long" as const : "short" as const;
   const [selectedDirection, setSelectedDirection] = useState<"long" | "short">(defaultDirection);
-  const activeDirection = visibleDirectionCounts[selectedDirection] > 0 ? selectedDirection : defaultDirection;
+  const activeDirection = ["trend-momentum", "mfe-mae", "candle-patterns"].includes(view) && !offline ? defaultDirection
+    : visibleDirectionCounts[selectedDirection] > 0 ? selectedDirection : defaultDirection;
+  const patternCoverage = useMemo(() => view === "candle-patterns" && sourceModel.patternObservations ? summarizeSavedPatterns(sourceModel.patternObservations.filter((row) => row.direction === activeDirection), readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel.patternObservations, activeDirection, movementQuery]);
   const meaningfulProfitRows = useMemo(() => model.meaningfulProfit.rows.filter((row) =>
     row.direction === activeDirection), [activeDirection, model.meaningfulProfit.rows]);
   const scalingRows = useMemo(() => model.scalingOut.rows.filter((row) =>
@@ -917,7 +938,7 @@ export function TradeAnalysisClient({
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-start" } }}>
           <AnalyzedTradeCountCard
             capabilityQuery={capabilityQuery}
-            count={view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
+            count={view === "trend-momentum" ? model.directionTradeCounts[activeDirection] : view === "day" ? model.analyzedTradeCount : visibleDirectionCounts[activeDirection]}
           />
           {view !== "day" ? <DirectionControl activeDirection={activeDirection} counts={visibleDirectionCounts} onChange={(direction) => {
             setSelectedDirection(direction);
@@ -934,6 +955,17 @@ export function TradeAnalysisClient({
         /> : null}
       </Stack>
 
+      {view === "trend-momentum" ? <TrendMomentumAnalysis projection={model.trendMomentum} direction={activeDirection} currency={model.currency} timezone={model.timezone} offline={offline}
+        supportingPage={indicatorSupportingPage}
+        moneyBasis={model.moneyBasis}
+        queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} /> : null}
+      {view === "day" && model.trendMomentum ? <Section title="Trend & Momentum" description="" helpHref="/help/trade-analyzer/trend-momentum"
+        titleHelp="Saved EMA 9, EMA 20, RSI and session VWAP context for user-defined trades in this selection. Missing indicator history does not reduce the main Analyzer count." collapsible={false}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
+          <Typography variant="body2">{model.trendMomentum.trades.filter((trade) => trade.indicators !== null).length} of {model.trendMomentum.trades.length} saved user-defined trades have indicator context.</Typography>
+          <Button variant="outlined" href={`/analytics/trade-analyzer/day/trend-momentum${offline ? "" : `?${searchParams.toString()}`}`}>{offline ? "Open saved comparisons" : "View comparisons"}</Button>
+        </Stack>
+      </Section> : null}
       {view === "day" ? <Stack spacing={1.25}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Selected-period records</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
@@ -1116,7 +1148,12 @@ export function TradeAnalysisClient({
         <EventPathTable explainColumns currency={model.currency} direction={activeDirection} kinds={["Partial exit", "Final exit"]} model={model} offline={offline} />
       </Section> : null}
 
-      {view === "mfe-mae" ? <Section defaultExpanded description={`MFE and MAE measure price movement after each ${directionLabel} entry or add until the final exit. Dollars are per share.`} helpHref="/help/trade-analyzer/mfe-mae#overview" title="Room after entry · MFE / MAE" titleHelp="Review how much upside and downside followed your entries and adds while the position was open. Each execution starts from its own price and carries equal weight in the summaries. MFE is the largest profitable price move; MAE is the largest losing price move. Neither is a realized trade profit or loss. Measurements use saved one-minute candles and the final exit price. The entry and exit candles' full ranges are excluded because their highs and lows may have occurred outside your holding period.">
+      {view === "mfe-mae" && filteredMovement ? <Section defaultExpanded description="" title="Indicator filters" titleHelp="Compare movement after executions with the chosen EMA alignment and RSI range. Both conditions must match the same saved timeframe before that execution. Any keeps executions without added indicator history." helpHref="/help/trade-analyzer/mfe-mae#comparisons">
+        <MovementIndicatorFilters queryString={movementQuery} coverage={filteredMovement.coverage[activeDirection]} onChange={(query) => {
+          if (offline) setOfflineMovementQuery(query); else router.replace(`${pathname}?${query}`, { scroll: false });
+        }} />
+      </Section> : null}
+      {view === "mfe-mae" ? <Section defaultExpanded description={`MFE and MAE measure price movement after each ${directionLabel} entry or add until that position closes. Dollars are per share.`} helpHref="/help/trade-analyzer/mfe-mae#overview" title="Room after entry · MFE / MAE" titleHelp="Review how much upside and downside followed your entries and adds while the position was open. Each execution starts from its own price and carries equal weight in the summaries. MFE is the largest profitable price move; MAE is the largest losing price move. Neither is a realized trade profit or loss. Measurements use saved one-minute candles and the position-closing price. The entry and exit candles' full ranges are excluded because their highs and lows may have occurred outside your holding period.">
         <Stack spacing={1.5}>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" } }}>
             <ExplainedMetric label="Measured entries / adds" value={String(directionExcursions.length)} help="The number of entries and adds with usable MFE/MAE measurements. A trade can contribute more than one row. Any missing required minute excludes that measurement rather than counting it as zero. A position that opens and closes in the same minute can use its exact exit price without an interior candle." />
@@ -1124,9 +1161,9 @@ export function TradeAnalysisClient({
             <ExplainedMetric label="Median MAE %" value={percent(directionMovement.medianAdversePercent)} tone="error.main" help="The middle maximum losing price move across measured entries and adds, as a percentage of each execution price. The value describes the size of the move; it is not a realized loss." />
             <ExplainedMetric label="Average MFE %" value={percent(directionMovement.averageFavorablePercent)} tone="success.main" help="Adds the maximum profitable percentage move for each measured entry or add, then divides by the number of measurements. Each execution counts equally. Large moves can pull the average above the median." />
             <ExplainedMetric label="Average MAE %" value={percent(directionMovement.averageAdversePercent)} tone="error.main" help="Adds the maximum losing percentage move for each measured entry or add, then divides by the number of measurements. Each execution counts equally; this is not weighted by position size." />
-            <ExplainedMetric label="Average MFE per share" value={money(directionMovement.averageFavorableMoney?.toString() ?? null, model.currency)} tone="success.main" help={`Average ${favorableMoneyLabel}. Each measurement is the largest ${favorableMoveLabel} from that execution's price until the final exit. These are dollars per share, not total trade profit.`} />
+            <ExplainedMetric label="Average MFE per share" value={money(directionMovement.averageFavorableMoney?.toString() ?? null, model.currency)} tone="success.main" help={`Average ${favorableMoneyLabel}. Each measurement is the largest ${favorableMoveLabel} from that execution's price until that position closes. These are dollars per share, not total trade profit.`} />
             <ExplainedMetric label="Median MFE per share" value={money(directionMovement.medianFavorableMoney?.toString() ?? null, model.currency)} tone="success.main" help={`The middle ${favorableMoneyLabel} when the measured maximum moves are ordered by size. Dollars are per share. Percentage measurements make it easier to compare stocks at different prices.`} />
-            <ExplainedMetric label="Average MAE per share" value={money(directionMovement.averageAdverseMoney?.toString() ?? null, model.currency)} tone="error.main" help={`Average ${adverseMoneyLabel}. Each measurement is the largest ${adverseMoveLabel} from that execution's price until the final exit. This is price movement per share, not realized loss.`} />
+            <ExplainedMetric label="Average MAE per share" value={money(directionMovement.averageAdverseMoney?.toString() ?? null, model.currency)} tone="error.main" help={`Average ${adverseMoneyLabel}. Each measurement is the largest ${adverseMoveLabel} from that execution's price until that position closes. This is price movement per share, not realized loss.`} />
             <ExplainedMetric label="Median MAE per share" value={money(directionMovement.medianAdverseMoney?.toString() ?? null, model.currency)} tone="error.main" help={`The middle ${adverseMoneyLabel} when measured maximum moves are ordered by size. Dollars are per share, not the amount lost on the position.`} />
           </Box>
           <Typography color="text.secondary" variant="body2">Measurements with missing required candles are excluded. Entries and adds count separately; the figures are not whole-trade profit or loss.</Typography>
@@ -1135,11 +1172,16 @@ export function TradeAnalysisClient({
       </Section> : null}
 
       {view === "mfe-mae" ? <Section defaultExpanded description="Price movement within 5, 15, 30 and 60 minutes of each entry or add. These windows can continue after your final exit." helpHref="/help/trade-analyzer/mfe-mae#timed-paths" title="Price path after entry" titleHelp="Unlike the MFE/MAE summary, these fixed time windows do not stop at your exit. They start from each execution's price and use its saved one-minute price path. The Analyzer requests candles through 30 minutes after the final exit, so longer windows may be unavailable. Missing required candles also make a window unavailable. The windows overlap: 15 minutes includes the first 5 minutes, rather than showing only minutes 5 to 15.">
-        <EventPathTable currency={model.currency} direction={activeDirection} explainColumns kinds={["Initial entry", "Add"]} model={model} offline={offline} paginationAtBottom />
+        <EventPathTable currency={model.currency} direction={activeDirection} explainColumns kinds={["Initial entry", "Re-entry", "Add"]} model={model} offline={offline} paginationAtBottom />
       </Section> : null}
 
-      {view === "mfe-mae" ? <Section description="Each row is an entry or add, measured until the final exit. Table filters do not change the summaries above." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions" titleHelp="See the entries and adds behind the MFE/MAE summary. Each starts at its own execution price, uses the interior one-minute candle ranges and final exit price, and excludes prices after the position closes. Use the ticker and execution filters to inspect these rows. Trade P/L is the whole trade's final result and may repeat across multiple rows.">
+      {view === "mfe-mae" ? <Section description="Each row is an entry or add, measured until that position closes. Ticker and execution filters inside this table do not change the summaries above." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions" titleHelp="See the entries and adds behind the MFE/MAE summary. Each starts at its own execution price, uses the interior one-minute candle ranges and position-closing price, and excludes prices after the position closes. Use the ticker and execution filters to inspect these rows. Trade P/L is the whole trade's final result and may repeat across multiple rows.">
         <MfeMaeTable direction={activeDirection} model={model} offline={offline} />
+      </Section> : null}
+      {view === "candle-patterns" && patternCoverage ? <Section defaultExpanded description="" title="Indicator filters" titleHelp="Compare candle patterns with the EMA alignment and RSI range recorded before each execution. Pattern timeframe and whether it appeared before or at the execution remain separate." helpHref="/help/trade-analyzer/candle-patterns#pattern-results">
+        <MovementIndicatorFilters mode="patterns" queryString={movementQuery} coverage={{ matched: patternCoverage.matching.length, notMatched: patternCoverage.nonmatchingOccurrenceCount, unavailable: patternCoverage.unavailableOccurrenceCount }} onChange={(query) => {
+          if (offline) setOfflineMovementQuery(query); else router.replace(`${pathname}?${query}`, { scroll: false });
+        }} />
       </Section> : null}
       {view === "candle-patterns" ? <Section defaultExpanded description="The ten most frequently observed candle patterns." helpHref="/help/trade-analyzer/candle-patterns#ranked-patterns" title="Most observed patterns">
         <PatternRanking groups={patternGroups} />
@@ -1175,7 +1217,7 @@ export function TradeAnalysisClient({
                 <HorizontalScrollRegion label={`${friendlyPattern(group.pattern)} breakdown table`} minTableWidth={860} stickyFirstColumn>
                   <Table aria-label={`${friendlyPattern(group.pattern)} breakdown`} size="small">
                     <TableHead><TableRow><TableCell>Timeframe</TableCell><TableCell>Execution</TableCell><TableCell>Location</TableCell><TableCell align="right">Occurrences</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Total result</TableCell><TableCell align="right">Avg result</TableCell><TableCell align="right">Median result</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg return</TableCell></TableRow></TableHead>
-                    <TableBody>{group.rows.map((row) => <TableRow hover key={`${row.timeframe}-${row.executionSide}-${row.location}`}><TableCell sx={{ fontWeight: 750 }}>{row.timeframe}</TableCell><TableCell>{row.executionSide}</TableCell><TableCell>{row.location}</TableCell><TableCell align="right">{row.occurrenceCount}</TableCell><TableCell align="right">{row.tradeCount}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.totalPnlDecimal ?? null), fontWeight: 750 }}>{money(row.totalPnlDecimal ?? null, model.currency)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averagePnlDecimal) }}>{money(row.averagePnlDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.medianPnlDecimal ?? null) }}>{money(row.medianPnlDecimal ?? null, model.currency)}</TableCell><TableCell align="right">{percent(row.winRatePercent)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averageReturnPercent) }}>{percent(row.averageReturnPercent)}</TableCell></TableRow>)}</TableBody>
+                    <TableBody>{group.rows.map((row) => <TableRow hover key={`${row.timeframe}-${row.executionSide}-${row.location}`}><TableCell sx={{ fontWeight: 750 }}>{row.timeframe}</TableCell><TableCell>{row.executionSide}</TableCell><TableCell>{row.location}</TableCell><TableCell align="right">{row.occurrenceCount}</TableCell><TableCell align="right">{row.tradeCount}{row.pnlTradeCount !== undefined && row.pnlTradeCount < row.tradeCount ? <Typography variant="caption" component="div" color="text.secondary">{row.pnlTradeCount} with P/L</Typography> : null}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.totalPnlDecimal ?? null), fontWeight: 750 }}>{money(row.totalPnlDecimal ?? null, model.currency)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averagePnlDecimal) }}>{money(row.averagePnlDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.medianPnlDecimal ?? null) }}>{money(row.medianPnlDecimal ?? null, model.currency)}</TableCell><TableCell align="right">{percent(row.winRatePercent)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averageReturnPercent) }}>{percent(row.averageReturnPercent)}</TableCell></TableRow>)}</TableBody>
                   </Table>
                 </HorizontalScrollRegion>
               </Paper>
@@ -1194,6 +1236,8 @@ export function TradeAnalysisClient({
         >
           {selectedPattern ? (
             <CandlePatternOccurrenceExplorer
+              key={`${selectedPattern}:${movementQuery}:${activeDirection}`}
+              indicatorQuery={movementQuery}
               currency={evidenceQuery.currency}
               direction={activeDirection}
               endDate={evidenceQuery.endDate}
@@ -1206,6 +1250,19 @@ export function TradeAnalysisClient({
         </Drawer>
       ) : null}
 
+      {view === "entry-exit" ? <Section title="Indicator context at executions" description="" helpHref="/help/trade-analyzer/trend-momentum"
+        titleHelp="Compare EMA alignment or RSI at initial entries, adds, re-entries and exits. Only completed candles known at that execution are used. A trade counts once within a group even when it contains several qualifying executions.">
+        <TrendMomentumExecutionComparison projection={model.trendMomentum} direction={activeDirection} money={(value) => money(value, model.currency)} moneyBasis={model.moneyBasis} offline={offline}
+          queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
+      </Section> : null}
+      {view === "green-to-red" || view === "scaling-out" ? <Section title="Indicators at the comparison point"
+        description="" helpHref="/help/trade-analyzer/trend-momentum" titleHelp={view === "green-to-red"
+          ? "Compare indicators at first +20% with whether the trade later turned red, or at first red with later recovery. Later indicator values do not replace the original observation."
+          : "Compare indicators at the same first zone arrival for trades with and without later recorded profit taking in that zone. A seller's sale-time indicator is not compared with a nonseller's entry-time indicator."}>
+        <TrendMomentumLandmarkComparison mode={view} projection={model.trendMomentum} greenRows={greenToRedOpportunityRows} zoneRows={profitZoneRecords}
+          money={(value) => money(value, model.currency)} moneyBasis={model.moneyBasis}
+          queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
+      </Section> : null}
       {model.malformedSnapshotCount > 0 ? <Typography color="warning.main" variant="body2">{model.malformedSnapshotCount} saved execution snapshots could not be read and were excluded from execution-level breakdowns.</Typography> : null}
     </Stack>
   );

@@ -4,12 +4,14 @@ import type { SharedAnalyzerAvailability, SharedAnalyzerSelectionOutcome } from 
 import { dailyTradeFirstResultCoverageEnd, newYorkExtendedSession } from "./daily-trade-analyzer-session";
 import { LogicalTradeAnalyzerRepository } from "./logical-trade-analyzer-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
+import type { TrendMomentumHistoryRepository } from "./trend-momentum-history-repository";
 
 export class LogicalTradeAnalyzerSelectionService {
   constructor(
     private readonly logicalTrades: JournalLogicalTradeService,
     private readonly analyzer: LogicalTradeAnalyzerRepository,
     private readonly allowances: SharedAnalyzerAllowanceRepository,
+    private readonly indicatorHistory?: TrendMomentumHistoryRepository,
   ) {}
 
   availability(scope: AccountScope, now: Date = new Date()): SharedAnalyzerAvailability | null {
@@ -39,17 +41,30 @@ export class LogicalTradeAnalyzerSelectionService {
         : null;
       if (desiredEnd === null) return "not_eligible";
       const savedCoverage = this.analyzer.hasSavedCoverage(target, new Date(desiredEnd * 1000).toISOString());
-      if (!savedCoverage && availability.selectableAvailable <= 0) return "usage_exhausted";
+      const retry = this.analyzer.hasPriorAnalysis(scope, target.logicalTradeId);
+      const savedIndicators = savedCoverage && (!this.indicatorHistory ||
+        this.indicatorHistory.hasSufficientEvidence(scope, target.providerSymbol, target.tradingDateNewYork,
+          Math.min(...target.events.map((event) => Date.parse(event.executedAtUtc) / 1000)), desiredEnd));
+      if (!savedCoverage && !retry && availability.selectableAvailable <= 0) return "usage_exhausted";
+      if (retry && !savedIndicators && !this.allowances.manualRetryAvailable(scope, target.logicalTradeId, now)) return "retry_limit_reached";
       const queued = this.analyzer.queue({
         scope,
         target,
         desiredCoverageEndUtc: new Date(desiredEnd * 1000).toISOString(),
         now,
+        retryTerminal: true,
       });
       if (!queued.created) return "already_requested";
-      if (savedCoverage) return "queued";
+      // Core-only cached recomputation remains usable when no allowance is left.
+      // An explicit Analyze with available allowance can acquire missing history.
+      if (savedIndicators || (!retry && savedCoverage && availability.selectableAvailable <= 0)) return "queued";
+      if (retry) {
+        if (!this.allowances.recordManualRetry(scope, queued.jobId, now)) throw new Error("manual_retry_reservation_failed");
+        return "queued";
+      }
       const reservation = this.allowances.reserve({ userId: scope.userId, jobId: queued.jobId, now });
       if (!reservation) {
+        if (savedCoverage) return "queued";
         this.analyzer.expireUnreservedJob(queued.jobId, now);
         return "usage_exhausted";
       }
@@ -68,31 +83,12 @@ export class LogicalTradeAnalyzerSelectionService {
       const queued: string[] = [];
       for (const trade of refresh.refreshed) {
         if (!trade.logicalTradeId) continue;
-        const correctionAvailable = this.allowances.hasAvailableCorrection(trade.logicalTradeId);
         const target = this.analyzer.target(scope, trade);
         if (!target || this.analyzer.alreadyRequested(scope, target.logicalTradeVersionId)) continue;
-        const session = newYorkExtendedSession(target.tradingDateNewYork);
-        const desiredEnd = session ? dailyTradeFirstResultCoverageEnd(session, target.finalExitAtUtc) : null;
-        if (desiredEnd === null) continue;
-        const savedCoverage = this.analyzer.hasSavedCoverage(target, new Date(desiredEnd * 1000).toISOString());
-        if (!correctionAvailable && !(savedCoverage && this.analyzer.hasPriorAnalysis(scope, trade.logicalTradeId))) continue;
-        const job = this.analyzer.queue({
-          scope,
-          target,
-          desiredCoverageEndUtc: new Date(desiredEnd * 1000).toISOString(),
-          now,
-        });
-        if (!job.created) continue;
-        if (!savedCoverage && !this.allowances.claimCorrection({
-          logicalTradeId: trade.logicalTradeId,
-          jobId: job.jobId,
-          userId: scope.userId,
-          now,
-        })) {
-          this.analyzer.expireUnreservedJob(job.jobId, now);
-          continue;
-        }
-        queued.push(trade.logicalTradeId);
+        if (!this.analyzer.hasPriorAnalysis(scope, trade.logicalTradeId)) continue;
+        // A corrected version follows the same stable-trade retry cap as Analyze.
+        // Preserve old correction-opportunity evidence without minting waiver chains.
+        if (this.select(scope, target.representativeRoundTripId, now) === "queued") queued.push(trade.logicalTradeId);
       }
       return Object.freeze(queued);
     });

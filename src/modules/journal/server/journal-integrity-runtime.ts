@@ -46,6 +46,7 @@ import { JournalTradingDayReviewService } from "./reviews/journal-trading-day-re
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { LogicalTradeAnalyzerRepository } from "@/src/modules/level-analysis/server/logical-trade-analyzer-repository";
 import { LogicalTradeAnalyzerSelectionService } from "@/src/modules/level-analysis/server/logical-trade-analyzer-selection-service";
+import { TrendMomentumHistoryRepository } from "@/src/modules/level-analysis/server/trend-momentum-history-repository";
 import { SharedAnalyzerAllowanceRepository } from "@/src/modules/level-analysis/server/shared-analyzer-allowance-repository";
 
 export type JournalIntegrityRuntime = Readonly<{
@@ -126,6 +127,7 @@ export function createJournalIntegrityRuntime(
     logicalTrades,
     new LogicalTradeAnalyzerRepository(database),
     new SharedAnalyzerAllowanceRepository(database),
+    new TrendMomentumHistoryRepository(database),
   );
   const manualExecutionEdits = new JournalManualExecutionEditService(
     new JournalExecutionReconciliationRepository(database),

@@ -10,6 +10,7 @@ import { analyzerProgressMessage } from "./analyzer-progress-messages";
 import { buildWrittenTradeReview, type WrittenReviewFill } from "./analyzer-written-review-model";
 import { tradeSummaryPoints } from "./analyzer-trade-summary";
 import { AnalyzerHelpTooltip } from "../analytics/analyzer-help-tooltip";
+import { TradeIndicatorContext } from "./trade-indicator-context";
 
 function Help({ label, text }: { label: string; text: string }) {
   return <AnalyzerHelpTooltip label={label} text={text} />;
@@ -54,13 +55,14 @@ export function WrittenTradeAnalysis({ analysis, direction, currency, timezone, 
       {count != null && count < 100 ? <LinearProgress aria-label={`${count} of 100 analyzed trades`} value={Math.min(100, Math.max(0, count))} variant="determinate" sx={{ mt: 1.25, height: 5, borderRadius: 3 }} /> : null}
       {count != null && count >= 100 ? <Button href="/analytics/trade-analyzer/day" size="small" sx={{ mt: 0.75, px: 0 }}>View your analysis pages</Button> : null}
     </Box>
-    <Box><Heading title="Trade summary" help={`The key entry, exit and green-to-red findings for this saved trade. ${timeframe === "5m" ? "EMA 9 uses the last completed 5-minute candle before the entry." : "EMA 9 uses the saved one-minute candle containing the entry, including that minute's completed data."} VWAP is session-based through the execution minute. Profit-path timing and peak opportunity retain one-minute closes and exact executions when you change chart timeframe. Peak opportunity includes realized P/L plus the value of shares still held. Profitable-exit amounts are gross, before losing exits and fees; final Trade P/L combines all exits using your selected basis. Price movement after the final exit is not included.`} />
+    <Box><Heading title="Trade summary" help={`The key entry, exit and green-to-red findings for this saved trade. ${analysis.trendMomentum ? "EMA 9 and Session VWAP use the saved indicator history and only candles completed before entry. Unavailable new context is not replaced with an older calculation." : `${timeframe === "5m" ? "EMA 9 uses the last completed 5-minute candle before the entry." : "This older analysis uses the saved one-minute candle containing the entry, including that minute's completed data."} Older Session VWAP includes the execution minute.`} Profit-path timing and peak opportunity retain one-minute closes and exact executions when you change chart timeframe. Peak opportunity includes realized P/L plus the value of shares still held. Profitable-exit amounts are gross, before losing exits and fees; final Trade P/L combines all exits using your selected basis. Price movement after the final exit is not included.`} />
       <Typography variant="caption" color="text.secondary">{review?.basis === "net" ? "Net P/L · entered fees included" : "Gross P/L · before fees"}</Typography>
       {review && final ? <>
         <Typography variant="h6" sx={{ mt: 0.75, fontWeight: 850, color: pnlColor(review.finalPnl) }}>{final.isZero() ? "Finished at breakeven." : `Finished with a ${amount(final.abs().toFixed(), currency)} ${final.lt(0) ? "loss" : "profit"}.`}</Typography>
         <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2.25, display: "grid", gap: 0.65 }}>{tradeSummaryPoints(analysis, review, value => amount(value, currency), timeframe).map(point => <Typography component="li" variant="body2" key={point}>{point}</Typography>)}</Box>
       </> : null}
     </Box>
+    <TradeIndicatorContext analysis={analysis} timeframe={timeframe} currency={currency} timezone={timezone} />
     {!review ? <Alert severity="info">The saved executions are not complete enough to calculate this trade’s P/L story.</Alert> : <>
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "repeat(3, minmax(0, 1fr))" } }}>
         {[

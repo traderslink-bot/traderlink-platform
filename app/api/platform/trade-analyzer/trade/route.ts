@@ -148,6 +148,8 @@ function logicalAnalyzerView(
       observedAt: path.observedAtCandleTime,
     })),
     greenToRed: saved.analyzed.greenToRed,
+    trendMomentum: saved.analyzed.trendMomentum,
+    trendMomentumUnavailableReason: saved.analyzed.trendMomentumUnavailableReason,
     mismatchBrokerConfirmed: false,
     status: saved.status === "ready" ? "ready" : "pending",
   };

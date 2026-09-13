@@ -77,6 +77,7 @@ function eventLabel(value: DailyTradePatternOccurrenceRow["eventKind"]): string 
     case "entry": return "Entry";
     case "add": return "Add";
     case "partial_exit": return "Partial exit";
+    case "temporary_flat": return "Position closed before re-entry";
     case "final_exit": return "Final exit";
   }
 }
@@ -148,7 +149,9 @@ export function CandlePatternOccurrenceExplorer({
   onClose,
   pattern,
   startDate,
+  indicatorQuery = "",
 }: {
+  indicatorQuery?: string;
   currency: string | null;
   direction: "long" | "short";
   endDate: string | null;
@@ -206,6 +209,10 @@ export function CandlePatternOccurrenceExplorer({
       params.set("end", endDate);
     }
     if (cursor) params.set("cursor", cursor);
+    const indicators = new URLSearchParams(indicatorQuery);
+    for (const key of ["movement_interval", "movement_alignment", "movement_rsi"]) {
+      const value = indicators.get(key); if (value) params.set(key, value);
+    }
     queueMicrotask(() => {
       if (!controller.signal.aborted) setState("loading");
     });
@@ -214,6 +221,7 @@ export function CandlePatternOccurrenceExplorer({
       signal: controller.signal,
     }).then(async (response) => {
       const payload = await response.json() as OccurrenceResponse;
+      if (controller.signal.aborted) return;
       if (!response.ok || payload.status !== "ready" || !payload.page) {
         throw new Error("Pattern occurrences are unavailable.");
       }
@@ -230,7 +238,7 @@ export function CandlePatternOccurrenceExplorer({
       setState("error");
     });
     return () => controller.abort();
-  }, [currency, cursor, direction, endDate, execution, location, moneyBasis, page, pageSize, pattern, startDate, ticker, timeframe]);
+  }, [currency, cursor, direction, endDate, execution, location, moneyBasis, page, pageSize, pattern, startDate, ticker, timeframe, indicatorQuery]);
 
   useEffect(() => {
     if (!selected) return;
@@ -246,6 +254,7 @@ export function CandlePatternOccurrenceExplorer({
       signal: controller.signal,
     }).then(async (response) => {
       const payload = await response.json() as ReplayResponse;
+      if (controller.signal.aborted) return;
       if (!response.ok || payload.status !== "ready" || !payload.analysis) {
         throw new Error("Replay is unavailable.");
       }

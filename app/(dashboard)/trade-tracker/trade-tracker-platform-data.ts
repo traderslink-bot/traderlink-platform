@@ -2,6 +2,7 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
+import { scaleTradeIndicatorResult } from "@/src/lib/trade-candle-analysis/trend-momentum-reporting";
 import { readAnalyzerWrittenReviewContext } from "@/src/modules/level-analysis/server/analyzer-written-review-context";
 
 import {
@@ -460,6 +461,7 @@ function logicalAnalyzerView(saved: LogicalTradeAnalyzerSavedResult | null): Day
     high: candle.highDecimal, low: candle.lowDecimal, open: candle.openDecimal,
     time: candle.time, turnover: candle.turnoverDecimal ?? null, volume: candle.volumeDecimal }));
   return { availableAtUtc: saved.availableAtUtc, candles: candleViews, detailLoaded: true,
+    analysisRevisionRef: saved.analysisVersionId ?? null,
     detailVersionRef: saved.logicalTradeVersionId,
     events: withExecutionPatternContexts(candleViews.map((candle) => ({
       close: Number(candle.close), high: Number(candle.high), low: Number(candle.low),
@@ -482,6 +484,8 @@ function logicalAnalyzerView(saved: LogicalTradeAnalyzerSavedResult | null): Day
       favorableMove: path.favorableMoveDecimal, minutesAfterExit: path.minutesAfterExit,
       observedAt: path.observedAtCandleTime,
     })), greenToRed: saved.analyzed.greenToRed, mismatchBrokerConfirmed: false,
+    trendMomentum: saved.analyzed.trendMomentum,
+    trendMomentumUnavailableReason: saved.analyzed.trendMomentumUnavailableReason,
     status: saved.status === "ready" ? "ready" : "pending" };
 }
 
@@ -716,6 +720,7 @@ ORDER BY candle_time_utc_seconds`);
         detailLoaded: true,
         detailVersionRef: analysis.current_round_trip_version_id,
         events: eventViews,
+        analysisRevisionRef: analysis.daily_trade_analysis_version_id,
         executionMismatchSetId: null,
         executionMismatches: [],
         finalExitPaths: paths.all(analysis.daily_trade_analysis_version_id).map((path) => ({
@@ -860,6 +865,7 @@ export function scaleDaySessionTradeAnalyzer(
   });
   return Object.freeze({
     ...analyzer,
+    ...(analyzer.trendMomentum ? { trendMomentum: scaleTradeIndicatorResult(analyzer.trendMomentum, multiplier) } : {}),
     candles: analyzer.candles.map((candle) => Object.freeze({
       ...candle,
       close: scaleReportingDecimal(candle.close, multiplier)!,

@@ -1,4 +1,5 @@
 import type { OverviewDateRange } from "@/app/(dashboard)/analytics/overview-date-range-control";
+import { analyzerViewSelection } from "@/src/lib/trade-candle-analysis/trend-momentum-view-selection";
 import type { EntryPriceComparison, EntryPriceInsights, EntryPriceResult, ExecutionChartData, ExecutionTradeRow } from "@/app/(dashboard)/analytics/execution-analytics-client";
 import type { ResultsTickerRow } from "@/app/(dashboard)/analytics/results-ticker-table";
 import type { TimingChartData } from "@/app/(dashboard)/analytics/timing/timing-analytics-client";
@@ -20,6 +21,7 @@ export type JournalAnalyticsOfflineRouteKind =
   | "trade-analyzer-green-to-red"
   | "trade-analyzer-scaling-out"
   | "trade-analyzer-candle-patterns"
+  | "trade-analyzer-trend-momentum"
   | "trade-analyzer-trades";
 
 export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION =
@@ -33,6 +35,7 @@ export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS: Readonly<
   "analytics-results": "journal-analytics:results:current",
   "analytics-timing": "journal-analytics:timing:current",
   "trade-analyzer-candle-patterns": "journal-analytics:trade-analyzer:candle-patterns:v2",
+  "trade-analyzer-trend-momentum": "journal-analytics:trade-analyzer:trend-momentum:v1",
   "trade-analyzer-day": "journal-analytics:trade-analyzer:day:v2",
   "trade-analyzer-entry-exit": "journal-analytics:trade-analyzer:entry-exit:v3",
   "trade-analyzer-green-to-red": "journal-analytics:trade-analyzer:green-to-red:v2",
@@ -91,6 +94,7 @@ export type JournalAnalyticsExecutionOfflineViewModel = Readonly<{
 }>;
 
 export type JournalTradeAnalyzerOfflineViewModel = Readonly<{
+  selectionQuery?: string;
   dateRange: OverviewDateRange;
   evidenceQuery: EvidenceQuery;
   kind:
@@ -99,7 +103,8 @@ export type JournalTradeAnalyzerOfflineViewModel = Readonly<{
     | "trade-analyzer-mfe-mae"
     | "trade-analyzer-green-to-red"
     | "trade-analyzer-scaling-out"
-    | "trade-analyzer-candle-patterns";
+    | "trade-analyzer-candle-patterns"
+    | "trade-analyzer-trend-momentum";
   model: DailyTradeLongTermAnalyticsV2Model;
   version: 1;
   view: Exclude<TradeAnalysisView, "trades">;
@@ -126,6 +131,7 @@ const ANALYZER_KIND_BY_VIEW: Readonly<
   Record<Exclude<TradeAnalysisView, "trades">, JournalTradeAnalyzerOfflineViewModel["kind"]>
 > = Object.freeze({
   "candle-patterns": "trade-analyzer-candle-patterns",
+  "trend-momentum": "trade-analyzer-trend-momentum",
   day: "trade-analyzer-day",
   "entry-exit": "trade-analyzer-entry-exit",
   "green-to-red": "trade-analyzer-green-to-red",
@@ -158,6 +164,7 @@ function localTradeRef(index: number): string {
 }
 
 export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
+  selectionQuery?: string;
   dateRange: OverviewDateRange;
   evidenceQuery: EvidenceQuery;
   model: DailyTradeLongTermAnalyticsV2Model;
@@ -173,6 +180,23 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
   };
   const model = Object.freeze({
     ...input.model,
+    ...(input.model.patternObservations ? { patternObservations: input.model.patternObservations.map((row) => ({ ...row,
+      tradeId: localRef(row.tradeId), representativeRoundTripId: localRef(row.representativeRoundTripId),
+      analysisVersionId: localRef(row.analysisVersionId), eventId: localRef(row.eventId), occurrenceKey: localRef(row.occurrenceKey),
+    })) } : {}),
+    ...(input.model.trendMomentum ? { trendMomentum: {
+      ...input.model.trendMomentum,
+      records: input.model.trendMomentum.records.map((row) => ({ ...row,
+        tradeId: localRef(row.tradeId), representativeRoundTripId: localRef(row.representativeRoundTripId),
+        executionId: localRef(row.executionId), context: row.context ? { ...row.context, eventId: localRef(row.context.eventId) } : null,
+      })),
+      trades: input.model.trendMomentum.trades.map((trade) => ({ ...trade,
+        tradeId: localRef(trade.tradeId), representativeRoundTripId: localRef(trade.representativeRoundTripId),
+        indicators: trade.indicators ? { ...trade.indicators,
+          executions: trade.indicators.executions.map((event) => ({ ...event, eventId: localRef(event.eventId) })),
+        } : null,
+      })),
+    } } : {}),
     eventPaths: Object.freeze(input.model.eventPaths.map((row) => Object.freeze({
       ...row,
       roundTripId: localRef(row.roundTripId),
@@ -189,6 +213,7 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
       ...input.model.greenToRedOpportunity,
       rows: Object.freeze(input.model.greenToRedOpportunity.rows.map((row) => Object.freeze({
         ...row,
+        tradeId: localRef(row.tradeId),
         roundTripId: localRef(row.roundTripId),
       }))),
     }),
@@ -204,10 +229,12 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
       recordsByDirection: Object.freeze({
         long: Object.freeze(input.model.profitZones.recordsByDirection.long.map((row) => Object.freeze({
           ...row,
+          tradeId: localRef(row.tradeId),
           roundTripId: localRef(row.roundTripId),
         }))),
         short: Object.freeze(input.model.profitZones.recordsByDirection.short.map((row) => Object.freeze({
           ...row,
+          tradeId: localRef(row.tradeId),
           roundTripId: localRef(row.roundTripId),
         }))),
       }),
@@ -227,6 +254,7 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
   return Object.freeze({
     dateRange: Object.freeze({ ...input.dateRange }),
     evidenceQuery: Object.freeze({ ...input.evidenceQuery }),
+    selectionQuery: analyzerViewSelection(new URLSearchParams(input.selectionQuery ?? "")),
     kind: ANALYZER_KIND_BY_VIEW[input.view],
     model,
     version: 1,
@@ -305,5 +333,7 @@ export function isJournalAnalyticsOfflineViewModel(
     return isRecord(value.dateRange) && (value.page === null || isRecord(value.page));
   }
   return isRecord(value.dateRange) && isRecord(value.evidenceQuery) && isRecord(value.model) &&
+    (value.selectionQuery === undefined || (typeof value.selectionQuery === "string" && value.selectionQuery.length <= 4096 &&
+      analyzerViewSelection(new URLSearchParams(value.selectionQuery)) === value.selectionQuery)) &&
     typeof value.view === "string";
 }

@@ -1,4 +1,9 @@
 import "server-only";
+import { withSavedPatternRuntime } from "@/src/modules/level-analysis/server/trend-momentum-pattern-runtime";
+import { pageSavedAnalyzedTrades } from "@/src/modules/level-analysis/server/trend-momentum-analyzed-trades";
+import { readSavedPatternPopulation } from "@/src/modules/level-analysis/server/trend-momentum-pattern-service";
+import { summarizeSavedPatterns } from "@/src/lib/trade-candle-analysis/trend-momentum-patterns";
+import { readSavedTradeMovement } from "@/src/modules/level-analysis/server/trend-momentum-movement-service";
 
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -22,10 +27,7 @@ import {
 import { journalReportingCurrencyMultiplier } from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
 import {
   buildDailyTradeLongTermAnalytics,
-  readDailyTradeAnalysisCurrencies,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
-import { readDailyTradeAnalyzedTrades } from "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
-import { reportDailyTradeAnalyzedTrades } from "@/src/modules/level-analysis/server/daily-trade-analysis-reporting";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
@@ -34,12 +36,15 @@ import type { OverviewDateRange } from "./overview-date-range-control";
 import { AnalyzedTradesIndex } from "./analyzed-trades-index";
 import { TradeAnalysisClient, type TradeAnalysisView } from "./trade-analysis-client";
 import { TradeAnalyzerHelpLink } from "./trade-analyzer-help-link";
+import { readTrendMomentumAnalytics } from "@/src/modules/level-analysis/server/trend-momentum-analytics-service";
+import { buildIndicatorSupportingPage } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
 
 const VIEW_DETAILS: Readonly<Record<TradeAnalysisView, Readonly<{
   helpHref: string;
   title: string;
 }>>> = Object.freeze({
   day: Object.freeze({ helpHref: "/help/trade-analyzer/day-trade-analysis", title: "Day Trade Analysis" }),
+  "trend-momentum": Object.freeze({ helpHref: "/help/trade-analyzer/trend-momentum", title: "Trend & Momentum" }),
   "entry-exit": Object.freeze({ helpHref: "/help/trade-analyzer/entry-exit-analysis", title: "Entries and exits" }),
   "mfe-mae": Object.freeze({ helpHref: "/help/trade-analyzer/mfe-mae", title: "Room after entry" }),
   "green-to-red": Object.freeze({ helpHref: "/help/trade-analyzer/green-to-red-analysis", title: "Green to red" }),
@@ -164,29 +169,15 @@ export async function TradeAnalysisPage({
         ));
 
   if (view === "trades") {
-    const tradeIndex = await withJournalAnalyticsReportingDashboardRuntime(
-      scope,
-      ({ reportingContext }) => withReadonlyPlatformDatabase({}, (database) => {
-        const availableCurrencies = readDailyTradeAnalysisCurrencies(database, scope);
-        const currency = availableCurrencies.length > 0
-          ? new PlatformUserPreferenceRepository(database)
-              .getActiveUserReportingCurrency(scope.userId)
-          : null;
-        const page = currency === null ? null : reportDailyTradeAnalyzedTrades(
-          readDailyTradeAnalyzedTrades(database, scope, {
-            afterCursor: null,
-            currency,
-            endDate: dateRange.endDate,
-            moneyBasis,
-            pageSize: 25,
-            startDate: dateRange.startDate,
-            ticker: "",
-          }),
-          reportingContext,
-        );
-        return Object.freeze({ currency, page });
-      }),
-    );
+    const indicatorQuery = new URLSearchParams(Object.entries(searchParams).flatMap(([key, value]) => typeof value === "string" && (key.startsWith("indicator_") || ["direction", "range", "start", "end", "basis"].includes(key)) ? [[key, value]] : []));
+    indicatorQuery.set("basis", moneyBasis);
+    if (dateRange.startDate && dateRange.endDate) { indicatorQuery.set("start", dateRange.startDate); indicatorQuery.set("end", dateRange.endDate); }
+    else { indicatorQuery.delete("start"); indicatorQuery.delete("end"); }
+    const tradeIndex = await withSavedPatternRuntime(scope, { basis: moneyBasis, startDate: dateRange.startDate, endDate: dateRange.endDate, includePatterns: false }, ({ trades, timezone, runtime }) => ({
+      currency: runtime.reportingCurrency,
+      page: pageSavedAnalyzedTrades(trades, { query: indicatorQuery, timezone, scopeIdentity: `${scope.workspaceId}:${scope.activeAccountId}:${runtime.reportingCurrency}`,
+        pageSize: 25, cursor: null, ticker: "" }),
+    }));
     const offlineModel = createJournalAnalyzedTradesOfflineViewModel({
       currency: tradeIndex.currency,
       dateRange,
@@ -202,7 +193,7 @@ export async function TradeAnalysisPage({
         generatedAtUtc={new Date().toISOString()}
         model={offlineModel}
         pathname={baseHref}
-        queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}`}
+        queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}:conditions:${indicatorQuery.toString()}`}
         reportingCurrency={tradeIndex.currency}
         routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["trade-analyzer-trades"]}
@@ -214,6 +205,8 @@ export async function TradeAnalysisPage({
             <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
           </Stack>
           <AnalyzedTradesIndex
+            key={indicatorQuery.toString()}
+            indicatorQuery={indicatorQuery.toString()}
             currency={tradeIndex.currency}
             dateRange={dateRange}
             endDate={dateRange.endDate}
@@ -247,9 +240,9 @@ export async function TradeAnalysisPage({
     if (currency !== null) do {
       const response = analytics.getRoundTripAnalyticsTable(scope, buildJournalAnalyticsDashboardQuery(scope, {
         afterCursor: cursor,
-        // Entry/Exit selects by the saved trade's final close below, keeping all
+        // Saved-trade views select by the trade's final close below, keeping all
         // earlier round trips in that trade available for its complete results.
-        closingDateRange: view === "entry-exit" ? { kind: "all_available" } : closingRange(dateRange),
+        closingDateRange: ["day", "entry-exit", "trend-momentum", "mfe-mae", "candle-patterns", "green-to-red", "scaling-out"].includes(view) ? { kind: "all_available" } : closingRange(dateRange),
         currency,
         metricIds: ["included_count"],
         moneyBasis,
@@ -270,10 +263,11 @@ export async function TradeAnalysisPage({
           )] as const]
         : [];
     }));
-    return Object.freeze({
-      generatedAtUtc: overview.generatedAtUtc,
-      calculationVersion: overview.registryVersion,
-      model: buildDailyTradeLongTermAnalytics(
+    const patternPopulation = view === "candle-patterns" ? readSavedPatternPopulation({ database, scope, journalRows: rows,
+      startDate: dateRange.startDate, endDate: dateRange.endDate }) : null;
+    const scenarioPopulation = view === "green-to-red" || view === "scaling-out" ? readSavedPatternPopulation({ database, scope, journalRows: rows,
+      startDate: dateRange.startDate, endDate: dateRange.endDate, includePatterns: false }) : null;
+    const baseModel = buildDailyTradeLongTermAnalytics(
         database,
         scope,
         Object.freeze(rows),
@@ -282,15 +276,38 @@ export async function TradeAnalysisPage({
         timezone,
         multipliers,
         selectedProfitZoneMinimumHoldMinutes,
-        view === "entry-exit" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
-      ),
+        view === "entry-exit" || view === "trend-momentum" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
+        view === "mfe-mae",
+        view === "day" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
+        view === "green-to-red" || view === "scaling-out" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
+      );
+    return Object.freeze({
+      generatedAtUtc: overview.generatedAtUtc,
+      calculationVersion: overview.registryVersion,
+      model: Object.freeze({ ...baseModel,
+        ...(scenarioPopulation ? { eligibleDayTradeCount: scenarioPopulation.eligibleDayTradeCount,
+          analyzedTradeCount: scenarioPopulation.analyzedTradeCount, directionTradeCounts: scenarioPopulation.directionTradeCounts,
+          coveragePercent: scenarioPopulation.eligibleDayTradeCount ? scenarioPopulation.analyzedTradeCount / scenarioPopulation.eligibleDayTradeCount * 100 : null } : {}),
+        ...(patternPopulation ? { patternObservations: patternPopulation.observations,
+          patterns: summarizeSavedPatterns(patternPopulation.observations, { interval: "1m", alignment: "any", rsiBand: "any" }).rows,
+          eligibleDayTradeCount: patternPopulation.eligibleDayTradeCount, analyzedTradeCount: patternPopulation.analyzedTradeCount,
+          directionTradeCounts: patternPopulation.directionTradeCounts,
+          coveragePercent: patternPopulation.eligibleDayTradeCount ? patternPopulation.analyzedTradeCount / patternPopulation.eligibleDayTradeCount * 100 : null } : {}),
+        ...(view === "mfe-mae" ? readSavedTradeMovement({ database, scope, journalRows: rows, legacy: baseModel, multipliers,
+          startDate: dateRange.startDate, endDate: dateRange.endDate }) : {}),
+        ...(["day", "entry-exit", "trend-momentum", "green-to-red", "scaling-out"].includes(view) ? { trendMomentum: readTrendMomentumAnalytics({ database, scope, journalRows: rows,
+        startDate: dateRange.startDate, endDate: dateRange.endDate }) } : {}) }),
     });
   }));
+  const directionCounts = view === "trend-momentum" && result.model.trendMomentum
+    ? { long: result.model.trendMomentum.trades.filter((trade) => trade.direction === "long").length,
+        short: result.model.trendMomentum.trades.filter((trade) => trade.direction === "short").length }
+    : result.model.directionTradeCounts;
   const evidenceQuery = Object.freeze({
     currency: result.model.currency,
-    direction: searchParams.direction === "short" && result.model.directionTradeCounts.short > 0
+    direction: searchParams.direction === "short" && directionCounts.short > 0
       ? "short" as const
-      : result.model.directionTradeCounts.long > 0 ? "long" as const : "short" as const,
+      : directionCounts.long > 0 ? "long" as const : "short" as const,
     endDate: dateRange.endDate,
     moneyBasis,
     profitZoneMinimumHoldMinutes: selectedProfitZoneMinimumHoldMinutes,
@@ -298,6 +315,7 @@ export async function TradeAnalysisPage({
     startDate: dateRange.startDate,
   });
   const offlineModel = createJournalTradeAnalyzerOfflineViewModel({
+    selectionQuery: new URLSearchParams(Object.entries(searchParams).flatMap(([key, value]) => typeof value === "string" ? [[key, value]] : [])).toString(),
     dateRange,
     evidenceQuery,
     model: result.model,
@@ -312,7 +330,7 @@ export async function TradeAnalysisPage({
       generatedAtUtc={result.generatedAtUtc}
       model={offlineModel}
       pathname={baseHref}
-      queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}:zone-hold:${selectedProfitZoneMinimumHoldMinutes}`}
+      queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}:zone-hold:${selectedProfitZoneMinimumHoldMinutes}:selection:${offlineModel.selectionQuery ?? ""}`}
       reportingCurrency={result.model.currency}
       routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
       viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS[offlineModel.kind]}
@@ -324,6 +342,9 @@ export async function TradeAnalysisPage({
           <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
         </Stack>
         <TradeAnalysisClient
+          indicatorSupportingPage={view === "trend-momentum" && result.model.trendMomentum
+            ? buildIndicatorSupportingPage(result.model.trendMomentum, { get: (key) => typeof searchParams[key] === "string" ? searchParams[key] as string : null }, evidenceQuery.direction)
+            : undefined}
           evidenceQuery={evidenceQuery}
           model={result.model}
           view={view}

@@ -91,8 +91,8 @@ export function ManualTradePostEntryReview({
     (selectedIndices[0]! >= 0 && selectedIndices.at(-1)! - selectedIndices[0]! + 1 === selectedIndices.length);
 
   const toggleAnalyzer = (representative: string, checked: boolean) => {
-    if (checked && (!analyzerUses || analyzerGroupRefs.length >= analyzerUses.selectableAvailable)) {
-      onError("You have used all available Trade Analyzer uses.");
+    if (checked && analyzerUses?.enabled !== true) {
+      onError("Trade Analyzer is currently unavailable.");
       return;
     }
     onError(null);
@@ -104,8 +104,9 @@ export function ManualTradePostEntryReview({
   return <Stack spacing={1.5}>
     {showAnalyzer ? <Box>
       <Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography>
-      <Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.dailyAvailable - analyzerGroupRefs.length)} available today</Typography>
-      <Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerGroupRefs.length)} available this period · resets in {analyzerUses.daysUntilReset} days</Typography>
+      <Typography color="text.secondary" variant="body2">{analyzerUses.dailyAvailable} available today</Typography>
+      <Typography color="text.secondary" variant="body2">{analyzerUses.periodAvailable} available this period · resets in {analyzerUses.daysUntilReset} days</Typography>
+      <Typography color="text.secondary" variant="body2">Analysis using sufficient saved candles is free. Selecting a trade does not spend a use.</Typography>
     </Box> : null}
     {units.map((unit) => {
       const members = unit.groupRefs.map((ref) => groups.find((group) => group.groupRef === ref))

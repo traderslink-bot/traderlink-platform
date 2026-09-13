@@ -7,6 +7,7 @@ import { validateDailyTradeExecutionCandles } from "./daily-trade-execution-cand
 import { LogicalTradeAnalyzerRepository, type ClaimedLogicalTradeAnalyzerJob } from "./logical-trade-analyzer-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
 import type { LogicalTradeAnalyzerNotificationService } from "./logical-trade-analyzer-notification-service";
+import type { TrendMomentumHistoryService } from "./trend-momentum-history-service";
 
 type ProviderFactory = (scope: AccountScope) => Promise<MarketDataProvider>;
 
@@ -28,6 +29,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
     private readonly providerFor: ProviderFactory,
     private readonly notifications?: LogicalTradeAnalyzerNotificationService,
     private readonly now: () => Date = () => new Date(),
+    private readonly trendMomentum?: TrendMomentumHistoryService,
   ) {}
 
   async runOne(): Promise<boolean> {
@@ -83,6 +85,9 @@ export class LogicalTradeMoomooAnalyzerWorker {
       return true;
     }
     const desiredEnd = Math.min(policyEnd, availableEnd);
+    // Readiness and measurement endpoints are separate from reusable download
+    // coverage. Fetch the available session only when saved coverage is lacking.
+    const downloadEnd = availableEnd;
     setDiagnosticStage("read_current_candles");
     let current = this.candles.readCurrentCandles(job.marketSessionSetId);
     setDiagnosticStage("read_current_session_version");
@@ -95,12 +100,12 @@ export class LogicalTradeMoomooAnalyzerWorker {
     const recordFailure = (failureReasonCode: string,
       outcome: "no_coverage" | "provider_unavailable", completedAt: Date): string =>
       this.candles.persistMarketSession({ candles: [], completedAtUtc: completedAt.toISOString(),
-        coverageEndUtc: new Date(desiredEnd * 1000).toISOString(), failureReasonCode,
+        coverageEndUtc: new Date(downloadEnd * 1000).toISOString(), failureReasonCode,
         marketSessionSetId: job.marketSessionSetId, outcome,
         promoteCurrent: current.length === 0,
         providerExchangeTimezone: "America/New_York", providerUtcOffsetSeconds: null,
         requestedStartUtc: new Date(session.startTime * 1000).toISOString(),
-        requestedEndUtc: new Date(desiredEnd * 1000).toISOString(), sha256: null });
+        requestedEndUtc: new Date(downloadEnd * 1000).toISOString(), sha256: null });
     if (!hasDesiredCoverage) {
       setDiagnosticStage("resolve_designated_scope");
       const providerScope = this.allowances.designatedScope();
@@ -129,6 +134,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
       setDiagnosticStage("begin_moomoo_acquisition");
       const acquisition = this.allowances.beginAcquisition({
         jobId: job.jobId, marketSessionSetId: job.marketSessionSetId, now: startedAt,
+        historyContinuation: Boolean(this.trendMomentum),
       });
       if (!acquisition) {
         // A missing provider or the single-acquisition/global guard is not a
@@ -138,18 +144,20 @@ export class LogicalTradeMoomooAnalyzerWorker {
         return true;
       }
       chargedAcquisitionId = acquisition.acquisitionId;
+      const historyRequest = this.trendMomentum?.beginSession(job, acquisition.acquisitionId, session.startTime, downloadEnd);
       setDiagnosticStage("fetch_moomoo_candles");
       const result = await provider.fetch({
         symbol: job.target.providerSymbol, interval: "1m", startTime: session.startTime,
-        endTime: desiredEnd, includeExtendedHours: true,
+        endTime: downloadEnd, includeExtendedHours: true,
       });
       const completedAt = this.now();
+      if (historyRequest) this.trendMomentum?.finishSession(job, historyRequest, result);
       if (!result.ok) {
         const outcome = result.code === "provider_unavailable" ? "provider_unavailable" : "no_coverage";
         sessionVersionId = recordFailure(result.failureReasonCode, outcome, completedAt);
         console.error("TraderLink Trade Analyzer market-data acquisition failed.", {
           adapter: "moomoo_history_kline_v1", failureReasonCode: result.failureReasonCode,
-          requestedEndUtc: new Date(desiredEnd * 1000).toISOString(),
+          requestedEndUtc: new Date(downloadEnd * 1000).toISOString(),
           requestedStartUtc: new Date(session.startTime * 1000).toISOString(),
           symbol: job.target.providerSymbol,
         });
@@ -160,7 +168,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
         (outcome === "provider_unavailable"
           ? this.notifications?.notifySharedConnectionFailure.bind(this.notifications)
           : this.notifications?.notifyFailure.bind(this.notifications)
-        )?.({ occurredAt: completedAt, scope: job.scope, target: job.target });
+        )?.({ occurredAt: completedAt, scope: job.scope, target: job.target, failureReason: outcome });
         return true;
       }
       current = result.candles;
@@ -168,17 +176,17 @@ export class LogicalTradeMoomooAnalyzerWorker {
       if (retainSharedSession(job.target.tradingDateNewYork, job.createdAtUtc, completedAt)) {
         sessionVersionId = this.candles.persistMarketSession({
           candles: current, completedAtUtc: completedAt.toISOString(),
-          coverageEndUtc: new Date(desiredEnd * 1000).toISOString(), failureReasonCode: null,
+          coverageEndUtc: new Date(downloadEnd * 1000).toISOString(), failureReasonCode: null,
           marketSessionSetId: job.marketSessionSetId, outcome: "ready",
           providerExchangeTimezone: result.exchangeTimezone,
           providerUtcOffsetSeconds: result.utcOffsetSeconds,
           requestedStartUtc: new Date(session.startTime * 1000).toISOString(),
-          requestedEndUtc: new Date(desiredEnd * 1000).toISOString(),
+          requestedEndUtc: new Date(downloadEnd * 1000).toISOString(),
           sha256: result.normalizedCandleSha256,
         });
       } else sessionVersionId = null;
       this.allowances.completeAcquisition({ acquisitionId: acquisition.acquisitionId, now: completedAt, outcome: "ready" });
-    } else {
+    } else if (!this.trendMomentum) {
       this.allowances.release(job.jobId, startedAt);
     }
     setDiagnosticStage("validate_execution_candles");
@@ -202,9 +210,25 @@ export class LogicalTradeMoomooAnalyzerWorker {
       this.notifications?.notifyNeedsCorrection({ occurredAt: completedAt, scope: job.scope, target: job.target });
       return true;
     }
+    let trend: Awaited<ReturnType<TrendMomentumHistoryService["prepare"]>> | null = null;
+    let trendFailed = false;
+    if (this.trendMomentum && desiredEnd >= policyEnd) {
+      try { trend = await this.trendMomentum.prepare(job, desiredEnd); }
+      catch {
+        trendFailed = true;
+        console.error("Trade Analyzer indicator history unavailable; retaining core trade analysis.");
+      }
+    }
+    if (trend?.pending) {
+      this.logical.reschedule(job.jobId, new Date(this.now().getTime() + 60_000), this.now());
+      return true;
+    }
+    this.allowances.release(job.jobId, this.now());
     this.logical.persistResult({
-      analyzed: analyzeDailyTrade({ candles: current, dailyRanges: [],
-        direction: job.target.direction, events: job.target.events }),
+      analyzed: { ...analyzeDailyTrade({ candles: current, dailyRanges: [],
+        direction: job.target.direction, events: job.target.events,
+        ...(trend && !trend.pending ? { trendMomentum: { ...trend.input, historyOutcome: trend.outcome } } : {}) }),
+        ...(trendFailed ? { trendMomentumUnavailableReason: "history_unavailable" as const } : {}) },
       evidenceCandles: current,
       marketSessionSetVersionId: sessionVersionId, now: completedAt, scope: job.scope,
       status: hasDesiredCoverage && desiredEnd >= policyEnd ? "ready" : "pending", target: job.target,

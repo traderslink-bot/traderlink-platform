@@ -1,53 +1,22 @@
-import { readDailyTradeAnalyzedTrades } from
-  "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
-import { reportDailyTradeAnalyzedTrades } from
-  "@/src/modules/level-analysis/server/daily-trade-analysis-reporting";
-import { resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from
-  "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireTraderLinkPlatformRequestScope } from
-  "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { isTraderLinkPlatformError } from
-  "@/src/modules/platform/server/database/platform-migration-contract";
-import { withReadonlyPlatformDatabase } from
-  "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { withSavedPatternRuntime } from "@/src/modules/level-analysis/server/trend-momentum-pattern-runtime";
+import { pageSavedAnalyzedTrades } from "@/src/modules/level-analysis/server/trend-momentum-analyzed-trades";
+import { resolveJournalAnalyticsMoneyBasis } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function optionalDate(value: string | null): string | null {
-  return value?.trim() || null;
-}
-
 export async function GET(request: Request): Promise<Response> {
   try {
-    const url = new URL(request.url);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const page = await withJournalAnalyticsReportingDashboardRuntime(
-      scope,
-      ({ pnlReportingBasis, reportingContext }) => withReadonlyPlatformDatabase({}, (database) =>
-        reportDailyTradeAnalyzedTrades(
-          readDailyTradeAnalyzedTrades(database, scope, {
-            afterCursor: url.searchParams.get("cursor"),
-            currency: optionalDate(url.searchParams.get("currency")),
-            endDate: optionalDate(url.searchParams.get("end")),
-            moneyBasis: resolveJournalAnalyticsMoneyBasis(url.searchParams.get("basis"), pnlReportingBasis),
-            pageSize: Number(url.searchParams.get("pageSize") ?? 25),
-            startDate: optionalDate(url.searchParams.get("start")),
-            ticker: (url.searchParams.get("ticker") ?? "").slice(0, 32),
-          }),
-          reportingContext,
-        )),
-    );
-    return Response.json({ status: "ready", page }, {
-      headers: { "cache-control": "no-store" },
+    const query = new URL(request.url).searchParams, scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const page = await withSavedPatternRuntime(scope, { basis: query.get("basis"), startDate: query.get("start")?.trim() || null, endDate: query.get("end")?.trim() || null, includePatterns: false }, ({ trades, timezone, runtime }) => {
+      query.set("basis", resolveJournalAnalyticsMoneyBasis(query.get("basis"), runtime.pnlReportingBasis));
+      return pageSavedAnalyzedTrades(trades, { query, timezone, scopeIdentity: `${scope.workspaceId}:${scope.activeAccountId}:${runtime.reportingCurrency}`,
+        pageSize: Number(query.get("pageSize") ?? 25), cursor: query.get("cursor"), ticker: (query.get("ticker") ?? "").slice(0, 32) });
     });
+    return Response.json({ status: "ready", page }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
-    const code = isTraderLinkPlatformError(error)
-      ? error.code
-      : "TRADERLINK_ANALYZED_TRADES_UNAVAILABLE";
-    return Response.json({ status: "unavailable", code }, {
-      status: code.includes("ACCESS_DENIED") ? 403 :
-        code.includes("VALIDATION_FAILED") ? 400 : 503,
-    });
+    const code = isTraderLinkPlatformError(error) ? error.code : "TRADERLINK_ANALYZED_TRADES_UNAVAILABLE";
+    return Response.json({ status: "unavailable", code }, { status: code.includes("ACCESS_DENIED") ? 403 : code.includes("VALIDATION_FAILED") ? 400 : 503, headers: { "cache-control": "no-store" } });
   }
 }

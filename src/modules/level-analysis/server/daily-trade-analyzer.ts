@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import { analyzeTradeExecutionIndicators } from "@/src/lib/trade-candle-analysis/trend-momentum-executions";
 
 import type { TradeCandle } from "@/src/lib/trade-candle-analysis/candle-analysis";
 import {
@@ -26,6 +27,8 @@ import {
 } from "../contracts/daily-trade-analyzer-contracts";
 import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
 import { analyzeDailyTradeGreenToRed } from "./daily-trade-green-to-red-analyzer";
+import { tradeIndicatorLandmarks } from "./trend-momentum-landmark-inputs";
+import { saveExecutionIndicatorFilterContext } from "../../../lib/trade-candle-analysis/trend-momentum-execution-filter";
 
 function numericCandles(candles: readonly NormalizedMarketCandle[]): readonly TradeCandle[] {
   return Object.freeze(candles.map((candle) => Object.freeze({
@@ -465,6 +468,20 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
   const fiveMinuteCandles = aggregateCompleteExecutionTimeframeCandles(candles, "5m");
   const fiveMinuteIndicatorPoints = calculateIndicatorPoints(fiveMinuteCandles, { vwapSource: "turnover" });
   const states = positionStates(events);
+  const positionCycles: { openedAt: number; closedAt: number; closingPrice: number }[] = [];
+  let cycleOpenedAt: number | null = null;
+  let timingUnavailable = false;
+  if (input.trendMomentum) for (const event of events) {
+    const state = states.get(event.eventId)!;
+    const at = Date.parse(event.executedAtUtc) / 1000;
+    if (state.quantityBefore.isZero() && state.quantityAfter.gt(0)) cycleOpenedAt = at;
+    if (state.quantityBefore.gt(0) && state.quantityAfter.isZero()) {
+      if (cycleOpenedAt === null || !Number.isFinite(at) || at <= cycleOpenedAt) timingUnavailable = true;
+      else positionCycles.push({ openedAt: cycleOpenedAt, closedAt: at, closingPrice: Number(event.priceDecimal) });
+      cycleOpenedAt = null;
+    }
+  }
+  if (cycleOpenedAt !== null) timingUnavailable = true;
   const eventSnapshots = Object.freeze(events.map((event) => {
     const state = states.get(event.eventId);
     if (!state) throw new Error("daily_trade_event_position_state_missing");
@@ -498,5 +515,23 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
     direction: input.direction,
     events,
   });
-  return Object.freeze({ eventSnapshots, finalExitPaths, greenToRed });
+  let trendResult: Pick<DailyTradeAnalyzerResult, "trendMomentum" | "trendMomentumUnavailableReason"> = {};
+  if (input.trendMomentum) {
+    try {
+      trendResult = { trendMomentum: analyzeTradeExecutionIndicators({
+        ...input.trendMomentum, direction: input.direction, positionCycles, timingUnavailable,
+        landmarks: tradeIndicatorLandmarks(input),
+      }, events) };
+    } catch {
+      // Optional indicator evidence must not discard completed core analysis.
+      // The reason is neutral: an error does not establish low trading volume.
+      trendResult = { trendMomentumUnavailableReason: "history_unavailable" };
+    }
+  }
+  const contexts = new Map(trendResult.trendMomentum?.executions.map((event) => [event.eventId, event]) ?? []);
+  const enrichedSnapshots = trendResult.trendMomentum ? eventSnapshots.map((snapshot) => {
+    const context = contexts.get(snapshot.event.eventId);
+    return context ? Object.freeze({ ...snapshot, indicatorFilterContext: saveExecutionIndicatorFilterContext(context) }) : snapshot;
+  }) : eventSnapshots;
+  return Object.freeze({ eventSnapshots: Object.freeze(enrichedSnapshots), finalExitPaths, greenToRed, ...trendResult });
 }

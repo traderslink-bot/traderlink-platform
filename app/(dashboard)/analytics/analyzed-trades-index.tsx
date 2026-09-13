@@ -71,8 +71,8 @@ function dateTime(value: string, timezone: string): Readonly<{
   });
 }
 
-function trackerHref(row: DailyTradeAnalyzedTradePage["rows"][number]): string {
-  const params = new URLSearchParams({ trade: row.roundTripId, interval: "1m" });
+function trackerHref(row: DailyTradeAnalyzedTradePage["rows"][number], interval: "1m" | "5m"): string {
+  const params = new URLSearchParams({ trade: row.roundTripId, interval });
   if (row.firstExecutionId) params.set("event", row.firstExecutionId);
   return `/trade-tracker/${row.trackerDate}?${params.toString()}`;
 }
@@ -85,7 +85,9 @@ export function AnalyzedTradesIndex({
   moneyBasis,
   offline = false,
   startDate,
+  indicatorQuery = "",
 }: {
+  indicatorQuery?: string;
   currency: string | null;
   dateRange: OverviewDateRange;
   endDate: string | null;
@@ -133,6 +135,9 @@ export function AnalyzedTradesIndex({
       params.set("end", endDate);
     }
     if (cursor) params.set("cursor", cursor);
+    for (const [key, value] of new URLSearchParams(indicatorQuery)) {
+      if (key.startsWith("indicator_") || key === "direction") params.set(key, value);
+    }
     queueMicrotask(() => {
       if (!controller.signal.aborted) setState("loading");
     });
@@ -158,7 +163,7 @@ export function AnalyzedTradesIndex({
       setState("error");
     });
     return () => controller.abort();
-  }, [currency, cursor, endDate, moneyBasis, offline, page, pageSize, startDate, ticker]);
+  }, [currency, cursor, endDate, moneyBasis, offline, page, pageSize, startDate, ticker, indicatorQuery]);
 
   const resolvedState = currency ? state : "ready";
   const rows = currency
@@ -192,6 +197,7 @@ export function AnalyzedTradesIndex({
           value={draftTicker}
         />
       </Stack>
+      {result?.indicatorSummary ? <Alert severity="info">{result.indicatorSummary}{!offline ? <Button size="small" href={`/analytics/trade-analyzer/day/trend-momentum?${indicatorQuery}`}>Change indicator conditions</Button> : null}</Alert> : null}
       {resolvedState === "loading" && !result ? (
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", py: 4 }}>
           <CircularProgress size={20} />
@@ -220,14 +226,16 @@ export function AnalyzedTradesIndex({
             <Table aria-label="Analyzed trades" size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Ticker</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Direction</TableCell>
-                  <TableCell>Entry time</TableCell>
-                  <TableCell>Exit time</TableCell>
-                  <TableCell align="right">{moneyBasis === "gross" ? "Gross" : "Net"} result</TableCell>
-                  <TableCell align="right">Return</TableCell>
-                  <TableCell align="right">Executions</TableCell>
+                  {[
+                    ["Ticker", "The symbol for your saved trade. When indicator conditions are selected, the note explains why this trade appears."],
+                    ["Date", "Final closing date of your saved trade, including all round trips you grouped together."],
+                    ["Direction", "Whether your saved trade was long or short."],
+                    ["Entry time", "Time of the first execution in the saved trade, in your account timezone."],
+                    ["Exit time", "Time of the final closing execution in the saved trade, in your account timezone."],
+                    [`${moneyBasis === "gross" ? "Gross" : "Net"} result`, "The whole saved trade's result, counted once. Unavailable does not mean zero or a loss."],
+                    ["Return", "The saved trade's selected result divided by its total entry notional."],
+                    ["Executions", "All saved executions in this trade, including re-entries and interim position closures."],
+                  ].map(([label, help], index) => <TableCell key={label} align={index >= 5 ? "right" : "left"}><Stack component="span" direction="row" sx={{ alignItems: "center", justifyContent: index >= 5 ? "flex-end" : "flex-start" }}>{label}<AnalyzerHelpTooltip label={label} text={help} /></Stack></TableCell>)}
                   <TableCell />
                 </TableRow>
               </TableHead>
@@ -237,7 +245,7 @@ export function AnalyzedTradesIndex({
                   const closed = dateTime(row.closedAtUtc, result!.timezone);
                   return (
                     <TableRow hover key={row.roundTripId}>
-                      <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell>
+                      <TableCell sx={{ fontWeight: 850 }}>{row.symbol}{row.whyIncluded ? <Typography variant="caption" component="div" color="text.secondary" sx={{ fontWeight: 400, maxWidth: 280 }}>{row.whyIncluded}</Typography> : null}</TableCell>
                       <TableCell>{closed.date}</TableCell>
                       <TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell>
                       <TableCell>{opened.time}</TableCell>
@@ -248,7 +256,7 @@ export function AnalyzedTradesIndex({
                       <TableCell align="right" sx={{ color: financialOutcomeColor(row.returnPercentDecimal) }}>{percent(row.returnPercentDecimal)}</TableCell>
                       <TableCell align="right">{row.executionCount}</TableCell>
                       <TableCell align="right">
-                        <Button endIcon={<OpenInNewIcon />} href={offline ? `/trade-tracker/${row.trackerDate}` : trackerHref(row)} size="small" variant="outlined">
+                        <Button endIcon={<OpenInNewIcon />} href={offline ? `/trade-tracker/${row.trackerDate}` : trackerHref(row, new URLSearchParams(indicatorQuery).get("indicator_interval") === "5m" ? "5m" : "1m")} size="small" variant="outlined">
                           {offline ? "Open saved day" : "View full analysis"}
                         </Button>
                       </TableCell>

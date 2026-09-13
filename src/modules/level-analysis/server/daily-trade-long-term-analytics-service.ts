@@ -1,4 +1,10 @@
 import Decimal from "decimal.js";
+import { readSavedPatternPopulation } from "./trend-momentum-pattern-service";
+import { savedTradeDaySummary } from "./saved-trade-day-summary";
+import { savedTradeClosesInPeriod, type SavedTradePeriod } from "./saved-trade-period";
+import { savedTradeScalingRows, wholeTradeProfitProtection } from "./saved-trade-scaling";
+import type { TrendMomentumProjection } from "../../../lib/trade-candle-analysis/trend-momentum-analytics";
+import { readExecutionIndicatorFilterContext, type ExecutionIndicatorFilterContext } from "../../../lib/trade-candle-analysis/trend-momentum-execution-filter";
 import { entryExitPeakProfit } from "./daily-trade-entry-exit-math";
 import type Database from "better-sqlite3";
 
@@ -60,6 +66,7 @@ type PatternFact = Readonly<{
 }>;
 
 type EventFact = Readonly<{
+  indicatorFilterContext?: ExecutionIndicatorFilterContext | null;
   atr14Percent: number | null;
   candleLocationRatio: number | null;
   ema9DistancePercent: number | null;
@@ -99,6 +106,8 @@ type AnalyzerFact = Readonly<{
 }>;
 
 type ScenarioTrade = Readonly<{
+  actualPnlDecimal: string | null;
+  profitProtection: DailyTradeProfitProtectionOutcome;
   closeLocalDate: string;
   direction: "long" | "short";
   entryLocalDate: string;
@@ -126,6 +135,7 @@ export type TradeAnalysisBreakdownRow = Readonly<{
 }>;
 
 export type TradeAnalysisPatternRow = Readonly<{
+  pnlTradeCount?: number;
   averagePnlDecimal: string | null;
   executionSide: "Entry" | "Exit";
   location: "Exact execution candle" | "Before execution";
@@ -161,6 +171,7 @@ export type TradeAnalysisTradeRow = Readonly<{
 }>;
 
 export type TradeAnalysisExcursionRow = Readonly<{
+  indicatorFilterContext?: ExecutionIndicatorFilterContext | null;
   actualPnlDecimal: string | null;
   adverseMoveDecimal: string;
   adverseMovePercent: number;
@@ -347,10 +358,11 @@ export type TradeAnalysisGreenToRedOpportunityRow = Readonly<{
 }>;
 
 export type TradeAnalysisEventPathRow = Readonly<{
+  indicatorFilterContext?: ExecutionIndicatorFilterContext | null;
   adverseMoveDecimal: string | null;
   closeDate: string;
   direction: "long" | "short";
-  eventKind: "Add" | "Final exit" | "Initial entry" | "Partial exit";
+  eventKind: "Add" | "Final exit" | "Initial entry" | "Re-entry" | "Partial exit";
   eventPriceDecimal: string;
   eventSequence: number;
   executedAtUtc: string;
@@ -399,6 +411,8 @@ type TradeAnalysisGreenToRedDamage = Readonly<{
 }>;
 
 export type DailyTradeLongTermAnalyticsModel = Readonly<{
+  patternObservations?: readonly import("../../../lib/trade-candle-analysis/trend-momentum-patterns").SavedPatternObservation[];
+  trendMomentum?: TrendMomentumProjection;
   entryExitExcludedTradeCount?: number;
   analyzedExecutionCount: number;
   analyzedTradeCount: number;
@@ -677,6 +691,7 @@ function parseEvent(row: SnapshotRow): EventFact | null {
       : [];
     return Object.freeze({
       atr14Percent: atr14 === null ? null : atr14 / Number(priceDecimal) * 100,
+      indicatorFilterContext: readExecutionIndicatorFilterContext(snapshot.indicatorFilterContext, { eventId: event.eventId, executedAtUtc: event.executedAtUtc }),
       candleLocationRatio: finiteNumber(metrics.candleLocationRatio),
       ema9DistancePercent: finiteNumber(ema9Distance?.signedDistancePercent),
       eventId: event.eventId,
@@ -1678,6 +1693,7 @@ function analyzedScenarioTrades(input: Readonly<{
   journalRows: readonly JournalAnalyticsRoundTripTableRow[];
   reportingMultiplierByRoundTrip: ReadonlyMap<string, string>;
   scope: WorkspaceAccessScope;
+  selection?: SavedTradePeriod;
 }>): readonly ScenarioTrade[] {
   const accountId = input.scope.activeAccountId;
   if (!accountId || !input.scope.allowedAccountIds.includes(accountId)) return Object.freeze([]);
@@ -1701,12 +1717,15 @@ function analyzedScenarioTrades(input: Readonly<{
     const firstJournal = members[0];
     const lastJournal = members.at(-1);
     if (!representative || !firstJournal || !lastJournal) return [];
+    if (!savedTradeClosesInPeriod(lastJournal.closeLocalDate, input.selection)) return [];
     const multiplier = input.reportingMultiplierByRoundTrip.get(representative.roundTripId) ?? "1";
+    if (new Set(members.map((member) => new Decimal(input.reportingMultiplierByRoundTrip.get(member.roundTripId) ?? "1").toString())).size !== 1) return [];
     let executionCount = 0;
     let scenario: DailyTradeV2ScenarioAnalysis | null = null;
+    let profitProtection: DailyTradeProfitProtectionOutcome = { status: "not_applicable" };
+    const saved = trade.logicalTradeId ? logicalAnalyzer.readCurrentByRoundTrip(accountScope, representative.roundTripId) : null;
 
     if (trade.logicalTradeId) {
-      const saved = logicalAnalyzer.readCurrentByRoundTrip(accountScope, representative.roundTripId);
       if (saved?.status === "ready" && saved.analyzed) {
         executionCount = saved.analyzed.eventSnapshots.length;
         scenario = analyzeDailyTradeV2Scenario({
@@ -1726,6 +1745,20 @@ function analyzedScenarioTrades(input: Readonly<{
             sequence: snapshot.event.sequence,
           })),
         });
+        if (input.selection && scenario) {
+          const partials = saved.analyzed.eventSnapshots.filter((snapshot) => snapshot.event.kind === "partial_exit");
+          if (partials.length > 1) profitProtection = { status: "comparison_unavailable", reductionPercentDecimal: null };
+          else if (partials.length === 1) {
+            const snapshot = partials[0]!;
+            const outcomes = trade.members.map((member) => readJournalProfitProtectionOutcome(input.database, input.scope, {
+              roundTripId: member.roundTripId,
+              events: [{ eventId: snapshot.event.eventId, executedAt: snapshot.event.executedAtUtc, kind: "partial_exit",
+                metrics: { positionQuantityBefore: snapshot.metrics.positionQuantityBeforeDecimal, positionQuantityAfter: snapshot.metrics.positionQuantityAfterDecimal },
+                price: snapshot.event.priceDecimal, quantity: snapshot.event.quantityDecimal }],
+            }));
+            profitProtection = wholeTradeProfitProtection(outcomes, scenario.calculatedFinalGrossResultDecimal);
+          }
+        }
       }
     }
 
@@ -1733,14 +1766,18 @@ function analyzedScenarioTrades(input: Readonly<{
     // existing round-trip analysis remains valid until a logical re-analysis
     // replaces it. Multi-member user-defined trades require their own combined
     // analysis and must never be reconstructed by ticker or by member totals.
-    if (!scenario && trade.members.length === 1) {
-      const analyzer = input.analyzerByRoundTripId.get(representative.roundTripId);
+    if (!scenario && !saved && trade.members.length === 1) {
+      const candidate = input.analyzerByRoundTripId.get(representative.roundTripId);
+      const analyzer = candidate?.roundTripVersionId === representative.roundTripVersionId ? candidate : undefined;
       executionCount = analyzer?.events.length ?? 0;
       scenario = analyzer?.scenario ?? null;
+      profitProtection = analyzer?.profitProtection ?? { status: "not_applicable" };
     }
     if (!scenario) return [];
 
     return [Object.freeze({
+      actualPnlDecimal: members.every((member) => member.selectedPnlDecimal !== null) ? sumDecimals(members.map((member) => member.selectedPnlDecimal!)) : null,
+      profitProtection: scaleProfitProtection(profitProtection, multiplier),
       closeLocalDate: lastJournal.closeLocalDate,
       direction: trade.direction,
       entryLocalDate: firstJournal.entryLocalDate,
@@ -1865,6 +1902,7 @@ function buildEntryExitProjection(
     isLastTradeExit: event.eventSequence === trade.events.at(-1)?.eventSequence,
   }));
   const eventPaths: TradeAnalysisEventPathRow[] = events.flatMap(({ event, trade }) => event.postEventPaths.map((path) => ({
+    indicatorFilterContext: event.indicatorFilterContext,
     adverseMoveDecimal: path.oppositeDirectionMoveDecimal, favorableMoveDecimal: path.tradeDirectionMoveDecimal,
     closeDate: trade.journal.closeLocalDate, direction: trade.journal.direction, eventKind: eventKindLabel(event.eventKind), eventPriceDecimal: event.priceDecimal,
     eventSequence: event.eventSequence, executedAtUtc: event.executedAtUtc, minutesAfterEvent: path.minutesAfterEvent, observedAtCandleTime: path.observedAtCandleTime,
@@ -1907,15 +1945,20 @@ export function buildDailyTradeLongTermAnalytics(
   reportingMultiplierByRoundTrip: ReadonlyMap<string, string> = new Map(),
   profitZoneMinimumHoldMinutes = 0,
   entryExitSelection?: Readonly<{ startDate: string | null; endDate: string | null }>,
+  currentSnapshotsOnly = false,
+  daySelection?: Readonly<{ startDate: string | null; endDate: string | null }>,
+  scenarioSelection?: SavedTradePeriod,
 ): DailyTradeLongTermAnalyticsV2Model {
-  const analyzer = readAnalyzerFacts(database, scope, entryExitSelection !== undefined);
-  const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade");
+  const analyzer = readAnalyzerFacts(database, scope, currentSnapshotsOnly || entryExitSelection !== undefined || daySelection !== undefined || scenarioSelection !== undefined);
+  const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade" &&
+    savedTradeClosesInPeriod(row.closeLocalDate, scenarioSelection));
   const scenarioTrades = analyzedScenarioTrades({
     analyzerByRoundTripId: analyzer,
     database,
     journalRows,
     reportingMultiplierByRoundTrip,
     scope,
+    selection: scenarioSelection,
   });
   const joined: readonly Joined[] = Object.freeze(eligibleDayTrades.flatMap((journal) => {
     const sourceFact = analyzer.get(journal.roundTripId);
@@ -1939,6 +1982,10 @@ export function buildDailyTradeLongTermAnalytics(
       v2Opportunity,
     })];
   }));
+  const dayPopulation = daySelection ? readSavedPatternPopulation({ database, scope, journalRows,
+    ...daySelection, includePatterns: false }) : null;
+  const daySummary = dayPopulation ? savedTradeDaySummary(dayPopulation.trades,
+    dayPopulation.eligibleDayTradeCount, scenarioTrades, moneyBasis) : null;
   const allEvents: readonly EventJoined[] = Object.freeze(joined.flatMap((trade) => {
     const financialsBySequence = executionFinancials(trade.analyzer.events, trade.journal.direction);
     return trade.analyzer.events.map((event) => Object.freeze({
@@ -1961,6 +2008,7 @@ export function buildDailyTradeLongTermAnalytics(
     hasExcursionCoverage(event, trade.analyzer));
   const savedTradePnl = savedTradePnlByRoundTrip(database, scope, journalRows);
   const excursionRows = Object.freeze(measuredEntryExcursions.map(({ event, trade }): TradeAnalysisExcursionRow => Object.freeze({
+    indicatorFilterContext: event.indicatorFilterContext,
     actualPnlDecimal: savedTradePnl.get(trade.journal.roundTripId) ?? null,
     adverseMoveDecimal: event.excursionAdverseDecimal!,
     adverseMovePercent: excursionPercent(event.excursionAdverseDecimal!, event.priceDecimal),
@@ -1981,7 +2029,8 @@ export function buildDailyTradeLongTermAnalytics(
     favorable: excursionPercent(event.excursionFavorableDecimal!, event.priceDecimal),
   }));
   const peakEligibleTrades = joined.filter((row) => row.analyzer.path.peakAtUtcSeconds !== null);
-  const meaningfulProfitRows = Object.freeze(joined.flatMap((row): TradeAnalysisMeaningfulProfitRow[] => {
+  const savedScaling = scenarioSelection ? savedTradeScalingRows(scenarioTrades, moneyBasis) : null;
+  const meaningfulProfitRows = Object.freeze(savedScaling ? savedScaling.meaningful : joined.flatMap((row): TradeAnalysisMeaningfulProfitRow[] => {
     const qualification = row.analyzer.scenario?.primaryQualification;
     if (!qualification || row.v2Opportunity === null) return [];
     return [Object.freeze({
@@ -2033,7 +2082,7 @@ export function buildDailyTradeLongTermAnalytics(
       trackerDate: trade.entryLocalDate,
     })];
   }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol)));
-  const scalingRows = Object.freeze(joined.flatMap((row): TradeAnalysisScalingOutRow[] => {
+  const scalingRows = Object.freeze(savedScaling ? savedScaling.scaling : joined.flatMap((row): TradeAnalysisScalingOutRow[] => {
     const qualification = row.analyzer.scenario?.primaryQualification;
     const scaleOut = row.analyzer.scenario?.scaleOut;
     if (!qualification || !scaleOut || row.v2Opportunity === null) return [];
@@ -2123,6 +2172,7 @@ export function buildDailyTradeLongTermAnalytics(
   });
   const eventPathRows = Object.freeze(allEvents.flatMap(({ event, trade }): TradeAnalysisEventPathRow[] =>
     event.postEventPaths.map((path) => Object.freeze({
+      indicatorFilterContext: event.indicatorFilterContext,
       adverseMoveDecimal: (event.eventKind === "entry" || event.eventKind === "add") && !hasEventPathCoverage(event, path, trade.analyzer) ? null : path.oppositeDirectionMoveDecimal,
       closeDate: trade.journal.closeLocalDate,
       direction: trade.journal.direction,
@@ -2308,7 +2358,7 @@ export function buildDailyTradeLongTermAnalytics(
       totalActualPnlDecimal: sumDecimals(meaningfulProfitRows.map((row) => row.actualPnlDecimal)),
       totalDifferenceDecimal: sumDecimals(meaningfulProfitRows.map((row) => row.differenceDecimal)),
       totalPotentialPnlDecimal: sumDecimals(meaningfulProfitRows.map((row) => row.calculatedPotentialPnlDecimal)),
-      tradeCount: meaningfulProfitRows.length,
+      tradeCount: daySummary?.meaningfulProfitTradeCount ?? meaningfulProfitRows.length,
     }),
     moneyBasis,
     opportunityTradeCount: joined.filter((row) => row.opportunity !== null).length,
@@ -2317,7 +2367,7 @@ export function buildDailyTradeLongTermAnalytics(
       averagePeakToFinalGivebackDecimal: averageDecimals(joined.flatMap((row) =>
         row.analyzer.path.peakToFinalReversalDecimal === null ? [] : [row.analyzer.path.peakToFinalReversalDecimal])),
       medianCapturedPercent: medianNumbers(capturedValues),
-      totalActualPnlDecimal: sumDecimals(joined.map((row) => row.actualPnl)),
+      totalActualPnlDecimal: daySummary ? daySummary.totalActualPnlDecimal : sumDecimals(joined.map((row) => row.actualPnl)),
       totalAdditionalOpportunityDecimal: sumDecimals(joined.flatMap((row) => row.additional === null ? [] : [row.additional])),
       totalPotentialPnlDecimal: sumDecimals(joined.map((row) =>
         new Decimal(row.actualPnl).plus(row.additional ?? 0).toString())),
@@ -2393,5 +2443,11 @@ export function buildDailyTradeLongTermAnalytics(
     }).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol))),
     winRatePercent: percentage(joined.filter((row) => new Decimal(row.actualPnl).gt(0)).length, joined.length),
     ...(entryExitSelection ? buildEntryExitProjection(database, scope, journalRows, analyzer, moneyBasis, timezone, reportingMultiplierByRoundTrip, entryExitSelection) : {}),
+    ...(daySummary ? {
+      analyzedTradeCount: daySummary.analyzedTradeCount, analyzedExecutionCount: daySummary.analyzedExecutionCount,
+      eligibleDayTradeCount: daySummary.eligibleDayTradeCount, coveragePercent: daySummary.coveragePercent,
+      directionTradeCounts: daySummary.directionTradeCounts, averagePnlDecimal: daySummary.averagePnlDecimal,
+      averageReturnPercent: daySummary.averageReturnPercent,
+    } : {}),
   });
 }
