@@ -43,8 +43,11 @@ test("offline pattern records redact saved trade, execution and revision identif
   const privateRow = { ...rows[0]!, tradeId: "private-trade", representativeRoundTripId: "private-member", analysisVersionId: "private-revision", eventId: "private-event", occurrenceKey: "private-compound-key" };
   const model = { patternObservations: [privateRow], eventPaths: [], executionContextRows: [], excursions: [], greenToRedOpportunity: { rows: [] },
     meaningfulProfit: { rows: [] }, profitZones: { recordsByDirection: { long: [], short: [] } }, scalingOut: { rows: [] }, trades: [] };
-  const saved = createJournalTradeAnalyzerOfflineViewModel({ model, dateRange: { kind: "all", startDate: null, endDate: null }, evidenceQuery: {}, view: "candle-patterns" } as unknown as Parameters<typeof createJournalTradeAnalyzerOfflineViewModel>[0]);
+  const saved = createJournalTradeAnalyzerOfflineViewModel({ model, dateRange: { kind: "all", startDate: null, endDate: null }, evidenceQuery: {}, view: "candle-patterns",
+    selectionQuery: "movement_alignment=above&indicator_event=reclaim&trade=private-trade&cursor=private-cursor" } as unknown as Parameters<typeof createJournalTradeAnalyzerOfflineViewModel>[0]);
   assert.ok(!JSON.stringify(saved).includes("private-"));
   assert.equal(saved.model.patternObservations![0]!.pattern, privateRow.pattern);
+  assert.equal(new URLSearchParams(saved.selectionQuery).get("movement_alignment"), "above");
+  assert.equal(new URLSearchParams(saved.selectionQuery).get("indicator_event"), "reclaim");
   assert.equal(privateRow.tradeId, "private-trade");
 });

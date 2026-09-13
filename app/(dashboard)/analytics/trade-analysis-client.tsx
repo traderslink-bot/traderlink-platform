@@ -732,12 +732,14 @@ function AnalyzedTradeCountCard({
 }
 
 export function TradeAnalysisClient({
+  initialSelectionQuery = "",
   indicatorSupportingPage,
   evidenceQuery,
   model: sourceModel,
   offline = false,
   view,
 }: {
+  initialSelectionQuery?: string;
   indicatorSupportingPage?: import("@/src/lib/trade-candle-analysis/trend-momentum-cohorts").IndicatorSupportingPage;
   evidenceQuery: Readonly<{
     currency: string | null;
@@ -755,7 +757,7 @@ export function TradeAnalysisClient({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [offlineMovementQuery, setOfflineMovementQuery] = useState("");
+  const [offlineMovementQuery, setOfflineMovementQuery] = useState(initialSelectionQuery);
   const movementQuery = offline ? offlineMovementQuery : searchParams.toString();
   const filteredMovement = useMemo(() => view === "mfe-mae" ? filterSavedTradeMovement(sourceModel, readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel, movementQuery]);
   const filteredPatterns = useMemo(() => view === "candle-patterns" && sourceModel.patternObservations ? summarizeSavedPatterns(sourceModel.patternObservations, readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel.patternObservations, movementQuery]);
@@ -956,7 +958,7 @@ export function TradeAnalysisClient({
       {view === "trend-momentum" ? <TrendMomentumAnalysis projection={model.trendMomentum} direction={activeDirection} currency={model.currency} timezone={model.timezone} offline={offline}
         supportingPage={indicatorSupportingPage}
         moneyBasis={model.moneyBasis}
-        queryString={offline ? undefined : searchParams.toString()} onQueryChange={offline ? undefined : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} /> : null}
+        queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} /> : null}
       {view === "day" && model.trendMomentum ? <Section title="Trend & Momentum" description="" helpHref="/help/trade-analyzer/trend-momentum"
         titleHelp="Saved EMA 9, EMA 20, RSI and session VWAP context for user-defined trades in this selection. Missing indicator history does not reduce the main Analyzer count." collapsible={false}>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
@@ -1251,7 +1253,7 @@ export function TradeAnalysisClient({
       {view === "entry-exit" ? <Section title="Indicator context at executions" description="" helpHref="/help/trade-analyzer/trend-momentum"
         titleHelp="Compare EMA alignment or RSI at initial entries, adds, re-entries and exits. Only completed candles known at that execution are used. A trade counts once within a group even when it contains several qualifying executions.">
         <TrendMomentumExecutionComparison projection={model.trendMomentum} direction={activeDirection} money={(value) => money(value, model.currency)} moneyBasis={model.moneyBasis} offline={offline}
-          queryString={offline ? undefined : searchParams.toString()} onQueryChange={offline ? undefined : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
+          queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
       </Section> : null}
       {view === "green-to-red" || view === "scaling-out" ? <Section title="Indicators at the comparison point"
         description="" helpHref="/help/trade-analyzer/trend-momentum" titleHelp={view === "green-to-red"
@@ -1259,7 +1261,7 @@ export function TradeAnalysisClient({
           : "Compare indicators at the same first zone arrival for trades with and without later recorded profit taking in that zone. A seller's sale-time indicator is not compared with a nonseller's entry-time indicator."}>
         <TrendMomentumLandmarkComparison mode={view} projection={model.trendMomentum} greenRows={greenToRedOpportunityRows} zoneRows={profitZoneRecords}
           money={(value) => money(value, model.currency)} moneyBasis={model.moneyBasis}
-          queryString={offline ? undefined : searchParams.toString()} onQueryChange={offline ? undefined : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
+          queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
       </Section> : null}
       {model.malformedSnapshotCount > 0 ? <Typography color="warning.main" variant="body2">{model.malformedSnapshotCount} saved execution snapshots could not be read and were excluded from execution-level breakdowns.</Typography> : null}
     </Stack>

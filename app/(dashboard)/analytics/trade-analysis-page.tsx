@@ -315,6 +315,7 @@ export async function TradeAnalysisPage({
     startDate: dateRange.startDate,
   });
   const offlineModel = createJournalTradeAnalyzerOfflineViewModel({
+    selectionQuery: new URLSearchParams(Object.entries(searchParams).flatMap(([key, value]) => typeof value === "string" ? [[key, value]] : [])).toString(),
     dateRange,
     evidenceQuery,
     model: result.model,
@@ -329,7 +330,7 @@ export async function TradeAnalysisPage({
       generatedAtUtc={result.generatedAtUtc}
       model={offlineModel}
       pathname={baseHref}
-      queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}:zone-hold:${selectedProfitZoneMinimumHoldMinutes}`}
+      queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}:zone-hold:${selectedProfitZoneMinimumHoldMinutes}:selection:${offlineModel.selectionQuery ?? ""}`}
       reportingCurrency={result.model.currency}
       routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
       viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS[offlineModel.kind]}

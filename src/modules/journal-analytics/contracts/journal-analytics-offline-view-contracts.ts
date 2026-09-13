@@ -1,4 +1,5 @@
 import type { OverviewDateRange } from "@/app/(dashboard)/analytics/overview-date-range-control";
+import { analyzerViewSelection } from "@/src/lib/trade-candle-analysis/trend-momentum-view-selection";
 import type { EntryPriceComparison, EntryPriceInsights, EntryPriceResult, ExecutionChartData, ExecutionTradeRow } from "@/app/(dashboard)/analytics/execution-analytics-client";
 import type { ResultsTickerRow } from "@/app/(dashboard)/analytics/results-ticker-table";
 import type { TimingChartData } from "@/app/(dashboard)/analytics/timing/timing-analytics-client";
@@ -93,6 +94,7 @@ export type JournalAnalyticsExecutionOfflineViewModel = Readonly<{
 }>;
 
 export type JournalTradeAnalyzerOfflineViewModel = Readonly<{
+  selectionQuery?: string;
   dateRange: OverviewDateRange;
   evidenceQuery: EvidenceQuery;
   kind:
@@ -162,6 +164,7 @@ function localTradeRef(index: number): string {
 }
 
 export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
+  selectionQuery?: string;
   dateRange: OverviewDateRange;
   evidenceQuery: EvidenceQuery;
   model: DailyTradeLongTermAnalyticsV2Model;
@@ -251,6 +254,7 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
   return Object.freeze({
     dateRange: Object.freeze({ ...input.dateRange }),
     evidenceQuery: Object.freeze({ ...input.evidenceQuery }),
+    selectionQuery: analyzerViewSelection(new URLSearchParams(input.selectionQuery ?? "")),
     kind: ANALYZER_KIND_BY_VIEW[input.view],
     model,
     version: 1,
@@ -329,5 +333,7 @@ export function isJournalAnalyticsOfflineViewModel(
     return isRecord(value.dateRange) && (value.page === null || isRecord(value.page));
   }
   return isRecord(value.dateRange) && isRecord(value.evidenceQuery) && isRecord(value.model) &&
+    (value.selectionQuery === undefined || (typeof value.selectionQuery === "string" && value.selectionQuery.length <= 4096 &&
+      analyzerViewSelection(new URLSearchParams(value.selectionQuery)) === value.selectionQuery)) &&
     typeof value.view === "string";
 }

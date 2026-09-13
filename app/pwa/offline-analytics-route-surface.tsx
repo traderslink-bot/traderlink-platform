@@ -171,6 +171,8 @@ export function OfflineAnalyticsRouteSurface({ kind, partitionKey, pathname }: {
       ) : null}
       {"evidenceQuery" in model ? (
         <TradeAnalysisClient
+          key={model.selectionQuery ?? ""}
+          initialSelectionQuery={model.selectionQuery}
           evidenceQuery={model.evidenceQuery}
           model={model.model}
           offline

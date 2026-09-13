@@ -2,6 +2,22 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Offline selection restoration checkpoint - 2026-09-13
+
+- Confirmed the offline client previously initialized comparison/filter state
+  with an empty query, losing the choices present when the view was saved.
+  Added a canonical allowlist of categorical selections to captures and seeded
+  offline controls from it. Existing captures remain compatible. Private IDs,
+  cursors, free text and unknown URL keys are never copied into this field.
+- Trend, execution, landmark, Room After Entry and pattern controls reuse the
+  existing local query state. No added polling, provider call, effect or server.
+  Reviewed the three TSX changes using React state/serialization guidance.
+- Twelve focused selection, redaction, evidence and during-study tests pass.
+  Six selected TypeScript roots have zero diagnostics. This is not a full-app
+  typecheck or actual browser/PWA reopen acceptance; those gates remain open.
+- Help now explains restored choices and backward-compatible defaults. The
+  full plan remains active; nothing published and migration 0134 unapplied.
+
 ## Combined regression and production identity checkpoint - 2026-09-13
 
 - Ran all 28 `trend-momentum*.test.ts` / `saved-trade*.test.ts` files under
