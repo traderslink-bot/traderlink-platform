@@ -106,7 +106,7 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
       <TextField select size="small" label="Candle timeframe" value={interval} onChange={(e) => { setInterval(e.target.value as "1m" | "5m"); setPage(1); }}>
         <MenuItem value="1m">1 minute</MenuItem><MenuItem value="5m">5 minutes</MenuItem>
       </TextField>
-      <Typography color="text.secondary">{selected.trades.filter((t) => t.indicators !== null).length} of {selected.trades.length} trades have saved indicator context.</Typography>
+      <Typography sx={{ color: "text.secondary" }}>{selected.trades.filter((t) => t.indicators !== null).length} of {selected.trades.length} trades have saved indicator context.</Typography>
     </Stack>
     <Section title="Execution context" help="Compare completed whole-trade results with the indicator conditions known at each execution. Only candles completed before the execution are used. One trade may appear in more than one group; do not add the groups together. Missing history does not remove the trade's other analysis.">
       <Stack spacing={1.5}>

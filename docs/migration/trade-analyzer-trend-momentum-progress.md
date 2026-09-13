@@ -2032,6 +2032,16 @@ are not yet verified. The detailed draft is not an implementation completion cla
 
 ## Owner-required tooltip quality - 2026-09-12
 
+### Live Navy Dark caption correction - 2026-09-13
+
+- Live Bullrun now displays all 94 refreshed Demo results. One-minute and
+  five-minute selection changes the observations; Combined conditions has its
+  requested 20px caption gap, including at 390px mobile width without body overflow.
+- Found the standalone coverage caption inherited near-black text in Navy Dark:
+  its generated Typography rule had no color. Use the existing theme text.secondary
+  token through sx for this one line, preserving Light and all data/behavior.
+- No shared theme, Help content, provider or financial data changes.
+
 ### Demo refresh mounting correction - 2026-09-13
 
 - Live Bullrun QA exposed current-pack eligibility excluding the saved indicator
