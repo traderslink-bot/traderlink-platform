@@ -5,7 +5,7 @@ import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import { Alert, Box, Button, CircularProgress, Drawer, IconButton, Stack, Typography } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
@@ -238,7 +238,7 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
     setRequestError(null);
     try {
       const response = await fetch("/api/platform/trade-analyzer/trade/request", {
-        method: "POST", headers: { "Content-Type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
+        method: "POST", headers: { "Content-Type": "application/json", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" },
         body: JSON.stringify({ roundTripId }),
       });
       const payload = await response.json() as { outcome?: string; availability?: typeof availability };

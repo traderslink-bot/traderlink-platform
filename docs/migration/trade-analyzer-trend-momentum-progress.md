@@ -7,6 +7,31 @@ Current source/remaining hosted acceptance:
 
 ## Production handback and test-harness correction - 2026-09-13
 
+### Resumed live acceptance and Analyzer request correction
+
+- Owner supplied a normal production Chrome session: This Guy, Discord signed
+  in, Primary Journal. Account page shows Moomoo Connected; execution imports are
+  disabled and unchanged. Connection badge is not provider-success evidence.
+- Saved GCDT analysis opens and clearly identifies its older indicator history.
+  September 4 FFAI explicit Analyze returned HTTP 400 twice, with unchanged
+  allowance (10 daily / 96 period). Browser evidence identifies the wrong
+  Journal mutation header; the endpoint requires the Platform mutation header.
+  Coordinator confirms both requests reached production and failed immediately.
+- Corrected only the popup's request-header import/use; bulk Workspace already
+  uses the correct header. Server authentication and mutation checks unchanged.
+  Three focused Vitest cases pass: both callers match the endpoint contract,
+  and the server accepts Platform but rejects Journal-only mutation requests.
+  Temporary dependency junction was removed after the single-worker test.
+- Primary-session browser checks: 5-minute selector updates its URL; section help
+  opens by keyboard without collapsing the section; all 72 table headings have
+  explanation controls; mobile document width matches viewport content width.
+  Optional Analytics rejected to dismiss blocking notice; no analytics enabled.
+- Offline emulation did not survive in-app-browser reload (online became true),
+  so that attempt is NOT an offline acceptance pass. Network and viewport restored.
+- Pending: coordinator release of header fix, live request/provider/retry and
+  independent numeric calibration, full rendered/offline acceptance. No migration,
+  provider configuration, Swing, financial calculation or Watchlist change.
+
 - Coordinator reports production source ade1375505482a2aefc870cb33eaf3d427283be4,
   deployment 5266f140-84b4-4d1b-a805-14a8489c3d6e SUCCESS, one running instance,
   original volume, 121 migrations through 0135, maintenance absent and both

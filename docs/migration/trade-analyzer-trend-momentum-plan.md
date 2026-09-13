@@ -7,6 +7,11 @@ including planned UI implementation. Production release remains separately gated
 Latest source checkpoint and remaining acceptance:
 [Current handoff](trade-analyzer-current-acceptance-handoff.md).
 
+Resumed live QA: This Guy production access is confirmed. The individual
+Workspace Analyzer request-header correction passes focused regression checks;
+release and live provider/retry/numeric/offline acceptance remain open. See the
+[progress record](trade-analyzer-trend-momentum-progress.md) for exact evidence.
+
 ## Owner clarification: saved data, retries and fetch window
 
 Download-window slice implemented locally: five worker tests and two changed-root
