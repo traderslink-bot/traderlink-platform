@@ -8,6 +8,7 @@ import { LogicalTradeAnalyzerRepository, type ClaimedLogicalTradeAnalyzerJob } f
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
 import type { LogicalTradeAnalyzerNotificationService } from "./logical-trade-analyzer-notification-service";
 import type { TrendMomentumHistoryService } from "./trend-momentum-history-service";
+import { moomooV1AnalyzerCandles } from "./providers/moomoo-analyzer-candle-time";
 
 type ProviderFactory = (scope: AccountScope) => Promise<MarketDataProvider>;
 
@@ -189,6 +190,9 @@ export class LogicalTradeMoomooAnalyzerWorker {
     } else if (!this.trendMomentum) {
       this.allowances.release(job.jobId, startedAt);
     }
+    // Both cache and provider receipts retain the explicit v1 native END-label
+    // contract. Persist above before converting this derived calculation view.
+    current = moomooV1AnalyzerCandles(current, { start: session.startTime, endExclusive: downloadEnd });
     setDiagnosticStage("validate_execution_candles");
     const mismatches = validateDailyTradeExecutionCandles({
       candles: current, direction: job.target.direction, events: job.target.events,

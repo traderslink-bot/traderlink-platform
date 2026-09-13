@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 import { LogicalTradeAnalyzerSelectionService } from "./logical-trade-analyzer-selection-service";
+import { TRADE_INDICATOR_CALCULATION_VERSION } from "@/src/lib/trade-candle-analysis/trend-momentum-version";
 
 for (const fixture of [
   { name: "explicit older-result refresh", explicit: true, hasIndicators: false, active: false, outcome: "queued" },
+  { name: "explicit old timestamp-version refresh", explicit: true, hasIndicators: true, version: "trade_indicator_context_v1", active: false, outcome: "queued" },
   { name: "ordinary request preserves completed result", explicit: false, hasIndicators: false, active: false, outcome: "already_requested" },
   { name: "current indicators cannot be refreshed as older history", explicit: true, hasIndicators: true, active: false, outcome: "already_requested" },
   { name: "duplicate pending refresh does not queue again", explicit: true, hasIndicators: false, active: true, outcome: "already_requested" },
@@ -14,7 +16,7 @@ for (const fixture of [
     events: [{ executedAtUtc: "2026-09-11T14:00:00.000Z" }] };
   const analyzer = {
     target: () => target,
-    readCurrentByRoundTrip: () => ({ status: "ready", analyzed: fixture.hasIndicators ? { trendMomentum: {} } : {} }),
+    readCurrentByRoundTrip: () => ({ status: "ready", analyzed: fixture.hasIndicators ? { trendMomentum: { calculationVersion: fixture.version ?? TRADE_INDICATOR_CALCULATION_VERSION } } : {} }),
     alreadyRequested: (_scope: unknown, _version: string, refresh: boolean) => fixture.active || !refresh,
     hasSavedCoverage: () => true, hasPriorAnalysis: () => true,
     queue: (input: { refreshCompleted: boolean }) => { assert.equal(input.refreshCompleted, true); return { created: true, jobId: "job" }; },

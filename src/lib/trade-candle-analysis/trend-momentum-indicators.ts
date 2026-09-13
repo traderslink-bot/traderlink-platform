@@ -5,7 +5,7 @@ import {
   type IndicatorHistoryRange,
 } from "./trend-momentum-history";
 
-export const TRADE_INDICATOR_CALCULATION_VERSION = "trade_indicator_context_v1" as const;
+export { TRADE_INDICATOR_CALCULATION_VERSION } from "./trend-momentum-version";
 
 export type TradeIndicatorPoint = Readonly<{
   time: number;

@@ -1,5 +1,19 @@
 # Trade Analyzer Trend & Momentum Progress
 
+## Timestamp checkpoint follow-up - 2026-09-13
+
+- Owned-slice checkpoint: 28 files / 143 tests; 139 passed, four drilldown
+  failures traced to a synthetic fixture without calculationVersion. Updated
+  that fixture; the affected file then passed all six tests. Changed-file
+  ESLint and git diff --check passed. This was a targeted rerun, not a second
+  full-suite run. Final before/exact/inside-minute assertions also pass in the
+  five-test timestamp file, with targeted lint clean. Final diff review passed;
+  this timestamp-only slice is ready for local commit and coordinator handoff.
+- Timestamp slice excludes owner exemptions (0136) and Demo changes.
+- Owner reaffirmed This Guy and TradersLink are disposable test accounts;
+  routine test trade/execution additions, changes and removals need no repeat
+  approval. Other users remain outside this authority.
+
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
 Current source/remaining hosted acceptance:
@@ -8,6 +22,44 @@ Current source/remaining hosted acceptance:
 ## Production handback and test-harness correction - 2026-09-13
 
 ### Resumed live acceptance and Analyzer request correction
+
+- Timestamp convention is now established from existing native Watchlist evidence
+  (its progress lines 57-70 and active parser), not inferred from one empty call.
+  A single separately authorized FFAI native-5m read returned HTTP200/provider0
+  with zero rows for same-date start/end. No retry/write/token refresh occurred;
+  SSH was closed. The prior native evidence proves next-date end and intraday
+  close labels; no second provider request is needed for this convention.
+- Local Analyzer-only correction keeps v1 raw receipts unchanged and converts
+  their calculation view by -60 seconds in the logical worker and compatible
+  history reader. New result context is v2; existing explicit refresh accepts old
+  context while corrected cohorts exclude it without removing trades/P&L.
+  Initial focused checkpoint: 7 files / 43 tests pass and changed-file lint clean.
+  Added 15m boundary and Help clarification afterward; final local checkpoint
+  is recorded above. Hosted saved-only recalculation remains open. No timestamp
+  release or data application yet.
+
+- Price-preservation release is live at
+  83481c7418d4caca7ef2cc722b68d17bc2aa6761 / Railway
+  742e6b29-1714-4c35-a50c-43ec6a30b5c4 SUCCESS; coordinator reports hosted
+  compile/TypeScript/pages and app/proxy health ready/121. Normal Update app
+  activation preceded live QA. A fee-only fake-trade edit retained the exact
+  untouched sub-cent prices in preview and a fresh saved edit response, while
+  prefill remained two decimals. Restored the temporary fee through review and
+  confirmation; another fresh response verified original prices, quantities and
+  zero fees. Workspace gross was unchanged and saved Analyzer reopened ready
+  with EMA9/20, RSI and session VWAP. No separate analysis request was submitted.
+- Independent saved-data arithmetic check: 721 one-minute and 144 five-minute
+  chart points satisfy EMA9/20 recurrence exactly; reconstructed Wilder RSI
+  recurrence differs by at most 2.85e-14. All 721 one-minute session VWAP points
+  exactly match cumulative saved turnover/volume. These checks do not prove the
+  initial warm-up seed, native five-minute aggregation or provider timestamps.
+  At that arithmetic-only checkpoint, the saved session's 960 rows labeled
+  04:01 through 20:00 ET raised a close-label question. The subsequent native
+  evidence and local correction above resolve it; hosted recalculation is pending.
+- Owner explicitly authorizes all normal test-trade/execution additions,
+  corrections and removals in This Guy and TradersLink, both entirely fake test
+  accounts. Other users remain excluded. This does not authorize financial
+  brokerage transactions or expanding authentication permissions.
 
 - Coordinator released whole-trade refresh at
   0277d4fdc2db4bae1a5263c46651e333c7866bcc / Railway

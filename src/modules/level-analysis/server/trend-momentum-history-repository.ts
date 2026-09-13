@@ -8,6 +8,7 @@ import { inspectIndicatorWarmup, hasCompletedIndicatorCoverage } from "@/src/lib
 import { priorIndicatorHistoryRanges } from "./trend-momentum-history-ranges";
 import { newYorkExtendedSession } from "./daily-trade-analyzer-session";
 import { ManualAnalyzerRetryRepository } from "./manual-analyzer-retry-repository";
+import { moomooV1AnalyzerCandles } from "./providers/moomoo-analyzer-candle-time";
 
 const columns = "history_request_id,logical_trade_job_id,acquisition_id,requested_start_seconds,requested_end_seconds,attempt_number,status,failure_reason,candles_json,candle_sha256,created_at_utc,completed_at_utc";
 const historySource = `(SELECT ${columns}, NULL AS retry_request_id FROM level_analysis_indicator_history_requests
@@ -70,7 +71,10 @@ ORDER BY request.completed_at_utc DESC, request.history_request_id LIMIT 100`).a
     ) as readonly Row[];
     const parsed = this.parseEvidence(rows);
     const candles = new Map<number, NormalizedMarketCandle>();
-    for (const candle of parsed.candles) {
+    // The query above requires Moomoo adapter v1: both historical and future
+    // receipts under that identity retain native END labels. Do not rewrite
+    // immutable receipt JSON/digests or mix normalized analysis snapshots here.
+    for (const candle of moomooV1AnalyzerCandles(parsed.candles, { start, endExclusive: asOf })) {
       if (candle.time >= start && candle.time + 60 <= asOf && !candles.has(candle.time)) candles.set(candle.time, candle);
     }
     return { ranges: parsed.ranges.map((range) => ({ start: Math.max(start, range.start),

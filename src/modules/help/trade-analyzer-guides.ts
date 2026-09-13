@@ -160,7 +160,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Compare EMA alignment and RSI at your saved entries and exits.",
         keywords: ["EMA 9", "EMA 20", "RSI", "initial entry", "add", "partial exit"], blocks: [
           { kind: "paragraph", text: "Choose one-minute or five-minute candles and an execution type: initial entry, add, re-entry, partial exit, interim position closure or final exit. The comparison uses indicators known at that execution and counts each whole-trade outcome once within a group. Older distance-only analysis is not substituted when the added indicator history is unavailable." },
-          { kind: "paragraph", text: "For an older saved analysis, open its Analyzer from Workspace and choose Refresh indicator history. Your trade details stay unchanged and the earlier saved analysis is retained. Sufficient saved candles are reused for free; missing history uses the existing limit of three free candle-data retries per saved trade each New York day." },
+          { kind: "paragraph", text: "For an older saved analysis, open its Analyzer from Workspace and choose Refresh indicator history. This also updates older indicator calculations. Your trade details stay unchanged and the earlier saved analysis is retained. Sufficient saved candles are reused for free; missing history uses the existing limit of three free candle-data retries per saved trade each New York day." },
           { kind: "paragraph", text: "Detailed indicator comparisons opens Trend & Momentum with your date range, Gross/Net basis, direction, timeframe and execution type preserved. You can combine conditions there and inspect supporting executions." },
         ],
       },

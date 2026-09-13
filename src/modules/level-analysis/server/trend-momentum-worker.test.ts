@@ -4,9 +4,10 @@ import { LogicalTradeMoomooAnalyzerWorker } from "./logical-trade-moomoo-analyze
 import { analyzeDailyTrade } from "./daily-trade-analyzer";
 import type { DailyTradeAnalyzerEvent, DailyTradeAnalyzerResult } from "../contracts/daily-trade-analyzer-contracts";
 import type { ClaimedLogicalTradeAnalyzerJob } from "./logical-trade-analyzer-repository";
+import { moomooV1AnalyzerCandles } from "./providers/moomoo-analyzer-candle-time";
 
 const start = Date.parse("2026-09-11T08:00:00.000Z") / 1000;
-const candles = Array.from({ length: 401 }, (_, i) => ({ time: start + i * 60,
+const candles = Array.from({ length: 401 }, (_, i) => ({ time: start + (i + 1) * 60,
   openDecimal: "10", highDecimal: "12", lowDecimal: "9", closeDecimal: "10",
   volumeDecimal: "1000", turnoverDecimal: "10000" }));
 const events: DailyTradeAnalyzerEvent[] = ([
@@ -43,7 +44,7 @@ function fixture(prepare: () => Promise<unknown>, options: { now?: string; cache
       if (options.cached !== false) throw new Error("cached core must not fetch");
       return { fetch: async (request: typeof downloads[number]) => {
         downloads.push(request);
-        return { ok: true, candles: Array.from({ length: (request.endTime - start) / 60 }, (_, i) => ({ ...candles[0], time: start + i * 60 })),
+        return { ok: true, candles: Array.from({ length: (request.endTime - start) / 60 }, (_, i) => ({ ...candles[0], time: start + (i + 1) * 60 })),
           exchangeTimezone: "America/New_York", utcOffsetSeconds: -14400, normalizedCandleSha256: "fixture" };
       } } as unknown as Awaited<ReturnType<Args[3]>>;
     },
@@ -95,7 +96,7 @@ test("history failure preserves the existing multi-cycle trade calculations", as
   assert.equal(f.saved[0].status, "ready");
   const { trendMomentumUnavailableReason, ...core } = f.saved[0].analyzed;
   assert.equal(trendMomentumUnavailableReason, "history_unavailable");
-  assert.deepEqual(core, analyzeDailyTrade({ candles, dailyRanges: [], direction: "long", events }));
+  assert.deepEqual(core, analyzeDailyTrade({ candles: moomooV1AnalyzerCandles(candles, { start, endExclusive: start + 16 * 3600 }), dailyRanges: [], direction: "long", events }));
   assert.deepEqual(core.eventSnapshots.map((s) => s.event.eventId), ["0", "1", "2", "3"]);
   assert.deepEqual(f.counts(), { finished: 1, rescheduled: 0, released: 1, ready: 1 });
 });
@@ -118,5 +119,5 @@ test("ready indicator context is saved with all executions of one logical trade"
     assert.equal(snapshot.indicatorFilterContext!.executedAtUtc, snapshot.event.executedAtUtc);
   }
   assert.deepEqual(f.saved[0].analyzed.eventSnapshots.map((snapshot) => { const core = { ...snapshot }; delete core.indicatorFilterContext; return core; }),
-    analyzeDailyTrade({ candles, dailyRanges: [], direction: "long", events }).eventSnapshots);
+    analyzeDailyTrade({ candles: moomooV1AnalyzerCandles(candles, { start, endExclusive: start + 16 * 3600 }), dailyRanges: [], direction: "long", events }).eventSnapshots);
 });

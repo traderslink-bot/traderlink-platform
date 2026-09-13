@@ -234,6 +234,25 @@ All additions require owner review of layout/copy before UI implementation.
 
 ## 4. Data and time contracts
 
+### Moomoo timestamp compatibility correction - 2026-09-13
+
+- Confirmed existing native-provider evidence in the Watchlist indicator progress
+  record and parser: intraday labels mark END; the raw Analyzer storage identity
+  `moomoo_history_kline_v1` previously retained those labels unchanged. Do not
+  rewrite prior session/history receipts or silently redefine that storage identity.
+- Convert that known v1 receipt view by exactly one minute before logical Analyzer
+  execution matching and calculation, after any raw persistence. Apply the same
+  conversion to saved compatible indicator history. Filter by completed interval
+  after conversion. Execution times/prices and Yahoo/Daily data remain unchanged.
+- New derived context is `trade_indicator_context_v2`; older context cannot enter
+  corrected aggregate/filter comparisons. Preserve old analysis versions and use
+  the existing explicit Refresh indicator history action. Sufficient cached raw
+  receipts remain reusable without provider requests or paid usage.
+- Verify 1m/5m/15m boundaries, before/inside/exact-boundary execution cases,
+  immutable receipt preservation, account isolation, current-version refresh
+  exclusion, old-version refresh, and hosted saved-only recalculation. No Watchlist
+  edit, applied migration, extra provider request or automatic data rewrite.
+
 1. Use current, ready Analyzer evidence linked to exact accepted Journal
    execution/group revisions. Never join private data by ticker alone.
 2. Canonical trade identity follows the newer Analyzer: saved logical trade

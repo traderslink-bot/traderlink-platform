@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
 import type { DailyTradeAnalyzerResult } from "../../modules/level-analysis/contracts/daily-trade-analyzer-contracts";
 import type { TradeExecutionIndicatorResult } from "./trend-momentum-executions";
+import { hasCurrentTradeIndicatorContext } from "./trend-momentum-version";
 
 export type TrendMomentumTrade = Readonly<{
   tradeId: string; representativeRoundTripId: string; symbol: string; direction: "long" | "short";
@@ -23,6 +24,10 @@ export type TrendMomentumProjection = Readonly<{
 }>;
 
 export function buildTrendMomentumProjection(trades: readonly TrendMomentumTrade[]): TrendMomentumProjection {
+  // Keep trade/outcome populations intact; older calculation context must not
+  // enter corrected indicator cohorts before an explicit saved-data refresh.
+  trades = trades.map(trade => trade.analysis?.trendMomentum && !hasCurrentTradeIndicatorContext(trade.analysis.trendMomentum)
+    ? { ...trade, analysis: { ...trade.analysis, trendMomentum: undefined } } : trade);
   if (new Set(trades.map((t) => t.tradeId)).size !== trades.length) throw new Error("indicator_duplicate_logical_trade");
   const records: TrendMomentumRecord[] = [];
   for (const trade of trades) {

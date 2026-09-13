@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
+import { TRADE_INDICATOR_CALCULATION_VERSION } from "../../../lib/trade-candle-analysis/trend-momentum-version";
 import { pageSavedAnalyzedTrades } from "./trend-momentum-analyzed-trades";
 import type { SavedPatternTrade } from "../../../lib/trade-candle-analysis/trend-momentum-patterns";
 import { createJournalAnalyzedTradesOfflineViewModel } from "../../journal-analytics/contracts/journal-analytics-offline-view-contracts";
@@ -9,7 +10,7 @@ function trade(id: string, alignment: "above" | "below" | null): SavedPatternTra
   const events = [1, 2].map((sequence) => ({ eventId: `${id}-e${sequence}`, sequence, kind: sequence === 1 ? "entry" : "final_exit", executedAtUtc: `2026-09-11T14:0${sequence}:00Z`, priceDecimal: "10" }));
   return { tradeId: id, analysisVersionId: "revision", representativeRoundTripId: "member", symbol: "TEST", direction: "long", closeDate: "2026-09-11", trackerDate: "2026-09-11",
     openedAtUtc: events[0]!.executedAtUtc, closedAtUtc: events[1]!.executedAtUtc, pnlDecimal: "5", returnPercentDecimal: "10",
-    analyzed: { eventSnapshots: events.map((event) => ({ event })), trendMomentum: alignment ? { executions: events.map((event) => ({ eventId: event.eventId, executedAtUtc: event.executedAtUtc, oneMinute: { alignment }, fiveMinute: { alignment: "below" }, sessionVwap: null })) } : undefined } } as unknown as SavedPatternTrade;
+    analyzed: { eventSnapshots: events.map((event) => ({ event })), trendMomentum: alignment ? { calculationVersion: TRADE_INDICATOR_CALCULATION_VERSION, executions: events.map((event) => ({ eventId: event.eventId, executedAtUtc: event.executedAtUtc, oneMinute: { alignment }, fiveMinute: { alignment: "below" }, sessionVwap: null })) } : undefined } } as unknown as SavedPatternTrade;
 }
 const base = { query: new URLSearchParams("basis=gross"), timezone: "America/New_York", scopeIdentity: "owner-account-USD", pageSize: 25, cursor: null, ticker: "" };
 

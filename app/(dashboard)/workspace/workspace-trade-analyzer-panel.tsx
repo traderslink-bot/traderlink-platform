@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
+import { hasCurrentTradeIndicatorContext } from "@/src/lib/trade-candle-analysis/trend-momentum-version";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 import type { DailyTradeChartInterval } from "../trade-tracker/[sessionDate]/daily-trade-analyzer-chart";
@@ -223,7 +224,7 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
         );
         return;
       }
-      if (!payload.analysis.trendMomentum) {
+      if (!hasCurrentTradeIndicatorContext(payload.analysis.trendMomentum)) {
         const uses = await fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" }).then((value) => value.json()).catch(() => null) as { availability?: typeof availability } | null;
         if (request !== loadRequestRef.current) return;
         setAvailability(uses?.availability?.enabled === false ? null : uses?.availability ?? null);
@@ -262,7 +263,7 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
     } finally { setRequesting(false); }
   }
   const message = requestError ?? unavailableMessage(loadState);
-  const refreshControl = analysis?.status === "ready" && !analysis.trendMomentum && availability?.enabled
+  const refreshControl = analysis?.status === "ready" && !hasCurrentTradeIndicatorContext(analysis.trendMomentum) && availability?.enabled
     ? <Stack spacing={1} sx={{ p: { xs: 1.5, md: 2 } }}>
         <Button disabled={requesting} onClick={() => void requestAnalysis(true)} sx={{ alignSelf: "flex-start" }} variant="outlined">Refresh indicator history</Button>
         <Typography color="text.secondary" variant="body2">Your trade details stay unchanged. Saved candles are reused when sufficient; new candle downloads use your free retry allowance.</Typography>

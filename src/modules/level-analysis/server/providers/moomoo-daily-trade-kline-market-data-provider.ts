@@ -123,7 +123,12 @@ function providerMetadata(items: readonly unknown[]): Readonly<{
   });
 }
 
-/** Uses the proven same-day History K-Line request shape and never exposes a credential. */
+/**
+ * Uses the proven same-day request shape and never exposes a credential.
+ * Storage adapter moomoo_history_kline_v1 retains native one-minute END labels.
+ * The logical Analyzer converts its derived input through moomooV1AnalyzerCandles;
+ * changing labels here would mix conventions in immutable existing v1 receipts.
+ */
 export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvider {
   constructor(
     private readonly accessToken: () => Promise<string>,

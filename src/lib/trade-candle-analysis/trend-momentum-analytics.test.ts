@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 import { analyzeIndicatorEpisodes } from "./trend-momentum-episodes";
+import { TRADE_INDICATOR_CALCULATION_VERSION } from "./trend-momentum-version";
 import { buildTrendMomentumProjection, selectIndicatorStudy, selectIndicatorReclaimStudy, summarizeIndicatorRecords, summarizeIndicatorStudy,
   type TrendMomentumRecord, type TrendMomentumProjection } from "./trend-momentum-analytics";
 
@@ -17,7 +18,7 @@ test("aggregate payload keeps execution context once without modifying saved ana
     oneMinute: { alignment: "above", rsiBand: "above_70", historyBars: 200 }, fiveMinute: null, sessionVwap: null }));
   const analysis = { eventSnapshots: contexts.map((event, sequence) => ({ event: { eventId: event.eventId,
     executedAtUtc, sequence, kind: sequence === 0 ? "entry" : "add", priceDecimal: "10" } })),
-    trendMomentum: { executions: contexts, duringTrade: { oneMinute: null, fiveMinute: null },
+    trendMomentum: { calculationVersion: TRADE_INDICATOR_CALCULATION_VERSION, executions: contexts, duringTrade: { oneMinute: null, fiveMinute: null },
       chartSeries: { oneMinute: [{ privateChart: true }], fiveMinute: [] } } };
   const source = { ...record("one-trade", "5", "initial"), analysis } as unknown as Parameters<typeof buildTrendMomentumProjection>[0][number];
   const result = buildTrendMomentumProjection([source]);
@@ -57,7 +58,7 @@ test("large saved-trade population preserves counts and excludes chart payloads"
   const contexts = Array.from({ length: 20 }, (_, i) => ({ eventId: `event-${i}`, executedAtUtc,
     oneMinute: { alignment: "above", rsiBand: "above_70", historyBars: 200 }, fiveMinute: null, sessionVwap: null }));
   const analysis = { eventSnapshots: contexts.map((event, sequence) => ({ event: { eventId:event.eventId,executedAtUtc,sequence,
-    kind:sequence===0?"entry":"add",priceDecimal:"10" } })), trendMomentum: { executions:contexts,
+    kind:sequence===0?"entry":"add",priceDecimal:"10" } })), trendMomentum: { calculationVersion: TRADE_INDICATOR_CALCULATION_VERSION, executions:contexts,
       duringTrade:{oneMinute:null,fiveMinute:null},chartSeries:{oneMinute:[{chartOnlyEvidence:true}],fiveMinute:[]} } };
   const rows = Array.from({length:500},(_,i)=>({...record(`trade-${i}`,"5",`initial-${i}`),analysis})) as unknown as Parameters<typeof buildTrendMomentumProjection>[0];
   const projection = buildTrendMomentumProjection(rows);
@@ -96,6 +97,20 @@ test("unanalysed trades remain in coverage instead of disappearing", () => {
   assert.equal(projection.records.length, 0);
   assert.equal(projection.trades[0].unavailableReason, "not_yet_analyzed");
   assert.throws(() => buildTrendMomentumProjection([{ ...identity, analysis: null }, { ...identity, analysis: null }]));
+});
+
+test("old timestamp calculation does not mix into current indicator cohorts or erase trade P/L", () => {
+  const analysis = { eventSnapshots: [{ event: { eventId: "entry", executedAtUtc: "2026-09-11T14:00:00Z",
+    sequence: 1, kind: "entry", priceDecimal: "10" } }],
+    trendMomentum: { calculationVersion: "trade_indicator_context_v1", executions: [] } };
+  const source = { ...record("old", "5", "entry"), analysis } as unknown as Parameters<typeof buildTrendMomentumProjection>[0][number];
+  const result = buildTrendMomentumProjection([source]);
+  assert.equal(result.tradeCount, 1);
+  assert.equal(result.analyzedTradeCount, 1);
+  assert.equal(result.indicatorTradeCount, 0);
+  assert.equal(result.records[0].context, null);
+  assert.equal(result.trades[0].pnlDecimal, "5");
+  assert.equal(analysis.trendMomentum.calculationVersion, "trade_indicator_context_v1");
 });
 test("first-event selection precedes filters and unknown recovery is excluded from rate", () => {
   const at = 1_800_000_000;

@@ -5,6 +5,7 @@ import { dailyTradeFirstResultCoverageEnd, newYorkExtendedSession } from "./dail
 import { LogicalTradeAnalyzerRepository } from "./logical-trade-analyzer-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
 import type { TrendMomentumHistoryRepository } from "./trend-momentum-history-repository";
+import { hasCurrentTradeIndicatorContext } from "@/src/lib/trade-candle-analysis/trend-momentum-version";
 
 export class LogicalTradeAnalyzerSelectionService {
   constructor(
@@ -36,7 +37,7 @@ export class LogicalTradeAnalyzerSelectionService {
       const saved = options.refreshIndicators
         ? this.analyzer.readCurrentByRoundTrip(scope, roundTripId) : null;
       const refreshCompleted = Boolean(saved?.status === "ready" &&
-        saved.analyzed && !saved.analyzed.trendMomentum);
+        saved.analyzed && !hasCurrentTradeIndicatorContext(saved.analyzed.trendMomentum));
       if (this.analyzer.alreadyRequested(scope, target.logicalTradeVersionId, refreshCompleted)) return "already_requested";
       const availability = this.allowances.availability(scope.userId, now);
       if (!availability.enabled) return "disabled";
