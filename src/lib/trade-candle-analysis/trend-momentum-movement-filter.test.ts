@@ -8,7 +8,7 @@ import { MovementIndicatorFilters } from "../../../app/(dashboard)/analytics/tre
 type Input = Parameters<typeof filterSavedTradeMovement>[0];
 const row = (id: string, context: unknown) => ({ roundTripId: id, executionSequence: 1, direction: "long", eventKind: "Entry",
   favorableMoveDecimal: "2", adverseMoveDecimal: "1", favorableMovePercent: 20, adverseMovePercent: 10, indicatorFilterContext: context });
-const context = { calculationVersion: "trade_indicator_context_v2", oneMinute: { observedAt: 1, alignment: "above", rsiBand: "above_70" }, fiveMinute: { observedAt: 1, alignment: "below", rsiBand: "below_30" } };
+const context = { calculationVersion: "trade_indicator_context_v3", oneMinute: { observedAt: 1, alignment: "above", rsiBand: "above_70" }, fiveMinute: { observedAt: 1, alignment: "below", rsiBand: "below_30" } };
 const rows = [row("match", context), row("unknown", null), row("outside", { ...context, oneMinute: context.fiveMinute })] as unknown as Input["excursions"];
 const input: Input = { excursions: rows, eventPaths: rows.flatMap((row) => [5, 15, 30, 60].map((minutesAfterEvent) => ({ ...row, eventSequence: 1, minutesAfterEvent }))) as unknown as Input["eventPaths"] };
 

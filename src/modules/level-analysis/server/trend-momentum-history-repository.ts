@@ -8,7 +8,7 @@ import { inspectIndicatorWarmup, hasCompletedIndicatorCoverage } from "@/src/lib
 import { priorIndicatorHistoryRanges } from "./trend-momentum-history-ranges";
 import { newYorkExtendedSession } from "./daily-trade-analyzer-session";
 import { ManualAnalyzerRetryRepository } from "./manual-analyzer-retry-repository";
-import { moomooV1AnalyzerCandles } from "./providers/moomoo-analyzer-candle-time";
+import { moomooV1AnalyzerCandles, moomooV1ObservedCoverage } from "./providers/moomoo-analyzer-candle-time";
 
 const columns = "history_request_id,logical_trade_job_id,acquisition_id,requested_start_seconds,requested_end_seconds,attempt_number,status,failure_reason,candles_json,candle_sha256,created_at_utc,completed_at_utc";
 const historySource = `(SELECT ${columns}, NULL AS retry_request_id FROM level_analysis_indicator_history_requests
@@ -64,7 +64,7 @@ JOIN level_analysis_market_session_sets session ON session.market_session_set_id
 WHERE job.user_id = ? AND job.workspace_id = ? AND job.account_id = ?
  AND session.provider_symbol = ? AND session.provider_key = 'moomoo_history_kline'
  AND session.provider_adapter_version = 'moomoo_history_kline_v1'
- AND request.status IN ('complete', 'no_history')
+ AND request.status IN ('complete', 'no_history', 'partial')
  AND request.requested_start_seconds < ? AND request.requested_end_seconds > ?
 ORDER BY request.completed_at_utc DESC, request.history_request_id LIMIT 100`).all(
       scope.userId, scope.workspaceId, scope.accountId, symbol, asOf, start,
@@ -164,14 +164,17 @@ AND EXISTS (SELECT 1 FROM level_analysis_logical_trade_jobs job WHERE job.logica
     const ranges: IndicatorHistoryRange[] = [];
     const candles: NormalizedMarketCandle[] = [];
     for (const row of rows) {
-      if (row.status !== "complete" && row.status !== "no_history") continue;
+      if (row.status !== "complete" && row.status !== "no_history" && row.status !== "partial") continue;
       const json = row.candles_json;
       if (!json || createHash("sha256").update(json).digest("hex") !== row.candle_sha256) {
         throw new Error("indicator_history_evidence_digest_mismatch");
       }
       const values: unknown = JSON.parse(json);
       if (!Array.isArray(values)) throw new Error("indicator_history_evidence_invalid");
-      ranges.push({ start: row.requested_start_seconds, endExclusive: row.requested_end_seconds });
+      const requested = { start: row.requested_start_seconds, endExclusive: row.requested_end_seconds };
+      ranges.push(...(row.status === "partial"
+        ? moomooV1ObservedCoverage(values as NormalizedMarketCandle[], requested)
+        : [requested]));
       candles.push(...values as NormalizedMarketCandle[]);
     }
     return Object.freeze({ ranges: Object.freeze(ranges), candles: Object.freeze(candles) });

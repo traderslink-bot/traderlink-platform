@@ -1,5 +1,446 @@
 # Trade Analyzer Trend & Momentum Progress
 
+## Final local Demo/indicator checkpoint - 2026-09-13
+
+- Clean code checkpoint b439ea3f3e8fa34851b43356c50e0be0ef40e17c.
+  Consolidated ten changed test files/47 tests pass in one worker/512MB,
+  29 seconds. All 22 changed TS/TSX roots pass bounded TypeScript checking;
+  changed-code lint and whitespace checks pass. No local server or full build.
+- Cumulative exact allowlist is 26 paths from base
+  9b9b3a8867c9272db8503fd5512d81a3ba65636b. Financial packs, executions,
+  Watchlist and migrations remain outside that allowlist.
+- Ready for coordinator source/release review, not product completion.
+  Remaining gates are reconciled main/remote build/health, actual existing
+  Demo refresh, individual/combined rendered views, themes/mobile/tooltips,
+  offline refresh and owner acceptance. No source has been published by this task.
+
+## Preserve observed partial-history minutes - 2026-09-13
+
+- Replaced all-or-nothing prior-history exclusion with observed-minute coverage.
+  Partial receipts contribute only actual saved one-minute intervals; missing
+  minutes remain uncovered and their 5m bucket is omitted. Complete sparse
+  responses still establish their requested range. No price repair, synthetic
+  candle, changed receipt status, broadened owner access or new migration.
+- Shared helper is used by normal history and Demo. Demo accepts only the known
+  excluded-row reason for partial prior sessions, prefers complete prior
+  receipts, and still rejects a partial pinned current day or supplement.
+  Normal partial requests retain their partial status and checksum validation.
+- Five focused files/28 tests plus seven changed-file lint checks pass with one
+  worker/512MB. New cases cover rejected buckets, zero-volume actual prices,
+  core rejection, complete-prior preference, account isolation, checksum failure
+  and read-only preservation. Temporary dependency junction removed.
+- Read-only candidate check across all 94 current Demo examples now meets both
+  preferred history targets and yields EMA20 and RSI in both timeframes at all
+  361 executions. RSI's 200-bar rule was not lowered. No new provider request.
+- Independent raw-saved-data reconstruction of 1m/5m close sequences, SMA-seeded
+  EMA9/20, Wilder RSI and session turnover/volume VWAP compared all 2,527
+  execution indicator values: zero failures, maximum absolute difference
+  2.842170943040401e-14. Gapped 5m buckets were excluded independently.
+  These results supersede the earlier remaining-28 history/RSI limitation.
+- No hosted result persistence or source deployment. Full rendered/offline,
+  existing-account refresh, production reconciliation and owner acceptance
+  remain separate outstanding gates; numerical proof does not imply completion.
+
+## EMA initialization versus preferred history - 2026-09-13
+
+- Owner clarified usable EMA values must not be hidden by the preferred
+  acquisition target. Shared normal/Demo policy now initializes EMA9 at nine
+  completed candles and EMA20 at twenty, in the selected interval. Earlier
+  accepted candles remain included; bounded acquisition still seeks 200 bars.
+  RSI retains its separate requirement pending further calibration.
+- Calculation revision advances to v3 so saved results with the old availability
+  rules are not silently mixed with the new analysis. Demo activation checks the
+  shared revision constant. History shortage still does not prove no volume.
+- Recovered completed, read-only sensitivity evidence: among 66 history-complete
+  Demo examples, trade-day-only versus longer-history EMA20 differed by at most
+  0.1108513133 percent of the current close (BOXL, 56 current-day 5m bars).
+  Only one exceeded 0.1 percent. RSI differed by as much as 7.148791389 points
+  (AMIX, 51 bars). This is not proof that any twenty-bar seed matches all charts.
+- A subsequent actual-candidate read-only 94-example check confirmed the
+  remaining 28 first entries span 08:00 to 16:18 ET, with 48-147 usable 5m bars.
+  The old 200-bar gate withheld 5m EMA20 at every execution in those 28.
+  This was not an early-premarket-only problem. No provider request or write.
+- Focused checkpoint passed: seven files/39 tests and all ten changed-code-file
+  lint checks, one worker/512MB. One stale test expected the removed gate; corrected
+  its assertion while retaining independent RSI/history checks, then reran.
+  Tests include zero-volume valid prices, later-execution recovery, chart/context
+  agreement, revision exclusion and real-schema persistence. Junction removed.
+- Corrected actual candidate tested against all 94 saved Demo examples:
+  EMA20 available at all 361 executions in both 1m and 5m. No hosted result
+  was persisted and no provider calls made. UI already has an explicit short
+  missing-EMA explanation rather than a blank. Help explains initialization
+  and extra history. Source remains unpublished; remaining RSI/partial-history,
+  full rendered/offline and owner acceptance requirements remain open.
+
+## Preserve available Demo indicators - 2026-09-13
+
+- Confirmed ordinary calculation/context already gates each indicator and
+  timeframe independently. The overly broad persistence gate was Demo-only;
+  removed its requirement that every warm-up target pass. Valid current-day
+  coverage remains mandatory, and insufficient 5m history remains labelled
+  unavailable without suppressing usable 1m EMA values or session VWAP.
+- Two exact files/seven tests pass, including real-schema persistence,
+  subsequent enrichment after prior history is supplied, unchanged executions,
+  same-evidence idempotency and multi-round-trip grouping. Three changed-file
+  lint checks pass. One worker/512MB; no local server or hosted result write.
+- This is not a reduction of the current 100/200-bar convergence gates. Owner
+  questioned comparison with charting platforms; follow-up must distinguish
+  numerical initialization from convergence/interpretation readiness. Official
+  StockCharts guidance describes SMA seeding and using at least 250 earlier
+  periods for EMA accuracy; it does not establish a universal 200-bar display
+  prohibition. Source: https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/moving-averages-simple-and-exponential
+- Earlier statements that insufficient warm-up always preserves the old Demo
+  result are superseded by this per-indicator correction. Incomplete current-day
+  coverage still preserves the previous result. No partial receipt was promoted
+  to complete and no provider candle was altered.
+
+## Saved full-population preflight and numerical comparison - 2026-09-13
+
+- The candidate's actual receipt reader and Demo calculation ran in memory
+  against a current 94-example Demo account on production's read-only database.
+  No result was persisted and no provider call was made by these checks.
+  All 94 targets prepared; 66 met both warm-up requirements. The remaining
+  28 examples span LGPS, QNME, FGI, JWEL, XHG, PPCB, WETO and CRE; all had
+  sufficient 1m bars but insufficient accepted 5m warm-up. This is not a claim
+  that Bullrun's rendered results are updated or that full acceptance passes.
+- Independently reconstructed 1m/5m close sequences, SMA-seeded EMA recurrences,
+  Wilder gain/loss RSI and current-session turnover/volume VWAP for every
+  history-complete example. Compared 155,564 non-null candidate chart values:
+  zero failures; maximum absolute error 2.842170943040401e-14. Null eligibility,
+  rendered charts, grouped views and the remaining 28 examples retain their
+  separate acceptance requirements. The check used one 512MB in-memory process.
+- Stored partial sessions all lacked the native 09:31 ET opening-minute row.
+  Coordinator separately authorized exactly one in-memory raw QNME diagnostic;
+  it confirmed high_below_close, not a low-volume rejection. No raw diagnostic
+  data was persisted, credentials printed, validation relaxed or settings changed.
+  Startup first failed on a missing public library before any request; the
+  corrected in-memory bundle made exactly one diagnostic provider request.
+- Further work must distinguish known-invalid rows from no-volume gaps and
+  preserve useful validated history without inventing an OHLC correction or
+  calling an entire partial response complete. No further raw diagnostics are
+  authorized by that one-request gate. Source remains unpublished.
+
+## First prior-history acquisition pass - 2026-09-13
+
+- Completed nearest-prior requests for all 28 Demo symbol/day groups through
+  authenticated owner Market Data UI. Twenty returned 960 bars and no failure
+  reason. Eight returned 959 bars with partial:moomoo_rows_excluded: QNME,
+  JWEL, FGI, XHG, WETO, CRE, LGPS and PPCB.
+- Tried one additional earlier session only for QNME (July 31) and JWEL
+  (August 6); both again returned 959 bars with one excluded row. Stopped
+  further acquisition to investigate rather than blindly walk older dates.
+  Total this pass: 30 single provider requests, 20 complete and 10 partial.
+- Read-only hosted diagnostic records confirm HTTP200/provider code0,
+  pagination_complete1, rows_received960 for every request. Each partial
+  response has invalid_rows_excluded1; each complete response has zero.
+  No rate-limit or connection failure is evidenced. Exact invalid raw rows
+  have not yet been located; their cause must not be guessed or waived.
+- Browser click/wait timeouts were followed by fresh state checks confirming
+  completed results; no timed-out submission was blindly repeated. Current-day
+  requests were not made. No Demo result refresh, financial write or deployment.
+  The partial-receipt safeguard is committed at 019855607; numerical/current
+  Bullrun Demo/rendered/offline acceptance remain open.
+
+## Hosted Demo inventory and partial-history correction - 2026-09-13
+
+- Coordinator confirmed no release in flight and lifted the provider hold for
+  bounded owner-approved missing prior history through Market Data. Demo source
+  publication remains forbidden until separately released. Owner identified
+  Bullrun as the account to use for subsequent rendered Demo acceptance.
+- Read-only production SQLite (readonly, fileMustExist, query_only) at deployed
+  b2edf24b0f6f2e1077abfd36c4ed4cb0bcabf568 confirms 14 active Demo accounts:
+  ten have 94 current ready examples and four have 28. Current logical grouping
+  counts match those populations, with no missing pinned receipts. Three cleared
+  lifecycle records remain untouched. Neither exempt testing owner has an active
+  Demo account. Queries emitted no user/account/trade identifiers or real trades.
+- All current Demo symbol/day groups have full-day requested pinned ready
+  receipts. The ten-weekday lookback contained no ready prior receipts before
+  acquisition began. No current-day re-download is needed. Serial nearest-prior
+  requests are now underway through the existing owner UI; no analysis refresh,
+  settings change, financial mutation, migration or source deployment occurred.
+- Actual QNME/JWEL prior responses exposed ready receipts marked partial because
+  invalid/conflicting rows were excluded. Fixed the unpublished Demo reader to
+  require a null failure reason as well as ready/checksum for core, prior and
+  supplementary coverage. It must not convert a partial response to complete.
+  Five focused reader tests and two-file lint pass with one worker/512MB;
+  temporary dependency junction removed. Full historical numerical acceptance
+  remains pending after sufficient compatible history is collected.
+
+## Live saved-market inventory - 2026-09-13
+
+- Read-only production Market Data inventory in the authenticated TradersLink
+  browser loaded with no filters and Next disabled. All 28 analyzed Demo
+  symbol/day groups have current-day saved candles. CELU, LGPS and PPCB on
+  August 27 show 772 bars each; the other 25 groups show 960 each.
+- This includes the five database-only groups: RITR/HYFM August 3, QNME
+  August 4 and SCKT/JWEL August 10. No earlier-day sessions for these Demo
+  symbols appeared in the inventory. This is current inventory evidence, not
+  proof of exact pinned analysis receipts, matching price adjustments, current
+  account memberships or completed indicator refresh for all 94 examples.
+- No Request candles or analysis-refresh action was used. The temporary tab
+  was closed. Sent this evidence and clean checkpoint
+  fc47dd5f71cda50045f08ec95e76b7098f1516c6 to the release coordinator; the
+  outstanding hosted gate is compatible earlier-history and pinned-receipt
+  inspection, then authorized acquisition and full-population acceptance.
+
+## Consolidated Demo technical checkpoint - 2026-09-13
+
+- Fresh consolidated run: eight exact Demo/shared-input files, 31 tests passed,
+  zero failures, one worker, 512MB heap, 26.62 seconds. All 16 changed code/test
+  paths passed targeted lint. No local server or provider request.
+- Added the [20-path Demo handoff](trade-analyzer-demo-refresh-handoff.md) with
+  source base, code checkpoint, measured evidence and the explicit remaining
+  hosted history/population/numerical/rendered/offline/release requirements.
+  This does not mark the goal complete or authorize a production deployment.
+
+## Completed Demo revision skip and live availability QA - 2026-09-13
+
+- Activation now excludes already-ready current logical revisions with complete
+  v2 indicator context in SQL before loading candles or calculating. A changed
+  logical version remains eligible. Five focused activation tests and exact-file
+  lint pass, including the complete-versus-obsolete revision distinction.
+- Live This Guy Trend & Momentum at 5m renders two analyzed trades but zero
+  current indicator contexts. Old data is labelled unavailable; this is NOT
+  current-v2 numerical acceptance. The EMA card tooltip opens and explains
+  alignment/direction/separation and sparse observations. No read was refreshed.
+- Added a current boundary to the earlier release-ready handoff so its historical
+  core allowlist cannot be mistaken for approval to publish the local Demo work.
+
+## Combined-trade storage and both live exemptions - 2026-09-13
+
+- Extended the real-schema disposable integration test to combine two actual
+  base Demo round trips through JournalLogicalTradeRepository. Refresh preserves
+  exact current membership, includes both sets of executions, returns the same
+  analysis version through either member, remains idempotent, leaves execution
+  versions byte-for-byte unchanged and passes foreign_key_check. Test passed
+  in about 16 seconds with one worker and a 512MB heap. Synthetic prior bars
+  remain a persistence fixture, not real market-history acceptance evidence.
+- Direct authenticated GET of /api/platform/daily-trade-analyzer/allowance in
+  each existing browser account returned status ready, enabled true, unlimited
+  true, dailyAvailable/periodAvailable/selectableAvailable null, daysUntilReset
+  zero. Both This Guy and TradersLink are verified, not inferred from labels.
+  Temporary read-only tabs were closed; no analysis or provider call was made.
+- Full current-v12 hosted population and actual history-backed numerical/live
+  acceptance remain open; local Demo code remains unpublished.
+
+## Real-schema persistence and shared connection check - 2026-09-13
+
+- One real-schema in-memory integration test passed using the complete local
+  migration manifest and the immutable bundled base Demo materializer. It
+  verifies missing-warmup refusal, successful logical indicator persistence,
+  unchanged journal_execution_versions rows, idempotent repeated refresh and
+  a clean SQLite foreign_key_check. Runtime was about 15 seconds, one worker,
+  512MB heap. No disk database, provider request or production migration used.
+- Its earlier candles are explicitly synthetic test fixtures, not observed
+  market history. This proves storage integration for the base pack; it does
+  not prove full current-v12 population, multi-member numerical calibration,
+  or hosted Demo acceptance. Those requirements remain open.
+- The new schema test lint passes; changed-root TypeScript covering this test
+  and the two route/client test files reports zero diagnostics.
+- Fresh production /admin/journal/analyzer read confirms Analyzer enabled and
+  designated shared connection This Guy / Primary Journal. The status reports
+  a successful latest shared provider result at 2026-09-13T16:17:58Z. This is
+  historical provider-result evidence, not a new provider request in this run.
+  Used a separate temporary read-only tab and closed it; no settings changed.
+
+## Demo endpoint and client lifecycle regression - 2026-09-13
+
+- Two focused files / eight tests pass with one worker and 512MB heap. Rendered
+  React tests verify one serial pass, a single refresh, hidden-page pause/resume,
+  account-change cancellation, ignored late responses and reconnect-only retry.
+- Endpoint tests verify existing-v12 refresh without reapplying immutable facts,
+  new activation entering the same bounded pass, cleared lifecycle preservation,
+  denied non-owner/security requests and no-store response behavior. These mock
+  authentication/storage dependencies; they do not replace production-schema QA.
+- Exact two-file lint passes. No local server, provider request, account setting
+  change or production Demo mutation occurred. Full-schema and hosted acceptance
+  remain required. Coordinator's current gate allows bounded live exemption
+  acceptance but explicitly forbids provider requests and Demo publication.
+
+## Existing Demo activation integration - 2026-09-13
+
+- Existing current-pack activation now calls the Demo materializer's saved-only
+  derived refresh rather than returning before any Analyzer upgrade. It resolves
+  the user's active Demo account independently of their selected real account,
+  respects cleared lifecycle, selects only current ready legacy Analyzer rows,
+  and processes one candidate per request with a validated keyset cursor.
+- The existing invisible activation client advances serially with a 500ms yield,
+  pauses while hidden/offline, aborts its request on unmount/scope change, and
+  refreshes displayed data once a changed pass finishes. Missing warm-up advances
+  the pass without publishing a partial upgrade or calling any provider.
+- Four focused materializer orchestration/SQLite-selection tests passed. The
+  four changed roots have zero TypeScript diagnostics. Targeted lint emitted no
+  diagnostics. Initial combined test command produced no completion report, so
+  the four-test file was rerun with explicit exit status 0; no broader test pass
+  is inferred from that initial command.
+- Remaining acceptance includes client lifecycle/route regression, real schema
+  integration, hosted history acquisition and actual Demo result validation.
+  This integration is LOCAL ONLY, not approved as production-ready yet.
+- Coordinator reports owner grants active. Live This Guy saved FFAI guidance now
+  displays unlimited retries. No provider request or regeneration was triggered;
+  exact fresh allowance JSON and shared-provider live status still need proof.
+
+## Remaining base Demo inventory - 2026-09-13
+
+- Read-only audit used the checksum-verified immutable market pack, the actual
+  base and v4 Analyzer trade constructors, native timestamp normalization and
+  normal indicator warm-up inspection. It covered all 28 base analyzed trades.
+- YYGH, CRE, SOAR and XPON (Aug 26): four trades each; earliest entry has
+  241 completed 1m / 48 completed 5m bars, short 152 five-minute bars.
+- CELU (Aug 27): four trades; 312 completed 1m / 62 completed 5m, short 138.
+- PPCB (Aug 27): four trades; 271 completed 1m / 54 completed 5m, short 146.
+- LGPS (Aug 27): four trades; 241 completed 1m / 48 completed 5m, short 152.
+- CHOW is the eighth base market-data session but has zero base analyzed
+  trades; do not request its history solely because its candles are bundled.
+- Combined with the 66 August source trades, the source inventory covers 94
+  Analyzer-backed examples. Current hosted user-defined grouping may change
+  the displayed trade count and still requires database verification. Five
+  August session receipts remain database-only; no hosted history was fetched.
+- Local audit used a 384MB heap, no server and no provider request. This is
+  source-pack sufficiency evidence, not production-data or completed Demo proof.
+
+## Demo receipt extension QA - 2026-09-13
+
+- An older partial core can now be supplemented by a wider compatible saved
+  current-day receipt without replacing the pinned core. The calculator rejects
+  conflicting overlapping values and preserves original decimal representations
+  when another receipt uses numerically equivalent formatting.
+- Prior-day selection now returns one ranked revision per date from SQL. Ready
+  receipt metadata with no saved candle rows is rejected as a storage gap.
+- Three focused files passed all 15 tests with one worker and a 512MB heap;
+  targeted four-file lint passed. No provider request or production mutation.
+- Owner opened the TradersLink Chrome session; production Users administration
+  rendered Owner administrator. This Guy audited detail confirms Moomoo Connected.
+  No exemption was granted and no Analyzer refresh was triggered. Coordinator
+  was notified that authenticated admin access is now available.
+- Remaining completion boundary is unchanged: hosted receipt inventory and
+  missing-history acquisition, maintenance integration, full-schema verification,
+  coordinated release and actual regenerated Demo acceptance are outstanding.
+
+## Bounded Demo receipt selection and derived refresh - 2026-09-13
+
+- Added readJournalDemoIndicatorReceipts: pins the original core session version,
+  reads compatible Moomoo-v1 1m extended-hours receipts for the bounded preceding
+  ten weekdays, chooses one prior immutable revision per date, and returns
+  source-version/checksum evidence without modifying raw candles or receipts.
+- Added refreshJournalDemoTradeIndicators for one authorized active Demo trade.
+  It preserves current logical membership, requires every member to be backed
+  by saved analysis, prepares all executions together, and persists a normal
+  immutable logical Analyzer revision only after session/warm-up sufficiency.
+  Identical current results are skipped. Missing history preserves old analysis;
+  newly created derived logical identity is rolled back via the explicit
+  DemoIndicatorHistoryRequired outcome. Cleared/other-account access is denied.
+- Two files/seven tests passed: receipt SQL is tested against in-memory SQLite;
+  orchestration uses repository mocks plus a real SQLite transaction to verify
+  idempotence, all cycles, journal-only-member handling and rollback. This is
+  NOT full production-schema or hosted acceptance. Four changed files lint and
+  TypeScript-check clean. Test-only count-result annotations were added afterward
+  for strict typing; no runtime behavior changed after the passing test run.
+- Remaining integration is explicit: wire the bounded refresh into the approved
+  Demo maintenance/activation path, inspect real saved database receipts, acquire
+  missing history under the coordinated provider gate, verify full-schema/fact
+  preservation, release separately, and accept the regenerated live Demo pages.
+  No application route, existing activation call, provider/allowance path,
+  notification, Help UI, immutable Demo pack or fixed clock changed in this slice.
+  New source is local and unpublished; it does not claim existing Demo users
+  have received refreshed results yet.
+
+## Actual bundled Demo warm-up inventory - 2026-09-13
+
+- Ran a read-only384MB tsx audit using the actual native timestamp normalizer
+  and inspectIndicatorWarmup, with the v11 revisions applied to the66 August
+  analyzer-backed source trades. No synthetic candles or provider requests.
+- All16 inline symbol/day groups have at least200 completed1m bars before the
+  earliest entry, but only48-146 completed5m bars (54-152 missing against the
+  current200-bar policy). This confirms prior-session history is required;
+  unavailable-only Demo output is explicitly not the requested completion.
+
+| Symbol/date (2026) | Completed 1m before earliest entry | Completed 5m | Missing 5m |
+| --- | ---: | ---: | ---: |
+| AMIX08-04 |256|51|149|
+| YXT08-05 |243|48|152|
+| INLF08-05 |306|61|139|
+| YJ08-07 |437|87|113|
+| MB08-07 |332|66|134|
+| WXM08-11 |337|67|133|
+| BOXL08-12 |283|56|144|
+| RMCF08-12 |309|61|139|
+| XHG08-13 |280|56|144|
+| FGI08-13 |240|48|152|
+| WETO08-14 |246|49|151|
+| MDXH08-14 |325|65|135|
+| FTFT08-28 |730|146|54|
+| FNGR08-28 |353|70|130|
+| AEHL08-31 |334|66|134|
+| NCRA08-31 |330|66|134|
+
+- RITR/HYFM08-03, QNME08-04 and SCKT/JWEL08-10 require the exact saved database
+  receipts before counting. These21 August groups do not replace the remaining
+  eight base-pack symbol/day groups in the complete Demo acceptance inventory.
+- Requested the coordinator's scoped read-only hosted inventory/access path,
+  then bounded missing-history acquisition under existing owner authorization.
+  Current instruction prohibits Analyzer requests and Demo publication until
+  that separate hosted gate; no such requests or mutations occurred.
+- This Guy's visible account dropdown exposes only Primary Journal. No Demo
+  was recreated or opt-out changed to work around that; hosted lifecycle and
+  existing Demo ownership still need authoritative verification.
+
+## Saved-only Demo calculator and exemption live check - 2026-09-13
+
+- Added prepareJournalDemoTrendMomentum: normal engine and shared policy over
+  all executions of one current logical trade, with bounded prior history,
+  explicit Moomoo-v1 end-label conversion, receipt identity/conflict checks,
+  independent warm-up availability and current-session-only core/VWAP input.
+  Partial requests do not establish completed coverage. Missing saved warm-up
+  is unavailable, not a claim that the provider exhausted available history.
+- Five focused tests pass: deterministic repeat preparation, all position
+  cycles, unchanged input facts/receipts, normal-engine financial/path agreement,
+  independent unavailable5m versus available1m indicators, partial rejection,
+  conflict/cross-symbol rejection and prior-session VWAP isolation. Two-file
+  lint passed. Changed-root TypeScript passed after explicitly including Node
+  test types in the diagnostic command; initial command omitted those types.
+  Project tsconfig was not changed. No local server or broad build ran.
+- This is calculation preparation, not a deployed Demo refresh. Verified
+  database receipt selection, current-logical-trade materialization, idempotent
+  derived persistence, opt-out/fixed-date integration and hosted acceptance
+  remain required. No Demo financial pack, source facts or live result changed.
+- Coordinator reports0136 feature code live and app healthy, but confirms both
+  stable-identity grants NOT applied. Fresh live This Guy allowance response
+  at17:39:41UTC was enabled with9 daily/95 period available, no Unlimited flag;
+  response was neither service-worker nor disk cached. This is expected before
+  grants, not completed exemption acceptance. Exact release metadata requested.
+- Visible Profile confirms This Guy/Discord, General confirms Primary Journal
+  and Moomoo Connected. Available browser inventory contains no authenticated
+  Journal Admin session. Sent coordinator the existing audited userRef-to-stable
+  identity resolution plus verified-admin repository grant procedure. No grant,
+  Analyzer request, timestamp refresh or provider call submitted by this task.
+
+## Demo input-policy preparation and live read checks - 2026-09-13
+
+- Source inventory confirms current-v12 Demo activation returns without rebuilding
+  analysis, while the legacy Demo analyzer materializer omits Trend & Momentum.
+  Updating only fresh-pack construction would therefore miss existing accounts.
+- The two market packs reference 29 symbol/days. Twenty-four embed candles; five
+  August additions resolve exact checksums from saved database sessions (RITR,
+  HYFM, QNME, SCKT, JWEL). This is a local pack inventory, not proof of current
+  hosted receipt availability or sufficient prior-session warm-up.
+- Extracted buildTradeIndicatorInput from the normal history service. The Demo
+  refresh must reuse this shared session/reset/policy constructor with normalized
+  evidence; the extraction changes no thresholds, requests, grants or UI. Normal
+  and winter-session/sparse-evidence contracts pass. Across two focused runs,
+  three files / ten tests passed, including existing history service and worker
+  tests; changed-file lint and whitespace checks passed. No local server/build.
+- Live read-only FFAI acceptance: saved Analyzer reopens; 1m to 5m changes context
+  from 15:27 to 15:25 and RSI from 50.0 to42.7. The15m chart explicitly retains
+  labeled1m analysis context. These remain old saved-result checks, not v2
+  recalculation proof. Update app was clicked normally; its notice reappeared,
+  so do not claim service-worker activation is fully verified.
+- No refresh request, hosted mutation, provider call, migration or Demo rebuild
+  was submitted. Coordinator was asked for the current gate and saved-receipt
+  sufficiency/digest checkpoint. Remaining Demo work: bounded idempotent derived
+  refresh for current logical trades, saved-history inventory/acquisition where
+  needed, immutable-fact preservation tests, release and live acceptance.
+
 ## Owner-exemption source handoff - 2026-09-13
 
 - Explicit grants now bypass personal daily/period/manual-retry quantity limits

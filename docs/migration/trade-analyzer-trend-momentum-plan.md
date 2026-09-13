@@ -49,6 +49,41 @@ remain pending. See the owner-exemption handoff in the progress record.
 
 ### Demo completion requirement
 
+Owner clarification on EMA initialization: EMA9 becomes available after nine
+completed candles and EMA20 after twenty in the selected interval. Request and
+use extra prior history for convergence without treating the 200-bar acquisition
+target as a universal display requirement. RSI remains separately calibrated.
+Chart, execution, landmark and combined-page values must share this policy.
+Later entries/exits can qualify even if an earlier execution cannot. Revision
+v3 replaces the old availability contract; Help must explain shorter-history
+initialization without attributing missing data to unproven low volume.
+
+Partial-history correction: a partial earlier Moomoo response may contribute
+validated observed minutes, without marking its requested range complete.
+Unknown/excluded minutes remain uncovered; any 5m bucket crossing an uncovered
+minute is omitted. Complete sparse responses retain their full provider-confirmed
+range, so ordinary no-trading gaps are not confused with rejected-data gaps.
+Normal and Demo history use the same observed-minute coverage helper. Keep
+Demo trade-day pinned coverage mandatory and preserve receipt state/digests.
+
+Owner clarification on indicator availability: a prior-history or 5m warm-up
+shortfall must not hide usable 1m indicators, session VWAP or the whole saved
+analysis. Preserve indicator/timeframe-specific availability. The normal engine
+already gates values individually; remove the Demo-only all-warm-up persistence
+gate. Keep valid trade-day coverage mandatory. Separately evaluate numerical
+initialization versus convergence history; do not equate low volume with invalid
+data, silently lower accuracy standards, or repair contradictory OHLC by guessing.
+
+Current source/data/release boundary: [Demo refresh handoff](trade-analyzer-demo-refresh-handoff.md).
+
+Implementation checkpoint: normal and Demo-derived analysis must share
+`buildTradeIndicatorInput` for session boundaries and indicator policy. This
+constructor is extracted and focused-tested; Demo integration is not complete.
+Existing current-v12 accounts need an explicit derived-result refresh because
+pack activation intentionally skips an already-applied fact pack. Resolve
+current user-defined trade membership, preserve immutable facts and fixed date,
+and verify saved warm-up receipts before requesting missing provider history.
+
 Owner explicitly requires Demo analyzed trades to demonstrate the updated
 Analyzer, including individual indicator context, chart overlays and combined
 Day pages. Refresh derived analysis through the established Demo materializer;

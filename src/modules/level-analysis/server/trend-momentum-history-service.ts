@@ -5,13 +5,9 @@ import type { MarketDataProvider, MarketDataProviderResult } from "../contracts/
 import type { ClaimedLogicalTradeAnalyzerJob } from "./logical-trade-analyzer-repository";
 import { TrendMomentumHistoryRepository } from "./trend-momentum-history-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
-import { newYorkExtendedSession, newYorkMarketSessionBoundaries } from "./daily-trade-analyzer-session";
+import { newYorkExtendedSession } from "./daily-trade-analyzer-session";
 import { priorIndicatorHistoryRanges } from "./trend-momentum-history-ranges";
-
-// Candidate policy: independent numerical/corpus calibration is a release gate.
-const policy = Object.freeze({ version: "trade_indicator_policy_v1",
-  minimumBars: Object.freeze({ ema9: 100, ema20: 200, rsi14: 200 }),
-  emaChangePercent: 0.02, rsiChangePoints: 2, maxAgeSeconds: 120 });
+import { buildTradeIndicatorInput } from "./trend-momentum-input";
 
 export class TrendMomentumHistoryService {
   constructor(private readonly history: TrendMomentumHistoryRepository,
@@ -39,10 +35,7 @@ export class TrendMomentumHistoryService {
       candles: evidence.candles.map((bar) => ({ time: bar.time, open: Number(bar.openDecimal),
         high: Number(bar.highDecimal), low: Number(bar.lowDecimal), close: Number(bar.closeDecimal),
         volume: Number(bar.volumeDecimal), turnover: bar.turnoverDecimal == null ? null : Number(bar.turnoverDecimal) })) };
-    const input: TradeExecutionIndicatorInput = { history,
-      session: { start: session.startTime, endExclusive: session.endTime },
-      resetTimes: [session.startTime, ...newYorkMarketSessionBoundaries(job.target.tradingDateNewYork).map((b) => Date.parse(b.atUtc) / 1000)],
-      policies: { "1m": policy, "5m": { ...policy, maxAgeSeconds: 600 } } };
+    const input = buildTradeIndicatorInput(job.target.tradingDateNewYork, history);
     const earliest = Math.min(...job.target.events.map((e) => Date.parse(e.executedAtUtc) / 1000));
     const enough = inspectIndicatorWarmup({ ...history, asOf: Math.floor(earliest) },
       [{ interval: "1m", requiredBars: 200 }, { interval: "5m", requiredBars: 200 }])

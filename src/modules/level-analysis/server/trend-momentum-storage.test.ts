@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { aggregateIndicatorHistory, hasCompletedIndicatorCoverage } from "@/src/lib/trade-candle-analysis/trend-momentum-history";
 import { test } from "vitest";
 import Database from "better-sqlite3";
 import { dailyTradeAnalyzerTrendMomentumHistoryMigration as migration } from "./database/migrations/0134_daily_trade_analyzer_trend_momentum_history";
@@ -8,6 +10,40 @@ import { priorIndicatorHistoryRanges } from "./trend-momentum-history-ranges";
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const now = new Date("2026-09-12T16:00:00.000Z");
+
+test("partial history reuses actual minutes without covering missing minutes or leaking account evidence", () => {
+  const db = new Database(":memory:");
+  try {
+    const start = 1800000000;
+    const bars = Array.from({length: 10},(_,i)=>({time:start+(i+1)*60,
+      openDecimal:"2",highDecimal:"2",lowDecimal:"2",closeDecimal:"2",volumeDecimal:"0",turnoverDecimal:"0"})).filter((_,i)=>i!==2);
+    const json = JSON.stringify(bars);
+    db.exec(`CREATE TABLE level_analysis_indicator_history_requests(history_request_id,logical_trade_job_id,acquisition_id,requested_start_seconds,requested_end_seconds,attempt_number,status,failure_reason,candles_json,candle_sha256,created_at_utc,completed_at_utc);
+      CREATE TABLE level_analysis_manual_retry_history_requests AS SELECT *,NULL AS retry_request_id FROM level_analysis_indicator_history_requests WHERE 0;
+      CREATE TABLE level_analysis_logical_trade_jobs(logical_trade_job_id,user_id,workspace_id,account_id,market_session_set_id);
+      CREATE TABLE level_analysis_market_session_sets(market_session_set_id,provider_symbol,provider_key,provider_adapter_version);
+      INSERT INTO level_analysis_logical_trade_jobs VALUES('job','user','workspace','account','session');
+      INSERT INTO level_analysis_market_session_sets VALUES('session','TEST','moomoo_history_kline','moomoo_history_kline_v1');`);
+    db.prepare("INSERT INTO level_analysis_indicator_history_requests VALUES('request','job','acquisition',?,?,1,'partial','provider_range_incomplete',?,?,?,?)")
+      .run(start,start+600,json,createHash("sha256").update(json).digest("hex"),now.toISOString(),now.toISOString());
+    const repo = new TrendMomentumHistoryRepository(db);
+    const scope={userId:"user",workspaceId:"workspace",accountId:"account",workspaceRole:"owner" as const};
+    const before=db.prepare("SELECT total_changes() n").get();
+    const evidence=repo.compatibleEvidence(scope,"TEST",start,start+600);
+    assert.equal(evidence.candles.length,9);
+    assert.equal(hasCompletedIndicatorCoverage(evidence.ranges,start,start+600),false);
+    assert.equal(hasCompletedIndicatorCoverage(evidence.ranges,start+120,start+180),false);
+    assert.equal(hasCompletedIndicatorCoverage(evidence.ranges,start+300,start+600),true);
+    const five=aggregateIndicatorHistory({asOf:start+600,completedRanges:evidence.ranges,
+      candles:evidence.candles.map(c=>({time:c.time,open:2,high:2,low:2,close:2,volume:0,turnover:0}))},"5m");
+    assert.deepEqual(five.map(c=>c.time),[start+300]);
+    assert.equal(repo.compatibleEvidence({...scope,accountId:"other"},"TEST",start,start+600).candles.length,0);
+    assert.deepEqual(db.prepare("SELECT total_changes() n").get(),before);
+    assert.equal((db.prepare("SELECT status FROM level_analysis_indicator_history_requests").get() as {status:string}).status,"partial");
+    db.exec("UPDATE level_analysis_indicator_history_requests SET candle_sha256='invalid'");
+    assert.throws(()=>repo.compatibleEvidence(scope,"TEST",start,start+600),/digest_mismatch/);
+  } finally { db.close(); }
+});
 
 test("earlier session ranges are bounded, skip weekends and respect New York daylight time", () => {
   const ranges = priorIndicatorHistoryRanges("2026-03-10");

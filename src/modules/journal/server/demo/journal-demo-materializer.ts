@@ -1,4 +1,7 @@
 import type Database from "better-sqlite3";
+import { TRADE_INDICATOR_CALCULATION_VERSION } from "@/src/lib/trade-candle-analysis/trend-momentum-version";
+import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { DemoIndicatorHistoryRequired, refreshJournalDemoTradeIndicators } from "./journal-demo-indicator-refresh";
 
 import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4, createCanonicalUtcTimestamp, createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { JournalAccountRepository } from "../accounts/journal-account-repository";
@@ -28,6 +31,51 @@ export class JournalDemoMaterializer {
 
   materializeForWorkspace(input: Readonly<{ baseCurrency: string; createdForUserId: string; tradingTimezone: string; workspaceId: string }>): JournalDemoMaterializationResult {
     return this.database.transaction(() => this.materializeLocked(input)).immediate();
+  }
+
+  /** Existing fact packs stay immutable. Advance one saved-analysis candidate
+   * per request; missing history never triggers provider access from activation.
+   */
+  refreshExistingAnalysis(scope: WorkspaceAccessScope, after: string | null = null) {
+    if (scope.workspaceRole !== "owner") throw new Error("demo_indicator_account_not_authorized");
+    if (after !== null) assertCanonicalUuidV4(after, "demoIndicatorCursor");
+    const demos = new JournalDemoAccountRepository(this.database);
+    if (demos.findLifecycleForUser(scope)?.state === "cleared") return { changed: false, nextAfter: null };
+    const demo = demos.findAccountForUser(scope);
+    if (!demo) return { changed: false, nextAfter: null };
+    const rows = this.database.prepare(`SELECT DISTINCT trip.round_trip_id AS id
+ FROM journal_round_trips trip JOIN journal_round_trip_daily_trade_analyses analysis
+ ON analysis.workspace_id=trip.workspace_id AND analysis.account_id=trip.account_id
+ AND analysis.round_trip_id=trip.round_trip_id AND analysis.round_trip_version_id=trip.current_version_id
+ WHERE trip.workspace_id=? AND trip.account_id=? AND analysis.status='ready'
+ AND trip.round_trip_id>?
+ AND NOT EXISTS (
+ SELECT 1 FROM journal_active_logical_trade_memberships member
+ JOIN journal_logical_trade_daily_analyses current
+ ON current.workspace_id=member.workspace_id AND current.account_id=member.account_id
+ AND current.logical_trade_id=member.logical_trade_id
+ AND current.logical_trade_version_id=member.logical_trade_version_id
+ JOIN journal_logical_trade_daily_analysis_versions version
+ ON version.logical_trade_analysis_id=current.logical_trade_analysis_id
+ AND version.revision_number=current.current_revision
+ WHERE member.workspace_id=trip.workspace_id AND member.account_id=trip.account_id
+ AND member.round_trip_id=trip.round_trip_id AND current.user_id=? AND current.status='ready'
+ AND json_extract(version.result_json,'$.trendMomentum.calculationVersion')=?
+ AND json_extract(version.result_json,'$.trendMomentum.historyOutcome')='complete')
+ ORDER BY trip.round_trip_id LIMIT 2`).all(
+      scope.workspaceId, demo.accountId, after ?? "", scope.userId, TRADE_INDICATOR_CALCULATION_VERSION,
+    ) as { id: string }[];
+    if (!rows[0]) return { changed: false, nextAfter: null };
+    let changed = false;
+    try {
+      changed = refreshJournalDemoTradeIndicators(this.database, {
+        scope: { userId: scope.userId, workspaceId: scope.workspaceId, workspaceRole: "owner", accountId: demo.accountId },
+        roundTripId: rows[0].id, now: this.dependencies.now?.() ?? new Date(),
+      }).status === "refreshed";
+    } catch (error) {
+      if (!(error instanceof DemoIndicatorHistoryRequired)) throw error;
+    }
+    return { changed, nextAfter: rows.length > 1 ? rows[0].id : null };
   }
 
   private materializeLocked(input: Readonly<{ baseCurrency: string; createdForUserId: string; tradingTimezone: string; workspaceId: string }>): JournalDemoMaterializationResult {

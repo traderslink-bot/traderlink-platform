@@ -1,5 +1,25 @@
 # Day Analyzer current acceptance handoff
 
+## Current acceptance boundary - 2026-09-13
+
+The release-ready statement and source allowlist below describe the earlier
+core Analyzer handoff, NOT the later local Demo refresh. Current evidence and
+remaining work are recorded in [Trend & Momentum progress](trade-analyzer-trend-momentum-progress.md).
+Both live owner-account allowances now return Unlimited; This Guy remains the
+configured working shared Moomoo source. New Demo source is local/unpublished.
+Its saved-only persistence, two-round-trip grouping, activation endpoint and
+client lifecycle checks pass. Current hosted inventory and saved-data numerical
+acceptance now cover all 94 Demo examples and 361 executions. Missing prior
+history was acquired under the coordinator-approved bounded test authority;
+valid partial-history minutes are retained without covering rejected gaps.
+Current candidate passes 47 tests in ten changed test files and changed-root
+TypeScript across 22 code roots. Rendered/offline and hosted result refresh
+acceptance still require a separate reconciled release. Use only the new
+[26-path Demo/indicator handoff](trade-analyzer-demo-refresh-handoff.md), never
+the historical core allowlist below.
+
+## Historical core release handoff
+
 Status: Release-ready for the owner-authorized guarded production path, subject
 to coordinator source reconciliation, build/CI, backup and rollback gates below.
 Product acceptance remains open until post-deployment provider and rendered QA.
