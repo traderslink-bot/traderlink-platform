@@ -7,12 +7,18 @@ import type { IndicatorHistoryRange } from "@/src/lib/trade-candle-analysis/tren
 import { inspectIndicatorWarmup, hasCompletedIndicatorCoverage } from "@/src/lib/trade-candle-analysis/trend-momentum-history";
 import { priorIndicatorHistoryRanges } from "./trend-momentum-history-ranges";
 import { newYorkExtendedSession } from "./daily-trade-analyzer-session";
+import { ManualAnalyzerRetryRepository } from "./manual-analyzer-retry-repository";
+
+const columns = "history_request_id,logical_trade_job_id,acquisition_id,requested_start_seconds,requested_end_seconds,attempt_number,status,failure_reason,candles_json,candle_sha256,created_at_utc,completed_at_utc";
+const historySource = `(SELECT ${columns}, NULL AS retry_request_id FROM level_analysis_indicator_history_requests
+UNION ALL SELECT ${columns}, retry_request_id FROM level_analysis_manual_retry_history_requests)`;
 
 type Row = Readonly<{
   history_request_id: string; requested_start_seconds: number; requested_end_seconds: number;
   attempt_number: number; status: "requested" | "complete" | "no_history" | "partial" | "provider_failure";
   failure_reason: string | null; candles_json: string | null; candle_sha256: string | null;
   created_at_utc: string; completed_at_utc: string | null;
+  retry_request_id: string | null;
 }>;
 export class TrendMomentumHistoryRepository {
   constructor(private readonly database: Database.Database) {}
@@ -22,15 +28,16 @@ export class TrendMomentumHistoryRepository {
     const cutoff = new Date(now.getTime() - 5 * 60_000).toISOString();
     const timestamp = createCanonicalUtcTimestamp(now);
     return this.database.transaction(() => {
-      const rows = this.read(scope, jobId).filter((row) =>
+      const rows = this.read(scope, jobId, true).filter((row) =>
         row.status === "requested" && row.created_at_utc < cutoff);
       for (const row of rows) {
+        const table = row.retry_request_id ? "level_analysis_manual_retry_history_requests" : "level_analysis_indicator_history_requests";
         this.database.prepare(`UPDATE level_analysis_analyzer_acquisitions
 SET completed_at_utc = ?, outcome = 'provider_unavailable'
 WHERE completed_at_utc IS NULL AND acquisition_id =
- (SELECT acquisition_id FROM level_analysis_indicator_history_requests WHERE history_request_id = ?)`)
+ (SELECT acquisition_id FROM ${table} WHERE history_request_id = ?)`)
           .run(timestamp, row.history_request_id);
-        this.database.prepare(`UPDATE level_analysis_indicator_history_requests
+        this.database.prepare(`UPDATE ${table}
 SET status = 'provider_failure', failure_reason = 'request_interrupted', completed_at_utc = ?
 WHERE history_request_id = ? AND status = 'requested'`).run(timestamp, row.history_request_id);
       }
@@ -38,17 +45,19 @@ WHERE history_request_id = ? AND status = 'requested'`).run(timestamp, row.histo
     }).immediate();
   }
 
-  read(scope: AccountScope, jobId: string): readonly Row[] {
-    return this.database.prepare(`SELECT request.* FROM level_analysis_indicator_history_requests request
+  read(scope: AccountScope, jobId: string, allRequests = false): readonly Row[] {
+    const retry = new ManualAnalyzerRetryRepository(this.database).latest(jobId);
+    return this.database.prepare(`SELECT request.* FROM ${historySource} request
 JOIN level_analysis_logical_trade_jobs job ON job.logical_trade_job_id = request.logical_trade_job_id
 WHERE job.logical_trade_job_id = ? AND job.user_id = ? AND job.workspace_id = ? AND job.account_id = ?
+AND (? = 1 OR request.retry_request_id IS ?)
 ORDER BY request.requested_end_seconds DESC, request.attempt_number ASC`).all(
-      jobId, scope.userId, scope.workspaceId, scope.accountId,
+      jobId, scope.userId, scope.workspaceId, scope.accountId, allRequests ? 1 : 0, retry?.retry_request_id ?? null,
     ) as readonly Row[];
   }
 
   compatibleEvidence(scope: AccountScope, symbol: string, start: number, asOf: number) {
-    const rows = this.database.prepare(`SELECT request.* FROM level_analysis_indicator_history_requests request
+    const rows = this.database.prepare(`SELECT request.* FROM ${historySource} request
 JOIN level_analysis_logical_trade_jobs job ON job.logical_trade_job_id = request.logical_trade_job_id
 JOIN level_analysis_market_session_sets session ON session.market_session_set_id = job.market_session_set_id
 WHERE job.user_id = ? AND job.workspace_id = ? AND job.account_id = ?
@@ -94,23 +103,26 @@ ORDER BY request.completed_at_utc DESC, request.history_request_id LIMIT 100`).a
       throw new Error("indicator_history_request_range_invalid");
     }
     return this.database.transaction(() => {
+      const retry = new ManualAnalyzerRetryRepository(this.database).active(input.jobId, input.now);
       const authorized = this.database.prepare(`SELECT 1 FROM level_analysis_logical_trade_jobs job
-JOIN level_analysis_analyzer_reservations reservation ON reservation.logical_trade_job_id = job.logical_trade_job_id
-JOIN level_analysis_analyzer_acquisitions acquisition ON acquisition.reservation_id = reservation.reservation_id
+JOIN level_analysis_analyzer_acquisitions acquisition ON acquisition.acquisition_id = ?
 WHERE job.logical_trade_job_id = ? AND job.user_id = ? AND job.workspace_id = ? AND job.account_id = ?
- AND job.status = 'leased' AND acquisition.acquisition_id = ? AND acquisition.completed_at_utc IS NULL
- AND acquisition.charged_user_id = job.user_id`).get(input.jobId, input.scope.userId,
-        input.scope.workspaceId, input.scope.accountId, input.acquisitionId);
+ AND job.status = 'leased' AND acquisition.completed_at_utc IS NULL
+ AND acquisition.charged_user_id = job.user_id
+ AND ((? IS NULL AND EXISTS(SELECT 1 FROM level_analysis_analyzer_reservations reservation WHERE reservation.logical_trade_job_id=job.logical_trade_job_id AND reservation.reservation_id=acquisition.reservation_id))
+ OR EXISTS(SELECT 1 FROM level_analysis_manual_retry_acquisitions link WHERE link.acquisition_id=acquisition.acquisition_id AND link.retry_request_id=?))`).get(input.acquisitionId,input.jobId,input.scope.userId,
+        input.scope.workspaceId,input.scope.accountId,retry?.retry_request_id ?? null,retry?.retry_request_id ?? null);
       if (!authorized) return null;
       const prior = this.read(input.scope, input.jobId).filter((r) =>
         r.requested_start_seconds === range.start && r.requested_end_seconds === range.endExclusive);
       if (prior.some((r) => r.status === "complete" || r.status === "no_history" || r.status === "requested") || prior.length >= 3) return null;
       const id = createCanonicalUuidV4();
-      this.database.prepare(`INSERT INTO level_analysis_indicator_history_requests
+      const table = retry ? "level_analysis_manual_retry_history_requests" : "level_analysis_indicator_history_requests";
+      this.database.prepare(`INSERT INTO ${table}
  (history_request_id, logical_trade_job_id, acquisition_id, requested_start_seconds, requested_end_seconds,
- attempt_number, status, created_at_utc) VALUES (?, ?, ?, ?, ?, ?, 'requested', ?)`).run(
+ attempt_number, status, created_at_utc${retry ? ",retry_request_id" : ""}) VALUES (?, ?, ?, ?, ?, ?, 'requested', ?${retry ? ",?" : ""})`).run(
         id, input.jobId, input.acquisitionId, range.start, range.endExclusive,
-        prior.length + 1, createCanonicalUtcTimestamp(input.now));
+        prior.length + 1, createCanonicalUtcTimestamp(input.now), ...(retry ? [retry.retry_request_id] : []));
       return id;
     }).immediate();
   }
@@ -125,7 +137,8 @@ WHERE job.logical_trade_job_id = ? AND job.user_id = ? AND job.workspace_id = ? 
     const json = JSON.stringify(candles);
     const status = emptyComplete ? "no_history" : complete ? "complete" : result.ok ? "partial" : "provider_failure";
     const failure = complete || emptyComplete ? null : result.ok ? "provider_range_incomplete" : result.failureReasonCode;
-    return this.database.prepare(`UPDATE level_analysis_indicator_history_requests
+    for (const table of ["level_analysis_indicator_history_requests", "level_analysis_manual_retry_history_requests"] as const) {
+    const changed = this.database.prepare(`UPDATE ${table}
 SET status = ?, failure_reason = ?, candles_json = ?, candle_sha256 = ?, completed_at_utc = ?
 WHERE history_request_id = ? AND logical_trade_job_id = ? AND status = 'requested'
 AND EXISTS (SELECT 1 FROM level_analysis_logical_trade_jobs job WHERE job.logical_trade_job_id = ?
@@ -134,6 +147,9 @@ AND EXISTS (SELECT 1 FROM level_analysis_logical_trade_jobs job WHERE job.logica
       createCanonicalUtcTimestamp(input.now), input.requestId, input.jobId, input.jobId,
       input.scope.userId, input.scope.workspaceId, input.scope.accountId,
     ).changes === 1;
+    if (changed) return true;
+    }
+    return false;
   }
 
   completedEvidence(scope: AccountScope, jobId: string) {

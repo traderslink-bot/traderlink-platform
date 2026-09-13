@@ -1,5 +1,20 @@
 # TraderLink Platform Migration Register
 
+## Analyzer manual retries: allocated, source-only
+
+Coordinator reserved `0135_daily_trade_analyzer_manual_retry_requests` after
+exact predecessor `0134_daily_trade_analyzer_trend_momentum_history`. Adds
+`level_analysis_manual_retry_requests`, `level_analysis_manual_retry_acquisitions`
+and `level_analysis_manual_retry_history_requests`. Requests bind account,
+saved trade, version and New York day with ordinal 1-3; acquisition links accept
+only matching free acquisitions with no paid reservation; history receipts bind
+that request, job, acquisition and bounded range/attempt. Completed evidence and
+request identities are immutable. Original 0119 reservations and 0134 receipts
+remain unchanged. Registered in source; only disposable in-memory fixtures have
+applied this migration. No persistent database, hosted migration or release is
+authorized by this record. Guarded release must apply 0134 then 0135 if neither
+exists, with fresh coordinator predecessor/backup checks.
+
 **Status:** Phases 0-6 are locally accepted. Phase 6 passed sequential regression, production build, packaged-runtime inspection, two-account browser/API/privacy verification and final backup/restore. The accepted source is now published at `traderslink-bot/traderlink-platform`, and the narrow landing/Academy release is live on Vercel. Production-source transfer, public owner linking, Docker execution, persistent-volume deployment and full replacement application/DNS cutover remain external. The completed Journal review-correction package passes its focused, final build and fresh browser gates; port 3010 is currently closed. The accepted real-data baseline is 331 ready closed round trips, zero automatically legitimate-open round trips, and two contained Data Decisions. Four clearly labelled `TLDEMO` local review imports were added on 2026-08-04; they are temporary pending examples, not real trader data or accepted Analytics results.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7`; preserved locally, not pushed or deployed.
 **Phase 4 implementation commit:** `4575dafd0fb62804ac090c4a149152506d8db7b1`; preserved locally, not pushed or deployed. See [Phase 4 Handoff](phase-4-core-analytics-handoff.md).

@@ -284,6 +284,7 @@ WHERE version.workspace_id = ? AND version.account_id = ? AND version.logical_tr
     target: LogicalTradeAnalyzerTarget;
     desiredCoverageEndUtc: string;
     now: Date;
+    retryTerminal?: boolean;
   }>): Readonly<{ jobId: string; created: boolean }> {
     const timestamp = createCanonicalUtcTimestamp(input.now);
     this.database.prepare(`INSERT INTO level_analysis_market_session_sets (
@@ -312,7 +313,13 @@ FROM level_analysis_logical_trade_jobs WHERE workspace_id = ? AND account_id = ?
       input.scope.workspaceId, input.scope.accountId,
       input.target.logicalTradeVersionId, input.desiredCoverageEndUtc,
     ) as { logical_trade_job_id: string } | undefined;
-    if (existing) return Object.freeze({ jobId: existing.logical_trade_job_id, created: false });
+    if (existing) {
+      const retried = input.retryTerminal ? this.database.prepare(`UPDATE level_analysis_logical_trade_jobs
+SET status='queued',attempt_count=0,next_attempt_at_utc=?,completed_at_utc=NULL,lease_expires_at_utc=NULL,updated_at_utc=?
+WHERE logical_trade_job_id=? AND status IN ('no_coverage','provider_unavailable','expired')`).run(
+        timestamp,timestamp,existing.logical_trade_job_id).changes === 1 : false;
+      return Object.freeze({ jobId: existing.logical_trade_job_id, created: retried });
+    }
     const jobId = createCanonicalUuidV4();
     this.database.prepare(`INSERT INTO level_analysis_logical_trade_jobs (
  logical_trade_job_id, user_id, workspace_id, account_id, logical_trade_id,
@@ -363,11 +370,15 @@ WHERE status = 'queued' AND NOT EXISTS (
  WHERE reservation.logical_trade_job_id = level_analysis_logical_trade_jobs.logical_trade_job_id
    AND reservation.status = 'active'
  ) AND NOT EXISTS (
+ SELECT 1 FROM level_analysis_manual_retry_requests retry
+ WHERE retry.logical_trade_job_id=level_analysis_logical_trade_jobs.logical_trade_job_id
+ AND retry.created_at_utc > ?
+ ) AND NOT EXISTS (
  SELECT 1 FROM level_analysis_market_session_sets session
  WHERE session.market_session_set_id = level_analysis_logical_trade_jobs.market_session_set_id
   AND session.current_status = 'ready' AND session.current_version_id IS NOT NULL
   AND session.current_coverage_end_utc >= level_analysis_logical_trade_jobs.desired_coverage_end_utc
-)`).run(timestamp, timestamp);
+)`).run(timestamp, timestamp, new Date(now.getTime()-86400000).toISOString());
       this.database.prepare(`UPDATE level_analysis_logical_trade_jobs
 SET status = 'expired', completed_at_utc = ?, lease_expires_at_utc = NULL, updated_at_utc = ?
 WHERE (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))
@@ -405,7 +416,8 @@ WHERE logical_trade_job_id = ? AND (status = 'queued' OR (status = 'leased' AND 
       return null;
     }
     return Object.freeze({ attemptCount: row.attempt_count + 1,
-      createdAtUtc: row.created_at_utc,
+      createdAtUtc: (this.database.prepare(`SELECT created_at_utc FROM level_analysis_manual_retry_requests
+WHERE logical_trade_job_id=? ORDER BY created_at_utc DESC,rowid DESC LIMIT 1`).get(row.logical_trade_job_id) as { created_at_utc: string } | undefined)?.created_at_utc ?? row.created_at_utc,
       desiredCoverageEndUtc: row.desired_coverage_end_utc, jobId: row.logical_trade_job_id,
       marketSessionSetId: row.market_session_set_id, scope, target });
   }

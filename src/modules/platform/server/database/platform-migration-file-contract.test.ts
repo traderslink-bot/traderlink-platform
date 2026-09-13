@@ -15,7 +15,7 @@ describe("static platform migration file contract", () => {
       })),
     );
     expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
-      "0134_daily_trade_analyzer_trend_momentum_history",
+      "0135_daily_trade_analyzer_manual_retry_requests",
     );
   });
 

@@ -62,6 +62,8 @@ function accountingFixture() {
     CREATE TABLE level_analysis_logical_trade_jobs(logical_trade_job_id,user_id,status);
     INSERT INTO level_analysis_logical_trade_jobs VALUES ('job','user','leased');
     CREATE TABLE level_analysis_analyzer_acquisitions(acquisition_id,market_session_set_id,charged_user_id,reservation_id,charge_kind,started_at_utc,completed_at_utc,outcome);
+    CREATE TABLE level_analysis_manual_retry_requests(retry_request_id,logical_trade_job_id,user_id,created_at_utc);
+    CREATE TABLE level_analysis_manual_retry_acquisitions(acquisition_id,retry_request_id);
   `);
   return db;
 }
@@ -92,6 +94,22 @@ test("history continuations retain provider accounting but charge one user unit"
   assert.equal(db.open, false);
 });
 
+test("a free correction never reduces available allowance while queued or after provider acquisition", () => {
+  const db = accountingFixture();
+  try {
+    db.exec("UPDATE level_analysis_analyzer_reservations SET correction_waiver=1");
+    const repo = new SharedAnalyzerAllowanceRepository(db);
+    assert.equal(repo.availability("user", now).dailyAvailable, 10);
+    assert.equal(repo.availability("user", now).periodAvailable, 100);
+    const acquired = repo.beginAcquisition({ jobId: "job", marketSessionSetId: "session", now })!;
+    assert.equal(acquired.chargeKind, "correction_waived");
+    repo.completeAcquisition({ acquisitionId: acquired.acquisitionId, now, outcome: "ready" });
+    assert.equal(repo.availability("user", now).dailyAvailable, 10);
+    assert.equal(repo.availability("user", now).periodAvailable, 100);
+    assert.equal((db.prepare("SELECT count(*) AS n FROM level_analysis_analyzer_acquisitions").get() as { n: number }).n, 1);
+  } finally { db.close(); }
+});
+
 test("a continuation after an owner reset does not re-charge the original analysis", () => {
   const db = accountingFixture();
   try {
@@ -118,6 +136,9 @@ test("history repository binds job ownership and never rewrites completed eviden
     db.prepare("INSERT INTO level_analysis_analyzer_reservations VALUES (?, ?)").run(id(8), id(1));
     db.prepare("INSERT INTO level_analysis_analyzer_acquisitions VALUES (?, ?, NULL, ?, NULL)").run(id(2), id(8), id(5));
     migration.statements.forEach((sql) => db.exec(sql));
+    db.exec(`CREATE TABLE level_analysis_manual_retry_requests(retry_request_id,logical_trade_job_id,user_id,created_at_utc);
+CREATE TABLE level_analysis_manual_retry_acquisitions(acquisition_id,retry_request_id);
+CREATE TABLE level_analysis_manual_retry_history_requests AS SELECT *, NULL AS retry_request_id FROM level_analysis_indicator_history_requests WHERE 0;`);
     const repo = new TrendMomentumHistoryRepository(db);
     const scope = { userId: id(5), workspaceId: id(6), accountId: id(7), workspaceRole: "owner" as const };
     const args = { scope, jobId: id(1), acquisitionId: id(2), range: { start: 1800000000, endExclusive: 1800003600 }, now };

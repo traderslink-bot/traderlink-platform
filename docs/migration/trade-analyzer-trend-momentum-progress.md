@@ -2,6 +2,30 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Bounded free retry source checkpoint
+
+- Added coordinator-allocated 0135 source-only migration for durable manual
+  requests, free acquisition attribution and request-specific history receipts.
+  Original paid reservations and completed 0134 evidence are preserved.
+- Selection/worker accounting supports three provider-backed retries per stable
+  account/trade/New York day across corrections. Saved-only analysis bypasses
+  paid allowance and retry caps; queued correction waivers no longer reduce the
+  displayed allowance. Existing provider pacing/global caps remain.
+- Corrected Workspace, individual Analyzer and post-entry selection gates that blocked free cached
+  analysis at zero allowance; selection no longer previews an assumed charge.
+  Added retry-limit copy and aligned Help. No Swing Tracker changes.
+- 25 focused tests pass across retry/selection/storage/worker coverage, including
+  real-SQL requeue identity preservation, duplicate queue rejection and separate
+  free history acquisitions without altering the original charge. These are
+  disposable fixtures, not live-provider proof.
+- Changed implementation roots pass TypeScript in bounded groups (11 roots,
+  followed by the added panel and two retry test roots); lint has zero errors.
+  Workspace library retains two pre-existing warnings outside changed logic.
+  Source verifier passes all 121 migrations ending at 0135. Help is aligned.
+- Full rendered acceptance, live calibration and broader goal remain open.
+  No persistent migration, live provider call, push or deployment. Swing Tracker
+  review is deferred until the current Day Analyzer work is finished.
+
 ## Available-session download implementation
 
 - Worker now separates required first-result coverage from download coverage.

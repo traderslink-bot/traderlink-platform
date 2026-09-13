@@ -7,7 +7,8 @@ including planned UI implementation. Production release remains separately gated
 ## Owner clarification: saved data, retries and fetch window
 
 Download-window slice implemented locally: five worker tests and two changed-root
-type checks pass. Real Moomoo verification and bounded free retries remain open.
+type checks pass. Bounded free retries are implemented locally with 0135;
+integration acceptance and real Moomoo verification remain open.
 
 The owner confirmed that the designated account named This Guy and its saved
 trades may be used for testing. The earlier private-corpus authorization blocker
@@ -74,8 +75,9 @@ sparse-history and multi-round-trip acceptance remain pending.
 Source checkpoint 2026-09-13: 125 scoped tests pass; 107 changed TypeScript roots
 pass their split checks; lint has zero errors and one inherited unused-component
 warning. These are not hosted calibration, full build or browser acceptance.
-Retry-allowance choice, private-corpus identity, live calibration and the final
-rendered/release gates remain open. See the progress record for exact evidence.
+Retry-allowance choice and private-corpus identity are resolved by the owner
+clarification above. Live calibration and final rendered/release gates remain
+open. See the progress record for exact evidence.
 
 ## 1. Product outcome
 
@@ -87,6 +89,13 @@ and immutable completed candle evidence, which existing session storage does not
 provide. Only disposable in-memory verification is authorized now; release must
 apply 0134 through the guarded migration process before this manifest can start
 against production. No automatic startup migration or existing-data rewrite.
+
+Coordinator also allocated `0135_daily_trade_analyzer_manual_retry_requests`
+after 0134. This adds immutable daily retry identities, free acquisition links
+and request-specific history receipts without rewriting original reservations or
+0134 receipts. Both migrations require guarded predecessor/backup checks and
+sequential application before this candidate runs; neither has been applied to
+a persistent database. See the migration register for the exact three tables.
 
 Extend the deterministic Trade Analyzer, independently of Watchlist and AI, to
 explain EMA9, EMA20, RSI14 and Session VWAP behaviour around trades. The primary

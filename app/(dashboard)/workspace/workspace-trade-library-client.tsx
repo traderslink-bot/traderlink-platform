@@ -424,8 +424,8 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
     onClose();
   };
   const toggleAnalysis = (trade: WorkspaceTradeLibraryRow, checked: boolean) => {
-    if (checked && (!analyzerUses || analyzerUses.selectableAvailable <= analyzerSelection.length)) {
-      setAnalyzerError("You have used all available Trade Analyzer uses.");
+    if (checked && analyzerUses?.enabled !== true) {
+      setAnalyzerError("Trade Analyzer is currently unavailable.");
       return;
     }
     setAnalyzerError(null);
@@ -452,7 +452,11 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
           outcome?: string;
         }> | null;
         if (!response.ok || (result?.outcome !== "queued" && result?.outcome !== "already_requested")) {
-          setAnalyzerError("The selected trade could not be sent to Trade Analyzer. Try again.");
+          setAnalyzerError(result?.outcome === "retry_limit_reached"
+            ? "This trade has used its three free candle-data retries for today. You can try again after midnight New York time. Analysis using sufficient saved candles remains free."
+            : result?.outcome === "usage_exhausted"
+              ? "No Analyzer uses remain for a new candle download. Analysis using sufficient saved candles remains free."
+              : "The selected trade could not be sent to Trade Analyzer. Try again.");
           return;
         }
         setAnalyzerSelection((current) => current.filter((id) => id !== roundTripId));

@@ -21,5 +21,6 @@ export type SharedAnalyzerSelectionOutcome =
   | "already_requested"
   | "not_eligible"
   | "usage_exhausted"
+  | "retry_limit_reached"
   | "disabled"
   | "demo_unavailable";
