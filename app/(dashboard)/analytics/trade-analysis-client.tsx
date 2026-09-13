@@ -27,6 +27,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { filterSavedTradeMovement, readMovementFilters } from "@/src/lib/trade-candle-analysis/trend-momentum-movement-filter";
 import { MovementIndicatorFilters } from "./trend-momentum-movement-filters";
+import { summarizeSavedPatterns } from "@/src/lib/trade-candle-analysis/trend-momentum-patterns";
 
 import { DashboardMetricCard } from "@/app/dashboard-template";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
@@ -757,7 +758,8 @@ export function TradeAnalysisClient({
   const [offlineMovementQuery, setOfflineMovementQuery] = useState("");
   const movementQuery = offline ? offlineMovementQuery : searchParams.toString();
   const filteredMovement = useMemo(() => view === "mfe-mae" ? filterSavedTradeMovement(sourceModel, readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel, movementQuery]);
-  const model = filteredMovement ? { ...sourceModel, ...filteredMovement } : sourceModel;
+  const filteredPatterns = useMemo(() => view === "candle-patterns" && sourceModel.patternObservations ? summarizeSavedPatterns(sourceModel.patternObservations, readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel.patternObservations, movementQuery]);
+  const model = filteredMovement ? { ...sourceModel, ...filteredMovement } : filteredPatterns ? { ...sourceModel, patterns: filteredPatterns.rows } : sourceModel;
   const [patternPage, setPatternPage] = useState(1);
   const [patternPageSize, setPatternPageSize] = useState(10);
   const greenToRedDirectionCounts = model.greenToRedOpportunity.tradeCountsByDirection ?? model.directionTradeCounts;
@@ -774,8 +776,9 @@ export function TradeAnalysisClient({
     ? evidenceQuery.direction
     : visibleDirectionCounts.long > 0 ? "long" as const : "short" as const;
   const [selectedDirection, setSelectedDirection] = useState<"long" | "short">(defaultDirection);
-  const activeDirection = view === "trend-momentum" && !offline ? defaultDirection
+  const activeDirection = ["trend-momentum", "mfe-mae", "candle-patterns"].includes(view) && !offline ? defaultDirection
     : visibleDirectionCounts[selectedDirection] > 0 ? selectedDirection : defaultDirection;
+  const patternCoverage = useMemo(() => view === "candle-patterns" && sourceModel.patternObservations ? summarizeSavedPatterns(sourceModel.patternObservations.filter((row) => row.direction === activeDirection), readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel.patternObservations, activeDirection, movementQuery]);
   const meaningfulProfitRows = useMemo(() => model.meaningfulProfit.rows.filter((row) =>
     row.direction === activeDirection), [activeDirection, model.meaningfulProfit.rows]);
   const scalingRows = useMemo(() => model.scalingOut.rows.filter((row) =>
@@ -1173,6 +1176,11 @@ export function TradeAnalysisClient({
       {view === "mfe-mae" ? <Section description="Each row is an entry or add, measured until that position closes. Ticker and execution filters inside this table do not change the summaries above." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions" titleHelp="See the entries and adds behind the MFE/MAE summary. Each starts at its own execution price, uses the interior one-minute candle ranges and position-closing price, and excludes prices after the position closes. Use the ticker and execution filters to inspect these rows. Trade P/L is the whole trade's final result and may repeat across multiple rows.">
         <MfeMaeTable direction={activeDirection} model={model} offline={offline} />
       </Section> : null}
+      {view === "candle-patterns" && patternCoverage ? <Section defaultExpanded description="" title="Indicator filters" titleHelp="Compare candle patterns with the EMA alignment and RSI range recorded before each execution. Pattern timeframe and whether it appeared before or at the execution remain separate." helpHref="/help/trade-analyzer/candle-patterns#pattern-results">
+        <MovementIndicatorFilters mode="patterns" queryString={movementQuery} coverage={{ matched: patternCoverage.matching.length, notMatched: patternCoverage.nonmatchingOccurrenceCount, unavailable: patternCoverage.unavailableOccurrenceCount }} onChange={(query) => {
+          if (offline) setOfflineMovementQuery(query); else router.replace(`${pathname}?${query}`, { scroll: false });
+        }} />
+      </Section> : null}
       {view === "candle-patterns" ? <Section defaultExpanded description="The ten most frequently observed candle patterns." helpHref="/help/trade-analyzer/candle-patterns#ranked-patterns" title="Most observed patterns">
         <PatternRanking groups={patternGroups} />
       </Section> : null}
@@ -1207,7 +1215,7 @@ export function TradeAnalysisClient({
                 <HorizontalScrollRegion label={`${friendlyPattern(group.pattern)} breakdown table`} minTableWidth={860} stickyFirstColumn>
                   <Table aria-label={`${friendlyPattern(group.pattern)} breakdown`} size="small">
                     <TableHead><TableRow><TableCell>Timeframe</TableCell><TableCell>Execution</TableCell><TableCell>Location</TableCell><TableCell align="right">Occurrences</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Total result</TableCell><TableCell align="right">Avg result</TableCell><TableCell align="right">Median result</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg return</TableCell></TableRow></TableHead>
-                    <TableBody>{group.rows.map((row) => <TableRow hover key={`${row.timeframe}-${row.executionSide}-${row.location}`}><TableCell sx={{ fontWeight: 750 }}>{row.timeframe}</TableCell><TableCell>{row.executionSide}</TableCell><TableCell>{row.location}</TableCell><TableCell align="right">{row.occurrenceCount}</TableCell><TableCell align="right">{row.tradeCount}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.totalPnlDecimal ?? null), fontWeight: 750 }}>{money(row.totalPnlDecimal ?? null, model.currency)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averagePnlDecimal) }}>{money(row.averagePnlDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.medianPnlDecimal ?? null) }}>{money(row.medianPnlDecimal ?? null, model.currency)}</TableCell><TableCell align="right">{percent(row.winRatePercent)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averageReturnPercent) }}>{percent(row.averageReturnPercent)}</TableCell></TableRow>)}</TableBody>
+                    <TableBody>{group.rows.map((row) => <TableRow hover key={`${row.timeframe}-${row.executionSide}-${row.location}`}><TableCell sx={{ fontWeight: 750 }}>{row.timeframe}</TableCell><TableCell>{row.executionSide}</TableCell><TableCell>{row.location}</TableCell><TableCell align="right">{row.occurrenceCount}</TableCell><TableCell align="right">{row.tradeCount}{row.pnlTradeCount !== undefined && row.pnlTradeCount < row.tradeCount ? <Typography variant="caption" component="div" color="text.secondary">{row.pnlTradeCount} with P/L</Typography> : null}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.totalPnlDecimal ?? null), fontWeight: 750 }}>{money(row.totalPnlDecimal ?? null, model.currency)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averagePnlDecimal) }}>{money(row.averagePnlDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.medianPnlDecimal ?? null) }}>{money(row.medianPnlDecimal ?? null, model.currency)}</TableCell><TableCell align="right">{percent(row.winRatePercent)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averageReturnPercent) }}>{percent(row.averageReturnPercent)}</TableCell></TableRow>)}</TableBody>
                   </Table>
                 </HorizontalScrollRegion>
               </Paper>
@@ -1226,6 +1234,8 @@ export function TradeAnalysisClient({
         >
           {selectedPattern ? (
             <CandlePatternOccurrenceExplorer
+              key={`${selectedPattern}:${movementQuery}:${activeDirection}`}
+              indicatorQuery={movementQuery}
               currency={evidenceQuery.currency}
               direction={activeDirection}
               endDate={evidenceQuery.endDate}

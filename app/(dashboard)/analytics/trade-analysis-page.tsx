@@ -1,4 +1,6 @@
 import "server-only";
+import { readSavedPatternPopulation } from "@/src/modules/level-analysis/server/trend-momentum-pattern-service";
+import { summarizeSavedPatterns } from "@/src/lib/trade-candle-analysis/trend-momentum-patterns";
 import { readSavedTradeMovement } from "@/src/modules/level-analysis/server/trend-momentum-movement-service";
 
 import Stack from "@mui/material/Stack";
@@ -253,7 +255,7 @@ export async function TradeAnalysisPage({
         afterCursor: cursor,
         // Entry/Exit selects by the saved trade's final close below, keeping all
         // earlier round trips in that trade available for its complete results.
-        closingDateRange: view === "entry-exit" || view === "trend-momentum" || view === "mfe-mae" ? { kind: "all_available" } : closingRange(dateRange),
+        closingDateRange: ["entry-exit", "trend-momentum", "mfe-mae", "candle-patterns"].includes(view) ? { kind: "all_available" } : closingRange(dateRange),
         currency,
         metricIds: ["included_count"],
         moneyBasis,
@@ -274,6 +276,8 @@ export async function TradeAnalysisPage({
           )] as const]
         : [];
     }));
+    const patternPopulation = view === "candle-patterns" ? readSavedPatternPopulation({ database, scope, journalRows: rows,
+      startDate: dateRange.startDate, endDate: dateRange.endDate }) : null;
     const baseModel = buildDailyTradeLongTermAnalytics(
         database,
         scope,
@@ -290,6 +294,11 @@ export async function TradeAnalysisPage({
       generatedAtUtc: overview.generatedAtUtc,
       calculationVersion: overview.registryVersion,
       model: Object.freeze({ ...baseModel,
+        ...(patternPopulation ? { patternObservations: patternPopulation.observations,
+          patterns: summarizeSavedPatterns(patternPopulation.observations, { interval: "1m", alignment: "any", rsiBand: "any" }).rows,
+          eligibleDayTradeCount: patternPopulation.eligibleDayTradeCount, analyzedTradeCount: patternPopulation.analyzedTradeCount,
+          directionTradeCounts: patternPopulation.directionTradeCounts,
+          coveragePercent: patternPopulation.eligibleDayTradeCount ? patternPopulation.analyzedTradeCount / patternPopulation.eligibleDayTradeCount * 100 : null } : {}),
         ...(view === "mfe-mae" ? readSavedTradeMovement({ database, scope, journalRows: rows, legacy: baseModel, multipliers,
           startDate: dateRange.startDate, endDate: dateRange.endDate }) : {}),
         ...(["day", "entry-exit", "trend-momentum", "green-to-red", "scaling-out"].includes(view) ? { trendMomentum: readTrendMomentumAnalytics({ database, scope, journalRows: rows,

@@ -177,6 +177,10 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
   };
   const model = Object.freeze({
     ...input.model,
+    ...(input.model.patternObservations ? { patternObservations: input.model.patternObservations.map((row) => ({ ...row,
+      tradeId: localRef(row.tradeId), representativeRoundTripId: localRef(row.representativeRoundTripId),
+      analysisVersionId: localRef(row.analysisVersionId), eventId: localRef(row.eventId), occurrenceKey: localRef(row.occurrenceKey),
+    })) } : {}),
     ...(input.model.trendMomentum ? { trendMomentum: {
       ...input.model.trendMomentum,
       records: input.model.trendMomentum.records.map((row) => ({ ...row,

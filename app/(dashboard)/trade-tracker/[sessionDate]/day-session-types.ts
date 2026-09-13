@@ -37,6 +37,7 @@ export type DaySessionTradeAnalyzer = {
   availableAtUtc?: string | null;
   detailLoaded?: boolean;
   detailVersionRef?: string | null;
+  analysisRevisionRef?: string | null;
   candles: Array<{
     close: string;
     high: string;

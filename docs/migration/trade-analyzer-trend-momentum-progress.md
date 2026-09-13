@@ -2,6 +2,28 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Candle Patterns page/evidence integration - 2026-09-13
+
+- Connected page summaries and occurrence API to the shared saved-trade
+  population, selecting complete trades by final close and using whole-trade
+  reporting results once per comparison row. Visible P/L coverage distinguishes
+  missing results from losing trades. Interim flat executions have their own label.
+- Added shared EMA/RSI controls to pattern rankings, comparison rows and server
+  evidence requests. Pattern timeframe and timing labels remain unchanged.
+  Drawer identity resets with selection; aborted responses cannot overwrite it.
+- Evidence pages default to 25 with 10/25/50/100 supported, full matching totals,
+  and cursors bound to scope/selection/result revisions. Exact occurrence refs
+  reject changed revisions. Replay carries its saved analysis revision and must
+  match the occurrence; mixed reporting rates cannot produce a misleading chart.
+- Offline saved observations redact trade/member/execution/revision/compound IDs
+  while keeping context and grouped financial identity usable. Twelve focused
+  pattern/service/evidence/filter tests pass; eleven selected source/UI/route
+  TypeScript roots pass. Help updated. No provider or hosted action occurred.
+- Still required: actual route/browser/replay acceptance and population/payload
+  scaling checks, legacy single-member source SQL integration proof, broader
+  Analyzer trade-identity audit, remaining Trend comparisons and final goal gates.
+  Source integration is not production or visual acceptance.
+
 ## Candle Patterns canonical source boundary - 2026-09-13
 
 - Verified both current pattern summaries and the occurrence API still read

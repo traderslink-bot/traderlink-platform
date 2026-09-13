@@ -461,6 +461,7 @@ function logicalAnalyzerView(saved: LogicalTradeAnalyzerSavedResult | null): Day
     high: candle.highDecimal, low: candle.lowDecimal, open: candle.openDecimal,
     time: candle.time, turnover: candle.turnoverDecimal ?? null, volume: candle.volumeDecimal }));
   return { availableAtUtc: saved.availableAtUtc, candles: candleViews, detailLoaded: true,
+    analysisRevisionRef: saved.analysisVersionId ?? null,
     detailVersionRef: saved.logicalTradeVersionId,
     events: withExecutionPatternContexts(candleViews.map((candle) => ({
       close: Number(candle.close), high: Number(candle.high), low: Number(candle.low),
@@ -719,6 +720,7 @@ ORDER BY candle_time_utc_seconds`);
         detailLoaded: true,
         detailVersionRef: analysis.current_round_trip_version_id,
         events: eventViews,
+        analysisRevisionRef: analysis.daily_trade_analysis_version_id,
         executionMismatchSetId: null,
         executionMismatches: [],
         finalExitPaths: paths.all(analysis.daily_trade_analysis_version_id).map((path) => ({

@@ -32,4 +32,8 @@ test("default and invalid query values preserve observations; timeframe never su
 test("filter controls name the indicator timeframe and explain their complete page effect", () => {
   const html = renderToStaticMarkup(createElement(MovementIndicatorFilters, { queryString: "", onChange: () => {}, coverage: { matched: 1, notMatched: 2, unavailable: 3 } }));
   for (const copy of ["Indicator timeframe", "EMA alignment", "RSI range", "movement cards and both tables", "does not mean price must reverse"]) assert.ok(html.includes(copy), copy);
+  const patternHtml = renderToStaticMarkup(createElement(MovementIndicatorFilters, { mode: "patterns", queryString: "", onChange: () => {}, coverage: { matched: 1, notMatched: 2, unavailable: 3 } }));
+  assert.ok(patternHtml.includes("pattern summaries and their evidence rows"));
+  assert.ok(patternHtml.includes("pattern timeframe stays unchanged"));
+  assert.ok(!patternHtml.includes("movement cards and both tables"));
 });

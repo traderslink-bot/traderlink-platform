@@ -129,6 +129,7 @@ export type TradeAnalysisBreakdownRow = Readonly<{
 }>;
 
 export type TradeAnalysisPatternRow = Readonly<{
+  pnlTradeCount?: number;
   averagePnlDecimal: string | null;
   executionSide: "Entry" | "Exit";
   location: "Exact execution candle" | "Before execution";
@@ -404,6 +405,7 @@ type TradeAnalysisGreenToRedDamage = Readonly<{
 }>;
 
 export type DailyTradeLongTermAnalyticsModel = Readonly<{
+  patternObservations?: readonly import("../../../lib/trade-candle-analysis/trend-momentum-patterns").SavedPatternObservation[];
   trendMomentum?: TrendMomentumProjection;
   entryExitExcludedTradeCount?: number;
   analyzedExecutionCount: number;

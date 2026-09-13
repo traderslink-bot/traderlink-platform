@@ -18,7 +18,7 @@ export type DailyTradePatternOccurrenceRow = Readonly<{
   candlesBeforeExecution: 0 | 1 | 2;
   currency: string;
   direction: "long" | "short";
-  eventKind: "entry" | "add" | "partial_exit" | "final_exit";
+  eventKind: "entry" | "add" | "partial_exit" | "temporary_flat" | "final_exit";
   executedAtUtc: string;
   executionId: string;
   occurrenceRef: string;
