@@ -2,6 +2,21 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Room After Entry indicator filters - 2026-09-12
+
+- Added one shared EMA-alignment/RSI-band filter over the saved execution
+  capsules. Cards, comparisons, timed paths and measured rows use its same
+  selected population. Required missing context stays separate from a mismatch;
+  default Any preserves existing observations. Coverage deduplicates executions
+  across movement rows and four timed windows, separately by direction.
+- Online controls preserve selections in the URL; offline controls filter the
+  already-saved model locally. No extra candle or AI request. One-/five-minute
+  selection changes indicator context only, never movement candle resolution.
+- Eleven focused movement/filter/service tests pass including rendered control
+  labels, timeframe isolation, grouping, timing and missing-data behavior.
+  Help describes whole-page versus table-local filters. Real browser interaction
+  and offline acceptance remain pending; this is not a release-ready claim.
+
 ## Room After Entry saved-trade correction in progress - 2026-09-12
 
 - Connected Room After Entry to current saved logical-trade results. Fetches

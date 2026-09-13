@@ -264,10 +264,11 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       {
         id: "comparisons",
         title: "Comparisons",
-        summary: "Separate original entries, adds, longs and shorts without turning observation into a trading rule.",
+        summary: "Compare entries and adds by direction, EMA alignment and RSI range.",
         keywords: ["entries", "adds", "long", "short", "comparison"],
         blocks: [
           { kind: "paragraph", text: "The four comparison rows reuse the same measured execution facts. They show the count plus average movement in your favor and against you in price and percentage terms. They describe the observed sample and do not prescribe a stop, target or adding strategy." },
+          { kind: "paragraph", text: "Indicator filters apply to the movement cards, timed price paths and measured-execution table together. Choose one-minute or five-minute indicator context, EMA9 relative to EMA20, and an RSI range. Both conditions must match the same saved context before the execution. Price movement itself still uses one-minute candles. Any keeps rows without added indicator history; selecting a condition separates missing context from actual non-matches. The displayed coverage counts each execution once, not once for every time window." },
         ],
       },
       {

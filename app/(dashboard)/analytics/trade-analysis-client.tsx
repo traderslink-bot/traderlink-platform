@@ -25,6 +25,8 @@ import Decimal from "decimal.js";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { filterSavedTradeMovement, readMovementFilters } from "@/src/lib/trade-candle-analysis/trend-momentum-movement-filter";
+import { MovementIndicatorFilters } from "./trend-momentum-movement-filters";
 
 import { DashboardMetricCard } from "@/app/dashboard-template";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
@@ -731,7 +733,7 @@ function AnalyzedTradeCountCard({
 export function TradeAnalysisClient({
   indicatorSupportingPage,
   evidenceQuery,
-  model,
+  model: sourceModel,
   offline = false,
   view,
 }: {
@@ -752,6 +754,10 @@ export function TradeAnalysisClient({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [offlineMovementQuery, setOfflineMovementQuery] = useState("");
+  const movementQuery = offline ? offlineMovementQuery : searchParams.toString();
+  const filteredMovement = useMemo(() => view === "mfe-mae" ? filterSavedTradeMovement(sourceModel, readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel, movementQuery]);
+  const model = filteredMovement ? { ...sourceModel, ...filteredMovement } : sourceModel;
   const [patternPage, setPatternPage] = useState(1);
   const [patternPageSize, setPatternPageSize] = useState(10);
   const greenToRedDirectionCounts = model.greenToRedOpportunity.tradeCountsByDirection ?? model.directionTradeCounts;
@@ -1137,6 +1143,11 @@ export function TradeAnalysisClient({
         <EventPathTable explainColumns currency={model.currency} direction={activeDirection} kinds={["Partial exit", "Final exit"]} model={model} offline={offline} />
       </Section> : null}
 
+      {view === "mfe-mae" && filteredMovement ? <Section defaultExpanded description="" title="Indicator filters" titleHelp="Compare movement after executions with the chosen EMA alignment and RSI range. Both conditions must match the same saved timeframe before that execution. Any keeps executions without added indicator history." helpHref="/help/trade-analyzer/mfe-mae#comparisons">
+        <MovementIndicatorFilters queryString={movementQuery} coverage={filteredMovement.coverage[activeDirection]} onChange={(query) => {
+          if (offline) setOfflineMovementQuery(query); else router.replace(`${pathname}?${query}`, { scroll: false });
+        }} />
+      </Section> : null}
       {view === "mfe-mae" ? <Section defaultExpanded description={`MFE and MAE measure price movement after each ${directionLabel} entry or add until that position closes. Dollars are per share.`} helpHref="/help/trade-analyzer/mfe-mae#overview" title="Room after entry · MFE / MAE" titleHelp="Review how much upside and downside followed your entries and adds while the position was open. Each execution starts from its own price and carries equal weight in the summaries. MFE is the largest profitable price move; MAE is the largest losing price move. Neither is a realized trade profit or loss. Measurements use saved one-minute candles and the position-closing price. The entry and exit candles' full ranges are excluded because their highs and lows may have occurred outside your holding period.">
         <Stack spacing={1.5}>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" } }}>
@@ -1159,7 +1170,7 @@ export function TradeAnalysisClient({
         <EventPathTable currency={model.currency} direction={activeDirection} explainColumns kinds={["Initial entry", "Re-entry", "Add"]} model={model} offline={offline} paginationAtBottom />
       </Section> : null}
 
-      {view === "mfe-mae" ? <Section description="Each row is an entry or add, measured until that position closes. Table filters do not change the summaries above." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions" titleHelp="See the entries and adds behind the MFE/MAE summary. Each starts at its own execution price, uses the interior one-minute candle ranges and position-closing price, and excludes prices after the position closes. Use the ticker and execution filters to inspect these rows. Trade P/L is the whole trade's final result and may repeat across multiple rows.">
+      {view === "mfe-mae" ? <Section description="Each row is an entry or add, measured until that position closes. Ticker and execution filters inside this table do not change the summaries above." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions" titleHelp="See the entries and adds behind the MFE/MAE summary. Each starts at its own execution price, uses the interior one-minute candle ranges and position-closing price, and excludes prices after the position closes. Use the ticker and execution filters to inspect these rows. Trade P/L is the whole trade's final result and may repeat across multiple rows.">
         <MfeMaeTable direction={activeDirection} model={model} offline={offline} />
       </Section> : null}
       {view === "candle-patterns" ? <Section defaultExpanded description="The ten most frequently observed candle patterns." helpHref="/help/trade-analyzer/candle-patterns#ranked-patterns" title="Most observed patterns">
