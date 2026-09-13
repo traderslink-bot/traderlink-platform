@@ -5,6 +5,39 @@ Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 Current source/remaining hosted acceptance:
 [Exact handoff](trade-analyzer-current-acceptance-handoff.md).
 
+## Production handback and test-harness correction - 2026-09-13
+
+- Coordinator reports production source ade1375505482a2aefc870cb33eaf3d427283be4,
+  deployment 5266f140-84b4-4d1b-a805-14a8489c3d6e SUCCESS, one running instance,
+  original volume, 121 migrations through 0135, maintenance absent and both
+  app/proxy health ready. Both migration backups restore-verified by coordinator.
+- Test-only correction c2b56a0b5f744733c7e9482ba29a7278f603a31a changes exactly
+  32 owned test files: node:test registration becomes Vitest; two mock fixtures
+  use vi.spyOn with afterEach restoreAllMocks. All 723 assertion-bearing lines
+  are unchanged. No product behavior or fixture values changed.
+- Repository-config Vitest, jsdom, one worker, no file parallelism: narrow 32
+  files/146 tests pass; complete owned set 33 files/148 tests pass. The final
+  type-only mock casts were followed by a passing two-file/five-test rerun.
+  Targeted lint has zero errors; two changed mock roots pass TypeScript.
+- Live browser successfully loaded production Trend & Momentum. Signed-in
+  profile is TradersLink / local development owner, Primary account, not This
+  Guy. Two older saved analyses have no new indicator context; this is not
+  evidence of a new provider-generation failure or successful calibration.
+- Keyboard Enter opens section help without collapsing its expanded section.
+  Navy Dark mobile viewport probe measured document width equal to viewport
+  content width (375px), with 72 table headings and 90 explanation buttons.
+  Cookie-consent dialog obscures the lower screen and blocked a selector check.
+  No consent, appearance, account, authentication or delivery settings changed.
+- Complete Light/touch/offline/PWA/performance and This Guy provider/corpus
+  acceptance are NOT passed. Coordinator explicitly retained that separate
+  boundary; no alternate identity, second-writer database mutation or provider
+  requests were used to bypass it. No product changes are authorized by findings.
+- Cleanup: temporary node_modules junction removed without deleting the shared
+  installed dependencies; browser viewport reset and temporary tab closed.
+  Normal page viewing may update ordinary read-only PWA page caches. No trade
+  data was added/edited/deleted and no persistent test settings remain.
+- Test correction is local only; no push, deployment or migration by this task.
+
 ## Final source release handoff
 
 - Final changed-slice checkpoint: 32 Node test files, 146 tests pass, zero failed
