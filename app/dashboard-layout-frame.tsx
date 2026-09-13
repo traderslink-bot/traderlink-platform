@@ -73,7 +73,7 @@ async function TraderLinkPlatformDashboardFrameContent({
       demos.findLifecycleForUser(scope)?.state !== "cleared" &&
       (!demo || (demo.demoPackVersionId !== JOURNAL_DEMO_CURRENT_VERSION_ID && !demos.findPackApplication({
         accountId: demo.accountId, workspaceId: scope.workspaceId, demoPackVersionId: JOURNAL_DEMO_CURRENT_VERSION_ID,
-      })));
+      })) || demos.hasPendingIndicatorAnalysis(scope));
     const activeAccount = scope.activeAccountId
       ? new JournalAccountService(new JournalAccountRepository(database))
         .requireAccountRecord(scope, scope.activeAccountId)

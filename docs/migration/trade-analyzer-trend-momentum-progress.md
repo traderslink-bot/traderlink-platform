@@ -2032,6 +2032,22 @@ are not yet verified. The detailed draft is not an implementation completion cla
 
 ## Owner-required tooltip quality - 2026-09-12
 
+### Demo refresh mounting correction - 2026-09-13
+
+- Live Bullrun QA exposed current-pack eligibility excluding the saved indicator
+  refresh. Added a read-only pending-analysis check to the existing owner/session
+  gate; preserved cleared accounts, account isolation and complete-result skip.
+- Fifteen focused tests, targeted lint and three-root TypeScript passed. Exact
+  correction scope and hosted acceptance still pending are recorded in
+  [Demo refresh handoff](trade-analyzer-demo-refresh-handoff.md).
+
+### Owner-requested Combined conditions spacing - 2026-09-13
+
+- Added 2.5 theme spacing units below Completed Gross/Net trade outcomes before
+  the dropdowns, across desktop/mobile and shared online/offline rendering.
+- No copy, filters, calculations or theme colors changed. Help remains accurate;
+  this spacing-only correction needs no guide changes. Hosted visual check pending.
+
 - Made card and table-column tooltips mandatory for new/changed Analyzer pages,
   preserving existing coverage, interactions, tone and presentation quality.
 - Required short trader-friendly explanations of displayed values, units,

@@ -139,7 +139,7 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
         axis="vwapSide" onAxisChange={() => {}} money={money} basisLabel={basisLabel} />
     </Section>
     <Section title="Combined conditions" help="Choose conditions that must all be present at one execution. A matching trade is counted once. A trade is nonmatching only when all required indicator data is available for its selected executions and none matches. Results describe your saved trades, not a forecast.">
-      <Typography variant="body2" color="text.secondary">Completed {basisLabel} trade outcomes</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>Completed {basisLabel} trade outcomes</Typography>
       <TrendMomentumConditions projection={selected} interval={interval} kind={kind} filters={parseIndicatorConditions(query)} onChange={changeQuery} money={money}
         query={query} direction={direction} timezone={timezone} offline={offline}
         supportingPage={offline ? buildIndicatorSupportingPage(selected, query, direction) : supportingPage} />

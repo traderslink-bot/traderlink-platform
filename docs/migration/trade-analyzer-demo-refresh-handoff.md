@@ -1,5 +1,24 @@
 # Demo Analyzer refresh handoff
 
+## Live acceptance correction - 2026-09-13
+
+- Production c00ec8b20b8eef2c239b6a4c1045d42dcebc947a was healthy, but
+  Bullrun's current Demo pack did not mount DemoSessionActivation: no ensure
+  request was observed, and the read-only hosted check found zero v3 Demo results.
+- Corrected the dashboard eligibility check to include pending saved indicator
+  analysis independently of financial pack upgrades. The check is read-only,
+  owner/workspace/account scoped, preserves cleared Demo lifecycle and skips
+  complete current results. Existing serial saved-only refresh is unchanged.
+- Correction allowlist: app/dashboard-layout-frame.tsx;
+  src/modules/journal/server/demo/journal-demo-account-repository.ts;
+  src/modules/journal/server/demo/journal-demo-activation-refresh.test.ts;
+  this handoff; trade-analyzer-trend-momentum-progress.md.
+- Three focused test files / 15 tests passed; targeted lint, changed-root
+  TypeScript (three roots, zero diagnostics), and whitespace checks passed.
+  No migration, provider request, financial fact edit or local server/build.
+- Hosted refresh and rendered acceptance remain pending the coordinator release.
+  Spacing-only correction is separate commit 1308b104f8b1fa28689b6ec3c3e1a4f2352a5863.
+
 Status: local technical checkpoint; NOT production accepted and NOT authority
 to publish. On 2026-09-13 Coordinator lifted the temporary provider hold for
 bounded owner-approved missing prior history through the existing Market Data

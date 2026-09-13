@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { TRADE_INDICATOR_CALCULATION_VERSION } from "@/src/lib/trade-candle-analysis/trend-momentum-version";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -62,6 +63,32 @@ function mapDemoLifecycle(row: DemoLifecycleRow): JournalDemoLifecycleRecord {
 
 export class JournalDemoAccountRepository {
   constructor(private readonly database: Database.Database) {}
+
+  /** Read-only eligibility check; never downloads candles or changes Demo facts. */
+  hasPendingIndicatorAnalysis(scope: WorkspaceAccessScope): boolean {
+    if (scope.workspaceRole !== "owner" || this.findLifecycleForUser(scope)?.state === "cleared") return false;
+    const demo = this.findAccountForUser(scope);
+    if (!demo) return false;
+    return Boolean(this.database.prepare(`SELECT 1 FROM journal_round_trips trip
+JOIN journal_round_trip_daily_trade_analyses analysis
+ ON analysis.workspace_id=trip.workspace_id AND analysis.account_id=trip.account_id
+ AND analysis.round_trip_id=trip.round_trip_id AND analysis.round_trip_version_id=trip.current_version_id
+WHERE trip.workspace_id=? AND trip.account_id=? AND analysis.status='ready'
+ AND NOT EXISTS (
+ SELECT 1 FROM journal_active_logical_trade_memberships member
+ JOIN journal_logical_trade_daily_analyses current
+ ON current.workspace_id=member.workspace_id AND current.account_id=member.account_id
+ AND current.logical_trade_id=member.logical_trade_id
+ AND current.logical_trade_version_id=member.logical_trade_version_id
+ JOIN journal_logical_trade_daily_analysis_versions version
+ ON version.logical_trade_analysis_id=current.logical_trade_analysis_id
+ AND version.revision_number=current.current_revision
+ WHERE member.workspace_id=trip.workspace_id AND member.account_id=trip.account_id
+ AND member.round_trip_id=trip.round_trip_id AND current.user_id=? AND current.status='ready'
+ AND json_extract(version.result_json,'$.trendMomentum.calculationVersion')=?
+ AND json_extract(version.result_json,'$.trendMomentum.historyOutcome')='complete') LIMIT 1`
+    ).get(scope.workspaceId, demo.accountId, scope.userId, TRADE_INDICATOR_CALCULATION_VERSION));
+  }
 
   findActiveAccount(scope: WorkspaceAccessScope): JournalDemoAccountRecord | null {
     if (!scope.activeAccountId || !scope.allowedAccountIds.includes(scope.activeAccountId)) return null;

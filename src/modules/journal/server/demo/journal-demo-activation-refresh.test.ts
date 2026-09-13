@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import Database from "better-sqlite3";
 import { test, vi } from "vitest";
 import { JournalDemoMaterializer } from "./journal-demo-materializer";
@@ -8,6 +9,35 @@ import * as refresh from "./journal-demo-indicator-refresh";
 const one="10000000-0000-4000-8000-000000000001";
 const two="10000000-0000-4000-8000-000000000002";
 const scope={userId:"owner",workspaceId:"workspace",workspaceRole:"owner" as const,activeAccountId:"real",allowedAccountIds:["real"]};
+
+test("dashboard checks indicator refresh independently of the financial pack upgrade",()=>{
+  const source=readFileSync("app/dashboard-layout-frame.tsx","utf8");
+  assert.match(source,/\}\)\) \|\| demos\.hasPendingIndicatorAnalysis\(scope\)\)/);
+  assert.match(source,/dashboardContext\.demoActivationPending \? <DemoSessionActivation/);
+});
+
+test("current Demo pack can need indicators, while completed, cleared and unrelated accounts do not",()=>{
+  const f=fixture();try{
+    const repo=new JournalDemoAccountRepository(f.db);
+    assert.equal(repo.hasPendingIndicatorAnalysis(scope),true);
+    assert.equal(repo.hasPendingIndicatorAnalysis({...scope,workspaceRole:"member"}),false);
+    assert.equal(repo.hasPendingIndicatorAnalysis({...scope,workspaceId:"other"}),false);
+    for(const id of [one,two]) {
+      f.db.prepare("INSERT INTO journal_active_logical_trade_memberships VALUES('workspace','demo',?,?,?)").run(id,id,id);
+      f.db.prepare("INSERT INTO journal_logical_trade_daily_analyses VALUES('workspace','demo',?,?,?,1,'owner','ready')").run(id,id,id);
+      f.db.prepare("INSERT INTO journal_logical_trade_daily_analysis_versions VALUES(?,1,?)").run(id,JSON.stringify({trendMomentum:{calculationVersion:"trade_indicator_context_v3",historyOutcome:"complete"}}));
+    }
+    assert.equal(repo.hasPendingIndicatorAnalysis(scope),false);
+    f.db.exec("UPDATE journal_logical_trade_daily_analysis_versions SET result_json='{}'");
+    assert.equal(repo.hasPendingIndicatorAnalysis(scope),true);
+    vi.mocked(JournalDemoAccountRepository.prototype.findLifecycleForUser).mockReturnValue({state:"cleared",userId:"owner",workspaceId:"workspace",clearedAtUtc:"",clearedDemoAccountId:"demo"});
+    assert.equal(repo.hasPendingIndicatorAnalysis(scope),false);
+    vi.mocked(JournalDemoAccountRepository.prototype.findLifecycleForUser).mockReturnValue(null);
+    vi.mocked(JournalDemoAccountRepository.prototype.findAccountForUser).mockReturnValue(null);
+    assert.equal(repo.hasPendingIndicatorAnalysis(scope),false);
+    assert.equal(f.run.mock.calls.length,0);
+  }finally{f.close();}
+});
 function fixture() {
   const db=new Database(":memory:");
   db.exec(`CREATE TABLE journal_round_trips(round_trip_id,workspace_id,account_id,current_version_id);
