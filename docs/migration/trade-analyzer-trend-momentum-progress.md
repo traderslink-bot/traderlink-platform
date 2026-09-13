@@ -2,6 +2,24 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Section help markup correction - 2026-09-13
+
+- Tooltip audit found seven help IconButtons nested inside AccordionSummary
+  buttons, confirmed in rendered static markup. Event propagation guards do
+  not make nested buttons valid HTML.
+- Replaced only this page's local Section wrapper with a themed outlined Paper,
+  native heading toggle and separate sibling help control. All titles, help
+  text, children and default-expanded behavior remain. Added useId-based
+  aria-controls/labelled regions and a visible keyboard-focus outline.
+- Presentation/during-study: 10 tests passed, including zero nested buttons,
+  seven expanded controls with corresponding regions, and existing URL/data
+  behavior. Targeted Next lint: zero errors/warnings. No local server used.
+- Used Next.js skill hydration guidance and installed use-client documentation;
+  no server/client boundary or data contract changed. Help content unchanged.
+- Actual keyboard/touch, Light/Navy Dark/mobile visual acceptance and the full
+  per-page tooltip inventory remain open. Static markup is not browser proof.
+- No provider call, hosted write, migration, push or deployment.
+
 ## Numerical acceptance scale and sparse-bucket checks - 2026-09-13
 
 - Reused the existing independent closed-form EMA and Wilder RSI references;

@@ -1,9 +1,10 @@
 "use client";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
+import Box from "@mui/material/Box";
+import ButtonBase from "@mui/material/ButtonBase";
+import Collapse from "@mui/material/Collapse";
+import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
@@ -14,7 +15,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useMemo, useState, type ReactNode } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import { summarizeIndicatorRecords,
   type IndicatorExecutionKind, type TrendMomentumProjection } from "@/src/lib/trade-candle-analysis/trend-momentum-analytics";
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
@@ -43,10 +44,26 @@ function Heading({ label, help }: { label: string; help: string }) {
   return <Stack component="span" direction="row" sx={{ alignItems: "center" }}>{label}<AnalyzerHelpTooltip label={label} text={help} /></Stack>;
 }
 function Section({ title, help, children }: { title: string; help: string; children: ReactNode }) {
-  return <Accordion defaultExpanded disableGutters variant="outlined">
-    <AccordionSummary expandIcon={<ExpandMoreIcon />}><Heading label={title} help={help} /></AccordionSummary>
-    <AccordionDetails>{children}</AccordionDetails>
-  </Accordion>;
+  const [expanded, setExpanded] = useState(true);
+  const id = useId();
+  return <Paper variant="outlined">
+    <Stack direction="row" sx={{ alignItems: "center", px: 2 }}>
+      <Box component="h3" sx={{ m: 0, flex: 1, minWidth: 0, font: "inherit" }}>
+        <ButtonBase id={`${id}-heading`} aria-expanded={expanded} aria-controls={`${id}-content`}
+          onClick={() => setExpanded(value => !value)}
+          sx={{ width: "100%", minHeight: 48, justifyContent: "space-between", textAlign: "left",
+            "&.Mui-focusVisible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 } }}>
+          {title}<ExpandMoreIcon sx={{ flexShrink: 0, transform: expanded ? "rotate(180deg)" : "none" }} />
+        </ButtonBase>
+      </Box>
+      <AnalyzerHelpTooltip label={title} text={help} />
+    </Stack>
+    <Collapse in={expanded}>
+      <Box id={`${id}-content`} role="region" aria-labelledby={`${id}-heading`} sx={{ px: 2, pb: 2 }}>
+        {children}
+      </Box>
+    </Collapse>
+  </Paper>;
 }
 
 export function TrendMomentumAnalysis({ projection, direction, currency, timezone, offline = false, queryString, onQueryChange, supportingPage, moneyBasis = "gross" }: {

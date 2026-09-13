@@ -24,6 +24,18 @@ test("empty selection renders controls, explanatory column controls and exclusiv
     "Required indicator data missing", "Explain Median trade P/L", "Explain RSI range"]) assert.ok(html.includes(text), text);
   for (const text of ["EMA 9 &amp; EMA 20", "Session VWAP", "Explain Average Gross P/L", "Explain Median Gross P/L"]) assert.ok(html.includes(text), text);
   assert.ok(!html.includes("NaN"));
+  let buttonDepth = 0;
+  for (const match of html.matchAll(/<button\b[^>]*>|<\/button>/g)) {
+    if (match[0].startsWith("</")) buttonDepth--;
+    else {
+      assert.equal(buttonDepth, 0, `Nested interactive button: ${match[0]}`);
+      buttonDepth++;
+    }
+  }
+  assert.equal(buttonDepth, 0);
+  const sectionButtons = [...html.matchAll(/<button\b[^>]*aria-expanded="true"[^>]*aria-controls="([^"]+)"[^>]*>/g)];
+  assert.equal(sectionButtons.length, 7);
+  for (const [, contentId] of sectionButtons) assert.ok(html.includes(`id="${contentId}" role="region"`));
 });
 
 test("URL selections restore timeframe and execution without a browser router", () => {
