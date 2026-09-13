@@ -2,6 +2,12 @@
 
 Status: **INCOMPLETE - NOT AUTHORIZED FOR RELEASE**.
 
+Superseding owner decision: retry charging and private-corpus choices below are
+now answered. The owner authorized This Guy's saved trades, free retries with a
+limit, free saved-data-only analysis even on first use, and full available-session
+downloads when a fetch is needed. See the plan's Owner clarification section.
+The candidate SHA below predates implementation of those new requirements.
+
 Plan: [Full controlling plan](trade-analyzer-trend-momentum-plan.md).
 Evidence: [Progress](trade-analyzer-trend-momentum-progress.md).
 UI audit: [Tooltip source index](trade-analyzer-tooltip-source-inventory.md).
@@ -202,4 +208,3 @@ source, tests, migration registration, Help and documentation.
 - `src/modules/level-analysis/server/trend-momentum-worker.test.ts`
 - `src/modules/platform/server/database/platform-migration-file-contract.test.ts`
 - `src/modules/platform/server/database/platform-migration-manifest.ts`
-

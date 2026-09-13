@@ -2,6 +2,22 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Owner resolves retry and corpus choices
+
+- Owner explicitly reconfirmed authorization for This Guy and its saved trades.
+  Removed that decision as an active blocker; no new private reads in this turn.
+- Owner approved free retries with a limit and free saved-data-only analysis,
+  including the first analysis. Announced a default of three manual provider
+  retries per saved trade/New York day, excluding saved-only reruns.
+- Owner also approved fetching the available full extended session when a
+  download is required, instead of ending the download at exit plus 30 minutes.
+- Updated the controlling plan with accounting, stable identity, atomic cap,
+  measurement-window preservation and exact verification requirements.
+- Current source already has correction-waived acquisition accounting. It does
+  not yet implement the new bounded manual-retry contract. Earlier handoff's
+  unanswered-choice text is superseded; implementation/acceptance gates remain.
+- No application, billing, migration or hosted changes made in this policy update.
+
 ## Candidate handoff, not release readiness - 2026-09-13
 
 - Captured clean source/docs candidate 53d9e73b4 relative to f97ab1cee and its

@@ -4,6 +4,44 @@ Status: Implementation authorized 2026-09-12. Owner subsequently approved all
 required testing and completing the planned work without routine approval stops,
 including planned UI implementation. Production release remains separately gated.
 
+## Owner clarification: saved data, retries and fetch window
+
+The owner confirmed that the designated account named This Guy and its saved
+trades may be used for testing. The earlier private-corpus authorization blocker
+is resolved; credentials and private trade facts remain protected.
+
+The owner approved these behavior changes after the original source checkpoint:
+
+- Analysis using sufficient saved candles never consumes user allowance, even
+  on the first analysis. No provider request means no usage charge.
+- Manual retries do not consume another user allowance, including corrected
+  trade-time retries, but Moomoo-backed retries must have a limit.
+- Implementation default announced to the owner: three manual Moomoo-backed
+  retries per saved trade per New York calendar day. Saved-data-only reruns do
+  not use that limit. This is an implementation choice, not an owner-specified
+  number. Preserve provider pacing/global safeguards and automatic range limits.
+- Key the limit to account and stable saved trade, not just its editable revision,
+  so changing a time does not reset the counter. Count one accepted manual retry
+  request, not every internal history range or background worker continuation.
+  Enforce atomically against duplicate clicks. Do not silently create unlimited
+  waiver chains through the existing correction-opportunity mechanism.
+- When a Moomoo download is needed, request from 04:00 New York through the
+  latest completed minute, capped at 20:00 for that trading date. A past-date
+  download therefore requests the full extended session. Reuse sufficient saved
+  coverage first instead of fetching simply because the clock advanced.
+- Separate download/storage coverage from the analysis's measurement windows.
+  Later candles must not enter entry-time indicators or alter fixed-horizon or
+  held-position endpoints. Earlier-date warm-up is still bounded and separate.
+
+Source review found existing correction_waiver reservations/acquisitions and
+correction opportunities. Reuse compatible accounting paths, but do not reset
+historical charge facts or extend migration 0134 without a reviewed registry
+decision. Required tests: first cached analysis with zero allowance; cached retry;
+provider retry without a second charge; cap across edits/double clicks/day rollover;
+normal first provider charge; historical/evening fetch window; unchanged analysis
+endpoints and notification deduplication. These requirements are not yet marked
+implemented or verified by the earlier test results.
+
 Progress: [Planning and implementation record](trade-analyzer-trend-momentum-progress.md).
 Handoff: [Incomplete candidate and exact source allowlist](trade-analyzer-trend-momentum-candidate-handoff.md).
 Tooltip audit: [Source inventory and outstanding review](trade-analyzer-tooltip-source-inventory.md).
