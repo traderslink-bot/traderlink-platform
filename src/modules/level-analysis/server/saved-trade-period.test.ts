@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { savedTradeClosesInPeriod } from "./saved-trade-period";
 
 test("saved-trade period includes both boundaries and supports open-ended ranges", () => {

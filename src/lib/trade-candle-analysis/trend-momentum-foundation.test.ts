@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import type { TradeCandle } from "./candle-analysis";
 import { aggregateIndicatorHistory, inspectIndicatorWarmup } from "./trend-momentum-history";
 import { calculateTradeIndicatorSeries, calculateTradeSessionVwap } from "./trend-momentum-indicators";

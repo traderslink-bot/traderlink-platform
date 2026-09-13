@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { buildIndicatorCohorts, buildIndicatorSupportingPage, groupIndicatorRecords, DEFAULT_INDICATOR_FILTERS, parseIndicatorConditions } from "./trend-momentum-cohorts";
 import type { TrendMomentumProjection, TrendMomentumRecord } from "./trend-momentum-analytics";
 

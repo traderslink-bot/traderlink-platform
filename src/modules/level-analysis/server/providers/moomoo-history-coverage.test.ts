@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { MoomooDailyTradeKlineMarketDataProvider } from "./moomoo-daily-trade-kline-market-data-provider";
 
 const start = 1_800_000_000;

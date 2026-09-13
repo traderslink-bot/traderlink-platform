@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { savedTradeDaySummary } from "./saved-trade-day-summary";
 
 type Trade = Parameters<typeof savedTradeDaySummary>[0][number];

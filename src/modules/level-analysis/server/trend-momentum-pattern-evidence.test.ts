@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { pageSavedPatternEvidence, patternEvidenceRow, resolveSavedPatternEvidence } from "./trend-momentum-pattern-evidence";
 import type { SavedPatternObservation } from "../../../lib/trade-candle-analysis/trend-momentum-patterns";
 import { createJournalTradeAnalyzerOfflineViewModel } from "../../journal-analytics/contracts/journal-analytics-offline-view-contracts";

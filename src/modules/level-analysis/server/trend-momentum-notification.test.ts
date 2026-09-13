@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { logicalTradeFailureNotice } from "./logical-trade-analyzer-notification-service";

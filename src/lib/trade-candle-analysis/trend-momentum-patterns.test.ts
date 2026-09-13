@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { savedPatternObservations, summarizeSavedPatterns, type SavedPatternTrade } from "./trend-momentum-patterns";
 
 const at = Date.parse("2026-09-11T14:00:30Z") / 1000;

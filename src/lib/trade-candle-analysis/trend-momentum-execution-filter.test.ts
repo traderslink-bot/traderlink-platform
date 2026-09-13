@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { matchesExecutionIndicatorFilter, readExecutionIndicatorFilterContext, saveExecutionIndicatorFilterContext } from "./trend-momentum-execution-filter";
 
 const event = { eventId: "private-execution", executedAtUtc: "2026-09-11T14:00:30.000Z" };

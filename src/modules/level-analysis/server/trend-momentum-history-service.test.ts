@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { TrendMomentumHistoryService } from "./trend-momentum-history-service";
 import type { TrendMomentumHistoryRepository } from "./trend-momentum-history-repository";
 import type { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";

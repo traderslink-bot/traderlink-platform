@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import Database from "better-sqlite3";
 import { dailyTradeAnalyzerManualRetryRequestsMigration as migration } from "./database/migrations/0135_daily_trade_analyzer_manual_retry_requests";
 import { ManualAnalyzerRetryRepository, analyzerRetryDate } from "./manual-analyzer-retry-repository";

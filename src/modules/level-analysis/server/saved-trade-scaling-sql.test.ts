@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import Database from "better-sqlite3";
 import { readJournalProfitProtectionOutcome } from "../../journal/server/analytics/journal-profit-protection-outcome-service";
 import { wholeTradeProfitProtection } from "./saved-trade-scaling";

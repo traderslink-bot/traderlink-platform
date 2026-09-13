@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { tradeIndicatorLandmarks } from "../../modules/level-analysis/server/trend-momentum-landmark-inputs";
 import type { DailyTradeAnalyzerInput } from "../../modules/level-analysis/contracts/daily-trade-analyzer-contracts";
 import { analyzeTradeExecutionIndicators } from "./trend-momentum-executions";

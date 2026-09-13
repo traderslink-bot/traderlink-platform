@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { LogicalTradeMoomooAnalyzerWorker } from "./logical-trade-moomoo-analyzer-worker";
 import { analyzeDailyTrade } from "./daily-trade-analyzer";
 import type { DailyTradeAnalyzerEvent, DailyTradeAnalyzerResult } from "../contracts/daily-trade-analyzer-contracts";

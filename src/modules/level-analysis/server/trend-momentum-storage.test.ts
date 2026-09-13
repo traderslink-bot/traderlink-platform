@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import Database from "better-sqlite3";
 import { dailyTradeAnalyzerTrendMomentumHistoryMigration as migration } from "./database/migrations/0134_daily_trade_analyzer_trend_momentum_history";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";

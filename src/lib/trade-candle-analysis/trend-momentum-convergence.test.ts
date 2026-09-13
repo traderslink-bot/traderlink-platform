@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { calculateTradeIndicatorSeries } from "./trend-momentum-indicators";
 import { tradeIndicatorContextAt } from "./trend-momentum-context";
 

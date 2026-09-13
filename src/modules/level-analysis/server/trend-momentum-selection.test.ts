@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { LogicalTradeAnalyzerSelectionService } from "./logical-trade-analyzer-selection-service";
 
 for (const fixture of [

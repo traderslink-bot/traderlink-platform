@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { analyzeIndicatorEpisodes } from "./trend-momentum-episodes";
 import { buildTrendMomentumProjection, selectIndicatorStudy, selectIndicatorReclaimStudy, summarizeIndicatorRecords, summarizeIndicatorStudy,
   type TrendMomentumRecord, type TrendMomentumProjection } from "./trend-momentum-analytics";

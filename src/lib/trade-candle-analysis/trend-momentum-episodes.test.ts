@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { analyzeIndicatorEpisodes, type IndicatorObservation } from "./trend-momentum-episodes";
 const base = 1_800_000_000;
 const o = (minute: number, close: number): IndicatorObservation =>

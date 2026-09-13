@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { savedTradeScalingRows, wholeTradeProfitProtection } from "./saved-trade-scaling";
 
 type Trade = Parameters<typeof savedTradeScalingRows>[0][number];
