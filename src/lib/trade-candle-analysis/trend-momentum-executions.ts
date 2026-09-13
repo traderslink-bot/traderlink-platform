@@ -4,7 +4,9 @@ import { tradeIndicatorContextAt, type TradeIndicatorContextPolicy } from "./tre
 import { calculateTradeIndicatorSeries, calculateTradeSessionVwap, tradeSessionVwapValues, TRADE_INDICATOR_CALCULATION_VERSION } from "./trend-momentum-indicators";
 import { analyzeIndicatorEpisodes, type IndicatorPositionCycle } from "./trend-momentum-episodes";
 
+export type TradeIndicatorLandmark = Readonly<{ key: string; at: number; contextAt: number; precision: "execution" | "candle_range" }>;
 export type TradeExecutionIndicatorInput = Readonly<{
+  landmarks?: readonly TradeIndicatorLandmark[];
   historyOutcome?: string;
   direction?: "long" | "short";
   positionCycles?: readonly IndicatorPositionCycle[];
@@ -69,6 +71,16 @@ export function analyzeTradeExecutionIndicators(
       resetTimes: input.resetTimes, direction: input.direction });
   };
   return Object.freeze({ calculationVersion: TRADE_INDICATOR_CALCULATION_VERSION,
+    ...(input.landmarks ? { landmarks: input.landmarks.map((landmark) => {
+      if (!Number.isFinite(landmark.at) || !Number.isFinite(landmark.contextAt) || landmark.contextAt > landmark.at) throw new Error("indicator_landmark_time_invalid");
+      const at = landmark.contextAt;
+      const covered = at <= input.history.asOf && at >= input.session.start;
+      const context = (interval: "1m" | "5m") => covered ? tradeIndicatorContextAt({
+        series: interval === "1m" ? one : five, at, interval, completedRanges: input.history.completedRanges,
+        resetTimes: input.resetTimes, policy: input.policies[interval] }) : null;
+      return { ...landmark, oneMinute: context("1m"), fiveMinute: context("5m"),
+        sessionVwap: covered ? calculateTradeSessionVwap({ ...input.history, asOf: Math.floor(at) }, input.session) : null };
+    }) } : {}),
     chartSeries,
     historyOutcome: input.historyOutcome ?? "complete",
     timingUnavailable: input.timingUnavailable ?? false,

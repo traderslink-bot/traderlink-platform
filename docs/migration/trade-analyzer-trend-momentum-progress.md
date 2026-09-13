@@ -2,6 +2,29 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Shared financial-landmark evidence - 2026-09-12
+
+- Reused the existing V2 financial scenario engine to identify first zone
+  arrivals, first +20% and first red after +20%. Added source provenance only
+  to the green-opportunity result; no financial formula or eligibility changed.
+- New indicator results save compact context at these exact landmarks. A
+  candle-extreme timestamp is the source minute's end, so its context cut-off
+  is that minute's start. Exit-fill landmarks retain exact execution time.
+  EMA/RSI use completed matching-timeframe bars; VWAP uses the same session.
+- Landmark context is retained in the aggregate projection and its price values
+  follow reporting conversion. No existing saved results are rewritten and no
+  page view requests market data. Cross-page comparison UI remains next; this
+  does not yet claim the Green-to-Red/Scaling integrations are complete.
+- Contained optional enrichment exceptions inside the Analyzer so they cannot
+  discard completed core event/path/financial analysis. Failure gets the existing
+  neutral history-unavailable reason, not an asserted low-volume cause.
+- Twenty-two landmark/foundation/reporting/worker fixtures pass in one process;
+  six selected TypeScript roots pass with the installed ESNext library contract.
+  Whitespace check passes. No hosted action, migration or local server used.
+- Help review: this checkpoint adds saved backend evidence only. Update the
+  cross-page Help copy with its visible integration rather than documenting
+  controls that are not yet present.
+
 ## Indicator-specific comparison tables - 2026-09-12
 
 - Added separate EMA 9 & EMA 20, RSI and Session VWAP sections with saved-URL

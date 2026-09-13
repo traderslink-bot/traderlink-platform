@@ -50,6 +50,7 @@ export function buildTrendMomentumProjection(trades: readonly TrendMomentumTrade
         timingUnavailable: analysis.trendMomentum.timingUnavailable,
         duringTrade: analysis.trendMomentum.duringTrade,
         executions: analysis.trendMomentum.executions,
+        ...(analysis.trendMomentum.landmarks ? { landmarks: analysis.trendMomentum.landmarks } : {}),
       } : null,
       unavailableReason: analysis?.trendMomentumUnavailableReason ?? (analysis?.trendMomentum ? null : "not_yet_analyzed"),
     }))),

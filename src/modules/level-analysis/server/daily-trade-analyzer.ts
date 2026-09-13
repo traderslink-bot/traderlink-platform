@@ -27,6 +27,7 @@ import {
 } from "../contracts/daily-trade-analyzer-contracts";
 import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
 import { analyzeDailyTradeGreenToRed } from "./daily-trade-green-to-red-analyzer";
+import { tradeIndicatorLandmarks } from "./trend-momentum-landmark-inputs";
 
 function numericCandles(candles: readonly NormalizedMarketCandle[]): readonly TradeCandle[] {
   return Object.freeze(candles.map((candle) => Object.freeze({
@@ -513,9 +514,18 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
     direction: input.direction,
     events,
   });
-  return Object.freeze({ eventSnapshots, finalExitPaths, greenToRed,
-    ...(input.trendMomentum ? { trendMomentum: analyzeTradeExecutionIndicators({
-      ...input.trendMomentum, direction: input.direction, positionCycles, timingUnavailable,
-    }, events) } : {}),
-  });
+  let trendResult: Pick<DailyTradeAnalyzerResult, "trendMomentum" | "trendMomentumUnavailableReason"> = {};
+  if (input.trendMomentum) {
+    try {
+      trendResult = { trendMomentum: analyzeTradeExecutionIndicators({
+        ...input.trendMomentum, direction: input.direction, positionCycles, timingUnavailable,
+        landmarks: tradeIndicatorLandmarks(input),
+      }, events) };
+    } catch {
+      // Optional indicator evidence must not discard completed core analysis.
+      // The reason is neutral: an error does not establish low trading volume.
+      trendResult = { trendMomentumUnavailableReason: "history_unavailable" };
+    }
+  }
+  return Object.freeze({ eventSnapshots, finalExitPaths, greenToRed, ...trendResult });
 }

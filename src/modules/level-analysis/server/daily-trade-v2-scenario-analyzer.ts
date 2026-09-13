@@ -33,6 +33,8 @@ export type DailyTradeV2ScenarioCandle = Readonly<{
 }>;
 
 export type DailyTradeV2GreenOpportunity = Readonly<{
+  firstReachedTwentySource?: "completed_close" | "exit";
+  firstRedAfterTwentySource?: "completed_close" | "exit" | null;
   firstRecoveryAfterRedAtUtcSeconds: number | null;
   firstReachedTwentyAtUtcSeconds: number;
   firstRedAfterTwentyAtUtcSeconds: number | null;
@@ -421,6 +423,8 @@ function buildGreenOpportunity(input: Readonly<{
   return Object.freeze({
     firstRecoveryAfterRedAtUtcSeconds: firstRecovery?.time ?? null,
     firstReachedTwentyAtUtcSeconds: reachedTwenty.time,
+    firstReachedTwentySource: reachedTwenty.source,
+    firstRedAfterTwentySource: turnedRed ? firstRed?.source ?? "exit" : null,
     firstRedAfterTwentyAtUtcSeconds: turnedRed
       ? firstRed?.time ?? input.exitProfits.at(-1)?.time ?? null
       : null,
