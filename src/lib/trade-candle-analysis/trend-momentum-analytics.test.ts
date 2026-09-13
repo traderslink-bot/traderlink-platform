@@ -11,6 +11,27 @@ const record = (tradeId: string, pnlDecimal: string | null, executionId: string)
   executionPriceDecimal: "10",
 });
 
+test("aggregate payload keeps execution context once without modifying saved analysis", () => {
+  const executedAtUtc = "2026-09-11T14:00:00Z";
+  const contexts = Array.from({ length: 40 }, (_, i) => ({ eventId: `event-${i}`, executedAtUtc,
+    oneMinute: { alignment: "above", rsiBand: "above_70", historyBars: 200 }, fiveMinute: null, sessionVwap: null }));
+  const analysis = { eventSnapshots: contexts.map((event, sequence) => ({ event: { eventId: event.eventId,
+    executedAtUtc, sequence, kind: sequence === 0 ? "entry" : "add", priceDecimal: "10" } })),
+    trendMomentum: { executions: contexts, duringTrade: { oneMinute: null, fiveMinute: null },
+      chartSeries: { oneMinute: [{ privateChart: true }], fiveMinute: [] } } };
+  const source = { ...record("one-trade", "5", "initial"), analysis } as unknown as Parameters<typeof buildTrendMomentumProjection>[0][number];
+  const result = buildTrendMomentumProjection([source]);
+  assert.equal(result.records.length, 40);
+  assert.deepEqual(result.records.map((row) => row.context), contexts);
+  assert.deepEqual(result.trades[0].indicators!.executions, []);
+  assert.equal(source.analysis!.trendMomentum!.executions.length, 40);
+  assert.equal("chartSeries" in result.trades[0].indicators!, false);
+  assert.equal(summarizeIndicatorRecords(result.records).tradeCount, 1);
+  assert.equal(summarizeIndicatorRecords(result.records).totalPnlDecimal, "5");
+  const duplicate = { ...result, trades: result.trades.map((trade) => ({ ...trade, indicators: { ...trade.indicators, executions: contexts } })) };
+  assert.ok(Buffer.byteLength(JSON.stringify(result)) < Buffer.byteLength(JSON.stringify(duplicate)));
+});
+
 test("first reclaim stays first across position cycles even when its older saved context is missing", () => {
   const at = 1_800_000_000;
   const during = analyzeIndicatorEpisodes({

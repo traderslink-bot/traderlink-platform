@@ -51,7 +51,9 @@ export function buildTrendMomentumProjection(trades: readonly TrendMomentumTrade
         historyOutcome: analysis.trendMomentum.historyOutcome,
         timingUnavailable: analysis.trendMomentum.timingUnavailable,
         duringTrade: analysis.trendMomentum.duringTrade,
-        executions: analysis.trendMomentum.executions,
+        // Aggregate consumers read execution context from records. Retain the
+        // old array shape without serializing a second copy of every context.
+        executions: Object.freeze([]),
         ...(analysis.trendMomentum.landmarks ? { landmarks: analysis.trendMomentum.landmarks } : {}),
       } : null,
       unavailableReason: analysis?.trendMomentumUnavailableReason ?? (analysis?.trendMomentum ? null : "not_yet_analyzed"),

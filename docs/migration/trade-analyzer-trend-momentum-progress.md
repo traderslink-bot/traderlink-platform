@@ -2,6 +2,19 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Aggregate payload duplication check - 2026-09-13
+
+- Removed the unused second execution-context array from newly built aggregate
+  trade rows; execution records retain their complete context. Kept the empty
+  array shape for compatibility and left saved individual analyses unchanged.
+- Regression fixture verifies 40 executions still count as one trade with one
+  P/L result, without serializing the duplicate context. Existing offline
+  identity and landmark behavior remains covered.
+- Six focused files passed 29 tests in one 512-MB process; whitespace check
+  passed. This is not a full payload-scale or rendered browser acceptance.
+- No visible copy or interaction changed; Help needs no additional update for
+  this optimization. No provider calls, hosted writes, migration or deployment.
+
 ## Combined source checkpoint and lint cleanup - 2026-09-13
 
 - Final rerun: all 31 scoped trend-momentum/saved-trade/provider-coverage files,
