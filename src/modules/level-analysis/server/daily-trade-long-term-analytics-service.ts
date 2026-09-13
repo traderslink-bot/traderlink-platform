@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
 import { readSavedPatternPopulation } from "./trend-momentum-pattern-service";
 import { savedTradeDaySummary } from "./saved-trade-day-summary";
+import { savedTradeClosesInPeriod, type SavedTradePeriod } from "./saved-trade-period";
 import type { TrendMomentumProjection } from "../../../lib/trade-candle-analysis/trend-momentum-analytics";
 import { readExecutionIndicatorFilterContext, type ExecutionIndicatorFilterContext } from "../../../lib/trade-candle-analysis/trend-momentum-execution-filter";
 import { entryExitPeakProfit } from "./daily-trade-entry-exit-math";
@@ -1689,6 +1690,7 @@ function analyzedScenarioTrades(input: Readonly<{
   journalRows: readonly JournalAnalyticsRoundTripTableRow[];
   reportingMultiplierByRoundTrip: ReadonlyMap<string, string>;
   scope: WorkspaceAccessScope;
+  selection?: SavedTradePeriod;
 }>): readonly ScenarioTrade[] {
   const accountId = input.scope.activeAccountId;
   if (!accountId || !input.scope.allowedAccountIds.includes(accountId)) return Object.freeze([]);
@@ -1712,12 +1714,13 @@ function analyzedScenarioTrades(input: Readonly<{
     const firstJournal = members[0];
     const lastJournal = members.at(-1);
     if (!representative || !firstJournal || !lastJournal) return [];
+    if (!savedTradeClosesInPeriod(lastJournal.closeLocalDate, input.selection)) return [];
     const multiplier = input.reportingMultiplierByRoundTrip.get(representative.roundTripId) ?? "1";
     let executionCount = 0;
     let scenario: DailyTradeV2ScenarioAnalysis | null = null;
+    const saved = trade.logicalTradeId ? logicalAnalyzer.readCurrentByRoundTrip(accountScope, representative.roundTripId) : null;
 
     if (trade.logicalTradeId) {
-      const saved = logicalAnalyzer.readCurrentByRoundTrip(accountScope, representative.roundTripId);
       if (saved?.status === "ready" && saved.analyzed) {
         executionCount = saved.analyzed.eventSnapshots.length;
         scenario = analyzeDailyTradeV2Scenario({
@@ -1744,8 +1747,9 @@ function analyzedScenarioTrades(input: Readonly<{
     // existing round-trip analysis remains valid until a logical re-analysis
     // replaces it. Multi-member user-defined trades require their own combined
     // analysis and must never be reconstructed by ticker or by member totals.
-    if (!scenario && trade.members.length === 1) {
-      const analyzer = input.analyzerByRoundTripId.get(representative.roundTripId);
+    if (!scenario && !saved && trade.members.length === 1) {
+      const candidate = input.analyzerByRoundTripId.get(representative.roundTripId);
+      const analyzer = candidate?.roundTripVersionId === representative.roundTripVersionId ? candidate : undefined;
       executionCount = analyzer?.events.length ?? 0;
       scenario = analyzer?.scenario ?? null;
     }
@@ -1921,15 +1925,18 @@ export function buildDailyTradeLongTermAnalytics(
   entryExitSelection?: Readonly<{ startDate: string | null; endDate: string | null }>,
   currentSnapshotsOnly = false,
   daySelection?: Readonly<{ startDate: string | null; endDate: string | null }>,
+  scenarioSelection?: SavedTradePeriod,
 ): DailyTradeLongTermAnalyticsV2Model {
-  const analyzer = readAnalyzerFacts(database, scope, currentSnapshotsOnly || entryExitSelection !== undefined || daySelection !== undefined);
-  const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade");
+  const analyzer = readAnalyzerFacts(database, scope, currentSnapshotsOnly || entryExitSelection !== undefined || daySelection !== undefined || scenarioSelection !== undefined);
+  const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade" &&
+    savedTradeClosesInPeriod(row.closeLocalDate, scenarioSelection));
   const scenarioTrades = analyzedScenarioTrades({
     analyzerByRoundTripId: analyzer,
     database,
     journalRows,
     reportingMultiplierByRoundTrip,
     scope,
+    selection: scenarioSelection,
   });
   const joined: readonly Joined[] = Object.freeze(eligibleDayTrades.flatMap((journal) => {
     const sourceFact = analyzer.get(journal.roundTripId);

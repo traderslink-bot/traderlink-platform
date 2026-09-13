@@ -450,6 +450,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Compare indicator conditions at first arrival in a profit zone.",
         keywords: ["scaling out", "EMA", "RSI", "VWAP", "profit zone"], blocks: [
           { kind: "paragraph", text: "On Scaling out, expand Indicators at the comparison point and choose a zone, timeframe and indicator. Trades with and without recorded profit taking are both classified at their first arrival in that zone. Missing indicator context remains visible. The existing Gross financial results and profit-taking classifications are unchanged." },
+          { kind: "paragraph", text: "Green-to-Red and Scaling out select saved trades by their final closing date. If a trade includes earlier round trips, those entries and exits remain part of its analysis even when they occurred before the selected date range." },
         ],
       },
       {

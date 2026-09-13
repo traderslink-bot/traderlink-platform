@@ -2,6 +2,29 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Scenario-page final-close selection correction - 2026-09-13
+
+- Confirmed Green-to-Red and Scaling Out fetched date-filtered round trips
+  before assembling saved trades, losing earlier members of included trades.
+  Both now retain all members and apply the selected period to the saved
+  trade's final close in the scenario reader. Scenario math is unchanged.
+- Page empty-state/coverage/direction counts now use current saved-trade
+  results, so ready grouped analyses are not hidden by a zero legacy count.
+  The existing secondary legacy rows remain date-bounded until their separate
+  migration, rather than accidentally expanding to all dates with the fetch.
+- Ten focused date/Day/SQL tests pass. Four selected source/page/test TypeScript
+  roots pass for the date and coverage wiring. The subsequent small scenario
+  fallback guard requires combined final-checkpoint regression: pending/stale
+  logical results no longer fall back, and standalone candidates must match
+  the current member version. No browser acceptance or release claim.
+  Help explains the final-close behavior.
+- Confirmed Scaling behavior still uses legacy `joined` rows. Its profit
+  protection comparison calls a Journal helper scoped to one round trip and
+  supports exactly one partial exit followed by compatible later allocations.
+  Preserve that evidence contract when moving the cards to saved-trade rows;
+  do not substitute a member's result for the grouped trade or fabricate a
+  counterfactual. This is the next identity correction, not a completed slice.
+
 ## Day displayed-summary correction - 2026-09-13
 
 - Confirmed and replaced the Day page's round-trip-derived displayed trade

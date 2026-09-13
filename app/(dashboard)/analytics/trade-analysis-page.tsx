@@ -240,9 +240,9 @@ export async function TradeAnalysisPage({
     if (currency !== null) do {
       const response = analytics.getRoundTripAnalyticsTable(scope, buildJournalAnalyticsDashboardQuery(scope, {
         afterCursor: cursor,
-        // Entry/Exit selects by the saved trade's final close below, keeping all
+        // Saved-trade views select by the trade's final close below, keeping all
         // earlier round trips in that trade available for its complete results.
-        closingDateRange: ["day", "entry-exit", "trend-momentum", "mfe-mae", "candle-patterns"].includes(view) ? { kind: "all_available" } : closingRange(dateRange),
+        closingDateRange: ["day", "entry-exit", "trend-momentum", "mfe-mae", "candle-patterns", "green-to-red", "scaling-out"].includes(view) ? { kind: "all_available" } : closingRange(dateRange),
         currency,
         metricIds: ["included_count"],
         moneyBasis,
@@ -265,6 +265,8 @@ export async function TradeAnalysisPage({
     }));
     const patternPopulation = view === "candle-patterns" ? readSavedPatternPopulation({ database, scope, journalRows: rows,
       startDate: dateRange.startDate, endDate: dateRange.endDate }) : null;
+    const scenarioPopulation = view === "green-to-red" || view === "scaling-out" ? readSavedPatternPopulation({ database, scope, journalRows: rows,
+      startDate: dateRange.startDate, endDate: dateRange.endDate, includePatterns: false }) : null;
     const baseModel = buildDailyTradeLongTermAnalytics(
         database,
         scope,
@@ -277,11 +279,15 @@ export async function TradeAnalysisPage({
         view === "entry-exit" || view === "trend-momentum" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
         view === "mfe-mae",
         view === "day" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
+        view === "green-to-red" || view === "scaling-out" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
       );
     return Object.freeze({
       generatedAtUtc: overview.generatedAtUtc,
       calculationVersion: overview.registryVersion,
       model: Object.freeze({ ...baseModel,
+        ...(scenarioPopulation ? { eligibleDayTradeCount: scenarioPopulation.eligibleDayTradeCount,
+          analyzedTradeCount: scenarioPopulation.analyzedTradeCount, directionTradeCounts: scenarioPopulation.directionTradeCounts,
+          coveragePercent: scenarioPopulation.eligibleDayTradeCount ? scenarioPopulation.analyzedTradeCount / scenarioPopulation.eligibleDayTradeCount * 100 : null } : {}),
         ...(patternPopulation ? { patternObservations: patternPopulation.observations,
           patterns: summarizeSavedPatterns(patternPopulation.observations, { interval: "1m", alignment: "any", rsiBand: "any" }).rows,
           eligibleDayTradeCount: patternPopulation.eligibleDayTradeCount, analyzedTradeCount: patternPopulation.analyzedTradeCount,
