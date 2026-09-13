@@ -28,6 +28,7 @@ import {
 import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
 import { analyzeDailyTradeGreenToRed } from "./daily-trade-green-to-red-analyzer";
 import { tradeIndicatorLandmarks } from "./trend-momentum-landmark-inputs";
+import { saveExecutionIndicatorFilterContext } from "../../../lib/trade-candle-analysis/trend-momentum-execution-filter";
 
 function numericCandles(candles: readonly NormalizedMarketCandle[]): readonly TradeCandle[] {
   return Object.freeze(candles.map((candle) => Object.freeze({
@@ -527,5 +528,10 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
       trendResult = { trendMomentumUnavailableReason: "history_unavailable" };
     }
   }
-  return Object.freeze({ eventSnapshots, finalExitPaths, greenToRed, ...trendResult });
+  const contexts = new Map(trendResult.trendMomentum?.executions.map((event) => [event.eventId, event]) ?? []);
+  const enrichedSnapshots = trendResult.trendMomentum ? eventSnapshots.map((snapshot) => {
+    const context = contexts.get(snapshot.event.eventId);
+    return context ? Object.freeze({ ...snapshot, indicatorFilterContext: saveExecutionIndicatorFilterContext(context) }) : snapshot;
+  }) : eventSnapshots;
+  return Object.freeze({ eventSnapshots: Object.freeze(enrichedSnapshots), finalExitPaths, greenToRed, ...trendResult });
 }

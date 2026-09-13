@@ -1,5 +1,6 @@
 import Decimal from "decimal.js";
 import type { TrendMomentumProjection } from "../../../lib/trade-candle-analysis/trend-momentum-analytics";
+import { readExecutionIndicatorFilterContext, type ExecutionIndicatorFilterContext } from "../../../lib/trade-candle-analysis/trend-momentum-execution-filter";
 import { entryExitPeakProfit } from "./daily-trade-entry-exit-math";
 import type Database from "better-sqlite3";
 
@@ -61,6 +62,7 @@ type PatternFact = Readonly<{
 }>;
 
 type EventFact = Readonly<{
+  indicatorFilterContext?: ExecutionIndicatorFilterContext | null;
   atr14Percent: number | null;
   candleLocationRatio: number | null;
   ema9DistancePercent: number | null;
@@ -162,6 +164,7 @@ export type TradeAnalysisTradeRow = Readonly<{
 }>;
 
 export type TradeAnalysisExcursionRow = Readonly<{
+  indicatorFilterContext?: ExecutionIndicatorFilterContext | null;
   actualPnlDecimal: string | null;
   adverseMoveDecimal: string;
   adverseMovePercent: number;
@@ -348,6 +351,7 @@ export type TradeAnalysisGreenToRedOpportunityRow = Readonly<{
 }>;
 
 export type TradeAnalysisEventPathRow = Readonly<{
+  indicatorFilterContext?: ExecutionIndicatorFilterContext | null;
   adverseMoveDecimal: string | null;
   closeDate: string;
   direction: "long" | "short";
@@ -679,6 +683,7 @@ function parseEvent(row: SnapshotRow): EventFact | null {
       : [];
     return Object.freeze({
       atr14Percent: atr14 === null ? null : atr14 / Number(priceDecimal) * 100,
+      indicatorFilterContext: readExecutionIndicatorFilterContext(snapshot.indicatorFilterContext, { eventId: event.eventId, executedAtUtc: event.executedAtUtc }),
       candleLocationRatio: finiteNumber(metrics.candleLocationRatio),
       ema9DistancePercent: finiteNumber(ema9Distance?.signedDistancePercent),
       eventId: event.eventId,
@@ -1867,6 +1872,7 @@ function buildEntryExitProjection(
     isLastTradeExit: event.eventSequence === trade.events.at(-1)?.eventSequence,
   }));
   const eventPaths: TradeAnalysisEventPathRow[] = events.flatMap(({ event, trade }) => event.postEventPaths.map((path) => ({
+    indicatorFilterContext: event.indicatorFilterContext,
     adverseMoveDecimal: path.oppositeDirectionMoveDecimal, favorableMoveDecimal: path.tradeDirectionMoveDecimal,
     closeDate: trade.journal.closeLocalDate, direction: trade.journal.direction, eventKind: eventKindLabel(event.eventKind), eventPriceDecimal: event.priceDecimal,
     eventSequence: event.eventSequence, executedAtUtc: event.executedAtUtc, minutesAfterEvent: path.minutesAfterEvent, observedAtCandleTime: path.observedAtCandleTime,
@@ -1963,6 +1969,7 @@ export function buildDailyTradeLongTermAnalytics(
     hasExcursionCoverage(event, trade.analyzer));
   const savedTradePnl = savedTradePnlByRoundTrip(database, scope, journalRows);
   const excursionRows = Object.freeze(measuredEntryExcursions.map(({ event, trade }): TradeAnalysisExcursionRow => Object.freeze({
+    indicatorFilterContext: event.indicatorFilterContext,
     actualPnlDecimal: savedTradePnl.get(trade.journal.roundTripId) ?? null,
     adverseMoveDecimal: event.excursionAdverseDecimal!,
     adverseMovePercent: excursionPercent(event.excursionAdverseDecimal!, event.priceDecimal),
@@ -2125,6 +2132,7 @@ export function buildDailyTradeLongTermAnalytics(
   });
   const eventPathRows = Object.freeze(allEvents.flatMap(({ event, trade }): TradeAnalysisEventPathRow[] =>
     event.postEventPaths.map((path) => Object.freeze({
+      indicatorFilterContext: event.indicatorFilterContext,
       adverseMoveDecimal: (event.eventKind === "entry" || event.eventKind === "add") && !hasEventPathCoverage(event, path, trade.analyzer) ? null : path.oppositeDirectionMoveDecimal,
       closeDate: trade.journal.closeLocalDate,
       direction: trade.journal.direction,

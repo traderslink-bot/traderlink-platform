@@ -113,6 +113,7 @@ export type DailyTradeAnalyzerEventMetrics = Readonly<{
 }>;
 
 export type DailyTradeAnalyzerEventSnapshot = Readonly<{
+  indicatorFilterContext?: import("../../../lib/trade-candle-analysis/trend-momentum-execution-filter").SavedExecutionIndicatorFilterContext;
   candleTime: number | null;
   event: DailyTradeAnalyzerEvent;
   fiveMinuteContext: DailyTradeAnalyzerFiveMinuteContext;

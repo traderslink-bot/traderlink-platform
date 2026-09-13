@@ -2,6 +2,28 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Exact execution-filter snapshot boundary - 2026-09-12
+
+- New completed Analyzer results embed compact EMA-alignment/RSI-band context
+  with each execution snapshot, tied to its exact execution ID and timestamp.
+  This avoids cross-joining movement/pattern observations by symbol or sequence.
+- Reader validates the calculation version and binding, rejects future frames,
+  preserves another valid timeframe if one is malformed, and removes private
+  execution identifiers before exposing filter categories to aggregate models.
+  Default Any filters preserve all rows; missing required context is unknown.
+- Existing movement/path projections now carry this optional context directly
+  from their own saved snapshots. Existing historical snapshots remain readable
+  and unavailable for added context; no historical facts were rewritten.
+- Nine binding/worker/landmark tests pass, including unchanged core snapshots
+  after removing the additive field. Four selected source TypeScript roots and
+  whitespace check pass. No server, provider request, migration or hosted action.
+- Room After Entry still requires its current logical-result/source selection
+  and filter UI integration; merely attaching context to legacy rows is not
+  sufficient. Candle Patterns aggregate/occurrence filters must use this same
+  snapshot contract. These page integrations are not marked complete.
+- Help review: no new visible control in this checkpoint; update relevant Help
+  when the movement/pattern filters are connected.
+
 ## Day overview and Entries/Exits integration - 2026-09-12
 
 - Added the compact Day overview coverage card and detailed-comparison link,
