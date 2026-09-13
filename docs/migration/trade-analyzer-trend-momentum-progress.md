@@ -2,6 +2,33 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Combined regression and production identity checkpoint - 2026-09-13
+
+- Ran all 28 `trend-momentum*.test.ts` / `saved-trade*.test.ts` files under
+  `src/lib/trade-candle-analysis` and `src/modules/level-analysis/server` in one
+  512-MB Node process: **113 tests passed, zero failures/skips**. Includes
+  foundation/convergence, history/storage/worker, grouped SQL/allocation,
+  filtering/pagination, offline redaction, reporting and static rendering.
+  This is the scoped feature checkpoint, not full application or browser QA.
+- Used installed Next's server-side empty module for the test-process-only
+  `server-only` marker mapping. No dependency or production alias changed.
+- Revalidated Railway project `TraderLink Platform`, explicit production
+  environment, service `traderlink-platform-web-restore-0909`: SSH reports
+  `f97ab1ceecf30c411d605f1dd5ed3af31246dead`, the assigned implementation base.
+  This proves deployed source identity only, not health or branch configuration.
+  No local link, variables, restart, build, migration or deployment action.
+- The worktree was unlinked; resolved the project/environment/service through
+  read-only CLI inventory. SSH needed installed Git's SSH client added only to
+  the command process PATH. No machine-wide PATH or SSH configuration changed.
+- Current remaining acceptance work: during-group supporting-trade navigation
+  and outcome presentation; offline selection capture/restore; terminal-data
+  notification coverage/dedup audit; owner/test historical corpus calibration
+  with bounded Moomoo history; full focused type/lint/build checkpoint and
+  populated desktop/mobile Light/Navy Dark/browser acceptance. The controlling
+  plan remains the full target, including reserved unapplied 0134 and separate
+  production release authority. The previous anonymous two-record feasibility
+  sample is not broad calibration. No fresh candle request or DB read this turn.
+
 ## During-trade conditions and event controls - 2026-09-13
 
 - Added loss/reclaim event selection and combined same-observation EMA,
