@@ -14,6 +14,37 @@ release and live provider/retry/numeric/offline acceptance remain open. See the
 
 ## Owner clarification: saved data, retries and fetch window
 
+### Owner-account unlimited Analyzer access - 2026-09-13
+
+Owner further confirms both accounts contain disposable fake test trades and
+explicitly authorizes adding, editing and removing their trades/executions,
+including prices and times, for complete testing. Use the normal product mutation
+workflow and record relevant test changes; no authority extends to other users.
+
+Owner explicitly requests unlimited analysis requests and manual retries for
+the two verified Platform users displayed as This Guy and TradersLink. Resolve
+their stable identities through authenticated account/admin evidence; never
+grant access by mutable display-name matching or to all workspace owners.
+Use an explicit auditable per-user exemption, disabled for every other user.
+Remove personal daily/period/manual-retry quantity gates for these users while
+preserving authentication, account isolation, the service enable switch,
+duplicate active-job protection, single-provider acquisition and short pacing.
+An exempt request must not be held behind the ordinary global usage quota;
+keep acquisition audit records without consuming ordinary users' quota.
+Bounded attempts within one request remain operational failure protection, not
+a limit on how many separate analyses the owner can request.
+
+Do not fake unlimited with a very large finite allowance. Display Unlimited
+instead of a fabricated remaining count on the existing allowance surfaces.
+No new administrative role, broker permission, or ordinary Demo entitlement.
+The immutable 0135 migration currently enforces daily_ordinal BETWEEN 1 AND 3;
+a registered follow-up is required, preserving existing retry/history links and
+audit identities. Never edit an applied migration or erase retry history.
+Before hosted application, verify both target identities, migration preservation,
+ordinary-user caps, exempt requests past both quotas and three retries, active
+duplicate prevention, shared pacing and accurate UI. Coordinator owns migration
+allocation and guarded application. This requirement is not yet implemented.
+
 ### Demo completion requirement
 
 Owner explicitly requires Demo analyzed trades to demonstrate the updated

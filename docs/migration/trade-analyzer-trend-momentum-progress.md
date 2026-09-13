@@ -9,6 +9,25 @@ Current source/remaining hosted acceptance:
 
 ### Resumed live acceptance and Analyzer request correction
 
+- Live whole-trade correction acceptance exposed stale Analyzer linkage. Owner
+  confirms both named accounts contain disposable fake trades and permits all
+  normal test edits. Corrected only the selected test trade's two prices through
+  review/confirm; dates, times and quantities unchanged. The saved trade updated,
+  but its Analyzer still showed pre-edit mismatch evidence after app reload.
+  Exact before/after values remain in this owner task, not the release handoff.
+- Source reproduced the omission: per-execution corrections rebuild their chain,
+  then the final account rebuild can be already_current and contribute no IDs.
+  Include the explicitly edited trade ID alongside final rebuilt IDs when facts
+  changed; deduplicate and leave unrelated already-current trades out. No-op
+  edits do not add an ID. Three focused orchestration cases pass; both changed
+  TypeScript files lint clean. Hosted correction-to-analysis verification remains
+  open; do not infer that unit proof establishes the full live flow.
+- Retry-window correction is live per coordinator at
+  7fec32217ac69fec89dd2398c13dc5c1de38865f, Railway
+  dd3896b1-63b5-417f-a49c-2f13692c6d64 SUCCESS, health ready/121.
+  0136_shared_trade_analyzer_owner_exemptions is exclusively allocated for
+  the two-account exemption; no source migration or hosted application yet.
+
 - Dependent retry-window correction: history acquisition uses the immutable
   active manual-retry request timestamp, falling back to the original job date.
   Existing job identity, original creation time, caps and saved analysis remain

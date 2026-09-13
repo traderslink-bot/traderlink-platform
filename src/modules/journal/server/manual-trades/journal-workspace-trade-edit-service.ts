@@ -526,9 +526,13 @@ ORDER BY allocation_version.executed_at_utc, allocation_version.source_order_key
         maintenanceReasonCode: "workspace_atomic_trade_edit",
         now,
       });
-      const affectedRoundTripIds = Object.freeze([...new Set(rebuilds
+      // Per-execution corrections already rebuild their chain. The final pass
+      // can be already_current, but the edited logical trade still needs refresh.
+      const editedTradeIds = correctedExecutionCount > 0 || removedExecutionCount > 0 || additions.length > 0
+        ? [roundTripId] : [];
+      const affectedRoundTripIds = Object.freeze([...new Set([...editedTradeIds, ...rebuilds
         .filter((rebuild) => rebuild.status === "rebuilt")
-        .flatMap((rebuild) => rebuild.roundTripIds))]);
+        .flatMap((rebuild) => rebuild.roundTripIds)])]);
       try {
         this.executionEdits.refreshLogicalTradesAfterRebuild(accountScope, affectedRoundTripIds, now);
       } catch {
