@@ -2,6 +2,23 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Available-session download implementation
+
+- Worker now separates required first-result coverage from download coverage.
+  When core candles need fetching, requests 04:00 through the latest completed
+  minute capped at 20:00 New York. Persists that requested/downloaded boundary
+  consistently in session evidence and indicator-history request receipts.
+- Keeps sufficient cached first-result coverage on the zero-provider path.
+  Readiness still uses the original final-exit-plus-30-minute policy; no formula,
+  execution timestamp, user allowance or fixed study endpoint was changed.
+- Five focused worker tests pass, including before-close evening, after-close,
+  historical day, saved-cache reuse and prior multi-cycle/history behavior.
+  Changed worker/test roots have zero TypeScript diagnostics. Tests use provider
+  fixtures, not live Moomoo evidence. Live-provider and wider regression remain.
+- Updated candle Help to explain the new download policy and saved-data reuse.
+- Free manual-retry limit remains unfinished; no migration, provider request,
+  user-data write, push or deployment performed in this slice.
+
 ## Owner resolves retry and corpus choices
 
 - Owner explicitly reconfirmed authorization for This Guy and its saved trades.

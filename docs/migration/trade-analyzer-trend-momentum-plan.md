@@ -6,6 +6,9 @@ including planned UI implementation. Production release remains separately gated
 
 ## Owner clarification: saved data, retries and fetch window
 
+Download-window slice implemented locally: five worker tests and two changed-root
+type checks pass. Real Moomoo verification and bounded free retries remain open.
+
 The owner confirmed that the designated account named This Guy and its saved
 trades may be used for testing. The earlier private-corpus authorization blocker
 is resolved; credentials and private trade facts remain protected.

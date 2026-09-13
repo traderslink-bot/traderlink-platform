@@ -90,6 +90,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Turnover", "The traded dollar value supplied by Moomoo for the candle. It helps compare activity across differently priced stocks."],
           ] },
           { kind: "paragraph", text: "Hover or select the chart to inspect a candle. Saved server-side candles are reused when another eligible replay needs the same symbol, date and interval." },
+          { kind: "paragraph", text: "When a new day-trade candle download is needed, it starts at 4:00 AM Eastern and runs through the latest completed minute, up to 8:00 PM for that trading date. A download for a past day therefore covers the full extended session. Sufficient saved candles are reused without downloading the rest of the day just because time has passed. Entry indicators still use only candles completed before the entry, and each study keeps its own measurement window." },
         ],
       },
       {

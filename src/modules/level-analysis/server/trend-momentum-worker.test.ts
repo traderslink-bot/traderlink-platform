@@ -14,7 +14,7 @@ const events: DailyTradeAnalyzerEvent[] = ([
 ] as const).map(([kind, time], i) => ({ eventId: String(i), sequence: i + 1, kind,
   executedAtUtc: `2026-09-11T${time}:00.000Z`, quantityDecimal: "1", priceDecimal: "10", feesDecimal: "0" }));
 
-function fixture(prepare: () => Promise<unknown>) {
+function fixture(prepare: () => Promise<unknown>, options: { now?: string; cached?: boolean } = {}) {
   const job = { attemptCount: 1, createdAtUtc: "2026-09-11T14:40:00.000Z",
     desiredCoverageEndUtc: "2026-09-11T14:40:00.000Z", jobId: "job", marketSessionSetId: "set",
     scope: { userId: "user", workspaceId: "workspace", accountId: "account", workspaceRole: "owner" },
@@ -24,19 +24,62 @@ function fixture(prepare: () => Promise<unknown>) {
   } as ClaimedLogicalTradeAnalyzerJob;
   const saved: { analyzed: DailyTradeAnalyzerResult; status: string }[] = [];
   let finished = 0, rescheduled = 0, released = 0, ready = 0;
+  const downloads: { startTime: number; endTime: number; interval: string }[] = [];
+  const stored: { coverageEndUtc: string; requestedEndUtc: string; candles: readonly unknown[] }[] = [];
+  const historyWindows: number[] = [];
   const logical = { claimNext: () => job, persistResult: (result: typeof saved[number]) => saved.push(result),
     finish: () => { finished++; }, reschedule: () => { rescheduled++; } };
-  const repository = { readCurrentCandles: () => candles, currentSessionVersionId: () => "revision",
-    currentSessionCoverageEnd: () => job.desiredCoverageEndUtc };
-  const allowance = { release: () => { released++; } };
+  const repository = { readCurrentCandles: () => options.cached === false ? [] : candles,
+    currentSessionVersionId: () => "revision",
+    currentSessionCoverageEnd: () => options.cached === false ? null : job.desiredCoverageEndUtc,
+    persistMarketSession: (value: typeof stored[number]) => { stored.push(value); return "downloaded"; } };
+  const allowance = { release: () => { released++; }, designatedScope: () => job.scope,
+    beginAcquisition: () => ({ acquisitionId: "acquisition", chargeKind: "user_charged" }),
+    completeAcquisition: () => {} };
   type Args = ConstructorParameters<typeof LogicalTradeMoomooAnalyzerWorker>;
   const worker = new LogicalTradeMoomooAnalyzerWorker(logical as unknown as Args[0],
     repository as unknown as Args[1], allowance as unknown as Args[2],
-    async () => { throw new Error("cached core must not fetch"); },
+    async () => {
+      if (options.cached !== false) throw new Error("cached core must not fetch");
+      return { fetch: async (request: typeof downloads[number]) => {
+        downloads.push(request);
+        return { ok: true, candles: Array.from({ length: (request.endTime - start) / 60 }, (_, i) => ({ ...candles[0], time: start + i * 60 })),
+          exchangeTimezone: "America/New_York", utcOffsetSeconds: -14400, normalizedCandleSha256: "fixture" };
+      } } as unknown as Awaited<ReturnType<Args[3]>>;
+    },
     { notifyReady: () => { ready++; } } as unknown as Args[4],
-    () => new Date("2026-09-11T15:00:00.000Z"), { prepare } as unknown as Args[6]);
-  return { worker, saved, counts: () => ({ finished, rescheduled, released, ready }) };
+    () => new Date(options.now ?? "2026-09-11T15:00:00.000Z"), { prepare,
+      beginSession: (_job: unknown, _acquisition: string, _start: number, end: number) => { historyWindows.push(end); return "request"; },
+      finishSession: () => {} } as unknown as Args[6]);
+  return { worker, saved, downloads, stored, historyWindows, counts: () => ({ finished, rescheduled, released, ready }) };
 }
+
+test("needed download captures available session through evening or full past day", async () => {
+  for (const [now, expectedEnd] of [
+    ["2026-09-11T22:42:37.000Z", "2026-09-11T22:42:00.000Z"],
+    ["2026-09-12T02:00:00.000Z", "2026-09-12T00:00:00.000Z"],
+    ["2026-09-14T16:00:00.000Z", "2026-09-12T00:00:00.000Z"],
+  ]) {
+    const f = fixture(async () => null, { now, cached: false });
+    await f.worker.runOne();
+    assert.equal(f.downloads.length, 1);
+    assert.equal(f.downloads[0].startTime, start);
+    assert.equal(f.downloads[0].endTime, Date.parse(expectedEnd) / 1000);
+    assert.equal(f.downloads[0].interval, "1m");
+    assert.deepEqual(f.historyWindows, [Date.parse(expectedEnd) / 1000]);
+    assert.equal(f.stored[0].coverageEndUtc, expectedEnd);
+    assert.equal(f.stored[0].requestedEndUtc, expectedEnd);
+    assert.equal(f.saved[0].status, "ready");
+    assert.deepEqual(f.saved[0].analyzed.eventSnapshots.map(s => s.event.eventId), ["0", "1", "2", "3"]);
+  }
+});
+
+test("sufficient saved first-result coverage does not trigger an evening top-up download", async () => {
+  const f = fixture(async () => null, { now: "2026-09-12T02:00:00.000Z" });
+  await f.worker.runOne();
+  assert.equal(f.downloads.length, 0);
+  assert.equal(f.saved[0].status, "ready");
+});
 
 test("worker waits for history without publishing a completed result or losing reservation", async () => {
   const f = fixture(async () => ({ pending: true }));
