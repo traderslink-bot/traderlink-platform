@@ -150,6 +150,14 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     description: "See what happened after you entered and how you left your recorded trades.",
     sections: [
       {
+        id: "indicator-executions", title: "Indicator context at executions",
+        summary: "Compare EMA alignment and RSI at your saved entries and exits.",
+        keywords: ["EMA 9", "EMA 20", "RSI", "initial entry", "add", "partial exit"], blocks: [
+          { kind: "paragraph", text: "Choose one-minute or five-minute candles and an execution type: initial entry, add, re-entry, partial exit, interim position closure or final exit. The comparison uses indicators known at that execution and counts each whole-trade outcome once within a group. Older distance-only analysis is not substituted when the added indicator history is unavailable." },
+          { kind: "paragraph", text: "Detailed indicator comparisons opens Trend & Momentum with your date range, Gross/Net basis, direction, timeframe and execution type preserved. You can combine conditions there and inspect supporting executions." },
+        ],
+      },
+      {
         id: "individual-executions",
         title: "Highlight one execution",
         summary: "Select Show on chart beside any execution to highlight that exact fill without replacing the complete-trade analysis.",
@@ -445,6 +453,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["analyzed trades", "supporting trades", "paid plan", "historical imports"],
         blocks: [
           { kind: "paragraph", text: "The Analyzed trades card counts only current saved results with an execution snapshot linked to its saved market candle. Select it to inspect the exact trade replays behind the summaries." },
+          { kind: "paragraph", text: "The Day overview's Trend & Momentum card separately shows how many saved user-defined trades have added indicator context. It includes long and short trades in the selected period and does not reduce the main analyzed-trade count when indicator history is missing." },
           { kind: "paragraph", text: "An active paid plan is required to create new analysis. Analysis completed while paid remains readable after cancellation." },
         ],
       },

@@ -2,6 +2,23 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Day overview and Entries/Exits integration - 2026-09-12
+
+- Added the compact Day overview coverage card and detailed-comparison link,
+  with no duplicate long tables. Count includes both directions because the
+  existing Day overview has no direction selector. Existing analyzed count and
+  financial metrics are unchanged.
+- Added Entries/Exits EMA alignment and RSI comparisons for initial entries,
+  adds, re-entries, partial exits, interim closures and final exits. Matching
+  timeframe and Gross/Net labels are explicit. Detailed-comparison links retain
+  date/basis/direction/timeframe/execution choices. Offline uses saved records.
+- Twelve focused execution-page/cohort/render tests pass; three selected UI
+  TypeScript roots pass. Help updated. No local server or hosted action.
+- Room After Entry and Candle Patterns still need exact pre-execution filtering;
+  their existing occurrence IDs/version joins must be preserved, not inferred
+  from ticker or execution sequence alone. Analyzed Trades cohort restoration,
+  remaining evidence drilldowns and full acceptance remain outstanding.
+
 ## Green-to-Red and Scaling Out integration - 2026-09-12
 
 - Added an additive Indicators at the comparison point section to both pages.

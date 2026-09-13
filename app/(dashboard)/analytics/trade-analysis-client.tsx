@@ -55,6 +55,7 @@ import {
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 import { TrendMomentumAnalysis } from "./trend-momentum-analysis";
 import { TrendMomentumLandmarkComparison } from "./trend-momentum-landmark-comparison";
+import { TrendMomentumExecutionComparison } from "./trend-momentum-execution-comparison";
 
 export type TradeAnalysisView = "day" | "entry-exit" | "mfe-mae" | "green-to-red" | "scaling-out" | "candle-patterns" | "trades" | "trend-momentum";
 
@@ -947,6 +948,13 @@ export function TradeAnalysisClient({
         supportingPage={indicatorSupportingPage}
         moneyBasis={model.moneyBasis}
         queryString={offline ? undefined : searchParams.toString()} onQueryChange={offline ? undefined : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} /> : null}
+      {view === "day" && model.trendMomentum ? <Section title="Trend & Momentum" description="" helpHref="/help/trade-analyzer/trend-momentum"
+        titleHelp="Saved EMA 9, EMA 20, RSI and session VWAP context for user-defined trades in this selection. Missing indicator history does not reduce the main Analyzer count." collapsible={false}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
+          <Typography variant="body2">{model.trendMomentum.trades.filter((trade) => trade.indicators !== null).length} of {model.trendMomentum.trades.length} saved user-defined trades have indicator context.</Typography>
+          <Button variant="outlined" href={`/analytics/trade-analyzer/day/trend-momentum${offline ? "" : `?${searchParams.toString()}`}`}>{offline ? "Open saved comparisons" : "View comparisons"}</Button>
+        </Stack>
+      </Section> : null}
       {view === "day" ? <Stack spacing={1.25}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Selected-period records</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
@@ -1219,6 +1227,11 @@ export function TradeAnalysisClient({
         </Drawer>
       ) : null}
 
+      {view === "entry-exit" ? <Section title="Indicator context at executions" description="" helpHref="/help/trade-analyzer/trend-momentum"
+        titleHelp="Compare EMA alignment or RSI at initial entries, adds, re-entries and exits. Only completed candles known at that execution are used. A trade counts once within a group even when it contains several qualifying executions.">
+        <TrendMomentumExecutionComparison projection={model.trendMomentum} direction={activeDirection} money={(value) => money(value, model.currency)} moneyBasis={model.moneyBasis} offline={offline}
+          queryString={offline ? undefined : searchParams.toString()} onQueryChange={offline ? undefined : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
+      </Section> : null}
       {view === "green-to-red" || view === "scaling-out" ? <Section title="Indicators at the comparison point"
         description="" helpHref="/help/trade-analyzer/trend-momentum" titleHelp={view === "green-to-red"
           ? "Compare indicators at first +20% with whether the trade later turned red, or at first red with later recovery. Later indicator values do not replace the original observation."
