@@ -939,7 +939,8 @@ export function TradeAnalysisClient({
         /> : null}
       </Stack>
 
-      {view === "trend-momentum" ? <TrendMomentumAnalysis projection={model.trendMomentum} direction={activeDirection} currency={model.currency} timezone={model.timezone} offline={offline} /> : null}
+      {view === "trend-momentum" ? <TrendMomentumAnalysis projection={model.trendMomentum} direction={activeDirection} currency={model.currency} timezone={model.timezone} offline={offline}
+        queryString={offline ? undefined : searchParams.toString()} onQueryChange={offline ? undefined : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} /> : null}
       {view === "day" ? <Stack spacing={1.25}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Selected-period records</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>

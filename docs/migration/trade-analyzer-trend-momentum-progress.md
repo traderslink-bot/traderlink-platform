@@ -2,6 +2,37 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Combined-condition controls - 2026-09-12
+
+- Added the Combined conditions section: EMA alignment/directions/separation,
+  RSI band/direction, execution-price vs session VWAP, and candle spacing.
+  Matching, nonmatching, and missing-data cohorts show distinct trade outcomes,
+  wins/losses/breakeven, total/average/median P/L, average return and denominators.
+- Online selections persist in URL parameters without removing date, direction
+  or reporting-basis parameters. Offline selections remain locally interactive.
+  Every filter and table heading includes plain-language help.
+- Initial focused render check caught unsupported MUI system props; moved them
+  to sx. This is a local source slice, not rendered browser or hosted acceptance.
+- After correction, all nine focused cohort/aggregation/render tests pass without
+  the warning, and the three edited UI roots have zero TypeScript diagnostics.
+  Updated the Trend & Momentum Help guide for exclusive cohorts and saved filters.
+- Supporting-record server pagination, cross-page integration, remaining corpus
+  and complete acceptance checks are still outstanding. The goal remains active.
+
+## Restart recovery and combined-condition core - 2026-09-12
+
+- Verified checkpoints 0ff29bccc, 18ab0f82d and 0a2e8a955 and the unfinished
+  comparison files survived the owner-reported restart. Diff whitespace check
+  passes. Recreated the test file whose interrupted patch had not succeeded.
+- Added exclusive same-execution matching/nonmatching/unknown cohorts. A known
+  match takes precedence; otherwise any missing required context stays unknown.
+  Multiple executions still count one whole-trade outcome. Trades without saved
+  selected executions are outside the comparison and counted separately.
+- Added wins/losses/breakevens, median P/L and average return to distinct-trade
+  summaries, plus known-value URL filter parsing. UI wiring remains next.
+- Six aggregation/cohort fixtures and three selected-root TypeScript checks
+  pass after restart. Full-scope QA and final acceptance remain incomplete.
+
 ## Individual trade context and chart alignment - 2026-09-12
 
 - Connected saved indicator context through both logical-analysis presentation

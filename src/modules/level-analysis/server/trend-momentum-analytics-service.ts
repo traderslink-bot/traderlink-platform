@@ -32,10 +32,13 @@ export function readTrendMomentumAnalytics(input: Readonly<{
     if (members.some((member) => !member)) continue;
     const pnl = members.every((member) => member!.selectedPnlDecimal !== null)
       ? members.reduce((sum, member) => sum.plus(member!.selectedPnlDecimal!), new Decimal(0)).toFixed() : null;
+    const notional = members.reduce((sum, member) => sum.plus(member!.entryNotionalDecimal), new Decimal(0));
     const saved = trade.logicalTradeId ? analyzer.readCurrentByRoundTrip(accountScope, first.roundTripId) : null;
     trades.push({ tradeId: trade.logicalTradeId ?? first.roundTripId, representativeRoundTripId: first.roundTripId,
       symbol: first.displayedSymbol, direction: trade.direction, closeDate: last.closeLocalDate,
-      trackerDate: first.entryLocalDate, pnlDecimal: pnl, analysis: saved?.status === "ready" ? saved.analyzed : null });
+      trackerDate: first.entryLocalDate, pnlDecimal: pnl,
+      returnPercentDecimal: pnl !== null && notional.gt(0) ? new Decimal(pnl).div(notional).mul(100).toFixed() : null,
+      analysis: saved?.status === "ready" ? saved.analyzed : null });
   }
   return buildTrendMomentumProjection(trades);
 }

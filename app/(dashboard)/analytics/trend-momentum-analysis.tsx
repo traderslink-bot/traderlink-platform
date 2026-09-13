@@ -20,6 +20,8 @@ import { selectIndicatorStudy, summarizeIndicatorRecords, summarizeIndicatorStud
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import { paginatedRows, TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
+import { parseIndicatorConditions } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
+import { TrendMomentumConditions } from "./trend-momentum-conditions";
 
 const kinds: Record<IndicatorExecutionKind, string> = { initial_entry: "Initial entry", re_entry: "Re-entry",
   add: "Add", partial_exit: "Partial exit", position_close: "Position close", final_exit: "Final exit" };
@@ -42,14 +44,28 @@ function Section({ title, help, children }: { title: string; help: string; child
   </Accordion>;
 }
 
-export function TrendMomentumAnalysis({ projection, direction, currency, timezone, offline = false }: {
+export function TrendMomentumAnalysis({ projection, direction, currency, timezone, offline = false, queryString, onQueryChange }: {
   projection: TrendMomentumProjection | undefined; direction: "long" | "short"; currency: string | null;
-  timezone: string; offline?: boolean;
+  timezone: string; offline?: boolean; queryString?: string; onQueryChange?: (query: string) => void;
 }) {
-  const [interval, setInterval] = useState<"1m" | "5m">("1m");
-  const [kind, setKind] = useState<IndicatorExecutionKind>("initial_entry");
-  const [reference, setReference] = useState<"ema9" | "ema20" | "vwap">("ema9");
-  const [coverage, setCoverage] = useState<"complete" | "incomplete">("complete");
+  const [localQuery, setLocalQuery] = useState("");
+  const query = new URLSearchParams(queryString ?? localQuery);
+  const interval = query.get("indicator_interval") === "5m" ? "5m" : "1m";
+  const requestedKind = query.get("indicator_execution");
+  const kind: IndicatorExecutionKind = requestedKind && Object.hasOwn(kinds, requestedKind) ? requestedKind as IndicatorExecutionKind : "initial_entry";
+  const requestedReference = query.get("indicator_reference");
+  const reference = requestedReference === "ema20" || requestedReference === "vwap" ? requestedReference : "ema9";
+  const coverage = query.get("indicator_coverage") === "incomplete" ? "incomplete" : "complete";
+  const changeQuery = (key: string, value: string) => {
+    const next = new URLSearchParams(query);
+    next.set(`indicator_${key}`, value);
+    if (onQueryChange) onQueryChange(next.toString()); else setLocalQuery(next.toString());
+    setPage(1);
+  };
+  const setInterval = (value: string) => changeQuery("interval", value);
+  const setKind = (value: string) => changeQuery("execution", value);
+  const setReference = (value: string) => changeQuery("reference", value);
+  const setCoverage = (value: string) => changeQuery("coverage", value);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const selected = useMemo(() => projection ? { ...projection,
@@ -97,6 +113,9 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
         </TableRow>; })}</TableBody></Table></HorizontalScrollRegion>
         {!records.length ? <Typography color="text.secondary">No saved {kinds[kind].toLowerCase()} indicator records for this selection.</Typography> : null}
       </Stack>
+    </Section>
+    <Section title="Combined conditions" help="Choose conditions that must all be present at one execution. A matching trade is counted once. A trade is nonmatching only when all required indicator data is available for its selected executions and none matches. Results describe your saved trades, not a forecast.">
+      <TrendMomentumConditions projection={selected} interval={interval} kind={kind} filters={parseIndicatorConditions(query)} onChange={changeQuery} money={money} />
     </Section>
     <Section title="During the trade" help="Uses the first qualifying recorded-close event in each saved trade. Later events cannot replace it. Long trades study a move below the reference and return above it; short trades study the reverse. Events while no shares were held do not count.">
       <Stack spacing={1.5}>

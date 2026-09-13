@@ -5,11 +5,13 @@ import type { TradeExecutionIndicatorResult } from "./trend-momentum-executions"
 export type TrendMomentumTrade = Readonly<{
   tradeId: string; representativeRoundTripId: string; symbol: string; direction: "long" | "short";
   closeDate: string; trackerDate: string; pnlDecimal: string | null;
+  returnPercentDecimal?: string | null;
   analysis: DailyTradeAnalyzerResult | null;
 }>;
 export type IndicatorExecutionKind = "initial_entry" | "re_entry" | "add" | "partial_exit" | "position_close" | "final_exit";
 export type TrendMomentumRecord = Readonly<Omit<TrendMomentumTrade, "analysis"> & {
   executionId: string; executionKind: IndicatorExecutionKind; executedAtUtc: string; executionSequence: number;
+  executionPriceDecimal: string;
   context: TradeExecutionIndicatorResult["executions"][number] | null;
 }>;
 export type TrendMomentumProjection = Readonly<{
@@ -32,6 +34,7 @@ export function buildTrendMomentumProjection(trades: readonly TrendMomentumTrade
       const kind = event.kind === "entry" ? entries++ === 0 ? "initial_entry" : "re_entry"
         : event.kind === "temporary_flat" ? "position_close" : event.kind;
       records.push(Object.freeze({ ...identity, executionId: event.eventId, executionKind: kind,
+        executionPriceDecimal: event.priceDecimal,
         executedAtUtc: event.executedAtUtc, executionSequence: event.sequence, context: contexts.get(event.eventId) ?? null }));
     }
   }
@@ -63,7 +66,17 @@ export function summarizeIndicatorRecords(records: readonly TrendMomentumRecord[
   const known = [...trades.values()].filter((p): p is string => p !== null).map((p) => new Decimal(p));
   if (known.some((p) => !p.isFinite())) throw new Error("indicator_trade_outcome_invalid");
   const sum = known.reduce((total, p) => total.plus(p), new Decimal(0));
+  const sorted = [...known].sort((a, b) => a.cmp(b));
+  const middle = Math.floor(sorted.length / 2);
+  const median = sorted.length ? sorted.length % 2 ? sorted[middle] : sorted[middle - 1].plus(sorted[middle]).div(2) : null;
+  const returns = [...new Map(records.map((record) => [record.tradeId, record.returnPercentDecimal ?? null])).values()]
+    .filter((value): value is string => value !== null).map((value) => new Decimal(value));
+  if (returns.some((value) => !value.isFinite())) throw new Error("indicator_trade_return_invalid");
   return Object.freeze({ tradeCount: trades.size, occurrenceCount: records.length, pnlTradeCount: known.length,
+    wins: known.filter((p) => p.gt(0)).length, losses: known.filter((p) => p.lt(0)).length,
+    breakevens: known.filter((p) => p.eq(0)).length, medianPnlDecimal: median?.toFixed() ?? null,
+    returnTradeCount: returns.length,
+    averageReturnPercent: returns.length ? returns.reduce((total, value) => total.plus(value), new Decimal(0)).div(returns.length).toNumber() : null,
     totalPnlDecimal: known.length ? sum.toFixed() : null,
     averagePnlDecimal: known.length ? sum.div(known.length).toFixed() : null,
     winRatePercent: known.length ? 100 * known.filter((p) => p.gt(0)).length / known.length : null });

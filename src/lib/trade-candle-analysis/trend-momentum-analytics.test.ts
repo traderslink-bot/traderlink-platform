@@ -8,6 +8,7 @@ const record = (tradeId: string, pnlDecimal: string | null, executionId: string)
   tradeId, pnlDecimal, executionId, representativeRoundTripId: tradeId, symbol: "TEST", direction: "long",
   closeDate: "2026-09-11", trackerDate: "2026-09-11", executionKind: "initial_entry",
   executedAtUtc: "2026-09-11T14:00:00Z", executionSequence: 1, context: null,
+  executionPriceDecimal: "10",
 });
 test("whole-trade outcomes count once despite repeated executions and preserve unknown Net", () => {
   const result = summarizeIndicatorRecords([record("a", "10.25", "1"), record("a", "10.25", "2"),
