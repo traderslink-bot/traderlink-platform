@@ -727,11 +727,13 @@ function AnalyzedTradeCountCard({
 }
 
 export function TradeAnalysisClient({
+  indicatorSupportingPage,
   evidenceQuery,
   model,
   offline = false,
   view,
 }: {
+  indicatorSupportingPage?: import("@/src/lib/trade-candle-analysis/trend-momentum-cohorts").IndicatorSupportingPage;
   evidenceQuery: Readonly<{
     currency: string | null;
     endDate: string | null;
@@ -764,7 +766,8 @@ export function TradeAnalysisClient({
     ? evidenceQuery.direction
     : visibleDirectionCounts.long > 0 ? "long" as const : "short" as const;
   const [selectedDirection, setSelectedDirection] = useState<"long" | "short">(defaultDirection);
-  const activeDirection = visibleDirectionCounts[selectedDirection] > 0 ? selectedDirection : defaultDirection;
+  const activeDirection = view === "trend-momentum" && !offline ? defaultDirection
+    : visibleDirectionCounts[selectedDirection] > 0 ? selectedDirection : defaultDirection;
   const meaningfulProfitRows = useMemo(() => model.meaningfulProfit.rows.filter((row) =>
     row.direction === activeDirection), [activeDirection, model.meaningfulProfit.rows]);
   const scalingRows = useMemo(() => model.scalingOut.rows.filter((row) =>
@@ -940,6 +943,7 @@ export function TradeAnalysisClient({
       </Stack>
 
       {view === "trend-momentum" ? <TrendMomentumAnalysis projection={model.trendMomentum} direction={activeDirection} currency={model.currency} timezone={model.timezone} offline={offline}
+        supportingPage={indicatorSupportingPage}
         queryString={offline ? undefined : searchParams.toString()} onQueryChange={offline ? undefined : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} /> : null}
       {view === "day" ? <Stack spacing={1.25}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Selected-period records</Typography>

@@ -4,6 +4,9 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { TrendMomentumAnalysis } from "../../../app/(dashboard)/analytics/trend-momentum-analysis";
 import { buildTrendMomentumProjection } from "./trend-momentum-analytics";
+import { buildIndicatorSupportingPage } from "./trend-momentum-cohorts";
+import type { TrendMomentumProjection } from "./trend-momentum-analytics";
+import { TrendMomentumSupportingTrades } from "../../../app/(dashboard)/analytics/trend-momentum-supporting-trades";
 
 test("unavailable saved indicator view renders an explicit message", () => {
   const html = renderToStaticMarkup(createElement(TrendMomentumAnalysis, {
@@ -31,4 +34,21 @@ test("URL selections restore timeframe and execution without a browser router", 
   assert.ok(html.includes('value="5m"'));
   assert.ok(html.includes('value="vwap"'));
   assert.ok(html.includes('value="below"'));
+});
+
+test("supporting rows render saved execution details and withhold mismatched pages", () => {
+  const query = new URLSearchParams();
+  const projection = { records: [{ tradeId: "t", executionId: "e", executionKind: "initial_entry", executionSequence: 0,
+    direction: "long", symbol: "TNON", executionPriceDecimal: "8.02", executedAtUtc: "2026-09-11T13:30:00.000Z",
+    pnlDecimal: "12", context: null }], trades: [{ tradeId: "t", direction: "long" }] } as unknown as TrendMomentumProjection;
+  const page = buildIndicatorSupportingPage(projection, query, "long");
+  const props = { page, query, direction: "long" as const, timezone: "America/New_York", offline: false,
+    onChange: () => {}, money: (value: string | null) => value ?? "Unavailable" };
+  const html = renderToStaticMarkup(createElement(TrendMomentumSupportingTrades, props));
+  for (const text of ["TNON", "8.02", "9:30:00", "1 trade", "1 execution", "View details", "Explain Execution price per share"]) assert.ok(html.includes(text), text);
+  const changed = renderToStaticMarkup(createElement(TrendMomentumSupportingTrades, { ...props, query: new URLSearchParams("indicator_interval=5m") }));
+  assert.ok(changed.includes("Loading supporting trades"));
+  assert.ok(!changed.includes("TNON"));
+  const reportingChanged = renderToStaticMarkup(createElement(TrendMomentumSupportingTrades, { ...props, query: new URLSearchParams("basis=net") }));
+  assert.ok(!reportingChanged.includes("TNON"));
 });

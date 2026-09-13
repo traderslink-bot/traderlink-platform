@@ -65,3 +65,36 @@ export function buildIndicatorCohorts(projection: TrendMomentumProjection, inter
     nonmatching: { rows: cohorts.nonmatching, summary: summarizeIndicatorRecords(cohorts.nonmatching) },
     unknown: { rows: cohorts.unknown, summary: summarizeIndicatorRecords(cohorts.unknown) }, outsideTradeIds: outside };
 }
+
+export function indicatorSupportingSelection(query: Pick<URLSearchParams, "get">, direction: "long" | "short") {
+  const execution = query.get("indicator_execution");
+  const kinds: readonly string[] = ["initial_entry", "re_entry", "add", "partial_exit", "position_close", "final_exit"];
+  const kind: IndicatorExecutionKind = execution && kinds.includes(execution) ? execution as IndicatorExecutionKind : "initial_entry";
+  const interval = query.get("indicator_interval") === "5m" ? "5m" as const : "1m" as const;
+  const requestedGroup = query.get("indicator_group");
+  const group = requestedGroup === "nonmatching" || requestedGroup === "unknown" ? requestedGroup : "matching";
+  const size = Number(query.get("indicator_size"));
+  const pageSize = [10, 25, 50, 100].includes(size) ? size : 25;
+  const page = Number(query.get("indicator_page"));
+  const filters = parseIndicatorConditions(query);
+  const selection = { direction, kind, interval, group, pageSize, page: Number.isSafeInteger(page) && page > 0 ? page : 1, filters } as const;
+  return { ...selection, key: JSON.stringify({ ...selection,
+    reportingSelection: ["range", "start", "end", "basis"].map((key) => query.get(key)) }) };
+}
+
+/** Call with the current scoped, date- and reporting-filtered projection. */
+export function buildIndicatorSupportingPage(projection: TrendMomentumProjection,
+  query: Pick<URLSearchParams, "get">, direction: "long" | "short") {
+  const selected = indicatorSupportingSelection(query, direction);
+  const scoped = { ...projection, trades: projection.trades.filter((row) => row.direction === direction),
+    records: projection.records.filter((row) => row.direction === direction) };
+  const cohort = buildIndicatorCohorts(scoped, selected.interval, selected.kind, selected.filters)[selected.group];
+  const compare = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
+  const rows = [...cohort.rows].sort((a, b) => compare(a.executedAtUtc, b.executedAtUtc)
+    || compare(a.tradeId, b.tradeId) || a.executionSequence - b.executionSequence || compare(a.executionId, b.executionId));
+  const page = Math.min(selected.page, Math.max(1, Math.ceil(rows.length / selected.pageSize)));
+  return { selectionKey: selected.key, group: selected.group, page, pageSize: selected.pageSize,
+    totalRows: rows.length, totalTrades: cohort.summary.tradeCount,
+    rows: rows.slice((page - 1) * selected.pageSize, page * selected.pageSize) };
+}
+export type IndicatorSupportingPage = ReturnType<typeof buildIndicatorSupportingPage>;

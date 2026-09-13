@@ -13,6 +13,8 @@ import { buildIndicatorCohorts, INDICATOR_FILTER_OPTIONS, type IndicatorConditio
 import type { IndicatorExecutionKind, TrendMomentumProjection } from "@/src/lib/trade-candle-analysis/trend-momentum-analytics";
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
+import { TrendMomentumSupportingTrades } from "./trend-momentum-supporting-trades";
+import type { IndicatorSupportingPage } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
 
 const fields: Record<keyof IndicatorConditionFilters, [string, string]> = {
   alignment: ["EMA 9 compared with EMA 20", "Compare the two averages at the same execution, using completed candles only."],
@@ -41,10 +43,11 @@ const columns = [
   ["Average return", "Mean trade P/L divided by total entry value for each trade. Each trade has equal weight; missing returns are excluded."],
 ] as const;
 
-export function TrendMomentumConditions({ projection, interval, kind, filters, onChange, money }: {
+export function TrendMomentumConditions({ projection, interval, kind, filters, onChange, money, supportingPage, query, direction, timezone, offline }: {
   projection: TrendMomentumProjection; interval: "1m" | "5m"; kind: IndicatorExecutionKind;
-  filters: IndicatorConditionFilters; onChange: (key: keyof IndicatorConditionFilters, value: string) => void;
+  filters: IndicatorConditionFilters; onChange: (key: string, value: string) => void;
   money: (value: string | null) => string;
+  supportingPage?: IndicatorSupportingPage; query: URLSearchParams; direction: "long" | "short"; timezone: string; offline: boolean;
 }) {
   const cohorts = buildIndicatorCohorts(projection, interval, kind, filters);
   const percent = (value: number | null) => value === null ? "Unavailable" : `${value.toFixed(1)}%`;
@@ -71,5 +74,6 @@ export function TrendMomentumConditions({ projection, interval, kind, filters, o
       </TableBody></Table>
     </HorizontalScrollRegion>
     <Typography variant="body2" color="text.secondary">{cohorts.outsideTradeIds.length} trades have no saved execution of this type and are outside this comparison. Missing required indicator data is kept separate from nonmatching results.</Typography>
+    <TrendMomentumSupportingTrades page={supportingPage} query={query} direction={direction} timezone={timezone} offline={offline} onChange={onChange} money={money} />
   </Stack>;
 }

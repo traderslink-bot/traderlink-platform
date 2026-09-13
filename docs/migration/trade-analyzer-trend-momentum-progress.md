@@ -2,6 +2,27 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Supporting execution drilldown - 2026-09-12
+
+- Added server-built supporting pages from the same current scoped projection.
+  Direction and combined conditions apply before counts or pagination. Default
+  25 rows; only 10/25/50/100 allowed. Timestamp, trade ID, execution sequence and
+  execution ID provide deterministic ordering. Counts cover the whole cohort.
+- Expandable execution rows show saved EMA9/20, RSI14, VWAP, last completed
+  candle, candle age, direction observation span and real history count. Each
+  column/detail has a trader-facing tooltip. Full-analysis links preserve the
+  selected timeframe. Offline uses sanitized saved records and opens saved days.
+- Changed selections withhold mismatched supporting pages until the server
+  result arrives. Trend direction follows current online URL state. No database
+  writes, market-data requests, local servers or hosted actions were performed.
+- Eleven cohort/aggregation/static-render checks pass, including populated rows,
+  timeframe/reporting-basis mismatch withholding, stable page boundaries and
+  changed-population clamping. Six selected TypeScript roots pass after fixing
+  a literal-union inference issue. These are not browser-interaction proofs.
+- The existing summary projection still carries its full execution/episode set
+  for offline and comparison controls; paged detail rows alone do not prove the
+  final payload-size/scaling requirement. This remains a final integration item.
+
 ## Combined-condition controls - 2026-09-12
 
 - Added the Combined conditions section: EMA alignment/directions/separation,

@@ -20,7 +20,7 @@ import { selectIndicatorStudy, summarizeIndicatorRecords, summarizeIndicatorStud
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import { paginatedRows, TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
-import { parseIndicatorConditions } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
+import { parseIndicatorConditions, buildIndicatorSupportingPage, type IndicatorSupportingPage } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
 import { TrendMomentumConditions } from "./trend-momentum-conditions";
 
 const kinds: Record<IndicatorExecutionKind, string> = { initial_entry: "Initial entry", re_entry: "Re-entry",
@@ -44,9 +44,10 @@ function Section({ title, help, children }: { title: string; help: string; child
   </Accordion>;
 }
 
-export function TrendMomentumAnalysis({ projection, direction, currency, timezone, offline = false, queryString, onQueryChange }: {
+export function TrendMomentumAnalysis({ projection, direction, currency, timezone, offline = false, queryString, onQueryChange, supportingPage }: {
   projection: TrendMomentumProjection | undefined; direction: "long" | "short"; currency: string | null;
   timezone: string; offline?: boolean; queryString?: string; onQueryChange?: (query: string) => void;
+  supportingPage?: IndicatorSupportingPage;
 }) {
   const [localQuery, setLocalQuery] = useState("");
   const query = new URLSearchParams(queryString ?? localQuery);
@@ -59,6 +60,7 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
   const changeQuery = (key: string, value: string) => {
     const next = new URLSearchParams(query);
     next.set(`indicator_${key}`, value);
+    if (key !== "page") next.delete("indicator_page");
     if (onQueryChange) onQueryChange(next.toString()); else setLocalQuery(next.toString());
     setPage(1);
   };
@@ -67,7 +69,7 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
   const setReference = (value: string) => changeQuery("reference", value);
   const setCoverage = (value: string) => changeQuery("coverage", value);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const selected = useMemo(() => projection ? { ...projection,
     trades: projection.trades.filter((t) => t.direction === direction),
     records: projection.records.filter((r) => r.direction === direction),
@@ -115,7 +117,9 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
       </Stack>
     </Section>
     <Section title="Combined conditions" help="Choose conditions that must all be present at one execution. A matching trade is counted once. A trade is nonmatching only when all required indicator data is available for its selected executions and none matches. Results describe your saved trades, not a forecast.">
-      <TrendMomentumConditions projection={selected} interval={interval} kind={kind} filters={parseIndicatorConditions(query)} onChange={changeQuery} money={money} />
+      <TrendMomentumConditions projection={selected} interval={interval} kind={kind} filters={parseIndicatorConditions(query)} onChange={changeQuery} money={money}
+        query={query} direction={direction} timezone={timezone} offline={offline}
+        supportingPage={offline ? buildIndicatorSupportingPage(selected, query, direction) : supportingPage} />
     </Section>
     <Section title="During the trade" help="Uses the first qualifying recorded-close event in each saved trade. Later events cannot replace it. Long trades study a move below the reference and return above it; short trades study the reverse. Events while no shares were held do not count.">
       <Stack spacing={1.5}>

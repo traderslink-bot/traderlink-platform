@@ -35,6 +35,7 @@ import { AnalyzedTradesIndex } from "./analyzed-trades-index";
 import { TradeAnalysisClient, type TradeAnalysisView } from "./trade-analysis-client";
 import { TradeAnalyzerHelpLink } from "./trade-analyzer-help-link";
 import { readTrendMomentumAnalytics } from "@/src/modules/level-analysis/server/trend-momentum-analytics-service";
+import { buildIndicatorSupportingPage } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
 
 const VIEW_DETAILS: Readonly<Record<TradeAnalysisView, Readonly<{
   helpHref: string;
@@ -289,11 +290,15 @@ export async function TradeAnalysisPage({
         startDate: dateRange.startDate, endDate: dateRange.endDate }) } : {}) }),
     });
   }));
+  const directionCounts = view === "trend-momentum" && result.model.trendMomentum
+    ? { long: result.model.trendMomentum.trades.filter((trade) => trade.direction === "long").length,
+        short: result.model.trendMomentum.trades.filter((trade) => trade.direction === "short").length }
+    : result.model.directionTradeCounts;
   const evidenceQuery = Object.freeze({
     currency: result.model.currency,
-    direction: searchParams.direction === "short" && result.model.directionTradeCounts.short > 0
+    direction: searchParams.direction === "short" && directionCounts.short > 0
       ? "short" as const
-      : result.model.directionTradeCounts.long > 0 ? "long" as const : "short" as const,
+      : directionCounts.long > 0 ? "long" as const : "short" as const,
     endDate: dateRange.endDate,
     moneyBasis,
     profitZoneMinimumHoldMinutes: selectedProfitZoneMinimumHoldMinutes,
@@ -327,6 +332,9 @@ export async function TradeAnalysisPage({
           <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
         </Stack>
         <TradeAnalysisClient
+          indicatorSupportingPage={view === "trend-momentum" && result.model.trendMomentum
+            ? buildIndicatorSupportingPage(result.model.trendMomentum, { get: (key) => typeof searchParams[key] === "string" ? searchParams[key] as string : null }, evidenceQuery.direction)
+            : undefined}
           evidenceQuery={evidenceQuery}
           model={result.model}
           view={view}
