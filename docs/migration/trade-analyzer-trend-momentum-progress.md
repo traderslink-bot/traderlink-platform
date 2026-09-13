@@ -2,6 +2,29 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## During-trade conditions and event controls - 2026-09-13
+
+- Added loss/reclaim event selection and combined same-observation EMA,
+  RSI, VWAP, spacing and close-vs-EMA20 conditions. First recorded event is
+  selected across all cycles before filtering; later matches never replace it.
+  Matching/nonmatching/unknown context groups remain separate within complete
+  versus incomplete first-event history. Missing position cycles cannot prove
+  no event; fully observed no-event and unknown-presence counts are separate.
+- Connected the existing themed During the trade section to the new groups,
+  financial comparison table, selected-event follow-through and occurrence
+  pagination. URL state uses separate during-condition keys; offline local
+  query changes use the same calculation with no provider requests. Loss-only
+  recovery rates exclude unknown outcomes; reclaim-only samples show no rate.
+  Occurrences, unique saved trades and held-position counts are distinguished.
+- Eighteen focused during/episode/analytics tests pass, including static HTML
+  rendering of reclaim controls and missing history. Four selected source/UI/
+  test TypeScript roots have zero diagnostics. Help instructions updated.
+- Static render is not browser acceptance: actual control interaction, mobile,
+  Light/Navy Dark, offline capture/restoration and full current-page evidence
+  pagination still need final checks. Supporting trade links for during groups,
+  remaining outcome presentation, provider/corpus calibration and the full
+  acceptance/release gates remain open. No local server or hosted action.
+
 ## Independently anchored reclaim evidence - 2026-09-13
 
 - Added optional saved reclaim-study evidence: exact observed reclaim time and

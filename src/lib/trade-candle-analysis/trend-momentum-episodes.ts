@@ -43,7 +43,8 @@ export function analyzeIndicatorEpisodes(input: Readonly<{
   const episodes: Episode[] = [];
   const crossings: { kind: "ema_cross" | "rsi_midpoint"; cycle: number; at: number;
     previousSideAt: number; side: "above" | "below"; price: number }[] = [];
-  const historyComplete: Record<Reference, boolean> = { ema9: true, ema20: true, vwap: true };
+  const hasCycles = input.cycles.length > 0;
+  const historyComplete: Record<Reference, boolean> = { ema9: hasCycles, ema20: hasCycles, vwap: hasCycles };
 
   input.cycles.forEach((cycle, cycleIndex) => {
     const held = observations.filter((o) => o.at > cycle.openedAt && o.at < cycle.closedAt);
