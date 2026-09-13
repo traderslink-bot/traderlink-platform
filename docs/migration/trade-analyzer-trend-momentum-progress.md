@@ -2,6 +2,27 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Saved-population SQL checkpoint - 2026-09-13
+
+- Added four disposable in-memory SQLite integration tests using the real
+  Journal logical-trade and Analyzer repository readers, without repository
+  mocks. These exercise query contracts, not full migration constraints.
+- Verified two members produce one saved trade with combined P/L, current
+  analysis revision, first entry/final close and final-close date selection.
+  Missing members and other account/workspace scopes cannot enter the result.
+- Verified pending/stale/missing grouped results cannot fall back to ready
+  member analyses. Standalone legacy results must match the current member
+  version and a ready analysis revision. Missing P/L stays unavailable.
+- All six tests in the SQL plus existing population-service checkpoint pass.
+  No production database, provider or deployment action was performed.
+- Remaining identity audit confirmed Day still receives round-trip-based
+  coverage, average return and profit-capture totals from the legacy `joined`
+  population. Its indicator coverage alone uses saved trades. Do not fix only
+  the displayed count: migrate its complete displayed summary together.
+  Green-to-Red and Scaling primary scenario populations already use saved
+  trades; preserve those while checking their ancillary summaries/date bounds.
+  This checkpoint does not complete the goal or establish browser acceptance.
+
 ## Analyzed Trades saved identity and condition restoration - 2026-09-13
 
 - Confirmed the index and API were still round-trip-only. Connected both to
