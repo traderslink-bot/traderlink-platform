@@ -2,6 +2,29 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Allocation-backed Scaling verification - 2026-09-13
+
+- Added real SQLite allocation-join tests for long and short grouped-trade
+  comparisons. One member contributes actual Gross P/L of 1 versus -2 at its
+  later exit; another contributes 5. Verified whole-trade totals are 6 versus
+  3, retaining exactly 3 of additional loss avoided, without counting the
+  second member's unchanged result as protection.
+- Verified other-account/workspace reads, changed execution versions,
+  snapshot price mismatch, later adds and incomplete allocated quantities
+  cannot establish a comparison. Eight SQL plus scaling-math tests pass;
+  the new test's selected TypeScript diagnostic count is zero.
+- Standalone Node did not resolve Next's `server-only` marker. The test
+  process mapped only that marker to installed Next's compiled server-side
+  empty module. All Journal queries, Decimal arithmetic and SQLite execution
+  remained real. No source alias, dependency installation or app setting changed.
+- Next feature gap confirmed against plan sections 317-319 and 377 onward:
+  during-trade UI currently selects losses only. Reclaim-specific follow-through,
+  same-observation combined filters and no-event versus unknown presence still
+  need implementation. Existing loss episode/recovery calculations must remain
+  intact; first event must be selected before conditions, across all cycles.
+  Full scenario integration, provider/corpus calibration, rendered acceptance
+  and final release gates remain pending. Nothing deployed or applied.
+
 ## Scaling secondary saved-trade projection - 2026-09-13
 
 - Replaced scenario-page secondary Scaling behavior and meaningful-profit
