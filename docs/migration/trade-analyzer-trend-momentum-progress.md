@@ -2,6 +2,24 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Candle Patterns canonical source boundary - 2026-09-13
+
+- Verified both current pattern summaries and the occurrence API still read
+  per-round-trip results. Added their shared replacement saved-trade population
+  reader; it is not yet wired into the page/API. The complete integration,
+  including replay revision checks, is required before acceptance.
+- Reader selects complete saved day trades by final close, binds patterns to
+  the exact current analysis revision, preserves whole-trade selected P/L and
+  null financial coverage, and allows only current single-member compatibility.
+  Pending grouped analyses cannot substitute separate member snapshots.
+- Projection preserves pattern timing/location, rejects future/unavailable
+  patterns, distinguishes missing indicator context, and deduplicates canonical
+  trade P/L within each comparison group while retaining individual occurrences.
+- Eight focused pattern/projection/reader/movement tests pass. Four selected
+  source TypeScript roots pass. Existing Help unchanged because no new pattern
+  page control is live yet; update it with the page/API integration. No migration,
+  provider request, local server or hosted action.
+
 ## Room After Entry indicator filters - 2026-09-12
 
 - Added one shared EMA-alignment/RSI-band filter over the saved execution

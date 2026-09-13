@@ -31,6 +31,7 @@ export type LogicalTradeAnalyzerTarget = Readonly<{
 }>;
 
 export type LogicalTradeAnalyzerSavedResult = Readonly<{
+  analysisVersionId?: string;
   availableAtUtc: string | null;
   analyzed: DailyTradeAnalyzerResult | null;
   candles: readonly NormalizedMarketCandle[];
@@ -96,6 +97,7 @@ WHERE workspace_id = ? AND account_id = ? AND logical_trade_version_id = ?
 
   readCurrentByRoundTrip(scope: AccountScope, roundTripId: string): LogicalTradeAnalyzerSavedResult | null {
     const row = this.database.prepare(`SELECT analysis.logical_trade_version_id, analysis.status,
+ version.logical_trade_analysis_version_id,
  version.result_json, version.evidence_candles_json, version.execution_mismatches_json,
  (SELECT job.desired_coverage_end_utc FROM level_analysis_logical_trade_jobs job
   WHERE job.workspace_id = analysis.workspace_id AND job.account_id = analysis.account_id
@@ -114,7 +116,7 @@ JOIN journal_logical_trade_daily_analysis_versions version
 WHERE membership.workspace_id = ? AND membership.account_id = ?
  AND membership.round_trip_id = ? AND analysis.logical_trade_version_id = membership.logical_trade_version_id
 LIMIT 1`).get(scope.workspaceId, scope.accountId, roundTripId) as
-      | { logical_trade_version_id: string; status: LogicalTradeAnalyzerSavedResult["status"];
+      | { logical_trade_version_id: string; logical_trade_analysis_version_id: string; status: LogicalTradeAnalyzerSavedResult["status"];
           result_json: string | null; evidence_candles_json: string | null;
           execution_mismatches_json: string | null; available_at_utc: string | null }
       | undefined;
@@ -162,6 +164,7 @@ WHERE membership.workspace_id = ? AND membership.account_id = ?
     }
     try {
       return Object.freeze({
+        analysisVersionId: row.logical_trade_analysis_version_id,
         availableAtUtc: row.available_at_utc,
         analyzed: row.result_json ? JSON.parse(row.result_json) as DailyTradeAnalyzerResult : null,
         candles: Object.freeze(row.evidence_candles_json
