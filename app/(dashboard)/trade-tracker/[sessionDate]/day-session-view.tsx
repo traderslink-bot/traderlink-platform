@@ -1,4 +1,5 @@
 "use client";
+import { tradeAnalysisAvailabilityMessage } from "@/src/lib/trade-candle-analysis/analysis-availability";
 import { ExecutionPositionDetails, WrittenTradeAnalysis } from "../written-trade-analysis";
 import { buildWrittenTradeReview } from "../analyzer-written-review-model";
 
@@ -2439,9 +2440,7 @@ function TradeReview({
                   {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
                 </Typography>
                 <Typography color="text.secondary" variant="body2">
-                  {analyzer.status === "pending"
-                    ? "Trade Analyzer is collecting market data."
-                    : "Trade Analyzer could not collect the market data needed for this trade."}
+                  {tradeAnalysisAvailabilityMessage(analyzer.status)}
                 </Typography>
               </>
             </Stack>

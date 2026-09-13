@@ -3,12 +3,17 @@ import { test } from "node:test";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { logicalTradeFailureNotice } from "./logical-trade-analyzer-notification-service";
+import { tradeAnalysisAvailabilityMessage } from "../../../lib/trade-candle-analysis/analysis-availability";
 
 test("unavailable candle messages distinguish missing coverage from failed retrieval", () => {
   assert.match(logicalTradeFailureNotice("no_coverage").summary, /Not enough candle data/);
   assert.match(logicalTradeFailureNotice("no_coverage").summary, /can happen/);
   assert.match(logicalTradeFailureNotice("provider_unavailable").summary, /couldn't retrieve/);
   assert.doesNotMatch(logicalTradeFailureNotice().summary, /volume|execution details/);
+  assert.equal(logicalTradeFailureNotice("no_coverage").summary, tradeAnalysisAvailabilityMessage("no_coverage"));
+  assert.equal(logicalTradeFailureNotice().summary, tradeAnalysisAvailabilityMessage("provider_unavailable"));
+  assert.match(tradeAnalysisAvailabilityMessage("pending"), /collecting/);
+  assert.doesNotMatch(tradeAnalysisAvailabilityMessage("unknown"), /very little|volume/);
 });
 
 test("Analyzer notification service never modifies delivery preferences", () => {

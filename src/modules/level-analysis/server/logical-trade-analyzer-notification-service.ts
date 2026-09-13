@@ -8,11 +8,10 @@ import { notifyJournalOwnerOfDailyTradeAnalyzerFailure } from "@/src/modules/pla
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import type { LogicalTradeAnalyzerTarget } from "./logical-trade-analyzer-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
+import { tradeAnalysisAvailabilityMessage } from "@/src/lib/trade-candle-analysis/analysis-availability";
 
 export function logicalTradeFailureNotice(reason: "no_coverage" | "provider_unavailable" = "provider_unavailable") {
-  return { title: "Trade Analyzer needs review", summary: reason === "no_coverage"
-    ? "Not enough candle data to analyze this trade. This can happen when a stock trades very little."
-    : "We couldn't retrieve the candle data. Please try again later." };
+  return { title: "Trade Analyzer needs review", summary: tradeAnalysisAvailabilityMessage(reason) };
 }
 
 function workspaceScope(scope: AccountScope): WorkspaceAccessScope {

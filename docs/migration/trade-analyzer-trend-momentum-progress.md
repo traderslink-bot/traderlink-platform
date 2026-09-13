@@ -2,6 +2,28 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Terminal-card alignment and retry trace - 2026-09-13
+
+- Added a client-safe shared availability-message function. Terminal trade card
+  and logical-trade failure notice now use identical approved no-coverage versus
+  provider-failure copy. Pending remains collecting; unknown statuses retain the
+  neutral fallback. The existing usable-analysis branch is unchanged.
+- Two focused notice/architecture checks pass, including shared-message equality
+  and pending/unknown wording. Four selected TypeScript roots have zero diagnostics.
+  Help updated. No runtime request, hosted mutation, server or migration.
+- Confirmed manual retry defect: selection.alreadyRequested excludes terminal
+  failures, but repository.queue returns any existing version/window job without
+  checking terminal status. select then returns already_requested instead of
+  requeueing. A correction/new trade version is a distinct accepted request.
+  Internal reschedule/claim recovery reuses the same job. reserve creates a new
+  reservation, but cached runs may have no reservation, so it alone cannot be
+  the universal notification request identity.
+- Next retry work must preserve bounded allowance accounting and append-only
+  request evidence, distinguish explicit resubmission from worker retries, and
+  test dedup/outcome changes. Do not claim that a notification-key-only change
+  fixes queue behavior. Reserved 0134 currently contains history receipts only;
+  any added persistence must be reviewed against its registration/verification.
+
 ## Failure-notice and preference audit - 2026-09-13
 
 - Found and removed a notification-service mutation that automatically enabled

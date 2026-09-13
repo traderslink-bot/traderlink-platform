@@ -591,7 +591,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: [
           { kind: "paragraph", text: "For a newly completed same-day trade, Trade Analyzer collects market data through 30 minutes after the final exit's one-minute candle before creating its first completed result. Seconds do not change that readiness time. The blue collection notice gives the expected Eastern Time. You can leave the page while it completes; when the result is ready, TradersLink adds an in-app update and uses the notification channels you have configured." },
           { kind: "paragraph", text: "A later finalized-session update can add the 60-minute observation when that market data is available. You do not have to wait for it before reviewing the first completed result. When the extended-hours session closes before a full 30 minutes can form, the collection notice identifies the shorter available market-data window." },
-          { kind: "paragraph", text: "If the required market data cannot be collected after its bounded retries, TraderLink records an unavailable state rather than leaving the trade on a collecting message. It never fills missing future candles with zeroes or guesses." },
+          { kind: "paragraph", text: "If the required market data cannot be collected after its bounded retries, TraderLink records an unavailable state rather than leaving the trade on a collecting message. The card distinguishes too few available candles from a failed data request. Sparse candles alone do not prove low trading volume. It never fills missing future candles with zeroes or guesses." },
         ],
       },
       {
