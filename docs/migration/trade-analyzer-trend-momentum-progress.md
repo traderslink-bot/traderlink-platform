@@ -2,6 +2,28 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Scaling secondary saved-trade projection - 2026-09-13
+
+- Replaced scenario-page secondary Scaling behavior and meaningful-profit
+  rows with combined saved-trade scenarios/P&L and canonical saved IDs.
+  Qualification, fee completeness and two-cent reconciliation are preserved.
+  No-scale/red-finish summaries consume those same corrected rows.
+- For exactly one partial exit, the existing Journal allocation verifier finds
+  its supporting member. Only one verified comparison is accepted. Its exact
+  cash-flow difference is retained while actual/counterfactual totals include
+  the complete saved trade. Multiple partial exits and ambiguous comparisons
+  remain unavailable; no Journal writer or counterfactual fee model changed.
+- Scenario price projections now require matching reporting multipliers across
+  all members instead of scaling every member with the first member's rate.
+- Nine focused scaling/date/Day tests pass, including missing Net facts,
+  reconciliation, duplicate IDs and all three comparison outcome types.
+  Type-check found and corrected a nullable-scenario guard. Final three-root
+  recheck has zero diagnostics. Help updated. No production or provider actions.
+- Still required: real allocation-backed integration test for a combined trade,
+  final grouped-scenario regression, populated offline/browser acceptance,
+  remaining during-trade feature work, provider/corpus calibration and all
+  final goal/release gates. This is not a completion or release-ready claim.
+
 ## Scenario-page final-close selection correction - 2026-09-13
 
 - Confirmed Green-to-Red and Scaling Out fetched date-filtered round trips
