@@ -2,6 +2,26 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Current owner corpus revalidation - 2026-09-13
+
+- Confirmed production SSH works with Node v24.21.0. Explicit production
+  service still reports source f97ab1ceecf30c411d605f1dd5ed3af31246dead.
+- Opened configured SQLite with readonly/fileMustExist and query_only; required
+  exactly one active journal_administration owner grant. Limited current ready
+  logical records to 20 and each candle payload to 2 MB; matched active logical
+  membership version and current saved analysis revision.
+- Only two records returned: 445 candles/2 executions and 52 candles/2 executions.
+  Both lack new trendMomentum results, as expected on the deployed baseline.
+  Saved candle shape includes turnoverDecimal and lossless decimal OHLCV.
+- Independently queried at most 20 owner-only historical ready round-trip
+  analysis revisions: zero returned. No historical legacy sample can be assumed
+  available. No private IDs, prices or execution times returned in this audit.
+- This is corpus-availability evidence, not numerical or broad acceptance.
+  Next calibration must use authorized bounded Moomoo history and/or explicit
+  test/Demo fixtures. No writes, provider calls, deployment or migration ran.
+- Retry allowance choice remains with the owner; no accounting/schema changes
+  made while awaiting it. Continue independent goal work meanwhile.
+
 ## Terminal-card alignment and retry trace - 2026-09-13
 
 - Added a client-safe shared availability-message function. Terminal trade card
