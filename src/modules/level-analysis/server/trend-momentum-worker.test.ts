@@ -74,6 +74,6 @@ test("ready indicator context is saved with all executions of one logical trade"
     assert.equal(snapshot.indicatorFilterContext!.eventId, snapshot.event.eventId);
     assert.equal(snapshot.indicatorFilterContext!.executedAtUtc, snapshot.event.executedAtUtc);
   }
-  assert.deepEqual(f.saved[0].analyzed.eventSnapshots.map(({ indicatorFilterContext, ...core }) => core),
+  assert.deepEqual(f.saved[0].analyzed.eventSnapshots.map((snapshot) => { const core = { ...snapshot }; delete core.indicatorFilterContext; return core; }),
     analyzeDailyTrade({ candles, dailyRanges: [], direction: "long", events }).eventSnapshots);
 });

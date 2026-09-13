@@ -56,7 +56,7 @@ test("cross-page card explains pre-point coverage and distinguishes later outcom
   const html = renderToStaticMarkup(createElement(TrendMomentumLandmarkComparison, {
     mode: "green-to-red", projection: projection(), greenRows: [
       { tradeId: "private-trade", firstReachedTwentyAtUtcSeconds: 160, firstRedAfterTwentyAtUtcSeconds: 180, recoveredAfterTurningRed: false },
-    ] as Parameters<typeof TrendMomentumLandmarkComparison>[0]["greenRows"], zoneRows: [], moneyBasis: "net", money: (value) => value ?? "Unavailable",
+    ] as unknown as Parameters<typeof TrendMomentumLandmarkComparison>[0]["greenRows"], zoneRows: [], moneyBasis: "net", money: (value) => value ?? "Unavailable",
   }));
   for (const text of ["First +20%", "Later turned red", "Explain Indicator coverage", "Average Net P/L", "Observations"]) assert.ok(html.includes(text), text);
   assert.ok(!html.includes("NaN"));

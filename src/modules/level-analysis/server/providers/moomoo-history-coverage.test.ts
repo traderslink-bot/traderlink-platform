@@ -4,7 +4,7 @@ import { MoomooDailyTradeKlineMarketDataProvider } from "./moomoo-daily-trade-kl
 
 const start = 1_800_000_000;
 const request = { symbol: "TEST", interval: "1m" as const, startTime: start,
-  endTime: start + 3600, includeExtendedHours: true };
+  endTime: start + 3600, includeExtendedHours: true as const };
 const row = { time_key: (start + 60) * 1000, open: 10, high: 11, low: 9, close: 10,
   volume: 100, turnover: 1000 };
 function provider(payload: unknown) {

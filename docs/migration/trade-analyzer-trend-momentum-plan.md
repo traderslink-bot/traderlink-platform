@@ -8,13 +8,21 @@ Progress: [Planning and implementation record](trade-analyzer-trend-momentum-pro
 Parent: [Trade Analyzer Analysis Pages Plan](trade-analyzer-analysis-pages-plan.md).
 
 Feasibility update: the progress record now includes the verified production
-source and an owner-scoped read-only sample. One early entry has only nine
+source and an operator-grant-user-scoped read-only sample. The designated shared
+connection belongs to a different user; personal test-corpus authorization is
+awaiting owner confirmation. One early entry has only nine
 completed pre-entry bars; another has 382. Therefore prior-session warm-up is
 a concrete implementation requirement where saved earlier history is insufficient,
 not a reason to suppress the complete trade. The existing adapter's <=24-hour
 request bound and shared strict pattern aggregator must be preserved; use bounded
 history ranges and indicator-specific sparse aggregation. Broader numerical,
 sparse-history and multi-round-trip acceptance remain pending.
+
+Source checkpoint 2026-09-13: 125 scoped tests pass; 107 changed TypeScript roots
+pass their split checks; lint has zero errors and one inherited unused-component
+warning. These are not hosted calibration, full build or browser acceptance.
+Retry-allowance choice, private-corpus identity, live calibration and the final
+rendered/release gates remain open. See the progress record for exact evidence.
 
 ## 1. Product outcome
 

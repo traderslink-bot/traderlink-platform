@@ -43,8 +43,11 @@ test("whole-trade outcomes count once despite repeated executions and preserve u
   assert.throws(() => summarizeIndicatorRecords([record("a", "1", "1"), record("a", "2", "2")]));
 });
 test("unanalysed trades remain in coverage instead of disappearing", () => {
-  const { context: _context, executionId: _id, executionKind: _kind, executedAtUtc: _at,
-    executionSequence: _sequence, ...identity } = record("a", null, "1");
+  const source = record("a", null, "1");
+  const identity = { tradeId: source.tradeId, pnlDecimal: source.pnlDecimal,
+    representativeRoundTripId: source.representativeRoundTripId, symbol: source.symbol,
+    direction: source.direction, closeDate: source.closeDate, trackerDate: source.trackerDate,
+    executionPriceDecimal: source.executionPriceDecimal };
   const projection = buildTrendMomentumProjection([{ ...identity, analysis: null }]);
   assert.equal(projection.tradeCount, 1);
   assert.equal(projection.analyzedTradeCount, 0);

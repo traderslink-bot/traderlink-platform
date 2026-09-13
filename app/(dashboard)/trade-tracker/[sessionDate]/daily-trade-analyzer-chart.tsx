@@ -777,7 +777,7 @@ export function DailyTradeAnalyzerChart({
       eventCandleIndexesRef.current = new Map();
       chart.remove();
     };
-  }, [analysis, annotationAppearance, chartInterval, chartPatternColors, chartPatterns, chartSemanticColors, chartTheme, currency, direction, emaAvailable, vwapAvailable, rsiAvailable, isFullscreen, layers, rangeMode, rangeRevision, ruleEvidence]);
+  }, [analysis, annotationAppearance, chartInterval, chartPatternColors, chartPatterns, chartSemanticColors, chartTheme, theme.palette.mode, currency, direction, emaAvailable, vwapAvailable, rsiAvailable, isFullscreen, layers, rangeMode, rangeRevision, ruleEvidence]);
 
   useEffect(() => {
     selectedEventIdRef.current = selectedEventId;

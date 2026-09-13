@@ -2,6 +2,31 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Combined source checkpoint and lint cleanup - 2026-09-13
+
+- Final rerun: all 31 scoped trend-momentum/saved-trade/provider-coverage files,
+  125 tests passed with zero failures/skips in one 512-MB process. Static
+  migration-file verification passed for 120 registered entries; none applied.
+- Project Next lint rules on all 107 changed TS/TSX files: zero errors, one
+  inherited unused TradeOutcomeSummary warning, confirmed present at base.
+  Fixed owned fixture unused variables, literal request typing and intentionally
+  partial render-fixture cast. No production validation was weakened.
+- Fixed chart effect's missing theme-mode dependency. Read lightweight-charts
+  skill fully; verified installed 5.2.0 typings and existing chart.remove cleanup.
+  No new chart API, polling or layout introduced. Theme interaction still needs
+  actual rendered acceptance. Help inspected; no new user-facing behavior/copy.
+- Initial combined type check found fixture errors plus missing Vitest globals.
+  Corrected fixtures. Including all Vitest types with all source exceeded the
+  768-MB cap; did not raise it. Sequential split: 106 changed roots with zero
+  diagnostics, then the migration test with real Vitest globals and zero
+  diagnostics. This checks changed-root diagnostics, not full application build.
+- Only pre-existing unused-component warning remains; dashboard-template's
+  previously recorded inherited failures are not reclassified as passes.
+  Full goal remains open: retry semantics awaiting owner choice, designated-user
+  corpus authorization, numerical/provider calibration, remaining integrated
+  UI/payload acceptance, browser Light/Navy Dark/mobile/PWA, release handoff.
+- No local server, provider request, production write, push or deployment.
+
 ## Shared-connection identity and calibration boundary - 2026-09-13
 
 - Read-only production check confirmed the configured shared Moomoo user differs

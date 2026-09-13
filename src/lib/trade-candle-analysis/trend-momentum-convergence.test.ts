@@ -9,7 +9,7 @@ const scenarios = [
   ["falling", (i: number) => 10 - i * 0.003 + Math.sin(i * 0.31) * 0.3],
   ["volatile penny", (i: number) => 0.1 + Math.exp(Math.sin(i * 0.051) * 1.2) * 0.2],
   ["slower stock", (i: number) => 200 + Math.sin(i * 0.015) * 0.8 + Math.cos(i * 0.3) * 0.1],
-  ["flat", (_i: number) => 10],
+  ["flat", () => 10],
 ] as const;
 
 test("200 returned bars converge against 2000-bar references on bounded varied-price fixtures", () => {
