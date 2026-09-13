@@ -5,6 +5,17 @@ Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 Current source/remaining hosted acceptance:
 [Exact handoff](trade-analyzer-current-acceptance-handoff.md).
 
+## Final source release handoff
+
+- Final changed-slice checkpoint: 32 Node test files, 146 tests pass, zero failed
+  or skipped. Source checks remain separate from real provider/browser proof.
+- Coordinator confirmed existing owner production authorization, so no repeated
+  permission question is required. Staging stays untouched. Final handoff is
+  release-ready for coordinator reconciliation/build/CI and guarded migrations,
+  not a claim that deployment or full product acceptance already happened.
+- Coordinator must preserve backup/rollback and one-writer boundaries; afterward
+  this task owns approved This Guy corpus/provider and rendered acceptance.
+
 ## Post-retry regression and scale checkpoint
 
 - Complete focused Trend & Momentum run: 27 files, 124 tests passed at bab42b4cc

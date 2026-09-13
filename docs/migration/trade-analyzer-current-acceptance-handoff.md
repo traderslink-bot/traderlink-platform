@@ -1,6 +1,8 @@
 # Day Analyzer current acceptance handoff
 
-Status: Source checkpoint ready for coordinator review, NOT authorized to deploy.
+Status: Release-ready for the owner-authorized guarded production path, subject
+to coordinator source reconciliation, build/CI, backup and rollback gates below.
+Product acceptance remains open until post-deployment provider and rendered QA.
 This supersedes stale retry/corpus blockers in the earlier candidate handoff.
 
 ## Exact source
@@ -10,13 +12,16 @@ This supersedes stale retry/corpus blockers in the earlier candidate handoff.
 - Integration base: f97ab1ceecf30c411d605f1dd5ed3af31246dead
 - Source checkpoint: dc8eb2bf2110824a23949e523837fbea5cceca34
 - Immediate parent: bab42b4cc4f2db721a00c59042cacc6aca6c7392
-- Complete base-to-checkpoint allowlist: 123 paths below. This handoff is an additional documentation-only file.
+- Complete base-to-checkpoint allowlist: 123 paths below. Final release adds this
+  documentation-only handoff, for 124 allowed paths total. Final immutable commit
+  is supplied in the coordinator message; no unlisted path is authorized.
 
 ## Verified and remaining
 
-- 27 focused files / 124 tests passed after retry implementation; subsequent
-  scale and presentation additions pass six aggregate and eight display tests.
-  Counts overlap and must not be summed as independent coverage.
+- Final complete changed-slice Node test run: 32 files / 146 tests passed,
+  zero failed/skipped, in one 512-MB process. Includes later scale/presentation
+  additions, provider adapter fixtures and saved-trade corrections. Prior counts
+  overlap and must not be added to this result.
 - Retry slice: 25 focused tests, including real-SQL requeue, duplicate queue,
   stable-trade/day limit across corrections, free acquisitions and unchanged
   original paid reservation. Saved-only analysis is allowed at zero paid usage.
@@ -31,6 +36,19 @@ This supersedes stale retry/corpus blockers in the earlier candidate handoff.
 - Real This Guy corpus/provider calibration, complete remote build/CI and final
   rendered acceptance remain outstanding. No live provider requests in this slice.
 - Prior dashboard-template failures are recorded, not silently claimed green.
+  They are four inherited assertions concerning shared Frame/layout, navigation
+  ownership, Watchlist/dynamic News enumeration and a Help-link comment. Do not
+  change unrelated shell behavior to satisfy stale assertions. Coordinator must
+  assess these explicitly alongside remote build/CI before publishing.
+
+## Runtime dependencies
+
+No new environment variable or OpenAI credential/model is introduced. Use the
+existing single-writer application runtime, designated shared Moomoo connection,
+encrypted credential/normal refresh path, Analyzer enabled/allowance settings and
+existing worker schedule. Preserve current provider spacing/global caps. The
+history service is wired into the existing worker and Journal selection runtime.
+No Watchlist, Discord, AI, or Swing runtime configuration change is included.
 
 ## Migration and rollback boundary
 
@@ -57,15 +75,16 @@ No startup migration, volume replacement or manual token rewriting is allowed.
 ## Owner direction and hosted lane
 
 Owner says finish current Day Analyzer work first; defer Swing Tracker redesign
-and Swing integration. This instruction does not choose a new hosted environment.
+and Swing integration. Coordinator confirmed standing owner production authority
+selects the guarded production path after this explicit release-ready handoff;
+no repeat owner approval is required for that path.
 Owner prohibits local servers and permits This Guy's account/saved trades for
 calibration. Coordinator confirms normal staging belongs to Coach/Communities.
 
-Do not deploy/apply now. Coordinator must obtain/confirm the exact owner-approved
-isolated temporary preview or production-release path, reconcile against fresh
+Coordinator owns deploy/application and must reconcile against fresh
 canonical main and serialize backup/predecessor checks plus 0134 then 0135.
 Record exact deployed source, service/volume identity, one instance, schema and
-public health, then execute provider/corpus and rendered acceptance. No new
+public health, then return the live app for provider/corpus and rendered acceptance. No new
 blocking question about the already-approved test account is needed.
 
 ## Complete source allowlist
@@ -192,4 +211,3 @@ blocking question about the already-approved test account is needed.
 - `src/modules/level-analysis/server/trend-momentum-worker.test.ts`
 - `src/modules/platform/server/database/platform-migration-file-contract.test.ts`
 - `src/modules/platform/server/database/platform-migration-manifest.ts`
-
