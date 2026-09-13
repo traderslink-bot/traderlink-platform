@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { analyzeIndicatorEpisodes } from "./trend-momentum-episodes";
 import { DEFAULT_INDICATOR_FILTERS } from "./trend-momentum-cohorts";
-import { buildDuringStudy, summarizeDuringStudy, type DuringStudySelection } from "./trend-momentum-during-study";
+import { buildDuringStudy, summarizeDuringStudy, duringStudyClosure, type DuringStudySelection } from "./trend-momentum-during-study";
 import type { TrendMomentumProjection } from "./trend-momentum-analytics";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -52,6 +52,27 @@ test("during-trade controls render reclaim selection and separate unknown presen
   assert.match(html, /1 could not be checked/);
   assert.match(html, /includes observed returns only/);
   assert.doesNotMatch(html, /Recorded return rate:/);
+  assert.match(html, /Until position closure/);
+  assert.match(html, /per share/);
+});
+
+test("until-closure keeps loss and reclaim anchors separate and missing values outside averages", () => {
+  const projection = project(trade("one", evidence()));
+  const loss = buildDuringStudy(projection, selection).complete.matching[0];
+  const reclaim = buildDuringStudy(projection, { ...selection, event: "reclaim" }).complete.matching[0];
+  assert.equal(duringStudyClosure(loss)!.at, at + 600);
+  assert.ok(Math.abs(duringStudyClosure(loss)!.changePerShare - 0.7) < 1e-10);
+  assert.ok(Math.abs(duringStudyClosure(reclaim)!.changePerShare - 0.2) < 1e-10);
+  const missing = { ...loss, followThrough: null };
+  const equalTime = { ...loss, followThrough: { ...loss.followThrough!, untilClosure: { ...loss.followThrough!.untilClosure, at: loss.at } } };
+  const invalid = { ...loss, followThrough: { ...loss.followThrough!, untilClosure: { ...loss.followThrough!.untilClosure, changePercent: NaN } } };
+  assert.equal(duringStudyClosure(equalTime), null);
+  const result = summarizeDuringStudy([loss, missing, equalTime, invalid], "loss");
+  assert.equal(result.untilClosure.measured, 1); assert.equal(result.untilClosure.unavailable, 3);
+  assert.equal(result.untilClosure.averageChangePercent, duringStudyClosure(loss)!.changePercent);
+  assert.equal(summarizeDuringStudy([missing], "reclaim").untilClosure.averageChangePercent, null);
+  assert.equal(summarizeDuringStudy([{ ...loss, trade: { ...loss.trade, direction: "short" } }], "loss").untilClosure.averageChangePercent,
+    result.untilClosure.averageChangePercent);
 });
 
 test("reclaim samples use reclaim context and do not present a biased recovery rate", () => {

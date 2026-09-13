@@ -75,10 +75,13 @@ export function buildDuringStudy(projection: TrendMomentumProjection, selection:
 }
 
 export function summarizeDuringStudy(rows: readonly DuringStudyRow[], event: "loss" | "reclaim") {
+  const closures = rows.map(duringStudyClosure).filter((value) => value !== null);
   const observed = rows.filter((row) => row.episode.recovery === "observed_reclaim").length;
   const noRecorded = rows.filter((row) => row.episode.recovery === "no_recorded_reclaim_before_closure").length;
   const unknown = rows.length - observed - noRecorded;
   return { ...summarizeIndicatorRecords(rows.map((row) => row.trade)),
+    untilClosure: { measured: closures.length, unavailable: rows.length - closures.length,
+      averageChangePercent: closures.length ? closures.reduce((sum, value) => sum + value.changePercent, 0) / closures.length : null },
     cycleCount: new Set(rows.map((row) => JSON.stringify([row.trade.tradeId, row.episode.cycle]))).size,
     observed, noRecorded, unknown,
     // Reclaim-selected samples cannot estimate the chance of a reclaim.
@@ -94,4 +97,11 @@ export function summarizeDuringStudy(rows: readonly DuringStudyRow[], event: "lo
       return { minutes, counts, averageChangePercent: changes.length ? changes.reduce((sum, value) => sum + value, 0) / changes.length : null };
     }),
   };
+}
+
+/** Closing-fill movement belongs to this held cycle, not a later re-entry or whole-trade P/L. */
+export function duringStudyClosure(row: DuringStudyRow) {
+  const value = row.followThrough?.untilClosure;
+  return value && Number.isFinite(value.at) && value.at > row.at && Number.isFinite(value.changePerShare) && Number.isFinite(value.changePercent)
+    ? value : null;
 }

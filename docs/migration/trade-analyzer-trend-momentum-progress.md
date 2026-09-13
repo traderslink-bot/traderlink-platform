@@ -2,6 +2,24 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Until-position-closure presentation - 2026-09-13
+
+- Plan section at lines 483 onward required closing-fill movement independently
+  of fixed horizons. Source already saved it, but the page did not display it.
+  Added a first-event summary with measured/unavailable counts and mean raw
+  percentage movement; recorded events show closing time and per-share/% move.
+- Shared validity check rejects absent/nonfinite measurements and closing times
+  not strictly after the selected event. Reclaim uses its own saved anchor;
+  missing older evidence never borrows a loss measurement. Raw price direction
+  is retained for shorts; whole-trade financial calculations are unchanged.
+- Nineteen focused during-study, episode and reporting tests pass, including
+  static rendered labels, currency handling, independent anchors and missing
+  measurements. Three selected TypeScript roots have zero diagnostics. Help
+  updated. Desktop/mobile themed browser acceptance remains unproven.
+- Nothing deployed, no provider request or local server. Continue with the
+  full remaining plan: notification/availability audit, historical calibration,
+  final source/payload and rendered acceptance, then narrow release handoff.
+
 ## During-trade supporting navigation - 2026-09-13
 
 - Confirmed Analyzed Trades previously interpreted every indicator query as

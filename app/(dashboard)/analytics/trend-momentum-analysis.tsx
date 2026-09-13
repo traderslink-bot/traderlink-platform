@@ -23,7 +23,7 @@ import { paginatedRows, TradeAnalyzerTablePagination } from "./trade-analyzer-ta
 import { parseIndicatorConditions, buildIndicatorSupportingPage, type IndicatorSupportingPage } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
 import { TrendMomentumConditions } from "./trend-momentum-conditions";
 import { TrendMomentumBandComparison } from "./trend-momentum-band-comparison";
-import { buildDuringStudy, summarizeDuringStudy, duringStudyTradeQuery } from "@/src/lib/trade-candle-analysis/trend-momentum-during-study";
+import { buildDuringStudy, summarizeDuringStudy, duringStudyTradeQuery, duringStudyClosure } from "@/src/lib/trade-candle-analysis/trend-momentum-during-study";
 import { INDICATOR_FILTER_OPTIONS } from "@/src/lib/trade-candle-analysis/trend-momentum-cohorts";
 
 const kinds: Record<IndicatorExecutionKind, string> = { initial_entry: "Initial entry", re_entry: "Re-entry",
@@ -199,6 +199,12 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
         ].map(([label, help]) => <TableCell key={label}><Heading label={label} help={help} /></TableCell>)}</TableRow></TableHead>
           <TableBody>{summary.horizons.map((h) => <TableRow key={h.minutes}><TableCell>{h.minutes} min</TableCell><TableCell>{percent(h.averageChangePercent)}</TableCell><TableCell>{h.counts.measured}</TableCell><TableCell>{h.counts.closed_before_horizon}</TableCell><TableCell>{h.counts.closed_at_horizon}</TableCell><TableCell>{h.counts.endpoint_unavailable}</TableCell><TableCell>{h.counts.timing_unavailable}</TableCell></TableRow>)}</TableBody>
         </Table></HorizontalScrollRegion>
+        <HorizontalScrollRegion label="Scroll to inspect movement until position closure" minTableWidth={480}><Table size="small"><TableHead><TableRow>
+          {[["Until position closure", "From the selected first event to this position's actual closing fill. Partial exits do not end this window; a later re-entry is not included."],
+            ["Average price change", "Average raw percentage change from event price to closing-fill price. This is price movement, not trade P/L. A price rise is not automatically favourable to a short."],
+            ["Measured", "Selected first events with a recorded closing fill after the event."],
+            ["Unavailable", "Selected events without a usable closing-fill measurement. These are excluded from the average, not treated as zero."]].map(([label, help]) => <TableCell key={label}><Heading label={label} help={help} /></TableCell>)}
+        </TableRow></TableHead><TableBody><TableRow><TableCell>First selected event</TableCell><TableCell>{percent(summary.untilClosure.averageChangePercent)}</TableCell><TableCell>{summary.untilClosure.measured}</TableCell><TableCell>{summary.untilClosure.unavailable}</TableCell></TableRow></TableBody></Table></HorizontalScrollRegion>
       </Stack>
     </Section>
     <Section title="Recorded events" help="All qualifying episodes, including later events and later positions within the same saved trade. These are occurrence counts, not extra trades. Open the saved analysis to inspect the executions and chart.">
@@ -208,13 +214,17 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
           ["Ticker", "The traded symbol."], ["Event time", "Time of the selected loss or return recorded by a completed candle."],
           ["Position", "Opening-to-flat position number within your saved trade. Re-entering does not create another saved trade."],
           ["Return", "The first recorded close back across the reference while this position was still held and the data remained uninterrupted."],
+          ["Position closed", "Actual closing-fill time for this held position, not the final close of a later re-entry."],
+          ["Price change until close", "Closing-fill price minus the selected event price, shown per share and as a raw percentage. This is not your trade P/L."],
           ["Full analysis", "Open this saved trade and its chart."],
         ].map(([label, help]) => <TableCell key={label}><Heading label={label} help={help} /></TableCell>)}</TableRow></TableHead>
-          <TableBody>{paginatedRows(occurrences, page, pageSize).map(({ trade, episode, at }) => <TableRow key={`${trade.tradeId}:${episode.cycle}:${at}`}>
+          <TableBody>{paginatedRows(occurrences, page, pageSize).map((row) => { const { trade, episode, at } = row; const closure = duringStudyClosure(row); return <TableRow key={`${trade.tradeId}:${episode.cycle}:${at}`}>
             <TableCell>{trade.symbol}</TableCell><TableCell>{date(at)}</TableCell><TableCell>{episode.cycle + 1}</TableCell>
             <TableCell>{episode.recovery === "observed_reclaim" ? `Recorded ${date(episode.reclaimedAt!)}` : episode.recovery === "unknown" ? "Unknown" : "No recorded return before closing"}</TableCell>
+            <TableCell>{closure ? date(closure.at) : "Unavailable"}</TableCell>
+            <TableCell>{closure ? `${money(String(closure.changePerShare))} per share (${percent(closure.changePercent)})` : "Unavailable"}</TableCell>
             <TableCell><Button size="small" variant="outlined" href={`/trade-tracker/${trade.trackerDate}${offline ? "" : `?${new URLSearchParams({ interval, trade: trade.representativeRoundTripId })}`}`}>{offline ? "Open saved day" : "Full analysis"}</Button></TableCell>
-          </TableRow>)}</TableBody></Table></HorizontalScrollRegion>
+          </TableRow>; })}</TableBody></Table></HorizontalScrollRegion>
         <TradeAnalyzerTablePagination rowCount={occurrences.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />
       </Stack>
     </Section>
