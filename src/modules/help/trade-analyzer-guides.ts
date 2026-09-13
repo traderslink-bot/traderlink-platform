@@ -14,6 +14,11 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         { kind: "paragraph", text: "Combined conditions requires all chosen conditions at the same execution. A trade matches if at least one execution of the selected type meets them all. Otherwise it is nonmatching only when every selected execution has the required indicator data; missing data stays in a separate group. These three groups do not overlap. Trades without that execution type are counted outside the comparison." },
         { kind: "paragraph", text: "Online filter selections stay in the page address. The table includes known-P/L counts, wins, losses, breakevens, total, average and median trade P/L, and average trade return. Average return gives each trade equal weight and uses its P/L divided by total entry value. Offline selections work within the saved view without requesting new candles." },
         { kind: "paragraph", text: "Supporting trades shows the executions behind the selected comparison group, 25 at a time by default. View details expands the saved EMA, RSI and VWAP values, last completed candle, candle age and direction observation span. The whole-trade P/L repeats when a trade has several executions; do not add those rows together. Full analysis opens the saved trade and chart." },
+      ] }, { id: "comparison-points", title: "Indicators at the comparison point", summary: "Compare the same point across qualifying trades.",
+      keywords: ["scaling out", "first zone", "green to red", "first 20", "recovery"], blocks: [
+        { kind: "paragraph", text: "On Green to red, choose First +20% to compare indicator conditions before later red or no-later-red outcomes. First red after +20% considers only trades that turned red and compares later recorded recovery. On Scaling out, every trade uses its first arrival at the chosen profit zone, whether or not it later took profit there." },
+        { kind: "paragraph", text: "A move found from a candle's high or low may have happened anywhere within that minute. Its indicator context therefore stops before the minute began. An exact exit-fill comparison uses the execution time. Last completed close vs VWAP compares two prices known before the point, not an assumed buy or sell." },
+        { kind: "paragraph", text: "The existing financial comparison still decides which trades qualify. Missing saved indicator context remains an unavailable group rather than removing a trade or changing its financial result. Choosing a comparison never requests new candles or AI analysis." },
       ] }, { id: "during-trade", title: "During the trade", summary: "Inspect recorded losses and returns across a reference while you held shares.",
       keywords: ["reclaim", "EMA loss", "first event", "coverage"], blocks: [
         { kind: "paragraph", text: "For long trades, a recorded loss moves from above to below the chosen reference; a return moves back above. Short trades use the reverse. Neutral closes do not create extra events. The headline comparison uses the first qualifying event in the entire saved trade, before conditions are filtered. The event table also includes later occurrences." },
@@ -287,6 +292,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           ] },
           { kind: "paragraph", text: "A sustained opportunity uses completed-close windows instead of treating a one-second spike as an easy exit. Potential and missed values describe recorded market opportunity; actual P/L remains the money earned or lost." },
           { kind: "paragraph", text: "Time held after the profit peak groups trades by peak-to-exit duration. Every row shows distinct trades, sample-supported rates and average actual, potential and missed results for the complete cohort." },
+          { kind: "paragraph", text: "Indicators at the comparison point adds EMA, RSI and VWAP comparisons at first +20%, or at first red after +20% for recovery comparisons. Every trade uses the same selected point. Indicator coverage does not change the existing financial totals." },
         ],
       },
       {
@@ -423,8 +429,15 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
     slug: "day-trade-analysis",
     title: "Day Trade Analysis",
-    description: "Use the long-term landing page, shared filters, coverage and four focused Analyzer capability pages.",
+    description: "Use the long-term landing page, shared filters, coverage and focused Analyzer pages.",
     sections: [
+      {
+        id: "scaling-indicator-context", title: "Scaling out indicator context",
+        summary: "Compare indicator conditions at first arrival in a profit zone.",
+        keywords: ["scaling out", "EMA", "RSI", "VWAP", "profit zone"], blocks: [
+          { kind: "paragraph", text: "On Scaling out, expand Indicators at the comparison point and choose a zone, timeframe and indicator. Trades with and without recorded profit taking are both classified at their first arrival in that zone. Missing indicator context remains visible. The existing Gross financial results and profit-taking classifications are unchanged." },
+        ],
+      },
       {
         id: "eligibility-coverage",
         title: "Analyzed trades",

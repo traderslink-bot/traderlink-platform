@@ -2,6 +2,28 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Green-to-Red and Scaling Out integration - 2026-09-12
+
+- Added an additive Indicators at the comparison point section to both pages.
+  Green-to-Red compares first +20% against later-red outcomes, or first red
+  against recovery only among turned-red trades. Scaling uses the same first
+  selected-zone arrival for both profit-taking and no-profit-taking groups.
+- Reuses existing financial rows, classifications and selected Gross/Net outcomes.
+  Joins by canonical trade ID plus exact landmark key/time; unknown indicators
+  do not change financial eligibility. Timeframe/point/axis selections persist
+  in the URL online and remain locally interactive offline.
+- Saved landmark evidence now includes its last completed close for a properly
+  labeled close-vs-VWAP comparison, with reporting conversion. No hypothetical
+  execution or position profit is inferred from that observation.
+- Corrected offline financial-row trade references to use the same anonymized
+  mapping as indicator rows; regression verifies joins and no original IDs.
+- Seventeen focused landmark/comparison/cohort/reporting fixtures pass. Nine selected
+  TypeScript roots pass; whitespace check passes. Updated relevant Help guides.
+- Still required: complete per-row evidence drilldowns for these sections,
+  remaining page integrations, full-data/payload checks, calibration corpus,
+  browser/offline interaction acceptance and final release handoff. No hosted
+  actions or migration application occurred.
+
 ## Shared financial-landmark evidence - 2026-09-12
 
 - Reused the existing V2 financial scenario engine to identify first zone

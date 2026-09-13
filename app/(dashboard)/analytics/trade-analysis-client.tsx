@@ -54,6 +54,7 @@ import {
 } from "./trade-analyzer-table-pagination";
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 import { TrendMomentumAnalysis } from "./trend-momentum-analysis";
+import { TrendMomentumLandmarkComparison } from "./trend-momentum-landmark-comparison";
 
 export type TradeAnalysisView = "day" | "entry-exit" | "mfe-mae" | "green-to-red" | "scaling-out" | "candle-patterns" | "trades" | "trend-momentum";
 
@@ -1218,6 +1219,14 @@ export function TradeAnalysisClient({
         </Drawer>
       ) : null}
 
+      {view === "green-to-red" || view === "scaling-out" ? <Section title="Indicators at the comparison point"
+        description="" helpHref="/help/trade-analyzer/trend-momentum" titleHelp={view === "green-to-red"
+          ? "Compare indicators at first +20% with whether the trade later turned red, or at first red with later recovery. Later indicator values do not replace the original observation."
+          : "Compare indicators at the same first zone arrival for trades with and without later recorded profit taking in that zone. A seller's sale-time indicator is not compared with a nonseller's entry-time indicator."}>
+        <TrendMomentumLandmarkComparison mode={view} projection={model.trendMomentum} greenRows={greenToRedOpportunityRows} zoneRows={profitZoneRecords}
+          money={(value) => money(value, model.currency)} moneyBasis={model.moneyBasis}
+          queryString={offline ? undefined : searchParams.toString()} onQueryChange={offline ? undefined : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
+      </Section> : null}
       {model.malformedSnapshotCount > 0 ? <Typography color="warning.main" variant="body2">{model.malformedSnapshotCount} saved execution snapshots could not be read and were excluded from execution-level breakdowns.</Typography> : null}
     </Stack>
   );

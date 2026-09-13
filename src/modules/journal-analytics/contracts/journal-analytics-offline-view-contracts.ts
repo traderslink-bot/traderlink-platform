@@ -206,6 +206,7 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
       ...input.model.greenToRedOpportunity,
       rows: Object.freeze(input.model.greenToRedOpportunity.rows.map((row) => Object.freeze({
         ...row,
+        tradeId: localRef(row.tradeId),
         roundTripId: localRef(row.roundTripId),
       }))),
     }),
@@ -221,10 +222,12 @@ export function createJournalTradeAnalyzerOfflineViewModel(input: Readonly<{
       recordsByDirection: Object.freeze({
         long: Object.freeze(input.model.profitZones.recordsByDirection.long.map((row) => Object.freeze({
           ...row,
+          tradeId: localRef(row.tradeId),
           roundTripId: localRef(row.roundTripId),
         }))),
         short: Object.freeze(input.model.profitZones.recordsByDirection.short.map((row) => Object.freeze({
           ...row,
+          tradeId: localRef(row.tradeId),
           roundTripId: localRef(row.roundTripId),
         }))),
       }),

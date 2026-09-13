@@ -78,7 +78,10 @@ export function analyzeTradeExecutionIndicators(
       const context = (interval: "1m" | "5m") => covered ? tradeIndicatorContextAt({
         series: interval === "1m" ? one : five, at, interval, completedRanges: input.history.completedRanges,
         resetTimes: input.resetTimes, policy: input.policies[interval] }) : null;
-      return { ...landmark, oneMinute: context("1m"), fiveMinute: context("5m"),
+      let low = 0, high = one.length;
+      while (low < high) { const middle = Math.floor((low + high) / 2); if (one[middle].availableAt <= at) low = middle + 1; else high = middle; }
+      return { ...landmark, lastCompletedClose: covered ? one[low - 1]?.close ?? null : null,
+        oneMinute: context("1m"), fiveMinute: context("5m"),
         sessionVwap: covered ? calculateTradeSessionVwap({ ...input.history, asOf: Math.floor(at) }, input.session) : null };
     }) } : {}),
     chartSeries,

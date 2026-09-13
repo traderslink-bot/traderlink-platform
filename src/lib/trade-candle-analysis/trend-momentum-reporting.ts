@@ -21,6 +21,7 @@ export function scaleTradeIndicatorResult(result: TradeExecutionIndicatorResult,
     close: scale(point.close)!, ema9: scale(point.ema9), ema20: scale(point.ema20), vwap: scale(point.vwap) }));
   return { ...result,
     ...(result.landmarks ? { landmarks: result.landmarks.map((landmark) => ({ ...landmark,
+      lastCompletedClose: landmark.lastCompletedClose == null ? null : scale(landmark.lastCompletedClose),
       oneMinute: context(landmark.oneMinute), fiveMinute: context(landmark.fiveMinute),
       sessionVwap: landmark.sessionVwap ? { ...landmark.sessionVwap, value: scale(landmark.sessionVwap.value) } : null,
     })) } : {}),

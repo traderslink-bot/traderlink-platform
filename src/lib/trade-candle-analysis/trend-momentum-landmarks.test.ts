@@ -59,10 +59,12 @@ test("landmark indicators exclude the later move and scale only saved price valu
   assert.equal(zone.oneMinute!.ema20, 10);
   assert.equal(zone.oneMinute!.observedAt, start + 1500);
   assert.equal(zone.sessionVwap!.value, 10);
+  assert.equal(zone.lastCompletedClose, 10);
   assert.equal(zone.fiveMinute!.ema20, null);
   const reported = scaleTradeIndicatorResult(result, "1.4").landmarks!.find((row) => row.key === "zone:20")!;
   assert.equal(reported.oneMinute!.ema20, 14);
   assert.equal(reported.sessionVwap!.value, 14);
+  assert.equal(reported.lastCompletedClose, 14);
   assert.equal(reported.at, zone.at);
   assert.equal(reported.contextAt, zone.contextAt);
   assert.equal(reported.oneMinute!.rsi14, zone.oneMinute!.rsi14);

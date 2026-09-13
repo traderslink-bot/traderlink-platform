@@ -286,7 +286,7 @@ export async function TradeAnalysisPage({
         multipliers,
         selectedProfitZoneMinimumHoldMinutes,
         view === "entry-exit" || view === "trend-momentum" ? { startDate: dateRange.startDate, endDate: dateRange.endDate } : undefined,
-      ), ...(view === "trend-momentum" ? { trendMomentum: readTrendMomentumAnalytics({ database, scope, journalRows: rows,
+      ), ...(["trend-momentum", "green-to-red", "scaling-out"].includes(view) ? { trendMomentum: readTrendMomentumAnalytics({ database, scope, journalRows: rows,
         startDate: dateRange.startDate, endDate: dateRange.endDate }) } : {}) }),
     });
   }));

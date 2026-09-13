@@ -11,15 +11,16 @@ import type { summarizeIndicatorRecords } from "@/src/lib/trade-candle-analysis/
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 
-export function TrendMomentumOutcomeTable({ rows, money, basisLabel }: {
+export function TrendMomentumOutcomeTable({ rows, money, basisLabel, observations = false }: {
   rows: readonly { key: string; label: ReactNode; summary: ReturnType<typeof summarizeIndicatorRecords> }[];
   money: (value: string | null) => string; basisLabel: "Gross" | "Net";
+  observations?: boolean;
 }) {
   const percent = (value: number | null) => value === null ? "Unavailable" : `${value.toFixed(1)}%`;
   const columns = [
-    ["Indicator condition", "Conditions known at the selected execution type. A trade can appear in several descriptive groups when its executions differ; do not add groups together."],
+    ["Indicator condition", observations ? "Indicator condition at the same financial comparison point for each trade, followed by the later recorded outcome." : "Conditions known at the selected execution type. A trade can appear in several descriptive groups when its executions differ; do not add groups together."],
     ["Trades", "Distinct user-defined trades, counted once within this group."],
-    ["Executions", "Executions in this group. Several may belong to one trade."],
+    [observations ? "Observations" : "Executions", observations ? "One selected financial comparison point per qualifying trade. This is not an assumed execution." : "Executions in this group. Several may belong to one trade."],
     ["Known P/L", `Trades with known completed ${basisLabel} P/L. Unavailable P/L is not treated as zero.`],
     ["Wins / losses / breakeven", `Completed ${basisLabel} trade outcomes above, below or equal to zero.`],
     ["Win rate", "Winning trades divided by all trades with known P/L, including breakeven trades."],

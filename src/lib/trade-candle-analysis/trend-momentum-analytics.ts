@@ -58,7 +58,7 @@ export function buildTrendMomentumProjection(trades: readonly TrendMomentumTrade
 }
 
 /** A trade contributes its actual selected-basis outcome only once per group. */
-export function summarizeIndicatorRecords(records: readonly TrendMomentumRecord[]) {
+export function summarizeIndicatorRecords(records: readonly Pick<TrendMomentumRecord, "tradeId" | "pnlDecimal" | "returnPercentDecimal">[]) {
   const trades = new Map<string, string | null>();
   for (const record of records) {
     if (trades.has(record.tradeId) && trades.get(record.tradeId) !== record.pnlDecimal) throw new Error("indicator_trade_outcome_conflict");
