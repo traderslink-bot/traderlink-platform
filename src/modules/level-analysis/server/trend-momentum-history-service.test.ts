@@ -7,9 +7,10 @@ import type { ClaimedLogicalTradeAnalyzerJob } from "./logical-trade-analyzer-re
 import type { MarketDataProviderResult, NormalizedMarketCandle } from "../contracts/candle-review-contracts";
 import { newYorkExtendedSession } from "./daily-trade-analyzer-session";
 
-test("worker history service requests bounded ranges, resumes and reuses completed evidence", async () => {
+for (const scenario of ["new", "refresh", "expired"] as const) test("worker history requests bounded ranges and reuses evidence; " + scenario, async () => {
   const session = newYorkExtendedSession("2026-09-11")!;
   let now = new Date((session.endTime + 3600) * 1000);
+  const requestStartedAt = scenario === "expired" ? "2026-09-01T12:00:00Z" : now.toISOString();
   const ranges: { start: number; endExclusive: number }[] = [];
   const candles: NormalizedMarketCandle[] = [];
   const requests: { id: string; range: { start: number; endExclusive: number }; result?: MarketDataProviderResult }[] = [];
@@ -32,6 +33,7 @@ test("worker history service requests bounded ranges, resumes and reuses complet
   const allowance = {
     designatedScope: () => ({ userId: "user", workspaceId: "workspace", accountId: "account", workspaceRole: "owner" }),
     hasHistoryReservation: () => true,
+    historyRequestStartedAt: () => requestStartedAt,
     beginAcquisition: () => ({ acquisitionId: String(++acquisitions) }),
     completeAcquisition: () => {},
   } as unknown as SharedAnalyzerAllowanceRepository;
@@ -42,12 +44,20 @@ test("worker history service requests bounded ranges, resumes and reuses complet
         closeDecimal: "10", volumeDecimal: "100", turnoverDecimal: "1000",
       })), exchangeTimezone: "America/New_York", utcOffsetSeconds: -14400, normalizedCandleSha256: "fixture" }),
   }), () => now);
-  const job = { jobId: "job", createdAtUtc: now.toISOString(), marketSessionSetId: "session",
+  const job = { jobId: "job", createdAtUtc: scenario !== "new" ? "2026-09-01T12:00:00Z" : now.toISOString(), marketSessionSetId: "session",
     scope: { userId: "user", workspaceId: "workspace", accountId: "account", workspaceRole: "owner" },
     target: { tradingDateNewYork: "2026-09-11", providerSymbol: "TEST",
       events: [{ eventId: "entry", executedAtUtc: new Date((session.startTime + 3600) * 1000).toISOString() }] },
   } as unknown as ClaimedLogicalTradeAnalyzerJob;
   const asOf = session.startTime + 7200;
+  if (scenario === "expired") {
+    const expired = await service.prepare(job, asOf);
+    assert.equal(expired.pending, false);
+    if (!expired.pending) assert.equal(expired.outcome, "provider_unavailable");
+    assert.equal(acquisitions, 0);
+    assert.equal(requests.length, 0);
+    return;
+  }
   for (let pass = 0; pass < 3; pass++) {
     assert.equal((await service.prepare(job, asOf)).pending, true);
     now = new Date(now.getTime() + 60_000);

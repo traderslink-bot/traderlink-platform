@@ -60,7 +60,8 @@ export class TrendMomentumHistoryService {
       if (attempts.length >= 3) { exhaustedByFailure = true; continue; }
       const last = attempts.at(-1);
       if (last?.completed_at_utc && Date.parse(last.completed_at_utc) + 60_000 > now.getTime()) return { pending: true };
-      if (now.getTime() - Date.parse(job.createdAtUtc) >= 24 * 3600_000) { exhaustedByFailure = true; break; }
+      const requestStartedAt = this.allowances.historyRequestStartedAt(job.jobId, job.createdAtUtc, now);
+      if (now.getTime() - Date.parse(requestStartedAt) >= 24 * 3600_000) { exhaustedByFailure = true; break; }
       const scope = this.allowances.designatedScope();
       if (!scope || !this.allowances.hasHistoryReservation(job.jobId, now)) {
         return { pending: false, input, outcome: "provider_unavailable" };

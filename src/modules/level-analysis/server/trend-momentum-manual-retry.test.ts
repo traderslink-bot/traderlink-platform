@@ -38,6 +38,9 @@ UNIQUE(provider_key,provider_adapter_version,provider_symbol,exchange_identity,t
       return retries.record(scope,queued.jobId,now);
     }).immediate();
     assert.ok(accepted);
+    const allowances = new SharedAnalyzerAllowanceRepository(db);
+    assert.equal(allowances.historyRequestStartedAt(id(10),originalCreated,now),now.toISOString());
+    assert.equal(allowances.historyRequestStartedAt(id(10),originalCreated,new Date(now.getTime()+86400000)),originalCreated);
     assert.equal(repository.alreadyRequested(scope,id(20)),true);
     assert.equal(repository.queue(input).created,false);
     const row = db.prepare("SELECT status,attempt_count,created_at_utc FROM level_analysis_logical_trade_jobs WHERE logical_trade_job_id=?").get(id(10));

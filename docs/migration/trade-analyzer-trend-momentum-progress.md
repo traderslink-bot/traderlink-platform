@@ -9,6 +9,18 @@ Current source/remaining hosted acceptance:
 
 ### Resumed live acceptance and Analyzer request correction
 
+- Dependent retry-window correction: history acquisition uses the immutable
+  active manual-retry request timestamp, falling back to the original job date.
+  Existing job identity, original creation time, caps and saved analysis remain
+  unchanged. Two focused suites / nine tests pass, including an old job explicitly
+  refreshed now and an expired original request making zero acquisitions.
+  Coordinator reports 47cf0b82589b5cb69554e0742d0c4acb7d70dcef live and healthy;
+  older GCDT refresh remains paused until this dependent correction is deployed.
+- Owner requires existing Demo analyzed trades to demonstrate the updated
+  Analyzer. Derived-result refresh and rendered Demo verification remain open;
+  preserve pack v12, fixed date, execution facts, P/L and opt-outs. No Demo data
+  application has occurred in this checkpoint.
+
 - Header correction released by coordinator at 6a35d65d752f9665a2349b12ec03835ac364d5e8,
   Railway 2bd70d14-5b7d-4f02-8e15-2fc667193d0a SUCCESS; health ready/121.
   Same FFAI popup POST now returns 200/queued, one allowance reservation

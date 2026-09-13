@@ -56,6 +56,11 @@ export class SharedAnalyzerAllowanceRepository {
     return new ManualAnalyzerRetryRepository(this.database).record(scope, jobId, now);
   }
 
+  historyRequestStartedAt(jobId: string, originalCreatedAtUtc: string, now: Date): string {
+    return new ManualAnalyzerRetryRepository(this.database).active(jobId, now)?.created_at_utc
+      ?? originalCreatedAtUtc;
+  }
+
   immediate<T>(operation: () => T): T {
     return this.database.inTransaction ? operation() : this.database.transaction(operation).immediate();
   }
