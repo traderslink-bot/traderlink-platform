@@ -2,6 +2,19 @@
 
 Plan: [Detailed plan](trade-analyzer-trend-momentum-plan.md).
 
+## Candidate handoff, not release readiness - 2026-09-13
+
+- Captured clean source/docs candidate 53d9e73b4 relative to f97ab1cee and its
+  complete 112-file Git allowlist in the linked candidate handoff. This later
+  handoff and plan/progress updates are separately identified documentation.
+- Explicitly recorded retry decision, private-corpus identity, real calibration,
+  payload/copy/browser/CI acceptance and separate owner/release gates as open.
+  Did not collapse the objective to the tested source subset or sum overlapping
+  test runs as unique coverage. No coordinator dispatch or hosted operation.
+- Last turn revalidated the retry issue but received no owner answers. This turn
+  completed the safe handoff preparation without changing billing or accessing
+  the unconfirmed private corpus. Final allowlist/SHA must be refreshed at release.
+
 ## Tooltip source inventory checkpoint - 2026-09-13
 
 - Indexed all 19 changed TSX files and their explanation ownership in the
