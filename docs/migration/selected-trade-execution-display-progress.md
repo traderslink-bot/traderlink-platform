@@ -73,3 +73,37 @@ against its Workspace Details; repeat for a singleton and another trade in the
 same ticker; switch selections rapidly and close/reopen. Confirm the same trade
 remains selected, no missing/duplicate allocations, existing appearances/layouts
 unchanged, and health remains ready. This is not app-wide audit completion.
+
+## Live acceptance and minimal derived-average follow-up
+
+The coordinator deployed standalone `b8d7aafde906dfbf62eb00c4f67ac5de4fdacae7`,
+Railway `ea442738-82d8-400e-a4c0-974680c39ecd` SUCCESS. Hosted compile/TypeScript
+passed; both health endpoints are ready. Live AEHL August 31 12:36-13:47 matched
+all three executions between Explorer and shared Details. AEHL 10:17-11:40 matched
+all five time/side/quantity/price rows between Explorer and Calendar, but shared
+Details returned its historical summary and hid executions.
+
+Actual ledger-function reproduction identified a separate existing failure:
+`(196 * 5.98 + 50 * 5.99) / 246` creates a recurring derived average at the
+160-significant-digit calculation precision; validating it as a canonical stored
+decimal exceeds the 128-character limit. The resulting `tradeStoryDecimal`
+exception causes the reader's historical fallback. The coordinator approved only
+rounding that derived division result to 32 decimal places before validation.
+All stored execution prices/quantities, allocation quantities, realized results,
+fees and exact ledger quantities remain unchanged. No new notice is added.
+
+The three-file follow-up contains only the ledger change, its new regression
+test and this appended record, independently based on live `b8d7aafd`.
+Tests cover the actual five-execution case through ledger/activities/story copy,
+source preservation, single-entry precision, multiple adds, partial reductions,
+determinism and existing grouped-reopen timeline behavior. The first test draft
+expected the old unsupported-reopen status; current production already supports
+reopen timelines, so the fixture assertion was corrected without changing that behavior.
+Final local follow-up checks: three focused files / 27 tests pass, targeted ESLint
+passes, and strict TypeScript with the repository alias configuration reports zero
+diagnostics. The initial standalone tsc command omitted the repository alias and
+was rerun with that configuration; no application workaround was added.
+
+Production SQL checked by the coordinator found zero multi-member logical trades
+in the accessible Demo account. Therefore live singleton and allocation checks
+must not be called live multi-member acceptance. No fixture was created or changed.

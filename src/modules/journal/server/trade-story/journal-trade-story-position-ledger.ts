@@ -104,7 +104,9 @@ function weightedAverage(
     new ExactDecimal(currentAverageDecimal)
       .times(currentQuantityDecimal)
       .plus(new ExactDecimal(addedPriceDecimal).times(addedQuantityDecimal))
-      .dividedBy(quantity),
+      // This is a derived average, not a stored execution price. Recurring
+      // division must fit the canonical decimal contract used by the story.
+      .dividedBy(quantity).toDecimalPlaces(32),
   );
 }
 
