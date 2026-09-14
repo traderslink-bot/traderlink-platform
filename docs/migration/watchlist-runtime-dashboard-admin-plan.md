@@ -1,5 +1,7 @@
 # Watchlist Runtime Dashboard Admin Plan
 
+September 14 selectable-format release: [Simple analysis progress and gates](watchlist-simple-analysis-release.md).
+
 **Status:** Correction approved for implementation
 
 **Scope:** An owner-only Dashboard page for the existing Railway Watchlist

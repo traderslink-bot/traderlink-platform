@@ -309,6 +309,8 @@ export type TradersLinkAiReadListingContext = {
 };
 
 type TradersLinkAiReadPayloadBase = {
+  analysisFormat?: "current" | "simple";
+  simpleAnalysis?: import("./simple-analysis").SimpleAnalysis;
   ownerHiddenSections?: string[];
   symbol: string;
   generatedAt: number;

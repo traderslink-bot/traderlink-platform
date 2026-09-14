@@ -1,3 +1,5 @@
+import { parseSimpleAnalysis } from "./simple-analysis";
+
 export function olderTradersLinkArticlePublicationDate(read: TradersLinkAiReadPayload): string | null {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
@@ -578,6 +580,8 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
   if (!isRecord(value)) {
     return null;
   }
+  if (value.analysisFormat !== undefined && value.analysisFormat !== "current" && value.analysisFormat !== "simple") return null;
+  if (value.analysisFormat === "simple" && (value.version !== 3 || !parseSimpleAnalysis(value.simpleAnalysis))) return null;
   if (
     (value.version !== 2 && value.version !== 3 && value.version !== 4) ||
     typeof value.symbol !== "string" ||
