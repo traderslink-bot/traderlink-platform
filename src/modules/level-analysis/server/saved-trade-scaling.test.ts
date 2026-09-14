@@ -3,7 +3,7 @@ import { test } from "vitest";
 import { savedTradeScalingRows, wholeTradeProfitProtection } from "./saved-trade-scaling";
 
 type Trade = Parameters<typeof savedTradeScalingRows>[0][number];
-const trade = (id = "combined", pnl = "5") => ({ tradeId: id, closeLocalDate: "2026-09-11", entryLocalDate: "2026-09-10", direction: "long", symbol: "TEST", actualPnlDecimal: pnl,
+const trade = (id = "combined", pnl = "5") => ({ tradeId: id, representativeRoundTripId: `${id}-member`, closeLocalDate: "2026-09-11", entryLocalDate: "2026-09-10", direction: "long", symbol: "TEST", actualPnlDecimal: pnl,
   profitProtection: { status: "not_applicable" }, scenario: {
     calculatedFinalGrossResultDecimal: pnl, calculatedFinalNetResultDecimal: null,
     primaryQualification: { calculatedGrossResultDecimal: "12", calculatedNetResultDecimal: null, closePriceDecimal: "2", qualifiedAtUtcSeconds: 100, requiredCloseCount: 10, thresholdPercent: 20 },
@@ -13,7 +13,8 @@ const trade = (id = "combined", pnl = "5") => ({ tradeId: id, closeLocalDate: "2
 test("Scaling rows carry one saved ID, whole-trade P/L and original qualification facts", () => {
   const result = savedTradeScalingRows([trade()], "gross");
   assert.equal(result.scaling.length, 1);
-  assert.equal(result.scaling[0].roundTripId, "combined");
+  assert.equal(result.scaling[0].roundTripId, "combined-member");
+  assert.equal(result.meaningful[0].roundTripId, "combined-member");
   assert.equal(result.scaling[0].actualPnlDecimal, "5");
   assert.equal(result.scaling[0].trackerDate, "2026-09-10");
   assert.equal(result.scaling[0].closeDate, "2026-09-11");

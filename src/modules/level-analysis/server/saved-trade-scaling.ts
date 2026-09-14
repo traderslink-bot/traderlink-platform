@@ -14,7 +14,7 @@ export function wholeTradeProfitProtection(outcomes: readonly DailyTradeProfitPr
 }
 
 export function savedTradeScalingRows(trades: readonly Readonly<{
-  tradeId: string; closeLocalDate: string; entryLocalDate: string; direction: "long" | "short"; symbol: string;
+  tradeId: string; representativeRoundTripId: string; closeLocalDate: string; entryLocalDate: string; direction: "long" | "short"; symbol: string;
   scenario: DailyTradeV2ScenarioAnalysis; actualPnlDecimal: string | null;
   profitProtection: DailyTradeProfitProtectionOutcome;
 }>[], basis: "gross" | "net") {
@@ -29,7 +29,7 @@ export function savedTradeScalingRows(trades: readonly Readonly<{
     const potential = basis === "gross" ? q.calculatedGrossResultDecimal : q.calculatedNetResultDecimal;
     if (final === null || potential === null || new Decimal(final).minus(pnl).abs().gt("0.02")) continue;
     const shared = { actualPnlDecimal: pnl, closeDate: trade.closeLocalDate, direction: trade.direction,
-      roundTripId: trade.tradeId, symbol: trade.symbol, trackerDate: trade.entryLocalDate,
+      roundTripId: trade.representativeRoundTripId, symbol: trade.symbol, trackerDate: trade.entryLocalDate,
       scaledOutWhileGreen: scale.eventCount > 0, requiredCloseCount: q.requiredCloseCount, thresholdPercent: q.thresholdPercent };
     meaningful.push({ ...shared, calculatedPotentialPnlDecimal: potential, differenceDecimal: new Decimal(potential).minus(pnl).toFixed(),
       outcome: new Decimal(pnl).gt(0) ? "ended_green" : new Decimal(pnl).lt(0) ? "ended_red" : "ended_flat",

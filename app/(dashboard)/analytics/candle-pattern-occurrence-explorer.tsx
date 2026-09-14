@@ -113,11 +113,12 @@ function percent(value: string | null): string {
   return value === null ? "Unavailable" : `${Number(value).toFixed(2)}%`;
 }
 
-function trackerHref(row: DailyTradePatternOccurrenceRow): string {
+export function trackerHref(row: DailyTradePatternOccurrenceRow, basis: "gross" | "net"): string {
   const params = new URLSearchParams({
     event: row.executionId,
     interval: row.timeframe,
     trade: row.roundTripId,
+    basis,
   });
   return `/trade-tracker/${row.trackerDate}?${params.toString()}`;
 }
@@ -313,7 +314,7 @@ export function CandlePatternOccurrenceExplorer({
             <Button disabled={selectedIndex === 0} onClick={() => { if (selectedIndex !== null) selectOccurrence(Math.max(0, selectedIndex - 1)); }} size="small" variant="outlined">Previous</Button>
             <Button disabled={selectedIndex === (result?.rows.length ?? 1) - 1} onClick={() => { if (selectedIndex !== null) selectOccurrence(Math.min((result?.rows.length ?? 1) - 1, selectedIndex + 1)); }} size="small" variant="outlined">Next</Button>
           </Stack>
-          <Button endIcon={<OpenInNewIcon />} href={trackerHref(selected)} size="small" sx={{ ml: { sm: "auto !important" } }} variant="contained">Open Session Tracker</Button>
+          <Button endIcon={<OpenInNewIcon />} href={trackerHref(selected, moneyBasis)} size="small" sx={{ ml: { sm: "auto !important" } }} variant="contained">Open Session Tracker</Button>
         </Stack>
       </Box>
       <Stack spacing={2} sx={{ p: { xs: 1.5, sm: 2 } }}>

@@ -4,6 +4,10 @@ Owner authorized fixes on 2026-09-13 after read-only production QA.
 
 ## Scope
 
+2026-09-13 broader owner-requested follow-up is tracked in
+[trade identity audit](trade-identity-audit-progress.md). The original AEHL
+focus correction passed hosted acceptance on production `81a1bbb192b1f6145a3a4c89a4a37602c97b58ac`.
+
 - Put the shared PWA update notice below modal menus and dialogs. Preserve the
   explicit update button, activation safety, offline data and theme styling.
 - Distinguish an empty selected date range from an account without trades.

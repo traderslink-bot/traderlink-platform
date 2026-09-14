@@ -17,6 +17,32 @@ import { analyzedTradeTrackerHref } from "../../../app/(dashboard)/analytics/ana
 import type { DailyTradeAnalyzedTradePage } from "../../modules/level-analysis/server/daily-trade-analysis-evidence-service";
 import { pageSavedAnalyzedTrades } from "../../modules/level-analysis/server/trend-momentum-analyzed-trades";
 import type { SavedPatternTrade } from "./trend-momentum-patterns";
+import { trackerHref } from "../../../app/(dashboard)/analytics/candle-pattern-occurrence-explorer";
+import { patternEvidenceRow } from "../../modules/level-analysis/server/trend-momentum-pattern-evidence";
+import type { SavedPatternObservation } from "./trend-momentum-patterns";
+
+test("pattern drilldown preserves member identity, event, timeframe and basis", () => {
+  for (const basis of ["gross", "net"] as const) for (const timeframe of ["1m", "5m"] as const) {
+    const source = { tradeId: "logical", representativeRoundTripId: "member", occurrenceKey: "key",
+      eventId: "fill", trackerDate: "2026-08-31", timeframe } as SavedPatternObservation;
+    const url = new URL(trackerHref(patternEvidenceRow(source, "USD"), basis), "https://example.test");
+    assert.equal(url.searchParams.get("trade"), "member");
+    assert.equal(url.searchParams.get("event"), "fill");
+    assert.equal(url.searchParams.get("interval"), timeframe);
+    assert.equal(url.searchParams.get("basis"), basis);
+    assert.equal(source.tradeId, "logical");
+  }
+});
+
+test("all shared Analyzer tracker links carry the displayed basis while offline links stay day-only", () => {
+  const source = readFileSync("app/(dashboard)/analytics/trade-analysis-client.tsx", "utf8");
+  const links = source.split("\n").filter((line) => line.includes('new URLSearchParams({ interval: "1m", trade:'));
+  assert.equal(links.length, 4);
+  for (const line of links) {
+    assert.match(line, /basis: (model\.)?moneyBasis/);
+    assert.match(line, /offline \? `\/trade-tracker\/\$\{/);
+  }
+});
 
 test("logical trade list opens its representative tracker member, not the logical ID", () => {
   const source = { tradeId: "logical-trade", representativeRoundTripId: "tracker-member", analysisVersionId: "revision",

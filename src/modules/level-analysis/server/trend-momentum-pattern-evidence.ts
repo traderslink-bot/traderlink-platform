@@ -17,7 +17,7 @@ export function patternEvidenceRow(row: SavedPatternObservation, currency: strin
     eventKind: row.eventKind, executedAtUtc: row.executedAtUtc, executionId: row.eventId,
     occurrenceRef: encode({ kind: "saved-pattern-v1", key: row.occurrenceKey }), pattern: row.pattern,
     patternTimeUtcSeconds: row.patternTime, resultDecimal: row.pnlDecimal, returnPercentDecimal: row.returnPercentDecimal,
-    roundTripId: row.tradeId, symbol: row.symbol, timeframe: row.timeframe, trackerDate: row.trackerDate };
+    roundTripId: row.representativeRoundTripId, symbol: row.symbol, timeframe: row.timeframe, trackerDate: row.trackerDate };
 }
 export function resolveSavedPatternEvidence(observations: readonly SavedPatternObservation[], reference: string) {
   const decoded = decode(reference);

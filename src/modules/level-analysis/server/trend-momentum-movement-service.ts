@@ -40,7 +40,7 @@ export function readSavedTradeMovement(input: Readonly<{
       const pnl = complete.every((member) => member.selectedPnlDecimal !== null)
         ? complete.reduce((sum, member) => sum.plus(member.selectedPnlDecimal!), new Decimal(0)).toFixed() : null;
       const projected = projectSavedIndicatorMovement({ analyzed: saved.analyzed, candles: saved.candles,
-        identity: { roundTripId: trade.logicalTradeId ?? first.roundTripId, symbol: first.displayedSymbol,
+        identity: { roundTripId: first.roundTripId, symbol: first.displayedSymbol,
           direction: trade.direction, closeDate: last.closeLocalDate, trackerDate: first.entryLocalDate },
         pnlDecimal: pnl, multiplier: [...rates][0]!, timezone: input.legacy.timezone });
       excursions.push(...projected.excursions); eventPaths.push(...projected.eventPaths);
@@ -50,7 +50,7 @@ export function readSavedTradeMovement(input: Readonly<{
       if (!previous) continue;
       analyzedTradeCount++; directionTradeCounts[trade.direction]++;
       analyzedExecutionCount += previous.executionCount;
-      const id = trade.logicalTradeId ?? first.roundTripId;
+      const id = first.roundTripId;
       excursions.push(...input.legacy.excursions.filter((row) => row.roundTripId === first.roundTripId).map((row) => ({ ...row, roundTripId: id })));
       eventPaths.push(...(input.legacy.eventPaths ?? []).filter((row) => row.roundTripId === first.roundTripId && (row.eventKind === "Initial entry" || row.eventKind === "Add")).map((row) => ({ ...row, roundTripId: id })));
     }

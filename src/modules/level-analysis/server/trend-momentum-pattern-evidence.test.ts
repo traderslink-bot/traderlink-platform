@@ -4,7 +4,7 @@ import { pageSavedPatternEvidence, patternEvidenceRow, resolveSavedPatternEviden
 import type { SavedPatternObservation } from "../../../lib/trade-candle-analysis/trend-momentum-patterns";
 import { createJournalTradeAnalyzerOfflineViewModel } from "../../journal-analytics/contracts/journal-analytics-offline-view-contracts";
 
-const rows = Array.from({ length: 27 }, (_, index) => ({ occurrenceKey: `trade:revision:${index}`, tradeId: "group", analysisVersionId: "revision", eventId: `e${index}`,
+const rows = Array.from({ length: 27 }, (_, index) => ({ occurrenceKey: `trade:revision:${index}`, tradeId: "group", representativeRoundTripId: "member", analysisVersionId: "revision", eventId: `e${index}`,
   eventSequence: index, eventKind: index === 0 ? "temporary_flat" : "entry", executedAtUtc: "2026-09-11T14:00:00Z", patternSequence: 0,
   pattern: "hammer", direction: "long", symbol: "TEST", timeframe: "1m", candlesBeforeExecution: 1,
   pnlDecimal: "7", returnPercentDecimal: "10", indicatorFilterContext: null,
@@ -34,6 +34,8 @@ test("changed scope, filters, results and revision invalidate cursors or referen
 });
 
 test("same indicator conditions apply to paged evidence and missing data remains excluded only when required", () => {
+  assert.equal(patternEvidenceRow(rows[0]!, "CAD").roundTripId, "member");
+  assert.equal(rows[0]!.tradeId, "group");
   assert.equal(pageSavedPatternEvidence(rows, { ...options, filters: { ...options.filters, alignment: "above" } }).totalRowCount, 0);
   assert.equal(pageSavedPatternEvidence(rows, { ...options, execution: "exit" }).totalRowCount, 1);
   assert.equal(patternEvidenceRow({ ...rows[0]!, pnlDecimal: null }, "CAD").resultDecimal, null);

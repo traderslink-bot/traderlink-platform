@@ -12,7 +12,7 @@ const trade = { logicalTradeId: "group", tradeStyle: "day", lifecycleState: "act
 const row = (id: string, closeLocalDate: string, pnl: string | null) => ({ roundTripId: id, closeLocalDate, selectedPnlDecimal: pnl, displayedSymbol: "TEST", entryLocalDate: "2026-09-10" });
 const input = () => ({ database: {}, scope: { activeAccountId: "account", allowedAccountIds: ["account"], userId: "user", workspaceId: "workspace", workspaceRole: "owner" },
   journalRows: [row("one", "2026-09-10", "3"), row("two", "2026-09-11", "4")],
-  legacy: { timezone: "America/New_York", trades: [{ roundTripId: "one", executionCount: 2 }], excursions: [{ roundTripId: "one" }], eventPaths: [] },
+  legacy: { timezone: "America/New_York", trades: [{ roundTripId: "one", executionCount: 2 }], excursions: [{ roundTripId: "one", adverseMoveDecimal: "0", favorableMoveDecimal: "1", adverseMovePercent: 0, favorableMovePercent: 10, direction: "long", eventKind: "Entry" }], eventPaths: [] },
   multipliers: new Map(), startDate: "2026-09-11", endDate: "2026-09-11" } as unknown as Input);
 const saved = { status: "ready", candles: [], analyzed: { eventSnapshots: [
   { event: { kind: "entry", eventId: "entry", sequence: 1, executedAtUtc: at, priceDecimal: "10" }, metrics: { excursionUntilFlat: { favorableMoveDecimal: "1", adverseMoveDecimal: "0", minutesUntilFlat: 0 } } },
@@ -26,7 +26,8 @@ test("saved grouped trade is counted once with complete members across the date 
   assert.equal(result.analyzedTradeCount, 1);
   assert.equal(result.eligibleDayTradeCount, 1);
   assert.equal(result.directionTradeCounts.long, 1);
-  assert.equal(result.excursions[0]!.roundTripId, "group");
+  assert.equal(result.excursions[0]!.roundTripId, "one");
+  assert.ok(result.eventPaths.every((event) => event.roundTripId === "one"));
   assert.equal(result.excursions[0]!.actualPnlDecimal, "7");
   assert.equal(result.entryOpportunityRisk.measuredExecutionCount, 1);
   assert.equal(readSavedTradeMovement({ ...input(), endDate: "2026-09-10" }).eligibleDayTradeCount, 0);
@@ -49,4 +50,13 @@ test("missing P/L keeps movement and unavailable grouped analysis never uses ind
 test("account authorization is required before any trade lookup", () => {
   const source = input();
   assert.throws(() => readSavedTradeMovement({ ...source, scope: { ...source.scope, allowedAccountIds: [] } }), /account is unavailable/);
+});
+
+test("single-member compatibility retains a navigable member instead of substituting its logical ID", () => {
+  vi.spyOn(JournalLogicalTradeRepository.prototype, "list").mockImplementation(() =>
+    ([{ ...trade, members: [trade.members[0]] }]) as unknown as ReturnType<typeof JournalLogicalTradeRepository.prototype.list>);
+  vi.spyOn(LogicalTradeAnalyzerRepository.prototype, "readCurrentByRoundTrip").mockImplementation(() => null);
+  const result = readSavedTradeMovement({ ...input(), startDate: null, endDate: null });
+  assert.equal(result.analyzedTradeCount, 1);
+  assert.equal(result.excursions[0]!.roundTripId, "one");
 });
