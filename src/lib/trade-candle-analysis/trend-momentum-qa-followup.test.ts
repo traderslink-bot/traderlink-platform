@@ -15,6 +15,26 @@ import { buildIndicatorSupportingPage } from "./trend-momentum-cohorts";
 import type { TrendMomentumProjection } from "./trend-momentum-analytics";
 import { analyzedTradeTrackerHref } from "../../../app/(dashboard)/analytics/analyzed-trades-index";
 import type { DailyTradeAnalyzedTradePage } from "../../modules/level-analysis/server/daily-trade-analysis-evidence-service";
+import { pageSavedAnalyzedTrades } from "../../modules/level-analysis/server/trend-momentum-analyzed-trades";
+import type { SavedPatternTrade } from "./trend-momentum-patterns";
+
+test("logical trade list opens its representative tracker member, not the logical ID", () => {
+  const source = { tradeId: "logical-trade", representativeRoundTripId: "tracker-member", analysisVersionId: "revision",
+    symbol: "TEST", direction: "long", trackerDate: "2026-08-03", openedAtUtc: "2026-08-03T12:00:00Z",
+    closedAtUtc: "2026-08-03T12:10:00Z", pnlDecimal: "97.5", returnPercentDecimal: "10",
+    analyzed: { eventSnapshots: [{ event: { eventId: "entry", sequence: 0, kind: "entry", executedAtUtc: "2026-08-03T12:00:00Z" } }] },
+  } as unknown as SavedPatternTrade;
+  const page = pageSavedAnalyzedTrades([source], { query: new URLSearchParams("basis=net"), timezone: "America/New_York",
+    scopeIdentity: "test-scope", pageSize: 25, cursor: null, ticker: "" });
+  assert.equal(page.totalRowCount, 1);
+  assert.equal(page.rows[0]!.resultDecimal, "97.5");
+  const url = new URL(analyzedTradeTrackerHref(page.rows[0]!, "5m", "net"), "https://example.test");
+  assert.equal(url.searchParams.get("trade"), "tracker-member");
+  assert.equal(url.searchParams.get("event"), "entry");
+  assert.equal(url.searchParams.get("basis"), "net");
+  assert.equal(url.searchParams.get("interval"), "5m");
+  assert.equal(source.tradeId, "logical-trade");
+});
 
 test("alternate analyzed-trades path preserves basis, timeframe and execution focus", () => {
   for (const basis of ["gross", "net"] as const) for (const interval of ["1m", "5m"] as const) {

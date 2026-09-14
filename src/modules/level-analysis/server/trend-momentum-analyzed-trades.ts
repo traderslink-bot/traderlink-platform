@@ -48,7 +48,8 @@ export function pageSavedAnalyzedTrades(trades: readonly SavedPatternTrade[], in
     continuationCursor: start + page.length < rows.length ? Buffer.from(JSON.stringify({ signature, trade: page.at(-1)!.tradeId })).toString("base64url") : null,
     rows: page.map((trade) => {
       const matching = byTrade.get(trade.tradeId), events = [...trade.analyzed.eventSnapshots].sort((a, b) => a.event.sequence - b.event.sequence);
-      return { roundTripId: trade.tradeId, symbol: trade.symbol, direction: trade.direction, trackerDate: trade.trackerDate,
+      // The tracker focuses the representative member; grouping/cursors above use the logical trade.
+      return { roundTripId: trade.representativeRoundTripId, symbol: trade.symbol, direction: trade.direction, trackerDate: trade.trackerDate,
         openedAtUtc: trade.openedAtUtc, closedAtUtc: trade.closedAtUtc, executionCount: events.length,
         firstExecutionId: matching?.[0]?.executionId ?? events[0]?.event.eventId ?? null,
         resultDecimal: trade.pnlDecimal, returnPercentDecimal: trade.returnPercentDecimal,

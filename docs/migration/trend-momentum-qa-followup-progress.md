@@ -27,6 +27,16 @@ Owner authorized fixes on 2026-09-13 after read-only production QA.
 
 ## Release boundary
 
+Post-deploy focus correction: the analyzed-trade list was returning the logical
+trade ID as its tracker focus ID. The tracker resolves representative member
+IDs, so unmatched logical IDs fell back to another trade. Return the existing
+representative member for navigation only; grouping, pagination signatures and
+counts continue to use the logical trade. Add an end-to-end pure projection/link
+regression with deliberately different logical/member IDs and 5m Net context.
+Verification passed: three files / 21 tests, targeted lint clean, whitespace
+check clean. Includes pagination, scope isolation and offline ID stripping.
+Ready for narrow handoff. No production mutation is authorized from this task.
+
 Final follow-up: the alternate Trend -> View trades -> View full analysis link
 now also carries its selected Gross/Net basis, preserving timeframe and optional
 execution focus. Offline saved-day routing is unchanged. The Help explanation
