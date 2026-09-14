@@ -1,5 +1,7 @@
 "use client";
 
+import { SimpleAnalysisCard } from "./simple-analysis-card";
+
 import "flag-icons/css/flag-icons.min.css";
 
 import Link from "next/link";
@@ -103,7 +105,7 @@ const detailCardHelpText: Record<string, string> = {
   "Known Recent News / SEC Filings":
     "Recent company news and SEC filings that may explain attention or volatility. Always open the source before relying on the headline.",
   "TradersLink Analysis":
-    "An AI-assisted day-trade preparation read derived from full-session price action across premarket, regular hours, and after-hours. Optional catalyst, SEC, dilution, and web-research context appears only when that admin setting is enabled.",
+    "An AI-assisted day-trade preparation read using available session and historical price action, with supplied catalyst context. The owner can review, edit and approve the saved analysis.",
 };
 
 function formatPrice(value: number | null): string {
@@ -371,39 +373,6 @@ function formatAiReadTag(value: string): string {
     .join(" ");
 }
 
-function formatDilutionDate(value: string | null): string {
-  if (!value) {
-    return "No source-backed date";
-  }
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${value}T12:00:00.000Z`));
-}
-
-function DilutionTimingRow({
-  label,
-  lane,
-}: {
-  label: string;
-  lane: NonNullable<TradersLinkAiReadPayload["dilutionRisk"]["companyIssuance"]>;
-}) {
-  return (
-    <div className="watchlist-ai-read-dilution-row">
-      <div>
-        <strong>{label}</strong>
-        <span>{formatAiReadTag(lane.status)}</span>
-      </div>
-      <p>{lane.summary}</p>
-      <small>
-        Earliest: {formatDilutionDate(lane.earliestDate)} · Trigger: {formatAiReadTag(lane.trigger)}
-      </small>
-    </div>
-  );
-}
-
 function pullbackPlanStateCopy(plan: TradersLinkAiPullbackPlan): string {
   switch (plan.state) {
     case "watch":
@@ -528,6 +497,7 @@ export function TradersLinkAiReadCard({
     return <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />;
   }
   const read = sanitizeTradersLinkAiReadForDisplay(parsedRead);
+  if (read.analysisFormat === "simple") return <SimpleAnalysisCard read={read} renderSectionEditor={renderSectionEditor} />;
   const hidden = new Set(read.ownerHiddenSections ?? []);
   const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read);
   const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
@@ -778,62 +748,12 @@ export function TradersLinkAiReadCard({
             </p>
           </section>
         ) : null}
-        {renderSectionEditor?.(["dilutionRisk"])}
-        {!hidden.has("dilutionRisk") && read.externalResearchEnabled === true ? (
-            <section className="watchlist-ai-read-section">
-              <div className="watchlist-ai-read-section-heading">
-                <h3>Dilution risk</h3>
-                <span>{formatAiReadTag(read.dilutionRisk.level)}</span>
-              </div>
-              <p>{read.dilutionRisk.summary}</p>
-              {read.dilutionRisk.companyIssuance || read.dilutionRisk.publicResale ? (
-                <div className="watchlist-ai-read-dilution-timing">
-                  <p className="watchlist-ai-read-dilution-today">
-                    <strong>Can the company issue shares today?</strong>{" "}
-                    {read.dilutionRisk.canCompanyIssueToday === true
-                      ? "Yes, based on the cited mechanism."
-                      : read.dilutionRisk.canCompanyIssueToday === false
-                        ? "No; a source-backed gate or future event remains."
-                        : "Not confirmed from the available sources."}
-                  </p>
-                  {read.dilutionRisk.companyIssuance ? (
-                    <DilutionTimingRow label="Company issuance" lane={read.dilutionRisk.companyIssuance} />
-                  ) : null}
-                  {read.dilutionRisk.publicResale ? (
-                    <DilutionTimingRow label="Public resale" lane={read.dilutionRisk.publicResale} />
-                  ) : null}
-                </div>
-              ) : null}
-              <p className="watchlist-ai-read-relevance">
-                <strong>Day-trade impact:</strong> {read.dilutionRisk.dayTradeRelevance}
-              </p>
-            </section>
-        ) : null}
+        {/* Dilution monitoring is not available. Preserve saved fields, but do
+            not present them as an operating feature or an editable card section. */}
       </div>
 
-      {renderSectionEditor?.(["listingStatus"])}
-      {!hidden.has("listingStatus") && read.externalResearchEnabled === true &&
-       read.listingStatus.status !== "none" &&
-      read.listingStatus.status !== "unknown" &&
-      (read.listingStatus.immediacy === "near_term" ||
-        read.listingStatus.immediacy === "immediate") &&
-      read.listingStatus.sourceUrls.length > 0 ? (
-        <section
-          className="watchlist-ai-read-listing"
-          data-immediacy={read.listingStatus.immediacy}
-        >
-          <div>
-            <h3>Listing monitor</h3>
-            <span>
-              {formatAiReadTag(read.listingStatus.status)} · {formatAiReadTag(read.listingStatus.immediacy)}
-            </span>
-          </div>
-          <p>{read.listingStatus.summary}</p>
-          <p>
-            <strong>Day-trade impact:</strong> {read.listingStatus.dayTradeRelevance}
-          </p>
-        </section>
-      ) : null}
+      {/* Listing status is saved AI research, not an operational Nasdaq monitor.
+          Keep its history readable without displaying a monitoring feature. */}
 
       {read.externalResearchEnabled === true && read.sources.length > 0 ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-sources">
@@ -1068,6 +988,13 @@ function sanitizeTradersLinkAiReadForDisplay(
   return {
     ...read,
     currentRead: removeStockTitanReference(read.currentRead),
+    ...(read.simpleAnalysis ? {simpleAnalysis:{
+      ...read.simpleAnalysis,
+      setup:removeStockTitanReference(read.simpleAnalysis.setup),
+      pullbacks:read.simpleAnalysis.pullbacks.map(plan=>({...plan,explanation:removeStockTitanReference(plan.explanation),confirmation:removeStockTitanReference(plan.confirmation)})),
+      upside:read.simpleAnalysis.upside.map(level=>({...level,explanation:removeStockTitanReference(level.explanation)})),
+      invalidation:read.simpleAnalysis.invalidation ? {...read.simpleAnalysis.invalidation,explanation:removeStockTitanReference(read.simpleAnalysis.invalidation.explanation)} : null,
+    }} : {}),
     riskSummary: read.riskSummary.map(removeStockTitanReference),
     sources,
     catalystRealityCheck: {

@@ -27,6 +27,7 @@ async function request<T>(symbol: string, path = "", body?: unknown, signal?: Ab
   return result as T;
 }
 const labels: Record<string, string> = {
+  low:"Area low",high:"Area high",explanation:"Explanation",invalidation:"Invalidation price",
   label: "Label", price: "Price", rationale: "Explanation", condition: "Condition", zoneLow: "Area low", zoneHigh: "Area high",
   confirmationPrice: "Confirmation price", confirmation: "Confirmation", invalidationPrice: "Invalidation price", firstObjectivePrice: "Next level",
   recoveryZoneLow: "Recovery area low", recoveryZoneHigh: "Recovery area high", firstReclaimPrice: "First reclaim", setupRestorePrice: "Recovery setup established above",
@@ -78,6 +79,34 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
   }
   function sectionEditor(keys: readonly string[]) {
     if (!patch) return null;
+    if (patch.simpleAnalysis) {
+      const simple=editRecord(patch.simpleAnalysis);
+      const hidden=patch.ownerHiddenSections as string[];
+      const visibility=(key:string,title:string)=><label key={key}><input type="checkbox" checked={!hidden.includes(key)} disabled={busy}
+        onChange={event=>change(["ownerHiddenSections"],event.target.checked?hidden.filter(item=>item!==key):[...hidden,key])} /> Show {title}</label>;
+      const simpleFields=(object:EditRecord,names:string[],path:(string|number)[])=>names.map(key=><TextField key={key}
+        label={labels[key] || key}
+        value={object[key]??""} fullWidth size="small" margin="dense" disabled={busy}
+        type={["low","high","invalidation","price"].includes(key)?"number":"text"}
+        multiline={!["low","high","invalidation","price"].includes(key)}
+        slotProps={{htmlInput:{step:"any",maxLength:8000}}}
+        onChange={event=>change([...path,key],["low","high","invalidation","price"].includes(key)?event.target.value===""?null:Number(event.target.value):event.target.value)} />);
+      return keys.map(key=>{
+        if(key==="simpleSetup") return <details key={key}><summary>Edit analysis</summary>{visibility("currentRead","analysis")}<TextField label="Analysis" value={simple.setup??""} fullWidth multiline disabled={busy} onChange={event=>change(["simpleAnalysis","setup"],event.target.value)} /></details>;
+        if(key==="simpleInvalidation") return <details key={key}><summary>Edit thesis invalidation</summary>{visibility("momentumFailure","thesis invalidation")}
+          <Button disabled={busy} onClick={()=>change(["simpleAnalysis","invalidation"],simple.invalidation?null:{price:null,explanation:""})}>{simple.invalidation?"Remove":"Add"} invalidation</Button>
+          {simple.invalidation?simpleFields(editRecord(simple.invalidation),["price","explanation"],["simpleAnalysis","invalidation"]):null}</details>;
+        const name=key==="simplePullbacks"?"pullbacks":"upside";
+        const list=simple[name] as EditValue[];
+        return <details key={key}><summary>Edit {name==="pullbacks"?"pullbacks":"where it could go next"}</summary>
+          {name==="pullbacks"?<>{visibility("shallow","first pullback")}{visibility("deep","second pullback")}</>:visibility("targets","where it could go next")}
+          {list.map((item,index)=><fieldset key={index}><legend>{index+1}</legend>
+            {simpleFields(editRecord(item),["low","high","explanation",...(name==="pullbacks"?["confirmation","invalidation"]:[])],["simpleAnalysis",name,index])}
+            <Button disabled={busy} onClick={()=>change(["simpleAnalysis",name],list.filter((_,i)=>i!==index))}>Remove</Button></fieldset>)}
+          <Button disabled={busy||list.length>=(name==="pullbacks"?2:5)} onClick={()=>{const item:EditRecord={low:null,high:null,explanation:""};if(name==="pullbacks"){item.confirmation="";item.invalidation=null;}change(["simpleAnalysis",name],[...list,item]);}}>Add</Button>
+        </details>;
+      });
+    }
     return keys.map(raw => {
       if (raw === "bias") return <details key="bias"><summary>Edit bias and confidence</summary>{["bias", "confidence"].map(key => <label key={key}>{key === "bias" ? "Bias" : "Confidence"}<select value={String(patch[key])} disabled={busy} onChange={event => change([key], event.target.value)}>{(key === "bias" ? ["bullish", "neutral", "bearish", "mixed"] : ["low", "medium", "high"]).map(value => <option key={value}>{value}</option>)}</select></label>)}</details>;
       const key = raw as AnalysisEditSection, hidden = (patch.ownerHiddenSections as string[]).includes(key);

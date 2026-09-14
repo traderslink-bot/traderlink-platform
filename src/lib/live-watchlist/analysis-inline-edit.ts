@@ -22,6 +22,10 @@ function pick(value: unknown, fields: string[]): EditRecord {
   return Object.fromEntries(fields.map(key => [key, source[key] ?? (isPriceField(key) ? null : "")]));
 }
 export function makeAnalysisEdit(payload: Record<string, unknown>): EditRecord {
+  if (payload.analysisFormat === "simple") return {
+    simpleAnalysis:structuredClone(payload.simpleAnalysis) as EditValue,
+    ownerHiddenSections:structuredClone(payload.ownerHiddenSections ?? []) as EditValue,
+  };
   const result: EditRecord = {};
   for (const key of ["currentRead", "bias", "confidence", "riskSummary", "ownerHiddenSections"]) {
     result[key] = structuredClone(payload[key] as EditValue ?? (key === "riskSummary" || key === "ownerHiddenSections" ? [] : ""));
