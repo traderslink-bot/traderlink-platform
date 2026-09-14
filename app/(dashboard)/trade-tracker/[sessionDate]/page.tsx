@@ -34,6 +34,7 @@ export default async function TradeTrackerDayPage({
   params: Promise<{ sessionDate: string }>;
   searchParams: Promise<{
     analyzer?: string;
+    basis?: string;
     currency?: string;
     event?: string;
     interval?: string;
@@ -74,6 +75,7 @@ export default async function TradeTrackerDayPage({
           eventId: query.event && uuid.test(query.event) ? query.event : null,
           interval,
           roundTripId: query.trade,
+          basis: query.basis === "net" || query.basis === "gross" ? query.basis : undefined,
         } as const
       : null;
     return (

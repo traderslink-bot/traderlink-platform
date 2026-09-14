@@ -106,7 +106,7 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
   if (!selected) return <Typography color="text.secondary">Indicator results have not been saved for this view yet.</Typography>;
   return <Stack spacing={2}>
     <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-      <TextField select size="small" label="Candle timeframe" value={interval} onChange={(e) => { setInterval(e.target.value as "1m" | "5m"); setPage(1); }}>
+      <TextField select size="small" label="Candle timeframe" sx={{ minWidth: 180 }} value={interval} onChange={(e) => { setInterval(e.target.value as "1m" | "5m"); setPage(1); }}>
         <MenuItem value="1m">1 minute</MenuItem><MenuItem value="5m">5 minutes</MenuItem>
       </TextField>
     </Stack>
@@ -123,7 +123,7 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
           <TableCell><Heading label="Profitable trades" help="Percentage of trades with known completed P/L that finished above zero. This describes your saved results, not the chance that a future trade will succeed." /></TableCell>
         </TableRow></TableHead><TableBody>{[...groups].map(([label, rows]) => { const result = summarizeIndicatorRecords(rows); return <TableRow key={label}>
           <TableCell>{label}</TableCell><TableCell>{result.tradeCount}</TableCell><TableCell>{result.occurrenceCount}</TableCell>
-          <TableCell>{money(result.averagePnlDecimal)} ({result.pnlTradeCount} trades)</TableCell><TableCell>{percent(result.winRatePercent)}</TableCell>
+          <TableCell>{money(result.averagePnlDecimal)} ({result.pnlTradeCount} {result.pnlTradeCount === 1 ? "trade" : "trades"})</TableCell><TableCell>{percent(result.winRatePercent)}</TableCell>
         </TableRow>; })}</TableBody></Table></HorizontalScrollRegion>
         {!records.length ? <Typography color="text.secondary">No saved {kinds[kind].toLowerCase()} indicator records for this selection.</Typography> : null}
       </Stack>
@@ -172,14 +172,14 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
             <MenuItem value="matching">Matching conditions</MenuItem><MenuItem value="nonmatching">Not matching</MenuItem><MenuItem value="unknown">Context unavailable</MenuItem>
           </TextField>
         </Stack>
-        <Typography color="text.secondary">Conditions are checked together at the first recorded event. A later event cannot replace it. {study?.noEventTradeIds.length ?? 0} trades had no recorded event with complete history; {study?.unknownPresenceTradeIds.length ?? 0} could not be checked.</Typography>
+        <Typography color="text.secondary">Conditions are checked together at the first recorded event. A later event cannot replace it. {study?.noEventTradeIds.length ?? 0} {study?.noEventTradeIds.length === 1 ? "trade" : "trades"} had no recorded event with complete history; {study?.unknownPresenceTradeIds.length ?? 0} could not be checked.</Typography>
         <HorizontalScrollRegion label="Scroll to compare during-trade groups" minTableWidth={520}><Table size="small"><TableHead><TableRow>
           {[ ["Group", "Each trade is classified using its first selected event, before conditions are applied."], ["Trades", "Saved trades counted once in this group."], [`${basisLabel} P/L`, "Combined known completed results; missing P/L is not zero."], ["Average return", "Each saved trade with a known percentage result receives equal weight."] ].map(([label, help]) => <TableCell key={label}><Heading label={label} help={help} /></TableCell>)}
         </TableRow></TableHead><TableBody>{(["matching", "nonmatching", "unknown"] as const).map((group) => {
           const totals = summarizeDuringStudy(studyGroups?.[group] ?? [], studyEvent);
           return <TableRow key={group}><TableCell>{group === "matching" ? "Matching conditions" : group === "nonmatching" ? "Not matching" : "Context unavailable"}{!offline ? <Button size="small" href={`/analytics/trade-analyzer/day/trades?${duringStudyTradeQuery(query, direction, group)}`}>View trades</Button> : null}</TableCell><TableCell>{totals.tradeCount}</TableCell><TableCell>{money(totals.totalPnlDecimal)} ({totals.pnlTradeCount} with P/L)</TableCell><TableCell>{percent(totals.averageReturnPercent)}</TableCell></TableRow>;
         })}</TableBody></Table></HorizontalScrollRegion>
-        <Typography>{summary.tradeCount} trades · {summary.observed} recorded returns · {summary.noRecorded} without a recorded return before closing · {summary.unknown} unknown</Typography>
+        <Typography>{summary.tradeCount} {summary.tradeCount === 1 ? "trade" : "trades"} · {summary.observed} recorded returns · {summary.noRecorded} without a recorded return before closing · {summary.unknown} unknown</Typography>
         {studyEvent === "loss" ? <Stack direction="row"><Typography>Recorded return rate: {percent(summary.recordedReclaimRate)}</Typography><AnalyzerHelpTooltip label="recorded return rate" text="Recorded returns divided by episodes with known recovery outcomes. Unknown outcomes are excluded. Earlier incomplete history stays in its own selection even if a later return was observed." /></Stack> : <Typography color="text.secondary">This comparison includes observed returns only. It does not estimate how often a lost reference was recovered.</Typography>}
         <HorizontalScrollRegion label="Scroll to inspect each follow-through time" minTableWidth={800}><Table size="small"><TableHead><TableRow>{[
           ["Time after event", "Clock time after the first qualifying event, not a count of returned candles."],
@@ -216,7 +216,7 @@ export function TrendMomentumAnalysis({ projection, direction, currency, timezon
             <TableCell>{episode.recovery === "observed_reclaim" ? `Recorded ${date(episode.reclaimedAt!)}` : episode.recovery === "unknown" ? "Unknown" : "No recorded return before closing"}</TableCell>
             <TableCell>{closure ? date(closure.at) : "Unavailable"}</TableCell>
             <TableCell>{closure ? `${money(String(closure.changePerShare))} per share (${percent(closure.changePercent)})` : "Unavailable"}</TableCell>
-            <TableCell><Button size="small" variant="outlined" href={`/trade-tracker/${trade.trackerDate}${offline ? "" : `?${new URLSearchParams({ interval, trade: trade.representativeRoundTripId })}`}`}>{offline ? "Open saved day" : "Full analysis"}</Button></TableCell>
+            <TableCell><Button size="small" variant="outlined" href={`/trade-tracker/${trade.trackerDate}${offline ? "" : `?${new URLSearchParams({ interval, trade: trade.representativeRoundTripId, basis: moneyBasis ?? "gross" })}`}`}>{offline ? "Open saved day" : "Full analysis"}</Button></TableCell>
           </TableRow>; })}</TableBody></Table></HorizontalScrollRegion>
         <TradeAnalyzerTablePagination rowCount={occurrences.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />
       </Stack>

@@ -57,7 +57,7 @@ export function PwaUpdateNotice({ paused = false }: { paused?: boolean }) {
   }, []);
   if (!waiting || paused) return null;
   return <Alert severity="info" sx={{ position: "fixed", bottom: 16, right: 16,
-    width: "calc(100vw - 32px)", maxWidth: 420, zIndex: (theme) => theme.zIndex.snackbar }}>
+    width: "calc(100vw - 32px)", maxWidth: 420, zIndex: (theme) => theme.zIndex.modal - 1 }}>
     <Stack spacing={1}>
       <span>A TradersLink update is ready. Save any edits before updating. Offline entries already saved on this device will remain.</span>
       {activationFailed && <span>The update could not finish. Please try again when connected.</span>}

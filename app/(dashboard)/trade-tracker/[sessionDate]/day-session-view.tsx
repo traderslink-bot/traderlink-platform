@@ -1,7 +1,7 @@
 "use client";
 import { tradeAnalysisAvailabilityMessage } from "@/src/lib/trade-candle-analysis/analysis-availability";
 import { ExecutionPositionDetails, WrittenTradeAnalysis } from "../written-trade-analysis";
-import { buildWrittenTradeReview } from "../analyzer-written-review-model";
+import { buildWrittenTradeReview, withWrittenReviewBasis } from "../analyzer-written-review-model";
 
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -2536,6 +2536,7 @@ export function DaySessionView({
     eventId: string | null;
     interval: DailyTradeChartInterval;
     roundTripId: string;
+    basis?: "gross" | "net";
   }> | null;
   offlineCapture?: DailyTrackerOfflineCaptureMetadata;
   offlineSavedAtUtc?: string;
@@ -3587,7 +3588,10 @@ export function DaySessionView({
               </Box>
               <Stack divider={<Divider flexItem sx={{ borderBottomWidth: 2, borderColor: (theme) => theme.palette.mode === "dark" ? theme.palette.divider : "rgba(1, 30, 86, 0.32)" }} />}>
                 {ticker.roundTrips.map((roundTrip, index) => {
-                  const analyzer = analyzerDetails[roundTrip.roundTripKey] ?? roundTrip.analyzer;
+                  const analyzer = withWrittenReviewBasis(
+                    analyzerDetails[roundTrip.roundTripKey] ?? roundTrip.analyzer,
+                    initialAnalyzerFocus?.roundTripId === roundTrip.roundTripKey ? initialAnalyzerFocus.basis : undefined,
+                  );
                   return (
                   <TradeReview
                     analyzer={analyzer}

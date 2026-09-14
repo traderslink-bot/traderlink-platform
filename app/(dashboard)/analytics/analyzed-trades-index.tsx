@@ -71,8 +71,8 @@ function dateTime(value: string, timezone: string): Readonly<{
   });
 }
 
-function trackerHref(row: DailyTradeAnalyzedTradePage["rows"][number], interval: "1m" | "5m"): string {
-  const params = new URLSearchParams({ trade: row.roundTripId, interval });
+export function analyzedTradeTrackerHref(row: DailyTradeAnalyzedTradePage["rows"][number], interval: "1m" | "5m", basis: "gross" | "net"): string {
+  const params = new URLSearchParams({ trade: row.roundTripId, interval, basis });
   if (row.firstExecutionId) params.set("event", row.firstExecutionId);
   return `/trade-tracker/${row.trackerDate}?${params.toString()}`;
 }
@@ -256,7 +256,7 @@ export function AnalyzedTradesIndex({
                       <TableCell align="right" sx={{ color: financialOutcomeColor(row.returnPercentDecimal) }}>{percent(row.returnPercentDecimal)}</TableCell>
                       <TableCell align="right">{row.executionCount}</TableCell>
                       <TableCell align="right">
-                        <Button endIcon={<OpenInNewIcon />} href={offline ? `/trade-tracker/${row.trackerDate}` : trackerHref(row, new URLSearchParams(indicatorQuery).get("indicator_interval") === "5m" ? "5m" : "1m")} size="small" variant="outlined">
+                        <Button endIcon={<OpenInNewIcon />} href={offline ? `/trade-tracker/${row.trackerDate}` : analyzedTradeTrackerHref(row, new URLSearchParams(indicatorQuery).get("indicator_interval") === "5m" ? "5m" : "1m", moneyBasis)} size="small" variant="outlined">
                           {offline ? "Open saved day" : "View full analysis"}
                         </Button>
                       </TableCell>

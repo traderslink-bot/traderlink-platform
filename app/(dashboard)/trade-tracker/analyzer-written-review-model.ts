@@ -4,6 +4,13 @@ import type { DaySessionTradeAnalyzer } from "./[sessionDate]/day-session-types"
 
 export type WrittenReviewFill = { id: string; time: number; label: string; quantity: string; price: string; remaining: string; grossPnl: string | null };
 
+/** A navigation-only override; never rewrite the saved analysis or account preference. */
+export function withWrittenReviewBasis(analysis: DaySessionTradeAnalyzer | null, basis?: "gross" | "net") {
+  return analysis && basis ? { ...analysis, reviewContext: {
+    ...analysis.reviewContext, basis, analyzedTradeCount: analysis.reviewContext?.analyzedTradeCount ?? null,
+  } } : analysis;
+}
+
 /** Rebuild from saved fills, not the already fee-adjusted stored path. */
 export function buildWrittenTradeReview(analysis: DaySessionTradeAnalyzer, direction: "long" | "short") {
   const basis = analysis.reviewContext?.basis ?? "gross";

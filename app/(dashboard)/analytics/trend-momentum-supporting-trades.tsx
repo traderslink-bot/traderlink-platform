@@ -64,7 +64,7 @@ export function TrendMomentumSupportingTrades({ page, query, direction, timezone
             <Typography variant="body2">{selection.interval === "1m" ? "1-minute" : "5-minute"} indicator context at this execution</Typography>
             {details.map(([label, value, help]) => <Stack key={label} direction="row" sx={{ alignItems: "center" }}><Typography variant="body2">{label}: {value}</Typography><AnalyzerHelpTooltip label={label} text={help} /></Stack>)}
             {!context ? <Typography color="text.secondary">The required candle history was not saved for this timeframe. Other saved trade analysis remains available.</Typography> : null}
-            <Button variant="outlined" size="small" href={`/trade-tracker/${row.trackerDate}${offline ? "" : `?${new URLSearchParams({ interval: selection.interval, trade: row.representativeRoundTripId })}`}`}>{offline ? "Open saved day" : "Full analysis"}</Button>
+            <Button variant="outlined" size="small" href={`/trade-tracker/${row.trackerDate}${offline ? "" : `?${new URLSearchParams({ interval: selection.interval, trade: row.representativeRoundTripId, basis: query.get("basis") === "net" ? "net" : "gross" })}`}`}>{offline ? "Open saved day" : "Full analysis"}</Button>
           </Stack></TableCell></TableRow> : null}</Fragment>;
       })}</TableBody></Table></HorizontalScrollRegion>
       {current.totalRows === 0 ? <Typography color="text.secondary">No executions in this comparison group.</Typography> : null}

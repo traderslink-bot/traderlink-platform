@@ -73,7 +73,7 @@ export function TrendMomentumConditions({ projection, interval, kind, filters, o
             <TableCell>{result.tradeCount}</TableCell><TableCell>{result.occurrenceCount}</TableCell><TableCell>{result.pnlTradeCount}</TableCell>
             <TableCell>{result.wins} / {result.losses} / {result.breakevens}</TableCell><TableCell>{percent(result.winRatePercent)}</TableCell>
             <TableCell>{money(result.totalPnlDecimal)}</TableCell><TableCell>{money(result.averagePnlDecimal)}</TableCell><TableCell>{money(result.medianPnlDecimal)}</TableCell>
-            <TableCell>{percent(result.averageReturnPercent)} ({result.returnTradeCount} trades)</TableCell></TableRow>;
+            <TableCell>{percent(result.averageReturnPercent)} ({result.returnTradeCount} {result.returnTradeCount === 1 ? "trade" : "trades"})</TableCell></TableRow>;
         })}
       </TableBody></Table>
     </HorizontalScrollRegion>

@@ -35,6 +35,6 @@ export function TrendMomentumOutcomeTable({ rows, money, basisLabel, observation
     <TableCell>{label}</TableCell><TableCell>{result.tradeCount}</TableCell><TableCell>{result.occurrenceCount}</TableCell><TableCell>{result.pnlTradeCount}</TableCell>
     <TableCell>{result.wins} / {result.losses} / {result.breakevens}</TableCell><TableCell>{percent(result.winRatePercent)}</TableCell>
     <TableCell>{money(result.totalPnlDecimal)}</TableCell><TableCell>{money(result.averagePnlDecimal)}</TableCell><TableCell>{money(result.medianPnlDecimal)}</TableCell>
-    <TableCell>{percent(result.averageReturnPercent)} ({result.returnTradeCount} trades)</TableCell>
+    <TableCell>{percent(result.averageReturnPercent)} ({result.returnTradeCount} {result.returnTradeCount === 1 ? "trade" : "trades"})</TableCell>
   </TableRow>)}</TableBody></Table></HorizontalScrollRegion>;
 }

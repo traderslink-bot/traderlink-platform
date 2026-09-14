@@ -1,5 +1,21 @@
 # Trade Analyzer Trend & Momentum Plan
 
+Owner-authorized hosted QA corrections:
+[QA follow-up progress](trend-momentum-qa-followup-progress.md).
+
+Owner-requested count presentation follow-up:
+[Analyzed-trade display progress](trend-momentum-analyzed-count-display-progress.md).
+
+## Current technical acceptance - 2026-09-13
+
+Implementation, coordinated production release and technical QA are complete.
+See [final technical acceptance](trade-analyzer-final-technical-acceptance.md)
+for the requirement/evidence audit, exact production release, 48-file/228-test
+checkpoint and live Demo/mobile/theme/offline results. The owner waived further
+visual/tooltips review as a completion gate and directed completion on 2026-09-13.
+The planned Day Analyzer work is complete. Older pending statements below are historical planning
+checkpoints, superseded by that current acceptance record.
+
 Status: Implementation authorized 2026-09-12. Owner subsequently approved all
 required testing and completing the planned work without routine approval stops,
 including planned UI implementation. Production release remains separately gated.

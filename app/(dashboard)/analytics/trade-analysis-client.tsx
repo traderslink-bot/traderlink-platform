@@ -918,9 +918,13 @@ export function TradeAnalysisClient({
       </Stack>
       <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined">
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">
-          {model.eligibleDayTradeCount === 0 ? "No completed day trades" : "No trades have been analyzed."}
+          {evidenceQuery.rangeKind !== "all"
+            ? "No analyzed trades in this date range"
+            : model.eligibleDayTradeCount === 0 ? "No completed day trades" : "No trades have been analyzed."}
         </Typography>
-        {model.eligibleDayTradeCount === 0 ? <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+        {evidenceQuery.rangeKind !== "all" ? <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+          Choose another date range to view your analyzed trades.
+        </Typography> : model.eligibleDayTradeCount === 0 ? <Typography color="text.secondary" sx={{ mt: 0.75 }}>
           Trade Analysis will begin after completed day trades are available in this account.
         </Typography> : null}
       </Paper>
