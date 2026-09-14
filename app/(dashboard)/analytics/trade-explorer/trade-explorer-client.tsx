@@ -1178,14 +1178,15 @@ export default function TradeExplorerClient({
     setExpandedExecutions(Object.freeze([]));
     setExecutionDetailsStatus("loading");
     try {
-      const response = await fetch(`/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(roundTripId)}`, {
+      const response = await fetch(`/api/platform/journal/calendar/ticker-details?selection=trade&roundTripIds=${encodeURIComponent(roundTripId)}`, {
         cache: "no-store",
       });
       if (!response.ok) throw new Error("Execution details request failed.");
       const body = await response.json() as Readonly<{ trades?: readonly TradeExecutionDetails[] }>;
       if (executionRequestRef.current !== requestNumber) return;
       const details = body.trades?.find((trade) => trade.roundTripId === roundTripId);
-      setExpandedExecutions(Object.freeze([...(details?.executions ?? [])]));
+      if (!details || body.trades?.length !== 1) throw new Error("Selected trade details missing.");
+      setExpandedExecutions(Object.freeze([...details.executions]));
       setExecutionDetailsStatus("ready");
     } catch {
       if (executionRequestRef.current !== requestNumber) return;

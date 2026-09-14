@@ -144,7 +144,7 @@ function executionTimestamp(value: string, timezone: string | null): string {
 
 async function loadTrade(trade: AnalyticsTradeDetail, moneyBasis: JournalAnalyticsMoneyBasis): Promise<LoadedTrade> {
   try {
-    const detailsUrl = `/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(trade.roundTripId)}`;
+    const detailsUrl = `/api/platform/journal/calendar/ticker-details?selection=trade&roundTripIds=${encodeURIComponent(trade.roundTripId)}`;
     const analysisUrl = `/api/platform/trade-analyzer/trade?roundTripId=${encodeURIComponent(trade.roundTripId)}&direction=${trade.direction}&basis=${moneyBasis}`;
     const [detailsResponse, analysisResponse] = await Promise.all([
       fetch(detailsUrl, { cache: "no-store" }),
@@ -158,11 +158,13 @@ async function loadTrade(trade: AnalyticsTradeDetail, moneyBasis: JournalAnalyti
       analysis?: DaySessionTradeAnalyzer;
       status?: string;
     }>;
+    const selectedDetails = details.trades?.find((item) => item.roundTripId === trade.roundTripId);
+    if (!selectedDetails || details.trades?.length !== 1) throw new Error("details_unavailable");
     return Object.freeze({
       analysis: analysisResponse.ok && analysisPayload.status === "ready"
         ? analysisPayload.analysis ?? null
         : null,
-      executions: details.trades?.find((item) => item.roundTripId === trade.roundTripId)?.executions ?? [],
+      executions: selectedDetails.executions,
       status: "ready" as const,
     });
   } catch {
@@ -409,7 +411,7 @@ export function TickerTradeDetailDrawer({
       if (payload.rows.length > 0) {
         try {
           const detailResponse = await fetch(
-            `/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(payload.rows.map((row) => row.roundTripId).join(","))}`,
+            `/api/platform/journal/calendar/ticker-details?selection=trade&roundTripIds=${encodeURIComponent(payload.rows.map((row) => row.roundTripId).join(","))}`,
             { cache: "no-store" },
           );
           if (!detailResponse.ok) throw new Error("supporting_details_unavailable");
@@ -417,6 +419,12 @@ export function TickerTradeDetailDrawer({
             trades?: readonly TickerSupportingDetail[];
           }>;
           if (revision !== requestRevision.current) return;
+          const expectedIds = new Set(payload.rows.map((row) => row.roundTripId));
+          if (!detailPayload.trades || detailPayload.trades.length !== expectedIds.size
+            || new Set(detailPayload.trades.map((detail) => detail.roundTripId)).size !== expectedIds.size
+            || detailPayload.trades.some((detail) => !expectedIds.has(detail.roundTripId))) {
+            throw new Error("supporting_details_unavailable");
+          }
           setDetailsById((current) => Object.freeze({
             ...current,
             ...Object.fromEntries((detailPayload.trades ?? []).map((detail) => [detail.roundTripId, detail])),

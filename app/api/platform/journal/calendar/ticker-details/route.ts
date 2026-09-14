@@ -5,6 +5,9 @@ import { withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { journalReportingCurrencyAmount } from
   "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
+import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { selectedTradeExecutionMembers, selectedTradeExecutions } from
+  "@/src/modules/journal/server/trade-story/selected-trade-execution-members";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,12 +50,21 @@ export async function GET(request: Request): Promise<Response> {
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const accountId = scope.activeAccountId;
     if (!accountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-    const roundTripIds = requestedRoundTripIds(request);
-    const placeholders = roundTripIds.map(() => "?").join(", ");
+    const requestedIds = requestedRoundTripIds(request);
+    const selectionMode = new URL(request.url).searchParams.get("selection");
+    if (selectionMode !== null && selectionMode !== "trade") {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "selection" });
+    }
     const reporting = await withJournalAnalyticsReportingDashboardRuntime(
       scope,
       ({ reportingContext, reportingCurrency }) => Object.freeze({
-        evidence: withReadonlyPlatformDatabase({}, (database) => Object.freeze({
+        evidence: withReadonlyPlatformDatabase({}, (database) => database.transaction(() => {
+          const selections = requestedIds.map((selectionId) => selectionMode === "trade"
+            ? selectedTradeExecutionMembers(database, narrowWorkspaceAccessToAccount(scope, accountId), selectionId)
+            : Object.freeze({ selectionId, memberIds: Object.freeze([selectionId]) }));
+          const roundTripIds = [...new Set(selections.flatMap((selection) => selection.memberIds))];
+          const placeholders = roundTripIds.map(() => "?").join(", ");
+          return Object.freeze({ selections,
       brokenRules: database.prepare<unknown[], BrokenRuleRow>(`SELECT
  review.round_trip_id,
  rule_version.title AS rule_title
@@ -137,7 +149,8 @@ JOIN journal_execution_versions execution
 WHERE allocation.workspace_id = ? AND allocation.account_id = ?
   AND version.round_trip_id IN (${placeholders})
 ORDER BY version.round_trip_id, execution.executed_at_utc, allocation.allocation_sequence`).all(scope.workspaceId, accountId, ...roundTripIds),
-        })),
+        });
+        })()),
         reportingContext,
         reportingCurrency,
       }),
@@ -173,12 +186,18 @@ ORDER BY version.round_trip_id, execution.executed_at_utc, allocation.allocation
     }
     const detailsByRoundTripId = new Map(evidence.details.map((detail) => [detail.round_trip_id, detail]));
     return Response.json({
-      trades: roundTripIds.flatMap((roundTripId) => {
-        const detail = detailsByRoundTripId.get(roundTripId);
+      trades: evidence.selections.flatMap((selection) => {
+        const roundTripId = selection.selectionId;
+        const representativeId = selection.memberIds[0]!;
+        if (selectionMode === "trade" && selection.memberIds.some((id) =>
+          !detailsByRoundTripId.has(id) || !executionsByRoundTripId.get(id)?.length)) {
+          platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "roundTripIds" });
+        }
+        const detail = detailsByRoundTripId.get(representativeId);
         if (!detail) return [];
         return [Object.freeze({
-          brokenRules: brokenRulesByRoundTripId.get(roundTripId) ?? [],
-          executions: executionsByRoundTripId.get(roundTripId) ?? [],
+          brokenRules: brokenRulesByRoundTripId.get(representativeId) ?? [],
+          executions: selectedTradeExecutions(selection, selection.memberIds.flatMap((id) => executionsByRoundTripId.get(id) ?? [])),
           notes: [detail.trade_note, detail.technical_note].filter((note) => note.trim().length > 0),
           roundTripId,
           ruleCount: detail.rule_review_count,

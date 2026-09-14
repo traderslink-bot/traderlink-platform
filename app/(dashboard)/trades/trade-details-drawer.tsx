@@ -221,9 +221,10 @@ export function TradeDetailsDrawer({
       if (!response.ok) throw new Error("trade_details_unavailable");
       return response.json() as Promise<TradeDetails>;
     }).then((details) => {
+      if (controller.signal.aborted) return;
       setState({ details, status: "ready" });
     }).catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === "AbortError") return;
+      if (controller.signal.aborted || error instanceof DOMException && error.name === "AbortError") return;
       setState({ status: "error" });
     });
     return () => controller.abort();

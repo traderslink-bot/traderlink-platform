@@ -709,24 +709,35 @@ export function CalendarClient({
   const expandedTickerRequestKey = expandedTicker
     ? `${selectedDate}:${expandedTicker.instrumentId}:${expandedTickerRoundTripIds}`
     : null;
+  const expandedTickerExecutionCounts = JSON.stringify(expandedTicker?.trades.map((trade) =>
+    [trade.roundTripId, trade.executions.length]) ?? []);
 
   useEffect(() => {
     if (offlineSavedAtUtc || !detailsOpen || !expandedTickerRequestKey) return;
     const controller = new AbortController();
-    void fetch(`/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(expandedTickerRoundTripIds)}`, {
+    void fetch(`/api/platform/journal/calendar/ticker-details?selection=trade&roundTripIds=${encodeURIComponent(expandedTickerRoundTripIds)}`, {
       cache: "no-store",
       signal: controller.signal,
     }).then(async (response) => {
       if (!response.ok) throw new Error("ticker_details_unavailable");
       return response.json() as Promise<Readonly<{ trades: readonly TickerTradeDetail[] }>>;
     }).then((result) => {
+      if (controller.signal.aborted) return;
+      const expectedIds = expandedTickerRoundTripIds.split(",");
+      const minimumCounts = new Map<string, number>(JSON.parse(expandedTickerExecutionCounts));
+      if (result.trades.length !== expectedIds.length
+        || new Set(result.trades.map((trade) => trade.roundTripId)).size !== expectedIds.length
+        || result.trades.some((trade) => !expectedIds.includes(trade.roundTripId)
+          || trade.executions.length < (minimumCounts.get(trade.roundTripId) ?? 0))) {
+        throw new Error("ticker_details_unavailable");
+      }
       setTickerDetailState({ requestKey: expandedTickerRequestKey, status: "ready", trades: result.trades });
     }).catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === "AbortError") return;
+      if (controller.signal.aborted || error instanceof DOMException && error.name === "AbortError") return;
       setTickerDetailState({ requestKey: expandedTickerRequestKey, status: "error", trades: [] });
     });
     return () => controller.abort();
-  }, [detailsOpen, expandedTickerRequestKey, expandedTickerRoundTripIds, offlineSavedAtUtc]);
+  }, [detailsOpen, expandedTickerRequestKey, expandedTickerRoundTripIds, expandedTickerExecutionCounts, offlineSavedAtUtc]);
 
   const visibleTickerDetailState = tickerDetailState.requestKey === expandedTickerRequestKey
     ? tickerDetailState
