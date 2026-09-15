@@ -1514,19 +1514,6 @@ function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState }) {
   );
 }
 
-function WatchlistAnalysisNotice() {
-  return (
-    <section className="academy-card watchlist-notice-card" aria-label="Watchlist analysis notice">
-      <p>
-        Watchlist notifications are not entry signals. Each analysis includes pullback areas,
-        breakout levels, and a momentum failure point. The posted price is the price at the
-        time of analysis. A break below the failure level invalidates the momentum thesis,
-        though broader support and resistance levels may still remain relevant.
-      </p>
-    </section>
-  );
-}
-
 function WatchlistDetailEntryGuidanceNotice() {
   return (
     <section className="academy-card watchlist-notice-card" aria-label="Watchlist entry guidance">
@@ -1603,7 +1590,7 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
           symbol={symbol}
         />
       ) : null}
-      <WatchlistAnalysisNotice />
+      <WatchlistDetailEntryGuidanceNotice />
       {traderReadCard ? (
         <WatchlistDetailCardArticle
           label="Trader Read"
@@ -1960,7 +1947,6 @@ export function LiveWatchlistDetailClient({
               <h1 className="academy-title">{symbol.symbol}</h1>
               <WatchlistLifecycleBadge symbol={symbol} />
             </div>
-            <WatchlistDetailEntryGuidanceNotice />
           </div>
           <Link href="/watchlist" className="academy-card-action watchlist-back-action">
             Back to watchlist
