@@ -1,0 +1,17 @@
+# Watchlist analysis image preview
+
+## Latest owner-approved pagination correction
+
+Use semantic grouping, not height-balanced halves. For longer analyses, image 1 contains everything above the first visible Pullback. Image 2 starts at Pullback and includes the remaining content. If image 2 is too tall, catalyst/recent news and risk notes move together to image 3. Short selected content may remain one image. Preserve visible section order, hidden-section choices, fixed font and watermark/ticker/time on every image. Implemented locally; 16 focused checks passed. This supersedes earlier one/two-image balanced-split wording below. Nothing deployed or posted.
+
+## Approved implementation checkpoint
+
+Owner approved the preview styling and requested implementation of automatic one/two-image exports. Implement in the canonical Watchlist runtime, preserving the linked Discord message. Controlling inventory: saved approved payload only; current and simple formats; all selected visible sections; no unsupported listing/dilution panels; section-boundary pagination; fixed readable font; ticker/time per image only; repeated watermark and footer; PNG attachments on the same message; no AI or live-market requests; text-only continuation on pre-send rendering failure; unchanged uncertain-delivery protection; focused rendering/pagination/transport tests; no real Discord test without separate confirmation. Old frozen approvals must not acquire unexpected attachments. Very long edits must not be truncated or shrunk; export failure retains the ordinary linked post and is recorded for admin audit. No website-card changes.
+
+Runtime progress: `docs/watchlist-analysis-images-progress.md`. Local implementation and focused verification complete: automatic measured one/two-image export, current/simple payload adapters, fixed bundled font, hidden sections, frozen per-approval image cache and multipart Discord attachment support. 40 distinct focused checks pass; PNGs visually inspected. Help updated. No real Discord post or deployment. Release/build and hosted attachment acceptance remain pending.
+
+Owner-approved preview scope: use today's VEEA analysis to review a mobile-width, two-image export before connecting Discord. Existing Discord text and Watchlist/ticker links remain unchanged. Image-only header repeats ticker and analysis time on each image; website card is untouched. Subtle repeated traderslink.pro watermark plus footer branding. No AI image generation, paid request, post, approval, deployment or local server.
+
+First prototype: deterministic SVG-to-PNG renderer using installed Sharp, with source text transcribed from the visible VEEA card on September 15, 2026. This is an export layout prototype, not a screenshot or production data adapter. Analysis text/prices retained; long duplicate source URLs replaced by one article-source footer. Split only at section boundaries. Review readability and watermark with owner before production integration.
+
+Progress: two PNG previews generated and visually inspected (1000x3076 and 1000x3246). No visible clipping; watermark subtle and repeated. This full-format read remains tall even when split in two; owner needs to review practical mobile readability. Renderer and output are local preview artifacts under data/. Production wiring, automatic saved-payload mapping and actual Discord attachment testing are not implemented. Website and Discord unchanged. No feature commit/acceptance before layout review.
