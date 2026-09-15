@@ -1,5 +1,9 @@
 # Watchlist analysis image preview
 
+## Latest owner-approved pagination correction
+
+Use semantic grouping, not height-balanced halves. For longer analyses, image 1 contains everything above the first visible Pullback. Image 2 starts at Pullback and includes the remaining content. If image 2 is too tall, catalyst/recent news and risk notes move together to image 3. Short selected content may remain one image. Preserve visible section order, hidden-section choices, fixed font and watermark/ticker/time on every image. Implemented locally; 16 focused checks passed. This supersedes earlier one/two-image balanced-split wording below. Nothing deployed or posted.
+
 ## Approved implementation checkpoint
 
 Owner approved the preview styling and requested implementation of automatic one/two-image exports. Implement in the canonical Watchlist runtime, preserving the linked Discord message. Controlling inventory: saved approved payload only; current and simple formats; all selected visible sections; no unsupported listing/dilution panels; section-boundary pagination; fixed readable font; ticker/time per image only; repeated watermark and footer; PNG attachments on the same message; no AI or live-market requests; text-only continuation on pre-send rendering failure; unchanged uncertain-delivery protection; focused rendering/pagination/transport tests; no real Discord test without separate confirmation. Old frozen approvals must not acquire unexpected attachments. Very long edits must not be truncated or shrunk; export failure retains the ordinary linked post and is recorded for admin audit. No website-card changes.
