@@ -486,7 +486,8 @@ export function TradersLinkAiReadCard({
   renderSectionEditor,
 }: {
   card: LiveWatchlistCardContent;
-    symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus" | "firstPostedAt">;
+    symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus"> &
+      Partial<Pick<LiveWatchlistSymbolState, "firstPostedAt">>;
   livePrice: number | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
