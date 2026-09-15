@@ -2,6 +2,13 @@
 
 Controlling plan: [Watchlist Deterministic Indicators Plan](watchlist-deterministic-indicators-plan.md)
 
+## 2026-09-15 — Approved-post timestamp repair
+
+- Confirmed VEEA's blank card/null snapshot and mismatch between runtime activation and first approved publication time.
+- Runtime-only correction and six passing focused tests recorded in the canonical runtime's `docs/watchlist-indicator-publication-time-fix.md`.
+- Platform's activation guard, provider routing and calculations stay unchanged. No migration or Help behavior change.
+- Owner authorized coordinator release; handoff permission check blocked transmission. Local verification is complete; hosted deployment/card acceptance remains pending.
+
 ## 2026-09-12 — Planning checkpoint
 
 - Detailed plan created at the owner's request from the agreed discussion and prior source inspection.
