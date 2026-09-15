@@ -1,5 +1,7 @@
 # Watchlist Deterministic Indicators Plan
 
+Current repair: [future candle-slot parsing and YFOR acceptance](watchlist-indicator-future-slots-progress.md).
+
 Date: 2026-09-12
 
 Status: Owner authorized correction, deployment and post-deployment retesting of the two production QA findings. Narrow trailing-quote and closed-session recovery fixes pass focused checks locally; Coordinator deployment and another nine-ticker hosted QA are next. Acceptance is not complete. See [production QA](watchlist-indicators-production-qa-20260912.md) and the linked progress record.

@@ -64,7 +64,7 @@ function sortedUnique(bars: readonly IndicatorHistoryBar[]): readonly IndicatorH
 }
 
 /** No raw vendor errors, symbols from payloads, account IDs or credentials enter results. */
-export function parseMoomooIndicatorPage(payload: unknown, timeframe?: IndicatorTimeframe): IndicatorTransportResult<IndicatorHistoryPage> {
+export function parseMoomooIndicatorPage(payload: unknown, timeframe?: IndicatorTimeframe, observedAt = Date.now()): IndicatorTransportResult<IndicatorHistoryPage> {
   const root = object(payload), data = object(root?.data);
   if (!root || typeof root.ret_code !== "number" || !Number.isInteger(root.ret_code)) return invalid();
   if (root?.ret_code !== 0) {
@@ -78,12 +78,21 @@ export function parseMoomooIndicatorPage(payload: unknown, timeframe?: Indicator
   const precision = data.volume_precision ?? 0;
   if (!Number.isInteger(precision) || Number(precision) < 0 || Number(precision) > 8) return invalid();
   const bars: IndicatorHistoryBar[] = [];
+  let excludedPoints = 0;
   for (const value of data.kline_list) {
     const row = object(value);
     if (!row) return invalid();
     // Hosted native 1m/5m/15m cover 04:00–20:00 with the interval END label.
     // Internally bars use START. Daily trading-date labels are not shifted.
     const timestamp = numeric(row.time_key);
+    // The live endpoint pads the rest of today's session with timestamp-only
+    // slots. These are not candles or evidence of zero trading volume.
+    if (timeframe && timeframe !== "1d" && timestamp !== null && Number.isSafeInteger(timestamp)
+      && timestamp % 60_000 === 0 && timestamp > observedAt
+      && [row.open, row.high, row.low, row.close, row.volume].every(value => value == null)) {
+      excludedPoints++;
+      continue;
+    }
     const duration = timeframe ? { "1m": 60_000, "5m": 300_000, "15m": 900_000, "1d": 0 }[timeframe] : 0;
     const normalized = bar(timestamp === null ? null : timestamp - duration,
       [row.open, row.high, row.low, row.close, row.volume], Number(precision));
@@ -103,7 +112,7 @@ export function parseMoomooIndicatorPage(payload: unknown, timeframe?: Indicator
   const hasMore = typeof pagination?.has_more === "boolean" ? pagination.has_more : nextEnd !== null ? true : next === 0 ? false : null;
   if (hasMore === false && nextEnd !== null) return invalid();
   if (hasMore === true && (nextEnd === null || unique.length === 0)) return invalid();
-  return { ok: true, usable: unique.length > 0, requestAccepted: true, data: { bars: unique, hasMore, nextEnd } };
+  return { ok: true, usable: unique.length > 0, requestAccepted: true, data: { bars: unique, hasMore, nextEnd, excludedPoints } };
 }
 
 export function parseYahooIndicatorPage(payload: unknown): IndicatorTransportResult<IndicatorHistoryPage> {
@@ -220,7 +229,7 @@ export async function requestIndicatorHistoryPage(input: Readonly<{
   let payload: unknown;
   try { payload = JSON.parse(new TextDecoder().decode(bytes)); } catch { return invalid(); }
   const timeframe = ({ "1": "1m", "6": "5m", "7": "15m", "2": "1d" } as const)[url.searchParams.get("ktype") as "1" | "6" | "7" | "2"];
-  return input.provider === "moomoo" ? parseMoomooIndicatorPage(payload, timeframe) : parseYahooIndicatorPage(payload);
+  return input.provider === "moomoo" ? parseMoomooIndicatorPage(payload, timeframe, (input.now ?? Date.now)()) : parseYahooIndicatorPage(payload);
 }
 
 type HistoryFetchInput = Readonly<{

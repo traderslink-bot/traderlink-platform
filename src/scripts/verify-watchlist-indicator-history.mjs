@@ -19,6 +19,17 @@ equal(parseMoomooIndicatorPage(payload(Array.from({ length: 12001 }, (_, i) => r
 equal(parseMoomooIndicatorPage(payload([row(start), row(start, 4)])).reason, "invalid_data");
 equal(parseMoomooIndicatorPage(payload([{ ...row(start), close: null }])).reason, "invalid_data");
 equal(parseMoomooIndicatorPage(payload([])).usable, false);
+for (const [frame, duration] of [["1m", minute], ["5m", 5 * minute], ["15m", 15 * minute]]) {
+  const parsed = parseMoomooIndicatorPage(payload([row(end), row(end + duration),
+    { time_key: end + 2 * duration }]), frame, end + 1000);
+  equal(parsed.ok, true);
+  equal(parsed.data.bars.length, 2); // Forming populated candle is filtered by session normalization.
+  equal(parsed.data.excludedPoints, 1);
+  equal(parsed.data.bars[0].volume, 100);
+  equal(parseMoomooIndicatorPage(payload([{ time_key: end - duration }]), frame, end).reason, "invalid_data");
+  equal(parseMoomooIndicatorPage(payload([{ time_key: end + duration, close: 3 }]), frame, end).reason, "invalid_data");
+}
+equal(parseMoomooIndicatorPage(payload([{ time_key: end + minute }]), "1d", end).reason, "invalid_data");
 equal(parseMoomooIndicatorPage({ ret_code: -7 }).reason, "no_data");
 equal(parseMoomooIndicatorPage({ ret_code: -3 }).requestAccepted, true);
 equal(parseMoomooIndicatorPage({}).reason, "invalid_data");
