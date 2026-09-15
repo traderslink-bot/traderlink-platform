@@ -18,6 +18,13 @@ const {SimpleAnalysisCard}=require("../../../../app/watchlist/simple-analysis-ca
 const {makeAnalysisEdit,mergeAnalysisEdit}=require("../analysis-inline-edit.ts");
 const {parseSimpleAnalysis}=require("../simple-analysis.ts");
 const {parseTradersLinkAiRead}=require("../traderslink-ai-read.ts");
+const {catalystNewsCopy}=require("../catalyst-news-copy.ts");
+test("news copy removes source narration without changing company facts",()=>{
+  const fact="ADVASA's direct listing issued no new shares; registration alone does not establish selling.";
+  assert.equal(catalystNewsCopy("The supplied TradersLink article confirms that "+fact+" Source: https://example.com/news"),fact);
+  assert.equal(catalystNewsCopy(fact),fact);
+  assert.equal(catalystNewsCopy("The company said the supplied materials were incomplete."),"The company said the supplied materials were incomplete.");
+});
 const simple={setup:"A setup <script>unsafe</script>",pullbacks:[
   {low:.2,high:.22,confirmation:"Wait for buyers",invalidation:.19,explanation:"First base"},
   {low:.17,high:.18,confirmation:"Wait for reclaim",invalidation:.16,explanation:"Lower base"}],

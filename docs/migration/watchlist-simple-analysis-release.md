@@ -1,5 +1,7 @@
 # Selectable Simple analysis — Platform
 
+September 15 follow-up: [News card correction](watchlist-news-copy-correction.md).
+
 Source integrated September 14 under owner approval to complete and deploy.
 Release is coordinated with the canonical Watchlist runtime, not a new host.
 

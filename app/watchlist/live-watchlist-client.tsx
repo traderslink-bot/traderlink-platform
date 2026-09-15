@@ -1,5 +1,7 @@
 "use client";
 
+import { catalystNewsCopy } from "../../src/lib/live-watchlist/catalyst-news-copy";
+
 import { SimpleAnalysisCard } from "./simple-analysis-card";
 
 import "flag-icons/css/flag-icons.min.css";
@@ -719,14 +721,13 @@ export function TradersLinkAiReadCard({
 
       <div className="watchlist-ai-read-context-grid">
         {renderSectionEditor?.(["catalystRealityCheck"])}
-        {!hidden.has("catalystRealityCheck") && read.catalystRealityCheck.status === "confirmed" &&
+        {!hidden.has("catalystRealityCheck") &&
         read.catalystRealityCheck.sourceUrls.length > 0 ? (
           <section className="watchlist-ai-read-section">
             <div className="watchlist-ai-read-section-heading">
               <h3>Catalyst / recent news</h3>
-              <span>{formatAiReadTag(read.catalystRealityCheck.status)}</span>
             </div>
-            <p>{read.catalystRealityCheck.summary}</p>
+            <p>{catalystNewsCopy(read.catalystRealityCheck.summary)}</p>
             {olderArticlePublishedAt ? (
               <p><strong>Older article:</strong> {formatArticleDate(olderArticlePublishedAt)}</p>
             ) : null}
@@ -737,9 +738,9 @@ export function TradersLinkAiReadCard({
                 ))}
               </ul>
             ) : null}
-            <p className="watchlist-ai-read-relevance">
-              <strong>Day-trade impact:</strong> {read.catalystRealityCheck.dayTradeRelevance}
-            </p>
+            {read.catalystRealityCheck.sourceUrls.map((url) => (
+              <p key={url}><a href={url} target="_blank" rel="noopener noreferrer">Read source article</a></p>
+            ))}
           </section>
         ) : null}
         {/* Dilution monitoring is not available. Preserve saved fields, but do
