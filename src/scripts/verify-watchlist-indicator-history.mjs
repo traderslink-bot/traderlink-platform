@@ -52,6 +52,10 @@ assert.throws(() => indicatorHistoryUrl("moomoo", { ...request, symbol: "../bad"
 const yahoo = { chart: { result: [{ meta: { exchangeTimezoneName: "America/New_York" }, timestamp: [start / 1000],
   indicators: { quote: [{ open: [3], high: [3.1], low: [2.9], close: [3], volume: [100] }] } }] } };
 equal(parseYahooIndicatorPage(yahoo).data.bars[0].start, start);
+yahoo.chart.result[0].indicators.quote[0].volume = [0];
+equal(parseYahooIndicatorPage(yahoo).data.bars[0].volume, null);
+equal(parseYahooIndicatorPage(yahoo).data.bars[0].close, 3);
+equal(parseMoomooIndicatorPage(payload([{ ...row(start), volume: 0 }])).data.bars[0].volume, 0);
 yahoo.chart.result[0].indicators.quote[0].volume = [null];
 equal(parseYahooIndicatorPage(yahoo).data.bars[0].volume, null);
 equal(parseYahooIndicatorPage(yahoo).data.bars[0].close, 3);

@@ -33,12 +33,12 @@ export function indicatorDisplayRows(input: Readonly<{
     : r?.rsiCondition === "at_midpoint" ? "Recent gains and losses are balanced." : "";
   const vwapPosition = finite(input.vwap) && finite(input.livePrice) ? input.livePrice > input.vwap ? "above" : input.livePrice < input.vwap ? "below" : "at" : null;
   const baselineLabel = input.timeframe === "1d" ? "completed trading days" : `completed ${timeframe} candles in the same session`;
-  let volumeValue = finite(r?.volume) ? new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(r.volume) : "—";
+  let volumeValue = finite(r?.volume) ? new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(r.volume) : "Unavailable";
   let volumeExplanation = finite(r?.volume) ? `Shares traded in the latest completed ${timeframe} candle.` : "";
-  if (finite(r?.volumeRatio)) {
+  if (finite(r?.volume) && finite(r?.volumeRatio)) {
     volumeValue += ` · ${r.volumeRatio.toFixed(2)}× baseline`;
     volumeExplanation = `${r.volumeState === "above_baseline" ? "Above" : r.volumeState === "below_baseline" ? "Below" : "Near"} the average of the preceding ${r.volumeBaselineBars} ${baselineLabel}.`;
-  } else if (finite(r?.volumeChangePercent)) {
+  } else if (finite(r?.volume) && finite(r?.volumeChangePercent)) {
     volumeValue += ` · ${r.volumeChangePercent >= 0 ? "+" : ""}${r.volumeChangePercent.toFixed(1)}%`;
     volumeExplanation = `Compared with the previous completed ${timeframe} candle; not a mature volume baseline.`;
   }
@@ -49,7 +49,7 @@ export function indicatorDisplayRows(input: Readonly<{
     { label: "Trend", value: trend, explanation: trendExplanation },
     { label: "Momentum", value: momentum, explanation: momentumExplanation },
     { label: "RSI", value: finite(r?.rsi14) ? `${r.rsi14.toFixed(1)}${condition ? ` · ${condition}` : ""}` : "—", explanation: rsiExplanation },
-    { label: "VWAP", value: indicatorPrice(input.vwap), explanation: finite(input.vwap)
+    { label: "VWAP", value: finite(input.vwap) ? indicatorPrice(input.vwap) : "Unavailable", explanation: finite(input.vwap)
       ? `${vwapPosition ? `Live price is ${vwapPosition} today's` : "Today's"} VWAP (including extended hours).` : "" },
     { label: "Moving averages", value: `EMA9 ${indicatorPrice(r?.ema9)} · EMA20 ${indicatorPrice(r?.ema20)}`,
       explanation: finite(r?.ema9) && finite(r?.ema20) ? `The faster average is ${r.ema9 > r.ema20 ? "above" : r.ema9 < r.ema20 ? "below" : "equal to"} the slower average.` : "" },

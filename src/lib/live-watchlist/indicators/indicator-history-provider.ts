@@ -147,7 +147,10 @@ export function parseYahooIndicatorPage(payload: unknown): IndicatorTransportRes
     }
     const normalized = bar(timestamp === null ? null : timestamp * 1000, values);
     if (!normalized) return invalid();
-    bars.push(normalized);
+    // Yahoo can publish changing extended-hours OHLC with zero volume. Its
+    // zero does not distinguish no trades from unavailable volume; keep prices
+    // but withhold volume-dependent calculations. Moomoo zeros are unchanged.
+    bars.push(normalized.volume === 0 ? { ...normalized, volume: null } : normalized);
   }
   const unique = sortedUnique(bars);
   if (!unique) return invalid();
