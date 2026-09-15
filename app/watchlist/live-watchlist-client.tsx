@@ -529,15 +529,15 @@ export function TradersLinkAiReadCard({
       ) : null}
       <div className="watchlist-ai-read-header">
         <div>
-          <p className="watchlist-ai-read-eyebrow">
-            {formatAiReadSession(read.marketSession)} at ${formatPrice(read.currentPrice)}
-          </p>
           <h2 className="academy-card-title">{read.symbol} trade preparation</h2>
-        </div>
-        <div className="watchlist-ai-read-badges">
-          <span className="watchlist-ai-read-badge" data-bias={read.bias}>
-            {read.bias} bias
-          </span>
+          <p className="watchlist-ai-read-eyebrow">
+            {formatAiReadSession(read.marketSession)} {formatTime(symbol.firstPostedAt ?? read.generatedAt)} ET at ${formatPrice(read.currentPrice)}
+          </p>
+          <div className="watchlist-ai-read-badges" style={{ justifyContent: "flex-start" }}>
+            <span className="watchlist-ai-read-badge" data-bias={read.bias}>
+              {read.bias} bias
+            </span>
+          </div>
         </div>
       </div>
 
