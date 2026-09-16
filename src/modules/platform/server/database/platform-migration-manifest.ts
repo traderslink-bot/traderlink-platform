@@ -1,4 +1,5 @@
 import { platformWatchlistPublicationNotificationsMigration } from "./migrations/0137_platform_watchlist_publication_notifications";
+import { platformWatchlistNotificationActionIdentityMigration } from "./migrations/0138_platform_watchlist_notification_action_identity";
 import { journalAccountBoundaryMigration } from "@/src/modules/journal/server/database/migrations/0002_journal_account_boundary";
 import { journalImportEvidenceMigration } from "@/src/modules/journal/server/database/migrations/0003_journal_import_evidence";
 import { journalExecutionLedgerMigration } from "@/src/modules/journal/server/database/migrations/0004_journal_execution_ledger";
@@ -623,6 +624,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       migration: sharedTradeAnalyzerOwnerExemptionsMigration,
     }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0137_platform_watchlist_publication_notifications.ts", migration: platformWatchlistPublicationNotificationsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0138_platform_watchlist_notification_action_identity.ts", migration: platformWatchlistNotificationActionIdentityMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
