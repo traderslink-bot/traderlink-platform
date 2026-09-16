@@ -1,5 +1,13 @@
 # TraderLink Platform Migration Register
 
+**Separate Watchlist listing/analysis:** `0138_platform_watchlist_notification_action_identity`
+is exclusively reserved by Visible release coordinator after exact predecessor
+`0137_platform_watchlist_publication_notifications`. Preserves prior receipts and
+preferences while separating action IDs and freezing the analysis notification
+choice. Source registered; unapplied on hosted databases. See
+[plan](watchlist-separate-listing-analysis-plan.md) and
+[progress](watchlist-separate-listing-analysis-progress.md).
+
 ## Analyzer owner exemptions: 0136 allocated and source-registered, unapplied
 
 Coordinator exclusively reserved `0136_shared_trade_analyzer_owner_exemptions`
@@ -28,6 +36,14 @@ remain unchanged. Registered in source; only disposable in-memory fixtures have
 applied this migration. No persistent database, hosted migration or release is
 authorized by this record. Guarded release must apply 0134 then 0135 if neither
 exists, with fresh coordinator predecessor/backup checks.
+
+**Approved Watchlist notifications:** `0137_platform_watchlist_publication_notifications`
+is exclusively reserved by Visible release coordinator after exact predecessor
+`0136_shared_trade_analyzer_owner_exemptions`. It adds empty owner-approval intent,
+user preference, publication event and delivery tables. No historical backfill.
+See [plan](watchlist-approved-push-email-plan.md) and
+[progress](watchlist-approved-push-email-progress.md). Source registered; hosted
+application remains Coordinator-owned and has not been performed by this task.
 
 **Status:** Phases 0-6 are locally accepted. Phase 6 passed sequential regression, production build, packaged-runtime inspection, two-account browser/API/privacy verification and final backup/restore. The accepted source is now published at `traderslink-bot/traderlink-platform`, and the narrow landing/Academy release is live on Vercel. Production-source transfer, public owner linking, Docker execution, persistent-volume deployment and full replacement application/DNS cutover remain external. The completed Journal review-correction package passes its focused, final build and fresh browser gates; port 3010 is currently closed. The accepted real-data baseline is 331 ready closed round trips, zero automatically legitimate-open round trips, and two contained Data Decisions. Four clearly labelled `TLDEMO` local review imports were added on 2026-08-04; they are temporary pending examples, not real trader data or accepted Analytics results.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7`; preserved locally, not pushed or deployed.

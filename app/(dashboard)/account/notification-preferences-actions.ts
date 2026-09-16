@@ -16,6 +16,7 @@ import {
 } from "@/src/modules/platform/server/notifications/platform-notification-email-address-repository";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
+import { WatchlistPublicationNotificationStore } from "@/src/modules/watchlist/server/notifications/watchlist-publication-notification-store";
 
 export async function saveDiscordDmNotificationCategories(
   categories: readonly string[],
@@ -47,17 +48,23 @@ export async function saveDiscordDmNotificationCategories(
 
 export async function saveWebPushNotificationCategories(
   categories: readonly string[],
+  watchlistEnabled?: boolean,
 ): Promise<Readonly<{ ok: true; categories: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
   try {
     const scope = await requireTraderLinkPlatformPageScope();
     const preferences = withPlatformDatabase(
       { mode: "runtime" },
-      (database) => new PlatformNotificationRepository(database)
-        .replaceWebPushCategories({
+      (database) => database.transaction(() => {
+        const result = new PlatformNotificationRepository(database).replaceWebPushCategories({
           categories,
           scope,
           updatedAtUtc: createCanonicalUtcTimestamp(),
-        }),
+        });
+        if (watchlistEnabled !== undefined) {
+          new WatchlistPublicationNotificationStore(database).savePreference(scope.userId, "web_push", watchlistEnabled, new Date());
+        }
+        return result;
+      }).immediate(),
     );
     revalidatePath("/account/preferences");
     return Object.freeze({ ok: true as const, categories: preferences.webPushCategories });
@@ -75,6 +82,7 @@ export async function saveWebPushNotificationCategories(
 
 export async function saveEmailNotificationCategories(
   categories: readonly string[],
+  watchlistEnabled?: boolean,
 ): Promise<Readonly<{ ok: true; categories: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
   try {
     const scope = await requireTraderLinkPlatformPageScope();
@@ -86,11 +94,17 @@ export async function saveEmailNotificationCategories(
           loadPlatformNotificationEmailEncryptionConfiguration(),
         ).readStatus(scope);
         if (emailStatus.state !== "confirmed") return null;
-        return new PlatformNotificationRepository(database).replaceEmailCategories({
-          categories,
-          scope,
-          updatedAtUtc: createCanonicalUtcTimestamp(),
-        });
+        return database.transaction(() => {
+          const result = new PlatformNotificationRepository(database).replaceEmailCategories({
+            categories,
+            scope,
+            updatedAtUtc: createCanonicalUtcTimestamp(),
+          });
+          if (watchlistEnabled !== undefined) {
+            new WatchlistPublicationNotificationStore(database).savePreference(scope.userId, "email", watchlistEnabled, new Date());
+          }
+          return result;
+        }).immediate();
       },
     );
     if (!preferences) {

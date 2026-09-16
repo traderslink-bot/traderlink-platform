@@ -38,11 +38,13 @@ function emailHtml(input: Readonly<{
   destinationUrl: string | null;
   summary: string;
   title: string;
+  extraLinks?: readonly Readonly<{ label: string; url: string }>[];
 }>): string {
   const link = input.destinationUrl
     ? `<p><a href="${escapeHtml(input.destinationUrl)}">${escapeHtml(input.actionLabel)}</a></p>`
     : "";
-  return `<!doctype html><html><body><h1>${escapeHtml(input.title)}</h1><p>${escapeHtml(input.summary)}</p>${link}</body></html>`;
+  const extra = (input.extraLinks ?? []).map(item => `<p><a href="${escapeHtml(item.url)}">${escapeHtml(item.label)}</a></p>`).join("");
+  return `<!doctype html><html><body><h1>${escapeHtml(input.title)}</h1><p>${escapeHtml(input.summary)}</p>${link}${extra}</body></html>`;
 }
 
 function providerResult(response: Response): PlatformNotificationDeliveryResult {
@@ -58,6 +60,8 @@ function providerResult(response: Response): PlatformNotificationDeliveryResult 
  */
 export async function deliverPlatformNotificationEmail(input: Readonly<{
   actionLabel?: string;
+  timeoutMs?: number;
+  additionalLinks?: readonly Readonly<{ label: string; path: string }>[];
   content: PlatformRemoteNotificationContent;
   emailAddress: string;
   environment?: NodeJS.ProcessEnv;
@@ -82,18 +86,28 @@ export async function deliverPlatformNotificationEmail(input: Readonly<{
   if (actionLabel.length > 80 || /[\u0000-\u001f\u007f]/u.test(actionLabel)) {
     return deliveryResult("invalid_destination");
   }
+  const extraLinks: { label: string; url: string }[] = [];
+  if ((input.additionalLinks?.length ?? 0) > 3) return deliveryResult("invalid_destination");
+  for (const link of input.additionalLinks ?? []) {
+    if (!link.label.trim() || link.label.length > 80 || /[\u0000-\u001f\u007f]/u.test(link.label)) return deliveryResult("invalid_destination");
+    const prepared = preparePlatformRemoteNotificationContent({ content: { title: link.label, summary: link.label, destinationPath: link.path },
+      publicOrigin: resolvePlatformNotificationPublicOrigin(environment) });
+    if (!prepared?.destinationUrl) return deliveryResult("invalid_destination");
+    extraLinks.push({ label: link.label, url: prepared.destinationUrl });
+  }
 
   const text = [
     content.title,
     content.summary,
     content.destinationUrl ? `${actionLabel}: ${content.destinationUrl}` : null,
+    ...extraLinks.map(link => `${link.label}: ${link.url}`),
   ].filter((value): value is string => Boolean(value)).join("\n\n");
 
   try {
     const response = await (input.fetcher ?? fetch)(RESEND_EMAILS_API, {
       body: JSON.stringify({
         from: NOTIFICATION_FROM,
-        html: emailHtml({ ...content, actionLabel }),
+        html: emailHtml({ ...content, actionLabel, extraLinks }),
         reply_to: NOTIFICATION_REPLY_TO,
         subject: content.title,
         text,
@@ -106,6 +120,7 @@ export async function deliverPlatformNotificationEmail(input: Readonly<{
         "User-Agent": "TradersLink-Platform-Notifications/1.0",
       },
       method: "POST",
+      ...(input.timeoutMs ? { signal: AbortSignal.timeout(input.timeoutMs) } : {}),
     });
     return providerResult(response);
   } catch {

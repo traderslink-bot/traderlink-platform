@@ -37,6 +37,10 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
       { kind: "paragraph", text: "Website and Discord delivery are tracked separately. If delivery needs attention, inspect its status before retrying. An uncertain delivery must not be treated as a confirmed failure or blindly resent." },
       { kind: "paragraph", text: "If an approved message appeared in Discord but its delivery is awaiting confirmation, select that message part, enter its Discord message ID, and choose Verify existing message. Verification checks the existing message against the approved text and records a matching receipt; it does not send a message. After successful verification, Retry Discord delivery can finish any remaining parts without resending confirmed parts. A message that cannot be verified stays unresolved." }],
   }, {
+    id: "notifications", title: "Watchlist notifications", summary: "Choose push or email updates in Account Notifications.",
+    keywords: ["push", "email", "approval", "notifications"],
+    blocks: [{ kind: "paragraph", text: "Publish ticker without analysis lists the ticker with its available levels and indicators and sends the normal listing notifications. Any analysis draft stays private until you approve it. Approving the analysis together with a new ticker sends one listing announcement. For a ticker already listed, Approve and publish analysis adds the approved read; select Notify users to announce it, or leave it unchecked to publish silently. The checkbox starts unchecked for each new approval. Discord analysis updates include the approved images when available; push and email contain links only. Members choose push and email independently in Account Notifications, and both start off. Saving edits or retrying delivery does not create another announcement. Delivery problems do not undo your approval." }],
+  }, {
     id: "controls", title: "Generation controls", summary: "Choose review and automatic follow-up behavior.",
     keywords: ["automatic updates", "manual refresh", "session", "cost"],
     // Interrupted requests must not look like a never-generated activation.

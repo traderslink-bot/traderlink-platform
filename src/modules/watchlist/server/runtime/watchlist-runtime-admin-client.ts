@@ -3,6 +3,7 @@ import "server-only";
 type RuntimeMethod = "GET" | "POST";
 
 type RuntimeRawRequest = Readonly<{
+  timeoutMs?: number;
   /** Supplied only by the owner-authorized server route, never browser headers. */
   reviewActor?: string;
   body?: string;
@@ -61,7 +62,7 @@ export async function requestWatchlistRuntimeRaw(
       },
       method: request.method,
       redirect: request.reviewActor ? "error" : "follow",
-      signal: AbortSignal.timeout(180_000),
+      signal: AbortSignal.timeout(request.timeoutMs ?? 180_000),
     });
     return Object.freeze({
       body: await response.text(),

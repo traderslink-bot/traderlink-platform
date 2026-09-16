@@ -3,6 +3,8 @@ import { runDailyTradeAnalyzerOnce } from "@/src/modules/level-analysis/server/d
 import { openPlatformDatabase } from "../database/open-platform-database";
 import { PlatformRemoteNotificationDeliveryRepository } from "../notifications/platform-remote-notification-delivery-repository";
 import { PlatformRemoteNotificationDeliveryService } from "../notifications/platform-remote-notification-delivery-service";
+import { reconcileWatchlistNotificationApprovals } from "@/src/modules/watchlist/server/notifications/watchlist-notification-runtime";
+import { runWatchlistNotificationDelivery } from "@/src/modules/watchlist/server/notifications/watchlist-notification-delivery";
 
 let workersStarted = false;
 
@@ -50,6 +52,12 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
   };
 
   void runAnalyzer();
+  const runWatchlistApprovals = () => void reconcileWatchlistNotificationApprovals().catch(() => console.error("Watchlist notification approval check failed."));
+  const runWatchlistDelivery = () => void runWatchlistNotificationDelivery().catch(() => console.error("Watchlist notification delivery check failed."));
+  runWatchlistApprovals();
+  runWatchlistDelivery();
+  setInterval(runWatchlistApprovals, 15_000);
+  setInterval(runWatchlistDelivery, 15_000);
   void deliverNotifications();
   setInterval(() => void runAnalyzer(), 30_000);
   setInterval(() => void deliverNotifications(), 15_000);

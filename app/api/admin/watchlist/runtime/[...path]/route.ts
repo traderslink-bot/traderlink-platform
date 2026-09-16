@@ -3,6 +3,7 @@ import { requestWatchlistRuntimeRaw } from "@/src/modules/watchlist/server/runti
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
 import { requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
+import { recordWatchlistApprovalNotificationIntent } from "@/src/modules/watchlist/server/notifications/watchlist-notification-runtime";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -28,6 +29,7 @@ const POST_PATHS = new Set([
   "/api/watchlist/analysis-review/settings",
   "/api/watchlist/analysis-review/save",
   "/api/watchlist/analysis-review/approve",
+  "/api/watchlist/analysis-review/publish-without-analysis",
   "/api/watchlist/analysis-review/retry-discord",
   "/api/watchlist/analysis-review/verify-discord",
   "/api/ai-clean-read/comments",
@@ -57,7 +59,6 @@ const POST_PATHS = new Set([
   "/api/watchlist/ai-read-visibility",
   "/api/watchlist/deactivate",
   "/api/watchlist/deactivate-bulk",
-  "/api/watchlist/daily-recaps/post-reviewed",
   "/api/watchlist/move-to-list",
   "/api/watchlist/refresh-levels",
   "/api/watchlist/remove-from-list",
@@ -103,9 +104,14 @@ async function relay(
   }
 
   const incomingUrl = new URL(request.url);
+  const body = method === "POST" ? await request.text() : undefined;
+  if (["/api/watchlist/analysis-review/approve", "/api/watchlist/analysis-review/publish-without-analysis"].includes(pathname) && reviewActor && body) {
+    try { recordWatchlistApprovalNotificationIntent(body, reviewActor, pathname.endsWith("/publish-without-analysis")); }
+    catch { console.error("Watchlist notification intent could not be saved; approval remains unchanged."); }
+  }
   const result = await requestWatchlistRuntimeRaw({
     reviewActor,
-    body: method === "POST" ? await request.text() : undefined,
+    body,
     contentType: request.headers.get("content-type") ?? undefined,
     method,
     path: `${pathname}${incomingUrl.search}`,

@@ -76,6 +76,7 @@ export function NotificationPreferences({
   initialEmailStatus,
   initialPressReleasePushChannels,
   initialWebPushCategories,
+  initialWatchlistPreferences,
 }: {
   initialDiscordDmCategories: readonly PlatformNotificationCategory[];
   initialEmailCategories: readonly PlatformNotificationCategory[];
@@ -86,10 +87,13 @@ export function NotificationPreferences({
   }>;
   initialPressReleasePushChannels: readonly PressReleasePushChannel[];
   initialWebPushCategories: readonly PlatformNotificationCategory[];
+  initialWatchlistPreferences: Readonly<{ webPushEnabled: boolean; emailEnabled: boolean }>;
 }) {
   const [selected, setSelected] = useState<readonly PlatformNotificationCategory[]>(initialDiscordDmCategories);
   const [emailSelected, setEmailSelected] = useState<readonly PlatformNotificationCategory[]>(initialEmailCategories);
   const [pushSelected, setPushSelected] = useState<readonly PlatformNotificationCategory[]>(initialWebPushCategories);
+  const [watchlistPush, setWatchlistPush] = useState(initialWatchlistPreferences.webPushEnabled);
+  const [watchlistEmail, setWatchlistEmail] = useState(initialWatchlistPreferences.emailEnabled);
   const [pressReleasePushSelected, setPressReleasePushSelected] = useState<readonly PressReleasePushChannel[]>(initialPressReleasePushChannels);
   const [pushState, setPushState] = useState<PlatformWebPushBrowserState>("checking");
   const [discordMessage, setDiscordMessage] = useState<string | null>(null);
@@ -153,10 +157,12 @@ export function NotificationPreferences({
   }
 
   function toggleAllEmail(checked: boolean): void {
+    setWatchlistEmail(checked);
     setEmailSelected(checked ? PLATFORM_NOTIFICATION_CATEGORIES : Object.freeze([]));
   }
 
   function toggleAllPush(checked: boolean): void {
+    setWatchlistPush(checked);
     setPushSelected(checked ? PLATFORM_NOTIFICATION_CATEGORIES : Object.freeze([]));
     setPressReleasePushSelected(checked ? PRESS_RELEASE_PUSH_CHANNELS : Object.freeze([]));
   }
@@ -182,6 +188,8 @@ export function NotificationPreferences({
     startTransition(async () => {
       try {
         await enablePlatformWebPush(pushSelected, pushPreparation);
+        const watchlistResult = await saveWebPushNotificationCategories(pushSelected, watchlistPush);
+        if (!watchlistResult.ok) throw new Error(watchlistResult.message);
         const pressReleaseResult = await savePressReleasePushChannels(pressReleasePushSelected);
         if (!pressReleaseResult.ok) throw new Error(pressReleaseResult.message);
         setPressReleasePushSelected(pressReleaseResult.channels as readonly PressReleasePushChannel[]);
@@ -223,7 +231,7 @@ export function NotificationPreferences({
 
   function saveEmail(): void {
     startTransition(async () => {
-      const result = await saveEmailNotificationCategories(emailSelected);
+      const result = await saveEmailNotificationCategories(emailSelected, watchlistEmail);
       if (result.ok) {
         setEmailSelected(result.categories as readonly PlatformNotificationCategory[]);
         setEmailMessage("Email notification preferences saved.");
@@ -258,7 +266,7 @@ export function NotificationPreferences({
     startTransition(async () => {
       try {
         const [result, pressReleaseResult] = await Promise.all([
-          saveWebPushNotificationCategories(pushSelected),
+          saveWebPushNotificationCategories(pushSelected, watchlistPush),
           savePressReleasePushChannels(pressReleasePushSelected),
         ]);
         if (result.ok && pressReleaseResult.ok) {
@@ -342,7 +350,7 @@ export function NotificationPreferences({
       ) : null}
       <Stack spacing={0.25}>
         <FormControlLabel
-          control={<Checkbox checked={emailSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length} indeterminate={emailSelected.length > 0 && emailSelected.length < PLATFORM_NOTIFICATION_CATEGORIES.length} onChange={(event) => toggleAllEmail(event.target.checked)} />}
+          control={<Checkbox checked={watchlistEmail && emailSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length} indeterminate={(watchlistEmail || emailSelected.length > 0) && !(watchlistEmail && emailSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length)} onChange={(event) => toggleAllEmail(event.target.checked)} />}
           label="Select all"
         />
         {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
@@ -352,6 +360,7 @@ export function NotificationPreferences({
             label={labels[category]}
           />
         ))}
+        <FormControlLabel control={<Checkbox checked={watchlistEmail} onChange={(event) => setWatchlistEmail(event.target.checked)} />} label="Watchlist" />
       </Stack>
       <Button disabled={working} onClick={saveEmail} sx={{ alignSelf: "flex-start" }} variant="contained">
         {working ? "Saving..." : "Save Email Preferences"}
@@ -391,7 +400,7 @@ export function NotificationPreferences({
       ) : null}
       <Stack spacing={0.25}>
         <FormControlLabel
-          control={<Checkbox checked={pushSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length && pressReleasePushSelected.length === PRESS_RELEASE_PUSH_CHANNELS.length} disabled={pushState === "unsupported" || pushState === "denied"} indeterminate={! (pushSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length && pressReleasePushSelected.length === PRESS_RELEASE_PUSH_CHANNELS.length) && (pushSelected.length > 0 || pressReleasePushSelected.length > 0)} onChange={(event) => toggleAllPush(event.target.checked)} />}
+          control={<Checkbox checked={watchlistPush && pushSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length && pressReleasePushSelected.length === PRESS_RELEASE_PUSH_CHANNELS.length} disabled={pushState === "unsupported" || pushState === "denied"} indeterminate={!(watchlistPush && pushSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length && pressReleasePushSelected.length === PRESS_RELEASE_PUSH_CHANNELS.length) && (watchlistPush || pushSelected.length > 0 || pressReleasePushSelected.length > 0)} onChange={(event) => toggleAllPush(event.target.checked)} />}
           label="Select all"
         />
         {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
@@ -401,6 +410,7 @@ export function NotificationPreferences({
             label={labels[category]}
           />
         ))}
+        <FormControlLabel control={<Checkbox checked={watchlistPush} disabled={pushState === "unsupported" || pushState === "denied"} onChange={(event) => setWatchlistPush(event.target.checked)} />} label="Watchlist" />
         {PRESS_RELEASE_PUSH_CHANNELS.map((channel) => (
           <FormControlLabel
             control={<Checkbox checked={pressReleasePushSelected.includes(channel)} disabled={pushState === "unsupported" || pushState === "denied"} onChange={(event) => togglePressReleasePush(channel, event.target.checked)} />}

@@ -11,6 +11,7 @@ import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/
 import { AccountSettingsLayout } from "../account-settings-layout";
 import { AppearanceSettings } from "../appearance-settings";
 import { NotificationPreferences } from "../notification-preferences";
+import { WatchlistPublicationNotificationStore } from "@/src/modules/watchlist/server/notifications/watchlist-publication-notification-store";
 
 export const metadata: Metadata = {
   description: "Choose TradersLink appearance, push notifications and Discord messages.",
@@ -22,8 +23,9 @@ export const revalidate = 0;
 
 export default async function AccountPreferencesPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { appearance, notificationPreferences, notificationEmailStatus, pressReleasePushChannels } = withReadonlyPlatformDatabase({}, (database) =>
+  const { appearance, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
+      watchlistPreferences: new WatchlistPublicationNotificationStore(database).readPreferences(scope.userId),
       appearance: new PlatformUserPreferenceRepository(database).getActiveWorkspaceAppearance(scope),
       notificationPreferences: new PlatformNotificationRepository(database).readPreferences(scope),
       notificationEmailStatus: (() => {
@@ -48,6 +50,7 @@ export default async function AccountPreferencesPage() {
     emailState: notificationEmailStatus.state,
     pressRelease: pressReleasePushChannels,
     push: notificationPreferences.webPushCategories,
+    watchlist: watchlistPreferences,
   });
 
   return (
@@ -67,6 +70,7 @@ export default async function AccountPreferencesPage() {
           initialEmailStatus={notificationEmailStatus}
           initialPressReleasePushChannels={pressReleasePushChannels}
           initialWebPushCategories={notificationPreferences.webPushCategories}
+          initialWatchlistPreferences={watchlistPreferences}
         />
       </DashboardPanel>
     </AccountSettingsLayout>
