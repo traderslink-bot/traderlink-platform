@@ -1,3 +1,4 @@
+import { platformWatchlistPublicationNotificationsMigration } from "./migrations/0137_platform_watchlist_publication_notifications";
 import { journalAccountBoundaryMigration } from "@/src/modules/journal/server/database/migrations/0002_journal_account_boundary";
 import { journalImportEvidenceMigration } from "@/src/modules/journal/server/database/migrations/0003_journal_import_evidence";
 import { journalExecutionLedgerMigration } from "@/src/modules/journal/server/database/migrations/0004_journal_execution_ledger";
@@ -621,6 +622,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/level-analysis/server/database/migrations/0136_shared_trade_analyzer_owner_exemptions.ts",
       migration: sharedTradeAnalyzerOwnerExemptionsMigration,
     }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0137_platform_watchlist_publication_notifications.ts", migration: platformWatchlistPublicationNotificationsMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -629,6 +631,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0137_platform_watchlist_publication_notifications": Object.freeze(["platform_watchlist_notification_intents", "platform_watchlist_notification_preferences", "platform_watchlist_notification_events", "platform_watchlist_notification_deliveries"]),
     "0136_shared_trade_analyzer_owner_exemptions": Object.freeze([
       "level_analysis_owner_exemption_events", "level_analysis_owner_exempt_acquisitions",
     ]),
