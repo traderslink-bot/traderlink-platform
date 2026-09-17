@@ -1,5 +1,5 @@
 ---
-title: "Hammer"
+title: "Hammer Candlestick Pattern"
 slug: "/academy/candle-behavior/hammer/"
 primary_keyword: "hammer"
 secondary_keywords: ["hammer candle", "hammer pattern", "candle behavior"]
@@ -22,11 +22,11 @@ internal_links: ["/academy/gap-fill-trading/", "/academy/candle-behavior/inverte
 visual_assets: ["/academy/images/chart-reading/candle-behavior/hammer-shape.svg", "/academy/images/chart-reading/candle-behavior/hammer-context.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
-meta_title: "Hammer Explained"
-meta_description: "Learn Hammer by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
+meta_title: "Hammer Candlestick Pattern Explained"
+meta_description: "Learn to identify a hammer candlestick pattern, read its context after weakness, and review confirmation, failure, and common confusion with a hanging man."
 ---
 
-# Hammer
+# Hammer Candlestick Pattern
 
 A hammer shows lower rejection after weakness. Sellers pushed price down during the candle, but buyers brought it back up before the close, leaving a long lower wick and a small body near the high.
 
@@ -73,6 +73,8 @@ The shape can look like a hanging man. The difference is context: hammer is disc
 ## Key Takeaway
 
 A hammer shows lower rejection after weakness. It becomes more useful when it forms near support and the next candles respect the hammer low or push back through the hammer high.
+
+To study detected patterns alongside saved executions, [explore candle-pattern analysis in Trade Analyzer](/trade-analyzer). Its confirmed pattern rules are more specific than this introductory shape description, so not every hammer-shaped candle will be detected.
 
 ## Related Lessons
 

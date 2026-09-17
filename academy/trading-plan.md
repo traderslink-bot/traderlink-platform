@@ -288,12 +288,14 @@ The best beginner plan is simple, specific, and reviewable.
 
 A plan will not make trading easy, but it makes decisions harder to hide from.
 
+Use a [trading journal](/trading-journal) to keep your recorded trades, notes, and rule results together when reviewing how you followed the plan.
+
 ## Related Lessons
 
 * [Risk Management](/academy/risk-management/)
 * [Trading Discipline](/academy/trading-discipline/)
 * [Trading Rules](/academy/trading-rules/)
-* [How to Review Your Trades](/blog/how-to-review-your-trades/)
+* [Trade Risk Review](/academy/trade-risk-review)
 * [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
 ## FAQ

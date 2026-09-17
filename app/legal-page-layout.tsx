@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { PublicSiteFooter } from "./public-site-footer";
+import { LegacyWebsiteChrome } from "@/src/components/site/public-website-chrome";
 
 export function LegalPageLayout({
   children,
@@ -15,7 +16,8 @@ export function LegalPageLayout({
 }) {
   return (
     <main className="tl-home min-h-screen bg-[#020817] text-slate-100">
-      <header className="border-b border-slate-800">
+      <LegacyWebsiteChrome>
+        <header className="border-b border-slate-800">
         <nav className="mx-auto flex w-full max-w-7xl items-center px-5 py-5 sm:px-8">
           <Link
             aria-label="TradersLink homepage"
@@ -34,7 +36,8 @@ export function LegalPageLayout({
             </span>
           </Link>
         </nav>
-      </header>
+        </header>
+      </LegacyWebsiteChrome>
 
       <article className="mx-auto w-full max-w-4xl px-5 py-12 sm:px-8 sm:py-16">
         <div className="border-b border-slate-800 pb-8">

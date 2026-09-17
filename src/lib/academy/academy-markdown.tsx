@@ -126,7 +126,7 @@ function renderBlock(block: MarkdownBlock) {
                 ) : (
                   <a
                     key={link.href}
-                    href={link.href}
+                    href={canonicalAcademyHref(link.href)}
                     className="academy-md-link-card"
                   >
                     {link.text}
@@ -447,7 +447,7 @@ function renderInline(text: string): ReactNode[] {
           );
         } else {
           nodes.push(
-            <a key={key} href={link[2]} className="academy-md-link">
+            <a key={key} href={canonicalAcademyHref(link[2])} className="academy-md-link">
               {link[1]}
             </a>,
           );
@@ -465,12 +465,18 @@ function renderInline(text: string): ReactNode[] {
   return nodes;
 }
 
+// Normalize rendered links only; stored lesson slugs also identify saved progress.
+function canonicalAcademyHref(href: string): string {
+  if (!href.startsWith("/academy/")) return href;
+  return href.replace(/\/(?=[?#]|$)/, "");
+}
+
 function isUnavailableAcademyHref(href: string): boolean {
   if (!href.startsWith("/academy/")) {
     return false;
   }
 
-  const lesson = getAcademyLesson(href);
+  const lesson = getAcademyLesson(href.split(/[?#]/, 1)[0]);
 
   return !lesson || !isAcademyLessonLaunchReady(lesson);
 }

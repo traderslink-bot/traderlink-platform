@@ -287,6 +287,8 @@ It looks at size, invalidation, stops, adds, reductions, slippage, spread, daily
 
 Profit and loss show the result. Risk review explains the process behind the result.
 
+To connect the review to saved executions and historical price movement, [review completed trades with Trade Analyzer](/trade-analyzer).
+
 ## Related Lessons
 
 * [Risk Management](/academy/risk-management/)

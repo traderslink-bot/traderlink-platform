@@ -304,6 +304,8 @@ Size should be based on risk distance, account risk, volatility, liquidity, spre
 
 The goal is not the biggest position. The goal is a position that can be managed correctly.
 
+You can [review results by position size](/trade-analytics) to compare completed trades and open the examples behind each result. Past results do not establish the right size for a future trade.
+
 ## Related Lessons
 
 * [Risk Management](/academy/risk-management/)

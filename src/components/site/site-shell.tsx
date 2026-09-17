@@ -8,6 +8,7 @@ import {
   TRADERSLINK_X_URL,
 } from "@/src/lib/academy/academy-seo";
 import { PublicSiteFooter } from "@/app/public-site-footer";
+import { usePublicWebsiteChrome } from "./public-website-chrome";
 
 type SiteTheme = "light" | "dark";
 type SiteAuthSnapshot =
@@ -33,6 +34,7 @@ export function SiteShell({
   shellElement?: "div" | "main";
 }) {
   const [selectedTheme, setSelectedTheme] = useState<SiteTheme>("light");
+  const publicWebsite = usePublicWebsiteChrome();
   const [auth, setAuth] = useState<SiteAuthSnapshot>(signedOutAuthSnapshot);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ShellElement = shellElement;
@@ -115,7 +117,8 @@ export function SiteShell({
 
   return (
     <ShellElement className="academy-shell" data-academy-theme={theme}>
-      <header className="academy-topbar">
+      {!publicWebsite ? (
+        <header className="academy-topbar">
         <div className="academy-topbar-inner">
           <div className="academy-brand">
             <Link
@@ -174,7 +177,16 @@ export function SiteShell({
             />
           </div>
         </div>
-      </header>
+        </header>
+      ) : (
+        <div
+          aria-label="Academy account and display controls"
+          className="academy-topbar-actions"
+          style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "flex-end", padding: "12px 4.5%" }}
+        >
+          <SiteTopbarControls auth={auth} showThemeToggle={!forcedTheme} onSelectTheme={selectTheme} theme={theme} />
+        </div>
+      )}
       {children}
       <PublicSiteFooter />
     </ShellElement>

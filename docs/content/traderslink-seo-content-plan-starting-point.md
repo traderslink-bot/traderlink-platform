@@ -1,5 +1,7 @@
 # TradersLink SEO Content Plan Starting Point
 
+> Historical guidance: pricing and product-availability statements below may be outdated. For the approved current public-site SEO work, use the [September 2026 SEO plan](../migration/public-site-seo-improvement-plan-2026-09-16.md) and verify claims against the current product.
+
 ## Purpose
 
 Use this as the starting brief for ChatGPT or any content writer building the

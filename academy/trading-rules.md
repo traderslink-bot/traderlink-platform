@@ -314,6 +314,8 @@ They should be clear, realistic, and reviewable. A beginner does not need dozens
 
 Rules are useful when they make behavior easier to see.
 
+You can [review trading rules in your journal](/trading-journal), keeping supported rule results beside the recorded trades and notes that explain the day.
+
 ## Related Lessons
 
 * [Trading Plan](/academy/trading-plan/)

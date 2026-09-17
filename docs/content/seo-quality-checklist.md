@@ -1,5 +1,7 @@
 # TradersLink SEO Quality Checklist
 
+> Historical guidance: pricing and product-availability statements below may be outdated. For the approved current public-site SEO work, use the [September 2026 SEO plan](../migration/public-site-seo-improvement-plan-2026-09-16.md) and verify claims against the current product.
+
 ## Purpose
 
 Use this checklist before marking any SEO draft as `needs_review` in `docs/content/content-production-queue.md`.

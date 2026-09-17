@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
+import { PublicWebsiteChrome } from "@/src/components/site/public-website-chrome";
+import { isPublicWebsiteHost } from "@/src/components/site/public-website-host";
 import { AnalyticsConsent } from "./analytics-consent";
 import { MuiProviders } from "./mui-provider";
 import { PwaServiceWorkerBootstrap } from "./pwa/pwa-service-worker-bootstrap";
@@ -36,11 +39,15 @@ export const viewport: Viewport = {
   themeColor: "#011e56",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const requestHeaders = await headers();
+  const publicWebsite = isPublicWebsiteHost(
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host"),
+  );
   return (
     <html
       lang="en"
@@ -49,7 +56,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <PwaServiceWorkerBootstrap />
         <MuiProviders>
-          {children}
+          {publicWebsite ? (
+            <PublicWebsiteChrome>{children}</PublicWebsiteChrome>
+          ) : (
+            children
+          )}
           <AnalyticsConsent />
         </MuiProviders>
       </body>

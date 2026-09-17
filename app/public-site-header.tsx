@@ -5,10 +5,13 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Image from "next/image";
 import Link from "next/link";
+import { usePublicWebsiteChrome } from "@/src/components/site/public-website-chrome";
 
 const dashboardEntryHref = "https://app.traderslink.pro/dashboard-entry";
 
 export function PublicSiteHeader() {
+  const publicWebsite = usePublicWebsiteChrome();
+  if (publicWebsite) return null;
   return (
     <Box component="header" sx={{ backgroundColor: "common.white", borderBottom: 1, borderColor: "divider" }}>
       <Box sx={{ alignItems: "center", display: "flex", gap: { xs: 0.5, sm: 1.5 }, justifyContent: "space-between", margin: "0 auto", maxWidth: 1440, minHeight: 68, px: { xs: 1.25, sm: 2.5 } }}>
