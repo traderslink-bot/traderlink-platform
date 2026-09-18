@@ -46,7 +46,8 @@ export default async function RootLayout({
 }>) {
   const requestHeaders = await headers();
   const publicWebsite = isPublicWebsiteHost(
-    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host"),
+    requestHeaders.get("host"),
+    requestHeaders.get("x-forwarded-host"),
   );
   return (
     <html
