@@ -6,6 +6,7 @@ import { createContext, type ReactNode, useContext, useEffect, useRef, useState 
 import { usePathname } from "next/navigation";
 import styles from "./public-website-chrome.module.css";
 import { OPEN_COOKIE_CHOICES_EVENT } from "@/src/lib/privacy/analytics-consent-events";
+import { isPublicWebsiteRoute } from "./public-website-route";
 
 const PublicWebsiteContext = createContext(false);
 export function usePublicWebsiteChrome() { return useContext(PublicWebsiteContext); }
@@ -24,6 +25,7 @@ const footerLinks = [featureLinks[0], featureLinks[2], featureLinks[3], ["/acade
 
 export function PublicWebsiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  if (!isPublicWebsiteRoute(pathname)) return children;
   return <PublicWebsiteContext.Provider value={true}>
     <HomepageNavigation key={pathname} />
     {children}
