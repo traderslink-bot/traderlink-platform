@@ -8,6 +8,12 @@
 .tabs button[aria-selected="true"] { background: #011e56; color: white; border-color: #011e56; font-weight: 700; }
 .tabs button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 .rows { margin: 0; }
+.state { display: table; padding: .18rem .5rem; margin-bottom: .4rem; border-radius: 6px; font-size: .8rem; font-weight: 700; background: #e8eff8; color: #164571; }
+.state[data-tone="bullish"] { background: #e1f4e8; color: #14532d; }
+.state[data-tone="bearish"] { background: #fde7e7; color: #991b1b; }
+.state[data-tone="neutral"] { background: #fff0dc; color: #8a4100; }
+.help { border: 0; background: transparent; color: inherit; cursor: help; min-width: 32px; min-height: 32px; font: inherit; }
+.help:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .row { padding: .8rem 0; border-bottom: 1px solid var(--academy-border); display: grid; grid-template-columns: 125px minmax(0, 1fr); gap: .5rem; }
 .row:last-child { border-bottom: 0; }
 .row dt { font-weight: 700; }

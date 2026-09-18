@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
+import Tooltip from "@mui/material/Tooltip";
 import type { IndicatorTimeframe } from "@/src/lib/live-watchlist/indicators/indicator-engine";
 import { memberIndicatorSnapshot, type WatchlistMemberIndicatorSnapshot } from "@/src/lib/live-watchlist/indicators/indicator-member-snapshot";
 import { indicatorDisplayRows, indicatorFrameLabel, indicatorSummary } from "@/src/lib/live-watchlist/indicators/indicator-presentation";
@@ -75,7 +76,11 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
     <section role="tabpanel" id={`${id}-details`} aria-labelledby={`${id}-${selected}`} tabIndex={0}>
       <p className={styles.updated}>Last updated {timestamp(result?.dataThrough)}</p>
       <dl className={styles.rows}>{rows.map(row => <div className={styles.row} key={row.label}>
-        <dt>{row.label}</dt><dd>{row.value}{row.explanation ? <p>{row.explanation}</p> : null}
+        <dt>{row.label}{row.calculation ? <Tooltip title={row.calculation} describeChild arrow>
+          <button type="button" className={styles.help} aria-label={`${row.label} calculation details`}>ⓘ</button>
+        </Tooltip> : null}</dt><dd>
+          {row.state ? <span className={styles.state} data-tone={row.tone}>{row.state}</span> : null}
+          {row.value}{row.explanation ? <p>{row.explanation}</p> : null}
           {row.label === "VWAP" ? <p className={styles.updated}>Last updated {timestamp(current?.vwap.dataThrough)}</p> : null}
         </dd>
       </div>)}</dl>
