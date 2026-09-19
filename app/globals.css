@@ -3420,9 +3420,10 @@ main.bg-zinc-950 .text-zinc-500 {
 /* Mobile ticker detail: only the final chart breaks out of the content gutters. */
 @media (max-width: 620px) {
   .watchlist-page > .watchlist-tradingview-card:last-child {
-    width: 100vw;
+    /* Dashboard 12px + Watchlist 20px gutters; exclude the browser scrollbar. */
+    width: calc(100% + 64px);
     max-width: none;
-    margin-inline: calc(50% - 50vw);
+    margin-inline: -32px;
   }
 
   .watchlist-page > .watchlist-tradingview-card:last-child .watchlist-tradingview-widget {
@@ -3438,6 +3439,14 @@ main.bg-zinc-950 .text-zinc-500 {
 
   .academy-shell:has(.watchlist-page > .watchlist-tradingview-card:last-child) {
     min-height: 0;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 620px) {
+  .watchlist-page > .watchlist-tradingview-card:last-child {
+    /* The dashboard gutter becomes 20px at its sm breakpoint. */
+    width: calc(100% + 80px);
+    margin-inline: -40px;
   }
 }
 
