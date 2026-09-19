@@ -18,7 +18,7 @@ const AnalysisPreviewCard = dynamic(() => import("@/app/watchlist/live-watchlist
 const IndicatorAuditPanel = dynamic(() => import("./watchlist-indicator-audit-panel"));
 const RUNTIME_SECTIONS = [
   ["watchlist", "Watchlist"], ["runtime", "Runtime"], ["market-data", "Market Data"],
-  ["ai-controls", "AI Controls"], ["live-website-controls", "Live Website Controls"],
+  ["ai-controls", "AI Controls"], ["discord-notifications", "Discord notifications"], ["live-website-controls", "Live Website Controls"],
   ["automatic-low-float-selection", "Automatic Low-Float Selection"],
 ] as const;
 

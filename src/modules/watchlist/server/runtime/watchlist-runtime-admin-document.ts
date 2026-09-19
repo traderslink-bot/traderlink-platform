@@ -28,6 +28,7 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
     { id: "runtime", label: "Runtime" },
     { id: "market-data", label: "Market Data" },
     { id: "ai-controls", label: "AI Controls" },
+    { id: "discord-notifications", label: "Discord notifications" },
     { id: "live-website-controls", label: "Live Website Controls" },
     { id: "automatic-low-float-selection", label: "Automatic Low-Float Selection" },
   ];
@@ -99,6 +100,7 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
       ["runtime", runtimeStatus],
       ["market-data", marketData],
       ["ai-controls", aiControls],
+      ["discord-notifications", directSection(root, "Discord notifications")],
       ["live-website-controls", deterministicAdapter],
       ["live-website-controls", liveWebsiteControls],
       ["automatic-low-float-selection", automaticLowFloat],

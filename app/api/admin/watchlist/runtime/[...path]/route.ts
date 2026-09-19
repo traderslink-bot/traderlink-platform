@@ -11,6 +11,7 @@ export const runtime = "nodejs";
 type SupportedMethod = "GET" | "POST";
 
 const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/discord-mentions",
   "/api/watchlist/analysis-review/export",
   "/api/watchlist/analysis-review/history",
   "/api/watchlist/analysis-review/queue",
@@ -26,6 +27,7 @@ const GET_PATHS = new Set([
 ]);
 
 const POST_PATHS = new Set([
+  "/api/watchlist/analysis-review/discord-mentions",
   "/api/watchlist/analysis-review/settings",
   "/api/watchlist/analysis-review/save",
   "/api/watchlist/analysis-review/approve",

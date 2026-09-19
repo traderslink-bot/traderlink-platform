@@ -1,5 +1,7 @@
 # Watchlist Runtime Dashboard Admin Plan
 
+Owner-approved addition: [Discord mention controls](watchlist-discord-mentions-plan.md).
+
 September 14 selectable-format release: [Simple analysis progress and gates](watchlist-simple-analysis-release.md).
 
 **Status:** Correction approved for implementation

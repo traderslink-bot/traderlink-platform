@@ -1,0 +1,21 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),ts=require('typescript');
+const {JSDOM}=require('jsdom');
+function load(path){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:()=>({})});return exports;}
+const runtime=process.env.WATCHLIST_RUNTIME_SOURCE;
+assert.ok(runtime,'Set WATCHLIST_RUNTIME_SOURCE to canonical runtime checkout');
+const {WATCHLIST_DISCORD_MENTIONS_PANEL}=load(runtime+'/src/runtime/manual-watchlist-discord-mentions-panel.ts');
+const {rewriteWatchlistRuntimeDocument}=load('src/modules/watchlist/server/runtime/watchlist-runtime-admin-document.ts');
+const html=rewriteWatchlistRuntimeDocument('<html><body><main><form id="watchlist-form"></form>'+WATCHLIST_DISCORD_MENTIONS_PANEL+'</main></body></html>');
+const dom=new JSDOM(html,{url:'https://app.test/admin/watchlist',runScripts:'outside-only'});const w=dom.window,d=w.document;
+let saved;w.AbortSignal.timeout=()=>new w.AbortController().signal;
+w.fetch=async(url,options)=>{assert.equal(url,'/api/admin/watchlist/runtime/watchlist/analysis-review/discord-mentions');if(options.method==='POST'){saved=JSON.parse(options.body);assert.equal(options.headers['x-traderlink-journal-admin-request'],'1');}return{ok:true,json:async()=>({settings:saved??{everyone:true,roles:[{id:'12345678901234567',label:'Premium Members',enabled:true}]}})};};
+(async()=>{for(const s of d.querySelectorAll('script'))w.eval(s.textContent);await new Promise(r=>setTimeout(r,40));
+const panel=d.getElementById('watchlist-discord-notifications');assert.equal(panel.hidden,true);
+Array.from(d.querySelectorAll('nav button')).find(b=>b.textContent==='Discord notifications').click();assert.equal(panel.hidden,false);
+d.getElementById('discord-mention-everyone').checked=false;
+d.getElementById('discord-mention-add').click();assert.equal(d.querySelectorAll('#discord-mention-roles fieldset').length,2);
+const last=d.querySelector('#discord-mention-roles fieldset:last-child');last.querySelector('[data-field=id]').value='23456789012345678';last.querySelector('[data-field=label]').value='New role';
+d.querySelector('#discord-mention-roles fieldset button').click();d.getElementById('discord-mention-save').click();await new Promise(r=>setTimeout(r,10));
+assert.deepEqual(saved,{everyone:false,roles:[{id:'23456789012345678',label:'New role',enabled:true}]});assert.match(d.getElementById('discord-mention-status').textContent,/saved/);
+assert.ok(fs.readFileSync('app/(dashboard)/admin/watchlist/watchlist-runtime-admin-client.tsx','utf8').includes('["discord-notifications", "Discord notifications"]'));
+console.log('PASS: main/wrapper navigation, hidden section, load, everyone toggle, add/remove role, save, authenticated proxy rewrite. No network.');dom.window.close();})().catch(e=>{dom.window.close();console.error(e);process.exitCode=1;});
