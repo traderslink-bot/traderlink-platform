@@ -3417,6 +3417,30 @@ main.bg-zinc-950 .text-zinc-500 {
   gap: 1rem;
 }
 
+/* Mobile ticker detail: only the final chart breaks out of the content gutters. */
+@media (max-width: 620px) {
+  .watchlist-page > .watchlist-tradingview-card:last-child {
+    width: 100vw;
+    max-width: none;
+    margin-inline: calc(50% - 50vw);
+  }
+
+  .watchlist-page > .watchlist-tradingview-card:last-child .watchlist-tradingview-widget {
+    border-radius: 0;
+    border-inline-width: 0;
+  }
+
+  .watchlist-page:has(> .watchlist-tradingview-card:last-child),
+  .academy-container.watchlist-container:has(.watchlist-page > .watchlist-tradingview-card:last-child),
+  main:has(.watchlist-page > .watchlist-tradingview-card:last-child) {
+    padding-bottom: 0;
+  }
+
+  .academy-shell:has(.watchlist-page > .watchlist-tradingview-card:last-child) {
+    min-height: 0;
+  }
+}
+
 .watchlist-tradingview-card {
   min-width: 0;
   height: clamp(56rem, 105vh, 72rem);
