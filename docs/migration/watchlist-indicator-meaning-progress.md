@@ -19,3 +19,13 @@ TypeScript and targeted ESLint passed. No hosted visual check or local server.
 No deployment authorized by this slice. Existing dirty
 Watchlist repair files must not be absorbed into this change. Final hosted visual
 acceptance remains separate. Help must describe states rather than buy/sell signals.
+
+## Owner-approved Trend, Momentum and RSI follow-up
+
+2026-09-17: Trend and Momentum now use the same existing colored tags.
+RSI retains its number with bullish/bearish/neutral momentum and the owner's
+approved directional-advantage wording. Separate orange Overbought (>70) and
+Oversold (<30) tags describe stretched conditions. Thresholds stay unchanged;
+missing data gets no inferred state. No MA, volume, ATR, VWAP, engine, refresh
+or provider changes. Focused four-timeframe and exact boundary checks added.
+No deployment performed; hosted visual acceptance remains pending.

@@ -1,6 +1,7 @@
 import type { IndicatorResult, IndicatorTimeframe } from "./indicator-engine";
 export type IndicatorDisplayRow = Readonly<{ label: string; value: string; explanation: string;
-  state?: string; tone?: "bullish" | "bearish" | "neutral" | "activity"; calculation?: string }>;
+  state?: string; tone?: "bullish" | "bearish" | "neutral" | "activity"; calculation?: string;
+  conditionState?: "Overbought" | "Oversold" }>;
 const finite = (n: number | null | undefined): n is number => typeof n === "number" && Number.isFinite(n);
 export const indicatorPrice = (n: number | null | undefined): string => finite(n) ? `$${n.toFixed(n < 1 ? 4 : 2)}` : "—";
 export const indicatorFrameLabel = (frame: IndicatorTimeframe): string => frame === "1d" ? "Daily" : frame;
@@ -27,11 +28,12 @@ export function indicatorDisplayRows(input: Readonly<{
   const condition = r?.rsiCondition === "oversold" ? "Oversold" : r?.rsiCondition === "overbought" ? "Overbought"
     : r?.rsiCondition === "below_midpoint" ? "Below 50" : r?.rsiCondition === "above_midpoint" ? "Above 50" : r?.rsiCondition === "at_midpoint" ? "At 50" : "";
   const momentumExplanation = finite(r?.rsiChange) ? `RSI ${r.rsiChange > 0 ? "rose" : r.rsiChange < 0 ? "fell" : "changed"} ${Math.abs(r.rsiChange).toFixed(1)} points over three completed candles${condition ? `; currently ${condition.toLowerCase()}` : ""}.` : "";
-  const rsiExplanation = r?.rsiCondition === "oversold" ? "Below 30; recent losses outweigh gains. Oversold alone does not establish a reversal."
-    : r?.rsiCondition === "overbought" ? "Above 70; buying pressure is elevated and can remain elevated during a strong run."
-    : r?.rsiCondition === "below_midpoint" ? "Recent losses outweigh gains over the RSI lookback."
-    : r?.rsiCondition === "above_midpoint" ? "Recent gains outweigh losses over the RSI lookback."
-    : r?.rsiCondition === "at_midpoint" ? "Recent gains and losses are balanced." : "";
+  const rsiTone = !finite(r?.rsi14) ? undefined : r.rsi14 > 50 ? "bullish" : r.rsi14 < 50 ? "bearish" : "neutral";
+  const rsiState = rsiTone === "bullish" ? "Bullish momentum" : rsiTone === "bearish" ? "Bearish momentum" : rsiTone === "neutral" ? "Neutral momentum" : undefined;
+  const rsiCondition = !finite(r?.rsi14) ? undefined : r.rsi14 > 70 ? "Overbought" : r.rsi14 < 30 ? "Oversold" : undefined;
+  const rsiExplanation = rsiTone === "bullish" ? "Upward price movement has the advantage."
+    : rsiTone === "bearish" ? "Downward price movement has the advantage."
+    : rsiTone === "neutral" ? "Neither direction has a clear advantage." : "";
   const vwapPosition = finite(input.vwap) && finite(input.livePrice) ? input.livePrice > input.vwap ? "above" : input.livePrice < input.vwap ? "below" : "at" : null;
   const baselineLabel = input.timeframe === "1d" ? "completed trading days" : `completed ${timeframe} candles in the same session`;
   let volumeValue = finite(r?.volume) ? new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(r.volume) : "Unavailable";
@@ -64,9 +66,12 @@ export function indicatorDisplayRows(input: Readonly<{
   const atrState = !finite(r?.atr14) ? undefined : r.volatility === "expanding" ? "Widening swings" : r.volatility === "contracting" ? "Narrowing swings" : r.volatility === "steady" ? "Steady swings" : "Price swing size";
   const atrExplanation = !finite(r?.atr14) ? "" : `${r.volatility === "expanding" ? "Price swings are getting larger than recently; allow for wider fluctuations." : r.volatility === "contracting" ? "Price swings are getting smaller than recently; current movement is more contained." : r.volatility === "steady" ? "Price swings are similar in size to recent conditions." : "Shows the recent typical size of price swings; a comparison with earlier volatility is not available yet."} ATR measures movement size, not whether price will rise or fall.`;
   return [
-    { label: "Trend", value: trend, explanation: trendExplanation },
-    { label: "Momentum", value: momentum, explanation: momentumExplanation },
-    { label: "RSI", value: finite(r?.rsi14) ? `${r.rsi14.toFixed(1)}${condition ? ` · ${condition}` : ""}` : "—", explanation: rsiExplanation },
+    { label: "Trend", value: trend === "—" ? trend : "", state: r?.trend ? trend : undefined,
+      tone: r?.trend === "uptrend" ? "bullish" : r?.trend === "downtrend" ? "bearish" : "neutral", explanation: trendExplanation },
+    { label: "Momentum", value: momentum === "—" ? momentum : "", state: momentum === "—" ? undefined : momentum,
+      tone: r?.rsiDirection === "falling" ? "bearish" : r?.rsiDirection === "rising" || r?.rsiDirection === "recovered_above_oversold" ? "bullish" : "neutral", explanation: momentumExplanation },
+    { label: "RSI", value: finite(r?.rsi14) ? r.rsi14.toFixed(1) : "—", state: rsiState, tone: rsiTone, conditionState: rsiCondition,
+      explanation: rsiExplanation + (rsiCondition === "Overbought" ? " Strong recent buying pressure. Price may be stretched, but the run can continue." : rsiCondition === "Oversold" ? " Strong recent selling pressure. Price may be stretched downward, but a bounce has not been confirmed." : "") },
     { label: "VWAP", value: finite(input.vwap) ? indicatorPrice(input.vwap) : "Unavailable", explanation: finite(input.vwap)
       ? `${vwapPosition ? `Live price is ${vwapPosition} today's` : "Today's"} VWAP (including extended hours).` : "" },
     { label: "Moving averages", value: `EMA9 ${indicatorPrice(r?.ema9)} · EMA20 ${indicatorPrice(r?.ema20)}`,

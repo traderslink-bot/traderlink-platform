@@ -80,6 +80,7 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
           <button type="button" className={styles.help} aria-label={`${row.label} calculation details`}>ⓘ</button>
         </Tooltip> : null}</dt><dd>
           {row.state ? <span className={styles.state} data-tone={row.tone}>{row.state}</span> : null}
+          {row.conditionState ? <span className={styles.state} data-tone="neutral">{row.conditionState}</span> : null}
           {row.value}{row.explanation ? <p>{row.explanation}</p> : null}
           {row.label === "VWAP" ? <p className={styles.updated}>Last updated {timestamp(current?.vwap.dataThrough)}</p> : null}
         </dd>

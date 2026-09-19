@@ -27,3 +27,22 @@ for (const timeframe of ['1m', '5m', '15m', '1d']) {
   assert.match(row({ atr14: .1 }, 'ATR', timeframe).calculation, new RegExp(timeframe === '1d' ? 'daily' : timeframe));
 }
 console.log('PASS: 4 timeframes, MA direction/mixed/missing, volume states/missing/zero/early, ATR states/missing/baseline. No providers or AI.');
+for (const frame of ['1m', '5m', '15m', '1d']) {
+  const base = { dataThrough: Date.parse('2026-09-17T16:00:00Z') };
+  for (const [trend, tone] of [['uptrend', 'bullish'], ['downtrend', 'bearish'], ['sideways', 'neutral'], ['mixed', 'neutral']]) {
+    const r = row({ ...base, trend }, 'Trend', frame); assert.equal(r.tone, tone); assert.ok(r.state); assert.equal(r.value, '');
+  }
+  for (const [rsiDirection, tone] of [['rising', 'bullish'], ['falling', 'bearish'], ['recovered_above_oversold', 'bullish'], ['little_changed', 'neutral']]) {
+    const r = row({ ...base, rsiDirection }, 'Momentum', frame); assert.equal(r.tone, tone); assert.ok(r.state); assert.equal(r.value, '');
+  }
+  for (const [rsi14, tone, conditionState] of [[0,'bearish','Oversold'],[29.9,'bearish','Oversold'],[30,'bearish',undefined],[49.9,'bearish',undefined],[50,'neutral',undefined],[50.1,'bullish',undefined],[70,'bullish',undefined],[70.1,'bullish','Overbought'],[100,'bullish','Overbought']]) {
+    const r = row({ ...base, rsi14 }, 'RSI', frame); assert.equal(r.tone, tone); assert.equal(r.conditionState, conditionState); assert.equal(r.value, rsi14.toFixed(1));
+  }
+  for (const label of ['Trend', 'Momentum', 'RSI']) {
+    const r = row(base, label, frame); assert.equal(r.state, undefined); assert.equal(r.value, '—'); assert.equal(r.conditionState, undefined);
+  }
+}
+assert.equal(row({rsi14:60}, 'RSI').explanation, 'Upward price movement has the advantage.');
+assert.equal(row({rsi14:40}, 'RSI').explanation, 'Downward price movement has the advantage.');
+assert.equal(row({rsi14:50}, 'RSI').explanation, 'Neither direction has a clear advantage.');
+console.log('PASS: Trend/Momentum tones, RSI direction and separate extreme-condition chips; exact 30/50/70 boundaries and unavailable states across all four timeframes.');
