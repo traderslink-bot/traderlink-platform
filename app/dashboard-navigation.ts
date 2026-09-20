@@ -218,7 +218,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       items: Object.freeze([
         Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
         Object.freeze({ href: "/watchlist", label: "Watchlist", icon: "watchlist" as const }),
-        Object.freeze({ href: "/swings", label: "Swing Trade Ideas", icon: "watchlist" as const }),
         Object.freeze({ href: "/levels", label: "Levels Generator", icon: "marketCharts" as const }),
         Object.freeze({ href: "/admin/watchlist", label: "Watchlist Admin", icon: "admin" as const }),
         Object.freeze({ href: "/market-data", label: "Market Data", icon: "marketCharts" as const }),
@@ -264,7 +263,6 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/calendar": "Calendar",
     "/scanner": "Scanner",
     "/watchlist": "Watchlist",
-    "/swings": "Swing Trade Ideas",
     "/levels": "Stock Levels",
     "/admin/watchlist": "Watchlist Admin",
     "/market-data": "Market Data",

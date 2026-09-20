@@ -34,8 +34,10 @@ identityValue=null;assert.equal((await access.readSwingIdeaAccess(new Headers())
 identityValue={...identity,discord:{guildOwner:false,roleIds:[]}};
 assert.equal((await access.readSwingIdeaAccess(new Headers())).premium,false);
 lastVerifiedAtUtc='2020-01-01T00:00:00Z';roles=[];
-assert.equal((await access.readSwingIdeaAccess(new Headers())).premium,false);assert.equal(fetchCount,1);
-assert.equal((await access.readSwingIdeaAccess(new Headers())).premium,false);assert.equal(fetchCount,1);
+assert.equal((await access.readSwingIdeaAccess(new Headers())).premium,false);assert.equal(fetchCount,0);
+identityValue=identity;
+assert.equal((await access.readSwingIdeaAccess(new Headers())).premium,true);assert.equal(fetchCount,0);
+assert.ok(!fs.readFileSync(authFile,'utf8').includes('DISCORD_BOT_TOKEN'));
 const returns=load('src/lib/academy/discord-auth-return.ts');
 assert.equal(returns.isSwingIdeaAuthReturnTo('/swings/'+catalog.SWING_IDEA.id),true);
 assert.equal(returns.isSwingIdeaAuthReturnTo('/swings/private/anything'),false);
@@ -49,6 +51,17 @@ const blocks=[...preview.matchAll(/<div class="panel">([\s\S]*?)<\/div>/g)].map(
 assert.equal(JSON.stringify(blocks),JSON.stringify(content.SWING_SECTIONS));
 assert.ok(!content.SWING_SECTIONS.join('').match(/<script|onerror=|javascript:/i));
 const detail=fs.readFileSync('app/swings/[ideaId]/page.tsx','utf8');assert.match(detail,/access\.premium \? await import/);assert.match(detail,/force-no-store/);assert.match(detail,/data-pwa-offline-exclude/);
+const listing=fs.readFileSync('app/swings/page.tsx','utf8');assert.ok(!/SWING_TITLE|swing-idea-content|CRML/.test(listing));
+assert.match(listing,/redirect\(`/);assert.ok(!listing.includes('<section'));
+assert.ok(!fs.readFileSync('app/dashboard-navigation.ts','utf8').includes('href: "/swings"'));
+const surface=load('app/swings/swing-theme-surface.tsx',{'@mui/material/Box':{},'react/jsx-runtime':{jsx:(type,props)=>({type,props})}});
+for(const mode of ['light','dark']) {
+  const palette={mode,text:{primary:mode==='dark'?'#e8edf7':'#172033',secondary:'#888'},background:{paper:mode==='dark'?'#172334':'#fff',default:'#000'},divider:'#555',primary:{main:'#011e56'}};
+  const rendered=surface.SwingThemeSurface({children:'test'});const styles=rendered.props.sx({palette});
+  assert.equal(styles['--swing-text'],palette.text.primary);assert.equal(styles['--swing-paper'],palette.background.paper);
+  assert.equal(styles['--swing-link'],mode==='dark'?'#79aaf1':'#011e56');
+}
+assert.ok(!fs.readFileSync('app/swings/swing-idea.module.css','utf8').includes('--mui-palette'));
 const offline=load('src/modules/platform/contracts/platform-offline-projection-contracts.ts');assert.equal(offline.platformOfflineRouteCanStoreProjection('/swings/'+catalog.SWING_IDEA.id),false);
 const route=fs.readFileSync('app/api/swings/visits/route.ts','utf8');assert.match(route,/requirePlatformMutationRequest\(request\)/);assert.match(route,/access\.identity\?\.scope\.userId/);assert.match(route,/bytes > 512/);
 const admin=fs.readFileSync('app/admin/journal/swings/page.tsx','utf8');assert.match(admin,/withJournalAdminPageDatabase/);
@@ -68,7 +81,7 @@ result=visits.readSwingVisits(db,{from:now-1,until:now+1,member:'TEST MEMBER',ou
 assert.equal(visits.readSwingVisits(db,{from:now-1,until:now+1,member:'',outcome:'',page:1}).visits.length,0);
 db.prepare('DELETE FROM platform_users WHERE user_id=?').run(identity.scope.userId);assert.equal(db.prepare('SELECT COUNT(*) n FROM platform_premium_swing_idea_visit_events WHERE user_id IS NOT NULL').get().n,0);db.close();
 console.log('PASS: in-memory visit idempotency, anonymous separation, totals, member/outcome filters, pagination, account deletion.');
-console.log('PASS: Premium/Free/anonymous checks, stale-role refresh/cache, safe return path, private-content boundary, verbatim source sections, offline exclusion, visit/admin guards.');
+console.log('PASS: existing Premium/Free/anonymous identity, no bot dependency, both theme palettes, generic listing and full locked preview, safe return, content fidelity, offline exclusion, visit/admin guards.');
 console.log('Migration checksum: '+checksum);
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

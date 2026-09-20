@@ -1,6 +1,10 @@
 # Premium Swing Trade Ideas
 
 Status: implementation authorized; owner explicitly deferred visual review to production.
+Superseding owner correction: one Premium-gated idea page only. No dashboard sidebar
+link or listing page. `/swings` redirects to its opaque detail URL. Non-Premium users
+see the exact approved locked preview there. Use existing Platform Premium status;
+no separate bot verification or five-minute expiry. Existing light/dark theme applies.
 Progress: [Implementation progress](premium-swing-ideas-progress.md).
 
 ## Controlling scope
@@ -43,8 +47,9 @@ performance calculation.
 ## Proposed presentation for owner review
 
 Signed-in dashboard: existing header/sidebar; Swing Trade Ideas under Stock Tools.
-Index: one idea card; Premium users can see its ticker/title, others see only the
-approved teaser. Detail uses the Watchlist analysis visual language, light surfaces,
+Index: one idea card with a generic title for everyone; ticker appears only inside
+the protected Premium detail. Detail uses the Watchlist analysis visual language,
+surfaces and readable text following the dashboard light/dark theme,
 navy headings and generous section spacing. No ticker data in locked card markup.
 Keep the author's original section order and titles: background paragraphs, History
 of 2 previous runs, First run, Second run, My plan, Key levels (zones), First/Second/

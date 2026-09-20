@@ -5,7 +5,7 @@ export const TOOLS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     slug: "swing-trade-ideas", title: "Swing Trade Ideas",
     description: "Open Premium swing ideas and understand member access.",
     sections: Object.freeze([
-      Object.freeze({id:"view-idea",title:"View a swing idea",summary:"Open Swing Trade Ideas under Stock Tools.",keywords:Object.freeze(["swing", "Premium", "research", "Whop"]),blocks:Object.freeze([
+      Object.freeze({id:"view-idea",title:"View a swing idea",summary:"Open the shared swing idea link.",keywords:Object.freeze(["swing", "Premium", "research", "Whop"]),blocks:Object.freeze([
         Object.freeze({kind:"paragraph",text:"Signed-in Premium members can open the full research and trading plan. If you already have Premium, use Sign in on the idea page. Otherwise join Premium through the Whop link, connect your Discord account to Whop, then sign in with that Discord account. If your access recently changed, sign in again to refresh membership."}),
         Object.freeze({kind:"paragraph",text:"These are authored ideas, not live-updating prices or automatic trade instructions. Swing Trade Ideas is separate from your Swing Trade Tracker and Trade Analyzer. An internet connection is required to check access."}),
       ])}),

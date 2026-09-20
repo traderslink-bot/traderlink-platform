@@ -35,3 +35,19 @@ Plan: [Detailed plan](premium-swing-ideas-plan.md).
 - Superseding release allocation: Coordinator reserved 0139 after 0138, authorized
   the narrow source package, and owns its backup, migration, deployment and health checks.
 - Owner requested completion and production handoff. No further local preview is required.
+- Production release: `9d1b0396281e296752d30fe6574187211a48e3cf`, Railway
+  `36ce0ed8-ac6a-4aa9-8ee9-5579cb45684f` SUCCESS, health ready, 125 migrations.
+- Owner-reported correction: CSS used unavailable MUI variables instead of actual
+  dashboard theme. Added a scoped theme surface binding text, paper, links and dividers
+  to the existing ThemeProvider for light/dark. No content rewrite or auth relaxation.
+- Listing now always has generic Swing Trade Idea title, even for Premium members;
+  ticker remains only inside authenticated Premium detail and owner-only administration.
+- Focused regression assertions cover both theme palettes and no private title import
+  on the listing. Help behavior is unchanged; no new guide text required.
+- Superseding owner correction: exactly ONE Premium-gated idea page; no dashboard
+  sidebar link and no listing page. `/swings` redirects to the opaque idea URL.
+  Non-Premium visitors see the exact full approved locked preview on that page.
+- Removed the added five-minute/bot membership gate. Access uses existing Platform
+  authenticated Discord membership and Premium entitlement, without additional provider
+  calls. Existing Platform auth policies are unchanged. Help now says open shared link.
+- Focused tests and scoped ESLint pass for these corrections. No migration required.
