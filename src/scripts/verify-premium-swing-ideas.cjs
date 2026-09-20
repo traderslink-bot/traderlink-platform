@@ -17,6 +17,9 @@ function load(file,mocks={}) {
 async function main(){
 const catalog=load('src/modules/swings/swing-idea-catalog.ts');
 assert.match(catalog.SWING_IDEA.id,/^[a-f0-9]{32}$/);assert.equal(catalog.isSwingIdeaId('CRML'),false);
+assert.match(catalog.SWING_IDEA.slug,/^[a-f0-9]{8}$/);
+assert.equal(catalog.isSwingIdeaSlug(catalog.SWING_IDEA.slug),true);assert.equal(catalog.isSwingIdeaSlug(catalog.SWING_IDEA.id),true);
+assert.equal(catalog.isSwingIdeaSlug('CRML'),false);
 assert.ok(!JSON.stringify(catalog).includes('CRML'));
 const authFile='src/modules/swings/server/swing-idea-access.ts';
 const identity={scope:{userId:'11111111-1111-4111-8111-111111111111'},discord:{guildOwner:false,roleIds:['premium']}};
@@ -40,6 +43,7 @@ assert.equal((await access.readSwingIdeaAccess(new Headers())).premium,true);ass
 assert.ok(!fs.readFileSync(authFile,'utf8').includes('DISCORD_BOT_TOKEN'));
 const returns=load('src/lib/academy/discord-auth-return.ts');
 assert.equal(returns.isSwingIdeaAuthReturnTo('/swings/'+catalog.SWING_IDEA.id),true);
+assert.equal(returns.isSwingIdeaAuthReturnTo('/swings/'+catalog.SWING_IDEA.slug),true);
 assert.equal(returns.isSwingIdeaAuthReturnTo('/swings/private/anything'),false);
 assert.equal(returns.normalizeDiscordAuthReturnTo('//evil.example'),'/watchlist');
 const migration=load('src/modules/platform/server/database/migrations/0139_platform_premium_swing_idea_visit_events.ts').platformPremiumSwingIdeaVisitEventsMigration;
@@ -48,9 +52,17 @@ const checksum=crypto.createHash('sha256').update(migration.statements.join('\n-
 const content=load('src/modules/swings/server/swing-idea-content.ts');assert.equal(content.SWING_SECTIONS.length,4);assert.ok(content.SWING_SECTIONS.join('').includes('From Oct 1st to Oct 14 2026'));
 const preview=fs.readFileSync('docs/migration/previews/swing-idea-design.html','utf8').split('<section data-panel="premium" hidden>')[1].split('</section>')[0];
 const blocks=[...preview.matchAll(/<div class="panel">([\s\S]*?)<\/div>/g)].map(m=>m[1].replaceAll('class="divider"',''));
-assert.equal(JSON.stringify(blocks),JSON.stringify(content.SWING_SECTIONS));
+const plain=s=>s.replace(/<\/?(?:strong|u)>/g,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+assert.equal(plain(blocks.join(' ')),plain(content.SWING_SECTIONS.join(' ')));
+for(const bold of ['Trump','interest','acquire/control Greenland','Pullback:','First Target Zone:','Second Target Zone:','Third Target Zone:'])assert.ok(content.SWING_SECTIONS.join('').includes('<strong>'+bold+'</strong>'));
+assert.ok(content.SWING_SECTIONS.join('').includes('<h3>Key levels (zones)</h3>'));
+assert.match(fs.readFileSync('app/swings/swing-idea.module.css','utf8'),/\.panel h2\{font-size:20px;font-weight:700\}/);
+assert.match(fs.readFileSync('app/swings/swing-idea.module.css','utf8'),/\.panel h3\{font-size:18px;font-weight:700\}/);
 assert.ok(!content.SWING_SECTIONS.join('').match(/<script|onerror=|javascript:/i));
 const detail=fs.readFileSync('app/swings/[ideaId]/page.tsx','utf8');assert.match(detail,/access\.premium \? await import/);assert.match(detail,/force-no-store/);assert.match(detail,/data-pwa-offline-exclude/);
+const meta=detail.split('export const metadata: Metadata =')[1].split('export default')[0];
+assert.ok(!/CRML|Tanbreez|SWING_TITLE|SWING_SECTIONS/.test(meta));assert.match(meta,/openGraph:/);assert.match(meta,/logo-horizontal-main.png/);assert.match(meta,/title: SWING_IDEA.teaser/);
+assert.match(detail,/SwingVisitRecorder ideaId=\{SWING_IDEA.id\}/);
 const listing=fs.readFileSync('app/swings/page.tsx','utf8');assert.ok(!/SWING_TITLE|swing-idea-content|CRML/.test(listing));
 assert.match(listing,/redirect\(`/);assert.ok(!listing.includes('<section'));
 assert.ok(!fs.readFileSync('app/dashboard-navigation.ts','utf8').includes('href: "/swings"'));

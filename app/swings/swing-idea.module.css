@@ -1,5 +1,6 @@
 .page{width:100%;max-width:960px;margin:0 auto;padding:20px 0 36px;color:var(--swing-text)}
 .page h1{margin:0 0 24px;font-size:2rem}.page h2{margin:0 0 20px;font-size:1.35rem}.page h3{margin:24px 0 14px;font-size:1.1rem}
+.panel h2{font-size:20px;font-weight:700}.panel h3{font-size:18px;font-weight:700}.panel strong{font-weight:700}.panel u{text-decoration:underline}
 .page p{margin:0 0 22px;line-height:1.75}.page p:last-child{margin-bottom:0}.page a{color:var(--swing-link);font-weight:700}
 .page h1,.page h2,.page h3,.panel p,.panel strong{color:inherit}
 .panel{color:var(--swing-text);background:var(--swing-paper);border:1px solid var(--swing-divider);border-radius:12px;padding:28px;margin-bottom:22px;overflow-wrap:anywhere}

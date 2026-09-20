@@ -27,7 +27,7 @@ export function isWatchlistAuthReturnTo(returnTo: string): boolean {
 
 export function isSwingIdeaAuthReturnTo(returnTo: string): boolean {
   const pathname = new URL(returnTo, "https://traderslink.pro").pathname;
-  return pathname === "/swings" || /^\/swings\/[a-f0-9]{32}$/.test(pathname);
+  return pathname === "/swings" || /^\/swings\/(?:[a-f0-9]{8}|[a-f0-9]{32})$/.test(pathname);
 }
 
 export function buildDiscordAuthResultUrl(args: {

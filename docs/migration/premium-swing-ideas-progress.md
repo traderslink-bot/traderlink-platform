@@ -51,3 +51,14 @@ Plan: [Detailed plan](premium-swing-ideas-plan.md).
   authenticated Discord membership and Premium entitlement, without additional provider
   calls. Existing Platform auth policies are unchanged. Help now says open shared link.
 - Focused tests and scoped ESLint pass for these corrections. No migration required.
+- Owner requested 8-character public name: `/swings/d59c2a78`; old 32-character
+  link still opens the same page. Database identity and all visit history unchanged.
+- Explicit public Open Graph/Twitter metadata uses the exact approved teaser headline
+  and existing TradersLink logo only; no private ticker/content/image. Locked teaser
+  is the page h1 with no larger generic heading above it. Discord controls its own
+  embed layout/font size; no automatic Discord post is made by this work.
+- Formatting rechecked against live Keep DOM computed styles: original main headings
+  20px/700, secondary headings 18px/700, body bold runs700, underlined dates. Restored
+  missing Trump/interest/acquire-control and ownership bold spans; corrected Pullback
+  label emphasis and inline bold target labels. Explicit CSS font weights avoid the
+  global heading reset. Plain-text comparison preserves all wording/numbers.
