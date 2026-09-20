@@ -246,7 +246,8 @@ export function WorkspaceDashboard({
           <DashboardChartAction />
         </Stack> : null}
       </Stack>
-      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : hasLiveTradeLibraryProps(tradeLibraryProps) && newsScannerOpen ? <WorkspaceNewsScannerPanel expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} initialPreference={prScannerCardPreference ?? { revision: null, showInWorkspace: true }} onClose={() => setNewsScannerOpen(false)} onPreferenceSaved={(preference) => { setShowPrScannerCard(preference.showInWorkspace); router.refresh(); }} /> : <>
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && calendarOpen ? <WorkspaceCalendarPanel onClose={() => setCalendarOpen(false)} /> : null}
+      {hasLiveTradeLibraryProps(tradeLibraryProps) && newsScannerOpen ? <WorkspaceNewsScannerPanel expectedAccountSelectionRef={tradeLibraryProps.expectedAccountSelectionRef} initialPreference={prScannerCardPreference ?? { revision: null, showInWorkspace: true }} onClose={() => setNewsScannerOpen(false)} onPreferenceSaved={(preference) => { setShowPrScannerCard(preference.showInWorkspace); router.refresh(); }} /> : null}
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Session Tracker when entering executions for multiple trades. <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 800, textDecoration: "underline" }} variant="inherit">Open Session Tracker</Typography></Alert> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
@@ -295,7 +296,6 @@ export function WorkspaceDashboard({
           <TradeDetailsDrawer analyzer={null} initialTab="details" onClose={() => setSummaryTradeDetailsId(null)} open={summaryTradeDetailsId !== null} roundTripId={summaryTradeDetailsId} />
         </>
       ) : null}
-      </>}
       </DashboardPage>
     </DashboardChartProvider>
   );

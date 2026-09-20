@@ -1,5 +1,16 @@
 # Workspace News Scanner Card Plan
 
+## September 19 side-card alignment
+
+The owner approved changing only the expanded Workspace PR Scanner and Calendar
+from inline page replacements to shell-aligned cards. PR Scanner uses the
+established right-side pattern used by Workspace Rules and Notes. Both retain
+their existing content and data behavior, fill mobile width, and provide the
+standard top-right X close control. Calendar fills the shell's complete
+main-content area on desktop while retaining the shell header and variable-width
+sidebar. Top action buttons, Add trade,
+compact cards, other News pages and Calendar routes remain unchanged.
+
 ## September 19 posted-date display
 
 Owner requested the article posted date beside the time in the expanded Workspace
