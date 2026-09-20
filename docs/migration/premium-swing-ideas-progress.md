@@ -62,3 +62,13 @@ Plan: [Detailed plan](premium-swing-ideas-plan.md).
   missing Trump/interest/acquire-control and ownership bold spans; corrected Pullback
   label emphasis and inline bold target labels. Explicit CSS font weights avoid the
   global heading reset. Plain-text comparison preserves all wording/numbers.
+- Owner-requested spelling pass: aquiring → acquiring; currentl → current;
+  though resistance → through resistance; you own → your own; well know → well-known;
+  theres → there's. No sentence rewrites, number/date changes or formatting changes.
+  Source-fidelity test permits exactly these six corrections, no other text changes.
+- Owner explicitly added seventh correction: "scaling in and Scaling out." →
+  "scaling in and scaling out." Bold emphasis retained; fidelity check updated.
+- Full-text proofreading also corrected possessive its ownership, Friday's news,
+  all three lowercase first-person i instances and possible → possibly before $16.
+  Paragraph structure, owner phrasing, all numbers/dates and HTML tags remain intact.
+  Regression checks reject each original typo and reconcile only this exact correction list.

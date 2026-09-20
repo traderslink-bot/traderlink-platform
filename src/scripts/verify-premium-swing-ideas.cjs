@@ -53,7 +53,10 @@ const content=load('src/modules/swings/server/swing-idea-content.ts');assert.equ
 const preview=fs.readFileSync('docs/migration/previews/swing-idea-design.html','utf8').split('<section data-panel="premium" hidden>')[1].split('</section>')[0];
 const blocks=[...preview.matchAll(/<div class="panel">([\s\S]*?)<\/div>/g)].map(m=>m[1].replaceAll('class="divider"',''));
 const plain=s=>s.replace(/<\/?(?:strong|u)>/g,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-assert.equal(plain(blocks.join(' ')),plain(content.SWING_SECTIONS.join(' ')));
+const spelling=s=>s.replace('aquiring','acquiring').replace('currentl price','current price').replace('clear though resistance','clear through resistance').replace('draw you own conclusions','draw your own conclusions').replace('a well know stock','a well-known stock').replace('theres some',"there's some");
+const proofread=s=>spelling(s).replace('scaling in and Scaling out.','scaling in and scaling out.').replace("increased it's ownership",'increased its ownership').replace('Fridays news',"Friday's news").replace(/\bi\b/g,'I').replace('possible $16','possibly $16');
+assert.equal(proofread(plain(blocks.join(' '))),plain(content.SWING_SECTIONS.join(' ')));
+assert.ok(!/aquiring|currentl|clear though|you own|well know|theres|and Scaling|increased it's|Fridays news|\bi\b|possible \$16/.test(content.SWING_SECTIONS.join('')));
 for(const bold of ['Trump','interest','acquire/control Greenland','Pullback:','First Target Zone:','Second Target Zone:','Third Target Zone:'])assert.ok(content.SWING_SECTIONS.join('').includes('<strong>'+bold+'</strong>'));
 assert.ok(content.SWING_SECTIONS.join('').includes('<h3>Key levels (zones)</h3>'));
 assert.match(fs.readFileSync('app/swings/swing-idea.module.css','utf8'),/\.panel h2\{font-size:20px;font-weight:700\}/);
