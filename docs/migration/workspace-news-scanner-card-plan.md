@@ -1,5 +1,11 @@
 # Workspace News Scanner Card Plan
 
+## September 19 posted-date display
+
+Owner requested the article posted date beside the time in the expanded Workspace
+PR Scanner, using the same font. [Completed implementation and handoff](workspace-pr-scanner-date-progress-20260919.md).
+The earlier retention proposal was stopped and is excluded.
+
 ## Purpose
 
 Add a compact, read-only **News Scanner** card to Workspace for traders who
