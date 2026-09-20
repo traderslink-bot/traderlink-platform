@@ -2,6 +2,19 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const TOOLS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "swing-trade-ideas", title: "Swing Trade Ideas",
+    description: "Open Premium swing ideas and understand member access.",
+    sections: Object.freeze([
+      Object.freeze({id:"view-idea",title:"View a swing idea",summary:"Open Swing Trade Ideas under Stock Tools.",keywords:Object.freeze(["swing", "Premium", "research", "Whop"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"Signed-in Premium members can open the full research and trading plan. If you already have Premium, use Sign in on the idea page. Otherwise join Premium through the Whop link, connect your Discord account to Whop, then sign in with that Discord account. If your access recently changed, sign in again to refresh membership."}),
+        Object.freeze({kind:"paragraph",text:"These are authored ideas, not live-updating prices or automatic trade instructions. Swing Trade Ideas is separate from your Swing Trade Tracker and Trade Analyzer. An internet connection is required to check access."}),
+      ])}),
+      Object.freeze({id:"activity",title:"Page activity",summary:"The owner can see recorded page visits.",keywords:Object.freeze(["visits", "privacy", "activity"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"The owner can see which signed-in members opened an idea, when they visited, and whether they saw the full idea or the locked preview. This does not show whether a visitor read the entire idea. Logged-out visits cannot identify a member. Anonymous and deleted-account history is available for 30 days."}),
+      ])}),
+    ]),
+  }),
+  Object.freeze({
     slug: "halt-alerts",
     title: "Halt Alerts",
     description: "Turn on halt alerts, understand what they show and mute one ticker for the day.",

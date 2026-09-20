@@ -43,6 +43,7 @@ const navigation = [
   { href: "/admin/journal/statement-formats", label: "Statement Formats", icon: <SchemaRoundedIcon /> },
   { href: "/admin/journal/data-decisions", label: "Data Decisions", icon: <FactCheckRoundedIcon /> },
   { href: "/admin/journal/levels", label: "Levels", icon: <InsightsRoundedIcon /> },
+  { href: "/admin/journal/swings", label: "Swing Idea Activity", icon: <InsightsRoundedIcon /> },
   { href: "/admin/journal/ai-reviews", label: "AI Reviews", icon: <AutoAwesomeRoundedIcon /> },
   { href: "/admin/journal/analyzer", label: "Trade Analyzer", icon: <QueryStatsRoundedIcon /> },
   { href: "/admin/journal/links-quality", label: "Links AI Chat", icon: <FlagRoundedIcon /> },

@@ -35,6 +35,7 @@ import { withPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import {
   buildDiscordAuthResultUrl,
   isWatchlistAuthReturnTo,
+  isSwingIdeaAuthReturnTo,
   normalizeDiscordAuthReturnTo,
 } from "@/src/lib/academy/discord-auth-return";
 import {
@@ -133,7 +134,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
-    const dashboardAccessAllowed = watchlistReturn || withPlatformDatabase(
+    const dashboardAccessAllowed = watchlistReturn || isSwingIdeaAuthReturnTo(returnTo) || withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformDashboardMemberAccessRepository(database)
         .read().allowAllDiscordMembers || hasPlatformDiscordPremiumAccess({

@@ -25,6 +25,11 @@ export function isWatchlistAuthReturnTo(returnTo: string): boolean {
   return pathname === "/watchlist" || pathname.startsWith("/watchlist/");
 }
 
+export function isSwingIdeaAuthReturnTo(returnTo: string): boolean {
+  const pathname = new URL(returnTo, "https://traderslink.pro").pathname;
+  return pathname === "/swings" || /^\/swings\/[a-f0-9]{32}$/.test(pathname);
+}
+
 export function buildDiscordAuthResultUrl(args: {
   origin: string;
   returnTo: string;

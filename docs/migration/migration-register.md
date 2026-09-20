@@ -1,3 +1,7 @@
+# Premium Swing Ideas migration reservation
+
+`0139_platform_premium_swing_idea_visit_events` follows `0138_platform_watchlist_notification_action_identity` (executionOrder 139). Coordinator reserved this identity exclusively. New visit-event table and two indexes only; nullable user FK uses ON DELETE SET NULL. SHA-256 normalized SQL checksum: `c57f28ed50ceac1dfda41fd96e058bbdaddfe8b47fdeb30d89a7f03a25b64c4a`. Registered, not applied by feature task. Coordinator owns guarded backup/migration/release. Rollback must retain the 0139 manifest identity because the strict schema verifier rejects unknown applied migrations; do not drop the table or visit records. See [plan](premium-swing-ideas-plan.md) and [progress](premium-swing-ideas-progress.md).
+
 # TraderLink Platform Migration Register
 
 **Separate Watchlist listing/analysis:** `0138_platform_watchlist_notification_action_identity`

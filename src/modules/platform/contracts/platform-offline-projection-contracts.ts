@@ -39,6 +39,7 @@ const LAST_SYNCED_ROUTE_PREFIXES = Object.freeze([
 ]);
 
 const ONLINE_REQUIRED_ROUTE_PREFIXES = Object.freeze([
+  "/swings",
   "/account",
   "/ai-chat",
   "/charts",

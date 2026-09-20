@@ -18,6 +18,7 @@ import {
 import {
   buildDiscordAuthResultUrl,
   isWatchlistAuthReturnTo,
+  isSwingIdeaAuthReturnTo,
   normalizeDiscordAuthReturnTo,
 } from "@/src/lib/academy/discord-auth-return";
 import {
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     currentIdentity = null;
   }
 
-  if (currentIdentity && !isJournalAdminReturnTo(returnTo)) {
+  if (currentIdentity && !isJournalAdminReturnTo(returnTo) && !isSwingIdeaAuthReturnTo(returnTo)) {
     return NextResponse.redirect(new URL(returnTo, origin));
   }
 
