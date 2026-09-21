@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
 import Tooltip from "@mui/material/Tooltip";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
+import { watchlistIndicatorHelp } from "./watchlist-indicator-help";
 import type { IndicatorTimeframe } from "@/src/lib/live-watchlist/indicators/indicator-engine";
 import { memberIndicatorSnapshot, type WatchlistMemberIndicatorSnapshot } from "@/src/lib/live-watchlist/indicators/indicator-member-snapshot";
 import { indicatorDisplayRows, indicatorFrameLabel, indicatorSummary } from "@/src/lib/live-watchlist/indicators/indicator-presentation";
@@ -17,6 +19,7 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
 }) {
   const [selected, setSelected] = useState<IndicatorTimeframe>("5m");
   const [snapshot, setSnapshot] = useState<MemberSnapshot | null>(null);
+  const [openHelp, setOpenHelp] = useState<string | null>(null);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const id = useId();
   const activationId = `${symbol}:${firstPostedAt}`;
@@ -53,6 +56,7 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
   const result = current?.timeframes[selected];
   const rows = indicatorDisplayRows({ result, timeframe: selected, livePrice, vwap: current?.vwap.value ?? null });
   const select = (frame: IndicatorTimeframe) => {
+    setOpenHelp(null);
     setSelected(frame);
     try { localStorage.setItem(PREFERENCE, frame); } catch { /* No market data or identifiers are stored. */ }
   };
@@ -75,16 +79,20 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
     </div>
     <section role="tabpanel" id={`${id}-details`} aria-labelledby={`${id}-${selected}`} tabIndex={0}>
       <p className={styles.updated}>Last updated {timestamp(result?.dataThrough)}</p>
-      <dl className={styles.rows}>{rows.map(row => <div className={styles.row} key={row.label}>
-        <dt>{row.label}{row.calculation ? <Tooltip title={row.calculation} describeChild arrow>
-          <button type="button" className={styles.help} aria-label={`${row.label} calculation details`}>ⓘ</button>
-        </Tooltip> : null}</dt><dd>
+      <ClickAwayListener onClickAway={() => setOpenHelp(null)}>
+      <dl className={styles.rows} onKeyDown={event => { if (event.key === "Escape") setOpenHelp(null); }}>{rows.map((row, index) => <div className={styles.row} key={row.label}>
+        <dt>{row.label}<Tooltip id={`${id}-help-${index}`} title={watchlistIndicatorHelp(row.label, row.calculation)} describeChild arrow
+          open={openHelp === row.label} disableHoverListener disableFocusListener disableTouchListener>
+          <button type="button" className={styles.help} aria-label={`About ${row.label}`} aria-expanded={openHelp === row.label}
+            onClick={() => setOpenHelp(current => current === row.label ? null : row.label)}>ⓘ</button>
+        </Tooltip></dt><dd>
           {row.state ? <span className={styles.state} data-tone={row.tone}>{row.state}</span> : null}
           {row.conditionState ? <span className={styles.state} data-tone="neutral">{row.conditionState}</span> : null}
           {row.value}{row.explanation ? <p>{row.explanation}</p> : null}
           {row.label === "VWAP" ? <p className={styles.updated}>Last updated {timestamp(current?.vwap.dataThrough)}</p> : null}
         </dd>
       </div>)}</dl>
+      </ClickAwayListener>
     </section>
   </article>;
 }
