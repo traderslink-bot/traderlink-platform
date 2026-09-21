@@ -15,6 +15,7 @@ Provider decision: **Moomoo is the selected primary provider**, with Yahoo fallb
 Parent: [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md)
 
 Progress: [Indicators Progress](watchlist-deterministic-indicators-progress.md)
+Display grouping: [Trend/EMA and RSI/momentum progress](watchlist-indicator-grouping-progress.md).
 Tooltip correction: [Click/tap help progress](watchlist-indicator-tooltip-progress.md).
 
 ## 1. Outcome and complete scope

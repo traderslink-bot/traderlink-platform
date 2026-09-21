@@ -18,6 +18,7 @@
 .row:last-child { border-bottom: 0; }
 .row dt { font-weight: 700; }
 .row dd { margin: 0; overflow-wrap: anywhere; }
+.reading + .reading { margin-top: .75rem; }
 .row p { margin: .35rem 0 0; color: var(--academy-muted); font-size: .83rem; line-height: 1.5; }
 .updated { font-size: .77rem; color: var(--academy-muted); margin: .4rem 0 0; }
 @media (max-width: 480px) { .summaries { gap: .35rem; } .summary { padding: .5rem; } .row { grid-template-columns: 1fr; gap: .25rem; } }

@@ -2,7 +2,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Tooltip from "@mui/material/Tooltip";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
-import { watchlistIndicatorHelp } from "./watchlist-indicator-help";
+import { watchlistIndicatorGroups } from "./watchlist-indicator-groups";
 import type { IndicatorTimeframe } from "@/src/lib/live-watchlist/indicators/indicator-engine";
 import { memberIndicatorSnapshot, type WatchlistMemberIndicatorSnapshot } from "@/src/lib/live-watchlist/indicators/indicator-member-snapshot";
 import { indicatorDisplayRows, indicatorFrameLabel, indicatorSummary } from "@/src/lib/live-watchlist/indicators/indicator-presentation";
@@ -54,7 +54,7 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
   }, [symbol, firstPostedAt, activationId]);
   const current = snapshot?.activationId === activationId ? snapshot : null;
   const result = current?.timeframes[selected];
-  const rows = indicatorDisplayRows({ result, timeframe: selected, livePrice, vwap: current?.vwap.value ?? null });
+  const rows = watchlistIndicatorGroups(indicatorDisplayRows({ result, timeframe: selected, livePrice, vwap: current?.vwap.value ?? null }));
   const select = (frame: IndicatorTimeframe) => {
     setOpenHelp(null);
     setSelected(frame);
@@ -81,14 +81,17 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
       <p className={styles.updated}>Last updated {timestamp(result?.dataThrough)}</p>
       <ClickAwayListener onClickAway={() => setOpenHelp(null)}>
       <dl className={styles.rows} onKeyDown={event => { if (event.key === "Escape") setOpenHelp(null); }}>{rows.map((row, index) => <div className={styles.row} key={row.label}>
-        <dt>{row.label}<Tooltip id={`${id}-help-${index}`} title={watchlistIndicatorHelp(row.label, row.calculation)} describeChild arrow
+        <dt>{row.label}<Tooltip id={`${id}-help-${index}`} title={row.help} describeChild arrow
           open={openHelp === row.label} disableHoverListener disableFocusListener disableTouchListener>
           <button type="button" className={styles.help} aria-label={`About ${row.label}`} aria-expanded={openHelp === row.label}
             onClick={() => setOpenHelp(current => current === row.label ? null : row.label)}>ⓘ</button>
         </Tooltip></dt><dd>
-          {row.state ? <span className={styles.state} data-tone={row.tone}>{row.state}</span> : null}
-          {row.conditionState ? <span className={styles.state} data-tone="neutral">{row.conditionState}</span> : null}
-          {row.value}{row.explanation ? <p>{row.explanation}</p> : null}
+          {row.parts.map(part => <div className={styles.reading} key={part.label}>
+            {part.state ? <span className={styles.state} data-tone={part.tone}>{part.state}</span> : null}
+            {part.conditionState ? <span className={styles.state} data-tone="neutral">{part.conditionState}</span> : null}
+            {part.label === "RSI" ? "RSI " : null}{part.value}
+            {part.explanation ? <p>{part.explanation}</p> : null}
+          </div>)}
           {row.label === "VWAP" ? <p className={styles.updated}>Last updated {timestamp(current?.vwap.dataThrough)}</p> : null}
         </dd>
       </div>)}</dl>
