@@ -1,5 +1,22 @@
 # Watchlist analysis header time
 
+## Live acceptance correction
+
+- First deployment 57b5609 corrected the current time, but history returned no rows:
+  the private runtime review GET requires an owner actor. A member history reader
+  correctly cannot impersonate the owner. Initial mocked verification missed this.
+- Corrective runtime patch introduces a separate service-token-protected, GET-only
+  published-history projection, while retaining the private review owner requirement.
+  It exposes only acknowledged time/price rows through a requested public-card hash.
+- Platform consumes that sanitized endpoint. No owner identity/header is fabricated.
+- Actual deployed runtime dispatcher plus corrective patch is now exercised in the
+  focused verifier, including ownerless projection, private review 403, POST 405,
+  malformed hash 400, member authorization and shared caching. These checks pass.
+- Runtime patch: [published history projection](watchlist-analysis-history-runtime.patch).
+  Apply to runtime 8c8068dba6d2fe5d4f7ce5cb51379ca5686cc8b3, then Platform correction.
+  No database migration, regeneration, approval, notification or data edits required.
+- Full live multirow/mobile acceptance is still pending the corrective deployment.
+
 ## September 21 owner-approved publication history (current scope)
 
 - Supersedes the one-line timestamp correction and its old patch artifact.

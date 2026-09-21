@@ -33,6 +33,28 @@ for (const path of [file, 'app/watchlist/analysis-history-lines.tsx', 'app/watch
 console.log('PASS: approved history, exact date/time/price copy, multiple updates, retry deduplication, unpublished exclusion, current-version boundary, DST, sub-dollar precision and five-file TSX/TS transpilation.');
 
 async function verifyRoute() {
+  const cp = require('node:child_process');
+  const runtimeRepo = 'C:/Users/jerac/Documents/TraderLink/levels-system-post-mtf-handoff-stability';
+  let runtimeSource = cp.execFileSync('git', ['-c', `safe.directory=${runtimeRepo}`, '-C', runtimeRepo, 'show', '8c8068dba6d2fe5d4f7ce5cb51379ca5686cc8b3:src/runtime/manual-watchlist-analysis-review-api.ts'], { encoding: 'utf8' });
+  const patch = fs.readFileSync('docs/migration/watchlist-analysis-history-runtime.patch', 'utf8').replace(/\r/g, '');
+  for (const hunk of patch.split(/^@@[^\n]*\n/m).slice(1)) {
+    const lines = hunk.split('\n').filter(line => /^[ +\-]/.test(line));
+    const before = lines.filter(line => line[0] !== '+').map(line => line.slice(1)).join('\n');
+    const after = lines.filter(line => line[0] !== '-').map(line => line.slice(1)).join('\n');
+    assert.equal(runtimeSource.split(before).length, 2, 'Runtime patch anchor must be unique');
+    runtimeSource = runtimeSource.replace(before, after);
+  }
+  const runtimeModule = { exports: {} };
+  const runtimeCode = ts.transpileModule(runtimeSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  vm.runInNewContext(runtimeCode, { module: runtimeModule, exports: runtimeModule.exports, require: name => name === 'node:crypto' ? require(name) : {}, URLSearchParams });
+  const dispatch = runtimeModule.exports.dispatchAnalysisReviewRequest;
+  const manager = { getTradersLinkAiReadReview: () => ({ events }) };
+  const digest = require('node:crypto').createHash('sha256').update(JSON.stringify(second)).digest('hex');
+  const request = { method: 'GET', pathname: '/api/watchlist/published-analysis-history', searchParams: new URLSearchParams({ symbol: 'GRML', bodyHash: digest }), actor: undefined };
+  assert.equal((await dispatch({ ...request, pathname: '/api/watchlist/analysis-review' }, manager)).status, 403);
+  assert.equal((await dispatch({ ...request, method: 'POST' }, manager)).status, 405);
+  assert.equal((await dispatch({ ...request, searchParams: new URLSearchParams({ symbol: 'GRML', bodyHash: 'bad' }) }, manager)).status, 400);
+  assert.equal(JSON.stringify((await dispatch(request, manager)).body), JSON.stringify({ rows: rows() }));
   let authorized = false, upstreamCalls = 0;
   const routeModule = { exports: {} };
   const routePath = 'app/api/live-watchlist/symbols/[symbol]/analysis-history/route.ts';
@@ -43,7 +65,12 @@ async function verifyRoute() {
     if (name.endsWith('live-watchlist-auth')) return { authorizeWatchlistMemberRequest: async () => ({ ok: authorized, error: 'Denied', status: 403 }) };
     if (name.endsWith('live-watchlist-store')) return { LiveWatchlistStore: class { async getSymbol() { return { symbol: 'GRML', status: 'live', cards: { tradersLinkAiRead: { body: JSON.stringify(second) } } }; } } };
     if (name.endsWith('analysis-publication-history')) return mod.exports;
-    if (name.endsWith('watchlist-runtime-admin-client')) return { requestWatchlistRuntimeRaw: async request => { upstreamCalls++; assert.equal(request.method, 'GET'); assert.equal(request.path, '/api/watchlist/analysis-review?symbol=GRML'); return { ok: true, body: JSON.stringify({ review: { events } }) }; } };
+    if (name.endsWith('watchlist-runtime-admin-client')) return { requestWatchlistRuntimeRaw: async upstream => {
+      upstreamCalls++; assert.equal(upstream.method, 'GET'); assert.equal(upstream.reviewActor, undefined);
+      const url = new URL(upstream.path, 'https://runtime.invalid');
+      const response = await dispatch({ method: upstream.method, pathname: url.pathname, searchParams: url.searchParams, actor: undefined }, manager);
+      return { ok: response.status === 200, body: JSON.stringify(response.body) };
+    } };
     throw Error(name);
   } });
   const ctx = { params: Promise.resolve({ symbol: 'GRML' }) };
@@ -55,5 +82,6 @@ async function verifyRoute() {
   assert.equal(JSON.stringify(answers[0].body), JSON.stringify({ rows: rows() }));
   assert.equal((await routeModule.exports.GET({}, { params: Promise.resolve({ symbol: '../private' }) })).status, 400);
   console.log('PASS: member authorization before upstream access, read-only request, sanitized response, symbol validation and concurrent cache coalescing.');
+  console.log('PASS: actual patched runtime dispatcher integration, public projection without owner impersonation, private review remains forbidden, invalid hash and mutations rejected.');
 }
 verifyRoute().catch(error => { console.error(error); process.exitCode = 1; });

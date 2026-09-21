@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { authorizeWatchlistMemberRequest } from "@/src/lib/live-watchlist/live-watchlist-auth";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
-import { publishedAnalysisHistory, type AnalysisHistoryRow } from "@/src/lib/live-watchlist/analysis-publication-history";
+import type { AnalysisHistoryRow } from "@/src/lib/live-watchlist/analysis-publication-history";
 import { requestWatchlistRuntimeRaw } from "@/src/modules/watchlist/server/runtime/watchlist-runtime-admin-client";
 
 export const runtime = "nodejs";
@@ -18,15 +18,22 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
   const state = await new LiveWatchlistStore().getSymbol(symbol);
   const body = state?.cards.tradersLinkAiRead?.body;
   if (!body || state?.status === "deactivated") return NextResponse.json({ rows: [] });
-  const key = `${state.symbol}:${createHash("sha256").update(body).digest("hex")}`;
+  const bodyHash = createHash("sha256").update(body).digest("hex");
+  const key = `${state.symbol}:${bodyHash}`;
   let entry = cache.get(key);
   if (!entry || entry.expires <= Date.now()) {
     if (cache.size >= 100) cache.delete(cache.keys().next().value!);
     const rows = (async () => {
       const response = await requestWatchlistRuntimeRaw({ method: "GET", timeoutMs: 8000,
-        path: `/api/watchlist/analysis-review?symbol=${encodeURIComponent(state.symbol)}` });
+        path: `/api/watchlist/published-analysis-history?symbol=${encodeURIComponent(state.symbol)}&bodyHash=${bodyHash}` });
       if (!response.ok) return [];
-      try { return publishedAnalysisHistory(JSON.parse(response.body), body); } catch { return []; }
+      try {
+        const value = JSON.parse(response.body);
+        if (!Array.isArray(value.rows)) return [];
+        return value.rows.filter((row: AnalysisHistoryRow | null) => row &&
+          Number.isFinite(row.generatedAt) && row.generatedAt > 0 && Number.isFinite(row.price) && row.price > 0)
+          .map((row: AnalysisHistoryRow) => ({ generatedAt: row.generatedAt, price: row.price }));
+      } catch { return []; }
     })();
     entry = { expires: Date.now() + 60_000, rows };
     cache.set(key, entry);
