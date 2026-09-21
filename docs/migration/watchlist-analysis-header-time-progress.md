@@ -1,5 +1,50 @@
 # Watchlist analysis header time
 
+## September 21 owner-approved publication history (current scope)
+
+- Supersedes the one-line timestamp correction and its old patch artifact.
+- Both full and Simple analysis cards show chronological rows under the title:
+  `Analysis posted: Sep 18, 7:52 PM ET — $4.35`, followed by one
+  `Analysis updated: Sep 21, 4:12 AM ET — $5.32` row per published analysis.
+- Short month/day; Eastern time; no year or seconds. Existing eyebrow typography.
+- Read the existing runtime approval audit server-side, select only website-acknowledged
+  approvals up to the exact currently displayed card, and expose only time/price pairs.
+  No private events, actor identities, drafts, prompts, credentials or delivery data
+  are sent to members. Existing Watchlist access rules protect the new read route.
+- Deduplicate repeated delivery of the same generation and reference price.
+- Cache only public rows for 60 seconds (100-key bound), coalesce concurrent reads;
+  request once per displayed generation, not on live price updates. No AI calls.
+- If history cannot be read/matched, show the current analysis time/price as
+  `Analysis:` rather than inventing an original or confusing a draft with publication.
+  Editor previews say `Analysis preview:` and do not request publication history.
+- Potential Gain, original Watchlist time, analysis content, approval and all delivery
+  behavior are untouched. No migration or runtime deployment required.
+- Help updated for the owner-approved history lines. Focused verifier:
+  `src/scripts/verify-watchlist-analysis-history.cjs`.
+- Release packaging must include only this slice's hunks from the mixed e70f tree.
+  The old `watchlist-analysis-header-time.patch` is superseded; do not release it.
+- Implementation and focused local QA complete: history/format fixtures, third update,
+  failed/unacknowledged exclusion, generation boundary, duplicate delivery, DST,
+  sub-dollar precision, authorization, read-only upstream access, sanitized response,
+  concurrent-request coalescing, and five-file TS/TSX transpilation pass.
+- Targeted ESLint passes with no errors; one pre-existing unused-function warning in
+  live-watchlist-client.tsx. No local server, full build, broad suite, AI request,
+  hosted write or notification send. Production rendering remains a release check.
+
+## September 21 refreshed-analysis correction (supersedes first-post header rule)
+
+- Owner approved using the displayed analysis's generatedAt for its header time.
+- Replace only the firstPostedAt fallback in the full card header; retain session,
+  reference price, typography, section order and the Simple card unchanged.
+- Original Watchlist posting metadata and Potential Gain starting price/time remain
+  unchanged. No regeneration, publication, notification or provider request needed.
+- GRML regression evidence: original Sep 18 19:52:36 ET / $4.35; refreshed
+  Sep 21 04:12:46 ET / $5.32. Header must use 04:12:46, not 19:52:36.
+- Help reviewed: existing guidance says to read the analysis timestamp and reference
+  price; this fix restores that contract, so no Help copy change is necessary.
+- Implementation complete; focused verification and Coordinator packaging below.
+- Production deployment remains pending; do not publish the mixed e70f file wholesale.
+
 ## September 15 owner correction
 
 Controlling scope: [Watchlist runtime dashboard admin plan](watchlist-runtime-dashboard-admin-plan.md).

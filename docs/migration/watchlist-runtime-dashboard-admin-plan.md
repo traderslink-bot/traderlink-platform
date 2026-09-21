@@ -1,5 +1,7 @@
 # Watchlist Runtime Dashboard Admin Plan
 
+September 21 approved analysis date/price history: [header history progress](watchlist-analysis-header-time-progress.md).
+
 Owner-approved addition: [Discord mention controls](watchlist-discord-mentions-plan.md).
 
 September 14 selectable-format release: [Simple analysis progress and gates](watchlist-simple-analysis-release.md).

@@ -1,6 +1,7 @@
 "use client";
 
 import { SimpleAnalysisCard } from "./simple-analysis-card";
+import { AnalysisHistoryLines } from "./analysis-history-lines";
 
 import "flag-icons/css/flag-icons.min.css";
 
@@ -36,7 +37,6 @@ import {
 import {
   deriveTradersLinkAiPullbackPlan,
   describeTradersLinkAiLiveVolumeContext,
-  formatAiReadSession,
   parseTradersLinkAiRead,
   olderTradersLinkArticlePublicationDate,
   resolveTradersLinkAiPullbackScenarioState,
@@ -531,9 +531,7 @@ export function TradersLinkAiReadCard({
       <div className="watchlist-ai-read-header">
         <div>
           <h2 className="academy-card-title">{read.symbol} trade preparation</h2>
-          <p className="watchlist-ai-read-eyebrow">
-            {formatAiReadSession(read.marketSession)} {formatTime(symbol.firstPostedAt ?? read.generatedAt)} ET at ${formatPrice(read.currentPrice)}
-          </p>
+          <AnalysisHistoryLines read={read} preview={Boolean(renderSectionEditor)} />
           <div className="watchlist-ai-read-badges" style={{ justifyContent: "flex-start" }}>
             <span className="watchlist-ai-read-badge" data-bias={read.bias}>
               {read.bias} bias

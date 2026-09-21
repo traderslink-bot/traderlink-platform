@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AnalysisHistoryLines } from "./analysis-history-lines";
 import type { TradersLinkAiReadPayload } from "@/src/lib/live-watchlist/live-watchlist-types";
 
 /** Separate presentation selected by the saved read, never by today's setting. */
@@ -15,8 +16,8 @@ export function SimpleAnalysisCard({ read, renderSectionEditor }: {
   return <article className="academy-card watchlist-content-card watchlist-ai-read-card" data-card-label="TradersLink Analysis">
     <div className="academy-card-topline"><span>TradersLink Analysis</span></div>
     <div className="watchlist-ai-read-header"><div>
-      <p className="watchlist-ai-read-eyebrow">Analysis price: {price(read.currentPrice)}</p>
       <h2 className="academy-card-title">{read.symbol} trade preparation</h2>
+      <AnalysisHistoryLines read={read} preview={Boolean(renderSectionEditor)} />
     </div></div>
     {renderSectionEditor?.(["simpleSetup"])}
     {!hidden.has("currentRead") && simple.setup.trim() ? <p>{simple.setup}</p> : null}

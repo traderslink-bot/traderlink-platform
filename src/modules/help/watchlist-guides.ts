@@ -11,7 +11,7 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
   }, {
     id: "updates", title: "Price and analysis updates", summary: "Live data and a new analysis are separate updates.",
     keywords: ["live price", "analysis time", "refresh"],
-    blocks: [{ kind: "paragraph", text: "Price and market data can continue updating while the published analysis remains unchanged. Read the analysis timestamp and reference price; a live price change does not mean a new analysis has been generated." }],
+    blocks: [{ kind: "paragraph", text: "Price and market data can continue updating while the published analysis remains unchanged. Under the analysis title, Analysis posted shows the original published analysis time and reference price. Each Analysis updated line shows a later published analysis and its own time and reference price. Times are Eastern Time, without seconds. Unapproved drafts are not included. Potential Gain keeps the original Watchlist starting price; it does not restart when the analysis changes." }],
   }, {
     id: "indicators", title: "Indicators", summary: "Read current market conditions separately from the saved analysis.",
     keywords: ["EMA", "RSI", "VWAP", "ATR", "volume", "momentum", "timeframe", "Unavailable"],
