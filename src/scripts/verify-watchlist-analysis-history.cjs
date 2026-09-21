@@ -17,6 +17,8 @@ function rows(body = second, input = events) { return history({ review: { events
 assert.equal(rows().length, 2);
 assert.equal(format(rows()[0], 0), 'Analysis posted: Sep 18, 7:52 PM ET — $4.35');
 assert.equal(format(rows()[1], 1), 'Analysis updated: Sep 21, 4:12 AM ET — $5.32');
+assert.equal(format({ generatedAt: second.generatedAt, price: 2.8693 }, 1), 'Analysis updated: Sep 21, 4:12 AM ET — $2.87');
+assert.equal(format({ generatedAt: first.generatedAt, price: 2.6001 }, 0), 'Analysis posted: Sep 18, 7:52 PM ET — $2.60');
 assert.equal(rows(third).length, 0, 'Unacknowledged approval must not be public');
 assert.equal(rows(first).length, 1, 'Do not expose newer approval than displayed read');
 assert.equal(rows(third, [...events, ack(3)]).length, 3);

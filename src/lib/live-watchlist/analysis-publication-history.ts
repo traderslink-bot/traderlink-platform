@@ -39,6 +39,6 @@ export function formatAnalysisHistoryRow(row: AnalysisHistoryRow, index: number)
   const date = new Date(row.generatedAt);
   const day = date.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
   const time = date.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
-  const price = row.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const price = row.price >= 1 ? row.price.toFixed(2) : row.price.toFixed(4);
   return `Analysis ${index === 0 ? "posted" : "updated"}: ${day}, ${time} ET — $${price}`;
 }

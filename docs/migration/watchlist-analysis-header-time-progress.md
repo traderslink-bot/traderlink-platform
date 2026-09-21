@@ -1,5 +1,20 @@
 # Watchlist analysis header time
 
+## Corrective production acceptance September 21
+
+- Runtime 9d75f897 / deployment cbb78b97 and Platform ae46df66 / deployment
+  ff360bac are reported healthy by Coordinator. Read-only live acceptance confirms
+  GRML Sep 18 7:52 PM $4.35 and Sep 21 4:12 AM $5.32; GLND Sep 18 7:56 PM
+  and Sep 21 4:18 AM. No seconds appear in the history rows.
+- GLND mobile header fits within its 273px content width at the requested 390px
+  viewport; no horizontal header overflow. Temporary viewport restored.
+- Potential Gain baselines remain GRML $4.35 and GLND stored $2.6001; unchanged.
+- One display-only followup restores existing price precision: two decimals at
+  $1 or above, four below $1. Thus GLND displays $2.60 / $2.87, while stored
+  $2.6001 / $2.8693 remain lossless. Added focused regression assertions.
+- Live list contains no Simple-format analysis, so no live Simple acceptance is
+  claimed; it uses the same tested history component. No test ticker was added.
+
 ## Live acceptance correction
 
 - First deployment 57b5609 corrected the current time, but history returned no rows:
