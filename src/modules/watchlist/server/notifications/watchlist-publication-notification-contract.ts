@@ -95,9 +95,9 @@ export function watchlistPublicationNotificationCopy(ticker: string, kind: "list
   if (!tickerPattern.test(ticker)) throw new Error("Invalid Watchlist ticker.");
   return Object.freeze({
     destinationPath: `/watchlist/${ticker}`,
-    pushTitle: kind === "analysis" ? `${ticker} analysis published` : `${ticker} added to the Watchlist`,
+    pushTitle: kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the Watchlist`,
     pushBody: kind === "analysis" ? `An approved TradersLink Analysis is ready for ${ticker}.` : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
-    emailTitle: kind === "analysis" ? `${ticker} TradersLink Analysis published` : `${ticker} added to the TradersLink Watchlist`,
+    emailTitle: kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the TradersLink Watchlist`,
     emailBody: kind === "analysis" ? `An approved TradersLink Analysis for ${ticker} is ready.` : `A new Watchlist post for ${ticker} is ready.`,
     emailTickerLabel: `View ${ticker}`,
     emailWatchlistLabel: "View Watchlist",

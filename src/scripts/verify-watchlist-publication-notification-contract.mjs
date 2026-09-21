@@ -28,6 +28,8 @@ assert.equal(expired(event, now + WATCHLIST_NOTIFICATION_MAX_AGE_MS), true);
 assert.deepEqual(parse(event, now + 86_400_000), event);
 assert.equal(expired(event, now + 86_400_000), true);
 assert.equal(copy('YFOR').pushTitle, 'YFOR added to the Watchlist');
+assert.equal(copy('GLND','analysis').pushTitle, 'GLND Analysis updated');
+assert.equal(copy('GLND','analysis').emailTitle, 'GLND Analysis updated');
 assert.equal(copy('YFOR').destinationPath, '/watchlist/YFOR');
 assert.equal(copy('YFOR').emailWatchlistPath, '/watchlist');
 assert.equal(copy('YFOR').emailTitle, 'YFOR added to the TradersLink Watchlist');
