@@ -107,3 +107,10 @@
   badge and drawer acceptance remain evidence-gated until an eligible real
   article is published or the owner authorizes a separate non-production
   review fixture.
+
+## 2026-09-22 public News Eastern-time correction
+
+- [x] Render the public `/news`, `/news/[ticker]`, and `/news/[ticker]/[slug]` publication timestamps in `America/New_York` and label them `ET`.
+- [x] Preserve stored UTC timestamps and all ingestion, AI, Discord, and source-link behavior. The public free-article route reuses the corrected shared article view.
+- [x] Help impact reviewed: no Help-page update is needed because this changes only displayed publication time.
+- [x] Verification: source formatter scan, diff whitespace scan, and a focused `12:05 PM ET` Eastern conversion check.

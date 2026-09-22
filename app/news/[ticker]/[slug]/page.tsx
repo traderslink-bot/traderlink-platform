@@ -117,10 +117,13 @@ function formatDate(value: string): string {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  const easternTimestamp = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "America/New_York",
   }).format(date);
+
+  return `${easternTimestamp} ET`;
 }
 
 function formatLevelsText(value: unknown): string {
