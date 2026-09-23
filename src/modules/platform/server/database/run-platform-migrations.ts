@@ -45,9 +45,8 @@ export function verifyCompletedPlatformDatabase(
 }
 
 /**
- * Revalidates every runtime invariant affected by ordinary data writes. The
- * process-level runtime guard schedules the unchanged full SQLite quick check
- * separately so it cannot block the main server event loop.
+ * Legacy synchronous data-change verification. Explicit callers retain the
+ * foreign-key scan; only the runtime guard below opts into background scans.
  */
 export function verifyPlatformDatabaseAfterDataChange(
   database: Database.Database,
@@ -57,10 +56,20 @@ export function verifyPlatformDatabaseAfterDataChange(
     verifyCompletedPlatformDatabaseUnmeasured(database, manifestInput, false));
 }
 
+/** Only for the runtime guard after a successful full verification of this DB. */
+export function verifyPlatformDatabaseStructureAfterDataChange(
+  database: Database.Database,
+  manifestInput: readonly PlatformMigration[] = platformMigrationManifest,
+): PlatformMigrationRunResult {
+  return measurePlatformRequestPhase("integrity", () =>
+    verifyCompletedPlatformDatabaseUnmeasured(database, manifestInput, false, false));
+}
+
 function verifyCompletedPlatformDatabaseUnmeasured(
   database: Database.Database,
   manifestInput: readonly PlatformMigration[],
   includeQuickCheck: boolean,
+  includeForeignKeyCheck = true,
 ): PlatformMigrationRunResult {
   const manifest = measurePlatformRequestPhase("integrity_manifest", () => validatePlatformMigrationManifest(manifestInput));
   const finalRow = measurePlatformRequestPhase("integrity_registry", () => {
@@ -86,7 +95,9 @@ function verifyCompletedPlatformDatabaseUnmeasured(
     return finalRow;
   });
   const digest = measurePlatformRequestPhase("integrity_schema", () => requirePlatformSchemaDigest(database, finalRow.post_schema_sha256));
-  measurePlatformRequestPhase("integrity_foreign_keys", () => requirePlatformForeignKeyCheck(database));
+  if (includeForeignKeyCheck) {
+    measurePlatformRequestPhase("integrity_foreign_keys", () => requirePlatformForeignKeyCheck(database));
+  }
   if (includeQuickCheck) {
     measurePlatformRequestPhase("integrity_quick_check", () => requirePlatformQuickCheck(database));
   }

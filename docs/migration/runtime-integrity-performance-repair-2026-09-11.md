@@ -1,5 +1,10 @@
 # Runtime integrity performance repair — September 11, 2026
 
+September 23 local follow-up: [runtime performance preparation](runtime-performance-preparation-2026-09-23.md)
+moves the remaining ordinary-write FK scan off requests while preserving the
+startup/migration gates. That follow-up is not deployed; this record describes
+the earlier quick-check-only repair.
+
 Status: implementation and focused verification in progress. No repair release has been published.
 
 ## Measured problem

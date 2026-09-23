@@ -11,7 +11,7 @@ import {
 import { platformFailure } from "./platform-migration-contract";
 import {
   verifyCompletedPlatformDatabase,
-  verifyPlatformDatabaseAfterDataChange,
+  verifyPlatformDatabaseStructureAfterDataChange,
 } from "./run-platform-migrations";
 
 export type PlatformDatabaseOpenMode = "runtime" | "initializer";
@@ -20,15 +20,21 @@ const runtimeIntegrityCacheKey =
   "__traderlinkPlatformRuntimeDatabaseIntegrityFingerprints" as const;
 
 type RuntimeIntegrityState = {
+  version: 2;
+  cancelWorker: (() => void) | null;
   dataGeneration: number;
+  dirtySinceForeignKeyCheck: boolean;
   dirtySinceQuickCheck: boolean;
+  foreignKeyCheckFailed: boolean;
   fingerprint: string;
   generation: number;
+  lastForeignKeyCheckStartedAt: number;
   lastQuickCheckStartedAt: number;
   quickCheckFailed: boolean;
   quickCheckInFlight: boolean;
   quickCheckSuccessLogged: boolean;
   quickCheckTimer: ReturnType<typeof setTimeout> | null;
+  timerDueAt: number;
   requiresFullVerification: boolean;
   structureFingerprint: string;
 };
@@ -38,12 +44,14 @@ type RuntimeIntegrityProcessState = typeof globalThis & {
 };
 
 export const PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS = 60_000;
+export const PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS = 5_000;
 const PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS = 30_000;
 const PLATFORM_RUNTIME_QUICK_CHECK_WORKER_SOURCE = String.raw`
 const { parentPort, workerData } = require("node:worker_threads");
 const Database = require("better-sqlite3");
 const { statSync } = require("node:fs");
 let database = null;
+let message;
 function structureFingerprint() {
   const details = statSync(workerData.databasePath);
   const schemaVersion = database.pragma("schema_version", { simple: true });
@@ -57,26 +65,38 @@ try {
   });
   database.pragma("query_only = ON");
   database.pragma("busy_timeout = 5000");
+  // Both scans observe one read-only snapshot; concurrent writers remain in WAL.
+  database.exec("BEGIN");
   const structureBefore = structureFingerprint();
-  const rows = database.pragma("quick_check");
-  const result = rows.length === 1 ? Object.values(rows[0] || {})[0] : undefined;
+  const foreignKeyRows = database.pragma("foreign_key_check");
+  let status = foreignKeyRows.length === 0 ? "ok" : "foreign_key_failed";
+  if (workerData.includeQuickCheck) {
+    const rows = database.pragma("quick_check");
+    const result = rows.length === 1 ? Object.values(rows[0] || {})[0] : undefined;
+    if (result !== "ok") status = "integrity_failed";
+  }
+  database.exec("COMMIT");
   const structureAfter = structureFingerprint();
-  parentPort.postMessage({
+  message = {
     dataGeneration: workerData.dataGeneration,
     generation: workerData.generation,
-    status: result === "ok" ? "ok" : "integrity_failed",
+    includeQuickCheck: workerData.includeQuickCheck,
+    status,
     structureAfter,
     structureBefore,
-  });
+  };
 } catch {
-  parentPort.postMessage({
+  message = {
     dataGeneration: workerData.dataGeneration,
     generation: workerData.generation,
     status: "worker_failed",
-  });
+    includeQuickCheck: workerData.includeQuickCheck,
+  };
 } finally {
   if (database) database.close();
 }
+// Release the connection before allowing the scheduler to start another scan.
+parentPort.postMessage(message);
 `;
 
 export type PlatformDatabasePragmaEvidence = Readonly<{
@@ -215,9 +235,15 @@ function startPlatformRuntimeQuickCheck(
   state: RuntimeIntegrityState,
   now: number,
 ): void {
-  state.lastQuickCheckStartedAt = now;
+  const includeQuickCheck = state.dirtySinceQuickCheck &&
+    now >= state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS;
+  state.lastForeignKeyCheckStartedAt = now;
+  state.dirtySinceForeignKeyCheck = false;
+  if (includeQuickCheck) {
+    state.lastQuickCheckStartedAt = now;
+    state.dirtySinceQuickCheck = false;
+  }
   state.quickCheckInFlight = true;
-  state.dirtySinceQuickCheck = false;
   const dataGeneration = state.dataGeneration;
   const generation = state.generation;
   const expectedStructureFingerprint = state.structureFingerprint;
@@ -227,7 +253,7 @@ function startPlatformRuntimeQuickCheck(
   try {
     worker = new Worker(PLATFORM_RUNTIME_QUICK_CHECK_WORKER_SOURCE, {
       eval: true,
-      workerData: { databasePath, dataGeneration, generation },
+      workerData: { databasePath, dataGeneration, generation, includeQuickCheck },
     });
   } catch {
     state.quickCheckInFlight = false;
@@ -246,28 +272,37 @@ function startPlatformRuntimeQuickCheck(
     void worker.terminate();
     if (state.generation !== generation) return;
     state.quickCheckInFlight = false;
+    state.cancelWorker = null;
     state.requiresFullVerification = true;
     logPlatformRuntimeQuickCheckOutcome(state, "timeout", startedAt);
   }, PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS);
   timeout.unref();
+  state.cancelWorker = () => {
+    settled = true;
+    clearTimeout(timeout);
+    void worker.terminate();
+  };
   worker.once("message", (message: unknown) => {
     if (settled) return;
     settled = true;
     clearTimeout(timeout);
     if (state.generation !== generation) return;
     state.quickCheckInFlight = false;
+    state.cancelWorker = null;
     const status = message && typeof message === "object" && "status" in message
       ? (message as { status?: unknown }).status
       : null;
-    const workerResult = message as {
+    const workerResult = (message && typeof message === "object" ? message : {}) as {
       dataGeneration?: unknown;
       generation?: unknown;
+      includeQuickCheck?: unknown;
       structureAfter?: unknown;
       structureBefore?: unknown;
     };
     if (
       workerResult.dataGeneration !== dataGeneration ||
-      workerResult.generation !== generation
+      workerResult.generation !== generation ||
+      workerResult.includeQuickCheck !== includeQuickCheck
     ) {
       state.requiresFullVerification = true;
       logPlatformRuntimeQuickCheckOutcome(state, "worker_failed", startedAt);
@@ -284,7 +319,10 @@ function startPlatformRuntimeQuickCheck(
         "database_identity_changed",
         startedAt,
       );
-    } else if (status === "integrity_failed") {
+    } else if (status === "foreign_key_failed") {
+      state.foreignKeyCheckFailed = true;
+      logPlatformRuntimeQuickCheckOutcome(state, "foreign_key_failed", startedAt);
+    } else if (status === "integrity_failed" && includeQuickCheck) {
       state.quickCheckFailed = true;
       logPlatformRuntimeQuickCheckOutcome(
         state,
@@ -305,6 +343,7 @@ function startPlatformRuntimeQuickCheck(
     clearTimeout(timeout);
     if (state.generation !== generation) return;
     state.quickCheckInFlight = false;
+    state.cancelWorker = null;
     state.requiresFullVerification = true;
     logPlatformRuntimeQuickCheckOutcome(state, "worker_error", startedAt);
   });
@@ -314,6 +353,7 @@ function startPlatformRuntimeQuickCheck(
     clearTimeout(timeout);
     if (state.generation !== generation) return;
     state.quickCheckInFlight = false;
+    state.cancelWorker = null;
     state.requiresFullVerification = true;
     logPlatformRuntimeQuickCheckOutcome(state, "worker_early_exit", startedAt);
   });
@@ -321,7 +361,7 @@ function startPlatformRuntimeQuickCheck(
 
 function logPlatformRuntimeQuickCheckOutcome(
   state: RuntimeIntegrityState,
-  outcome: "database_identity_changed" | "integrity_failed" | "ok" |
+  outcome: "database_identity_changed" | "foreign_key_failed" | "integrity_failed" | "ok" |
     "timeout" | "worker_construction_failed" | "worker_early_exit" |
     "worker_error" | "worker_failed",
   startedAt: number,
@@ -330,13 +370,13 @@ function logPlatformRuntimeQuickCheckOutcome(
   try {
     if (outcome === "ok") {
       if (state.quickCheckSuccessLogged) return;
-      console.info("TraderLink background SQLite quick check completed.", {
+      console.info("TraderLink background SQLite integrity scan completed.", {
         durationMs,
       });
       state.quickCheckSuccessLogged = true;
       return;
     }
-    console.warn("TraderLink background SQLite quick check requires attention.", {
+    console.warn("TraderLink background SQLite integrity scan requires attention.", {
       durationMs,
       outcome,
     });
@@ -351,30 +391,35 @@ function schedulePlatformRuntimeQuickCheck(
   now: number,
 ): void {
   if (
-    !state.dirtySinceQuickCheck ||
+    (!state.dirtySinceForeignKeyCheck && !state.dirtySinceQuickCheck) ||
     state.quickCheckInFlight ||
-    state.quickCheckTimer ||
+    state.foreignKeyCheckFailed ||
     state.quickCheckFailed ||
     state.requiresFullVerification
   ) {
     return;
   }
-  const delay = Math.max(
-    0,
-    Math.min(
-      PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS,
-      state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS - now,
-    ),
+  const dueAt = Math.min(
+    state.dirtySinceForeignKeyCheck
+      ? state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS
+      : Infinity,
+    state.dirtySinceQuickCheck
+      ? state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS
+      : Infinity,
   );
+  // Writes may bring an FK deadline forward, but must never postpone a scan.
+  if (state.quickCheckTimer && state.timerDueAt <= dueAt) return;
+  if (state.quickCheckTimer) clearTimeout(state.quickCheckTimer);
+  state.quickCheckTimer = null;
+  state.timerDueAt = dueAt;
+  const delay = Math.max(0, dueAt - now);
   if (delay === 0) {
     startPlatformRuntimeQuickCheck(databasePath, state, now);
     return;
   }
   state.quickCheckTimer = setTimeout(() => {
     state.quickCheckTimer = null;
-    if (state.dirtySinceQuickCheck && !state.quickCheckInFlight) {
-      startPlatformRuntimeQuickCheck(databasePath, state, Date.now());
-    }
+    schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
   }, delay);
   state.quickCheckTimer.unref();
 }
@@ -385,14 +430,20 @@ function recordSuccessfulFullRuntimeVerification(
   structureFingerprint: string,
 ): void {
   if (state.quickCheckTimer) clearTimeout(state.quickCheckTimer);
+  state.cancelWorker?.();
+  state.cancelWorker = null;
+  state.dirtySinceForeignKeyCheck = false;
   state.dirtySinceQuickCheck = false;
   state.dataGeneration = 0;
   state.fingerprint = fingerprint;
   state.generation += 1;
   state.lastQuickCheckStartedAt = Date.now();
+  state.lastForeignKeyCheckStartedAt = state.lastQuickCheckStartedAt;
+  state.foreignKeyCheckFailed = false;
   state.quickCheckFailed = false;
   state.quickCheckInFlight = false;
   state.quickCheckTimer = null;
+  state.timerDueAt = 0;
   state.requiresFullVerification = false;
   state.structureFingerprint = structureFingerprint;
 }
@@ -411,7 +462,13 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   );
   const verifiedFingerprints = readVerifiedRuntimeDatabaseFingerprints();
   const cached = verifiedFingerprints.get(databasePath);
-  const existing = cached && typeof cached === "object" ? cached : undefined;
+  const existing = cached && typeof cached === "object" && cached.version === 2
+    ? cached : undefined;
+  if (existing?.foreignKeyCheckFailed) {
+    platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+      check: "foreign_key_check",
+    });
+  }
   if (existing?.quickCheckFailed) {
     platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
       check: "quick_check",
@@ -440,15 +497,21 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
       );
     } else {
       verifiedFingerprints.set(databasePath, {
+        version: 2,
+        cancelWorker: null,
         dataGeneration: 0,
+        dirtySinceForeignKeyCheck: false,
         dirtySinceQuickCheck: false,
+        foreignKeyCheckFailed: false,
         fingerprint,
         generation: 0,
+        lastForeignKeyCheckStartedAt: verifiedAt,
         lastQuickCheckStartedAt: verifiedAt,
         quickCheckFailed: false,
         quickCheckInFlight: false,
         quickCheckSuccessLogged: false,
         quickCheckTimer: null,
+        timerDueAt: 0,
         requiresFullVerification: false,
         structureFingerprint,
       });
@@ -456,8 +519,9 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
     return;
   }
 
-  verifyPlatformDatabaseAfterDataChange(database);
+  verifyPlatformDatabaseStructureAfterDataChange(database);
   existing.dataGeneration += 1;
+  existing.dirtySinceForeignKeyCheck = true;
   existing.dirtySinceQuickCheck = true;
   existing.fingerprint = fingerprint;
   existing.structureFingerprint = structureFingerprint;
