@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { authorizeWatchlistMemberRequest } from "@/src/lib/live-watchlist/live-watchlist-auth";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import { projectLiveWatchlistList } from "@/src/lib/live-watchlist/live-watchlist-list";
 import { measurePlatformRequestPhase, measurePlatformRequestPhaseAsync, withPlatformRequestTiming } from "@/src/modules/platform/server/observability/platform-request-timing";
 
 export const runtime = "nodejs";
@@ -15,7 +16,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const data = await measurePlatformRequestPhaseAsync("watchlist", () => new LiveWatchlistStore().listSymbols());
-    return measurePlatformRequestPhase("json", () => NextResponse.json(data, {
+    return measurePlatformRequestPhase("json", () => NextResponse.json(
+      request.nextUrl.searchParams.get("view") === "list" ? projectLiveWatchlistList(data) : data, {
       headers: { "Cache-Control": "private, no-store" },
     }));
   });

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import { projectLiveWatchlistList } from "@/src/lib/live-watchlist/live-watchlist-list";
 import { authorizeWatchlistPageAccess } from "@/src/modules/watchlist/server/access/watchlist-access-service";
 import {
   buildWatchlistPreviewMetadata,
@@ -46,7 +47,7 @@ export default async function LiveWatchlistPage({
     <WatchlistDashboardFrame>
       <div className="academy-container watchlist-container">
         <WatchlistVisitRecorder pageKey="index" pageKind="index" />
-        <LiveWatchlistIndexClient initialState={state} />
+        <LiveWatchlistIndexClient initialState={projectLiveWatchlistList(state)} />
       </div>
     </WatchlistDashboardFrame>
   );

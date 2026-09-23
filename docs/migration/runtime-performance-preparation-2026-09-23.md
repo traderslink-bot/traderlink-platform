@@ -33,8 +33,8 @@ data operation belongs to this preparation. Release remains a later checkpoint.
 
 - [x] Current-production base and isolated existing checkout verified.
 - [x] Background foreign-key scan implementation and focused verification.
-- [ ] Compact list implementation and focused verification.
-- [ ] Local commits and final scope review.
+- [x] Compact list implementation and focused verification.
+- [x] Two separate local slices and final scope review (local Git history records commits).
 - [ ] Later authorized hosted build, health and measured acceptance.
 
 ## Exclusions
@@ -64,3 +64,45 @@ data engine, polling-frequency, user data, auth or UI/content changes.
   and natural warm-request timing are **not yet verified**. A worker failure
   intentionally restores full synchronous verification on the next open, so a
   packaging problem could restore the old latency rather than pass unchecked.
+
+Integrity local commit: `6f5226a3c0d23e4ebdf923d29b02cf1571594602`.
+
+## Compact list checkpoint
+
+- `?view=list` opts into the compact transport after the existing authorization.
+  The default endpoint remains full, authenticated and `private, no-store`.
+  Server-rendered list props are compact as well. The client normalizes either
+  compact or legacy full replies so an old-server rollback remains compatible.
+- Detail, archive and stream transports remain full and unchanged. List stream
+  events are projected before storing them in client state. Neither the SQL
+  state read/parse cost nor SSE network bytes are claimed to be reduced.
+- Preserved every list field: symbol/status, timestamps/activation sorting,
+  price/revision/observation, country and its independent card timestamp,
+  session grouping, followup/reversal flags, visibility and lifecycle labels.
+  Cards, ladders and level maps are not transmitted in compact snapshots.
+- `scripts/watchlist-list-payload-check.cjs 9ae6bb62dc64917e129a70342601568200aec3e1`
+  passed 324 reconciliation pairs, 324 stream merge comparisons, 20 pure list
+  element-tree comparisons against that unchanged production source, removal
+  timing, auth-denied/no-read, legacy/default/unknown/compact response and no-store
+  checks. This is a source-level contract proof, not rendered-browser acceptance.
+- Synthetic six-symbol payload: 144,124 to 3,004 JSON bytes (about 98% smaller).
+  The earlier live sample was approximately 191 KB; no post-change live payload
+  or speed improvement has been measured because nothing is deployed.
+- Bounded semantic check: client/list/reconciliation roots, 23 source files,
+  zero diagnostics. Page and API syntax checks passed. The proof harness initially
+  omitted its `formatDate` dependency; the harness was corrected and rerun clean.
+- Next.js/React guidance applied: minimize server/client serialization without
+  caching authenticated data, keep functional state updates and existing effect
+  cleanup/coalescing. No UI wording/layout, hooks lifecycle or polling changes.
+
+## Later release acceptance, not performed here
+
+1. Fresh remote/deployed source, lane ownership, mounted volume and exact applied
+   migration identities; rebase/integrate only these allowlisted changes if the
+   production parent advances. No schema migration is introduced by either slice.
+2. Owner-authorized after-hours release with verified prior healthy rollback;
+   hosted build/typecheck and native worker packaging, then public health.
+3. Natural warm signed-in timings, worker outcomes and CPU/RAM, compact response
+   bytes, list flags/groups/removals, ticker detail and a real installed PWA.
+4. On an unavailable app, restore the verified compatible healthy release before
+   any retry. Do not claim phone acceptance or live speed from the local proof.

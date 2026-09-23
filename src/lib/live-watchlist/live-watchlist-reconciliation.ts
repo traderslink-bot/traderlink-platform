@@ -7,8 +7,8 @@ import type { LiveWatchlistSymbolState } from "./live-watchlist-types";
  * backwards. The persisted watchlist state remains authoritative.
  */
 export function isNewerLiveWatchlistSymbolState(
-  current: LiveWatchlistSymbolState,
-  incoming: LiveWatchlistSymbolState,
+  current: Pick<LiveWatchlistSymbolState, "marketDataRevision" | "latestPriceObservedAt" | "updatedAt">,
+  incoming: Pick<LiveWatchlistSymbolState, "marketDataRevision" | "latestPriceObservedAt" | "updatedAt">,
 ): boolean {
   const currentRevision = current.marketDataRevision;
   const incomingRevision = incoming.marketDataRevision;

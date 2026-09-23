@@ -12,7 +12,6 @@ import type {
   LiveWatchlistArchiveSnapshot,
   LiveWatchlistCardContent,
   LiveWatchlistMarketDataStatus,
-  LiveWatchlistStatePayload,
   LiveWatchlistSymbolState,
   LiveWatchlistVolumeContext,
   TradersLinkAiReadLevel,
@@ -31,9 +30,16 @@ import {
 import { getWatchlistCountryFlag } from "@/src/lib/live-watchlist/watchlist-country-flag";
 import { buildWatchlistHighRiskWarning } from "@/src/lib/live-watchlist/watchlist-high-risk-warning";
 import {
-  reconcileLiveWatchlistSnapshot,
   reconcileLiveWatchlistSymbolState,
 } from "@/src/lib/live-watchlist/live-watchlist-reconciliation";
+import {
+  mergeLiveWatchlistListSymbol,
+  projectLiveWatchlistList,
+  projectLiveWatchlistListSymbol,
+  reconcileLiveWatchlistListSnapshot,
+  type LiveWatchlistListPayload,
+  type LiveWatchlistListSymbol,
+} from "@/src/lib/live-watchlist/live-watchlist-list";
 import {
   deriveTradersLinkAiPullbackPlan,
   describeTradersLinkAiLiveVolumeContext,
@@ -1288,11 +1294,11 @@ export function mergeSymbol(
   return [reconciled, ...without].sort(sortSymbolsByActivation);
 }
 
-function isPostmarketAddition(symbol: LiveWatchlistSymbolState): boolean {
+function isPostmarketAddition(symbol: LiveWatchlistListSymbol): boolean {
   return getLiveWatchlistEntryGroup(symbol) === "postmarket";
 }
 
-function WatchlistLifecycleBadge({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+function WatchlistLifecycleBadge({ symbol }: { symbol: LiveWatchlistListSymbol }) {
   const lifecycle = symbol.watchlistLifecycle;
   if (
     symbol.reversalWatchAttemptReady === true &&
@@ -1317,7 +1323,7 @@ function WatchlistLifecycleBadge({ symbol }: { symbol: LiveWatchlistSymbolState 
   );
 }
 
-function ReversalAttemptBadge({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+function ReversalAttemptBadge({ symbol }: { symbol: LiveWatchlistListSymbol }) {
   if (
     symbol.reversalWatchAttemptReady !== true ||
     symbol.watchlistLifecycle?.status !== "recovery_attempt"
@@ -1340,7 +1346,7 @@ function WatchlistTickerTable({
   symbols,
 }: {
   ariaLabel: string;
-  symbols: LiveWatchlistSymbolState[];
+  symbols: LiveWatchlistListSymbol[];
 }) {
   return (
     <section className="watchlist-table" aria-label={ariaLabel}>
@@ -1354,7 +1360,7 @@ function WatchlistTickerTable({
         <span>Details</span>
       </div>
       {symbols.map((symbol) => {
-        const countryFlag = getWatchlistCountryFlag(symbol.cards.companyInfo?.metadata?.country);
+        const countryFlag = getWatchlistCountryFlag(symbol.companyInfo?.country);
         return (
           <Link
             key={symbol.symbol}
@@ -1603,7 +1609,7 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
 export function LiveWatchlistIndexClient({
   initialState,
 }: {
-  initialState: LiveWatchlistStatePayload;
+  initialState: LiveWatchlistListPayload;
 }) {
   const [symbols, setSymbols] = useState(initialState.symbols);
   const [marketDataStatus, setMarketDataStatus] = useState<LiveWatchlistMarketDataStatus>(
@@ -1639,13 +1645,13 @@ export function LiveWatchlistIndexClient({
     let pollTimer: number | null = null;
 
     const refreshController = createWatchlistRefreshController(async (signal) => {
-      const response = await fetch("/api/live-watchlist", { credentials: "same-origin", signal });
+      const response = await fetch("/api/live-watchlist?view=list", { credentials: "same-origin", signal });
       if (!response.ok) {
         throw new Error("watchlist_refresh_unavailable");
       }
-      const payload = (await response.json()) as LiveWatchlistStatePayload;
+      const payload = projectLiveWatchlistList(await response.json());
       if (!cancelled) {
-        setSymbols((current) => reconcileLiveWatchlistSnapshot({
+        setSymbols((current) => reconcileLiveWatchlistListSnapshot({
           current,
           incoming: payload.symbols,
           generatedAt: payload.generatedAt,
@@ -1662,7 +1668,7 @@ export function LiveWatchlistIndexClient({
     });
     stream.addEventListener("symbol", (event) => {
       const next = JSON.parse(event.data) as LiveWatchlistSymbolState;
-      setSymbols((current) => mergeSymbol(current, next));
+      setSymbols((current) => mergeLiveWatchlistListSymbol(current, projectLiveWatchlistListSymbol(next)));
     });
     stream.addEventListener("health", (event) => {
       const next = JSON.parse(event.data) as {
