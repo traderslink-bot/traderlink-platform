@@ -1,6 +1,7 @@
 # Discord halt alerts
 
-Status: implementation and focused static verification complete; Coordinator release pending.
+Status: implementation and focused static verification complete; approved release
+blocked on owner installing the existing bot in Discord and granting channel access.
 
 Controlling plan: [Nasdaq and NYSE Halt Alerts Plan](nasdaq-nyse-halt-alerts-plan.md).
 
@@ -73,3 +74,19 @@ Controlling plan: [Nasdaq and NYSE Halt Alerts Plan](nasdaq-nyse-halt-alerts-pla
 - [ ] Real qualifying halt message confirmed in the selected channel.
 
 No test runner, broad suite, local build or local server is run by this feature task.
+
+## Coordinator access preflight, 2026-09-24
+
+- Implementation candidate: `255ed6b860a138bd70a573f7dcf3eeeb31522a96`, 13-file delta
+  from the assigned `a5f74b49` parent. Production approval remains valid.
+- At 14:08:39 UTC the production bot's channel read returned HTTP 403. At 14:09:32 UTC
+  its identity authenticated with HTTP 200, but guild access returned Unknown Guild.
+- At 14:11:03 UTC the Coordinator verified application/bot ID `1540380904705495090`,
+  name **TradersLink Platform**, and a successful accessible-guilds response with
+  zero entries. The configured bot is not installed in any server.
+- Required owner action: install that existing bot in TradersLink, then explicitly
+  allow View Channel and Send Messages on the selected private channel. No shared
+  token replacement or guild change is required.
+- Coordinator has not changed production settings, migrated, deployed or posted a
+  test message. Resume the already-approved guarded release and activation when the
+  bot is installed and access is verified. Healthy production remains unchanged.
