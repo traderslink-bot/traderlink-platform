@@ -1,7 +1,7 @@
 # Discord halt alerts
 
-Status: implementation and focused static verification complete; approved release
-blocked on owner installing the existing bot in Discord and granting channel access.
+Status: implementation and focused static verification complete; bot installation
+and private-channel permissions verified. Coordinator owns the approved release in progress.
 
 Controlling plan: [Nasdaq and NYSE Halt Alerts Plan](nasdaq-nyse-halt-alerts-plan.md).
 
@@ -90,3 +90,29 @@ No test runner, broad suite, local build or local server is run by this feature 
 - Coordinator has not changed production settings, migrated, deployed or posted a
   test message. Resume the already-approved guarded release and activation when the
   bot is installed and access is verified. Healthy production remains unchanged.
+
+## Channel access and schema-compatible fallback, 2026-09-24
+
+- Coordinator verified installation after owner authorization. At 14:29:03 UTC,
+  channel `1552678787676774490` (`halt-alerts`, text channel) passed View Channel
+  and Send Messages for the exact existing TradersLink Platform bot. Administrator
+  access is false; the channel remains private. No message was sent by this check.
+- Coordinator took the serialized release slot and requested a schema-compatible
+  fallback artifact before applying 0140. Local commit
+  `23058580810ba79f6ef8f838a458473fc4f3bbe9` has exact parent
+  `a5f74b49076e82b2c9a7a45ef871df8f1574adbb` and only two changed files:
+  `src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries.ts`
+  and `src/modules/platform/server/database/platform-migration-manifest.ts`.
+- Both blobs exactly match reviewed feature commit `255ed6b8`; every other file
+  matches the production parent. The migration identity, SQL checksum and managed
+  table registration remain available after 0140 while all application behavior
+  stays at the prior release. Plain `a5f74b49` is not a valid schema rollback after
+  0140: its strict migration manifest does not recognize the new identity/table.
+- Artifact is retained at local ref `refs/codex/halt-discord-schema-fallback-20260924`.
+  Built through an isolated index without changing the active branch, feature
+  commits or checkout. Exact two-file allowlist, blob equality, SQL checksum and
+  diff whitespace checks passed. No tests, build, database or hosted actions ran.
+- This is static fallback packaging, not runtime startup proof or production
+  deployment evidence. Coordinator must verify the deployed schema/health and use
+  the current release parent for any published recovery; never force-push this
+  old-parent artifact. Actual channel message evidence remains pending.
