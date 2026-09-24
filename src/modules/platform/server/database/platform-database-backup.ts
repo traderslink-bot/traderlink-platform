@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 import Database from "better-sqlite3";
@@ -78,7 +78,19 @@ type RecoveryAuthorityResult = Readonly<{
 }>;
 
 function sha256File(path: string): string {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
+  const hash = createHash("sha256");
+  const buffer = Buffer.alloc(1024 * 1024);
+  const descriptor = openSync(path, "r");
+  try {
+    for (;;) {
+      const bytesRead = readSync(descriptor, buffer, 0, buffer.length, null);
+      if (bytesRead === 0) break;
+      hash.update(buffer.subarray(0, bytesRead));
+    }
+    return hash.digest("hex");
+  } finally {
+    closeSync(descriptor);
+  }
 }
 
 function sidecarEvidence(path: string): Readonly<{ exists: boolean; sizeBytes: number }> {
