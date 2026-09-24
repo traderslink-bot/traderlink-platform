@@ -116,3 +116,36 @@ No test runner, broad suite, local build or local server is run by this feature 
   deployment evidence. Coordinator must verify the deployed schema/health and use
   the current release parent for any published recovery; never force-push this
   old-parent artifact. Actual channel message evidence remains pending.
+
+## Backup size prerequisite and revised carrier, 2026-09-24
+
+- Before hosted mutation, the Coordinator identified a 2,349,572,096-byte database
+  on Node 24.21.0. The existing whole-file `readFileSync` in the backup checksum
+  helper exceeds Node's synchronous whole-file read limit, so the original carrier
+  must not be used for this migration attempt.
+- Requested strictly technical repair commit
+  `21cde3f171829b81e32fd64ce9e3f67612ce86d1`, exact parent `a5f74b49`, changes only
+  `src/modules/platform/server/database/platform-database-backup.ts`. SHA-256 now
+  uses a single 1 MiB buffer, synchronous read-only open/read calls until EOF, only
+  the bytes actually read, and descriptor closure in `finally`. No exported API,
+  digest format, error wrapper, database, restore or evidence contract changes.
+- Updated schema carrier `7b899383bd6510767abf71b40cdb4df575656e5d` is parented
+  directly to that repair and adds only the exact reviewed 0140 migration and
+  manifest blobs. Its cumulative delta from production is three files. The SQL
+  checksum is unchanged. It supersedes `23058580` for this release sequence;
+  the old artifact remains preserved, not deployed or deleted.
+- Both new artifacts are retained at `refs/codex/halt-backup-chunked-sha256-20260924`
+  and `refs/codex/halt-discord-schema-carrier-v2-20260924`. Feature `255ed6b8` and
+  its documentation lineage remain intact. The local working-file edit used for
+  focused checking was returned to that unchanged feature lineage after the repair
+  was preserved in Git; the repair is delivered through its dedicated commit.
+- Focused `tsc --noEmit` on the repaired backup file and transitive imports passed
+  before packaging; exact parent/allowlist, diff and migration blob equality checks
+  passed. No tests, full build, large-file runtime experiment or hosted action ran.
+  Sequential reads, partial final chunks, empty files and guaranteed closure were
+  source-reviewed, not claimed as executed runtime tests.
+- Coordinator will release backup-only repair, then guarded carrier, then the
+  unchanged halt feature. Preserve the backup repair when integrating that feature;
+  never replace the new production tree with the feature's old whole-tree snapshot.
+  Real large-file backup/restore, schema migration, carrier startup and feature
+  activation evidence remain Coordinator-owned and outstanding.
