@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 
 import type { MarketHalt } from "./market-halt-feed";
 import { MarketHaltAlertRepository } from "./market-halt-alert-repository";
+import { newsMarketHaltDiscordDeliveriesMigration } from "./database/migrations/0140_news_market_halt_discord_deliveries";
 
 function halt(overrides: Partial<MarketHalt> = {}): MarketHalt {
   return Object.freeze({
@@ -19,7 +20,7 @@ function halt(overrides: Partial<MarketHalt> = {}): MarketHalt {
   });
 }
 
-function fixture(): Readonly<{
+function fixture(discordChannelId: string | null = null): Readonly<{
   database: Database.Database;
   enableRecipient(): void;
   repository: MarketHaltAlertRepository;
@@ -70,7 +71,10 @@ CREATE TABLE news_market_halt_push_deliveries (
     database.prepare(`INSERT INTO platform_web_push_subscriptions (subscription_id, user_id, state)
 VALUES ('00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001', 'active')`).run();
   };
-  return Object.freeze({ database, enableRecipient, repository: new MarketHaltAlertRepository(database) });
+  if (discordChannelId) {
+    for (const sql of newsMarketHaltDiscordDeliveriesMigration.statements) database.exec(sql);
+  }
+  return Object.freeze({ database, enableRecipient, repository: new MarketHaltAlertRepository(database, discordChannelId) });
 }
 
 describe("MarketHaltAlertRepository lifecycle reconciliation", () => {
@@ -220,6 +224,22 @@ FROM news_market_halt_events WHERE ticker = 'HAO'`).get()).toEqual({
 });
 
 describe("MarketHaltAlertRepository daily delivery lifecycle", () => {
+  it("queues the shared first-halt sequence to Discord without any phone subscriptions", () => {
+    const { database, repository } = fixture("1552678787676774490");
+    try {
+      const first = repository.upsert({ halt: halt({ ticker: "FCUV" }), observedAtUtc: "2026-09-04T14:21:00.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:21:00.000Z" });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:21:30.000Z" });
+      const updated = repository.upsert({ halt: halt({ ticker: "FCUV", resumptionTradeTimeEt: "10:25:00" }), observedAtUtc: "2026-09-04T14:22:00.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: updated.haltId, observedAtUtc: "2026-09-04T14:22:00.000Z" });
+      const later = repository.upsert({ halt: halt({ ticker: "FCUV", haltTimeEt: "10:30:00" }), observedAtUtc: "2026-09-04T14:30:00.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: later.haltId, observedAtUtc: "2026-09-04T14:30:00.000Z" });
+      expect(database.prepare("SELECT notification_stage FROM news_market_halt_discord_deliveries ORDER BY created_at_utc").all())
+        .toEqual([{ notification_stage: "initial" }, { notification_stage: "trade_time" }]);
+      expect(database.prepare("SELECT COUNT(*) AS count FROM news_market_halt_push_deliveries").get()).toEqual({ count: 0 });
+    } finally { database.close(); }
+  });
+
   it("sends one staged sequence for the first ticker halt and records a later halt silently", () => {
     const { database, enableRecipient, repository } = fixture();
     try {

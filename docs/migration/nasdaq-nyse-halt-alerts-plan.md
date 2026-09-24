@@ -4,6 +4,12 @@
 
 **Extends:** [Press Release Dashboard Plan](press-release-dashboard-plan.md)
 
+**Approved Discord channel delivery:** [Discord halt delivery progress](halt-alert-discord-channel-progress.md).
+The owner approved the same qualifying initial/quote/trade alerts in one private
+TradersLink server channel on 2026-09-24, including production release and immediate
+activation for real-halt testing. Personal Push preferences/mutes continue to affect
+only that user's device delivery; the server channel has its own delivery queue.
+
 ## Outcome
 
 Traders who select **Halt Alerts (Nasdaq/NYSE)** receive Push notifications for qualifying Nasdaq and NYSE halt events. They can mute one ticker through the end of that trading day from the Halt Alerts drawer or the notification itself without turning the alert stream off.

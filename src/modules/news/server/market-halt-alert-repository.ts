@@ -10,6 +10,7 @@ import {
 } from "../../platform/server/database/platform-migration-contract";
 import type { MarketHalt } from "./market-halt-feed";
 import { marketHaltMuteExpiresAtUtc } from "./market-halt-mute-expiry";
+import { MarketHaltDiscordRepository } from "./market-halt-discord-repository";
 
 function assertActive(database: Database.Database, scope: WorkspaceAccessScope): void {
   const found = database.prepare<[string, string], { found: number }>(`SELECT 1 AS found
@@ -175,7 +176,10 @@ function isSameHaltLifecycle(existing: ExistingHaltLifecycle, halt: MarketHalt):
 }
 
 export class MarketHaltAlertRepository {
-  constructor(private readonly database: Database.Database) {}
+  constructor(
+    private readonly database: Database.Database,
+    private readonly discordChannelId: string | null = null,
+  ) {}
 
   read(scope: WorkspaceAccessScope): Readonly<{ enabled: boolean }> {
     assertActive(this.database, scope);
@@ -398,6 +402,17 @@ WHERE ticker = ? AND halt_date_et = ? AND first_halt_id = ? AND ended_at_utc IS 
     stage: HaltAlertStage;
   }>): number {
     const copy = notificationCopy(input.event, input.stage);
+    if (this.discordChannelId && /^[A-Z0-9.-]{1,4}$/u.test(input.event.ticker)) {
+      new MarketHaltDiscordRepository(this.database).enqueue({
+        channelId: this.discordChannelId,
+        haltId: input.event.halt_id,
+        stage: input.stage,
+        revision: input.revision,
+        title: copy.title,
+        body: copy.body,
+        occurredAtUtc: input.occurredAtUtc,
+      });
+    }
     const subscriptions = this.database.prepare<[string, string], { subscription_id: string }>(`SELECT subscription.subscription_id
 FROM platform_web_push_subscriptions subscription
 JOIN news_market_halt_preferences preference

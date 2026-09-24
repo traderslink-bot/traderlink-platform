@@ -1,5 +1,12 @@
 # TraderLink Platform Migration Progress
 
+## Discord halt channel delivery
+
+Owner-approved implementation, production release and activation are tracked in
+[Discord halt delivery progress](halt-alert-discord-channel-progress.md). Coordinator
+reserved `0140_news_market_halt_discord_deliveries` after 0139; hosted migration and
+release remain Coordinator-owned.
+
 ## Dark appearance preference
 
 The owner-approved Navy dark appearance is tracked in the

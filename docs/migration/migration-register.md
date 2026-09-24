@@ -4,6 +4,12 @@
 
 # TraderLink Platform Migration Register
 
+**Discord halt alerts:** `0140_news_market_halt_discord_deliveries` (execution order
+140) is exclusively Coordinator-reserved after `0139_platform_premium_swing_idea_visit_events`.
+Adds one durable channel-delivery table and two indexes, reusing the existing global
+ticker/day lifecycle. No Journal records or user preferences change. See
+[progress and release contract](halt-alert-discord-channel-progress.md).
+
 **Separate Watchlist listing/analysis:** `0138_platform_watchlist_notification_action_identity`
 is exclusively reserved by Visible release coordinator after exact predecessor
 `0137_platform_watchlist_publication_notifications`. Preserves prior receipts and
