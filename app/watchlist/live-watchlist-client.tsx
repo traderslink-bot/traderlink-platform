@@ -127,11 +127,11 @@ function aiReadStatusLabel(
 ): string | null {
   if (symbol.marketDataStatus === "halted") {
     return hasPublishedRead
-      ? "AI Read update: Trading is halted. This read remains on the last confirmed candle until trading resumes."
-      : "AI Read update: Trading is halted. Waiting for confirmed candles before publishing a read.";
+      ? "Analysis update: Trading is halted. This read remains on the last confirmed candle until trading resumes."
+      : "Analysis update: Trading is halted. Waiting for confirmed candles before publishing a read.";
   }
   if (symbol.marketDataStatus === "possible_halt") {
-    return "AI Read update: A possible halt was detected. Waiting for confirmation before treating new price action as current.";
+    return "Analysis update: A possible halt was detected. Waiting for confirmation before treating new price action as current.";
   }
   return null;
 }
@@ -851,7 +851,7 @@ function TradersLinkAiReadStatusCard({
       ) : null}
       {status === "failed" ? (
         <p className="watchlist-ai-read-status">
-          AI analysis contained inaccuracies and was rejected.
+          Analysis contained inaccuracies and was rejected.
         </p>
       ) : null}
     </article>
