@@ -61,7 +61,7 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
     try { localStorage.setItem(PREFERENCE, frame); } catch { /* No market data or identifiers are stored. */ }
   };
   return <article className={`academy-card watchlist-content-card ${styles.card}`} data-card-label="Indicators" aria-labelledby={`${id}-title`}>
-    <h2 id={`${id}-title`}>Indicators</h2>
+    <h2 id={`${id}-title`} style={{ fontWeight: 700 }}>INDICATORS</h2>
     <div className={styles.summaries}>
       {FRAMES.slice(0, 3).map(frame => <div className={styles.summary} key={frame}>
         <strong>{frame}</strong><span>{indicatorSummary(current?.timeframes[frame])}</span>

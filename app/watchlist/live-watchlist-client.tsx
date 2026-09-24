@@ -1578,8 +1578,9 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
       ) : null}
       {symbol.cards.traderNotes?.body?.trim() ? (
         <article className="academy-card watchlist-content-card" data-card-label="Trader notes" style={{ gridColumn: "1 / -1", minWidth: 0 }}>
-          <h2>Trader notes</h2>
+          <h2 style={{ fontWeight: 700 }}>TRADER NOTES</h2>
           <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{symbol.cards.traderNotes.body}</div>
+          <p style={{ marginTop: "1rem", marginBottom: 0, fontSize: "0.75rem", lineHeight: 1.5, color: "var(--academy-muted)" }}>Full analysis may be added if the ticker develops a clearer trading setup.</p>
         </article>
       ) : null}
       <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.firstPostedAt}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} livePrice={symbol.latestPrice} />

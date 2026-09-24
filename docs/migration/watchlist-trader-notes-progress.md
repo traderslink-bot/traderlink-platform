@@ -43,3 +43,19 @@ Owner selected General Watchlist, approved the explanatory tooltip and bidirecti
 - Final QA found and corrected two integration gaps before release: actual disk serializer needed the notes/opt-out fields, and the old Move implementation could schedule analysis when moved into Top Regular. Eleven offline scenario groups now pass, including actual disk save/load and all six General-to/from-existing-category transitions.
 - Both combined replacement commits supersede the earlier local 24709005/06cad8e1 package; do not apply both versions. Pending d1710014 wording correction remains a separate three-file change for coordinator reconciliation.
 - No migration. Preserve all existing production state/notes and compact-list performance changes. Platform first, then runtime; hosted build, health and owner-audience acceptance are still required. Runtime rollback to the old parser is unsafe after General entries are saved because it does not recognize the new group: use a forward correction or first reconcile General entries with owner approval, never discard the state file.
+
+
+## Owner-approved card heading and footer refinement — September 24, 2026
+
+- Member titles are TRADER NOTES and INDICATORS, explicitly bold (700), preserving
+  existing heading sizes, theme and indicator aria-labelledby/id association.
+- Nonempty Trader notes ends with small theme-muted text: "Full analysis may be added if the ticker develops a clearer trading setup."
+- The footer remains inside the existing trimmed-notes condition: absent, empty
+  and whitespace-only notes render no card and no footer. No warning added.
+- Help reviewed: existing optional-notes/later-analysis guidance remains accurate;
+  no Help update needed for typography and this explanatory footer.
+- Focused TSX syntax and React static-render checks pass for nonempty/multiline,
+  empty, whitespace and absent notes, plus indicator heading identity/weight.
+  React review confirms no hook, request, state, notification or data changes.
+- Display-only local checkpoint; no local server/build, API requests or hosted
+  actions. Coordinator owns any release and final rendered acceptance.
