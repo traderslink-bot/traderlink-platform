@@ -54,6 +54,30 @@ function safeSourceUrl(value: string | null): string | null {
   } catch { return null; }
 }
 
+function articleTypeLabel(row: ArticleRow): string {
+  const parsed: unknown = JSON.parse(row.metadata_json);
+  const metadata = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? parsed as Record<string, unknown> : {};
+  const eventType = (row.event_type || "").toLowerCase();
+  const recordedForm = typeof metadata.filingType === "string"
+    ? metadata.filingType.trim().toUpperCase().replace(/^(?:SEC\s+)?FORM\s+/, "").replace(/\s+/g, " ") : "";
+  // Accept only a short recorded form identifier, never derive a form from headline prose.
+  const form = /^[A-Z0-9][A-Z0-9./ -]{0,23}$/.test(recordedForm)
+    && (/\d/.test(recordedForm) || /^(?:EFFECT|CORRESP|UPLOAD|CERT|RW|AW|DRS(?:\/A)?|POS AM)$/.test(recordedForm))
+    ? recordedForm : null;
+  let secSource = false;
+  try {
+    const hostname = new URL(row.source_url || "").hostname.toLowerCase();
+    secSource = hostname === "sec.gov" || hostname.endsWith(".sec.gov");
+  } catch { /* An absent source does not establish a filing type. */ }
+  if (secSource || eventType.startsWith("sec_")
+    || (form && !eventType.startsWith("press_release"))) {
+    return form ? `SEC ${form}` : "SEC Filing";
+  }
+  if (eventType.startsWith("press_release")) return "Press Release";
+  return "News";
+}
+
 function articleLink(row: ArticleRow): string | null {
   const metadata = JSON.parse(row.metadata_json) as Record<string, unknown>;
   const summary = row.summary?.trim() || "";
@@ -78,7 +102,7 @@ export function listScannerRecentPressReleases(database: Database.Database, tick
   `).all(ticker, `${window.dates[4]}T00:00:00.000Z`, now.toISOString(), ...routeTags) as ArticleRow[];
   const articles = rows.filter((row) => includedDates.has(easternSavedDate(row.created_at))).map((row) => ({
     id: row.id, ticker: row.ticker, headline: row.headline, createdAt: row.created_at,
-    savedDate: easternSavedDate(row.created_at), url: articleLink(row),
+    savedDate: easternSavedDate(row.created_at), url: articleLink(row), typeLabel: articleTypeLabel(row),
   }));
   return { ...window, articles };
 }
