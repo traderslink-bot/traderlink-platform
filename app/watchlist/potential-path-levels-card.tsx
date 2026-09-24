@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { normalizeOvernightLevelReference } from "@/src/lib/live-watchlist/overnight-level-reference";
+import styles from "./overnight-price-note.module.css";
 import type { ReactNode } from "react";
 
 import type {
@@ -223,6 +225,7 @@ export function WatchlistV2PotentialPathCard({
   priceNoteOwnLine?: boolean;
 }) {
   const levelMap = symbol.levelMap ?? null;
+  const overnight = normalizeOvernightLevelReference(levelMap?.overnightReference);
   const levelRows = buildWatchlistV2LevelRows(levelMap);
   const fullLadderBody = fullLadderCard
     ? cleanGenericCardBody(fullLadderCard)
@@ -247,12 +250,18 @@ export function WatchlistV2PotentialPathCard({
                   : "POSSIBLE HALT - confirmation pending"}
               </span>
             ) : null}
-            {showPrice ? <span>{formatPrice(symbol.latestPrice)}</span> : null}
-            <small className="watchlist-price-delay-note" data-own-line={priceNoteOwnLine ? "true" : undefined}>{priceNote}</small>
+            {showPrice ? <span>{formatPrice(overnight?.price ?? symbol.latestPrice)}</span> : null}
+            {!overnight ? <small className="watchlist-price-delay-note" data-own-line={priceNoteOwnLine ? "true" : undefined}>{priceNote}</small> : null}
           </div>
         </header>
 
-        {showMeta ? (
+        {overnight ? (
+          <div className={styles.note} role="note">
+            <strong>Overnight price: ${formatPrice(overnight.price)} · Checked {new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }).format(new Date(overnight.checkedAt))} ET</strong>
+            <span>Levels use this fixed price until live updates resume in premarket.</span>
+          </div>
+        ) : null}
+        {showMeta && !overnight ? (
           <dl className="watchlist-v2-card-meta">
             <div>
               <dt>{metaLabel}</dt>
@@ -343,7 +352,7 @@ export function WatchlistPotentialPathCardArticle({
             showNearestLevels={showNearestLevels}
             showPrice={showPrice}
           />
-          {card && showOuterMeta ? (
+          {card && showOuterMeta && !normalizeOvernightLevelReference(symbol.levelMap?.overnightReference) ? (
             <p className="watchlist-card-meta">
               Updated {formatTime(card.updatedAt)} | Price when posted {formatPrice(card.priceWhenPosted)}
             </p>

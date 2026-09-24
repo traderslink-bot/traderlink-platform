@@ -1,0 +1,2 @@
+.note { display: grid; gap: 4px; margin: 12px 0; padding: 10px 12px; border: 1px solid #779bc966; border-radius: 8px; background: #729ed51a; color: inherit; font-size: .8125rem; line-height: 1.5; overflow-wrap: anywhere; }
+.note strong { font-weight: 600; }

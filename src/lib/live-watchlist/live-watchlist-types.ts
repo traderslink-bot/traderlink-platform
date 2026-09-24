@@ -458,6 +458,7 @@ export type LiveWatchlistTradePlan = {
 };
 
 export type LiveWatchlistLevelMap = {
+  overnightReference?: import("./overnight-level-reference").OvernightLevelReference;
   currentPrice: number;
   rangeState: LiveWatchlistLevelMapRangeState;
   nearestSupport: LiveWatchlistLevelMapLevel | null;
