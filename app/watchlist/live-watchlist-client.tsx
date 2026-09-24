@@ -1576,6 +1576,12 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
       ) : symbol.tradersLinkAiReadCardVisible !== false ? (
         <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />
       ) : null}
+      {symbol.cards.traderNotes?.body?.trim() ? (
+        <article className="academy-card watchlist-content-card" data-card-label="Trader notes" style={{ gridColumn: "1 / -1", minWidth: 0 }}>
+          <h2>Trader notes</h2>
+          <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{symbol.cards.traderNotes.body}</div>
+        </article>
+      ) : null}
       <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.firstPostedAt}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} livePrice={symbol.latestPrice} />
       {recentNewsFilingsCard && showRecentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
@@ -1639,6 +1645,7 @@ export function LiveWatchlistIndexClient({
     (symbol) => getLiveWatchlistEntryGroup(symbol) === "main",
   );
   const postmarketSymbols = activeSymbols.filter(isPostmarketAddition);
+  const generalSymbols = activeSymbols.filter(symbol => getLiveWatchlistEntryGroup(symbol) === "general");
 
   useEffect(() => {
     let cancelled = false;
@@ -1728,7 +1735,7 @@ export function LiveWatchlistIndexClient({
           </span>
           <span>
             {topRegularWatchlistVisible ? `${topRegularSymbols.length} top / ` : ""}
-            {mainSessionSymbols.length} main / {postmarketSymbols.length} post-market
+            {mainSessionSymbols.length} main / {postmarketSymbols.length} post-market / {generalSymbols.length} general
           </span>
           <span
             data-market-data-status={marketDataStatus}
@@ -1802,6 +1809,21 @@ export function LiveWatchlistIndexClient({
                   />
                 </div>
               ) : null}
+            </section>
+          ) : null}
+          {generalSymbols.length > 0 ? (
+            <section className="watchlist-session-list" aria-labelledby="watchlist-general-heading">
+              <div className="watchlist-session-heading">
+                <div>
+                  <h2 id="watchlist-general-heading">General Watchlist</h2>
+                  <details style={{ position: "relative", width: "fit-content" }}>
+                    <summary aria-label="About General Watchlist" style={{ cursor: "pointer", listStyle: "none" }}>ⓘ</summary>
+                    <p style={{ position: "absolute", zIndex: 20, width: "min(280px, 70vw)", background: "var(--academy-surface)", color: "var(--academy-text)", border: "1px solid var(--academy-border-strong)", borderRadius: 8, padding: 12, boxShadow: "var(--academy-shadow-3)" }}>Stocks being watched for potential opportunities, without a specific trading session or day-trade/swing-trade focus. Open a ticker to view available notes, analysis and price levels.</p>
+                  </details>
+                </div>
+                <span>{generalSymbols.length}</span>
+              </div>
+              <WatchlistTickerTable ariaLabel="General Watchlist tickers" symbols={generalSymbols} />
             </section>
           ) : null}
           {postmarketSymbols.length > 0 ? (

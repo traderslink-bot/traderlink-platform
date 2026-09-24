@@ -75,8 +75,7 @@ export function parseWatchlistPublicationNotificationEvent(
   const published = Date.parse(event.publishedAtUtc);
   if (approved > published || published > nowMs + CLOCK_SKEW_MS) return null;
   if (event.version === 2 && (!["listing","analysis"].includes(event.notificationKind as string) ||
-    !Number.isSafeInteger(event.approvalRevision) || (event.approvalRevision as number) < 1 || typeof event.notifyUsers !== "boolean" ||
-    (event.notificationKind === "listing" && event.notifyUsers !== true))) return null;
+    !Number.isSafeInteger(event.approvalRevision) || (event.approvalRevision as number) < 1 || typeof event.notifyUsers !== "boolean")) return null;
   return Object.freeze({ version: event.version as 1 | 2, cycleId: event.cycleId, ticker: event.ticker,
     approvedAtUtc: event.approvedAtUtc, publishedAtUtc: event.publishedAtUtc,
     ...(event.version === 2 ? { notificationKind: event.notificationKind as "listing" | "analysis",

@@ -198,8 +198,8 @@ function normalizeWatchlistLifecycle(
     : null;
 }
 
-function normalizeWatchlistGroup(value: unknown): "top_regular" | "main" | "postmarket" | undefined {
-  return value === "top_regular" || value === "main" || value === "postmarket"
+function normalizeWatchlistGroup(value: unknown): "top_regular" | "main" | "postmarket" | "general" | undefined {
+  return value === "top_regular" || value === "main" || value === "postmarket" || value === "general"
     ? value
     : undefined;
 }

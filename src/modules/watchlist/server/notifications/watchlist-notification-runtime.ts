@@ -60,7 +60,7 @@ export function recordWatchlistApprovalNotificationIntent(body: string, actor: s
     database.prepare(`INSERT INTO platform_watchlist_notification_intents
       (intent_id,cycle_id,ticker,expected_head,draft_revision,notify_users,actor,recipients_json,requested_at_utc,next_check_at_utc,state)
       VALUES(?,?,?,?,?,?,?,?,?,?,'pending')`).run(
-      intentId,request.cycleId,ticker,request.expectedHead,draftRevision,listingOnly || request.notifyUsers === true ? 1 : 0,actor,JSON.stringify(recipients),now,now);
+      intentId,request.cycleId,ticker,request.expectedHead,draftRevision,(listingOnly ? request.notifyUsers !== false : request.notifyUsers === true) ? 1 : 0,actor,JSON.stringify(recipients),now,now);
   }).immediate());
 }
 

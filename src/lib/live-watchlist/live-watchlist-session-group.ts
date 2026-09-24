@@ -1,6 +1,6 @@
 import type { LiveWatchlistSymbolState } from "./live-watchlist-types";
 
-export type LiveWatchlistEntryGroup = "top_regular" | "main" | "postmarket";
+export type LiveWatchlistEntryGroup = "top_regular" | "main" | "postmarket" | "general";
 
 export function shouldShowReversalWatchlist(visible: boolean, symbolCount: number): boolean {
   return visible && symbolCount > 0;
@@ -19,7 +19,7 @@ export function getLiveWatchlistEntryGroup(
   if (
     symbol.watchlistGroup === "top_regular" ||
     symbol.watchlistGroup === "main" ||
-    symbol.watchlistGroup === "postmarket"
+    symbol.watchlistGroup === "postmarket" || symbol.watchlistGroup === "general"
   ) {
     return symbol.watchlistGroup;
   }

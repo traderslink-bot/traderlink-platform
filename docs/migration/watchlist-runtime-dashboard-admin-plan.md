@@ -1,5 +1,7 @@
 # Watchlist Runtime Dashboard Admin Plan
 
+September 23 per-ticker analysis choice and notes: [approved plan](watchlist-trader-notes-plan.md).
+
 September 21 approved analysis date/price history: [header history progress](watchlist-analysis-header-time-progress.md).
 
 Owner-approved addition: [Discord mention controls](watchlist-discord-mentions-plan.md).

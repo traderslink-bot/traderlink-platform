@@ -29,6 +29,7 @@ const GET_PATHS = new Set([
 const POST_PATHS = new Set([
   "/api/watchlist/analysis-review/discord-mentions",
   "/api/watchlist/analysis-review/settings",
+  "/api/watchlist/analysis-review/save-notes",
   "/api/watchlist/analysis-review/save",
   "/api/watchlist/analysis-review/approve",
   "/api/watchlist/analysis-review/publish-without-analysis",
