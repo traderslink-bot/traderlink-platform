@@ -1,7 +1,8 @@
 # Discord halt alerts
 
-Status: implementation and focused static verification complete; bot installation
-and private-channel permissions verified. Coordinator owns the approved release in progress.
+Status: original Discord feature live with real delivery evidence. Owner-approved
+WZRD shared resumption-update correction is locally implemented and type-checked;
+Coordinator deployment remains pending.
 
 Controlling plan: [Nasdaq and NYSE Halt Alerts Plan](nasdaq-nyse-halt-alerts-plan.md).
 
@@ -149,3 +150,52 @@ No test runner, broad suite, local build or local server is run by this feature 
   never replace the new production tree with the feature's old whole-tree snapshot.
   Real large-file backup/restore, schema migration, carrier startup and feature
   activation evidence remain Coordinator-owned and outstanding.
+
+## Original release closure, 2026-09-24
+
+- Coordinator released feature `bf6de9e622fe693d934876de636bf5147a145777`, Railway
+  `58e75503-6bba-452b-a633-f7801a4e6927` SUCCESS. Schema 126, original volume,
+  absent maintenance controls and healthy application were independently verified.
+- Real EZGO initial alert delivered on attempt one at 15:17:11.695 UTC, Discord
+  message `1552700434865717280`. This proves that delivery, not every later stage.
+- Owner confirmed the channel's later `@everyone` visibility was intentional;
+  do not revert its permissions. Earlier private-trial references are historical.
+
+## WZRD resumption-update correction, 2026-09-24
+
+- Owner explicitly requested correction after read-only diagnosis. Production
+  source was `8bea441d5b20fb6145ecde42521101ea56bfc5d2`, schema 126. Relevant
+  lifecycle, parser and Discord transport blobs match the assigned feature checkout.
+- Coordinator confirmed exact repair parent
+  `acf7fc6166842dc3d4b86dac2d0d65c24f301dd8` after the separate scanner release
+  completed. Package only this four-file correction on that parent through an
+  isolated Git index; do not inherit the old feature branch's release ancestry.
+- WZRD initial halt was 12:41:37.646 ET. Production stored both quote/trade times
+  as 12:46:37 but ended the sequence at 12:48:12.781 ET with both last-notified
+  times null and both revisions zero. Discord had one delivered initial alert;
+  PWA had three delivered initial rows and no quote/trade rows. Those PWA rows are
+  server-delivery evidence, not independent device-receipt proof.
+- Natural polls remained successful with Nasdaq HTTP 200. Official RSS retrieved
+  at 17:14:05.290 UTC showed accepted code M and the same times. Exact first feed
+  publication time cannot be reconstructed from the stored row and is not claimed.
+- Cause: the existing shared lifecycle closed on reached trade time before checking
+  for previously unnotified times. This discarded the update before either queue.
+- Correction: compute and enqueue factual quote/trade changes, update their
+  stage/revision markers, then apply silent closure in the same reconciliation.
+  Both transports retain their existing shared transaction and delivery behavior.
+  No initial eligibility, parser, channel, notification copy, schema or transport
+  changes. First-halt/day, deduplication, silent closure and two-minute delivery
+  freshness remain intact; already-ended historical sequences are never reopened.
+- Added regression source for the WZRD boundary at and after trade time, one
+  combined update to both transports, repeated-poll/later-halt silence, a missing
+  trade time after an earlier quote update, revised trade-time closure without
+  historical replay, and a delay to a future time keeping the sequence open.
+  Existing future-time and unchanged-time closure cases remain.
+- Focused TypeScript for changed source, regression source and imports passed.
+  No test runner, full build, local database, manual cron or hosted mutation ran.
+  Runtime regression execution is not claimed under the owner's no-test-run rule.
+- Reviewed Help Center Halt Alerts guide: existing factual timing descriptions
+  remain accurate; no public copy or UI change is required for this correction.
+- Coordinator owns final exact-parent packaging review, publication, Railway
+  deployment, health and real subsequent resumption-stage verification. No migration
+  is needed. WZRD's already-ended historical sequence is not replayed by this fix.

@@ -224,6 +224,104 @@ FROM news_market_halt_events WHERE ticker = 'HAO'`).get()).toEqual({
 });
 
 describe("MarketHaltAlertRepository daily delivery lifecycle", () => {
+  it.each(["2026-09-24T16:46:37.000Z", "2026-09-24T16:48:12.781Z"])(
+    "queues newly discovered WZRD times before closing at %s, without replaying",
+    (observedAtUtc) => {
+      const { database, enableRecipient, repository } = fixture("1552678787676774490");
+      try {
+        enableRecipient();
+        const initialAt = "2026-09-24T16:43:12.432Z";
+        const initialHalt = halt({ ticker: "WZRD", haltDateEt: "2026-09-24", haltTimeEt: "12:41:37.646", reasonCode: "M" });
+        const first = repository.upsert({ halt: initialHalt, observedAtUtc: initialAt, sourceUrl: "https://example.test" });
+        repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: initialAt });
+        const updated = repository.upsert({
+          halt: { ...initialHalt, resumptionQuoteTimeEt: "12:46:37", resumptionTradeTimeEt: "12:46:37" },
+          observedAtUtc, sourceUrl: "https://example.test",
+        });
+        expect(updated.haltId).toBe(first.haltId);
+        expect(repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc })).toBe(1);
+        expect(database.prepare(`SELECT last_notified_quote_time_et, last_notified_trade_time_et,
+quote_time_revision, trade_time_revision, ended_at_utc
+FROM news_market_halt_ticker_day_alert_sequences WHERE ticker = 'WZRD'`).get()).toEqual({
+          last_notified_quote_time_et: "12:46:37", last_notified_trade_time_et: "12:46:37",
+          quote_time_revision: 0, trade_time_revision: 1, ended_at_utc: observedAtUtc,
+        });
+        expect(repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc })).toBe(0);
+        const laterAt = "2026-09-24T17:00:00.000Z";
+        const later = repository.upsert({ halt: { ...initialHalt, haltTimeEt: "13:00:00" }, observedAtUtc: laterAt, sourceUrl: "https://example.test" });
+        expect(later.haltId).not.toBe(first.haltId);
+        expect(repository.reconcileDeliveryLifecycle({ haltId: later.haltId, observedAtUtc: laterAt })).toBe(0);
+        for (const table of ["news_market_halt_push_deliveries", "news_market_halt_discord_deliveries"]) {
+          expect(database.prepare(`SELECT notification_stage, notification_revision FROM ${table} ORDER BY created_at_utc`).all()).toEqual([
+            { notification_stage: "initial", notification_revision: 0 },
+            { notification_stage: "trade_time", notification_revision: 1 },
+          ]);
+          const update = database.prepare(`SELECT notification_body, created_at_utc FROM ${table} WHERE notification_stage = 'trade_time'`).get();
+          expect(update).toEqual({
+            notification_body: "Nasdaq now expects trading at 12:46:37 ET. Quotes are expected at 12:46:37 ET.",
+            created_at_utc: observedAtUtc,
+          });
+        }
+      } finally { database.close(); }
+    },
+  );
+
+  it("queues a missing trade time after an earlier quote alert even when the trade time has passed", () => {
+    const { database, enableRecipient, repository } = fixture("1552678787676774490");
+    try {
+      enableRecipient();
+      const first = repository.upsert({ halt: halt(), observedAtUtc: "2026-09-04T14:21:30.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:21:30.000Z" });
+      repository.upsert({ halt: halt({ resumptionQuoteTimeEt: "10:25:00" }), observedAtUtc: "2026-09-04T14:22:00.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:22:00.000Z" });
+      repository.upsert({ halt: halt({ resumptionQuoteTimeEt: "10:25:00", resumptionTradeTimeEt: "10:30:00" }), observedAtUtc: "2026-09-04T14:30:10.000Z", sourceUrl: "https://example.test" });
+      expect(repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:30:10.000Z" })).toBe(1);
+      expect(repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:31:00.000Z" })).toBe(0);
+      for (const table of ["news_market_halt_push_deliveries", "news_market_halt_discord_deliveries"]) {
+        expect(database.prepare(`SELECT notification_stage FROM ${table} ORDER BY created_at_utc`).all()).toEqual([
+          { notification_stage: "initial" }, { notification_stage: "quote_time" }, { notification_stage: "trade_time" },
+        ]);
+      }
+    } finally { database.close(); }
+  });
+
+  it("notifies a changed trade time before closing and never reopens an ended sequence", () => {
+    const { database, repository } = fixture("1552678787676774490");
+    try {
+      const initial = halt({ resumptionQuoteTimeEt: "10:25:00", resumptionTradeTimeEt: "10:26:00" });
+      const first = repository.upsert({ halt: initial, observedAtUtc: "2026-09-04T14:21:30.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:21:30.000Z" });
+      repository.upsert({ halt: { ...initial, resumptionTradeTimeEt: "10:27:00" }, observedAtUtc: "2026-09-04T14:27:10.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:27:10.000Z" });
+      // Historical ended sequences stay closed; deployment must not replay old alerts.
+      repository.upsert({ halt: { ...initial, resumptionTradeTimeEt: "10:35:00" }, observedAtUtc: "2026-09-04T14:28:00.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:28:00.000Z" });
+      expect(database.prepare(`SELECT notification_stage, notification_revision FROM news_market_halt_discord_deliveries ORDER BY created_at_utc`).all()).toEqual([
+        { notification_stage: "initial", notification_revision: 0 }, { notification_stage: "trade_time", notification_revision: 1 },
+      ]);
+      expect(database.prepare(`SELECT last_notified_trade_time_et, ended_at_utc FROM news_market_halt_ticker_day_alert_sequences`).get()).toEqual({
+        last_notified_trade_time_et: "10:27:00", ended_at_utc: "2026-09-04T14:27:10.000Z",
+      });
+    } finally { database.close(); }
+  });
+
+  it("keeps watching when a reached trade time is revised to a later time", () => {
+    const { database, repository } = fixture("1552678787676774490");
+    try {
+      const initial = halt({ resumptionTradeTimeEt: "10:26:00" });
+      const first = repository.upsert({ halt: initial, observedAtUtc: "2026-09-04T14:21:30.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:21:30.000Z" });
+      repository.upsert({ halt: { ...initial, resumptionTradeTimeEt: "10:30:00" }, observedAtUtc: "2026-09-04T14:26:10.000Z", sourceUrl: "https://example.test" });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:26:10.000Z" });
+      expect(database.prepare(`SELECT ended_at_utc FROM news_market_halt_ticker_day_alert_sequences`).get()).toEqual({ ended_at_utc: null });
+      repository.reconcileDeliveryLifecycle({ haltId: first.haltId, observedAtUtc: "2026-09-04T14:30:10.000Z" });
+      expect(database.prepare(`SELECT ended_at_utc FROM news_market_halt_ticker_day_alert_sequences`).get()).toEqual({ ended_at_utc: "2026-09-04T14:30:10.000Z" });
+      expect(database.prepare(`SELECT notification_stage, notification_revision FROM news_market_halt_discord_deliveries ORDER BY created_at_utc`).all()).toEqual([
+        { notification_stage: "initial", notification_revision: 0 }, { notification_stage: "trade_time", notification_revision: 1 },
+      ]);
+    } finally { database.close(); }
+  });
+
   it("queues the shared first-halt sequence to Discord without any phone subscriptions", () => {
     const { database, repository } = fixture("1552678787676774490");
     try {

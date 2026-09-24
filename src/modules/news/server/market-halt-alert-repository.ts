@@ -357,17 +357,7 @@ WHERE ticker = ? AND halt_date_et = ?`).get(event.ticker, event.halt_date_et);
     }
     if (sequence.first_halt_id !== event.halt_id || sequence.ended_at_utc) return 0;
 
-    if (expectedTradeTimeReached(event, input.observedAtUtc)) {
-      this.database.prepare(`UPDATE news_market_halt_ticker_day_alert_sequences
-SET ended_at_utc = ?
-WHERE ticker = ? AND halt_date_et = ? AND first_halt_id = ? AND ended_at_utc IS NULL`).run(
-        input.observedAtUtc,
-        event.ticker,
-        event.halt_date_et,
-        event.halt_id,
-      );
-      return 0;
-    }
+    let queued = 0;
     const quoteChanged = event.resumption_quote_time_et !== null &&
       event.resumption_quote_time_et !== sequence.last_notified_quote_time_et;
     const tradeChanged = event.resumption_trade_time_et !== null &&
@@ -377,7 +367,7 @@ WHERE ticker = ? AND halt_date_et = ? AND first_halt_id = ? AND ended_at_utc IS 
       const revision = stage === "trade_time"
         ? sequence.trade_time_revision + 1
         : sequence.quote_time_revision + 1;
-      const count = this.enqueueStage({ event, occurredAtUtc: input.observedAtUtc, revision, stage });
+      queued = this.enqueueStage({ event, occurredAtUtc: input.observedAtUtc, revision, stage });
       this.database.prepare(`UPDATE news_market_halt_ticker_day_alert_sequences SET
   last_notified_quote_time_et = ?, last_notified_trade_time_et = ?,
   quote_time_revision = quote_time_revision + ?, trade_time_revision = trade_time_revision + ?
@@ -390,9 +380,20 @@ WHERE ticker = ? AND halt_date_et = ? AND first_halt_id = ? AND ended_at_utc IS 
         event.halt_date_et,
         event.halt_id,
       );
-      return count;
     }
-    return 0;
+    // Newly observed times must be queued even if their scheduled time has passed.
+    // Closing first would permanently discard this update for both transports.
+    if (expectedTradeTimeReached(event, input.observedAtUtc)) {
+      this.database.prepare(`UPDATE news_market_halt_ticker_day_alert_sequences
+SET ended_at_utc = ?
+WHERE ticker = ? AND halt_date_et = ? AND first_halt_id = ? AND ended_at_utc IS NULL`).run(
+        input.observedAtUtc,
+        event.ticker,
+        event.halt_date_et,
+        event.halt_id,
+      );
+    }
+    return queued;
   }
 
   private enqueueStage(input: Readonly<{
