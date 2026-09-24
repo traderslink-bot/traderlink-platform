@@ -1,4 +1,5 @@
 import { platformPremiumSwingIdeaVisitEventsMigration } from "./migrations/0139_platform_premium_swing_idea_visit_events";
+import { newsMarketHaltDiscordDeliveriesMigration } from "@/src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries";
 import { platformWatchlistPublicationNotificationsMigration } from "./migrations/0137_platform_watchlist_publication_notifications";
 import { platformWatchlistNotificationActionIdentityMigration } from "./migrations/0138_platform_watchlist_notification_action_identity";
 import { journalAccountBoundaryMigration } from "@/src/modules/journal/server/database/migrations/0002_journal_account_boundary";
@@ -627,6 +628,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0137_platform_watchlist_publication_notifications.ts", migration: platformWatchlistPublicationNotificationsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0138_platform_watchlist_notification_action_identity.ts", migration: platformWatchlistNotificationActionIdentityMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0139_platform_premium_swing_idea_visit_events.ts", migration: platformPremiumSwingIdeaVisitEventsMigration }),
+    Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries.ts", migration: newsMarketHaltDiscordDeliveriesMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -636,6 +638,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
     "0139_platform_premium_swing_idea_visit_events": Object.freeze(["platform_premium_swing_idea_visit_events"]),
+    "0140_news_market_halt_discord_deliveries": Object.freeze(["news_market_halt_discord_deliveries"]),
     "0137_platform_watchlist_publication_notifications": Object.freeze(["platform_watchlist_notification_intents", "platform_watchlist_notification_preferences", "platform_watchlist_notification_events", "platform_watchlist_notification_deliveries"]),
     "0136_shared_trade_analyzer_owner_exemptions": Object.freeze([
       "level_analysis_owner_exemption_events", "level_analysis_owner_exempt_acquisitions",
