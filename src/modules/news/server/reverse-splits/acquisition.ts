@@ -66,9 +66,10 @@ export class ReverseSplitAcquisitionService {
       const finishedWindow = page.nextOffset === null;
       const nextTo = shiftDate(from, -1);
       const nextFrom = shiftDate(nextTo, -6) < lowerBound ? lowerBound : shiftDate(nextTo, -6);
-      const completed = { lastSuccess: now.toISOString(), completedFrom: from, completedTo: to, completedUnresolved: unresolved };
+      const completed = { lastSuccess: now.toISOString(), completedFrom: from, completedTo: to, completedUnresolved: unresolved,
+        historicalUnresolved: Number(previous?.historicalUnresolved ?? 0) + (mode === "backfill" ? unresolved : 0) };
       const nextState = !finishedWindow
-        ? { from, to, offset: page.nextOffset, lowerBound, unresolved, nextAt: new Date(now.getTime() + 2_000).toISOString() }
+        ? { ...previous, from, to, offset: page.nextOffset, lowerBound, unresolved, nextAt: new Date(now.getTime() + 2_000).toISOString() }
         : mode === "backfill"
           ? { ...completed, lowerBound, from: nextFrom, to: nextTo, offset: 0, complete: from <= lowerBound, nextAt: new Date(now.getTime() + 2_000).toISOString() }
           : { ...completed, offset: 0, nextAt: new Date(now.getTime() + 15 * 60_000).toISOString() };

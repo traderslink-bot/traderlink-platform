@@ -51,6 +51,8 @@ import {
 import { WatchlistPotentialPathCardArticle } from "./potential-path-levels-card";
 import { createVisibleWatchlistStream, createWatchlistRefreshController } from "@/src/lib/live-watchlist/watchlist-refresh-controller";
 import { WatchlistIndicatorsCard } from "./watchlist-indicators-card";
+import { useWatchlistReverseSplits, WatchlistReverseSplitBadge, WatchlistReverseSplitDetails } from "./reverse-split-watchlist";
+import type { ReverseSplitRow } from "@/src/modules/news/contracts/reverse-split-dashboard-contracts";
 
 const watchlistDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -1344,9 +1346,11 @@ function ReversalAttemptBadge({ symbol }: { symbol: LiveWatchlistListSymbol }) {
 function WatchlistTickerTable({
   ariaLabel,
   symbols,
+  reverseSplits,
 }: {
   ariaLabel: string;
   symbols: LiveWatchlistListSymbol[];
+  reverseSplits: Readonly<Record<string, ReverseSplitRow>>;
 }) {
   return (
     <section className="watchlist-table" aria-label={ariaLabel}>
@@ -1384,6 +1388,7 @@ function WatchlistTickerTable({
               </strong>
               <ReversalAttemptBadge symbol={symbol} />
               <WatchlistLifecycleBadge symbol={symbol} />
+              <WatchlistReverseSplitBadge item={reverseSplits[symbol.symbol]} />
             </span>
             <span className="watchlist-mobile-field" data-mobile-label="Price (delayed 15 sec)">
               {formatPrice(symbol.latestPrice)}
@@ -1619,6 +1624,7 @@ export function LiveWatchlistIndexClient({
   initialState: LiveWatchlistListPayload;
 }) {
   const [symbols, setSymbols] = useState(initialState.symbols);
+  const reverseSplits = useWatchlistReverseSplits(symbols.map((symbol) => symbol.symbol));
   const [marketDataStatus, setMarketDataStatus] = useState<LiveWatchlistMarketDataStatus>(
     initialState.marketDataStatus,
   );
@@ -1768,6 +1774,7 @@ export function LiveWatchlistIndexClient({
               <WatchlistTickerTable
                 ariaLabel="Top regular hour watchlist tickers"
                 symbols={topRegularSymbols}
+                reverseSplits={reverseSplits}
               />
             </section>
           ) : null}
@@ -1788,6 +1795,7 @@ export function LiveWatchlistIndexClient({
                   <WatchlistTickerTable
                     ariaLabel="Main-session watchlist tickers"
                     symbols={mainSessionSymbols}
+                    reverseSplits={reverseSplits}
                   />
                 </>
               ) : null}
@@ -1807,6 +1815,7 @@ export function LiveWatchlistIndexClient({
                   <WatchlistTickerTable
                     ariaLabel="Potential reversal watchlist tickers"
                     symbols={reversalWatchSymbols}
+                    reverseSplits={reverseSplits}
                   />
                 </div>
               ) : null}
@@ -1824,7 +1833,7 @@ export function LiveWatchlistIndexClient({
                 </div>
                 <span>{generalSymbols.length}</span>
               </div>
-              <WatchlistTickerTable ariaLabel="General Watchlist tickers" symbols={generalSymbols} />
+              <WatchlistTickerTable ariaLabel="General Watchlist tickers" symbols={generalSymbols} reverseSplits={reverseSplits} />
             </section>
           ) : null}
           {postmarketSymbols.length > 0 ? (
@@ -1836,7 +1845,7 @@ export function LiveWatchlistIndexClient({
                 </div>
                 <span>{postmarketSymbols.length}</span>
               </div>
-              <WatchlistTickerTable ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} />
+              <WatchlistTickerTable ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} reverseSplits={reverseSplits} />
             </section>
           ) : null}
         </div>
@@ -1875,6 +1884,7 @@ export function LiveWatchlistDetailClient({
   initialSymbol: LiveWatchlistSymbolState;
 }) {
   const [symbol, setSymbol] = useState(initialSymbol);
+  const reverseSplits = useWatchlistReverseSplits(symbol.status === "deactivated" ? [] : [symbol.symbol]);
   const [marketDataStatus, setMarketDataStatus] =
     useState<LiveWatchlistMarketDataStatus>(initialMarketDataStatus);
 
@@ -1991,6 +2001,7 @@ export function LiveWatchlistDetailClient({
       </section>
 
       <WatchlistDetailCards symbol={symbol} />
+      <WatchlistReverseSplitDetails item={reverseSplits[symbol.symbol]} />
       <TradingViewChart symbol={symbol} />
     </div>
   );

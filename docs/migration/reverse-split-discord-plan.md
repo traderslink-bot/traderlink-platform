@@ -1,6 +1,7 @@
 # Reverse splits: dashboard and notifications
 
 Status: owner approved implementation on September 24, 2026; not approved for deployment.
+UI checkpoint: owner approved the searchable paginated table with All / Approved / Announced / History filters, ratio/date/float/close/source columns and positive-only Watchlist labels. This approves implementation of that layout, not visual acceptance or release.
 Progress: [implementation record](reverse-split-discord-progress.md).
 Operations: [activation and recovery](reverse-split-discord-operations.md).
 
@@ -40,11 +41,15 @@ The acquisition service supports a rolling two-day SEC overlap plus a separately
 
 ## Owner scope extension: dashboard and multiple delivery channels
 
-The owner subsequently specified that advanced reverse-split information belongs on a dedicated app dashboard page, with pagination, while Discord and notifications summarize upcoming next-day splits. This supersedes the original Discord-only/no-dashboard boundary above. The current local source modules are incomplete and no dashboard or Push/email implementation is claimed.
+The owner subsequently specified that advanced reverse-split information belongs on a dedicated app dashboard page, with pagination, while Discord and notifications summarize upcoming next-day splits. This supersedes the original Discord-only/no-dashboard boundary above. The dashboard and Watchlist UI source is now implemented after layout approval, but not visually accepted or deployed. Ingestion and delivery remain incomplete; no Push/email implementation is claimed.
 
 Before dashboard implementation, propose and obtain owner approval for the page layout, status filters, columns, mobile presentation and Light/Navy Dark appearances. Before modifying any new shared route, navigation, notification, subscription or schema path, reconcile the coordinator's existing file allowlist and update this plan with the agreed implementation contract. Reuse the existing app shell and notification mechanisms; do not create parallel delivery infrastructure. Keep the underlying event identity and revisions shared across dashboard, Discord, Push and email to avoid contradictory information or duplicate event notifications.
 
 The owner also requested access from Watchlist ticker details and visible status when a ticker is posted. Include both Watchlist surfaces in the UI review and shared-data contract; this adds no separate discovery pipeline or implicit delivery authorization.
+
+The approved UI implementation uses `/reverse-splits` under the existing dashboard layout and a read-only News projection. Watchlist clients request one bounded authenticated batch for their visible ticker set; they do not change Watchlist publication records, source types, analysis, audience selection or outbox triggers. Fetch only while visible, refresh after visibility returns, cancel requests on unmount, and clear stale positive labels on failure. No per-row provider requests and no new external Watchlist-runtime bridge are part of this UI checkpoint. Keep unavailable coverage distinct from an empty filtered result; never seed the production view with sample market facts.
+
+UI reads page in 25-row slices, bound a Watchlist batch to 100 tickers and cap raw observations at 10,000 with an explicit partial-coverage state when exceeded. The initial catalogue can retain distinct past announced dates alongside the latest action; it must not call a past schedule proof of completion. Cached float retrieval time and regular-session close date remain explicit, including on historical rows. Stored market snapshots reuse `news_reverse_split_runtime` under a namespaced key, without adding a schema table or fetching from providers during a browser request.
 
 ## Source preflight
 

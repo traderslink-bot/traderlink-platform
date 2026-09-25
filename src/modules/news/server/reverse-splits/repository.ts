@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import type Database from "better-sqlite3";
 import { assertCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { isoDate, type ParseResult, type ReverseSplitEvent, type SplitSource } from "./contracts";
+import { isoDate, validTicker, type ParseResult, type ReverseSplitEvent, type SplitSource, type SplitMarketData } from "./contracts";
 import { sourceUrl } from "./sources";
 
 export const REVERSE_SPLIT_PARSER_VERSION = "2026-09-25.1";
@@ -103,6 +103,42 @@ export class ReverseSplitRepository {
       WHERE s.state IN ('parsed', 'fetching', 'failed') AND s.outcome_code NOT IN ('conflicting_terms', 'unresolved_split_terms')
       ORDER BY e.ticker, e.observed_at_utc, e.observation_id`).all()
       .map((row) => JSON.parse(row.event_json) as ReverseSplitEvent);
+  }
+
+  readObservations(tickers?: readonly string[]): readonly Readonly<{ event: ReverseSplitEvent; fetchedAt: string | null }>[] {
+    if (tickers && (tickers.length > 100 || tickers.some((ticker) => !validTicker(ticker)))) throw new Error("reverse_split_tickers_invalid");
+    if (tickers?.length === 0) return [];
+    const tickerClause = tickers ? `AND e.ticker IN (${tickers.map(() => "?").join(",")})` : "";
+    return this.database.prepare<unknown[], { event_json: string; fetched_at_utc: string | null }>(`SELECT
+      json_remove(e.event_json, '$.evidence') AS event_json, s.fetched_at_utc
+      FROM news_reverse_split_events e JOIN news_reverse_split_sources s ON s.source_url = e.source_url
+      AND s.content_hash = e.content_hash AND s.parser_version = e.parser_version
+      LEFT JOIN news_reverse_split_runtime m ON m.runtime_key = 'market:' || e.ticker
+      WHERE s.state IN ('parsed', 'fetching', 'failed')
+      AND json_extract(m.state_json, '$.eligibleSecurity') IS NOT 0
+      ${tickerClause} ORDER BY e.observed_at_utc DESC, e.observation_id LIMIT 10001`).all(...(tickers ?? []))
+      .map((row) => ({ event: { ...JSON.parse(row.event_json) as ReverseSplitEvent, evidence: "" }, fetchedAt: row.fetched_at_utc }));
+  }
+
+  readRuntimeState(key: string): unknown {
+    const row = this.database.prepare<[string], { state_json: string }>(`SELECT state_json FROM news_reverse_split_runtime WHERE runtime_key = ?`).get(key);
+    return row ? JSON.parse(row.state_json) as unknown : null;
+  }
+
+  saveMarketSnapshot(ticker: string, market: SplitMarketData, now: string): void {
+    if (!validTicker(ticker) || !isoDate(market.expectedCloseDate)) throw new Error("reverse_split_market_snapshot_invalid");
+    assertCanonicalUtcTimestamp(now, "reverseSplitMarketSavedAt");
+    this.database.prepare(`INSERT INTO news_reverse_split_runtime(runtime_key, state_json, updated_at_utc)
+      VALUES (?, ?, ?) ON CONFLICT(runtime_key) DO UPDATE SET state_json = excluded.state_json, updated_at_utc = excluded.updated_at_utc`)
+      .run(`market:${ticker}`, JSON.stringify(market), now);
+  }
+
+  marketSnapshots(tickers: readonly string[]): ReadonlyMap<string, SplitMarketData> {
+    if (tickers.length > 100 || tickers.some((ticker) => !validTicker(ticker))) throw new Error("reverse_split_tickers_invalid");
+    if (!tickers.length) return new Map();
+    const rows = this.database.prepare<unknown[], { runtime_key: string; state_json: string }>(`SELECT runtime_key, state_json
+      FROM news_reverse_split_runtime WHERE runtime_key IN (${tickers.map(() => "?").join(",")})`).all(...tickers.map((ticker) => `market:${ticker}`));
+    return new Map(rows.map((row) => [row.runtime_key.slice("market:".length), JSON.parse(row.state_json) as SplitMarketData]));
   }
 
   sourceCoverage(): Readonly<Record<string, number>> {

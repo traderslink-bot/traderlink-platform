@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { ReverseSplitEvent, SplitSource } from "./contracts";
 import { parseReverseSplit } from "./parsing";
-import { paginateSplitEvents, resolveSplitEvents, watchlistSplitStatus } from "./read-model";
+import { paginateSplitEvents, resolveSplitEvents, splitCatalogue, watchlistSplitStatus } from "./read-model";
+import { reverseSplitClose, reverseSplitQuantity } from "../../contracts/reverse-split-dashboard-contracts";
 import { selectDigestEvents, splitMessage, type DigestSchedule } from "./messages";
 
 const source: SplitSource = {
@@ -78,5 +79,19 @@ describe("reverse-split source and presentation contracts", () => {
     expect(paginateSplitEvents({ events: input, filter: "upcoming", marketDate: "2026-09-24", page: 1, pageSize: 1 }))
       .toMatchObject({ total: 2, pageCount: 2, items: [{ ticker: "ABCD" }] });
     expect(input[0].ticker).toBe("DEMO");
+  });
+  it("retains a distinct past announced date alongside a later split", () => {
+    const previous = { ...confirmed, effectiveDate: "2026-06-01", source: { ...source, publishedDate: "2026-05-28" } };
+    expect(splitCatalogue([previous, confirmed], "2026-09-24").events).toHaveLength(2);
+  });
+  it("does not turn a cancelled future date into a past completed split", () => {
+    const cancelled: ReverseSplitEvent = { ...confirmed, status: "cancelled", effectiveDate: null, ratio: null,
+      source: { ...source, publishedDate: "2026-09-25" } };
+    expect(splitCatalogue([confirmed, cancelled], "2026-09-30").events).toMatchObject([{ status: "cancelled" }]);
+  });
+  it("keeps missing values distinct from zero and tiny prices", () => {
+    expect(reverseSplitQuantity(null)).toBe("—");
+    expect(reverseSplitClose(null)).toBe("—");
+    expect(reverseSplitClose(0.005)).toBe("<$0.01");
   });
 });

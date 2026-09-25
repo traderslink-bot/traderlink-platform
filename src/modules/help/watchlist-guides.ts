@@ -4,6 +4,11 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
   slug: "analysis", title: "Read Watchlist analysis",
   description: "Understand the posted price, setup areas and analysis updates.",
   sections: [{
+    id: "reverse-splits", title: "Reverse Splits", summary: "Read verified shareholder approvals and announced splits.",
+    keywords: ["reverse split", "approved", "announced", "float"],
+    blocks: [{ kind: "paragraph", text: "When current verified information is available, a ticker shows Reverse split approved or Reverse split announced. Open its detail page for the available ratio, dates, float, closing price and original source, or use View list to open Reverse Splits. No label is shown when neither status is verified; that does not prove no split exists. This information updates separately from the saved Watchlist analysis, and posting a ticker does not trigger an extra reverse-split alert." },
+      { kind: "link", href: "/help/tools/reverse-splits", label: "Reverse Splits guide", text: "Understand shareholder approvals, dates, float estimates and source coverage." }],
+  }, {
     id: "setups", title: "TradersLink Analysis", summary: "Read the setup that fits your trading style.",
     keywords: ["watchlist", "pullback", "breakout", "failure", "posted price"],
     blocks: [{ kind: "paragraph", text: "Watchlist posts highlight active stocks attracting volume and attention—they are not signals to rush into a trade. Wait for your setup and use the pullback, breakout, and failure levels. A break below the failure level invalidates the momentum idea. The posted price reflects the price at the time of analysis." },

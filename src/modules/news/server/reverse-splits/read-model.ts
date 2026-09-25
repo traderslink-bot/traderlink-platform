@@ -79,6 +79,32 @@ export function watchlistSplitStatus(event: ReverseSplitEvent | null, marketDate
 
 export type SplitListFilter = "all" | "approved" | "announced" | "upcoming" | "history";
 
+export function splitCatalogue(input: readonly ReverseSplitEvent[], marketDate: string): SplitResolution {
+  if (!isoDate(marketDate)) throw new Error("reverse_split_market_date_invalid");
+  const current = resolveSplitEvents(input);
+  const historicalGroups = new Map<string, ReverseSplitEvent[]>();
+  const currentByTicker = new Map(current.events.map((event) => [event.ticker, event]));
+  const conflicts = [...current.conflicts];
+  const blocked = new Set(conflicts.map((conflict) => conflict.ticker));
+  for (const event of input) {
+    if (blocked.has(event.ticker) || event.status !== "confirmed" || !event.effectiveDate || event.effectiveDate >= marketDate) continue;
+    const latest = currentByTicker.get(event.ticker);
+    if (latest && latest.source.publishedDate >= event.source.publishedDate && latest.source.publishedDate <= event.effectiveDate &&
+      (latest.status === "cancelled" || latest.status === "postponed" || (latest.status === "confirmed" && latest.effectiveDate !== event.effectiveDate))) continue;
+    const key = `${event.ticker}:${event.effectiveDate}`;
+    historicalGroups.set(key, [...(historicalGroups.get(key) ?? []), event]);
+  }
+  const events = [...current.events];
+  for (const group of historicalGroups.values()) {
+    const result = resolveSplitEvents(group);
+    conflicts.push(...result.conflicts);
+    for (const event of result.events) {
+      if (!events.some((existing) => existing.ticker === event.ticker && existing.status === "confirmed" && existing.effectiveDate === event.effectiveDate)) events.push(event);
+    }
+  }
+  return { events, conflicts };
+}
+
 export function paginateSplitEvents(input: Readonly<{
   events: readonly ReverseSplitEvent[]; marketDate: string; filter: SplitListFilter;
   ticker?: string; page: number; pageSize: number;
