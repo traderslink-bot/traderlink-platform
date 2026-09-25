@@ -423,3 +423,44 @@ grammar corrections are still uncommitted.
 
 The review remains open. Releasing an APUS-only correction or treating reference
 inventory size as passing coverage would not satisfy the owner's instruction.
+
+## Duplicate-looking approval rows: primary follow-up
+
+The undated reference rows do not identify their underlying authorization.
+Primary filings nevertheless establish distinct annual authorities for both
+issuers, so ticker plus ratio alone is not a safe event identity. The exact
+mapping from each reference ordinal to a filing remains unproven.
+
+### KTTA: same range, different annual authorizations
+
+The [September 3, 2025 result](https://www.sec.gov/Archives/edgar/data/1841330/000121390025084062/ea0255742-8k_pasithea.htm)
+approves Proposal 4, a board-selected 2-to-20 split before the meeting's first
+anniversary. The [September 9, 2026 result](https://www.sec.gov/Archives/edgar/data/1841330/000121390026098405/ea0304934-8k_pasithea.htm)
+approves Proposal 3 with the same range but a new first-anniversary deadline.
+Both are signed on their meeting dates. Neither states a selected ratio or
+trading date. At the September 25, 2026 QA date, the older authority's stated
+window has ended; the newer authority's window has not. This does not establish
+whether another source reports its subsequent exercise or withdrawal.
+
+The approval results sit in paragraphs after each proposal description. The
+changed proposal numbering is not a change of issuer or proof of duplication.
+Require separate identities, relative-expiry handling, and newer-authority
+preservation. Do not collapse the two benchmark rows merely because both show
+2 to 20 and the same float.
+
+### TNXP: same aggregate range, changed duration
+
+The [May 8, 2025 result](https://www.sec.gov/Archives/edgar/data/1430306/000199937125005717/tnxp-8k_050825.htm)
+approves one or more reverse splits with aggregate range 2 to 250 within one
+year of May 8, 2025. The [May 7, 2026 result](https://www.sec.gov/Archives/edgar/data/1430306/000199937126010226/tnxp-8k_050726.htm)
+approves the same aggregate range within **two years** of May 7, 2026. These are
+distinct dated approvals, not two identical facts. Both filings reserve final
+ratios, number and timing to a later board announcement.
+
+At the QA date, the 2025 authority's stated window has ended while the 2026
+window has not. March 19 record dates and incentive-plan approval in the same
+documents must not replace split approval dates or durations. The source's
+aggregate terminology must remain explicit, not become a fixed 1-for-250
+action. Require lifecycle tests in either ingestion order, not only isolated
+single-document parsing. Raw fixtures and parser outcomes for these four
+additional primary documents remain pending with the source owner.
