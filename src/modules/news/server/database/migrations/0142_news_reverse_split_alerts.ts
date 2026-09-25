@@ -38,8 +38,49 @@ CREATE TABLE news_reverse_split_events (
 CREATE INDEX news_reverse_split_event_ticker ON news_reverse_split_events(ticker, observed_at_utc);
 CREATE INDEX news_reverse_split_event_date ON news_reverse_split_events(effective_date, ticker);
 
+CREATE TABLE news_reverse_split_digests (
+  digest_id TEXT PRIMARY KEY CHECK (length(digest_id) = 64),
+  digest_date TEXT NOT NULL CHECK (length(digest_date) = 10),
+  revision INTEGER NOT NULL CHECK (revision >= 0),
+  event_signature TEXT NOT NULL CHECK (length(event_signature) = 64),
+  events_json TEXT NOT NULL CHECK (json_valid(events_json)),
+  parts_json TEXT NOT NULL CHECK (json_valid(parts_json)),
+  notification_title TEXT NOT NULL CHECK (length(notification_title) BETWEEN 1 AND 160),
+  notification_summary TEXT NOT NULL CHECK (length(notification_summary) BETWEEN 1 AND 500),
+  expires_at_utc TEXT NOT NULL CHECK (length(expires_at_utc) = 24),
+  created_at_utc TEXT NOT NULL CHECK (length(created_at_utc) = 24),
+  UNIQUE (digest_date, revision)
+) STRICT;
+
+CREATE TABLE news_reverse_split_notification_preferences (
+  user_id TEXT PRIMARY KEY REFERENCES platform_users(user_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+  web_push_enabled INTEGER NOT NULL DEFAULT 0 CHECK (web_push_enabled IN (0, 1)),
+  email_enabled INTEGER NOT NULL DEFAULT 0 CHECK (email_enabled IN (0, 1)),
+  updated_at_utc TEXT NOT NULL CHECK (length(updated_at_utc) = 24)
+) STRICT;
+
+CREATE TABLE news_reverse_split_notification_deliveries (
+  delivery_id TEXT PRIMARY KEY CHECK (length(delivery_id) = 64),
+  digest_id TEXT NOT NULL REFERENCES news_reverse_split_digests(digest_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+  user_id TEXT NOT NULL REFERENCES platform_users(user_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+  channel TEXT NOT NULL CHECK (channel IN ('web_push', 'email')),
+  target_ref TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('pending', 'sending', 'delivered', 'failed', 'expired', 'opted_out', 'inaccessible')),
+  attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+  available_at_utc TEXT NOT NULL CHECK (length(available_at_utc) = 24),
+  lease_token TEXT,
+  lease_until_utc TEXT,
+  delivered_at_utc TEXT,
+  failure_code TEXT,
+  created_at_utc TEXT NOT NULL CHECK (length(created_at_utc) = 24),
+  updated_at_utc TEXT NOT NULL CHECK (length(updated_at_utc) = 24),
+  UNIQUE (digest_id, user_id, channel, target_ref)
+) STRICT;
+CREATE INDEX news_reverse_split_notification_queue ON news_reverse_split_notification_deliveries(channel, state, available_at_utc);
+
 CREATE TABLE news_reverse_split_discord_deliveries (
   delivery_id TEXT PRIMARY KEY CHECK (length(delivery_id) = 64),
+  digest_id TEXT NOT NULL REFERENCES news_reverse_split_digests(digest_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
   channel_id TEXT NOT NULL CHECK (length(channel_id) BETWEEN 1 AND 32 AND channel_id NOT GLOB '*[^0-9]*'),
   digest_date TEXT NOT NULL CHECK (length(digest_date) = 10),
   revision INTEGER NOT NULL CHECK (revision >= 0),
@@ -49,6 +90,7 @@ CREATE TABLE news_reverse_split_discord_deliveries (
   state TEXT NOT NULL CHECK (state IN ('pending', 'sending', 'uncertain', 'delivered', 'failed', 'expired')),
   attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
   available_at_utc TEXT NOT NULL CHECK (length(available_at_utc) = 24),
+  first_attempt_at_utc TEXT CHECK (first_attempt_at_utc IS NULL OR length(first_attempt_at_utc) = 24),
   expires_at_utc TEXT NOT NULL CHECK (length(expires_at_utc) = 24),
   lease_token TEXT,
   lease_until_utc TEXT,
