@@ -1,5 +1,13 @@
 # Reverse-split implementation progress
 
+## Database timeout release repair — September 25, 2026
+
+The first functional release was recovered to the 127-compatible baseline after
+background scan timeouts triggered synchronous request scans. The owner directly
+approved the narrow integrity-preserving retry repair. Coordinator implementation
+and 21 focused simulated tests plus targeted semantic checks passed; independent
+review and hosted acceptance remain pending. See the [repair record](runtime-integrity-retry-repair-2026-09-25.md).
+
 Controlling [plan](reverse-split-discord-plan.md). Status: private full-feature source checkpoint ready for technical review; production remains the earlier owner-only empty preview. Full feature not activated or accepted.
 
 ## Registered-manifest and erasure proof — September 25, 2026
