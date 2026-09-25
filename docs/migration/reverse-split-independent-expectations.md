@@ -65,6 +65,15 @@ adjusted estimate. Date/ratio information can remain independently of these
 calculations. The list still has Approval / Announced; Watchlist is Announced
 only. No extra consent, notification, or hosted action is authorized.
 
+**Open weekend/holiday interpretation:** the coordinator has asked the owner
+one non-blocking question about Monday splits and other dates without a regular
+session on the preceding calendar day: use the preceding trading session's
+close, or retain a strict calendar-day rule and omit those estimates. Until
+answered, the Friday/Monday and holiday assertions below are provisional, not
+independently owner-confirmed acceptance criteria. Do not duplicate the question
+or pause unrelated source/display QA. The after-4-PM Eastern requirement and
+genuine, dated, completed-session inputs remain unchanged.
+
 Independent acceptance matrix for the source owner's next immutable patch
 (calculation rows apply to both list and Watchlist):
 
@@ -75,7 +84,7 @@ Independent acceptance matrix for the source owner's next immutable patch
 | Ratio alone, date alone, cancellation, postponement, expired or completed action | No announced Watchlist note; preserve stored source evidence. |
 | Next-day action at 3:59 PM Eastern | Note can appear, estimates cannot. |
 | Next-day action after 4 PM Eastern | Estimates only with that completed regular session's closing price and supported pre-split float; no fabricated fallback values. Pin exact 4:00 PM behavior in tests. |
-| Action two or more days away, including Friday for Monday | No estimates, even after 4 PM; do not broaden next calendar day to next trading day. |
+| Action two or more days away | No estimates under the current calendar-day interpretation; Friday/Monday and holiday handling remain provisional pending the owner's answer above. |
 | Eastern midnight advances into the action date | Previous evening's estimate eligibility ends; completed-state suppression remains separate from a scheduled date alone. |
 | Winter and summer timestamps, UTC date differing from Eastern date | Same rule using America/New_York; never a hard-coded UTC offset or browser-local date. |
 | Early market close before 4 PM | No early estimate display; owner specified 4 PM, not market close. |
@@ -331,11 +340,32 @@ Benchmark: 2 to 12. [8-K signed September 18](https://www.sec.gov/Archives/edgar
 reports September 18 final voting results for one or more 2-to-12 splits,
 aggregate no greater than 12, during the next two years. The text introduces
 what shareholders were asked to approve; the final table supplies 262,920 for,
-17,360 against and 7,610 abstentions. Do not require a literal "was approved"
-sentence while ignoring the actual result table. The
+17,360 against and 7,610 abstentions. The counts alone do not establish the
+applicable voting threshold; combine them with the linked proxy's explicit
+split-proposal rule, rather than either requiring a literal approval sentence
+or assuming every proposal passes whenever For exceeds Against. The
 [definitive proxy](https://www.sec.gov/Archives/edgar/data/1859807/000121390026095087/ea0302274-02.htm)
 specifies September 18, 2028 as the deadline. Final ratio and trading date are
 not given. Permission to adjourn is not an actual postponement.
+
+Independent companion check: the 8-K expressly links its September 18 meeting
+to definitive materials filed August 28, with an August 19 record date and the
+`PFSA2026SM` meeting identifier. The August 28 proxy matches that issuer,
+meeting, record date and reverse-split proposal. Its specific voting rule is
+For greater than Against, with abstentions and broker non-votes having no
+effect. Thus 262,920 versus 17,360 supports approval for this proposal. The
+adjournment proposal has a different voting rule and must not lend it to the
+split proposal. A generic majority-of-outstanding rule would produce a
+different result here (605,647 outstanding); do not infer that rule either.
+
+The lead's newly supplied full raw proxy fixture was independently decompressed:
+322,882 bytes, SHA256
+`156fbcdb6bc732e2cd4d0f40ab8925f1d7d1d0640ffe9e68d489520d41360a58`.
+Both match its stored envelope. The matching source body and result support
+the expectation; this is not evidence that the runtime already fetches or
+links companion proxies. That separately bounded implementation and its
+cross-issuer/meeting/proposal negative tests remain pending with the source
+owner. Preserve both original source identities and hashes.
 
 ### SNGX - authorization not a final selected split
 
