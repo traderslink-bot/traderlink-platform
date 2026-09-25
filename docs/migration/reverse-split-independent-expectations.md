@@ -2,6 +2,43 @@
 
 Status: primary-source research checkpoint, 2026-09-25. **Not release acceptance.**
 
+## Controlling owner acceptance scope: two active states
+
+The coordinator relayed a newer explicit owner decision on September 25. This
+supersedes the earlier visible History and multiple-action expansion proposal:
+
+- **Approval:** an actual reverse split approval exists, but no trading date has
+  been announced. A clearly evidenced maximum permitted ratio may be shown when
+  easy to extract. Otherwise omit it; do not infer or multiply a ratio.
+- **Announced:** both the selected ratio and announced trading date are known.
+  A ratio without a trading date is not an Announced record under this contract.
+- Completed/past actions are excluded from the active page and Watchlist tags.
+  There is no separate completed/history product in the acceptance scope.
+- Cancellation, postponement and expiry remain internal suppression safeguards,
+  not additional visible statuses. Proposed votes and unapproved conditional
+  ideas must not become approvals.
+- A historical paragraph must not erase or corrupt a genuine later current
+  approval or announcement in the same filing. Preserve immutable raw evidence
+  and existing production provenance; no production-row deletion or cleanup.
+- No multi-action schema expansion or migration is authorized by this decision.
+  Do not wait on the superseded expansion question. If a genuinely current
+  compound authorization cannot map to these two states without guessing,
+  report the exact ambiguity instead of inventing another product.
+
+The detailed source facts and original baseline below remain research/evidence,
+not a demand to add fields or a historical user interface that the owner has
+now excluded. The next test report must distinguish superseded product
+assertions from corrected defects. Missing optional detailed range wording is
+not equivalent to inventing an approval or showing a completed action as active.
+All historical fixtures and the full reference inventory remain useful negative
+and lifecycle test inputs; a reference-table Complete label is not verification.
+
+Examples requiring care: SKYQ's two authorizations are each capped at 1-for-25;
+their product is not a permitted single-action maximum. NXL's per-action cap of
+1-for-100 and aggregate 1-for-250 describe different facts and cannot silently
+share one unqualified maximum label. Unknown or ambiguous optional facts may
+be omitted without suppressing an otherwise evidenced current approval.
+
 The owner requires thorough upcoming and historical testing before any further
 Reverse Splits release or hosted reprocessing. The source owner maintains the
 controlling `docs/migration/reverse-split-source-acceptance.md` in the release
