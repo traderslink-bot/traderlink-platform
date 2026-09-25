@@ -32,7 +32,8 @@ type RuntimeIntegrityState = {
   lastQuickCheckStartedAt: number;
   quickCheckFailed: boolean;
   quickCheckInFlight: boolean;
-  quickCheckSuccessLogged: boolean;
+  foreignKeySuccessLogs: number;
+  quickCheckSuccessLogs: number;
   quickCheckTimer: ReturnType<typeof setTimeout> | null;
   timerDueAt: number;
   requiresFullVerification: boolean;
@@ -372,7 +373,7 @@ function startPlatformRuntimeQuickCheck(
       state.retryCount = 0;
       state.retryNotBefore = 0;
       // Do not clear dirty flags: writes since this snapshot still need scanning.
-      logPlatformRuntimeQuickCheckOutcome(state, "ok", startedAt);
+      logPlatformRuntimeQuickCheckOutcome(state, "ok", startedAt, includeQuickCheck);
     }
   });
   worker.once("error", (error: Error) => {
@@ -405,15 +406,18 @@ function logPlatformRuntimeQuickCheckOutcome(
     "timeout" | "worker_construction_failed" | "worker_early_exit" |
     "worker_error" | "worker_failed",
   startedAt: number,
+  includeQuickCheck = false,
 ): void {
   const durationMs = Math.max(0, Date.now() - startedAt);
   try {
     if (outcome === "ok") {
-      if (state.quickCheckSuccessLogged) return;
+      const counter = includeQuickCheck ? "quickCheckSuccessLogs" : "foreignKeySuccessLogs";
+      if (state[counter] >= 2) return;
       console.info("TraderLink background SQLite integrity scan completed.", {
         durationMs,
+        includeQuickCheck,
       });
-      state.quickCheckSuccessLogged = true;
+      state[counter] += 1;
       return;
     }
     console.warn("TraderLink background SQLite integrity scan requires attention.", {
@@ -556,7 +560,8 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
         lastQuickCheckStartedAt: verifiedAt,
         quickCheckFailed: false,
         quickCheckInFlight: false,
-        quickCheckSuccessLogged: false,
+        foreignKeySuccessLogs: 0,
+        quickCheckSuccessLogs: 0,
         quickCheckTimer: null,
         timerDueAt: 0,
         requiresFullVerification: false,

@@ -30,6 +30,9 @@ observed scans took 34–102 seconds. Production was restored to the verified
   Preserve an observed FK failure if a later scan throws.
 - Successful retry clears retry state, not dirty work from concurrent writes.
   Stale worker generations cannot approve or corrupt newer state.
+- Bounded diagnostics report the first two FK-only and first two combined scans,
+  including their durations, to verify real repeated completion after deployment.
+  No database paths, identities or contents are logged.
 
 No schema, data, permissions, notification preferences, providers, UI or Help
 changes. Existing Reverse Splits source is preserved in full. This contract
