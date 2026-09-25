@@ -45,6 +45,34 @@ controlling `docs/migration/reverse-split-source-acceptance.md` in the release
 checkout. This separate reviewer-owned report avoids concurrent edits to that
 matrix. Coordinator owns integration, release, and any hosted application.
 
+### Subsequent owner Watchlist clarification
+
+The coordinator relayed the following narrower consumer requirement after the
+two-state decision. The dedicated Reverse Splits page retains Approval and
+Announced; **Watchlist shows Announced only**, as a small ratio/date note, not
+an approval label or large card. Post-split estimated float and price may appear
+only after 4 PM Eastern when the announced split is the next calendar day.
+These estimates remain distinct from actual live price and float. This does
+not authorize notifications, public rollout, or changes to unrelated cards.
+
+Independent acceptance matrix for the source owner's next immutable patch:
+
+| Case | Required result |
+| --- | --- |
+| Approval with no announced trading date, even with a permitted ratio | No Watchlist note; eligible Approval can remain on the dedicated page. |
+| Current announcement with selected ratio and trading date | Compact Watchlist ratio/date note; no large explanatory card. |
+| Ratio alone, date alone, cancellation, postponement, expired or completed action | No announced Watchlist note; preserve stored source evidence. |
+| Next-day action at 3:59 PM Eastern | Note can appear, estimates cannot. |
+| Next-day action after 4 PM Eastern | Estimates only with valid, fresh, matching pre-split inputs; no fabricated fallback values. Pin exact 4:00 PM behavior in tests. |
+| Action two or more days away, including Friday for Monday | No estimates, even after 4 PM; do not broaden next calendar day to next trading day. |
+| Eastern midnight advances into the action date | Previous evening's estimate eligibility ends; completed-state suppression remains separate from a scheduled date alone. |
+| Winter and summer timestamps, UTC date differing from Eastern date | Same rule using America/New_York; never a hard-coded UTC offset or browser-local date. |
+| Early market close before 4 PM | No early estimate display; owner specified 4 PM, not market close. |
+| Zero, negative, missing, stale, wrong-symbol, or already split-adjusted quote/float | No invalid estimate and no double adjustment; a valid announced ratio/date note may remain. |
+
+Review desktop/mobile compact rendering and the existing refresh/date-transition
+path. No source-writer overlap: this lane changes reviewer documents only.
+
 ## Evidence boundaries
 
 - These expectations were independently read from the primary pages through web
@@ -573,6 +601,34 @@ This is not proof that no later renewal exists. The proxy alone is a proposal,
 not an approval. Cross-document linkage must be explicit and preserve both
 sources. Direct raw download returned HTTP 503; extracted primary text is
 available, but a raw-body fixture/hash remains pending with the source owner.
+
+### BFRI bounded later-filing check
+
+An official EFTS query for CIK 0001858685, September 17, 2025 through September
+25, 2026, and the phrases reverse stock split, reverse share split, or share
+consolidation returned HTTP 200, `timed_out: false`, and six exact hits. This is
+a bounded search result, not proof that every possible later authority was found.
+
+- The September 19, 2025 8-K is the already verified September 16 vote result.
+- The [January 7, 2026 8-K](https://www.sec.gov/Archives/edgar/data/1858685/000149315226000823/form8-k.htm)
+  discusses Nasdaq deficiency and possible future action. June 30 is a
+  compliance deadline, not a split trading date; this filing does not establish
+  a newly approved ratio or scheduled split.
+- The [April 30, 2026 definitive proxy](https://www.sec.gov/Archives/edgar/data/1858685/000149315226020616/formdef14a.htm)
+  has directors, incentive-plan changes and auditor ratification on its June 11
+  agenda. Its split references concern historical July 3, 2023 adjustments and
+  general plan provisions; those must not become a new split approval.
+- The [July 22, 2026 S-8](https://www.sec.gov/Archives/edgar/data/1858685/000149315226034268/forms-8.htm)
+  registers incentive-plan shares. Its 1-for-20 split is explicitly historical
+  July 3, 2023; the June 11 approval concerns the plan, not a new reverse split.
+- The same S-8's `ex107.htm` and September 19, 2025 Schedule 13D/A accession
+  `0001213900-25-089466`, `primary_doc.xml`, were discovered but full retrieval
+  returned HTTP 503. They remain acquisition gaps, not reviewed negative cases.
+
+None of the four reviewed bodies supplies a later replacement authority for
+the expired September 2025 approval. Do not elevate that limited observation
+into an issuer-wide assertion that no later authorization exists. The two
+retrieval gaps and the definitive proxy raw-body hash remain explicitly open.
 
 ### Additional filing-index metadata checked
 
