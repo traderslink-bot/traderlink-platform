@@ -20,12 +20,38 @@ matrix. Coordinator owns integration, release, and any hosted application.
 - Parser pass, downstream pass, acquisition coverage, and primary expectation
   verification are separate states. All new cases below have verified primary
   expectations; their parser and downstream fixture results remain pending here.
-- Lead reports 2,536 benchmark actions: 242 Vote Approved, 9 Upcoming, and 2,285
-  Complete. This report has **not independently reconciled the full captured
-  inventory**. Those counts are not passed tests, unique ticker counts, or proof
-  of complete market coverage. Raw capture reconciliation is pending.
+- Independent rendered-DOM census at approximately 19:36 UTC confirmed 2,536
+  benchmark rows: 242 Vote Approved, 9 Upcoming, and 2,285 Complete, across 1,484
+  distinct ticker strings. These are not passed tests or proof of full market
+  coverage. Lead's saved raw inventory remains to be reconciled byte-for-byte.
 - All dates below are in 2026 unless explicitly marked otherwise. A published
   future trading date is not proof that trading subsequently commenced.
+
+## Independently verified benchmark census
+
+The anonymous rendered table contained 2,537 `tr` elements including its header;
+counts above used actual DOM rows, not a potentially truncated locator response.
+All visible button labels were inspected; none was a pagination control. This
+describes the accessible continuous table, not any unexposed paid inventory.
+Historical dates span November 29, 2019 through September 24, 2026.
+
+All nine upcoming rows matched the lead's capture: GCDT October 7 ratio 6;
+GMEX September 28 ratio 9; IMMP September 28 ratio 20; MTNB September 28 ratio 15;
+DLXY September 28 ratio 5; BTLN September 28 ratio 8; CTNT September 28 ratio 150;
+KITT September 25 ratio 6; RPGL September 25 ratio 15. The RPGL reference value
+remains a disagreement with primary evidence, not an accepted expectation.
+
+There are 2,534 unique composite keys `(ticker, displayed date, ratio, status)`
+among the 2,536 rows. Exact one-based data-row positions:
+
+- KTTA rows 21 and 151: blank date, range 2 to 20, Vote Approved, same float 87.33.
+- TNXP rows 80 and 196: blank date, range 2 to 250, Vote Approved, floats 14.21
+  and 13.41 respectively.
+
+Do not silently discard either pair or infer whether these represent distinct
+authorizations: no authorization date is supplied in these table rows. Preserve
+row ordinals and resolve identity against source evidence. Multiple rows for a
+ticker are otherwise expected when an issuer has more than one action.
 
 ## Assigned upcoming cases
 
