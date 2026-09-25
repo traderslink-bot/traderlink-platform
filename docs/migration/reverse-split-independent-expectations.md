@@ -554,6 +554,26 @@ or a review of the next immutable correction, which is still pending.
 
 ## Original nineteen-case baseline recovered
 
+### BFRI definitive proxy located: expiry evidence, optional ratio remains conflicted
+
+A read-only SEC EFTS lookup for CIK 1858685, DEF 14A, and August 5, 2025
+returned exactly one filing: accession `0001641172-25-022261`, document
+`formdef14a.htm`. The [definitive proxy](https://www.sec.gov/Archives/edgar/data/1858685/000164117225022261/formdef14a.htm)
+was read through primary-page web retrieval. Its notice and calculations use
+a 3-to-8 ratio range, but its Principal Effects sentence still uses five to
+twenty-five. Do not choose an unqualified maximum from conflicting statements.
+The newer owner contract allows omission of this optional fact.
+
+The authority ends around the first anniversary of actual shareholder approval:
+the notice uses before the anniversary while the body permits no later than
+the anniversary. The independently verified September 19, 2025 vote-result
+filing establishes approval on September 16, 2025. By September 25, 2026,
+this particular authority is no longer current under either boundary reading.
+This is not proof that no later renewal exists. The proxy alone is a proposal,
+not an approval. Cross-document linkage must be explicit and preserve both
+sources. Direct raw download returned HTTP 503; extracted primary text is
+available, but a raw-body fixture/hash remains pending with the source owner.
+
 ### Additional filing-index metadata checked
 
 Independently read these SEC index pages in Chrome on September 25, 2026:
@@ -570,9 +590,15 @@ The ingestion contract in `sources.ts` sets SEC `publishedDate` from
 SEC accepted the filing on September 18 in the evening. Its approval remains
 September 18. Do not overwrite the separate source/event facts to force equality.
 NXL and ZNB index pages returned the SEC maintenance/unavailable screen in this
-independent browser check as well as failing for the lead. Their index metadata
-remains explicitly pending; the successfully captured full filing bodies and
-their hashes are a separate verified result.
+independent browser check as well as failing for the lead. Index accepted
+timestamps remain unavailable. Subsequent exact-CIK/date/form queries against
+the official SEC EFTS endpoint each returned HTTP 200 and one matching
+accession/document: NXL `0001829126-26-008621:nexalintec_8k.htm` with
+`file_date` August 11, 2026; ZNB
+`0001213900-26-099698:ea0304940-6k_zeta.htm` with `file_date` September 14,
+2026. Both match their stored publication dates. Publication-date verification
+is therefore resolved through official EFTS, without pretending the unavailable
+index pages loaded. Full-body hashes remain a separate integrity result.
 
 ### Preserved original test evidence
 
