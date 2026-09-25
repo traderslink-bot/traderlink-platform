@@ -34,7 +34,7 @@ jobs:
 
       - name: Upload GA1-B scale stage records
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ga1-b-governed-scale-stage-records
           path: artifacts/ga1-b-scale-stage-records.ndjson
