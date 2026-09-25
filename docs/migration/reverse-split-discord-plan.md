@@ -1,6 +1,6 @@
 # Reverse splits: dashboard and notifications
 
-Status: owner approved implementation and the private full-feature preview. Source wiring and notification controls are implemented locally; technical release review and actual collection/delivery proof remain incomplete. Public rollout is not authorized. The Visible release coordinator alone owns publication, migration and activation.
+Status: owner approved implementation and the private full-feature preview. Coordinator reports the private runtime serving real source records at `b743f3ed`; full historical coverage and actual delivery proof remain incomplete. Owner-authorized mobile overflow and Navy Dark contrast corrections are at the local verification checkpoint, tracked in the [implementation record](reverse-split-discord-progress.md#private-display-acceptance-correction--september-25-2026). Public rollout is not authorized. The Visible release coordinator alone owns publication, migration and activation.
 UI checkpoint: owner approved the searchable paginated table with All / Approved / Announced / History filters, ratio/date/float/close/source columns and positive-only Watchlist labels. On September 25 the owner confirmed approval after seeing the deployed private preview. Populated-data and delivery acceptance remain separate.
 Progress: [implementation record](reverse-split-discord-progress.md).
 Release-blocking database timeout repair: [approved contract and verification](runtime-integrity-retry-repair-2026-09-25.md). No feature scope or schema change.

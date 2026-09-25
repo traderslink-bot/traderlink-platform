@@ -1,5 +1,12 @@
 # Reverse-split implementation progress
 
+## Private display acceptance correction — September 25, 2026
+
+- Coordinator reports the full private feature and database retry repair serving at `b743f3ed4be88c221b50ebcd6ce5cd839c3e8752`, with 127 migrations, healthy requests during completed background checks and real source collection. Watchlist owner independently verified populated records, search and status filters. Collection is partial; actual notification receipts remain unverified and Discord delivery remains disabled.
+- Owner requested completion of the remaining display findings. On the clean assigned `acd748ec` tree, changed only the Reverse Splits view: source anchors use the existing shared MUI Link appearance, including its readable Navy Dark color; the same external-tab announcement is now the accessible link label instead of an absolutely positioned hidden span that overflowed a 390px viewport. Visible labels, URLs, new-tab behavior and Light link appearance are preserved.
+- The footer explicitly resolves the existing dark text token through `sx`, preserving its existing Light rendering. Installed Typography handles `textSecondary` rather than the dotted `text.secondary` color prop, which left this outside-panel caption inheriting the global dark body text. No shared theme, layout, authorization, provider, schema or notification behavior changed.
+- Targeted one-root TypeScript plus dependencies passed with zero diagnostics (768 MB cap); one-file ESLint passed with zero findings (512 MB cap; existing dependency-location React detection notice only). Help guide reviewed: no wording/workflow change, so no guide edit required. Hosted Light/Navy and mobile visual proof remains the independent reviewer/coordinator gate; no local build/server or broad tests run.
+
 ## Database timeout release repair — September 25, 2026
 
 The first functional release was recovered to the 127-compatible baseline after
@@ -8,7 +15,7 @@ approved the narrow integrity-preserving retry repair. Coordinator implementatio
 and 21 focused simulated tests plus targeted semantic checks passed; independent
 review and hosted acceptance remain pending. See the [repair record](runtime-integrity-retry-repair-2026-09-25.md).
 
-Controlling [plan](reverse-split-discord-plan.md). Status: private full-feature source checkpoint ready for technical review; production remains the earlier owner-only empty preview. Full feature not activated or accepted.
+Controlling [plan](reverse-split-discord-plan.md). Status: private full-feature runtime is deployed per coordinator; remaining display/source acceptance and real delivery proof are incomplete. Public rollout is not authorized.
 
 ## Registered-manifest and erasure proof — September 25, 2026
 

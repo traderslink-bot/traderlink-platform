@@ -7,6 +7,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import MuiLink from "@mui/material/Link";
 import MenuItem from "@mui/material/MenuItem";
 import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
@@ -28,10 +29,11 @@ function Status({ item }: { item: ReverseSplitRow }) {
 }
 
 function Source({ item }: { item: ReverseSplitRow }) {
+  const label = item.sourceKind === "sec" ? "SEC filing" : "Nasdaq notice";
   return <Stack spacing={0.5}>
-    <Typography component="a" href={item.sourceUrl} target="_blank" rel="noopener noreferrer" color="primary" variant="body2" sx={{ textDecoration: "underline", width: "fit-content" }}>
-      {item.sourceKind === "sec" ? "SEC filing" : "Nasdaq notice"}<Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}> (opens in a new tab)</Box>
-    </Typography>
+    <MuiLink href={item.sourceUrl} target="_blank" rel="noopener noreferrer" aria-label={`${label} (opens in a new tab)`} color="primary" variant="body2" underline="always" sx={{ width: "fit-content" }}>
+      {label}
+    </MuiLink>
     <Typography variant="caption" color="text.secondary">{reverseSplitDate(item.sourcePublishedDate)}</Typography>
   </Stack>;
 }
@@ -114,7 +116,7 @@ export function ReverseSplitsView({ data }: { data: ReverseSplitDashboard }) {
       </>}
       {data.pageCount > 1 ? <Pagination aria-label="Reverse-split pages" count={data.pageCount} page={data.page} disabled={pending} onChange={(_, page) => startTransition(() => router.push(pageHref(page)))} sx={{ mt: 2, "& ul": { justifyContent: "center" } }} /> : null}
     </DashboardPanel> : null}
-    <Typography variant="caption" color="text.secondary">
+    <Typography variant="caption" color="text.secondary" sx={(theme) => ({ color: theme.palette.mode === "dark" ? theme.palette.text.secondary : undefined })}>
       Float is the provider-reported estimate, not shares outstanding. *Estimated post-split float assumes the reported float is still pre-split; provider updates can lag. Closing prices are dated regular-session prices, not extended-hours quotes. A past announced date does not confirm that trading resumed. Missing values appear as a dash.
     </Typography>
   </Stack>;
