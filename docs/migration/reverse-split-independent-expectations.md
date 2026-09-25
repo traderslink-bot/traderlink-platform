@@ -464,3 +464,53 @@ aggregate terminology must remain explicit, not become a fixed 1-for-250
 action. Require lifecycle tests in either ingestion order, not only isolated
 single-document parsing. Raw fixtures and parser outcomes for these four
 additional primary documents remain pending with the source owner.
+
+## Complete historical reference capture and approval-fixture review
+
+The reviewer-owned [historical inventory](reverse-split-reference-history.md)
+now preserves all 2,285 reference rows 252 through 2536, including all five
+displayed source columns and original row ordinals. Its canonical LF row text
+is 86,087 bytes with SHA-256
+`4051aeee012608bab7ea73f1f2e0bf327449522c9414e5a1d47292233df1f455`.
+Together with the source owner's 251-row approval/upcoming inventory this
+completes the durable reference census, not parser or lifecycle acceptance.
+Eleven historical reference rows have ratios below one; those entries must
+not automatically become reverse-split facts merely because of this table's
+heading. Original source values remain unaltered.
+
+Independently decompressed all 19 approval-corpus fixtures and confirmed each
+raw body byte count and SHA-256 against the captured fixture metadata. Read all
+19 expected objects and the full-body test harness. This integrity check does
+not validate publication metadata or mean those expectations pass the parser.
+The lead reports at least one required-fact failure for each baseline case;
+the detailed baseline result artifact remains requested for independent review.
+
+### SNGX publication metadata correction
+
+The [SEC filing index](https://www.sec.gov/Archives/edgar/data/812796/000110465926109329/0001104659-26-109329-index.htm)
+was independently read in Chrome. It shows filing date **September 21, 2026**,
+accepted **16:30:41** that day, and period of report **September 17, 2026**.
+At review, fixture `d039127e037a62983770a1378c0f11c799f04b25fd893e2974750b48e5a00f5f.json`
+still used September 17 as `source.publishedDate`. The source owner was asked
+to correct only that publication metadata; the raw body/hash must remain
+unchanged. Shareholder approval remains September 17, with the stated one-year
+authority measured from that approval, not from filing publication.
+
+### Additional action-binding regression requested
+
+The lead's first uncommitted correction used a new numeric scope whenever text
+said new/second/separate reverse stock split. Repeated references to the same
+new action must not create fresh scopes and evade its clearance condition:
+
+```html
+<p>The new reverse stock split remains subject to Nasdaq clearance.</p>
+<p>The Company will effect a 1-for-10 reverse stock split.</p>
+<p>The new reverse stock split will begin trading on a split-adjusted basis on October 7, 2026.</p>
+```
+
+At a September 25 publication date, the first and third paragraphs describe
+the same conditional action. The final paragraph cannot become unconditional
+merely because it repeats the word new. This source-visible counterexample was
+sent to the lead for an executable paired regression alongside the separate
+historical/current-action control. This is not an independently executed test
+or a review of the next immutable correction, which is still pending.
