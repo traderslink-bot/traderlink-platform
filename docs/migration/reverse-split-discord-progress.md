@@ -1,6 +1,12 @@
 # Reverse-split implementation progress
 
-Controlling [plan](reverse-split-discord-plan.md). Status: implementation active, not deployed.
+Controlling [plan](reverse-split-discord-plan.md). Status: implementation active; owner-only empty-data preview deployed by the coordinator, full feature not activated.
+
+## Private Help serialization correction — September 25, 2026
+
+- Coordinator reports preview commit `6dfb5de7751fc76af9fd29d57d193eeadb8b4e37` deployed successfully as Railway `6afff80e-2bb8-460a-a68e-c5eb04334127`, with healthy exact 126-schema identity and original volume. Main owner page renders; owner API is empty; anonymous page/API gates verified by the coordinator. This task did not independently perform those hosted checks.
+- Coordinator's rendered Help check identified a server/client function-prop serialization error (digest `1990388189`) at the two `DashboardSecondaryAction component={Link}` sites. Removed the function-valued props and unused import; existing MUI action renders an anchor from the same string `href`. Labels, destinations, content, theme and owner page/metadata gates are unchanged. No shared component, schema, configuration, provider or runtime changes.
+- Targeted single-page TypeScript check plus resolved dependencies and diff whitespace check performed; no tests, local build/server or deployment. Coordinator retains corrected hosted-render and release verification.
 
 ## Owner-only review gate — September 24, 2026 Eastern
 
