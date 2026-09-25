@@ -12,6 +12,10 @@ supersedes the earlier visible History and multiple-action expansion proposal:
   easy to extract. Otherwise omit it; do not infer or multiply a ratio.
 - **Announced:** both the selected ratio and announced trading date are known.
   A ratio without a trading date is not an Announced record under this contract.
+- **Reverse splits only.** Forward splits must not appear in the list,
+  Watchlist notes, post-split calculations or notification eligibility.
+  Direction must belong to the actual selected action, not a separate
+  historical paragraph or a mechanically inverted ratio.
 - Completed/past actions are excluded from the active page and Watchlist tags.
   There is no separate completed/history product in the acceptance scope.
 - Cancellation, postponement and expiry remain internal suppression safeguards,
@@ -51,28 +55,29 @@ The coordinator relayed the following narrower consumer requirement after the
 two-state decision. The dedicated Reverse Splits page retains Approval and
 Announced; **Watchlist shows Announced only**, as a small ratio/date note, not
 an approval label or large card. Post-split estimated float and price may appear
-only after 4 PM Eastern when the announced split is the next calendar day.
+only after 4 PM Eastern on the last regular trading session before the announced
+split, retaining eligibility over intervening non-trading days while upcoming.
 These estimates remain distinct from actual live price and float. This does
 not authorize notifications, public rollout, or changes to unrelated cards.
 
 The owner's subsequent clarification applies the same calculation timing and
 input rules to **both the dedicated Reverse Splits list and Watchlist**. Use
-the completed regular session's closing price from the day before the announced
-split and a supported pre-split float. An intraday quote, a moving after-hours
+the last completed regular session's closing price before the announced split
+and a supported pre-split float. An intraday quote, a moving after-hours
 quote, or a closing price from the wrong date cannot substitute. Neither a
 missing value nor an already adjusted value permits a fabricated or twice
 adjusted estimate. Date/ratio information can remain independently of these
 calculations. The list still has Approval / Announced; Watchlist is Announced
 only. No extra consent, notification, or hosted action is authorized.
 
-**Open weekend/holiday interpretation:** the coordinator has asked the owner
-one non-blocking question about Monday splits and other dates without a regular
-session on the preceding calendar day: use the preceding trading session's
-close, or retain a strict calendar-day rule and omit those estimates. Until
-answered, the Friday/Monday and holiday assertions below are provisional, not
-independently owner-confirmed acceptance criteria. Do not duplicate the question
-or pause unrelated source/display QA. The after-4-PM Eastern requirement and
-genuine, dated, completed-session inputs remain unchanged.
+**Weekend/holiday question resolved by the owner:** Monday splits use Friday's
+regular close; holidays use the preceding regular trading session. This
+supersedes the earlier strict calendar-day interpretation. There is no open
+owner choice or waiting condition for this edge. Use the actual session
+calendar rather than subtracting 24 hours or assuming every weekday trades.
+The after-4-PM Eastern requirement and genuine, dated, completed-session inputs
+remain unchanged. A properly dated Friday close does not become the wrong
+session merely because Saturday and Sunday pass.
 
 Independent acceptance matrix for the source owner's next immutable patch
 (calculation rows apply to both list and Watchlist):
@@ -82,10 +87,12 @@ Independent acceptance matrix for the source owner's next immutable patch
 | Approval with no announced trading date, even with a permitted ratio | No Watchlist note; eligible Approval can remain on the dedicated page. |
 | Current announcement with selected ratio and trading date | Compact Watchlist ratio/date note; no large explanatory card. |
 | Ratio alone, date alone, cancellation, postponement, expired or completed action | No announced Watchlist note; preserve stored source evidence. |
-| Next-day action at 3:59 PM Eastern | Note can appear, estimates cannot. |
-| Next-day action after 4 PM Eastern | Estimates only with that completed regular session's closing price and supported pre-split float; no fabricated fallback values. Pin exact 4:00 PM behavior in tests. |
-| Action two or more days away | No estimates under the current calendar-day interpretation; Friday/Monday and holiday handling remain provisional pending the owner's answer above. |
-| Eastern midnight advances into the action date | Previous evening's estimate eligibility ends; completed-state suppression remains separate from a scheduled date alone. |
+| Last regular session before the split, at 3:59 PM Eastern | Note can appear, estimates cannot. |
+| Last regular session before the split, after 4 PM Eastern | Estimates only with that completed regular session's closing price and supported pre-split float; no fabricated fallback values. Pin exact 4:00 PM behavior in tests. |
+| Monday split, Friday after 4 PM through the non-trading weekend | Retain estimates from Friday's regular close; do not substitute Sunday, a moving quote or a different session. |
+| Holiday intervenes before an announced split | Use the preceding actual regular session after its 4 PM gate; retain across the holiday while upcoming. |
+| Another regular session remains before the split | No early estimates from an older close. |
+| Eastern midnight advances into the action date | Upcoming estimate eligibility ends; completed-state suppression remains separate from a scheduled date alone. |
 | Winter and summer timestamps, UTC date differing from Eastern date | Same rule using America/New_York; never a hard-coded UTC offset or browser-local date. |
 | Early market close before 4 PM | No early estimate display; owner specified 4 PM, not market close. |
 | Zero, negative, missing, stale, wrong-symbol, or already split-adjusted quote/float | No invalid estimate and no double adjustment; a valid announced ratio/date note may remain. |
@@ -94,6 +101,25 @@ Independent acceptance matrix for the source owner's next immutable patch
 
 Review desktop/mobile compact rendering and the existing refresh/date-transition
 path. No source-writer overlap: this lane changes reviewer documents only.
+
+### Reverse-only direction controls
+
+The next immutable checkpoint must include forward-split exclusions in the
+parser/projection and all consumers, including notification eligibility, without
+enabling or sending notifications during QA. A 2-for-1 issuance of two new
+shares for one old share is not a 1-for-2 reverse split. Do not take the larger
+number as a reverse factor, invert the ratio to fit expectations, or use a
+document-wide reverse-split keyword to override the selected action's direction.
+An explicit ten-old-shares-to-one-new-share consolidation remains a valid
+reverse form even when its written ordering differs from `1-for-10`.
+
+Paired mixed-document controls: historical reverse plus current forward must
+not produce a current reverse note; historical forward plus genuine current
+reverse must preserve the current reverse action and its own ratio/date.
+Conflicting or ambiguous direction cannot justify a guessed reverse action.
+The eleven below-one numerical values in the reference inventory are candidate
+discrepancies to inspect, not proof of direction without primary source wording.
+Preserve the original inventory and evidence rather than rewriting their ratios.
 
 ## Evidence boundaries
 
