@@ -55,7 +55,18 @@ only after 4 PM Eastern when the announced split is the next calendar day.
 These estimates remain distinct from actual live price and float. This does
 not authorize notifications, public rollout, or changes to unrelated cards.
 
-Independent acceptance matrix for the source owner's next immutable patch:
+The owner's subsequent clarification applies the same calculation timing and
+input rules to **both the dedicated Reverse Splits list and Watchlist**. Use
+the completed regular session's closing price from the day before the announced
+split and a supported pre-split float. An intraday quote, a moving after-hours
+quote, or a closing price from the wrong date cannot substitute. Neither a
+missing value nor an already adjusted value permits a fabricated or twice
+adjusted estimate. Date/ratio information can remain independently of these
+calculations. The list still has Approval / Announced; Watchlist is Announced
+only. No extra consent, notification, or hosted action is authorized.
+
+Independent acceptance matrix for the source owner's next immutable patch
+(calculation rows apply to both list and Watchlist):
 
 | Case | Required result |
 | --- | --- |
@@ -63,12 +74,14 @@ Independent acceptance matrix for the source owner's next immutable patch:
 | Current announcement with selected ratio and trading date | Compact Watchlist ratio/date note; no large explanatory card. |
 | Ratio alone, date alone, cancellation, postponement, expired or completed action | No announced Watchlist note; preserve stored source evidence. |
 | Next-day action at 3:59 PM Eastern | Note can appear, estimates cannot. |
-| Next-day action after 4 PM Eastern | Estimates only with valid, fresh, matching pre-split inputs; no fabricated fallback values. Pin exact 4:00 PM behavior in tests. |
+| Next-day action after 4 PM Eastern | Estimates only with that completed regular session's closing price and supported pre-split float; no fabricated fallback values. Pin exact 4:00 PM behavior in tests. |
 | Action two or more days away, including Friday for Monday | No estimates, even after 4 PM; do not broaden next calendar day to next trading day. |
 | Eastern midnight advances into the action date | Previous evening's estimate eligibility ends; completed-state suppression remains separate from a scheduled date alone. |
 | Winter and summer timestamps, UTC date differing from Eastern date | Same rule using America/New_York; never a hard-coded UTC offset or browser-local date. |
 | Early market close before 4 PM | No early estimate display; owner specified 4 PM, not market close. |
 | Zero, negative, missing, stale, wrong-symbol, or already split-adjusted quote/float | No invalid estimate and no double adjustment; a valid announced ratio/date note may remain. |
+| Live or after-hours quote changes after the regular close | Neither surface recalculates from the moving quote; use the dated regular close only. |
+| Valid-looking close from a different regular session | No calculation from the wrong day's close; retain independent eligible ratio/date information. |
 
 Review desktop/mobile compact rendering and the existing refresh/date-transition
 path. No source-writer overlap: this lane changes reviewer documents only.
