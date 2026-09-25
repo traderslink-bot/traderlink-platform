@@ -1,9 +1,21 @@
 # Reverse splits: dashboard and notifications
 
-Status: owner approved implementation on September 24, 2026; subsequently authorized a restricted owner-account production review through the Visible release coordinator. Public rollout, live collection and delivery remain unapproved and incomplete.
-UI checkpoint: owner approved the searchable paginated table with All / Approved / Announced / History filters, ratio/date/float/close/source columns and positive-only Watchlist labels. This approves implementation of that layout, not visual acceptance or release.
+Status: owner approved implementation and the private full-feature preview. Source wiring and notification controls are implemented locally; technical release review and actual collection/delivery proof remain incomplete. Public rollout is not authorized. The Visible release coordinator alone owns publication, migration and activation.
+UI checkpoint: owner approved the searchable paginated table with All / Approved / Announced / History filters, ratio/date/float/close/source columns and positive-only Watchlist labels. On September 25 the owner confirmed approval after seeing the deployed private preview. Populated-data and delivery acceptance remain separate.
 Progress: [implementation record](reverse-split-discord-progress.md).
 Operations: [activation and recovery](reverse-split-discord-operations.md).
+
+## Current private feature checkpoint — September 25, 2026
+
+This section supersedes the earlier empty-preview checkpoint below. Owner requested real private feature operation and approved separate Push/Email controls on both Reverse Splits and Account → Preferences → Notifications. Both locations use one News-owned preference per Platform user, default off. The existing exact two-Discord-subject owner gate remains on reads, actions, enqueue and delivery. No public notification enrollment and no changes to halt/press-release subscriptions or queues.
+
+The worker hook is disabled unless both `REVERSE_SPLIT_ENABLED` and `REVERSE_SPLIT_PRIVATE_PREVIEW_ENABLED` are true. It performs one collection unit per pass, plans an immutable canonical nightly digest independent of Discord configuration, and separately drains enabled Discord/Push/email deliveries. A preview reads the same preparation logic without enqueueing or sending. Opening a page cannot send a message. Private data use does not establish commercial redistribution permission.
+
+Migration 0142 now owns seven tables: sources, events, runtime, digests, Discord deliveries, notification preferences and notification deliveries. Canonical date/revision signatures link all channels. Existing Platform push encryption/delivery and confirmed-email/Resend transport are reused; subscription targets are captured at digest creation and rechecked at send. No late opt-in retroactively enrolls old digests. Coordinator approved local manifest registration after immutable source review. The real registered manifest/verifier and user erasure passed an isolated synthetic integration check; production application remains a separate coordinator gate.
+
+Owner authorized focused tests on September 25 subject to low resources. Run one test file at a time with one worker and bounded Node memory; do not run the full regression suite/build/server. UI components use shared theme tokens; the added controls and populated-data rendering still require live visual acceptance.
+
+The bot's exact View/Send/ReadHistory channel permissions have been saved and coordinator GET-only verification passed. This is not message-delivery proof. Finish focused checks and schema/lifecycle review before coordinator activation and owner-device acceptance; the full product inventory below remains controlling.
 
 ## Restricted owner review checkpoint
 
@@ -42,6 +54,8 @@ The acquisition service supports a rolling two-day SEC overlap plus a separately
 
 ## Checkpoints
 
+September 25 continuation: owner accepted the live UI and requested completion of the remaining feature. Continue automatic source/related-document processing, bounded fair collection and market refresh, then durable scheduled notifications and their existing preference integration. Keep the approved UI and owner visibility unchanged during implementation. New collection code remains unhooked until migration/source/recipient and verification gates are reviewed with the coordinator; the return-to-work instruction does not itself publish code or approve public redistribution. Related-document follow-up stays inside the same verified SEC accession, with bounded depth/count and no arbitrary external fetching. Every pass does one persisted round-robin work unit so initial backfill, current discoveries, source parsing and quotes cannot indefinitely starve one another.
+
 1. Source adapters, conservative extraction, float/price acquisition and message preview.
 2. Persistence, scheduler, safe Discord delivery, restart and correction handling.
 3. Focused static verification and authored cases; no Vitest, full suite, build or server under current owner resource policy. Owner reviews message format. Coordinator receives exact local commit/file allowlist and unresolved gates.
@@ -49,7 +63,7 @@ The acquisition service supports a rolling two-day SEC overlap plus a separately
 
 ## Owner scope extension: dashboard and multiple delivery channels
 
-The owner subsequently specified that advanced reverse-split information belongs on a dedicated app dashboard page, with pagination, while Discord and notifications summarize upcoming next-day splits. This supersedes the original Discord-only/no-dashboard boundary above. The dashboard and Watchlist UI source is now implemented after layout approval, but not visually accepted or deployed. Ingestion and delivery remain incomplete; no Push/email implementation is claimed.
+The owner subsequently specified that advanced reverse-split information belongs on a dedicated app dashboard page, with pagination, while Discord and notifications summarize upcoming next-day splits. This supersedes the original Discord-only/no-dashboard boundary above. The private dashboard preview is deployed and owner-approved; its source lock still returns empty data. Ingestion and delivery remain incomplete; no Push/email implementation is claimed.
 
 Before dashboard implementation, propose and obtain owner approval for the page layout, status filters, columns, mobile presentation and Light/Navy Dark appearances. Before modifying any new shared route, navigation, notification, subscription or schema path, reconcile the coordinator's existing file allowlist and update this plan with the agreed implementation contract. Reuse the existing app shell and notification mechanisms; do not create parallel delivery infrastructure. Keep the underlying event identity and revisions shared across dashboard, Discord, Push and email to avoid contradictory information or duplicate event notifications.
 

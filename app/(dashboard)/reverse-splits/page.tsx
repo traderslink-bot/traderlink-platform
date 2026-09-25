@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Typography from "@mui/material/Typography";
-import { DashboardPage } from "@/app/dashboard-template";
+import { DashboardPage, DashboardPanel } from "@/app/dashboard-template";
+import { ReverseSplitNotificationPanel } from "./notification-panel";
 import { requireReverseSplitReviewPageAccess } from "@/src/modules/news/server/reverse-splits/access";
 import { readReverseSplitDashboard } from "@/src/modules/news/server/reverse-splits/dashboard";
 import { ReverseSplitsView } from "./reverse-splits-view";
@@ -22,5 +23,6 @@ export default async function ReverseSplitsPage({ searchParams }: {
   return <DashboardPage>
     <Typography component="h1" variant="h1">Reverse Splits</Typography>
     <ReverseSplitsView data={data} />
+    <DashboardPanel title="Notifications"><ReverseSplitNotificationPanel preview /></DashboardPanel>
   </DashboardPage>;
 }

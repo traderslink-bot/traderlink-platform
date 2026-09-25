@@ -26,5 +26,13 @@ export const REVERSE_SPLIT_HELP_GUIDE: HelpGuide = {
       { kind: "paragraph", text: "Coverage notices identify initial collection, delayed sources or information still being verified. The list covers tracked official notices and filings within the supported ticker scope, not a guarantee that every market event has been found. Keep the original source dates in mind when using the information." },
       { kind: "link", href: "/reverse-splits", label: "Open Reverse Splits", text: "Browse the current tracked list." },
     ],
+  }, {
+    id: "notifications", title: "Notifications", summary: "Choose reverse-split push and email separately.",
+    keywords: ["push", "email", "Discord", "schedule", "7 PM"],
+    blocks: [
+      { kind: "paragraph", text: "The Notifications card on Reverse Splits and the Reverse Splits options in Account → Preferences → Notifications use the same saved Push and Email switches. Both start off. Push requires an active device subscription; email requires a confirmed notification address. Other notification categories are unchanged." },
+      { kind: "paragraph", text: "Evening posts are prepared at 7 PM Eastern for the next trading session. Sunday includes the week ahead with Monday listed first. Later confirmed changes can produce a correction. Approval-only entries stay on the dashboard until a trading date is confirmed. Delayed or incomplete source data is disclosed, not presented as a complete market list." },
+      { kind: "paragraph", text: "The Discord preview reads saved source data and sends nothing. Delivery remains private during owner review. A successful provider response is not proof a notification appeared on your phone; device receipt must be checked separately." },
+    ],
   }],
 };

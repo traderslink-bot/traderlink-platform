@@ -61,4 +61,30 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
   void deliverNotifications();
   setInterval(() => void runAnalyzer(), 30_000);
   setInterval(() => void deliverNotifications(), 15_000);
+  if (process.env.REVERSE_SPLIT_ENABLED === "true" && process.env.REVERSE_SPLIT_PRIVATE_PREVIEW_ENABLED === "true") {
+    let reverseSplitRunning = false;
+    let lastFailure = "";
+    let lastFailureAt = 0;
+    const runReverseSplits = async (): Promise<void> => {
+      if (reverseSplitRunning) return;
+      reverseSplitRunning = true;
+      try {
+        const { runReverseSplitWorkerOnce } = await import("@/src/modules/news/server/reverse-splits/runtime");
+        const failures = await runReverseSplitWorkerOnce();
+        const signature = [...failures].sort().join(",");
+        if (signature && (signature !== lastFailure || Date.now() - lastFailureAt >= 15 * 60_000)) {
+          console.error("TraderLink reverse-split worker needs attention.", { codes: failures });
+          lastFailure = signature;
+          lastFailureAt = Date.now();
+        }
+      } catch {
+        if (lastFailure !== "worker_load_failed") console.error("TraderLink reverse-split worker could not start.");
+        lastFailure = "worker_load_failed";
+      } finally {
+        reverseSplitRunning = false;
+      }
+    };
+    void runReverseSplits();
+    setInterval(() => void runReverseSplits(), 10_000);
+  }
 }

@@ -6,18 +6,22 @@ export type SplitCalendar = Readonly<{
   marketDateAt(now: Date): string;
   easternWallClockAtUtc(date: string, time: string): string;
   nextOpenSessionDate(date: string): string;
-  session(date: string): Readonly<{ state: "open" | "closed" }>;
+  session(date: string): Readonly<{ state: "open" | "closed"; sessionKind?: string }>;
 }>;
 export type DigestSchedule = Readonly<{ date: string; due: boolean; weekly: boolean; nextSession: string; endDate: string; closeDate: string }>;
+export function latestRegularCloseDate(now: Date, calendar: SplitCalendar): string {
+  let date = calendar.marketDateAt(now);
+  for (let count = 0; count < 15; count++, date = shiftDate(date, -1)) {
+    const session = calendar.session(date);
+    if (session.state === "open" && now.toISOString() >= calendar.easternWallClockAtUtc(date, session.sessionKind === "scheduled_early_close" ? "13:00" : "16:00")) return date;
+  }
+  throw new Error("reverse_split_calendar_gap");
+}
 export function digestSchedule(now: Date, calendar: SplitCalendar): DigestSchedule {
   const date = calendar.marketDateAt(now), deadline = calendar.easternWallClockAtUtc(date, "19:00");
   const weekly = new Date(`${date}T12:00:00Z`).getUTCDay() === 0;
   const nextSession = calendar.nextOpenSessionDate(date);
-  let closeDate = date;
-  for (let count = 0; calendar.session(closeDate).state !== "open"; count++) {
-    if (count > 14) throw new Error("reverse_split_calendar_gap");
-    closeDate = shiftDate(closeDate, -1);
-  }
+  const closeDate = latestRegularCloseDate(now, calendar);
   return { date, due: now.toISOString() >= deadline, weekly, nextSession, endDate: weekly ? shiftDate(date, 5) : nextSession, closeDate };
 }
 
@@ -52,6 +56,7 @@ export function splitMessage(event: ReverseSplitEvent, market: SplitMarketData |
     if (event.ratio) lines.push(`Reverse split: **1-for-${event.ratio}**`);
   } else lines.push(event.status === "cancelled" ? "Reverse split cancelled" : "Reverse split postponed — new date not confirmed");
   lines.push(`Float (EODHD reported): ${market?.float ? quantity(market.float) : "Unavailable"}`);
+  if (market?.float) lines.push(`Float retrieved: ${market.floatRetrievedAt}`);
   if (market?.float && event.ratio && event.status === "confirmed" && event.effectiveDate! > today) {
     lines.push(`Estimated post-split float*: ${quantity(market.float / event.ratio)}`);
   }
@@ -76,7 +81,10 @@ export function buildDigest(input: Readonly<{
   if (resolution.conflicts.length) sections.push("Conflicting source details are being checked automatically; affected tickers are withheld from this post.");
   const events = resolution.events.filter((event) => input.market.get(event.ticker)?.eligibleSecurity !== false);
   const confirmed = events.filter((event) => event.status === "confirmed").sort((a, b) => a.effectiveDate!.localeCompare(b.effectiveDate!) || a.ticker.localeCompare(b.ticker));
-  if (schedule.weekly) {
+  if (input.update) {
+    sections.push("**Updated split information**");
+    sections.push(...events.map((event) => splitMessage(event, input.market.get(event.ticker), schedule.date)));
+  } else if (schedule.weekly) {
     const monday = shiftDate(schedule.date, 1);
     sections.push(`**Monday — ${monday}**`);
     const mondayEvents = confirmed.filter((event) => event.effectiveDate === monday);
@@ -89,9 +97,9 @@ export function buildDigest(input: Readonly<{
     sections.push(...(confirmed.length ? confirmed.map((event) => splitMessage(event, input.market.get(event.ticker), schedule.date)) : ["No confirmed splits found for this session."]));
   }
   const changed = events.filter((event) => event.status === "postponed" || event.status === "cancelled");
-  if (changed.length) sections.push("**Schedule Changes**", ...changed.map((event) => splitMessage(event, input.market.get(event.ticker), schedule.date)));
+  if (!input.update && changed.length) sections.push("**Schedule Changes**", ...changed.map((event) => splitMessage(event, input.market.get(event.ticker), schedule.date)));
   sections.push(`Full list and shareholder approvals: <${dashboard.toString()}>`);
-  if (events.some((event) => event.ratio && input.market.get(event.ticker)?.float)) sections.push("*Estimate assumes the reported float is pre-split; provider figures can lag. Float retrieved for this post. Prices and float: EODHD.");
+  if (events.some((event) => event.ratio && input.market.get(event.ticker)?.float)) sections.push("*Estimate assumes the reported float is pre-split; provider figures can lag. Prices and float: EODHD.");
   const pages: string[] = [];
   let current = "";
   for (const section of sections) {

@@ -22,6 +22,7 @@ export function parseReverseSplit(source: SplitSource, html: string): ParseResul
   const ignored = (reason: string): ParseResult => ({ event: null, outcome: "ignored", reason });
   const deferred = (reason: string): ParseResult => ({ event: null, outcome: "deferred", reason });
   if (!isoDate(source.publishedDate)) return deferred("publication_date_missing");
+  if (source.kind === "sec" && new URL(source.url).pathname.endsWith("-index.htm")) return ignored("related_filing_index");
   const section = source.kind === "nasdaq" ? /class=["']newscontentbox2["'][^>]*>([\s\S]*?)(?:<!-- Begin FooterHTAEmail|<div class=["']footnote2)/iu.exec(html)?.[1] : html;
   if (!section) return deferred("source_markup_changed");
   const text = plainText(section), title = plainText(source.title), parts = passages(section);
@@ -36,19 +37,26 @@ export function parseReverseSplit(source: SplitSource, html: string): ParseResul
   const terminal: SplitStatus | null = terminalPassage ? /cancelled|canceled|withdrawn/iu.test(terminalPassage) ? "cancelled" : "postponed" : null;
   const dateEvidence: { date: string; passage: string }[] = [];
   const patterns = source.kind === "nasdaq" ? [`(?:will become effective|becomes effective|Marketplace Effective Date)[^;]{0,100}?(${datePattern})`] : [
-    `(?:begin|commence|start)[\\s\\S]{0,160}?(?:trading|trade)[\\s\\S]{0,160}?(?:split.adjusted|after implementation)[\\s\\S]{0,100}?(${datePattern})`,
-    `(?:begin|commence|start)[\\s\\S]{0,160}?(?:split.adjusted)[\\s\\S]{0,100}?(?:trading|trade)[\\s\\S]{0,100}?(${datePattern})`,
+    `(?:begin|commence|start)[\\s\\S]{0,160}?(?:trading|trade)[\\s\\S]{0,160}?(?:split.adjusted|after implementation)[\\s\\S]{0,300}?(${datePattern})`,
+    `(?:begin|commence|start)[\\s\\S]{0,160}?(?:split.adjusted)[\\s\\S]{0,100}?(?:trading|trade)[\\s\\S]{0,300}?(${datePattern})`,
+    `(?:trading|trade)[\\s\\S]{0,160}?split.adjusted[\\s\\S]{0,100}?(?:begin|commence|start)[\\s\\S]{0,300}?(${datePattern})`,
   ];
   for (const part of parts) for (const pattern of patterns) for (const match of part.matchAll(new RegExp(pattern, "giu"))) {
     const parsed = parseWrittenDate(match[1]);
-    if (parsed && parsed <= shiftDate(source.publishedDate, 365) && !/previously|originally|no longer|not (?:begin|commence|start)/iu.test(part)) dateEvidence.push({ date: parsed, passage: part });
+    if (parsed && parsed <= shiftDate(source.publishedDate, 365) && !/previously|originally|no longer|subject to|provided that|\bif\b|not (?:begin|commence|start)/iu.test(part)) dateEvidence.push({ date: parsed, passage: part });
   }
   const dates = [...new Set(dateEvidence.map((item) => item.date))];
   const ratioEvidence = parts.filter((part) => source.kind === "nasdaq"
     ? new RegExp(splitPattern, "iu").test(part) && !/previously|originally/iu.test(part)
-    : /will (?:effect|implement)|(?:set|fixed|selected|determined) the (?:final )?ratio|effect a|announces? (?:a )?1\s*-\s*for/iu.test(part))
+    : /will (?:effect|implement)|(?:set|fixed|selected|determined) the (?:final )?ratio|approved the final reverse (?:stock |share )?split ratio|board of directors (?:has |had )?approved (?:a |the )?1\s*-\s*for|effect a|announces? (?:a )?1\s*-\s*for/iu.test(part))
     .filter((part) => !/\b(?:if|subject to|may|could|would|up to|not more than|between|ranging|will not|not to|does not|no intention)\b/iu.test(part));
-  const selectedRatios = splitRatios(ratioEvidence.join(" "));
+  const selectedRatios = splitRatios(ratioEvidence.map((part) => {
+    if (source.kind !== "nasdaq") return part;
+    const adsChange = /\band (?:ADS )?ratio change from\b/iu.exec(part);
+    if (!adsChange || !/American Depositary Share/iu.test(part.slice(adsChange.index)) ||
+      new RegExp(splitPattern, "iu").test(part.slice(adsChange.index))) return part;
+    return part.slice(0, adsChange.index);
+  }).join(" "));
   const ratio = selectedRatios.length === 1 ? selectedRatios[0] : null;
   if (dates.length > 1 || selectedRatios.length > 1 || (terminal && dates.length > 0)) return deferred("conflicting_terms");
   let status: SplitStatus;

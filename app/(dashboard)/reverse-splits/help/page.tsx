@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import { DashboardPage, DashboardPanel, DashboardSecondaryAction } from "@/app/dashboard-template";
 import { REVERSE_SPLIT_HELP_GUIDE } from "@/src/modules/help/reverse-split-guides";
 import { requireReverseSplitReviewPageAccess } from "@/src/modules/news/server/reverse-splits/access";
+import { reverseSplitPrivatePreviewEnabled } from "@/src/modules/news/server/reverse-splits/configuration";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -18,7 +19,9 @@ export default async function ReverseSplitsHelpPage() {
   await requireReverseSplitReviewPageAccess();
   return <DashboardPage>
     <Typography component="h1" variant="h1">Reverse Splits Help</Typography>
-    <Alert severity="info">Owner review only. Live data collection and notifications are off. This guide describes the intended feature; the preview contains no market records.</Alert>
+    <Alert severity="info">{reverseSplitPrivatePreviewEnabled()
+      ? "Private owner preview. Source coverage is shown on the list; unavailable data is never filled with estimates presented as facts."
+      : "Private owner preview. Live reverse-split data is not enabled yet."}</Alert>
     <DashboardSecondaryAction href="/reverse-splits">Back to Reverse Splits</DashboardSecondaryAction>
     {REVERSE_SPLIT_HELP_GUIDE.sections.map((section) => <DashboardPanel key={section.id} title={section.title}>
       <Stack spacing={2}>

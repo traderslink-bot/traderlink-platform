@@ -2,6 +2,7 @@ export type SplitStatus = "confirmed" | "announced" | "approved" | "postponed" |
 export type SplitSource = Readonly<{
   url: string; kind: "nasdaq" | "sec"; title: string; publishedDate: string;
   ticker: string | null; company: string | null;
+  relatedDepth?: number;
 }>;
 export type ReverseSplitEvent = Readonly<{
   ticker: string; company: string; status: SplitStatus; ratio: number | null;

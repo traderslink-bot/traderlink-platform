@@ -10,7 +10,7 @@ export async function getSplitMarketData(input: Readonly<{
   const fetcher = input.fetcher ?? fetch;
   const issues: string[] = [];
   let float: number | null = null, close: number | null = null, closeDate: string | null = null;
-  let eligibleSecurity = true;
+  let eligibleSecurity = false;
   const quoteUrl = new URL("https://eodhd.com/api/us-quote-delayed");
   quoteUrl.searchParams.set("api_token", input.token);
   quoteUrl.searchParams.set("s", `${input.ticker}.US`);
@@ -20,8 +20,8 @@ export async function getSplitMarketData(input: Readonly<{
     const quote = record(record(body?.data)?.[`${input.ticker}.US`]);
     float = positiveNumber(quote?.sharesFloat);
     if (float !== null && !Number.isSafeInteger(float)) float = null;
-    if (quote && (quote.type !== "STOCK" || /\b(?:warrant|unit|preferred|ETF)\b/iu.test(String(quote.description ?? "")))) eligibleSecurity = false;
-    if (!quote) issues.push("security_type_unavailable");
+    eligibleSecurity = quote?.type === "STOCK" && !/\b(?:warrants?|units?|preferred|ETF)\b/iu.test(String(quote.description ?? ""));
+    if (!quote || typeof quote.type !== "string") issues.push("security_type_unavailable");
     if (float === null) issues.push("float_unavailable");
   } catch { issues.push("float_source_unavailable"); }
   const dailyUrl = new URL(`https://eodhd.com/api/eod/${input.ticker}.US`);

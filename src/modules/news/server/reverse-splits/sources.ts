@@ -100,3 +100,39 @@ export async function discoverSecSplits(input: Readonly<{
 export async function retrieveSplitSource(source: SplitSource, userAgent: string, fetcher: typeof fetch = fetch): Promise<string> {
   return boundedText(sourceUrl(source.url, source.kind), fetcher, source.kind === "sec" ? { "User-Agent": userAgent } : {});
 }
+
+export function relatedSecSources(source: SplitSource, html: string): readonly SplitSource[] {
+  if (source.kind !== "sec" || (source.relatedDepth ?? 0) >= 2) return [];
+  const current = sourceUrl(source.url, "sec");
+  const directory = current.pathname.slice(0, current.pathname.lastIndexOf("/") + 1);
+  const accession = directory.split("/").filter(Boolean).at(-1)!;
+  const related = new Map<string, SplitSource>();
+  const markup = html.toLowerCase();
+  const add = (url: URL, title: string) => {
+    if (url.toString() === current.toString() || related.size >= 12) return;
+    related.set(url.toString(), { ...source, url: url.toString(), title, relatedDepth: (source.relatedDepth ?? 0) + 1 });
+  };
+  if ((source.relatedDepth ?? 0) === 0 && !current.pathname.endsWith("-index.htm")) {
+    const dashed = `${accession.slice(0, 10)}-${accession.slice(10, 12)}-${accession.slice(12)}`;
+    add(sourceUrl(`${current.origin}${directory}${dashed}-index.htm`, "sec"), "SEC filing document index");
+  }
+  for (const match of html.matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu)) {
+    try {
+      const raw = plainText(match[1]);
+      if (raw.startsWith("#")) continue;
+      let target = new URL(raw, current);
+      if (target.origin === current.origin && target.pathname === "/ix" && [...target.searchParams.keys()].every((key) => key === "doc")) {
+        target = new URL(target.searchParams.get("doc") ?? "", current);
+      }
+      const url = sourceUrl(target.toString(), "sec");
+      if (url.pathname.slice(0, url.pathname.lastIndexOf("/") + 1) !== directory || url.pathname.endsWith("-index.htm") || !/\.html?$/u.test(url.pathname)) continue;
+      const label = plainText(match[2]);
+      const rowStart = markup.lastIndexOf("<tr", match.index);
+      const rowEnd = markup.indexOf("</tr>", match.index);
+      const row = rowStart >= 0 && rowEnd > rowStart && rowEnd - rowStart < 8000 ? plainText(html.slice(rowStart, rowEnd)) : "";
+      if (!/8.?k|6.?k|ex(?:hibit)?[_. -]?(?:99|3)|press release|certificate|amendment|reverse[ -](?:stock[ -])?split/iu.test(`${url.pathname.slice(directory.length)} ${label} ${row}`)) continue;
+      add(url, "SEC related filing document");
+    } catch { continue; }
+  }
+  return [...related.values()];
+}

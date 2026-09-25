@@ -6,7 +6,7 @@ import { assertCanonicalUtcTimestamp } from "@/src/modules/platform/server/datab
 import { isoDate, validTicker, type ParseResult, type ReverseSplitEvent, type SplitSource, type SplitMarketData } from "./contracts";
 import { sourceUrl } from "./sources";
 
-export const REVERSE_SPLIT_PARSER_VERSION = "2026-09-25.1";
+export const REVERSE_SPLIT_PARSER_VERSION = "2026-09-25.3";
 export type SourceClaim = Readonly<{ source: SplitSource; token: string; attempt: number }>;
 export type RuntimeClaim = Readonly<{ key: string; token: string; state: unknown }>;
 
@@ -34,7 +34,11 @@ export class ReverseSplitRepository {
       const insert = this.database.prepare(`INSERT INTO news_reverse_split_sources
         (source_url, source_kind, source_json, published_date, state, next_attempt_at_utc, created_at_utc, updated_at_utc)
         VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)
-        ON CONFLICT(source_url) DO UPDATE SET source_json = excluded.source_json, published_date = excluded.published_date`);
+        ON CONFLICT(source_url) DO UPDATE SET
+          source_json = CASE WHEN COALESCE(json_extract(excluded.source_json, '$.relatedDepth'), 0)
+            <= COALESCE(json_extract(news_reverse_split_sources.source_json, '$.relatedDepth'), 0)
+            THEN excluded.source_json ELSE news_reverse_split_sources.source_json END,
+          published_date = excluded.published_date`);
       for (const source of sources) {
         if (!isoDate(source.publishedDate)) throw new Error("reverse_split_source_date_invalid");
         const url = sourceUrl(source.url, source.kind).toString();
@@ -46,16 +50,30 @@ export class ReverseSplitRepository {
   claimSource(now: string): SourceClaim | null {
     assertCanonicalUtcTimestamp(now, "reverseSplitClaimedAt");
     return this.database.transaction(() => {
-      const row = this.database.prepare<[string, string], { source_url: string; source_json: string; attempt_count: number }>(`
+      const queue = this.readRuntimeState("source_queue_turn") as { turn?: number } | null;
+      const turn = Number.isSafeInteger(queue?.turn) ? Number(queue!.turn) % 3 : 0;
+      const recentFirst = turn !== 2;
+      const row = this.database.prepare<[string, string, string, number, number], { source_url: string; source_json: string; attempt_count: number }>(`
         SELECT source_url, source_json, attempt_count FROM news_reverse_split_sources
         WHERE next_attempt_at_utc <= ? AND (lease_until_utc IS NULL OR lease_until_utc <= ?)
-        ORDER BY published_date DESC, next_attempt_at_utc, source_url LIMIT 1`).get(now, now);
+        ORDER BY CASE WHEN published_date >= ? THEN ? ELSE ? END,
+          next_attempt_at_utc, published_date DESC, source_url LIMIT 1`).get(now, now, after(now, -7 * 86_400_000).slice(0, 10), recentFirst ? 0 : 1, recentFirst ? 1 : 0);
       if (!row) return null;
+      this.database.prepare(`INSERT INTO news_reverse_split_runtime(runtime_key, state_json, updated_at_utc)
+        VALUES ('source_queue_turn', ?, ?) ON CONFLICT(runtime_key) DO UPDATE
+        SET state_json = excluded.state_json, updated_at_utc = excluded.updated_at_utc`).run(JSON.stringify({ turn: (turn + 1) % 3 }), now);
       const token = randomUUID();
       this.database.prepare(`UPDATE news_reverse_split_sources SET state = 'fetching', lease_token = ?, lease_until_utc = ?,
         attempt_count = attempt_count + 1, updated_at_utc = ? WHERE source_url = ?`).run(token, after(now, 45_000), now, row.source_url);
       return { source: JSON.parse(row.source_json) as SplitSource, token, attempt: row.attempt_count + 1 };
     }).immediate();
+  }
+
+  hasDueSource(now: string): boolean {
+    assertCanonicalUtcTimestamp(now, "reverseSplitDueAt");
+    return Boolean(this.database.prepare<[string, string], { source_url: string }>(`SELECT source_url
+      FROM news_reverse_split_sources WHERE next_attempt_at_utc <= ?
+      AND (lease_until_utc IS NULL OR lease_until_utc <= ?) LIMIT 1`).get(now, now));
   }
 
   completeSource(claim: SourceClaim, body: string, result: ParseResult, now: string): boolean {
@@ -133,6 +151,30 @@ export class ReverseSplitRepository {
       .run(`market:${ticker}`, JSON.stringify(market), now);
   }
 
+  nextMarketTicker(closeDate: string, now: string): string | null {
+    if (!isoDate(closeDate)) throw new Error("reverse_split_close_date_invalid");
+    assertCanonicalUtcTimestamp(now, "reverseSplitMarketDueAt");
+    const row = this.database.prepare<[string, string, string, string], { ticker: string }>(`SELECT DISTINCT e.ticker
+      FROM news_reverse_split_events e JOIN news_reverse_split_sources s ON s.source_url = e.source_url
+      AND s.content_hash = e.content_hash AND s.parser_version = e.parser_version
+      LEFT JOIN news_reverse_split_runtime m ON m.runtime_key = 'market:' || e.ticker
+      WHERE s.state IN ('parsed', 'fetching', 'failed') AND (
+        m.runtime_key IS NULL OR
+        (m.updated_at_utc <= ? AND json_extract(m.state_json, '$.expectedCloseDate') IS NOT ?) OR
+        (m.updated_at_utc <= ? AND json_array_length(m.state_json, '$.issues') > 0) OR
+        m.updated_at_utc <= ?)
+      ORDER BY m.updated_at_utc, e.ticker LIMIT 1`).get(after(now, -15 * 60_000), closeDate, after(now, -15 * 60_000), after(now, -6 * 60 * 60_000));
+    return row && validTicker(row.ticker) ? row.ticker : null;
+  }
+
+  completeMarketSnapshot(claim: RuntimeClaim, ticker: string, market: SplitMarketData, now: string): boolean {
+    return this.database.transaction(() => {
+      if (!this.completeRuntime(claim, { nextAt: after(now, 5_000), lastSuccess: now }, now)) return false;
+      this.saveMarketSnapshot(ticker, market, now);
+      return true;
+    }).immediate();
+  }
+
   marketSnapshots(tickers: readonly string[]): ReadonlyMap<string, SplitMarketData> {
     if (tickers.length > 100 || tickers.some((ticker) => !validTicker(ticker))) throw new Error("reverse_split_tickers_invalid");
     if (!tickers.length) return new Map();
@@ -145,6 +187,13 @@ export class ReverseSplitRepository {
     const counts: Record<string, number> = {};
     for (const row of this.database.prepare<[], { state: string; count: number }>(`
       SELECT state, COUNT(*) AS count FROM news_reverse_split_sources GROUP BY state`).all()) counts[row.state] = row.count;
+    counts.market_pending = this.database.prepare<[], { count: number }>(`SELECT COUNT(DISTINCT e.ticker) AS count
+      FROM news_reverse_split_events e JOIN news_reverse_split_sources s ON s.source_url = e.source_url
+      AND s.content_hash = e.content_hash AND s.parser_version = e.parser_version
+      LEFT JOIN news_reverse_split_runtime m ON m.runtime_key = 'market:' || e.ticker
+      WHERE s.state IN ('parsed', 'fetching', 'failed') AND (m.runtime_key IS NULL OR EXISTS (
+        SELECT 1 FROM json_each(m.state_json, '$.issues') WHERE value IN ('security_type_unavailable', 'float_source_unavailable')
+      ))`).get()!.count;
     return counts;
   }
 

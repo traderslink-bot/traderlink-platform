@@ -7,9 +7,6 @@ import {
   type TraderLinkPlatformRequestIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
-// 2026-09-25 03:33 UTC: Owner review never activates market reads or delivery; broader rollout requires a reviewed code change.
-export const REVERSE_SPLIT_OWNER_REVIEW_ONLY = true;
-
 export function hasReverseSplitReviewAccess(identity: TraderLinkPlatformRequestIdentity): boolean {
   try {
     return hasOwnerMarketDataAccess(identity);

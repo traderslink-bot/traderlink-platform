@@ -12,6 +12,7 @@ import { AccountSettingsLayout } from "../account-settings-layout";
 import { AppearanceSettings } from "../appearance-settings";
 import { NotificationPreferences } from "../notification-preferences";
 import { WatchlistPublicationNotificationStore } from "@/src/modules/watchlist/server/notifications/watchlist-publication-notification-store";
+import { ReverseSplitNotificationPanel } from "../../reverse-splits/notification-panel";
 
 export const metadata: Metadata = {
   description: "Choose TradersLink appearance, push notifications and Discord messages.",
@@ -72,6 +73,7 @@ export default async function AccountPreferencesPage() {
           initialWebPushCategories={notificationPreferences.webPushCategories}
           initialWatchlistPreferences={watchlistPreferences}
         />
+        <ReverseSplitNotificationPanel />
       </DashboardPanel>
     </AccountSettingsLayout>
   );

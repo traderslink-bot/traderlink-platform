@@ -2,7 +2,7 @@ import "server-only";
 import { record, isoDate, shiftDate } from "./contracts";
 import { parseReverseSplit } from "./parsing";
 import { ReverseSplitRepository } from "./repository";
-import { discoverNasdaqSplits, discoverSecSplits, retrieveSplitSource } from "./sources";
+import { discoverNasdaqSplits, discoverSecSplits, relatedSecSources, retrieveSplitSource } from "./sources";
 
 export class ReverseSplitAcquisitionService {
   constructor(
@@ -84,12 +84,14 @@ export class ReverseSplitAcquisitionService {
   }
 
   async processOneSource(): Promise<Readonly<{ outcome: string; reason: string }>> {
+    if (!this.repository.hasDueSource(this.now().toISOString())) return { outcome: "idle", reason: "queue_empty" };
     if (!this.repository.reserveRequest(this.now().toISOString())) return { outcome: "idle", reason: "source_budget_wait" };
     const claimed = this.repository.claimSource(this.now().toISOString());
     if (!claimed) return { outcome: "idle", reason: "queue_empty" };
     try {
       const body = await retrieveSplitSource(claimed.source, this.secUserAgent, this.fetcher);
       const result = parseReverseSplit(claimed.source, body);
+      this.repository.discover(relatedSecSources(claimed.source, body), this.now().toISOString());
       const stored = this.repository.completeSource(claimed, body, result, this.now().toISOString());
       return stored ? { outcome: result.outcome, reason: result.reason } : { outcome: "deferred", reason: "source_lease_expired" };
     } catch {

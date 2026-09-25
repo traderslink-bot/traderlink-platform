@@ -6,7 +6,7 @@ import { record, validTicker, type ReverseSplitEvent, type SplitMarketData } fro
 import { paginateSplitEvents, resolveSplitEvents, splitCatalogue, watchlistSplitStatus } from "./read-model";
 import { ReverseSplitRepository } from "./repository";
 import { sourceUrl } from "./sources";
-import { REVERSE_SPLIT_OWNER_REVIEW_ONLY } from "./access";
+import { reverseSplitPrivatePreviewEnabled } from "./configuration";
 
 const PAGE_SIZE = 25;
 const MAX_OBSERVATIONS = 10_000;
@@ -22,7 +22,7 @@ function recent(value: unknown, now: Date, maximumAge: number): value is string 
 }
 
 function enabled(): boolean {
-  return process.env.REVERSE_SPLIT_ENABLED === "true" && process.env.REVERSE_SPLIT_DATA_USE_APPROVED === "true";
+  return reverseSplitPrivatePreviewEnabled();
 }
 
 function coverage(repository: ReverseSplitRepository, now: Date, limited: boolean, conflicts: number): ReverseSplitCoverage {
@@ -36,7 +36,7 @@ function coverage(repository: ReverseSplitRepository, now: Date, limited: boolea
     state: "partial", note: "Source updates are delayed. The list may be missing recent changes.", checkedAt,
   };
   const counts = repository.sourceCoverage();
-  if (limited || conflicts || counts.deferred || counts.failed || counts.pending || counts.fetching || sec?.completedUnresolved || backfill?.historicalUnresolved || backfill?.completedUnresolved) return {
+  if (limited || conflicts || counts.deferred || counts.failed || counts.pending || counts.fetching || counts.market_pending || sec?.completedUnresolved || backfill?.historicalUnresolved || backfill?.completedUnresolved) return {
     state: "partial", note: "Some source information is still being verified. This list may be incomplete.", checkedAt,
   };
   if (backfill?.complete !== true) return { state: "partial", note: "Older filings are still being collected. Verified entries appear as they become available.", checkedAt };
@@ -73,9 +73,8 @@ export function readReverseSplitDashboard(input: Readonly<{ ticker?: string; fil
   const requestedPage = input.page && /^\d{1,6}$/u.test(input.page) ? Math.max(1, Number(input.page)) : 1;
   const date = marketDate(now);
   const empty = (info: ReverseSplitCoverage): ReverseSplitDashboard => ({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, pageCount: 0, ticker, filter, marketDate: date, coverage: info });
-  if (REVERSE_SPLIT_OWNER_REVIEW_ONLY) return empty({ state: "disabled", note: "Owner review: live data collection and notifications are off. No reverse-split records are available in this preview.", checkedAt: null });
   if (ticker && !validTicker(ticker)) return empty({ state: "unavailable", note: "Enter a ticker of up to four characters.", checkedAt: null });
-  if (!enabled()) return empty({ state: "disabled", note: "Reverse-split data is not available yet.", checkedAt: null });
+  if (!enabled()) return empty({ state: "disabled", note: "Owner preview: live reverse-split data is not enabled yet.", checkedAt: null });
   try {
     return withReadonlyPlatformDatabase({}, (database) => {
       const repository = new ReverseSplitRepository(database);
@@ -100,7 +99,7 @@ export function readReverseSplitDashboard(input: Readonly<{ ticker?: string; fil
 export function readWatchlistReverseSplits(tickers: readonly string[], now = new Date()): WatchlistReverseSplits {
   const empty: WatchlistReverseSplits = { items: [], generatedAt: now.toISOString() };
   if (tickers.length > 100 || tickers.some((ticker) => !validTicker(ticker))) throw new Error("reverse_split_tickers_invalid");
-  if (REVERSE_SPLIT_OWNER_REVIEW_ONLY || !enabled() || !tickers.length) return empty;
+  if (!enabled() || !tickers.length) return empty;
   return withReadonlyPlatformDatabase({}, (database) => {
     const repository = new ReverseSplitRepository(database);
     const observations = repository.readObservations([...new Set(tickers)]);
