@@ -13,7 +13,9 @@ matrix. Coordinator owns integration, release, and any hosted application.
 - These expectations were independently read from the primary pages through web
   retrieval or the existing authorized Chrome QA tab. Search aggregators were
   used only to discover primary links, never as factual authority.
-- **Raw HTML hashes are pending for every source below.** Rendered/extracted
+- **Raw HTML hashes were pending at the initial checkpoint.** The later fixture
+  integrity checkpoint below records exactly which supplied bodies were verified.
+  Rendered/extracted
   text verification is not a downloaded raw-body hash. The source owner must
   capture the actual full fixture body and hash before a parser result can be
   associated with it. Do not substitute a hash of this report or a snippet.
@@ -175,3 +177,249 @@ It does not infer split state from Watchlist AI text or price changes.
   actions were performed for this independent research checkpoint.
 - A narrow APUS code patch alone is insufficient for the owner's broader release
   gate. No release or full-coverage conclusion is made by this report.
+
+## First approval cohort: independent primary expectations
+
+Reviewed September 25, 2026. The source owner assigned the first twenty approval
+rows, with FBGL retained by that owner; the nineteen cases below are this
+reviewer's allocation. Benchmark ratios are discovery values, not authority.
+These are document-level expectations, not a claim that every later filing was
+acquired or that parser/lifecycle tests passed. Final trading dates and selected
+ratios remain unknown where the cited document does not establish them.
+
+### HKPD - fixed ratio, exchange date not yet supplied
+
+Benchmark: 20. [6-K signed September 23](https://www.sec.gov/Archives/edgar/data/2007702/000121390026102385/ea0306235-6k_cellyan.htm)
+reports shareholder approval on September 21 for a 1-for-20 Class A/B
+consolidation. September 9 is the record date, not approval. Effectiveness is
+on the date Nasdaq confirms without objection; no actual trading date is given.
+The separate conditional articles amendment does not undo the shareholder vote.
+The [September 9 proposal](https://www.sec.gov/Archives/edgar/data/2007702/000121390026098532/ea030497601ex99-1.htm)
+cannot independently establish that later shareholder approval already occurred.
+Keep the earlier December 2025 range authorization separate from this final ratio.
+
+### NXGL - revised authorization, cover warrants not an exclusion
+
+Benchmark: 2 to 20. [8-K signed September 23](https://www.sec.gov/Archives/edgar/data/1468929/000149315226043955/form8-k.htm)
+reports September 23 shareholder approval for a board-selected ratio from 2 to
+20 within one year. Final ratio and trading date are not supplied. The vote
+table supports approval; NXGLW appearing in the securities cover is not a
+reason to discard the common-stock action. Earlier 2-to-10 proposals must not
+overwrite these later approved terms. No independent claim about the outcome
+of the earlier proposal is made here.
+
+### IPW - new authority following prior completed actions
+
+Benchmark: 2 to 250. [8-K signed September 22](https://www.sec.gov/Archives/edgar/data/1830072/000168316826007276/ipower_8k.htm)
+reports September 21 approval for one or more reverse splits up to 1-for-250,
+at board discretion. This document does not supply a lower bound of 2, an
+expiry, a final selected ratio, or a trading date. August 3 is the record date.
+The [May 22 filing](https://www.sec.gov/Archives/edgar/data/1830072/000168316826004228/ipower_8k.htm)
+describes a prior 1-for-8 action under December 2025 authority, while the
+[August issuer announcement](https://ipower.gcs-web.com/news-releases/news-release-details/ipower-inc-announces-1-9-reverse-stock-split)
+describes an August 7 1-for-9 action. Neither completed action consumes this
+new September authorization. Test source-order independence and repeated issuer
+actions rather than merging all IPW observations into one lifecycle.
+
+### SKYQ - two sequential authorizations, benchmark range is wrong
+
+Benchmark: 2 to 250. [8-K signed September 22](https://www.sec.gov/Archives/edgar/data/1812447/000109690626001404/skyq-20260918_8k.htm)
+reports September 18 approval of two sequential authorizations, each from 2 to
+25. The first is exercisable on or before the two-year anniversary; the second
+on or after the first action and before that anniversary. Do not invent a
+2-to-250 range or call the product 625 an announced final ratio. Neither action
+has a final ratio or trading date in this document. The voting rule is majority
+of votes cast, not outstanding shares: the word "not" must not invert approval.
+A proposal-number typo in the result paragraph requires contextual reading.
+The earlier March 1-for-8 action is separate history, not fulfillment of these
+new September authorizations.
+
+### ZCMD - calendar-derived legal date versus trading date
+
+Benchmark: 2. [6-K signed September 21](https://www.sec.gov/Archives/edgar/data/1785566/000121390026101807/ea0305890-6k_zhongchao.htm)
+reports September 18 approval of two old Class A/B shares into one new share.
+The resolution takes effect on the tenth calendar day following passage:
+September 28 is a derived legal date, not an independently stated exchange
+trading date. Preserve the derivation and date kind; this source does not say
+when adjusted trading starts. The capital cancellation and subdivision in the
+next proposal neither cancel the split nor define another reverse ratio.
+Earlier 1-for-8 and wider authorities must not replace this new 1-for-2 action.
+The adjournment proposal was not presented because the other votes passed;
+that is not a split postponement.
+
+### PFSA - approval established by final voting results
+
+Benchmark: 2 to 12. [8-K signed September 18](https://www.sec.gov/Archives/edgar/data/1859807/000121390026101568/ea0306040-8k_profusa.htm)
+reports September 18 final voting results for one or more 2-to-12 splits,
+aggregate no greater than 12, during the next two years. The text introduces
+what shareholders were asked to approve; the final table supplies 262,920 for,
+17,360 against and 7,610 abstentions. Do not require a literal "was approved"
+sentence while ignoring the actual result table. The
+[definitive proxy](https://www.sec.gov/Archives/edgar/data/1859807/000121390026095087/ea0302274-02.htm)
+specifies September 18, 2028 as the deadline. Final ratio and trading date are
+not given. Permission to adjourn is not an actual postponement.
+
+### SNGX - authorization not a final selected split
+
+Benchmark: 2 to 20. [September 17 meeting 8-K](https://www.sec.gov/Archives/edgar/data/812796/000110465926109329/sngx-20260917x8k.htm)
+reports approval of Proposal 2, from 2 to 20, at board discretion within one
+year. The vote table records 8,068,017 for, 2,273,350 against and 269,278
+abstentions. No final selected ratio or trading date is supplied. Other
+proposal/election counts must not be interpreted as split terms.
+
+### SBFM - maximum ratio and mailing-dependent consent effectiveness
+
+Benchmark: 20. [8-K signed September 16](https://www.sec.gov/Archives/edgar/data/1402328/000168316826007193/sunshine_8k.htm)
+reports majority-holder written consent on September 15 authorizing a board
+selection up to 1-for-20, if any. Twenty is a maximum, not a final selected
+ratio. Consent effectiveness depends on twenty days after the definitive
+information statement is mailed; neither signature nor filing date proves
+the mailing date. Keep that condition, not an invented October date. The
+June 1 1-for-10 action mentioned in older filings is separate history.
+No adjusted trading date is established by this source.
+
+### NXL - individual versus aggregate ratios; mixed proposal outcomes
+
+Benchmark: 2 to 250. [8-K signed August 11](https://www.sec.gov/Archives/edgar/data/1527352/000182912626008621/nexalintec_8k.htm)
+reports August 11 approval of Item 3 for one or more splits, each 2 to 100,
+aggregate no more than 250. A single 2-to-250 range loses a material distinction.
+July 6 is the record date. Items 4 and 5 were not approved; their negative
+outcomes do not negate Item 3. Final ratio, trading date, and expiry are not
+established in this filing. Preserve the separately approved action when
+parsing mixed outcomes in one document.
+
+### BFRI - older approval located; current state not yet reconciled
+
+Benchmark: unknown ratio. [8-K signed September 19, 2025](https://www.sec.gov/Archives/edgar/data/1858685/000149315225014281/form8-k.htm)
+establishes approval at the September 16, 2025 special meeting but does not
+state a numerical ratio. It references the August 5, 2025 definitive proxy.
+The [July preliminary proxy](https://www.sec.gov/Archives/edgar/data/1858685/000164117225021034/formpre14a.htm)
+contains a one-year limit and inconsistent draft numerical ranges; it is not
+adequate evidence for a definitive ratio or current authority. The definitive
+primary document and later lifecycle remain a follow-up acquisition gap.
+Do not assume this year-old approval is still actionable in September 2026,
+or relabel FDA approvals as stock-split approvals. This row is **partially
+verified**, not accepted as a current active warning.
+
+### BGM - approval benchmark superseded by final announcement
+
+Benchmark: unknown ratio. [6-K signed September 24](https://www.sec.gov/Archives/edgar/data/1779578/000110465926110425/tm2626068d1_6k.htm)
+announces 30 old shares into 1 new share with Class A adjusted trading expected
+at the October 1 open. Shareholder approval is September 5 and board approval
+August 11; September 21 share-count context is neither. The announcement
+covers Class A/B and preferred shares without turning their adjustments into
+separate common-stock actions. Record the reference-list discrepancy: this
+source is no longer merely an unknown-ratio authorization. Older up-to-50
+authority does not override the selected 30.
+
+### ARBE - dollar objective is not a numerical ratio
+
+Benchmark: unknown ratio. [6-K signed September 10](https://www.sec.gov/Archives/edgar/data/1861841/000121390026098845/ea0305108-6k_arbe.htm)
+reports the September 9 meeting after September 2 was adjourned for lack of
+quorum. Shareholders approved a board-selected reverse split intended to
+produce approximately a $3 share price, executable before the 2027 annual
+meeting. Three dollars is not a 1-for-3 ratio. No final trading date or numeric
+ratio is given. The earlier meeting adjournment is not postponement of an
+announced split; the actual approval date is September 9.
+
+### INVZ - compliance deadline is not split date or authorization expiry
+
+Benchmark: 5 to 20. [6-K signed September 16](https://www.sec.gov/Archives/edgar/data/1835654/000117891326004529/zk2636125.htm)
+reports September 16 approval from 5 to 20, final selection reserved to the
+board. Neither a final trading date nor expiry is supplied. The
+[September 23 compliance announcement](https://www.sec.gov/Archives/edgar/data/1835654/000117891326004565/zk2636142.htm)
+references the same approval while naming March 22, 2027 as the Nasdaq
+compliance deadline. Do not turn that deadline into a scheduled split or
+authority expiry. Director term years are unrelated as well.
+
+### RKDA - preserve the explicit outside deadline
+
+Benchmark: 2 to 10. [8-K signed September 15](https://www.sec.gov/Archives/edgar/data/1469443/000119312526391780/rkda-20260910.htm)
+reports September 10 approval of Proposal IV for a board-selected 2-to-10
+split before June 30, 2027. There is no final ratio or trading date. The
+expired 2025 equity-plan discussion in another item must not expire this
+separate authorization. Signature date is not the shareholder meeting date.
+
+### YDKG - fixed ratio despite the word range
+
+Benchmark: 10. [6-K signed September 15](https://www.sec.gov/Archives/edgar/data/1413745/000121390026100145/ea0305544-6k_yueda.htm)
+reports September 13 shareholder approval of a 1-for-10 Class A/B
+consolidation. The source calls the ratio a range despite specifying a single
+value; do not fabricate endpoints. Effectiveness awaits the Nasdaq-confirmed
+date and no actual adjusted trading date is supplied. Conditional adoption of
+new articles does not mean the shareholder vote itself remains outstanding.
+The old November 2025 1-for-100 action is separate history.
+
+### CHOW - immediate legal consolidation without a trading announcement
+
+Benchmark: 10. [6-K signed September 15](https://www.sec.gov/Archives/edgar/data/2041829/000149315226042772/form6-k.htm)
+reports all six proposals approved September 14 at 10 AM Hong Kong time.
+Proposal 1 approves 10 old shares into 1 with immediate legal effect. Preserve
+that legal fact, but do not invent an exchange trading date. Separate
+dual-class creation, redesignation and capital increase are conditional on
+that split; those conditions do not turn Proposal 1 back into a pending vote.
+Large authorized-share figures and ten-vote Class B terms are not other split
+ratios. Meeting-local date and any ET normalization must be distinguishable.
+
+### FXHO - approved conditional authority, not a fixed 100 split
+
+Benchmark: 10 to 100. [6-K signed September 14](https://www.sec.gov/Archives/edgar/data/1789299/000149315226042573/form6-k.htm)
+reports September 10 approval of Proposal 4, one or more Class A
+consolidations in the range 1-for-10 to 1-for-100, conditional on a price below
+$1 for at least five continuous trading days and the other approved capital
+actions. Final ratio, date and expiry are not stated. Preserve the condition;
+do not claim it was fulfilled. Large subdivision ratios elsewhere in the
+filing are forward capital changes, not extra reverse splits. The former WTO
+ticker and June split belong to earlier history, not this new approval.
+
+### ZNB - historical ratification and a new second split in one filing
+
+Benchmark: 8. [6-K signed September 14](https://www.sec.gov/Archives/edgar/data/1747661/000121390026099698/ea0304940-6k_zeta.htm)
+reports a September 10 Beijing meeting, also explicitly September 9 at 10 PM
+ET. Resolution 1 ratifies the historical 1-for-8 effective July 27; Resolution
+6 approves a **new second 1-for-8** subject to the capital restructuring and
+Nasdaq notification condition. No new market effective date is fixed. The
+new resolution lapses if its condition is unfulfilled by the first meeting
+anniversary. Do not attach July 27 to the second action, discard it as a
+duplicate ratio, or suppress the whole document because it includes history.
+Capital cancellation is not cancellation of the split. Preserve the meeting
+timezone when normalizing approval dates.
+
+### TOPP - aggregate cap and a deadline not derived from meeting date
+
+Benchmark: 2 to 900. [8-K signed September 11](https://www.sec.gov/Archives/edgar/data/1960847/000121390026099323/ea0305018-8k_toppoint.htm)
+reports September 8 approval of one or more 2-to-900 splits, aggregate no more
+than 900. The express deadline is August 24, 2029; do not recompute it as
+three years after the actual September meeting. A final selected ratio and
+adjusted trading date are absent. Authorized-share changes and reincorporation
+are distinct resolutions, not additional split actions.
+
+## Supplied fixture integrity checkpoint
+
+The reviewer independently inspected the source owner's manifests and
+`filing-corpus.test.ts` in the release checkout. A bounded read-only Node check
+decompressed every body from both manifests, recomputed SHA-256, checked exact
+byte length, and checked the hash-derived filename. All **17** matched. This
+does not establish live acquisition completeness, passing parser behavior, or
+an immutable implementation baseline; the source owner explicitly reports its
+grammar corrections are still uncommitted.
+
+- `upcoming-expectations.json`: 9 cases; manifest SHA-256
+  `70f680d254af3526305db3589387d68f5a16cd1cd8929c7135a90382ad20981f`.
+- `control-expectations.json`: 8 cases; manifest SHA-256
+  `2c3de632d13d7e3157636f835668da1b6b4600ad818d8ee4212b7b4f511901ec`.
+- Upcoming set: GCDT, GMEX, IMMP, MTNB, DLXY, BTLN, CTNT, KITT, RPGL.
+- Control set: APUS, VRME, MYPS, CDT, FBGL, AUUD, MGN, PCLA.
+- APUS fixture hash is
+  `92c0d1ee8623a091c22c82618690b0861bb81e18d3fc719268df96a3ad91dcf9`,
+  distinct from the earlier coordinator-reported hosted cached-body hash above.
+  These are distinct captures; no byte identity is claimed.
+- Test source verifies raw-body hash and byte length before parsing, then
+  verifies event fields and the Watchlist status read model. This is not yet a
+  mounted-browser refresh or persisted multi-document lifecycle test.
+- The nineteen new approval cases above still need complete raw fixtures,
+  hashes and executable results attached by the source owner. BFRI also needs
+  definitive-source/later-history reconciliation before current-state acceptance.
+
+The review remains open. Releasing an APUS-only correction or treating reference
+inventory size as passing coverage would not satisfy the owner's instruction.
