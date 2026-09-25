@@ -6,6 +6,7 @@ import { record, validTicker, type ReverseSplitEvent, type SplitMarketData } fro
 import { paginateSplitEvents, resolveSplitEvents, splitCatalogue, watchlistSplitStatus } from "./read-model";
 import { ReverseSplitRepository } from "./repository";
 import { sourceUrl } from "./sources";
+import { REVERSE_SPLIT_OWNER_REVIEW_ONLY } from "./access";
 
 const PAGE_SIZE = 25;
 const MAX_OBSERVATIONS = 10_000;
@@ -72,6 +73,7 @@ export function readReverseSplitDashboard(input: Readonly<{ ticker?: string; fil
   const requestedPage = input.page && /^\d{1,6}$/u.test(input.page) ? Math.max(1, Number(input.page)) : 1;
   const date = marketDate(now);
   const empty = (info: ReverseSplitCoverage): ReverseSplitDashboard => ({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, pageCount: 0, ticker, filter, marketDate: date, coverage: info });
+  if (REVERSE_SPLIT_OWNER_REVIEW_ONLY) return empty({ state: "disabled", note: "Owner review: live data collection and notifications are off. No reverse-split records are available in this preview.", checkedAt: null });
   if (ticker && !validTicker(ticker)) return empty({ state: "unavailable", note: "Enter a ticker of up to four characters.", checkedAt: null });
   if (!enabled()) return empty({ state: "disabled", note: "Reverse-split data is not available yet.", checkedAt: null });
   try {
@@ -98,7 +100,7 @@ export function readReverseSplitDashboard(input: Readonly<{ ticker?: string; fil
 export function readWatchlistReverseSplits(tickers: readonly string[], now = new Date()): WatchlistReverseSplits {
   const empty: WatchlistReverseSplits = { items: [], generatedAt: now.toISOString() };
   if (tickers.length > 100 || tickers.some((ticker) => !validTicker(ticker))) throw new Error("reverse_split_tickers_invalid");
-  if (!enabled() || !tickers.length) return empty;
+  if (REVERSE_SPLIT_OWNER_REVIEW_ONLY || !enabled() || !tickers.length) return empty;
   return withReadonlyPlatformDatabase({}, (database) => {
     const repository = new ReverseSplitRepository(database);
     const observations = repository.readObservations([...new Set(tickers)]);

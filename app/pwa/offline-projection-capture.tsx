@@ -53,7 +53,8 @@ function navigation(): readonly PlatformOfflineNavigationGroup[] {
     Object.freeze({ label: "Home", items: Object.freeze([item(DASHBOARD_HOME_ITEM)]) }),
     ...DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group) => Object.freeze({
       label: group.label,
-      items: Object.freeze(group.items.filter(isDashboardNavigationItem).map(item)),
+      items: Object.freeze(group.items.filter(isDashboardNavigationItem)
+        .filter((candidate) => candidate.href !== "/reverse-splits").map(item)),
     })),
     Object.freeze({
       label: "More",

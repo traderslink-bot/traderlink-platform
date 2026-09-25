@@ -301,6 +301,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/press-releases/news-filtered": "News Scanner",
     "/market-news/week-ahead": "The Week Ahead",
     "/reverse-splits": "Reverse Splits",
+    "/reverse-splits/help": "Reverse Splits Help",
     "/press-releases/market-cap": "All Market Cap",
     "/press-releases/market-cap/under-30m": "Under $30M Market Cap",
     "/press-releases/market-cap/30m-50m": "$30M–$50M Market Cap",
@@ -322,7 +323,7 @@ export type DashboardHelpTarget = Readonly<{
 const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: string }>[] =
   Object.freeze([
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle patterns" }),
-    Object.freeze({ route: "/reverse-splits", href: "/help/tools/reverse-splits", label: "Reverse Splits" }),
+    Object.freeze({ route: "/reverse-splits", href: "/reverse-splits/help", label: "Reverse Splits" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/trend-momentum", href: "/help/trade-analyzer/trend-momentum", label: "Trend & Momentum" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/green-to-red", href: "/help/trade-analyzer/green-to-red-analysis", label: "Green to red" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/scaling-out", href: "/help/trade-analyzer/day-trade-analysis", label: "Scaling out" }),

@@ -1,9 +1,17 @@
 # Reverse splits: dashboard and notifications
 
-Status: owner approved implementation on September 24, 2026; not approved for deployment.
+Status: owner approved implementation on September 24, 2026; subsequently authorized a restricted owner-account production review through the Visible release coordinator. Public rollout, live collection and delivery remain unapproved and incomplete.
 UI checkpoint: owner approved the searchable paginated table with All / Approved / Announced / History filters, ratio/date/float/close/source columns and positive-only Watchlist labels. This approves implementation of that layout, not visual acceptance or release.
 Progress: [implementation record](reverse-split-discord-progress.md).
 Operations: [activation and recovery](reverse-split-discord-operations.md).
+
+## Restricted owner review checkpoint
+
+The coordinator relayed the owner's explicit request to make the feature visible only to the owner's accounts and deploy it for review. Reuse the existing `hasOwnerMarketDataAccess` contract unchanged: exactly two valid configured stable Discord subjects, an active linked Discord identity for the authenticated Platform user, and no local-development bypass. Premium membership, guild roles, workspace ownership and display names do not grant this access. Existing linked Platform identity controls apply across that user's Journal account selections; no identifiers or new identity configuration are introduced.
+
+Gate the page and its metadata, private Help page and metadata, navigation, and Watchlist batch endpoint. Non-owners receive generic not-found before any reverse-split query or read. Remove only this feature's additions from public Help collections/search; retain the guide on `/reverse-splits/help` behind the same gate. Watchlist badges/details require the protected endpoint's positive data; denied requests clear them and stop polling for that ticker set.
+
+The source-only owner-review lock forces an explicit unavailable state and empty records before any News table read, regardless of ingestion/data-use environment flags. No sample market rows, provider calls, News migration, runtime hook or notification activation. Owner can review layout/controls and private Help; populated rows and live Watchlist badges are not part of this preview. Migration 0142 stays unregistered/unapplied, paused Welcome stays untouched. Coordinator alone owns final production source/schema/health/rollback and publication checks. This checkpoint does not remove any remaining full-feature requirements below.
 
 ## Complete product scope
 

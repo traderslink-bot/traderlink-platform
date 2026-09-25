@@ -18,18 +18,20 @@ export function useWatchlistReverseSplits(symbols: readonly string[]): SplitMap 
   useEffect(() => {
     if (!key) return;
     let disposed = false;
+    let accessDenied = false;
     let controller: AbortController | null = null;
     let timeout: number | null = null;
     let receivedAt = 0;
     const selected = new Set(key.split(","));
     const refresh = async () => {
-      if (disposed || document.visibilityState !== "visible" || controller) return;
+      if (disposed || accessDenied || document.visibilityState !== "visible" || controller) return;
       controller = new AbortController();
       timeout = window.setTimeout(() => controller?.abort(), 10_000);
       try {
         const response = await fetch(`/api/live-watchlist/reverse-splits?tickers=${encodeURIComponent(key)}`, {
           credentials: "same-origin", cache: "no-store", signal: controller.signal,
         });
+        if (response.status === 401 || response.status === 403 || response.status === 404) accessDenied = true;
         if (!response.ok) throw new Error("reverse_split_status_unavailable");
         const payload = await response.json() as WatchlistReverseSplits;
         if (!Array.isArray(payload.items) || payload.items.length > 100 || !Number.isFinite(Date.parse(payload.generatedAt))) throw new Error("reverse_split_status_invalid");

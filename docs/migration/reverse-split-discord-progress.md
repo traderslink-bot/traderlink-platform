@@ -2,6 +2,18 @@
 
 Controlling [plan](reverse-split-discord-plan.md). Status: implementation active, not deployed.
 
+## Owner-only review gate — September 24, 2026 Eastern
+
+- Coordinator relayed direct owner authorization for an owner-account-only production preview and approved the additional narrow shell-filter/private-Help paths. Coordinator retains all deployment/migration/production authority; this task performs source work only.
+- Reused the existing two-stable-Discord-subject owner contract unchanged. It resolves active linked Discord identities for the authenticated Platform user and rejects local development, arbitrary Premium/admin/workspace-owner status, absent/malformed configuration and failed reads. No identity values or secrets copied into code or documentation.
+- Added a fail-closed gate to page and metadata, private Help and metadata, and Watchlist batch API before ticker parsing or data reads. Navigation reuses the existing server-derived owner-access boolean. Denied Watchlist reads show no badges/details and stop repeat requests for that ticker set.
+- Removed only the newly added public Tools/Watchlist Help entries; existing public guides remain intact. The central Reverse Splits guide is retained solely for private `/reverse-splits/help`, with an explicit owner-preview notice.
+- Read-only review identified that PWA navigation snapshots independently enumerate the unfiltered shared navigation. Coordinator approved one additional filter in `app/pwa/offline-projection-capture.tsx` to exclude Reverse Splits from offline navigation for all users. Existing route eligibility classifies `/reverse-splits` and `/reverse-splits/help` as not available, so neither content page is captured; no contract or service-worker change was needed. No offline records, caches or subscriptions cleared or changed.
+- Added a server-only review lock that returns unavailable/empty data before News storage access regardless of environment flags. No fake rows, News migration, provider calls, collection hook, Discord/Push/email activation or Welcome change. This allows schema-compatible review on production 0140 without applying 0142.
+- Targeted TypeScript covered 25 roots and resolved dependencies with zero diagnostics, no emit and a 768 MB heap cap. Targeted ESLint covered 26 files: two errors and four warnings, all independently reproduced from production parent `e938e82a` in unchanged shell effects/imports and the Watchlist unused helper; no new lint findings. The shell issues are two `react-hooks/set-state-in-effect` errors, two existing dependency warnings and an unused import; Watchlist has one unused-function warning. No rules suppressed or unrelated halt/Trade Drawer code changed. `git diff --check` passed. No tests, build, browser, provider calls, runtime server, migration or deployment performed. Visual and live owner/non-owner acceptance remain coordinator release checks; this does not complete the full feature's open items.
+
+## Earlier scope and implementation history
+
 - Owner approved nightly 19:00 Eastern posts, Sunday weekly overview, shareholder approvals, float (not shares outstanding), ratio, effective date and regular-session close.
 - Coordinator assigned existing `release-workspace-boundary-4e22`, branch `codex/reverse-split-discord-20260924`, clean parent `e938e82a86a7305e33fae45c812cebd212f5d50e`. Paused Welcome in cdb0 is untouched.
 - Coordinator reserved News migration 0142; exclude paused 0141 from this branch.

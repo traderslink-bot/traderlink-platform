@@ -1,8 +1,6 @@
 import type { HelpGuide } from "./help-guide-types";
-import { REVERSE_SPLIT_HELP_GUIDE } from "./reverse-split-guides";
 
 export const TOOLS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
-  REVERSE_SPLIT_HELP_GUIDE,
   Object.freeze({
     slug: "swing-trade-ideas", title: "Swing Trade Ideas",
     description: "Open Premium swing ideas and understand member access.",
