@@ -4,6 +4,10 @@
 
 **Extends:** [Press Release Dashboard Plan](press-release-dashboard-plan.md)
 
+**Separate reverse-split feature:** [Reverse-split plan](reverse-split-discord-plan.md).
+Official advance notices and SEC filings feed that feature; this does not change
+the working halt lifecycle, ticker rules or halt delivery preferences.
+
 **Approved Discord channel delivery:** [Discord halt delivery progress](halt-alert-discord-channel-progress.md).
 The owner approved the same qualifying initial/quote/trade alerts in one private
 TradersLink server channel on 2026-09-24, including production release and immediate

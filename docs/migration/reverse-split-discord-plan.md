@@ -1,0 +1,53 @@
+# Reverse splits: dashboard and notifications
+
+Status: owner approved implementation on September 24, 2026; not approved for deployment.
+Progress: [implementation record](reverse-split-discord-progress.md).
+Operations: [activation and recovery](reverse-split-discord-operations.md).
+
+## Complete product scope
+
+- The app dashboard is the primary home for the complete tracked reverse-split list, including shareholder-approved but unscheduled splits. Provide a dedicated Reverse Splits page with pagination; exact layout, columns, filters and navigation require owner UI review before implementation. Complete tracked list does not imply exhaustive market coverage; disclose source coverage and missing facts.
+- Watchlist integration uses the same canonical reverse-split records. When a ticker is posted to the watchlist, show only a verified positive status: "Reverse split approved" or "Reverse split announced", with the final ratio and first split-adjusted trading date when confirmed. Do not display "not scheduled" or another absence-status label. An approved split may display its approval without a scheduled date; if neither approval nor announcement is verified, show no reverse-split label. The detailed ticker page exposes the available approval date/range, final ratio/date, reported float, conditional estimated post-split float, dated regular-session close and source links, without filling missing schedule information with "not scheduled" copy. Include material postponements/cancellations in the details and distinguish historical completed splits from upcoming ones. Missing or stale coverage must not be presented as proof that no split exists.
+- Watchlist status remains linked to the current event revision after posting so a later announcement or cancellation does not leave a stale approval badge. Reuse stored data rather than synchronously fetching SEC filings for each watchlist view or post. A watchlist post alone does not trigger an additional reverse-split notification. Exact placement and presentation require owner UI approval and coordination with the Watchlist owner before shared files are changed.
+- Separate configurable Discord channel plus reverse-split Push and email notifications using existing delivery infrastructure and appropriate user preferences. Do not enroll users through halt preferences or change working halt delivery. Notification configuration, entitlements and delivery semantics require a scoped implementation contract before extending shared services.
+- Every evening at 19:00 America/New_York, including weekends. Sunday includes the coming week with Monday first; other evenings cover the next verified trading session.
+- Advance official corporate-action announcements are primary. Do not classify a halt as a split from its time. No dependency on the 19:50 halt feed and no change to working halt alerts.
+- Include shareholder-approved but unscheduled reverse splits in a clearly separate dashboard status. A proposed vote is not approval. Approval of a range is not a selected final ratio or effective date. Nightly notifications focus on the next trading session and link to the dashboard for the complete tracked list; the previously requested Sunday weekly overview remains in the message-format review scope.
+- Discovery, approval verification and subsequent ratio/date tracking must run automatically without an owner filing-review queue. Unresolved evidence requires automated follow-up and truthful coverage reporting, not invented facts or an owner review dependency. A keyword match alone is not proof of shareholder approval.
+- Show ticker/company, ratio, first split-adjusted trading date, EODHD reported float, clearly conditional estimated post-split float, dated regular-session closing price, and source link. Never substitute shares outstanding, market cap, bid/ask or after-hours price.
+- Data must carry provenance and retrieval time. Use date-specific EOD `close`, never quote `previousClosePrice`, `lastTradePrice`, `ethPrice` or `adjusted_close` as the regular close. On closed days use the previous verified session; missing data stays unavailable.
+- An estimated post-split float divides the reported float by the ratio only for future confirmed splits, explicitly assuming the provider still reports pre-split float. Do not present that calculation as a verified new float.
+- Preserve corrections, postponements and cancellations. Refresh official sources; send only a material late update after the nightly digest, not another alert per source or repeated poll.
+- Keep existing maximum-four-character ticker scope and exclude ETFs/warrants/units. No onboarding changes or paid data purchase. Dilution monitoring is a later, separately planned feature incorporating the owner's ideas; only reusable filing acquisition/provenance belongs in this slice.
+- Disabled by default. Channel ID and data-use entitlement are activation gates, not guessed configuration.
+
+## Implementation design
+
+News owns a small server-only module. Reuse the hosted one-process worker, Platform SQLite conventions, configured Discord bot/guild, and verified US-equities calendar. No additional server, package installation or scheduling framework.
+
+Nasdaq category 105 RSS supplies official notices. SEC full-text search discovers recent 8-K/6-K reverse-split filings, including exhibits. Bounded, rate-limited acquisition queues preserve source documents and parser outcomes; unsupported/ambiguous evidence is withheld and reported as partial coverage rather than invented facts. Discovered-source links are strictly allowlisted; no arbitrary URL fetching or credential forwarding.
+
+Migration `0142_news_reverse_split_alerts` is reserved by the coordinator, after production 0140 with no dependency on paused Welcome 0141. Tables: `news_reverse_split_events`, `news_reverse_split_sources`, `news_reverse_split_discord_deliveries`, `news_reverse_split_runtime`. The initial schema preserves source observations and compressed documents, source/version identity, discovery progress, immutable message parts, receipts and worker leases. Current ticker resolution consumes the latest parsed source versions; the full historical lifecycle projection remains an acceptance requirement. Network requests never hold transactions. Restart recovery must not duplicate previously sent digests; uncertain Discord sends require reconciliation rather than an unbounded resend outside nonce protection. The migration is authored but not yet registered or executed.
+
+The acquisition service supports a rolling two-day SEC overlap plus a separately checkpointed initial one-year backfill in seven-day windows. This is a bounded coverage baseline, not proof that every older unexpired authorization has been found. Acquisition requests share a persisted 1.5-second spacing budget. Source identity, skipped/unresolved discovery counts and source processing outcomes must reach health/coverage reporting before member-facing activation. Deferred parsing is an automatic retry outcome, not an owner review queue; additional extraction/related-document fallback and representative filing proof are still required before claiming the approval workflow complete.
+
+## Checkpoints
+
+1. Source adapters, conservative extraction, float/price acquisition and message preview.
+2. Persistence, scheduler, safe Discord delivery, restart and correction handling.
+3. Focused static verification and authored cases; no Vitest, full suite, build or server under current owner resource policy. Owner reviews message format. Coordinator receives exact local commit/file allowlist and unresolved gates.
+4. Separate owner-authorized coordinator migration/deployment/configuration and actual channel-delivery proof. No implementation claim implies production delivery.
+
+## Owner scope extension: dashboard and multiple delivery channels
+
+The owner subsequently specified that advanced reverse-split information belongs on a dedicated app dashboard page, with pagination, while Discord and notifications summarize upcoming next-day splits. This supersedes the original Discord-only/no-dashboard boundary above. The current local source modules are incomplete and no dashboard or Push/email implementation is claimed.
+
+Before dashboard implementation, propose and obtain owner approval for the page layout, status filters, columns, mobile presentation and Light/Navy Dark appearances. Before modifying any new shared route, navigation, notification, subscription or schema path, reconcile the coordinator's existing file allowlist and update this plan with the agreed implementation contract. Reuse the existing app shell and notification mechanisms; do not create parallel delivery infrastructure. Keep the underlying event identity and revisions shared across dashboard, Discord, Push and email to avoid contradictory information or duplicate event notifications.
+
+The owner also requested access from Watchlist ticker details and visible status when a ticker is posted. Include both Watchlist surfaces in the UI review and shared-data contract; this adds no separate discovery pipeline or implicit delivery authorization.
+
+## Source preflight
+
+Read-only requests succeeded: Nasdaq category 105 RSS and notice pages; SEC full-text search and filing pages; EODHD extended quotes for float and daily prices for close. EODHD fundamentals returned 403 and is not used. VWAV September 23 daily close was 5.72, September 24 was 5.79; extended quote had associated the latter with the former date, so it is explicitly rejected as a closing-price source.
+
+API access does not establish commercial redistribution entitlement. Confirm the owner's EODHD agreement before enabling member-facing data publication. Missing/ambiguous float basis, SEC discovery coverage, symbol changes, and exceptional exchange closures remain explicit acceptance cases.

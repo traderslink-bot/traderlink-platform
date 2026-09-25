@@ -4,6 +4,12 @@
 
 # TraderLink Platform Migration Register
 
+**Reverse splits:** `0142_news_reverse_split_alerts` is Coordinator-reserved
+with no dependency on paused Welcome 0141. Four News-owned tables are authored
+for source observations, acquisition receipts/checkpoints and Discord outbox state.
+Not registered or applied; final schema/release acceptance remains open. See the
+[plan](reverse-split-discord-plan.md) and [progress](reverse-split-discord-progress.md).
+
 **Discord halt alerts:** `0140_news_market_halt_discord_deliveries` (execution order
 140) is exclusively Coordinator-reserved after `0139_platform_premium_swing_idea_visit_events`.
 Adds one durable channel-delivery table and two indexes, reusing the existing global

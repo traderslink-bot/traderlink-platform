@@ -1,5 +1,13 @@
 # TraderLink Platform Migration Progress
 
+## Reverse splits: dashboard, Watchlist and notifications
+
+Owner-approved scope and the local source-only checkpoint are tracked in the
+[reverse-split plan](reverse-split-discord-plan.md) and
+[progress record](reverse-split-discord-progress.md). Migration 0142 is reserved
+and authored but unregistered/unapplied; UI review, approval coverage and delivery
+implementation remain incomplete. Existing halt delivery and paused Welcome are unchanged.
+
 ## Discord halt channel delivery
 
 Owner-approved implementation, production release and activation are tracked in
