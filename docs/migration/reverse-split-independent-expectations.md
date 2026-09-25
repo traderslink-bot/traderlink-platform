@@ -514,3 +514,593 @@ merely because it repeats the word new. This source-visible counterexample was
 sent to the lead for an executable paired regression alongside the separate
 historical/current-action control. This is not an independently executed test
 or a review of the next immutable correction, which is still pending.
+
+## Original nineteen-case baseline recovered
+
+### Additional filing-index metadata checked
+
+Independently read these SEC index pages in Chrome on September 25, 2026:
+
+| Ticker | Filing date | SEC accepted timestamp | Period of report | Index |
+| --- | --- | --- | --- | --- |
+| NXGL | 2026-09-23 | 2026-09-23 17:20:29 | 2026-09-23 | [SEC](https://www.sec.gov/Archives/edgar/data/1468929/000149315226043955/0001493152-26-043955-index.htm) |
+| PFSA | 2026-09-21 | 2026-09-18 20:23:31 | 2026-09-18 | [SEC](https://www.sec.gov/Archives/edgar/data/1859807/000121390026101568/0001213900-26-101568-index.htm) |
+| ARBE | 2026-09-10 | 2026-09-10 17:00:01 | 2026-09-10 | [SEC](https://www.sec.gov/Archives/edgar/data/1861841/000121390026098845/0001213900-26-098845-index.htm) |
+| RKDA | 2026-09-15 | 2026-09-15 15:01:55 | 2026-09-10 | [SEC](https://www.sec.gov/Archives/edgar/data/1469443/000119312526391780/0001193125-26-391780-index.htm) |
+
+The ingestion contract in `sources.ts` sets SEC `publishedDate` from
+`data.file_date`. PFSA therefore uses September 21 for that field even though
+SEC accepted the filing on September 18 in the evening. Its approval remains
+September 18. Do not overwrite the separate source/event facts to force equality.
+NXL and ZNB index pages returned the SEC maintenance/unavailable screen in this
+independent browser check as well as failing for the lead. Their index metadata
+remains explicitly pending; the successfully captured full filing bodies and
+their hashes are a separate verified result.
+
+### Preserved original test evidence
+
+The source owner's original completed test output was recovered read-only from
+its local task transcript, without rerunning tests or reconstructing results.
+Completion timestamp: 2026-09-25T20:08:02.135Z; exit code: 1.
+The run used one Vitest worker, no file parallelism, Node max-old-space-size 512,
+and only `approval-corpus.test.ts`. The working source at that instant was not
+an immutable reviewed checkpoint; do not attribute this run to a later commit.
+
+Exact aggregated-output SHA-256:
+`3c707a90ddfb1a7c7f31a38e3d94fdd3a2412ba314328a691c4c6e013a252a81`.
+
+Independent result review: nine cases emitted an approval record but missed
+required fields or final terms (HKPD, IPW, BFRI, BGM, RKDA, YDKG, FXHO, ZNB,
+TOPP). Ten cases returned no event. The mechanically preserved output below is authoritative
+for those categories; a failed case is not automatically a wholly absent record.
+
+<details>
+<summary>Original complete test output, not a current-run result</summary>
+
+```text
+
+ RUN  v4.1.4 C:/Users/jerac/.codex/worktrees/release-workspace-boundary-4e22
+
+xxxxxxxxxxxxxxxxxxx
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'HKPD-approval'
+AssertionError: parsed:approved: expected { ticker: 'HKPD', …(9) } to match object { ticker: 'HKPD', …(6) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "approvalDate": "2026-09-21",
++   "approvalDate": null,
+    "approvalExpiresDate": null,
+-   "authorizedRatio": "1-for-20",
++   "authorizedRatio": null,
+    "effectiveDate": null,
+    "ratio": null,
+    "status": "approved",
+    "ticker": "HKPD",
+  }
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'NXGL-approval'
+AssertionError: deferred:conflicting_terms: expected null to match object { ticker: 'NXGL', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-09-23",
+  "approvalExpiresDate": "2027-09-23",
+  "authorizedRatio": "1-for-2 to 1-for-20",
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "NXGL",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'IPW-approval'
+AssertionError: parsed:approved: expected { ticker: 'IPW', company: 'IPW', …(8) } to match object { ticker: 'IPW', …(6) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "approvalDate": "2026-09-21",
++   "approvalDate": null,
+    "approvalExpiresDate": null,
+    "authorizedRatio": "Up to 1-for-250",
+    "effectiveDate": null,
+    "ratio": null,
+    "status": "approved",
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'SKYQ-approval'
+AssertionError: deferred:unresolved_split_terms: expected null to match object { ticker: 'SKYQ', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-09-18",
+  "approvalExpiresDate": "2028-09-18",
+  "authorizedRatio": "Two sequential authorizations: each 1-for-2 to 1-for-25",
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "SKYQ",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'ZCMD-approval'
+AssertionError: deferred:unresolved_split_terms: expected null to match object { ticker: 'ZCMD', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-09-18",
+  "approvalExpiresDate": null,
+  "authorizedRatio": "1-for-2",
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "ZCMD",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'PFSA-approval'
+AssertionError: deferred:unresolved_split_terms: expected null to match object { ticker: 'PFSA', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-09-18",
+  "approvalExpiresDate": "2028-09-18",
+  "authorizedRatio": "1-for-2 to 1-for-12; aggregate up to 1-for-12",
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "PFSA",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'SNGX-approval'
+AssertionError: deferred:unresolved_split_terms: expected null to match object { ticker: 'SNGX', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-09-17",
+  "approvalExpiresDate": "2027-09-17",
+  "authorizedRatio": "1-for-2 to 1-for-20",
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "SNGX",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'SBFM-approval'
+AssertionError: deferred:unresolved_split_terms: expected null to match object { ticker: 'SBFM', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-09-15",
+  "approvalExpiresDate": null,
+  "authorizedRatio": "Up to 1-for-20",
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "SBFM",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'NXL-approval'
+AssertionError: deferred:unresolved_split_terms: expected null to match object { ticker: 'NXL', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-08-11",
+  "approvalExpiresDate": null,
+  "authorizedRatio": "1-for-2 to 1-for-100; aggregate up to 1-for-250",
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "NXL",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'BFRI-approval'
+AssertionError: parsed:approved: expected { ticker: 'BFRI', …(9) } to match object { ticker: 'BFRI', …(6) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "approvalDate": "2025-09-16",
++   "approvalDate": null,
+    "approvalExpiresDate": null,
+    "authorizedRatio": null,
+    "effectiveDate": null,
+    "ratio": null,
+    "status": "approved",
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'BGM-approval'
+AssertionError: parsed:approved: expected { ticker: 'BGM', company: 'BGM', …(8) } to match object { ticker: 'BGM', …(6) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "approvalDate": "2026-09-05",
+    "approvalExpiresDate": null,
+    "authorizedRatio": null,
+-   "effectiveDate": "2026-10-01",
+-   "ratio": 30,
+-   "status": "confirmed",
++   "effectiveDate": null,
++   "ratio": null,
++   "status": "approved",
+    "ticker": "BGM",
+  }
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'ARBE-approval'
+AssertionError: deferred:unresolved_split_terms: expected null to match object { ticker: 'ARBE', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-09-09",
+  "approvalExpiresDate": null,
+  "authorizedRatio": null,
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "ARBE",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'INVZ-approval'
+AssertionError: deferred:unresolved_split_terms: expected null to match object { ticker: 'INVZ', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-09-16",
+  "approvalExpiresDate": null,
+  "authorizedRatio": "1-for-5 to 1-for-20",
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "INVZ",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'RKDA-approval'
+AssertionError: parsed:approved: expected { ticker: 'RKDA', …(9) } to match object { ticker: 'RKDA', …(6) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,8 +1,8 @@
+  {
+-   "approvalDate": "2026-09-10",
+-   "approvalExpiresDate": "2027-06-29",
++   "approvalDate": null,
++   "approvalExpiresDate": null,
+    "authorizedRatio": "1-for-2 to 1-for-10",
+    "effectiveDate": null,
+    "ratio": null,
+    "status": "approved",
+    "ticker": "RKDA",
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'YDKG-approval'
+AssertionError: parsed:approved: expected { ticker: 'YDKG', …(9) } to match object { ticker: 'YDKG', …(6) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "approvalDate": "2026-09-13",
++   "approvalDate": null,
+    "approvalExpiresDate": null,
+-   "authorizedRatio": "1-for-10",
++   "authorizedRatio": null,
+    "effectiveDate": null,
+    "ratio": null,
+    "status": "approved",
+    "ticker": "YDKG",
+  }
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'CHOW-approval'
+AssertionError: deferred:unresolved_split_terms: expected null to match object { ticker: 'CHOW', …(6) }
+
+- Expected:
+{
+  "approvalDate": "2026-09-14",
+  "approvalExpiresDate": null,
+  "authorizedRatio": "1-for-10",
+  "effectiveDate": null,
+  "ratio": null,
+  "status": "approved",
+  "ticker": "CHOW",
+}
+
++ Received:
+null
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'FXHO-approval'
+AssertionError: parsed:approved: expected { ticker: 'FXHO', …(9) } to match object { ticker: 'FXHO', …(6) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "approvalDate": "2026-09-10",
++   "approvalDate": null,
+    "approvalExpiresDate": null,
+-   "authorizedRatio": "1-for-10 to 1-for-100",
++   "authorizedRatio": null,
+    "effectiveDate": null,
+    "ratio": null,
+    "status": "approved",
+    "ticker": "FXHO",
+  }
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'ZNB-approval'
+AssertionError: parsed:approved: expected { ticker: 'ZNB', company: 'ZNB', …(8) } to match object { ticker: 'ZNB', …(6) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "approvalDate": "2026-09-10",
+-   "approvalExpiresDate": "2027-09-10",
+-   "authorizedRatio": "1-for-8",
++   "approvalDate": null,
++   "approvalExpiresDate": null,
++   "authorizedRatio": null,
+    "effectiveDate": null,
+    "ratio": null,
+    "status": "approved",
+    "ticker": "ZNB",
+  }
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯
+
+ FAIL  src/modules/news/server/reverse-splits/approval-corpus.test.ts > independent full approval filing bodies > 'TOPP-approval'
+AssertionError: parsed:approved: expected { ticker: 'TOPP', …(9) } to match object { ticker: 'TOPP', …(6) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "approvalDate": "2026-09-08",
+-   "approvalExpiresDate": "2029-08-24",
+-   "authorizedRatio": "1-for-2 to 1-for-900; aggregate up to 1-for-900",
++   "approvalDate": null,
++   "approvalExpiresDate": null,
++   "authorizedRatio": "1-for-2 to 1-for-900",
+    "effectiveDate": null,
+    "ratio": null,
+    "status": "approved",
+    "ticker": "TOPP",
+  }
+
+ ❯ src/modules/news/server/reverse-splits/approval-corpus.test.ts:19:64
+     17|     expect(createHash("sha256").update(bytes).digest("hex")).toBe(fixt…
+     18|     const result = parseReverseSplit(fixture.source, bytes.toString("u…
+     19|     expect(result.event, `${result.outcome}:${result.reason}`).toMatch…
+       |                                                                ^
+     20|   });
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/19]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  19 failed (19)
+   Start at  16:08:01
+   Duration  755ms (transform 181ms, setup 0ms, import 236ms, tests 113ms, environment 0ms)
+
+```
+
+</details>
