@@ -54,6 +54,7 @@ import { traderLinkCommunitiesCoachingProgramsMigration } from "@/src/modules/co
 import { traderLinkCommunitiesCoachingPlanBuilderMigration } from "@/src/modules/communities/server/database/migrations/0129_traderlink_communities_coaching_plan_builder";
 import { traderLinkCommunitiesCoachingServiceMeasurementMigration } from "@/src/modules/communities/server/database/migrations/0130_traderlink_communities_coaching_service_measurement";
 import { traderLinkCommunitiesReviewCoachingSectionsMigration } from "@/src/modules/communities/server/database/migrations/0131_traderlink_communities_review_coaching_sections";
+import { traderLinkCommunitiesReviewWorkflowMigration } from "@/src/modules/communities/server/database/migrations/0143_traderlink_communities_review_workflow";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -641,6 +642,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/communities/server/database/migrations/0131_traderlink_communities_review_coaching_sections.ts",
       migration: traderLinkCommunitiesReviewCoachingSectionsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0143_traderlink_communities_review_workflow.ts",
+      migration: traderLinkCommunitiesReviewWorkflowMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -1122,6 +1127,11 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0130_traderlink_communities_coaching_service_measurement": Object.freeze([]),
     "0131_traderlink_communities_review_coaching_sections": Object.freeze([]),
+    "0143_traderlink_communities_review_workflow": Object.freeze([
+      "traderlink_community_coaching_review_actions",
+      "traderlink_community_coaching_review_attachment_links",
+      "traderlink_community_coaching_review_events",
+    ]),
     "0124_traderlink_communities_server_watchlists": Object.freeze([
       "traderlink_community_server_watchlists",
       "traderlink_community_server_watchlist_symbols",

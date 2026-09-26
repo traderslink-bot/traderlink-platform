@@ -154,6 +154,7 @@ export type TraderLinkCommunityJournalGrant = Readonly<{
   studentUserId: string;
   journalAccountId: string;
   dataScope: "summary" | "trades" | "journal" | "analytics" | "complete";
+  sharedFields?: readonly string[];
   status: "active" | "revoked";
   grantedAtUtc: string;
   revokedAtUtc: string | null;
@@ -190,11 +191,21 @@ export type TraderLinkCommunityTradeReview = Readonly<{
   periodStart: string | null;
   periodEnd: string | null;
   roundTripIds: readonly string[];
+  deliveryState:"draft"|"delivered"|"viewed"|"follow_up"|"completed"|"cancelled";
+  dueAtUtc:string|null;
+  deliveredAtUtc:string|null;
+  viewedAtUtc:string|null;
+  followUpDueAtUtc:string|null;
+  cancelledAtUtc:string|null;
 }>;
+
+export type TraderLinkCommunityReviewTrade=Readonly<{reviewId:string;roundTripId:string;tradeLabel?:string;selectedByUserId:string|null;selectionSource:"coach"|"student";workflowState:"queued"|"saved"|"removed";coachFeedback:string;savedAtUtc:string|null;removedAtUtc:string|null;updatedAtUtc:string|null;ordinal:number}>;
+export type TraderLinkCommunityReviewAction=Readonly<{actionId:string;reviewId:string;relationshipId:string;createdByUserId:string;title:string;details:string;dueAtUtc:string|null;status:"open"|"completed"|"cancelled";completedAtUtc:string|null;createdAtUtc:string;updatedAtUtc:string}>;
+export type TraderLinkCommunityReviewEvent=Readonly<{eventId:string;reviewId:string;relationshipId:string;actorUserId:string;eventType:"started"|"trade_added"|"trade_removed"|"trade_saved"|"delivered"|"viewed"|"follow_up_required"|"completed"|"cancelled";occurredAtUtc:string}>;
 
 export type TraderLinkCommunityCoachingSession=Readonly<{sessionId:string;relationshipId:string;title:string;agenda:string;notes:string;scheduledAtUtc:string|null;completedAtUtc:string|null;status:"scheduled"|"completed"|"cancelled"}>;
 export type TraderLinkCommunityTeachingItem=Readonly<{teachingId:string;coachUserId:string;title:string;teachingType:"lesson"|"class"|"assignment";body:string;deliveryUrl:string;scheduledAtUtc:string|null;status:"draft"|"published"|"completed"|"cancelled";audienceMode:"all_students"|"plan"|"selected_students";planId:string|null;students:readonly Readonly<{relationshipId:string;status:"assigned"|"attending"|"completed"|"excused";completedAtUtc:string|null}>[]} >;
-export type TraderLinkCommunityCoachingAttachment=Readonly<{attachmentId:string;relationshipId:string;uploadedByUserId:string;targetType:"message"|"review"|"session"|"teaching"|"submission";targetId:string;filename:string;mediaType:"image/png"|"image/jpeg"|"image/webp";byteLength:number;createdAtUtc:string;href:string}>;
+export type TraderLinkCommunityCoachingAttachment=Readonly<{attachmentId:string;relationshipId:string;uploadedByUserId:string;targetType:"message"|"review"|"session"|"teaching"|"submission";targetId:string;roundTripId?:string|null;filename:string;mediaType:"image/png"|"image/jpeg"|"image/webp";byteLength:number;createdAtUtc:string;href:string}>;
 export type TraderLinkCommunityReviewReply=Readonly<{replyId:string;reviewId:string;authorUserId:string;authorName:string;body:string;createdAtUtc:string}>;
 
 export type TraderLinkCommunityCoachingTask = Readonly<{
@@ -255,6 +266,9 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
   journalGrants: readonly TraderLinkCommunityJournalGrant[];
   coachingMessages: readonly TraderLinkCommunityCoachingMessage[];
   tradeReviews: readonly TraderLinkCommunityTradeReview[];
+  reviewTrades: readonly TraderLinkCommunityReviewTrade[];
+  reviewActions: readonly TraderLinkCommunityReviewAction[];
+  reviewEvents: readonly TraderLinkCommunityReviewEvent[];
   coachingTasks: readonly TraderLinkCommunityCoachingTask[];
   coachingRecords: readonly TraderLinkCommunityCoachingRecord[];
   coachingSessions: readonly TraderLinkCommunityCoachingSession[];
