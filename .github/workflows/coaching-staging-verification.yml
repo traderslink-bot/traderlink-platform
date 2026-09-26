@@ -26,4 +26,5 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - run: node --import tsx src/scripts/coaching-staging-maintenance.ts --rehearse
       - run: npm run build
