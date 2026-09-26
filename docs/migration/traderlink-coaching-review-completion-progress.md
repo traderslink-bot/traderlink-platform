@@ -198,5 +198,14 @@ verified an applied-migration identity on any hosted database.
   still require the staging checkpoint.
 - `git diff --check` passed. No hooks, tests, build, dev server, dependency
   installation, production mutation or staging publication occurred here.
-- The remaining UI/config/documentation checkpoint will be reported with its
-  exact SHA and cumulative 24-file allowlist to the coordinator.
+- UI/config/documentation checkpoint: `92ad8dbc127fe39b918a553c6c847be488d07b60`,
+  parent `d448ecf48af0937f2ff55947f20ccbc13fd4c4fa`; 16 explicit files. The exact
+  cumulative 24-file allowlist was sent to the coordinator.
+- A final three-source-file corrective pass hides unpublished trade-selection
+  IDs from student payloads, normalizes attachment response filenames, guards
+  against out-of-order Trade Details fetches and formats quantities to two
+  decimal places. Changed-file semantic inspection: zero diagnostics;
+  `git diff --check` passed. No schema/config expansion.
+- Coordinator acknowledged the handoff and is verifying current-main/staging
+  reconciliation. This branch remains an isolated source package; no staging
+  outcome is asserted here.
