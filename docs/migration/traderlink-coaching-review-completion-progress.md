@@ -218,3 +218,24 @@ verified an applied-migration identity on any hosted database.
   conflict with newer production migrations at those orders. Existing staging
   remains healthy. Source reconciliation may continue locally; the expanded
   hosted compatibility sequence requires a concrete plan and owner approval.
+
+## Staging Coaching navigation correction — 2026-09-26
+
+- Coordinator deployed current-production baseline plus complete coaching at
+  `dc54bc36c6fe2670d4bee7ba913bf154e4a1949f`; the owner then reported Coaching
+  navigation returning 404.
+- Confirmed source mismatch: the index always sent coaching-capable members to
+  the student-only coaching route, which correctly denies non-students.
+- Correct only the index redirect: coach workspace takes priority across current
+  memberships, then an actual student relationship, then the permitted coach
+  directory. Membership ordering remains deterministic; no eligible membership
+  falls back to My Communities. Existing destination access checks stay intact.
+- Student lookup is scoped to the signed-in user and the current community.
+  No role, relationship, Journal, or database schema is changed.
+- Help guidance reviewed: no guide change required for repairing this redirect.
+  No visible UI copy or layout changes. No local build or test suite.
+- Coordinator owns exact-delta integration, remote build and staging deployment;
+  signed-in destination verification remains required after release.
+- Focused static verification: route TypeScript syntax has zero diagnostics;
+  `git diff --check` passes. Compared redirect prerequisites with both destination
+  loader and catch-all authorization checks. Runtime verification is not implied.
