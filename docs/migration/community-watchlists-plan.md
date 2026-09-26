@@ -6,6 +6,9 @@
 
 **Scope:** Dashboard-native, opt-in user watchlists and Discord sharing. This
 is a new Community feature, separate from the existing TradersLink Watchlist.
+The same user-owned watchlist may also be deliberately shared into an active
+TraderLink Discord server community under the
+[TraderLink Communities Partner Platform Plan](traderlink-communities-partner-platform-plan.md).
 
 ## Outcome
 
@@ -23,6 +26,35 @@ opens the exact in-dashboard watchlist -> sees its author and research
 
 It does not attempt to create a general social network, performance
 leaderboard, chat service or group system.
+
+## Discord server community sharing extension
+
+A regular server member can create and edit a Community Watchlist using this
+existing product, then choose `Share to community` and select an active Discord
+server community they belong to. This extends the existing loop; it does not
+create a second watchlist product or editor.
+
+- The stable Platform user remains the watchlist owner and named author.
+- Sharing creates a community placement, delivery and engagement relationship,
+  not a copied watchlist.
+- One watchlist can be deliberately shared into multiple communities where the
+  author has active membership.
+- The author may unshare from one community without deleting the watchlist or
+  removing it from other communities.
+- The server owner may remove the watchlist from their own community but may
+  not edit the author's research or unpublish the canonical watchlist globally.
+- The community's configured member-watchlist Discord channel receives the
+  exact canonical watchlist link through the Communities delivery boundary.
+- The Discord post shows only a compact author/title/symbol preview and a `View
+  watchlist in TraderLink` link. The full research remains on the TraderLink
+  page, and sign-in returns the eligible member to that exact page.
+- Sharing the same watchlist into several eligible server communities creates
+  separate placement/delivery evidence and community engagement attribution,
+  but every link resolves to the same user-owned canonical watchlist.
+- Member sharing does not require a staff role or owner preapproval in the
+  first pilot.
+- Existing watchlist follows and list-level engagement remain author-facing;
+  the server owner receives the separately defined community-scoped activity.
 
 ## Product boundary
 
@@ -58,6 +90,27 @@ A direct published-list link requires the normal Platform sign-in boundary. On
 successful Discord sign-in, the app returns the visitor to the exact requested
 watchlist. Anonymous public browsing is deliberately deferred until its
 privacy, moderation and indexing policy is approved.
+
+### Future TraderLink-native community layer
+
+Singular `/community` is the home for interaction between TraderLink users,
+not for one private Discord server. Community Watchlists and opt-in trader
+profiles are the first useful content and identity layer. If participation
+grows, later owner-reviewed slices may add:
+
+- people, author and watchlist discovery;
+- profile and watchlist follows;
+- a personalized feed of deliberately published TraderLink content;
+- ticker or stock discussion boards; and
+- deliberate sharing between the TraderLink-wide community and a user's
+  eligible Discord-backed communities.
+
+Plural `/communities` remains the separate server-scoped product for Discord
+owners, staff, coaches and members. Server-private alerts, audiences, named
+activity and coaching never enter `/community` automatically. Discussion
+boards, replies, moderation, reporting and public indexing require their own
+approved plan before implementation; they are not added to the current
+Community Watchlists private-beta slice.
 
 ## First-release experience
 
@@ -188,7 +241,9 @@ The following are intentionally outside the first release:
    live chat. Watchlist following is now an approved, separate engagement
    slice; it does not imply following the watchlist owner.
 2. Broad people discovery at `/community`.
-3. Trading-group membership, group pages and group-created lists.
+3. Broad trading-group discovery and group-owned lists. Deliberate placement of
+   a member-owned list into a verified server community is approved separately
+   and does not make the list group-owned.
 4. Reactions, saves/remixes, alerts and notification subscriptions.
 5. Performance rankings, copy trading, broker actions and trade execution.
 6. Company/stock-detail pages and automatic Moomoo market-data enrichment.
@@ -217,6 +272,9 @@ and watchlist routes.
    users; verify it stays separate from the official Watchlist.
 6. **Owner product review:** review real dashboard/mobile flows before the
    next engagement layer begins.
+7. **Communities placement extension:** add `Share to community`, eligible
+   membership selection, unshare, community-scoped Discord delivery and
+   placement engagement without duplicating the watchlist record.
 
 The owner authorized the private-beta implementation on 2026-08-22. It may add
 the Community migration, storage and server-only Discord delivery code. It does
