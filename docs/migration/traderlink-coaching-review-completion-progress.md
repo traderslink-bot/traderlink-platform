@@ -209,3 +209,12 @@ verified an applied-migration identity on any hosted database.
 - Coordinator acknowledged the handoff and is verifying current-main/staging
   reconciliation. This branch remains an isolated source package; no staging
   outcome is asserted here.
+- Final scheduling correction: coaches can set or clear the due date of a
+  student-created draft request in the review agreement panel. Scheduling does
+  not mark the review started. Review/action/follow-up datetime inputs labelled
+  UTC are parsed explicitly as UTC. The three source files pass changed-file
+  semantic inspection with zero diagnostics and `git diff --check`.
+- Coordinator found that staging's applied Communities migration orders 121/122
+  conflict with newer production migrations at those orders. Existing staging
+  remains healthy. Source reconciliation may continue locally; the expanded
+  hosted compatibility sequence requires a concrete plan and owner approval.

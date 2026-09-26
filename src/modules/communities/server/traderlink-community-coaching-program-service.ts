@@ -24,6 +24,13 @@ export class TraderLinkCommunityCoachingProgramService{
   else this.database.prepare(`UPDATE traderlink_community_coaching_review_actions SET status=?,completed_at_utc=?,updated_at_utc=? WHERE action_id=? AND review_id=? AND community_id=?`).run(input.state,input.state==="completed"?input.atUtc:null,input.atUtc,input.actionId,input.reviewId,input.communityId);
  }
  private event(input:Readonly<{communityId:string;relationshipId:string;reviewId:string;actorUserId:string;eventType:"started"|"trade_added"|"trade_removed"|"trade_saved"|"delivered"|"viewed"|"follow_up_required"|"completed"|"cancelled";atUtc:string;details?:unknown}>){this.database.prepare(`INSERT INTO traderlink_community_coaching_review_events(event_id,review_id,relationship_id,community_id,actor_user_id,event_type,occurred_at_utc,details_json) VALUES(?,?,?,?,?,?,?,?)`).run(createCanonicalUuidV4(),input.reviewId,input.relationshipId,input.communityId,input.actorUserId,input.eventType,input.atUtc,JSON.stringify(input.details??{}));}
+ setReviewDueDate(input:Readonly<{communityId:string;actor:Actor;relationshipId:string;reviewId:string;dueAtUtc?:string;atUtc:string}>){
+  this.coach(input.communityId,input.relationshipId,input.actor);
+  const {review}=this.review(input.communityId,input.relationshipId,input.reviewId,input.actor);
+  if(review.delivery_state!=="draft")platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED",{field:"reviewState"});
+  assertCanonicalUtcTimestamp(input.atUtc,"atUtc");if(input.dueAtUtc)assertCanonicalUtcTimestamp(input.dueAtUtc,"dueAtUtc");
+  this.database.prepare(`UPDATE traderlink_community_coaching_trade_reviews SET due_at_utc=?,updated_at_utc=? WHERE review_id=? AND community_id=?`).run(input.dueAtUtc??null,input.atUtc,input.reviewId,input.communityId);
+ }
  createReview(input:Readonly<{communityId:string;actor:Actor;relationshipId:string;reviewType:ReviewType;title:string;context:string;periodStart?:string;periodEnd?:string;dueAtUtc?:string;roundTripIds:readonly string[];atUtc:string}>){
   assertCanonicalUtcTimestamp(input.atUtc,"atUtc");
   const relation=this.relation(input.communityId,input.relationshipId,input.actor);
