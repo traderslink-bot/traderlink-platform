@@ -11,7 +11,7 @@ import {updateCommunityTradeReviewAction} from "./community-actions";
 
 const statusLabel=(value:string)=>value.replaceAll("_"," ").replace(/^./,letter=>letter.toUpperCase());
 
-export function CoachReviewEditor({communitySlug,relationshipId,review,previousFocus,isReview}:{communitySlug:string;relationshipId:string;review:TraderLinkCommunityTradeReview;previousFocus:string|null;isReview:boolean}){
+export function CoachReviewEditor({communitySlug,relationshipId,review,previousFocus,isReview,paused=false}:{communitySlug:string;relationshipId:string;review:TraderLinkCommunityTradeReview;previousFocus:string|null;isReview:boolean;paused?:boolean}){
  return <Box action={isReview?undefined:updateCommunityTradeReviewAction} component="form">
   <input name="communitySlug" type="hidden" value={communitySlug}/>
   <input name="relationshipId" type="hidden" value={relationshipId}/>
@@ -30,7 +30,7 @@ export function CoachReviewEditor({communitySlug,relationshipId,review,previousF
     <Grid size={{xs:12,md:6}}><TextField defaultValue={review.nextFocus} fullWidth label="Next focus" minRows={3} multiline name="nextFocus"/></Grid>
     <Grid size={{xs:12,md:6}}><TextField defaultValue={review.coachPrivateNotes} fullWidth label="Coach notes" minRows={3} multiline name="coachPrivateNotes"/></Grid>
    </Grid>
-   <Stack direction={{xs:"column",sm:"row"}} spacing={1} sx={{justifyContent:"flex-end"}}><Button disabled={isReview} name="status" type="submit" value="in_review">Save draft</Button><Button disabled={isReview} name="status" type="submit" value="completed" variant="contained">Complete review</Button></Stack>
+   <Stack direction={{xs:"column",sm:"row"}} spacing={1} sx={{justifyContent:"flex-end"}}><Button disabled={isReview||paused||review.deliveryState!=="draft"} name="status" type="submit" value="in_review" variant="contained">Save draft</Button></Stack>
   </Stack>
  </Box>;
 }

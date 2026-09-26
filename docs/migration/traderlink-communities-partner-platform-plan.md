@@ -8,6 +8,8 @@ owner-test allowlist if production-only Discord behavior requires it.
 
 **Progress record:** [TraderLink Communities Partner Platform Progress](traderlink-communities-partner-platform-progress.md)
 
+**Active coaching completion record:** [TraderLink Coaching Review Completion Progress](traderlink-coaching-review-completion-progress.md)
+
 **Active implementation record:** [Communities 1 Identity And Permissions Progress](traderlink-communities-1-identity-permissions-progress.md)
 
 **Active pilot record:** [Communities Discord Pilot Progress](traderlink-communities-discord-pilot-progress.md)
