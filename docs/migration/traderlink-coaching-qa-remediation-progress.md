@@ -157,6 +157,14 @@ Current verification: [remediation QA record](traderlink-coaching-remediation-qa
 
 ### Final deployed follow-up
 
+- Subsequent genuine Bullrun sign-in attempt exposed access-required rendering error
+  digest1019681659. Coordinator logs confirm a component-function serialization
+  failure, separate from DASHBOARD_ACCESS_DENIED. Narrow correction removes the
+  Next Link component prop from the external MUI button; exact URL/copy/access rules
+  unchanged. Source checkpoint pending hosted recheck. Bullrun Discord identity
+  confirmed; Chrome disconnected during normal OAuth navigation, so student sign-in
+  is not yet verified. No identities, grants or permissions changed.
+
 - Source5efeb32 / deployment0d999d35 now includes repaired productionc3 plus the
   complete1f16 coaching follow-up. Coordinator confirms successful remote build,
   health200/exact141, original volume and both existing reviews retained.
