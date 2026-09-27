@@ -144,6 +144,13 @@ from that workspace. Source-confirmed; multi-coach live scenario not seeded.
 
 ### Data and release boundaries
 
+Additional runtime observation: the final console sweep retained one React418
+text-hydration error at16:21:55UTC during this QA session. The log identifies a
+shared JS chunk, not the originating component; it did not recur on the final
+setup reload. Root cause and affected route are not yet localized. Do not treat
+the earlier empty console sample as a whole-session clean-console pass. Temporary
+plan selections were cleared, final setup shows zero selected offers, Light mode.
+
 - Existing review `aa1785a7-9b20-44cf-b2df-7cd2bb5c250f` was not edited.
 - Only new QA draft `69865ebd-fc79-4daa-9d28-e99d405ba752` was created, titled
   `QA20260927 - isolated workflow draft`, under existing synthetic relationship.
