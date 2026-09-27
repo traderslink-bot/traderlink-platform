@@ -1,5 +1,6 @@
-import {COACHING_REVIEW_FOCUS,type CoachingReviewFocus} from "@/src/modules/communities/contracts/coaching-review-workspace";
 "use client";
+
+import {COACHING_REVIEW_FOCUS,type CoachingReviewFocus} from "@/src/modules/communities/contracts/coaching-review-workspace";
 
 import {Box,Button,Chip,Stack,TextField} from "@mui/material";
 import type {TraderLinkCommunityDashboardSnapshot,TraderLinkCommunityTradeReview} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";

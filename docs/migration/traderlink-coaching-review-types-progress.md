@@ -90,3 +90,11 @@ otherwise use coordinated restore/recovery with writes paused.
 
 Pending: coordinator remote build, staging snapshot rehearsal, deployment and
 mobile/desktop owner acceptance. This feature slice is not yet declared complete.
+
+### Remote checkpoint correction
+
+Coordinator candidate a5838f913 passed isolated snapshot migration139->140 with
+existing rows preserved. GitHub36297661039 caught an import before the student
+review's use-client directive; corrected directive order in a narrow follow-up.
+The local TypeScript-only check did not detect this Next.js boundary error.
+No staging database change or feature deployment occurred before correction.
