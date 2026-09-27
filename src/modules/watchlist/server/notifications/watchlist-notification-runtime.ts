@@ -6,6 +6,7 @@ import { resolveTraderLinkDiscordGuildId } from "@/src/modules/platform/server/a
 import { requestWatchlistRuntimeRaw } from "../runtime/watchlist-runtime-admin-client";
 import { publicationFromReview, type WatchlistApprovalIntent } from "./watchlist-publication-notification-contract";
 import { WatchlistPublicationNotificationStore } from "./watchlist-publication-notification-store";
+import { readAutomaticAnalysisEvents, reconcileOwnerReviewNotifications } from "./watchlist-automatic-notifications";
 
 type Recipient = { userId: string; channel: "web_push" | "email"; targetRef: string };
 type IntentRow = { intent_id: string; cycle_id: string; ticker: string; expected_head: number; draft_revision: number;
@@ -70,12 +71,37 @@ export async function reconcileWatchlistNotificationApprovals(): Promise<void> {
   running = true;
   let database: Database.Database | undefined;
   try {
+    const automatic = await readAutomaticAnalysisEvents().catch(() => null);
+    // The runtime's persisted automatic approval is the owner's configured
+    // authority for this replacement; no synthetic interactive owner identity.
+    for (const event of automatic?.events ?? []) {
+      if (event.kind !== "publication") continue;
+      recordWatchlistApprovalNotificationIntent(JSON.stringify({ symbol: event.symbol, cycleId: event.cycleId,
+        expectedHead: event.expectedHead, draftRevision: event.draftRevision, notifyUsers: true }), event.actor!);
+    }
     database = openPlatformDatabase({ mode: "runtime" });
+    for (const event of automatic?.events ?? []) {
+      if (event.kind !== "publication") continue;
+      const row = database.prepare<[string], IntentRow>("SELECT * FROM platform_watchlist_notification_intents WHERE intent_id=? AND state='pending'")
+        .get(`${event.cycleId}:draft:${event.draftRevision}`);
+      if (!row) continue;
+      const publication = publicationFromReview({ cycleId: row.cycle_id, ticker: row.ticker,
+        expectedHead: row.expected_head, draftRevision: row.draft_revision, actor: row.actor },event.review,Date.now());
+      if (!publication) continue;
+      database.transaction(() => {
+        new WatchlistPublicationNotificationStore(database!).accept({ event: publication, now: new Date(),
+          recipients: () => (JSON.parse(row.recipients_json) as Recipient[]).filter(recipient => watchlistNotificationAccess(database!,recipient.userId)) });
+        database!.prepare("UPDATE platform_watchlist_notification_intents SET state='accepted' WHERE intent_id=?").run(row.intent_id);
+      }).immediate();
+    }
+    if (automatic) await reconcileOwnerReviewNotifications(database,automatic).catch(() => {
+      console.error("Watchlist owner review notification check failed.");
+    });
     const now = new Date();
     database.prepare(`UPDATE platform_watchlist_notification_intents SET state='expired'
       WHERE state='pending' AND requested_at_utc<=?`).run(new Date(now.getTime()-3_600_000).toISOString());
     const intents = database.prepare<[string], IntentRow>(`SELECT * FROM platform_watchlist_notification_intents
-      WHERE state='pending' AND next_check_at_utc<=? ORDER BY requested_at_utc LIMIT 3`).all(now.toISOString());
+      WHERE state='pending' AND actor!='runtime:automatic-boundary' AND next_check_at_utc<=? ORDER BY requested_at_utc LIMIT 3`).all(now.toISOString());
     for (const row of intents) {
       database.prepare("UPDATE platform_watchlist_notification_intents SET next_check_at_utc=? WHERE intent_id=?")
         .run(new Date(Date.now()+30_000).toISOString(),row.intent_id);

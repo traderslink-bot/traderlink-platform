@@ -13,11 +13,11 @@ import { createAndRestoreVerifyPlatformDatabaseBackup } from "@/src/modules/plat
 import { loadAccountIdentityConfiguration } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 
-const prefix = platformMigrationManifest.slice(0, 140);
-const expected = ["0145_traderlink_communities_coaching_delivery_workflow"];
-assert.equal(platformMigrationManifest.length, 141);
-assert.deepEqual(platformMigrationManifest.slice(140).map(m => m.migrationId), expected);
-assert.deepEqual(platformMigrationManifest.slice(140).map(m => m.executionOrder), expected.map((_, i) => 158 + i));
+const prefix = platformMigrationManifest.slice(0, 141);
+const expected = ["0146_watchlist_owner_review_notifications"];
+assert.equal(platformMigrationManifest.length, 142);
+assert.deepEqual(platformMigrationManifest.slice(141).map(m => m.migrationId), expected);
+assert.deepEqual(platformMigrationManifest.slice(141).map(m => m.executionOrder), expected.map((_, i) => 159 + i));
 
 function open(path: string) {
   const db = new Database(path, { fileMustExist: true });
@@ -43,12 +43,12 @@ function advance(path: string) {
   try {
     verifyCompletedPlatformDatabase(db, prefix);
     const preserved = preserveRows(db);
-    for (let i = 140; i < platformMigrationManifest.length; i++) {
+    for (let i = 141; i < platformMigrationManifest.length; i++) {
       const before = platformMigrationManifest.slice(0, i);
       verifyCompletedPlatformDatabase(db, before);
       const next = platformMigrationManifest.slice(0, i + 1);
       const result = runPlatformMigrations(db, { manifest: next });
-      assert.deepEqual([...result.appliedMigrationIds], [expected[i - 140]]);
+      assert.deepEqual([...result.appliedMigrationIds], [expected[i - 141]]);
       verifyCompletedPlatformDatabase(db, next);
     }
     for (const table of preserved) {
@@ -80,11 +80,11 @@ async function main() {
   const preflight = open(sourcePath);
   const count = readAppliedPlatformMigrations(preflight).length;
   try {
-    assert(count === 140 || count === 141, "Unexpected or partially advanced staging registry; do not retry blindly");
-    verifyCompletedPlatformDatabase(preflight, count === 140 ? prefix : platformMigrationManifest);
+    assert(count === 141 || count === 142, "Unexpected or partially advanced staging registry; do not retry blindly");
+    verifyCompletedPlatformDatabase(preflight, count === 141 ? prefix : platformMigrationManifest);
     preflight.pragma("wal_checkpoint(TRUNCATE)");
   } finally { preflight.close(); }
-  if (count === 140) {
+  if (count === 141) {
     const disk = statfsSync(root);
     assert(disk.bavail * disk.bsize > statSync(sourcePath).size * 4 + 1024 ** 3, "Insufficient backup/rehearsal headroom");
     const checkpoint = join(root, "coaching-staging-checkpoints", new Date().toISOString().replaceAll(/[-:.]/g, ""));
@@ -102,7 +102,7 @@ async function main() {
     writeFileSync(join(checkpoint, "backup-evidence.json"), JSON.stringify(evidence));
     // Prove the entire exact batch on the real restored snapshot before any live migration.
     const rehearsalDigest = advance(restoreVerificationPath);
-    writeFileSync(join(checkpoint, "rehearsal.json"), JSON.stringify({ migrationCount: 141, schema: rehearsalDigest }));
+    writeFileSync(join(checkpoint, "rehearsal.json"), JSON.stringify({ migrationCount: 142, schema: rehearsalDigest }));
     console.log(JSON.stringify({ stage: "backup_restore_and_rehearsal_verified", checkpoint, backupSha256: evidence.backup.fileSha256, restoredSha256: evidence.restored.fileSha256, schema: rehearsalDigest }));
     let liveDigest: string;
     try {
@@ -123,20 +123,20 @@ async function main() {
       }
       renameSync(sourcePath, failedPath);
       renameSync(recoveryPath, sourcePath);
-      writeFileSync(join(checkpoint, "restored-after-failure.json"), JSON.stringify({ restoredPrefix: 140, backupSha256: evidence.backup.fileSha256 }));
+      writeFileSync(join(checkpoint, "restored-after-failure.json"), JSON.stringify({ restoredPrefix: 141, backupSha256: evidence.backup.fileSha256 }));
       throw error;
     }
     assert.equal(liveDigest, rehearsalDigest);
-    writeFileSync(join(checkpoint, "completed.json"), JSON.stringify({ migrationCount: 141, schema: liveDigest, migrations: expected }));
+    writeFileSync(join(checkpoint, "completed.json"), JSON.stringify({ migrationCount: 142, schema: liveDigest, migrations: expected }));
     assert(!existsSync(sourcePath + "-wal") || statSync(sourcePath + "-wal").size === 0);
-    console.log(JSON.stringify({ stage: "staging_migrations_verified", migrationCount: 141, checkpoint, schema: liveDigest }));
+    console.log(JSON.stringify({ stage: "staging_migrations_verified", migrationCount: 142, checkpoint, schema: liveDigest }));
   }
   if (!rehearsal) {
     // Maintenance health only. No Next server, application writes or notification sends.
     createServer((request, response) => {
       response.setHeader("Content-Type", "application/json");
       response.statusCode = request.url === "/api/platform/health" ? 200 : 503;
-      response.end(JSON.stringify({ status: "maintenance_ready", migrationCount: 141 }));
+      response.end(JSON.stringify({ status: "maintenance_ready", migrationCount: 142 }));
     }).listen(Number(process.env.PORT || 3000), "0.0.0.0");
   }
 }
