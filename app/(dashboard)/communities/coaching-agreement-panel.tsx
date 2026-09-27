@@ -3,7 +3,8 @@ import {Box,Button,Chip,Grid,Stack,TextField,Typography} from "@mui/material";
 import {DashboardPanel} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import {coachingAgreementAction} from "./community-actions";
-import {PLAN_OFFERS,FREQUENCIES} from "./coaching-plan-offers";
+import {PLAN_OFFERS,FREQUENCIES,PERIODS} from "./coaching-plan-offers";
+import {COACHING_REVIEW_FOCUS} from "@/src/modules/communities/contracts/coaching-review-workspace";
 
 export function CoachingAgreementPanel({snapshot,relationshipId,disabled=false}:{snapshot:TraderLinkCommunityDashboardSnapshot;relationshipId:string;disabled?:boolean}){
  const relationship=snapshot.relationships.find(item=>item.relationshipId===relationshipId);if(!relationship)return null;
@@ -16,7 +17,22 @@ export function CoachingAgreementPanel({snapshot,relationshipId,disabled=false}:
   {[proposed,accepted].filter(item=>!!item).map(agreement=><Box key={agreement.agreementId} sx={{border:1,borderColor:"divider",borderRadius:2,p:2}}>
    <Stack direction="row" spacing={1}><Typography sx={{fontWeight:800}}>{agreement.terms.planName}</Typography><Chip color={agreement.status==="accepted"?"success":"warning"} label={agreement.status==="accepted"?"Accepted":"Awaiting acceptance"}/></Stack>
    <Typography>{agreement.terms.currency} {(agreement.terms.priceAmountMinor/100).toFixed(2)} · {agreement.terms.billingCadence.replaceAll("_"," ")}</Typography>
-   {agreement.terms.items.map(item=><Typography key={item.planItemId}>{PLAN_OFFERS.find(offer=>offer.type===item.itemType)?.label??"Journal review"} · {item.quantity} · {item.timelineEnabled?FREQUENCIES[item.frequency]:"Unscheduled"}</Typography>)}
+   {agreement.terms.items.map(item=>{const offer=PLAN_OFFERS.find(offer=>offer.type===item.itemType),detail=agreement.terms.builderConfig?.offers[item.itemType];return <Box key={item.planItemId} sx={{my:1.5}}>
+    <Typography sx={{fontWeight:700}}>{offer?.label??"Journal review"}</Typography>
+    <Stack direction="row" sx={{gap:.75,flexWrap:"wrap",mt:.5}}>
+     {item.itemType!=="review_follow_up"?<Chip size="small" color="info" label={item.timelineEnabled?(item.frequency==="custom"?`Every ${agreement.terms.customIntervalDays} days`:FREQUENCIES[item.frequency]):"Unscheduled"}/>:null}
+     {offer?.count?<Chip size="small" label={`${offer.count}: ${item.quantity}`}/>:null}
+     {offer?.period&&item.timelineEnabled?<Chip size="small" label={item.coveragePeriod==="custom"?`${agreement.terms.coverageDays?.[item.planItemId]} days covered`:PERIODS[item.coveragePeriod]}/>:null}
+     {item.timelineEnabled&&!["questions","review_follow_up"].includes(item.itemType)?<Chip size="small" color="warning" label={`Due within ${item.dueOffsetDays} ${item.dueOffsetDays===1?"day":"days"}`}/>:null}
+     {item.itemType==="review_follow_up"?<Chip size="small" label={`${item.followUpDays} ${item.followUpDays===1?"day":"days"} after read confirmation`}/>:null}
+     {item.plannedMinutes?<Chip size="small" label={`${item.plannedMinutes} minutes`}/>:null}
+     {item.selectionMode!=="not_applicable"?<Chip size="small" label={`Chosen by ${item.selectionMode==="coach_or_student"?"coach or student":item.selectionMode}`}/>:null}
+     {item.reviewDepth==="complete_day"?<Chip size="small" label="Complete day with Journal"/>:null}
+     {(item.focusAreas??[]).map(focus=><Chip key={focus} size="small" label={COACHING_REVIEW_FOCUS[focus]}/>)}
+     {detail?.resources.map(resource=><Chip key={resource} size="small" label={resource}/>)}
+    </Stack>
+    {detail?.details?<Typography sx={{whiteSpace:"pre-wrap",mt:.5}}>{detail.details}</Typography>:null}
+   </Box>;})}
    <Typography>{agreement.terms.startDate??"No schedule"}{agreement.terms.startDate?` · ${agreement.terms.dueTimeUtc} UTC`:""}</Typography>
    <Typography sx={{whiteSpace:"pre-wrap"}}>{agreement.terms.description}</Typography>
    {!coach&&agreement.status==="proposed"?<Box component="form" action={disabled?undefined:coachingAgreementAction}>{hidden}<input type="hidden" name="agreementId" value={agreement.agreementId}/><Button disabled={disabled} type="submit" name="intent" value="accept" variant="contained">Accept agreement</Button></Box>:null}
