@@ -1,7 +1,7 @@
 # Coaching review types and inline trade feedback
 
 Owner approved implementation on 2026-09-27 after the five-type recommendation.
-Status: in progress; no claim of deployed or visually accepted changes.
+Status: deployed to staging; owner mobile/desktop visual acceptance pending.
 
 ## Controlling scope
 
@@ -88,8 +88,8 @@ backup and verify existing records. Do not remove columns as a rollback. Return
 to the prior app build only if its migration-verifier compatibility is proven;
 otherwise use coordinated restore/recovery with writes paused.
 
-Pending: coordinator remote build, staging snapshot rehearsal, deployment and
-mobile/desktop owner acceptance. This feature slice is not yet declared complete.
+Pending: signed-in mobile/desktop owner acceptance. This feature slice is not
+yet declared visually accepted or complete.
 
 ### Remote checkpoint correction
 
@@ -98,3 +98,23 @@ existing rows preserved. GitHub36297661039 caught an import before the student
 review's use-client directive; corrected directive order in a narrow follow-up.
 The local TypeScript-only check did not detect this Next.js boundary error.
 No staging database change or feature deployment occurred before correction.
+
+### Verified staging release — 2026-09-27
+
+Coordinator reported active source9af63c9269c92467e4d1d4c24a0de5ba2187fa65,
+Railway deployment1f019758-6375-40cd-b520-688dc75c58e1 SUCCESS, one RUNNING
+instance, original READY volume and public health200/ready/140. Corrected build
+36297856089 and schema-compatible recovery build36297796987 passed remotely.
+Actual staging backup/restore and migration0144 at staging order157 passed;
+all original row/column hashes and the existing review were preserved. No seed,
+reset or review retyping. Held navigation48077 remains excluded. Production
+main37b6 and healthready127 unchanged, per coordinator verification.
+
+Owner signs in as TradersLink and opens the existing test-student review:
+https://traderlink-platform-staging-staging.up.railway.app/communities/test-community/workspace/students/8c6d9100-f76a-4fe1-82a8-4d32eb150006/reviews/aa1785a7-9b20-44cf-b2df-7cd2bb5c250f
+
+Unauthenticated route returned the expected307. Signed-in rendered UI acceptance
+is not claimed. Inline trade feedback applies to the existing draft; new scope
+requires the coach to choose Review setup. Coordinator release evidence:
+coaching-0144-staging-release.md in its coordination workspace. Future source
+handoffs remain exact child deltas only, never this branch's cumulative history.
