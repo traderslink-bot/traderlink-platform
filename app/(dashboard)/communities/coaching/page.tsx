@@ -10,12 +10,8 @@ export default async function CommunityCoachingIndexPage() {
     const repository = new TraderLinkCommunityRepository(database);
     const community = repository.listForUser(identity.scope.userId).find((item) => {
       const capabilities = repository.resolveAccess(item.communityId, identity.scope.userId).capabilities;
-      const ownRelationship = database.prepare(`SELECT 1
-FROM traderlink_community_coaching_relationships
-WHERE community_id = ? AND student_user_id = ?
-LIMIT 1`).get(item.communityId, identity.scope.userId);
       return capabilities.includes("community.coaching.view") ||
-        capabilities.includes("community.coaching.offer") || Boolean(ownRelationship);
+        capabilities.includes("community.coaching.offer");
     });
     return community ? `/communities/${community.slug}/coaching` : "/communities";
   });

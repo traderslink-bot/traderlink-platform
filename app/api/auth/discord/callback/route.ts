@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import {reconcileCoachingAccess} from "@/src/modules/communities/server/coaching-access-lifecycle";
 
 import {
   deriveJournalAccountSelectionRef,
@@ -274,7 +273,6 @@ FROM traderlink_communities WHERE discord_guild_id = ?`).get(guild.id) as
               | { community_id: string }
               | undefined;
             if (community) {
-              reconcileCoachingAccess(database,community.community_id,signInResult.userId,verifiedAtUtc);
               new TraderLinkCommunityRepository(database).syncActiveMemberFromDiscord({
                 communityId: community.community_id,
                 userId: signInResult.userId,

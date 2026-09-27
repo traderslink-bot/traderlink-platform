@@ -41,8 +41,7 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
                       : requestedPath.includes("/manage")
                         ? capabilities.has("community.manage")
               : true;
-    const ownCoachingHistory=requestedPath===`/communities/${communitySlug}/coaching`&&current.relationships.some(relationship=>relationship.studentUserId===viewer.userId);
-    if(!permitted&&!ownCoachingHistory)notFound();
+    if(!permitted)notFound();
     const alertSlug=requestedPath.match(/\/alerts\/([^/?#]+)/u)?.[1];
     const watchlistId=requestedPath.match(/\/server-watchlists\/([^/?#]+)/u)?.[1];
     const tracked=alertSlug
