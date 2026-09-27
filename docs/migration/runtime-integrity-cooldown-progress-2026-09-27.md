@@ -1,5 +1,10 @@
 # Runtime integrity scan cooldown — September 27, 2026
 
+Subsequent owner-approved policy: [duration-based scan budget and operational
+pending availability](runtime-integrity-load-budget-progress-2026-09-27.md).
+That record supersedes the fixed cooldown and operational-pending readiness
+policy below; this file preserves the first repair's historical checkpoint.
+
 Status: implementation and focused controlled verification complete. Native CI,
 release and natural hosted-cycle acceptance remain Coordinator-owned gates.
 
