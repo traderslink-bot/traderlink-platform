@@ -62,6 +62,7 @@ import { traderLinkCommunitiesCoachingPlanBuilderMigration } from "@/src/modules
 import { traderLinkCommunitiesCoachingServiceMeasurementMigration } from "@/src/modules/communities/server/database/migrations/0130_traderlink_communities_coaching_service_measurement";
 import { traderLinkCommunitiesReviewCoachingSectionsMigration } from "@/src/modules/communities/server/database/migrations/0131_traderlink_communities_review_coaching_sections";
 import { traderLinkCommunitiesReviewWorkflowMigration } from "@/src/modules/communities/server/database/migrations/0143_traderlink_communities_review_workflow";
+import { traderLinkCommunitiesReviewWorkspaceMetadataMigration } from "@/src/modules/communities/server/database/migrations/0144_traderlink_communities_review_workspace_metadata";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -165,6 +166,7 @@ const stagingAppendOrders: Readonly<Record<string, number>> = Object.freeze({
   "0140_news_market_halt_discord_deliveries": 154,
   "0142_news_reverse_split_alerts": 155,
   "0143_traderlink_communities_review_workflow": 156,
+  "0144_traderlink_communities_review_workspace_metadata": 157,
 });
 
 const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
@@ -710,6 +712,10 @@ const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
       sourcePath: "src/modules/communities/server/database/migrations/0143_traderlink_communities_review_workflow.ts",
       migration: traderLinkCommunitiesReviewWorkflowMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0144_traderlink_communities_review_workspace_metadata.ts",
+      migration: traderLinkCommunitiesReviewWorkspaceMetadataMigration,
+    }),
   ]);
 
 export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[] = Object.freeze(
@@ -1232,6 +1238,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0130_traderlink_communities_coaching_service_measurement": Object.freeze([]),
     "0131_traderlink_communities_review_coaching_sections": Object.freeze([]),
+    "0144_traderlink_communities_review_workspace_metadata": Object.freeze([]),
     "0143_traderlink_communities_review_workflow": Object.freeze([
       "traderlink_community_coaching_review_actions",
       "traderlink_community_coaching_review_attachment_links",

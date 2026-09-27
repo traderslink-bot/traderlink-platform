@@ -13,19 +13,11 @@ import { createAndRestoreVerifyPlatformDatabaseBackup } from "@/src/modules/plat
 import { loadAccountIdentityConfiguration } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 
-const prefix = platformMigrationManifest.slice(0, 126);
-const expected = [
-  "0121_news_market_halt_delivery_lifecycle", "0122_journal_demo_august_provenance_guard",
-  "0132_journal_demo_v10_provenance_guard", "0133_platform_watchlist_daily_recaps",
-  "0134_daily_trade_analyzer_trend_momentum_history", "0135_daily_trade_analyzer_manual_retry_requests",
-  "0136_shared_trade_analyzer_owner_exemptions", "0137_platform_watchlist_publication_notifications",
-  "0138_platform_watchlist_notification_action_identity", "0139_platform_premium_swing_idea_visit_events",
-  "0140_news_market_halt_discord_deliveries", "0142_news_reverse_split_alerts",
-  "0143_traderlink_communities_review_workflow",
-];
-assert.equal(platformMigrationManifest.length, 139);
-assert.deepEqual(platformMigrationManifest.slice(126).map(m => m.migrationId), expected);
-assert.deepEqual(platformMigrationManifest.slice(126).map(m => m.executionOrder), expected.map((_, i) => 144 + i));
+const prefix = platformMigrationManifest.slice(0, 139);
+const expected = ["0144_traderlink_communities_review_workspace_metadata"];
+assert.equal(platformMigrationManifest.length, 140);
+assert.deepEqual(platformMigrationManifest.slice(139).map(m => m.migrationId), expected);
+assert.deepEqual(platformMigrationManifest.slice(139).map(m => m.executionOrder), expected.map((_, i) => 157 + i));
 
 function open(path: string) {
   const db = new Database(path, { fileMustExist: true });
@@ -36,17 +28,32 @@ function open(path: string) {
   return db;
 }
 
+function preserveRows(db: Database.Database) {
+  const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name <> 'platform_schema_migrations' ORDER BY name").all() as {name:string}[]);
+  return tables.map(({name}) => {
+    const columns=(db.prepare('PRAGMA table_info("'+name.replaceAll('"','""')+'")').all() as {name:string}[]).map(c=>c.name);
+    const query='SELECT '+columns.map(c=>'"'+c.replaceAll('"','""')+'"').join(',')+' FROM "'+name.replaceAll('"','""')+'"';
+    const hashes=(db.prepare(query).all() as unknown[]).map(row=>createHash('sha256').update(JSON.stringify(row)).digest('hex')).sort();
+    return {name,query,hashes};
+  });
+}
+
 function advance(path: string) {
   const db = open(path);
   try {
     verifyCompletedPlatformDatabase(db, prefix);
-    for (let i = 126; i < platformMigrationManifest.length; i++) {
+    const preserved = preserveRows(db);
+    for (let i = 139; i < platformMigrationManifest.length; i++) {
       const before = platformMigrationManifest.slice(0, i);
       verifyCompletedPlatformDatabase(db, before);
       const next = platformMigrationManifest.slice(0, i + 1);
       const result = runPlatformMigrations(db, { manifest: next });
-      assert.deepEqual([...result.appliedMigrationIds], [expected[i - 126]]);
+      assert.deepEqual([...result.appliedMigrationIds], [expected[i - 139]]);
       verifyCompletedPlatformDatabase(db, next);
+    }
+    for (const table of preserved) {
+      const after = (db.prepare(table.query).all() as unknown[]).map(row=>createHash("sha256").update(JSON.stringify(row)).digest("hex")).sort();
+      assert.deepEqual(after, table.hashes, "Existing rows changed: " + table.name);
     }
     const result = verifyCompletedPlatformDatabase(db);
     db.pragma("wal_checkpoint(TRUNCATE)");
@@ -73,11 +80,11 @@ async function main() {
   const preflight = open(sourcePath);
   const count = readAppliedPlatformMigrations(preflight).length;
   try {
-    assert(count === 126 || count === 139, "Unexpected or partially advanced staging registry; do not retry blindly");
-    verifyCompletedPlatformDatabase(preflight, count === 126 ? prefix : platformMigrationManifest);
+    assert(count === 139 || count === 140, "Unexpected or partially advanced staging registry; do not retry blindly");
+    verifyCompletedPlatformDatabase(preflight, count === 139 ? prefix : platformMigrationManifest);
     preflight.pragma("wal_checkpoint(TRUNCATE)");
   } finally { preflight.close(); }
-  if (count === 126) {
+  if (count === 139) {
     const disk = statfsSync(root);
     assert(disk.bavail * disk.bsize > statSync(sourcePath).size * 4 + 1024 ** 3, "Insufficient backup/rehearsal headroom");
     const checkpoint = join(root, "coaching-staging-checkpoints", new Date().toISOString().replaceAll(/[-:.]/g, ""));
@@ -95,7 +102,7 @@ async function main() {
     writeFileSync(join(checkpoint, "backup-evidence.json"), JSON.stringify(evidence));
     // Prove the entire exact batch on the real restored snapshot before any live migration.
     const rehearsalDigest = advance(restoreVerificationPath);
-    writeFileSync(join(checkpoint, "rehearsal.json"), JSON.stringify({ migrationCount: 139, schema: rehearsalDigest }));
+    writeFileSync(join(checkpoint, "rehearsal.json"), JSON.stringify({ migrationCount: 140, schema: rehearsalDigest }));
     console.log(JSON.stringify({ stage: "backup_restore_and_rehearsal_verified", checkpoint, backupSha256: evidence.backup.fileSha256, restoredSha256: evidence.restored.fileSha256, schema: rehearsalDigest }));
     let liveDigest: string;
     try {
@@ -116,20 +123,20 @@ async function main() {
       }
       renameSync(sourcePath, failedPath);
       renameSync(recoveryPath, sourcePath);
-      writeFileSync(join(checkpoint, "restored-after-failure.json"), JSON.stringify({ restoredPrefix: 126, backupSha256: evidence.backup.fileSha256 }));
+      writeFileSync(join(checkpoint, "restored-after-failure.json"), JSON.stringify({ restoredPrefix: 139, backupSha256: evidence.backup.fileSha256 }));
       throw error;
     }
     assert.equal(liveDigest, rehearsalDigest);
-    writeFileSync(join(checkpoint, "completed.json"), JSON.stringify({ migrationCount: 139, schema: liveDigest, migrations: expected }));
+    writeFileSync(join(checkpoint, "completed.json"), JSON.stringify({ migrationCount: 140, schema: liveDigest, migrations: expected }));
     assert(!existsSync(sourcePath + "-wal") || statSync(sourcePath + "-wal").size === 0);
-    console.log(JSON.stringify({ stage: "staging_migrations_verified", migrationCount: 139, checkpoint, schema: liveDigest }));
+    console.log(JSON.stringify({ stage: "staging_migrations_verified", migrationCount: 140, checkpoint, schema: liveDigest }));
   }
   if (!rehearsal) {
     // Maintenance health only. No Next server, application writes or notification sends.
     createServer((request, response) => {
       response.setHeader("Content-Type", "application/json");
       response.statusCode = request.url === "/api/platform/health" ? 200 : 503;
-      response.end(JSON.stringify({ status: "maintenance_ready", migrationCount: 139 }));
+      response.end(JSON.stringify({ status: "maintenance_ready", migrationCount: 140 }));
     }).listen(Number(process.env.PORT || 3000), "0.0.0.0");
   }
 }
