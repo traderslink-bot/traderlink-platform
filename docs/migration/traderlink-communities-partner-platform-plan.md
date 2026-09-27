@@ -14,6 +14,8 @@ owner-test allowlist if production-only Discord behavior requires it.
 
 **Current coach plan-builder revision:** [Coach Plan Offers Redesign](traderlink-coach-plan-offers-redesign-progress.md). Owner rejected the generic identical-checkbox setup; preserve the review workspace while revising the offer builder.
 
+**Current whole-coaching QA:** [Coaching feature QA — 2026-09-27](traderlink-coaching-full-qa-20260927.md). Known presentation fixes followed by the complete coaching inventory audit.
+
 **Active implementation record:** [Communities 1 Identity And Permissions Progress](traderlink-communities-1-identity-permissions-progress.md)
 
 **Active pilot record:** [Communities Discord Pilot Progress](traderlink-communities-discord-pilot-progress.md)

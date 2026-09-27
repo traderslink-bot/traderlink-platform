@@ -1,6 +1,7 @@
 import type {TraderLinkCommunityCoachingItemType} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import type {CoachingReviewFocus} from "@/src/modules/communities/contracts/coaching-review-workspace";
 import {blue, teal, green, orange, purple, red, pink} from "@mui/material/colors";
+import {darken} from "@mui/material/styles";
 
 export type Offer = Readonly<{
   type: Exclude<TraderLinkCommunityCoachingItemType,"journal_review">;
@@ -36,7 +37,8 @@ const OFFER_PALETTES = {trade_review:blue, trading_day_review:teal, performance_
   private_session:purple, group_lesson:blue, questions:orange, student_check_in:teal,
   review_follow_up:pink, custom_task:green} as const;
 export function offerColor(offer:Offer, mode:"light"|"dark"):string {
-  return OFFER_PALETTES[offer.type][mode === "dark" ? 300 : 800];
+  const palette = OFFER_PALETTES[offer.type];
+  return mode === "dark" ? palette[100] : darken(palette[900], .25);
 }
 
 export const PERFORMANCE_INCLUSIONS: readonly Readonly<{key:CoachingReviewFocus;label:string}>[] = [
@@ -69,7 +71,10 @@ export function initialOfferSettings(offer:Offer):OfferSettings {
 }
 export function offerSummary(offer:Offer,value:OfferSettings):string[] {
   const result=[value.timeline?FREQUENCIES[value.frequency]:"Flexible schedule"];
-  if(offer.count)result.push(`${value.quantity||"—"} ${offer.measure.replaceAll("_"," ")}`);
+  if(offer.count){
+    const units = {trades:["trade","trades"],trading_days:["trading day","trading days"],reviews:["review","reviews"],check_ins:["check-in","check-ins"],sessions:["session","sessions"],lessons:["lesson","lessons"],questions:["question","questions"],custom:["item","items"]} as const;
+    result.push(`${value.quantity||"—"} ${units[offer.measure][Number(value.quantity)===1?0:1]}`);
+  }
   if(offer.period&&value.timeline)result.push(PERIODS[value.coverage]);
   if(value.timeline)result.push(`Due within ${value.dueDays||"0"} days`);
   if(offer.type==="trade_review")result.push(`Trades chosen by ${value.selection==="coach_or_student"?"coach or student":value.selection}`);
