@@ -30,6 +30,10 @@ type RuntimeIntegrityState = {
   generation: number;
   lastForeignKeyCheckStartedAt: number;
   lastQuickCheckStartedAt: number;
+  // Optional only for an existing process-global v3 entry during module reload.
+  // These are process-release deadlines, never successful-verification evidence.
+  foreignKeyNotBefore?: number;
+  quickCheckNotBefore?: number;
   quickCheckFailed: boolean;
   quickCheckInFlight: boolean;
   foreignKeySuccessLogs: number;
@@ -261,7 +265,8 @@ function startPlatformRuntimeQuickCheck(
 ): void {
   const includeQuickCheck = state.dirtySinceQuickCheck &&
     (state.retryPending ||
-      now >= state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS);
+      now >= (state.quickCheckNotBefore ??
+        state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS));
   state.lastForeignKeyCheckStartedAt = now;
   state.dirtySinceForeignKeyCheck = false;
   if (includeQuickCheck) {
@@ -283,6 +288,7 @@ function startPlatformRuntimeQuickCheck(
   let hardDueAt = startedAt + PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS;
   let foreignKeyDurationMs = 0;
   let quickCheckDurationMs = 0;
+  let retryDelayMs = 0;
   let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
   let killTimer: ReturnType<typeof setTimeout> | undefined;
   let exitTimer: ReturnType<typeof setTimeout> | undefined;
@@ -300,10 +306,26 @@ function startPlatformRuntimeQuickCheck(
     if (includeQuickCheck) state.dirtySinceQuickCheck = true;
     state.retryPending = true;
     state.retryCount = Math.min(state.retryCount + 1, 5);
-    state.retryNotBefore = Date.now() + Math.min(
-      PLATFORM_RUNTIME_RETRY_MAX_MS,
-      PLATFORM_RUNTIME_RETRY_MIN_MS * 2 ** (state.retryCount - 1),
+    retryDelayMs = Math.max(
+      includeQuickCheck ? PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS :
+        PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS,
+      Math.min(
+        PLATFORM_RUNTIME_RETRY_MAX_MS,
+        PLATFORM_RUNTIME_RETRY_MIN_MS * 2 ** (state.retryCount - 1),
+      ),
     );
+    // A timeout requests termination; it does not begin the idle recovery gap.
+    state.retryNotBefore = Infinity;
+  };
+  const recordRelease = () => {
+    const releasedAt = Date.now();
+    state.foreignKeyNotBefore = releasedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS;
+    if (includeQuickCheck) {
+      state.quickCheckNotBefore = releasedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS;
+    }
+    if (state.generation === generation && retryDelayMs > 0) {
+      state.retryNotBefore = releasedAt + retryDelayMs;
+    }
   };
   const latchCorruption = (error: unknown) => {
     const code = error && typeof error === "object" && "code" in error
@@ -323,6 +345,7 @@ function startPlatformRuntimeQuickCheck(
   } catch (error) {
     state.quickCheckInFlight = false;
     if (!latchCorruption(error)) retry();
+    recordRelease();
     log("worker_construction_failed");
     schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
     return;
@@ -502,6 +525,7 @@ function startPlatformRuntimeQuickCheck(
       }
     }
     settled = true;
+    recordRelease();
     state.quickCheckInFlight = false;
     state.cancelWorker = null;
     schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
@@ -577,12 +601,14 @@ function schedulePlatformRuntimeQuickCheck(
   ) {
     return;
   }
-  const dueAt = Math.max(state.retryNotBefore, Math.min(
+  const dueAt = Math.max(state.retryNotBefore, state.foreignKeyNotBefore ?? 0, Math.min(
     state.dirtySinceForeignKeyCheck
-      ? state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS
+      ? (state.foreignKeyNotBefore ??
+        state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS)
       : Infinity,
     state.dirtySinceQuickCheck
-      ? state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS
+      ? (state.quickCheckNotBefore ??
+        state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS)
       : Infinity,
   ));
   // Writes may bring an FK deadline forward, but must never postpone a scan.
@@ -616,6 +642,9 @@ function recordSuccessfulFullRuntimeVerification(
   state.fingerprint = fingerprint;
   state.lastQuickCheckStartedAt = Date.now();
   state.lastForeignKeyCheckStartedAt = state.lastQuickCheckStartedAt;
+  state.foreignKeyNotBefore = state.lastForeignKeyCheckStartedAt +
+    PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS;
+  state.quickCheckNotBefore = state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS;
   state.foreignKeyCheckFailed = false;
   state.quickCheckFailed = false;
   state.quickCheckTimer = null;

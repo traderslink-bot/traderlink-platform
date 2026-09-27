@@ -157,8 +157,12 @@ test('late successful snapshot retains concurrent writes without requiring their
   assert.ok(latestGeneration > child.data.dataGeneration);
   h.advance(12_000); h.finish(child); h.open();
   assert.equal(h.state().retryPending, false);
+  assert.equal(h.workers.length, 1);
+  h.advance(4_999); assert.equal(h.workers.length, 1);
+  h.advance(1);
   assert.equal(h.workers.length, 2, 'new writes need their own scan after actual exit');
   assert.equal(h.workers[1].data.dataGeneration, latestGeneration);
+  assert.equal(h.workers[1].data.includeQuickCheck, false);
 });
 
 test('quick phase expires at FK completion plus120s, escalates once and never overlaps before exit', () => {
@@ -173,6 +177,8 @@ test('quick phase expires at FK completion plus120s, escalates once and never ov
   assert.equal(h.workers.length, 1);
   h.message(child); pending(h); // A successful result after hard cutoff cannot recover.
   h.exit(child);
+  h.advance(59_999); assert.equal(h.workers.length, 1);
+  h.advance(1);
   assert.equal(h.workers.length, 2);
 });
 
@@ -297,8 +303,64 @@ for (const duration of [34_000, 102_000]) test(`healthy ${duration}ms scans stay
     h.finish(worker);
     assert.equal(h.state().retryPending, false);
     assert.equal(h.full(), 1);
-    if (h.workers.at(-1) === worker) h.advance(60_000);
+    // Concurrent writes receive an FK-only pass at exit+5s, then quick at exit+60s.
+    h.advance(5_000);
+    assert.equal(h.workers.at(-1).data.includeQuickCheck, false);
+    h.finish(h.workers.at(-1));
+    h.advance(55_000);
+    assert.equal(h.workers.at(-1).data.includeQuickCheck, true);
   }
+});
+
+test('long successful quick scan waits sixty seconds from exit despite continuing writes', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.advance(90_000); h.change(); h.open(); h.finish(child);
+  h.advance(5_000);
+  assert.equal(h.workers.length, 2);
+  assert.equal(h.workers[1].data.includeQuickCheck, false);
+  h.finish(h.workers[1]);
+  h.advance(54_999); h.change(); h.open();
+  // This write may start an FK-only pass; it cannot pull quick forward.
+  assert.equal(h.workers.at(-1).data.includeQuickCheck, false);
+  h.finish(h.workers.at(-1));
+  h.advance(4_999);
+  assert.equal(h.workers.length, 3);
+  h.advance(1);
+  assert.equal(h.workers.length, 4);
+  assert.equal(h.workers[3].data.includeQuickCheck, true);
+});
+
+test('quick deadline expiring during a long FK scan cannot bypass the exit gap', () => {
+  const h = scanning(), child = h.workers[0];
+  h.advance(70_000); h.finish(child);
+  h.advance(4_999); assert.equal(h.workers.length, 1);
+  h.advance(1);
+  assert.equal(h.workers.length, 2);
+  assert.equal(h.workers[1].data.includeQuickCheck, true);
+});
+
+test('failed combined check blocks FK-only recovery throughout the exit cooldown', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.message(child, { status: 'worker_failed' });
+  h.advance(300_000); h.change(); pending(h);
+  assert.equal(h.workers.length, 1);
+  h.exit(child);
+  h.advance(5_000); h.change(); pending(h);
+  assert.equal(h.workers.length, 1);
+  h.advance(54_999); pending(h);
+  assert.equal(h.workers.length, 1);
+  h.advance(1);
+  assert.equal(h.workers[1].data.includeQuickCheck, true);
+  h.message(h.workers[1]); pending(h);
+  h.exit(h.workers[1]); h.open();
+});
+
+test('foreign-key-only operational failure also waits from delayed actual exit', () => {
+  const h = scanning(), child = h.workers[0];
+  h.message(child, { status: 'worker_failed' });
+  h.advance(20_000); h.exit(child);
+  h.advance(4_999); assert.equal(h.workers.length, 1); pending(h);
+  h.advance(1); assert.equal(h.workers.length, 2);
 });
 
 test('timeout retains dirty work, fails fast, waits for exit and retries without a write', () => {
@@ -314,7 +376,10 @@ test('timeout retains dirty work, fails fast, waits for exit and retries without
   h.advance(20_000);
   assert.equal(h.workers.length, 1);
   h.exit(worker);
+  h.advance(59_999); assert.equal(h.workers.length, 1); pending(h);
+  h.advance(1);
   assert.equal(h.workers.length, 2);
+  assert.equal(h.workers[1].data.includeQuickCheck, true);
   pending(h);
   h.finish(h.workers[1]);
   h.open();
@@ -328,12 +393,14 @@ test('a message alone never releases the single-flight worker slot', () => {
   h.advance(70_000); h.open();
   assert.equal(h.workers.length, 1);
   h.exit(h.workers[0]);
+  h.advance(4_999); assert.equal(h.workers.length, 1);
+  h.advance(1);
   assert.equal(h.workers.length, 2);
 });
 
 test('retry succeeds while writes continue and preserves their pending checks', () => {
   const h = scanning(true);
-  h.advance(120_000); h.exit(h.workers[0]); h.advance(5_000);
+  h.advance(120_000); h.exit(h.workers[0]); h.advance(60_000);
   const retryWorker = h.workers[1];
   h.change(); pending(h);
   assert.equal(h.state().dirtySinceQuickCheck, true);
@@ -361,15 +428,15 @@ for (const kind of ['construction', 'error', 'early-exit', 'malformed', 'worker-
     if (worker && kind !== 'early-exit') h.exit(worker);
     h.constructionError(null);
     const count = h.workers.length;
-    h.advance(4_999); assert.equal(h.workers.length, count);
+    h.advance(59_999); assert.equal(h.workers.length, count);
     h.advance(1); assert.equal(h.workers.length, count + 1);
     h.finish(h.workers.at(-1)); h.open();
   });
 }
 
-test('operational retries back off at 5/10/20/40/60 seconds with a cap', () => {
+test('combined retries retain a sixty-second exit-anchored floor through the backoff cap', () => {
   const h = scanning(true);
-  for (const delay of [5_000, 10_000, 20_000, 40_000, 60_000, 60_000]) {
+  for (const delay of [60_000, 60_000, 60_000, 60_000, 60_000, 60_000]) {
     const worker = h.workers.at(-1);
     h.finish(worker, { status: 'worker_failed' });
     assert.equal(h.state().retryNotBefore - h.now(), delay);
@@ -416,6 +483,8 @@ test('old generation cannot clear new state or release its slot before actual ex
   assert.equal(h.state().quickCheckFailed, false);
   assert.equal(h.workers.length, 1);
   h.exit(old);
+  h.advance(4_999); assert.equal(h.workers.length, 1);
+  h.advance(1);
   assert.equal(h.workers.length, 2);
   h.finish(h.workers[1]); h.open();
   assert.equal(h.full(), 2);
