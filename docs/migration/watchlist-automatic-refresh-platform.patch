@@ -1,0 +1,118 @@
+diff --git a/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts b/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts
+index 9ebbe0f5e..c3a5e1671 100644
+--- a/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts
++++ b/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts
+@@ -6,6 +6,7 @@ import { resolveTraderLinkDiscordGuildId } from "@/src/modules/platform/server/a
+ import { requestWatchlistRuntimeRaw } from "../runtime/watchlist-runtime-admin-client";
+ import { publicationFromReview, type WatchlistApprovalIntent } from "./watchlist-publication-notification-contract";
+ import { WatchlistPublicationNotificationStore } from "./watchlist-publication-notification-store";
++import { readAutomaticAnalysisEvents, reconcileOwnerReviewNotifications } from "./watchlist-automatic-notifications";
+ 
+ type Recipient = { userId: string; channel: "web_push" | "email"; targetRef: string };
+ type IntentRow = { intent_id: string; cycle_id: string; ticker: string; expected_head: number; draft_revision: number;
+@@ -70,12 +71,37 @@ export async function reconcileWatchlistNotificationApprovals(): Promise<void> {
+   running = true;
+   let database: Database.Database | undefined;
+   try {
++    const automatic = await readAutomaticAnalysisEvents().catch(() => null);
++    // The runtime's persisted automatic approval is the owner's configured
++    // authority for this replacement; no synthetic interactive owner identity.
++    for (const event of automatic?.events ?? []) {
++      if (event.kind !== "publication") continue;
++      recordWatchlistApprovalNotificationIntent(JSON.stringify({ symbol: event.symbol, cycleId: event.cycleId,
++        expectedHead: event.expectedHead, draftRevision: event.draftRevision, notifyUsers: true }), event.actor!);
++    }
+     database = openPlatformDatabase({ mode: "runtime" });
++    for (const event of automatic?.events ?? []) {
++      if (event.kind !== "publication") continue;
++      const row = database.prepare<[string], IntentRow>("SELECT * FROM platform_watchlist_notification_intents WHERE intent_id=? AND state='pending'")
++        .get(`${event.cycleId}:draft:${event.draftRevision}`);
++      if (!row) continue;
++      const publication = publicationFromReview({ cycleId: row.cycle_id, ticker: row.ticker,
++        expectedHead: row.expected_head, draftRevision: row.draft_revision, actor: row.actor },event.review,Date.now());
++      if (!publication) continue;
++      database.transaction(() => {
++        new WatchlistPublicationNotificationStore(database!).accept({ event: publication, now: new Date(),
++          recipients: () => (JSON.parse(row.recipients_json) as Recipient[]).filter(recipient => watchlistNotificationAccess(database!,recipient.userId)) });
++        database!.prepare("UPDATE platform_watchlist_notification_intents SET state='accepted' WHERE intent_id=?").run(row.intent_id);
++      }).immediate();
++    }
++    if (automatic) await reconcileOwnerReviewNotifications(database,automatic).catch(() => {
++      console.error("Watchlist owner review notification check failed.");
++    });
+     const now = new Date();
+     database.prepare(`UPDATE platform_watchlist_notification_intents SET state='expired'
+       WHERE state='pending' AND requested_at_utc<=?`).run(new Date(now.getTime()-3_600_000).toISOString());
+     const intents = database.prepare<[string], IntentRow>(`SELECT * FROM platform_watchlist_notification_intents
+-      WHERE state='pending' AND next_check_at_utc<=? ORDER BY requested_at_utc LIMIT 3`).all(now.toISOString());
++      WHERE state='pending' AND actor!='runtime:automatic-boundary' AND next_check_at_utc<=? ORDER BY requested_at_utc LIMIT 3`).all(now.toISOString());
+     for (const row of intents) {
+       database.prepare("UPDATE platform_watchlist_notification_intents SET next_check_at_utc=? WHERE intent_id=?")
+         .run(new Date(Date.now()+30_000).toISOString(),row.intent_id);
+diff --git a/app/api/admin/watchlist/runtime/[...path]/route.ts b/app/api/admin/watchlist/runtime/[...path]/route.ts
+index 594622335..d072d73a3 100644
+--- a/app/api/admin/watchlist/runtime/[...path]/route.ts
++++ b/app/api/admin/watchlist/runtime/[...path]/route.ts
+@@ -4,6 +4,7 @@ import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform
+ import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
+ import { requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
+ import { recordWatchlistApprovalNotificationIntent } from "@/src/modules/watchlist/server/notifications/watchlist-notification-runtime";
++import { ownerReviewDeliveryStatus } from "@/src/modules/watchlist/server/notifications/watchlist-automatic-notifications";
+ 
+ export const dynamic = "force-dynamic";
+ export const runtime = "nodejs";
+@@ -119,7 +120,15 @@ async function relay(
+     method,
+     path: `${pathname}${incomingUrl.search}`,
+   });
+-  return new Response(result.body, {
++  let responseBody = result.body;
++  if (pathname === "/api/watchlist/analysis-review/settings" && result.status === 200) {
++    try {
++      const value = JSON.parse(responseBody);
++      value.settings.ownerReviewDeliveryStatus = withJournalAdminDatabase(request.headers, database => ownerReviewDeliveryStatus(database));
++      responseBody = JSON.stringify(value);
++    } catch { /* Runtime controls remain available if delivery status cannot be read. */ }
++  }
++  return new Response(responseBody, {
+     headers: {
+       "cache-control": "private, no-store, max-age=0",
+       "content-type": result.contentType,
+diff --git a/src/modules/platform/server/database/platform-migration-manifest.ts b/src/modules/platform/server/database/platform-migration-manifest.ts
+index d2fe4eb39..db6120595 100644
+--- a/src/modules/platform/server/database/platform-migration-manifest.ts
++++ b/src/modules/platform/server/database/platform-migration-manifest.ts
+@@ -1,3 +1,4 @@
++import { watchlistOwnerReviewNotificationsMigration } from "./migrations/0146_watchlist_owner_review_notifications";
+ import { platformPremiumSwingIdeaVisitEventsMigration } from "./migrations/0139_platform_premium_swing_idea_visit_events";
+ import { newsMarketHaltDiscordDeliveriesMigration } from "@/src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries";
+ import { newsReverseSplitAlertsMigration } from "@/src/modules/news/server/database/migrations/0142_news_reverse_split_alerts";
+@@ -631,6 +632,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
+     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0139_platform_premium_swing_idea_visit_events.ts", migration: platformPremiumSwingIdeaVisitEventsMigration }),
+     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries.ts", migration: newsMarketHaltDiscordDeliveriesMigration }),
+     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0142_news_reverse_split_alerts.ts", migration: newsReverseSplitAlertsMigration }),
++    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0146_watchlist_owner_review_notifications.ts", migration: watchlistOwnerReviewNotificationsMigration }),
+   ]);
+ 
+ export const platformMigrationManifest = validatePlatformMigrationManifest(
+@@ -639,6 +641,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
+ 
+ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
+   Object.freeze({
++    "0146_watchlist_owner_review_notifications": Object.freeze(["platform_watchlist_owner_review_deliveries"]),
+     "0139_platform_premium_swing_idea_visit_events": Object.freeze(["platform_premium_swing_idea_visit_events"]),
+     "0140_news_market_halt_discord_deliveries": Object.freeze(["news_market_halt_discord_deliveries"]),
+     "0142_news_reverse_split_alerts": Object.freeze([
+diff --git a/src/modules/help/watchlist-guides.ts b/src/modules/help/watchlist-guides.ts
+index d5cf89063..0f70ccfe4 100644
+--- a/src/modules/help/watchlist-guides.ts
++++ b/src/modules/help/watchlist-guides.ts
+@@ -48,6 +48,8 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
+     keywords: ["automatic updates", "manual refresh", "session", "cost"],
+     // Interrupted requests must not look like a never-generated activation.
+     blocks: [{ kind: "paragraph", text: "Uncheck Generate analysis beside the ticker field to add a notes-only ticker. Enter My notes, then add the ticker. It stays private until you publish it, even if global analysis generation is off. My notes on its row lets you save a draft; after listing, Publish notes updates the member card without notifications. Blank published notes remove that card. Generate analysis on the row requests an analysis later when global/session generation is enabled; review and approve it before members see it. Publishing a new ticker with its approved analysis also publishes your saved Trader notes. Published notes remain alongside the analysis, and unsent notes drafts stay private. The per-ticker choice prevents automatic analysis requests after restart as well. Automatic follow-up AI requests are off by default. Turning them off preserves their settings for later and does not stop live price/data updates. Manual refresh remains available and requests a new analysis. When a required-review replacement is waiting for approval or its generation failed, another automatic request waits for owner action; live data continues." },
++      { kind: "paragraph", text: "Automatically publish refreshed analyses applies only to new automatic boundary refreshes of tickers already on the Watchlist. When off, the replacement waits for your review while the existing analysis stays visible. When on, the replacement publishes and sends the same Analysis updated announcements as a manual update with Notify users selected: Discord links and analysis images, plus opted-in member push and email. Initial analyses, manual refreshes and drafts already waiting for review are unchanged. Automatic AI updates must also be on; session settings and request limits still apply." },
++      { kind: "paragraph", text: "Notify me when an analysis needs review sends automatic replacement review alerts to your owner account. Push uses that account's AI review notification preference and subscribed devices. Send review notifications to Discord adds an alert to the separately configured private owner channel, not the member Watchlist channel. Reload review controls to see owner delivery status. A notification problem does not generate another analysis or prevent you from approving the saved draft." },
+       { kind: "paragraph", text: "Review before publishing applies to new activations when analysis generation is enabled for that session. If generation is off when you add the ticker, the post follows the normal publishing path without an initial AI request, even if settings or the session change while it prepares. Manual refresh remains available when generation is enabled. With review enabled, replacement analyses also wait for approval, including refreshes of older public tickers. The existing public analysis and live data remain available. Changing review settings does not silently approve a post already waiting for review." },
+       { kind: "paragraph", text: "If a request was interrupted before publication was acknowledged, restart keeps that status visible. With automatic updates off, it does not send another initial request. Manual refresh remains a separate request when generation is enabled." }],
+   }, {
