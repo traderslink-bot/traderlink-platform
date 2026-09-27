@@ -109,6 +109,13 @@ Release contract: [migration and staging handoff](traderlink-coaching-remediatio
   visibility before/after delivery. These remain disposable fixtures, not live identities.
 - Coordinator confirmed no staging coaching bot token or dedicated scheduler. Existing
   CRON_SECRET alone does not prove scheduled execution. Do not repurpose other services.
+- Source checkpoint saved as `9818506605e4289fc960b6176b09ced57b2851cc`
+  (34-file allowlist; parent3bf6ae9). Coordinator accepted the immutable handoff for
+  integrated rehearsal/build, with external identity/provider acceptance still open.
+- Existing Communities regression verifier was brought forward to migrations0143–0145
+  and the explicit draft/deliver/read/complete lifecycle. It now runs in memory, without
+  filesystem cleanup. PASS:20 capabilities, community/role isolation, grant revocation,
+  coaching history, activity projection, Tier2 idempotence and zero foreign-key violations.
 - Help review: existing `discord-communities` guide's payment/privacy/role statements
   remain correct. Additional agreement/scheduling instructions need owner-approved
   wording; no new explanatory UI/help paragraphs have been published.
