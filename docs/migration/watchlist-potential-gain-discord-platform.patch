@@ -1,0 +1,90 @@
+diff --git a/app/watchlist/live-watchlist-client.tsx b/app/watchlist/live-watchlist-client.tsx
+index 1bce2daad..c5e229a46 100644
+--- a/app/watchlist/live-watchlist-client.tsx
++++ b/app/watchlist/live-watchlist-client.tsx
+@@ -1470,7 +1470,7 @@ function WatchlistDetailCardArticle({
+   );
+ }
+ 
+-function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState }) {
++export function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+   const gain = symbol.potentialGain;
+ 
+   return (
+diff --git a/app/(dashboard)/admin/watchlist/watchlist-runtime-admin-client.tsx b/app/(dashboard)/admin/watchlist/watchlist-runtime-admin-client.tsx
+index 345434db8..00bb41b33 100644
+--- a/app/(dashboard)/admin/watchlist/watchlist-runtime-admin-client.tsx
++++ b/app/(dashboard)/admin/watchlist/watchlist-runtime-admin-client.tsx
+@@ -16,6 +16,7 @@ import { WatchlistAnalysisEditor } from "./watchlist-analysis-editor";
+ 
+ const AnalysisPreviewCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then((module) => module.TradersLinkAiReadCard));
+ const IndicatorAuditPanel = dynamic(() => import("./watchlist-indicator-audit-panel"));
++const PotentialGainPost = dynamic(() => import("./watchlist-potential-gain-post").then(module => module.WatchlistPotentialGainPost));
+ const RUNTIME_SECTIONS = [
+   ["watchlist", "Watchlist"], ["runtime", "Runtime"], ["market-data", "Market Data"],
+   ["ai-controls", "AI Controls"], ["discord-notifications", "Discord notifications"], ["live-website-controls", "Live Website Controls"],
+@@ -47,6 +48,7 @@ export function WatchlistRuntimeAdminClient({
+     frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-admin-wrapper", type: "select-section", section: runtimeSectionRef.current }, window.location.origin);
+   }, []);
+   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
++  const [gainPostSymbol, setGainPostSymbol] = useState<string | null>(null);
+   const [analysisPreview, setAnalysisPreview] = useState<{
+     card: LiveWatchlistCardContent; dipBuyPlanVisible: boolean;
+   } | null>(null);
+@@ -87,9 +89,10 @@ export function WatchlistRuntimeAdminClient({
+     const onMessage = (event: MessageEvent<unknown>) => {
+       if (event.origin !== window.location.origin || event.source !== frameRef.current?.contentWindow) return;
+       if (!event.data || typeof event.data !== "object") return;
+-      const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown };
++      const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown; symbol?: unknown };
+       if (message.source !== "traderslink-watchlist-admin") return;
+       if (message.type === "navigation-ready") { syncNavigation(); return; }
++      if (message.type === "post-potential-gain" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainPostSymbol(message.symbol); return; }
+       if (message.type === "open-usage") { selectUsage(); return; }
+       if (message.type === "open-recaps" && dailyRecapsPanel) { setSelectedSection("recaps"); return; }
+       if (message.type === "open-indicator-audit") { setAuditOpened(true); setSelectedSection("indicator-audit"); return; }
+@@ -104,6 +107,7 @@ export function WatchlistRuntimeAdminClient({
+ 
+   return (
+     <>
++      {gainPostSymbol && <PotentialGainPost key={gainPostSymbol} symbol={gainPostSymbol} onClose={() => setGainPostSymbol(null)} />}
+       {editingSymbol && <WatchlistAnalysisEditor key={editingSymbol} symbol={editingSymbol} onClose={() => setEditingSymbol(null)} onSaved={() => frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-editor", type: "saved" }, window.location.origin)} />}
+       <Dialog open={analysisPreview !== null} onClose={() => setAnalysisPreview(null)} fullWidth maxWidth="lg" aria-labelledby="analysis-preview-title">
+         <DialogTitle id="analysis-preview-title">Website analysis preview</DialogTitle>
+diff --git a/src/modules/platform/server/database/platform-migration-manifest.ts b/src/modules/platform/server/database/platform-migration-manifest.ts
+index d2fe4eb39..a32a88776 100644
+--- a/src/modules/platform/server/database/platform-migration-manifest.ts
++++ b/src/modules/platform/server/database/platform-migration-manifest.ts
+@@ -1,3 +1,4 @@
++import { watchlistPotentialGainPostsMigration } from "./migrations/0147_watchlist_potential_gain_posts";
+ import { platformPremiumSwingIdeaVisitEventsMigration } from "./migrations/0139_platform_premium_swing_idea_visit_events";
+ import { newsMarketHaltDiscordDeliveriesMigration } from "@/src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries";
+ import { newsReverseSplitAlertsMigration } from "@/src/modules/news/server/database/migrations/0142_news_reverse_split_alerts";
+@@ -631,6 +632,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
+     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0139_platform_premium_swing_idea_visit_events.ts", migration: platformPremiumSwingIdeaVisitEventsMigration }),
+     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries.ts", migration: newsMarketHaltDiscordDeliveriesMigration }),
+     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0142_news_reverse_split_alerts.ts", migration: newsReverseSplitAlertsMigration }),
++    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0147_watchlist_potential_gain_posts.ts", migration: watchlistPotentialGainPostsMigration }),
+   ]);
+ 
+ export const platformMigrationManifest = validatePlatformMigrationManifest(
+@@ -639,6 +641,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
+ 
+ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
+   Object.freeze({
++    "0147_watchlist_potential_gain_posts": Object.freeze(["platform_watchlist_potential_gain_posts"]),
+     "0139_platform_premium_swing_idea_visit_events": Object.freeze(["platform_premium_swing_idea_visit_events"]),
+     "0140_news_market_halt_discord_deliveries": Object.freeze(["news_market_halt_discord_deliveries"]),
+     "0142_news_reverse_split_alerts": Object.freeze([
+diff --git a/src/modules/help/watchlist-guides.ts b/src/modules/help/watchlist-guides.ts
+index d5cf89063..3f328ae1d 100644
+--- a/src/modules/help/watchlist-guides.ts
++++ b/src/modules/help/watchlist-guides.ts
+@@ -48,6 +48,7 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
+     keywords: ["automatic updates", "manual refresh", "session", "cost"],
+     // Interrupted requests must not look like a never-generated activation.
+     blocks: [{ kind: "paragraph", text: "Uncheck Generate analysis beside the ticker field to add a notes-only ticker. Enter My notes, then add the ticker. It stays private until you publish it, even if global analysis generation is off. My notes on its row lets you save a draft; after listing, Publish notes updates the member card without notifications. Blank published notes remove that card. Generate analysis on the row requests an analysis later when global/session generation is enabled; review and approve it before members see it. Publishing a new ticker with its approved analysis also publishes your saved Trader notes. Published notes remain alongside the analysis, and unsent notes drafts stay private. The per-ticker choice prevents automatic analysis requests after restart as well. Automatic follow-up AI requests are off by default. Turning them off preserves their settings for later and does not stop live price/data updates. Manual refresh remains available and requests a new analysis. When a required-review replacement is waiting for approval or its generation failed, another automatic request waits for owner action; live data continues." },
++      { kind: "paragraph", text: "Post potential gain opens an image preview for that ticker in Watchlist Admin. Add an optional message, then choose Send to Discord to post that exact image to the separate potential gain channel. It uses the existing potential gain card, does not generate analysis, and does not send email or push notifications. The image does not update after posting. If delivery cannot be confirmed, check Discord before posting again." },
+       { kind: "paragraph", text: "Review before publishing applies to new activations when analysis generation is enabled for that session. If generation is off when you add the ticker, the post follows the normal publishing path without an initial AI request, even if settings or the session change while it prepares. Manual refresh remains available when generation is enabled. With review enabled, replacement analyses also wait for approval, including refreshes of older public tickers. The existing public analysis and live data remain available. Changing review settings does not silently approve a post already waiting for review." },
+       { kind: "paragraph", text: "If a request was interrupted before publication was acknowledged, restart keeps that status visible. With automatic updates off, it does not send another initial request. Manual refresh remains a separate request when generation is enabled." }],
+   }, {
