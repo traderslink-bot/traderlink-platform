@@ -121,6 +121,11 @@ Release contract: [migration and staging handoff](traderlink-coaching-remediatio
 - Coordinator identified held navigation in the source parent. `/communities/coaching`
   was narrowed to actual5f2 routing plus only the own-student-relationship eligibility
   check needed for paused history. No held coach/directory redirect was approved or restored.
+- Final workload audit: paused access is labelled on mobile as well as desktop and
+  on tasks/sessions; undated flexible work no longer inflates due-date counters;
+  delivered/viewed reviews are excluded from the student-list work-due count.
+- Existing Discord-delivery verifier passes with mocked transport only:2 deliveries,
+  exact links, selected channels and mentions suppressed. No real message was sent.
 - Help review: existing `discord-communities` guide's payment/privacy/role statements
   remain correct. Additional agreement/scheduling instructions need owner-approved
   wording; no new explanatory UI/help paragraphs have been published.
