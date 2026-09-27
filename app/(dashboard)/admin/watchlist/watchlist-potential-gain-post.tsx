@@ -63,7 +63,7 @@ export function WatchlistPotentialGainPost({ symbol, onClose }: { symbol: string
         <PotentialGainCard symbol={ticker} />
       </div>}
       {image && <Image unoptimized src={image.url} alt={`${symbol} potential gain card to post`} width={1100} height={1100} style={{ width: "100%", height: "auto" }} />}
-      <TextField label="Message (optional)" value={message} onChange={event => setMessage(event.target.value)} multiline minRows={3} fullWidth
+      <TextField label="Message (optional)" helperText="This post will tag @everyone." value={message} onChange={event => setMessage(event.target.value)} multiline minRows={3} fullWidth
         disabled={busy || sent || lockedMessage.current !== null} slotProps={{ htmlInput: { maxLength: 1800 } }} sx={{ mt: 2 }} />
     </DialogContent>
     <DialogActions><Button onClick={onClose} disabled={busy}>Close</Button><Button variant="contained" onClick={() => void send()} disabled={!image || busy || sent || uncertain}>Send to Discord</Button></DialogActions>

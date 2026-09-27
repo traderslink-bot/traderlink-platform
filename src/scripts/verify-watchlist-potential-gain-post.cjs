@@ -17,7 +17,7 @@ function load(file,deps={}){
  const transport=async(url,options={})=>{
    if(options.method!=='POST'){gets++;return Response.json({channel_id:channel});}
    posts++; assert.equal(new URL(url).searchParams.get('wait'),'true');
-   const payload=JSON.parse(options.body.get('payload_json'));assert.equal(payload.content,input.message);assert.deepEqual(payload.allowed_mentions,{parse:[]});
+   const payload=JSON.parse(options.body.get('payload_json'));assert.equal(payload.content,input.message ? `${input.message}\n\n@everyone` : '@everyone');assert.deepEqual(payload.allowed_mentions,{parse:['everyone']});
    assert.equal(options.body.get('files[0]').type,'image/png');
    if(status===0)throw Error('fixture timeout');
    return Response.json(status===200?{id:'12345'}:{retry_after:30},{status});
@@ -31,7 +31,8 @@ function load(file,deps={}){
  db.prepare('UPDATE platform_watchlist_potential_gain_posts SET retry_at_ms=0 WHERE request_id=?').run(retry.requestId);status=200;
  assert.equal((await service.sendPotentialGainPost(db,retry,transport,env)).state,'sent');
  for(const failure of [0,502]){status=failure;const item=next();assert.equal((await service.sendPotentialGainPost(db,item,transport,env)).state,'uncertain');const count=posts;await service.sendPotentialGainPost(db,item,transport,env);assert.equal(posts,count);}
- status=200;channel='wrong';const count=posts;assert.equal((await service.sendPotentialGainPost(db,next(),transport,env)).state,'configuration');assert.equal(posts,count);
+ status=200;input.message='';assert.equal((await service.sendPotentialGainPost(db,next(),transport,env)).state,'sent','Empty optional message still tags everyone');
+ channel='wrong';const count=posts;assert.equal((await service.sendPotentialGainPost(db,next(),transport,env)).state,'configuration');assert.equal(posts,count);
  assert.equal(service.potentialGainWebhook({WATCHLIST_POTENTIAL_GAIN_DISCORD_WEBHOOK_URL:'https://example.test/api/webhooks/123/secret'}),null);
  assert.throws(()=>service.validateGainPost({...input,png:Buffer.alloc(12)}));assert.throws(()=>service.validateGainPost({...input,message:'x'.repeat(1801)}));
  assert.throws(()=>service.validateGainPost({...input,symbol:'../TEST'}));

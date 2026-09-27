@@ -56,7 +56,7 @@ export async function sendPotentialGainPost(database: Database.Database, input: 
   try {
     webhook.searchParams.set("wait", "true");
     const form = new FormData();
-    form.set("payload_json", JSON.stringify({ content: input.message || undefined, allowed_mentions: { parse: [] }, attachments: [{ id: 0, filename: `${input.symbol}-potential-gain.png`, description: `${input.symbol} potential gain card` }] }));
+    form.set("payload_json", JSON.stringify({ content: input.message ? `${input.message}\n\n@everyone` : "@everyone", allowed_mentions: { parse: ["everyone"] }, attachments: [{ id: 0, filename: `${input.symbol}-potential-gain.png`, description: `${input.symbol} potential gain card` }] }));
     form.set("files[0]", new Blob([new Uint8Array(input.png)], { type: "image/png" }), `${input.symbol}-potential-gain.png`);
     const response = await transport(webhook, { method: "POST", body: form, signal: AbortSignal.timeout(20000), redirect: "error" });
     if (response.ok) {

@@ -26,7 +26,7 @@ produce('src/modules/platform/server/database/platform-migration-manifest.ts',s=
 });
 produce('src/modules/help/watchlist-guides.ts',s=>{
  const anchor=s.split('\n').find(l=>l.includes('blocks: [{')&&l.includes('Uncheck Generate analysis'));assert.ok(anchor);
- return replace(s,anchor,anchor+'\n      { kind: "paragraph", text: "Post potential gain opens an image preview for that ticker in Watchlist Admin. Add an optional message, then choose Send to Discord to post that exact image to the separate potential gain channel. It uses the existing potential gain card, does not generate analysis, and does not send email or push notifications. The image does not update after posting. If delivery cannot be confirmed, check Discord before posting again." },');
+ return replace(s,anchor,anchor+'\n      { kind: "paragraph", text: "Post potential gain opens an image preview for that ticker in Watchlist Admin. Add an optional message, then choose Send to Discord to post that exact image to the separate potential gain channel. Every potential gain post tags @everyone, including posts without an optional message. It uses the existing potential gain card, does not generate analysis, and does not send email or push notifications. The image does not update after posting. If delivery cannot be confirmed, check Discord before posting again." },');
 });
 fs.writeFileSync('docs/migration/watchlist-potential-gain-discord-platform.patch',patch);
 fs.unlinkSync(path.join(tmp,'before'));fs.unlinkSync(path.join(tmp,'after'));fs.rmdirSync(tmp);
