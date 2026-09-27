@@ -1,6 +1,7 @@
 "use client";
 
 import {useMemo, useState} from "react";
+import {alpha} from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -14,7 +15,7 @@ import TextField from "@mui/material/TextField";
 import {CommunityTypography as Typography} from "./community-typography";
 import type {TraderLinkCommunityCoachingItemType, TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import {createCommunityCoachingPlanAction} from "./community-actions";
-import {PLAN_OFFERS, PERFORMANCE_INCLUSIONS, REVIEW_RESOURCES, FREQUENCIES, PERIODS, initialOfferSettings, offerSummary, type Offer, type OfferSettings} from "./coaching-plan-offers";
+import {PLAN_OFFERS, PERFORMANCE_INCLUSIONS, REVIEW_RESOURCES, FREQUENCIES, PERIODS, initialOfferSettings, offerSummary, offerColor, type Offer, type OfferSettings} from "./coaching-plan-offers";
 
 type ItemType = TraderLinkCommunityCoachingItemType;
 type Settings = Record<ItemType, OfferSettings>;
@@ -60,10 +61,17 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false}:{
                 {PLAN_OFFERS.filter(offer => offer.group===group).map(offer => {
                   const added = selected.includes(offer.type);
                   return <Grid key={offer.type} size={{xs:6, md:4}}>
-                    <Button type="button" fullWidth aria-pressed={added} onClick={() => toggle(offer.type)} variant="outlined" color={added ? offer.accent : "inherit"}
-                      sx={{height:"100%", minHeight:64, flexDirection:{xs:"column",sm:"row"}, alignItems:{xs:"flex-start",sm:"center"}, justifyContent:"space-between", textAlign:"left", gap:1, borderWidth:added?2:1}}>
-                      <span>{offer.label}</span>
-                      <Chip component="span" size="small" color={added ? offer.accent : "default"} label={added ? "Added" : "+"}/>
+                    <Button type="button" fullWidth aria-label={offer.label} aria-describedby={`offer-description-${offer.type}`} aria-pressed={added} onClick={() => toggle(offer.type)} variant="outlined"
+                      sx={theme => {const color=offerColor(offer,theme.palette.mode);return {
+                        height:"100%", flexDirection:"column", alignItems:"flex-start", textAlign:"left", gap:1,
+                        p:1.5, color, borderColor:alpha(color,added?1:.5), borderWidth:2, borderTopWidth:4,
+                        bgcolor:alpha(color,added?.16:.07), boxShadow:added?`inset 0 0 0 1px ${color}`:"none",
+                        "&:hover":{borderColor:color,bgcolor:alpha(color,.2),boxShadow:added?`inset 0 0 0 1px ${color}`:"none"},
+                        "&.Mui-focusVisible":{outline:`3px solid ${color}`,outlineOffset:3},
+                      };}}>
+                      <Typography component="span" fontWeight={750} sx={{color:"inherit"}}>{offer.label}</Typography>
+                      <Typography component="span" id={`offer-description-${offer.type}`} variant="body2" sx={{color:"text.primary",fontWeight:400,lineHeight:1.5}}>{offer.description}</Typography>
+                      <Chip component="span" size="small" label={added ? "Added" : "+"} sx={theme => ({mt:"auto",color:offerColor(offer,theme.palette.mode),bgcolor:alpha(offerColor(offer,theme.palette.mode),.16),fontWeight:800})}/>
                     </Button>
                   </Grid>;
                 })}
@@ -111,7 +119,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false}:{
             {!active.length ? <Typography color="text.secondary">No services selected</Typography> : active.map(offer => <Box key={offer.type}>
               <Typography fontWeight={800}>{offer.label}</Typography>
               <Stack direction="row" sx={{flexWrap:"wrap", gap:.75, mt:1}}>
-                {offerSummary(offer, settings[offer.type]).map(text => <Chip key={text} size="small" color={offer.accent} variant="outlined" label={text} sx={{height:"auto", "& .MuiChip-label":{whiteSpace:"normal", py:.5}}}/>)}
+                {offerSummary(offer, settings[offer.type]).map(text => <Chip key={text} size="small" variant="outlined" label={text} sx={theme => ({color:offerColor(offer,theme.palette.mode),borderColor:alpha(offerColor(offer,theme.palette.mode),.5),height:"auto", "& .MuiChip-label":{whiteSpace:"normal", py:.5}})}/>)}
               </Stack>
               {settings[offer.type].details ? <Typography variant="body2" sx={{mt:1, whiteSpace:"pre-wrap"}}>{settings[offer.type].details}</Typography> : null}
             </Box>)}
@@ -144,7 +152,7 @@ function OfferEditor({offer, value, onChange, onRemove}:{
 }) {
   const focusToggle = (key:OfferSettings["focus"][number]) => onChange({focus:value.focus.includes(key)?value.focus.filter(item=>item!==key):[...value.focus,key]});
   const isReview = offer.group==="Reviews";
-  return <Box sx={{border:1, borderColor:"divider", borderTop:4, borderTopColor:offer.accent+".main", borderRadius:2, p:{xs:2,sm:2.5}}}>
+  return <Box sx={theme => ({border:1, borderColor:"divider", borderTop:4, borderTopColor:offerColor(offer,theme.palette.mode), borderRadius:2, p:{xs:2,sm:2.5}})}>
     <Stack direction="row" sx={{justifyContent:"space-between", alignItems:"center", mb:2}}>
       <Typography component="h3" variant="h3">{offer.label}</Typography>
       <Button type="button" size="small" color="error" onClick={onRemove} aria-label={"Remove "+offer.label}>Remove</Button>

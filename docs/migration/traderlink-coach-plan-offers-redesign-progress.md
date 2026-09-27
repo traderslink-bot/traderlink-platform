@@ -1,6 +1,6 @@
 # Coach plan offers redesign
 
-Status: new design and mobile correction deployed and visually inspected on staging on 2026-09-27. Owner review pending.
+Status: owner approved the builder direction; approved card colours and descriptions are implemented locally, pending staging review.
 This supersedes the rejected generic five-type plan-builder presentation, not
 the existing review-workspace workflow.
 
@@ -32,6 +32,21 @@ Coordinator owns remote build and staging on the current production-mirrored
 baseline. No local build or test suite. Owner visual acceptance remains required.
 
 ## Checkpoints
+
+### Approved card presentation follow-up
+
+- Owner approved exact descriptions for all13 service tiles in chat. Added verbatim;
+  these explain choices and do not add requirements to the coach's saved offer.
+- Always-visible tinted cards, coloured top border/title/status, distinct review
+  accents: blue Trades, teal Trading-day, green Performance, orange Rules,
+  purple Strategy, red Risk, pink Goals. Shared Material palette mapping also
+  colours the corresponding editor and preview. Theme mode selects accessible
+  darker/light accents; body copy uses shared text.primary.
+- Selection retains its colour, changes + to Added, and strengthens border/tint.
+  Card descriptions wrap and status aligns at bottom; keyboard focus is visible.
+- No form state, save action, student access, schema or review-workspace changes.
+- Help guidance reviewed: no behavioural change requires guide changes.
+- Diff check clean; no local build or test suite. Staging visual check pending.
 
 - [x] Distinct offer selection and configuration implemented.
 - [x] Performance package and standalone services implemented.
