@@ -1,12 +1,6 @@
 import type {TraderLinkCommunityCoachingItemType} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import type {CoachingReviewFocus} from "@/src/modules/communities/contracts/coaching-review-workspace";
-import blue from "@mui/material/colors/blue";
-import teal from "@mui/material/colors/teal";
-import green from "@mui/material/colors/green";
-import orange from "@mui/material/colors/orange";
-import purple from "@mui/material/colors/purple";
-import red from "@mui/material/colors/red";
-import pink from "@mui/material/colors/pink";
+import {blue, teal, green, orange, purple, red, pink} from "@mui/material/colors";
 
 export type Offer = Readonly<{
   type: Exclude<TraderLinkCommunityCoachingItemType,"journal_review">;
