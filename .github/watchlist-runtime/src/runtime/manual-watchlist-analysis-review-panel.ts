@@ -1,0 +1,500 @@
+export const ANALYSIS_REVIEW_PANEL = String.raw`
+<style>#analysis-review-panel [hidden] { display: none !important; } #analysis-review-panel details { margin: 12px 0; } #analysis-review-panel summary { cursor: pointer; font-weight: 700; margin-bottom: 10px; } #analysis-review-panel fieldset { min-width: 0; margin: 8px 0; } #analysis-review-actions { flex-wrap: wrap; }</style>
+<div class="ai-read-console" id="analysis-review-panel">
+  <h3>Analysis Review</h3>
+  <div class="provider-control">
+    <label for="analysis-review-format">Analysis format</label>
+    <select id="analysis-review-format" disabled><option value="current">Current analysis</option><option value="simple">Simple analysis</option></select>
+    <p>Applies to new requests only. Initial analyses and manual refreshes keep their review workflow.</p>
+    <label><input type="checkbox" id="analysis-review-automatic" style="width:auto" disabled /> Automatic AI updates</label>
+    <p>When off, automatic follow-up AI requests stop. Manual refresh and live price/data updates remain available.</p>
+    <label><input type="checkbox" id="analysis-review-required" style="width:auto" disabled /> Review before publishing</label>
+    <p>When on, new tickers wait for your approval when AI generation and the current session are enabled. Existing drafts stay held until approved.</p>
+    <p id="analysis-review-effective" role="status"></p>
+    <label><input type="checkbox" id="analysis-review-auto-publish" style="width:auto" disabled /> Automatically publish refreshed analyses</label>
+    <p>Applies to new automatic boundary refreshes only. When off, review and approve the replacement first. When on, publish it and send the normal Analysis updated notifications. Initial analyses and manual refreshes are unchanged.</p>
+    <label><input type="checkbox" id="analysis-review-owner-notify" style="width:auto" disabled /> Notify me when an analysis needs review</label>
+    <p>Notify your owner account when an automatic refreshed analysis is ready. Push uses your account's notification preferences and subscribed devices.</p>
+    <label><input type="checkbox" id="analysis-review-owner-discord" style="width:auto" disabled /> Send review notifications to Discord</label>
+    <p>Uses the separately configured private owner channel, not the member Watchlist channel.</p>
+    <p id="analysis-review-owner-delivery" role="status"></p>
+    <button type="button" id="analysis-review-settings-save" disabled>Save review controls</button>
+    <button type="button" id="analysis-review-settings-load" class="secondary">Reload review controls</button>
+  </div>
+  <div class="inline-control">
+    <button type="button" id="analysis-review-queue-refresh" class="secondary">Refresh review list</button>
+  </div>
+  <div id="analysis-review-queue" aria-label="Ticker review status"></div>
+  <div class="inline-control">
+    <label for="analysis-review-symbol">Ticker</label>
+    <input id="analysis-review-symbol" maxlength="20" autocomplete="off" />
+    <button type="button" id="analysis-review-load">Review ticker</button>
+    <button type="button" id="analysis-review-history-load" class="secondary">Ticker history</button>
+  </div>
+  <div id="analysis-review-cycles" aria-label="Saved ticker histories"></div>
+  <p id="analysis-review-status" role="status" aria-live="polite"></p>
+  <div id="analysis-review-editor"></div>
+  <div class="inline-control" id="analysis-review-listing-area" hidden>
+    <button type="button" id="analysis-review-listing" class="secondary">Publish ticker without analysis</button>
+  </div>
+  <div class="inline-control" id="analysis-review-actions" hidden>
+    <button type="button" id="analysis-review-save">Save draft</button>
+    <button type="button" id="analysis-review-preview">Preview</button>
+    <label id="analysis-review-notify-area" hidden><input type="checkbox" id="analysis-review-notify" style="width:auto" /> Notify users</label>
+    <button type="button" id="analysis-review-approve" disabled>Approve and publish</button>
+  </div>
+  <div class="inline-control" id="analysis-review-delivery-area" hidden>
+    <button type="button" id="analysis-review-retry" class="secondary">Retry Discord delivery</button>
+  </div>
+  <div class="inline-control" id="analysis-review-export-area" hidden>
+    <label for="analysis-review-export-generation">Audit generation</label>
+    <select id="analysis-review-export-generation"></select>
+    <button type="button" id="analysis-review-inspect" class="secondary">Inspect request</button>
+    <button type="button" id="analysis-review-export" class="secondary">Export audit</button>
+  </div>
+  <div id="analysis-review-audit-content"></div>
+  <div class="inline-control" id="analysis-review-verification" hidden>
+    <label for="analysis-review-verify-part">Discord message part</label>
+    <select id="analysis-review-verify-part"></select>
+    <label for="analysis-review-verify-message">Existing Discord message ID</label>
+    <input id="analysis-review-verify-message" inputmode="numeric" maxlength="20" />
+    <button type="button" id="analysis-review-verify-discord">Verify existing message</button>
+  </div>
+  <div id="analysis-review-preview-content"></div>
+</div>
+<script>
+(() => {
+  const byId = (id) => document.getElementById("analysis-review-" + id);
+  const editor = byId("editor"), status = byId("status"), previewContent = byId("preview-content");
+  const actions = byId("actions"), ticker = byId("symbol");
+  const keys = ["currentRead", "bias", "confidence", "needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation", "targets", "downsideCheckpoints", "pullbackPlans", "failureRecovery", "catalystRealityCheck", "dilutionRisk", "listingStatus", "riskSummary", "ownerHiddenSections"];
+  const sectionLabels = { currentRead: "Analysis", needsToHold: "Support to watch", cautionBelow: "Caution below", momentumFailure: "Momentum failure", mustClear: "Must clear", breakoutContinuation: "Breakout continuation", targets: "Where the trade could go next", downsideCheckpoints: "Downside levels", shallow: "Shallow pullback", deep: "Deep pullback", failureRecovery: "Failure and recovery", catalystRealityCheck: "Catalyst / recent news", dilutionRisk: "Dilution risk", listingStatus: "Listing status", riskSummary: "Risk notes" };
+  const fieldLabels = { label: "Label", price: "Price", rationale: "Rationale", condition: "Condition", zoneLow: "Area low", zoneHigh: "Area high", confirmationPrice: "Confirmation price", confirmation: "Confirmation", invalidationPrice: "Invalidation price", firstObjectivePrice: "Next level", recoveryZoneLow: "Recovery area low", recoveryZoneHigh: "Recovery area high", firstReclaimPrice: "First reclaim", setupRestorePrice: "Recovery setup established above", summary: "Summary", dayTradeRelevance: "Day-trading relevance" };
+  const levelFields = ["label", "price", "rationale"];
+  const pullbackFields = ["zoneLow", "zoneHigh", "confirmationPrice", "confirmation", "invalidationPrice", "firstObjectivePrice", "rationale"];
+  const recoveryFields = ["recoveryZoneLow", "recoveryZoneHigh", "firstReclaimPrice", "setupRestorePrice", "firstObjectivePrice", "rationale"];
+  let review = null, patch = null, preview = null, dirty = false, busy = false, controlsLoaded = false;
+  let historical = false;
+  const isListed = () => review?.preserveExistingPublication === true || Boolean(review?.events.some(event => event.body.kind === "delivery" && event.body.channel === "website" && event.body.status === "acknowledged"));
+  const node = (tag, text, parent) => { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (parent) parent.append(el); return el; };
+  const message = (text) => { status.textContent = text; };
+  const changed = () => { dirty = true; preview = null; previewContent.replaceChildren(); byId("approve").disabled = true; };
+  const pick = (value, names) => Object.fromEntries(names.map((key) => [key, value[key]]));
+  function editable(payload) {
+    if (payload.analysisFormat === "simple") return {simpleAnalysis:structuredClone(payload.simpleAnalysis),ownerHiddenSections:[...(payload.ownerHiddenSections || [])]};
+    const result = Object.fromEntries(keys.filter((key) => Object.hasOwn(payload, key)).map((key) => [key, structuredClone(payload[key])]));
+    for (const key of ["needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation"]) result[key] = pick(payload[key], levelFields);
+    result.targets = payload.targets.map((item) => pick(item, ["label", "price", "condition"]));
+    result.downsideCheckpoints = payload.downsideCheckpoints.map((item) => pick(item, ["label", "price", "condition"]));
+    result.pullbackPlans = Object.fromEntries(["shallow", "deep"].map((key) => [key, payload.pullbackPlans[key] ? pick(payload.pullbackPlans[key], pullbackFields) : null]));
+    result.failureRecovery = payload.failureRecovery ? pick(payload.failureRecovery, recoveryFields) : null;
+    for (const key of ["catalystRealityCheck", "dilutionRisk", "listingStatus"]) result[key] = pick(payload[key], ["summary", "dayTradeRelevance"]);
+    result.ownerHiddenSections = payload.ownerHiddenSections || [];
+    return result;
+  }
+  async function request(action, body, query = {}) {
+    const base = "/api/watchlist/analysis-review";
+    const response = await fetch(base + action + (body ? "" : "?" + new URLSearchParams({ symbol: ticker.value.trim().toUpperCase(), ...query })), {
+      method: body ? "POST" : "GET", cache: "no-store",
+      headers: body ? { "Content-Type": "application/json", "x-traderlink-journal-admin-request": "1" } : {},
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Owner review is unavailable. Check your owner session and try again.");
+    return result;
+  }
+  async function run(operation) {
+    if (busy) return;
+    busy = true;
+    const controls = Array.from(document.querySelectorAll("#analysis-review-panel button, #analysis-review-panel input, #analysis-review-panel textarea, #analysis-review-panel select"));
+    controls.forEach((control) => { control.disabled = true; });
+    try { await operation(); } catch (error) { message(error.message || "Review could not complete."); }
+    finally { busy = false; controls.forEach((control) => { control.disabled = false; }); byId("approve").disabled = !preview || dirty; ["automatic", "required", "format", "auto-publish", "owner-notify", "owner-discord", "settings-save"].forEach((id) => { byId(id).disabled = !controlsLoaded; }); }
+  }
+  function input(parent, label, object, key, numeric) {
+    const wrapper = node("label", label, parent);
+    const control = node(numeric ? "input" : "textarea", undefined, wrapper);
+    if (numeric) { control.type = "number"; control.step = "any"; }
+    else control.maxLength = 8000;
+    control.value = object[key] === null || object[key] === undefined ? "" : String(object[key]);
+    control.addEventListener("input", () => { object[key] = numeric ? (control.value === "" ? null : Number(control.value)) : control.value; changed(); });
+  }
+  function fields(parent, object, names) {
+    names.forEach((key) => input(parent, fieldLabels[key], object, key, key === "price" || /Price$|Low$|High$/.test(key)));
+  }
+  function section(key) {
+    const details = node("details", undefined, editor);
+    node("summary", sectionLabels[key], details);
+    const wrapper = node("label", "Show this section", details);
+    const checkbox = node("input", undefined, wrapper); checkbox.type = "checkbox";
+    checkbox.style.width = "auto"; checkbox.checked = !patch.ownerHiddenSections.includes(key);
+    checkbox.addEventListener("change", () => { patch.ownerHiddenSections = patch.ownerHiddenSections.filter((item) => item !== key); if (!checkbox.checked) patch.ownerHiddenSections.push(key); changed(); });
+    return details;
+  }
+  function renderReviewHistory(events, parent) {
+    const history = node("details", undefined, parent); node("summary", "Request and version history", history);
+    const requestNumbers = new Map();
+    events.filter((event) => event.body.kind === "generation" || event.body.kind === "original").forEach((event) => {
+      if (!requestNumbers.has(event.body.generationId)) requestNumbers.set(event.body.generationId, requestNumbers.size + 1);
+    });
+    node("p", "Recorded requests: " + requestNumbers.size, history);
+    events.filter((event) => ["generation", "original", "edit", "approve", "delivery", "discord_chunk"].includes(event.body.kind)).forEach((event) => {
+      const requestNumber = requestNumbers.get(event.body.generationId);
+      node("p", (requestNumber ? "Request " + requestNumber + " · " : "") + "Version " + event.revision + " · " + event.body.kind + " · " + new Date(event.at).toLocaleString() + (event.body.channel ? " · " + event.body.channel : "") + (event.body.status ? " · " + event.body.status : "") + (event.body.trigger ? " · " + event.body.trigger : ""), history);
+    });
+  }
+  function renderEditor() {
+    const listed = isListed();
+    byId("delivery-area").hidden = historical || !review?.approved || review.approved.body.publication?.notifyUsers === false;
+    byId("listing-area").hidden = historical || !review || review.cancelled || listed || Boolean(review.approved && review.approved.body.draftRevision !== 0);
+    byId("notify-area").hidden = !listed;
+    byId("notify").checked = false;
+    byId("approve").textContent = listed ? "Approve and publish analysis" : "Approve and publish";
+    byId("retry").hidden = review?.approved?.body.publication?.notifyUsers === false;
+    renderVerificationControls();
+    byId("audit-content").replaceChildren();
+    editor.replaceChildren(); previewContent.replaceChildren(); preview = null;
+    const draft = review && review.draft;
+    const generations = byId("export-generation"); generations.replaceChildren();
+    const generationIds = new Set();
+    (review ? review.events : []).filter((event) => event.body.kind === "original" || event.body.kind === "generation").forEach((event) => {
+      if (generationIds.has(event.body.generationId)) return;
+      generationIds.add(event.body.generationId);
+      const option = node("option", "Request " + generationIds.size + " · " + new Date(event.at).toLocaleString(), generations); option.value = event.body.generationId;
+    });
+    byId("export-area").hidden = generationIds.size === 0;
+    if (generationIds.size) generations.value = Array.from(generationIds).at(-1);
+    if (historical) {
+      patch = null; dirty = false; actions.hidden = true;
+      if (review) renderReviewHistory(review.events, editor);
+      message("Historical record — read only. Export a request to inspect its saved analysis and revisions.");
+      return;
+    }
+    if (!draft || !draft.body.payload) {
+      patch = null; dirty = false; actions.hidden = true;
+      if (review) renderReviewHistory(review.events, editor);
+      message(listed ? "Ticker published without analysis. No analysis draft is available yet." : "No analysis draft is available yet. You can publish the ticker without analysis."); return;
+    }
+    patch = editable(draft.body.payload); dirty = false; actions.hidden = false;
+    if (patch.simpleAnalysis) {
+      const simple=patch.simpleAnalysis;
+      input(section("currentRead"),"Analysis",simple,"setup",false);
+      [["pullbacks","Pullback",2],["upside","Where it could go next",5]].forEach(([key,title,limit])=>{
+        const parent=node("details",undefined,editor); node("summary",title,parent);
+        const list=node("div",undefined,parent);
+        const render=()=>{
+          list.replaceChildren();
+          simple[key].forEach((item,index)=>{
+            const row=node("fieldset",undefined,list);node("legend",title+" "+(index+1),row);
+            ["low","high","explanation",...(key==="pullbacks"?["confirmation","invalidation"]:[])].forEach(name=>
+              input(row,({low:"Area low",high:"Area high",explanation:"Explanation",confirmation:"Confirmation",invalidation:"Invalidation price"})[name],item,name,["low","high","invalidation"].includes(name)));
+            const remove=node("button","Remove",row);remove.type="button";remove.onclick=()=>{simple[key].splice(index,1);changed();render();};
+          });
+        };
+        render();const add=node("button","Add",parent);add.type="button";add.onclick=()=>{
+          if(simple[key].length>=limit)return;
+          simple[key].push({low:null,high:null,explanation:"",...(key==="pullbacks"?{confirmation:"",invalidation:null}:{})});changed();render();
+        };
+      });
+      ["shallow","deep","targets"].forEach(key=>section(key));
+      const invalidation=section("momentumFailure");
+      const addFailure=node("button",simple.invalidation?"Remove invalidation":"Add invalidation",invalidation);addFailure.type="button";
+      const body=node("div",undefined,invalidation);
+      const showFailure=()=>{body.replaceChildren();addFailure.textContent=simple.invalidation?"Remove invalidation":"Add invalidation";if(simple.invalidation){input(body,"Price",simple.invalidation,"price",true);input(body,"Explanation",simple.invalidation,"explanation",false);}};
+      addFailure.onclick=()=>{simple.invalidation=simple.invalidation?null:{price:null,explanation:""};changed();showFailure();};showFailure();
+      renderReviewHistory(review.events,editor);return;
+    }
+    node("p", review.symbol + " · Saved version " + draft.revision + " · Analysis price $" + draft.body.payload.currentPrice, editor);
+    for (const key of ["bias", "confidence"]) {
+      const label = node("label", key === "bias" ? "Bias" : "Confidence", editor);
+      const select = node("select", undefined, label);
+      (key === "bias" ? ["bullish", "neutral", "bearish", "mixed"] : ["low", "medium", "high"]).forEach((value) => { const option = node("option", value, select); option.value = value; });
+      select.value = patch[key]; select.addEventListener("change", () => { patch[key] = select.value; changed(); });
+    }
+    input(section("currentRead"), "Analysis", patch, "currentRead", false);
+    for (const key of ["needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation"]) fields(section(key), patch[key], levelFields);
+    for (const key of ["targets", "downsideCheckpoints", "riskSummary"]) {
+      const parent = section(key), list = node("div", undefined, parent);
+      const renderList = () => {
+        list.replaceChildren();
+        patch[key].forEach((item, index) => {
+          const row = node("fieldset", undefined, list); node("legend", String(index + 1), row);
+          if (key === "riskSummary") input(row, "Risk note", patch[key], index, false);
+          else fields(row, item, ["label", "price", "condition"]);
+          const remove = node("button", "Remove", row); remove.type = "button";
+          remove.onclick = () => { patch[key].splice(index, 1); changed(); renderList(); };
+        });
+      };
+      renderList(); const add = node("button", "Add", parent); add.type = "button";
+      add.onclick = () => { if (patch[key].length >= 20) { message("Up to 20 items can be saved in this section."); return; } patch[key].push(key === "riskSummary" ? "" : { label: "", price: null, condition: "" }); changed(); renderList(); };
+    }
+    for (const key of ["shallow", "deep", "failureRecovery"]) {
+      const parent = section(key), object = key === "failureRecovery" ? patch : patch.pullbackPlans;
+      const names = key === "failureRecovery" ? recoveryFields : pullbackFields;
+      const wrapper = node("label", "Include this setup", parent), toggle = node("input", undefined, wrapper);
+      toggle.type = "checkbox"; toggle.style.width = "auto"; toggle.checked = Boolean(object[key]);
+      const body = node("div", undefined, parent);
+      const renderSetup = () => { body.replaceChildren(); if (object[key]) fields(body, object[key], names); };
+      toggle.onchange = () => { object[key] = toggle.checked ? Object.fromEntries(names.map((name) => [name, /Price$|Low$|High$/.test(name) ? null : ""])) : null; changed(); renderSetup(); };
+      renderSetup();
+    }
+    for (const key of ["catalystRealityCheck"]) fields(section(key), patch[key], ["summary", "dayTradeRelevance"]);
+    renderReviewHistory(review.events, editor);
+  }
+  byId("load").onclick = () => { if (dirty && !window.confirm("Discard unsaved edits and load this ticker?")) return; run(async () => { const result = await request(""); review = result.review; historical = false; renderEditor(); if (review && review.draft) message("Saved analysis loaded."); }); };
+  async function loadHistory(symbol, after) {
+    const result = await request("/history", undefined, { symbol, ...(after ? { after } : {}) });
+    const list = byId("cycles");
+    if (!after) list.replaceChildren();
+    const previousMore = list.querySelector("[data-history-more]");
+    if (previousMore) previousMore.remove();
+    node("h4", symbol + " · Saved histories", list);
+    result.cycles.forEach((cycle) => {
+      const button = node("button", "Inspect " + new Date(cycle.startedAt).toLocaleString(), list);
+      button.type = "button";
+      button.onclick = () => {
+        if (dirty && !window.confirm("Discard unsaved edits and open this historical record?")) return;
+        run(async () => {
+          const selected = await request("", undefined, { symbol, cycleId: cycle.cycleId });
+          review = selected.review; historical = true; renderEditor();
+        });
+      };
+    });
+    if (result.nextCursor) {
+      const more = node("button", "Load more histories", list); more.type = "button"; more.dataset.historyMore = "1";
+      more.onclick = () => run(() => loadHistory(symbol, result.nextCursor));
+    } else if (!result.cycles.length) node("p", after ? "No more matching histories." : "No saved histories for this ticker.", list);
+  }
+  byId("history-load").onclick = () => run(() => loadHistory(ticker.value.trim().toUpperCase()));
+  byId("save").onclick = () => run(async () => {
+    if (historical) throw new Error("Historical records are read only.");
+    const result = await request("/save", { symbol: review.symbol, cycleId: review.cycleId, expectedHead: review.head, patch });
+    review = result.review; renderEditor(); message("Draft saved." + (result.warnings.length ? " " + result.warnings.join(" ") : ""));
+  });
+  byId("preview").onclick = () => run(async () => {
+    if (historical) throw new Error("Historical records are read only.");
+    if (dirty) { message("Save your edits before previewing."); return; }
+    preview = await request("/preview");
+    if (preview.cycleId !== review.cycleId || preview.draftRevision !== review.draft.revision) { preview = null; throw new Error("The draft changed. Reload before previewing."); }
+    previewContent.replaceChildren(); node("h4", "Discord preview", previewContent);
+    const websiteButton = node("button", "Website preview", previewContent);
+    websiteButton.type = "button";
+    const savedWebsite = preview.publication.website;
+    websiteButton.onclick = () => {
+      if (window.parent === window) { message("Open Watchlist Admin in the dashboard to view the website card."); return; }
+      window.parent.postMessage({ source: "traderslink-watchlist-admin", type: "preview-analysis", card: savedWebsite.cards.tradersLinkAiRead, dipBuyPlanVisible: savedWebsite.tradersLinkAiReadDipBuyPlanVisible }, window.location.origin);
+    };
+    preview.publication.discordChunks.forEach((text) => { const body = node("pre", text, previewContent); body.style.whiteSpace = "pre-wrap"; body.style.overflowWrap = "anywhere"; });
+    message("Preview ready. Approve and publish sends this saved version.");
+  });
+  byId("approve").onclick = () => run(async () => {
+    if (historical) throw new Error("Historical records are read only.");
+    if (!preview || dirty) throw new Error("Preview the saved version before approving.");
+    const notifyUsers = byId("notify").checked;
+    const result = await request("/approve", { symbol: review.symbol, cycleId: preview.cycleId, expectedHead: preview.expectedHead, draftRevision: preview.draftRevision, previewHash: preview.previewHash, notifyUsers });
+    review = result.review; renderEditor(); message("Analysis approval recorded. Check publication and delivery status below.");
+  });
+  byId("listing").onclick = () => run(async () => {
+    if (historical || !review || isListed()) throw new Error("Open a current ticker that has not been listed yet.");
+    const result = await request("/publish-without-analysis", { symbol: review.symbol, cycleId: review.cycleId, expectedHead: review.head });
+    review = result.review;
+    if (dirty) {
+      byId("listing-area").hidden = true; byId("notify-area").hidden = false; byId("notify").checked = false;
+      byId("approve").textContent = "Approve and publish analysis";
+      byId("delivery-area").hidden = false; changed();
+    } else renderEditor();
+    message("Listing approval recorded. Your analysis draft has not been published." + (dirty ? " Your unsaved edits are still here." : ""));
+  });
+  byId("retry").onclick = () => run(async () => {
+    if (historical) throw new Error("Historical records are read only.");
+    if (!review || !review.approved) throw new Error("There is no approved version to deliver.");
+    const result = await request("/retry-discord", { symbol: review.symbol, cycleId: review.cycleId, approvalRevision: review.approved.revision });
+    review = result.review; renderVerificationControls(); preview = null; previewContent.replaceChildren();
+    message("Discord delivery confirmed.");
+  });
+  function renderVerificationControls() {
+    const area = byId("verification"), parts = byId("verify-part");
+    parts.replaceChildren(); area.hidden = true; byId("verify-message").value = "";
+    if (historical || !review || !review.approved) return;
+    const latest = new Map();
+    review.events.filter(event => event.body.kind === "discord_chunk" && event.body.approvalRevision === review.approved.revision)
+      .forEach(event => latest.set(event.body.index, event));
+    latest.forEach((event, index) => {
+      if (event.body.status !== "started") return;
+      const option = node("option", "Part " + (index + 1) + " · Awaiting confirmation", parts); option.value = String(index);
+      area.hidden = false;
+    });
+  }
+  byId("verify-discord").onclick = () => run(async () => {
+    if (historical || !review || !review.approved) throw new Error("Open the current approved review first.");
+    const part = byId("verify-part").value, messageId = byId("verify-message").value.trim();
+    if (!part || !/^\d{17,20}$/.test(messageId)) throw new Error("Select a message part and enter its Discord message ID.");
+    const result = await request("/verify-discord", { symbol: review.symbol, cycleId: review.cycleId,
+      expectedHead: review.head, approvalRevision: review.approved.revision, index: Number(part), messageId });
+    review = result.review; byId("verify-message").value = "";
+    if (dirty) { renderVerificationControls(); preview = null; previewContent.replaceChildren(); }
+    else renderEditor();
+    message("Existing Discord message verified. No message was sent. Use Retry Discord delivery to finish any remaining delivery steps.");
+  });
+  function renderAudit(audit) {
+    const container = byId("audit-content"); container.replaceChildren();
+    node("h4", audit.symbol + " · Request audit", container);
+    node("p", "Generation: " + audit.generationId, container);
+    node("p", audit.diagnosticStatus === "available" ? "Available captured diagnostics are shown below." : "Input/response diagnostics are unavailable. Saved request and version records remain below.", container);
+    if (audit.diagnosticCoverage && typeof audit.diagnosticCoverage === "object") {
+      const labels = { request: "Input packet", response: "AI response", validation: "Validation", prepared_payload: "Prepared analysis", transport_error: "Transport error" };
+      const stages = Object.entries(labels).map(([key, label]) => {
+        const count = audit.diagnosticCoverage[key];
+        return label + ": " + (Number.isSafeInteger(count) && count >= 0 ? count : "Unavailable");
+      });
+      node("p", "Captured records — " + stages.join(" · "), container);
+      node("p", "A zero means no record is available here. It does not prove that a request was never sent or that a stage never occurred.", container);
+    }
+    const checks = [];
+    const sectionNames = { "pullbackPlans.shallow": "Shallow pullback", "pullbackPlans.deep": "Deep pullback", failureRecovery: "Failure / recovery", breakoutContinuation: "Breakout continuation", mustClear: "Must-clear level", targets: "Where the trade could go next", downsideCheckpoints: "Downside checkpoints" };
+    const reasons = { invalid_number: "a required price is missing or invalid", low_confidence: "generation confidence is low", zone_order: "zone prices are reversed", reference_order: "price ordering does not fit the analysis price", missing_evidence: "no supporting observation was cited", unknown_evidence: "a cited observation was not in the packet", zone_evidence_mismatch: "zone prices do not match the cited base", invalidation_order: "invalidation does not sit below the zone", confirmation_order: "confirmation prices are out of order", objective_order: "the optional objective is out of order", momentum_failed: "the analysis price is already at or below momentum failure", failure_order: "invalidation conflicts with momentum failure", reclaim_order: "reclaim does not clear the recovery zone", restore_order: "setup restoration does not clear reclaim", zone_overlap: "the zones overlap or lack separation" };
+    const diagnosticEvents = Array.isArray(audit.diagnostic && audit.diagnostic.events) ? audit.diagnostic.events : [];
+    const savedValidationEvents = (Array.isArray(audit.selectedEvents) ? audit.selectedEvents : []).flatMap(event =>
+      event && event.body && event.body.kind === "original" && Array.isArray(event.body.validationDecisions)
+        ? event.body.validationDecisions.map(payload => ({ phase: "validation", payload })) : []);
+    const attempts = new Map();
+    diagnosticEvents.forEach(event => {
+      const result = event && event.phase === "validation" && event.payload;
+      if (result && result.stage === "api_attempt" && typeof result.clientRequestId === "string" && result.clientRequestId) attempts.set(result.clientRequestId, result);
+    });
+    node("p", "API requests: " + (attempts.size ? attempts.size + " recorded" : "Unavailable in this audit"), container);
+    const costs = Array.from(attempts.values()).map(attempt => attempt.usageReported && attempt.usage ? attempt.usage.estimatedTotalCostUsd : null);
+    const costAvailable = costs.length > 0 && costs.every(cost => typeof cost === "number" && Number.isFinite(cost) && cost >= 0);
+    const summedCost = costAvailable ? costs.reduce((sum, cost) => sum + cost, 0) : null;
+    const totalCost = summedCost !== null && Number.isFinite(summedCost) ? summedCost : null;
+    const costText = totalCost === null ? "Unavailable" : totalCost > 0 && totalCost < 0.000001 ? "less than $0.000001" : "$" + totalCost.toFixed(6);
+    node("p", "Estimated cost: " + costText + (totalCost === null ? "" : " USD for recorded requests"), container);
+    [...diagnosticEvents, ...savedValidationEvents].forEach(event => {
+      if (event.phase !== "validation" || !event.payload || typeof event.payload !== "object") return;
+      const result = event.payload;
+      if (result.reviewOnly === true) {
+        if (result.stage === "owner_review" && typeof result.message === "string") checks.push(result.message);
+        if (Array.isArray(result.issues)) result.issues.forEach(issue => {
+          const detail = typeof issue === "string" ? issue : issue && (issue.reason || reasons[issue.code]);
+          if (typeof detail === "string") checks.push("For your review: " + detail.slice(0, 600) + " Kept in your draft.");
+        });
+        return;
+      }
+      if (result.stage === "checkpoint_dependencies" && Array.isArray(result.issues)) result.issues.forEach(issue => {
+        if (!issue || typeof issue.reason !== "string") return;
+        checks.push((result.field === "targets" ? "Upside checkpoint" : "Downside checkpoint") +
+          " — omitted: " + issue.reason.slice(0, 600));
+      });
+      if ((result.stage === "core_evidence" || result.stage === "must_clear_evidence") && Array.isArray(result.issues)) {
+        const names = { needsToHold: "Support to watch", cautionBelow: "Caution below", momentumFailure: "Momentum failure", mustClear: "Must-clear level" };
+        if (result.issues.length) result.issues.forEach(issue => {
+          if (typeof issue !== "string") return;
+          const key = Object.keys(names).find(name => issue.startsWith(name + " "));
+          const label = key ? names[key] : result.stage === "must_clear_evidence" ? names.mustClear : "Core levels";
+          checks.push(label + " — check failed: " + (key ? issue.slice(key.length + 1) : issue).slice(0, 600) + ".");
+        });
+        else {
+          const anchors = result.stage === "must_clear_evidence" ? { mustClear: result.anchor } : result.anchors;
+          if (anchors && typeof anchors === "object") Object.keys(names).forEach(key => {
+            const anchor = anchors[key];
+            if (!anchor || typeof anchor.anchorPrice !== "number" || !Number.isFinite(anchor.anchorPrice) || anchor.anchorPrice <= 0) return;
+            const basis = anchor.basis === "observed_level" ? "observed anchor" : anchor.basis === "threshold_below" ? "threshold below observed anchor" : anchor.basis === "confirmation_above" ? "confirmation above observed anchor" : null;
+            if (basis) checks.push(names[key] + " — " + basis + " $" + anchor.anchorPrice + "." +
+              (typeof anchor.explanation === "string" && anchor.explanation.trim() ? " " + anchor.explanation.trim().slice(0, 600) : ""));
+          });
+        }
+      }
+      if (result.stage === "optional_overview" && Array.isArray(result.issues)) result.issues.forEach(issue => {
+        if (!issue || issue.action !== "omit_text" || typeof issue.path !== "string") return;
+        checks.push((issue.path === "currentRead" ? "Analysis overview" : "Risk summary item") + " — omitted after a text check; valid setup prices were retained. See the validation record for the original text and reason.");
+      });
+      if (result.stage === "optional_sections" && Array.isArray(result.issues)) result.issues.forEach(issue => {
+        if (!issue || typeof issue.path !== "string") return;
+        const key = Object.keys(sectionNames).find(name => issue.path === name || issue.path.startsWith(name + "."));
+        const section = key ? sectionNames[key] : "Analysis section";
+        const reason = issue.code === "unsupported_text" ? "the explanation failed an analysis text check; see the validation record for the exact reason" : issue.code === "reference_order" && issue.path.startsWith("pullbackPlans.") ? "zone is not sufficiently below the analysis price" : issue.code === "momentum_failed" ? "the analysis price is too close to or below momentum failure" : (Object.hasOwn(reasons, issue.code) ? reasons[issue.code] : "see the validation record for details");
+        checks.push(section + " — " + (issue.action === "omit_objective" ? "optional objective omitted: " : "omitted: ") + reason + ".");
+      });
+      if (result.stage === "breakout_selection") checks.push(result.selectedCandidateId === "alternate" ? "Breakout continuation — backup selected from the same AI response." : result.selectedCandidateId === "primary" ? "Breakout continuation — primary selected." : "Breakout continuation — no candidate selected; see the validation record for reasons.");
+      if (result.stage === "outer_daily_resistance" && result.action === "omit_objective") checks.push("Farther daily resistance — optional addition omitted; the previously validated analysis was retained. See the validation record for the price and reason.");
+    });
+    if (checks.length) {
+      node("h4", "Analysis checks", container);
+      node("p", "These checks describe the generated analysis. Owner edits are saved separately.", container);
+      const list = node("ul", undefined, container);
+      const unique = Array.from(new Set(checks));
+      unique.slice(0, 80).forEach(text => node("li", text, list));
+      if (unique.length > 80) node("p", "More checks are available in the validation records below.", container);
+    }
+    const show = (label, value) => {
+      const details = node("details", undefined, container); node("summary", label, details);
+      let rendered = false;
+      details.addEventListener("toggle", () => {
+        if (!details.open || rendered) return;
+        rendered = true;
+        const text = typeof value === "string" ? value : JSON.stringify(value ?? null, null, 2);
+        const body = node("pre", text.slice(0, 100000), details);
+        body.style.whiteSpace = "pre-wrap"; body.style.overflowWrap = "anywhere";
+        if (text.length > 100000) node("p", "Display shortened for performance. Export audit contains the full available record.", details);
+      });
+    };
+    const labels = { request: "Input packet", response: "AI response", validation: "Validation results", prepared_payload: "Prepared analysis", transport_error: "Request error" };
+    diagnosticEvents.forEach((event, index) => show((labels[event.phase] || "Diagnostic record") + " · " + (index + 1), event.payload));
+    (audit.selectedEvents || []).forEach((event) => show("Version " + event.revision + " · " + event.body.kind, event));
+  }
+  byId("inspect").onclick = () => run(async () => {
+    const generationId = byId("export-generation").value;
+    if (!review || !generationId) throw new Error("Select a saved request to inspect.");
+    const result = await request("/export", undefined, { symbol: review.symbol, generationId, ...(historical ? { cycleId: review.cycleId } : {}) });
+    renderAudit(result.audit);
+    message("Selected request loaded. Inspecting does not generate or publish analysis.");
+  });
+  byId("export-generation").onchange = () => byId("audit-content").replaceChildren();
+  byId("export").onclick = () => run(async () => {
+    const generationId = byId("export-generation").value;
+    if (!review || !generationId) throw new Error("Select a saved analysis to export.");
+    const result = await request("/export", undefined, { symbol: review.symbol, generationId, ...(historical ? { cycleId: review.cycleId } : {}) });
+    const url = URL.createObjectURL(new Blob([JSON.stringify(result.audit, null, 2)], { type: "application/json" }));
+    const link = node("a"); link.href = url; link.download = review.symbol + "-analysis-audit.json"; document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    message("Selected audit exported. It has not been shared with anyone.");
+  });
+  const showSettings = (settings) => {
+    byId("automatic").checked = settings.automaticUpdatesEnabled;
+    byId("required").checked = settings.reviewBeforePublishingEnabled;
+    byId("auto-publish").checked = settings.autoPublishBoundaryRefreshes === true;
+    byId("owner-notify").checked = settings.ownerReviewNotificationsEnabled !== false;
+    byId("owner-discord").checked = settings.ownerReviewDiscordEnabled !== false;
+    byId("owner-delivery").textContent = settings.ownerReviewDeliveryStatus || "Owner delivery status is available in the dashboard Watchlist Admin.";
+    ["auto-publish", "owner-notify", "owner-discord"].forEach(id => { byId(id).disabled = false; });
+    byId("effective").textContent = !settings.automaticUpdatesEnabled
+      ? "Automatic boundary refresh is paused: Automatic AI updates is off."
+      : !settings.boundaryRefreshEnabled ? "Automatic boundary refresh is off."
+      : "Automatic boundary refresh is on, subject to session settings and request limits.";
+    byId("format").value = settings.analysisFormat || "current";
+    controlsLoaded = true;
+  };
+  const loadQueue = async () => {
+    const result = await request("/queue"), list = byId("queue");
+    list.replaceChildren();
+    if (!result.tickers.length) { node("p", "No active tickers require owner review.", list); return; }
+    result.tickers.forEach((item) => {
+      const row = node("div", undefined, list); row.className = "inline-control";
+      node("span", item.symbol + " · " + item.status, row);
+      const button = node("button", (item.canReview ? "Review " : "Inspect ") + item.symbol, row); button.type = "button";
+      button.onclick = () => { if (dirty && !window.confirm("Discard unsaved edits and load this ticker?")) return; run(async () => { ticker.value = item.symbol; review = (await request("")).review; historical = false; renderEditor(); if (review && review.draft) message("Saved analysis loaded."); }); };
+    });
+  };
+  byId("queue-refresh").onclick = () => run(loadQueue);
+  const loadSettings = () => run(async () => { showSettings((await request("/settings")).settings); await loadQueue(); message("Review controls and ticker list loaded."); });
+  byId("settings-load").onclick = loadSettings;
+  byId("settings-save").onclick = () => run(async () => {
+    if (!controlsLoaded) throw new Error("Load the saved controls first.");
+    const result = await request("/settings", { automaticUpdatesEnabled: byId("automatic").checked, reviewBeforePublishingEnabled: byId("required").checked, analysisFormat:byId("format").value,
+      autoPublishBoundaryRefreshes: byId("auto-publish").checked, ownerReviewNotificationsEnabled: byId("owner-notify").checked, ownerReviewDiscordEnabled: byId("owner-discord").checked });
+    showSettings(result.settings); message("Review controls saved. Session settings and existing pending drafts are unchanged.");
+  });
+  void loadSettings();
+  window.addEventListener("beforeunload", (event) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } });
+})();
+</script>`;

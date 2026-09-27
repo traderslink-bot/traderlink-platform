@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import Database from '../app/node_modules/better-sqlite3/lib/index.js';
+import {platformMigrationManifest as manifest} from '../app/src/modules/platform/server/database/platform-migration-manifest';
+import {runPlatformMigrations,verifyCompletedPlatformDatabase} from '../app/src/modules/platform/server/database/run-platform-migrations';
+const db=new Database(':memory:'); db.pragma('foreign_keys=ON');
+assert.equal(manifest.length,128); assert.equal(manifest.at(-1)?.migrationId,'0146_watchlist_owner_review_notifications');
+runPlatformMigrations(db,{manifest:manifest.slice(0,-1)});
+const before=db.prepare('SELECT * FROM platform_schema_migrations ORDER BY execution_order').all();
+const tables=db.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%'").all() as {name:string}[];
+const counts=tables.filter(t=>t.name!=='platform_schema_migrations').map(t=>[t.name,db.prepare('SELECT COUNT(*) AS n FROM "'+t.name+'"').get()]);
+assert.deepEqual(runPlatformMigrations(db).appliedMigrationIds,['0146_watchlist_owner_review_notifications']);
+assert.deepEqual(db.prepare('SELECT * FROM platform_schema_migrations ORDER BY execution_order LIMIT 127').all(),before);
+for(const [name,count] of counts)assert.deepEqual(db.prepare('SELECT COUNT(*) AS n FROM "'+name+'"').get(),count);
+verifyCompletedPlatformDatabase(db); assert.deepEqual(runPlatformMigrations(db).appliedMigrationIds,[]);
+assert.equal(db.prepare('SELECT COUNT(*) AS n FROM platform_watchlist_owner_review_deliveries').get().n,0);
+db.close(); console.log('PASS exact127-to128 migration, immutable predecessor, existing rows/counts, schema/FK/quick checks and idempotency. Synthetic empty schema only; hosted backup remains mandatory.');

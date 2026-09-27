@@ -26,7 +26,6 @@ export interface DiscordUserGuild {
   id: string;
   name?: string | null;
   owner?: boolean;
-  permissions?: string;
 }
 
 interface DiscordTokenResponse {
