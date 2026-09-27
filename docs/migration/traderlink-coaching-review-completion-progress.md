@@ -264,3 +264,10 @@ verified an applied-migration identity on any hosted database.
 - Coordinator has prepared a verified staging backup/restore copy and owns remote
   rehearsal, transactional live application, and result verification. Helper plus
   this progress record are the only handoff files; exclude the held nav commit.
+- Coordinator completed restored-copy rehearsal and atomic live staging setup.
+  Existing-row preservation and no-change rerun checks passed; actual coach Journal
+  reader confirms six closed trades and zero pending decisions. Persistent review:
+  `/communities/test-community/workspace/students/8c6d9100-f76a-4fe1-82a8-4d32eb150006/reviews/aa1785a7-9b20-44cf-b2df-7cd2bb5c250f`.
+  Log in as TradersLink; the synthetic student cannot sign in. Source remains
+  dc54bc36 / deployment 5bb70aac; nav correction and production remain untouched.
+  Signed-in rendered interaction acceptance remains outstanding.
