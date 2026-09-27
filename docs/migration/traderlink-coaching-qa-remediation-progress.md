@@ -38,15 +38,15 @@ No redesign or removal of those workflows. No automatic Journal sharing.
 
 ## Implementation checkpoints
 
-- [ ] Additive contracts/schema proposal and reservation; no applied migration edits.
-- [ ] Area1 plan editor and agreement lifecycle.
-- [ ] Area2 idempotent schedule generation and workload presentation.
-- [ ] Area3 allowances and entitlement transitions.
-- [ ] Area4 coach-scoped analysis surfaces.
-- [ ] Area5 sessions and teaching lifecycle.
-- [ ] Area6 relationship selection/accessibility/date corrections.
-- [ ] Targeted low-resource checks after coherent source batches.
-- [ ] Coordinator staged migration rehearsal and production-parity release.
+- [x] Additive contracts/schema proposal and reservation; no applied migration edits.
+- [x] Area1 plan editor/agreement implemented; student browser gate open.
+- [x] Area2 generation/workload implemented; automatic caller staging check pending.
+- [x] Area3 allowances/transitions implemented; real provider verification remains open.
+- [x] Area4 coach-scoped analysis implemented and browser query checked.
+- [x] Area5 sessions/teaching implemented; coach edit/reuse checked, student gate open.
+- [x] Area6 relationship/accessibility/date corrections implemented; multi-student browser gate open.
+- [x] Targeted low-resource checks after coherent source batches.
+- [x] Coordinator migration rehearsal and production-parity release of3d28 chain.
 - [ ] Full13-area QA, including coach/student, images and access isolation.
 - [ ] Final report separates verified, failed and externally blocked scenarios.
 
@@ -70,6 +70,7 @@ Do not falsely mark the old goal complete to create another.
 ### Implementation and local evidence (in progress)
 
 Release contract: [migration and staging handoff](traderlink-coaching-remediation-release-handoff.md).
+Current verification: [remediation QA record](traderlink-coaching-remediation-qa-20260927.md).
 
 - Plan edits persist structured details/resources and use revision conflict checks;
   published/paused state and legacy Journal scope/items are preserved on edits.
@@ -139,3 +140,17 @@ Release contract: [migration and staging handoff](traderlink-coaching-remediatio
 - Help review: existing `discord-communities` guide's payment/privacy/role statements
   remain correct. Additional agreement/scheduling instructions need owner-approved
   wording; no new explanatory UI/help paragraphs have been published.
+- Normal staging188fd/1a6f9c3b is healthy141 with current productiona741 and the
+  complete3d28 source chain. See the remediation QA record for deployed coach evidence.
+- Final bounded follow-up: maintenance extracted into a shared service and runtime,
+  hosted registration after readiness every60seconds, batch5, non-overlap/finally-close,
+  hourly agreement watermark and yields between agreement transactions. Same cron
+  authentication retained. Coordinator cleared the two-line shared worker registration;
+  this is source clearance, not permission for an uncoordinated deploy.
+- Added in-memory maintenance assertions: automatic weekly generation, retry
+  idempotence, hourly selection, missing-token honesty, overlap suppression and
+  recovery after a failed pass. PASS. Final6-file semantic check0diagnostics;
+  final7-file lint0errors/0warnings including the shared registration.
+- Desktop expanded editor is constrained to visible table width while preserving
+  the aligned/scrollable table and right-side panel. Teaching singular label corrected.
+  These final UI changes require deployed recheck; no new descriptions or redesign.

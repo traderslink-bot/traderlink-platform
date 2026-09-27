@@ -93,3 +93,16 @@ Next.js guidance informed server-action authorization and serializable client da
 React guidance informed stable dates, controlled state and dependency checks. Existing
 Help payment/privacy/Discord-role statements remain valid. New instructional prose
 is not published without the owner's exact-wording approval.
+
+## Final runtime follow-up after188fd browser QA
+
+Coordinator cleared only the narrow import/registration in
+`src/modules/platform/server/runtime/traderlink-hosted-background-workers.ts`.
+Existing Analyzer/notification registrations remain unchanged. Coaching starts
+after hosted readiness, first tick after60seconds, batch5, process-local overlap
+guard, connection closed in finally and yields between agreement transactions.
+Existing cron authentication delegates to the same pass. No new service, schema,
+secret, identity, production source or configuration is required by this patch.
+No bot token means role refresh is explicitly unavailable, not falsely successful.
+Verify the scheduled startup log and a subsequent pass on staging before claiming
+automatic operation; student/browser/provider acceptance boundaries remain open.
