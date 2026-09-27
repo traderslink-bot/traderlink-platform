@@ -11,6 +11,7 @@ import { MarketHaltWebPushRepository } from "@/src/modules/news/server/market-ha
 import { loadMarketHaltDiscordConfiguration } from "@/src/modules/news/server/market-halt-discord-configuration";
 import { MarketHaltDiscordRepository } from "@/src/modules/news/server/market-halt-discord-repository";
 import { MarketHaltDiscordDeliveryService } from "@/src/modules/news/server/market-halt-discord-delivery";
+import { marketHaltDirection } from "@/src/modules/news/server/market-halt-direction";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +78,17 @@ export async function GET(request: Request): Promise<Response> {
       health.fail({ runId, sources: fetched.sources });
       return Response.json({ ok: false, sources: fetched.sources }, { status: 503 });
     }
+    const directionObservedAtUtc = createCanonicalUtcTimestamp();
+    const eligibility = new MarketHaltAlertRepository(runtimeDatabase);
+    const directionCandidates = new Map<string, (typeof fetched.halts)[number]>();
+    for (const halt of fetched.halts) {
+      const key = `${halt.haltDateEt}:${halt.haltTimeEt}:${halt.ticker}`;
+      if (!eligibility.initialAlertAlreadyIssued(halt) && !directionCandidates.has(key)) {
+        directionCandidates.set(key, halt);
+      }
+    }
+    const directions = new Map(await Promise.all([...directionCandidates].map(async ([key, halt]) =>
+      [key, await marketHaltDirection(halt, directionObservedAtUtc)] as const)));
     const observedAtUtc = createCanonicalUtcTimestamp();
     let created = 0;
     let queued = 0;
@@ -92,6 +104,7 @@ export async function GET(request: Request): Promise<Response> {
     runtimeDatabase.transaction(() => {
       const repository = new MarketHaltAlertRepository(runtimeDatabase, discordConfiguration?.channelId ?? null);
       const observedHaltIds = new Set<string>();
+      const haltDirectionsById = new Map<string, Awaited<ReturnType<typeof marketHaltDirection>>>();
       for (const halt of fetched.halts) {
         const result = repository.upsert({
           halt,
@@ -100,9 +113,18 @@ export async function GET(request: Request): Promise<Response> {
         });
         if (result.inserted) created += 1;
         observedHaltIds.add(result.haltId);
+        const key = `${halt.haltDateEt}:${halt.haltTimeEt}:${halt.ticker}`;
+        const direction = directions.get(key) ?? null;
+        if (!haltDirectionsById.has(result.haltId) || direction) {
+          haltDirectionsById.set(result.haltId, direction);
+        }
       }
       for (const haltId of observedHaltIds) {
-        queued += repository.reconcileDeliveryLifecycle({ haltId, observedAtUtc });
+        queued += repository.reconcileDeliveryLifecycle({
+          haltId,
+          observedAtUtc,
+          direction: haltDirectionsById.get(haltId) ?? null,
+        });
       }
     }).immediate();
     // Each transport settles independently, including configuration failures.

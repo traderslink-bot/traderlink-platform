@@ -35,7 +35,7 @@ export const TOOLS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Each alert identifies the stock, exchange reason and any posted return-to-trading times.",
         keywords: Object.freeze(["halt reason", "halt code", "news pending", "volatility pause", "resume trading"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "A halt alert shows the ticker, time, exchange reason and the reason code when the exchange provides one. It also explains the reason in plain language and shows posted quote or trading-resumption times when they are available." }),
+          Object.freeze({ kind: "paragraph", text: "A halt alert shows the ticker, time, exchange reason and the reason code when the exchange provides one. For a volatility halt, the first alert also says UP or DOWN when fresh market data clearly establishes the direction into the halt. The direction is omitted when the evidence is unavailable or unclear. The alert also shows posted quote or trading-resumption times when they are available." }),
           Object.freeze({ kind: "paragraph", text: "Halt Alerts cover qualifying Nasdaq and NYSE news-related and volatility halts. Listing, filing, administrative, IPO, corporate-action, ETF, market-wide and resumption-only notices are not sent as Halt Alerts." }),
         ]),
       }),

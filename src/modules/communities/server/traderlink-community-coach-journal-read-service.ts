@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import {coachingEntitlement} from "./coaching-access-lifecycle";
 import Decimal from "decimal.js";
 
 import type { WorkspaceAccessScope } from "../../platform/contracts/workspace-access-scope";
@@ -28,6 +29,12 @@ export type CoachStudentTradeDetails=Readonly<{trade:CoachStudentJournalTrade;st
 
 export class TraderLinkCommunityCoachJournalReadService{
   constructor(private readonly database:Database.Database){}
+  readAnalysisScope(input:Readonly<{coachUserId:string;relationshipId:string}>):Readonly<{scope:WorkspaceAccessScope;canReadTrades:boolean}>{
+    const {grant,scope}=this.grant(input);
+    const fields=JSON.parse(grant.shared_fields_json) as string[];
+    if(!["complete","analytics"].includes(grant.data_scope)&&!fields.includes("analytics"))platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED",{operation:"coach_analytics_read"});
+    return {scope,canReadTrades:["trades","complete"].includes(grant.data_scope)};
+  }
 
   readReviewContext(input:Readonly<{coachUserId:string;relationshipId:string;periodStart?:string;periodEnd?:string;selectedIds?:readonly string[];includeRules:boolean;includeJournal:boolean;includeDayJournal?:boolean}>){
     const {grant,scope}=this.grant(input);
@@ -67,7 +74,7 @@ export class TraderLinkCommunityCoachJournalReadService{
     const relationship=this.database.prepare(`SELECT community_id,coach_user_id FROM traderlink_community_coaching_relationships WHERE relationship_id=? AND status='active'`).get(input.relationshipId) as {community_id:string;coach_user_id:string}|undefined;
     if(!relationship||relationship.coach_user_id!==input.coachUserId)platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED",{operation:"coach_journal_read"});
     const entitlement=this.database.prepare(`SELECT CASE WHEN plan.required_discord_role_id IS NULL THEN 1 ELSE EXISTS(SELECT 1 FROM traderlink_communities community JOIN platform_discord_memberships membership ON membership.guild_id=community.discord_guild_id JOIN json_each(membership.role_ids_json) role ON role.value=plan.required_discord_role_id WHERE community.community_id=relationship.community_id AND membership.user_id=relationship.student_user_id) END role_present FROM traderlink_community_coaching_relationships relationship JOIN traderlink_community_coaching_plans plan ON plan.plan_id=relationship.plan_id WHERE relationship.relationship_id=?`).get(input.relationshipId) as {role_present:number}|undefined;
-    if(entitlement?.role_present!==1)platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED",{operation:"coaching_access_paused"});
+    if(!entitlement||!coachingEntitlement(this.database,input.relationshipId)?.present)platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED",{operation:"coaching_access_paused"});
     new TraderLinkCommunityRepository(this.database).requireCapability(relationship.community_id,input.coachUserId,"community.coaching.students");
     const grant=this.database.prepare(`SELECT g.student_user_id,g.journal_account_id,g.data_scope,g.shared_fields_json,
   u.display_name student_name,a.display_name account_name,a.workspace_id

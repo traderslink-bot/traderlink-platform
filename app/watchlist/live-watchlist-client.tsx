@@ -1582,7 +1582,7 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
         <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />
       ) : null}
       {symbol.cards.traderNotes?.body?.trim() ? (
-        <article className="academy-card watchlist-content-card" data-card-label="Trader notes" style={{ gridColumn: "1 / -1", minWidth: 0 }}>
+        <article className="academy-card watchlist-content-card" data-card-label="Trader notes" style={{ gridColumn: "1", minWidth: 0 }}>
           <h2 style={{ fontWeight: 700 }}>TRADER NOTES</h2>
           <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{symbol.cards.traderNotes.body}</div>
           <p style={{ marginTop: "1rem", marginBottom: 0, fontSize: "0.75rem", lineHeight: 1.5, color: "var(--academy-muted)" }}>Full analysis may be added if the ticker develops a clearer trading setup.</p>

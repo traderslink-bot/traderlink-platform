@@ -1,8 +1,8 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
 
 import Database from "better-sqlite3";
+import {traderLinkCommunitiesReviewWorkflowMigration} from "../modules/communities/server/database/migrations/0143_traderlink_communities_review_workflow";
+import {traderLinkCommunitiesReviewWorkspaceMetadataMigration} from "../modules/communities/server/database/migrations/0144_traderlink_communities_review_workspace_metadata";
+import {traderLinkCommunitiesCoachingDeliveryWorkflowMigration} from "../modules/communities/server/database/migrations/0145_traderlink_communities_coaching_delivery_workflow";
 
 import { platformIdentityMigration } from "../modules/platform/server/database/migrations/0001_platform_identity";
 import { journalAccountBoundaryMigration } from "../modules/journal/server/database/migrations/0002_journal_account_boundary";
@@ -41,11 +41,10 @@ const PILOT_GUILD="1433570740430573642";
 function assert(condition:unknown,message:string):asserts condition{if(!condition)throw new Error(message);}
 function expectDenied(operation:()=>unknown,message:string):void{let denied=false;try{operation();}catch{denied=true;}assert(denied,message);}
 
-const directory=mkdtempSync(join(tmpdir(),"traderlink-communities-qa-"));
-const database=new Database(join(directory,"qa.sqlite"));
+const database=new Database(":memory:");
 try{
   database.pragma("foreign_keys = ON");
-  for(const migration of [platformIdentityMigration,journalAccountBoundaryMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,communityWatchlistsMigration,traderLinkCommunitiesIdentityPermissionsMigration,traderLinkCommunitiesPartnerPlatformMigration,traderLinkCommunitiesDiscordFeatureAccessMigration,traderLinkCommunitiesServerWatchlistsMigration,traderLinkCommunitiesWorkspaceToolsMigration,traderLinkCommunitiesCoachingWorkspaceMigration,traderLinkCommunitiesCoachingProgramsMigration,traderLinkCommunitiesCoachingPlanBuilderMigration,traderLinkCommunitiesCoachingServiceMeasurementMigration,traderLinkCommunitiesReviewCoachingSectionsMigration]){
+  for(const migration of [platformIdentityMigration,journalAccountBoundaryMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,communityWatchlistsMigration,traderLinkCommunitiesIdentityPermissionsMigration,traderLinkCommunitiesPartnerPlatformMigration,traderLinkCommunitiesDiscordFeatureAccessMigration,traderLinkCommunitiesServerWatchlistsMigration,traderLinkCommunitiesWorkspaceToolsMigration,traderLinkCommunitiesCoachingWorkspaceMigration,traderLinkCommunitiesCoachingProgramsMigration,traderLinkCommunitiesCoachingPlanBuilderMigration,traderLinkCommunitiesCoachingServiceMeasurementMigration,traderLinkCommunitiesReviewCoachingSectionsMigration,traderLinkCommunitiesReviewWorkflowMigration,traderLinkCommunitiesReviewWorkspaceMetadataMigration,traderLinkCommunitiesCoachingDeliveryWorkflowMigration]){
     for(const statement of migration.statements)database.exec(statement);
   }
   const expected=["traderlink_communities","traderlink_community_memberships","traderlink_community_alerts","traderlink_community_watchlist_placements","traderlink_community_server_watchlists","traderlink_community_server_watchlist_symbols","traderlink_community_network_settings","traderlink_community_coach_profiles","traderlink_community_coaching_plans","traderlink_community_coaching_relationships","traderlink_community_journal_grants","traderlink_community_activity_events","traderlink_community_activity_daily_members","traderlink_community_partner_programs","traderlink_community_partner_earnings","traderlink_community_partner_billing_events","traderlink_community_coach_fee_rules","traderlink_community_alert_templates","traderlink_community_alert_template_fields","traderlink_community_alert_field_values","traderlink_community_coaching_messages","traderlink_community_coaching_trade_reviews","traderlink_community_coaching_review_trades","traderlink_community_coaching_sessions","traderlink_community_coaching_teaching_items","traderlink_community_coaching_teaching_students","traderlink_community_coaching_attachments","traderlink_community_coaching_review_replies"];
@@ -124,6 +123,10 @@ try{
   platform.setRelationshipStatus({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},relationshipId:relationship,status:"active",atUtc:NOW});
   const programs=new TraderLinkCommunityCoachingProgramService(database);
   const expandedReview=programs.createReview({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},relationshipId:relationship,reviewType:"weekly",title:"Weekly review",context:"Compare the week.",periodStart:"2026-09-01",periodEnd:"2026-09-05",roundTripIds:[],atUtc:NOW});
+  expectDenied(()=>programs.replyToReview({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,reviewId:expandedReview,body:"Too early",atUtc:NOW}),"Student cannot reply to an unsent draft.");
+  platform.updateTradeReview({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},reviewId:expandedReview,coachFeedback:"Weekly feedback",wentWell:"",needsWork:"",nextFocus:"",coachPrivateNotes:"",previousFocusStatus:null,previousFocusAssessment:"",status:"in_review",atUtc:NOW});
+  programs.deliverReview({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},relationshipId:relationship,reviewId:expandedReview,atUtc:NOW});
+  programs.markReviewViewed({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,reviewId:expandedReview,atUtc:NOW});
   programs.replyToReview({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,reviewId:expandedReview,body:"Received.",atUtc:NOW});
   const session=programs.createSession({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},relationshipId:relationship,title:"Weekly call",agenda:"Review the week.",atUtc:NOW});
   programs.completeSession({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},relationshipId:relationship,sessionId:session,notes:"Completed.",atUtc:NOW});
@@ -138,7 +141,9 @@ try{
   const message=platform.sendCoachingMessage({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,body:"Please review my entry.",atUtc:NOW});
   assert(Boolean(message),"An active student must be able to message the selected coach.");
   const review=platform.requestTradeReview({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,title:"ABC entry",studentContext:"Review the first entry.",atUtc:NOW});
-  platform.updateTradeReview({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},reviewId:review,coachFeedback:"Wait for confirmation.",wentWell:"The setup was identified.",needsWork:"Entry timing.",nextFocus:"Wait for confirmation.",coachPrivateNotes:"Recheck next week.",previousFocusStatus:null,previousFocusAssessment:"",status:"completed",atUtc:NOW});
+  platform.updateTradeReview({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},reviewId:review,coachFeedback:"Wait for confirmation.",wentWell:"The setup was identified.",needsWork:"Entry timing.",nextFocus:"Wait for confirmation.",coachPrivateNotes:"Recheck next week.",previousFocusStatus:null,previousFocusAssessment:"",status:"in_review",atUtc:NOW});
+  programs.deliverReview({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},relationshipId:relationship,reviewId:review,atUtc:NOW});
+  programs.setReviewLifecycle({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},relationshipId:relationship,reviewId:review,state:"completed",atUtc:NOW});
   assert(platform.readSnapshot("first-room",{userId:OWNER,displayName:"Owner",discordRoleIds:["200001"]}).tradeReviews.find(item=>item.reviewId===review)?.coachPrivateNotes==="","Student snapshots must never expose private coach notes.");
   assert(platform.readSnapshot("first-room",{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]}).tradeReviews.find(item=>item.reviewId===review)?.coachPrivateNotes==="Recheck next week.","Coach snapshots must retain private coach notes.");
   const draftReview=platform.requestTradeReview({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},relationshipId:relationship,title:"Draft review",studentContext:"Review the exit.",atUtc:NOW});
@@ -177,4 +182,4 @@ try{
   const finalForeignKeys=database.pragma("foreign_key_check") as unknown[];
   assert(finalForeignKeys.length===0,"Seeded Communities flow has foreign-key violations.");
   console.log(JSON.stringify({capabilities:capabilityCount,communityIsolation:true,discordRoleMapping:true,foreignKeyViolations:0,journalGrantRevoked:true,namedActivity:true,ok:true,tables:expected.length,tier2Idempotent:true}));
-}finally{database.close();rmSync(directory,{recursive:true,force:true});}
+}finally{database.close();}

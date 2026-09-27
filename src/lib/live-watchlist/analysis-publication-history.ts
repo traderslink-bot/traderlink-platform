@@ -1,4 +1,4 @@
-export type AnalysisHistoryRow = { generatedAt: number; price: number };
+export type AnalysisHistoryRow = { generatedAt: number; publishedAt?: number; price: number };
 
 type RecordValue = Record<string, unknown>;
 const record = (value: unknown): RecordValue =>
@@ -29,14 +29,22 @@ export function publishedAnalysisHistory(value: unknown, currentBody: string): A
       const key = `${read.generationId ?? time}:${price}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      result.push({ generatedAt: time, price });
+      const publication = events.find(candidate => {
+        const body = record(candidate.body);
+        return body.kind === "delivery" && body.channel === "website" &&
+          body.status === "acknowledged" && body.approvalRevision === event.revision;
+      });
+      const publishedAt = publication?.at;
+      result.push({ generatedAt: time, price,
+        ...(typeof publishedAt === "number" && Number.isFinite(publishedAt) && publishedAt > 0 ? { publishedAt } : {}),
+      });
     } catch { /* A missing/malformed card is not a published analysis row. */ }
   }
   return result;
 }
 
 export function formatAnalysisHistoryRow(row: AnalysisHistoryRow, index: number): string {
-  const date = new Date(row.generatedAt);
+  const date = new Date(row.publishedAt ?? row.generatedAt);
   const day = date.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
   const time = date.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
   const price = row.price >= 1 ? row.price.toFixed(2) : row.price.toFixed(4);
