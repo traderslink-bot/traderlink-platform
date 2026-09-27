@@ -17,7 +17,9 @@ function load(file, deps = {}, globals = {}) {
   db.exec("CREATE TABLE platform_users(user_id TEXT PRIMARY KEY,status TEXT); CREATE TABLE platform_workspace_memberships(user_id TEXT,workspace_id TEXT,status TEXT); CREATE TABLE platform_workspaces(workspace_id TEXT,status TEXT);");
   db.exec("INSERT INTO platform_users VALUES('owner','active'); INSERT INTO platform_workspace_memberships VALUES('owner','workspace','active'); INSERT INTO platform_workspaces VALUES('workspace','active');");
   const migration=load('src/modules/platform/server/database/migrations/0146_watchlist_owner_review_notifications.ts').watchlistOwnerReviewNotificationsMigration;
+  db.exec(`CREATE TABLE platform_watchlist_notification_events(event_id TEXT PRIMARY KEY,cycle_id TEXT,notification_kind TEXT,approval_revision INTEGER,notify_users INTEGER,ticker TEXT,approved_at_utc TEXT,published_at_utc TEXT,accepted_at_utc TEXT,expires_at_utc TEXT); INSERT INTO platform_watchlist_notification_events(event_id) VALUES ('historical');`);
   migration.statements.forEach(sql=>db.exec(sql));
+  assert.equal(db.prepare('SELECT owner_approved FROM platform_watchlist_notification_events').get().owner_approved,0);
   let inbox=0,posts=0,replyStatus=200,enabled=true;
   const deps={
     '@/src/modules/platform/server/administration/platform-operator-repository':{PlatformOperatorRepository:class{findActive(){return enabled?{userId:'owner'}:null;}}},
@@ -63,6 +65,26 @@ function load(file, deps = {}, globals = {}) {
   const publication=contract.publicationFromReview({ticker:'GYGY',cycleId:event.cycleId,expectedHead:automatic.expectedHead,draftRevision:3,actor:automatic.actor},automatic.review,Date.now());
   assert.equal(publication.notificationKind,'analysis');assert.equal(publication.notifyUsers,true);
   assert.equal(contract.watchlistPublicationNotificationCopy('GYGY','analysis').pushTitle,'GYGY Analysis updated');
+  assert.equal(publication.ownerApproved,false);
+  const ownerActor='platform-owner:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const ownerReview=JSON.parse(JSON.stringify(automatic.review));
+  ownerReview.events.find(e=>e.body.kind==='approve').actor=ownerActor;
+  const owned=contract.publicationFromReview({ticker:'GYGY',cycleId:event.cycleId,expectedHead:automatic.expectedHead,draftRevision:3,actor:ownerActor},ownerReview,Date.now());
+  assert.equal(owned.ownerApproved,true);
+  const Store=load('src/modules/watchlist/server/notifications/watchlist-publication-notification-store.ts',{'./watchlist-publication-notification-contract':contract}).WatchlistPublicationNotificationStore;
+  const queue=new Store(db);
+  queue.accept({event:owned,now:new Date(),recipients:()=>[]});
+  assert.equal(db.prepare("SELECT owner_approved FROM platform_watchlist_notification_events WHERE ticker='GYGY'").get().owner_approved,1);
+  assert.equal(queue.accept({event:owned,now:new Date(),recipients:()=>{throw Error('must not resend');}}).duplicate,true);
+  queue.accept({event:{...publication,approvalRevision:99},now:new Date(),recipients:()=>[]});
+  assert.equal(db.prepare('SELECT owner_approved FROM platform_watchlist_notification_events WHERE approval_revision=99').get().owner_approved,0);
+  assert.equal(contract.watchlistPublicationNotificationCopy('GYGY','analysis',owned.ownerApproved).pushTitle,'GYGY Analysis updated by "This Guy"');
+  assert.equal(contract.watchlistPublicationNotificationCopy('GYGY','listing',true).emailTitle,'GYGY added to the TradersLink Watchlist by "This Guy"');
+  const preview=load(path.join(runtime,'src/lib/ai/traderslink-ai-read-publication-preview.ts'));
+  const original=['GYGY added to the watchlist.\n\nView GYGY: https://example.test/watchlist/GYGY\n@everyone'];
+  assert.equal(preview.attributeOwnerApprovedDiscord(original,ownerActor)[0],'GYGY added to the watchlist by "This Guy".\n\nView GYGY: https://example.test/watchlist/GYGY\n@everyone');
+  assert.equal(preview.attributeOwnerApprovedDiscord(['GYGY Analysis updated\n\nlinks'],ownerActor)[0],'GYGY Analysis updated by "This Guy"\n\nlinks');
+  assert.equal(preview.attributeOwnerApprovedDiscord(original,'runtime:automatic-boundary')[0],original[0]);
   m.setAutomaticAnalysisPublicationControls({autoPublishBoundaryRefreshes:true});assert.equal(m.getTradersLinkAiReadReviewControls().automaticUpdatesEnabled,false);
   const api=load(path.join(runtime,'src/runtime/manual-watchlist-analysis-review-api.ts'));
   assert.equal((await api.dispatchAnalysisReviewRequest({method:'POST',pathname:'/api/watchlist/automatic-analysis-events',searchParams:new URLSearchParams()},m)).status,405);

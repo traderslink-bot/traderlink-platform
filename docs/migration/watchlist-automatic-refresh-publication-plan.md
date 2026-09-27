@@ -16,6 +16,9 @@ Local source and focused offline checkpoint complete. Hosted integration, migrat
 8. Runtime exposes authenticated minimal automatic-event evidence to Platform background reconciliation. Do not expose private analysis or credentials. Reuse existing member delivery queues; distinguish owner webhook receipts from member delivery state. Preserve current auth and one-writer boundary.
 9. Show owner controls in existing AI Controls and delivery status in existing admin review status; no new navigation. Keep Help aligned.
 10. Focused offline fixture checks at completed slice boundary for modes, manual/initial exclusions, setting changes, failure/retry, restart dedupe, auth, matching member copy and secret redaction. No paid AI calls or real notifications during implementation. Hosted test and deployment are separate Coordinator gates.
+11. Owner-approved addition: member notification titles retain existing wording and append `by "This Guy"` for authenticated owner-approved listing/analysis publication. Fully automatic publication omits the name. Use actual approval actor, not generation trigger; freeze attribution for retries. Existing Discord links/images/mentions, email/push preferences and suppression remain unchanged. No new member inbox delivery system is introduced by this wording-only addition.
+
+Attribution QA: manual review of an automatic draft carries the name; runtime automatic approval does not. Listing without analysis also carries the name. Historical accepted events default unattributed and are not replayed. Reserved, unapplied migration0146 adds an owner_approved flag to existing notification events alongside its owner-review receipt table; Coordinator confirmed migration was not frozen or applied before this extension.
 
 ## Plan QA
 

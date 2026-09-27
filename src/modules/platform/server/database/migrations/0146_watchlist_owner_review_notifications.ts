@@ -4,7 +4,9 @@ export const watchlistOwnerReviewNotificationsMigration: PlatformMigration = Obj
   moduleNamespace: "platform",
   migrationId: "0146_watchlist_owner_review_notifications",
   executionOrder: 146,
-  statements: Object.freeze([`CREATE TABLE platform_watchlist_owner_review_deliveries (
+  statements: Object.freeze([`ALTER TABLE platform_watchlist_notification_events
+    ADD COLUMN owner_approved INTEGER NOT NULL DEFAULT 0 CHECK(owner_approved IN (0,1));`,
+    `CREATE TABLE platform_watchlist_owner_review_deliveries (
     event_key TEXT PRIMARY KEY,
     cycle_id TEXT NOT NULL,
     generation_id TEXT NOT NULL,

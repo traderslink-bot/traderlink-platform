@@ -44,7 +44,13 @@ produce('src/modules/help/watchlist-guides.ts',s=>{
   const anchor=s.split('\n').find(l=>l.includes('blocks: [{')&&l.includes('Uncheck Generate analysis'));assert.ok(anchor);
   return replace(s,anchor,anchor+'\n'+paragraphs.join('\n'));
 });
+for (const name of ['watchlist-publication-notification-contract.ts','watchlist-publication-notification-store.ts','watchlist-notification-delivery.ts']) {
+  const file='src/modules/watchlist/server/notifications/'+name;
+  produce(file,()=>name==='watchlist-publication-notification-contract.ts'
+    ? local(file).replace('typeof event.notifyUsers !== "boolean" ||\n    (event.notificationKind === "listing" && event.notifyUsers !== true)', 'typeof event.notifyUsers !== "boolean"')
+    : local(file));
+}
 fs.writeFileSync(path.join(root,'docs/migration/watchlist-automatic-refresh-platform.patch'),patch);
-console.log('Generated exact four-file patch on '+base+'; new helper and migration delivered separately.');
+console.log('Generated exact seven-file patch on '+base+'; new helper and migration delivered separately.');
 // Only the two known generated files inside our uniquely-created temporary directory.
 fs.unlinkSync(path.join(tmp,'before'));fs.unlinkSync(path.join(tmp,'after'));fs.rmdirSync(tmp);
