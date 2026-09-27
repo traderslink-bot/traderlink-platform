@@ -2,6 +2,8 @@
 
 Owner approved on 2026-09-26. [Progress](watchlist-closed-market-analysis-progress.md).
 
+Separate owner-approved follow-up: [Extra High response allowance](watchlist-extra-high-output-progress.md). This changes only request sizing, not market-closed admission.
+
 Status: implementation and bounded offline QA complete; Coordinator handoff, deployment and owner ticker acceptance are separate remaining checkpoints.
 
 ## Approved behavior
