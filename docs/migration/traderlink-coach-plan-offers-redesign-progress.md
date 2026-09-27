@@ -1,6 +1,6 @@
 # Coach plan offers redesign
 
-Status: new design deployed on staging on 2026-09-27; mobile spacing correction pending deployment. Owner review pending.
+Status: new design and mobile correction deployed and visually inspected on staging on 2026-09-27. Owner review pending.
 This supersedes the rejected generic five-type plan-builder presentation, not
 the existing review-workspace workflow.
 
@@ -39,7 +39,7 @@ baseline. No local build or test suite. Owner visual acceptance remains required
 - [x] Focused TypeScript check: zero diagnostics in the two changed source files.
 - [x] Existing Coaching and Journal privacy Help guidance remains accurate; no new prose added.
 - [x] Coordinator staging deployment of initial design.
-- [ ] Mobile spacing correction deployed and inspected.
+- [x] Mobile spacing correction deployed and inspected.
 - [ ] Owner visual acceptance.
 
 Staging evidence: source9b336fe9b0cab898ed25fbf6698c34527e3222f3,
@@ -51,6 +51,14 @@ Performance without adding a separate service, and matching live preview/resourc
 labels. No plan was submitted or existing record modified. At390px, the Added
 chip crowded the Performance label; corrected service tiles to stack label/chip
 below the small breakpoint. Desktop retains horizontal label/chip layout.
+
+Final staging source ee6980336b2ad5778e3ee2dcd68eb5ccb8e8f1ba,
+Railway cfcd4bcc-1c7c-42c3-a4b9-005ec2ecc062 SUCCESS/one RUNNING;
+Coordinator confirmed full build passed, health200/ready140 and unchanged registry,
+volume and production health. Signed-in390px screenshot confirms Performance
+label and Added chip no longer overlap. Restored normal viewport, cleared only
+unsaved preview inputs by reload, and left the plan builder open. Existing saved
+plans unchanged. Save/publish was not exercised; owner design approval remains pending.
 
 Source review: existing form action/item-type contract retained; selections
 persist in existing plan items/focus JSON. Resource choices and coach-defined
