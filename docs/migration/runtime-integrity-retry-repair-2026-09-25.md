@@ -1,5 +1,9 @@
 # Runtime integrity timeout recovery — September 25, 2026
 
+September 27 follow-up: [bounded completion recovery](runtime-integrity-timeout-recovery-2026-09-27.md)
+tracks the recurring combined-deadline outage and the approved isolated-process
+repair. This record remains the historical September 25 contract.
+
 Status: implemented; focused regression and targeted semantic checks passed.
 Not deployed or accepted on production yet.
 

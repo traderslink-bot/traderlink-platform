@@ -28,6 +28,7 @@ function harness() {
   const db = { pragma: () => [{ schema_version: schema }] };
   const context = {
     exports: {},
+    process: { execPath: '/node', env: {} },
     Date: { now: () => now },
     console: { info() {}, warn() {} },
     setTimeout(callback, delay) {
@@ -42,18 +43,25 @@ function harness() {
         statSync: () => ({ dev: 1, ino: inode, size: 100, mtimeMs: modified }),
       };
       if (name === 'node:path') return require(name);
-      if (name === 'node:worker_threads') return { Worker: class extends EventEmitter {
-        constructor(workerSource, options) {
+      if (name === 'node:child_process') return { spawn(executable, args, options) {
+        assert.equal(executable, '/node');
+        assert.equal(options.windowsHide, true);
+        assert.equal(options.stdio.join(','), 'ignore,ignore,ignore,ipc');
+        assert.equal(options.env.NODE_OPTIONS, '');
+        return new class extends EventEmitter {
+        constructor() {
           super();
           if (constructionError) throw constructionError;
-          this.source = workerSource;
-          this.data = options.workerData;
+          this.source = args[1];
           this.terminated = false;
+          this.signals = [];
+          this.channel = { unref() {} };
           workers.push(this);
         }
+        send(data, callback) { this.data = data; callback(null); }
         unref() {}
-        terminate() { this.terminated = true; return Promise.resolve(1); }
-      } };
+        kill(signal) { this.signals.push(signal); this.terminated = true; return true; }
+      }(); } };
       if (name === 'better-sqlite3') return function Database() {};
       if (name === './platform-database-config') return {};
       if (name === './platform-migration-contract') return {
@@ -83,14 +91,24 @@ function harness() {
     }
     now = target;
   };
-  const message = (worker, overrides = {}) => worker.emit('message', {
-    ...worker.data, status: 'ok', structureBefore: `1:${inode}:${schema}`,
+  const progress = (worker, overrides = {}) => {
+    worker.progressSent = true;
+    worker.emit('message', { ...worker.data, kind: 'foreign_key_complete',
+      structureBefore: `1:${inode}:${schema}`, foreignKeyDurationMs: 43_000,
+      quickCheckStartedAt: now, ...overrides });
+  };
+  const message = (worker, overrides = {}) => {
+    if (worker.data.includeQuickCheck && !worker.progressSent &&
+      (!overrides.status || overrides.status === 'ok')) progress(worker);
+    worker.emit('message', {
+    ...worker.data, kind: 'result', status: 'ok', structureBefore: `1:${inode}:${schema}`,
     structureAfter: `1:${inode}:${schema}`, ...overrides,
   });
+  };
   const exit = (worker) => worker.emit('exit', 0);
   const finish = (worker, overrides) => { message(worker, overrides); exit(worker); };
   return {
-    open, state, advance, workers, message, exit, finish,
+    open, state, advance, workers, progress, message, exit, finish,
     change() { modified++; },
     inode() { inode++; modified++; },
     schema() { schema++; },
@@ -113,6 +131,141 @@ function scanning(quick = false) {
   return h;
 }
 const pending = (h) => assert.throws(h.open, (error) => error.check === 'background_verification_pending');
+
+test('132s combined check fails readiness at120s then recovers only after complete result and exit', () => {
+  const h = scanning(true);
+  const child = h.workers[0];
+  h.advance(43_000); h.progress(child);
+  h.advance(76_999); h.open();
+  h.advance(1); pending(h);
+  assert.equal(child.terminated, false);
+  h.advance(12_000); h.message(child);
+  pending(h);
+  h.exit(child); h.open();
+  assert.equal(h.state().retryPending, false);
+  assert.equal(h.workers.length, 1);
+  assert.equal(h.full(), 1);
+  h.advance(300_000);
+  assert.equal(h.workers.length, 1, 'timeout must not manufacture dirty work after late success');
+});
+
+test('late successful snapshot retains concurrent writes without requiring their generation to match', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.advance(43_000); h.progress(child);
+  h.advance(77_000); h.change(); pending(h);
+  const latestGeneration = h.state().dataGeneration;
+  assert.ok(latestGeneration > child.data.dataGeneration);
+  h.advance(12_000); h.finish(child); h.open();
+  assert.equal(h.state().retryPending, false);
+  assert.equal(h.workers.length, 2, 'new writes need their own scan after actual exit');
+  assert.equal(h.workers[1].data.dataGeneration, latestGeneration);
+});
+
+test('quick phase expires at FK completion plus120s, escalates once and never overlaps before exit', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.advance(43_000); h.progress(child);
+  h.advance(120_000); pending(h);
+  assert.deepEqual(child.signals, ['SIGTERM']);
+  h.advance(5_000);
+  assert.deepEqual(child.signals, ['SIGTERM', 'SIGKILL']);
+  h.advance(600_000);
+  assert.equal(child.signals.length, 2);
+  assert.equal(h.workers.length, 1);
+  h.message(child); pending(h); // A successful result after hard cutoff cannot recover.
+  h.exit(child);
+  assert.equal(h.workers.length, 2);
+});
+
+test('latest permitted phase transition still has a fixed total bound below240s', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.advance(119_999); h.progress(child);
+  h.advance(119_999);
+  assert.equal(child.terminated, false);
+  h.advance(1);
+  assert.equal(child.terminated, true);
+  pending(h);
+});
+
+test('duplicate phase progress cannot postpone deadline or approve a result', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.advance(43_000); h.progress(child);
+  h.advance(10_000); h.progress(child);
+  assert.equal(child.terminated, true);
+  pending(h);
+  h.finish(child); pending(h);
+});
+
+test('full-result success without quick-phase progress is not a complete protocol', () => {
+  const h = scanning(true), child = h.workers[0];
+  child.progressSent = true; // suppress helper's normal progress message
+  h.finish(child); pending(h);
+});
+
+test('changed phase identity requires full validation rather than granting extra time', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.progress(child, { structureBefore: 'different' });
+  assert.equal(child.terminated, true);
+  assert.equal(h.state().requiresFullVerification, true);
+});
+
+test('a validated result followed by nonzero exit cannot reopen readiness', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.message(child); child.emit('exit', 1); pending(h);
+});
+
+test('spawn error with close and no exit safely retries after actual failed creation', () => {
+  const h = scanning(), child = h.workers[0];
+  child.emit('error', new Error('spawn unavailable')); pending(h);
+  child.emit('close', -2);
+  h.advance(5_000);
+  assert.equal(h.workers.length, 2);
+});
+
+for (const status of ['foreign_key_failed', 'integrity_failed']) {
+  test(`${status} during overdue grace latches and cannot be cleared by success`, () => {
+    const h = scanning(true), child = h.workers[0];
+    h.advance(43_000); h.progress(child);
+    h.advance(78_000); h.message(child, { status });
+    h.message(child); h.exit(child);
+    assert.throws(h.open, (error) => error.check ===
+      (status === 'foreign_key_failed' ? 'foreign_key_check' : 'quick_check'));
+    h.advance(300_000); assert.equal(h.workers.length, 1);
+  });
+}
+
+test('an independent sticky failure cannot be cleared by complete successful exit', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.message(child); h.state().quickCheckFailed = true; h.exit(child);
+  assert.throws(h.open, (error) => error.check === 'quick_check');
+});
+
+test('delayed phase IPC uses child phase start, not receipt time, for its hard deadline', () => {
+  const h = scanning(true), child = h.workers[0];
+  const launchedAt = h.now();
+  h.advance(80_000);
+  h.progress(child, { quickCheckStartedAt: launchedAt + 43_000 });
+  h.advance(83_000);
+  assert.deepEqual(child.signals, ['SIGTERM']);
+  pending(h);
+});
+
+test('corruption arriving after hard cutoff still latches for the same generation', () => {
+  const h = scanning(true), child = h.workers[0];
+  h.advance(120_000);
+  h.message(child, { status: 'integrity_failed' });
+  h.exit(child);
+  assert.throws(h.open, (error) => error.check === 'quick_check');
+  h.advance(300_000); assert.equal(h.workers.length, 1);
+});
+
+test('invalid phase timestamp cannot extend the execution window', () => {
+  for (const timestamp of [NaN, Infinity, -1, 999_999]) {
+    const h = scanning(true), child = h.workers[0];
+    h.progress(child, { quickCheckStartedAt: timestamp });
+    pending(h);
+    assert.equal(child.terminated, true);
+  }
+});
 
 test('startup and identity/schema changes retain mandatory full verification', () => {
   const h = harness();
@@ -278,24 +431,36 @@ test('worker source classifies SQLite corruption and retains earlier FK failure'
     { code: 'SQLITE_BUSY', fk: true, expected: 'foreign_key_failed' },
   ]) {
     let result;
+    let receive;
     let closed = false;
-    runInNewContext(worker.source, { require(name) {
-      if (name === 'node:worker_threads') return {
-        workerData: worker.data, parentPort: { postMessage(value) { result = value; } },
-      };
+    let quickChecks = 0;
+    runInNewContext(worker.source, { process: {
+      once(event, callback) { assert.equal(event, 'message'); receive = callback; },
+      send(value, callback) { result = value; if (callback) callback(); },
+      disconnect() {},
+    }, require(name) {
       if (name === 'node:fs') return { statSync: () => ({ dev: 1, ino: 1 }) };
       if (name === 'better-sqlite3') return class {
+        constructor(path, options) {
+          assert.equal(options.readonly, true);
+          assert.equal(options.fileMustExist, true);
+        }
         exec() {}
         close() { closed = true; }
         pragma(name) {
           if (name === 'schema_version') return 1;
           if (name === 'foreign_key_check') return sample.fk ? [{}] : [];
-          if (name === 'quick_check') throw Object.assign(new Error('scan'), { code: sample.code });
+          if (name === 'quick_check') {
+            quickChecks++;
+            throw Object.assign(new Error('scan'), { code: sample.code });
+          }
         }
       };
       throw new Error(name);
     } });
+    receive(worker.data);
     assert.equal(result.status, sample.expected);
     assert.equal(closed, true);
+    assert.equal(quickChecks, sample.fk ? 0 : 1);
   }
 });

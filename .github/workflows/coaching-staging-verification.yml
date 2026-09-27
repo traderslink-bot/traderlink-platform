@@ -1,30 +1,21 @@
-name: Coaching staging verification
-
+name: Integrity repair verification
 on:
   push:
     branches: [codex/coaching-staging-integration-20260926]
-
 permissions:
   contents: read
-
 concurrency:
-  group: coaching-staging-verification
+  group: integrity-repair-verification
   cancel-in-progress: false
-
 jobs:
-  isolated-build:
+  linux-package:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-      - run: npm ci --no-audit --no-fund
-      - run: node --import tsx src/scripts/coaching-staging-maintenance.ts --rehearse
-      - run: npm run build
+      - name: Build exact production Docker package
+        run: docker build -t integrity-repair .
+      - name: Verify native child inside runtime image
+        run: docker run --rm --network none --entrypoint node -v "$PWD/src/modules/platform/server/database/open-platform-database.ts:/tmp/integrity-source.ts:ro" -v "$PWD/.github/integrity-native-smoke.cjs:/tmp/integrity-native-smoke.cjs:ro" integrity-repair /tmp/integrity-native-smoke.cjs
