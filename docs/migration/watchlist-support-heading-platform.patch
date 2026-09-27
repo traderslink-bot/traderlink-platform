@@ -1,0 +1,24 @@
+diff --git a/app/watchlist/live-watchlist-client.tsx b/app/watchlist/live-watchlist-client.tsx
+--- a/app/watchlist/live-watchlist-client.tsx
++++ b/app/watchlist/live-watchlist-client.tsx
+@@ -553,1 +553,1 @@
+-          ["needsToHold", "Needs to hold", read.needsToHold],
++          ["needsToHold", "Support to watch", read.needsToHold],
+@@ -637,1 +637,1 @@
+-            This area comes from the AI Read&apos;s caution and needs-to-hold boundaries. Acceptance
++            This area comes from the analysis&apos;s Caution below and Support to watch levels. Acceptance
+diff --git a/src/lib/live-watchlist/analysis-inline-edit.ts b/src/lib/live-watchlist/analysis-inline-edit.ts
+--- a/src/lib/live-watchlist/analysis-inline-edit.ts
++++ b/src/lib/live-watchlist/analysis-inline-edit.ts
+@@ -3,1 +3,1 @@
+-  currentRead: "Analysis", needsToHold: "Needs to hold", cautionBelow: "Caution below",
++  currentRead: "Analysis", needsToHold: "Support to watch", cautionBelow: "Caution below",
+diff --git a/src/lib/live-watchlist/__tests__/analysis-card-visibility.node-test.cjs b/src/lib/live-watchlist/__tests__/analysis-card-visibility.node-test.cjs
+--- a/src/lib/live-watchlist/__tests__/analysis-card-visibility.node-test.cjs
++++ b/src/lib/live-watchlist/__tests__/analysis-card-visibility.node-test.cjs
+@@ -126,1 +126,1 @@
+-  assert.doesNotMatch(hidden, /Deeper pullback|Pullback setups|Failure and recovery|Where the trade could go next|Needs to hold|Constructive while support holds|Thin liquidity/);
++  assert.doesNotMatch(hidden, /Deeper pullback|Pullback setups|Failure and recovery|Where the trade could go next|Support to watch|Constructive while support holds|Thin liquidity/);
+@@ -150,1 +150,1 @@
+-  assert.match(render(read), /Needs to hold/);
++  assert.match(render(read), /Support to watch/);
