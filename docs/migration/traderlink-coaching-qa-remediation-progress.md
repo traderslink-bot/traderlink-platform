@@ -116,6 +116,11 @@ Release contract: [migration and staging handoff](traderlink-coaching-remediatio
   and the explicit draft/deliver/read/complete lifecycle. It now runs in memory, without
   filesystem cleanup. PASS:20 capabilities, community/role isolation, grant revocation,
   coaching history, activity projection, Tier2 idempotence and zero foreign-key violations.
+- Final agreement display now includes immutable coverage, deadlines, quantities,
+  follow-up window, focus/resources and coach-written service details before acceptance.
+- Coordinator identified held navigation in the source parent. `/communities/coaching`
+  was narrowed to actual5f2 routing plus only the own-student-relationship eligibility
+  check needed for paused history. No held coach/directory redirect was approved or restored.
 - Help review: existing `discord-communities` guide's payment/privacy/role statements
   remain correct. Additional agreement/scheduling instructions need owner-approved
   wording; no new explanatory UI/help paragraphs have been published.
