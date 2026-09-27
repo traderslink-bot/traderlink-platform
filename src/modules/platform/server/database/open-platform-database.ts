@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import { dirname } from "node:path";
-import { Worker } from "node:worker_threads";
+import { spawn, type ChildProcess } from "node:child_process";
 
 import Database from "better-sqlite3";
 
@@ -50,21 +50,29 @@ type RuntimeIntegrityProcessState = typeof globalThis & {
 export const PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS = 60_000;
 export const PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS = 5_000;
 const PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS = 120_000;
+const PLATFORM_RUNTIME_CHILD_KILL_GRACE_MS = 5_000;
 const PLATFORM_RUNTIME_RETRY_MIN_MS = 5_000;
 const PLATFORM_RUNTIME_RETRY_MAX_MS = 60_000;
 const PLATFORM_RUNTIME_QUICK_CHECK_WORKER_SOURCE = String.raw`
-const { parentPort, workerData } = require("node:worker_threads");
-const Database = require("better-sqlite3");
 const { statSync } = require("node:fs");
+process.once("message", (workerData) => {
 let database = null;
 let message;
 let observedFailure = null;
+let foreignKeyDurationMs = 0;
+let quickCheckDurationMs = 0;
+const identity = {
+  dataGeneration: workerData.dataGeneration,
+  generation: workerData.generation,
+  includeQuickCheck: workerData.includeQuickCheck,
+};
 function structureFingerprint() {
   const details = statSync(workerData.databasePath);
   const schemaVersion = database.pragma("schema_version", { simple: true });
   return [details.dev, details.ino, String(schemaVersion)].join(":");
 }
 try {
+  const Database = require("better-sqlite3");
   database = new Database(workerData.databasePath, {
     readonly: true,
     fileMustExist: true,
@@ -75,20 +83,24 @@ try {
   // Both scans observe one read-only snapshot; concurrent writers remain in WAL.
   database.exec("BEGIN");
   const structureBefore = structureFingerprint();
+  const foreignKeyStartedAt = Date.now();
   const foreignKeyRows = database.pragma("foreign_key_check");
+  foreignKeyDurationMs = Date.now() - foreignKeyStartedAt;
   let status = foreignKeyRows.length === 0 ? "ok" : "foreign_key_failed";
   if (status !== "ok") observedFailure = status;
-  if (workerData.includeQuickCheck) {
+  if (status === "ok" && workerData.includeQuickCheck) {
+    const quickCheckStartedAt = Date.now();
+    process.send({ ...identity, kind: "foreign_key_complete", structureBefore,
+      foreignKeyDurationMs, quickCheckStartedAt });
     const rows = database.pragma("quick_check");
+    quickCheckDurationMs = Date.now() - quickCheckStartedAt;
     const result = rows.length === 1 ? Object.values(rows[0] || {})[0] : undefined;
     if (result !== "ok") status = observedFailure = "integrity_failed";
   }
   database.exec("COMMIT");
   const structureAfter = structureFingerprint();
   message = {
-    dataGeneration: workerData.dataGeneration,
-    generation: workerData.generation,
-    includeQuickCheck: workerData.includeQuickCheck,
+    ...identity,
     status,
     structureAfter,
     structureBefore,
@@ -97,18 +109,18 @@ try {
   const code = String(error && error.code || "");
   const corrupt = /^(SQLITE_CORRUPT|SQLITE_NOTADB)(_|$)/.test(code);
   message = {
-    dataGeneration: workerData.dataGeneration,
-    generation: workerData.generation,
+    ...identity,
     status: observedFailure || (corrupt ? "integrity_failed" : "worker_failed"),
-    includeQuickCheck: workerData.includeQuickCheck,
   };
 } finally {
   if (database) {
-    try { database.close(); } catch { /* Worker exit also releases the handle. */ }
+    try { database.close(); } catch { /* Child exit also releases the handle. */ }
   }
 }
-// Release the connection before allowing the scheduler to start another scan.
-parentPort.postMessage(message);
+// IPC is flushed before disconnect. The parent also requires actual process exit.
+process.send({ ...message, kind: "result", foreignKeyDurationMs, quickCheckDurationMs },
+  () => process.disconnect());
+});
 `;
 
 export type PlatformDatabasePragmaEvidence = Readonly<{
@@ -262,9 +274,28 @@ function startPlatformRuntimeQuickCheck(
   const expectedStructureFingerprint = state.structureFingerprint;
   const startedAt = now;
   let settled = false;
+  let exited = false;
+  let receivedResult = false;
+  let completeResult = false;
+  let foreignKeyComplete = false;
+  let overdue = false;
+  let phase: "foreign_keys" | "quick_check" | "exit" = "foreign_keys";
+  let hardDueAt = startedAt + PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS;
+  let foreignKeyDurationMs = 0;
+  let quickCheckDurationMs = 0;
+  let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+  let killTimer: ReturnType<typeof setTimeout> | undefined;
+  let exitTimer: ReturnType<typeof setTimeout> | undefined;
+  const log = (outcome: Parameters<typeof logPlatformRuntimeQuickCheckOutcome>[1]) =>
+    logPlatformRuntimeQuickCheckOutcome(state, outcome, startedAt, includeQuickCheck, {
+      phase, foreignKeyDurationMs, quickCheckDurationMs, overdue,
+    });
+  const clearScanTimers = () => {
+    clearTimeout(deadlineTimer);
+    clearTimeout(readinessTimer);
+  };
   const retry = () => {
     if (state.generation !== generation) return;
-    // A missing result cannot consume pending validation, even without another write.
     state.dirtySinceForeignKeyCheck = true;
     if (includeQuickCheck) state.dirtySinceQuickCheck = true;
     state.retryPending = true;
@@ -281,141 +312,242 @@ function startPlatformRuntimeQuickCheck(
     if (state.generation === generation) state.quickCheckFailed = true;
     return true;
   };
-  let worker: Worker;
+  let child: ChildProcess;
   try {
-    worker = new Worker(PLATFORM_RUNTIME_QUICK_CHECK_WORKER_SOURCE, {
-      eval: true,
-      workerData: { databasePath, dataGeneration, generation, includeQuickCheck },
+    child = spawn(process.execPath, ["-e", PLATFORM_RUNTIME_QUICK_CHECK_WORKER_SOURCE], {
+      stdio: ["ignore", "ignore", "ignore", "ipc"],
+      windowsHide: true,
+      // Do not inherit application preload hooks into an isolated native reader.
+      env: { ...process.env, NODE_OPTIONS: "" },
     });
   } catch (error) {
     state.quickCheckInFlight = false;
     if (!latchCorruption(error)) retry();
-    logPlatformRuntimeQuickCheckOutcome(
-      state,
-      "worker_construction_failed",
-      startedAt,
-    );
+    log("worker_construction_failed");
     schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
     return;
   }
-  worker.unref();
-  const timeout = setTimeout(() => {
+  const terminate = () => {
+    if (exited || killTimer) return;
+    // A signal request is never evidence of exit or permission to overlap readers.
+    try { child.kill("SIGTERM"); } catch { /* Escalate once below. */ }
+    killTimer = setTimeout(() => {
+      if (exited) return;
+      try { child.kill("SIGKILL"); } catch { /* Keep the slot and fail closed. */ }
+      exitTimer = setTimeout(() => {
+        if (!exited) log("worker_exit_pending");
+      }, PLATFORM_RUNTIME_CHILD_KILL_GRACE_MS);
+      exitTimer.unref();
+    }, PLATFORM_RUNTIME_CHILD_KILL_GRACE_MS);
+    killTimer.unref();
+  };
+  const fail = (outcome: Parameters<typeof logPlatformRuntimeQuickCheckOutcome>[1]) => {
     if (settled) return;
     settled = true;
+    clearScanTimers();
     retry();
-    // Do not release the single-flight slot until the worker actually exits.
-    void worker.terminate().catch(() => undefined);
-    if (state.generation === generation) {
-      logPlatformRuntimeQuickCheckOutcome(state, "timeout", startedAt);
-    }
+    log(outcome);
+    terminate();
+  };
+  const hardTimeout = () => fail("timeout");
+  const armDeadline = () => {
+    clearTimeout(deadlineTimer);
+    deadlineTimer = setTimeout(hardTimeout, Math.max(0, hardDueAt - Date.now()));
+    deadlineTimer.unref();
+  };
+  // Readiness still fails at the original 120s boundary. Only execution cleanup
+  // has a bounded second phase; overdue work never counts as a successful check.
+  const readinessTimer = setTimeout(() => {
+    if (settled || state.generation !== generation) return;
+    overdue = true;
+    state.retryPending = true;
+    log("verification_overdue");
   }, PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS);
-  timeout.unref();
+  readinessTimer.unref();
+  armDeadline();
   state.cancelWorker = () => {
     settled = true;
-    clearTimeout(timeout);
-    void worker.terminate().catch(() => undefined);
+    clearScanTimers();
+    terminate();
   };
-  worker.once("message", (message: unknown) => {
-    if (settled) return;
-    settled = true;
-    clearTimeout(timeout);
-    if (state.generation !== generation) return;
-    const status = message && typeof message === "object" && "status" in message
-      ? (message as { status?: unknown }).status
-      : null;
-    const workerResult = (message && typeof message === "object" ? message : {}) as {
+  child.on("message", (message: unknown) => {
+    if (exited || state.generation !== generation) return;
+    const result = (message && typeof message === "object" ? message : {}) as {
+      kind?: unknown;
+      status?: unknown;
       dataGeneration?: unknown;
       generation?: unknown;
       includeQuickCheck?: unknown;
       structureAfter?: unknown;
       structureBefore?: unknown;
+      foreignKeyDurationMs?: unknown;
+      quickCheckDurationMs?: unknown;
+      quickCheckStartedAt?: unknown;
     };
-    if (
-      typeof workerResult.dataGeneration !== "number" ||
-      typeof workerResult.generation !== "number" ||
-      typeof workerResult.includeQuickCheck !== "boolean"
-    ) {
-      retry();
-      logPlatformRuntimeQuickCheckOutcome(state, "worker_failed", startedAt);
-    } else if (
-      workerResult.dataGeneration !== dataGeneration ||
-      workerResult.generation !== generation ||
-      workerResult.includeQuickCheck !== includeQuickCheck
-    ) {
-      state.requiresFullVerification = true;
-      logPlatformRuntimeQuickCheckOutcome(state, "worker_failed", startedAt);
-    } else if (status === "foreign_key_failed") {
-      state.foreignKeyCheckFailed = true;
-      logPlatformRuntimeQuickCheckOutcome(state, "foreign_key_failed", startedAt);
-    } else if (status === "integrity_failed") {
-      // SQLite corruption can be reported during FK-only scans as well.
-      state.quickCheckFailed = true;
-      logPlatformRuntimeQuickCheckOutcome(state, "integrity_failed", startedAt);
-    } else if (
-      status !== "ok" ||
-      typeof workerResult.structureBefore !== "string" ||
-      typeof workerResult.structureAfter !== "string"
-    ) {
-      retry();
-      logPlatformRuntimeQuickCheckOutcome(state, "worker_failed", startedAt);
-    } else if (
-      workerResult.structureBefore !== expectedStructureFingerprint ||
-      workerResult.structureAfter !== expectedStructureFingerprint
-    ) {
-      state.requiresFullVerification = true;
-      logPlatformRuntimeQuickCheckOutcome(
-        state,
-        "database_identity_changed",
-        startedAt,
-      );
-    } else {
-      state.retryPending = false;
-      state.retryCount = 0;
-      state.retryNotBefore = 0;
-      // Do not clear dirty flags: writes since this snapshot still need scanning.
-      logPlatformRuntimeQuickCheckOutcome(state, "ok", startedAt, includeQuickCheck);
+    // Never lose an actual failure queued around timeout/cancellation. Only the
+    // exact child identity may latch it; a stale generation cannot affect state.
+    if (result.kind === "result" && result.dataGeneration === dataGeneration &&
+      result.generation === generation && result.includeQuickCheck === includeQuickCheck &&
+      (result.status === "foreign_key_failed" || result.status === "integrity_failed")) {
+      if (result.status === "foreign_key_failed") state.foreignKeyCheckFailed = true;
+      else state.quickCheckFailed = true;
+      settled = true;
+      clearScanTimers();
+      log(result.status);
+      terminate();
+      return;
     }
-  });
-  worker.once("error", (error: Error) => {
     if (settled) return;
-    settled = true;
-    clearTimeout(timeout);
-    if (!latchCorruption(error)) retry();
-    void worker.terminate().catch(() => undefined);
-    if (state.generation === generation) {
-      logPlatformRuntimeQuickCheckOutcome(state, "worker_error", startedAt);
+    // Timers can be delayed by other synchronous application work.
+    if (Date.now() >= hardDueAt) {
+      hardTimeout();
+      return;
+    }
+    if (
+      typeof result.dataGeneration !== "number" ||
+      typeof result.generation !== "number" ||
+      typeof result.includeQuickCheck !== "boolean"
+    ) {
+      fail("worker_failed");
+      return;
+    }
+    if (
+      result.dataGeneration !== dataGeneration ||
+      result.generation !== generation ||
+      result.includeQuickCheck !== includeQuickCheck
+    ) {
+      state.requiresFullVerification = true;
+      fail("worker_failed");
+      return;
+    }
+    if (result.kind === "foreign_key_complete") {
+      if (!includeQuickCheck || foreignKeyComplete || receivedResult ||
+        typeof result.structureBefore !== "string" ||
+        typeof result.quickCheckStartedAt !== "number" ||
+        !Number.isFinite(result.quickCheckStartedAt) ||
+        result.quickCheckStartedAt < startedAt ||
+        result.quickCheckStartedAt > Date.now()) {
+        fail("worker_failed");
+        return;
+      }
+      if (result.structureBefore !== expectedStructureFingerprint) {
+        state.requiresFullVerification = true;
+        fail("database_identity_changed");
+        return;
+      }
+      foreignKeyComplete = true;
+      phase = "quick_check";
+      foreignKeyDurationMs = safeScanDuration(result.foreignKeyDurationMs);
+      // Only this single validated transition can grant the second phase budget.
+      hardDueAt = Math.min(
+        result.quickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS,
+        startedAt + 2 * PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS,
+      );
+      armDeadline();
+      return;
+    }
+    if (result.kind !== "result" || receivedResult) {
+      fail("worker_failed");
+      return;
+    }
+    receivedResult = true;
+    foreignKeyDurationMs = safeScanDuration(result.foreignKeyDurationMs);
+    quickCheckDurationMs = safeScanDuration(result.quickCheckDurationMs);
+    if (result.status !== "ok" ||
+      (includeQuickCheck && !foreignKeyComplete) ||
+      typeof result.structureBefore !== "string" ||
+      typeof result.structureAfter !== "string") {
+      fail("worker_failed");
+      return;
+    }
+    if (result.structureBefore !== expectedStructureFingerprint ||
+      result.structureAfter !== expectedStructureFingerprint) {
+      state.requiresFullVerification = true;
+      fail("database_identity_changed");
+      return;
+    }
+    completeResult = true;
+    phase = "exit";
+    // Even an apparently complete result cannot reopen until the process exits.
+  });
+  child.on("error", (error: Error) => {
+    if (settled) return;
+    if (latchCorruption(error)) {
+      settled = true;
+      clearScanTimers();
+      log("worker_error");
+      terminate();
+    } else {
+      fail("worker_error");
     }
   });
-  worker.once("exit", () => {
+  const onExit = (code: number | null) => {
+    if (exited) return;
+    exited = true;
+    clearScanTimers();
+    clearTimeout(killTimer);
+    clearTimeout(exitTimer);
     if (!settled && state.generation === generation) {
-      retry();
-      logPlatformRuntimeQuickCheckOutcome(state, "worker_early_exit", startedAt);
+      if (completeResult && code === 0 && Date.now() < hardDueAt &&
+        !state.foreignKeyCheckFailed && !state.quickCheckFailed &&
+        !state.requiresFullVerification) {
+        state.retryPending = false;
+        state.retryCount = 0;
+        state.retryNotBefore = 0;
+        // Never clear dirty flags from writes after the captured snapshot.
+        log("ok");
+      } else {
+        retry();
+        log("worker_early_exit");
+      }
     }
     settled = true;
-    clearTimeout(timeout);
-    // A cancelled old generation still owns this slot until its actual exit.
     state.quickCheckInFlight = false;
     state.cancelWorker = null;
     schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
+  };
+  child.once("exit", onExit);
+  // spawn errors may emit close without ever creating a process or emitting exit.
+  child.once("close", (code: number | null) => {
+    if (!exited) onExit(code);
   });
+  try {
+    child.send({ databasePath, dataGeneration, generation, includeQuickCheck },
+      (error) => { if (error) fail("worker_error"); });
+  } catch {
+    fail("worker_error");
+  }
+  child.unref();
+  child.channel?.unref();
+}
+
+function safeScanDuration(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
 function logPlatformRuntimeQuickCheckOutcome(
   state: RuntimeIntegrityState,
   outcome: "database_identity_changed" | "foreign_key_failed" | "integrity_failed" | "ok" |
     "timeout" | "worker_construction_failed" | "worker_early_exit" |
-    "worker_error" | "worker_failed",
+    "worker_error" | "worker_failed" | "verification_overdue" | "worker_exit_pending",
   startedAt: number,
   includeQuickCheck = false,
+  phases?: Readonly<{
+    phase: "foreign_keys" | "quick_check" | "exit";
+    foreignKeyDurationMs: number;
+    quickCheckDurationMs: number;
+    overdue: boolean;
+  }>,
 ): void {
   const durationMs = Math.max(0, Date.now() - startedAt);
   try {
     if (outcome === "ok") {
       const counter = includeQuickCheck ? "quickCheckSuccessLogs" : "foreignKeySuccessLogs";
-      if (state[counter] >= 2) return;
+      if (state[counter] >= 2 && !phases?.overdue) return;
       console.info("TraderLink background SQLite integrity scan completed.", {
         durationMs,
         includeQuickCheck,
+        ...phases,
       });
       state[counter] += 1;
       return;
@@ -423,6 +555,8 @@ function logPlatformRuntimeQuickCheckOutcome(
     console.warn("TraderLink background SQLite integrity scan requires attention.", {
       durationMs,
       outcome,
+      includeQuickCheck,
+      ...phases,
     });
   } catch {
     // Diagnostics must never alter database verification behavior.
