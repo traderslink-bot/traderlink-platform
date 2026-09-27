@@ -1,0 +1,6 @@
+diff --git a/app/watchlist/live-watchlist-client.tsx b/app/watchlist/live-watchlist-client.tsx
+--- a/app/watchlist/live-watchlist-client.tsx
++++ b/app/watchlist/live-watchlist-client.tsx
+@@ -1585,1 +1585,1 @@
+-        <article className="academy-card watchlist-content-card" data-card-label="Trader notes" style={{ gridColumn: "1 / -1", minWidth: 0 }}>
++        <article className="academy-card watchlist-content-card" data-card-label="Trader notes" style={{ gridColumn: "1", minWidth: 0 }}>
