@@ -126,6 +126,16 @@ Release contract: [migration and staging handoff](traderlink-coaching-remediatio
   delivered/viewed reviews are excluded from the student-list work-due count.
 - Existing Discord-delivery verifier passes with mocked transport only:2 deliveries,
   exact links, selected channels and mentions suppressed. No real message was sent.
+- Pre-release form/service audit caught and fixed conversation-root image validation;
+  existing chat forms use the relationship ID, not an individual message ID. Explicit
+  owned conversation roots now work and foreign targets are rejected. Added assertions.
+- Student Send is disabled at zero question allowance. Teaching cards expose saved
+  links/dates and per-student completion/progress controls; draft publication refreshes
+  an all-student/plan audience transactionally without replacing existing progress.
+  Session/lesson creation labels explicitly identify UTC input.
+- Bounded semantic check after this audit:32 feature/verification TS files, zero
+  diagnostics. Both in-memory coaching and existing Communities service checks pass.
+  Source-extracted workload helpers pass UTC midnight, week and DST-day boundary checks.
 - Help review: existing `discord-communities` guide's payment/privacy/role statements
   remain correct. Additional agreement/scheduling instructions need owner-approved
   wording; no new explanatory UI/help paragraphs have been published.

@@ -18,7 +18,7 @@ export class TraderLinkCommunityCoachingProgramService{
  constructor(private readonly database:Database.Database){}
  private attachmentTarget(communityId:string,relationshipId:string,targetType:string,targetId:string,actor:Actor){
   const relation=this.relation(communityId,relationshipId,actor);
-  if(targetType==="message"&&!this.database.prepare(`SELECT 1 FROM traderlink_community_coaching_messages WHERE message_id=? AND community_id=? AND relationship_id=?`).get(targetId,communityId,relationshipId))platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED",{operation:"attachment_target"});
+  if(targetType==="message"&&targetId!==relationshipId&&!this.database.prepare(`SELECT 1 FROM traderlink_community_coaching_messages WHERE message_id=? AND community_id=? AND relationship_id=?`).get(targetId,communityId,relationshipId))platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED",{operation:"attachment_target"});
   if(targetType==="session"&&!this.database.prepare(`SELECT 1 FROM traderlink_community_coaching_sessions WHERE session_id=? AND community_id=? AND relationship_id=?`).get(targetId,communityId,relationshipId))platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED",{operation:"attachment_target"});
   if(targetType==="teaching"){
    const item=this.database.prepare(`SELECT item.status,item.available_at_utc FROM traderlink_community_coaching_teaching_items item JOIN traderlink_community_coaching_teaching_students student ON student.teaching_id=item.teaching_id WHERE item.teaching_id=? AND item.community_id=? AND student.relationship_id=?`).get(targetId,communityId,relationshipId) as {status:string;available_at_utc:string|null}|undefined;
@@ -35,12 +35,18 @@ export class TraderLinkCommunityCoachingProgramService{
  }
  updateTeachingDetails(input:Readonly<{communityId:string;actor:Actor;teachingId:string;title:string;body:string;deliveryUrl:string;recordingUrl:string;deliveryKind:"live"|"recorded"|"resource";scheduledAtUtc?:string;availableAtUtc?:string;dueAtUtc?:string;status:"draft"|"published"|"completed"|"cancelled";atUtc:string}>){
   new TraderLinkCommunityRepository(this.database).requireCapability(input.communityId,input.actor.userId,"community.coaching.students");
+  this.database.transaction(()=>{
   assertCanonicalUuidV4(input.teachingId,"teachingId");for(const date of [input.atUtc,input.scheduledAtUtc,input.availableAtUtc,input.dueAtUtc])if(date)assertCanonicalUtcTimestamp(date,"teachingDate");
   if(!["live","recorded","resource"].includes(input.deliveryKind)||!["draft","published","completed","cancelled"].includes(input.status))throw new Error("Choose a valid lesson status.");
   if(input.availableAtUtc&&input.dueAtUtc&&input.availableAtUtc>input.dueAtUtc)throw new Error("The due date must follow the availability date.");
+  if(input.status==="published"){
+   const audience=this.database.prepare(`SELECT audience_mode,plan_id FROM traderlink_community_coaching_teaching_items WHERE teaching_id=? AND community_id=? AND coach_user_id=?`).get(input.teachingId,input.communityId,input.actor.userId) as {audience_mode:string;plan_id:string|null}|undefined;
+   if(audience&&["all_students","plan"].includes(audience.audience_mode))this.database.prepare(`INSERT OR IGNORE INTO traderlink_community_coaching_teaching_students(teaching_id,community_id,relationship_id,status,completed_at_utc,updated_at_utc) SELECT ?,community_id,relationship_id,'assigned',NULL,? FROM traderlink_community_coaching_relationships WHERE community_id=? AND coach_user_id=? AND status='active' AND archived_at_utc IS NULL AND (?='all_students' OR plan_id=?)`).run(input.teachingId,input.atUtc,input.communityId,input.actor.userId,audience.audience_mode,audience.plan_id);
+  }
   if(input.status==="published"&&!this.database.prepare(`SELECT 1 FROM traderlink_community_coaching_teaching_students WHERE teaching_id=? AND community_id=? LIMIT 1`).get(input.teachingId,input.communityId))throw new Error("Choose students before publishing this lesson.");
   const result=this.database.prepare(`UPDATE traderlink_community_coaching_teaching_items SET title=?,body=?,delivery_url=?,recording_url=?,delivery_kind=?,scheduled_at_utc=?,available_at_utc=?,due_at_utc=?,status=?,updated_at_utc=? WHERE teaching_id=? AND community_id=? AND coach_user_id=?`).run(clean(input.title,160),clean(input.body,20000,false),externalCoachingUrl(input.deliveryUrl),externalCoachingUrl(input.recordingUrl),input.deliveryKind,input.scheduledAtUtc??null,input.availableAtUtc??null,input.dueAtUtc??null,input.status,input.atUtc,input.teachingId,input.communityId,input.actor.userId);
   if(result.changes!==1)platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED",{operation:"update_teaching"});
+  })();
  }
  setWorkspace(input:Readonly<{communityId:string;actor:Actor;relationshipId:string;reviewId:string;workspaceKind:unknown;focusAreas:unknown;periodStart?:string;periodEnd?:string;atUtc:string}>){
   this.coach(input.communityId,input.relationshipId,input.actor);
