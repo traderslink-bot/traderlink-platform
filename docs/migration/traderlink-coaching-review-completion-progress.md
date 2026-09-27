@@ -239,3 +239,28 @@ verified an applied-migration identity on any hosted database.
 - Focused static verification: route TypeScript syntax has zero diagnostics;
   `git diff --check` passes. Compared redirect prerequisites with both destination
   loader and catch-all authorization checks. Runtime verification is not implied.
+
+## Owner-authorized persistent staging student — 2026-09-26
+
+- Navigation correction is on hold, not deployed. Coordinator confirmed live
+  TradersLink Test Coach has no student relationships; the owner requested setup.
+- Added exported, non-auto-running `seedStagingCoachingStudent(database, options)`
+  in `src/scripts/seed-staging-coaching-student.ts`. Preview is read-only; apply
+  requires its exact confirmation and runs in one transaction. Repeat calls verify
+  the existing fixture without resetting coach edits. Collisions abort.
+- Hard guards pin staging project/service/environment, `/data/`, verified complete
+  139-migration history ending with 0143 at execution order 156, and exact existing
+  test-community/active coach profile and capabilities. Bundle only against the
+  deployed staging source; this older feature manifest is not a runnable target.
+- Creates one synthetic student (no OAuth/Discord identity or sign-in), isolated
+  workspace/account, six invented closed trades with explicit synthetic notes via
+  canonical Journal preview/commit services, an isolated test-only plan, active
+  relationship, explicit synthetic Journal sharing, and one student-requested
+  draft review with two queued trades and a due date. Four other trades remain
+  available to find/add; saved reviews start empty for the coach to exercise.
+- No existing account/plan/role changes, notifications, AI/provider calls or schema
+  changes. The test plan's null Discord role is isolated and does not weaken any
+  real plan. No fabricated Discord membership evidence is inserted.
+- Coordinator has prepared a verified staging backup/restore copy and owns remote
+  rehearsal, transactional live application, and result verification. Helper plus
+  this progress record are the only handoff files; exclude the held nav commit.
