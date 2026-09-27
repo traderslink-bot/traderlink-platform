@@ -32,7 +32,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
         if (!Array.isArray(value.rows)) return [];
         return value.rows.filter((row: AnalysisHistoryRow | null) => row &&
           Number.isFinite(row.generatedAt) && row.generatedAt > 0 && Number.isFinite(row.price) && row.price > 0)
-          .map((row: AnalysisHistoryRow) => ({ generatedAt: row.generatedAt, price: row.price }));
+          .map((row: AnalysisHistoryRow) => ({ generatedAt: row.generatedAt, price: row.price,
+            ...(typeof row.publishedAt === "number" && Number.isFinite(row.publishedAt) && row.publishedAt > 0
+              ? { publishedAt: row.publishedAt } : {}),
+          }));
       } catch { return []; }
     })();
     entry = { expires: Date.now() + 60_000, rows };
