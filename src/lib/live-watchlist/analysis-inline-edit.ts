@@ -1,6 +1,6 @@
 /** Only owner-editable fields cross the save boundary. Source evidence stays server-owned. */
 export const analysisEditSections = {
-  currentRead: "Analysis", needsToHold: "Needs to hold", cautionBelow: "Caution below",
+  currentRead: "Analysis", needsToHold: "Support to watch", cautionBelow: "Caution below",
   momentumFailure: "Momentum failure", mustClear: "Must clear", breakoutContinuation: "Breakout continuation",
   targets: "Where the trade could go next", shallow: "Pullback", deep: "Deeper pullback",
   downsideCheckpoints: "Downside levels", failureRecovery: "Failure and recovery",

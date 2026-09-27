@@ -563,7 +563,7 @@ export function TradersLinkAiReadCard({
       ) : null}
       {(() => {
         const levels = [
-          ["needsToHold", "Needs to hold", read.needsToHold],
+          ["needsToHold", "Support to watch", read.needsToHold],
           ["cautionBelow", "Caution below", read.cautionBelow],
           ["momentumFailure", "Momentum failure", read.momentumFailure],
           ["mustClear", "Must clear", read.mustClear],
@@ -647,7 +647,7 @@ export function TradersLinkAiReadCard({
           </p>
           <p>{pullbackPlanStateCopy(pullbackPlan)}</p>
           <p>
-            This area comes from the AI Read&apos;s caution and needs-to-hold boundaries. Acceptance
+            This area comes from the analysis&apos;s Caution below and Support to watch levels. Acceptance
             below ${formatPrice(pullbackPlan.zoneLow)} weakens the active pullback thesis.
           </p>
           <p>

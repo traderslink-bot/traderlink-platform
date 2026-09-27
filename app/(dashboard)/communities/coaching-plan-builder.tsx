@@ -71,7 +71,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false}:{
                       };}}>
                       <Typography component="span" fontWeight={750} sx={{color:"inherit"}}>{offer.label}</Typography>
                       <Typography component="span" id={`offer-description-${offer.type}`} variant="body2" sx={{color:"text.primary",fontWeight:400,lineHeight:1.5}}>{offer.description}</Typography>
-                      <Chip component="span" size="small" label={added ? "Added" : "+"} sx={theme => ({mt:"auto",color:offerColor(offer,theme.palette.mode),bgcolor:alpha(offerColor(offer,theme.palette.mode),.16),fontWeight:800})}/>
+                      <Chip component="span" size="small" label={added ? "Added" : "+"} sx={theme => ({mt:"auto",color:offerColor(offer,theme.palette.mode),bgcolor:"transparent",border:"1px solid currentColor",fontWeight:800})}/>
                     </Button>
                   </Grid>;
                 })}
