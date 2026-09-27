@@ -1,5 +1,8 @@
 # Bounded runtime integrity recovery — September 27, 2026
 
+Owner-authorized outage follow-up: [exit-anchored scan cooldown](runtime-integrity-cooldown-progress-2026-09-27.md).
+This supersedes start-anchored scheduling and failure-time retry delays only.
+
 Status: local implementation and focused verification complete; source ready for
 Coordinator review. Git records the immutable checkpoint and its exact parent.
 No deployment authority. Coordinator owns remote build and release acceptance.

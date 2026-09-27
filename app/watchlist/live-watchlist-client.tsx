@@ -1470,7 +1470,7 @@ function WatchlistDetailCardArticle({
   );
 }
 
-export function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState }) {
   const gain = symbol.potentialGain;
 
   return (

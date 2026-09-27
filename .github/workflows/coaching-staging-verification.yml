@@ -1,40 +1,21 @@
-name: Potential gain integrated release verification
+name: Integrity cooldown isolated verification
 on:
   push:
     branches: [codex/coaching-staging-integration-20260926]
 permissions:
   contents: read
 concurrency:
-  group: potential-gain-release
+  group: integrity-repair-verification
   cancel-in-progress: false
 jobs:
-  verify:
+  linux-package:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
-    strategy:
-      max-parallel: 1
-      matrix:
-        source: [3a3486e55b53f869f165be85a2a905f7f1537b08, 1ccb44bbc51d113d3d2d3f30086d4ef031473571]
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ matrix.source }}
-          path: app
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: npm ci --no-audit --no-fund
-        working-directory: app
-      - run: node --import ./app/node_modules/tsx/dist/loader.mjs .github/potential-gain-rehearsal.ts
-      - name: Offline integrated sender and route checks
-        if: matrix.source == '1ccb44bbc51d113d3d2d3f30086d4ef031473571'
-        working-directory: app
-        run: node src/scripts/verify-watchlist-potential-gain-post.cjs "$PWD/node_modules/typescript" "$PWD/node_modules/better-sqlite3"
-      - run: npm run build
-        working-directory: app
+      - name: Build production Docker package
+        run: docker build -t integrity-repair .
+      - name: Native isolated integrity and termination verification
+        run: docker run --rm --network none --entrypoint node -v "$PWD/src/modules/platform/server/database/open-platform-database.ts:/tmp/integrity-source.ts:ro" -v "$PWD/.github/integrity-native-smoke.cjs:/tmp/integrity-native-smoke.cjs:ro" integrity-repair /tmp/integrity-native-smoke.cjs

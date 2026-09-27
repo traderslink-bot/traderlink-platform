@@ -16,7 +16,6 @@ import { WatchlistAnalysisEditor } from "./watchlist-analysis-editor";
 
 const AnalysisPreviewCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then((module) => module.TradersLinkAiReadCard));
 const IndicatorAuditPanel = dynamic(() => import("./watchlist-indicator-audit-panel"));
-const PotentialGainPost = dynamic(() => import("./watchlist-potential-gain-post").then(module => module.WatchlistPotentialGainPost));
 const RUNTIME_SECTIONS = [
   ["watchlist", "Watchlist"], ["runtime", "Runtime"], ["market-data", "Market Data"],
   ["ai-controls", "AI Controls"], ["discord-notifications", "Discord notifications"], ["live-website-controls", "Live Website Controls"],
@@ -48,7 +47,6 @@ export function WatchlistRuntimeAdminClient({
     frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-admin-wrapper", type: "select-section", section: runtimeSectionRef.current }, window.location.origin);
   }, []);
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
-  const [gainPostSymbol, setGainPostSymbol] = useState<string | null>(null);
   const [analysisPreview, setAnalysisPreview] = useState<{
     card: LiveWatchlistCardContent; dipBuyPlanVisible: boolean;
   } | null>(null);
@@ -89,10 +87,9 @@ export function WatchlistRuntimeAdminClient({
     const onMessage = (event: MessageEvent<unknown>) => {
       if (event.origin !== window.location.origin || event.source !== frameRef.current?.contentWindow) return;
       if (!event.data || typeof event.data !== "object") return;
-      const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown; symbol?: unknown };
+      const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown };
       if (message.source !== "traderslink-watchlist-admin") return;
       if (message.type === "navigation-ready") { syncNavigation(); return; }
-      if (message.type === "post-potential-gain" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainPostSymbol(message.symbol); return; }
       if (message.type === "open-usage") { selectUsage(); return; }
       if (message.type === "open-recaps" && dailyRecapsPanel) { setSelectedSection("recaps"); return; }
       if (message.type === "open-indicator-audit") { setAuditOpened(true); setSelectedSection("indicator-audit"); return; }
@@ -107,7 +104,6 @@ export function WatchlistRuntimeAdminClient({
 
   return (
     <>
-      {gainPostSymbol && <PotentialGainPost key={gainPostSymbol} symbol={gainPostSymbol} onClose={() => setGainPostSymbol(null)} />}
       {editingSymbol && <WatchlistAnalysisEditor key={editingSymbol} symbol={editingSymbol} onClose={() => setEditingSymbol(null)} onSaved={() => frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-editor", type: "saved" }, window.location.origin)} />}
       <Dialog open={analysisPreview !== null} onClose={() => setAnalysisPreview(null)} fullWidth maxWidth="lg" aria-labelledby="analysis-preview-title">
         <DialogTitle id="analysis-preview-title">Website analysis preview</DialogTitle>
