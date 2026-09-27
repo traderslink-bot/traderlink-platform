@@ -87,4 +87,26 @@ synthetic QA records. Do not publish a plan that can queue a real Discord post.
 - No local production build, live Discord messages, production data writes or
   edits to the owner's saved review were performed for this checkpoint.
 
-Do not mark the six-area goal or the whole coaching feature complete on this evidence.
+## Final staging follow-up — 2026-09-27
+
+Coordinator verified source `5efeb32c9d1f89aa777b7096dd80489c1c74b7a5`, deployment
+`0d999d35-f3f0-45f0-ae32-6eec1839235d` SUCCESS, remote build36344438526 PASS,
+health200/exact141 at19:36:16UTC. Includes repaired productionc3 and all1f16
+coaching changes; original volume and both reviews retained.
+
+- Hosted scheduler logs confirm60seconds/batch5 and a natural successful first pass:
+  checked0, created0, failed0, archived0, roleRefreshConfiguredfalse. This proves
+  activation, not hosted generation with an eligible accepted agreement.
+- Fresh deployed desktop1440 check: expanded AMD editor bounds363.60–956.91 fit
+  inside table viewport312.80–1007.73. Save, Chart and Details stay visible in the
+  editor. Table columns remain aligned and horizontally scrollable independently.
+- Mobile390 check: client375/scroll375, saved AMD review reopens inline with its
+  persisted text, named Remove checkbox and Save trade review action visible.
+- Teaching draft and reused draft both display `1 student`; saved recording links
+  and due date retained. No review content or fixtures changed in this final recheck.
+- Temporary viewport reset; Light appearance preserved. Existing user tab untouched.
+
+Six-area implementation and the available 13-area QA pass are recorded. Genuine
+student browser delivery/read/follow-up, live Discord role removal/restoration and
+hosted generation from an eligible accepted agreement remain external acceptance
+gates. Do not mark the whole coaching feature end-to-end accepted on this evidence.

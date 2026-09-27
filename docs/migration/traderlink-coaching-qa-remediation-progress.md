@@ -154,3 +154,15 @@ Current verification: [remediation QA record](traderlink-coaching-remediation-qa
 - Desktop expanded editor is constrained to visible table width while preserving
   the aligned/scrollable table and right-side panel. Teaching singular label corrected.
   These final UI changes require deployed recheck; no new descriptions or redesign.
+
+### Final deployed follow-up
+
+- Source5efeb32 / deployment0d999d35 now includes repaired productionc3 plus the
+  complete1f16 coaching follow-up. Coordinator confirms successful remote build,
+  health200/exact141, original volume and both existing reviews retained.
+- Natural maintenance first pass succeeded with no eligible agreements; scheduler
+  activation verified, live recurring generation not claimed.
+- Final deployed desktop editor containment, mobile inline saved review/no horizontal
+  page overflow and teaching `1 student` label verified. Viewport restored.
+- Available 13-area QA completed and recorded in the linked remediation QA report;
+  genuine student/live Discord/eligible hosted-generation acceptance remains open.
