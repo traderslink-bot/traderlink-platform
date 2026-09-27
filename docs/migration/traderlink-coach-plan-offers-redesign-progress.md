@@ -1,6 +1,6 @@
 # Coach plan offers redesign
 
-Status: owner requested a new staging design on 2026-09-27; implementation in progress.
+Status: new design deployed on staging on 2026-09-27; mobile spacing correction pending deployment. Owner review pending.
 This supersedes the rejected generic five-type plan-builder presentation, not
 the existing review-workspace workflow.
 
@@ -38,7 +38,19 @@ baseline. No local build or test suite. Owner visual acceptance remains required
 - [x] Saved plan contents and live preview share the same offer summary formatter.
 - [x] Focused TypeScript check: zero diagnostics in the two changed source files.
 - [x] Existing Coaching and Journal privacy Help guidance remains accurate; no new prose added.
-- [ ] Coordinator staging deployment and owner visual acceptance.
+- [x] Coordinator staging deployment of initial design.
+- [ ] Mobile spacing correction deployed and inspected.
+- [ ] Owner visual acceptance.
+
+Staging evidence: source9b336fe9b0cab898ed25fbf6698c34527e3222f3,
+Railway734af750-1d0a-4345-beba-9314a9966c41 SUCCESS/one RUNNING,
+remote build36320618280 passed, public health200/ready140. Coordinator confirmed
+unchanged migration registry and original volume; production ready127 unchanged.
+Signed-in browser verified independent Trades/Rules editors, rules included within
+Performance without adding a separate service, and matching live preview/resource
+labels. No plan was submitted or existing record modified. At390px, the Added
+chip crowded the Performance label; corrected service tiles to stack label/chip
+below the small breakpoint. Desktop retains horizontal label/chip layout.
 
 Source review: existing form action/item-type contract retained; selections
 persist in existing plan items/focus JSON. Resource choices and coach-defined

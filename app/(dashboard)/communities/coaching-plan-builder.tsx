@@ -61,7 +61,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false}:{
                   const added = selected.includes(offer.type);
                   return <Grid key={offer.type} size={{xs:6, md:4}}>
                     <Button type="button" fullWidth aria-pressed={added} onClick={() => toggle(offer.type)} variant="outlined" color={added ? offer.accent : "inherit"}
-                      sx={{height:"100%", minHeight:64, justifyContent:"space-between", textAlign:"left", gap:1, borderWidth:added?2:1}}>
+                      sx={{height:"100%", minHeight:64, flexDirection:{xs:"column",sm:"row"}, alignItems:{xs:"flex-start",sm:"center"}, justifyContent:"space-between", textAlign:"left", gap:1, borderWidth:added?2:1}}>
                       <span>{offer.label}</span>
                       <Chip component="span" size="small" color={added ? offer.accent : "default"} label={added ? "Added" : "+"}/>
                     </Button>
