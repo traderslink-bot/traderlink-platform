@@ -1,6 +1,6 @@
 # Coach plan offers redesign
 
-Status: owner approved the builder direction; approved card colours and descriptions are implemented locally, pending staging review.
+Status: owner approved the builder direction; approved card colours and descriptions deployed and visually checked on staging. Owner review pending.
 This supersedes the rejected generic five-type plan-builder presentation, not
 the existing review-workspace workflow.
 
@@ -46,7 +46,17 @@ baseline. No local build or test suite. Owner visual acceptance remains required
   Card descriptions wrap and status aligns at bottom; keyboard focus is visible.
 - No form state, save action, student access, schema or review-workspace changes.
 - Help guidance reviewed: no behavioural change requires guide changes.
-- Diff check clean; no local build or test suite. Staging visual check pending.
+- Diff check clean; no local build or test suite. First remote build rejected
+  nested Material colour imports; d3042712f switched only imports to verified
+  supported @mui/material/colors named exports. Corrected full remote build passed.
+- Staging c853baedb729744cc3a5b19e6cb7cb6282ae4a86, Railway
+  c40cdc89-480a-4f4e-921d-9c41229ba911 SUCCESS/one RUNNING; Coordinator
+  verified public200/ready140, unchanged registry/volume and productionready127.
+- Signed-in desktop and390px Light/Navy Dark inspected: all13 descriptions
+  rendered; seven distinct review accents present before selection; Performance
+  switches to Added/strong border with matching preview. Mobile text wraps without
+  card overlap. Restored Light and normal viewport; cleared unsaved selection.
+  No saved plan submitted, no student record touched. Owner visual approval pending.
 
 - [x] Distinct offer selection and configuration implemented.
 - [x] Performance package and standalone services implemented.
