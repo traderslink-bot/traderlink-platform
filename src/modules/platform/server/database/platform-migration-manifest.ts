@@ -1,3 +1,4 @@
+import { watchlistOwnerReviewNotificationsMigration } from "./migrations/0146_watchlist_owner_review_notifications";
 import { platformPremiumSwingIdeaVisitEventsMigration } from "./migrations/0139_platform_premium_swing_idea_visit_events";
 import { newsMarketHaltDiscordDeliveriesMigration } from "@/src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries";
 import { newsReverseSplitAlertsMigration } from "@/src/modules/news/server/database/migrations/0142_news_reverse_split_alerts";
@@ -631,6 +632,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0139_platform_premium_swing_idea_visit_events.ts", migration: platformPremiumSwingIdeaVisitEventsMigration }),
     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries.ts", migration: newsMarketHaltDiscordDeliveriesMigration }),
     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0142_news_reverse_split_alerts.ts", migration: newsReverseSplitAlertsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0146_watchlist_owner_review_notifications.ts", migration: watchlistOwnerReviewNotificationsMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -639,6 +641,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0146_watchlist_owner_review_notifications": Object.freeze(["platform_watchlist_owner_review_deliveries"]),
     "0139_platform_premium_swing_idea_visit_events": Object.freeze(["platform_premium_swing_idea_visit_events"]),
     "0140_news_market_halt_discord_deliveries": Object.freeze(["news_market_halt_discord_deliveries"]),
     "0142_news_reverse_split_alerts": Object.freeze([
