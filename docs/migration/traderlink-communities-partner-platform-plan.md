@@ -16,6 +16,8 @@ owner-test allowlist if production-only Discord behavior requires it.
 
 **Current whole-coaching QA:** [Coaching feature QA — 2026-09-27](traderlink-coaching-full-qa-20260927.md). Presentation fixes are live and verified. The complete inventory audit identifies eight open functional/accessibility issues; whole-feature acceptance has not passed. Student-authenticated and external-service checks remain explicitly unverified.
 
+**Owner-authorized full remediation:** [Coaching QA Remediation](traderlink-coaching-qa-remediation-progress.md). All six areas followed by full QA in one continuous goal; preserve the approved interfaces and existing records.
+
 **Active implementation record:** [Communities 1 Identity And Permissions Progress](traderlink-communities-1-identity-permissions-progress.md)
 
 **Active pilot record:** [Communities Discord Pilot Progress](traderlink-communities-discord-pilot-progress.md)

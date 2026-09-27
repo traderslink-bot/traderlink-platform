@@ -17,10 +17,7 @@ export default async function CommunityCoachingIndexPage() {
           capabilities.includes("community.coaching.students")) {
         return `${basePath}/workspace`;
       }
-      if (!capabilities.includes("community.coaching.view") &&
-          !capabilities.includes("community.coaching.manage_all")) continue;
-
-      directoryDestination ??= `${basePath}/coaches`;
+      if (capabilities.includes("community.coaching.view") || capabilities.includes("community.coaching.manage_all")) directoryDestination ??= `${basePath}/coaches`;
       const relationship = database.prepare(`SELECT 1
 FROM traderlink_community_coaching_relationships
 WHERE community_id = ? AND student_user_id = ?
