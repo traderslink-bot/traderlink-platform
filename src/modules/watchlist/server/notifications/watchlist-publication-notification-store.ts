@@ -45,19 +45,20 @@ export class WatchlistPublicationNotificationStore {
     const kind = event.notificationKind ?? "listing";
     const eventId = kind === "listing" ? event.cycleId : `${event.cycleId}:analysis:${event.approvalRevision}`;
     return this.database.transaction(() => {
-      const previous = this.database.prepare<[string], { ticker: string; approved_at_utc: string; published_at_utc: string; notify_users: number }>(
-        `SELECT ticker,approved_at_utc,published_at_utc,notify_users FROM platform_watchlist_notification_events WHERE event_id=?`,
+      const previous = this.database.prepare<[string], { ticker: string; approved_at_utc: string; published_at_utc: string; notify_users: number; owner_approved: number }>(
+        `SELECT ticker,approved_at_utc,published_at_utc,notify_users,owner_approved FROM platform_watchlist_notification_events WHERE event_id=?`,
       ).get(eventId);
       if (previous) {
         if (previous.ticker !== event.ticker || previous.approved_at_utc !== event.approvedAtUtc ||
           previous.published_at_utc !== event.publishedAtUtc || previous.notify_users !== (event.notifyUsers === false ? 0 : 1)) throw new Error("Watchlist publication identity conflict.");
+        // Retries keep the attribution captured when this event was first accepted.
         return Object.freeze({ duplicate: true, enqueued: 0 });
       }
       const timestamp = input.now.toISOString();
       this.database.prepare(`INSERT INTO platform_watchlist_notification_events
-        (event_id,cycle_id,notification_kind,approval_revision,notify_users,ticker,approved_at_utc,published_at_utc,accepted_at_utc,expires_at_utc) VALUES(?,?,?,?,?,?,?,?,?,?)`)
+        (event_id,cycle_id,notification_kind,approval_revision,notify_users,ticker,approved_at_utc,published_at_utc,accepted_at_utc,expires_at_utc,owner_approved) VALUES(?,?,?,?,?,?,?,?,?,?,?)`)
         .run(eventId,event.cycleId,kind,event.approvalRevision ?? 0,event.notifyUsers === false ? 0 : 1,event.ticker, event.approvedAtUtc, event.publishedAtUtc, timestamp,
-          new Date(Date.parse(event.publishedAtUtc) + WATCHLIST_NOTIFICATION_MAX_AGE_MS).toISOString());
+          new Date(Date.parse(event.publishedAtUtc) + WATCHLIST_NOTIFICATION_MAX_AGE_MS).toISOString(), event.ownerApproved === true ? 1 : 0);
       let enqueued = 0;
       // A delayed historical event is acknowledged without enrolling anyone.
       if (event.notifyUsers !== false && !watchlistNotificationExpired(event, input.now.getTime())) {

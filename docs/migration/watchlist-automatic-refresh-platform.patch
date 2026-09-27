@@ -1,0 +1,233 @@
+diff --git a/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts b/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts
+index 9ebbe0f5e..c3a5e1671 100644
+--- a/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts
++++ b/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts
+@@ -6,6 +6,7 @@ import { resolveTraderLinkDiscordGuildId } from "@/src/modules/platform/server/a
+ import { requestWatchlistRuntimeRaw } from "../runtime/watchlist-runtime-admin-client";
+ import { publicationFromReview, type WatchlistApprovalIntent } from "./watchlist-publication-notification-contract";
+ import { WatchlistPublicationNotificationStore } from "./watchlist-publication-notification-store";
++import { readAutomaticAnalysisEvents, reconcileOwnerReviewNotifications } from "./watchlist-automatic-notifications";
+ 
+ type Recipient = { userId: string; channel: "web_push" | "email"; targetRef: string };
+ type IntentRow = { intent_id: string; cycle_id: string; ticker: string; expected_head: number; draft_revision: number;
+@@ -70,12 +71,37 @@ export async function reconcileWatchlistNotificationApprovals(): Promise<void> {
+   running = true;
+   let database: Database.Database | undefined;
+   try {
++    const automatic = await readAutomaticAnalysisEvents().catch(() => null);
++    // The runtime's persisted automatic approval is the owner's configured
++    // authority for this replacement; no synthetic interactive owner identity.
++    for (const event of automatic?.events ?? []) {
++      if (event.kind !== "publication") continue;
++      recordWatchlistApprovalNotificationIntent(JSON.stringify({ symbol: event.symbol, cycleId: event.cycleId,
++        expectedHead: event.expectedHead, draftRevision: event.draftRevision, notifyUsers: true }), event.actor!);
++    }
+     database = openPlatformDatabase({ mode: "runtime" });
++    for (const event of automatic?.events ?? []) {
++      if (event.kind !== "publication") continue;
++      const row = database.prepare<[string], IntentRow>("SELECT * FROM platform_watchlist_notification_intents WHERE intent_id=? AND state='pending'")
++        .get(`${event.cycleId}:draft:${event.draftRevision}`);
++      if (!row) continue;
++      const publication = publicationFromReview({ cycleId: row.cycle_id, ticker: row.ticker,
++        expectedHead: row.expected_head, draftRevision: row.draft_revision, actor: row.actor },event.review,Date.now());
++      if (!publication) continue;
++      database.transaction(() => {
++        new WatchlistPublicationNotificationStore(database!).accept({ event: publication, now: new Date(),
++          recipients: () => (JSON.parse(row.recipients_json) as Recipient[]).filter(recipient => watchlistNotificationAccess(database!,recipient.userId)) });
++        database!.prepare("UPDATE platform_watchlist_notification_intents SET state='accepted' WHERE intent_id=?").run(row.intent_id);
++      }).immediate();
++    }
++    if (automatic) await reconcileOwnerReviewNotifications(database,automatic).catch(() => {
++      console.error("Watchlist owner review notification check failed.");
++    });
+     const now = new Date();
+     database.prepare(`UPDATE platform_watchlist_notification_intents SET state='expired'
+       WHERE state='pending' AND requested_at_utc<=?`).run(new Date(now.getTime()-3_600_000).toISOString());
+     const intents = database.prepare<[string], IntentRow>(`SELECT * FROM platform_watchlist_notification_intents
+-      WHERE state='pending' AND next_check_at_utc<=? ORDER BY requested_at_utc LIMIT 3`).all(now.toISOString());
++      WHERE state='pending' AND actor!='runtime:automatic-boundary' AND next_check_at_utc<=? ORDER BY requested_at_utc LIMIT 3`).all(now.toISOString());
+     for (const row of intents) {
+       database.prepare("UPDATE platform_watchlist_notification_intents SET next_check_at_utc=? WHERE intent_id=?")
+         .run(new Date(Date.now()+30_000).toISOString(),row.intent_id);
+diff --git a/app/api/admin/watchlist/runtime/[...path]/route.ts b/app/api/admin/watchlist/runtime/[...path]/route.ts
+index 594622335..d072d73a3 100644
+--- a/app/api/admin/watchlist/runtime/[...path]/route.ts
++++ b/app/api/admin/watchlist/runtime/[...path]/route.ts
+@@ -4,6 +4,7 @@ import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform
+ import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
+ import { requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
+ import { recordWatchlistApprovalNotificationIntent } from "@/src/modules/watchlist/server/notifications/watchlist-notification-runtime";
++import { ownerReviewDeliveryStatus } from "@/src/modules/watchlist/server/notifications/watchlist-automatic-notifications";
+ 
+ export const dynamic = "force-dynamic";
+ export const runtime = "nodejs";
+@@ -119,7 +120,15 @@ async function relay(
+     method,
+     path: `${pathname}${incomingUrl.search}`,
+   });
+-  return new Response(result.body, {
++  let responseBody = result.body;
++  if (pathname === "/api/watchlist/analysis-review/settings" && result.status === 200) {
++    try {
++      const value = JSON.parse(responseBody);
++      value.settings.ownerReviewDeliveryStatus = withJournalAdminDatabase(request.headers, database => ownerReviewDeliveryStatus(database));
++      responseBody = JSON.stringify(value);
++    } catch { /* Runtime controls remain available if delivery status cannot be read. */ }
++  }
++  return new Response(responseBody, {
+     headers: {
+       "cache-control": "private, no-store, max-age=0",
+       "content-type": result.contentType,
+diff --git a/src/modules/platform/server/database/platform-migration-manifest.ts b/src/modules/platform/server/database/platform-migration-manifest.ts
+index d2fe4eb39..db6120595 100644
+--- a/src/modules/platform/server/database/platform-migration-manifest.ts
++++ b/src/modules/platform/server/database/platform-migration-manifest.ts
+@@ -1,3 +1,4 @@
++import { watchlistOwnerReviewNotificationsMigration } from "./migrations/0146_watchlist_owner_review_notifications";
+ import { platformPremiumSwingIdeaVisitEventsMigration } from "./migrations/0139_platform_premium_swing_idea_visit_events";
+ import { newsMarketHaltDiscordDeliveriesMigration } from "@/src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries";
+ import { newsReverseSplitAlertsMigration } from "@/src/modules/news/server/database/migrations/0142_news_reverse_split_alerts";
+@@ -631,6 +632,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
+     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0139_platform_premium_swing_idea_visit_events.ts", migration: platformPremiumSwingIdeaVisitEventsMigration }),
+     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries.ts", migration: newsMarketHaltDiscordDeliveriesMigration }),
+     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0142_news_reverse_split_alerts.ts", migration: newsReverseSplitAlertsMigration }),
++    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0146_watchlist_owner_review_notifications.ts", migration: watchlistOwnerReviewNotificationsMigration }),
+   ]);
+ 
+ export const platformMigrationManifest = validatePlatformMigrationManifest(
+@@ -639,6 +641,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
+ 
+ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
+   Object.freeze({
++    "0146_watchlist_owner_review_notifications": Object.freeze(["platform_watchlist_owner_review_deliveries"]),
+     "0139_platform_premium_swing_idea_visit_events": Object.freeze(["platform_premium_swing_idea_visit_events"]),
+     "0140_news_market_halt_discord_deliveries": Object.freeze(["news_market_halt_discord_deliveries"]),
+     "0142_news_reverse_split_alerts": Object.freeze([
+diff --git a/src/modules/help/watchlist-guides.ts b/src/modules/help/watchlist-guides.ts
+index d5cf89063..b5367d251 100644
+--- a/src/modules/help/watchlist-guides.ts
++++ b/src/modules/help/watchlist-guides.ts
+@@ -48,6 +48,8 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
+     keywords: ["automatic updates", "manual refresh", "session", "cost"],
+     // Interrupted requests must not look like a never-generated activation.
+     blocks: [{ kind: "paragraph", text: "Uncheck Generate analysis beside the ticker field to add a notes-only ticker. Enter My notes, then add the ticker. It stays private until you publish it, even if global analysis generation is off. My notes on its row lets you save a draft; after listing, Publish notes updates the member card without notifications. Blank published notes remove that card. Generate analysis on the row requests an analysis later when global/session generation is enabled; review and approve it before members see it. Publishing a new ticker with its approved analysis also publishes your saved Trader notes. Published notes remain alongside the analysis, and unsent notes drafts stay private. The per-ticker choice prevents automatic analysis requests after restart as well. Automatic follow-up AI requests are off by default. Turning them off preserves their settings for later and does not stop live price/data updates. Manual refresh remains available and requests a new analysis. When a required-review replacement is waiting for approval or its generation failed, another automatic request waits for owner action; live data continues." },
++      { kind: "paragraph", text: "Automatically publish refreshed analyses applies only to new automatic boundary refreshes of tickers already on the Watchlist. When off, the replacement waits for your review while the existing analysis stays visible. When on, the replacement publishes and sends the same Analysis updated announcements as a manual update with Notify users selected: Discord links and analysis images, plus opted-in member push and email. Initial analyses, manual refreshes and drafts already waiting for review are unchanged. Automatic AI updates must also be on; session settings and request limits still apply." },
++      { kind: "paragraph", text: "Notify me when an analysis needs review sends automatic replacement review alerts to your owner account. Push uses that account's AI review notification preference and subscribed devices. Send review notifications to Discord adds an alert to the separately configured private owner channel, not the member Watchlist channel. Reload review controls to see owner delivery status. A notification problem does not generate another analysis or prevent you from approving the saved draft. Member Discord, email and push titles include by \"This Guy\" when you approve the publication. Automatically published updates omit your name." },
+       { kind: "paragraph", text: "Review before publishing applies to new activations when analysis generation is enabled for that session. If generation is off when you add the ticker, the post follows the normal publishing path without an initial AI request, even if settings or the session change while it prepares. Manual refresh remains available when generation is enabled. With review enabled, replacement analyses also wait for approval, including refreshes of older public tickers. The existing public analysis and live data remain available. Changing review settings does not silently approve a post already waiting for review." },
+       { kind: "paragraph", text: "If a request was interrupted before publication was acknowledged, restart keeps that status visible. With automatic updates off, it does not send another initial request. Manual refresh remains a separate request when generation is enabled." }],
+   }, {
+diff --git a/src/modules/watchlist/server/notifications/watchlist-publication-notification-contract.ts b/src/modules/watchlist/server/notifications/watchlist-publication-notification-contract.ts
+index 81a74622d..82a8cc56c 100644
+--- a/src/modules/watchlist/server/notifications/watchlist-publication-notification-contract.ts
++++ b/src/modules/watchlist/server/notifications/watchlist-publication-notification-contract.ts
+@@ -11,6 +11,7 @@ export type WatchlistPublicationNotificationEvent = Readonly<{
+   notificationKind?: "listing" | "analysis";
+   approvalRevision?: number;
+   notifyUsers?: boolean;
++  ownerApproved?: boolean;
+ }>;
+ 
+ export type WatchlistNotificationChannel = "web_push" | "email";
+@@ -42,6 +43,7 @@ export function publicationFromReview(intent: WatchlistApprovalIntent, value: un
+     if (action !== undefined && (action !== "listing" && action !== "analysis" || typeof publication?.notifyUsers !== "boolean")) return null;
+     return parseWatchlistPublicationNotificationEvent({ version: action ? 2 : 1, cycleId: intent.cycleId, ticker: intent.ticker,
+       approvedAtUtc: new Date(approval.at).toISOString(), publishedAtUtc: new Date(receipt.at).toISOString(),
++      ownerApproved: /^platform-owner:[0-9a-f-]{36}$/i.test(approval.actor),
+       ...(action ? { notificationKind: action, approvalRevision: approval.revision, notifyUsers: publication!.notifyUsers } : {}) }, nowMs);
+   } catch { return null; }
+ }
+@@ -67,6 +69,10 @@ export function parseWatchlistPublicationNotificationEvent(
+   const event = value as Record<string, unknown>;
+   const keys = ["version", "cycleId", "ticker", "approvedAtUtc", "publishedAtUtc"];
+   if (event.version === 2) keys.push("notificationKind", "approvalRevision", "notifyUsers");
++  if (Object.hasOwn(event, "ownerApproved")) {
++    if (typeof event.ownerApproved !== "boolean") return null;
++    keys.push("ownerApproved");
++  }
+   if (Object.keys(event).length !== keys.length || keys.some(key => !Object.hasOwn(event, key))) return null;
+   if (![1,2].includes(event.version as number) || typeof event.cycleId !== "string" || !uuid.test(event.cycleId) ||
+     typeof event.ticker !== "string" || !tickerPattern.test(event.ticker) ||
+@@ -78,6 +84,7 @@ export function parseWatchlistPublicationNotificationEvent(
+     !Number.isSafeInteger(event.approvalRevision) || (event.approvalRevision as number) < 1 || typeof event.notifyUsers !== "boolean")) return null;
+   return Object.freeze({ version: event.version as 1 | 2, cycleId: event.cycleId, ticker: event.ticker,
+     approvedAtUtc: event.approvedAtUtc, publishedAtUtc: event.publishedAtUtc,
++    ...(typeof event.ownerApproved === "boolean" ? { ownerApproved: event.ownerApproved } : {}),
+     ...(event.version === 2 ? { notificationKind: event.notificationKind as "listing" | "analysis",
+       approvalRevision: event.approvalRevision as number, notifyUsers: event.notifyUsers as boolean } : {}) });
+ }
+@@ -90,13 +97,14 @@ export function watchlistNotificationExpired(
+   return !Number.isFinite(nowMs) || nowMs >= Date.parse(event.publishedAtUtc) + WATCHLIST_NOTIFICATION_MAX_AGE_MS;
+ }
+ 
+-export function watchlistPublicationNotificationCopy(ticker: string, kind: "listing" | "analysis" = "listing") {
++export function watchlistPublicationNotificationCopy(ticker: string, kind: "listing" | "analysis" = "listing", ownerApproved = false) {
+   if (!tickerPattern.test(ticker)) throw new Error("Invalid Watchlist ticker.");
++  const attribution = ownerApproved ? ' by "This Guy"' : "";
+   return Object.freeze({
+     destinationPath: `/watchlist/${ticker}`,
+-    pushTitle: kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the Watchlist`,
++    pushTitle: (kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the Watchlist`) + attribution,
+     pushBody: kind === "analysis" ? `An approved TradersLink Analysis is ready for ${ticker}.` : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
+-    emailTitle: kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the TradersLink Watchlist`,
++    emailTitle: (kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the TradersLink Watchlist`) + attribution,
+     emailBody: kind === "analysis" ? `An approved TradersLink Analysis for ${ticker} is ready.` : `A new Watchlist post for ${ticker} is ready.`,
+     emailTickerLabel: `View ${ticker}`,
+     emailWatchlistLabel: "View Watchlist",
+diff --git a/src/modules/watchlist/server/notifications/watchlist-publication-notification-store.ts b/src/modules/watchlist/server/notifications/watchlist-publication-notification-store.ts
+index babddfe34..25295d735 100644
+--- a/src/modules/watchlist/server/notifications/watchlist-publication-notification-store.ts
++++ b/src/modules/watchlist/server/notifications/watchlist-publication-notification-store.ts
+@@ -45,19 +45,20 @@ export class WatchlistPublicationNotificationStore {
+     const kind = event.notificationKind ?? "listing";
+     const eventId = kind === "listing" ? event.cycleId : `${event.cycleId}:analysis:${event.approvalRevision}`;
+     return this.database.transaction(() => {
+-      const previous = this.database.prepare<[string], { ticker: string; approved_at_utc: string; published_at_utc: string; notify_users: number }>(
+-        `SELECT ticker,approved_at_utc,published_at_utc,notify_users FROM platform_watchlist_notification_events WHERE event_id=?`,
++      const previous = this.database.prepare<[string], { ticker: string; approved_at_utc: string; published_at_utc: string; notify_users: number; owner_approved: number }>(
++        `SELECT ticker,approved_at_utc,published_at_utc,notify_users,owner_approved FROM platform_watchlist_notification_events WHERE event_id=?`,
+       ).get(eventId);
+       if (previous) {
+         if (previous.ticker !== event.ticker || previous.approved_at_utc !== event.approvedAtUtc ||
+           previous.published_at_utc !== event.publishedAtUtc || previous.notify_users !== (event.notifyUsers === false ? 0 : 1)) throw new Error("Watchlist publication identity conflict.");
++        // Retries keep the attribution captured when this event was first accepted.
+         return Object.freeze({ duplicate: true, enqueued: 0 });
+       }
+       const timestamp = input.now.toISOString();
+       this.database.prepare(`INSERT INTO platform_watchlist_notification_events
+-        (event_id,cycle_id,notification_kind,approval_revision,notify_users,ticker,approved_at_utc,published_at_utc,accepted_at_utc,expires_at_utc) VALUES(?,?,?,?,?,?,?,?,?,?)`)
++        (event_id,cycle_id,notification_kind,approval_revision,notify_users,ticker,approved_at_utc,published_at_utc,accepted_at_utc,expires_at_utc,owner_approved) VALUES(?,?,?,?,?,?,?,?,?,?,?)`)
+         .run(eventId,event.cycleId,kind,event.approvalRevision ?? 0,event.notifyUsers === false ? 0 : 1,event.ticker, event.approvedAtUtc, event.publishedAtUtc, timestamp,
+-          new Date(Date.parse(event.publishedAtUtc) + WATCHLIST_NOTIFICATION_MAX_AGE_MS).toISOString());
++          new Date(Date.parse(event.publishedAtUtc) + WATCHLIST_NOTIFICATION_MAX_AGE_MS).toISOString(), event.ownerApproved === true ? 1 : 0);
+       let enqueued = 0;
+       // A delayed historical event is acknowledged without enrolling anyone.
+       if (event.notifyUsers !== false && !watchlistNotificationExpired(event, input.now.getTime())) {
+diff --git a/src/modules/watchlist/server/notifications/watchlist-notification-delivery.ts b/src/modules/watchlist/server/notifications/watchlist-notification-delivery.ts
+index 455b0cc75..46e4e6d39 100644
+--- a/src/modules/watchlist/server/notifications/watchlist-notification-delivery.ts
++++ b/src/modules/watchlist/server/notifications/watchlist-notification-delivery.ts
+@@ -12,13 +12,13 @@ import { watchlistNotificationAccess } from "./watchlist-notification-runtime";
+ import { WatchlistPublicationNotificationStore } from "./watchlist-publication-notification-store";
+ 
+ type Delivery = { delivery_id: string; user_id: string; channel: "web_push" | "email"; target_ref: string;
+-  attempt_count: number; ticker: string; event_id: string; notification_kind: "listing" | "analysis"; expires_at_utc: string };
++  attempt_count: number; ticker: string; event_id: string; notification_kind: "listing" | "analysis"; expires_at_utc: string; owner_approved: number };
+ type Subscription = { authentication_tag: string; ciphertext: string; device_ref: string; endpoint_hash: string;
+   initialization_vector: string; key_version: string };
+ type SendResult = { sent: boolean; retry: boolean; code: string; delayMs?: number };
+ 
+ async function send(database: Database.Database, row: Delivery): Promise<SendResult> {
+-  const copy = watchlistPublicationNotificationCopy(row.ticker,row.notification_kind);
++  const copy = watchlistPublicationNotificationCopy(row.ticker,row.notification_kind,row.owner_approved === 1);
+   if (row.channel === "email") {
+     const email = new PlatformNotificationEmailAddressRepository(database, loadPlatformNotificationEmailEncryptionConfiguration())
+       .resolveConfirmedAddress(row.user_id);
+@@ -69,7 +69,7 @@ export async function deliverWatchlistNotifications(database: Database.Database,
+         WHERE state IN ('pending','sending') AND event_id IN (SELECT event_id FROM platform_watchlist_notification_events WHERE expires_at_utc<=?)`).run(now);
+       database.prepare(`UPDATE platform_watchlist_notification_deliveries SET state=CASE WHEN attempt_count>=5 THEN 'failed' ELSE 'pending' END
+         WHERE state='sending' AND last_attempt_at_utc<=?`).run(new Date(Date.now()-60_000).toISOString());
+-      const candidate = database.prepare<[string],Delivery>(`SELECT d.*,e.ticker,e.notification_kind,e.expires_at_utc FROM platform_watchlist_notification_deliveries d
++      const candidate = database.prepare<[string],Delivery>(`SELECT d.*,e.ticker,e.notification_kind,e.expires_at_utc,e.owner_approved FROM platform_watchlist_notification_deliveries d
+         JOIN platform_watchlist_notification_events e ON e.event_id=d.event_id
+         WHERE d.state='pending' AND d.available_at_utc<=? AND d.attempt_count<5 ORDER BY d.available_at_utc,d.delivery_id LIMIT 1`).get(now);
+       if (!candidate) return null;

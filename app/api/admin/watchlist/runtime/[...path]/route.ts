@@ -4,6 +4,7 @@ import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform
 import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
 import { requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
 import { recordWatchlistApprovalNotificationIntent } from "@/src/modules/watchlist/server/notifications/watchlist-notification-runtime";
+import { ownerReviewDeliveryStatus } from "@/src/modules/watchlist/server/notifications/watchlist-automatic-notifications";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -119,7 +120,15 @@ async function relay(
     method,
     path: `${pathname}${incomingUrl.search}`,
   });
-  return new Response(result.body, {
+  let responseBody = result.body;
+  if (pathname === "/api/watchlist/analysis-review/settings" && result.status === 200) {
+    try {
+      const value = JSON.parse(responseBody);
+      value.settings.ownerReviewDeliveryStatus = withJournalAdminDatabase(request.headers, database => ownerReviewDeliveryStatus(database));
+      responseBody = JSON.stringify(value);
+    } catch { /* Runtime controls remain available if delivery status cannot be read. */ }
+  }
+  return new Response(responseBody, {
     headers: {
       "cache-control": "private, no-store, max-age=0",
       "content-type": result.contentType,
