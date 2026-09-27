@@ -123,7 +123,7 @@ test("member card omits owner-hidden sections without modifying stored analysis"
   read.ownerHiddenSections = ["shallow", "deep", "failureRecovery", "downsideCheckpoints", "needsToHold", "targets", "currentRead", "riskSummary"];
   const original = JSON.stringify(read);
   const hidden = render(read);
-  assert.doesNotMatch(hidden, /Shallow pullback|Deep pullback|Pullback entry plans|Failure and recovery|Where the trade could go next|Needs to hold|Constructive while support holds|Thin liquidity/);
+  assert.doesNotMatch(hidden, /Shallow pullback|Deep pullback|Pullback entry plans|Failure and recovery|Where the trade could go next|Support to watch|Constructive while support holds|Thin liquidity/);
   assert.match(hidden, /Momentum failure/);
   assert.equal(JSON.stringify(read), original);
 });
@@ -146,7 +146,7 @@ test("omitted breakout levels leave no empty headings while owner explanation re
   read.mustClear = { label: "", price: null, rationale: "" };
   read.breakoutContinuation = { label: "", price: null, rationale: "" };
   assert.doesNotMatch(render(read), /Must clear|Breakout continuation/);
-  assert.match(render(read), /Needs to hold/);
+  assert.match(render(read), /Support to watch/);
   read.mustClear.rationale = "Owner explanation without a fixed price.";
   assert.match(render(read), /Owner explanation without a fixed price/);
   for (const key of ["needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation"]) read[key] = { label: "", price: null, rationale: "" };
