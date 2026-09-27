@@ -34,6 +34,7 @@ import {coachingPeriod,coachingReviewCoverage} from "../modules/communities/cont
 import {coachingEntitlement,reconcileCoachingAccess,archivePausedCoaching} from "../modules/communities/server/coaching-access-lifecycle";
 import {questionAllowance} from "../modules/communities/server/coaching-service-limits";
 import {CoachingDiscordRefreshService} from "../modules/communities/server/coaching-discord-refresh-service";
+import {runCoachingMaintenance,nonOverlappingCoachingMaintenance} from "../modules/communities/server/coaching-maintenance-service";
 import {TraderLinkCommunityCoachJournalReadService} from "../modules/communities/server/traderlink-community-coach-journal-read-service";
 const NOW="2026-09-05T12:00:00.000Z";
 const OWNER="10000000-0000-4000-8000-000000000001",MEMBER="10000000-0000-4000-8000-000000000002",OUTSIDER="10000000-0000-4000-8000-000000000003",WORKSPACE="10000000-0000-4000-8000-000000000004",ACCOUNT="10000000-0000-4000-8000-000000000005",OUTSIDER_WORKSPACE="10000000-0000-4000-8000-000000000007",OUTSIDER_ACCOUNT="10000000-0000-4000-8000-000000000008",PILOT_GUILD="1433570740430573642";
@@ -198,6 +199,27 @@ await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(404
 check.equal(coachingEntitlement(database,relationship)?.present,false,"Confirmed departed member pauses coaching");
 await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(200,{roles:["200001"]})).runAvailable(25,"2026-10-13T12:20:00.000Z");
 check.equal(coachingEntitlement(database,relationship)?.present,true,"Verified role restore resumes access");
+const maintenance=await runCoachingMaintenance(database,{atUtc:"2026-10-13T12:30:00.000Z",limit:1});
+check.equal(maintenance.checked,1,"Maintenance processes the eligible agreement");
+check.equal(maintenance.created,0,"Maintenance cannot duplicate already generated work");
+check.equal(maintenance.roleRefreshConfigured,false,"No token means no fabricated provider verification");
+check.equal((await runCoachingMaintenance(database,{atUtc:"2026-10-13T12:31:00.000Z",limit:1})).checked,0,"Hourly watermark prevents repeated agreement work");
+const scheduledPlan=platform.readSnapshot("first-room",actor).plans.find(item=>item.planId===plan)!;
+platform.createPlan({...edit,expectedRevision:scheduledPlan.revision,items:[{...included,frequency:"weekly",quantity:3}]});
+const scheduledAgreement=service.propose({...base,atUtc:"2026-10-14T12:00:00.000Z",startDate:"2026-10-14",dueTimeUtc:"17:00"});
+service.accept({...base,atUtc:"2026-10-14T12:00:00.000Z",actor:student,agreementId:scheduledAgreement});
+check.equal((await runCoachingMaintenance(database,{atUtc:"2026-10-14T12:01:00.000Z",limit:1})).created,5,"Maintenance creates upcoming weekly work without manual scheduling");
+check.equal((await runCoachingMaintenance(database,{atUtc:"2026-10-14T14:01:00.000Z",limit:1})).created,0,"Next eligible maintenance pass is idempotent");
+let releasePass!:()=>void;
+let passes=0;
+const deferred=new Promise<void>(resolve=>{releasePass=resolve;});
+const guarded=nonOverlappingCoachingMaintenance(async()=>{passes++;await deferred;return passes;});
+const activePass=guarded();
+check.equal(await guarded(),null,"Concurrent maintenance tick is skipped");
+releasePass();check.equal(await activePass,1);check.equal(await guarded(),2,"Later pass resumes after completion");
+let failures=0;
+const retryable=nonOverlappingCoachingMaintenance(async()=>{if(failures++===0)throw new Error("Fixture failure");return true;});
+await check.rejects(retryable());check.equal(await retryable(),true,"Failure releases overlap guard");
 check.equal((database.pragma("foreign_key_check") as unknown[]).length,0);
 console.log(JSON.stringify({result:"passed",generated,checks:["unsigned","student acceptance","weekly generation","idempotence","month end","unscheduled","plan edits","revision conflicts","frozen terms","question renewal","follow-up expiry","draft privacy","session privacy","lesson edit/reuse","role pause/restore","archive preservation","foreign keys"]}));
 }finally{database.close();}
