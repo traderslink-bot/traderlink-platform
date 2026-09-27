@@ -9,6 +9,7 @@ Official advance notices and SEC filings feed that feature; this does not change
 the working halt lifecycle, ticker rules or halt delivery preferences.
 
 **Approved Discord channel delivery:** [Discord halt delivery progress](halt-alert-discord-channel-progress.md).
+**Volatility direction enrichment:** [Halt direction progress](market-halt-direction-progress.md).
 The owner approved the same qualifying initial/quote/trade alerts in one private
 TradersLink server channel on 2026-09-24, including production release and immediate
 activation for real-halt testing. Personal Push preferences/mutes continue to affect

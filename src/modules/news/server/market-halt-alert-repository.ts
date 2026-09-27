@@ -11,6 +11,7 @@ import {
 import type { MarketHalt } from "./market-halt-feed";
 import { marketHaltMuteExpiresAtUtc } from "./market-halt-mute-expiry";
 import { MarketHaltDiscordRepository } from "./market-halt-discord-repository";
+import type { MarketHaltDirection } from "./market-halt-direction";
 
 function assertActive(database: Database.Database, scope: WorkspaceAccessScope): void {
   const found = database.prepare<[string, string], { found: number }>(`SELECT 1 AS found
@@ -136,7 +137,7 @@ function exchangeName(source: "nasdaq" | "nyse"): string {
   return source === "nyse" ? "NYSE" : "Nasdaq";
 }
 
-function notificationCopy(event: StoredHaltEvent, stage: HaltAlertStage): Readonly<{ body: string; title: string }> {
+function notificationCopy(event: StoredHaltEvent, stage: HaltAlertStage, direction: MarketHaltDirection | null = null): Readonly<{ body: string; title: string }> {
   const exchange = exchangeName(event.source);
   if (stage === "initial") {
     const timing = event.resumption_trade_time_et
@@ -146,7 +147,7 @@ function notificationCopy(event: StoredHaltEvent, stage: HaltAlertStage): Readon
         : "Expected quote and trading times have not been posted.";
     return Object.freeze({
       body: `${exchange} reports ${event.reason_description} (${event.reason_code}). ${timing}`,
-      title: `${event.ticker} halted at ${event.halt_time_et} ET`,
+      title: `${event.ticker} halted${direction ? ` ${direction.toUpperCase()}` : ""} at ${event.halt_time_et} ET`,
     });
   }
   if (stage === "quote_time") {
@@ -180,6 +181,13 @@ export class MarketHaltAlertRepository {
     private readonly database: Database.Database,
     private readonly discordChannelId: string | null = null,
   ) {}
+
+  initialAlertAlreadyIssued(halt: Pick<MarketHalt, "haltDateEt" | "ticker">): boolean {
+    return Boolean(this.database.prepare<[string, string], { found: number }>(`SELECT 1 AS found
+FROM news_market_halt_ticker_day_alert_sequences
+WHERE ticker = ? AND halt_date_et = ?
+LIMIT 1`).get(halt.ticker, halt.haltDateEt));
+  }
 
   read(scope: WorkspaceAccessScope): Readonly<{ enabled: boolean }> {
     assertActive(this.database, scope);
@@ -313,7 +321,7 @@ first_seen_at_utc, updated_at_utc
     return Object.freeze({ haltId, inserted: true });
   }
 
-  reconcileDeliveryLifecycle(input: Readonly<{ haltId: string; observedAtUtc: string }>): number {
+  reconcileDeliveryLifecycle(input: Readonly<{ haltId: string; observedAtUtc: string; direction?: MarketHaltDirection | null }>): number {
     assertCanonicalUtcTimestamp(input.observedAtUtc, "marketHaltAlertLifecycleObservedAt");
     const event = this.database.prepare<[string], StoredHaltEvent>(`SELECT
   halt_id, ticker, halt_date_et, halt_time_et, source, reason_code, reason_description,
@@ -340,6 +348,7 @@ WHERE ticker = ? AND halt_date_et = ?`).get(event.ticker, event.halt_date_et);
         occurredAtUtc: input.observedAtUtc,
         revision: 0,
         stage: "initial",
+        direction: input.direction ?? null,
       });
       this.database.prepare(`INSERT INTO news_market_halt_ticker_day_alert_sequences (
   ticker, halt_date_et, first_halt_id, initial_notified_at_utc,
@@ -401,8 +410,9 @@ WHERE ticker = ? AND halt_date_et = ? AND first_halt_id = ? AND ended_at_utc IS 
     occurredAtUtc: string;
     revision: number;
     stage: HaltAlertStage;
+    direction?: MarketHaltDirection | null;
   }>): number {
-    const copy = notificationCopy(input.event, input.stage);
+    const copy = notificationCopy(input.event, input.stage, input.stage === "initial" ? input.direction ?? null : null);
     if (this.discordChannelId && /^[A-Z0-9.-]{1,4}$/u.test(input.event.ticker)) {
       new MarketHaltDiscordRepository(this.database).enqueue({
         channelId: this.discordChannelId,
