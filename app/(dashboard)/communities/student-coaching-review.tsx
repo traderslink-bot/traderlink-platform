@@ -1,4 +1,3 @@
-import {COACHING_REVIEW_FOCUS,type CoachingReviewFocus} from "@/src/modules/communities/contracts/coaching-review-workspace";
 "use client";
 
 import {Box,Button,Chip,Stack,TextField} from "@mui/material";
@@ -10,7 +9,7 @@ export function StudentCoachingReview({snapshot,review,isReview,paused,messaging
  const delivered=Boolean(review.deliveredAtUtc);
  const disabled=isReview||paused;
  const status=review.deliveryState==="draft"?(review.status==="requested"?"Not started":"In progress"):review.deliveryState==="follow_up"?"Follow-up required":review.deliveryState.charAt(0).toUpperCase()+review.deliveryState.slice(1);
- const sections=[...Object.entries(review.focusFeedback??{}).map(([key,value])=>[COACHING_REVIEW_FOCUS[key as CoachingReviewFocus],value]),["Review",review.coachFeedback],["What went well",review.wentWell],["What needs work",review.needsWork],["Progress on previous focus",review.previousFocusAssessment],["Next focus",review.nextFocus]].filter(([,body])=>Boolean(body));
+ const sections=[["Review",review.coachFeedback],["What went well",review.wentWell],["What needs work",review.needsWork],["Progress on previous focus",review.previousFocusAssessment],["Next focus",review.nextFocus]].filter(([,body])=>Boolean(body));
  const trades=snapshot.reviewTrades.filter(item=>item.reviewId===review.reviewId&&item.workflowState==="saved");
  const actions=snapshot.reviewActions.filter(item=>item.reviewId===review.reviewId);
  const hidden=<><input name="communitySlug" type="hidden" value={snapshot.community.slug}/><input name="relationshipId" type="hidden" value={review.relationshipId}/><input name="reviewId" type="hidden" value={review.reviewId}/></>;
