@@ -113,7 +113,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false}:{
             <Stack direction="row" spacing={1} sx={{flexWrap:"wrap", gap:1}}>
               <Chip color="success" label={quote ? "Quote required" : price ? currency+" "+price : "Price not set"}/>
               <Chip color="info" label={{weekly:"Weekly billing",monthly:"Monthly billing",one_time:"One-time",custom:"Custom billing"}[billing]}/>
-              <Chip color="warning" label={(capacity || "—")+" students"}/>
+              <Chip color="warning" label={`${capacity || "—"} ${Number(capacity)===1?"student":"students"}`}/>
             </Stack>
             <Divider/>
             {!active.length ? <Typography color="text.secondary">No services selected</Typography> : active.map(offer => <Box key={offer.type}>

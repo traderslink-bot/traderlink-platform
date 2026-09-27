@@ -76,11 +76,11 @@ export function offerSummary(offer:Offer,value:OfferSettings):string[] {
     result.push(`${value.quantity||"—"} ${units[offer.measure][Number(value.quantity)===1?0:1]}`);
   }
   if(offer.period&&value.timeline)result.push(PERIODS[value.coverage]);
-  if(value.timeline)result.push(`Due within ${value.dueDays||"0"} days`);
+  if(value.timeline)result.push(`Due within ${value.dueDays||"0"} ${Number(value.dueDays)===1?"day":"days"}`);
   if(offer.type==="trade_review")result.push(`Trades chosen by ${value.selection==="coach_or_student"?"coach or student":value.selection}`);
   if(offer.type==="trading_day_review")result.push(value.depth==="complete_day"?"Trades and trading-day Journal":"Trades only");
-  if(offer.type==="review_follow_up")result.push(`${value.followUpDays} days of follow-up`);
-  if(value.minutes)result.push(`${value.minutes} minutes`);
+  if(offer.type==="review_follow_up")result.push(`${value.followUpDays} ${Number(value.followUpDays)===1?"day":"days"} of follow-up`);
+  if(value.minutes)result.push(`${value.minutes} ${Number(value.minutes)===1?"minute":"minutes"}`);
   const labels:Partial<Record<CoachingReviewFocus,string>>={journal:"Journal notes and tags",rules:"Rules",risk:"Risk management",execution:"Trade execution",goals:"Goals",overall:"Overall feedback",next_steps:"Next steps"};
   result.push(...value.focus.filter(key=>key!==offer.focus).map(key=>labels[key]??key),...value.resources);
   return result;
