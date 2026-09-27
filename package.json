@@ -16,6 +16,7 @@
     "transfer:hosted:execute": "tsx src/scripts/transfer-traderlink-platform-hosted-sources.ts --execute",
     "admin:journal:initial-owner-discord-link": "tsx src/scripts/manage-traderlink-initial-owner-discord-link.ts",
     "admin:journal:operator": "tsx src/scripts/manage-traderlink-journal-admin-operator.ts",
+    "admin:communities:operator": "tsx src/scripts/manage-traderlink-communities-operator.ts",
     "verify:journal-admin": "tsx src/scripts/verify-traderlink-platform-journal-admin-files.ts",
     "lint": "eslint",
     "test": "vitest run",

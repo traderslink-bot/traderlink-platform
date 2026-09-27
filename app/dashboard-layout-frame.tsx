@@ -28,6 +28,7 @@ import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-earl
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { DashboardMuiProviders } from "./mui-provider";
+import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
 
 async function TraderLinkPlatformDashboardFrameContent({
   children,
@@ -79,6 +80,18 @@ async function TraderLinkPlatformDashboardFrameContent({
         .requireAccountRecord(scope, scope.activeAccountId)
       : null;
     const marketHaltAlerts = new MarketHaltAlertRepository(database);
+    const communityRepository = new TraderLinkCommunityRepository(database);
+    const communityAccess = communityRepository.listForUser(scope.userId)
+      .map((community) => ({
+        community,
+        access: communityRepository.resolveAccess(community.communityId, scope.userId),
+      }))
+      .filter((entry) => entry.access.capabilities.includes("community.view"));
+    const firstCommunity = communityAccess[0] ?? null;
+    const firstCoachingCommunity = communityAccess.find((entry) =>
+      entry.access.capabilities.includes("community.coaching.view") ||
+      entry.access.capabilities.includes("community.coaching.offer"),
+    ) ?? null;
     return Object.freeze({
       demoActivationPending,
       activeAccount,
@@ -93,6 +106,17 @@ async function TraderLinkPlatformDashboardFrameContent({
       pressReleaseUnreadCounts: canReadPressReleases
         ? new PressReleaseDashboardRepository(database).unreadCounts(scope)
         : null,
+      communityNavigationHref: firstCommunity
+        ? `/communities/${firstCommunity.community.slug}`
+        : null,
+      coachingNavigationHref: firstCoachingCommunity
+        ? `/communities/${firstCoachingCommunity.community.slug}/coaching`
+        : null,
+      communityWatchlistsNavigationAccess: communityAccess.some((entry) =>
+        entry.access.capabilities.includes("community.watchlists.view") ||
+        entry.access.capabilities.includes("community.watchlists.share_own") ||
+        entry.access.capabilities.includes("community.watchlists.publish_staff"),
+      ),
     });
   });
   const accountSelectionRef = scope.activeAccountId
@@ -122,7 +146,10 @@ async function TraderLinkPlatformDashboardFrameContent({
           scannerEarlyAccess={scannerEarlyAccess}
           watchlistMemberNavigationAccess
           ownerMarketDataAccess={ownerMarketDataAccess}
-        watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
+          watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
+          communityNavigationHref={dashboardContext.communityNavigationHref}
+          coachingNavigationHref={dashboardContext.coachingNavigationHref}
+          communityWatchlistsNavigationAccess={dashboardContext.communityWatchlistsNavigationAccess}
         >
           {children}
         </TraderLinkPlatformDashboardTemplate>

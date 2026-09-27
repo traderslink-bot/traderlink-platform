@@ -8,6 +8,7 @@ import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import FactCheckRoundedIcon from "@mui/icons-material/FactCheckRounded";
 import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
+import ForumRoundedIcon from "@mui/icons-material/ForumRounded";
 import GroupRoundedIcon from "@mui/icons-material/GroupRounded";
 import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
@@ -39,6 +40,7 @@ const drawerWidth = 270;
 const navigation = [
   { href: "/admin/journal", label: "Overview", icon: <DashboardRoundedIcon /> },
   { href: "/admin/journal/users", label: "Users", icon: <GroupRoundedIcon /> },
+  { href: "/admin/journal/communities", label: "Communities", icon: <ForumRoundedIcon /> },
   { href: "/admin/journal/imports", label: "Imports", icon: <CloudUploadRoundedIcon /> },
   { href: "/admin/journal/statement-formats", label: "Statement Formats", icon: <SchemaRoundedIcon /> },
   { href: "/admin/journal/data-decisions", label: "Data Decisions", icon: <FactCheckRoundedIcon /> },
