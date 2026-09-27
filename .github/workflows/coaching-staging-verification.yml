@@ -1,11 +1,11 @@
-name: Coaching render and staging0146 verification
+name: Potential gain integrated release verification
 on:
   push:
     branches: [codex/coaching-staging-integration-20260926]
 permissions:
   contents: read
 concurrency:
-  group: coaching-staging-render
+  group: potential-gain-release
   cancel-in-progress: false
 jobs:
   verify:
@@ -14,17 +14,27 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        source: [473997ac2ba16d6b5d03d0b5aaf4b275651beb68, c92a35a2022efdb40a7f437aff73e2a216c5728d]
+        source: [3a3486e55b53f869f165be85a2a905f7f1537b08, 1ccb44bbc51d113d3d2d3f30086d4ef031473571]
     steps:
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
           ref: ${{ matrix.source }}
+          path: app
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
+          cache-dependency-path: app/package-lock.json
       - run: npm ci --no-audit --no-fund
-      - name: Rehearse staging141 to142 migration and row preservation
-        run: node --import tsx src/scripts/coaching-staging-maintenance.ts --rehearse
+        working-directory: app
+      - run: node --import ./app/node_modules/tsx/dist/loader.mjs .github/potential-gain-rehearsal.ts
+      - name: Offline integrated sender and route checks
+        if: matrix.source == '1ccb44bbc51d113d3d2d3f30086d4ef031473571'
+        working-directory: app
+        run: node src/scripts/verify-watchlist-potential-gain-post.cjs "$PWD/node_modules/typescript" "$PWD/node_modules/better-sqlite3"
       - run: npm run build
+        working-directory: app
