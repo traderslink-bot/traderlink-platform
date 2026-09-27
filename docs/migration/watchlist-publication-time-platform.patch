@@ -1,0 +1,29 @@
+diff --git a/src/lib/live-watchlist/analysis-publication-history.ts b/src/lib/live-watchlist/analysis-publication-history.ts
+--- a/src/lib/live-watchlist/analysis-publication-history.ts
++++ b/src/lib/live-watchlist/analysis-publication-history.ts
+@@ -1,1 +1,1 @@
+-export type AnalysisHistoryRow = { generatedAt: number; price: number };
++export type AnalysisHistoryRow = { generatedAt: number; publishedAt?: number; price: number };
+@@ -28,1 +28,9 @@
+-      result.push({ generatedAt: time, price });
++      const publication = events.find(candidate => {
++        const body = record(candidate.body);
++        return body.kind === "delivery" && body.channel === "website" &&
++          body.status === "acknowledged" && body.approvalRevision === event.revision;
++      });
++      const publishedAt = publication?.at;
++      result.push({ generatedAt: time, price,
++        ...(typeof publishedAt === "number" && Number.isFinite(publishedAt) && publishedAt > 0 ? { publishedAt } : {}),
++      });
+@@ -35,1 +43,1 @@
+-  const date = new Date(row.generatedAt);
++  const date = new Date(row.publishedAt ?? row.generatedAt);
+diff --git a/app/api/live-watchlist/symbols/[symbol]/analysis-history/route.ts b/app/api/live-watchlist/symbols/[symbol]/analysis-history/route.ts
+--- a/app/api/live-watchlist/symbols/[symbol]/analysis-history/route.ts
++++ b/app/api/live-watchlist/symbols/[symbol]/analysis-history/route.ts
+@@ -37,1 +37,4 @@
+-          .map((row: AnalysisHistoryRow) => ({ generatedAt: row.generatedAt, price: row.price }));
++          .map((row: AnalysisHistoryRow) => ({ generatedAt: row.generatedAt, price: row.price,
++            ...(typeof row.publishedAt === "number" && Number.isFinite(row.publishedAt) && row.publishedAt > 0
++              ? { publishedAt: row.publishedAt } : {}),
++          }));
