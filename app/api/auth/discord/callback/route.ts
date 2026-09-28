@@ -23,7 +23,7 @@ import {
   PLATFORM_DISCORD_OAUTH_STATE_COOKIE,
 } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
-import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
+import { canonicalDiscordJoinedAtUtc, PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import { PlatformNewsletterContactRepository } from "@/src/modules/platform/server/newsletter/platform-newsletter-contact-repository";
 import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
 import { resolvePlatformSessionClientLabel } from "@/src/modules/platform/server/authentication/platform-session-client-label";
@@ -124,46 +124,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       (database.prepare(`SELECT discord_guild_id FROM traderlink_communities WHERE status IN ('setup','active')`)
         .all() as readonly { discord_guild_id: string }[]).map((row) => row.discord_guild_id),
     );
-    // Discord's user-guild list can be unavailable even though the token can
-    // verify direct membership of an onboarded community. Resolve the bounded
-    // active-community set directly so every connected server can admit its
-    // own verified members to the baseline dashboard.
-    const verifiedCommunityMembers = new Map<string, NonNullable<typeof configuredGuildMember>>();
-    if (configuredGuildMember && enrolledGuildIds.includes(config.guildId)) {
-      verifiedCommunityMembers.set(config.guildId, configuredGuildMember);
+    // Reuse the configured guild evidence if the guild-list request failed.
+    // Do not probe unrelated communities on every person's sign-in.
+    const configuredCommunityMember = configuredGuildMember !== null &&
+      enrolledGuildIds.includes(config.guildId);
+    const discordGuilds = [...discordGuildsFromOAuth];
+    if (configuredCommunityMember && !discordGuilds.some((guild) => guild.id === config.guildId)) {
+      discordGuilds.push({ id: config.guildId, name: `Discord server ${config.guildId}` });
     }
-    const otherCommunityGuildIds = enrolledGuildIds
-      .filter((guildId) => guildId !== config.guildId)
-      .slice(0, 50);
-    const otherCommunityMembers = await Promise.all(otherCommunityGuildIds.map(async (guildId) => {
-      try {
-        return {
-          guildId,
-          member: await resolveDiscordCurrentGuildMembership({
-            accessToken: token.access_token,
-            guildId,
-          }),
-        };
-      } catch {
-        return { guildId, member: null };
-      }
-    }));
-    for (const { guildId, member } of otherCommunityMembers) {
-      if (member) verifiedCommunityMembers.set(guildId, member);
-    }
-    const verifiedCommunityGuildId = [...verifiedCommunityMembers.keys()][0] ?? null;
-    const discordGuildIdsFromOAuth = new Set(discordGuildsFromOAuth.map((guild) => guild.id));
-    const discordGuilds = [
-      ...discordGuildsFromOAuth,
-      ...[...verifiedCommunityMembers.keys()]
-        .filter((guildId) => !discordGuildIdsFromOAuth.has(guildId))
-        .map((guildId) => ({ id: guildId, name: `Discord server ${guildId}` })),
-    ];
     const partnerGuild = discordGuilds.find((guild) => enrolledGuildIds.includes(guild.id));
-    const signInGuildId = verifiedCommunityGuildId ?? (configuredGuildMember ? config.guildId : partnerGuild?.id);
-    const guildMember = (verifiedCommunityGuildId
-      ? verifiedCommunityMembers.get(verifiedCommunityGuildId)!
-      : configuredGuildMember) ?? (signInGuildId
+    const signInGuildId = configuredGuildMember ? config.guildId : partnerGuild?.id;
+    const guildMember = configuredGuildMember ?? (signInGuildId
       ? await resolveDiscordCurrentGuildMembership({ accessToken: token.access_token, guildId: signInGuildId })
       : null);
     if (!guildMember || !signInGuildId) {
@@ -183,7 +154,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
-    const dashboardAccessAllowed = verifiedCommunityGuildId !== null || Boolean(partnerGuild) || watchlistReturn || withPlatformDatabase(
+    const dashboardAccessAllowed = configuredCommunityMember || Boolean(partnerGuild) || watchlistReturn || withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformDashboardMemberAccessRepository(database)
         .read().allowAllDiscordMembers || hasPlatformDiscordPremiumAccess({
@@ -287,7 +258,7 @@ ON CONFLICT(user_id, discord_guild_id) DO UPDATE SET
         for (const guild of visibleGuilds) {
           const enrolled = enrolledGuildIds.includes(guild.id);
           const member = enrolled
-            ? verifiedCommunityMembers.get(guild.id) ?? await resolveDiscordCurrentGuildMembership({
+            ? (guild.id === config.guildId ? configuredGuildMember : null) ?? await resolveDiscordCurrentGuildMembership({
               accessToken: token.access_token,
               guildId: guild.id,
             })
@@ -302,7 +273,7 @@ ON CONFLICT(user_id, discord_guild_id) DO UPDATE SET
               avatarHash: discordUser.avatar ?? null,
               roleIds: member?.roles ?? [],
               guildOwner: guild.owner === true,
-              joinedAtUtc: member?.joined_at ?? null,
+              joinedAtUtc: canonicalDiscordJoinedAtUtc(member?.joined_at ?? null),
               verifiedAtUtc,
             });
             const community = database.prepare(`SELECT community_id

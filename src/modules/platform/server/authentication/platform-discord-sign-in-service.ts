@@ -51,7 +51,7 @@ type PlatformDiscordIdentitySignInResult = Readonly<{
   workspaceId: string;
 }>;
 
-function canonicalOptionalTimestamp(value: string | null): string | null {
+export function canonicalDiscordJoinedAtUtc(value: string | null): string | null {
   if (value === null) return null;
   const parsed = new Date(value);
   if (!Number.isFinite(parsed.getTime())) {
@@ -217,7 +217,7 @@ export class PlatformDiscordSignInService {
       avatarHash: input.avatarHash,
       roleIds: input.roleIds,
       guildOwner: input.guildOwner,
-      joinedAtUtc: canonicalOptionalTimestamp(input.joinedAtUtc),
+      joinedAtUtc: canonicalDiscordJoinedAtUtc(input.joinedAtUtc),
       verifiedAtUtc: timestamp,
     });
     if (input.emailVerified === true && typeof input.emailAddress === "string") {
