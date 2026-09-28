@@ -33,6 +33,7 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             "Session Tracker, Swing Trade Tracker and Quick Trade Entry can save a new manual trade on this device when you are offline.",
             "Push alerts are optional. You choose whether this device may receive them.",
           ]) }),
+          Object.freeze({ kind: "paragraph", text: "If a live page cannot load, choose Try again to reopen it. A slow response does not necessarily mean your device is offline. Any saved information shown below remains a last-updated copy, not live data." }),
           Object.freeze({ kind: "callout", title: "Current facts still need a connection", text: "Saved pages clearly show when they were last updated. Imports, account changes, live market data, AI requests and Data Decisions need an internet connection so TraderLink can use the latest facts safely." }),
         ]),
       }),

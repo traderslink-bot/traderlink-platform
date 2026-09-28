@@ -422,3 +422,7 @@ The correction must:
 ## Reuse request-scoped identity on three dashboard pages — local checkpoint
 
 [Reuse request-scoped identity on three dashboard pages](pwa-speed-identity-progress-2026-09-28.md): local implementation complete; targeted checks passed; no deployment, runtime acceptance pending.
+
+## Give slow PWA navigation bounded time and clear recovery — local checkpoint
+
+[Give slow PWA navigation bounded time and clear recovery](pwa-speed-navigation-progress-2026-09-28.md): local implementation complete; targeted checks passed; no deployment, runtime acceptance pending.

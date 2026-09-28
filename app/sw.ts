@@ -64,6 +64,7 @@ const offlineNavigationPlugin: SerwistPlugin = {
     const intendedPath = safeDestinationPath(url.pathname + url.search);
     const offlineUrl = new URL("/offline", self.location.origin);
     offlineUrl.searchParams.set("path", intendedPath);
+    offlineUrl.searchParams.set("recovery", "navigation");
     return Response.redirect(offlineUrl.href, 302);
   },
 };
@@ -134,9 +135,9 @@ const serwist = new Serwist({
       matcher: ({ request, sameOrigin }) =>
         sameOrigin && request.mode === "navigate",
       handler: new NetworkOnly({
-        // A stalled mobile connection must eventually reach the existing
-        // offline shell. Never cache authenticated navigation responses.
-        networkTimeoutSeconds: 12,
+        // Give slow online responses time to finish, with a bounded recovery
+        // shell if unavailable. Never cache authenticated navigation responses.
+        networkTimeoutSeconds: 30,
         plugins: [offlineNavigationPlugin],
       }),
     },
