@@ -406,3 +406,7 @@ The correction must:
 ## Installed app update recovery
 
 [Update timeout and stale-worker recovery progress](pwa-update-recovery-progress-2026-09-28.md). Source correction prepared; Android acceptance pending.
+
+## Shared server performance follow-up
+
+[Watchlist Admin deferred summaries](watchlist-admin-deferred-summary-progress-2026-09-28.md): approved initial-render correction; live timing acceptance pending.
