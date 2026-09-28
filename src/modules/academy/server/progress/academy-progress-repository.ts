@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type {
   AcademyProgressActor,
@@ -46,6 +47,7 @@ WHERE user_id = ? AND lesson_slug = ?`).get(userId, lessonSlug));
     assertCanonicalUuidV4(input.eventId, "eventId");
     assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
     return this.database.transaction(() => {
+      assertMembershipFeature(this.database, input.actor.userId, "academy.access");
       const current = this.isCompleted(input.actor.userId, input.lessonSlug);
       if (current === input.completed) return false;
       this.insertEvent({

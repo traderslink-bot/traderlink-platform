@@ -7,7 +7,7 @@ import {
   formatFinnhubMarketCap,
   getFinnhubCompanyProfile,
 } from "@/src/lib/news/finnhub-company-profile";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { DashboardPage } from "../../../../../dashboard-template";
 import {
@@ -25,7 +25,7 @@ export default async function CommunityWatchlistDetailPage({
   params: Promise<{ userName: string; watchlistName: string }>;
 }) {
   const { userName, watchlistName } = await params;
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("community.access");
   const detail = withReadonlyPlatformDatabase({}, (database) =>
     new CommunityWatchlistRepository(database).findPublished(userName, watchlistName),
   );

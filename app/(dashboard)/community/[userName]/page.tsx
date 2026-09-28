@@ -6,7 +6,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { CommunityWatchlistRepository } from "@/src/modules/community/server/community-watchlist-repository";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { DashboardPage, DashboardPanel } from "../../../dashboard-template";
 import { CommunityWatchlistSummaryCard } from "../watchlists/community-watchlist-cards";
@@ -21,7 +21,7 @@ export default async function CommunityProfilePage({
   params: Promise<{ userName: string }>;
 }) {
   const { userName } = await params;
-  await requireTraderLinkPlatformPageScope();
+  await requireMembershipPageScope("community.access");
   const profile = withReadonlyPlatformDatabase({}, (database) =>
     new CommunityWatchlistRepository(database).findProfile(userName),
   );

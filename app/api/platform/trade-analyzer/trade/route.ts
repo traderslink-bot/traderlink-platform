@@ -17,6 +17,8 @@ import {
   "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError, platformFailure } from
   "@/src/modules/platform/server/database/platform-migration-contract";
+import { membershipFeatureDeniedResponse } from
+  "@/src/modules/platform/server/membership/platform-membership-access";
 import { narrowWorkspaceAccessToAccount } from
   "@/src/modules/platform/contracts/workspace-access-scope";
 import { LogicalTradeAnalyzerRepository } from
@@ -168,7 +170,9 @@ export async function GET(request: Request): Promise<Response> {
     ) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "trade" });
     }
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, {
+      membershipAnyFeatures: ["journal.access", "analytics.access"],
+    });
     if (roundTripVersionId) {
       requireExpectedJournalAccountSelection(
         scope,
@@ -234,6 +238,8 @@ export async function GET(request: Request): Promise<Response> {
       headers: { "cache-control": "no-store" },
     });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     return Response.json(
       { status: "unavailable" },
       { status: isTraderLinkPlatformError(error) ? 400 : 500 },

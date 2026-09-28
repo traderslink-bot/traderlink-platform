@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type {
   CoachAiReviewDeliveryChangeDraft,
@@ -14,7 +15,7 @@ export class CoachAiReviewDeliveryChangeCommandService {
   private readonly drafts: CoachAiReviewDeliveryChangeRepository;
   private readonly schedules: CoachReviewDeliveryScheduleRepository;
 
-  constructor(database: Database.Database) {
+  constructor(private readonly database: Database.Database) {
     this.drafts = new CoachAiReviewDeliveryChangeRepository(database);
     this.schedules = new CoachReviewDeliveryScheduleRepository(database);
   }
@@ -40,6 +41,7 @@ export class CoachAiReviewDeliveryChangeCommandService {
         return this.drafts.expire(scope, input.draftId, now);
       }
       draft = this.drafts.beginConfirm(scope, input.draftId, now);
+      assertMembershipFeature(this.database, scope.userId, "ai.chat");
       const saved = this.schedules.save(scope, {
         weeklyDeliveryDay: input.editedProposal.weeklyDeliveryDay,
         deliveryTimeEastern: input.editedProposal.deliveryTimeEastern,

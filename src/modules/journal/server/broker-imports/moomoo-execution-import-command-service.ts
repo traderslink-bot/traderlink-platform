@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
@@ -113,6 +114,7 @@ export class MoomooExecutionImportCommandService {
     linkRef: string;
     earliestExecutionDate: string;
   }>): SafeMoomooImportJob {
+    assertMembershipFeature(this.database, input.scope.userId, "journal.imports");
     const link = this.accounts.resolveLinkedAccount(input);
     const cutoff = this.now();
     const plan = planMoomooExecutionImport({
@@ -205,6 +207,7 @@ export class MoomooExecutionImportCommandService {
     journalAccountId: string;
     linkRef: string;
   }>): SafeMoomooImportJob {
+    assertMembershipFeature(this.database, input.scope.userId, "journal.imports");
     const link = this.accounts.resolveLinkedAccount(input);
     const cutoff = this.now();
     return this.repository.immediate(() => {

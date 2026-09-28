@@ -2,6 +2,7 @@ import {
   narrowWorkspaceAccessToAccount,
   type WorkspaceAccessScope,
 } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import type { JournalDataDecisionItem } from "@/src/modules/journal/contracts/journal-product-read-models";
 import { JournalExecutionRepository } from "@/src/modules/journal/server/executions/journal-execution-repository";
 import { withWritableJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
@@ -56,7 +57,7 @@ function currentDecision(
 
 export function GET(request: Request): Response {
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     const accountId = scope.activeAccountId;
     if (!accountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
     const requestedImportBatchId = new URL(request.url).searchParams.get("importBatchId");
@@ -81,7 +82,9 @@ export function GET(request: Request): Response {
       });
     });
     return Response.json({ status: "ready", ...result });
-  } catch {
+  } catch (error) {
+    const membershipDenial = membershipFeatureDeniedResponse(error);
+    if (membershipDenial) return membershipDenial;
     return Response.json({ status: "unavailable" }, { status: 503 });
   }
 }
@@ -89,7 +92,7 @@ export function GET(request: Request): Response {
 export async function POST(request: Request): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     const body: unknown = await request.json();
     if (!isRecord(body) || !Number.isSafeInteger(body.expectedRevision)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
@@ -141,6 +144,8 @@ export async function POST(request: Request): Promise<Response> {
     });
     return Response.json({ status: "ready", result });
   } catch (error) {
+    const membershipDenial = membershipFeatureDeniedResponse(error);
+    if (membershipDenial) return membershipDenial;
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_DATA_DECISION_RESOLUTION_FAILED";

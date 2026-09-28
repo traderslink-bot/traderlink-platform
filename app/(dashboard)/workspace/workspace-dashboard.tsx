@@ -84,6 +84,7 @@ type WorkspaceOfflineTradeLibraryProps = Readonly<{
 }>;
 
 type WorkspaceDashboardProps = Readonly<{
+  analyticsAccessDenied?: boolean;
   analyticsMetrics?: readonly WorkspaceMetric[];
   demoAccountSelectionRef?: string;
   hasRealAcceptedExecution?: boolean;
@@ -171,6 +172,7 @@ function CurrentFocusContent({ content }: Readonly<{ content: string }>) {
 }
 
 export function WorkspaceDashboard({
+  analyticsAccessDenied = false,
   analyticsMetrics,
   demoAccountSelectionRef,
   hasRealAcceptedExecution,
@@ -251,7 +253,9 @@ export function WorkspaceDashboard({
       {demoAccountSelectionRef ? <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" /> : null}
       {multipleTradeSave ? <Alert onClose={() => { const next = new URLSearchParams(searchParams.toString()); next.delete("tradeSave"); router.replace(next.size === 0 ? "/workspace" : `/workspace?${next.toString()}`); }} severity="success" sx={{ mt: 1.5 }}>Trade saved. Multiple trades were updated. Select a trade to review it. Next time, use Session Tracker when entering executions for multiple trades. <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 800, textDecoration: "underline" }} variant="inherit">Open Session Tracker</Typography></Alert> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" } }}>
-        {metrics.map((metric) => <DashboardMetricCard action={metric.label === "Most profitable ticker" ? <Button component={Link} href={tickerExplorerHref("pnl")} size="small">View full list</Button> : metric.tradeDetailsRoundTripId ? <Button onClick={() => setSummaryTradeDetailsId(metric.tradeDetailsRoundTripId ?? null)} size="small">Trade details</Button> : undefined} hideCaption key={metric.label} {...metric} />)}
+        {analyticsAccessDenied ? <Alert severity="info" sx={{ gridColumn: "1 / -1" }}>
+          Your current plans do not include Analytics. Your Journal review remains available. <Button href="/plans" size="small">View plans</Button>
+        </Alert> : metrics.map((metric) => <DashboardMetricCard action={metric.label === "Most profitable ticker" ? <Button component={Link} href={tickerExplorerHref("pnl")} size="small">View full list</Button> : metric.tradeDetailsRoundTripId ? <Button onClick={() => setSummaryTradeDetailsId(metric.tradeDetailsRoundTripId ?? null)} size="small">Trade details</Button> : undefined} hideCaption key={metric.label} {...metric} />)}
       </Box>
       {hasLiveTradeLibraryProps(tradeLibraryProps) && (currentFocuses || (showRuleResultsCard && ruleResultsCard) || (showPrScannerCard && newsScannerAvailable)) ? <Box sx={{
         "& .MuiButton-root": { fontSize: "0.7rem", minWidth: 0, px: 0.5 },

@@ -25,7 +25,7 @@ export type DiscordSignInFacts = Readonly<{
   avatarHash: string | null;
   emailAddress?: string | null;
   emailVerified?: boolean;
-  guildId: string;
+  guildId: string | null;
   roleIds: readonly string[];
   guildOwner: boolean;
   joinedAtUtc: string | null;
@@ -209,17 +209,19 @@ export class PlatformDiscordSignInService {
       });
     }
 
-    memberships.upsertCurrent({
-      userId,
-      guildId: input.guildId,
-      username: input.username,
-      globalDisplayName: input.globalDisplayName,
-      avatarHash: input.avatarHash,
-      roleIds: input.roleIds,
-      guildOwner: input.guildOwner,
-      joinedAtUtc: canonicalOptionalTimestamp(input.joinedAtUtc),
-      verifiedAtUtc: timestamp,
-    });
+    if (input.guildId !== null) {
+      memberships.upsertCurrent({
+        userId,
+        guildId: input.guildId,
+        username: input.username,
+        globalDisplayName: input.globalDisplayName,
+        avatarHash: input.avatarHash,
+        roleIds: input.roleIds,
+        guildOwner: input.guildOwner,
+        joinedAtUtc: canonicalOptionalTimestamp(input.joinedAtUtc),
+        verifiedAtUtc: timestamp,
+      });
+    }
     if (input.emailVerified === true && typeof input.emailAddress === "string") {
       this.dependencies.syncVerifiedDiscordEmail?.({
         emailAddress: input.emailAddress,

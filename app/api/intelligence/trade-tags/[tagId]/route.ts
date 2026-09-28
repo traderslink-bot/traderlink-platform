@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import type { JournalTagRecord } from "@/src/modules/journal/contracts/journal-annotation-contracts";
 import { withWritableJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import {
@@ -39,6 +40,8 @@ function tagView(tag: JournalTagRecord) {
 }
 
 function errorResponse(error: unknown): Response {
+  const denied = membershipFeatureDeniedResponse(error);
+  if (denied) return denied;
   const code = isTraderLinkPlatformError(error)
     ? error.code
     : "TRADERLINK_JOURNAL_ANNOTATION_INVALID";
@@ -57,7 +60,7 @@ function errorResponse(error: unknown): Response {
 
 export async function PATCH(request: Request, context: Context): Promise<Response> {
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     const body = record(await request.json());
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const { tagId } = await context.params;
@@ -75,7 +78,7 @@ export async function PATCH(request: Request, context: Context): Promise<Respons
 
 export async function DELETE(request: Request, context: Context): Promise<Response> {
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     const body = record(await request.json());
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const { tagId } = await context.params;

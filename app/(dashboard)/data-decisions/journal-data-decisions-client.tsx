@@ -1,4 +1,8 @@
 "use client";
+import {
+  membershipActionError,
+  throwIfMembershipRequired,
+} from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -770,11 +774,12 @@ function DecisionCard({
         code?: string;
         result?: Readonly<{ openPosition?: ConfirmedOpenPosition | null }>;
       };
+      throwIfMembershipRequired(packet);
       if (!response.ok) throw new Error(packet.code ?? "The decision could not be saved.");
       await onResolved();
       return packet.result?.openPosition ?? null;
-    } catch {
-      setError("This change could not be saved. Please try again.");
+    } catch (error) {
+      setError(membershipActionError(error) ?? "This change could not be saved. Please try again.");
       return null;
     } finally {
       setSaving(false);
@@ -1043,6 +1048,7 @@ export function JournalDataDecisionsClient({
 }) {
   const [model, setModel] = useState(initial);
   const [notice, setNotice] = useState<string | null>(null);
+  const [accessError, setAccessError] = useState<string | null>(null);
   const [view, setView] = useState<DataDecisionsView>("trades");
   const [openPositionToClassify, setOpenPositionToClassify] = useState<ConfirmedOpenPosition | null>(null);
   const [statement, setStatement] = useState<JournalDataDecisionStatementReadModel | null>(null);
@@ -1068,11 +1074,17 @@ export function JournalDataDecisionsClient({
         decisions?: JournalDataDecisionsReadModel;
         statement?: JournalDataDecisionStatementReadModel | null;
       };
-      if (cancelled || !response.ok) return;
+      if (cancelled) return;
+      throwIfMembershipRequired(packet);
+      if (!response.ok) return;
+      setAccessError(null);
       if (packet.decisions) setModel(packet.decisions);
       setStatement(packet.statement ?? null);
-    }).catch(() => {
-      if (!cancelled) setStatement(null);
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        setStatement(null);
+        setAccessError(membershipActionError(error));
+      }
     });
     return () => { cancelled = true; };
   }, [statementImportBatchId]);
@@ -1090,7 +1102,14 @@ export function JournalDataDecisionsClient({
       decisions?: JournalDataDecisionsReadModel;
       statement?: JournalDataDecisionStatementReadModel | null;
     };
+    try {
+      throwIfMembershipRequired(packet);
+    } catch (error) {
+      setAccessError(membershipActionError(error));
+      return;
+    }
     if (response.ok && packet.decisions) {
+      setAccessError(null);
       setModel(packet.decisions);
       setStatement(packet.statement ?? null);
       setNotice("Decision saved. TraderLink rebuilt the affected account facts.");
@@ -1115,7 +1134,8 @@ export function JournalDataDecisionsClient({
         <Button onClick={() => setView("history")} variant={view === "history" ? "contained" : "outlined"}>Review history</Button>
         <FeatureHelpLink href={DATA_DECISIONS_VIEW_HELP[view].href} label={DATA_DECISIONS_VIEW_HELP[view].label} />
       </Stack>
-      {notice ? <Alert severity="success">{notice}</Alert> : null}
+      {accessError ? <Alert severity="warning">{accessError}</Alert> : null}
+      {!accessError && notice ? <Alert severity="success">{notice}</Alert> : null}
       {openPositionToClassify ? (
         <OpenPositionClassificationCard
           expectedAccountSelectionRef={expectedAccountSelectionRef}

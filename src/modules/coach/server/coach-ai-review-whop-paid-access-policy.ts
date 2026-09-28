@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { hasPlatformMembershipFeature, evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
@@ -22,6 +23,8 @@ implements CoachAiReviewPaidAccessPolicyV2 {
   ) {}
 
   read(scope?: WorkspaceAccessScope): CoachAiReviewPaidAccessStateV2 {
+    if (scope && !evaluateMembershipFeature(this.database, scope.userId, "ai.reviews").allowed) return "not_connected";
+    if (scope && hasPlatformMembershipFeature(this.database, scope.userId, "ai.reviews")) return "available";
     if (!isWhopAiReviewEntitlementSchemaAvailable(this.database) ||
         !readWhopAiReviewConfigurationHealth(this.environment).readyForEntitlement) {
       return "not_connected";

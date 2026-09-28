@@ -9,6 +9,7 @@ import {
   requireTraderLinkPlatformRequestScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ function record(value: unknown): Record<string, unknown> {
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     const body = record(await request.json());
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     if (body.action === "check") {
@@ -50,6 +51,8 @@ export async function POST(request: Request): Promise<Response> {
     }
     return Response.json({ ok: true, ideas: listJournalRuleIdeas(scope) });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     const code = isTraderLinkPlatformError(error) ? error.code : "TRADERLINK_RULE_IDEA_INVALID";
     const conflict = code === "TRADERLINK_RULE_IDEA_CONFLICT" || code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT";
     return Response.json({

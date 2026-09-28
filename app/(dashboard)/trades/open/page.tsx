@@ -1,3 +1,4 @@
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import type { Metadata } from "next";
 
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
@@ -9,9 +10,7 @@ import {
 } from "@/src/modules/journal/contracts/journal-open-positions-offline-view-contracts";
 import { withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import {
-  currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformPageScope,
-} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+  currentJournalAccountSelectionRef, } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { PositionStyleControl } from "../../trade-tracker/position-style-control";
 import { getReplacementOpenPositionStyles } from "../../trade-tracker/trade-tracker-platform-data";
 import { OpenPositionsView } from "./open-positions-view";
@@ -23,7 +22,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function OpenPositionsPage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("journal.access");
   const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard }) =>
     dashboard.getOpenPositions(scope));
   const positionStyles = getReplacementOpenPositionStyles(scope);

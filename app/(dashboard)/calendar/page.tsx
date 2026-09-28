@@ -11,9 +11,7 @@ import {
 import { CalendarClient } from "./calendar-client";
 import { emptyCalendarData, withCalendarDataRuntime } from "./calendar-data";
 import { calendarNavigationOptions, readCalendarActivityDates } from "./calendar-navigation";
-import {
-  requireTraderLinkPlatformServerComponentPageScope,
-} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { calendarDisabledForPerformanceTest } from "@/src/modules/platform/server/runtime-configuration/calendar-performance-test";
 import {
   journalScopeCurrentWeek,
@@ -96,7 +94,7 @@ export default async function CalendarPage({
   const selectedFilters = filters(query);
   const reviewLayout = process.env.NODE_ENV !== "production" && value(query.review) === "layout";
   const initialView: CalendarView = value(query.view) === "week" ? "week" : "month";
-  const scope = await requireTraderLinkPlatformServerComponentPageScope();
+  const scope = await requireMembershipPageScope("journal.access");
   const demoClock = readJournalDemoScopeClock(scope);
   const calendar = reviewLayout
     ? (() => {

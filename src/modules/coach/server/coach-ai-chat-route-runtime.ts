@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { isMembershipAccessDenied, MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { createHash } from "node:crypto";
 
 import type {
@@ -371,6 +372,10 @@ function mapChatRouteError(error: unknown): ChatRouteError {
 }
 
 export function respondToChatRouteError(error: unknown): Response {
+  if (isMembershipAccessDenied(error)) return Response.json(
+    { status: "unavailable", code: "membership_required", message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE },
+    { status: 403, headers: { "cache-control": "no-store" } },
+  );
   const mapped = mapChatRouteError(error);
   return Response.json(
     { status: "unavailable", code: mapped.code },

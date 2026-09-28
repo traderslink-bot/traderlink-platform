@@ -10,6 +10,7 @@ import { requireJournalMutationRequest } from
   "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { notifyJournalOwnerOfDailyTradeMarketDataDiscrepancy } from
   "@/src/modules/platform/server/notifications/platform-journal-owner-alert-service";
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export async function POST(
 ): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     const body = await request.json() as { expectedAccountSelectionRef?: unknown };
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const { mismatchSetId } = await context.params;
@@ -36,7 +37,9 @@ export async function POST(
       return confirmation;
     });
     return Response.json({ data: { status: "confirmed", roundTripId: result.roundTripId } });
-  } catch {
+  } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     return Response.json({ error: { message: "The broker confirmation could not be saved." } }, { status: 400 });
   }
 }

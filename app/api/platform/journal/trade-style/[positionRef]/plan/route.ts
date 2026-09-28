@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import type { JournalSwingPositionPlanChange } from "@/src/modules/journal/contracts/journal-trade-style-contracts";
 import { withWritableJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
 import {
@@ -42,7 +43,7 @@ export async function POST(
 ): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     const body = record(await request.json());
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const { positionRef } = await context.params;
@@ -67,6 +68,8 @@ export async function POST(
       journal.tradeStyles.saveSwingPlan(journal.tradeStyles.accountScope(scope), input));
     return Response.json({ status: "ready", result });
   } catch (error) {
+    const membershipDenial = membershipFeatureDeniedResponse(error);
+    if (membershipDenial) return membershipDenial;
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_TRADE_STYLE_INVALID";

@@ -7,6 +7,7 @@ import {
 import { serializeJournalAccountSelectionCookie } from "@/src/modules/platform/server/authentication/journal-account-selection-cookie";
 import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { assertMembershipJournalAccountCreation } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export async function POST(request: Request): Promise<Response> {
     requireJournalMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const body: unknown = await request.json();
-    if (!isRecord(body) || scope.allowedAccountIds.length >= 25) {
+    if (!isRecord(body)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
         field: "journalAccount",
       });
@@ -41,13 +42,15 @@ export async function POST(request: Request): Promise<Response> {
     } else if (body.expectedAccountSelectionRef !== null) {
       platformFailure("TRADERLINK_ACCOUNT_SELECTION_CONFLICT");
     }
-    const account = withWritableJournalIntegrityRuntime(scope, (runtime) =>
-      runtime.accounts.createAccount(scope, {
+    const account = withWritableJournalIntegrityRuntime(scope, (runtime, database) => database.transaction(() => {
+      assertMembershipJournalAccountCreation(database, scope.userId);
+      return runtime.accounts.createAccount(scope, {
         workspaceId: scope.workspaceId,
         displayName: requiredString(body, "displayName"),
         baseCurrency: requiredString(body, "baseCurrency").toUpperCase(),
         tradingTimezone: requiredString(body, "tradingTimezone"),
-      }), { allowNoActiveAccount: true });
+      });
+    }).immediate(), { allowNoActiveAccount: true });
     const selectionRef = deriveJournalAccountSelectionRef(
       scope.workspaceId,
       account.accountId,

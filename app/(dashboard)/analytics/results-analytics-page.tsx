@@ -14,7 +14,7 @@ import {
 } from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
 import { ResultsTickerTable, type ResultsTickerRow } from "./results-ticker-table";
@@ -72,7 +72,7 @@ function range(input: Readonly<Record<string, string | string[] | undefined>>): 
 }
 
 export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("analytics.access");
   const selectedRange = range(searchParams);
   const { moneyBasis, response } = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
     const moneyBasis = resolveJournalAnalyticsMoneyBasis(searchParams.basis, pnlReportingBasis);

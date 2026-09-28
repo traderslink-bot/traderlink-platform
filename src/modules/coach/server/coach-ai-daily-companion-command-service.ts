@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type {
   CoachAiDailyCompanionDraft,
@@ -86,7 +87,7 @@ export class CoachAiDailyCompanionCommandService {
   private readonly drafts: CoachAiDailyCompanionRepository;
   private readonly annotations: JournalAnnotationService;
 
-  constructor(database: Database.Database) {
+  constructor(private readonly database: Database.Database) {
     this.drafts = new CoachAiDailyCompanionRepository(database);
     this.annotations = new JournalAnnotationService(
       new JournalAnnotationRepository(database),
@@ -114,6 +115,7 @@ export class CoachAiDailyCompanionCommandService {
         platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
       }
       const edited = requireSameProposalShape(stored.draft.proposal, input.editedProposal);
+      assertMembershipFeature(this.database, scope.userId, "ai.chat");
       if (!scope.activeAccountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
       const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
 

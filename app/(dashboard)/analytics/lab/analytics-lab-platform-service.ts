@@ -1,4 +1,5 @@
 import "server-only";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
@@ -89,7 +90,8 @@ async function execute(
   input: AnalyticsLabPlatformQuery,
 ): Promise<AnalyticsLabPlatformPreview> {
   requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef);
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) => {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service, verifiedReadonlyDatabase }) => {
+    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.access");
     const query = journalQuery(scope, input);
     const response = service.getAnalyticsOverview(scope, query);
     const selected = response.partitions
@@ -119,7 +121,8 @@ export async function runAnalyticsLabPlatformQuery(
 export async function readAnalyticsLabPlatformPageModel(
   scope: WorkspaceAccessScope,
 ): Promise<AnalyticsLabPlatformPageModel> {
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, service }) => {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, service, verifiedReadonlyDatabase }) => {
+    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.access");
     const calendar = dashboard.getCalendar(scope, {
       currency: null,
       startDate: null,

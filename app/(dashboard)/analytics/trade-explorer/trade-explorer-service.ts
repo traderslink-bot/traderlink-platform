@@ -2,6 +2,7 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
@@ -370,6 +371,7 @@ async function execute(
   return withJournalAnalyticsReportingDashboardRuntime(
     scope,
     ({ service, verifiedReadonlyDatabase }) => {
+      assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
       const roundTripIds = hasAnnotationFilters(input)
         ? annotationRoundTripIds(
             verifiedReadonlyDatabase,
@@ -588,6 +590,7 @@ export async function runCompleteTradeExplorerTableQuery(
   });
   const asOfUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service, verifiedReadonlyDatabase }) => {
+    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
     const roundTripIds = hasAnnotationFilters(reportQuery)
       ? annotationRoundTripIds(
           verifiedReadonlyDatabase,
@@ -860,7 +863,8 @@ export async function runTradeExplorerComparison(
 ): Promise<TradeExplorerComparisonResult> {
   const normalized = normalizeTradeExplorerComparison(input);
   const generatedAtUtc = new Date().toISOString();
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) => {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service, verifiedReadonlyDatabase }) => {
+    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
     const groups = normalized.groups.map((group) => {
       const query = Object.freeze({
         ...group.query,
@@ -931,6 +935,7 @@ export async function readTradeExplorerPageModel(
   }>,
 ): Promise<TradeExplorerPageModel> {
   const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, pnlReportingBasis, service, verifiedReadonlyDatabase }) => {
+    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
     const calendarInput = Object.freeze({
       currency: null,
       startDate: null,

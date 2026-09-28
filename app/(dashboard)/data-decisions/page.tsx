@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { JournalProductReadService } from "@/src/modules/journal/server/product/journal-product-read-service";
 import {
   currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
 import { JournalDataDecisionsClient } from "./journal-data-decisions-client";
@@ -27,7 +27,7 @@ export default async function DataDecisionsPage({
 }: {
   searchParams: Promise<{ importBatchId?: string | string[] }>;
 }) {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("journal.access");
   const selectedImportBatchId = importBatchFilter((await searchParams).importBatchId);
   const accountId = scope.activeAccountId;
   if (!accountId) throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");

@@ -1,4 +1,6 @@
 "use client";
+import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { membershipActionError, throwIfMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
@@ -32,6 +34,7 @@ type DraftResponse = Readonly<{
 
 async function responseJson(response: Response): Promise<DraftResponse> {
   const value = await response.json() as Partial<DraftResponse>;
+  throwIfMembershipRequired(value);
   if (!response.ok || value.status !== "ready" || !value.draft) throw new Error("request_failed");
   return value as DraftResponse;
 }
@@ -71,12 +74,12 @@ export function AiChatDailyCompanionCard({
     try {
       const result = await responseJson(await fetch(`${endpoint}/confirm`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
         body: JSON.stringify({ editedProposal }),
       }));
       onDraftChange(result.draft);
-    } catch {
-      setError("This note could not be saved. If it changed elsewhere, refresh and ask for a new draft.");
+    } catch (error) {
+      setError(membershipActionError(error) ?? ("This note could not be saved. If it changed elsewhere, refresh and ask for a new draft."));
     } finally {
       setBusy(false);
     }
@@ -89,12 +92,12 @@ export function AiChatDailyCompanionCard({
     try {
       const result = await responseJson(await fetch(`${endpoint}/reject`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
         body: "{}",
       }));
       onDraftChange(result.draft);
-    } catch {
-      setError("The draft could not be discarded right now.");
+    } catch (error) {
+      setError(membershipActionError(error) ?? ("The draft could not be discarded right now."));
     } finally {
       setBusy(false);
     }

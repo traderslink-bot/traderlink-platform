@@ -1,4 +1,9 @@
 "use client";
+import {
+  MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
+  membershipActionError,
+  throwIfMembershipRequired,
+} from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
@@ -62,7 +67,7 @@ type ExactExecution = Readonly<{
 type LoadedTrade = Readonly<{
   analysis: DaySessionTradeAnalyzer | null;
   executions: readonly ExactExecution[];
-  status: "loading" | "ready" | "error";
+  status: "loading" | "ready" | "error" | "membership_required";
 }>;
 
 type TickerSupportingDetail = Readonly<{
@@ -150,14 +155,16 @@ async function loadTrade(trade: AnalyticsTradeDetail, moneyBasis: JournalAnalyti
       fetch(detailsUrl, { cache: "no-store" }),
       fetch(analysisUrl, { cache: "no-store" }),
     ]);
-    if (!detailsResponse.ok) throw new Error("details_unavailable");
     const details = await detailsResponse.json() as Readonly<{
       trades?: readonly Readonly<{ executions: readonly ExactExecution[]; roundTripId: string }>[];
     }>;
+    throwIfMembershipRequired(details);
+    if (!detailsResponse.ok) throw new Error("details_unavailable");
     const analysisPayload = await analysisResponse.json() as Readonly<{
       analysis?: DaySessionTradeAnalyzer;
       status?: string;
     }>;
+    throwIfMembershipRequired(analysisPayload);
     const selectedDetails = details.trades?.find((item) => item.roundTripId === trade.roundTripId);
     if (!selectedDetails || details.trades?.length !== 1) throw new Error("details_unavailable");
     return Object.freeze({
@@ -167,8 +174,8 @@ async function loadTrade(trade: AnalyticsTradeDetail, moneyBasis: JournalAnalyti
       executions: selectedDetails.executions,
       status: "ready" as const,
     });
-  } catch {
-    return Object.freeze({ analysis: null, executions: Object.freeze([]), status: "error" as const });
+  } catch (error) {
+    return Object.freeze({ analysis: null, executions: Object.freeze([]), status: membershipActionError(error) ? "membership_required" as const : "error" as const });
   }
 }
 
@@ -290,6 +297,7 @@ export function AnalyticsTradeDetailDrawer({
                       </Stack>
                       {loaded?.status === "loading" ? <CircularProgress size={24} /> : null}
                       {loaded?.status === "error" ? <Alert severity="error">Exact executions could not be loaded.</Alert> : null}
+                      {loaded?.status === "membership_required" ? <Alert severity="warning">{MEMBERSHIP_FEATURE_REQUIRED_MESSAGE}</Alert> : null}
                       {loaded?.status === "ready" && loaded.analysis && currency ? (
                         <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, overflow: "hidden" }}>
                           <DailyTradeAnalyzerChart

@@ -1,4 +1,5 @@
 "use client";
+import { membershipActionError, throwIfMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import Alert from "@mui/material/Alert";
@@ -17,6 +18,7 @@ type ActionResponse = Readonly<{ status: "ready"; draft: CoachAiChatActionDraft 
 
 async function responseJson(response: Response): Promise<ActionResponse> {
   const value = await response.json() as Partial<ActionResponse>;
+  throwIfMembershipRequired(value);
   if (!response.ok || value.status !== "ready" || !value.draft) {
     throw new Error("request_failed");
   }
@@ -208,10 +210,10 @@ export function AiChatActionDraftCard({
           result.draft.writeState === "committed") {
         window.location.reload();
       }
-    } catch {
-      setError(action === "confirm"
+    } catch (error) {
+      setError(membershipActionError(error) ?? (action === "confirm"
         ? "This change could not be completed. The original setting is unchanged."
-        : "This proposed change could not be dismissed right now.");
+        : "This proposed change could not be dismissed right now."));
     } finally {
       setBusy(false);
     }

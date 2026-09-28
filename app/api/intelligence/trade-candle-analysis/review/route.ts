@@ -1,4 +1,5 @@
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import type { CandleReviewRecord } from "@/src/modules/level-analysis/contracts/candle-review-contracts";
 import { CandleReviewRepository } from "@/src/modules/level-analysis/server/candle-review-repository";
 import { CandleReviewService } from "@/src/modules/level-analysis/server/candle-review-service";
@@ -53,7 +54,7 @@ export async function POST(request: Request): Promise<Response> {
 
   let database: ReturnType<typeof openPlatformDatabase> | null = null;
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     requireExpectedJournalAccountSelection(scope, expectedAccountSelectionRef);
     if (!scope.activeAccountId) return unavailable("Select a Journal account.", 409);
     const accountScope = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
@@ -73,6 +74,8 @@ export async function POST(request: Request): Promise<Response> {
     );
     return responseFor(reported.record, reported.currency, result.reused);
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     if (isTraderLinkPlatformError(error)) {
       if (error.code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT") {
         return unavailable("The selected Journal account changed. Refresh before analyzing.", 409);

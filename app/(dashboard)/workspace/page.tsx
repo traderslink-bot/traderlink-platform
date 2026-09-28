@@ -24,8 +24,9 @@ import {
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import {
   currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformServerComponentPageIdentity,
+  requireTraderLinkPlatformAuthenticatedPageIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import {
   createPlatformWorkspaceOfflineViewModel,
@@ -165,7 +166,9 @@ export default async function WorkspacePage({
   const identity = await measureWorkspacePhaseAsync(
     timings,
     "identity",
-    () => requireTraderLinkPlatformServerComponentPageIdentity(),
+    () => requireTraderLinkPlatformAuthenticatedPageIdentity({
+      membershipFeatures: ["journal.access"],
+    }),
   );
   const scope = identity.scope;
   if (!scope.activeAccountId) {
@@ -238,8 +241,10 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         prScannerCardPreference: new JournalWorkspacePrScannerCardPreferenceService(database).read(scope),
         ruleResultsCard,
         ruleResultsCardPreference,
-        response: measureWorkspacePhase(timings, "analytics_summary", () =>
-          service.getWorkspaceJournalAnalyticsSummary(scope, query)),
+        response: evaluateMembershipFeature(database, scope.userId, "analytics.access").allowed
+          ? measureWorkspacePhase(timings, "analytics_summary", () =>
+              service.getWorkspaceJournalAnalyticsSummary(scope, query))
+          : null,
         reviewSummary: measureWorkspacePhase(timings, "review_summary", () => readWorkspaceReviewSummary(
           database,
           scope,
@@ -271,7 +276,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     : undefined;
   const showDemoTradeTrackerInvitation = !onboardingStatus.activeAccountIsDemo &&
     onboardingStatus.demoLifecycleState !== "cleared";
-  const analyticsMetrics = [...WORKSPACE_METRICS.map(([label, metricId, caption]) => {
+  const analyticsMetrics = response ? [...WORKSPACE_METRICS.map(([label, metricId, caption]) => {
     const selectedMetricId = workspaceMetricId(metricId, pnlReportingBasis);
     const metrics = findJournalAnalyticsMetric(response, selectedMetricId);
     const metric = metrics.length === 1 ? metrics[0] ?? null : null;
@@ -289,8 +294,8 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     label: "Most profitable ticker",
     tradeDetailsRoundTripId: null,
     value: topTickersCard.mostProfitable ?? "—",
-  }];
-  const offlinePartition = response.partitions.length === 1
+  }] : [];
+  const offlinePartition = response?.partitions.length === 1
     ? response.partitions[0] ?? null
     : null;
   const offlineModel = createPlatformWorkspaceOfflineViewModel({
@@ -302,13 +307,16 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     <>
       <WorkspaceOfflineViewCapture
         accountTimezone={offlinePartition?.timezone ?? null}
-        calculationVersion={`${response.resultVersion}:${response.registryVersion}`}
+        calculationVersion={response
+          ? `${response.resultVersion}:${response.registryVersion}`
+          : "workspace-journal-review"}
         coverage={platformWorkspaceOfflineCoverage(offlineModel)}
-        generatedAtUtc={response.generatedAtUtc}
+        generatedAtUtc={response?.generatedAtUtc ?? new Date().toISOString()}
         model={offlineModel}
         reportingCurrency={offlinePartition?.currency ?? null}
       />
       <WorkspaceDashboard
+        analyticsAccessDenied={response === null}
         accountCurrency={account?.base_currency ?? offlinePartition?.currency ?? "USD"}
         accountTimezone={account?.trading_timezone ?? offlinePartition?.timezone ?? "UTC"}
         analyticsMetrics={analyticsMetrics}

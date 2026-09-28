@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isMembershipAccessDenied, MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
 import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
@@ -25,6 +26,9 @@ function safeFailure(
   error: unknown,
   stage: "import_start" | "import_status",
 ): NextResponse {
+  if (isMembershipAccessDenied(error)) return NextResponse.json({
+    status: "unavailable", code: "membership_required", message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, reportedToAdmin: false,
+  }, { status: 403, headers: { "cache-control": "no-store" } });
   const code = isTraderLinkPlatformError(error) ? error.code : null;
   const reportedToAdmin = recordMoomooOperationFailure({ database, error, stage });
   const status = code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT"
@@ -67,7 +71,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.imports"] });
     const body: unknown = await request.json();
     if (
       !isRecord(body) ||

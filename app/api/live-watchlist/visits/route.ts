@@ -2,7 +2,8 @@ import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/s
 import { TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { recordWatchlistUsageVisit } from "@/src/modules/watchlist/server/watchlist-usage-service";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
-import { requireTraderLinkPlatformDiscordMemberRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 import {
   isCanonicalUuidV4,
   isTraderLinkPlatformError,
@@ -25,11 +26,12 @@ function isUsageVisitBody(value: unknown): value is Readonly<{
 }
 
 export async function POST(request: Request): Promise<Response> {
-  let identity: ReturnType<typeof requireTraderLinkPlatformDiscordMemberRequestIdentity>;
+  let identity: ReturnType<typeof requireTraderLinkPlatformAuthenticatedRequestIdentity>;
   try {
     requirePlatformMutationRequest(request);
-    identity = requireTraderLinkPlatformDiscordMemberRequestIdentity(request.headers);
+    identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers, { membershipFeatures: ["watchlist.access"] });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) return new Response(null, { status: 403, headers: noStoreHeaders });
     const rejected = isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED";
     return new Response(null, { status: rejected ? 401 : 503, headers: noStoreHeaders });

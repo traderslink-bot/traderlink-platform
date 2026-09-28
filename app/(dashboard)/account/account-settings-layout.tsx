@@ -18,6 +18,7 @@ export type AccountSettingsSection =
   | "trading"
   | "ai"
   | "profile"
+  | "membership"
   | "security"
   | "privacy";
 
@@ -27,6 +28,12 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
   id: AccountSettingsSection;
   label: string;
 }>[] = Object.freeze([
+  Object.freeze({
+    description: "",
+    href: "/account/membership",
+    id: "membership",
+    label: "Plan & billing",
+  }),
   Object.freeze({
     description: "Accounts, currency, broker connections, PWA app settings",
     href: "/account/trading",

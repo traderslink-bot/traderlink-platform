@@ -94,7 +94,7 @@ function manualEntry(value: unknown): Readonly<{
 export async function POST(request: Request): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.manual_entry"] });
     const body: unknown = await request.json();
     if (!isRecord(body) || !Array.isArray(body.entries)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {

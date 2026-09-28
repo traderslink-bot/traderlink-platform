@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { assertMembershipFeature } from "../../platform/server/membership/platform-membership-access";
 
 import type {
   CommunityProfile,
@@ -158,6 +159,7 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
     detailHref: string;
     publicationId: string | null;
   }> {
+    assertMembershipFeature(this.database, input.userId, "community.access");
     assertCanonicalUuidV4(input.userId, "userId");
     assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
     const title = normalizeText(input.watchlist.title, 25, "title");
@@ -331,6 +333,9 @@ WHERE follow.follower_user_id = ? AND profile.handle = ? AND watchlist.slug = ?
     following: boolean;
     timestamp: string;
   }>): void {
+    if (input.following) {
+      assertMembershipFeature(this.database, input.userId, "community.access");
+    }
     assertCanonicalUuidV4(input.userId, "userId");
     assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
     assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
@@ -365,6 +370,7 @@ WHERE watchlist_id = ? AND follower_user_id = ?`).run(watchlist.watchlist_id, in
     nextSymbol: string;
     timestamp: string;
   }>): void {
+    assertMembershipFeature(this.database, input.userId, "community.access");
     assertCanonicalUuidV4(input.userId, "userId");
     assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
     assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
@@ -406,6 +412,7 @@ SET symbol = ? WHERE ticker_id = ?`).run(nextSymbol, ticker.ticker_id).changes;
     tags: readonly string[];
     timestamp: string;
   }>): void {
+    assertMembershipFeature(this.database, input.userId, "community.access");
     assertCanonicalUuidV4(input.userId, "userId");
     assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
     assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);

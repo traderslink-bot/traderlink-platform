@@ -5,6 +5,7 @@ import {
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ const WORKSPACE_METRICS = [
 
 export async function GET(request: Request): Promise<Response> {
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["analytics.access"] });
     const query = buildJournalAnalyticsDashboardQuery(scope, {
       metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
     });
@@ -36,6 +37,8 @@ export async function GET(request: Request): Promise<Response> {
       coverage: response.crossPartitionCounts,
     });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     const unauthorized = isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED";
     return Response.json(

@@ -1,4 +1,9 @@
 "use client";
+import {
+  MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
+  membershipActionError,
+  throwIfMembershipRequired,
+} from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import CloseIcon from "@mui/icons-material/Close";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -172,10 +177,10 @@ export function CandlePatternOccurrenceExplorer({
   const [pageSize, setPageSize] = useState(25);
   const [cursors, setCursors] = useState<Record<number, string | null>>({ 1: null });
   const [result, setResult] = useState<DailyTradePatternOccurrencePage | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "error" | "membership_required">("loading");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [replay, setReplay] = useState<ReplayResponse | null>(null);
-  const [replayState, setReplayState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [replayState, setReplayState] = useState<"idle" | "loading" | "ready" | "error" | "membership_required">("idle");
   const selected = selectedIndex === null ? null : result?.rows[selectedIndex] ?? null;
   const [chartInterval, setChartInterval] = useState<DailyTradeChartInterval>("1m");
 
@@ -222,6 +227,7 @@ export function CandlePatternOccurrenceExplorer({
       signal: controller.signal,
     }).then(async (response) => {
       const payload = await response.json() as OccurrenceResponse;
+      throwIfMembershipRequired(payload);
       if (controller.signal.aborted) return;
       if (!response.ok || payload.status !== "ready" || !payload.page) {
         throw new Error("Pattern occurrences are unavailable.");
@@ -233,6 +239,13 @@ export function CandlePatternOccurrenceExplorer({
       setState("ready");
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
+      if (membershipActionError(error)) {
+        setResult(null);
+        setSelectedIndex(null);
+        setReplay(null);
+        setState("membership_required");
+        return;
+      }
       console.error("Candle Pattern occurrences request failed.", {
         errorName: error instanceof Error ? error.name : "UnknownError",
       });
@@ -255,6 +268,7 @@ export function CandlePatternOccurrenceExplorer({
       signal: controller.signal,
     }).then(async (response) => {
       const payload = await response.json() as ReplayResponse;
+      throwIfMembershipRequired(payload);
       if (controller.signal.aborted) return;
       if (!response.ok || payload.status !== "ready" || !payload.analysis) {
         throw new Error("Replay is unavailable.");
@@ -263,6 +277,11 @@ export function CandlePatternOccurrenceExplorer({
       setReplayState("ready");
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
+      if (membershipActionError(error)) {
+        setReplay(null);
+        setReplayState("membership_required");
+        return;
+      }
       console.error("Candle Pattern replay request failed.", {
         errorName: error instanceof Error ? error.name : "UnknownError",
       });
@@ -322,6 +341,7 @@ export function CandlePatternOccurrenceExplorer({
         <Divider />
         {replayState === "loading" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", py: 4 }}><CircularProgress size={20} /><Typography color="text.secondary">Loading the saved trade chart…</Typography></Stack> : null}
         {replayState === "error" ? <Alert severity="warning">The saved chart is unavailable. You can still open the full Session Tracker review.</Alert> : null}
+        {replayState === "membership_required" ? <Alert severity="warning">{MEMBERSHIP_FEATURE_REQUIRED_MESSAGE}</Alert> : null}
         {replayState === "ready" && replay?.analysis ? (
           <DailyTradeAnalyzerChart
             analysis={replay.analysis}
@@ -359,6 +379,7 @@ export function CandlePatternOccurrenceExplorer({
         {currency ? <TradeAnalyzerTablePagination onPageChange={(nextPage) => { if (nextPage < page || cursors[nextPage]) setPage(nextPage); }} onPageSizeChange={(nextSize) => { setPageSize(nextSize); setPage(1); setCursors({ 1: null }); }} page={page} pageSize={pageSize} rowCount={result?.totalRowCount ?? 0} /> : null}
         {resolvedState === "loading" && !result ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", py: 3 }}><CircularProgress size={20} /><Typography color="text.secondary">Loading occurrences…</Typography></Stack> : null}
         {resolvedState === "error" ? <Alert severity="error">Pattern occurrences could not be loaded. Try again.</Alert> : null}
+        {resolvedState === "membership_required" ? <Alert severity="warning">{MEMBERSHIP_FEATURE_REQUIRED_MESSAGE}</Alert> : null}
         {resolvedState === "ready" && rows.length === 0 ? <Typography color="text.secondary">No occurrences match these filters.</Typography> : null}
 
         {rows.length > 0 ?

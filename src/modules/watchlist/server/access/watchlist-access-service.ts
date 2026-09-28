@@ -1,10 +1,12 @@
 import "server-only";
 
 import type { NextRequest } from "next/server";
+import { redirect } from "next/navigation";
+import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import {
-  requireTraderLinkPlatformDiscordMemberPageIdentity,
-  requireTraderLinkPlatformDiscordMemberRequestIdentity,
+  requireTraderLinkPlatformAuthenticatedPageIdentity,
+  requireTraderLinkPlatformAuthenticatedRequestIdentity,
   type TraderLinkPlatformRequestIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
@@ -21,7 +23,8 @@ export type WatchlistAccessResult =
       status: 401 | 403;
       reason:
         | "login_required"
-        | "local_boundary_denied";
+        | "local_boundary_denied"
+        | "membership_required";
       error: string;
     }>;
 
@@ -61,20 +64,23 @@ function evaluateIdentity(
 
 export async function authorizeWatchlistPageAccess(): Promise<WatchlistAccessResult> {
   try {
-    return evaluateIdentity(await requireTraderLinkPlatformDiscordMemberPageIdentity());
-  } catch {
+    return evaluateIdentity(await requireTraderLinkPlatformAuthenticatedPageIdentity({ membershipFeatures: ["watchlist.access"] }));
+  } catch (error) {
+    if (isMembershipAccessDenied(error)) redirect("/plans");
     return isLocalDevelopmentRuntime() ? localDenied() : loginRequired();
   }
 }
 
 export async function authorizeWatchlistRequest(
-  request: NextRequest,
+  request: Pick<NextRequest, "headers">,
+  identityOptions: Parameters<typeof requireTraderLinkPlatformAuthenticatedRequestIdentity>[1] = {},
 ): Promise<WatchlistAccessResult> {
   try {
     return evaluateIdentity(
-      requireTraderLinkPlatformDiscordMemberRequestIdentity(request.headers),
+      requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers, { ...identityOptions, membershipFeatures: ["watchlist.access"] }),
     );
-  } catch {
+  } catch (error) {
+    if (isMembershipAccessDenied(error)) return { ok: false, status: 403, reason: "membership_required", error: "Your current plans do not include Watchlist access. Review Plans or contact the owner." };
     return isLocalDevelopmentRuntime() ? localDenied() : loginRequired();
   }
 }

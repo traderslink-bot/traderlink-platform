@@ -2,7 +2,7 @@ import "server-only";
 
 import { DashboardPage } from "@/app/dashboard-template";
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import type { JournalAnalyticsGrouping } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
 import {
@@ -68,7 +68,7 @@ export async function TimingAnalyticsPage({
 }: {
   searchParams: Promise<{ basis?: string | string[] | undefined }>;
 }) {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("analytics.access");
   const requestedBasis = (await searchParams).basis;
   const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
     const moneyBasis = resolveJournalAnalyticsMoneyBasis(requestedBasis, pnlReportingBasis);

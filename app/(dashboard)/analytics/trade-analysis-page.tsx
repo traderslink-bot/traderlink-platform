@@ -28,7 +28,7 @@ import { journalReportingCurrencyMultiplier } from "@/src/modules/journal-analyt
 import {
   buildDailyTradeLongTermAnalytics,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 
@@ -147,7 +147,7 @@ export async function TradeAnalysisPage({
   searchParams: Readonly<Record<string, string | string[] | undefined>>;
   view: TradeAnalysisView;
 }) {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("analytics.access");
   const accountTimezone = withReadonlyPlatformDatabase({}, (database) => {
     const accountId = scope.activeAccountId;
     return accountId

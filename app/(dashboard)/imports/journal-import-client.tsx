@@ -1,4 +1,5 @@
 "use client";
+import { MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import Alert from "@mui/material/Alert";
@@ -118,6 +119,7 @@ export function JournalImportClient({
   const [feeSignConvention, setFeeSignConvention] = useState<"cost_positive" | "cash_effect">("cost_positive");
   const [completed, setCompleted] = useState<CompletedImport | null>(null);
   const [history, setHistory] = useState<readonly JournalImportHistoryItem[]>([]);
+  const [historyAccessDenied, setHistoryAccessDenied] = useState(false);
   const [working, setWorking] = useState<"preview" | "commit" | "ai_repair" | null>(null);
   const [notice, setNotice] = useState<Readonly<{
     severity: "success" | "warning" | "error";
@@ -126,10 +128,15 @@ export function JournalImportClient({
 
   async function refreshHistory(): Promise<readonly JournalImportHistoryItem[]> {
     const response = await fetch(HISTORY_ENDPOINT, { cache: "no-store" });
-    if (!response.ok) return [];
     const packet = await response.json() as {
+      code?: string;
       imports?: readonly JournalImportHistoryItem[];
     };
+    setHistoryAccessDenied(packet.code === "membership_required");
+    if (!response.ok) {
+      if (packet.code === "membership_required") setHistory([]);
+      return [];
+    }
     const imports = (packet.imports ?? []).filter((item) =>
       item.sourceKind === "broker_statement");
     setHistory(imports);
@@ -679,7 +686,7 @@ export function JournalImportClient({
       ) : null}
 
       <DashboardPanel action={<FeatureHelpLink href="/help/notifications-and-imports/import-history-and-follow-up#import-history" label="Import history" />} title="Import history">
-        {history.length === 0 ? (
+        {historyAccessDenied ? <Alert severity="warning">{MEMBERSHIP_FEATURE_REQUIRED_MESSAGE}</Alert> : history.length === 0 ? (
           <Typography color="text.secondary" variant="body2">No broker statements are recorded yet.</Typography>
         ) : (
           <>

@@ -2,6 +2,49 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const PAID_PLAN_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "membership-plans",
+    title: "Plans and membership access",
+    description: "Choose an available plan and check the access confirmed for your account.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "choose-a-plan", title: "Choose a plan", summary: "Review the exact offer before continuing.",
+        keywords: Object.freeze(["plans", "Stripe", "Whop", "private offer", "trial", "membership"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "The live Watchlist can be included in an owner-configured plan. View plans with this feature lists matching public offers; ask the owner about private access." }),
+          Object.freeze({ kind: "paragraph", text: "When membership plans are available, use Plans or an invitation supplied by the owner. Each offer shows its currency, initial payment and renewal period. A fixed number of days is different from a calendar month. Trial offers show their duration and whether access ends or the offer renews afterward." }),
+          Object.freeze({ kind: "paragraph", text: "An invitation page can temporarily have no offers. The owner can add or change its selected plans later without changing the invitation link; this does not add those plans to the public Plans page." }),
+          Object.freeze({ kind: "paragraph", text: "Sign in before choosing an offer. A free plan or a free trial without a payment method can grant access immediately. Stripe checkout grants access after the payment provider confirms the checkout. Returning from checkout alone does not confirm access." }),
+          Object.freeze({ kind: "paragraph", text: "Use Sign in on the plans page to return to the same offer page after Discord login, including an unlisted invitation. You do not need to join a Discord server to sign in for website plans and billing. Server-based offers still require the server membership or roles chosen by the owner." }),
+          Object.freeze({ kind: "paragraph", text: "External offers, including owner-configured Whop links, can require the owner to confirm access after payment. Follow the offer's instructions. If the invitation expires after you pay, contact the owner: they can verify payment and give you a separate owner grant. This does not change or cancel billing with the external provider. The existing linked Whop subscription flow remains separate." }),
+          Object.freeze({ kind: "paragraph", text: "If a Stripe payment succeeds but an invitation is no longer available, contact the owner rather than purchasing again. The owner can approve recovery for that checkout. Access still waits for Stripe's verified payment confirmation and follows the purchased plan; approval does not create a second charge." }),
+          Object.freeze({ kind: "paragraph", text: "Journal and Analytics can be included separately. When the owner enforces those settings, Workspace requires Journal access, while its performance cards require Analytics. Losing Analytics does not remove your Journal review or delete your records." }),
+          Object.freeze({ kind: "paragraph", text: "Opening Workspace while connected saves the review available to your current plan for offline use. A Journal-only saved Workspace can include your trading-day review without Analytics cards. Existing device snapshots are not remotely erased when a plan changes." }),
+          Object.freeze({ kind: "paragraph", text: "The Analytics analyzed-trades list, candle setup occurrences and their saved chart replays also require Analytics access when enforced. If access changes while a page is open, the next request shows the plan-access message instead of asking you to keep retrying." }),
+          Object.freeze({ kind: "paragraph", text: "Single-trade execution details, saved analysis and factual reflection summaries are shared by Journal and Analytics: either permitted feature can provide that read access. Trade Explorer review editing follows Trade Explorer access. Confirming a broker execution mismatch is a Journal action and follows Journal access. These settings never give access to another member's records." }),
+          Object.freeze({ kind: "paragraph", text: "Discord access can depend on your server and roles. The owner can change those rules later, including adding new roles or making an offer available to every verified server member. Purchase eligibility alone does not mean the plan has already been granted." }),
+          Object.freeze({ kind: "paragraph", text: "For an external-provider trial, review the price, duration and renewal shown by the provider before paying. If they differ from the offer here, stop and contact the owner. External trial checkout is configured separately from the regular offer." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "plan-and-billing", title: "Plan & billing", summary: "Check confirmed plans and manage linked Stripe billing.",
+        keywords: Object.freeze(["billing", "cancel", "membership", "access expiry"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Open Account, then Plan & billing, to see your active membership plans and their end dates. Manage Stripe billing opens the provider's billing portal when a Stripe subscription is linked. A recent payment may need time to be confirmed." }),
+          Object.freeze({ kind: "paragraph", text: "Plan & billing remains available to your signed-in account when dashboard plan access ends. A website membership does not require joining a Discord server; server-specific offers still require the server and roles configured for them." }),
+          Object.freeze({ kind: "paragraph", text: "An owner grant and a paid plan can coexist. Expiry or cancellation of one source does not remove a separate active source. Discord plan access depends on the server and roles selected by the owner and a current membership verification." }),
+          Object.freeze({ kind: "paragraph", text: "If the owner enables membership requirements for Community, you also need a plan that includes Community. This includes Community Watchlists, profiles, publishing, edits and following. Stopping an existing follow remains available. A plan does not grant community administration, Discord roles, editing rights over another member's watchlist or access to someone else's Journal." }),
+          Object.freeze({ kind: "paragraph", text: "If Coaching membership requirements are enabled, the student needs Coaching access for new coaching work and delivery. The coach does not need to purchase the student's plan. Access expiry pauses new work without deleting saved history or restoring revoked Journal-sharing permission." }),
+          Object.freeze({ kind: "paragraph", text: "Academy can be available independently of dashboard access. Lessons remain public unless the owner enables Academy membership requirements. When enabled, an eligible plan is required to read lessons and change completion progress. Expiry does not delete saved completions. Sign in with Discord to save progress; joining a server is not required for website Academy access." }),
+          Object.freeze({ kind: "paragraph", text: "When Journal membership requirements are enabled, Calendar, the trade trackers, Open Positions, Candle Review, Trading Rules and Rule Results require Journal access. Notes, tags, daily rule reviews, rule changes and Rule ideas follow the same Journal setting. Changing a plan does not delete your trades, rules or previously saved offline views. Import and manual-entry permissions are configured separately. Starting Moomoo history or latest imports follows the import permission; existing import status and connection management are not removed when import access ends." }),
+          Object.freeze({ kind: "paragraph", text: "If AI Chat access expires, confirming a pending AI-suggested change requires renewed access when enforcement is enabled. Saved drafts remain readable and can be dismissed. Retrying an already completed change does not apply it again." }),
+          Object.freeze({ kind: "paragraph", text: "The live Watchlist uses your signed-in account and the owner's Watchlist membership setting. A website plan with Watchlist access does not also require a dashboard plan or Discord server membership. Server Community Watchlists keep their separate server and role permissions." }),
+          Object.freeze({ kind: "paragraph", text: "Recurring owner access shows its chosen interval in Plan & billing. It continues until its end date or owner revocation and does not charge a payment. A paid subscription's renewal and charges are separate." }),
+        ]),
+      }),
+    ]),
+  }),
+
+  Object.freeze({
     slug: "getting-started",
     title: "Get paid access",
     description: "Understand the TraderLink paid plan, complete checkout in Whop and connect the correct account.",

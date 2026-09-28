@@ -78,7 +78,7 @@ export async function POST(request: Request): Promise<Response> {
   let attemptContext: JournalImportAttemptContext | null = null;
   try {
     requireJournalMutationRequest(request);
-    scope = requireTraderLinkPlatformRequestScope(request.headers);
+    scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.imports"] });
     const data = await request.formData();
     const file = data.get("statement");
     const sourceTimezone = data.get("sourceTimezone");

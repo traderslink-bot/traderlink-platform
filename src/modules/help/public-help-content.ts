@@ -54,7 +54,7 @@ export const PUBLIC_HELP_COLLECTIONS: readonly PublicHelpCollection[] = Object.f
   collection("trade-analyzer", "Trade Analyzer", "Replay supported trades and understand every saved Analyzer result.", TRADE_ANALYZER_HELP_GUIDES),
   collection("ai-chat", "Links AI Chat", "Ask about your trading, choose what to explore and prepare editable drafts.", AI_CHAT_HELP_GUIDES),
   collection("ai-reviews", "AI Reviews", "Choose a schedule, understand review evidence and use saved feedback.", AI_REVIEWS_HELP_GUIDES),
-  collection("paid-plan", "Paid plan and billing", "Connect Whop, manage the wider TraderLink paid plan and fix access problems.", PAID_PLAN_HELP_GUIDES),
+  collection("paid-plan", "Paid plan and billing", "Choose a plan, manage payments and check membership access.", PAID_PLAN_HELP_GUIDES),
   collection("tools", "Tools", "Learn how to use TraderLink tools such as Halt Alerts.", TOOLS_HELP_GUIDES),
   collection("stock-levels", "Stock Levels", "Request and read a factual support and resistance map.", STOCK_LEVELS_HELP_GUIDES),
   collection("watchlist", "Watchlist", "Read analysis and manage owner review and publication.", WATCHLIST_HELP_GUIDES),

@@ -1,4 +1,5 @@
 import "server-only";
+import { assertMembershipFeature } from "../membership/platform-membership-access";
 
 import type Database from "better-sqlite3";
 
@@ -78,10 +79,13 @@ export class MoomooConnectionRepository {
     encrypted: EncryptedMoomooCredentials; accessTokenExpiresAtUtc: string;
     authorizedScopes: readonly string[]; timestamp: string;
   }>): MoomooConnectionRecord {
+    if (!this.database.inTransaction) return this.database.transaction(() => this.saveAuthorized(scope, input)).immediate();
     assertCanonicalUuidV4(scope.userId, "userId"); assertCanonicalUuidV4(scope.workspaceId, "workspaceId");
     assertCanonicalUtcTimestamp(input.accessTokenExpiresAtUtc, "accessTokenExpiresAtUtc"); assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
     if (input.authorizedScopes.length === 0 || input.authorizedScopes.some((scope) => !/^[a-z][a-z0-9:_*-]{0,127}$/u.test(scope))) platformFailure("TRADERLINK_BROKER_CONNECTION_STORAGE_INVALID");
     const current = this.find(scope);
+    const connectionCount = this.database.prepare("SELECT COUNT(*) count FROM platform_broker_connections WHERE user_id=? AND connection_state<>'revoked'").get(scope.userId) as { count: number };
+    assertMembershipFeature(this.database, scope.userId, "broker.connections", connectionCount.count + (current && current.state !== "revoked" ? 0 : 1));
     const connectionId = current?.connectionId ?? createCanonicalUuidV4();
     const connectedAtUtc = current?.connectedAtUtc ?? input.timestamp;
     this.database.prepare(`INSERT INTO platform_broker_connections (connection_id, user_id, workspace_id, provider, connection_state, credential_key_version, credential_initialization_vector, credential_ciphertext, credential_authentication_tag, access_token_expires_at_utc, authorized_scopes, connected_at_utc, updated_at_utc, revoked_at_utc) VALUES (?, ?, ?, 'moomoo', 'active', ?, ?, ?, ?, ?, ?, ?, ?, NULL) ON CONFLICT(user_id, workspace_id, provider) DO UPDATE SET connection_state = 'active', credential_key_version = excluded.credential_key_version, credential_initialization_vector = excluded.credential_initialization_vector, credential_ciphertext = excluded.credential_ciphertext, credential_authentication_tag = excluded.credential_authentication_tag, access_token_expires_at_utc = excluded.access_token_expires_at_utc, authorized_scopes = excluded.authorized_scopes, updated_at_utc = excluded.updated_at_utc, revoked_at_utc = NULL`).run(connectionId, scope.userId, scope.workspaceId, input.encrypted.keyVersion, input.encrypted.initializationVector, input.encrypted.ciphertext, input.encrypted.authenticationTag, input.accessTokenExpiresAtUtc, JSON.stringify([...new Set(input.authorizedScopes)].sort()), connectedAtUtc, input.timestamp);

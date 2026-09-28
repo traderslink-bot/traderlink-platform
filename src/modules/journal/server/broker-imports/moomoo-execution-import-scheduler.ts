@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
 import {
@@ -38,6 +39,8 @@ export class MoomooExecutionImportScheduler {
     const dueBefore = new Date(cutoff.getTime() - intervalMinutes * 60_000);
     const candidates = this.repository.listIncrementalCandidates(
       createCanonicalUtcTimestamp(dueBefore),
+      100,
+      createCanonicalUtcTimestamp(cutoff),
     );
     let scheduled = 0;
     for (const candidate of candidates) {
@@ -63,6 +66,8 @@ export class MoomooExecutionImportScheduler {
               candidate.link.brokerAccountLinkId,
             )
           ) return false;
+          const member = this.database.prepare("SELECT user_id FROM platform_broker_connections WHERE connection_id=?").get(currentLink.connectionId) as { user_id: string } | undefined;
+          if (!member || !evaluateMembershipFeature(this.database, member.user_id, "journal.imports", undefined, cutoff.toISOString()).allowed) return false;
           const plan = planMoomooIncrementalExecutionImport({
             earliestExecutionDate: candidate.requestedStartDate,
             enabledMarketCodes: currentLink.enabledMarketCodes,

@@ -296,6 +296,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/manual-entry": "Manual Entry",
     "/data-decisions": "Data Decisions",
     "/account": "Account",
+    "/account/membership": "Plan & billing",
     "/notifications": "Notifications",
     "/press-releases": "All Press Releases",
     "/press-releases/news-filtered": "News Scanner",

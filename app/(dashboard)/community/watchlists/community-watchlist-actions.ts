@@ -10,6 +10,10 @@ import {
   createCanonicalUtcTimestamp,
   isTraderLinkPlatformError,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  isMembershipAccessDenied,
+  MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
+} from "@/src/modules/platform/server/membership/platform-membership-access";
 
 type CommunityWatchlistActionResult =
   | Readonly<{ ok: true; href: string; message: string }>
@@ -89,7 +93,9 @@ export async function createCommunityWatchlist(
   input: CreateCommunityWatchlistInput,
 ): Promise<CommunityWatchlistActionResult> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["community.access"],
+    });
     const created = withPlatformDatabase({ mode: "runtime" }, (database) =>
       new CommunityWatchlistRepository(database).create({
         userId: scope.userId,
@@ -113,6 +119,9 @@ export async function createCommunityWatchlist(
         : "Your draft is saved.",
     });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) {
+      return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE });
+    }
     const accessChanged = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",
       "TRADERLINK_WORKSPACE_ACCESS_DENIED",
@@ -132,7 +141,9 @@ export async function setCommunityWatchlistFollow(input: Readonly<{
   following: boolean;
 }>): Promise<CommunityWatchlistActionResult> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: input.following ? ["community.access"] : [],
+    });
     withPlatformDatabase({ mode: "runtime" }, (database) =>
       new CommunityWatchlistRepository(database).setPublishedFollow({
         ...input,
@@ -149,6 +160,9 @@ export async function setCommunityWatchlistFollow(input: Readonly<{
       message: input.following ? "You are following this watchlist." : "You stopped following this watchlist.",
     });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) {
+      return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE });
+    }
     const accessChanged = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",
       "TRADERLINK_WORKSPACE_ACCESS_DENIED",
@@ -169,7 +183,9 @@ export async function replaceCommunityWatchlistTicker(input: Readonly<{
   nextSymbol: string;
 }>): Promise<CommunityWatchlistActionResult> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["community.access"],
+    });
     withPlatformDatabase({ mode: "runtime" }, (database) =>
       new CommunityWatchlistRepository(database).replaceTickerSymbol({
         ...input,
@@ -185,6 +201,9 @@ export async function replaceCommunityWatchlistTicker(input: Readonly<{
       message: "Ticker changed.",
     });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) {
+      return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE });
+    }
     const accessChanged = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",
       "TRADERLINK_WORKSPACE_ACCESS_DENIED",
@@ -205,7 +224,9 @@ export async function updateCommunityWatchlistTickerTags(input: Readonly<{
   tags: readonly string[];
 }>): Promise<CommunityWatchlistActionResult> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["community.access"],
+    });
     withPlatformDatabase({ mode: "runtime" }, (database) =>
       new CommunityWatchlistRepository(database).updateTickerTags({
         ...input,
@@ -221,6 +242,9 @@ export async function updateCommunityWatchlistTickerTags(input: Readonly<{
       message: "Ticker tags saved.",
     });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) {
+      return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE });
+    }
     const accessChanged = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",
       "TRADERLINK_WORKSPACE_ACCESS_DENIED",

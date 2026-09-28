@@ -36,6 +36,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     sitemapEntry("/", "weekly", 1),
     sitemapEntry("/news", "daily", 0.8),
     sitemapEntry("/academy/", "weekly", 0.95),
+    sitemapEntry("/plans", "weekly", 0.8),
     sitemapEntry("/privacy", "yearly", 0.3),
     sitemapEntry("/terms", "yearly", 0.3),
     ...courseEntries,

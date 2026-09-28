@@ -23,6 +23,11 @@ import {
   TRADERLINK_PLATFORM_SESSION_COOKIE,
 } from "./platform-session-service";
 import { hasPlatformDiscordPremiumAccess } from "../../../watchlist/server/access/platform-discord-watchlist-entitlement";
+import {
+  assertMembershipFeature,
+  evaluateMembershipFeature,
+  hasPlatformMembershipFeature,
+} from "../membership/platform-membership-access";
 
 export type TraderLinkPlatformRequestIdentity = Readonly<{
   mode: "local_development" | "platform_session";
@@ -40,10 +45,13 @@ type PlatformRequestIdentityOptions = Readonly<{
   databasePath?: string;
   forbiddenRepositoryRoots?: readonly string[];
   now?: () => Date;
+  membershipFeatures?: readonly string[];
+  membershipAnyFeatures?: readonly string[];
 }>;
 
 type ResolvePlatformRequestIdentityOptions = PlatformRequestIdentityOptions & Readonly<{
   requireDashboardAccess: boolean;
+  requireDiscordMembership?: boolean;
 }>;
 
 function readSingleCookie(requestHeaders: Headers, name: string): string | null {
@@ -131,14 +139,39 @@ function resolveTraderLinkPlatformRequestIdentity(
           session.userId,
           resolveTraderLinkDiscordGuildId(environment),
         );
-      if (!membership) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      const membershipDashboardAccess = hasPlatformMembershipFeature(
+        database,
+        session.userId,
+        "dashboard.access",
+      );
+      if (options.requireDashboardAccess) {
+        assertMembershipFeature(database, session.userId, "dashboard.access");
+      }
+      for (const feature of options.membershipFeatures ?? []) {
+        assertMembershipFeature(database, session.userId, feature);
+      }
+      if (
+        options.membershipAnyFeatures?.length &&
+        !options.membershipAnyFeatures.some((feature) =>
+          evaluateMembershipFeature(database, session.userId, feature).allowed)
+      ) {
+        assertMembershipFeature(database, session.userId, options.membershipAnyFeatures[0]);
+      }
+      if (
+        !membership &&
+        options.requireDiscordMembership !== false &&
+        !membershipDashboardAccess
+      ) {
+        platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      }
       if (
         options.requireDashboardAccess &&
+        !membershipDashboardAccess &&
         !new PlatformDashboardMemberAccessRepository(database)
           .read().allowAllDiscordMembers &&
         !hasPlatformDiscordPremiumAccess({
-          guildOwner: membership.guildOwner,
-          roleIds: membership.roleIds,
+          guildOwner: membership?.guildOwner ?? false,
+          roleIds: membership?.roleIds ?? [],
         }, environment)
       ) {
         platformFailure("TRADERLINK_DASHBOARD_ACCESS_DENIED");
@@ -152,10 +185,10 @@ function resolveTraderLinkPlatformRequestIdentity(
           selectionRef,
         ),
         displayName: session.displayName,
-        discord: Object.freeze({
+        discord: membership ? Object.freeze({
           guildOwner: membership.guildOwner,
           roleIds: membership.roleIds,
-        }),
+        }) : null,
       });
     },
   );
@@ -178,6 +211,39 @@ export function requireTraderLinkPlatformDiscordMemberRequestIdentity(
   return resolveTraderLinkPlatformRequestIdentity(requestHeaders, {
     ...options,
     requireDashboardAccess: false,
+  });
+}
+
+/** Stable signed-in identity; each standalone feature supplies its own commercial policy. */
+export function requireTraderLinkPlatformAuthenticatedRequestIdentity(
+  requestHeaders: Headers,
+  options: PlatformRequestIdentityOptions = {},
+): TraderLinkPlatformRequestIdentity {
+  return resolveTraderLinkPlatformRequestIdentity(requestHeaders, {
+    ...options,
+    requireDashboardAccess: false,
+    requireDiscordMembership: false,
+  });
+}
+
+export async function requireTraderLinkPlatformAuthenticatedPageIdentity(
+  options: Omit<PlatformRequestIdentityOptions, "environment"> = {},
+): Promise<TraderLinkPlatformRequestIdentity> {
+  return requireTraderLinkPlatformAuthenticatedRequestIdentity(await nextHeaders(), {
+    ...options,
+    environment: process.env,
+  });
+}
+
+/** Billing requires a stable account, not a paid plan or Discord role. */
+export const requireTraderLinkPlatformBillingRequestIdentity =
+  requireTraderLinkPlatformAuthenticatedRequestIdentity;
+
+export async function requireTraderLinkPlatformBillingPageIdentity(): Promise<
+  TraderLinkPlatformRequestIdentity
+> {
+  return requireTraderLinkPlatformBillingRequestIdentity(await nextHeaders(), {
+    environment: process.env,
   });
 }
 

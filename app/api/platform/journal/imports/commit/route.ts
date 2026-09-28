@@ -25,7 +25,7 @@ export async function POST(request: Request): Promise<Response> {
   let attemptIdempotencyRef: string | null = null;
   try {
     requireJournalMutationRequest(request);
-    const requestScope = requireTraderLinkPlatformRequestScope(request.headers);
+    const requestScope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.imports"] });
     scope = requestScope;
     const data = await request.formData();
     const file = data.get("statement");

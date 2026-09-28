@@ -1,3 +1,4 @@
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import type { Metadata } from "next";
 
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
@@ -12,7 +13,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { DashboardDataScopeChip, DashboardPage, DashboardPanel, DashboardUnavailableState } from "../../../dashboard-template";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+
 import { isCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 import { readCandleReviewPageModel } from "./candle-review-platform-runtime";
@@ -42,7 +43,7 @@ export default async function TradeCandleReviewPage({
       </DashboardPage>
     );
   }
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("journal.access");
   const model = await readCandleReviewPageModel(scope, key);
   if (!model) {
     return (

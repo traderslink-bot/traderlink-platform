@@ -2,6 +2,7 @@
 
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { isMembershipAccessDenied, MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import { runAnalyticsLabPlatformQuery } from "./analytics-lab-platform-service";
 import {
@@ -20,6 +21,7 @@ function inputRecord(input: unknown): Record<string, unknown> {
 }
 
 function savedViewFailure(error: unknown): AnalyticsLabSavedViewMutationResult {
+  if (isMembershipAccessDenied(error)) return { ok: false, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE };
   const conflict = isTraderLinkPlatformError(error) && (
     error.code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT" ||
     error.code === "TRADERLINK_ANALYTICS_SAVED_VIEW_CONFLICT"
@@ -36,12 +38,13 @@ export async function runAnalyticsLabQuery(
   input: unknown,
 ): Promise<AnalyticsLabPlatformQueryResult> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({ membershipFeatures: ["analytics.access"] });
     return Object.freeze({
       ok: true as const,
       preview: await runAnalyticsLabPlatformQuery(scope, input),
     });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) return { ok: false, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE };
     const conflict = isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT";
     return Object.freeze({
@@ -58,7 +61,7 @@ export async function createAnalyticsLabSavedView(
 ): Promise<AnalyticsLabSavedViewMutationResult> {
   try {
     const value = inputRecord(input);
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({ membershipFeatures: ["analytics.access"] });
     const result = createSavedView(scope, {
       name: value.name,
       query: value.query,
@@ -78,7 +81,7 @@ export async function updateAnalyticsLabSavedView(
 ): Promise<AnalyticsLabSavedViewMutationResult> {
   try {
     const value = inputRecord(input);
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({ membershipFeatures: ["analytics.access"] });
     const savedViews = updateSavedView(scope, {
       savedViewId: value.savedViewId,
       expectedRevision: value.expectedRevision,
@@ -100,7 +103,7 @@ export async function retireAnalyticsLabSavedView(
 ): Promise<AnalyticsLabSavedViewMutationResult> {
   try {
     const value = inputRecord(input);
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({ membershipFeatures: ["analytics.access"] });
     const savedViews = retireSavedView(scope, {
       expectedAccountSelectionRef: value.expectedAccountSelectionRef,
       savedViewId: value.savedViewId,

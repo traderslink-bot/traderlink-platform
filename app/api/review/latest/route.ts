@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { parseCoachReflectionRequest } from "@/src/modules/coach/server/coach-reflection-request";
 import { readCoachReflection } from "@/src/modules/coach/server/coach-reflection-runtime";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 export function GET(request: Request): Response {
   try {
     const url = new URL(request.url);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipAnyFeatures: ["journal.access", "analytics.access"] });
     const review = readCoachReflection(scope, parseCoachReflectionRequest({
       period: url.searchParams.get("period"),
       date: url.searchParams.get("date"),
@@ -22,6 +23,8 @@ export function GET(request: Request): Response {
       review,
     }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_COACH_REFLECTION_UNAVAILABLE";

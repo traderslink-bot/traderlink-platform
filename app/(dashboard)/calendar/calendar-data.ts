@@ -1,11 +1,11 @@
 import "server-only";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import type Database from "better-sqlite3";
 
 import {
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import { JournalLogicalTradeRepository } from "@/src/modules/journal/server/logical-trades/journal-logical-trade-repository";
@@ -543,6 +543,6 @@ export async function withCalendarDataRuntime<T>(
 }
 
 export async function getCalendarData(input: CalendarFilterInput): Promise<CalendarData> {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("journal.access");
   return withCalendarDataRuntime(scope, ({ read }) => read(input));
 }

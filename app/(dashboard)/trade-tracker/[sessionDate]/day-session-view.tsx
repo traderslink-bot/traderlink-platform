@@ -1,4 +1,9 @@
 "use client";
+import {
+  MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
+  membershipActionError,
+  throwIfMembershipRequired,
+} from "@/src/modules/platform/contracts/platform-membership-messages";
 import { tradeAnalysisAvailabilityMessage } from "@/src/lib/trade-candle-analysis/analysis-availability";
 import { ExecutionPositionDetails, WrittenTradeAnalysis } from "../written-trade-analysis";
 import { buildWrittenTradeReview, withWrittenReviewBasis } from "../analyzer-written-review-model";
@@ -1639,7 +1644,7 @@ function TradeReview({
   tradeRules,
 }: {
   analyzer: DaySessionTradeAnalyzer | null;
-  analyzerDetailState: "idle" | "loading" | "error";
+  analyzerDetailState: "idle" | "loading" | "error" | "membership_required";
   analysisInterval: DailyTradeChartInterval;
   availableTags: DaySessionTradeTag[];
   canHide: boolean;
@@ -1678,7 +1683,7 @@ function TradeReview({
   const correctionRouter = useRouter();
   const [correctionEditorOpen, setCorrectionEditorOpen] = useState(false);
   const [mismatchConfirmationState, setMismatchConfirmationState] = useState<
-    "idle" | "saving" | "confirmed" | "error"
+    "idle" | "saving" | "confirmed" | "error" | "membership_required"
   >(analyzer?.mismatchBrokerConfirmed ? "confirmed" : "idle");
   const customRules = tradeRules.filter((rule) => rule.custom);
   const [selectedCustomRuleId, setSelectedCustomRuleId] = useState(
@@ -1923,8 +1928,10 @@ function TradeReview({
         },
       );
       setMismatchConfirmationState("confirmed");
-    } catch {
-      setMismatchConfirmationState("error");
+    } catch (error) {
+      setMismatchConfirmationState(
+        membershipActionError(error) ? "membership_required" : "error",
+      );
     }
   }
 
@@ -2343,9 +2350,9 @@ function TradeReview({
                   <Typography color="text.secondary" variant="caption">
                     TradersLink has been notified to review the market data.
                   </Typography>
-                ) : mismatchConfirmationState === "error" ? (
+                ) : mismatchConfirmationState === "error" || mismatchConfirmationState === "membership_required" ? (
                   <Typography color="error.main" variant="caption">
-                    The confirmation could not be saved. Try again.
+                    {mismatchConfirmationState === "membership_required" ? MEMBERSHIP_FEATURE_REQUIRED_MESSAGE : "The confirmation could not be saved. Try again."}
                   </Typography>
                 ) : null}
               </Stack>
@@ -2369,7 +2376,7 @@ function TradeReview({
             color={analyzerDetailState === "error" ? "error.main" : "info.dark"}
             variant="caption"
           >
-            {analyzerDetailState === "error"
+            {analyzerDetailState === "membership_required" ? MEMBERSHIP_FEATURE_REQUIRED_MESSAGE : analyzerDetailState === "error"
               ? "Trade Analyzer details could not be loaded. Hide and review the trade again."
               : "Loading Trade Analyzer details…"}
           </Typography>
@@ -2669,7 +2676,7 @@ export function DaySessionView({
     Record<string, DaySessionTradeAnalyzer>
   >({});
   const [analyzerDetailStates, setAnalyzerDetailStates] = useState<
-    Record<string, "idle" | "loading" | "error">
+    Record<string, "idle" | "loading" | "error" | "membership_required">
   >({});
   const analyzerDetailRequests = useRef(new Set<string>());
   const loadAnalyzerDetail = useCallback(async (roundTrip: DaySessionRoundTrip) => {
@@ -2700,6 +2707,7 @@ export function DaySessionView({
         analysis?: DaySessionTradeAnalyzer;
         status?: string;
       }>;
+      throwIfMembershipRequired(payload);
       if (
         !response.ok ||
         payload.status !== "ready" ||
@@ -2714,10 +2722,10 @@ export function DaySessionView({
         ...current,
         [roundTrip.roundTripKey]: "idle",
       }));
-    } catch {
+    } catch (error) {
       setAnalyzerDetailStates((current) => ({
         ...current,
-        [roundTrip.roundTripKey]: "error",
+        [roundTrip.roundTripKey]: membershipActionError(error) ? "membership_required" : "error",
       }));
     } finally {
       analyzerDetailRequests.current.delete(roundTrip.roundTripKey);

@@ -5,8 +5,8 @@ import Alert from "@mui/material/Alert";
 import { DashboardPage, DashboardUnavailableState } from "../../../dashboard-template";
 import {
   currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 
@@ -56,7 +56,7 @@ export default async function TradeTrackerDayPage({
     );
   }
 
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("journal.access");
   const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
   const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
     ? currentJournalAccountSelectionRef(scope)

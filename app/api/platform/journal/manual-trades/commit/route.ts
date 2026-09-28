@@ -27,7 +27,9 @@ export async function POST(request: Request): Promise<Response> {
   let commitRequest: JournalManualTradeCommitRequest | null = null;
   try {
     requireJournalMutationRequest(request);
-    const requestScope = requireTraderLinkPlatformRequestScope(request.headers);
+    const requestScope = requireTraderLinkPlatformRequestScope(request.headers, {
+      membershipFeatures: ["journal.manual_entry"],
+    });
     scope = requestScope;
     const parsedCommitRequest = parseJournalManualTradeCommitRequest(await request.json());
     if (parsedCommitRequest.tracker === "workspace") {

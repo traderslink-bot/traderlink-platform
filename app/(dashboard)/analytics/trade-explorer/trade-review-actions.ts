@@ -1,4 +1,5 @@
 "use server";
+import { isMembershipAccessDenied, MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import {
   requireTraderLinkPlatformPageScope,
@@ -116,6 +117,7 @@ function saveInput(value: unknown): TradeExplorerReviewSaveInput {
 }
 
 function failure(error: unknown, action: "open" | "save" | "tag"): ReviewActionFailure {
+  if (isMembershipAccessDenied(error)) return { ok: false, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, refreshRequired: false };
   const accessChanged = isTraderLinkPlatformError(error) && [
     "TRADERLINK_AUTH_SESSION_INVALID",
     "TRADERLINK_WORKSPACE_ACCESS_DENIED",
@@ -144,7 +146,7 @@ export async function loadTradeExplorerReview(
 ): Promise<ReviewActionResult<TradeExplorerReviewModel>> {
   try {
     const input = record(value);
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({ membershipFeatures: ["analytics.trade_explorer"] });
     return Object.freeze({
       data: readTradeExplorerReview(scope, {
         closeLocalDate: input.closeLocalDate,
@@ -163,7 +165,7 @@ export async function createTradeExplorerTag(
 ): Promise<ReviewActionResult<TradeExplorerReviewTag>> {
   try {
     const input = record(value);
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({ membershipFeatures: ["analytics.trade_explorer"] });
     return Object.freeze({
       data: createTradeExplorerReviewTag(scope, {
         expectedAccountSelectionRef: input.expectedAccountSelectionRef,
@@ -180,7 +182,7 @@ export async function saveTradeExplorerReviewAction(
   value: unknown,
 ): Promise<ReviewActionResult<TradeExplorerReviewModel>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({ membershipFeatures: ["analytics.trade_explorer"] });
     return Object.freeze({
       data: saveTradeExplorerReview(scope, saveInput(value)),
       ok: true as const,

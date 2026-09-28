@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type { EncryptedMoomooPrivateData } from "@/src/modules/platform/server/broker-connections/moomoo-private-data-crypto";
 import {
@@ -375,13 +376,14 @@ WHERE connection_id = ? AND provider = 'moomoo' AND link_state = 'active'`)
   listIncrementalCandidates(
     dueBeforeTimestamp: string,
     limit = 100,
+    evaluatedAtUtc = new Date().toISOString(),
   ): readonly MoomooIncrementalImportCandidate[] {
     assertCanonicalUtcTimestamp(dueBeforeTimestamp, "dueBeforeTimestamp");
     const safeLimit = Number.isSafeInteger(limit) && limit >= 1 && limit <= 500
       ? limit
       : 100;
-    const rows = this.database.prepare<[string, number], IncrementalCandidateRow>(`SELECT
-  link.*,
+    const candidates = this.database.prepare<[string], IncrementalCandidateRow & { user_id: string }>(`SELECT
+  link.*, connection.user_id,
   (SELECT MIN(history.requested_start_date)
    FROM journal_broker_import_jobs history
    WHERE history.workspace_id = link.workspace_id
@@ -412,8 +414,13 @@ WHERE link.provider = 'moomoo' AND link.link_state = 'active'
       AND active.broker_account_link_id = link.broker_account_link_id
       AND active.job_state IN ('queued', 'running', 'waiting_retry')
   )
-ORDER BY latest.cutoff_at_utc, link.broker_account_link_id
-LIMIT ?`).all(dueBeforeTimestamp, safeLimit);
+ORDER BY latest.cutoff_at_utc, link.broker_account_link_id`).iterate(dueBeforeTimestamp);
+    const rows: IncrementalCandidateRow[] = [];
+    for (const candidate of candidates) {
+      if (!evaluateMembershipFeature(this.database, candidate.user_id, "journal.imports", undefined, evaluatedAtUtc).allowed) continue;
+      rows.push(candidate);
+      if (rows.length === safeLimit) break;
+    }
     return Object.freeze(rows.map((row) => Object.freeze({
       link: mapLink(row),
       requestedStartDate: row.requested_start_date,
@@ -579,7 +586,7 @@ ON CONFLICT(workspace_id, account_id, source_identity_id) DO UPDATE SET
     assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
     assertCanonicalUtcTimestamp(input.staleBeforeTimestamp, "staleBeforeTimestamp");
     return this.immediate(() => {
-      const row = this.database.prepare<[string, string, string, string], ClaimedRangeRow>(`SELECT
+      const candidates = this.database.prepare<[string, string, string, string], ClaimedRangeRow>(`SELECT
   range.broker_import_range_id, range.broker_import_job_id,
   range.broker_account_link_id, range.workspace_id, range.account_id,
   connection.user_id, membership.role AS workspace_role,
@@ -613,13 +620,21 @@ WHERE link.link_state = 'active' AND connection.connection_state = 'active'
     OR (range.range_state = 'running' AND range.updated_at_utc <= ?)
     OR (range.range_state = 'received' AND range.updated_at_utc <= ?)
   )
-ORDER BY job.created_at_utc, range.work_sequence, range.broker_import_range_id
-LIMIT 1`).get(
+ORDER BY job.created_at_utc, range.work_sequence, range.broker_import_range_id`).iterate(
         input.timestamp,
         input.timestamp,
         input.staleBeforeTimestamp,
         input.staleBeforeTimestamp,
       );
+      // Skip ineligible users without consuming retries or starving other members.
+      // Iteration avoids materializing the entire pending queue in memory.
+      let row: ClaimedRangeRow | undefined;
+      for (const candidate of candidates) {
+        if (evaluateMembershipFeature(this.database, candidate.user_id, "journal.imports", undefined, input.timestamp).allowed) {
+          row = candidate;
+          break;
+        }
+      }
       if (!row) return null;
       const claimed = this.database.prepare(`UPDATE journal_broker_import_ranges
 SET range_state = 'running', safe_error_code = NULL, next_attempt_at_utc = NULL,

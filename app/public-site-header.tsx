@@ -21,6 +21,7 @@ export function PublicSiteHeader() {
           </Link>
           <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", display: { xs: "none", sm: "flex" } }}>
             <Button component={Link} href="https://traderslink.pro/news" size="small" variant="text">Market News</Button>
+            <Button component={Link} href="/plans" size="small" variant="text">Plans</Button>
             <Button component={Link} href="https://traderslink.pro/help" size="small" variant="text">Help Center</Button>
           </Stack>
         </Stack>

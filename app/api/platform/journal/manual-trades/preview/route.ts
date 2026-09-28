@@ -30,7 +30,7 @@ function responseStatus(code: string): number {
 export async function POST(request: Request): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.manual_entry"] });
     const body = requireJsonRecord(await request.json(), "manualTradePreview");
     const accountSelectionRef = requireExpectedJournalAccountSelection(
       scope,

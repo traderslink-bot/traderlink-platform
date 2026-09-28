@@ -1,4 +1,5 @@
 import "server-only";
+import { assertMembershipFeature, assertMembershipJournalAccountCreation } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import { createHash } from "node:crypto";
 
@@ -685,10 +686,10 @@ export class CoachAiChatActionDraftService {
       });
     } else if (input.extraction.kind === "create_journal_account") {
       const profile = this.profile.get(scope);
-      if ((scope.workspaceRole !== "owner" && scope.workspaceRole !== "admin") ||
-          profile.journalAccounts.length >= 25) {
+      if (scope.workspaceRole !== "owner" && scope.workspaceRole !== "admin") {
         platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
       }
+      assertMembershipJournalAccountCreation(this.database, scope.userId);
       const displayName = accountDisplayName(input.extraction.displayName);
       const baseCurrency = accountCurrency(input.extraction.baseCurrency);
       const tradingTimezone = accountTimezone(input.extraction.tradingTimezone);
@@ -1212,6 +1213,7 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
         return Object.freeze({ draft, accountSelectionRef: null });
       }
       const payload = this.drafts.readPrivatePayload(scope, input.draftId);
+      assertMembershipFeature(this.database, scope.userId, "ai.chat");
       let command: CoachAiChatActionCanonicalCommand;
       let reference: string;
       let accountSelectionRef: string | null = null;
@@ -1255,10 +1257,10 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           "expectedAccountRosterSha256",
         );
         if ((scope.workspaceRole !== "owner" && scope.workspaceRole !== "admin") ||
-            profile.journalAccounts.length >= 25 ||
             accountRosterSha256(profile.journalAccounts) !== expectedRoster) {
           platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
         }
+        assertMembershipJournalAccountCreation(this.database, scope.userId);
         const accountId = string(payload.accountId, "accountId");
         accountSelectionRef = string(payload.proposedSelectionRef, "proposedSelectionRef");
         if (deriveJournalAccountSelectionRef(scope.workspaceId, accountId) !== accountSelectionRef) {

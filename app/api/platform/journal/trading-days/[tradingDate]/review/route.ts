@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import type { JournalTradingDayReviewStatus } from "@/src/modules/journal/contracts/journal-trading-day-review-contracts";
 import { withWritableJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
 import {
@@ -31,7 +32,7 @@ export async function PUT(
 ): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     const body = record(await request.json());
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const { tradingDate } = await context.params;
@@ -58,6 +59,8 @@ export async function PUT(
       ));
     return Response.json({ status: "ready", result });
   } catch (error) {
+    const membershipDenial = membershipFeatureDeniedResponse(error);
+    if (membershipDenial) return membershipDenial;
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_TRADING_DAY_REVIEW_INVALID";

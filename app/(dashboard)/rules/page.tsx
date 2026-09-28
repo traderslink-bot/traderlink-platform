@@ -7,9 +7,7 @@ import {
   JOURNAL_OFFLINE_ROUTE_VIEW_VERSION,
   journalOfflineRouteCoverage,
 } from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
-import {
-  requireTraderLinkPlatformPageScope,
-} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import { RulesClient } from "./rules-client";
 import { readTradingRulesPageModel } from "./rules-page-data";
@@ -24,7 +22,7 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 export default async function TradingRulesPage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("journal.access");
   const model = await readTradingRulesPageModel(scope);
   return (
     <>

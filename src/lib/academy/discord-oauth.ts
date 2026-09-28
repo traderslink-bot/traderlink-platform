@@ -26,6 +26,7 @@ export interface DiscordUserGuild {
   id: string;
   name?: string | null;
   owner?: boolean;
+  permissions?: string;
 }
 
 interface DiscordTokenResponse {
@@ -206,6 +207,9 @@ export async function resolveDiscordCurrentGuildMembership(args: {
     const guilds = await fetchDiscordCurrentUserGuilds(args.accessToken);
 
     if (guilds.some((guild) => guild.id === args.guildId)) {
+      // A guild-list result proves membership, not roles. Preserve the prior
+      // snapshot by surfacing a failed role lookup instead of saving no roles.
+      if (memberLookupError) throw memberLookupError;
       return { joined_at: null };
     }
 

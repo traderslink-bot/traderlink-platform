@@ -29,7 +29,7 @@ import {
 import { compareExactDecimals, multiplyExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
 import { toLogicalTradeAnalyticsTable } from "@/src/modules/journal-analytics/server/logical-trade-analytics-table";
 import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import {
   ExecutionAnalyticsClient,
@@ -220,7 +220,7 @@ function range(input: Readonly<Record<string, string | string[] | undefined>>): 
 }
 
 export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("analytics.access");
   const selectedRange = range(searchParams);
   const closingDateRange = selectedRange.startDate && selectedRange.endDate
     ? { endDate: selectedRange.endDate, kind: "inclusive_closing_date" as const, startDate: selectedRange.startDate }

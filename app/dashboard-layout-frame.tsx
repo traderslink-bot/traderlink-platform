@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 
 import { TraderLinkPlatformDashboardTemplate } from "./dashboard-template";
 import {
-  requireTraderLinkPlatformDiscordMemberPageIdentity,
+  requireTraderLinkPlatformAuthenticatedPageIdentity,
+  requireTraderLinkPlatformBillingPageIdentity,
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformServerComponentPageIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -33,17 +34,30 @@ async function TraderLinkPlatformDashboardFrameContent({
   children,
   loginReturnTo = "/workspace",
   watchlistMemberAccess = false,
+  billingMemberAccess = false,
 }: {
   children: ReactNode;
   loginReturnTo?: string;
   watchlistMemberAccess?: boolean;
+  billingMemberAccess?: boolean;
 }) {
   let identity;
   try {
-    identity = watchlistMemberAccess
-      ? await requireTraderLinkPlatformDiscordMemberPageIdentity()
+    identity = billingMemberAccess
+      ? await requireTraderLinkPlatformBillingPageIdentity()
+      : watchlistMemberAccess
+      ? await requireTraderLinkPlatformAuthenticatedPageIdentity({
+          membershipFeatures: ["watchlist.access"],
+        })
       : await requireTraderLinkPlatformServerComponentPageIdentity();
   } catch (error) {
+    if (
+      process.env.NODE_ENV === "production" &&
+      isTraderLinkPlatformError(error) &&
+      error.safeContext.reason === "membership_feature_required"
+    ) {
+      redirect("/plans");
+    }
     if (
       process.env.NODE_ENV === "production" &&
       isTraderLinkPlatformError(error) &&
@@ -140,15 +154,18 @@ export function TraderLinkPlatformDashboardFrame({
   children,
   loginReturnTo = "/workspace",
   watchlistMemberAccess = false,
+  billingMemberAccess = false,
 }: {
   children: ReactNode;
   loginReturnTo?: string;
   watchlistMemberAccess?: boolean;
+  billingMemberAccess?: boolean;
 }) {
   return (
     <TraderLinkPlatformDashboardFrameContent
       loginReturnTo={loginReturnTo}
       watchlistMemberAccess={watchlistMemberAccess}
+      billingMemberAccess={billingMemberAccess}
     >
       {children}
     </TraderLinkPlatformDashboardFrameContent>

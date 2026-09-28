@@ -11,8 +11,8 @@ import {
 } from "@/src/modules/journal/contracts/journal-swing-tracker-offline-view-contracts";
 import {
   currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import {
   journalScopeCurrentDate,
@@ -49,7 +49,7 @@ export default async function SwingTradeTrackerPage({
     symbol?: string;
   }>;
 }) {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("journal.access");
   const account = getReplacementTradeTrackerAccount(scope);
   if (!account) {
     return (

@@ -7,7 +7,7 @@ import {
   JOURNAL_OFFLINE_ROUTE_VIEW_VERSION,
   journalOfflineRouteCoverage,
 } from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import TradeExplorerClient from "./trade-explorer-client";
 import { listTradeExplorerSavedViews } from "./trade-explorer-saved-view-runtime";
@@ -33,7 +33,7 @@ export default async function TradeExplorerPage({
     typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value) ? value : null;
   const startDate = date(parameters.startDate);
   const endDate = date(parameters.endDate);
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("analytics.trade_explorer");
   const [model, savedViews] = await Promise.all([
     readTradeExplorerPageModel(scope, tickerView ? { endDate, rank, startDate } : undefined),
     Promise.resolve(listTradeExplorerSavedViews(scope)),

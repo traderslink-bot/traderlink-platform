@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
@@ -258,6 +259,8 @@ export class MoomooExecutionImportWorker {
           plaintext: page.nextPageFlag,
         });
     this.database.transaction(() => {
+      // Recheck after provider I/O so a revoked grant cannot authorize a later write.
+      assertMembershipFeature(this.database, scope.userId, "journal.imports");
       const result: JournalImportCommitResult | null = inScopeFills.length === 0
         ? null
         : createJournalIntegrityRuntime(this.database).imports.commitMoomooApiFills(scope, {

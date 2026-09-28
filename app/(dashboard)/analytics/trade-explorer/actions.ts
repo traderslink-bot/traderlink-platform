@@ -2,6 +2,10 @@
 
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  isMembershipAccessDenied,
+  MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
+} from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import {
   runTradeExplorerComparison,
@@ -25,6 +29,9 @@ function inputRecord(input: unknown): Readonly<Record<string, unknown>> {
 }
 
 function comparisonStudyFailure(error: unknown): TradeExplorerComparisonStudyMutationResult {
+  if (isMembershipAccessDenied(error)) {
+    return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE });
+  }
   const conflict = isTraderLinkPlatformError(error) && [
     "TRADERLINK_ACCOUNT_SELECTION_CONFLICT",
     "TRADERLINK_TRADE_EXPLORER_STUDY_CONFLICT",
@@ -46,12 +53,17 @@ export async function runTradeExplorer(
   | Readonly<{ ok: false; message: string; refreshRequired: boolean }>
 > {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["analytics.trade_explorer"],
+    });
     return Object.freeze({
       ok: true as const,
       preview: await runTradeExplorerQuery(scope, input, afterCursor, tradeSort),
     });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) {
+      return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, refreshRequired: false });
+    }
     const accessChanged = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",
       "TRADERLINK_WORKSPACE_ACCESS_DENIED",
@@ -87,12 +99,17 @@ export async function runTradeExplorerGroupTrades(
   | Readonly<{ ok: false; message: string; refreshRequired: boolean }>
 > {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["analytics.trade_explorer"],
+    });
     return Object.freeze({
       ok: true as const,
       preview: await runTradeExplorerGroupTradesQuery(scope, input, group, afterCursor),
     });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) {
+      return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, refreshRequired: false });
+    }
     const refreshRequired = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",
       "TRADERLINK_WORKSPACE_ACCESS_DENIED",
@@ -114,7 +131,9 @@ export async function createTradeExplorerSavedView(
 ): Promise<TradeExplorerSavedViewMutationResult> {
   try {
     const value = inputRecord(input);
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["analytics.trade_explorer"],
+    });
     const result = createSavedView(scope, {
       name: value.name,
       view: value.view,
@@ -125,6 +144,9 @@ export async function createTradeExplorerSavedView(
       selectedSavedViewId: result.savedViewId,
     });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) {
+      return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, refreshRequired: false });
+    }
     const refreshRequired = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",
       "TRADERLINK_WORKSPACE_ACCESS_DENIED",
@@ -153,12 +175,17 @@ export async function compareTradeExplorerGroups(
   | Readonly<{ ok: false; message: string; refreshRequired: boolean }>
 > {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["analytics.trade_explorer"],
+    });
     return Object.freeze({
       ok: true as const,
       comparison: await runTradeExplorerComparison(scope, input),
     });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) {
+      return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, refreshRequired: false });
+    }
     const accessChanged = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",
       "TRADERLINK_WORKSPACE_ACCESS_DENIED",
@@ -180,7 +207,9 @@ export async function createTradeExplorerComparisonStudy(
 ): Promise<TradeExplorerComparisonStudyMutationResult> {
   try {
     const value = inputRecord(input);
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["analytics.trade_explorer"],
+    });
     const result = createComparisonStudy(scope, {
       name: value.name,
       comparison: value.comparison,
@@ -200,7 +229,9 @@ export async function updateTradeExplorerComparisonStudy(
 ): Promise<TradeExplorerComparisonStudyMutationResult> {
   try {
     const value = inputRecord(input);
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["analytics.trade_explorer"],
+    });
     const studies = updateComparisonStudy(scope, {
       studyId: value.studyId,
       expectedRevision: value.expectedRevision,
@@ -222,7 +253,9 @@ export async function retireTradeExplorerComparisonStudy(
 ): Promise<TradeExplorerComparisonStudyMutationResult> {
   try {
     const value = inputRecord(input);
-    const scope = await requireTraderLinkPlatformPageScope();
+    const scope = await requireTraderLinkPlatformPageScope({
+      membershipFeatures: ["analytics.trade_explorer"],
+    });
     const studies = retireComparisonStudy(scope, {
       expectedAccountSelectionRef: value.expectedAccountSelectionRef,
       studyId: value.studyId,

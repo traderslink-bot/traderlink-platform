@@ -112,7 +112,7 @@ export default async function AcademyHomePage({
           <div className="academy-hero-copy">
             <p className="academy-eyebrow">TradersLink Academy</p>
             <h1 className="academy-title">
-              Free Stock Market Lessons for Small Cap Stock Traders
+              Stock Market Lessons for Small Cap Stock Traders
             </h1>
             <p className="academy-lede">
               Learn how small cap stock traders read charts, understand candles,
@@ -154,16 +154,10 @@ export default async function AcademyHomePage({
                   Save your place as you learn.
                 </p>
                 <p>
-                  Academy lessons are open to read for free. To save completed
-                  lessons and keep your progress synced, join the free{" "}
-                  <a
-                    href={discordInviteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    TradersLink Discord
-                  </a>
-                  , then log in here with the same Discord account.
+                  Log in with Discord to save completed lessons and keep your
+                  progress synced. You do not need a dashboard plan to save
+                  Academy progress. If Academy requires a plan, review Plans
+                  for the available offers.
                 </p>
               </div>
             ) : null}

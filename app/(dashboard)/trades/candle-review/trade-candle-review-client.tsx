@@ -1,4 +1,5 @@
 "use client";
+import { MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -138,11 +139,16 @@ export function TradeCandleReviewClient({
         method: "POST",
       });
       const body = await response.json() as {
+        code?: string;
         currency?: string;
         ok?: unknown;
         message?: unknown;
         record?: CandleReviewRecord;
       };
+      if (body.code === "membership_required") {
+        setError(MEMBERSHIP_FEATURE_REQUIRED_MESSAGE);
+        return;
+      }
       if (!response.ok || body.ok !== true || !body.record) {
         setError(typeof body.message === "string"
           ? body.message

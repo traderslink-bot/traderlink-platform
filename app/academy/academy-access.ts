@@ -3,7 +3,10 @@ import "server-only";
 import { AcademyProgressRepository } from "@/src/modules/academy/server/progress/academy-progress-repository";
 import { AcademyProgressService } from "@/src/modules/academy/server/progress/academy-progress-service";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { redirect } from "next/navigation";
 
 export type CurrentAcademyViewer = Readonly<{
   mode: "local_development" | "platform_session";
@@ -12,14 +15,21 @@ export type CurrentAcademyViewer = Readonly<{
 
 export async function getCurrentAcademyViewer(): Promise<CurrentAcademyViewer | null> {
   try {
-    const identity = await requireTraderLinkPlatformPageIdentity();
+    const identity = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     return Object.freeze({
       mode: identity.mode,
       userId: identity.scope.userId,
     });
-  } catch {
-    return null;
+  } catch (error) {
+    if (isTraderLinkPlatformError(error) && error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED") return null;
+    throw error;
   }
+}
+
+export function requireAcademyLessonAccess(viewer: CurrentAcademyViewer | null): void {
+  const allowed = withReadonlyPlatformDatabase({}, database =>
+    evaluateMembershipFeature(database, viewer?.userId ?? null, "academy.access").allowed);
+  if (!allowed) redirect("/plans");
 }
 
 export async function listCurrentAcademyCompletedLessonSlugs(

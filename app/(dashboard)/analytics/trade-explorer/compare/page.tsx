@@ -7,7 +7,7 @@ import {
   JOURNAL_OFFLINE_ROUTE_VIEW_VERSION,
   journalOfflineRouteCoverage,
 } from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import { readTradeExplorerPageModel } from "../trade-explorer-service";
 import { listTradeExplorerComparisonStudies } from "../trade-explorer-comparison-study-runtime";
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TradeExplorerComparisonPage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("analytics.trade_explorer");
   const [model, studies] = await Promise.all([
     readTradeExplorerPageModel(scope),
     Promise.resolve(listTradeExplorerComparisonStudies(scope)),

@@ -10,8 +10,8 @@ import {
 import { DashboardPageDescription } from "../dashboard-page-description";
 import {
   currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformServerComponentPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 import {
@@ -57,7 +57,7 @@ export default async function TradeTrackerPage({
     return <TradeTrackerWorkingDayPreview sessionDate={DESIGN_PREVIEW_SESSION_DATE} />;
   }
 
-  const scope = await requireTraderLinkPlatformServerComponentPageScope();
+  const scope = await requireMembershipPageScope("journal.access");
   const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
   const demoClock = readJournalDemoScopeClock(scope);
   if (onboardingStatus.activeAccountIsDemo) {

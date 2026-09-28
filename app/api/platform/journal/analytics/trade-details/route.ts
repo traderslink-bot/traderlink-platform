@@ -20,7 +20,7 @@ function optionalDate(value: string | null, field: string): string | null {
 export async function GET(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["analytics.access"] });
     const symbol = (url.searchParams.get("symbol") ?? "").trim().toUpperCase();
     if (!SYMBOL_PATTERN.test(symbol)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "symbol" });

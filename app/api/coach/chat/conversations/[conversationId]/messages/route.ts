@@ -108,7 +108,7 @@ export async function POST(
   { params }: ConversationMessagesRouteContext,
 ): Promise<Response> {
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["ai.chat"] });
     assertNoQueryParameters(new URL(request.url));
     const { conversationId } = await params;
     const id = parseConversationId(conversationId);

@@ -17,6 +17,11 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
+import {
+  MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
+  membershipActionError,
+  throwIfMembershipRequired,
+} from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import type { DailyTradeAnalyzedTradePage } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
@@ -106,7 +111,7 @@ export function AnalyzedTradesIndex({
     2: initialPage?.continuationCursor ?? null,
   });
   const [result, setResult] = useState<DailyTradeAnalyzedTradePage | null>(initialPage);
-  const [state, setState] = useState<"idle" | "loading" | "ready" | "error">(initialPage ? "ready" : "idle");
+  const [state, setState] = useState<"idle" | "loading" | "ready" | "error" | "membership_required">(initialPage ? "ready" : "idle");
 
   useEffect(() => {
     if (offline || draftTicker.trim() === ticker) return;
@@ -146,6 +151,7 @@ export function AnalyzedTradesIndex({
       signal: controller.signal,
     }).then(async (response) => {
       const payload = await response.json() as PageResponse;
+      throwIfMembershipRequired(payload);
       if (controller.signal.aborted) return;
       if (!response.ok || payload.status !== "ready" || !payload.page) {
         throw new Error("Analyzed trades are unavailable.");
@@ -157,6 +163,11 @@ export function AnalyzedTradesIndex({
       setState("ready");
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
+      if (membershipActionError(error)) {
+        setResult(null);
+        setState("membership_required");
+        return;
+      }
       console.error("Analyzed Trades request failed.", {
         errorName: error instanceof Error ? error.name : "UnknownError",
       });
@@ -204,8 +215,8 @@ export function AnalyzedTradesIndex({
           <Typography color="text.secondary">Loading analyzed trades…</Typography>
         </Stack>
       ) : null}
-      {resolvedState === "error" ? (
-        <Alert severity="error">Analyzed trades could not be loaded. Try again.</Alert>
+      {resolvedState === "error" || resolvedState === "membership_required" ? (
+        <Alert severity="error">{resolvedState === "membership_required" ? MEMBERSHIP_FEATURE_REQUIRED_MESSAGE : "Analyzed trades could not be loaded. Try again."}</Alert>
       ) : null}
       {resolvedState === "ready" && rows.length === 0 ? currency ? (
         <Typography color="text.secondary">No analyzed trades match these filters.</Typography>

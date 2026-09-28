@@ -1,4 +1,6 @@
 "use client";
+import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { membershipActionError, throwIfMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import Alert from "@mui/material/Alert";
@@ -27,6 +29,7 @@ type Response = Readonly<{ status: "ready"; draft: CoachAiReviewDeliveryChangeDr
 
 async function responseJson(response: globalThis.Response): Promise<Response> {
   const value = await response.json() as Partial<Response>;
+  throwIfMembershipRequired(value);
   if (!response.ok || value.status !== "ready" || !value.draft) throw new Error("request_failed");
   return value as Response;
 }
@@ -61,16 +64,16 @@ export function AiChatReviewDeliveryChangeCard({
     try {
       const result = await responseJson(await fetch(`${endpoint}/${action}`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
         body: action === "confirm"
           ? JSON.stringify({ editedProposal: { weeklyDeliveryDay: day, deliveryTimeEastern: time } })
           : "{}",
       }));
       onDraftChange(result.draft);
-    } catch {
-      setError(action === "confirm"
+    } catch (error) {
+      setError(membershipActionError(error) ?? (action === "confirm"
         ? "This change could not be saved. If your settings changed elsewhere, refresh and try again."
-        : "This proposed change could not be dismissed right now.");
+        : "This proposed change could not be dismissed right now."));
     } finally {
       setBusy(false);
     }

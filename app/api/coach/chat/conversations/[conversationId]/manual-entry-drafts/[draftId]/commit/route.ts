@@ -25,7 +25,7 @@ export async function POST(request: Request, { params }: Context): Promise<Respo
   try {
     assertNoQueryParameters(new URL(request.url));
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["ai.chat", "journal.manual_entry"] });
     const values = await params;
     const conversationId = parseConversationId(values.conversationId);
     const draftId = parseCoachAiManualEntryDraftId(values.draftId);

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getCurrentAcademyViewer } from "../academy-access";
+import { getCurrentAcademyViewer, requireAcademyLessonAccess } from "../academy-access";
 import { AcademyShell } from "../academy-shell";
 import { LessonCompletionLink } from "../lesson-completion-link";
 import {
@@ -19,14 +19,11 @@ import {
   buildAcademyMetadata,
   buildLessonJsonLd,
   jsonLdScript,
-  TRADERSLINK_DISCORD_INVITE_URL,
 } from "@/src/lib/academy/academy-seo";
 
 type PageProps = {
   params: Promise<{ slug: string[] }>;
 };
-
-const discordInviteUrl = TRADERSLINK_DISCORD_INVITE_URL;
 
 export const dynamicParams = false;
 export const dynamic = "force-dynamic";
@@ -66,6 +63,7 @@ export default async function AcademyLessonPage({ params }: PageProps) {
   }
 
   const academyViewer = await getCurrentAcademyViewer();
+  requireAcademyLessonAccess(academyViewer);
   const primaryContext = lesson.contexts[0] ?? null;
   const primaryCoursePage = primaryContext
     ? getAcademyCoursePage(primaryContext.courseId)
@@ -93,15 +91,8 @@ export default async function AcademyLessonPage({ params }: PageProps) {
                 Track your progress
               </p>
               <p>
-                To save this lesson to your Academy progress, join the free{" "}
-                <a
-                  href={discordInviteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  TradersLink Discord
-                </a>{" "}
-                and log in with your Discord account.
+                Log in with your Discord account to save this lesson to your
+                Academy progress. Joining a Discord server is not required.
               </p>
               <a
                 href={`/api/auth/discord/login?returnTo=${encodeURIComponent(lesson.slug)}`}

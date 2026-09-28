@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -47,7 +48,9 @@ function requestedRoundTripIds(request: Request): readonly string[] {
 
 export async function GET(request: Request): Promise<Response> {
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, {
+      membershipAnyFeatures: ["journal.access", "analytics.access"],
+    });
     const accountId = scope.activeAccountId;
     if (!accountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
     const requestedIds = requestedRoundTripIds(request);
@@ -206,6 +209,8 @@ ORDER BY version.round_trip_id, execution.executed_at_utc, allocation.allocation
       }),
     });
   } catch (error) {
+    const membershipDenial = membershipFeatureDeniedResponse(error);
+    if (membershipDenial) return membershipDenial;
     return Response.json(
       { status: "error" },
       { status: isTraderLinkPlatformError(error) ? 400 : 500 },

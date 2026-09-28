@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import type { JournalRuleReviewRecord } from "@/src/modules/journal/contracts/journal-annotation-contracts";
 import { withWritableJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import {
@@ -44,7 +45,7 @@ export async function PUT(
   context: { params: Promise<{ sessionDate: string }> },
 ): Promise<Response> {
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     const body = record(await request.json());
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const { sessionDate } = await context.params;
@@ -108,6 +109,8 @@ export async function PUT(
     });
     return Response.json({ ok: true, data });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_JOURNAL_ANNOTATION_INVALID";

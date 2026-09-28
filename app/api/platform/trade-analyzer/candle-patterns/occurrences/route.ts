@@ -3,13 +3,16 @@ import { pageSavedPatternEvidence } from "@/src/modules/level-analysis/server/tr
 import { readMovementFilters } from "@/src/lib/trade-candle-analysis/trend-momentum-movement-filter";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url), query = url.searchParams;
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, {
+      membershipFeatures: ["analytics.access"],
+    });
     const timeframe = query.get("timeframe") ?? "all", execution = query.get("execution") ?? "all", location = query.get("location") ?? "all", direction = query.get("direction");
     if (!["all", "1m", "5m"].includes(timeframe) || !["all", "entry", "exit"].includes(execution) || !["all", "exact", "before"].includes(location) || (direction !== "long" && direction !== "short")) {
       return Response.json({ status: "invalid_filters" }, { status: 400, headers: { "cache-control": "no-store" } });
@@ -23,6 +26,8 @@ export async function GET(request: Request): Promise<Response> {
     }));
     return Response.json({ status: "ready", page }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     const code = isTraderLinkPlatformError(error) ? error.code : "TRADERLINK_TRADE_ANALYZER_EVIDENCE_UNAVAILABLE";
     return Response.json({ status: "unavailable", code }, { status: code.includes("ACCESS_DENIED") ? 403 : code.includes("VALIDATION_FAILED") ? 400 : 503, headers: { "cache-control": "no-store" } });
   }

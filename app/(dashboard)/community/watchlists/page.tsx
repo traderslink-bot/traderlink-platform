@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { CommunityWatchlistRepository } from "@/src/modules/community/server/community-watchlist-repository";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { CommunityWatchlistsHub } from "./community-watchlists-hub";
 
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function CommunityWatchlistsPage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireMembershipPageScope("community.access");
   const data = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new CommunityWatchlistRepository(database);
     return Object.freeze({ mine: repository.listMine(scope.userId), shared: repository.listShared() });

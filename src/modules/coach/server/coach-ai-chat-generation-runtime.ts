@@ -1,4 +1,5 @@
 import "server-only";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -96,6 +97,7 @@ export async function generateCoachAiChatSavedAnswer(
 ): Promise<CoachAiChatGenerationServiceResult> {
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
+    assertMembershipFeature(database, scope.userId, "ai.chat");
     const sourceFacts = new JournalAnalyticsFactSetService(
       new JournalAnalyticsFactSetRepository(database),
     );
