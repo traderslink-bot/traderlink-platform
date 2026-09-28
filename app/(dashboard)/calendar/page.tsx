@@ -12,7 +12,7 @@ import { CalendarClient } from "./calendar-client";
 import { emptyCalendarData, withCalendarDataRuntime } from "./calendar-data";
 import { calendarNavigationOptions, readCalendarActivityDates } from "./calendar-navigation";
 import {
-  requireTraderLinkPlatformPageScope,
+  requireTraderLinkPlatformServerComponentPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { calendarDisabledForPerformanceTest } from "@/src/modules/platform/server/runtime-configuration/calendar-performance-test";
 import {
@@ -96,7 +96,7 @@ export default async function CalendarPage({
   const selectedFilters = filters(query);
   const reviewLayout = process.env.NODE_ENV !== "production" && value(query.review) === "layout";
   const initialView: CalendarView = value(query.view) === "week" ? "week" : "month";
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireTraderLinkPlatformServerComponentPageScope();
   const demoClock = readJournalDemoScopeClock(scope);
   const calendar = reviewLayout
     ? (() => {

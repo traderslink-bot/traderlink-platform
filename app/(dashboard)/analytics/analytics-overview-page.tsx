@@ -12,7 +12,7 @@ import {
   resolveJournalAnalyticsMoneyBasis,
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformServerComponentPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import { analyticsOverviewMetrics, AnalyticsOverviewView } from "./analytics-overview-view";
 import type { OverviewDateRange } from "./overview-date-range-control";
@@ -45,7 +45,7 @@ function dateRangeFromSearchParams(searchParams: Readonly<Record<string, string 
 }
 
 export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireTraderLinkPlatformServerComponentPageScope();
   const dateRange = dateRangeFromSearchParams(searchParams);
   const { moneyBasis, response } = await withJournalAnalyticsReportingDashboardRuntime(
     scope,

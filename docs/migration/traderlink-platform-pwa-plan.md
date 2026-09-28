@@ -418,3 +418,7 @@ The correction must:
 ## Separate successful SQLite scan cadence from failure recovery — local checkpoint
 
 [Separate successful SQLite scan cadence from failure recovery](pwa-speed-integrity-progress-2026-09-28.md): local implementation complete; targeted checks passed; no deployment, runtime acceptance pending.
+
+## Reuse request-scoped identity on three dashboard pages — local checkpoint
+
+[Reuse request-scoped identity on three dashboard pages](pwa-speed-identity-progress-2026-09-28.md): local implementation complete; targeted checks passed; no deployment, runtime acceptance pending.
