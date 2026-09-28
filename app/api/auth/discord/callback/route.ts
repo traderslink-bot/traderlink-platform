@@ -126,6 +126,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .all() as readonly { discord_guild_id: string }[]).map((row) => row.discord_guild_id),
     );
     const partnerGuild = discordGuilds.find((guild) => enrolledGuildIds.includes(guild.id));
+    // The configured guild-member endpoint is the authoritative fallback when
+    // Discord does not return the user's guild list. A verified member of an
+    // active onboarded community has baseline dashboard access; Premium remains
+    // the fallback only for people outside every onboarded community.
+    const configuredCommunityMember = configuredGuildMember !== null &&
+      enrolledGuildIds.includes(config.guildId);
     const signInGuildId = configuredGuildMember ? config.guildId : partnerGuild?.id;
     const guildMember = configuredGuildMember ?? (signInGuildId
       ? await resolveDiscordCurrentGuildMembership({ accessToken: token.access_token, guildId: signInGuildId })
@@ -147,7 +153,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
-    const dashboardAccessAllowed = Boolean(partnerGuild) || watchlistReturn || isSwingIdeaAuthReturnTo(returnTo) || withPlatformDatabase(
+    const dashboardAccessAllowed = configuredCommunityMember || Boolean(partnerGuild) || watchlistReturn || isSwingIdeaAuthReturnTo(returnTo) || withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformDashboardMemberAccessRepository(database)
         .read().allowAllDiscordMembers || hasPlatformDiscordPremiumAccess({

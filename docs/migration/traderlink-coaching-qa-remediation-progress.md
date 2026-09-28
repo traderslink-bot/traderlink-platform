@@ -164,6 +164,13 @@ Current verification: [remediation QA record](traderlink-coaching-remediation-qa
   unchanged. Source checkpoint pending hosted recheck. Bullrun Discord identity
   confirmed; Chrome disconnected during normal OAuth navigation, so student sign-in
   is not yet verified. No identities, grants or permissions changed.
+- Genuine Bullrun OAuth then confirmed membership in configured guild1433570740430573642,
+  while the owner dashboard reports that same linked community active and Everyone
+  audience ready. The callback nevertheless denied baseline access if Discord's
+  guild-list response did not produce a partner match, despite the earlier direct
+  configured-guild membership lookup succeeding. The narrow correction treats that
+  verified direct membership as an active onboarded-community admission fallback;
+  it does not change Premium, coaching-role, alert or watchlist authorization.
 
 - Source5efeb32 / deployment0d999d35 now includes repaired productionc3 plus the
   complete1f16 coaching follow-up. Coordinator confirms successful remote build,
