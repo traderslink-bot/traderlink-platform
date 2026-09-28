@@ -164,7 +164,6 @@ export function OfflineProjectionCapture({
 }) {
   const pathname = normalizePlatformOfflinePathname(usePathname());
   const rootRef = useRef<HTMLDivElement>(null);
-  const lastSavedCapture = useRef<string | null>(null);
   const navigationSnapshot = useMemo(() => navigation(), []);
   const activeAppearance = useDashboardAppearanceValue(appearance);
   const partitionKey = useMemo(
@@ -193,7 +192,7 @@ export function OfflineProjectionCapture({
 
   const capture = useCallback((context: OfflineProjectionContext | null) => {
     const root = rootRef.current;
-    if (!root || document.visibilityState !== "visible" || !navigator.onLine || !platformOfflineRouteCanStoreProjection(pathname)) return;
+    if (!root || !navigator.onLine || !platformOfflineRouteCanStoreProjection(pathname)) return;
     if (
       context?.status !== "ready" ||
       context.contractVersion !== PLATFORM_OFFLINE_PROJECTION_CONTRACT_VERSION ||
@@ -208,9 +207,6 @@ export function OfflineProjectionCapture({
     }
     const content = projectionBlocks(root);
     if (content.blocks.length === 0) return;
-    // Ownership, route and server provenance are part of snapshot identity.
-    const captureIdentity = JSON.stringify([partitionKey, pathname, context, content]);
-    if (lastSavedCapture.current === captureIdentity) return;
     const lastSyncedAtUtc = new Date().toISOString();
     void savePlatformOfflineProjection(Object.freeze({
       accountSelectionRef,
@@ -227,39 +223,35 @@ export function OfflineProjectionCapture({
       routeMode: context.routeMode,
       schemaVersion: PLATFORM_OFFLINE_PROJECTION_SCHEMA_VERSION,
       title: content.title,
-    })).then(() => { lastSavedCapture.current = captureIdentity; }).catch(() => undefined);
+    })).catch(() => undefined);
   }, [accountSelectionRef, offlineScopeRef, partitionKey, pathname]);
 
   useEffect(() => {
-    let cancelCapture: () => void = () => undefined;
+    let cancelCapture = scheduleOfflineProjectionContextRead({
+      onContext: capture,
+      pathname,
+      scope: requestScope,
+    });
     if (!platformOfflineRouteCanStoreProjection(pathname)) return cancelCapture;
     const refreshCapture = () => {
       cancelCapture();
-      if (document.visibilityState !== "visible" || !navigator.onLine) return;
       cancelCapture = scheduleOfflineProjectionContextRead({
         onContext: capture,
         pathname,
         scope: requestScope,
       });
     };
-    refreshCapture();
-    const forceRefreshCapture = () => {
-      lastSavedCapture.current = null;
-      refreshCapture();
-    };
     const observer = new MutationObserver(() => {
       refreshCapture();
     });
     if (rootRef.current) observer.observe(rootRef.current, { childList: true, subtree: true });
     window.addEventListener("online", refreshCapture);
-    document.addEventListener("visibilitychange", refreshCapture);
-    window.addEventListener("traderlink:pwa-refresh-projection", forceRefreshCapture);
+    window.addEventListener("traderlink:pwa-refresh-projection", refreshCapture);
     return () => {
       cancelCapture();
       observer.disconnect();
       window.removeEventListener("online", refreshCapture);
-      document.removeEventListener("visibilitychange", refreshCapture);
-      window.removeEventListener("traderlink:pwa-refresh-projection", forceRefreshCapture);
+      window.removeEventListener("traderlink:pwa-refresh-projection", refreshCapture);
     };
   }, [capture, pathname, requestScope]);
 

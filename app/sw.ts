@@ -133,12 +133,7 @@ const serwist = new Serwist({
     {
       matcher: ({ request, sameOrigin }) =>
         sameOrigin && request.mode === "navigate",
-      handler: new NetworkOnly({
-        // A stalled mobile connection must eventually reach the existing
-        // offline shell. Never cache authenticated navigation responses.
-        networkTimeoutSeconds: 12,
-        plugins: [offlineNavigationPlugin],
-      }),
+      handler: new NetworkOnly({ plugins: [offlineNavigationPlugin] }),
     },
   ],
   skipWaiting: false,

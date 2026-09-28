@@ -52,14 +52,13 @@ const WORKSPACE_METRICS = [
 ] as const;
 
 type WorkspaceTimingName = "dashboard_runtime" | "identity" |
-  "analytics_summary" | "review_summary" | "top_tickers" | "trade_library" |
   "legacy_demo_guard" | "rule_results_annotations" | "rule_results_card" |
   "rule_results_custom_and_aggregation" | "rule_results_models" |
   "rule_results_presets";
 type WorkspaceTimings = Map<WorkspaceTimingName, number>;
 const workspaceTimingStateKey = "__traderlinkWorkspaceTimingState" as const;
 type WorkspaceTimingProcessState = typeof globalThis & {
-  [workspaceTimingStateKey]: { lastWarningAt: number; lastSevereWarningAt?: number } | undefined;
+  [workspaceTimingStateKey]: { lastWarningAt: number } | undefined;
 };
 
 function readWorkspaceTimingClock(): number {
@@ -95,12 +94,7 @@ function logSlowWorkspaceRequest(
   const processState = globalThis as WorkspaceTimingProcessState;
   const state = (processState[workspaceTimingStateKey] ??= { lastWarningAt: 0 });
   const now = Date.now();
-  // Do not suppress a severe outlier just because another slow request
-    // was logged recently. Ordinary slow requests remain rate-limited.
-    if (totalMs >= 2_500) {
-      if (now - (state.lastSevereWarningAt ?? 0) < 5_000) return;
-      state.lastSevereWarningAt = now;
-    } else if (now - state.lastWarningAt < 60_000) return;
+  if (now - state.lastWarningAt < 60_000) return;
   try {
     console.info("TraderLink slow Workspace request.", {
       phases: Object.fromEntries(Array.from(timings, ([name, duration]) => [
@@ -238,24 +232,23 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         prScannerCardPreference: new JournalWorkspacePrScannerCardPreferenceService(database).read(scope),
         ruleResultsCard,
         ruleResultsCardPreference,
-        response: measureWorkspacePhase(timings, "analytics_summary", () =>
-          service.getWorkspaceJournalAnalyticsSummary(scope, query)),
-        reviewSummary: measureWorkspacePhase(timings, "review_summary", () => readWorkspaceReviewSummary(
+        response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
+        reviewSummary: readWorkspaceReviewSummary(
           database,
           scope,
           new Date(),
           dashboard,
           demoClock?.today,
-        )),
-        topTickersCard: measureWorkspacePhase(timings, "top_tickers", () => readWorkspaceTopTickersCard(database, scope, {
+        ),
+        topTickersCard: readWorkspaceTopTickersCard(database, scope, {
           endDate: dates.endDate,
           moneyBasis: pnlReportingBasis,
           startDate: dates.startDate,
-        })),
-        tradeLibrary: measureWorkspacePhase(timings, "trade_library", () => readWorkspaceTradeLibrary(database, scope, {
+        }),
+        tradeLibrary: readWorkspaceTradeLibrary(database, scope, {
           afterCursor: null, endDate: dates.endDate, filter, followDashboardPeriod: false,
           group, searchTicker: queryParameters.searchTicker ?? "", sort, startDate: dates.startDate,
-        })),
+        }),
       });
     },
     { prefetchAllFactSet: period === "all" && !(queryParameters.startDate && queryParameters.endDate) },

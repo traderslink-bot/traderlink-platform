@@ -15,9 +15,6 @@ the [Professional Redesign Plan](traderlink-platform-pwa-professional-redesign-p
 **Implementation progress:**
 [TraderLink Platform PWA Progress](traderlink-platform-pwa-progress.md)
 
-**2026-09-28 speed repairs:**
-[Approved audit findings and repair progress](pwa-speed-repair-progress-2026-09-28.md)
-
 **Professional redesign:**
 [TraderLink Platform PWA Professional Redesign Plan](traderlink-platform-pwa-professional-redesign-plan.md)
 with its [progress record](traderlink-platform-pwa-professional-redesign-progress.md)
