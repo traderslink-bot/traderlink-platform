@@ -402,3 +402,7 @@ The correction must:
 ## Current QA follow-up
 
 [Live browser QA and follow-up correction checkpoint, 2026-09-28](pwa-live-qa-follow-up-2026-09-28.md). Android delivery acceptance remains open.
+
+## Installed app update recovery
+
+[Update timeout and stale-worker recovery progress](pwa-update-recovery-progress-2026-09-28.md). Source correction prepared; Android acceptance pending.
