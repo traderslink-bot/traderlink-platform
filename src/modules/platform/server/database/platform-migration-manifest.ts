@@ -1,4 +1,5 @@
 import { watchlistPotentialGainPostsMigration } from "./migrations/0147_watchlist_potential_gain_posts";
+import { platformMembershipPlatformMigration } from "./migrations/0148_platform_membership_platform";
 import { watchlistOwnerReviewNotificationsMigration } from "./migrations/0146_watchlist_owner_review_notifications";
 import { platformPremiumSwingIdeaVisitEventsMigration } from "./migrations/0139_platform_premium_swing_idea_visit_events";
 import { newsMarketHaltDiscordDeliveriesMigration } from "@/src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries";
@@ -635,6 +636,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0142_news_reverse_split_alerts.ts", migration: newsReverseSplitAlertsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0146_watchlist_owner_review_notifications.ts", migration: watchlistOwnerReviewNotificationsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0147_watchlist_potential_gain_posts.ts", migration: watchlistPotentialGainPostsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0148_platform_membership_platform.ts", migration: platformMembershipPlatformMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -643,6 +645,27 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0148_platform_membership_platform": Object.freeze([
+      "platform_membership_feature_definitions",
+      "platform_membership_plans",
+      "platform_membership_provider_definitions",
+      "platform_membership_plan_versions",
+      "platform_membership_plan_features",
+      "platform_membership_offers",
+      "platform_membership_trial_campaigns",
+      "platform_membership_provider_subscriptions",
+      "platform_membership_entitlements",
+      "platform_membership_discord_offer_rules",
+      "platform_membership_provider_event_receipts",
+      "platform_membership_share_links",
+      "platform_membership_share_link_offers",
+      "platform_membership_audit_events",
+      "platform_membership_claims",
+      "platform_membership_version_changes",
+      "platform_membership_recurring_grants",
+      "platform_membership_feature_policies",
+      "platform_membership_trial_checkouts",
+    ]),
     "0147_watchlist_potential_gain_posts": Object.freeze(["platform_watchlist_potential_gain_posts"]),
     "0146_watchlist_owner_review_notifications": Object.freeze(["platform_watchlist_owner_review_deliveries"]),
     "0139_platform_premium_swing_idea_visit_events": Object.freeze(["platform_premium_swing_idea_visit_events"]),
