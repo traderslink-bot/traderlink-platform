@@ -1,0 +1,215 @@
+diff --git a/app/watchlist/live-watchlist-client.tsx b/app/watchlist/live-watchlist-client.tsx
+index 1bce2daad..5fdf184f1 100644
+--- a/app/watchlist/live-watchlist-client.tsx
++++ b/app/watchlist/live-watchlist-client.tsx
+@@ -20,9 +20,7 @@ import type {
+   TradersLinkAiReadPullbackScenario,
+   TradersLinkAiReadSource,
+ } from "@/src/lib/live-watchlist/live-watchlist-types";
+-import {
+-  formatMarketDataStatusLabel,
+-} from "@/src/lib/live-watchlist/live-watchlist-labels";
++import { WatchlistLiveDataStatus, watchlistPriceNote } from "./watchlist-price-status";
+ import {
+   getLiveWatchlistEntryGroup,
+   shouldShowReversalWatchlist,
+@@ -1346,10 +1344,12 @@ function ReversalAttemptBadge({ symbol }: { symbol: LiveWatchlistListSymbol }) {
+ function WatchlistTickerTable({
+   ariaLabel,
+   symbols,
++  marketDataStatus,
+   reverseSplits,
+ }: {
+   ariaLabel: string;
+   symbols: LiveWatchlistListSymbol[];
++  marketDataStatus: LiveWatchlistMarketDataStatus;
+   reverseSplits: Readonly<Record<string, ReverseSplitRow>>;
+ }) {
+   return (
+@@ -1357,10 +1357,10 @@ function WatchlistTickerTable({
+       <div className="watchlist-table-head">
+         <span>Ticker</span>
+         <span>
+-          Price <small className="watchlist-price-delay-note">(delayed 15 sec)</small>
++          Price {marketDataStatus === "live" ? <small className="watchlist-price-delay-note">(delayed 15 sec)</small> : null}
+         </span>
+         <span>Added</span>
+-        <span>Updated</span>
++        <span>Price time</span>
+         <span>Details</span>
+       </div>
+       {symbols.map((symbol) => {
+@@ -1390,14 +1390,15 @@ function WatchlistTickerTable({
+               <WatchlistLifecycleBadge symbol={symbol} />
+               <WatchlistReverseSplitBadge item={reverseSplits[symbol.symbol]} />
+             </span>
+-            <span className="watchlist-mobile-field" data-mobile-label="Price (delayed 15 sec)">
++            <span className="watchlist-mobile-field" data-mobile-label={marketDataStatus === "live" ? "Price (delayed 15 sec)" : "Price"}>
+               {formatPrice(symbol.latestPrice)}
++              {marketDataStatus !== "live" ? <small className="watchlist-price-delay-note" style={{ display: "block" }}>{watchlistPriceNote(symbol, marketDataStatus)}</small> : null}
+             </span>
+             <span className="watchlist-mobile-field" data-mobile-label="Added" style={watchlistTimeCellStyle}>
+               {formatDateTime(symbol.firstPostedAt)}
+             </span>
+-            <span className="watchlist-mobile-field" data-mobile-label="Updated" style={watchlistTimeCellStyle}>
+-              {formatTime(symbol.updatedAt)}
++            <span className="watchlist-mobile-field" data-mobile-label="Price time" style={watchlistTimeCellStyle}>
++              {symbol.latestPriceSource === "ticker" && symbol.latestPriceObservedAt ? formatDateTime(symbol.latestPriceObservedAt) : "Unavailable"}
+             </span>
+             <span className="watchlist-mobile-field watchlist-details-cell" data-mobile-label="Details">
+               View details
+@@ -1537,7 +1538,7 @@ function WatchlistDetailEntryGuidanceNotice() {
+   );
+ }
+ 
+-function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) {
++function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol: LiveWatchlistSymbolState; marketDataStatus?: LiveWatchlistMarketDataStatus }) {
+   const liveClosestLevelsCard = closestLevelsCardFromState(symbol);
+   const closestLevelsCard = liveClosestLevelsCard ?? symbol.cards.nearestSupportResistance;
+   const traderReadCard = symbol.cards.liveTraderRead;
+@@ -1566,6 +1567,10 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState })
+         card={closestLevelsCard}
+         fullLadderCard={symbol.cards.fullLadder}
+         symbol={symbol}
++        priceNote={watchlistPriceNote(symbol, marketDataStatus)}
++        priceNoteOwnLine={marketDataStatus !== "live"}
++        showMeta={false}
++        showOuterMeta={false}
+       />
+       {symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
+         <TradersLinkAiReadCard
+@@ -1628,7 +1633,7 @@ export function LiveWatchlistIndexClient({
+   const [marketDataStatus, setMarketDataStatus] = useState<LiveWatchlistMarketDataStatus>(
+     initialState.marketDataStatus,
+   );
+-  const [marketDataUpdatedAt, setMarketDataUpdatedAt] = useState<number | null>(
++  const [, setMarketDataUpdatedAt] = useState<number | null>(
+     initialState.marketDataUpdatedAt,
+   );
+   const activeSymbols = symbols.filter((symbol) => symbol.watchlistSlotState !== "followup");
+@@ -1744,12 +1749,7 @@ export function LiveWatchlistIndexClient({
+             {topRegularWatchlistVisible ? `${topRegularSymbols.length} top / ` : ""}
+             {mainSessionSymbols.length} main / {postmarketSymbols.length} post-market / {generalSymbols.length} general
+           </span>
+-          <span
+-            data-market-data-status={marketDataStatus}
+-            title={marketDataUpdatedAt ? `Updated ${formatDateTime(marketDataUpdatedAt)}` : undefined}
+-          >
+-            {formatMarketDataStatusLabel(marketDataStatus)}
+-          </span>
++          <WatchlistLiveDataStatus status={marketDataStatus} />
+         </div>
+       </section>
+ 
+@@ -1771,7 +1771,7 @@ export function LiveWatchlistIndexClient({
+                 </div>
+                 <span>{topRegularSymbols.length}</span>
+               </div>
+-              <WatchlistTickerTable
++              <WatchlistTickerTable marketDataStatus={marketDataStatus}
+                 ariaLabel="Top regular hour watchlist tickers"
+                 symbols={topRegularSymbols}
+                 reverseSplits={reverseSplits}
+@@ -1792,7 +1792,7 @@ export function LiveWatchlistIndexClient({
+                     </div>
+                     <span>{mainSessionSymbols.length}</span>
+                   </div>
+-                  <WatchlistTickerTable
++                  <WatchlistTickerTable marketDataStatus={marketDataStatus}
+                     ariaLabel="Main-session watchlist tickers"
+                     symbols={mainSessionSymbols}
+                     reverseSplits={reverseSplits}
+@@ -1812,7 +1812,7 @@ export function LiveWatchlistIndexClient({
+                     Strong runners that have pulled back and are still being watched for a possible
+                     reversal. A spot on this list does not mean a reversal has started.
+                   </p>
+-                  <WatchlistTickerTable
++                  <WatchlistTickerTable marketDataStatus={marketDataStatus}
+                     ariaLabel="Potential reversal watchlist tickers"
+                     symbols={reversalWatchSymbols}
+                     reverseSplits={reverseSplits}
+@@ -1833,7 +1833,7 @@ export function LiveWatchlistIndexClient({
+                 </div>
+                 <span>{generalSymbols.length}</span>
+               </div>
+-              <WatchlistTickerTable ariaLabel="General Watchlist tickers" symbols={generalSymbols} reverseSplits={reverseSplits} />
++              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="General Watchlist tickers" symbols={generalSymbols} reverseSplits={reverseSplits} />
+             </section>
+           ) : null}
+           {postmarketSymbols.length > 0 ? (
+@@ -1845,7 +1845,7 @@ export function LiveWatchlistIndexClient({
+                 </div>
+                 <span>{postmarketSymbols.length}</span>
+               </div>
+-              <WatchlistTickerTable ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} reverseSplits={reverseSplits} />
++              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} reverseSplits={reverseSplits} />
+             </section>
+           ) : null}
+         </div>
+@@ -1990,17 +1990,13 @@ export function LiveWatchlistDetailClient({
+           </Link>
+         </div>
+         <div className="watchlist-summary-panel">
+-          <span>Price {formatPrice(symbol.latestPrice)}</span>
+           {symbol.watchlistSlotState === "followup" ? <span>Follow-up Watch</span> : null}
+           <span>Posted {formatDateTime(symbol.firstPostedAt)}</span>
+-          <span>Updated {formatTime(symbol.updatedAt)}</span>
+-          <span data-market-data-status={marketDataStatus}>
+-            {formatMarketDataStatusLabel(marketDataStatus)}
+-          </span>
++          <WatchlistLiveDataStatus status={marketDataStatus} />
+         </div>
+       </section>
+ 
+-      <WatchlistDetailCards symbol={symbol} />
++      <WatchlistDetailCards symbol={symbol} marketDataStatus={marketDataStatus} />
+       <WatchlistReverseSplitDetails item={reverseSplits[symbol.symbol]} />
+       <TradingViewChart symbol={symbol} />
+     </div>
+diff --git a/src/lib/live-watchlist/live-watchlist-list.ts b/src/lib/live-watchlist/live-watchlist-list.ts
+index 71e3c5d6d..17f34ca55 100644
+--- a/src/lib/live-watchlist/live-watchlist-list.ts
++++ b/src/lib/live-watchlist/live-watchlist-list.ts
+@@ -11,7 +11,7 @@ export type LiveWatchlistListSymbol = Pick<LiveWatchlistSymbolState,
+   "watchlistSlotState" | "reversalWatchEligible" | "reversalWatchAttemptReady" |
+   "reversalWatchlistVisible" | "topRegularWatchlistVisible" |
+   "watchlistLifecycleLabelsVisible" | "watchlistLifecycle" | "latestPrice" |
+-  "latestPriceObservedAt" | "marketDataRevision"
++  "latestPriceObservedAt" | "latestPriceSource" | "marketDataRevision"
+ > & {
+   companyInfo?: {
+     updatedAt: number;
+@@ -39,6 +39,7 @@ export function projectLiveWatchlistListSymbol(state: LiveWatchlistSymbolState):
+     watchlistLifecycle: state.watchlistLifecycle,
+     latestPrice: state.latestPrice,
+     latestPriceObservedAt: state.latestPriceObservedAt,
++    latestPriceSource: state.latestPriceSource,
+     marketDataRevision: state.marketDataRevision,
+     companyInfo: state.cards.companyInfo ? {
+       updatedAt: state.cards.companyInfo.updatedAt,
+diff --git a/app/watchlist/potential-path-levels-card.tsx b/app/watchlist/potential-path-levels-card.tsx
+index 707ff86c1..b453fc22c 100644
+--- a/app/watchlist/potential-path-levels-card.tsx
++++ b/app/watchlist/potential-path-levels-card.tsx
+@@ -257,7 +257,7 @@ export function WatchlistV2PotentialPathCard({
+ 
+         {overnight ? (
+           <div className={styles.note} role="note">
+-            <strong>Overnight price: ${formatPrice(overnight.price)} · Checked {new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }).format(new Date(overnight.checkedAt))} ET</strong>
++            <strong>Not live · Price time unavailable</strong>
+             <span>Levels use this fixed price until live updates resume in premarket.</span>
+           </div>
+         ) : null}
+diff --git a/src/modules/help/watchlist-guides.ts b/src/modules/help/watchlist-guides.ts
+index b5367d251..970eaf36f 100644
+--- a/src/modules/help/watchlist-guides.ts
++++ b/src/modules/help/watchlist-guides.ts
+@@ -11,7 +11,7 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
+   }, {
+     id: "updates", title: "Price and analysis updates", summary: "Live data and a new analysis are separate updates.",
+     keywords: ["live price", "analysis time", "refresh"],
+-    blocks: [{ kind: "paragraph", text: "Price and market data can continue updating while the published analysis remains unchanged. Under the analysis title, Analysis posted shows the original published analysis time and reference price. Each Analysis updated line shows a later published analysis and its own time and reference price. Times are Eastern Time, without seconds. Unapproved drafts are not included. Potential Gain keeps the original Watchlist starting price; it does not restart when the analysis changes. When an overnight price is available on addition, Potential Path uses that fixed price for its levels and percentage distances. The Overnight price note shows when it was checked, not the last trade time. Fresh premarket prices resume normal updates and remove the note. Indicators retain their completed-session readings and original update time." }],
++    blocks: [{ kind: "paragraph", text: "Price and market data can continue updating while the published analysis remains unchanged. Green Live data: On means the feed is on; red Off means it is not live. When Off, the price note shows the last available price time in Eastern Time, not the post or page update time, and the delayed-price label is hidden. If the price time is unavailable, the card says so. Under the analysis title, Analysis posted shows the original published analysis time and reference price. Each Analysis updated line shows a later published analysis and its own time and reference price. Times are Eastern Time, without seconds. Unapproved drafts are not included. Potential Gain keeps the original Watchlist starting price; it does not restart when the analysis changes. When an overnight price is available on addition, Potential Path uses that fixed price for its levels and percentage distances. The Overnight price note shows when it was checked, not the last trade time. Fresh premarket prices resume normal updates and remove the note. Indicators retain their completed-session readings and original update time." }],
+   }, {
+     id: "indicators", title: "Indicators", summary: "Read current market conditions separately from the saved analysis.",
+     keywords: ["EMA", "RSI", "VWAP", "ATR", "volume", "momentum", "timeframe", "Unavailable"],
