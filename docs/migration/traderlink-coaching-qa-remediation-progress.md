@@ -1,5 +1,7 @@
 # Coaching QA remediation — one continuous goal
 
+Current continuation: [2026-09-28 live QA](traderlink-coaching-live-qa-20260928.md).
+
 Owner authorized all six implementation areas and final QA in one goal on
 2026-09-27. This extends the existing unfinished coaching goal; no partial feature
 acceptance is implied. Source lane: coaching-resume-20260926, baseline3bf6ae9da.

@@ -67,12 +67,13 @@ function required(formData: FormData, key: string): string {
 
 function revalidateCommunityPath(communitySlug: string, path: string): void {
   revalidatePath(`/communities/${communitySlug}`);
-  revalidatePath(`/communities/${communitySlug}/${path}`);
+  revalidatePath(path === "coaching" ? "/communities/coaching" : `/communities/${communitySlug}/${path}`);
   refresh();
 }
 
 function updatedCommunityUrl(communitySlug: string, path: string): string {
-  return `/communities/${communitySlug}/${path}?updated=${Date.now().toString(36)}`;
+  const pathname = path === "coaching" ? "/communities/coaching" : `/communities/${communitySlug}/${path}`;
+  return `${pathname}?updated=${Date.now().toString(36)}`;
 }
 
 function optionalUtcDate(formData:FormData,key:string):string|undefined{
@@ -200,7 +201,7 @@ export async function saveCommunitySettingsAction(formData:FormData):Promise<voi
 
 export async function saveCommunityAlertTemplatePolicyAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).setPersonalAlertTemplatesEnabled({communityId:community.community_id,actor,enabled:formData.get("enabled")==="on",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/settings");redirect(updatedCommunityUrl(communitySlug,"manage/settings"));}
 
-export async function sendCommunityCoachingMessageAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).sendCoachingMessage({communityId:community.community_id,actor,relationshipId:required(formData,"relationshipId"),body:required(formData,"body"),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"coaching");redirect(updatedCommunityUrl(communitySlug,"coaching"));}
+export async function sendCommunityCoachingMessageAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).sendCoachingMessage({communityId:community.community_id,actor,relationshipId,body:required(formData,"body"),atUtc:createCanonicalUtcTimestamp()});});revalidatePath("/communities/coaching");revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);}
 
 export async function requestCommunityTradeReviewAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).requestTradeReview({communityId:community.community_id,actor,relationshipId:required(formData,"relationshipId"),title:required(formData,"title"),studentContext:String(formData.get("studentContext")??""),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"coaching");redirect(updatedCommunityUrl(communitySlug,"coaching"));}
 
