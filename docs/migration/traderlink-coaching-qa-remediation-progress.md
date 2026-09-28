@@ -183,6 +183,12 @@ Current verification: [remediation QA record](traderlink-coaching-remediation-qa
   transpilation and git diff whitespace check pass. No test suite or local production
   build was run. Coordinator remote build and normal Bullrun login are release gates.
   Help copy remains unchanged: this repair implements existing membership behavior.
+- Release checkpoint: local correction abbd5582 is handed off as the combined
+  6033ce41..abbd5582 diff (three-file allowlist), preserving newer production callback
+  behavior. Coordinator subsequently retained its prior owner stop-staging gate and
+  requested direct owner release confirmation in the Coordinator chat. No deployment
+  is claimed; Bullrun remains blocked on unchanged a88e23c1 staging. Do not bypass
+  that gate or mark student E2E complete.
 
 - Source5efeb32 / deployment0d999d35 now includes repaired productionc3 plus the
   complete1f16 coaching follow-up. Coordinator confirms successful remote build,
