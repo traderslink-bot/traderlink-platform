@@ -3,6 +3,11 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import Database from "better-sqlite3";
 
 import {
+  observePlatformMaintenancePhase,
+  observePlatformMaintenancePhaseAsync,
+} from "../observability/platform-maintenance-observability";
+
+import {
   ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS,
   DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
 } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
@@ -21,7 +26,10 @@ import {
   readAppliedPlatformMigrations,
   validateAppliedPlatformMigrationPrefix,
 } from "./platform-migration-registry";
-import { verifyCompletedPlatformDatabase } from "./run-platform-migrations";
+import {
+  verifyCompletedPlatformDatabase,
+  verifyPlatformMaintenancePreflightStructure,
+} from "./run-platform-migrations";
 
 const MAINTENANCE_MIGRATION_ID_ENV =
   "TRADERLINK_PLATFORM_MAINTENANCE_MIGRATION_ID";
@@ -116,7 +124,7 @@ function readMaintenancePreflight(
         stage: "maintenance_exact_predecessor",
       });
     }
-    verifyCompletedPlatformDatabase(database, prefixManifest);
+    verifyPlatformMaintenancePreflightStructure(database, prefixManifest);
     return "apply";
   } finally {
     database.close();
@@ -134,7 +142,8 @@ export async function runHostedPlatformMigrationMaintenance(
   if (!migrationId) return null;
 
   const databasePath = resolvePlatformDatabaseConfig({ environment }).databasePath;
-  const preflight = readMaintenancePreflight(databasePath, migrationId);
+  const preflight = observePlatformMaintenancePhase("preflight", () =>
+    readMaintenancePreflight(databasePath, migrationId));
   if (preflight === "already_applied") return Object.freeze([]);
 
   const accountIdentity = loadAccountIdentityConfiguration(
@@ -146,7 +155,7 @@ export async function runHostedPlatformMigrationMaintenance(
   const checkpointRoot = join(backupRoot(databasePath, environment), "migrations", migrationId, timestamp);
   const prefixManifest = platformMigrationManifest.slice(0, -1);
 
-  await createAndRestoreVerifyPlatformDatabaseBackup({
+  await observePlatformMaintenancePhaseAsync("checkpoint", () => createAndRestoreVerifyPlatformDatabaseBackup({
     sourcePath: databasePath,
     backupPath: join(checkpointRoot, "backup.sqlite"),
     restoreVerificationPath: join(checkpointRoot, "restore-verification.sqlite"),
@@ -167,11 +176,11 @@ export async function runHostedPlatformMigrationMaintenance(
           requirements.sourceAccountCanonicalizationVersions,
       });
     },
-  });
+  }));
 
-  const initialized = initializeTraderLinkPlatformDatabase({
+  const initialized = observePlatformMaintenancePhase("migration", () => initializeTraderLinkPlatformDatabase({
     databasePath,
-  });
+  }));
   if (
     initialized.appliedThisRun.length !== 1 ||
     initialized.appliedThisRun[0] !== migrationId
