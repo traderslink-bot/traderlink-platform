@@ -1,5 +1,7 @@
 "use client";
 
+import { preparePlatformServiceWorker } from "./platform-service-worker-registration";
+
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "../../contracts/platform-request-security";
 import type { PlatformNotificationCategory } from "../../contracts/platform-notification-contracts";
 
@@ -45,22 +47,7 @@ function supported(): boolean {
   return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }
 
-async function registration(): Promise<ServiceWorkerRegistration> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      (async () => {
-        await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
-        return await navigator.serviceWorker.ready;
-      })(),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error("The app could not connect to notifications. Try again.")), 15_000);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timer);
-  }
-}
+const registration = preparePlatformServiceWorker;
 
 export type PlatformWebPushDiagnostics = Readonly<{
   status: "active" | "needs_restore";

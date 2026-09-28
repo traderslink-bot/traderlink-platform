@@ -426,3 +426,7 @@ The correction must:
 ## Give slow PWA navigation bounded time and clear recovery — local checkpoint
 
 [Give slow PWA navigation bounded time and clear recovery](pwa-speed-navigation-progress-2026-09-28.md): local implementation complete; targeted checks passed; no deployment, runtime acceptance pending.
+
+## Share service-worker initialization across PWA push callers — local checkpoint
+
+[Share service-worker initialization across PWA push callers](pwa-speed-push-progress-2026-09-28.md): local implementation complete; targeted checks passed; no deployment, runtime acceptance pending.
