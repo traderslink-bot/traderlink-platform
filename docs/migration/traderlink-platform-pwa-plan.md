@@ -410,3 +410,7 @@ The correction must:
 ## Shared server performance follow-up
 
 [Watchlist Admin deferred summaries](watchlist-admin-deferred-summary-progress-2026-09-28.md): approved initial-render correction; live timing acceptance pending.
+
+## Fix Session Tracker empty-state client boundary — local checkpoint
+
+[Fix Session Tracker empty-state client boundary](pwa-speed-tracker-progress-2026-09-28.md): local implementation complete; targeted checks passed; no deployment, runtime acceptance pending.
