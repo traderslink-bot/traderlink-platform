@@ -1,3 +1,4 @@
+import { watchlistPotentialGainPostsMigration } from "./migrations/0147_watchlist_potential_gain_posts";
 import { watchlistOwnerReviewNotificationsMigration } from "./migrations/0146_watchlist_owner_review_notifications";
 import { platformPremiumSwingIdeaVisitEventsMigration } from "./migrations/0139_platform_premium_swing_idea_visit_events";
 import { newsMarketHaltDiscordDeliveriesMigration } from "@/src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries";
@@ -171,11 +172,13 @@ const stagingAppendOrders: Readonly<Record<string, number>> = Object.freeze({
   "0144_traderlink_communities_review_workspace_metadata": 157,
   "0145_traderlink_communities_coaching_delivery_workflow": 158,
   "0146_watchlist_owner_review_notifications": 159,
+  "0147_watchlist_potential_gain_posts": 160,
 });
 
 const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
   Object.freeze([
       Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0146_watchlist_owner_review_notifications.ts", migration: watchlistOwnerReviewNotificationsMigration }),
+      Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0147_watchlist_potential_gain_posts.ts", migration: watchlistPotentialGainPostsMigration }),
     Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0001_platform_identity.ts",
       migration: platformIdentityMigration,
@@ -744,6 +747,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
     "0146_watchlist_owner_review_notifications": Object.freeze(["platform_watchlist_owner_review_deliveries"]),
+    "0147_watchlist_potential_gain_posts": Object.freeze(["platform_watchlist_potential_gain_posts"]),
     "0139_platform_premium_swing_idea_visit_events": Object.freeze(["platform_premium_swing_idea_visit_events"]),
     "0140_news_market_halt_discord_deliveries": Object.freeze(["news_market_halt_discord_deliveries"]),
     "0142_news_reverse_split_alerts": Object.freeze([

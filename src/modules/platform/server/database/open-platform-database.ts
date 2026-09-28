@@ -30,6 +30,10 @@ type RuntimeIntegrityState = {
   generation: number;
   lastForeignKeyCheckStartedAt: number;
   lastQuickCheckStartedAt: number;
+  // Optional only for an existing process-global v3 entry during module reload.
+  // These are process-release deadlines, never successful-verification evidence.
+  foreignKeyNotBefore?: number;
+  quickCheckNotBefore?: number;
   quickCheckFailed: boolean;
   quickCheckInFlight: boolean;
   foreignKeySuccessLogs: number;
@@ -37,6 +41,7 @@ type RuntimeIntegrityState = {
   quickCheckTimer: ReturnType<typeof setTimeout> | null;
   timerDueAt: number;
   requiresFullVerification: boolean;
+  fullVerificationWaitingForExit?: boolean;
   retryPending: boolean;
   retryCount: number;
   retryNotBefore: number;
@@ -53,6 +58,7 @@ const PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS = 120_000;
 const PLATFORM_RUNTIME_CHILD_KILL_GRACE_MS = 5_000;
 const PLATFORM_RUNTIME_RETRY_MIN_MS = 5_000;
 const PLATFORM_RUNTIME_RETRY_MAX_MS = 60_000;
+const PLATFORM_RUNTIME_SCAN_IDLE_MULTIPLIER = 10;
 const PLATFORM_RUNTIME_QUICK_CHECK_WORKER_SOURCE = String.raw`
 const { statSync } = require("node:fs");
 process.once("message", (workerData) => {
@@ -261,7 +267,8 @@ function startPlatformRuntimeQuickCheck(
 ): void {
   const includeQuickCheck = state.dirtySinceQuickCheck &&
     (state.retryPending ||
-      now >= state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS);
+      now >= (state.quickCheckNotBefore ??
+        state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS));
   state.lastForeignKeyCheckStartedAt = now;
   state.dirtySinceForeignKeyCheck = false;
   if (includeQuickCheck) {
@@ -283,12 +290,13 @@ function startPlatformRuntimeQuickCheck(
   let hardDueAt = startedAt + PLATFORM_RUNTIME_QUICK_CHECK_TIMEOUT_MS;
   let foreignKeyDurationMs = 0;
   let quickCheckDurationMs = 0;
+  let retryDelayMs = 0;
   let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
   let killTimer: ReturnType<typeof setTimeout> | undefined;
   let exitTimer: ReturnType<typeof setTimeout> | undefined;
   const log = (outcome: Parameters<typeof logPlatformRuntimeQuickCheckOutcome>[1]) =>
     logPlatformRuntimeQuickCheckOutcome(state, outcome, startedAt, includeQuickCheck, {
-      phase, foreignKeyDurationMs, quickCheckDurationMs, overdue,
+      phase, foreignKeyDurationMs, quickCheckDurationMs, overdue, generation, dataGeneration,
     });
   const clearScanTimers = () => {
     clearTimeout(deadlineTimer);
@@ -300,10 +308,23 @@ function startPlatformRuntimeQuickCheck(
     if (includeQuickCheck) state.dirtySinceQuickCheck = true;
     state.retryPending = true;
     state.retryCount = Math.min(state.retryCount + 1, 5);
-    state.retryNotBefore = Date.now() + Math.min(
-      PLATFORM_RUNTIME_RETRY_MAX_MS,
-      PLATFORM_RUNTIME_RETRY_MIN_MS * 2 ** (state.retryCount - 1),
+    retryDelayMs = Math.max(
+      includeQuickCheck ? PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS :
+        PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS,
+      Math.min(
+        PLATFORM_RUNTIME_RETRY_MAX_MS,
+        PLATFORM_RUNTIME_RETRY_MIN_MS * 2 ** (state.retryCount - 1),
+      ),
     );
+    // A timeout requests termination; it does not begin the idle recovery gap.
+    state.retryNotBefore = Infinity;
+  };
+  const recordRelease = () => {
+    const releasedAt = Date.now();
+    recordRuntimeScanCooldown(state, startedAt, releasedAt, includeQuickCheck);
+    if (state.generation === generation && retryDelayMs > 0) {
+      state.retryNotBefore = releasedAt + retryDelayMs;
+    }
   };
   const latchCorruption = (error: unknown) => {
     const code = error && typeof error === "object" && "code" in error
@@ -323,6 +344,7 @@ function startPlatformRuntimeQuickCheck(
   } catch (error) {
     state.quickCheckInFlight = false;
     if (!latchCorruption(error)) retry();
+    recordRelease();
     log("worker_construction_failed");
     schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
     return;
@@ -355,8 +377,8 @@ function startPlatformRuntimeQuickCheck(
     deadlineTimer = setTimeout(hardTimeout, Math.max(0, hardDueAt - Date.now()));
     deadlineTimer.unref();
   };
-  // Readiness still fails at the original 120s boundary. Only execution cleanup
-  // has a bounded second phase; overdue work never counts as a successful check.
+  // An overdue attempt remains explicitly pending and retains its hard deadline.
+  // Operational pending alone does not revoke an otherwise valid baseline.
   const readinessTimer = setTimeout(() => {
     if (settled || state.generation !== generation) return;
     overdue = true;
@@ -487,6 +509,7 @@ function startPlatformRuntimeQuickCheck(
     clearScanTimers();
     clearTimeout(killTimer);
     clearTimeout(exitTimer);
+    let exitOutcome: "ok" | "worker_early_exit" | undefined;
     if (!settled && state.generation === generation) {
       if (completeResult && code === 0 && Date.now() < hardDueAt &&
         !state.foreignKeyCheckFailed && !state.quickCheckFailed &&
@@ -495,15 +518,18 @@ function startPlatformRuntimeQuickCheck(
         state.retryCount = 0;
         state.retryNotBefore = 0;
         // Never clear dirty flags from writes after the captured snapshot.
-        log("ok");
+        exitOutcome = "ok";
       } else {
         retry();
-        log("worker_early_exit");
+        exitOutcome = "worker_early_exit";
       }
     }
     settled = true;
+    recordRelease();
     state.quickCheckInFlight = false;
     state.cancelWorker = null;
+    phase = "exit";
+    log(exitOutcome ?? "worker_released");
     schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
   };
   child.once("exit", onExit);
@@ -525,11 +551,31 @@ function safeScanDuration(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
+function recordRuntimeScanCooldown(
+  state: RuntimeIntegrityState,
+  startedAt: number,
+  releasedAt: number,
+  includeQuickCheck: boolean,
+): void {
+  const idleMs = Math.max(0, releasedAt - startedAt) * PLATFORM_RUNTIME_SCAN_IDLE_MULTIPLIER;
+  // Every FK scan is database-wide too; an overdue quick scan cannot bypass
+  // its storage recovery interval. Retained writes do not shorten this deadline.
+  state.foreignKeyNotBefore = releasedAt + Math.max(
+    PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS, idleMs,
+  );
+  if (includeQuickCheck) {
+    state.quickCheckNotBefore = releasedAt + Math.max(
+      PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS, idleMs,
+    );
+  }
+}
+
 function logPlatformRuntimeQuickCheckOutcome(
   state: RuntimeIntegrityState,
   outcome: "database_identity_changed" | "foreign_key_failed" | "integrity_failed" | "ok" |
     "timeout" | "worker_construction_failed" | "worker_early_exit" |
-    "worker_error" | "worker_failed" | "verification_overdue" | "worker_exit_pending",
+    "worker_error" | "worker_failed" | "verification_overdue" | "worker_exit_pending" |
+    "startup_verified" | "worker_released",
   startedAt: number,
   includeQuickCheck = false,
   phases?: Readonly<{
@@ -537,25 +583,46 @@ function logPlatformRuntimeQuickCheckOutcome(
     foreignKeyDurationMs: number;
     quickCheckDurationMs: number;
     overdue: boolean;
+    generation: number;
+    dataGeneration: number;
   }>,
 ): void {
-  const durationMs = Math.max(0, Date.now() - startedAt);
+  const observedAtMs = Date.now();
+  const durationMs = Math.max(0, observedAtMs - startedAt);
+  const markers = {
+    startedAtMs: startedAt,
+    observedAtMs,
+    generation: state.generation,
+    dataGeneration: state.dataGeneration,
+    // Zero means a reader still owns the slot; no next launch is yet eligible.
+    nextEligibleAtMs: state.quickCheckInFlight ? 0 : Math.max(
+      state.foreignKeyNotBefore ?? 0,
+      Number.isFinite(state.retryNotBefore) ? state.retryNotBefore : 0,
+      (state.requiresFullVerification || (state.retryPending && state.dirtySinceQuickCheck))
+        ? (state.quickCheckNotBefore ?? state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS)
+        : 0,
+    ),
+  };
   try {
-    if (outcome === "ok") {
+    if (outcome === "ok" || outcome === "startup_verified") {
       const counter = includeQuickCheck ? "quickCheckSuccessLogs" : "foreignKeySuccessLogs";
-      if (state[counter] >= 2 && !phases?.overdue) return;
-      console.info("TraderLink background SQLite integrity scan completed.", {
+      if (outcome === "ok" && state[counter] >= 2 && !phases?.overdue) return;
+      console.info(outcome === "startup_verified"
+        ? "TraderLink full SQLite integrity baseline verified."
+        : "TraderLink background SQLite integrity scan completed.", {
         durationMs,
         includeQuickCheck,
+        ...markers,
         ...phases,
       });
-      state[counter] += 1;
+      if (outcome === "ok") state[counter] += 1;
       return;
     }
     console.warn("TraderLink background SQLite integrity scan requires attention.", {
       durationMs,
       outcome,
       includeQuickCheck,
+      ...markers,
       ...phases,
     });
   } catch {
@@ -577,12 +644,19 @@ function schedulePlatformRuntimeQuickCheck(
   ) {
     return;
   }
-  const dueAt = Math.max(state.retryNotBefore, Math.min(
+  const quickDueAt = state.quickCheckNotBefore ??
+    state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS;
+  const dueAt = Math.max(state.retryNotBefore, state.foreignKeyNotBefore ?? 0,
+    // A failed FK pass may promote its retry to a combined scan, but may not
+    // pull that full scan ahead of the existing quick-check cooldown.
+    state.retryPending && state.dirtySinceQuickCheck ? quickDueAt : 0, Math.min(
     state.dirtySinceForeignKeyCheck
-      ? state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS
+      ? (state.foreignKeyNotBefore ??
+        state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS)
       : Infinity,
     state.dirtySinceQuickCheck
-      ? state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS
+      ? (state.quickCheckNotBefore ??
+        state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS)
       : Infinity,
   ));
   // Writes may bring an FK deadline forward, but must never postpone a scan.
@@ -598,7 +672,7 @@ function schedulePlatformRuntimeQuickCheck(
   state.quickCheckTimer = setTimeout(() => {
     state.quickCheckTimer = null;
     schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
-  }, delay);
+  }, Math.min(delay, 2_147_483_647));
   state.quickCheckTimer.unref();
 }
 
@@ -606,6 +680,7 @@ function recordSuccessfulFullRuntimeVerification(
   state: RuntimeIntegrityState,
   fingerprint: string,
   structureFingerprint: string,
+  startedAt: number,
 ): void {
   if (state.quickCheckTimer) clearTimeout(state.quickCheckTimer);
   state.generation += 1;
@@ -616,15 +691,18 @@ function recordSuccessfulFullRuntimeVerification(
   state.fingerprint = fingerprint;
   state.lastQuickCheckStartedAt = Date.now();
   state.lastForeignKeyCheckStartedAt = state.lastQuickCheckStartedAt;
+  recordRuntimeScanCooldown(state, startedAt, Date.now(), true);
   state.foreignKeyCheckFailed = false;
   state.quickCheckFailed = false;
   state.quickCheckTimer = null;
   state.timerDueAt = 0;
   state.requiresFullVerification = false;
+  state.fullVerificationWaitingForExit = false;
   state.retryPending = false;
   state.retryCount = 0;
   state.retryNotBefore = 0;
   state.structureFingerprint = structureFingerprint;
+  logPlatformRuntimeQuickCheckOutcome(state, "startup_verified", startedAt, true);
 }
 
 export function verifyPlatformRuntimeDatabaseIntegrity(
@@ -653,58 +731,74 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
       check: "quick_check",
     });
   }
-  if (existing?.requiresFullVerification) {
+  const needsFullVerification = existing && (existing.requiresFullVerification ||
+    existing.structureFingerprint !== structureFingerprint);
+  if (needsFullVerification && existing.quickCheckInFlight) {
+    // Full synchronous revalidation must not overlap the old native reader.
+    // Identity/structure recovery is distinct from ordinary operational pending.
+    existing.requiresFullVerification = true;
+    if (!existing.fullVerificationWaitingForExit) {
+      existing.fullVerificationWaitingForExit = true;
+      existing.generation += 1;
+      existing.cancelWorker?.();
+    }
+    platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+      check: "background_verification_pending",
+    });
+  }
+  if (needsFullVerification) {
+    if (Date.now() < Math.max(existing.foreignKeyNotBefore ?? 0, existing.quickCheckNotBefore ?? 0)) {
+      existing.requiresFullVerification = true;
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+        check: "background_verification_pending",
+      });
+    }
+    const startedAt = Date.now();
     verifyCompletedPlatformDatabase(database);
     recordSuccessfulFullRuntimeVerification(
       existing,
       fingerprint,
       structureFingerprint,
+      startedAt,
     );
     return;
   }
   if (existing?.fingerprint === fingerprint) {
     if (existing.retryPending) {
       schedulePlatformRuntimeQuickCheck(databasePath, existing, Date.now());
-      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
-        check: "background_verification_pending",
-      });
     }
     return;
   }
-  if (!existing || existing.structureFingerprint !== structureFingerprint) {
+  if (!existing) {
+    const startedAt = Date.now();
     verifyCompletedPlatformDatabase(database);
     const verifiedAt = Date.now();
-    if (existing) {
-      recordSuccessfulFullRuntimeVerification(
-        existing,
-        fingerprint,
-        structureFingerprint,
-      );
-    } else {
-      verifiedFingerprints.set(databasePath, {
-        version: 3,
-        cancelWorker: null,
-        dataGeneration: 0,
-        dirtySinceForeignKeyCheck: false,
-        dirtySinceQuickCheck: false,
-        foreignKeyCheckFailed: false,
-        fingerprint,
-        generation: 0,
-        lastForeignKeyCheckStartedAt: verifiedAt,
-        lastQuickCheckStartedAt: verifiedAt,
-        quickCheckFailed: false,
-        quickCheckInFlight: false,
-        foreignKeySuccessLogs: 0,
-        quickCheckSuccessLogs: 0,
-        quickCheckTimer: null,
-        timerDueAt: 0,
-        requiresFullVerification: false,
-        retryPending: false,
-        retryCount: 0,
-        retryNotBefore: 0,
-        structureFingerprint,
-      });
-    }
+    const state: RuntimeIntegrityState = {
+      version: 3,
+      cancelWorker: null,
+      dataGeneration: 0,
+      dirtySinceForeignKeyCheck: false,
+      dirtySinceQuickCheck: false,
+      foreignKeyCheckFailed: false,
+      fingerprint,
+      generation: 0,
+      lastForeignKeyCheckStartedAt: verifiedAt,
+      lastQuickCheckStartedAt: verifiedAt,
+      quickCheckFailed: false,
+      quickCheckInFlight: false,
+      foreignKeySuccessLogs: 0,
+      quickCheckSuccessLogs: 0,
+      quickCheckTimer: null,
+      timerDueAt: 0,
+      requiresFullVerification: false,
+      retryPending: false,
+      retryCount: 0,
+      retryNotBefore: 0,
+      structureFingerprint,
+    };
+    recordRuntimeScanCooldown(state, startedAt, verifiedAt, true);
+    verifiedFingerprints.set(databasePath, state);
+    logPlatformRuntimeQuickCheckOutcome(state, "startup_verified", startedAt, true);
     return;
   }
 
@@ -715,11 +809,6 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   existing.fingerprint = fingerprint;
   existing.structureFingerprint = structureFingerprint;
   schedulePlatformRuntimeQuickCheck(databasePath, existing, Date.now());
-  if (existing.retryPending) {
-    platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
-      check: "background_verification_pending",
-    });
-  }
 }
 
 export function openPlatformDatabase(
