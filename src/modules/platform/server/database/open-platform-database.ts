@@ -34,6 +34,8 @@ type RuntimeIntegrityState = {
   // These are process-release deadlines, never successful-verification evidence.
   foreignKeyNotBefore?: number;
   quickCheckNotBefore?: number;
+  successfulForeignKeyNotBefore?: number;
+  successfulQuickCheckNotBefore?: number;
   quickCheckFailed: boolean;
   quickCheckInFlight: boolean;
   foreignKeySuccessLogs: number;
@@ -51,6 +53,11 @@ type RuntimeIntegrityState = {
 type RuntimeIntegrityProcessState = typeof globalThis & {
   [runtimeIntegrityCacheKey]: Map<string, RuntimeIntegrityState | string> | undefined;
 };
+
+// Successful scans rest longer; failure retries and identity-recovery cooldowns
+// retain their existing independent safety deadlines.
+const PLATFORM_RUNTIME_SUCCESSFUL_FK_CADENCE_MS = 5 * 60_000;
+const PLATFORM_RUNTIME_SUCCESSFUL_QUICK_CADENCE_MS = 30 * 60_000;
 
 export const PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS = 60_000;
 export const PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS = 5_000;
@@ -267,7 +274,8 @@ function startPlatformRuntimeQuickCheck(
 ): void {
   const includeQuickCheck = state.dirtySinceQuickCheck &&
     (state.retryPending ||
-      now >= (state.quickCheckNotBefore ??
+      now >= Math.max(state.successfulQuickCheckNotBefore ?? 0,
+        state.quickCheckNotBefore ??
         state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS));
   state.lastForeignKeyCheckStartedAt = now;
   state.dirtySinceForeignKeyCheck = false;
@@ -518,6 +526,7 @@ function startPlatformRuntimeQuickCheck(
         state.retryCount = 0;
         state.retryNotBefore = 0;
         // Never clear dirty flags from writes after the captured snapshot.
+        recordSuccessfulRuntimeScanCadence(state, Date.now(), includeQuickCheck);
         exitOutcome = "ok";
       } else {
         retry();
@@ -549,6 +558,17 @@ function startPlatformRuntimeQuickCheck(
 
 function safeScanDuration(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+function recordSuccessfulRuntimeScanCadence(
+  state: RuntimeIntegrityState,
+  releasedAt: number,
+  includeQuickCheck: boolean,
+): void {
+  state.successfulForeignKeyNotBefore = releasedAt + PLATFORM_RUNTIME_SUCCESSFUL_FK_CADENCE_MS;
+  if (includeQuickCheck) {
+    state.successfulQuickCheckNotBefore = releasedAt + PLATFORM_RUNTIME_SUCCESSFUL_QUICK_CADENCE_MS;
+  }
 }
 
 function recordRuntimeScanCooldown(
@@ -650,19 +670,25 @@ function schedulePlatformRuntimeQuickCheck(
   ) {
     return;
   }
-  const quickDueAt = state.quickCheckNotBefore ??
-    state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS;
+  const quickDueAt = Math.max(
+    state.retryPending ? 0 : state.successfulQuickCheckNotBefore ?? 0,
+    state.quickCheckNotBefore ??
+      state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS,
+  );
+  const foreignKeyDueAt = Math.max(
+    state.retryPending ? 0 : state.successfulForeignKeyNotBefore ?? 0,
+    state.foreignKeyNotBefore ??
+      state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS,
+  );
   const dueAt = Math.max(state.retryNotBefore, state.foreignKeyNotBefore ?? 0,
     // A failed FK pass may promote its retry to a combined scan, but may not
     // pull that full scan ahead of the existing quick-check cooldown.
     state.retryPending && state.dirtySinceQuickCheck ? quickDueAt : 0, Math.min(
     state.dirtySinceForeignKeyCheck
-      ? (state.foreignKeyNotBefore ??
-        state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS)
+      ? foreignKeyDueAt
       : Infinity,
     state.dirtySinceQuickCheck
-      ? (state.quickCheckNotBefore ??
-        state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS)
+      ? quickDueAt
       : Infinity,
   ));
   // Writes may bring an FK deadline forward, but must never postpone a scan.
@@ -698,6 +724,7 @@ function recordSuccessfulFullRuntimeVerification(
   state.lastQuickCheckStartedAt = Date.now();
   state.lastForeignKeyCheckStartedAt = state.lastQuickCheckStartedAt;
   recordRuntimeScanCooldown(state, startedAt, Date.now(), true);
+  recordSuccessfulRuntimeScanCadence(state, Date.now(), true);
   state.foreignKeyCheckFailed = false;
   state.quickCheckFailed = false;
   state.quickCheckTimer = null;
