@@ -164,13 +164,25 @@ Current verification: [remediation QA record](traderlink-coaching-remediation-qa
   unchanged. Source checkpoint pending hosted recheck. Bullrun Discord identity
   confirmed; Chrome disconnected during normal OAuth navigation, so student sign-in
   is not yet verified. No identities, grants or permissions changed.
-- Genuine Bullrun OAuth then confirmed membership in configured guild1433570740430573642,
-  while the owner dashboard reports that same linked community active and Everyone
-  audience ready. The callback nevertheless denied baseline access if Discord's
-  guild-list response did not produce a partner match, despite the earlier direct
-  configured-guild membership lookup succeeding. The narrow correction treats that
-  verified direct membership as an active onboarded-community admission fallback;
-  it does not change Premium, coaching-role, alert or watchlist authorization.
+- Earlier fallback patches did not establish the cause of Bullrun's denial. In
+  particular, the configured-guild mismatch claim was not supported by hosted
+  evidence. Candidate236654 was held and its broad parallel community probing is
+  removed from the follow-up; it was not deployed.
+- 2026-09-28: hosted owner Channels link confirms active test-community is linked
+  to1433570740430573642. Coordinator confirms absent DISCORD_GUILD_ID uses the same
+  built-in default. Fresh normal Bullrun OAuth ends at /access-required without
+  the callback's dashboard-access-off query parameter. Hosted logs at04:28:30UTC
+  report community membership refresh STORAGE_VALIDATION_FAILED, not session failure.
+- Source defect: sign-in canonicalizes Discord joined_at, but subsequent community
+  membership upsert passed raw joined_at into strict canonical UTC validation.
+  Reuse the same date conversion for both paths. Preserve configured-guild evidence
+  in the community sync even if the optional guild-list request is unavailable;
+  do not probe unrelated guilds. No role, Premium, consent or database schema change.
+  Hosted login recheck remains required before claiming this resolves Bullrun's block.
+- Verification: two-file targeted lint has zero errors/warnings; TypeScript syntax
+  transpilation and git diff whitespace check pass. No test suite or local production
+  build was run. Coordinator remote build and normal Bullrun login are release gates.
+  Help copy remains unchanged: this repair implements existing membership behavior.
 
 - Source5efeb32 / deployment0d999d35 now includes repaired productionc3 plus the
   complete1f16 coaching follow-up. Coordinator confirms successful remote build,

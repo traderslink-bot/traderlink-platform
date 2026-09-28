@@ -20,9 +20,7 @@ import type {
   TradersLinkAiReadPullbackScenario,
   TradersLinkAiReadSource,
 } from "@/src/lib/live-watchlist/live-watchlist-types";
-import {
-  formatMarketDataStatusLabel,
-} from "@/src/lib/live-watchlist/live-watchlist-labels";
+import { WatchlistLiveDataStatus, watchlistPriceNote } from "./watchlist-price-status";
 import {
   getLiveWatchlistEntryGroup,
   shouldShowReversalWatchlist,
@@ -1346,10 +1344,12 @@ function ReversalAttemptBadge({ symbol }: { symbol: LiveWatchlistListSymbol }) {
 function WatchlistTickerTable({
   ariaLabel,
   symbols,
+  marketDataStatus,
   reverseSplits,
 }: {
   ariaLabel: string;
   symbols: LiveWatchlistListSymbol[];
+  marketDataStatus: LiveWatchlistMarketDataStatus;
   reverseSplits: Readonly<Record<string, ReverseSplitRow>>;
 }) {
   return (
@@ -1357,10 +1357,10 @@ function WatchlistTickerTable({
       <div className="watchlist-table-head">
         <span>Ticker</span>
         <span>
-          Price <small className="watchlist-price-delay-note">(delayed 15 sec)</small>
+          Price {marketDataStatus === "live" ? <small className="watchlist-price-delay-note">(delayed 15 sec)</small> : null}
         </span>
         <span>Added</span>
-        <span>Updated</span>
+        <span>Price time</span>
         <span>Details</span>
       </div>
       {symbols.map((symbol) => {
@@ -1390,14 +1390,15 @@ function WatchlistTickerTable({
               <WatchlistLifecycleBadge symbol={symbol} />
               <WatchlistReverseSplitBadge item={reverseSplits[symbol.symbol]} />
             </span>
-            <span className="watchlist-mobile-field" data-mobile-label="Price (delayed 15 sec)">
+            <span className="watchlist-mobile-field" data-mobile-label={marketDataStatus === "live" ? "Price (delayed 15 sec)" : "Price"}>
               {formatPrice(symbol.latestPrice)}
+              {marketDataStatus !== "live" ? <small className="watchlist-price-delay-note" style={{ display: "block" }}>{watchlistPriceNote(symbol, marketDataStatus)}</small> : null}
             </span>
             <span className="watchlist-mobile-field" data-mobile-label="Added" style={watchlistTimeCellStyle}>
               {formatDateTime(symbol.firstPostedAt)}
             </span>
-            <span className="watchlist-mobile-field" data-mobile-label="Updated" style={watchlistTimeCellStyle}>
-              {formatTime(symbol.updatedAt)}
+            <span className="watchlist-mobile-field" data-mobile-label="Price time" style={watchlistTimeCellStyle}>
+              {symbol.latestPriceSource === "ticker" && symbol.latestPriceObservedAt ? formatDateTime(symbol.latestPriceObservedAt) : "Unavailable"}
             </span>
             <span className="watchlist-mobile-field watchlist-details-cell" data-mobile-label="Details">
               View details
@@ -1537,7 +1538,7 @@ function WatchlistDetailEntryGuidanceNotice() {
   );
 }
 
-function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol: LiveWatchlistSymbolState; marketDataStatus?: LiveWatchlistMarketDataStatus }) {
   const liveClosestLevelsCard = closestLevelsCardFromState(symbol);
   const closestLevelsCard = liveClosestLevelsCard ?? symbol.cards.nearestSupportResistance;
   const traderReadCard = symbol.cards.liveTraderRead;
@@ -1566,6 +1567,10 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
         card={closestLevelsCard}
         fullLadderCard={symbol.cards.fullLadder}
         symbol={symbol}
+        priceNote={watchlistPriceNote(symbol, marketDataStatus)}
+        priceNoteOwnLine={marketDataStatus !== "live"}
+        showMeta={false}
+        showOuterMeta={false}
       />
       {symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
         <TradersLinkAiReadCard
@@ -1628,7 +1633,7 @@ export function LiveWatchlistIndexClient({
   const [marketDataStatus, setMarketDataStatus] = useState<LiveWatchlistMarketDataStatus>(
     initialState.marketDataStatus,
   );
-  const [marketDataUpdatedAt, setMarketDataUpdatedAt] = useState<number | null>(
+  const [, setMarketDataUpdatedAt] = useState<number | null>(
     initialState.marketDataUpdatedAt,
   );
   const activeSymbols = symbols.filter((symbol) => symbol.watchlistSlotState !== "followup");
@@ -1744,12 +1749,7 @@ export function LiveWatchlistIndexClient({
             {topRegularWatchlistVisible ? `${topRegularSymbols.length} top / ` : ""}
             {mainSessionSymbols.length} main / {postmarketSymbols.length} post-market / {generalSymbols.length} general
           </span>
-          <span
-            data-market-data-status={marketDataStatus}
-            title={marketDataUpdatedAt ? `Updated ${formatDateTime(marketDataUpdatedAt)}` : undefined}
-          >
-            {formatMarketDataStatusLabel(marketDataStatus)}
-          </span>
+          <WatchlistLiveDataStatus status={marketDataStatus} />
         </div>
       </section>
 
@@ -1771,7 +1771,7 @@ export function LiveWatchlistIndexClient({
                 </div>
                 <span>{topRegularSymbols.length}</span>
               </div>
-              <WatchlistTickerTable
+              <WatchlistTickerTable marketDataStatus={marketDataStatus}
                 ariaLabel="Top regular hour watchlist tickers"
                 symbols={topRegularSymbols}
                 reverseSplits={reverseSplits}
@@ -1792,7 +1792,7 @@ export function LiveWatchlistIndexClient({
                     </div>
                     <span>{mainSessionSymbols.length}</span>
                   </div>
-                  <WatchlistTickerTable
+                  <WatchlistTickerTable marketDataStatus={marketDataStatus}
                     ariaLabel="Main-session watchlist tickers"
                     symbols={mainSessionSymbols}
                     reverseSplits={reverseSplits}
@@ -1812,7 +1812,7 @@ export function LiveWatchlistIndexClient({
                     Strong runners that have pulled back and are still being watched for a possible
                     reversal. A spot on this list does not mean a reversal has started.
                   </p>
-                  <WatchlistTickerTable
+                  <WatchlistTickerTable marketDataStatus={marketDataStatus}
                     ariaLabel="Potential reversal watchlist tickers"
                     symbols={reversalWatchSymbols}
                     reverseSplits={reverseSplits}
@@ -1833,7 +1833,7 @@ export function LiveWatchlistIndexClient({
                 </div>
                 <span>{generalSymbols.length}</span>
               </div>
-              <WatchlistTickerTable ariaLabel="General Watchlist tickers" symbols={generalSymbols} reverseSplits={reverseSplits} />
+              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="General Watchlist tickers" symbols={generalSymbols} reverseSplits={reverseSplits} />
             </section>
           ) : null}
           {postmarketSymbols.length > 0 ? (
@@ -1845,7 +1845,7 @@ export function LiveWatchlistIndexClient({
                 </div>
                 <span>{postmarketSymbols.length}</span>
               </div>
-              <WatchlistTickerTable ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} reverseSplits={reverseSplits} />
+              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} reverseSplits={reverseSplits} />
             </section>
           ) : null}
         </div>
@@ -1990,17 +1990,13 @@ export function LiveWatchlistDetailClient({
           </Link>
         </div>
         <div className="watchlist-summary-panel">
-          <span>Price {formatPrice(symbol.latestPrice)}</span>
           {symbol.watchlistSlotState === "followup" ? <span>Follow-up Watch</span> : null}
           <span>Posted {formatDateTime(symbol.firstPostedAt)}</span>
-          <span>Updated {formatTime(symbol.updatedAt)}</span>
-          <span data-market-data-status={marketDataStatus}>
-            {formatMarketDataStatusLabel(marketDataStatus)}
-          </span>
+          <WatchlistLiveDataStatus status={marketDataStatus} />
         </div>
       </section>
 
-      <WatchlistDetailCards symbol={symbol} />
+      <WatchlistDetailCards symbol={symbol} marketDataStatus={marketDataStatus} />
       <WatchlistReverseSplitDetails item={reverseSplits[symbol.symbol]} />
       <TradingViewChart symbol={symbol} />
     </div>

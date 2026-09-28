@@ -11,7 +11,7 @@ export type LiveWatchlistListSymbol = Pick<LiveWatchlistSymbolState,
   "watchlistSlotState" | "reversalWatchEligible" | "reversalWatchAttemptReady" |
   "reversalWatchlistVisible" | "topRegularWatchlistVisible" |
   "watchlistLifecycleLabelsVisible" | "watchlistLifecycle" | "latestPrice" |
-  "latestPriceObservedAt" | "marketDataRevision"
+  "latestPriceObservedAt" | "latestPriceSource" | "marketDataRevision"
 > & {
   companyInfo?: {
     updatedAt: number;
@@ -39,6 +39,7 @@ export function projectLiveWatchlistListSymbol(state: LiveWatchlistSymbolState):
     watchlistLifecycle: state.watchlistLifecycle,
     latestPrice: state.latestPrice,
     latestPriceObservedAt: state.latestPriceObservedAt,
+    latestPriceSource: state.latestPriceSource,
     marketDataRevision: state.marketDataRevision,
     companyInfo: state.cards.companyInfo ? {
       updatedAt: state.cards.companyInfo.updatedAt,
