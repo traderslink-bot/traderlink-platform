@@ -69,7 +69,8 @@ export function verifyPlatformDatabaseAfterDataChange(
     verifyCompletedPlatformDatabaseUnmeasured(database, manifestInput, false));
 }
 
-/** Only for the runtime guard after a successful full verification of this DB. */
+/** Runtime startup/data-change structure gate. The runtime guard separately
+ * schedules mandatory data scans; passing this check is not full data verification. */
 export function verifyPlatformDatabaseStructureAfterDataChange(
   database: Database.Database,
   manifestInput: readonly PlatformMigration[] = platformMigrationManifest,
