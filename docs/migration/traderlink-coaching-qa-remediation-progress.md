@@ -189,6 +189,16 @@ Current verification: [remediation QA record](traderlink-coaching-remediation-qa
   requested direct owner release confirmation in the Coordinator chat. No deployment
   is claimed; Bullrun remains blocked on unchanged a88e23c1 staging. Do not bypass
   that gate or mark student E2E complete.
+- Subsequent Coordinator release: staging4492726214c2715bd480102160d32c320cebd4ec,
+  parents a88e23c1 and current production70538576; deployment0ada8ce4-12c0-4b51-bdfa-482100d2e478
+  SUCCESS, health200/ready/sqlite_single_node/143. Migration manifest unchanged.
+  Fresh Bullrun OAuth now lands /workspace?auth=connected; profile visibly confirms
+  Bullrun/Discord/Signed in. test-community opens with2verifiedmembers and baseline
+  Overview only. Login/community sync correction is hosted-verified without changing
+  roles, grants or Premium. Student coaching remains correctly unavailable under the
+  existing role mappings; do not grant coach/staff powers just to enroll a student.
+  Empty-account Workspace separately reports Demo Trade Tracker unavailable; not
+  counted as a coaching login failure or resolved by this change.
 
 - Source5efeb32 / deployment0d999d35 now includes repaired productionc3 plus the
   complete1f16 coaching follow-up. Coordinator confirms successful remote build,
