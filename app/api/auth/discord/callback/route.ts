@@ -112,7 +112,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const config = getDiscordOAuthConfig(resolvePlatformPublicOrigin(request));
     const token = await exchangeDiscordCode({ config, code });
-    const [discordUser, configuredGuildMember, discordGuilds] = await Promise.all([
+    const [discordUser, configuredGuildMember, discordGuildsFromOAuth] = await Promise.all([
       fetchDiscordCurrentUser(token.access_token),
       resolveDiscordCurrentGuildMembership({
         accessToken: token.access_token,
@@ -124,15 +124,46 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       (database.prepare(`SELECT discord_guild_id FROM traderlink_communities WHERE status IN ('setup','active')`)
         .all() as readonly { discord_guild_id: string }[]).map((row) => row.discord_guild_id),
     );
+    // Discord's user-guild list can be unavailable even though the token can
+    // verify direct membership of an onboarded community. Resolve the bounded
+    // active-community set directly so every connected server can admit its
+    // own verified members to the baseline dashboard.
+    const verifiedCommunityMembers = new Map<string, NonNullable<typeof configuredGuildMember>>();
+    if (configuredGuildMember && enrolledGuildIds.includes(config.guildId)) {
+      verifiedCommunityMembers.set(config.guildId, configuredGuildMember);
+    }
+    const otherCommunityGuildIds = enrolledGuildIds
+      .filter((guildId) => guildId !== config.guildId)
+      .slice(0, 50);
+    const otherCommunityMembers = await Promise.all(otherCommunityGuildIds.map(async (guildId) => {
+      try {
+        return {
+          guildId,
+          member: await resolveDiscordCurrentGuildMembership({
+            accessToken: token.access_token,
+            guildId,
+          }),
+        };
+      } catch {
+        return { guildId, member: null };
+      }
+    }));
+    for (const { guildId, member } of otherCommunityMembers) {
+      if (member) verifiedCommunityMembers.set(guildId, member);
+    }
+    const verifiedCommunityGuildId = [...verifiedCommunityMembers.keys()][0] ?? null;
+    const discordGuildIdsFromOAuth = new Set(discordGuildsFromOAuth.map((guild) => guild.id));
+    const discordGuilds = [
+      ...discordGuildsFromOAuth,
+      ...[...verifiedCommunityMembers.keys()]
+        .filter((guildId) => !discordGuildIdsFromOAuth.has(guildId))
+        .map((guildId) => ({ id: guildId, name: `Discord server ${guildId}` })),
+    ];
     const partnerGuild = discordGuilds.find((guild) => enrolledGuildIds.includes(guild.id));
-    // The configured guild-member endpoint is the authoritative fallback when
-    // Discord does not return the user's guild list. A verified member of an
-    // active onboarded community has baseline dashboard access; Premium remains
-    // the fallback only for people outside every onboarded community.
-    const configuredCommunityMember = configuredGuildMember !== null &&
-      enrolledGuildIds.includes(config.guildId);
-    const signInGuildId = configuredGuildMember ? config.guildId : partnerGuild?.id;
-    const guildMember = configuredGuildMember ?? (signInGuildId
+    const signInGuildId = verifiedCommunityGuildId ?? (configuredGuildMember ? config.guildId : partnerGuild?.id);
+    const guildMember = (verifiedCommunityGuildId
+      ? verifiedCommunityMembers.get(verifiedCommunityGuildId)!
+      : configuredGuildMember) ?? (signInGuildId
       ? await resolveDiscordCurrentGuildMembership({ accessToken: token.access_token, guildId: signInGuildId })
       : null);
     if (!guildMember || !signInGuildId) {
@@ -152,7 +183,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
-    const dashboardAccessAllowed = configuredCommunityMember || Boolean(partnerGuild) || watchlistReturn || withPlatformDatabase(
+    const dashboardAccessAllowed = verifiedCommunityGuildId !== null || Boolean(partnerGuild) || watchlistReturn || withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformDashboardMemberAccessRepository(database)
         .read().allowAllDiscordMembers || hasPlatformDiscordPremiumAccess({
@@ -256,7 +287,7 @@ ON CONFLICT(user_id, discord_guild_id) DO UPDATE SET
         for (const guild of visibleGuilds) {
           const enrolled = enrolledGuildIds.includes(guild.id);
           const member = enrolled
-            ? await resolveDiscordCurrentGuildMembership({
+            ? verifiedCommunityMembers.get(guild.id) ?? await resolveDiscordCurrentGuildMembership({
               accessToken: token.access_token,
               guildId: guild.id,
             })

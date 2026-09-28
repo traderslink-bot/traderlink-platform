@@ -171,6 +171,12 @@ Current verification: [remediation QA record](traderlink-coaching-remediation-qa
   configured-guild membership lookup succeeding. The narrow correction treats that
   verified direct membership as an active onboarded-community admission fallback;
   it does not change Premium, coaching-role, alert or watchlist authorization.
+- Staging retest showed the configured-guild fallback cannot be sufficient when the
+  OAuth-configured guild differs from the active community guild. The callback now
+  verifies the bounded active-community guild set directly, promotes verified matches
+  into the existing membership-sync path and admits only those verified community
+  members to the baseline dashboard. This is required for multi-community onboarding;
+  it does not enable a global free-access switch.
 
 - Source5efeb32 / deployment0d999d35 now includes repaired productionc3 plus the
   complete1f16 coaching follow-up. Coordinator confirms successful remote build,
