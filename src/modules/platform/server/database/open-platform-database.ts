@@ -575,7 +575,7 @@ function logPlatformRuntimeQuickCheckOutcome(
   outcome: "database_identity_changed" | "foreign_key_failed" | "integrity_failed" | "ok" |
     "timeout" | "worker_construction_failed" | "worker_early_exit" |
     "worker_error" | "worker_failed" | "verification_overdue" | "worker_exit_pending" |
-    "startup_verified" | "worker_released",
+    "startup_verified" | "startup_scheduled" | "worker_released",
   startedAt: number,
   includeQuickCheck = false,
   phases?: Readonly<{
@@ -604,6 +604,12 @@ function logPlatformRuntimeQuickCheckOutcome(
     ),
   };
   try {
+    if (outcome === "startup_scheduled") {
+      console.info("TraderLink SQLite structure verified; initial data scan scheduled.", {
+        durationMs, includeQuickCheck, ...markers,
+      });
+      return;
+    }
     if (outcome === "ok" || outcome === "startup_verified") {
       const counter = includeQuickCheck ? "quickCheckSuccessLogs" : "foreignKeySuccessLogs";
       if (outcome === "ok" && state[counter] >= 2 && !phases?.overdue) return;
@@ -771,19 +777,25 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   }
   if (!existing) {
     const startedAt = Date.now();
-    verifyCompletedPlatformDatabase(database);
+    verifyPlatformDatabaseStructureAfterDataChange(database);
+    // File identity and schema must still match after the synchronous checks.
+    if (readPlatformRuntimeDatabaseStructureFingerprint(database, databasePath) !== structureFingerprint) {
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { check: "database_identity_changed" });
+    }
     const verifiedAt = Date.now();
     const state: RuntimeIntegrityState = {
       version: 3,
       cancelWorker: null,
       dataGeneration: 0,
-      dirtySinceForeignKeyCheck: false,
-      dirtySinceQuickCheck: false,
+      dirtySinceForeignKeyCheck: true,
+      dirtySinceQuickCheck: true,
       foreignKeyCheckFailed: false,
       fingerprint,
       generation: 0,
-      lastForeignKeyCheckStartedAt: verifiedAt,
-      lastQuickCheckStartedAt: verifiedAt,
+      lastForeignKeyCheckStartedAt: 0,
+      foreignKeyNotBefore: verifiedAt,
+      quickCheckNotBefore: verifiedAt,
+      lastQuickCheckStartedAt: 0,
       quickCheckFailed: false,
       quickCheckInFlight: false,
       foreignKeySuccessLogs: 0,
@@ -796,9 +808,16 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
       retryNotBefore: 0,
       structureFingerprint,
     };
-    recordRuntimeScanCooldown(state, startedAt, verifiedAt, true);
     verifiedFingerprints.set(databasePath, state);
-    logPlatformRuntimeQuickCheckOutcome(state, "startup_verified", startedAt, true);
+    // Publish the shared state before deferring the initial combined scan.
+    // A second opener coalesces with this timer instead of launching a reader.
+    state.timerDueAt = verifiedAt;
+    state.quickCheckTimer = setTimeout(() => {
+      state.quickCheckTimer = null;
+      schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
+    }, 0);
+    state.quickCheckTimer.unref();
+    logPlatformRuntimeQuickCheckOutcome(state, "startup_scheduled", startedAt, true);
     return;
   }
 
