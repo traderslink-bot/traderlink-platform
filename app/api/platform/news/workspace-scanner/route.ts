@@ -29,17 +29,20 @@ export function GET(request: Request): Response {
         headers, status: article ? 200 : 404,
       });
     }
-    const expanded = parameters.get("view") === "expanded";
+    const view = parameters.get("view");
+    const expanded = view === "expanded" || view === "expanded-summary";
     const articles = withReadonlyPlatformDatabase({}, (database) =>
       new PressReleaseDashboardRepository(database).list({
         channel: "news_filtered",
         limit: expanded ? 60 : 6,
         scope: identity.scope,
       }));
-    // Preserve the expanded scanner contract; the six-headline card needs no
+    // Preserve the expanded scanner contract; headline views need no
     // article body, analysis or metadata until an article is opened.
-    const responseArticles = parameters.get("view") === "summary"
-      ? articles.map(({ id, ticker, headline, isRead }) => ({ id, ticker, headline, isRead }))
+    const responseArticles = (view === "summary" || view === "expanded-summary")
+      ? articles.map(({ id, ticker, headline, isRead, publishedAt }) => ({
+        id, ticker, headline, isRead, ...(expanded ? { publishedAt } : {}),
+      }))
       : articles;
     return Response.json({ articles: responseArticles, status: "ready" }, { headers });
   } catch (error) {

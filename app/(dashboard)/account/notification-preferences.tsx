@@ -383,8 +383,11 @@ export function NotificationPreferences({
         Push notifications
       </Typography>
       <Typography color="text.secondary" variant="body2">
-        If your device can receive push notifications, it will ask you to accept or decline notifications from TradersLink. Manage your TradersLink notifications outside this page in your device settings. If you are having issues with notifications, check the settings on your device.
+        Choose which alerts you want to receive. Your browser or device must also allow notifications from TradersLink.
       </Typography>
+      {pushState === "off" && pushPreparation && !pushServiceUnavailable ? (
+        <Alert severity="info">Notifications are off on this device. Select Turn on notifications below to receive your chosen alerts.</Alert>
+      ) : null}
       {pushState === "unsupported" ? (
         <Alert severity="warning">Push notifications are not available in this browser or on this device.</Alert>
       ) : null}
@@ -422,20 +425,20 @@ export function NotificationPreferences({
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
         {pushState === "enabled" ? (
           <>
-            <Button disabled={working} onClick={savePush} variant="contained">{working ? "Saving..." : "Set Preferences"}</Button>
+            <Button disabled={working} onClick={savePush} variant="contained">{working ? "Saving..." : "Save alert choices"}</Button>
             <Button color="error" disabled={working} onClick={disablePush} variant="outlined">Turn off push notifications</Button>
           </>
         ) : pushState === "checking" ? (
-          <Button disabled variant="contained">Set Preferences</Button>
+          <Button disabled variant="contained">Checking notifications…</Button>
         ) : pushState === "unsupported" || pushState === "denied" ? null : pushPreparation === null ? (
-          <Button disabled={working} onClick={savePush} variant="contained">{working ? "Saving..." : "Set Preferences"}</Button>
+          <Button disabled={working} onClick={savePush} variant="contained">{working ? "Saving..." : "Save alert choices"}</Button>
         ) : (
           <Button
             disabled={working || pushPreparation === null}
             onClick={enablePush}
             variant="contained"
           >
-            {working ? "Saving..." : "Set Preferences"}
+            {working ? "Turning on..." : "Turn on notifications"}
           </Button>
         )}
       </Stack>

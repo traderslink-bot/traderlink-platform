@@ -398,3 +398,7 @@ The correction must:
   or Data Decision resolution.
 - Public deployment, Railway changes, DNS cutover, production VAPID secrets or
   real push activation without separate owner authorization.
+
+## Current QA follow-up
+
+[Live browser QA and follow-up correction checkpoint, 2026-09-28](pwa-live-qa-follow-up-2026-09-28.md). Android delivery acceptance remains open.
