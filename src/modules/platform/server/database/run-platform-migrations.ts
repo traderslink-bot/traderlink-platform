@@ -45,6 +45,19 @@ export function verifyCompletedPlatformDatabase(
 }
 
 /**
+ * Maintenance apply preflight only: prove the exact predecessor structure.
+ * The exclusive backup checkpoint must independently verify all source data
+ * before copying or migrating. This is never runtime-readiness evidence.
+ */
+export function verifyPlatformMaintenancePreflightStructure(
+  database: Database.Database,
+  manifestInput: readonly PlatformMigration[],
+): PlatformMigrationRunResult {
+  return measurePlatformRequestPhase("integrity", () =>
+    verifyCompletedPlatformDatabaseUnmeasured(database, manifestInput, false, false));
+}
+
+/**
  * Legacy synchronous data-change verification. Explicit callers retain the
  * foreign-key scan; only the runtime guard below opts into background scans.
  */
