@@ -3,10 +3,6 @@
 Owner-authorized outage follow-up: [exit-anchored scan cooldown](runtime-integrity-cooldown-progress-2026-09-27.md).
 This supersedes start-anchored scheduling and failure-time retry delays only.
 
-Separate owner-directed follow-up: [maintenance scan deduplication and phase logs](hosted-maintenance-verification-progress-2026-09-27.md).
-It preserves this background-scan behavior and addresses the synchronous
-maintenance checkpoint only.
-
 Status: local implementation and focused verification complete; source ready for
 Coordinator review. Git records the immutable checkpoint and its exact parent.
 No deployment authority. Coordinator owns remote build and release acceptance.

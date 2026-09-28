@@ -4,11 +4,6 @@ import { dirname, resolve } from "node:path";
 
 import Database from "better-sqlite3";
 
-import {
-  observePlatformMaintenancePhase,
-  observePlatformMaintenancePhaseAsync,
-} from "../observability/platform-maintenance-observability";
-
 import { validatePlatformDatabasePath } from "./platform-database-config";
 import {
   createCanonicalUtcTimestamp,
@@ -19,6 +14,8 @@ import {
 import {
   listPlatformUserTableNames,
   readAppliedPlatformMigrations,
+  requirePlatformForeignKeyCheck,
+  requirePlatformQuickCheck,
 } from "./platform-migration-registry";
 import {
   readPlatformDatabasePragmaEvidence,
@@ -132,13 +129,12 @@ function readSnapshotEvidence(
   database: Database.Database,
   path: string,
   now: () => Date,
-  hashPhase: "source_hash" | "backup_hash" | "restore_hash",
   verificationManifest?: readonly PlatformMigration[],
 ): PlatformDatabaseSnapshotEvidence {
-  // The full verifier already performs both FK and quick checks. Keep one full
-  // independent verification for each source/backup/restore evidence record.
   verifyCompletedPlatformDatabase(database, verificationManifest);
   const pragmas = verifyPlatformDatabaseConnectionPragmas(database);
+  requirePlatformForeignKeyCheck(database);
+  requirePlatformQuickCheck(database);
   const migrationRows = Object.freeze(
     readAppliedPlatformMigrations(database).map((row) => Object.freeze({ ...row })),
   );
@@ -167,7 +163,7 @@ function readSnapshotEvidence(
     pageSize: singlePragma(database, "page_size"),
     pageCount: singlePragma(database, "page_count"),
     fileSizeBytes: file.size,
-    fileSha256: observePlatformMaintenancePhase(hashPhase, () => sha256File(path)),
+    fileSha256: sha256File(path),
     sidecars: Object.freeze({
       wal: sidecarEvidence(`${path}-wal`),
       shm: sidecarEvidence(`${path}-shm`),
@@ -288,36 +284,34 @@ export async function createAndRestoreVerifyPlatformDatabaseBackup(
     source = new Database(sourcePath, { readonly: true, fileMustExist: true });
     source.pragma("foreign_keys = ON");
     source.pragma("busy_timeout = 5000");
-    const sourceEvidence = observePlatformMaintenancePhase("source_evidence", () => readSnapshotEvidence(
-      source!,
-      sourcePath,
-      now,
-      "source_hash",
-      options.verificationManifest,
-    ));
+    verifyCompletedPlatformDatabase(source, options.verificationManifest);
+    verifyPlatformDatabaseConnectionPragmas(source);
     const recoveryRequirements = readRecoveryRequirements(source);
     const recoveryStatus = await verifyRecoveryAuthority(
       recoveryRequirements,
       options.verifyRecoveryAuthority,
     );
 
-    observePlatformMaintenancePhase("checkpoint_directories", () => {
-      mkdirSync(dirname(backupPath), { recursive: true });
-      mkdirSync(dirname(restoreVerificationPath), { recursive: true });
-    });
-    await observePlatformMaintenancePhaseAsync("backup_copy", () => source!.backup(backupPath));
+    mkdirSync(dirname(backupPath), { recursive: true });
+    mkdirSync(dirname(restoreVerificationPath), { recursive: true });
+    const sourceEvidence = readSnapshotEvidence(
+      source,
+      sourcePath,
+      now,
+      options.verificationManifest,
+    );
+    await source.backup(backupPath);
 
     backup = new Database(backupPath, { readonly: true, fileMustExist: true });
     backup.pragma("foreign_keys = ON");
     backup.pragma("busy_timeout = 5000");
-    const backupEvidence = observePlatformMaintenancePhase("backup_evidence", () => readSnapshotEvidence(
-      backup!,
+    const backupEvidence = readSnapshotEvidence(
+      backup,
       backupPath,
       now,
-      "backup_hash",
       options.verificationManifest,
-    ));
-    await observePlatformMaintenancePhaseAsync("restore_copy", () => backup!.backup(restoreVerificationPath));
+    );
+    await backup.backup(restoreVerificationPath);
 
     restored = new Database(restoreVerificationPath, {
       readonly: true,
@@ -325,13 +319,12 @@ export async function createAndRestoreVerifyPlatformDatabaseBackup(
     });
     restored.pragma("foreign_keys = ON");
     restored.pragma("busy_timeout = 5000");
-    const restoredEvidence = observePlatformMaintenancePhase("restore_evidence", () => readSnapshotEvidence(
-      restored!,
+    const restoredEvidence = readSnapshotEvidence(
+      restored,
       restoreVerificationPath,
       now,
-      "restore_hash",
       options.verificationManifest,
-    ));
+    );
 
     const exactRegistryMatch =
       sameEvidence(sourceEvidence.migrationRows, backupEvidence.migrationRows) &&

@@ -16,10 +16,7 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
     const { verifyPlatformHostedRuntimeReadiness } = await import(
       "./src/modules/platform/server/readiness/platform-hosted-runtime-readiness"
     );
-    const readiness = appliedMigrations
-      ? (await import("./src/modules/platform/server/observability/platform-maintenance-observability"))
-        .observePlatformMaintenancePhase("readiness", () => verifyPlatformHostedRuntimeReadiness())
-      : verifyPlatformHostedRuntimeReadiness();
+    const readiness = verifyPlatformHostedRuntimeReadiness();
     console.info(
       `TraderLink hosted runtime verified ${readiness.migrationCount} migrations on ${readiness.storage}.`,
     );
