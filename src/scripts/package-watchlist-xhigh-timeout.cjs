@@ -1,0 +1,37 @@
+const fs = require('node:fs');
+const cp = require('node:child_process');
+const os = require('node:os');
+const path = require('node:path');
+const root = 'C:/Users/jerac/.codex/worktrees/watchlist-source-selector/levels-system-post-mtf-handoff-stability';
+const file = 'src/lib/ai/traderslink-ai-read-service.ts';
+const original = fs.readFileSync(path.join(root,file),'utf8').replace(/\r\n/g,'\n');
+let next = original;
+function change(from,to) { if(!next.includes(from)) throw Error('Missing source: '+from); next=next.replace(from,to); }
+change('  private readonly timeoutMs: number;', '  private get timeoutMs(): number {\n    return this.options.timeoutMs ?? (this.reasoningEffort === "xhigh" ? 600_000 : DEFAULT_TIMEOUT_MS);\n  }');
+change('    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;\n','');
+change('    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);', '    // Snapshot the deadline for this request; later admin settings changes must\n    // not alter its timer or the timing reported in its audit.\n    const timeoutMs = this.timeoutMs;\n    const timeout = setTimeout(() => controller.abort(), timeoutMs);');
+const start=next.indexOf('  private async request('),end=next.indexOf('\n  }',start)+4;
+const request=next.slice(start,end).replaceAll('timeoutMs: this.timeoutMs','timeoutMs').replaceAll('- this.timeoutMs','- timeoutMs').replaceAll('${this.timeoutMs}ms','${timeoutMs}ms');
+next=next.slice(0,start)+request+next.slice(end);
+change('    timeoutMs: resolvePositiveInteger(env.TRADERSLINK_AI_READ_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),','    timeoutMs: env.TRADERSLINK_AI_READ_TIMEOUT_MS?.trim()\n      ? resolvePositiveInteger(env.TRADERSLINK_AI_READ_TIMEOUT_MS, DEFAULT_TIMEOUT_MS)\n      : undefined,');
+const ts=require('C:/Users/jerac/Documents/TraderLink/traderlink-platform/node_modules/typescript');
+const result=ts.transpileModule(next,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS},reportDiagnostics:true});
+if(result.diagnostics.some(d=>d.category===ts.DiagnosticCategory.Error))throw Error('Syntax diagnostics');
+const folder=fs.mkdtempSync(path.join(os.tmpdir(),'watchlist-timeout-'));
+fs.writeFileSync(path.join(folder,'before'),original);fs.writeFileSync(path.join(folder,'after'),next);
+const diff=cp.spawnSync('git',['diff','--no-index','--',path.join(folder,'before'),path.join(folder,'after')],{encoding:'utf8'});
+if(diff.status!==1)throw Error(diff.stderr);
+const lines=diff.stdout.split('\n');lines[0]=`diff --git a/${file} b/${file}`;
+lines[lines.findIndex(x=>x.startsWith('--- '))]=`--- a/${file}`;
+lines[lines.findIndex(x=>x.startsWith('+++ '))]=`+++ b/${file}`;
+fs.writeFileSync('docs/migration/watchlist-xhigh-timeout.patch',lines.join('\n'));
+// Exercise the exact new getter without constructing a provider or making a request.
+const assert=require('node:assert/strict');
+const getter=next.match(/private get timeoutMs\(\): number \{([\s\S]*?)\n  \}/)[1];
+const resolve=new Function('DEFAULT_TIMEOUT_MS', getter);
+assert.equal(resolve.call({options:{},reasoningEffort:'xhigh'},180000),600000);
+assert.equal(resolve.call({options:{},reasoningEffort:'high'},180000),180000);
+assert.equal(resolve.call({options:{timeoutMs:1234},reasoningEffort:'xhigh'},180000),1234);
+assert(request.includes('const timeoutMs = this.timeoutMs;'));
+assert(!request.includes('timeoutMs: this.timeoutMs'));
+console.log('PASS: xhigh600s, high180s, explicit override, request deadline snapshot, syntax. No API requests.');
