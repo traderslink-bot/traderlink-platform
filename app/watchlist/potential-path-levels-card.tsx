@@ -257,7 +257,7 @@ export function WatchlistV2PotentialPathCard({
 
         {overnight ? (
           <div className={styles.note} role="note">
-            <strong>Overnight price: ${formatPrice(overnight.price)} · Checked {new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }).format(new Date(overnight.checkedAt))} ET</strong>
+            <strong>Not live · Price time unavailable</strong>
             <span>Levels use this fixed price until live updates resume in premarket.</span>
           </div>
         ) : null}

@@ -63,7 +63,7 @@ export async function deliverPlatformNotificationDiscordDirectMessage(input: Rea
   const messageText = [
     content.title,
     content.summary,
-    content.destinationUrl ? `Open: ${content.destinationUrl}` : null,
+    content.destinationUrl ? `Open: <${content.destinationUrl}>` : null,
   ].filter((value): value is string => Boolean(value)).join("\n\n").slice(0, 2_000);
 
   try {
