@@ -199,6 +199,23 @@ Current verification: [remediation QA record](traderlink-coaching-remediation-qa
   existing role mappings; do not grant coach/staff powers just to enroll a student.
   Empty-account Workspace separately reports Demo Trade Tracker unavailable; not
   counted as a coaching login failure or resolved by this change.
+- Genuine student acceptance continuation: owner approved mapping test-community
+  (1546028813106941952) to Access coaching only, then assigned that role to Bullrun
+  in Discord. Normal sign-out/sign-in (not merely visiting /signed-out) refreshed
+  roles; Bullrun sees Coaches but no staff controls. Owner approved acceptance of
+  the no-payment TEST — Private coaching plan. Coach roster and student My coaching
+  both confirm active enrollment; Journal remains unshared and student messaging
+  remains disabled. No coach/admin privileges or financial transaction were added.
+- Isolated hosted review QA20260928 — Bullrun delivery check (baeb2160-bd17-4e50-91ee-c02eff92ed14)
+  completed the actual two-account lifecycle: Not started → In progress → Delivered
+  → Viewed → Follow-up required (Sep29 15:00UTC) → Completed. Draft summary remained
+  hidden from Bullrun; coach-only note remained absent from final preview and student
+  view before/after delivery. Student read acknowledgement appeared to coach with UTC
+  timestamp; coach follow-up message and deadline appeared to Bullrun. Completed
+  status persisted on both sides. Synthetic workflow text only; no actual trade
+  analysis, Journal grant, payment, Discord post, image upload or bot-role mutation.
+  This closes basic student review delivery/read/follow-up acceptance, not agreement,
+  shared-trade/image, student-question allowance or live bot-refresh acceptance.
 
 - Source5efeb32 / deployment0d999d35 now includes repaired productionc3 plus the
   complete1f16 coaching follow-up. Coordinator confirms successful remote build,
