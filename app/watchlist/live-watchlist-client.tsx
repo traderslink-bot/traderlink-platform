@@ -1763,10 +1763,6 @@ export function LiveWatchlistIndexClient({
           </p>
         </div>
         <div className="watchlist-summary-panel" aria-label="Watchlist status">
-          <span>
-            {activeSymbols.length} active
-            {showReversalWatchlist ? ` / ${reversalWatchSymbols.length} reversal watch` : ""}
-          </span>
           <WatchlistLiveDataStatus status={marketDataStatus} />
         </div>
       </section>
