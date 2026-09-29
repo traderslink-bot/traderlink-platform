@@ -1849,7 +1849,10 @@ export function LiveWatchlistIndexClient({
             return (
               <section key={group} className="watchlist-session-list" aria-labelledby={group}>
                 <div className="watchlist-session-heading">
-                  <h2 id={group} title={group.slice(12)}>{heading}</h2>
+                  <div>
+                    <h2 id={group} title={group.slice(12)}>{heading}</h2>
+                    <WatchlistGroupHelp label={heading} text="Tickers selected ahead of the displayed trading date for their potential to make a move. This list does not suggest whether you should hold them overnight." />
+                  </div>
                   <span>{members.length}</span>
                 </div>
                 <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel={heading + " (" + group.slice(12) + ") tickers"} symbols={members} reverseSplits={reverseSplits} />

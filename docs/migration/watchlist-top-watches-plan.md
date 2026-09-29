@@ -15,3 +15,6 @@ Owner-approved title: **Top Watches · Sep 30**, with the actual trading date. T
 ## Verification
 
 Focused offline checks: weekends/holidays/year boundary/overnight and early-close calendar selection; invalid dates; group propagation through persistence, archive, publication and member projection; two date groups remain separate and stable; Admin embedded JavaScript syntax; unchanged existing group classification. No local server, broad suite, provider request or deployment. Browser/hosted acceptance follows coordinated release.
+
+
+Approved Top Watches tooltip: Tickers selected ahead of the displayed trading date for their potential to make a move. This list does not suggest whether you should hold them overnight. See [tooltip progress](watchlist-top-watches-tooltip-progress.md).
