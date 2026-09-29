@@ -1893,11 +1893,10 @@ export function LiveWatchlistIndexClient({
       <section className="academy-card watchlist-notice-card" aria-label="Watchlist notice">
         <h2>Watchlist Notice</h2>
         <p>
-          Currently this watchlist is for <strong>day trading ideas only</strong>. Tickers
-          are based on momentum, volume, chart setups, news, and current market
-          activity. They are <strong>not long-term investment picks</strong>,
-          may not be suitable for holding overnight, and company fundamentals
-          have not been researched.
+          This watchlist includes day trading ideas, swing trading ideas, and general stocks to watch. Tickers are selected based on catalysts, momentum, volume, chart setups, news, and market activity. Check the list category and each ticker’s available notes or analysis for context. Inclusion alone is not a recommendation to enter a trade or hold overnight.
+          </p>
+          <p>
+            Many tickers are selected because of a recent catalyst driving price activity, rather than a full review of company fundamentals. Catalyst details appear in the <strong>Catalyst / Recent News</strong> card when available. Additional research or context may be provided in <strong>Trader Notes</strong>, particularly for swing trades.
         </p>
         <p>
           Small cap stocks can move very quickly and carry high risk. A ticker

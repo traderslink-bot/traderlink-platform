@@ -27,3 +27,6 @@ Header count-summary removal: [progress](watchlist-count-summary-progress.md).
 
 
 Unfinished reverse-split Watchlist display disabled: [progress](watchlist-reverse-split-hidden-progress.md).
+
+
+Updated category-aware listing notice: [progress](watchlist-category-notice-progress.md).
