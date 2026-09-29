@@ -2,14 +2,14 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile"
+    "dockerfilePath": "Dockerfile.coaching-maintenance"
   },
   "deploy": {
     "healthcheckPath": "/api/platform/health",
-    "healthcheckTimeout": 300,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10,
+    "healthcheckTimeout": 900,
+    "restartPolicyType": "NEVER",
+    "restartPolicyMaxRetries": 0,
     "overlapSeconds": 0,
-    "drainingSeconds": 30
+    "drainingSeconds": 0
   }
 }
