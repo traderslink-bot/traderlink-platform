@@ -53,7 +53,7 @@ import { createVisibleWatchlistStream, createWatchlistRefreshController } from "
 import { WatchlistIndicatorsCard } from "./watchlist-indicators-card";
 import groupHelpStyles from "./watchlist-group-help.module.css";
 import compactRows from "./watchlist-compact-rows.module.css";
-import { isTopWatchesGroup, topWatchesLabel } from "@/src/lib/live-watchlist/top-watches-group";
+import { isTopWatchesGroup } from "@/src/lib/live-watchlist/top-watches-group";
 import { useWatchlistReverseSplits, WatchlistReverseSplitBadge, WatchlistReverseSplitDetails } from "./reverse-split-watchlist";
 import type { ReverseSplitRow } from "@/src/modules/news/contracts/reverse-split-dashboard-contracts";
 
@@ -1687,7 +1687,7 @@ export function LiveWatchlistIndexClient({
   const postmarketSymbols = activeSymbols.filter(isPostmarketAddition);
   const generalSymbols = activeSymbols.filter(symbol => getLiveWatchlistEntryGroup(symbol) === "general");
   const swingSymbols = activeSymbols.filter(symbol => getLiveWatchlistEntryGroup(symbol) === "swings");
-  const datedTopGroups = [...new Set(activeSymbols.map(getLiveWatchlistEntryGroup).filter(isTopWatchesGroup))].sort();
+  const overnightSymbols = activeSymbols.filter(symbol => isTopWatchesGroup(getLiveWatchlistEntryGroup(symbol)));
 
   useEffect(() => {
     let cancelled = false;
@@ -1844,44 +1844,16 @@ export function LiveWatchlistIndexClient({
               ) : null}
             </section>
           ) : null}
-          {datedTopGroups.map(group => {
-            const members = activeSymbols.filter(symbol => getLiveWatchlistEntryGroup(symbol) === group);
-            const heading = topWatchesLabel(group);
-            return (
-              <section key={group} className="watchlist-session-list" aria-labelledby={group}>
-                <div className="watchlist-session-heading">
-                  <div>
-                    <h2 id={group} title={group.slice(12)}>{heading}</h2>
-                    <WatchlistGroupHelp label={heading} text="Tickers selected ahead of the displayed trading date for their potential to make a move. This list does not suggest whether you should hold them overnight." />
-                  </div>
-                  <span>{members.length}</span>
-                </div>
-                <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel={heading + " (" + group.slice(12) + ") tickers"} symbols={members} reverseSplits={reverseSplits} />
-              </section>
-            );
-          })}
-          {swingSymbols.length > 0 ? (
-            <section className="watchlist-session-list" aria-labelledby="watchlist-swings-heading">
+          {overnightSymbols.length > 0 ? (
+            <section className="watchlist-session-list" aria-labelledby="watchlist-overnight-heading">
               <div className="watchlist-session-heading">
                 <div>
-                  <h2 id="watchlist-swings-heading">Swings</h2>
-                  <WatchlistGroupHelp label="Swings" text="This list focuses on stocks with a recent, active catalyst and floats above 50 million shares—ideally above 100 million. Stocks with an upcoming catalyst may also be included, regardless of float size." />
+                  <h2 id="watchlist-overnight-heading">Overnight Watches</h2>
+                  <WatchlistGroupHelp label="Overnight Watches" text="Tickers selected ahead of the next trading session for their potential to make a move. This list does not suggest whether you should hold them overnight." />
                 </div>
-                <span>{swingSymbols.length}</span>
+                <span>{overnightSymbols.length}</span>
               </div>
-              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="Swings watchlist tickers" symbols={swingSymbols} reverseSplits={reverseSplits} />
-            </section>
-          ) : null}
-          {generalSymbols.length > 0 ? (
-            <section className="watchlist-session-list" aria-labelledby="watchlist-general-heading">
-              <div className="watchlist-session-heading">
-                <div>
-                  <h2 id="watchlist-general-heading">General Watchlist</h2>
-                  <WatchlistGroupHelp label="General Watchlist" text="Stocks being watched for potential opportunities, without a specific trading session or day-trade/swing-trade focus. Open a ticker to view available notes, analysis and price levels." />
-                </div>
-                <span>{generalSymbols.length}</span>
-              </div>
-              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="General Watchlist tickers" symbols={generalSymbols} reverseSplits={reverseSplits} />
+              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="Overnight Watches tickers" symbols={overnightSymbols} reverseSplits={reverseSplits} />
             </section>
           ) : null}
           {postmarketSymbols.length > 0 ? (
@@ -1896,6 +1868,31 @@ export function LiveWatchlistIndexClient({
               <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} reverseSplits={reverseSplits} />
             </section>
           ) : null}
+          {generalSymbols.length > 0 ? (
+            <section className="watchlist-session-list" aria-labelledby="watchlist-general-heading">
+              <div className="watchlist-session-heading">
+                <div>
+                  <h2 id="watchlist-general-heading">General Watchlist</h2>
+                  <WatchlistGroupHelp label="General Watchlist" text="Stocks being watched for potential opportunities, without a specific trading session or day-trade/swing-trade focus. Open a ticker to view available notes, analysis and price levels." />
+                </div>
+                <span>{generalSymbols.length}</span>
+              </div>
+              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="General Watchlist tickers" symbols={generalSymbols} reverseSplits={reverseSplits} />
+            </section>
+          ) : null}
+          {swingSymbols.length > 0 ? (
+            <section className="watchlist-session-list" aria-labelledby="watchlist-swings-heading">
+              <div className="watchlist-session-heading">
+                <div>
+                  <h2 id="watchlist-swings-heading">Swings</h2>
+                  <WatchlistGroupHelp label="Swings" text="This list focuses on stocks with a recent, active catalyst and floats above 50 million shares—ideally above 100 million. Stocks with an upcoming catalyst may also be included, regardless of float size." />
+                </div>
+                <span>{swingSymbols.length}</span>
+              </div>
+              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="Swings watchlist tickers" symbols={swingSymbols} reverseSplits={reverseSplits} />
+            </section>
+          ) : null}
+
         </div>
       )}
       <section className="academy-card watchlist-notice-card" aria-label="Watchlist notice">

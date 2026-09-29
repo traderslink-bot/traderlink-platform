@@ -18,3 +18,6 @@ Focused offline checks: weekends/holidays/year boundary/overnight and early-clos
 
 
 Approved Top Watches tooltip: Tickers selected ahead of the displayed trading date for their potential to make a move. This list does not suggest whether you should hold them overnight. See [tooltip progress](watchlist-top-watches-tooltip-progress.md).
+
+
+Owner revision: public heading is Overnight Watches without date; combine existing dated memberships for display only, preserving stored assignments. Order: Top Regular, Main, Overnight, Post-Market, General, Swings. Admin retains date suffixes to distinguish saved destinations. See [progress](watchlist-overnight-rename-progress.md).
