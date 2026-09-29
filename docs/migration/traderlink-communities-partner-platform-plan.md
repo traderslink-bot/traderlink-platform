@@ -8,6 +8,8 @@ owner-test allowlist if production-only Discord behavior requires it.
 
 **Progress record:** [TraderLink Communities Partner Platform Progress](traderlink-communities-partner-platform-progress.md)
 
+**Deferred separate concept:** [Discord Channel Syndication](traderlink-discord-channel-syndication-deferred-plan.md). Finish current Communities/coaching first; this future idea is documented only and adds no implementation scope.
+
 **Active coaching completion record:** [TraderLink Coaching Review Completion Progress](traderlink-coaching-review-completion-progress.md)
 
 **Approved review-type and inline-editor slice:** [Coaching Review Types Progress](traderlink-coaching-review-types-progress.md)
