@@ -1811,6 +1811,7 @@ export function LiveWatchlistIndexClient({
                     <div>
                       <p className="academy-eyebrow">Premarket + Regular Hours</p>
                       <h2 id="watchlist-main-session-heading">Main Session</h2>
+                      <WatchlistGroupHelp label="Premarket / Regular Session" text="This list typically includes stocks with fresh morning catalysts. Additions may be delayed to let the initial move settle, with more tickers added from 9:00–9:30 AM ET ahead of the regular session." />
                     </div>
                     <span>{mainSessionSymbols.length}</span>
                   </div>

@@ -15,3 +15,6 @@ Owner-approved General/Swings tooltip follow-up: [progress](watchlist-group-tool
 
 
 Dated Top Watches is a separate owner-approved grouping: [plan](watchlist-top-watches-plan.md) and [progress](watchlist-top-watches-progress.md). Swings behavior remains unchanged.
+
+
+Related approved Main Session tooltip: [progress](watchlist-main-session-tooltip-progress.md).
