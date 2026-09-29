@@ -140,7 +140,42 @@ Authorization, storage and content are unchanged.
   warning. Local checkpointb60166b0f handed to Coordinator for staging integration;
   remote deployment and post-release navigation verification still pending.
 
-Lesson receipt/progress, images, scheduled agreement/maintenance, student questions,
-shared Journal, remaining negative access and desktop/mobile checks. Bullrun has
-no Journal account and messaging/review requests remain disabled. Permission
-changes require their own explicit action boundary; do not bypass them.
+## September 29 browser reconnection checkpoint
+
+- Owner reconnected the Chrome extension; Bullrun student browser access recovered.
+- Student-requested review opens in the coach workspace and remains Not started
+  on opening. Empty final review correctly disables Send review to Bullrun.
+- Full Analysis tools drawer exposes no data with Bullrun Journal sharing off;
+  it reports analysis unavailable and disables selection/addition. Positive
+  populated analysis coverage remains pending synthetic account and sharing.
+- Presentation finding: Student Journal > Analytics is a separate count-only
+  drawer, while Analysis tools contains the full reports/Explorer/Analyzer.
+  Do not mistake the count-only drawer for missing full analytics implementation.
+- Coordinator reports navigation correction integrated with production-mirror
+  candidate; database compatibility gate still pending. Not claimed deployed.
+- Requested action-time authorization for synthetic chart upload and a synthetic
+  Bullrun Journal shared with the TradersLink test coach on staging only.
+
+Remaining: images, scheduled agreement/maintenance, nonzero student-question
+allowance, populated shared Journal, live Discord role removal/restoration, and
+post-release navigation checks. Bullrun has no Journal account. Messaging and
+review-request service toggles are on; the accepted agreement has zero question
+allowance. Prior lesson receipt/progress and responsive checks passed; repeat
+only where the refreshed release changes the relevant behavior.
+
+## September 29 authorized synthetic-data setup
+
+- Owner explicitly approved synthetic chart upload and synthetic Bullrun Journal
+  creation/sharing. Created `QA Coaching Synthetic 20260929` using Account settings;
+  it is active. Existing Primary Journal preserved (earlier assumption that no
+  Journal account existed was incorrect; no selector on coaching was not proof).
+- Add Trade route redirected to Workspace; Session Tracker showed This page could
+  not load. Reported exact routes to Coordinator. No direct database seeding used.
+- Generated local labelled synthetic PNG (640x360), uploaded once from coach,
+  sent once, verified Bullrun receipt and loaded natural dimensions 640x360.
+- Student reverse upload stopped at browser extension requirement Allow access
+  to file URLs. No student upload submitted; no application failure inferred.
+- Shared active synthetic account with Account analytics scope. Student shows
+  Account analytics grant and Revoke; coach reload shows Journal access On and
+  empty account counts. No real Journal data shared. Grant remains active.
+- Populated Journal/analytics and student-to-coach images remain unverified.
