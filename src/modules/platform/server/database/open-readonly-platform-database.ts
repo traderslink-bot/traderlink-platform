@@ -29,7 +29,11 @@ export function openReadonlyPlatformDatabase(
     database.pragma("foreign_keys = ON");
     database.pragma("busy_timeout = 5000");
     database.pragma("query_only = ON");
-    verifyPlatformRuntimeDatabaseIntegrity(database, databasePath);
+    verifyPlatformRuntimeDatabaseIntegrity(
+      database,
+      databasePath,
+      options.environment ?? process.env,
+    );
     verifyPlatformDatabaseConnectionPragmas(database);
     return database;
   } catch (error) {

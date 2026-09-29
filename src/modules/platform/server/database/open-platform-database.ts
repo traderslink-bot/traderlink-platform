@@ -8,13 +8,18 @@ import {
   resolvePlatformDatabaseConfig,
   validatePlatformDatabasePath,
 } from "./platform-database-config";
+import { platformMigrationManifest } from "./platform-migration-manifest";
 import { platformFailure } from "./platform-migration-contract";
+import { readAppliedPlatformMigrations } from "./platform-migration-registry";
 import {
   verifyCompletedPlatformDatabase,
   verifyPlatformDatabaseStructureAfterDataChange,
 } from "./run-platform-migrations";
 
 export type PlatformDatabaseOpenMode = "runtime" | "initializer";
+
+export const TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID_ENV =
+  "TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID" as const;
 
 const runtimeIntegrityCacheKey =
   "__traderlinkPlatformRuntimeDatabaseIntegrityFingerprints" as const;
@@ -738,10 +743,35 @@ function recordSuccessfulFullRuntimeVerification(
   logPlatformRuntimeQuickCheckOutcome(state, "startup_verified", startedAt, true);
 }
 
+function runtimeVerificationManifest(
+  database: Database.Database,
+  environment: NodeJS.ProcessEnv,
+): readonly (typeof platformMigrationManifest)[number][] {
+  const compatibilityMigrationId =
+    environment[TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID_ENV];
+  if (compatibilityMigrationId === undefined) return platformMigrationManifest;
+  const target = platformMigrationManifest.at(-1);
+  if (
+    !target ||
+    compatibilityMigrationId !== target.migrationId ||
+    compatibilityMigrationId.trim() !== compatibilityMigrationId
+  ) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "runtime_compatibility_target",
+    });
+  }
+  const applied = readAppliedPlatformMigrations(database);
+  return applied.length === platformMigrationManifest.length
+    ? platformMigrationManifest
+    : platformMigrationManifest.slice(0, -1);
+}
+
 export function verifyPlatformRuntimeDatabaseIntegrity(
   database: Database.Database,
   databasePath: string,
+  environment: NodeJS.ProcessEnv = process.env,
 ): void {
+  const verificationManifest = runtimeVerificationManifest(database, environment);
   const fingerprint = readPlatformRuntimeDatabaseFingerprint(
     database,
     databasePath,
@@ -787,7 +817,7 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
       });
     }
     const startedAt = Date.now();
-    verifyCompletedPlatformDatabase(database);
+    verifyCompletedPlatformDatabase(database, verificationManifest);
     recordSuccessfulFullRuntimeVerification(
       existing,
       fingerprint,
@@ -804,7 +834,10 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   }
   if (!existing) {
     const startedAt = Date.now();
-    verifyPlatformDatabaseStructureAfterDataChange(database);
+    verifyPlatformDatabaseStructureAfterDataChange(
+      database,
+      verificationManifest,
+    );
     // File identity and schema must still match after the synchronous checks.
     if (readPlatformRuntimeDatabaseStructureFingerprint(database, databasePath) !== structureFingerprint) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { check: "database_identity_changed" });
@@ -848,7 +881,10 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
     return;
   }
 
-  verifyPlatformDatabaseStructureAfterDataChange(database);
+  verifyPlatformDatabaseStructureAfterDataChange(
+    database,
+    verificationManifest,
+  );
   existing.dataGeneration += 1;
   existing.dirtySinceForeignKeyCheck = true;
   existing.dirtySinceQuickCheck = true;
@@ -887,7 +923,11 @@ export function openPlatformDatabase(
     });
     configurePlatformDatabaseConnection(database, options.mode);
     if (options.mode === "runtime") {
-      verifyPlatformRuntimeDatabaseIntegrity(database, databasePath);
+      verifyPlatformRuntimeDatabaseIntegrity(
+        database,
+        databasePath,
+        options.environment ?? process.env,
+      );
       verifyPlatformDatabaseConnectionPragmas(database);
     }
     return database;
