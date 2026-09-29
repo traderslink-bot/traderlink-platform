@@ -1,3 +1,4 @@
+import { isTopWatchesGroup } from "./top-watches-group";
 import { neon } from "@neondatabase/serverless";
 import type Database from "better-sqlite3";
 
@@ -198,8 +199,8 @@ function normalizeWatchlistLifecycle(
     : null;
 }
 
-function normalizeWatchlistGroup(value: unknown): "top_regular" | "main" | "postmarket" | "general" | undefined {
-  return value === "top_regular" || value === "main" || value === "postmarket" || value === "general"
+function normalizeWatchlistGroup(value: unknown): "top_regular" | "main" | "postmarket" | "general" | "swings" | `top_watches:${string}` | undefined {
+  return value === "top_regular" || value === "main" || value === "postmarket" || value === "general" || value === "swings" || isTopWatchesGroup(value)
     ? value
     : undefined;
 }
@@ -534,6 +535,7 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
     watchlistLifecycleLabelsVisible: state.watchlistLifecycleLabelsVisible === true,
     watchlistLifecycle: normalizeWatchlistLifecycle(state.watchlistLifecycle),
     liveVolumeContext: normalizeLiveVolumeContext(state.liveVolumeContext),
+    indicatorCardVisible: state.indicatorCardVisible !== false,
     tradersLinkAiReadCardVisible: state.tradersLinkAiReadCardVisible !== false,
     tradersLinkAiReadDipBuyPlanVisible: state.tradersLinkAiReadDipBuyPlanVisible !== false,
     tradersLinkAiReadStatus:
@@ -719,6 +721,10 @@ export function applyPatch(
     liveVolumeContext: patchesLiveVolumeContext
       ? normalizeLiveVolumeContext(patch.liveVolumeContext ?? null)
       : baseExisting?.liveVolumeContext ?? null,
+    indicatorCardVisible:
+      typeof patch.indicatorCardVisible === "boolean"
+        ? patch.indicatorCardVisible
+        : baseExisting?.indicatorCardVisible !== false,
     tradersLinkAiReadCardVisible:
       typeof patch.tradersLinkAiReadCardVisible === "boolean"
         ? patch.tradersLinkAiReadCardVisible
@@ -827,6 +833,10 @@ function applyTickerDataPatch(
       patch.liveVolumeContext !== undefined
         ? normalizeLiveVolumeContext(patch.liveVolumeContext)
         : existing?.liveVolumeContext ?? null,
+    indicatorCardVisible:
+      typeof patch.indicatorCardVisible === "boolean"
+        ? patch.indicatorCardVisible
+        : existing?.indicatorCardVisible !== false,
     tradersLinkAiReadCardVisible:
       typeof patch.tradersLinkAiReadCardVisible === "boolean"
         ? patch.tradersLinkAiReadCardVisible

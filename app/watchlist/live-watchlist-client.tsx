@@ -51,6 +51,8 @@ import {
 import { WatchlistPotentialPathCardArticle } from "./potential-path-levels-card";
 import { createVisibleWatchlistStream, createWatchlistRefreshController } from "@/src/lib/live-watchlist/watchlist-refresh-controller";
 import { WatchlistIndicatorsCard } from "./watchlist-indicators-card";
+import groupHelpStyles from "./watchlist-group-help.module.css";
+import { isTopWatchesGroup, topWatchesLabel } from "@/src/lib/live-watchlist/top-watches-group";
 import { useWatchlistReverseSplits, WatchlistReverseSplitBadge, WatchlistReverseSplitDetails } from "./reverse-split-watchlist";
 import type { ReverseSplitRow } from "@/src/modules/news/contracts/reverse-split-dashboard-contracts";
 
@@ -1300,6 +1302,19 @@ function isPostmarketAddition(symbol: LiveWatchlistListSymbol): boolean {
   return getLiveWatchlistEntryGroup(symbol) === "postmarket";
 }
 
+function WatchlistGroupHelp({ label, text }: { label: string; text: string }) {
+  return (
+    <details className={groupHelpStyles.help}>
+      <summary className={`watchlist-card-help ${groupHelpStyles.trigger}`} aria-label={`About ${label}`}>
+        ?
+      </summary>
+      <p className={groupHelpStyles.content}>{text}</p>
+    </details>
+  );
+}
+
+const LEGACY_WATCHLIST_READ_ENABLED = false;
+
 function WatchlistLifecycleBadge({ symbol }: { symbol: LiveWatchlistListSymbol }) {
   const lifecycle = symbol.watchlistLifecycle;
   if (
@@ -1308,7 +1323,7 @@ function WatchlistLifecycleBadge({ symbol }: { symbol: LiveWatchlistListSymbol }
   ) {
     return null;
   }
-  if (symbol.watchlistLifecycleLabelsVisible !== true || !lifecycle) {
+  if (!LEGACY_WATCHLIST_READ_ENABLED || symbol.watchlistLifecycleLabelsVisible !== true || !lifecycle) {
     return null;
   }
   if (lifecycle.label === "Analysis Pending") {
@@ -1543,7 +1558,8 @@ function WatchlistDetailEntryGuidanceNotice() {
 function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol: LiveWatchlistSymbolState; marketDataStatus?: LiveWatchlistMarketDataStatus }) {
   const liveClosestLevelsCard = closestLevelsCardFromState(symbol);
   const closestLevelsCard = liveClosestLevelsCard ?? symbol.cards.nearestSupportResistance;
-  const traderReadCard = symbol.cards.liveTraderRead;
+  // Retired: retain stored history, but never render the legacy card.
+  const traderReadCard = LEGACY_WATCHLIST_READ_ENABLED ? symbol.cards.liveTraderRead : undefined;
   const tradersLinkAiReadCard = symbol.cards.tradersLinkAiRead;
   const recentNewsFilingsCard = symbol.cards.recentNewsFilings;
   const showRecentNewsFilingsCard = recentNewsFilingsCard
@@ -1595,7 +1611,9 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
           <p style={{ marginTop: "1rem", marginBottom: 0, fontSize: "0.75rem", lineHeight: 1.5, color: "var(--academy-muted)" }}>Full analysis may be added if the ticker develops a clearer trading setup.</p>
         </article>
       ) : null}
+      {symbol.indicatorCardVisible !== false ? (
       <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.firstPostedAt}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} livePrice={symbol.latestPrice} />
+      ) : null}
       {recentNewsFilingsCard && showRecentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
           label="Known Recent News / SEC Filings"
@@ -1660,6 +1678,8 @@ export function LiveWatchlistIndexClient({
   );
   const postmarketSymbols = activeSymbols.filter(isPostmarketAddition);
   const generalSymbols = activeSymbols.filter(symbol => getLiveWatchlistEntryGroup(symbol) === "general");
+  const swingSymbols = activeSymbols.filter(symbol => getLiveWatchlistEntryGroup(symbol) === "swings");
+  const datedTopGroups = [...new Set(activeSymbols.map(getLiveWatchlistEntryGroup).filter(isTopWatchesGroup))].sort();
 
   useEffect(() => {
     let cancelled = false;
@@ -1749,7 +1769,7 @@ export function LiveWatchlistIndexClient({
           </span>
           <span>
             {topRegularWatchlistVisible ? `${topRegularSymbols.length} top / ` : ""}
-            {mainSessionSymbols.length} main / {postmarketSymbols.length} post-market / {generalSymbols.length} general
+            {mainSessionSymbols.length} main / {postmarketSymbols.length} post-market / {generalSymbols.length} general / {swingSymbols.length} swings / {activeSymbols.filter(symbol => isTopWatchesGroup(getLiveWatchlistEntryGroup(symbol))).length} top watches
           </span>
           <WatchlistLiveDataStatus status={marketDataStatus} />
         </div>
@@ -1823,15 +1843,37 @@ export function LiveWatchlistIndexClient({
               ) : null}
             </section>
           ) : null}
+          {datedTopGroups.map(group => {
+            const members = activeSymbols.filter(symbol => getLiveWatchlistEntryGroup(symbol) === group);
+            const heading = topWatchesLabel(group);
+            return (
+              <section key={group} className="watchlist-session-list" aria-labelledby={group}>
+                <div className="watchlist-session-heading">
+                  <h2 id={group} title={group.slice(12)}>{heading}</h2>
+                  <span>{members.length}</span>
+                </div>
+                <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel={heading + " (" + group.slice(12) + ") tickers"} symbols={members} reverseSplits={reverseSplits} />
+              </section>
+            );
+          })}
+          {swingSymbols.length > 0 ? (
+            <section className="watchlist-session-list" aria-labelledby="watchlist-swings-heading">
+              <div className="watchlist-session-heading">
+                <div>
+                  <h2 id="watchlist-swings-heading">Swings</h2>
+                  <WatchlistGroupHelp label="Swings" text="This list focuses on stocks with a recent, active catalyst and floats above 50 million shares—ideally above 100 million. Stocks with an upcoming catalyst may also be included, regardless of float size." />
+                </div>
+                <span>{swingSymbols.length}</span>
+              </div>
+              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="Swings watchlist tickers" symbols={swingSymbols} reverseSplits={reverseSplits} />
+            </section>
+          ) : null}
           {generalSymbols.length > 0 ? (
             <section className="watchlist-session-list" aria-labelledby="watchlist-general-heading">
               <div className="watchlist-session-heading">
                 <div>
                   <h2 id="watchlist-general-heading">General Watchlist</h2>
-                  <details style={{ position: "relative", width: "fit-content" }}>
-                    <summary aria-label="About General Watchlist" style={{ cursor: "pointer", listStyle: "none" }}>ⓘ</summary>
-                    <p style={{ position: "absolute", zIndex: 20, width: "min(280px, 70vw)", background: "var(--academy-surface)", color: "var(--academy-text)", border: "1px solid var(--academy-border-strong)", borderRadius: 8, padding: 12, boxShadow: "var(--academy-shadow-3)" }}>Stocks being watched for potential opportunities, without a specific trading session or day-trade/swing-trade focus. Open a ticker to view available notes, analysis and price levels.</p>
-                  </details>
+                  <WatchlistGroupHelp label="General Watchlist" text="Stocks being watched for potential opportunities, without a specific trading session or day-trade/swing-trade focus. Open a ticker to view available notes, analysis and price levels." />
                 </div>
                 <span>{generalSymbols.length}</span>
               </div>

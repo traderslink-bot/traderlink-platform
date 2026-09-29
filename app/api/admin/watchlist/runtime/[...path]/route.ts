@@ -65,6 +65,7 @@ const POST_PATHS = new Set([
   "/api/watchlist/ai-read-dip-buy-visibility",
   "/api/watchlist/ai-read-refresh",
   "/api/watchlist/ai-read-visibility",
+  "/api/watchlist/indicator-visibility",
   "/api/watchlist/deactivate",
   "/api/watchlist/deactivate-bulk",
   "/api/watchlist/move-to-list",

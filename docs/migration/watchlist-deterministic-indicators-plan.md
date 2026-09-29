@@ -342,3 +342,8 @@ These references inform explanatory boundaries; they do not validate this projec
 - [TradingView VWAP documentation](https://www.tradingview.com/support/solutions/43000502018-volume-weighted-average-price-vwap/): session anchoring, reset periods and candle-price source conventions.
 
 Formula conventions and parity fixtures must be recorded in the implementation progress record, especially where a chart's session or smoothing settings differ.
+
+
+## Per-ticker visibility and legacy retirement
+
+Owner-approved follow-up: [plan](watchlist-legacy-retirement-plan.md) and [progress](watchlist-legacy-retirement-progress.md). Local implementation and focused offline checks are complete; coordinated deployment and hosted/visual acceptance remain pending. Off hides the indicator card and suppresses its provider requests without disabling current Analysis or other market-data consumers.

@@ -19,6 +19,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
   if (!ticker || ticker.status === "deactivated" || !Number.isSafeInteger(ticker.firstPostedAt) || !ticker.firstPostedAt || ticker.firstPostedAt <= 0) {
     return Response.json({ error: "Ticker was not found." }, { status: 404, headers });
   }
+  if (ticker.indicatorCardVisible === false) return Response.json({ snapshot: null }, { headers });
   const snapshot = readCachedWatchlistIndicators(symbol, `${symbol}:${ticker.firstPostedAt}`);
   // Explicit projection excludes provider identity, audit IDs, input candles and transport details.
   return Response.json({ snapshot: memberIndicatorSnapshot(snapshot) }, { headers });

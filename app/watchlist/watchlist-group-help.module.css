@@ -1,0 +1,40 @@
+.help {
+  position: relative;
+  width: fit-content;
+  margin-top: 0.35rem;
+}
+
+.help .trigger {
+  list-style: none;
+  cursor: pointer;
+}
+
+.help .trigger::-webkit-details-marker {
+  display: none;
+}
+
+/* Reuse Potential Path's question-mark circle, not its hover-only popup. */
+.help .trigger::after {
+  content: none;
+}
+
+.help .content {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 20;
+  width: min(18rem, calc(100vw - 4rem));
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.75rem 0.8rem;
+  border: 1px solid var(--academy-border-strong);
+  border-radius: 8px;
+  background: var(--academy-surface);
+  box-shadow: var(--academy-shadow-3);
+  color: var(--academy-text);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+}

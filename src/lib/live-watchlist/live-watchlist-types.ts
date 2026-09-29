@@ -12,7 +12,7 @@ export type LiveWatchlistCardKind =
   | "extendedQuote";
 
 export type LiveWatchlistStatus = "live" | "stale" | "deactivated";
-export type LiveWatchlistGroup = "top_regular" | "main" | "postmarket" | "general";
+export type LiveWatchlistGroup = "top_regular" | "main" | "postmarket" | "general" | "swings" | `top_watches:${string}`;
 export type TradersLinkAiReadStatus = "analyzing" | "ready" | "failed";
 export type LiveWatchlistSlotState = "active" | "followup";
 export type LiveWatchlistMarketDataStatus = "live" | "stale" | "offline" | "starting" | "closed";
@@ -66,6 +66,7 @@ export type LiveWatchlistCardPatch = {
   watchlistLifecycleLabelsVisible?: boolean;
   watchlistLifecycle?: LiveWatchlistLifecycleRead | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
+  indicatorCardVisible?: boolean;
   tradersLinkAiReadCardVisible?: boolean;
   tradersLinkAiReadDipBuyPlanVisible?: boolean;
   tradersLinkAiReadStatus?: TradersLinkAiReadStatus;
@@ -99,6 +100,7 @@ export type LiveWatchlistTickerDataPatch = {
   watchlistLifecycleLabelsVisible?: boolean;
   watchlistLifecycle?: LiveWatchlistLifecycleRead | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
+  indicatorCardVisible?: boolean;
   tradersLinkAiReadCardVisible?: boolean;
   tradersLinkAiReadDipBuyPlanVisible?: boolean;
   latestPrice: number;
@@ -489,6 +491,7 @@ export type LiveWatchlistSymbolState = {
   watchlistLifecycleLabelsVisible?: boolean;
   watchlistLifecycle?: LiveWatchlistLifecycleRead | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
+  indicatorCardVisible?: boolean;
   tradersLinkAiReadCardVisible?: boolean;
   tradersLinkAiReadDipBuyPlanVisible?: boolean;
   tradersLinkAiReadStatus?: TradersLinkAiReadStatus;

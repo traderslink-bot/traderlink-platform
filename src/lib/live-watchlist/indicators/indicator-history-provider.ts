@@ -239,6 +239,8 @@ type HistoryFetchInput = Readonly<{
   provider: IndicatorProvider; request: IndicatorHistoryRequest; coordinator: IndicatorRequestCoordinator;
   scope: string; consumer: string; budget: IndicatorHistoryBudget; accessToken?: string; fetcher?: typeof fetch;
   nextEnd?: number | null;
+  /** Recheck owner visibility immediately before each queued transport/retry. */
+  requestAllowed?: () => Promise<boolean>;
   /** Stop older paging once warm-up and the requested session start are both covered. */
   sufficientHistory?: Readonly<{ minimumBars: number; coverFrom: number }>;
 }>;
@@ -290,7 +292,10 @@ async function fetchIndicatorHistoryRange(input: HistoryFetchInput): Promise<Ind
     const url = indicatorHistoryUrl(input.provider, input.request, nextEnd);
     const response = await input.coordinator.request({ provider: input.provider, scope: input.scope, consumer: input.consumer,
       requestKey: url, maxAttempts: input.budget.attemptsRemaining >= 2 && input.budget.retriesRemaining > 0 ? 2 : 1,
-      execute: signal => requestIndicatorHistoryPage({ provider: input.provider, url, signal, accessToken: input.accessToken, fetcher: input.fetcher }) });
+      execute: async signal => {
+        if (input.requestAllowed && !(await input.requestAllowed())) return { ok: false as const, reason: "permission" as const, requestAccepted: false as const };
+        return requestIndicatorHistoryPage({ provider: input.provider, url, signal, accessToken: input.accessToken, fetcher: input.fetcher });
+      } });
     transportIds.push(...response.transportIds);
     input.budget.attemptsRemaining -= response.transportIds.length;
     input.budget.retriesRemaining -= Math.max(0, response.transportIds.length - 1);

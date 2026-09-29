@@ -1,4 +1,5 @@
 import "server-only";
+import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
 import { IndicatorRequestCoordinator } from "@/src/lib/live-watchlist/indicators/indicator-request-coordinator";
 import { fetchIndicatorHistory } from "@/src/lib/live-watchlist/indicators/indicator-history-provider";
 import { IndicatorRefreshService } from "@/src/lib/live-watchlist/indicators/indicator-refresh-service";
@@ -44,10 +45,14 @@ export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
       },
       saveCalculation: evidence => watchlistIndicatorAuditStore().saveCalculation(evidence),
       load: async input => {
+        const allowed = async () => {
+          const ticker = await new LiveWatchlistStore().getSymbol(input.request.symbol);
+          return !!ticker && ticker.status !== "deactivated" && ticker.indicatorCardVisible !== false;
+        };
         const access = consumerAccess.get(input.consumer);
         if (input.provider === "moomoo" && !access) return { provider: "moomoo", adjustment: "moomoo-forward",
           bars: [], pages: 0, transportIds: [], outcome: "authentication", nextEnd: null };
-        return fetchIndicatorHistory({ ...input, coordinator,
+        return fetchIndicatorHistory({ ...input, coordinator, requestAllowed: allowed,
           scope: input.provider === "moomoo" ? access!.requestScope : "watchlist-yahoo-chart",
           ...(input.provider === "moomoo" ? { accessToken: access!.token } : {}) });
       },
