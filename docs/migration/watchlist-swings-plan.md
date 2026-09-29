@@ -30,3 +30,6 @@ Unfinished reverse-split Watchlist display disabled: [progress](watchlist-revers
 
 
 Updated category-aware listing notice: [progress](watchlist-category-notice-progress.md).
+
+
+Compact mobile ticker cards: [progress](watchlist-compact-rows-progress.md).

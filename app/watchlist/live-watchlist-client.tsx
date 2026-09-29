@@ -52,6 +52,7 @@ import { WatchlistPotentialPathCardArticle } from "./potential-path-levels-card"
 import { createVisibleWatchlistStream, createWatchlistRefreshController } from "@/src/lib/live-watchlist/watchlist-refresh-controller";
 import { WatchlistIndicatorsCard } from "./watchlist-indicators-card";
 import groupHelpStyles from "./watchlist-group-help.module.css";
+import compactRows from "./watchlist-compact-rows.module.css";
 import { isTopWatchesGroup, topWatchesLabel } from "@/src/lib/live-watchlist/top-watches-group";
 import { useWatchlistReverseSplits, WatchlistReverseSplitBadge, WatchlistReverseSplitDetails } from "./reverse-split-watchlist";
 import type { ReverseSplitRow } from "@/src/modules/news/contracts/reverse-split-dashboard-contracts";
@@ -244,6 +245,13 @@ function formatTime(value: number): string {
 
 function formatDate(value: number): string {
   return watchlistDateFormatter.format(new Date(value));
+}
+
+const listDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York",
+});
+function formatListDateTime(value: number | null): string {
+  return value ? listDateTimeFormatter.format(new Date(value)) + " ET" : "n/a";
 }
 
 function formatDateTime(value: number | null): string {
@@ -1386,9 +1394,9 @@ function WatchlistTickerTable({
           <Link
             key={symbol.symbol}
             href={`/watchlist/${symbol.symbol}`}
-            className="watchlist-row"
+            className={`watchlist-row ${compactRows.row}`}
           >
-            <span className="watchlist-symbol-cell">
+            <span className={`watchlist-symbol-cell ${compactRows.ticker}`}>
               <strong>
                 {symbol.symbol}
                 {countryFlag ? (
@@ -1407,17 +1415,17 @@ function WatchlistTickerTable({
               <WatchlistLifecycleBadge symbol={symbol} />
               <WatchlistReverseSplitBadge item={reverseSplits[symbol.symbol]} />
             </span>
-            <span className="watchlist-mobile-field" data-mobile-label={marketDataStatus === "live" ? "Price (delayed 15 sec)" : "Price"}>
+            <span className={`watchlist-mobile-field ${compactRows.price}`} data-mobile-label={marketDataStatus === "live" ? "Price (delayed 15 sec)" : "Price"}>
               {formatPrice(symbol.latestPrice)}
               {marketDataStatus !== "live" ? <small className="watchlist-price-delay-note" style={{ display: "block" }}>{watchlistPriceNote(symbol, marketDataStatus)}</small> : null}
             </span>
-            <span className="watchlist-mobile-field" data-mobile-label="Added" style={watchlistTimeCellStyle}>
-              {formatDateTime(symbol.firstPostedAt)}
+            <span className={`watchlist-mobile-field ${compactRows.added}`} data-mobile-label="Added" style={watchlistTimeCellStyle}>
+              {formatListDateTime(symbol.firstPostedAt)}
             </span>
-            <span className="watchlist-mobile-field" data-mobile-label="Price time" style={watchlistTimeCellStyle}>
-              {symbol.latestPriceSource === "ticker" && symbol.latestPriceObservedAt ? formatDateTime(symbol.latestPriceObservedAt) : "Unavailable"}
+            <span className={`watchlist-mobile-field ${compactRows.priceTime}`} data-mobile-label="Price time" style={watchlistTimeCellStyle}>
+              {symbol.latestPriceSource === "ticker" && symbol.latestPriceObservedAt ? formatListDateTime(symbol.latestPriceObservedAt) : "Unavailable"}
             </span>
-            <span className="watchlist-mobile-field watchlist-details-cell" data-mobile-label="Details">
+            <span className={`watchlist-mobile-field watchlist-details-cell ${compactRows.details}`} data-mobile-label="Details">
               View details
             </span>
           </Link>

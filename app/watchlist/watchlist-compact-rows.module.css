@@ -1,0 +1,19 @@
+.row .details {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.row .details::before { content: none; }
+@media (max-width: 760px) {
+  .row.row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .row .ticker { grid-column: 1 / -1; grid-row: 1; order: 0; }
+  .row .price { grid-column: 1; grid-row: 2; order: 0; }
+  .row .priceTime { grid-column: 2; grid-row: 2; order: 0; }
+  .row .added { grid-column: 1; grid-row: 3; order: 0; }
+  .row .details { grid-column: 2; grid-row: 3; order: 0; }
+}
