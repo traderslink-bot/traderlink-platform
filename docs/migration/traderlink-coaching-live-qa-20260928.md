@@ -80,6 +80,51 @@ Authorization, storage and content are unchanged.
 
 ## Still being exercised
 
+## Dedicated bot activation and browser recheck — September 29
+
+- Owner created and invited the separate TradersLink Communities bot. Coordinator
+  applied only the staging bot-token variable and confirmed deployment
+  `49b238e0-6d6c-4bd6-a9c8-a679b63db949` successful with one running instance;
+  health HTTP 200, ready, sqlite_single_node, schema143. No production change.
+- Runtime confirms role refresh configured. Last explicit pre/post-invite-boundary
+  log at 01:41:03 UTC reports refreshed 0 / unavailable 1. Subsequent absence of
+  errors is not positive success evidence: clean refreshes are not always logged.
+  Positive member-refresh proof and real role removal/restoration remain pending.
+- Read-only live browser recheck: Bullrun remains active; accepted agreement,
+  completed review, messages and history remain present. Student messaging and
+  Journal sharing remain off; no permission changes performed.
+- Workload singular label verified live as `1 student`.
+- Synthetic review retains Find trades, To review (3), Saved (2), progress and
+  feedback. Selecting AAPL opens its inline trade-specific editor before the next
+  trade. Saved reviews retain View or edit controls. No review content was changed
+  or delivered during this recheck.
+- Members page verification timestamp is community membership evidence, not
+  platform_discord_memberships.last_verified_at_utc used by the bot refresher;
+  do not use that UI timestamp to infer refresh success or failure.
+
+### Remaining coverage
+
+## September 29 resumed QA — coaching entry point
+
+- Coordinator reconfirmed staging source278d2b837, deployment49b238e0 SUCCESS,
+  one RUNNING instance and volume READY. No new runtime diagnostic is available.
+- Reproduced `/communities/coaching` redirecting the signed-in TradersLink coach
+  without a student relationship to `/communities/test-community/coaching`, which
+  correctly rejects non-students. The prior action-helper correction did not fix
+  this entry-point selection. It is incorrect to describe the community-specific
+  student path itself as nonexistent; the catch-all serves authorized students.
+- Corrected index routing locally: own student relationship -> student workspace;
+  offer/student-management capability -> coach workspace; view/manage-all -> coach
+  directory; no matching access -> Communities. Destination guards unchanged.
+- Eight isolated route cases PASS. No hosted data mutation or full local build.
+- No coaching Help Center article was found in the current feature tree; this
+  correction restores existing navigation and introduces no new user-facing copy.
+- Available Chrome profile identifies as TradersLink, not Bullrun. Requested the
+  prior Bullrun profile be reopened; genuine remaining student-side tests cannot
+  be claimed from the coach session.
+- Bot role refresh remains unproven; do not equate conditional-log silence or the
+  separate community verification timestamp with a successful platform refresh.
+
 Lesson receipt/progress, images, scheduled agreement/maintenance, student questions,
 shared Journal, remaining negative access and desktop/mobile checks. Bullrun has
 no Journal account and messaging/review requests remain disabled. Permission
