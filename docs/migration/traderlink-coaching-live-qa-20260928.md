@@ -124,6 +124,21 @@ Authorization, storage and content are unchanged.
   be claimed from the coach session.
 - Bot role refresh remains unproven; do not equate conditional-log silence or the
   separate community verification timestamp with a successful platform refresh.
+- Owner reopened Bullrun's Chrome profile. Genuine student workspace and prior
+  delivered review/lesson/history verified; private coach history absent.
+- Enabled Bullrun's Student messaging and Student trade-review requests through
+  the coach UI. Both persisted checked and their student controls appeared after
+  reload. Journal access remains off. These two service toggles are currently on.
+- Zero-question allowance renders zero remaining and disables student Send.
+  Nonzero allowance consumption/renewal and image handling remain unverified live.
+- Submitted one synthetic `QA20260929 — Student review request`, no trade selection
+  or payment. Coach reload confirms new review3e15fd01-f871-4318-bf78-b026e9b20b7f
+  as Not started with Open review workspace. Did not resubmit after browser timeout.
+- Chrome control then repeatedly returned Debugger unattached or timed out;
+  requested reconnection. Do not classify browser-control failure as product failure.
+- Entry-point targeted ESLint passed with environment-only React autodetection
+  warning. Local checkpointb60166b0f handed to Coordinator for staging integration;
+  remote deployment and post-release navigation verification still pending.
 
 Lesson receipt/progress, images, scheduled agreement/maintenance, student questions,
 shared Journal, remaining negative access and desktop/mobile checks. Bullrun has
