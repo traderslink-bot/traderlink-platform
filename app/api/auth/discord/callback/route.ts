@@ -257,7 +257,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
               avatarHash: discordUser.avatar ?? null,
               roleIds: member.roles ?? [],
               guildOwner: listedGuild?.owner === true || member.guild_owner === true,
-              joinedAtUtc: canonicalDiscordJoinedAtUtc(member.joined_at),
+              joinedAtUtc: canonicalDiscordJoinedAtUtc(member.joined_at ?? null),
               verifiedAtUtc,
             });
           });
