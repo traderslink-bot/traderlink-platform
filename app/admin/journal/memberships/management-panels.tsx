@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { GenerationResetField } from "./generation-reset-field";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
@@ -224,12 +225,13 @@ export function MembershipManagementPanels({ database, section }: { database: Da
       </MembershipForm></JournalAdminPanel>)}
       <JournalAdminPanel title="Plan versions"><MembershipForm action={manageMembershipAction} label="Create new draft version"><Command operation="new_version" /><Select name="planVersionId" label="Copy version" options={versions} /></MembershipForm></JournalAdminPanel>
       {drafts.map((draft) => {
-        const selected = new Map((database.prepare("SELECT feature_key,limit_value FROM platform_membership_plan_features WHERE plan_version_id=?").all(draft.id) as { feature_key: string; limit_value: number | null }[]).map((f) => [f.feature_key, f.limit_value]));
+        const selected = new Map((database.prepare("SELECT feature_key,limit_value,reset_days FROM platform_membership_plan_features WHERE plan_version_id=?").all(draft.id) as { feature_key: string; limit_value: number | null; reset_days: number | null }[]).map((f) => [f.feature_key, f]));
         return <JournalAdminPanel key={draft.id} title={draft.name}><MembershipForm action={manageMembershipAction} label="Save draft"><Command operation="edit_draft" /><input type="hidden" name="planVersionId" value={draft.id} />
           <TextField name="publicDescription" label="Public description" multiline defaultValue={draft.public_description} />
           {features.map((feature) => <Stack key={feature.key} direction="row" spacing={2}>
             <MembershipCheckbox name="features" value={feature.key} defaultChecked={selected.has(feature.key)} label={feature.label} />
-            {feature.kind === "limit" ? <TextField name={`limit:${feature.key}`} label="Limit" helperText="Blank means unlimited." type="number" defaultValue={selected.get(feature.key) ?? ""} /> : null}
+            {feature.kind === "limit" ? <TextField name={`limit:${feature.key}`} label="Limit" helperText="Blank means unlimited." type="number" defaultValue={selected.get(feature.key)?.limit_value ?? ""} /> : null}
+            <GenerationResetField featureKey={feature.key} value={selected.get(feature.key)?.reset_days} />
           </Stack>)}
         </MembershipForm><Stack sx={{ mt: 2 }}><MembershipForm action={manageMembershipAction} label="Publish version"><Command operation="publish" /><input type="hidden" name="planVersionId" value={draft.id} /></MembershipForm></Stack></JournalAdminPanel>;
       })}

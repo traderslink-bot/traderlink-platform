@@ -613,6 +613,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Edit all flagged executions before submitting the corrected trade.",
         keywords: ["corrections", "saved candles", "allowance"],
         blocks: [
+          { kind: "paragraph", text: "When plan allowances are enabled, Analyzer shows your remaining analyses and next reset, or no scheduled reset. Plans may include any quantity or unlimited analyses. Usage applies across your accounts. A new charged market-data acquisition consumes one use; its continuation downloads do not consume additional uses. Saved-candle reuse and supported correction retries retain their existing waivers. A provider failure does not automatically refund an acquisition that started. The upgrade link shows matching public plans only." },
           { kind: "paragraph", text: "Choose Edit executions in the correction notice, update all incorrect rows, then review and save the trade together. Analyzer runs after the complete correction is saved. Saved candle coverage is reused without deducting Analyzer usage. If the corrected trade needs a different market-data window, a new request may be required." },
         ],
       },

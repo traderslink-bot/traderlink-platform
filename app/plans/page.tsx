@@ -13,11 +13,13 @@ export const metadata: Metadata = {
 };
 export const dynamic = "force-dynamic";
 
-export default function PlansPage() {
+export default async function PlansPage({ searchParams }: { searchParams: Promise<{ feature?: string | string[] }> }) {
+  const requested = (await searchParams).feature;
+  const feature = typeof requested === "string" ? requested : undefined;
   let plans = Object.freeze([]) as ReturnType<PlatformMembershipCatalogRepository["readPublicPlans"]>;
   try {
     plans = withReadonlyPlatformDatabase({}, (database) =>
-      new PlatformMembershipCatalogRepository(database).readPublicPlans());
+      new PlatformMembershipCatalogRepository(database).readPublicPlans(feature));
   } catch {
     // Public rendering stays truthful while the membership migration or hosted
     // storage is not available. It never invents plans or prices.

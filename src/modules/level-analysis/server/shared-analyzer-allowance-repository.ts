@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { readGenerationAllowance } from "@/src/modules/platform/server/membership/platform-membership-generation-allowance";
 import { ManualAnalyzerRetryRepository } from "./manual-analyzer-retry-repository";
 import { AnalyzerOwnerExemptionRepository } from "./analyzer-owner-exemption-repository";
 import { hasSharedAnalyzerAllowance } from "../contracts/shared-analyzer-beta-contracts";
@@ -147,6 +148,14 @@ WHERE user_id = ? ORDER BY starts_on_new_york_date LIMIT 1`).get(userId) as
     if (new AnalyzerOwnerExemptionRepository(this.database).activeEventId(userId)) {
       return Object.freeze({ enabled: settings.enabled, unlimited: true,
         dailyAvailable: null, periodAvailable: null, selectableAvailable: null, daysUntilReset: 0 });
+    }
+    const membership = readGenerationAllowance(this.database, userId, "trade_analyzer.analyses", now);
+    if (membership) {
+      const common = { enabled: settings.enabled, membership,
+        daysUntilReset: membership.resetsAtUtc ? Math.max(0, Math.ceil((Date.parse(membership.resetsAtUtc) - now.getTime()) / 86_400_000)) : 0 };
+      return membership.remaining === null
+        ? { ...common, unlimited: true, dailyAvailable: null, periodAvailable: null, selectableAvailable: null }
+        : { ...common, dailyAvailable: membership.remaining, periodAvailable: membership.remaining, selectableAvailable: membership.remaining };
     }
     const override = this.database.prepare(`SELECT daily_limit, period_limit
 FROM level_analysis_user_allowance_overrides WHERE user_id = ?`).get(userId) as
@@ -300,6 +309,13 @@ WHERE reservation_id = ?`).get(reservation.reservationId) as { count: number };
       if (!settings.enabled || !settings.designatedConnectionConfigured) return null;
       const exemptions = new AnalyzerOwnerExemptionRepository(this.database);
       const exemptionEventId = exemptions.activeEventId(retry?.user_id ?? reservation!.userId);
+      // A queued, uncharged download must still have access when it starts.
+      // Exclude its own reservation; continuations and correction retries stay waived.
+      const alreadyAcquired = reservation && this.database.prepare("SELECT 1 FROM level_analysis_analyzer_acquisitions WHERE reservation_id=? LIMIT 1").get(reservation.reservationId);
+      if (!retry && reservation && !alreadyAcquired && !reservation.correctionWaiver && !exemptionEventId) {
+        const membership = readGenerationAllowance(this.database, reservation.userId, "trade_analyzer.analyses", input.now, reservation.reservationId);
+        if (membership?.remaining === 0) return null;
+      }
       const expiredLeaseBefore = new Date(input.now.getTime() - 5 * 60 * 1000).toISOString();
       this.database.prepare(`UPDATE level_analysis_analyzer_acquisitions
 SET completed_at_utc = ?, outcome = 'provider_unavailable'

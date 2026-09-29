@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
+import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
+import { WatchlistFeatureMessage } from "../../watchlist-feature-message";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -66,6 +69,8 @@ export default async function LiveWatchlistArchiveDetailPage({
     );
   }
 
+  const features = readWatchlistFeatureAccess(access.principal.platformUserId);
+  if (!features.tickerDetails) return <WatchlistDashboardFrame><div className="academy-container"><WatchlistFeatureMessage feature="ticker_details" /><Link href="/watchlist">Back to watchlist</Link></div></WatchlistDashboardFrame>;
   const archive = await new LiveWatchlistStore().getArchive(archiveId);
   if (!archive) {
     notFound();
@@ -74,7 +79,7 @@ export default async function LiveWatchlistArchiveDetailPage({
   return (
     <WatchlistDashboardFrame>
       <div className="academy-container">
-        <LiveWatchlistArchiveDetailClient archive={archive} />
+        <LiveWatchlistArchiveDetailClient archive={{ ...archive, state: watchlistDetailProjection(archive.state, features.tradeAnalysis) }} />
       </div>
     </WatchlistDashboardFrame>
   );

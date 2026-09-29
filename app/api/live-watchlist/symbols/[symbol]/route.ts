@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
+import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
 
 import { authorizeWatchlistMemberRequest } from "@/src/lib/live-watchlist/live-watchlist-auth";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
@@ -16,6 +18,8 @@ export async function GET(
   }
 
   const { symbol } = await context.params;
+  const features = readWatchlistFeatureAccess(auth.principal.platformUserId);
+  if (!features.tickerDetails) return NextResponse.json({ code: "membership_required", feature: "watchlist.ticker_details" }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
   const store = new LiveWatchlistStore();
   const [state, health] = await Promise.all([
     store.getSymbol(symbol),
@@ -28,6 +32,6 @@ export async function GET(
     generatedAt: Date.now(),
     marketDataStatus: health.marketDataStatus,
     marketDataUpdatedAt: health.marketDataUpdatedAt,
-    symbol: state,
-  });
+    symbol: watchlistDetailProjection(state, features.tradeAnalysis),
+  }, { headers: { "Cache-Control": "private, no-store" } });
 }

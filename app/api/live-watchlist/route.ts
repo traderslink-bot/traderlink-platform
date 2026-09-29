@@ -17,7 +17,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const data = await measurePlatformRequestPhaseAsync("watchlist", () => new LiveWatchlistStore().listSymbols());
     return measurePlatformRequestPhase("json", () => NextResponse.json(
-      request.nextUrl.searchParams.get("view") === "list" ? projectLiveWatchlistList(data) : data, {
+      projectLiveWatchlistList(data), {
       headers: { "Cache-Control": "private, no-store" },
     }));
   });

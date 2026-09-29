@@ -11,6 +11,10 @@ export const PLATFORM_MEMBERSHIP_FEATURES = Object.freeze([
   { key: "ai.chat", label: "AI Chat", kind: "boolean", module: "ai" },
   { key: "academy.access", label: "Academy", kind: "boolean", module: "academy" },
   { key: "watchlist.access", label: "Watchlist", kind: "boolean", module: "watchlist" },
+  { key: "watchlist.ticker_details", label: "Ticker details", kind: "boolean", module: "watchlist" },
+  { key: "watchlist.trade_analysis", label: "Trade analysis & preparation", kind: "boolean", module: "watchlist" },
+  { key: "trade_analyzer.analyses", label: "Trade Analyzer analyses", kind: "limit", module: "level-analysis" },
+  { key: "levels.generations", label: "Levels Generator generations", kind: "limit", module: "stock-levels" },
   { key: "community.access", label: "Community", kind: "boolean", module: "community" },
   { key: "coaching.access", label: "Coaching", kind: "boolean", module: "coaching" },
   { key: "broker.connections", label: "Broker connections", kind: "limit", module: "platform" },
@@ -35,6 +39,7 @@ export type PlatformMembershipEntitlementSource =
 export type PlatformMembershipFeatureGrant = Readonly<{
   featureKey: PlatformMembershipFeatureKey;
   limitValue: number | null;
+  resetDays?: number | null;
 }>;
 
 export type PlatformEffectiveMembershipAccess = Readonly<{

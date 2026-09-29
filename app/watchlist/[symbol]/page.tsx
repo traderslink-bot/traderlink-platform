@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
+import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
+import { WatchlistFeatureMessage } from "../watchlist-feature-message";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -69,6 +72,8 @@ export default async function LiveWatchlistSymbolPage({
     );
   }
 
+  const features = readWatchlistFeatureAccess(access.principal.platformUserId);
+  if (!features.tickerDetails) return <WatchlistDashboardFrame><div className="academy-container watchlist-container"><WatchlistFeatureMessage feature="ticker_details" /><Link href="/watchlist">Back to watchlist</Link></div></WatchlistDashboardFrame>;
   const state = await new LiveWatchlistStore().getSymbol(symbol);
   if (!state) {
     notFound();
@@ -119,7 +124,7 @@ export default async function LiveWatchlistSymbolPage({
         <WatchlistVisitRecorder pageKey={state.symbol} pageKind="detail" />
         <LiveWatchlistDetailClient
           initialMarketDataStatus={health.marketDataStatus}
-          initialSymbol={state}
+          initialSymbol={watchlistDetailProjection(state, features.tradeAnalysis)}
         />
       </div>
     </WatchlistDashboardFrame>

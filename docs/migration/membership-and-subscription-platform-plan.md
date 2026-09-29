@@ -1,8 +1,8 @@
 # TraderLink Membership And Subscription Platform Plan
 
-**Owner-approved addition:** [Trade Analyzer and Levels Generator allowances](membership-generation-allowances-progress.md). Both require per-plan quantities, unlimited options and configurable reset periods; production-engine reconciliation is underway, not complete.
+**Owner-approved addition:** [Trade Analyzer and Levels Generator allowances](membership-generation-allowances-progress.md). Implementation is complete on the current-release source, with per-plan quantities, unlimited and configurable day-based resets. Static checks passed; runtime/owner acceptance and deployment remain pending.
 
-**Owner-approved addition:** [Independent Watchlist detail and preparation gates](watchlist-membership-feature-split-progress.md). Implementation is local; owner UI acceptance remains pending and is separate from the earlier completed QA inventory.
+**Owner-approved addition:** [Independent Watchlist detail and preparation gates](watchlist-membership-feature-split-progress.md). Reconciled implementation is complete on current-release source, including analysis-history/indicator endpoints and compact list/stream transport. Runtime/owner acceptance remains pending and separate from the earlier QA inventory.
 
 **Status:** Local implementation and focused follow-up QA complete. The Discord partial-outage finding is fixed and the [follow-up QA](membership-follow-up-qa-2026-09-27.md) rerun passed. Payment-processor integration/verification remains a separate later goal. The owner authorized the first production release on 2026-09-28; current reconciliation and release evidence are recorded in the [production release progress](membership-production-release-progress.md).
 

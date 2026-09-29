@@ -71,7 +71,7 @@ export class PlatformMembershipManagement {
             (plan_version_id,plan_id,version_number,public_description,lifecycle_state,created_by_user_id,created_at_utc)
             SELECT ?,?,MAX(version_number)+1,?,'draft',?,? FROM platform_membership_plan_versions WHERE plan_id=?`)
             .run(target, source.plan_id, source.public_description, actorUserId, at, source.plan_id);
-          this.database.prepare(`INSERT INTO platform_membership_plan_features SELECT ?,feature_key,feature_kind,limit_value
+          this.database.prepare(`INSERT INTO platform_membership_plan_features (plan_version_id,feature_key,feature_kind,limit_value,reset_days) SELECT ?,feature_key,feature_kind,limit_value,reset_days
             FROM platform_membership_plan_features WHERE plan_version_id=?`).run(target, sourceId);
           break;
         }

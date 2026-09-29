@@ -1,4 +1,6 @@
 "use client";
+import { WatchlistFeatureMessage } from "./watchlist-feature-message";
+import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
 
 import { SimpleAnalysisCard } from "./simple-analysis-card";
 import { AnalysisHistoryLines } from "./analysis-history-lines";
@@ -1572,7 +1574,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
         showMeta={false}
         showOuterMeta={false}
       />
-      {symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
+      {symbol.membershipAnalysisAllowed === false ? <WatchlistFeatureMessage feature="trade_analysis" /> : symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
         <TradersLinkAiReadCard
           card={tradersLinkAiReadCard}
           symbol={symbol}
@@ -1686,8 +1688,8 @@ export function LiveWatchlistIndexClient({
       void refresh();
     });
     stream.addEventListener("symbol", (event) => {
-      const next = JSON.parse(event.data) as LiveWatchlistSymbolState;
-      setSymbols((current) => mergeLiveWatchlistListSymbol(current, projectLiveWatchlistListSymbol(next)));
+      const next = JSON.parse(event.data) as LiveWatchlistListSymbol | LiveWatchlistSymbolState;
+      setSymbols((current) => mergeLiveWatchlistListSymbol(current, "cards" in next ? projectLiveWatchlistListSymbol(next) : next));
     });
     stream.addEventListener("health", (event) => {
       const next = JSON.parse(event.data) as {
@@ -1884,6 +1886,7 @@ export function LiveWatchlistDetailClient({
   initialSymbol: LiveWatchlistSymbolState;
 }) {
   const [symbol, setSymbol] = useState(initialSymbol);
+  const [detailsDenied, setDetailsDenied] = useState(false);
   const reverseSplits = useWatchlistReverseSplits(symbol.status === "deactivated" ? [] : [symbol.symbol]);
   const [marketDataStatus, setMarketDataStatus] =
     useState<LiveWatchlistMarketDataStatus>(initialMarketDataStatus);
@@ -1893,6 +1896,10 @@ export function LiveWatchlistDetailClient({
     let cancelled = false;
     const refreshController = createWatchlistRefreshController(async (signal) => {
       const response = await fetch(`/api/live-watchlist/symbols/${initialSymbol.symbol}`, { signal });
+      if (response.status === 401 || response.status === 403) {
+        if (!cancelled) setDetailsDenied(true);
+        return;
+      }
       if (!response.ok) {
         throw new Error("watchlist_refresh_unavailable");
       }
@@ -1901,7 +1908,8 @@ export function LiveWatchlistDetailClient({
         symbol: LiveWatchlistSymbolState;
       };
       if (!cancelled) {
-        setSymbol((current) => reconcileLiveWatchlistSymbolState(current, payload.symbol));
+        setDetailsDenied(false);
+        setSymbol((current) => watchlistDetailProjection(reconcileLiveWatchlistSymbolState(current, payload.symbol), payload.symbol.membershipAnalysisAllowed !== false));
         setMarketDataStatus(payload.marketDataStatus);
       }
     });
@@ -1913,7 +1921,9 @@ export function LiveWatchlistDetailClient({
     stream.addEventListener("symbol", (event) => {
       const next = JSON.parse(event.data) as LiveWatchlistSymbolState;
       if (next.symbol === initialSymbol.symbol) {
-        setSymbol((current) => reconcileLiveWatchlistSymbolState(current, next));
+        // The stream updates list/quote facts only. Polling refreshes detail
+        // through the endpoint that rechecks current plan access.
+        setSymbol((current) => watchlistDetailProjection(reconcileLiveWatchlistSymbolState(current, { ...current, ...next, cards: current.cards }), current.membershipAnalysisAllowed !== false));
       }
     });
     stream.addEventListener("health", (event) => {
@@ -1948,6 +1958,7 @@ export function LiveWatchlistDetailClient({
       }
     };
   }, [initialSymbol.symbol]);
+  if (detailsDenied) return <WatchlistFeatureMessage feature="ticker_details" />;
 
   if (symbol.status === "deactivated") {
     return (
@@ -2009,7 +2020,7 @@ export function LiveWatchlistArchiveIndex({
   totalArchives,
   totalPages,
 }: {
-  archives: LiveWatchlistArchiveSnapshot[];
+  archives: Omit<LiveWatchlistArchiveSnapshot, "state">[];
   currentPage: number;
   totalArchives: number;
   totalPages: number;

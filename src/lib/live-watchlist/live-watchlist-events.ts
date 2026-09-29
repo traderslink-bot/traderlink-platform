@@ -1,3 +1,4 @@
+import { projectLiveWatchlistListSymbol } from "./live-watchlist-list";
 import type {
   LiveWatchlistMarketDataStatus,
   LiveWatchlistSymbolState,
@@ -34,7 +35,8 @@ export function createLiveWatchlistStream(): ReadableStream<Uint8Array> {
 }
 
 export function broadcastLiveWatchlistUpdate(symbol: LiveWatchlistSymbolState): void {
-  const event = encodeSse("symbol", symbol);
+  // The shared member stream must never contain gated detail/analysis data.
+  const event = encodeSse("symbol", projectLiveWatchlistListSymbol(symbol));
   for (const [id, subscriber] of subscribers.entries()) {
     try {
       subscriber.controller.enqueue(event);

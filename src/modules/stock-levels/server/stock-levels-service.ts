@@ -1,4 +1,5 @@
 import "server-only";
+import { readGenerationAllowance } from "@/src/modules/platform/server/membership/platform-membership-generation-allowance";
 
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -49,6 +50,12 @@ function feedback(
   now: number,
   noRequestLimit: boolean,
 ): StockLevelsQuotaFeedback {
+  const database = openPlatformDatabase({ mode: "runtime" });
+  try {
+    const membership = readGenerationAllowance(database, scope.userId, "levels.generations", new Date(now));
+    if (membership) return { membership, remainingHourly: membership.remaining, remainingNewYorkDay: membership.remaining,
+      resetAt: membership.resetsAtUtc ? Date.parse(membership.resetsAtUtc) : null };
+  } finally { database.close(); }
   if (noRequestLimit) {
     return { remainingHourly: null, remainingNewYorkDay: null, resetAt: null };
   }
@@ -190,9 +197,10 @@ function recordCalculationAndSaveMap(
   try {
     const transaction = database.transaction(() => {
       pruneExpiredSavedMaps(database, scope, now);
-      if (map.cacheStatus === "fresh" && !noRequestLimit) {
-        const used = readQuota(database, scope, now);
-        if (used.hourly >= MAX_FRESH_REQUESTS_PER_HOUR || used.day >= MAX_FRESH_REQUESTS_PER_NEW_YORK_DAY) {
+      const membership = readGenerationAllowance(database, scope.userId, "levels.generations", new Date(now));
+      if (map.cacheStatus === "fresh" && (membership || !noRequestLimit)) {
+        const used = membership ? null : readQuota(database, scope, now);
+        if (membership ? membership.remaining === 0 : used!.hourly >= MAX_FRESH_REQUESTS_PER_HOUR || used!.day >= MAX_FRESH_REQUESTS_PER_NEW_YORK_DAY) {
           throw new SavedMapPersistenceFailure("limit_reached");
         }
         database.prepare("INSERT INTO platform_stock_levels_usage (user_id, symbol, requested_at_ms, new_york_date) VALUES (?, ?, ?, ?)")
@@ -206,7 +214,7 @@ function recordCalculationAndSaveMap(
       });
       return Object.freeze({ state: "ready" as const, savedMap });
     });
-    return transaction();
+    return transaction.immediate();
   } catch (error) {
     if (error instanceof SavedMapPersistenceFailure) {
       return error.state === "limit_reached"
@@ -238,7 +246,7 @@ export async function getStockLevels(
       }
     } finally { database.close(); }
   }
-  if (!noRequestLimit && (feedbackBefore.remainingHourly === 0 || feedbackBefore.remainingNewYorkDay === 0)) return { state: "unavailable", code: "limit_reached", message: "The Stock Levels request limit has been reached. Use the reset time shown here.", ...feedbackBefore };
+  if ((feedbackBefore.membership || !noRequestLimit) && (feedbackBefore.remainingHourly === 0 || feedbackBefore.remainingNewYorkDay === 0)) return { state: "unavailable", code: "limit_reached", message: "Your generation allowance has been reached. View plans for more access, or wait for your reset if one is scheduled.", ...feedbackBefore };
   const runtimeReply = await requestStockLevels(symbol);
   if (!runtimeReply) return { state: "unavailable", code: "runtime_unavailable", message: "A reliable Stock Levels map is unavailable right now. Try again later.", ...feedbackBefore };
   if (!("map" in runtimeReply)) {
@@ -249,13 +257,14 @@ export async function getStockLevels(
       : { state: "unavailable", code: runtimeReply.code, message: runtimeReply.message, ...feedbackBefore };
   }
   const { map } = runtimeReply;
-  const persisted = recordCalculationAndSaveMap(scope, map, now, replaceSavedMapId, noRequestLimit);
+  const completedAt = Date.now();
+  const persisted = recordCalculationAndSaveMap(scope, map, completedAt, replaceSavedMapId, noRequestLimit);
   if (persisted.state === "limit_reached") {
-    const feedbackAfterLimit = feedback(scope, now, noRequestLimit);
-    return { state: "unavailable", code: "limit_reached", message: "The Stock Levels request limit has been reached. Use the reset time shown here.", ...feedbackAfterLimit };
+    const feedbackAfterLimit = feedback(scope, completedAt, noRequestLimit);
+    return { state: "unavailable", code: "limit_reached", message: "Your generation allowance has been reached. View plans for more access, or wait for your reset if one is scheduled.", ...feedbackAfterLimit };
   }
   if (persisted.state === "saved_map_unavailable") {
     return { state: "unavailable", code: "saved_map_unavailable", message: "This saved map is unavailable.", ...feedback(scope, now, noRequestLimit) };
   }
-  return { state: "ready", map, savedMap: persisted.savedMap, ...feedback(scope, now, noRequestLimit) };
+  return { state: "ready", map, savedMap: persisted.savedMap, ...feedback(scope, completedAt, noRequestLimit) };
 }

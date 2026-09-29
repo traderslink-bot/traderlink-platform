@@ -20,9 +20,15 @@ export function membershipFeaturesFromForm(database: Database.Database, form: Fo
     if (typeof key !== "string" || !definitions.has(key)) throw new Error("A selected feature is no longer available. Refresh the feature list.");
     const feature = definitions.get(key)!;
     const value = form.get(`limit:${key}`);
+    const reset = form.get(`resetDays:${key}`);
+    const metered = key === "trade_analyzer.analyses" || key === "levels.generations";
+    if (metered && reset !== null && reset !== "" && (typeof reset !== "string" || !/^\d+$/.test(reset) || !Number.isSafeInteger(Number(reset)) || Number(reset) < 1)) {
+      throw new Error(`Enter a positive whole-number reset interval for ${feature.label}.`);
+    }
     if (feature.kind === "limit" && value !== null && value !== "" && (typeof value !== "string" || !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)))) {
       throw new Error(`Enter a whole-number limit for ${feature.label}.`);
     }
-    return { featureKey: key, limitValue: feature.kind === "limit" && value !== null && value !== "" ? Number(value) : null };
+    return { featureKey: key, limitValue: feature.kind === "limit" && value !== null && value !== "" ? Number(value) : null,
+      resetDays: metered && reset !== null && reset !== "" ? Number(reset) : null };
   });
 }

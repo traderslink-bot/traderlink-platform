@@ -1,6 +1,7 @@
 import { watchlistFreeChatMigration } from "./migrations/0149_watchlist_free_chat";
 import { watchlistPotentialGainPostsMigration } from "./migrations/0147_watchlist_potential_gain_posts";
 import { platformMembershipPlatformMigration } from "./migrations/0148_platform_membership_platform";
+import { platformMembershipGenerationAllowancesMigration } from "./migrations/0150_platform_membership_generation_allowances";
 import { watchlistOwnerReviewNotificationsMigration } from "./migrations/0146_watchlist_owner_review_notifications";
 import { platformPremiumSwingIdeaVisitEventsMigration } from "./migrations/0139_platform_premium_swing_idea_visit_events";
 import { newsMarketHaltDiscordDeliveriesMigration } from "@/src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries";
@@ -639,6 +640,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0147_watchlist_potential_gain_posts.ts", migration: watchlistPotentialGainPostsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0148_platform_membership_platform.ts", migration: platformMembershipPlatformMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0149_watchlist_free_chat.ts", migration: watchlistFreeChatMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0150_platform_membership_generation_allowances.ts", migration: platformMembershipGenerationAllowancesMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(

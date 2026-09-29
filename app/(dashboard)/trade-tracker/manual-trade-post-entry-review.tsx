@@ -1,4 +1,5 @@
 "use client";
+import { TradeAnalyzerAllowanceSummary } from "../trade-analyzer-allowance-summary";
 import type { SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 
 import Decimal from "decimal.js";
@@ -99,8 +100,7 @@ export function ManualTradePostEntryReview({
   return <Stack spacing={1.5}>
     {showAnalyzer ? <Box>
       <Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography>
-      <Typography color="text.secondary" variant="body2">{analyzerUses.unlimited ? "Unlimited" : `${analyzerUses.dailyAvailable} available today`}</Typography>
-      {!analyzerUses.unlimited ? <Typography color="text.secondary" variant="body2">{analyzerUses.periodAvailable} available this period · resets in {analyzerUses.daysUntilReset} days</Typography> : null}
+      <TradeAnalyzerAllowanceSummary availability={analyzerUses} selected={0} />
       <Typography color="text.secondary" variant="body2">Analysis using sufficient saved candles is free. Selecting a trade does not spend a use.</Typography>
     </Box> : null}
     {units.map((unit) => {

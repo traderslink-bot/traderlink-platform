@@ -23,6 +23,7 @@ export type StockLevelsQuotaFeedback = Readonly<{
   remainingHourly: number | null;
   remainingNewYorkDay: number | null;
   resetAt: number | null;
+  membership?: Readonly<{ remaining: number | null; resetsAtUtc: string | null; resetDays: number | null }>;
 }>;
 
 export type StockLevelsResult =
@@ -49,6 +50,15 @@ export function isSavedStockLevelsMap(value: unknown): value is SavedStockLevels
 export function isStockLevelsQuotaFeedback(value: unknown): value is StockLevelsQuotaFeedback {
   if (!value || typeof value !== "object") return false;
   const feedback = value as Record<string, unknown>;
+  if (feedback.membership !== undefined) {
+    if (!feedback.membership || typeof feedback.membership !== "object") return false;
+    const membership = feedback.membership as Record<string, unknown>;
+    if (!(membership.remaining === null || (Number.isSafeInteger(membership.remaining) && Number(membership.remaining) >= 0)) ||
+        !(membership.resetsAtUtc === null || (typeof membership.resetsAtUtc === "string" && Number.isFinite(Date.parse(membership.resetsAtUtc)))) ||
+        !(membership.resetDays === null || (Number.isSafeInteger(membership.resetDays) && Number(membership.resetDays) > 0))) return false;
+    return feedback.remainingHourly === membership.remaining && feedback.remainingNewYorkDay === membership.remaining &&
+      feedback.resetAt === (membership.resetsAtUtc === null ? null : Date.parse(membership.resetsAtUtc as string));
+  }
   const allNull = feedback.remainingHourly === null &&
     feedback.remainingNewYorkDay === null && feedback.resetAt === null;
   const isFiniteNumber = (candidate: unknown): candidate is number =>

@@ -1,6 +1,7 @@
 export type SharedAnalyzerAvailability = Readonly<{
   enabled: boolean;
   daysUntilReset: number;
+  membership?: Readonly<{ remaining: number | null; resetsAtUtc: string | null; resetDays: number | null }>;
 } & ({
   unlimited: true;
   dailyAvailable: null;

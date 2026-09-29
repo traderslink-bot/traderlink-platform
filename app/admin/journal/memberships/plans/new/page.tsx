@@ -1,4 +1,5 @@
 import Button from "@mui/material/Button";
+import { GenerationResetField } from "../../generation-reset-field";
 import { MembershipCheckbox } from "../../membership-checkbox";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
@@ -46,6 +47,7 @@ export default async function NewMembershipPlanPage() {
                   {feature.kind === "limit" ? (
                     <TextField slotProps={{ htmlInput: { min: 0, step: 1 } }} label="Limit" helperText="Blank means unlimited." name={`limit:${feature.key}`} size="small" sx={{ width: { sm: 160 } }} type="number" />
                   ) : null}
+                  <GenerationResetField featureKey={feature.key} />
                 </Stack>
               ))}
             </Stack>

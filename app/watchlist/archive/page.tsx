@@ -77,7 +77,8 @@ export default async function LiveWatchlistArchivePage({
     <WatchlistDashboardFrame>
       <div className="academy-container">
         <LiveWatchlistArchiveIndex
-          archives={archives}
+          archives={archives.map(archive => ({ archiveId: archive.archiveId, symbol: archive.symbol,
+            archivedAt: archive.archivedAt, firstPostedAt: archive.firstPostedAt, lastActiveUpdatedAt: archive.lastActiveUpdatedAt }))}
           currentPage={currentPage}
           totalArchives={totalArchives}
           totalPages={totalPages}

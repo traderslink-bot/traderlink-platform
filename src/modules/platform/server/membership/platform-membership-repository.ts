@@ -316,15 +316,18 @@ ON CONFLICT(provider_key) DO UPDATE SET label=excluded.label,
         platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "features" });
       }
       seen.add(grant.featureKey);
+      if (grant.resetDays != null && (!Number.isSafeInteger(grant.resetDays) || grant.resetDays < 1)) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "resetDays" });
+      }
     }
     this.database.transaction(() => {
       this.database.prepare("DELETE FROM platform_membership_plan_features WHERE plan_version_id=?")
         .run(planVersionId);
       const insert = this.database.prepare(`INSERT INTO platform_membership_plan_features
-(plan_version_id,feature_key,feature_kind,limit_value) VALUES (?,?,?,?)`);
+(plan_version_id,feature_key,feature_kind,limit_value,reset_days) VALUES (?,?,?,?,?)`);
       for (const grant of features) {
         const feature = definitions.get(grant.featureKey)!;
-        insert.run(planVersionId, grant.featureKey, feature.feature_kind, grant.limitValue);
+        insert.run(planVersionId, grant.featureKey, feature.feature_kind, grant.limitValue, grant.resetDays ?? null);
       }
     }).immediate();
   }

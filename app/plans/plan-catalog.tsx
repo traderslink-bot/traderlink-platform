@@ -55,6 +55,7 @@ export function PlanCatalog({
                         <CheckCircleRoundedIcon color="success" fontSize="small" />
                         <Typography variant="body2">
                           {feature.label}{feature.limitValue === null ? feature.kind === "limit" ? ": Unlimited" : "" : `: ${feature.limitValue}`}
+                          {feature.metered && feature.limitValue !== null ? feature.resetDays ? ` every ${feature.resetDays} days` : " · no reset" : ""}
                         </Typography>
                       </Stack>
                     ))}

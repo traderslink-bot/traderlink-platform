@@ -3,6 +3,7 @@
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
@@ -221,11 +222,14 @@ export function StockLevelsClient() {
 
   const hasNoRequestLimit = quotaFeedback?.remainingHourly === null &&
     quotaFeedback?.remainingNewYorkDay === null && quotaFeedback?.resetAt === null;
-  const feedback = hasNoRequestLimit
+  const membership = quotaFeedback?.membership;
+  const feedback = membership
+    ? `${membership.remaining === null ? "Unlimited generations" : `${membership.remaining} generations remaining`}${membership.resetsAtUtc ? ` · resets ${new Date(membership.resetsAtUtc).toLocaleString()}` : membership.remaining === null ? "" : " · no scheduled reset"}`
+    : hasNoRequestLimit
     ? "No request limit"
     : quotaFeedback
     ? `Your account has ${quotaFeedback.remainingHourly} request${quotaFeedback.remainingHourly === 1 ? "" : "s"} left this hour · ${quotaFeedback.remainingNewYorkDay} left today (New York)`
-    : requestError ?? "Each account has 5 requests per hour and 15 per New York trading day.";
+    : requestError ?? "Loading your generation allowance…";
 
   return (
     <DashboardPage>
@@ -248,6 +252,7 @@ export function StockLevelsClient() {
           </DashboardPrimaryAction>
         </Box>
         <Typography color="text.secondary" variant="body2">{feedback}</Typography>
+        {membership?.remaining === 0 ? <Button href="/plans?feature=levels.generations" variant="outlined">View plans with more generations</Button> : null}
       </DashboardPanel>
 
       {generatedResults.length > 0 ? (

@@ -8,6 +8,10 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
     keywords: ["Discord", "Free Chat", "sharing"],
     blocks: [{kind:"paragraph",text:"Owners can select Also post to Free Chat beside analysis approval. Free Chat on a ticker row opens Post to Free Chat for a later share of the published analysis, without repeating Watchlist, email or push notifications. The post tags everyone and includes the approved analysis images and Watchlist links. Automatically post analysis updates to Free Chat is off by default and applies only to future automatically published updates for that ticker. Manual refresh alone does not share a draft. Delivery status and sent time appear in these controls. A Free Chat failure does not undo or block normal approval."}],
   }, {
+    id: "plan-access", title: "Plan access", summary: "List, ticker details and analysis can have different access.",
+    keywords: ["plans", "membership", "locked", "analysis", "ticker details"],
+    blocks: [{ kind: "paragraph", text: "The owner can include the main Watchlist, Ticker details and Trade analysis & preparation separately in any plan. If a feature is locked, its message links to public plans containing it. Ticker detail access also applies to archives and indicators. Analysis access includes the preparation card and its publication history. Private coaching or invitation offers do not appear in these upgrade results." }],
+  }, {
     id: "setups", title: "TradersLink Analysis", summary: "Read the setup that fits your trading style.",
     keywords: ["watchlist", "pullback", "breakout", "failure", "posted price"],
     blocks: [{ kind: "paragraph", text: "Watchlist posts highlight active stocks attracting volume and attention—they are not signals to rush into a trade. Wait for your setup and use the pullback, breakout, and failure levels. A break below the failure level invalidates the momentum idea. The posted price reflects the price at the time of analysis." },

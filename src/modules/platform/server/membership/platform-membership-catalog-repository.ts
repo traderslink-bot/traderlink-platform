@@ -34,7 +34,7 @@ export type PlatformMembershipCatalogPlan = Readonly<{
   planVersionId: string;
   name: string;
   description: string;
-  features: readonly Readonly<{ label: string; kind: string; limitValue: number | null }>[];
+  features: readonly Readonly<{ label: string; kind: string; limitValue: number | null; resetDays?: number | null; metered?: boolean }>[];
   offers: readonly PlatformMembershipCatalogOffer[];
 }>;
 
@@ -46,6 +46,8 @@ type CatalogRow = Readonly<{
   feature_label: string | null;
   feature_kind: string | null;
   limit_value: number | null;
+  reset_days: number | null;
+  feature_key: string | null;
   offer_id: string;
   offer_name: string;
   provider: string;
@@ -88,7 +90,7 @@ function shape(rows: readonly CatalogRow[]): readonly PlatformMembershipCatalogP
     planVersionId: string;
     name: string;
     description: string;
-    features: Map<string, { label: string; kind: string; limitValue: number | null }>;
+    features: Map<string, { label: string; kind: string; limitValue: number | null; resetDays: number | null; metered: boolean }>;
     offers: Map<string, PlatformMembershipCatalogOffer>;
   }>();
   for (const row of rows) {
@@ -105,6 +107,8 @@ function shape(rows: readonly CatalogRow[]): readonly PlatformMembershipCatalogP
         label: row.feature_label,
         kind: row.feature_kind ?? "boolean",
         limitValue: row.limit_value,
+        resetDays: row.reset_days,
+        metered: row.feature_key === "trade_analyzer.analyses" || row.feature_key === "levels.generations",
       });
     }
     plan.offers.set(row.offer_id, Object.freeze({
@@ -138,7 +142,7 @@ function shape(rows: readonly CatalogRow[]): readonly PlatformMembershipCatalogP
 }
 
 const CATALOG_SELECT = `SELECT plan.plan_id,version.plan_version_id,plan.name plan_name,
-  version.public_description,definition.label feature_label,feature.feature_kind,feature.limit_value,
+  version.public_description,definition.label feature_label,feature.feature_kind,feature.limit_value,feature.reset_days,feature.feature_key,
   offer.offer_id,offer.name offer_name,offer.provider,provider.label provider_label,offer.channel,offer.billing_kind,
   offer.currency,offer.initial_amount_minor,offer.renewal_amount_minor,
   offer.billing_period_days,offer.billing_interval,offer.billing_interval_count,offer.access_duration_days,offer.external_checkout_url
@@ -158,13 +162,16 @@ export class PlatformMembershipCatalogRepository {
     return row?.name ?? "Plans";
   }
 
-  readPublicPlans(): readonly PlatformMembershipCatalogPlan[] {
+  readPublicPlans(featureKey?: string): readonly PlatformMembershipCatalogPlan[] {
     if (!isPlatformMembershipCatalogAvailable(this.database)) return Object.freeze([]);
     const rows = this.database.prepare(`${CATALOG_SELECT}
 WHERE plan.status='active' AND plan.visibility='public'
   AND version.lifecycle_state='published' AND offer.status='active'
   AND offer.channel IN ('website','both')
-ORDER BY plan.display_order,plan.name,offer.name,definition.label`).all() as CatalogRow[];
+  AND (? IS NULL OR EXISTS (SELECT 1 FROM platform_membership_plan_features requested
+    WHERE requested.plan_version_id=version.plan_version_id AND requested.feature_key=?
+      AND (requested.feature_kind='boolean' OR requested.limit_value IS NULL OR requested.limit_value>0)))
+ORDER BY plan.display_order,plan.name,offer.name,definition.label`).all(featureKey ?? null, featureKey ?? null) as CatalogRow[];
     return this.withTrials(shape(rows), createCanonicalUtcTimestamp());
   }
 

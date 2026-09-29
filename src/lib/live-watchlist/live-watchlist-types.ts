@@ -474,6 +474,7 @@ export type LiveWatchlistLevelMap = {
 };
 
 export type LiveWatchlistSymbolState = {
+  membershipAnalysisAllowed?: boolean;
   symbol: string;
   status: LiveWatchlistStatus;
   updatedAt: number;

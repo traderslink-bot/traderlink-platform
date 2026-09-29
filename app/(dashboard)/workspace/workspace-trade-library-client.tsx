@@ -1,4 +1,5 @@
 "use client";
+import { TradeAnalyzerAllowanceSummary } from "../trade-analyzer-allowance-summary";
 import type { SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
@@ -524,8 +525,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
             <Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography>
             {analyzerUsesStatus === "loading" ? <Typography color="text.secondary" variant="body2">Loading…</Typography> : null}
             {analyzerUsesStatus === "ready" && analyzerUses?.enabled ? <>
-              <Typography color="text.secondary" variant="body2">{analyzerUses.unlimited ? "Unlimited" : `${Math.max(0, analyzerUses.dailyAvailable - analyzerSelection.length)} available today`}</Typography>
-              {!analyzerUses.unlimited ? <Typography color="text.secondary" variant="body2">{Math.max(0, analyzerUses.periodAvailable - analyzerSelection.length)} available in 30 days · resets in {analyzerUses.daysUntilReset} days</Typography> : null}
+              <TradeAnalyzerAllowanceSummary availability={analyzerUses} selected={analyzerSelection.length} />
             </> : null}
             {analyzerUsesStatus === "unavailable" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
               <Typography color="error.main" variant="body2">Analyzer usage could not be loaded.</Typography>

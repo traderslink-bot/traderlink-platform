@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
 import { authorizeWatchlistMemberRequest } from "@/src/lib/live-watchlist/live-watchlist-auth";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
 import { readCachedWatchlistIndicators } from "@/src/modules/watchlist/server/indicators/indicator-refresh-runtime";
@@ -11,6 +12,7 @@ const headers = { "cache-control": "private, no-store, max-age=0", "x-content-ty
 export async function GET(request: NextRequest, context: { params: Promise<{ symbol: string }> }): Promise<Response> {
   const auth = await authorizeWatchlistMemberRequest(request);
   if (!auth.ok) return Response.json({ error: auth.error }, { status: auth.status, headers });
+  if (!readWatchlistFeatureAccess(auth.principal.platformUserId).tickerDetails) return Response.json({ code: "membership_required" }, { status: 403, headers });
   const symbol = (await context.params).symbol.toUpperCase();
   if (!/^[A-Z][A-Z0-9.-]{0,15}$/u.test(symbol)) return Response.json({ error: "Ticker was not found." }, { status: 404, headers });
   const ticker = await new LiveWatchlistStore().getSymbol(symbol);
