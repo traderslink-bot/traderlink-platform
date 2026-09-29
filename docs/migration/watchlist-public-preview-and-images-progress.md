@@ -15,4 +15,6 @@ Focused offline render and access-branch checks pass. BKYI images are 1000px wid
 
 Owner follow-up: make the destination URL prominent at the top as well as the bottom of every image. Added a dedicated green bold URL line and 45px of header space without changing content widths or font sizes. All four images retain an identical 1000px width; their differing heights can cause chat thumbnails to appear different widths. Updated heights: 870, 1669, 1923 and 1775.
 
+Owner watermark follow-up: increased navy watermark opacity from 5.5% to 10%. Rechecked PNG metadata: all four remain 1000px wide (heights 870, 1669, 1923, 1775). These are generated exports, not mobile screenshots; thumbnail scaling can change their apparent displayed widths.
+
 No live posts or deployment. Owner visual acceptance and release remain pending. [Plan](watchlist-public-preview-and-images-plan.md).
