@@ -13,4 +13,6 @@ Implementation underway. BKYI published page inspected at September 29 5:25 PM E
 
 Focused offline render and access-branch checks pass. BKYI images are 1000px wide with heights 825, 1624, 1878 and 1730; all four visually inspected for readable text, watermark and clipping. Strict scoped TypeScript passes. Landing JSX was rendered to static HTML; interactive browser/mobile acceptance is not yet verified. Browser file previews are blocked by the browser tool, and no workaround server was started.
 
+Owner follow-up: make the destination URL prominent at the top as well as the bottom of every image. Added a dedicated green bold URL line and 45px of header space without changing content widths or font sizes. All four images retain an identical 1000px width; their differing heights can cause chat thumbnails to appear different widths. Updated heights: 870, 1669, 1923 and 1775.
+
 No live posts or deployment. Owner visual acceptance and release remain pending. [Plan](watchlist-public-preview-and-images-plan.md).
