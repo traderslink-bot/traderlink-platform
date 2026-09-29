@@ -1,4 +1,5 @@
 import { parseSimpleAnalysis } from "./simple-analysis";
+import { cleanAnalysisDisplayPayload } from "./analysis-display-copy";
 
 export function olderTradersLinkArticlePublicationDate(read: TradersLinkAiReadPayload): string | null {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -649,7 +650,7 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
   if (contextSourceUrls.some((url) => !allowedSourceUrls.has(url))) {
     return null;
   }
-  return value as TradersLinkAiReadPayload;
+  return cleanAnalysisDisplayPayload(value as TradersLinkAiReadPayload);
 }
 
 export function formatAiReadSession(session: TradersLinkAiReadMarketSession): string {
