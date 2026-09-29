@@ -1,3 +1,4 @@
+import { platformWatchlistXPublicationsMigration } from "./migrations/0151_platform_watchlist_x_publications";
 import { watchlistFreeChatMigration } from "./migrations/0149_watchlist_free_chat";
 import { watchlistPotentialGainPostsMigration } from "./migrations/0147_watchlist_potential_gain_posts";
 import { platformMembershipPlatformMigration } from "./migrations/0148_platform_membership_platform";
@@ -641,6 +642,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0148_platform_membership_platform.ts", migration: platformMembershipPlatformMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0149_watchlist_free_chat.ts", migration: watchlistFreeChatMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0150_platform_membership_generation_allowances.ts", migration: platformMembershipGenerationAllowancesMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0151_platform_watchlist_x_publications.ts", migration: platformWatchlistXPublicationsMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -649,6 +651,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0151_platform_watchlist_x_publications": Object.freeze(["platform_watchlist_x_posts", "platform_watchlist_x_images"]),
     "0149_watchlist_free_chat": Object.freeze(["platform_watchlist_free_chat_preferences", "platform_watchlist_free_chat_posts"]),
     "0148_platform_membership_platform": Object.freeze([
       "platform_membership_feature_definitions",

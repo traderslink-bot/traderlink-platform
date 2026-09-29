@@ -1,3 +1,4 @@
+import { reconcileXPublications } from "./watchlist-x-runtime";
 import { reconcileFreeChatPublications } from "./watchlist-free-chat-runtime";
 import "server-only";
 import type Database from "better-sqlite3";
@@ -120,5 +121,6 @@ export async function reconcileWatchlistNotificationApprovals(): Promise<void> {
       }).immediate();
     }
   } finally { database?.close(); running = false;
+    void reconcileXPublications().catch(() => { /* Independent opt-in X delivery. */ });
     void reconcileFreeChatPublications().catch(() => { /* Independent channel; normal notifications are unchanged. */ }); }
 }

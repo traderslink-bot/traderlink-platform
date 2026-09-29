@@ -1,3 +1,5 @@
+import { handleXAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-x-admin";
+import { recordXApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-x-runtime";
 import { handleFreeChatAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin";
 import { recordFreeChatApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
@@ -14,6 +16,7 @@ export const runtime = "nodejs";
 type SupportedMethod = "GET" | "POST";
 
 const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/x-post",
   "/api/watchlist/analysis-review/free-chat",
   "/api/watchlist/analysis-review/discord-mentions",
   "/api/watchlist/analysis-review/export",
@@ -31,6 +34,7 @@ const GET_PATHS = new Set([
 ]);
 
 const POST_PATHS = new Set([
+  "/api/watchlist/analysis-review/x-post",
   "/api/watchlist/analysis-review/cancel-generation",
   "/api/watchlist/analysis-review/free-chat",
   "/api/watchlist/analysis-review/discord-mentions",
@@ -115,16 +119,24 @@ async function relay(
 
   const incomingUrl = new URL(request.url);
   let body = method === "POST" ? await request.text() : undefined;
+  if (pathname === "/api/watchlist/analysis-review/x-post" && reviewActor) {
+    try { return Response.json(await handleXAdmin(method,incomingUrl,body,reviewActor.slice(15)),{headers:{"cache-control":"private, no-store"}}); }
+    catch(error) { return Response.json({error:error instanceof Error && /^(Invalid|Shorten|Ticker changed|The published|Buffer X|X request|Unknown X)/.test(error.message) ? error.message : "X controls are unavailable. Try again."},{status:409,headers:{"cache-control":"private, no-store"}}); }
+  }
+  let xPostingWarning: string | null = null;
   if (pathname === "/api/watchlist/analysis-review/free-chat" && reviewActor) {
     try { return Response.json(await handleFreeChatAdmin(method,incomingUrl,body,reviewActor.slice("platform-owner:".length)), { headers: { "cache-control": "private, no-store" } }); }
     catch { return Response.json({ error: "Free Chat controls are unavailable. Reload and try again." }, { status: 409, headers: { "cache-control": "private, no-store" } }); }
   }
   if (pathname === "/api/watchlist/analysis-review/approve" && reviewActor && body) {
+    try { xPostingWarning = recordXApprovalIntent(body,reviewActor); } catch { xPostingWarning = "X selection could not be saved. Analysis approval is unchanged."; }
     try { recordFreeChatApprovalIntent(body,reviewActor); }
     catch { console.error("Free Chat selection could not be saved; ordinary approval remains unchanged."); }
     try {
       const input = JSON.parse(body);
       delete input.freeChat;
+      delete input.xPost;
+      delete input.xCaption;
       body = JSON.stringify(input);
     } catch { /* Existing runtime validation owns malformed approval input. */ }
   }
@@ -140,6 +152,7 @@ async function relay(
     path: `${pathname}${incomingUrl.search}`,
   });
   let responseBody = result.body;
+  if (xPostingWarning) { try { responseBody=JSON.stringify({...JSON.parse(responseBody),xPostingWarning}); } catch { /* Approval response preserved. */ } }
   if (pathname === "/api/watchlist/analysis-review/settings" && result.status === 200) {
     try {
       const value = JSON.parse(responseBody);
