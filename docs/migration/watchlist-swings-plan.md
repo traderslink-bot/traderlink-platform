@@ -21,3 +21,6 @@ Related approved Main Session tooltip: [progress](watchlist-main-session-tooltip
 
 
 Watchlist preview copy correction: [progress](watchlist-preview-copy-progress.md).
+
+
+Header count-summary removal: [progress](watchlist-count-summary-progress.md).

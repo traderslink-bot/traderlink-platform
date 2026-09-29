@@ -1767,10 +1767,6 @@ export function LiveWatchlistIndexClient({
             {activeSymbols.length} active
             {showReversalWatchlist ? ` / ${reversalWatchSymbols.length} reversal watch` : ""}
           </span>
-          <span>
-            {topRegularWatchlistVisible ? `${topRegularSymbols.length} top / ` : ""}
-            {mainSessionSymbols.length} main / {postmarketSymbols.length} post-market / {generalSymbols.length} general / {swingSymbols.length} swings / {activeSymbols.filter(symbol => isTopWatchesGroup(getLiveWatchlistEntryGroup(symbol))).length} top watches
-          </span>
           <WatchlistLiveDataStatus status={marketDataStatus} />
         </div>
       </section>
