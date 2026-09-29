@@ -1,0 +1,30 @@
+.landing { position: relative; isolation: isolate; max-width: 1180px; margin: 0 auto; padding: 28px 24px 64px; color: #172a46; }
+.background { opacity: .32; pointer-events: none; user-select: none; }
+.ticker { display: grid; gap: 8px; margin-bottom: 24px; }
+.ticker strong { font-size: 46px; line-height: 1.1; }
+.ticker span { font-size: 13px; letter-spacing: .06em; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.card { background: #fff; border: 1px solid #ced8e5; border-radius: 12px; padding: 24px; min-width: 0; }
+.card h2 { font-size: 16px; font-weight: 800; margin: 0 0 20px; }
+.card h3 { font-size: 16px; margin: 24px 0 10px; }
+.card p { font-size: 15px; line-height: 1.65; overflow-wrap: anywhere; }
+.price { font-size: 28px; }
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.columns p { padding: 10px 0; border-bottom: 1px solid #dbe3ed; }
+.chip { display: inline-block; background: #eef3f9; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+.access { position: absolute; z-index: 1; top: 180px; left: 50%; transform: translateX(-50%); width: min(470px, calc(100% - 48px)); box-sizing: border-box; padding: 32px; border: 1px solid #cad5e3; border-radius: 16px; background: #fff; box-shadow: 0 14px 50px #172a4620; text-align: center; }
+.access h1 { font-size: clamp(24px, 4vw, 32px); margin: 0 0 16px; line-height: 1.2; }
+.access p { line-height: 1.6; margin: 12px 0 20px; }
+.primary, .secondary { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 14px; margin-top: 12px; border: 1px solid #011e56; border-radius: 8px; font-weight: 700; text-decoration: none; }
+.primary { background: #011e56; color: #fff; }
+.secondary { color: #011e56; background: #fff; }
+.primary:focus-visible, .secondary:focus-visible { outline: 3px solid #2580dc; outline-offset: 3px; }
+.access small { display: block; color: #53647b; margin-top: 22px; line-height: 1.5; }
+.notice { padding: 12px; background: #fff4df; border-radius: 8px; text-align: left; }
+.notice p { margin: 6px 0 0; }
+@media (max-width: 640px) {
+  .landing { padding: 20px 16px 40px; }
+  .grid { grid-template-columns: 1fr; gap: 16px; }
+  .access { top: 145px; width: calc(100% - 32px); padding: 26px 20px; }
+  .card { padding: 20px; }
+}

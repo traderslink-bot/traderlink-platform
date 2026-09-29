@@ -27,7 +27,7 @@ export function freeChatWebhook(environment = process.env): URL | null {
 export function freeChatPayload(publication: FreeChatPublication) {
   if (!/^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(publication.symbol)
     || !publication.cycleId || !Number.isSafeInteger(publication.approvalRevision)
-    || publication.approvalRevision < 1 || publication.images.length > 3) throw Error("Invalid approved analysis.");
+    || publication.approvalRevision < 1 || publication.images.length > 4) throw Error("Invalid approved analysis.");
   const symbol = publication.symbol;
   const images = publication.images.map((image, index) => {
     const bytes = Buffer.from(image.base64, "base64");

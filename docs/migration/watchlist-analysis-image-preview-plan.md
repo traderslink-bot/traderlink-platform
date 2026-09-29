@@ -15,3 +15,6 @@ Owner-approved preview scope: use today's VEEA analysis to review a mobile-width
 First prototype: deterministic SVG-to-PNG renderer using installed Sharp, with source text transcribed from the visible VEEA card on September 15, 2026. This is an export layout prototype, not a screenshot or production data adapter. Analysis text/prices retained; long duplicate source URLs replaced by one article-source footer. Split only at section boundaries. Review readability and watermark with owner before production integration.
 
 Progress: two PNG previews generated and visually inspected (1000x3076 and 1000x3246). No visible clipping; watermark subtle and repeated. This full-format read remains tall even when split in two; owner needs to review practical mobile readability. Renderer and output are local preview artifacts under data/. Production wiring, automatic saved-payload mapping and actual Discord attachment testing are not implemented. Website and Discord unchanged. No feature commit/acceptance before layout review.
+
+
+September 29 owner revision: four light images replace earlier pagination. See [approved scope](watchlist-public-preview-and-images-plan.md) and [progress](watchlist-public-preview-and-images-progress.md).
