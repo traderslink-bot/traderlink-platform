@@ -2,6 +2,8 @@
 
 Latest owner decision supersedes the four-image layout below: Discord and X use two images only, upside levels followed by pullbacks (including confirmation and invalidation). Keep the complete analysis on the website. Keep the green URL at the top and bottom and the darker 10% watermark. Hidden/absent groups still produce no blank images. This is a preview change, not authorization to send live posts.
 
+Owner approved the images. New Discord analysis posts (initial, updated and Free Chat) insert this exact line beneath the existing headline and above links: “Images show part of the analysis. View full analysis in the app 👇”. Existing headline attribution, links, mentions, routing and approvals stay unchanged. X uses the approved caption with “Where it could go next and pullback areas to watch.” and “Link in bio.” No URL is added to the X caption by default.
+
 Owner approved on September 29: prioritize X posting and the public landing page; use BKYI for the faded background. Feed recovery is a separate slice unless independently verified.
 
 ## Approved scope

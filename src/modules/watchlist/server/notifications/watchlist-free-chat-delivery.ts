@@ -36,7 +36,7 @@ export function freeChatPayload(publication: FreeChatPublication) {
     }
     return { bytes, filename: `${symbol}-analysis-${index + 1}.png`, description: `${symbol} approved analysis, part ${index + 1}` };
   });
-  const content = `Free $${symbol} TradersLink Analysis${publication.updated ? " — Updated" : ""}\n\nhttps://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}\nhttps://app.traderslink.pro/watchlist\n\n@everyone`;
+  const content = `Free $${symbol} TradersLink Analysis${publication.updated ? " — Updated" : ""}\n\nImages show part of the analysis. View full analysis in the app 👇\n\nhttps://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}\nhttps://app.traderslink.pro/watchlist\n\n@everyone`;
   return { content, images };
 }
 
