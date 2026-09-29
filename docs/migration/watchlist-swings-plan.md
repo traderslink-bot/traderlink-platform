@@ -18,3 +18,6 @@ Dated Top Watches is a separate owner-approved grouping: [plan](watchlist-top-wa
 
 
 Related approved Main Session tooltip: [progress](watchlist-main-session-tooltip-progress.md).
+
+
+Watchlist preview copy correction: [progress](watchlist-preview-copy-progress.md).

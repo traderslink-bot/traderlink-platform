@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 const WATCHLIST_TITLE = "TradersLink Live Watchlist";
 const WATCHLIST_DESCRIPTION =
-  "Premium TradersLink live watchlist with ticker levels, market context, and trader reads from the Discord workflow.";
+  "Explore the TradersLink stock watchlist with trading analysis, catalysts, support and resistance levels, and potential setups for day and swing traders.";
 const PREVIEW_CRAWLER_USER_AGENT =
   /\b(discordbot|twitterbot|facebookexternalhit|slackbot|linkedinbot|telegrambot|whatsapp|skypeuripreview|embedly|pinterest|googlebot|bingbot)\b/i;
 
