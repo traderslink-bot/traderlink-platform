@@ -1,5 +1,8 @@
 "use client";
 
+// Unfinished feature: owner disabled all Watchlist presentation until approved.
+const WATCHLIST_REVERSE_SPLITS_ENABLED = false;
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
@@ -16,6 +19,7 @@ export function useWatchlistReverseSplits(symbols: readonly string[]): SplitMap 
   const key = [...new Set(symbols.map((symbol) => symbol.toUpperCase()).filter((symbol) => /^[A-Z][A-Z0-9.-]{0,3}$/u.test(symbol)))].sort().slice(0, 100).join(",");
   const [snapshot, setSnapshot] = useState<{ key: string; items: SplitMap }>({ key: "", items: EMPTY });
   useEffect(() => {
+    if (!WATCHLIST_REVERSE_SPLITS_ENABLED) return;
     if (!key) return;
     let disposed = false;
     let accessDenied = false;
@@ -70,14 +74,14 @@ export function useWatchlistReverseSplits(symbols: readonly string[]): SplitMap 
 }
 
 export function WatchlistReverseSplitBadge({ item }: { item?: ReverseSplitRow }) {
-  if (!item?.watchlistLabel) return null;
+  if (!WATCHLIST_REVERSE_SPLITS_ENABLED || !item?.watchlistLabel) return null;
   return <Chip component="span" label={item.watchlistLabel} size="small" variant="outlined"
     color={item.watchlistLabel === "Reverse split approved" ? "warning" : "info"}
     sx={{ maxWidth: "100%", height: "auto", width: "fit-content", "& .MuiChip-label": { whiteSpace: "normal", py: 0.4 } }} />;
 }
 
 export function WatchlistReverseSplitDetails({ item }: { item?: ReverseSplitRow }) {
-  if (!item?.watchlistLabel) return null;
+  if (!WATCHLIST_REVERSE_SPLITS_ENABLED || !item?.watchlistLabel) return null;
   const fields = [
     ...(item.approvalDate ? [["Shareholder approval", reverseSplitDate(item.approvalDate)]] : []),
     ...(item.approvedRatio ? [["Approved ratio / range", item.approvedRatio]] : []),

@@ -24,3 +24,6 @@ Watchlist preview copy correction: [progress](watchlist-preview-copy-progress.md
 
 
 Header count-summary removal: [progress](watchlist-count-summary-progress.md).
+
+
+Unfinished reverse-split Watchlist display disabled: [progress](watchlist-reverse-split-hidden-progress.md).
