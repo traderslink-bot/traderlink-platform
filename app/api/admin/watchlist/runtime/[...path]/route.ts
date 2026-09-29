@@ -31,6 +31,7 @@ const GET_PATHS = new Set([
 ]);
 
 const POST_PATHS = new Set([
+  "/api/watchlist/analysis-review/cancel-generation",
   "/api/watchlist/analysis-review/free-chat",
   "/api/watchlist/analysis-review/discord-mentions",
   "/api/watchlist/analysis-review/settings",

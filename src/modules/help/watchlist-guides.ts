@@ -4,6 +4,10 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
   slug: "analysis", title: "Read Watchlist analysis",
   description: "Understand the posted price, setup areas and analysis updates.",
   sections: [{
+    id: "analysis-cancellation", title: "Cancel analysis", summary: "Stop a pending analysis without changing the published read.",
+    keywords: ["cancel", "generation", "Discord channels"],
+    blocks: [{kind:"paragraph",text:"While an analysis is running, Watchlist Admin shows its elapsed time and Cancel analysis. Cancelling prevents that request from replacing the published analysis or starting a fallback request. You can manually refresh again. Work already processed by the provider may still be charged. The same automatic boundary request is paused until a manual refresh, a new published read or a runtime restart."}, {kind:"paragraph",text:"Approved Discord posts use the channel configured for their Watchlist category: Main and Top Regular, Post-Market and Overnight Watches, Swings, or General. Moving a ticker does not redirect a post already approved for delivery. Free Chat remains a separate choice."}],
+  }, {
     id: "free-chat", title: "Free Chat", summary: "Choose which approved analyses to share to Free Chat.",
     keywords: ["Discord", "Free Chat", "sharing"],
     blocks: [{kind:"paragraph",text:"Owners can select Also post to Free Chat beside analysis approval. Free Chat on a ticker row opens Post to Free Chat for a later share of the published analysis, without repeating Watchlist, email or push notifications. The post tags everyone and includes the approved analysis images and Watchlist links. Automatically post analysis updates to Free Chat is off by default and applies only to future automatically published updates for that ticker. Manual refresh alone does not share a draft. Delivery status and sent time appear in these controls. A Free Chat failure does not undo or block normal approval."}],

@@ -21,3 +21,6 @@ Approved Top Watches tooltip: Tickers selected ahead of the displayed trading da
 
 
 Owner revision: public heading is Overnight Watches without date; combine existing dated memberships for display only, preserving stored assignments. Order: Top Regular, Main, Overnight, Post-Market, General, Swings. Admin retains date suffixes to distinguish saved destinations. See [progress](watchlist-overnight-rename-progress.md).
+
+
+Owner-approved routing, cancellation and Free Chat dialog correction: [plan](watchlist-routing-cancellation-plan.md), [progress](watchlist-routing-cancellation-progress.md).
