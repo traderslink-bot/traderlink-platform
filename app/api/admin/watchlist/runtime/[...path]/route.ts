@@ -1,3 +1,5 @@
+import { handleFreeChatAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin";
+import { recordFreeChatApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { requestWatchlistRuntimeRaw } from "@/src/modules/watchlist/server/runtime/watchlist-runtime-admin-client";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -12,6 +14,7 @@ export const runtime = "nodejs";
 type SupportedMethod = "GET" | "POST";
 
 const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/free-chat",
   "/api/watchlist/analysis-review/discord-mentions",
   "/api/watchlist/analysis-review/export",
   "/api/watchlist/analysis-review/history",
@@ -28,6 +31,7 @@ const GET_PATHS = new Set([
 ]);
 
 const POST_PATHS = new Set([
+  "/api/watchlist/analysis-review/free-chat",
   "/api/watchlist/analysis-review/discord-mentions",
   "/api/watchlist/analysis-review/settings",
   "/api/watchlist/analysis-review/save-notes",
@@ -108,7 +112,20 @@ async function relay(
   }
 
   const incomingUrl = new URL(request.url);
-  const body = method === "POST" ? await request.text() : undefined;
+  let body = method === "POST" ? await request.text() : undefined;
+  if (pathname === "/api/watchlist/analysis-review/free-chat" && reviewActor) {
+    try { return Response.json(await handleFreeChatAdmin(method,incomingUrl,body,reviewActor.slice("platform-owner:".length)), { headers: { "cache-control": "private, no-store" } }); }
+    catch { return Response.json({ error: "Free Chat controls are unavailable. Reload and try again." }, { status: 409, headers: { "cache-control": "private, no-store" } }); }
+  }
+  if (pathname === "/api/watchlist/analysis-review/approve" && reviewActor && body) {
+    try { recordFreeChatApprovalIntent(body,reviewActor); }
+    catch { console.error("Free Chat selection could not be saved; ordinary approval remains unchanged."); }
+    try {
+      const input = JSON.parse(body);
+      delete input.freeChat;
+      body = JSON.stringify(input);
+    } catch { /* Existing runtime validation owns malformed approval input. */ }
+  }
   if (["/api/watchlist/analysis-review/approve", "/api/watchlist/analysis-review/publish-without-analysis"].includes(pathname) && reviewActor && body) {
     try { recordWatchlistApprovalNotificationIntent(body, reviewActor, pathname.endsWith("/publish-without-analysis")); }
     catch { console.error("Watchlist notification intent could not be saved; approval remains unchanged."); }

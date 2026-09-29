@@ -1,3 +1,7 @@
+# Watchlist Free Chat migration reservation
+
+`0149_watchlist_free_chat` (execution order 149) is Coordinator-reserved after `0148_platform_membership_platform`. Adds cycle-scoped, default-off automatic sharing preferences and version-bound Free Chat delivery receipts. Registered but unapplied. No historical backfill or existing notification mutation. Coordinator must verify predecessor/schema 130, back up, apply only 0149 and verify schema 131. After application, rollback must retain migration identity/tables and disable only the Free Chat worker/UI; do not deploy an older manifest or discard delivery receipts. See [plan](watchlist-free-chat-plan.md) and [progress](watchlist-free-chat-progress.md).
+
 # Premium Swing Ideas migration reservation
 
 `0139_platform_premium_swing_idea_visit_events` follows `0138_platform_watchlist_notification_action_identity` (executionOrder 139). Coordinator reserved this identity exclusively. New visit-event table and two indexes only; nullable user FK uses ON DELETE SET NULL. SHA-256 normalized SQL checksum: `c57f28ed50ceac1dfda41fd96e058bbdaddfe8b47fdeb30d89a7f03a25b64c4a`. Registered, not applied by feature task. Coordinator owns guarded backup/migration/release. Rollback must retain the 0139 manifest identity because the strict schema verifier rejects unknown applied migrations; do not drop the table or visit records. See [plan](premium-swing-ideas-plan.md) and [progress](premium-swing-ideas-progress.md).

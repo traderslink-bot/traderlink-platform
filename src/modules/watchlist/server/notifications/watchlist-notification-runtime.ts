@@ -1,3 +1,4 @@
+import { reconcileFreeChatPublications } from "./watchlist-free-chat-runtime";
 import "server-only";
 import type Database from "better-sqlite3";
 import { withPlatformDatabase, openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -118,5 +119,6 @@ export async function reconcileWatchlistNotificationApprovals(): Promise<void> {
         database!.prepare("UPDATE platform_watchlist_notification_intents SET state='accepted' WHERE intent_id=?").run(row.intent_id);
       }).immediate();
     }
-  } finally { database?.close(); running = false; }
+  } finally { database?.close(); running = false;
+    void reconcileFreeChatPublications().catch(() => { /* Independent channel; normal notifications are unchanged. */ }); }
 }

@@ -1,0 +1,43 @@
+diff --git a/src/lib/monitoring/manual-watchlist-runtime-manager.ts b/src/lib/monitoring/manual-watchlist-runtime-manager.ts
+--- a/src/lib/monitoring/manual-watchlist-runtime-manager.ts
++++ b/src/lib/monitoring/manual-watchlist-runtime-manager.ts
+@@ -5100,1 +5100,23 @@
++  async exportFreeChatPublication(input: { symbol: string; cycleId: string; approvalRevision: number }) {
++    const symbol = normalizeSymbol(input.symbol);
++    const entry = this.watchlistStore.getEntry(symbol);
++    const store = this.options.tradersLinkAiReadReviewStore;
++    if (!entry?.active || entry.publicationReview?.cycleId !== input.cycleId || !store) throw new Error("Ticker review changed.");
++    const state = store.read(input.cycleId);
++    const approval = state?.events.find(event => event.revision === input.approvalRevision && event.body.kind === "approve");
++    if (!state || state.cancelled || !approval || approval.body.kind !== "approve" || !approval.body.publication) throw new Error("Approved analysis unavailable.");
++    if (!state.events.some(event => event.body.kind === "delivery" && event.body.approvalRevision === approval.revision && event.body.channel === "website" && event.body.status === "acknowledged")) throw new Error("Analysis has not been published.");
++    const cards = approval.body.publication.website.cards as { tradersLinkAiRead?: { body?: string } };
++    if (!cards.tradersLinkAiRead?.body) throw new Error("No published analysis available.");
++    const images = await approvedAnalysisImages(store.imageDirectory(input.cycleId), approval.revision, approval.body.publication, symbol);
++    const earlier = state.events.some(event => event.revision < approval.revision && event.body.kind === "approve"
++      && state.events.some(receipt => receipt.body.kind === "delivery" && receipt.body.approvalRevision === event.revision && receipt.body.channel === "website" && receipt.body.status === "acknowledged"));
++    return { symbol, cycleId: input.cycleId, approvalRevision: approval.revision, updated: earlier,
++      images: images.map(image => ({ filename: image.filename, description: image.description, base64: Buffer.from(image.bytes).toString("base64") })) };
++  }
++
+   async publishApprovedTradersLinkAiReadToDiscord(input: { symbol: string; cycleId: string; approvalRevision: number }) {
+diff --git a/src/runtime/manual-watchlist-analysis-review-api.ts b/src/runtime/manual-watchlist-analysis-review-api.ts
+--- a/src/runtime/manual-watchlist-analysis-review-api.ts
++++ b/src/runtime/manual-watchlist-analysis-review-api.ts
+@@ -8,1 +8,1 @@
+-  "getAutomaticAnalysisEvents" |
++  "getAutomaticAnalysisEvents" | "exportFreeChatPublication" |
+@@ -13,1 +13,2 @@
+ export const ANALYSIS_REVIEW_PATHS = new Set([
++  "/api/watchlist/analysis-review/free-chat-publication",
+@@ -95,1 +95,12 @@
++  if (input.pathname.endsWith("/free-chat-publication")) {
++    if (input.method !== "GET") return { status: 405, body: { error: "Method not allowed." } };
++    const symbol = input.searchParams.get("symbol") ?? "";
++    const cycleId = input.searchParams.get("cycleId") ?? "";
++    const approvalRevision = Number(input.searchParams.get("approvalRevision"));
++    if (!/^[A-Z0-9][A-Z0-9.-]{0,19}$/.test(symbol) || !cycleId || cycleId.length > 200 || !Number.isSafeInteger(approvalRevision) || approvalRevision < 1) return { status: 400, body: { error: "Invalid publication request." } };
++    try { return { status: 200, body: { publication: await manager.exportFreeChatPublication({ symbol, cycleId, approvalRevision }) } }; }
++    catch { return { status: 409, body: { error: "Published analysis is unavailable for Free Chat." } }; }
++  }
+   const settingsRequest = input.pathname.endsWith("/settings");

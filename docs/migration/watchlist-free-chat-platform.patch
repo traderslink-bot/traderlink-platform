@@ -1,0 +1,67 @@
+diff --git a/app/api/admin/watchlist/runtime/[...path]/route.ts b/app/api/admin/watchlist/runtime/[...path]/route.ts
+--- a/app/api/admin/watchlist/runtime/[...path]/route.ts
++++ b/app/api/admin/watchlist/runtime/[...path]/route.ts
+@@ -1,1 +1,3 @@
++import { handleFreeChatAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin";
++import { recordFreeChatApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime";
+ import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+@@ -16,1 +18,2 @@
+ const GET_PATHS = new Set([
++  "/api/watchlist/analysis-review/free-chat",
+@@ -33,1 +36,2 @@
+ const POST_PATHS = new Set([
++  "/api/watchlist/analysis-review/free-chat",
+@@ -118,1 +122,17 @@
+-  const body = method === "POST" ? await request.text() : undefined;
++  let body = method === "POST" ? await request.text() : undefined;
++  if (pathname === "/api/watchlist/analysis-review/free-chat" && reviewActor) {
++    try { return Response.json(await handleFreeChatAdmin(method,incomingUrl,body,reviewActor.slice("platform-owner:".length)), { headers: { "cache-control": "private, no-store" } }); }
++    catch { return Response.json({ error: "Free Chat controls are unavailable. Reload and try again." }, { status: 409, headers: { "cache-control": "private, no-store" } }); }
++  }
++  if (pathname === "/api/watchlist/analysis-review/approve" && reviewActor && body) {
++    try { recordFreeChatApprovalIntent(body,reviewActor); }
++    catch { console.error("Free Chat selection could not be saved; ordinary approval remains unchanged."); }
++    try {
++      const input = JSON.parse(body);
++      delete input.freeChat;
++      body = JSON.stringify(input);
++    } catch { /* Existing runtime validation owns malformed approval input. */ }
++  }
+diff --git a/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts b/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts
+--- a/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts
++++ b/src/modules/watchlist/server/notifications/watchlist-notification-runtime.ts
+@@ -1,1 +1,2 @@
++import { reconcileFreeChatPublications } from "./watchlist-free-chat-runtime";
+ import "server-only";
+@@ -190,1 +191,2 @@
+-  } finally { database?.close(); running = false; }
++  } finally { database?.close(); running = false;
++    void reconcileFreeChatPublications().catch(() => { /* Independent channel; normal notifications are unchanged. */ }); }
+diff --git a/src/modules/platform/server/database/platform-migration-manifest.ts b/src/modules/platform/server/database/platform-migration-manifest.ts
+--- a/src/modules/platform/server/database/platform-migration-manifest.ts
++++ b/src/modules/platform/server/database/platform-migration-manifest.ts
+@@ -1,0 +1,1 @@
++import { watchlistFreeChatMigration } from "./migrations/0149_watchlist_free_chat";
+@@ -634,1 +635,2 @@
+     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0148_platform_membership_platform.ts", migration: platformMembershipPlatformMigration }),
++    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0149_watchlist_free_chat.ts", migration: watchlistFreeChatMigration }),
+@@ -645,1 +647,2 @@
++    "0149_watchlist_free_chat": Object.freeze(["platform_watchlist_free_chat_preferences", "platform_watchlist_free_chat_posts"]),
+     "0148_platform_membership_platform": Object.freeze([
+diff --git a/src/modules/help/watchlist-guides.ts b/src/modules/help/watchlist-guides.ts
+--- a/src/modules/help/watchlist-guides.ts
++++ b/src/modules/help/watchlist-guides.ts
+@@ -6,1 +6,5 @@
+   sections: [{
++    id: "free-chat", title: "Free Chat", summary: "Choose which approved analyses to share to Free Chat.",
++    keywords: ["Discord", "Free Chat", "sharing"],
++    blocks: [{kind:"paragraph",text:"Owners can select Also post to Free Chat beside analysis approval. Free Chat on a ticker row opens Post to Free Chat for a later share of the published analysis, without repeating Watchlist, email or push notifications. The post tags everyone and includes the approved analysis images and Watchlist links. Automatically post analysis updates to Free Chat is off by default and applies only to future automatically published updates for that ticker. Manual refresh alone does not share a draft. Delivery status and sent time appear in these controls. A Free Chat failure does not undo or block normal approval."}],
++  }, {
+diff --git a/docs/migration/migration-register.md b/docs/migration/migration-register.md
+--- a/docs/migration/migration-register.md
++++ b/docs/migration/migration-register.md
+@@ -1,0 +1,4 @@
++# Watchlist Free Chat migration reservation
++
++`0149_watchlist_free_chat` (execution order 149) is Coordinator-reserved after `0148_platform_membership_platform`. Adds cycle-scoped, default-off automatic sharing preferences and version-bound Free Chat delivery receipts. Registered but unapplied. No historical backfill or existing notification mutation. Coordinator must verify predecessor/schema 130, back up, apply only 0149 and verify schema 131. After application, rollback must retain migration identity/tables and disable only the Free Chat worker/UI; do not deploy an older manifest or discard delivery receipts. See [plan](watchlist-free-chat-plan.md) and [progress](watchlist-free-chat-progress.md).
++
