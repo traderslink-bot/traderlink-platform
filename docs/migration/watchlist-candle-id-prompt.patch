@@ -1,0 +1,13 @@
+diff --git a/src/lib/ai/traderslink-ai-read-service.ts b/src/lib/ai/traderslink-ai-read-service.ts
+--- a/src/lib/ai/traderslink-ai-read-service.ts
++++ b/src/lib/ai/traderslink-ai-read-service.ts
+@@ -649,1 +649,2 @@
+-  return ownerReview ? OWNER_REVIEW_DEVELOPER_PROMPT : DEVELOPER_PROMPT;
++  return (ownerReview ? OWNER_REVIEW_DEVELOPER_PROMPT : DEVELOPER_PROMPT) +
++    "\nCandle identifiers and candle timestamps are internal evidence only. Never quote timeframe:epoch identifiers (for example 5m:1790637300000), raw epoch numbers, or candle times in member-facing prose. Describe the observed base, retest, support or resistance in ordinary trading language. Keep exact candidate/candle IDs only in dedicated evidence fields when the schema requires them; do not remove price levels.";
+diff --git a/src/lib/ai/watchlist-simple-analysis.ts b/src/lib/ai/watchlist-simple-analysis.ts
+--- a/src/lib/ai/watchlist-simple-analysis.ts
++++ b/src/lib/ai/watchlist-simple-analysis.ts
+@@ -3,1 +3,2 @@
+ export const SIMPLE_ANALYSIS_PROMPT = `Write a concise, useful micro/nano-cap day-trading analysis using the supplied marketPacket and TradersLink article. Read the whole session and daily history, not just the latest candles. This is a test alternative to the existing read.
++Candle identifiers and candle timestamps are internal evidence only. Never quote timeframe:epoch identifiers, raw epoch numbers, or candle times in member-facing prose. Describe price structure in ordinary trading language. Keep IDs only in dedicated evidence fields when required; preserve price levels.
