@@ -1757,7 +1757,7 @@ export function LiveWatchlistIndexClient({
             row to open that ticker&apos;s detail page.
           </p>
           <p className="watchlist-testing-note">
-            The watchlist uses a combination of code, algorithms, and AI. It uses
+            The watchlist uses a combination of code, algorithms, AI and human analysis. It uses
             real-time market data and collects chart data, prioritizing recent data
             while going back as far as needed to build support and resistance levels.
           </p>
