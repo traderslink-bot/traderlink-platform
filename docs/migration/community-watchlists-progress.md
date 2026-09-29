@@ -1,6 +1,7 @@
 # Community Watchlists Progress
 
-**Status:** Private-beta implementation in progress — visual refinement underway
+**Status:** Private-beta implementation in progress — visual refinement and
+Discord server community placement integration underway
 
 **Controlling plan:** [Community Watchlists Plan](community-watchlists-plan.md)
 
@@ -41,6 +42,13 @@ rendered as visible copy.
 The direct card is a reusable client component. Its compact header toggles the
 full light-blue ticker board while the direct route starts expanded; later
 collection pages can use the same component with a collapsed default.
+
+The broader product direction now reserves singular `/community` for a future
+TraderLink-native network. Community Watchlists and opt-in profiles are its
+first layer; people discovery, follows, feeds and possible ticker or stock
+discussion boards remain later owner-reviewed slices. Private Discord-backed
+server spaces stay under plural `/communities`, and their private content does
+not become part of the native network without an explicit share.
 
 Watchlist follows are now an owner-authorized implementation slice. The compact
 card will store a watcher relationship and offer Follow Watchlist / Unfollow
@@ -138,6 +146,13 @@ The approved first release is:
   Watchlists; and
 - strict separation from the official Premium `/watchlist` product.
 
+The owner additionally approved regular members sharing their existing
+user-owned watchlists into the TraderLink communities for Discord servers they
+belong to. This reuses the nearly completed create/edit/publish experience. A
+new placement contract will add `Share to community`, eligible membership
+selection, community-scoped Discord delivery and engagement. It will not copy
+the watchlist, transfer its ownership to the server or require a staff role.
+
 Connections, group membership, people discovery, comments, direct messages,
 rankings, company pages and Moomoo enrichment remain deferred.
 
@@ -153,8 +168,11 @@ rankings, company pages and Moomoo enrichment remain deferred.
 | Discord announcement | Implemented in source | Server-only, mention-safe, one-publication delivery claim; no external message sent |
 | Shared Watchlists hub | Implemented in source | Starts compact; each card opens and closes by clicking its non-interactive surface, while ticker controls remain independently usable |
 | Owner visual review | Pending | Preview server was blocked by the shared migration boundary; no visual acceptance claimed |
+| Discord server community placement | Planned | Reuse the canonical user-owned watchlist and add explicit community share/unshare, delivery and engagement |
 
 ## Next authorized step
 
-Let the owner review the changed dashboard flow. A controlled private-channel
-publish test is the next separate step and will not happen automatically.
+Let the owner review the changed dashboard flow and the proposed `Share to
+community` placement step. Implement the Communities placement only after that
+visual direction is accepted. A controlled private-channel publish test is a
+separate later step and will not happen automatically.
