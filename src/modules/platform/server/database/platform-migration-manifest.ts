@@ -1,4 +1,7 @@
+import { watchlistFreeChatMigration } from "./migrations/0149_watchlist_free_chat";
 import { watchlistPotentialGainPostsMigration } from "./migrations/0147_watchlist_potential_gain_posts";
+import { platformMembershipPlatformMigration } from "./migrations/0148_platform_membership_platform";
+import { platformMembershipGenerationAllowancesMigration } from "./migrations/0150_platform_membership_generation_allowances";
 import { watchlistOwnerReviewNotificationsMigration } from "./migrations/0146_watchlist_owner_review_notifications";
 import { platformPremiumSwingIdeaVisitEventsMigration } from "./migrations/0139_platform_premium_swing_idea_visit_events";
 import { newsMarketHaltDiscordDeliveriesMigration } from "@/src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries";
@@ -173,12 +176,13 @@ const stagingAppendOrders: Readonly<Record<string, number>> = Object.freeze({
   "0145_traderlink_communities_coaching_delivery_workflow": 158,
   "0146_watchlist_owner_review_notifications": 159,
   "0147_watchlist_potential_gain_posts": 160,
+  "0148_platform_membership_platform": 161,
+  "0149_watchlist_free_chat": 162,
+  "0150_platform_membership_generation_allowances": 163,
 });
 
 const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
   Object.freeze([
-      Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0146_watchlist_owner_review_notifications.ts", migration: watchlistOwnerReviewNotificationsMigration }),
-      Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0147_watchlist_potential_gain_posts.ts", migration: watchlistPotentialGainPostsMigration }),
     Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0001_platform_identity.ts",
       migration: platformIdentityMigration,
@@ -672,6 +676,11 @@ const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0139_platform_premium_swing_idea_visit_events.ts", migration: platformPremiumSwingIdeaVisitEventsMigration }),
     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0140_news_market_halt_discord_deliveries.ts", migration: newsMarketHaltDiscordDeliveriesMigration }),
     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0142_news_reverse_split_alerts.ts", migration: newsReverseSplitAlertsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0146_watchlist_owner_review_notifications.ts", migration: watchlistOwnerReviewNotificationsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0147_watchlist_potential_gain_posts.ts", migration: watchlistPotentialGainPostsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0148_platform_membership_platform.ts", migration: platformMembershipPlatformMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0149_watchlist_free_chat.ts", migration: watchlistFreeChatMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0150_platform_membership_generation_allowances.ts", migration: platformMembershipGenerationAllowancesMigration }),
     Object.freeze({
       sourcePath: "src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions.ts",
       migration: traderLinkCommunitiesIdentityPermissionsMigration,
@@ -746,6 +755,28 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0149_watchlist_free_chat": Object.freeze(["platform_watchlist_free_chat_preferences", "platform_watchlist_free_chat_posts"]),
+    "0148_platform_membership_platform": Object.freeze([
+      "platform_membership_feature_definitions",
+      "platform_membership_plans",
+      "platform_membership_provider_definitions",
+      "platform_membership_plan_versions",
+      "platform_membership_plan_features",
+      "platform_membership_offers",
+      "platform_membership_trial_campaigns",
+      "platform_membership_provider_subscriptions",
+      "platform_membership_entitlements",
+      "platform_membership_discord_offer_rules",
+      "platform_membership_provider_event_receipts",
+      "platform_membership_share_links",
+      "platform_membership_share_link_offers",
+      "platform_membership_audit_events",
+      "platform_membership_claims",
+      "platform_membership_version_changes",
+      "platform_membership_recurring_grants",
+      "platform_membership_feature_policies",
+      "platform_membership_trial_checkouts",
+    ]),
     "0146_watchlist_owner_review_notifications": Object.freeze(["platform_watchlist_owner_review_deliveries"]),
     "0147_watchlist_potential_gain_posts": Object.freeze(["platform_watchlist_potential_gain_posts"]),
     "0139_platform_premium_swing_idea_visit_events": Object.freeze(["platform_premium_swing_idea_visit_events"]),
