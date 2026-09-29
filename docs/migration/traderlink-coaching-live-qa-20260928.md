@@ -104,6 +104,27 @@ Authorization, storage and content are unchanged.
 
 ### Remaining coverage
 
+## September 29 resumed QA — coaching entry point
+
+- Coordinator reconfirmed staging source278d2b837, deployment49b238e0 SUCCESS,
+  one RUNNING instance and volume READY. No new runtime diagnostic is available.
+- Reproduced `/communities/coaching` redirecting the signed-in TradersLink coach
+  without a student relationship to `/communities/test-community/coaching`, which
+  correctly rejects non-students. The prior action-helper correction did not fix
+  this entry-point selection. It is incorrect to describe the community-specific
+  student path itself as nonexistent; the catch-all serves authorized students.
+- Corrected index routing locally: own student relationship -> student workspace;
+  offer/student-management capability -> coach workspace; view/manage-all -> coach
+  directory; no matching access -> Communities. Destination guards unchanged.
+- Eight isolated route cases PASS. No hosted data mutation or full local build.
+- No coaching Help Center article was found in the current feature tree; this
+  correction restores existing navigation and introduces no new user-facing copy.
+- Available Chrome profile identifies as TradersLink, not Bullrun. Requested the
+  prior Bullrun profile be reopened; genuine remaining student-side tests cannot
+  be claimed from the coach session.
+- Bot role refresh remains unproven; do not equate conditional-log silence or the
+  separate community verification timestamp with a successful platform refresh.
+
 Lesson receipt/progress, images, scheduled agreement/maintenance, student questions,
 shared Journal, remaining negative access and desktop/mobile checks. Bullrun has
 no Journal account and messaging/review requests remain disabled. Permission

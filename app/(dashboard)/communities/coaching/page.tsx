@@ -8,16 +8,23 @@ export default async function CommunityCoachingIndexPage() {
   const identity = await requireTraderLinkPlatformServerComponentPageIdentity();
   const destination = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new TraderLinkCommunityRepository(database);
-    const community = repository.listForUser(identity.scope.userId).find((item) => {
+    for (const item of repository.listForUser(identity.scope.userId)) {
       const capabilities = repository.resolveAccess(item.communityId, identity.scope.userId).capabilities;
       const ownRelationship = database.prepare(`SELECT 1
 FROM traderlink_community_coaching_relationships
 WHERE community_id = ? AND student_user_id = ?
 LIMIT 1`).get(item.communityId, identity.scope.userId);
-      return capabilities.includes("community.coaching.view") ||
-        capabilities.includes("community.coaching.offer") || Boolean(ownRelationship);
-    });
-    return community ? `/communities/${community.slug}/coaching` : "/communities";
+      if (ownRelationship) return `/communities/${item.slug}/coaching`;
+      if (capabilities.includes("community.coaching.offer") ||
+          capabilities.includes("community.coaching.students")) {
+        return `/communities/${item.slug}/workspace`;
+      }
+      if (capabilities.includes("community.coaching.view") ||
+          capabilities.includes("community.coaching.manage_all")) {
+        return `/communities/${item.slug}/coaches`;
+      }
+    }
+    return "/communities";
   });
 
   redirect(destination);
