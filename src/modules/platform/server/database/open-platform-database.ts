@@ -8,13 +8,20 @@ import {
   resolvePlatformDatabaseConfig,
   validatePlatformDatabasePath,
 } from "./platform-database-config";
+import { platformMigrationManifest } from "./platform-migration-manifest";
 import { platformFailure } from "./platform-migration-contract";
+import { readAppliedPlatformMigrations } from "./platform-migration-registry";
 import {
   verifyCompletedPlatformDatabase,
   verifyPlatformDatabaseStructureAfterDataChange,
 } from "./run-platform-migrations";
 
 export type PlatformDatabaseOpenMode = "runtime" | "initializer";
+
+export const TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID_ENV =
+  "TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID" as const;
+export const TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_PREDECESSOR_COUNT_ENV =
+  "TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_PREDECESSOR_COUNT" as const;
 
 const runtimeIntegrityCacheKey =
   "__traderlinkPlatformRuntimeDatabaseIntegrityFingerprints" as const;
@@ -34,6 +41,8 @@ type RuntimeIntegrityState = {
   // These are process-release deadlines, never successful-verification evidence.
   foreignKeyNotBefore?: number;
   quickCheckNotBefore?: number;
+  successfulForeignKeyNotBefore?: number;
+  successfulQuickCheckNotBefore?: number;
   quickCheckFailed: boolean;
   quickCheckInFlight: boolean;
   foreignKeySuccessLogs: number;
@@ -51,6 +60,11 @@ type RuntimeIntegrityState = {
 type RuntimeIntegrityProcessState = typeof globalThis & {
   [runtimeIntegrityCacheKey]: Map<string, RuntimeIntegrityState | string> | undefined;
 };
+
+// Successful scans rest longer; failure retries and identity-recovery cooldowns
+// retain their existing independent safety deadlines.
+const PLATFORM_RUNTIME_SUCCESSFUL_FK_CADENCE_MS = 5 * 60_000;
+const PLATFORM_RUNTIME_SUCCESSFUL_QUICK_CADENCE_MS = 30 * 60_000;
 
 export const PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS = 60_000;
 export const PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS = 5_000;
@@ -267,7 +281,8 @@ function startPlatformRuntimeQuickCheck(
 ): void {
   const includeQuickCheck = state.dirtySinceQuickCheck &&
     (state.retryPending ||
-      now >= (state.quickCheckNotBefore ??
+      now >= Math.max(state.successfulQuickCheckNotBefore ?? 0,
+        state.quickCheckNotBefore ??
         state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS));
   state.lastForeignKeyCheckStartedAt = now;
   state.dirtySinceForeignKeyCheck = false;
@@ -518,6 +533,7 @@ function startPlatformRuntimeQuickCheck(
         state.retryCount = 0;
         state.retryNotBefore = 0;
         // Never clear dirty flags from writes after the captured snapshot.
+        recordSuccessfulRuntimeScanCadence(state, Date.now(), includeQuickCheck);
         exitOutcome = "ok";
       } else {
         retry();
@@ -549,6 +565,17 @@ function startPlatformRuntimeQuickCheck(
 
 function safeScanDuration(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+function recordSuccessfulRuntimeScanCadence(
+  state: RuntimeIntegrityState,
+  releasedAt: number,
+  includeQuickCheck: boolean,
+): void {
+  state.successfulForeignKeyNotBefore = releasedAt + PLATFORM_RUNTIME_SUCCESSFUL_FK_CADENCE_MS;
+  if (includeQuickCheck) {
+    state.successfulQuickCheckNotBefore = releasedAt + PLATFORM_RUNTIME_SUCCESSFUL_QUICK_CADENCE_MS;
+  }
 }
 
 function recordRuntimeScanCooldown(
@@ -650,19 +677,25 @@ function schedulePlatformRuntimeQuickCheck(
   ) {
     return;
   }
-  const quickDueAt = state.quickCheckNotBefore ??
-    state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS;
+  const quickDueAt = Math.max(
+    state.retryPending ? 0 : state.successfulQuickCheckNotBefore ?? 0,
+    state.quickCheckNotBefore ??
+      state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS,
+  );
+  const foreignKeyDueAt = Math.max(
+    state.retryPending ? 0 : state.successfulForeignKeyNotBefore ?? 0,
+    state.foreignKeyNotBefore ??
+      state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS,
+  );
   const dueAt = Math.max(state.retryNotBefore, state.foreignKeyNotBefore ?? 0,
     // A failed FK pass may promote its retry to a combined scan, but may not
     // pull that full scan ahead of the existing quick-check cooldown.
     state.retryPending && state.dirtySinceQuickCheck ? quickDueAt : 0, Math.min(
     state.dirtySinceForeignKeyCheck
-      ? (state.foreignKeyNotBefore ??
-        state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS)
+      ? foreignKeyDueAt
       : Infinity,
     state.dirtySinceQuickCheck
-      ? (state.quickCheckNotBefore ??
-        state.lastQuickCheckStartedAt + PLATFORM_RUNTIME_QUICK_CHECK_INTERVAL_MS)
+      ? quickDueAt
       : Infinity,
   ));
   // Writes may bring an FK deadline forward, but must never postpone a scan.
@@ -698,6 +731,7 @@ function recordSuccessfulFullRuntimeVerification(
   state.lastQuickCheckStartedAt = Date.now();
   state.lastForeignKeyCheckStartedAt = state.lastQuickCheckStartedAt;
   recordRuntimeScanCooldown(state, startedAt, Date.now(), true);
+  recordSuccessfulRuntimeScanCadence(state, Date.now(), true);
   state.foreignKeyCheckFailed = false;
   state.quickCheckFailed = false;
   state.quickCheckTimer = null;
@@ -711,10 +745,57 @@ function recordSuccessfulFullRuntimeVerification(
   logPlatformRuntimeQuickCheckOutcome(state, "startup_verified", startedAt, true);
 }
 
+function runtimeVerificationManifest(
+  database: Database.Database,
+  environment: NodeJS.ProcessEnv,
+): readonly (typeof platformMigrationManifest)[number][] {
+  const compatibilityMigrationId =
+    environment[TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID_ENV];
+  if (compatibilityMigrationId === undefined) return platformMigrationManifest;
+  const target = platformMigrationManifest.at(-1);
+  if (
+    !target ||
+    compatibilityMigrationId !== target.migrationId ||
+    compatibilityMigrationId.trim() !== compatibilityMigrationId
+  ) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "runtime_compatibility_target",
+    });
+  }
+  const configuredPredecessorCount =
+    environment[TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_PREDECESSOR_COUNT_ENV];
+  const predecessorCount = configuredPredecessorCount === undefined
+    ? platformMigrationManifest.length - 1
+    : Number(configuredPredecessorCount);
+  if (
+    !Number.isSafeInteger(predecessorCount) ||
+    predecessorCount < 1 ||
+    predecessorCount >= platformMigrationManifest.length ||
+    (configuredPredecessorCount !== undefined &&
+      String(predecessorCount) !== configuredPredecessorCount)
+  ) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "runtime_compatibility_predecessor",
+    });
+  }
+  const applied = readAppliedPlatformMigrations(database);
+  if (applied.length === platformMigrationManifest.length) {
+    return platformMigrationManifest;
+  }
+  if (applied.length !== predecessorCount) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "runtime_compatibility_applied_count",
+    });
+  }
+  return platformMigrationManifest.slice(0, predecessorCount);
+}
+
 export function verifyPlatformRuntimeDatabaseIntegrity(
   database: Database.Database,
   databasePath: string,
+  environment: NodeJS.ProcessEnv = process.env,
 ): void {
+  const verificationManifest = runtimeVerificationManifest(database, environment);
   const fingerprint = readPlatformRuntimeDatabaseFingerprint(
     database,
     databasePath,
@@ -760,7 +841,7 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
       });
     }
     const startedAt = Date.now();
-    verifyCompletedPlatformDatabase(database);
+    verifyCompletedPlatformDatabase(database, verificationManifest);
     recordSuccessfulFullRuntimeVerification(
       existing,
       fingerprint,
@@ -777,7 +858,10 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   }
   if (!existing) {
     const startedAt = Date.now();
-    verifyPlatformDatabaseStructureAfterDataChange(database);
+    verifyPlatformDatabaseStructureAfterDataChange(
+      database,
+      verificationManifest,
+    );
     // File identity and schema must still match after the synchronous checks.
     if (readPlatformRuntimeDatabaseStructureFingerprint(database, databasePath) !== structureFingerprint) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { check: "database_identity_changed" });
@@ -821,7 +905,10 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
     return;
   }
 
-  verifyPlatformDatabaseStructureAfterDataChange(database);
+  verifyPlatformDatabaseStructureAfterDataChange(
+    database,
+    verificationManifest,
+  );
   existing.dataGeneration += 1;
   existing.dirtySinceForeignKeyCheck = true;
   existing.dirtySinceQuickCheck = true;
@@ -860,7 +947,11 @@ export function openPlatformDatabase(
     });
     configurePlatformDatabaseConnection(database, options.mode);
     if (options.mode === "runtime") {
-      verifyPlatformRuntimeDatabaseIntegrity(database, databasePath);
+      verifyPlatformRuntimeDatabaseIntegrity(
+        database,
+        databasePath,
+        options.environment ?? process.env,
+      );
       verifyPlatformDatabaseConnectionPragmas(database);
     }
     return database;
