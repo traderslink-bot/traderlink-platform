@@ -1,5 +1,9 @@
 # Public preview and images progress
 
+## Latest owner revision — two images
+
+Both Discord and X now use the same two-image candidate: upside levels, then pullback areas with their confirmation and invalidation details. Website content is unchanged. Darker watermark remains at 10%; green URL remains at top and bottom. Generated BKYI preview sizes are 1000x1669 and 1000x1775. Focused renderer and immutable-cache checks passed. Previous four-image entries below are historical, not the current selected design. Existing frozen delivery artifacts are preserved; the new share export uses a distinct light-two cache. No live post or deployment.
+
 Implementation underway. BKYI published page inspected at September 29 5:25 PM ET; approved analysis shown at September 29 5:20 PM ET, $3.06. Only explicitly selected display content will enter the static public preview. No live quote or member account details.
 
 ## Implemented candidate
