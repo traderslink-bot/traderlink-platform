@@ -8,7 +8,7 @@
     "healthcheckPath": "/api/platform/health",
     "healthcheckTimeout": 900,
     "restartPolicyType": "NEVER",
-    "restartPolicyMaxRetries": 0,
+    "restartPolicyMaxRetries": 1,
     "overlapSeconds": 0,
     "drainingSeconds": 0
   }
