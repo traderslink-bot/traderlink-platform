@@ -37,3 +37,7 @@ Crisp workspace.
 
 No Journal schema, account/session contract, notification storage, public-site
 code or Railway configuration changes are part of this slice.
+
+## Owner-requested retirement
+
+Removed the Contact support control, Crisp launcher and SDK dependency. Historical implementation notes above are retained as history. No external Crisp account/data was deleted. Help and notification controls remain unchanged.

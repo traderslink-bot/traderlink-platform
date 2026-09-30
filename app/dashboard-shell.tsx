@@ -89,7 +89,6 @@ import {
 } from "./ai-chat-drawer-events";
 import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import { PushNotificationSetupBanner } from "./pwa/push-notification-setup-banner";
-import { CrispDashboardSupportChat } from "./crisp-dashboard-support-chat";
 import {
   PRESS_RELEASE_CHANNEL_DEFINITIONS,
   type PressReleaseUnreadCounts,
@@ -787,7 +786,6 @@ export function DashboardShell({
             />
           ) : null}
           <Box sx={{ flexGrow: 1 }} />
-          <CrispDashboardSupportChat />
           <NotificationCenter notifications={notifications} />
           <Tooltip title={helpLabel}>
             <IconButton

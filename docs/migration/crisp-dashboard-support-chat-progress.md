@@ -27,3 +27,7 @@ No Help Center guide update is required for this slice: the control states its
 purpose directly and opens the external support conversation. A future
 support-process feature (such as ticket status or account-specific support
 requests) requires its own guide and privacy review.
+
+## Owner-requested retirement
+
+Removed the Contact support control, Crisp launcher and SDK dependency. Historical implementation notes above are retained as history. No external Crisp account/data was deleted. Help and notification controls remain unchanged.
