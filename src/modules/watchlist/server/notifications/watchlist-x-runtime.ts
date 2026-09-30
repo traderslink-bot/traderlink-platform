@@ -81,7 +81,7 @@ export async function reconcileXPublications() {
         dbRun(db=>{
           if(post.state==='accepted') {db.prepare("UPDATE platform_watchlist_x_posts SET next_attempt_at_ms=?,status_message='Buffer status is temporarily unavailable; no duplicate will be sent.' WHERE post_key=?").run(Date.now()+60000,post.post_key);return;}
           setXState(db,post.post_key,post.state==='sending' && !(error instanceof XConfirmedRejection)?'uncertain':'failed',
-            post.state==='sending' && !(error instanceof XConfirmedRejection)?'Check Buffer before retrying; delivery could not be confirmed.':'X post could not be prepared or accepted. You can retry from Post to X.');
+            error instanceof XConfirmedRejection ? error.message : post.state==='sending' ? 'Check Buffer before retrying; delivery could not be confirmed.' : 'X post could not be prepared or accepted. You can retry from Post to X.');
         });
       }
     }

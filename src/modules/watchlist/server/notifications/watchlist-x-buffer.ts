@@ -3,6 +3,17 @@ export type BufferPost = { id: string; status: string; channelId: string };
 export class XPreparationError extends Error {}
 export class XConfirmedRejection extends Error {}
 
+/** Keep the provider's reason, never credentials or private media addresses. */
+export function safeXRejection(message: unknown, secrets: string[] = []) {
+  let text = typeof message === 'string' ? message : '';
+  for (const secret of secrets.filter(Boolean).sort((a,b)=>b.length-a.length)) text = text.split(secret).join('[redacted]');
+  text = text.replace(/https?:\/\/[^\s<>"']+/gi,'[URL removed]')
+    .replace(/Bearer\s+\S+/gi,'Bearer [redacted]')
+    .replace(/[A-Za-z0-9_-]{32,}/g,'[redacted]')
+    .replace(/[\u0000-\u001f\u007f<>]/g,' ').replace(/\s+/g,' ').trim();
+  return 'Buffer rejected the X post: ' + (text.slice(0,500) || 'No reason was supplied.');
+}
+
 export function xBufferConfig(env = process.env) {
   const key = env.WATCHLIST_BUFFER_API_KEY?.trim(), channel = env.WATCHLIST_BUFFER_X_CHANNEL_ID?.trim();
   return key && channel ? { key, channel } : null;
@@ -29,7 +40,7 @@ export async function createXBufferPost(input: {caption:string;channel:string;im
   }`,{input:{text:input.caption,channelId:input.channel,schedulingType:'automatic',mode:'shareNow',
     assets:input.imageUrls.map(url=>({image:{url}}))}},input.key,transport);
   const payload = result.data?.createPost;
-  if (payload?.message && !payload.post) throw new XConfirmedRejection('Buffer rejected the X post. Check the connection and caption before retrying.');
+  if (payload?.message && !payload.post) throw new XConfirmedRejection(safeXRejection(payload.message,[input.key,input.channel,...input.imageUrls]));
   if (result.errors?.length || !payload?.post?.id || payload.post.channelId !== input.channel) throw Error('Buffer acceptance could not be confirmed.');
   return payload.post;
 }

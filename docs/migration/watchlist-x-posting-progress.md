@@ -1,5 +1,15 @@
 # Watchlist X posting progress
 
+## Delivery defect investigation
+
+See [rejection diagnosis](watchlist-x-rejection-diagnosis.md). SOAR/BKYI reached Buffer but were rejected; the old code discarded the provider reason. Diagnostic correction prepared; underlying cause and live acceptance remain open. No retry/public post performed.
+
+## Production release and read-only acceptance
+
+Coordinator confirmed Platform `d8aaeed9ee36bc502b128c65913ec725789d2835`, deployment `7c96786e-68ab-45e6-a133-3f93c1204c8b`, and Runtime `a83f897b307d4058e30af08ad14b7b46e19d4926`, deployment `ab4caade-57d4-4514-866b-f89f9edc79f3`, running healthy as single instances. Migration0151 applied once, exact checksum above, count133. Guarded backup/restore verification completed by coordinator; no public X post sent.
+
+Independent live read-only check after release: Platform health HTTP200 ready, sqlite_single_node, migrationCount133. Anonymous /watchlist HTTP200 without redirect, contains dated BKYI preview, Join TradersLink Discord, sign-in and Not live data text. Invalid public image token returns404. Actual owner X dialog interaction, public image delivery and X post appearance are not proved by these checks; no live post authorized.
+
 ## Deployment authorization and credential verification
 
 Coordinator allocated `0151_platform_watchlist_x_publications`; corrected production executionOrder151 (not applied count133). Isolated manifest verification preserves every identity/order/checksum in the exact 132-migration production prefix, appends 0151 as entry133, and adds exactly two managed tables. SQLite quick_check and foreign_key_check pass for the new schema; worker SQL matches migration SQL. Migration checksum: `a541381f7e71d7638f42ab843d80453eb98f27ded1179f8789963aa61efb1345`. No hosted migration applied by this task. Compatibility order164 is staging-only.
