@@ -28,5 +28,5 @@ export default async function CommunitySectionPage({params}:{params:Promise<{com
     (resolved==="channels"&&(owner||capabilities.includes("community.discord.manage")))||
     (resolved==="settings"&&(owner||capabilities.includes("community.manage")));
   if(!allowed)notFound();
-  return <CommunityDashboard discordClientId={process.env.DISCORD_CLIENT_ID??null} isReview={loaded.isReview} section={resolved} snapshot={loaded.snapshot}/>;
+  return <CommunityDashboard discordClientId={process.env.TRADERLINK_COMMUNITIES_DISCORD_CLIENT_ID?.trim()||null} isReview={loaded.isReview} section={resolved} snapshot={loaded.snapshot}/>;
 }

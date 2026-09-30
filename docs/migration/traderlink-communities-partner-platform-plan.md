@@ -22,6 +22,8 @@ owner-test allowlist if production-only Discord behavior requires it.
 
 **Active pilot record:** [Communities Discord Pilot Progress](traderlink-communities-discord-pilot-progress.md)
 
+**Install identity correction:** [Dedicated Communities bot install setting](traderlink-communities-install-identity-progress.md). Narrow staging correction; OAuth identity stays unchanged.
+
 **Current visuals:** [TraderLink Communities Administration Mockup](traderlink-communities-administration-mockup.html),
 [TraderLink Server Owner Dashboard Mockup](traderlink-server-owner-dashboard-mockup.html),
 [TraderLink Community Staff Workspace Mockup](traderlink-community-staff-workspace-mockup.html),
