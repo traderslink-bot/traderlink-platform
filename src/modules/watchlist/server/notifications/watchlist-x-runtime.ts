@@ -1,3 +1,4 @@
+import { cadenceXCaption } from "./watchlist-x-caption";
 import "server-only";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { requestWatchlistRuntimeRaw } from "../runtime/watchlist-runtime-admin-client";
@@ -29,7 +30,7 @@ export async function reconcileXPublications() {
   try {
     dbRun(db=>recoverXPosts(db));
     const posts = dbRun(db=>db.prepare<[number],XPost>(`SELECT * FROM platform_watchlist_x_posts
-      WHERE state IN ('waiting','ready','accepted') AND next_attempt_at_ms<=? ORDER BY next_attempt_at_ms,requested_at_ms LIMIT 2`).all(Date.now()));
+      WHERE state IN ('waiting','ready','accepted') AND next_attempt_at_ms<=? ORDER BY CASE WHEN state='accepted' THEN 0 ELSE 1 END,next_attempt_at_ms,requested_at_ms LIMIT 2`).all(Date.now()));
     for (let post of posts) {
       try {
         // Freeze destination per intent; credential/channel configuration changes never redirect it.
@@ -64,10 +65,21 @@ export async function reconcileXPublications() {
           post = {...post,state:'ready'};
         }
         if (post.state !== 'ready') continue;
+        // Resolve accepted deliveries before choosing the next successful-post variant.
+        const pendingReceipt = dbRun(db=>db.prepare("SELECT 1 FROM platform_watchlist_x_posts WHERE channel_id=? AND state='accepted' LIMIT 1").get(post.channel_id));
+        if (pendingReceipt) continue;
         await verifyXChannel(post.channel_id,config.key);
         const tokens = dbRun(db=>db.prepare<[string],{token:string}>('SELECT token FROM platform_watchlist_x_images WHERE post_key=? ORDER BY ordinal').all(post.post_key));
         if(tokens.length<1 || tokens.length>4)throw Error('Images unavailable');
-        const claimed = dbRun(db=>db.prepare("UPDATE platform_watchlist_x_posts SET state='sending',attempts=attempts+1,updated_at_ms=? WHERE post_key=? AND state='ready'").run(Date.now(),post.post_key).changes===1);
+        const claimed = dbRun(db=>db.transaction(()=>{
+          const saved = db.prepare<[string],XPost>("SELECT * FROM platform_watchlist_x_posts WHERE post_key=? AND state='ready'").get(post.post_key);
+          if (!saved) return false;
+          const sent = db.prepare<[string],{total:number}>("SELECT COUNT(*) total FROM platform_watchlist_x_posts WHERE channel_id=? AND state='sent'").get(saved.channel_id)?.total ?? 0;
+          const caption = saved.attempts > 0 ? saved.caption : cadenceXCaption(saved.caption, sent % 2 === 1);
+          const changed = db.prepare("UPDATE platform_watchlist_x_posts SET caption=?,state='sending',attempts=attempts+1,updated_at_ms=? WHERE post_key=? AND state='ready'").run(caption,Date.now(),post.post_key).changes===1;
+          if (changed) post={...post,caption};
+          return changed;
+        }).immediate());
         if(!claimed)continue;
         post={...post,state:'sending'};
         const receipt = await createXBufferPost({caption:post.caption,channel:post.channel_id,key:config.key,
@@ -81,7 +93,7 @@ export async function reconcileXPublications() {
         dbRun(db=>{
           if(post.state==='accepted') {db.prepare("UPDATE platform_watchlist_x_posts SET next_attempt_at_ms=?,status_message='Buffer status is temporarily unavailable; no duplicate will be sent.' WHERE post_key=?").run(Date.now()+60000,post.post_key);return;}
           setXState(db,post.post_key,post.state==='sending' && !(error instanceof XConfirmedRejection)?'uncertain':'failed',
-            error instanceof XConfirmedRejection ? error.message : post.state==='sending' ? 'Check Buffer before retrying; delivery could not be confirmed.' : 'X post could not be prepared or accepted. You can retry from Post to X.');
+            error instanceof XConfirmedRejection ? error.message : post.state==='sending' ? 'Check Buffer before retrying; delivery could not be confirmed.' : error instanceof Error && error.message.startsWith('Shorten the X caption') ? error.message : 'X post could not be prepared or accepted. You can retry from Post to X.');
         });
       }
     }
