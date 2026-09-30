@@ -8,17 +8,20 @@ import { PlatformNotificationEmailAddressRepository } from "@/src/modules/platfo
 import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
 import { deliverPlatformNotificationEmail } from "@/src/modules/platform/server/notifications/platform-resend-notification-email";
 import { watchlistPublicationNotificationCopy } from "./watchlist-publication-notification-contract";
+import { parseAnalysisUpdateContext } from "./watchlist-analysis-update-copy";
 import { watchlistNotificationAccess } from "./watchlist-notification-runtime";
 import { WatchlistPublicationNotificationStore } from "./watchlist-publication-notification-store";
 
 type Delivery = { delivery_id: string; user_id: string; channel: "web_push" | "email"; target_ref: string;
-  attempt_count: number; ticker: string; event_id: string; notification_kind: "listing" | "analysis"; expires_at_utc: string; owner_approved: number };
+  attempt_count: number; ticker: string; event_id: string; notification_kind: "listing" | "analysis"; expires_at_utc: string; owner_approved: number; analysis_update_context_json: string | null };
 type Subscription = { authentication_tag: string; ciphertext: string; device_ref: string; endpoint_hash: string;
   initialization_vector: string; key_version: string };
 type SendResult = { sent: boolean; retry: boolean; code: string; delayMs?: number };
 
 async function send(database: Database.Database, row: Delivery): Promise<SendResult> {
-  const copy = watchlistPublicationNotificationCopy(row.ticker,row.notification_kind,row.owner_approved === 1);
+  let context;
+  try { context = parseAnalysisUpdateContext(JSON.parse(row.analysis_update_context_json ?? "null")); } catch { /* Older events retain delivery without price context. */ }
+  const copy = watchlistPublicationNotificationCopy(row.ticker,row.notification_kind,row.owner_approved === 1,context);
   if (row.channel === "email") {
     const email = new PlatformNotificationEmailAddressRepository(database, loadPlatformNotificationEmailEncryptionConfiguration())
       .resolveConfirmedAddress(row.user_id);
@@ -69,7 +72,7 @@ export async function deliverWatchlistNotifications(database: Database.Database,
         WHERE state IN ('pending','sending') AND event_id IN (SELECT event_id FROM platform_watchlist_notification_events WHERE expires_at_utc<=?)`).run(now);
       database.prepare(`UPDATE platform_watchlist_notification_deliveries SET state=CASE WHEN attempt_count>=5 THEN 'failed' ELSE 'pending' END
         WHERE state='sending' AND last_attempt_at_utc<=?`).run(new Date(Date.now()-60_000).toISOString());
-      const candidate = database.prepare<[string],Delivery>(`SELECT d.*,e.ticker,e.notification_kind,e.expires_at_utc,e.owner_approved FROM platform_watchlist_notification_deliveries d
+      const candidate = database.prepare<[string],Delivery>(`SELECT d.*,e.ticker,e.notification_kind,e.expires_at_utc,e.owner_approved,e.analysis_update_context_json FROM platform_watchlist_notification_deliveries d
         JOIN platform_watchlist_notification_events e ON e.event_id=d.event_id
         WHERE d.state='pending' AND d.available_at_utc<=? AND d.attempt_count<5 ORDER BY d.available_at_utc,d.delivery_id LIMIT 1`).get(now);
       if (!candidate) return null;

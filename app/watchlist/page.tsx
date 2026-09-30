@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AcademyShell } from "@/app/academy/academy-shell";
+import { WatchlistHomepageShell } from "./watchlist-homepage-shell";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
 import { projectLiveWatchlistList } from "@/src/lib/live-watchlist/live-watchlist-list";
 import { authorizeWatchlistPageAccess } from "@/src/modules/watchlist/server/access/watchlist-access-service";
@@ -49,9 +49,9 @@ function WatchlistAccessMessage({
 }) {
   const notice = getWatchlistAuthNotice(authStatus);
   return (
-    <AcademyShell forcedTheme="light">
+    <WatchlistHomepageShell>
       <WatchlistPublicPreview notice={notice} retryConsent={authStatus === "join-discord"} />
-    </AcademyShell>
+    </WatchlistHomepageShell>
   );
 }
 

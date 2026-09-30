@@ -1,5 +1,8 @@
+import { analysisUpdateComparison, analysisUpdateContextFromReview, parseAnalysisUpdateContext, ANALYSIS_UPDATE_EXPLANATION, type AnalysisUpdateContext } from "./watchlist-analysis-update-copy";
+
 /** Shared wire contract for an explicitly approved, website-acknowledged post.
- * There is deliberately no analysis body, price, email address or image here.
+ * Only saved analysis reference prices are included; no analysis body, live
+ * quote, email address or image belongs in this delivery contract.
  * Authentication and durable publication evidence are checked by the receiver.
  */
 export type WatchlistPublicationNotificationEvent = Readonly<{
@@ -12,6 +15,7 @@ export type WatchlistPublicationNotificationEvent = Readonly<{
   approvalRevision?: number;
   notifyUsers?: boolean;
   ownerApproved?: boolean;
+  analysisUpdateContext?: AnalysisUpdateContext;
 }>;
 
 export type WatchlistNotificationChannel = "web_push" | "email";
@@ -44,6 +48,7 @@ export function publicationFromReview(intent: WatchlistApprovalIntent, value: un
     return parseWatchlistPublicationNotificationEvent({ version: action ? 2 : 1, cycleId: intent.cycleId, ticker: intent.ticker,
       approvedAtUtc: new Date(approval.at).toISOString(), publishedAtUtc: new Date(receipt.at).toISOString(),
       ownerApproved: /^platform-owner:[0-9a-f-]{36}$/i.test(approval.actor),
+      ...(action === "analysis" ? { analysisUpdateContext: analysisUpdateContextFromReview(review, approval.revision) } : {}),
       ...(action ? { notificationKind: action, approvalRevision: approval.revision, notifyUsers: publication!.notifyUsers } : {}) }, nowMs);
   } catch { return null; }
 }
@@ -69,6 +74,7 @@ export function parseWatchlistPublicationNotificationEvent(
   const event = value as Record<string, unknown>;
   const keys = ["version", "cycleId", "ticker", "approvedAtUtc", "publishedAtUtc"];
   if (event.version === 2) keys.push("notificationKind", "approvalRevision", "notifyUsers");
+  if (Object.hasOwn(event, "analysisUpdateContext")) keys.push("analysisUpdateContext");
   if (Object.hasOwn(event, "ownerApproved")) {
     if (typeof event.ownerApproved !== "boolean") return null;
     keys.push("ownerApproved");
@@ -85,6 +91,8 @@ export function parseWatchlistPublicationNotificationEvent(
   return Object.freeze({ version: event.version as 1 | 2, cycleId: event.cycleId, ticker: event.ticker,
     approvedAtUtc: event.approvedAtUtc, publishedAtUtc: event.publishedAtUtc,
     ...(typeof event.ownerApproved === "boolean" ? { ownerApproved: event.ownerApproved } : {}),
+    ...(event.notificationKind === "analysis" && parseAnalysisUpdateContext(event.analysisUpdateContext)
+      ? { analysisUpdateContext: parseAnalysisUpdateContext(event.analysisUpdateContext) } : {}),
     ...(event.version === 2 ? { notificationKind: event.notificationKind as "listing" | "analysis",
       approvalRevision: event.approvalRevision as number, notifyUsers: event.notifyUsers as boolean } : {}) });
 }
@@ -97,15 +105,16 @@ export function watchlistNotificationExpired(
   return !Number.isFinite(nowMs) || nowMs >= Date.parse(event.publishedAtUtc) + WATCHLIST_NOTIFICATION_MAX_AGE_MS;
 }
 
-export function watchlistPublicationNotificationCopy(ticker: string, kind: "listing" | "analysis" = "listing", ownerApproved = false) {
+export function watchlistPublicationNotificationCopy(ticker: string, kind: "listing" | "analysis" = "listing", ownerApproved = false, context?: AnalysisUpdateContext) {
   if (!tickerPattern.test(ticker)) throw new Error("Invalid Watchlist ticker.");
-  const attribution = ownerApproved ? ' by "This Guy"' : "";
+  const attribution = ownerApproved ? ' by "This Guy"' : kind === "analysis" && context?.automatic ? " — Auto updated by AI" : "";
+  const comparison = analysisUpdateComparison(context);
   return Object.freeze({
     destinationPath: `/watchlist/${ticker}`,
     pushTitle: (kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the Watchlist`) + attribution,
-    pushBody: kind === "analysis" ? `An approved TradersLink Analysis is ready for ${ticker}.` : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
+    pushBody: kind === "analysis" ? comparison ?? ANALYSIS_UPDATE_EXPLANATION : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
     emailTitle: (kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the TradersLink Watchlist`) + attribution,
-    emailBody: kind === "analysis" ? `An approved TradersLink Analysis for ${ticker} is ready.` : `A new Watchlist post for ${ticker} is ready.`,
+    emailBody: kind === "analysis" ? [comparison, ANALYSIS_UPDATE_EXPLANATION].filter(Boolean).join("\n") : `A new Watchlist post for ${ticker} is ready.`,
     emailTickerLabel: `View ${ticker}`,
     emailWatchlistLabel: "View Watchlist",
     emailWatchlistPath: "/watchlist",

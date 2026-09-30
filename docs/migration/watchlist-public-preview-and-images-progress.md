@@ -24,3 +24,7 @@ Owner follow-up: make the destination URL prominent at the top as well as the bo
 Owner watermark follow-up: increased navy watermark opacity from 5.5% to 10%. Rechecked PNG metadata: all four remain 1000px wide (heights 870, 1669, 1923, 1775). These are generated exports, not mobile screenshots; thumbnail scaling can change their apparent displayed widths.
 
 No live posts or deployment. Owner visual acceptance and release remain pending. [Plan](watchlist-public-preview-and-images-plan.md).
+
+## September 30 — actual CNTB page
+
+The owner-approved replacement uses the actual rendered CNTB detail page through Indicators, its original responsive layout and normal full-page scrolling, plus the current traderslink.pro homepage header/footer. This supersedes the hand-built BKYI preview. Source implementation complete; hosted visual acceptance remains open. See [current progress](watchlist-real-page-preview-progress.md).

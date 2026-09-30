@@ -242,3 +242,8 @@ reported zero page errors across Account and all seven Journal Admin pages.
 ## Watchlist X publications — 0151
 
 Coordinator reserved `0151_platform_watchlist_x_publications`. Adds only `platform_watchlist_x_posts`, `platform_watchlist_x_images` and one pending-state index. Production executionOrder 151 follows 0150 (applied count advances 132 to 133). Existing order133 belongs to 0133 daily recaps and must not be reused. Coaching compatibility order164 is separate and must preserve identity/SQL. No migration applied locally or to hosted data. See [plan](watchlist-x-posting-plan.md) and [progress](watchlist-x-posting-progress.md).
+
+
+## Reserved 0152 — Watchlist update context
+
+`0152_platform_watchlist_notification_update_context`, order 152, follows `0151_platform_watchlist_x_publications`. Additive nullable JSON column on immutable Watchlist notification events; no backfill or deliveries. Registered, not applied. See [plan](watchlist-update-context-plan.md).

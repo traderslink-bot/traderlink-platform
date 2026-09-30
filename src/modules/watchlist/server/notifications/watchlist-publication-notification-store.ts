@@ -56,9 +56,10 @@ export class WatchlistPublicationNotificationStore {
       }
       const timestamp = input.now.toISOString();
       this.database.prepare(`INSERT INTO platform_watchlist_notification_events
-        (event_id,cycle_id,notification_kind,approval_revision,notify_users,ticker,approved_at_utc,published_at_utc,accepted_at_utc,expires_at_utc,owner_approved) VALUES(?,?,?,?,?,?,?,?,?,?,?)`)
+        (event_id,cycle_id,notification_kind,approval_revision,notify_users,ticker,approved_at_utc,published_at_utc,accepted_at_utc,expires_at_utc,owner_approved,analysis_update_context_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`)
         .run(eventId,event.cycleId,kind,event.approvalRevision ?? 0,event.notifyUsers === false ? 0 : 1,event.ticker, event.approvedAtUtc, event.publishedAtUtc, timestamp,
-          new Date(Date.parse(event.publishedAtUtc) + WATCHLIST_NOTIFICATION_MAX_AGE_MS).toISOString(), event.ownerApproved === true ? 1 : 0);
+          new Date(Date.parse(event.publishedAtUtc) + WATCHLIST_NOTIFICATION_MAX_AGE_MS).toISOString(), event.ownerApproved === true ? 1 : 0,
+          event.analysisUpdateContext ? JSON.stringify(event.analysisUpdateContext) : null);
       let enqueued = 0;
       // A delayed historical event is acknowledged without enrolling anyone.
       if (event.notifyUsers !== false && !watchlistNotificationExpired(event, input.now.getTime())) {

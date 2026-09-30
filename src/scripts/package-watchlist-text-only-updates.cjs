@@ -1,0 +1,44 @@
+const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),assert=require('node:assert/strict'),vm=require('node:vm');
+const root=path.resolve(__dirname,'../..'),runtime='C:/Users/jerac/Documents/TraderLink/levels-system-post-mtf-handoff-stability';
+const pp='c437a62f82bb2145cbccc13285ee4fcea86b1b2c',rp='83f7c86585c769d03f4f9718cc4f4f3214301b98';
+const git=(cwd,args,input,index)=>cp.execFileSync('git',args,{cwd,input,encoding:'utf8',maxBuffer:12e6,env:{...process.env,...(index?{GIT_INDEX_FILE:index}:{})}}).trimEnd();
+const source=(cwd,parent,file)=>git(cwd,['show',`${parent}:${file}`])+'\n';
+const edit=(text,from,to)=>{assert.equal(text.split(from).length,2,from);return text.replace(from,to);};
+const before='Updated levels and setups as the trade develops—not a new entry signal.';
+const after='A follow-up to the original analysis, with updated levels and setups for those holding a position or watching the trade develop.';
+const platform=new Map(),changes=new Map();
+const helper='src/modules/watchlist/server/notifications/watchlist-analysis-update-copy.ts';
+platform.set(helper,edit(source(root,pp,helper),before,after));
+const rh='src/lib/ai/watchlist-analysis-update-context.ts';
+changes.set(rh,edit(source(runtime,rp,rh),before,after));
+const renderer='src/lib/ai/traderslink-ai-read-publication-preview.ts';
+changes.set(renderer,edit(source(runtime,rp,renderer),"? chunk.replace(/^(\\S+ Analysis updated)(\\r?\\n|$)/, '$1 — Auto updated by AI$2') : chunk);","? chunk.replace(/^(\\S+ Analysis updated)(\\r?\\n|$)/, '$1 — Auto updated by AI$2').replace('Images show part of the analysis. View full analysis in the app 👇', 'View full analysis in the app 👇') : chunk);"));
+const manager='src/lib/monitoring/manual-watchlist-runtime-manager.ts';
+changes.set(manager,edit(source(runtime,rp,manager),'      discordChunks: attributeOwnerApprovedDiscord(preview.publication.discordChunks, input.actor),','      analysisImageVersion: input.actor === "runtime:automatic-boundary" ? undefined : preview.publication.analysisImageVersion,\n      discordChunks: attributeOwnerApprovedDiscord(preview.publication.discordChunks, input.actor),'));
+const help='src/modules/help/watchlist-guides.ts';
+platform.set(help,edit(source(root,pp,help),'That comparison is separate from Potential Gain.','That comparison is separate from Potential Gain. Automatic boundary-update Discord posts are text-only with links to the full analysis. Initial posts and manually approved updates keep their analysis images.'));
+const plan='docs/migration/watchlist-update-context-plan.md';
+platform.set(plan,edit(source(root,pp,plan),before,after)+'\nOwner-approved follow-up: automatic boundary-update Discord posts carry no analysis images or image-specific caption. Initial posts and manual approvals retain images.\n');
+const progress='docs/migration/watchlist-update-context-progress.md';
+platform.set(progress,source(root,pp,progress)+'\nSeptember 30 follow-up complete locally: exact owner-selected follow-up wording replaces the previous explanation; automatic boundary approvals freeze no image version and use a link-only caption. Initial/manual image behavior is unchanged. Focused offline renderer, manager-condition and TypeScript syntax checks pass. No live sends or deploy.\n');
+platform.set('src/scripts/package-watchlist-text-only-updates.cjs',fs.readFileSync(__filename,'utf8'));
+// Keep the existing focused suite consistent with the approved replacement copy.
+const test='src/scripts/verify-watchlist-update-context.cjs';
+platform.set(test,edit(source(root,pp,test),'assert.match(auto.emailBody,/not a new entry signal/);','assert.match(auto.emailBody,/for those holding a position or watching the trade develop/);'));
+const ts=require('C:/Users/jerac/Documents/TraderLink/traderlink-platform/node_modules/typescript');
+function load(file){const m={exports:{}};const text=changes.get(file)??source(runtime,rp,file);const out=ts.transpileModule(text,{reportDiagnostics:true,compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}});assert.equal(out.diagnostics.length,0);vm.runInNewContext(out.outputText,{module:m,exports:m.exports,process,URL,Buffer,require:id=>id.startsWith('.')?load(path.posix.join(path.posix.dirname(file),id.replace(/\.js$/,'.ts'))):require(id)});return m.exports;}
+const render=load(renderer),read={symbol:'TNON'},audience={everyone:true,roles:['12345678901234567']};
+const chunks=render.renderApprovedAnalysisDiscord(read,true,audience,{automatic:true,firstAnalysisPrice:4,updatedAnalysisPrice:5.2});
+const automatic=render.attributeOwnerApprovedDiscord(chunks,'runtime:automatic-boundary')[0];
+assert.ok(automatic.includes(after));assert.ok(!automatic.includes('Images show'));assert.match(automatic,/Auto updated by AI/);assert.match(automatic,/Originally analyzed at \$4.00. Now \$5.20/);assert.match(automatic,/@everyone/);
+const manual=render.attributeOwnerApprovedDiscord(chunks,'platform-owner:10000000-0000-4000-8000-000000000001')[0];
+assert.match(manual,/Images show part/);assert.match(manual,/by "This Guy"/);
+const match=changes.get(manager).match(/analysisImageVersion: (input.actor === "runtime:automatic-boundary" \? undefined : preview.publication.analysisImageVersion),/);assert.ok(match);
+const choice=new Function('input','preview','return '+match[1]);
+assert.equal(choice({actor:'runtime:automatic-boundary'},{publication:{analysisImageVersion:1}}),undefined);
+assert.equal(choice({actor:'platform-owner:owner'},{publication:{analysisImageVersion:1}}),1);
+for(const [file,text]of [...platform,...changes])if(file.endsWith('.ts'))assert.equal(ts.transpileModule(text,{fileName:file,reportDiagnostics:true,compilerOptions:{target:ts.ScriptTarget.ES2022}}).diagnostics.length,0,file);
+console.log('PASS: exact copy, automatic text-only caption/image flag, manual images retained, price context/tags/links preserved; no sends.');
+function commit(cwd,parent,files,label){const index=path.join(root,`data/text-only-${label}.index`);git(cwd,['read-tree',parent],undefined,index);for(const[file,text]of files){const blob=git(cwd,['hash-object','-w','--stdin'],text,index);git(cwd,['update-index','--add','--cacheinfo',`100644,${blob},${file}`],undefined,index);}git(cwd,['diff','--cached','--check',parent],undefined,index);const tree=git(cwd,['write-tree'],undefined,index);const sha=git(cwd,['commit-tree',tree,'-p',parent,'-m','Keep automatic boundary notifications text-only with follow-up context'],undefined,index);git(cwd,['update-ref',`refs/codex/watchlist-text-only-${label}`,sha],undefined,index);return sha;}
+console.log(JSON.stringify({platformParent:pp,runtimeParent:rp,platformFiles:[...platform.keys()],runtimeFiles:[...changes.keys()]}));
+if(process.argv.includes('--commit'))console.log(JSON.stringify({platform:commit(root,pp,platform,'platform'),runtime:commit(runtime,rp,changes,'runtime')}));

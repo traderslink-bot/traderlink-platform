@@ -20,3 +20,9 @@ Owner approved on September 29: prioritize X posting and the public landing page
 Check unauthenticated page does not auto-login; sign-in retains returnTo; existing member branch untouched; no public live-data endpoint; BKYI excerpt clearly dated; mobile buttons and desktop spacing; no hidden draft data. Check exact four image order, no dark background, watermark fits, no skipped approved fields within the four selected groups, no blank hidden groups, no stale cache limit of three, and no alteration of past frozen posts.
 
 Progress: [implementation record](watchlist-public-preview-and-images-progress.md). X delivery: [plan](watchlist-x-posting-plan.md).
+
+## September 30 — actual CNTB page
+
+The owner-approved replacement uses the actual rendered CNTB detail page through Indicators, its original responsive layout and normal full-page scrolling, plus the current traderslink.pro homepage header/footer. This supersedes the hand-built BKYI preview. Source implementation complete; hosted visual acceptance remains open. See [current progress](watchlist-real-page-preview-progress.md).
+
+September 30 follow-up: restore the original posted price beside the ticker-detail posted date and Live data status. [Completed source change](watchlist-posted-price-header-progress.md).
