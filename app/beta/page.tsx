@@ -8,7 +8,7 @@ import styles from "./beta.module.css";
 const STAGING_HOSTNAME = "traderlink-platform-staging-staging.up.railway.app";
 const DASHBOARD_ORIGIN = "https://app.traderslink.pro";
 
-type BetaFeatureIcon = "assessment" | "book" | "levels" | "negative" | "rule" | "trendUp";
+type BetaFeatureIcon = "assessment" | "book" | "levels" | "negative" | "rule" | "trendUp" | "watchlist";
 
 const BETA_FEATURES = [
   {
@@ -30,6 +30,11 @@ const BETA_FEATURES = [
     description: "Get press-release alerts in your dashboard, including halt alerts, so important news stays visible while you review trades.",
     icon: "negative",
     title: "Press Release Alerts",
+  },
+  {
+    description: "Explore detailed trading analysis with pullback areas, breakout levels, potential upside levels, and setup invalidation points. Follow live market prices, mapped support and resistance, and regularly updated indicators that explain trend, momentum, volume, and volatility—all together on each ticker’s detail page.",
+    icon: "watchlist",
+    title: "Live Watchlist",
   },
   {
     description: "Open a completed trade and review its executions, result, notes, tags, rules, and analysis in one place.",
@@ -61,6 +66,8 @@ function BetaFeatureIconGraphic({ icon }: { icon: BetaFeatureIcon }) {
       return <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4V4Zm2 2v12h12V6H6Zm2 2h8v2H8V8Zm0 4h5v2H8v-2Z" /></svg>;
     case "trendUp":
       return <svg viewBox="0 0 24 24"><path d="M3.4 18 2 16.6l7.4-7.4 4 4L18.6 8H15V6h7v7h-2V9.4L13.4 16l-4-4-6 6Z" /></svg>;
+    case "watchlist":
+      return <svg viewBox="0 0 24 24"><path d="M12 5c-5.5 0-9.5 5.1-9.7 5.3L1.2 12l1.1 1.7C2.5 13.9 6.5 19 12 19s9.5-5.1 9.7-5.3l1.1-1.7-1.1-1.7C21.5 10.1 17.5 5 12 5Zm0 12c-4 0-7.3-3.5-8.5-5C4.7 10.5 8 7 12 7s7.3 3.5 8.5 5c-1.2 1.5-4.5 5-8.5 5Zm0-7.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" /></svg>;
   }
 }
 
