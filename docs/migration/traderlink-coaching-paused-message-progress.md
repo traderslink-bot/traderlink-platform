@@ -34,6 +34,24 @@ code files using the canonical dependency installation through stdin (the owned
 worktree has no node_modules). TypeScript transpile syntax checks passed on the
 same files; this is not a full typecheck. git diff --check passed. No local build,
 test suite, server, migration or configuration change was run. Staging
-deployment/retest remains pending.
-Retest disabled Send, stale-page denial without page failure, unchanged message
-count/history, and restored Send. Do not call the entire feature complete.
+deployment and bounded coach-side retest are complete.
+
+## Staging acceptance — 2026-10-01
+
+- Coordinator deployed staging commit `9d5d1be839e624377c960b7d0a64f725ac0879ad`
+  in Railway deployment `3c70cd64-335b-4b86-bd2a-8a0cd282ea6e` (SUCCESS).
+  Hosted compile/typecheck passed; health HTTP 200, ready, schema 146.
+- Removed only Bullrun's test-community role. Normal bot refresh paused access.
+- Fresh coach page disabled Send and displayed the approved inline message.
+- A coach page opened before the pause submitted a synthetic draft: the page
+  stayed usable, displayed the inline pause message, and disabled Send.
+- Restored the exact Discord role. Normal bot refresh restored access. Both
+  coach pages enabled Send; the inline pause message cleared.
+- The rejected draft was absent. Both original messages, chart attachment,
+  pending/completed reviews, task and coaching history remained. Shared AAPL
+  data returned. Bullrun was left with the original test role restored.
+- Student-side pause/restoration passed before this narrow correction. Bullrun's
+  browser was unavailable for a second student-side run after deployment;
+  do not represent that earlier result as a fresh student-side retest.
+- No production change. This completes the bounded correction, not acceptance
+  of the entire Communities/Coaching feature.
