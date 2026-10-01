@@ -1,5 +1,7 @@
 # TraderLink Communities Partner Platform Plan
 
+**Paused coach messaging correction:** [Approved correction and staging acceptance](traderlink-coaching-paused-message-progress.md).
+
 **Status:** Page composition and initial Light/Dark visual direction are owner
 approved. The platform foundation is deployed to staging. The active boundary
 is a private first-server functional pilot; Communities is not publicly

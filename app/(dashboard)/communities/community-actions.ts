@@ -7,13 +7,26 @@ import { redirect } from "next/navigation";
 
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { createCanonicalUtcTimestamp, TraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { TraderLinkCommunityPlatformRepository } from "@/src/modules/communities/server/traderlink-community-platform-repository";
 import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
 import { TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES, type TraderLinkCommunityFixedResponsibility } from "@/src/modules/communities/contracts/traderlink-community-contracts";
 import { resolveTraderLinkCommunityViewer } from "@/src/modules/communities/server/traderlink-community-viewer";
 import { TraderLinkCommunityCoachingProgramService } from "@/src/modules/communities/server/traderlink-community-coaching-program-service";
 import {CoachingAgreementService} from "@/src/modules/communities/server/coaching-agreement-service";
+
+export async function sendCoachMessageWithFeedbackAction(_previous:{message:string},formData:FormData):Promise<{message:string}>{
+ try {
+  await sendCommunityCoachingMessageAction(formData);
+  return {message:""};
+ } catch(error) {
+  if(error instanceof TraderLinkPlatformError && error.code==="TRADERLINK_WORKSPACE_ACCESS_DENIED" && error.safeContext.operation==="coaching_access_paused") {
+   refresh();
+   return {message:"Coaching access is paused."};
+  }
+  throw error;
+ }
+}
 
 export async function coachingAgreementAction(formData:FormData):Promise<void>{
  const communitySlug=required(formData,"communitySlug"),relationshipId=required(formData,"relationshipId"),intent=required(formData,"intent");
