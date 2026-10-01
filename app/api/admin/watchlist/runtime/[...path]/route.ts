@@ -1,3 +1,4 @@
+import { recordCategoryMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { handleXAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-x-admin";
 import { recordXApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-x-runtime";
 import { handleFreeChatAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin";
@@ -16,6 +17,7 @@ export const runtime = "nodejs";
 type SupportedMethod = "GET" | "POST";
 
 const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/category-move",
   "/api/watchlist/analysis-review/x-post",
   "/api/watchlist/analysis-review/free-chat",
   "/api/watchlist/analysis-review/discord-mentions",
@@ -34,6 +36,7 @@ const GET_PATHS = new Set([
 ]);
 
 const POST_PATHS = new Set([
+  "/api/watchlist/analysis-review/category-move",
   "/api/watchlist/analysis-review/x-post",
   "/api/watchlist/analysis-review/cancel-generation",
   "/api/watchlist/analysis-review/free-chat",
@@ -143,6 +146,9 @@ async function relay(
   if (["/api/watchlist/analysis-review/approve", "/api/watchlist/analysis-review/publish-without-analysis"].includes(pathname) && reviewActor && body) {
     try { recordWatchlistApprovalNotificationIntent(body, reviewActor, pathname.endsWith("/publish-without-analysis")); }
     catch { console.error("Watchlist notification intent could not be saved; approval remains unchanged."); }
+  }
+  if(pathname==='/api/watchlist/analysis-review/category-move'&&method==='POST'&&reviewActor&&body){
+    try{recordCategoryMoveIntent(body,reviewActor);}catch{return Response.json({error:'Member notification request could not be saved. Move with notifications off, or retry.'},{status:503});}
   }
   const result = await requestWatchlistRuntimeRaw({
     reviewActor,
