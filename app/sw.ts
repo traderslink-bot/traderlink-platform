@@ -246,46 +246,6 @@ self.addEventListener("notificationclick", (event) => {
 
 serwist.addEventListeners();
 
-let safeUpdateCheck: Promise<boolean> | null = null;
-
-async function allAppWindowsSafeToUpdate(requesterId: string): Promise<boolean> {
-  const windows = await self.clients.matchAll({ includeUncontrolled: true, type: "window" });
-  if (!windows.length || windows.length > 20 || !windows.some(client => client.id === requesterId)) return false;
-  const replies = await Promise.all(windows.map(client => new Promise<boolean>((resolve) => {
-    const channel = new MessageChannel();
-    const finish = (safe: boolean) => {
-      clearTimeout(timer);
-      channel.port1.close();
-      channel.port2.close();
-      resolve(safe);
-    };
-    const timer = setTimeout(() => finish(false), 2_000);
-    channel.port1.onmessage = event => finish(event.data?.safe === true);
-    try { client.postMessage({ type: "traderlink:update-safety-check" }, [channel.port2]); }
-    catch { finish(false); }
-  })));
-  if (!replies.every(Boolean)) return false;
-  // A newly opened window has not certified safety; retry at a later boundary.
-  const current = await self.clients.matchAll({ includeUncontrolled: true, type: "window" });
-  return current.every(client => windows.some(previous => previous.id === client.id));
-}
-
-self.addEventListener("message", (event) => {
-  if (event.data?.type === "traderlink:request-safe-update" && event.ports[0] &&
-    event.source && "id" in event.source) {
-    const reply = event.ports[0];
-    const requesterId = event.source.id;
-    const check = safeUpdateCheck ??= allAppWindowsSafeToUpdate(requesterId)
-      .finally(() => { safeUpdateCheck = null; });
-    event.waitUntil(check.then(async safe => {
-      reply.postMessage({ status: safe ? "activating" : "blocked" });
-      if (safe) await self.skipWaiting();
-    }).catch(() => {
-      try { reply.postMessage({ status: "blocked" }); } catch { /* Requesting page closed. */ }
-    }).finally(() => reply.close()));
-  }
-});
-
 self.addEventListener("message", (event) => {
   if (event.data?.type === "traderlink:activate-update") {
     event.waitUntil(self.skipWaiting());

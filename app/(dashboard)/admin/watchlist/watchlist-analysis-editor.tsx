@@ -1,7 +1,5 @@
 "use client";
 
-import { usePwaUpdateBlocker } from "@/src/modules/platform/client/pwa/platform-pwa-update-safety";
-
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Alert from "@mui/material/Alert";
@@ -42,7 +40,6 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
   const [preview, setPreview] = useState<Preview | null>(null);
   const [patch, setPatch] = useState<EditRecord | null>(null);
   const [dirty, setDirty] = useState(false);
-  usePwaUpdateBlocker(dirty);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const saving = useRef(false);

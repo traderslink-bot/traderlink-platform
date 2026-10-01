@@ -434,3 +434,7 @@ The correction must:
 ## Safe automatic app updates — local candidate
 
 [Safe automatic update progress](pwa-safe-auto-update-progress-2026-09-28.md): implementation and targeted checks complete; conservative edit safety documented. Not deployed; runtime/device acceptance pending.
+
+## Owner-requested restoration of Update app — 2026-10-01
+
+[Restore the previous update alert](pwa-restore-update-alert-progress-2026-10-01.md). Supersedes the rejected automatic-update behavior. Local restoration prepared; not deployed.

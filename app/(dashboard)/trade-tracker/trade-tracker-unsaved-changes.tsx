@@ -1,7 +1,5 @@
 "use client";
 
-import { usePwaUpdateBlocker } from "@/src/modules/platform/client/pwa/platform-pwa-update-safety";
-
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -42,7 +40,6 @@ export function TradeTrackerUnsavedChangesProvider({
   const allowNextHistoryNavigation = useRef(false);
   const historyGuardActive = useRef(false);
   const hasUnsavedChanges = dirtySources.size > 0;
-  usePwaUpdateBlocker(hasUnsavedChanges);
 
   const reportUnsavedChanges = useCallback(
     (source: string, sourceHasUnsavedChanges: boolean) => {
