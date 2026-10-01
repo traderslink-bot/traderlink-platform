@@ -112,9 +112,9 @@ export function watchlistPublicationNotificationCopy(ticker: string, kind: "list
   return Object.freeze({
     destinationPath: `/watchlist/${ticker}`,
     pushTitle: (kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the Watchlist`) + attribution,
-    pushBody: kind === "analysis" ? [context?.categoryMoveNote,comparison ?? ANALYSIS_UPDATE_EXPLANATION].filter(Boolean).join("\n") : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
+    pushBody: kind === "analysis" ? comparison ?? ANALYSIS_UPDATE_EXPLANATION : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
     emailTitle: (kind === "analysis" ? `${ticker} Analysis updated` : `${ticker} added to the TradersLink Watchlist`) + attribution,
-    emailBody: kind === "analysis" ? [context?.categoryMoveNote,comparison, ANALYSIS_UPDATE_EXPLANATION].filter(Boolean).join("\n") : `A new Watchlist post for ${ticker} is ready.`,
+    emailBody: kind === "analysis" ? [comparison, ANALYSIS_UPDATE_EXPLANATION].filter(Boolean).join("\n") : `A new Watchlist post for ${ticker} is ready.`,
     emailTickerLabel: `View ${ticker}`,
     emailWatchlistLabel: "View Watchlist",
     emailWatchlistPath: "/watchlist",

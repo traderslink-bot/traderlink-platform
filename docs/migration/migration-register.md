@@ -247,8 +247,3 @@ Coordinator reserved `0151_platform_watchlist_x_publications`. Adds only `platfo
 ## Reserved 0152 — Watchlist update context
 
 `0152_platform_watchlist_notification_update_context`, order 152, follows `0151_platform_watchlist_x_publications`. Additive nullable JSON column on immutable Watchlist notification events; no backfill or deliveries. Registered, not applied. See [plan](watchlist-update-context-plan.md).
-
-
-## Reserved 0153 — Watchlist category move notifications
-
-`0153_platform_watchlist_category_move_notifications`, order153, predecessor0152. Two additive empty tables for explicit category-move intents and member deliveries. No historical sends or changes to analysis/listing event identities. Registered, not applied.
