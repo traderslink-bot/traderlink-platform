@@ -30,4 +30,3 @@ export function migrateLegacyManualWatchlistFile(
     `[ManualWatchlistRuntime] Migrated persistent data from ${legacyPath} to ${durablePath}.`,
   );
 }
-

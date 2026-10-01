@@ -45,4 +45,3 @@ export function appendDiscordMentions(content: string, audience: WatchlistDiscor
 export function allowedDiscordMentions(audience?: WatchlistDiscordAudience) {
   return { parse: audience?.everyone ? ["everyone"] : [], roles: audience?.roles.filter(id => roleId.test(id)) ?? [], users: [], replied_user: false };
 }
-

@@ -28,4 +28,3 @@ export function buildWatchlistDiscordLinkMessage(symbol: string): string {
     `View ${normalizedSymbol} ticker page: ${symbolUrl}`,
   ].join("\n");
 }
-

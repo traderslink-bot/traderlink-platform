@@ -11,4 +11,3 @@ export class DiscordConfirmedRejection extends Error {
     this.name = "DiscordConfirmedRejection";
   }
 }
-
