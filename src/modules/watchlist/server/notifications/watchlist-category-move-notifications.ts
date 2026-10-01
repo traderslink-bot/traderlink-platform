@@ -15,7 +15,7 @@ export function categoryMoveNotificationCopy(ticker:string,group:string){
  const label=/^top_watches:\d{4}-\d{2}-\d{2}$/.test(group)?"Overnight Watches":labels[group];
  if(!label||!/^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(ticker))throw Error("Invalid category move.");
  const title=`${ticker} added to ${label} by "This Guy"`;
- const body=label==="Overnight Watches"?`Watching ${ticker} for the next trading session. See the analysis for potential setups and levels to watch.`:`${ticker} has moved to ${label}. View the ticker page for available analysis, notes and levels.`;
+ const body=label==="Overnight Watches"?`See the analysis for potential setups and levels to watch.`:`${ticker} has moved to ${label}. View the ticker page for available analysis, notes and levels.`;
  return {pushTitle:title,emailTitle:title,pushBody:body,emailBody:body,destinationPath:`/watchlist/${ticker}`,emailTickerLabel:`View ${ticker}`,emailWatchlistLabel:"View Watchlist",emailWatchlistPath:"/watchlist"} as const;
 }
 /** Owner proxy snapshots current recipients before dispatch. Duplicate clicks keep the same set. */
