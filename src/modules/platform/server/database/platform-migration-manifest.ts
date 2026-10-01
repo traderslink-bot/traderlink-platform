@@ -1,3 +1,4 @@
+import { platformWatchlistCategoryMoveNotificationsMigration } from "./migrations/0153_platform_watchlist_category_move_notifications";
 import { platformWatchlistNotificationUpdateContextMigration } from "./migrations/0152_platform_watchlist_notification_update_context";
 import { platformWatchlistXPublicationsMigration } from "./migrations/0151_platform_watchlist_x_publications";
 import { watchlistFreeChatMigration } from "./migrations/0149_watchlist_free_chat";
@@ -645,6 +646,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0150_platform_membership_generation_allowances.ts", migration: platformMembershipGenerationAllowancesMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0151_platform_watchlist_x_publications.ts", migration: platformWatchlistXPublicationsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0152_platform_watchlist_notification_update_context.ts", migration: platformWatchlistNotificationUpdateContextMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0153_platform_watchlist_category_move_notifications.ts", migration: platformWatchlistCategoryMoveNotificationsMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
