@@ -16,7 +16,7 @@ import {
   type TraderLinkPlatformRequestIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {
-  buildDiscordAuthResultUrl,
+  buildDiscordAuthFailureUrl,
   isWatchlistAuthReturnTo,
   isSwingIdeaAuthReturnTo,
   normalizeDiscordAuthReturnTo,
@@ -40,6 +40,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const returnTo = normalizeDiscordAuthReturnTo(
     request.nextUrl.searchParams.get("returnTo"),
   );
+  const prompt = getDiscordOAuthPrompt(request);
   let currentIdentity: TraderLinkPlatformRequestIdentity | null = null;
 
   try {
@@ -50,13 +51,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     currentIdentity = null;
   }
 
-  if (currentIdentity && !isJournalAdminReturnTo(returnTo) && !isSwingIdeaAuthReturnTo(returnTo)) {
+  if (
+    currentIdentity &&
+    prompt !== "consent" &&
+    !isJournalAdminReturnTo(returnTo) &&
+    !isSwingIdeaAuthReturnTo(returnTo)
+  ) {
     return NextResponse.redirect(new URL(returnTo, origin));
   }
 
   try {
     const config = getDiscordOAuthConfig(origin);
-    const prompt = getDiscordOAuthPrompt(request);
     const state = randomBytes(24).toString("base64url");
     const response = NextResponse.redirect(
       buildDiscordAuthorizeUrl({ config, prompt, state }),
@@ -81,7 +86,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return response;
   } catch {
     return NextResponse.redirect(
-      buildDiscordAuthResultUrl({
+      buildDiscordAuthFailureUrl({
         origin,
         returnTo,
         status: "missing-config",

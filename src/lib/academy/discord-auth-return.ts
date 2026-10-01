@@ -39,3 +39,14 @@ export function buildDiscordAuthResultUrl(args: {
   url.searchParams.set("auth", args.status);
   return url;
 }
+
+export function buildDiscordAuthFailureUrl(args: {
+  origin: string;
+  returnTo: string;
+  status: string;
+}): URL {
+  const url = new URL("/sign-in-help", args.origin);
+  url.searchParams.set("status", args.status);
+  url.searchParams.set("returnTo", normalizeDiscordAuthReturnTo(args.returnTo));
+  return url;
+}

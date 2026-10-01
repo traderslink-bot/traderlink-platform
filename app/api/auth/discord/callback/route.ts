@@ -35,6 +35,7 @@ import {
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 import {
+  buildDiscordAuthFailureUrl,
   buildDiscordAuthResultUrl,
   isWatchlistAuthReturnTo,
   isSwingIdeaAuthReturnTo,
@@ -73,6 +74,20 @@ function authRedirect(
   );
 }
 
+function authFailureRedirect(
+  request: NextRequest,
+  returnTo: string,
+  status: string,
+): NextResponse {
+  return NextResponse.redirect(
+    buildDiscordAuthFailureUrl({
+      origin: resolvePlatformPublicOrigin(request),
+      returnTo,
+      status,
+    }),
+  );
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const code = request.nextUrl.searchParams.get("code");
   const oauthError = request.nextUrl.searchParams.get("error");
@@ -84,7 +99,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   );
 
   if (!state || !expectedState || state !== expectedState) {
-    const response = authRedirect(request, returnTo, "invalid-state");
+    const response = authFailureRedirect(request, returnTo, "invalid-state");
     clearDiscordOAuthCookies(response, request);
     return response;
   }
@@ -101,13 +116,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return response;
     }
 
-    const response = authRedirect(request, returnTo, "failed");
+    const response = authFailureRedirect(request, returnTo, "failed");
     clearDiscordOAuthCookies(response, request);
     return response;
   }
 
   if (!code) {
-    const response = authRedirect(request, returnTo, "invalid-state");
+    const response = authFailureRedirect(request, returnTo, "invalid-state");
     clearDiscordOAuthCookies(response, request);
     return response;
   }
@@ -270,7 +285,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         getSafeDiscordAuthErrorMessage(error),
       );
 
-      const response = authRedirect(
+      const response = authFailureRedirect(
         request,
         returnTo,
         "progress-storage-failed",
@@ -288,7 +303,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       (watchlistReturn && membershipWatchlistAccess);
     const destination = billingReturn || academyReturn || membershipReturnAccess || dashboardAccessAllowed
       ? returnTo
-      : "/plans";
+      : `/access-required?returnTo=${encodeURIComponent(returnTo)}`;
     const response = authRedirect(request, destination, "connected");
 
     clearDiscordOAuthCookies(response, request);
@@ -359,7 +374,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       getSafeDiscordAuthErrorMessage(error),
     );
 
-    const response = authRedirect(request, returnTo, "failed");
+    const response = authFailureRedirect(request, returnTo, "failed");
     clearDiscordOAuthCookies(response, request);
     return response;
   }

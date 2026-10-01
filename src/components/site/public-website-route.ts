@@ -6,7 +6,7 @@ const publicPageRoots = [
 const publicPages = new Set([
   "/", "/trading-journal", "/trade-analyzer", "/trade-analytics",
   "/privacy", "/terms", "/beta", "/filtered-news-momentum-scanner-access",
-  "/access-required", "/watchlist/how-it-works",
+  "/access-required", "/sign-in-help", "/watchlist/how-it-works",
   "/smokeys-12-week-market-structure-plan",
 ]);
 

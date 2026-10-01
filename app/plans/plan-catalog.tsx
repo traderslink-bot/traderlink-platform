@@ -38,10 +38,14 @@ export function PlanCatalog({
           </Stack>
           {plans.length === 0 ? (
             <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 3, md: 5 } }}>
-              <Typography component="h2" variant="h2">No plans are available</Typography>
+              <Typography component="h2" variant="h2">Plans are coming soon</Typography>
               <Typography color="text.secondary" sx={{ mt: 1 }}>
-                There are no active offers on this page right now.
+                You can still use TraderLink through the free TradersLink Discord. Join the Discord, then sign in again to refresh your access.
               </Typography>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mt: 3 }}>
+                <Button href="https://discord.gg/9dmGpfpRDD" variant="contained">Join Free Discord</Button>
+                <Button href="/api/auth/discord/login?prompt=consent&returnTo=%2Fworkspace" variant="outlined">Try Discord sign-in again</Button>
+              </Stack>
             </Paper>
           ) : (
             <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" } }}>

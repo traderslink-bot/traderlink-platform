@@ -8,6 +8,8 @@
 
 **Active Slice F6 contract:** [Public Identity And Hosted Transfer Plan](phase-5-slice-f6-public-identity-and-hosted-transfer-plan.md) and [Hosted Beta Runbook](traderlink-platform-hosted-beta-runbook.md)
 
+**Discord login recovery:** [New-user login recovery progress](discord-new-user-login-recovery-progress-2026-10-01.md)
+
 **Approved PWA contract:** [TraderLink Platform PWA Plan](traderlink-platform-pwa-plan.md) with its [implementation progress tracker](traderlink-platform-pwa-progress.md). The installed app preserves the complete dashboard, adds offline Daily/Swing/Quick Trade Entry through the canonical Journal preview/commit path, bounded last-synced dashboard projections, best-effort background sync with foreground fallbacks, opt-in privacy-safe Web Push and the owner-approved exact app-icon correction. This local implementation scope does not authorize deployment or production push activation.
 
 **Approved Press Release dashboard contract:** [Press Release Dashboard Plan](press-release-dashboard-plan.md) with its [implementation progress tracker](press-release-dashboard-progress.md). It preserves the existing Discord/public-article flow, adds authenticated channel feeds, exact unread badges, responsive article drawers and channel-specific PWA Push without duplicating or deleting canonical News articles.
