@@ -134,7 +134,7 @@ export default async function BetaLandingPage() {
               </span>
               <a
                 className={styles.actionButton}
-                href="https://discord.gg/9dmGpfpRDD"
+                href="https://discord.gg/JVTvmZNRMH"
                 rel="noopener noreferrer"
                 target="_blank"
               >
