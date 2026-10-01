@@ -148,7 +148,11 @@ async function relay(
     catch { console.error("Watchlist notification intent could not be saved; approval remains unchanged."); }
   }
   if(pathname==='/api/watchlist/analysis-review/category-move'&&method==='POST'&&reviewActor&&body){
-    try{recordCategoryMoveIntent(body,reviewActor);}catch{return Response.json({error:'Member notification request could not be saved. Move with notifications off, or retry.'},{status:503});}
+    try{recordCategoryMoveIntent(body,reviewActor);}catch(error){
+      const code=error&&typeof error==='object'&&'code' in error&&typeof error.code==='string'&&/^SQLITE_[A-Z_]+$/.test(error.code)?error.code:'intent_failed';
+      console.error('[Watchlist move notification]',{stage:'save_intent',code});
+      return Response.json({error:'Move notification could not be prepared. No move or notification was sent. Please retry.'},{status:503,headers:{'cache-control':'private, no-store'}});
+    }
   }
   const result = await requestWatchlistRuntimeRaw({
     reviewActor,

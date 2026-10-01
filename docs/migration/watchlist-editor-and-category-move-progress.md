@@ -41,3 +41,8 @@ Owner follow-up: actual analysis updates KEEP their saved original/update prices
 First [interaction audit](watchlist-admin-interaction-audit.md) records exact-source findings: independent move notification needed; old approvals retain original retry destination; failed Discord cleanup has no independent retry in its module; published-only fallback lacks receipts; two action builders cause accumulated layout clutter. Late receipts and remove/re-add are explicitly unverified follow-up cases, not reported as proven live bugs.
 
 Package A with `src/scripts/package-watchlist-level-editor.cjs` against the exact parents above, not the mixed working tree. Editor diff against that parent contains only this slice. Runtime changes are constructed from the released parent without altering the old runtime working tree. Pending B candidate: `src/scripts/fixtures/watchlist-category-move-state.ts` and focused verifier. Add durable storage and exact source-category receipt filtering; never reuse the broad all-category removal helper. New migration must preserve all existing notification records/constraints while giving moves their own identity/copy. Keep ordinary category moves silent and preserve publication times, analysis and gain history.
+
+
+## October 1 notified-move repair
+
+See [repair evidence and focused verification](watchlist-move-notify-repair-progress.md). SDEV silent moves worked; notified moves exposed an obsolete notification access query. The narrow repair preserves opt-ins and active Discord checks and uses current membership feature policy. Move delivery details now uses the authenticated proxy with either JavaScript quote style.

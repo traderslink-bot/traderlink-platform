@@ -214,7 +214,7 @@ function runtimePath(view: WatchlistRuntimeConsoleView): string {
 
 export function rewriteWatchlistRuntimeDocument(document: string): string {
   const rewritten = document
-    .replaceAll('"/api/', '"/api/admin/watchlist/runtime/')
+    .replaceAll(/(["'])\/api\/(?!admin\/watchlist\/runtime\/)/g, '$1/api/admin/watchlist/runtime/')
     .replaceAll(
       '"/ai-clean-read"',
       '"/api/admin/watchlist/console/ai-clean-read"',

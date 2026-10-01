@@ -1,3 +1,4 @@
+import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { reconcileXPublications } from "./watchlist-x-runtime";
 import { reconcileFreeChatPublications } from "./watchlist-free-chat-runtime";
 import "server-only";
@@ -15,10 +16,9 @@ type IntentRow = { intent_id: string; cycle_id: string; ticker: string; expected
   actor: string; recipients_json: string; requested_at_utc: string };
 
 export function watchlistNotificationAccess(database: Database.Database, userId: string): boolean {
-  const visibility = database.prepare<[], { member_visible: number }>(
-    "SELECT member_visible FROM platform_watchlist_visibility WHERE settings_key='member_visibility'",
-  ).get();
-  if (visibility?.member_visible !== 1) return false;
+  // Use the same Watchlist feature policy as the current application. The
+  // obsolete platform_watchlist_visibility table was never part of this schema.
+  if (!evaluateMembershipFeature(database, userId, "watchlist.access").allowed) return false;
   const active = database.prepare<[string], { n: number }>(`SELECT count(*) n FROM platform_users u
     WHERE u.user_id=? AND u.status='active' AND EXISTS(SELECT 1 FROM platform_auth_identities a
     WHERE a.user_id=u.user_id AND a.status='active' AND a.auth_provider='discord')`).get(userId);
