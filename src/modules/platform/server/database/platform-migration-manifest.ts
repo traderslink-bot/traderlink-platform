@@ -655,6 +655,10 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0153_platform_watchlist_category_move_notifications": Object.freeze([
+      "platform_watchlist_category_move_intents",
+      "platform_watchlist_category_move_deliveries",
+    ]),
     "0151_platform_watchlist_x_publications": Object.freeze(["platform_watchlist_x_posts", "platform_watchlist_x_images"]),
     "0149_watchlist_free_chat": Object.freeze(["platform_watchlist_free_chat_preferences", "platform_watchlist_free_chat_posts"]),
     "0148_platform_membership_platform": Object.freeze([
