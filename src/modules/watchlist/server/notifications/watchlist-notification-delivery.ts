@@ -18,10 +18,10 @@ type Subscription = { authentication_tag: string; ciphertext: string; device_ref
   initialization_vector: string; key_version: string };
 type SendResult = { sent: boolean; retry: boolean; code: string; delayMs?: number };
 
-async function send(database: Database.Database, row: Delivery): Promise<SendResult> {
+export async function sendWatchlistNotification(database: Database.Database, row: Delivery, override?: ReturnType<typeof watchlistPublicationNotificationCopy>): Promise<SendResult> {
   let context;
   try { context = parseAnalysisUpdateContext(JSON.parse(row.analysis_update_context_json ?? "null")); } catch { /* Older events retain delivery without price context. */ }
-  const copy = watchlistPublicationNotificationCopy(row.ticker,row.notification_kind,row.owner_approved === 1,context);
+  const copy = override ?? watchlistPublicationNotificationCopy(row.ticker,row.notification_kind,row.owner_approved === 1,context);
   if (row.channel === "email") {
     const email = new PlatformNotificationEmailAddressRepository(database, loadPlatformNotificationEmailEncryptionConfiguration())
       .resolveConfirmedAddress(row.user_id);
@@ -61,7 +61,7 @@ async function send(database: Database.Database, row: Delivery): Promise<SendRes
 }
 
 export async function deliverWatchlistNotifications(database: Database.Database, maximum = 10,
-  sender: (database: Database.Database, row: Delivery) => Promise<SendResult> = send,
+  sender: (database: Database.Database, row: Delivery) => Promise<SendResult> = sendWatchlistNotification,
   access: (database: Database.Database, userId: string) => boolean = watchlistNotificationAccess,
 ): Promise<number> {
   let processed = 0;

@@ -1,3 +1,4 @@
+import { runCategoryMoveNotifications } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { runDailyTradeAnalyzerOnce } from "@/src/modules/level-analysis/server/daily-trade-analyzer-runtime";
 
 import { openPlatformDatabase } from "../database/open-platform-database";
@@ -53,7 +54,7 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
 
   void runAnalyzer();
   const runWatchlistApprovals = () => void reconcileWatchlistNotificationApprovals().catch(() => console.error("Watchlist notification approval check failed."));
-  const runWatchlistDelivery = () => void runWatchlistNotificationDelivery().catch(() => console.error("Watchlist notification delivery check failed."));
+  const runWatchlistDelivery = () => { void runCategoryMoveNotifications().catch(() => console.error("Watchlist move notifications failed.")); return void runWatchlistNotificationDelivery().catch(() => console.error("Watchlist notification delivery check failed.")); };
   runWatchlistApprovals();
   runWatchlistDelivery();
   setInterval(runWatchlistApprovals, 15_000);
