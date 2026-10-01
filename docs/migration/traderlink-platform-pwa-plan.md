@@ -430,3 +430,7 @@ The correction must:
 ## Share service-worker initialization across PWA push callers — local checkpoint
 
 [Share service-worker initialization across PWA push callers](pwa-speed-push-progress-2026-09-28.md): local implementation complete; targeted checks passed; no deployment, runtime acceptance pending.
+
+## Safe automatic app updates — local candidate
+
+[Safe automatic update progress](pwa-safe-auto-update-progress-2026-09-28.md): implementation and targeted checks complete; conservative edit safety documented. Not deployed; runtime/device acceptance pending.

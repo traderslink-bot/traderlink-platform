@@ -3,25 +3,24 @@
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export function PwaUpdateNotice({ paused = false }: { paused?: boolean }) {
-  const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
-  const [applying, setApplying] = useState(false);
-  const [reloadReady, setReloadReady] = useState(false);
-  const [activationDelayed, setActivationDelayed] = useState(false);
-  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
-  const activationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const requested = useRef(false);
-  const reloading = useRef(false);
+import {
+  canSafelyUpdatePwa,
+  PWA_UPDATE_SAFETY_CHANGED,
+} from "@/src/modules/platform/client/pwa/platform-pwa-update-safety";
 
-  const reload = () => {
-    if (reloading.current) return;
-    reloading.current = true;
-    requested.current = false;
-    clearTimeout(activationTimer.current);
-    window.location.reload();
-  };
+type UpdateNotice = "hidden" | "editing" | "other-windows" | "failed";
+
+export function PwaUpdateNotice({ paused = false }: { paused?: boolean }) {
+  const pathname = usePathname();
+  const [notice, setNotice] = useState<UpdateNotice>("hidden");
+  const reloading = useRef(false);
+  const reloadReady = useRef(false);
+  const automaticFailed = useRef(false);
+  const initialController = useRef<ServiceWorker | null | undefined>(undefined);
+  const retry = useRef<() => void>(() => undefined);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
@@ -29,24 +28,81 @@ export function PwaUpdateNotice({ paused = false }: { paused?: boolean }) {
     let registration: ServiceWorkerRegistration | undefined;
     let installing: ServiceWorker | null = null;
     let waitingWorker: ServiceWorker | null = null;
-    const initialController = navigator.serviceWorker.controller;
+    let attemptedWorker: ServiceWorker | null = null;
+    let applying = false;
+    let activationTimer: ReturnType<typeof setTimeout> | undefined;
+    let readinessTimer: ReturnType<typeof setTimeout> | undefined;
+    let reply: MessagePort | undefined;
     let lastCheck = 0;
+    if (initialController.current === undefined) initialController.current = navigator.serviceWorker.controller;
+
+    const clearAttempt = () => {
+      applying = false;
+      clearTimeout(activationTimer);
+      reply?.close();
+      reply = undefined;
+    };
+    const safeNow = () => !cancelled && !paused && navigator.onLine &&
+      document.visibilityState === "visible" && canSafelyUpdatePwa();
+    const reload = () => {
+      // Always recheck after the asynchronous, cross-window activation handshake.
+      if (!safeNow()) { setNotice("editing"); clearAttempt(); return; }
+      if (reloading.current) return;
+      reloading.current = true;
+      clearAttempt();
+      window.location.reload();
+    };
+    const fail = () => {
+      clearAttempt();
+      automaticFailed.current = true;
+      setNotice(canSafelyUpdatePwa() ? "failed" : "editing");
+    };
     const inspect = () => {
-      if (cancelled) return;
-      const current = registration?.waiting ??
-        (registration?.installing?.state === "installed" && navigator.serviceWorker.controller
-          ? registration.installing : null);
+      if (cancelled || reloading.current) return;
+      const current = registration?.waiting ?? null;
       if (waitingWorker !== current) {
         waitingWorker?.removeEventListener("statechange", inspect);
         waitingWorker = current;
         waitingWorker?.addEventListener("statechange", inspect);
       }
-      setWaiting(current);
-      // Another tab can activate the worker without reloading this page.
-      if (initialController && navigator.serviceWorker.controller &&
-        navigator.serviceWorker.controller !== initialController) {
-        setReloadReady(true);
-      }
+      if (initialController.current && navigator.serviceWorker.controller &&
+        navigator.serviceWorker.controller !== initialController.current) reloadReady.current = true;
+      if (!current && !reloadReady.current && !applying && !automaticFailed.current) return;
+      if (!canSafelyUpdatePwa()) { setNotice("editing"); return; }
+      if (automaticFailed.current) { setNotice("failed"); return; }
+      if (!safeNow()) return;
+      if (reloadReady.current) { reload(); return; }
+      if (!current || applying || attemptedWorker === current) return;
+      attemptedWorker = current;
+      applying = true;
+      setNotice("hidden");
+      const channel = new MessageChannel();
+      reply = channel.port1;
+      reply.onmessage = (event: MessageEvent) => {
+        if (cancelled || !applying) return;
+        if (event.data?.status === "blocked") {
+          clearAttempt();
+          setNotice(canSafelyUpdatePwa() ? "other-windows" : "editing");
+        } else if (event.data?.status !== "activating") fail();
+      };
+      activationTimer = setTimeout(() => {
+        if (current.state === "activated" || (initialController.current &&
+          navigator.serviceWorker.controller !== initialController.current)) {
+          reloadReady.current = true;
+          reload();
+        } else fail();
+      }, 15_000);
+      try {
+        current.postMessage({ type: "traderlink:request-safe-update" }, [channel.port2]);
+      } catch { fail(); }
+    };
+    const check = () => {
+      if (!registration || document.visibilityState !== "visible") return;
+      if (!applying && !automaticFailed.current) attemptedWorker = null;
+      inspect();
+      if (!navigator.onLine || Date.now() - lastCheck < 60 * 60_000) return;
+      lastCheck = Date.now();
+      void registration.update().catch(() => undefined);
     };
     const found = () => {
       installing?.removeEventListener("statechange", inspect);
@@ -54,97 +110,57 @@ export function PwaUpdateNotice({ paused = false }: { paused?: boolean }) {
       installing?.addEventListener("statechange", inspect);
       inspect();
     };
-    const check = () => {
-      if (!registration || document.visibilityState !== "visible") return;
-      inspect();
-      if (!navigator.onLine || Date.now() - lastCheck < 60 * 60_000) return;
-      lastCheck = Date.now();
-      void registration.update().catch(() => undefined);
-    };
     const changed = () => {
-      if (requested.current) {
-        if (!reloading.current) {
-          reloading.current = true;
-          requested.current = false;
-          clearTimeout(activationTimer.current);
-          window.location.reload();
-        }
-      } else inspect();
+      if (initialController.current && navigator.serviceWorker.controller !== initialController.current) {
+        reloadReady.current = true;
+      }
+      clearAttempt();
+      inspect();
     };
+    retry.current = () => { if (automaticFailed.current || reloadReady.current) reload(); else inspect(); };
     void navigator.serviceWorker.ready.then((ready) => {
       if (cancelled) return;
       registration = ready;
-      registrationRef.current = ready;
       registration.addEventListener("updatefound", found);
-      found();
-      check();
+      // Allow the current React commit's edit guards to register before deciding.
+      readinessTimer = setTimeout(() => { found(); check(); }, 0);
     }).catch(() => undefined);
     navigator.serviceWorker.addEventListener("controllerchange", changed);
     document.addEventListener("visibilitychange", check);
+    window.addEventListener("pageshow", check);
+    window.addEventListener("focus", check);
     window.addEventListener("online", check);
+    window.addEventListener(PWA_UPDATE_SAFETY_CHANGED, inspect);
     return () => {
       cancelled = true;
-      requested.current = false;
-      registrationRef.current = null;
-      clearTimeout(activationTimer.current);
+      clearAttempt();
+      clearTimeout(readinessTimer);
+      retry.current = () => undefined;
       registration?.removeEventListener("updatefound", found);
       installing?.removeEventListener("statechange", inspect);
       waitingWorker?.removeEventListener("statechange", inspect);
       navigator.serviceWorker.removeEventListener("controllerchange", changed);
       document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("pageshow", check);
+      window.removeEventListener("focus", check);
       window.removeEventListener("online", check);
+      window.removeEventListener(PWA_UPDATE_SAFETY_CHANGED, inspect);
     };
-  }, []);
+  }, [pathname, paused]);
 
-  function applyUpdate() {
-    if (applying || reloading.current) return;
-    if (reloadReady || activationDelayed) { reload(); return; }
-    // Read the live registration, not the worker captured when the banner appeared.
-    const registration = registrationRef.current;
-    const worker = registration?.waiting ??
-      (registration?.installing?.state === "installed" ? registration.installing : null);
-    if (!worker) {
-      if (registration?.active?.state === "activated") reload();
-      else setActivationDelayed(true);
-      return;
-    }
-    const previousController = navigator.serviceWorker.controller;
-    requested.current = true;
-    setApplying(true);
-    setActivationDelayed(false);
-    const delayed = () => {
-      // Activation can finish before the controllerchange callback is delivered.
-      if (worker.state === "activated" || (navigator.serviceWorker.controller &&
-        navigator.serviceWorker.controller !== previousController)) {
-        reload();
-        return;
-      }
-      requested.current = false;
-      setApplying(false);
-      setActivationDelayed(true);
-    };
-    clearTimeout(activationTimer.current);
-    activationTimer.current = setTimeout(delayed, 15_000);
-    try {
-      // Supported by Serwist, including workers predating our custom message.
-      worker.postMessage({ type: "SKIP_WAITING" });
-    } catch {
-      clearTimeout(activationTimer.current);
-      delayed();
-    }
-  }
-
-  if ((!waiting && !applying && !reloadReady && !activationDelayed) || paused) return null;
-  return <Alert severity="info" sx={{ position: "fixed", bottom: 16, right: 16,
+  if (notice === "hidden" || paused) return null;
+  return <Alert data-pwa-update-control severity="info" sx={{ position: "fixed", bottom: 16, right: 16,
     width: "calc(100vw - 32px)", maxWidth: 420, zIndex: (theme) => theme.zIndex.modal - 1 }}>
     <Stack spacing={1}>
-      <span>{reloadReady
-        ? "The update is ready to open. Save any edits, then reload the app. Offline entries already saved on this device will remain."
-        : "A TradersLink update is ready. Save any edits before updating. Offline entries already saved on this device will remain."}</span>
-      {activationDelayed && !reloadReady && <span>The update is taking longer than expected. Save any edits, then reload the app.</span>}
-      <Button disabled={applying} sx={{ alignSelf: "flex-start" }} variant="outlined" onClick={applyUpdate}>
-        {applying ? "Updating…" : reloadReady || activationDelayed ? "Reload app" : "Update app"}
-      </Button>
+      <span>{notice === "editing"
+        ? "An update is ready. Finish and save your work, then close and reopen TradersLink to update."
+        : notice === "other-windows"
+          ? "An update is ready. Save your work in other TradersLink windows, then close them and reopen this app."
+          : "The automatic update could not finish. Save any work, then reload the app to try again."}</span>
+      <span>Offline entries already saved on this device will remain.</span>
+      {notice === "failed" && <Button sx={{ alignSelf: "flex-start" }} variant="outlined" onClick={() => retry.current()}>
+        Reload app
+      </Button>}
     </Stack>
   </Alert>;
 }
