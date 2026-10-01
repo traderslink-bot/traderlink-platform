@@ -11,6 +11,6 @@
     "restartPolicyMaxRetries": null,
     "overlapSeconds": 0,
     "drainingSeconds": 30,
-    "startCommand": "./node_modules/.bin/tsx src/scripts/run-hosted-platform-migration-maintenance.ts"
+    "startCommand": "./node_modules/.bin/tsx src/scripts/restore-hosted-platform-0153-checkpoint.ts"
   }
 }
