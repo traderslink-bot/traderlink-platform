@@ -1,5 +1,6 @@
 import { runCategoryMoveNotifications } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { runDailyTradeAnalyzerOnce } from "@/src/modules/level-analysis/server/daily-trade-analyzer-runtime";
+import { startHostedCoachingMaintenance } from "@/src/modules/communities/server/coaching-maintenance-runtime";
 
 import { openPlatformDatabase } from "../database/open-platform-database";
 import { PlatformRemoteNotificationDeliveryRepository } from "../notifications/platform-remote-notification-delivery-repository";
@@ -16,6 +17,7 @@ let workersStarted = false;
 export function startTraderLinkHostedBackgroundWorkers(): void {
   if (workersStarted) return;
   workersStarted = true;
+  startHostedCoachingMaintenance();
 
   let analyzerRunning = false;
   const runAnalyzer = async (): Promise<void> => {

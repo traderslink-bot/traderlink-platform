@@ -58,6 +58,20 @@ import { communityWatchlistsMigration } from "@/src/modules/community/server/dat
 import { communityWatchlistFollowsMigration } from "@/src/modules/community/server/database/migrations/0082_community_watchlist_follows";
 import { communityProfilesMigration } from "@/src/modules/community/server/database/migrations/0086_community_profiles";
 import { communityTickerCompanyFactsMigration } from "@/src/modules/community/server/database/migrations/0087_community_ticker_company_facts";
+import { traderLinkCommunitiesIdentityPermissionsMigration } from "@/src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions";
+import { traderLinkCommunitiesPartnerPlatformMigration } from "@/src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
+import { traderLinkCommunitiesDiscordFeatureAccessMigration } from "@/src/modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access";
+import { traderLinkCommunitiesServerWatchlistsMigration } from "@/src/modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists";
+import { traderLinkCommunitiesPrivatePilotBootstrapMigration } from "@/src/modules/communities/server/database/migrations/0125_traderlink_communities_private_pilot_bootstrap";
+import { traderLinkCommunitiesWorkspaceToolsMigration } from "@/src/modules/communities/server/database/migrations/0126_traderlink_communities_workspace_tools";
+import { traderLinkCommunitiesCoachingWorkspaceMigration } from "@/src/modules/communities/server/database/migrations/0127_traderlink_communities_coaching_workspace";
+import { traderLinkCommunitiesCoachingProgramsMigration } from "@/src/modules/communities/server/database/migrations/0128_traderlink_communities_coaching_programs";
+import { traderLinkCommunitiesCoachingPlanBuilderMigration } from "@/src/modules/communities/server/database/migrations/0129_traderlink_communities_coaching_plan_builder";
+import { traderLinkCommunitiesCoachingServiceMeasurementMigration } from "@/src/modules/communities/server/database/migrations/0130_traderlink_communities_coaching_service_measurement";
+import { traderLinkCommunitiesReviewCoachingSectionsMigration } from "@/src/modules/communities/server/database/migrations/0131_traderlink_communities_review_coaching_sections";
+import { traderLinkCommunitiesReviewWorkflowMigration } from "@/src/modules/communities/server/database/migrations/0143_traderlink_communities_review_workflow";
+import { traderLinkCommunitiesReviewWorkspaceMetadataMigration } from "@/src/modules/communities/server/database/migrations/0144_traderlink_communities_review_workspace_metadata";
+import { traderLinkCommunitiesCoachingDeliveryWorkflowMigration } from "@/src/modules/communities/server/database/migrations/0145_traderlink_communities_coaching_delivery_workflow";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -144,7 +158,36 @@ export type PlatformMigrationFileEntry = Readonly<{
   migration: PlatformMigration;
 }>;
 
-export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
+// Staging-only compatibility carrier. Never promote this ordering to production:
+// staging already applied Communities 0121–0131. Preserve that exact prefix and
+// append missing production migrations with their original identities and SQL.
+const stagingAppendOrders: Readonly<Record<string, number>> = Object.freeze({
+  "0121_news_market_halt_delivery_lifecycle": 144,
+  "0122_journal_demo_august_provenance_guard": 145,
+  "0132_journal_demo_v10_provenance_guard": 146,
+  "0133_platform_watchlist_daily_recaps": 147,
+  "0134_daily_trade_analyzer_trend_momentum_history": 148,
+  "0135_daily_trade_analyzer_manual_retry_requests": 149,
+  "0136_shared_trade_analyzer_owner_exemptions": 150,
+  "0137_platform_watchlist_publication_notifications": 151,
+  "0138_platform_watchlist_notification_action_identity": 152,
+  "0139_platform_premium_swing_idea_visit_events": 153,
+  "0140_news_market_halt_discord_deliveries": 154,
+  "0142_news_reverse_split_alerts": 155,
+  "0143_traderlink_communities_review_workflow": 156,
+  "0144_traderlink_communities_review_workspace_metadata": 157,
+  "0145_traderlink_communities_coaching_delivery_workflow": 158,
+  "0146_watchlist_owner_review_notifications": 159,
+  "0147_watchlist_potential_gain_posts": 160,
+  "0148_platform_membership_platform": 161,
+  "0149_watchlist_free_chat": 162,
+  "0150_platform_membership_generation_allowances": 163,
+  "0151_platform_watchlist_x_publications": 164,
+  "0152_platform_watchlist_notification_update_context": 165,
+  "0153_platform_watchlist_category_move_notifications": 166,
+});
+
+const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
   Object.freeze([
     Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0001_platform_identity.ts",
@@ -647,7 +690,73 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0151_platform_watchlist_x_publications.ts", migration: platformWatchlistXPublicationsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0152_platform_watchlist_notification_update_context.ts", migration: platformWatchlistNotificationUpdateContextMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0153_platform_watchlist_category_move_notifications.ts", migration: platformWatchlistCategoryMoveNotificationsMigration }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions.ts",
+      migration: traderLinkCommunitiesIdentityPermissionsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform.ts",
+      migration: traderLinkCommunitiesPartnerPlatformMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access.ts",
+      migration: traderLinkCommunitiesDiscordFeatureAccessMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists.ts",
+      migration: traderLinkCommunitiesServerWatchlistsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0125_traderlink_communities_private_pilot_bootstrap.ts",
+      migration: traderLinkCommunitiesPrivatePilotBootstrapMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0126_traderlink_communities_workspace_tools.ts",
+      migration: traderLinkCommunitiesWorkspaceToolsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0127_traderlink_communities_coaching_workspace.ts",
+      migration: traderLinkCommunitiesCoachingWorkspaceMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0128_traderlink_communities_coaching_programs.ts",
+      migration: traderLinkCommunitiesCoachingProgramsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0129_traderlink_communities_coaching_plan_builder.ts",
+      migration: traderLinkCommunitiesCoachingPlanBuilderMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0130_traderlink_communities_coaching_service_measurement.ts",
+      migration: traderLinkCommunitiesCoachingServiceMeasurementMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0131_traderlink_communities_review_coaching_sections.ts",
+      migration: traderLinkCommunitiesReviewCoachingSectionsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0143_traderlink_communities_review_workflow.ts",
+      migration: traderLinkCommunitiesReviewWorkflowMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0144_traderlink_communities_review_workspace_metadata.ts",
+      migration: traderLinkCommunitiesReviewWorkspaceMetadataMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/communities/server/database/migrations/0145_traderlink_communities_coaching_delivery_workflow.ts",
+      migration: traderLinkCommunitiesCoachingDeliveryWorkflowMigration,
+    }),
   ]);
+
+export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[] = Object.freeze(
+  integratedMigrationFileEntries.map((entry) => {
+    const executionOrder = stagingAppendOrders[entry.migration.migrationId];
+    return executionOrder === undefined ? entry : Object.freeze({
+      ...entry,
+      migration: Object.freeze({ ...entry.migration, executionOrder }),
+    });
+  }),
+);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
   platformMigrationFileEntries.map((entry) => entry.migration),
@@ -682,8 +791,8 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "platform_membership_feature_policies",
       "platform_membership_trial_checkouts",
     ]),
-    "0147_watchlist_potential_gain_posts": Object.freeze(["platform_watchlist_potential_gain_posts"]),
     "0146_watchlist_owner_review_notifications": Object.freeze(["platform_watchlist_owner_review_deliveries"]),
+    "0147_watchlist_potential_gain_posts": Object.freeze(["platform_watchlist_potential_gain_posts"]),
     "0139_platform_premium_swing_idea_visit_events": Object.freeze(["platform_premium_swing_idea_visit_events"]),
     "0140_news_market_halt_discord_deliveries": Object.freeze(["news_market_halt_discord_deliveries"]),
     "0142_news_reverse_split_alerts": Object.freeze([
@@ -1148,6 +1257,81 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "platform_watchlist_recap_composition_items",
       "platform_watchlist_recap_composition_revisions",
       "platform_watchlist_recap_post_attempts",
+    ]),
+    "0121_traderlink_communities_identity_permissions": Object.freeze([
+      "traderlink_communities",
+      "traderlink_community_memberships",
+      "traderlink_community_capability_catalog",
+      "traderlink_community_roles",
+      "traderlink_community_role_capabilities",
+      "traderlink_community_member_role_assignments",
+      "traderlink_community_discord_role_mappings",
+      "traderlink_community_owner_events",
+      "traderlink_community_authorization_audit_events",
+    ]),
+    "0122_traderlink_communities_partner_platform": Object.freeze([
+      "traderlink_community_operator_grants",
+      "traderlink_community_discord_guild_candidates",
+      "traderlink_community_settings",
+      "traderlink_community_audiences",
+      "traderlink_community_audience_discord_roles",
+      "traderlink_community_discord_destinations",
+      "traderlink_community_alerts",
+      "traderlink_community_watchlist_placements",
+      "traderlink_community_coach_profiles",
+      "traderlink_community_coaching_plans",
+      "traderlink_community_coaching_relationships",
+      "traderlink_community_journal_grants",
+      "traderlink_community_content_deliveries",
+      "traderlink_community_activity_events",
+      "traderlink_community_activity_daily_members",
+      "traderlink_community_partner_programs",
+      "traderlink_community_partner_attributions",
+      "traderlink_community_partner_earnings",
+      "traderlink_community_partner_billing_events",
+      "traderlink_community_coach_fee_rules",
+    ]),
+    "0129_traderlink_communities_coaching_plan_builder": Object.freeze([
+      "traderlink_community_coaching_plan_items",
+      "traderlink_community_coaching_plan_journal_scopes",
+    ]),
+    "0130_traderlink_communities_coaching_service_measurement": Object.freeze([]),
+    "0131_traderlink_communities_review_coaching_sections": Object.freeze([]),
+    "0144_traderlink_communities_review_workspace_metadata": Object.freeze([]),
+    "0145_traderlink_communities_coaching_delivery_workflow": Object.freeze([
+      "traderlink_community_coaching_agreements",
+      "traderlink_community_coaching_occurrences",
+      "traderlink_community_coaching_access_state",
+      "traderlink_community_coaching_notices",
+    ]),
+    "0143_traderlink_communities_review_workflow": Object.freeze([
+      "traderlink_community_coaching_review_actions",
+      "traderlink_community_coaching_review_attachment_links",
+      "traderlink_community_coaching_review_events",
+    ]),
+    "0124_traderlink_communities_server_watchlists": Object.freeze([
+      "traderlink_community_server_watchlists",
+      "traderlink_community_server_watchlist_symbols",
+      "traderlink_community_network_settings",
+    ]),
+    "0126_traderlink_communities_workspace_tools": Object.freeze([
+      "traderlink_community_alert_templates",
+      "traderlink_community_alert_template_fields",
+      "traderlink_community_alert_field_values",
+      "traderlink_community_coaching_messages",
+      "traderlink_community_coaching_trade_reviews",
+    ]),
+    "0127_traderlink_communities_coaching_workspace": Object.freeze([
+      "traderlink_community_coaching_tasks",
+      "traderlink_community_coaching_records",
+    ]),
+    "0128_traderlink_communities_coaching_programs": Object.freeze([
+      "traderlink_community_coaching_review_trades",
+      "traderlink_community_coaching_sessions",
+      "traderlink_community_coaching_teaching_items",
+      "traderlink_community_coaching_teaching_students",
+      "traderlink_community_coaching_attachments",
+      "traderlink_community_coaching_review_replies",
     ]),
   });
 
