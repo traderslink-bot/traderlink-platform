@@ -78,3 +78,14 @@ Added checks cover published defaults during draft edits, renamed/reordered/hidd
 deleted thesis handling, and editor control/list-refresh regressions. No real posts,
 provider calls, migrations or deployment performed. Hosted visual/end-to-end gates
 remain open; these corrections do not constitute hosted acceptance.
+# October 1 follow-up delivery QA corrections
+
+Premium and Free post composition now retain independent in-editor comments when
+switching destinations. Delivery history identifies the published version and
+provides an explicit saved-post retry preview for failed records. Retry targets the
+exact plan/channel/delivery identity and frozen payload, including after newer
+publication; it never substitutes newer content. The preview explains that the page
+link still opens the current published plan. Resolution/send retain refreshed history.
+Help updated. Mock checks cover old-version retry, wrong-plan/channel rejection,
+unchanged frozen payload, duplicate suppression and unchanged current publication.
+Focused authorship, delivery and SSR checks pass. No live sends or deployment.

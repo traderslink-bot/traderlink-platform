@@ -13,7 +13,7 @@ function webhook(kind:SwingChannel):URL|null {
   const value=process.env[kind==="premium"?"SWING_PLANS_PREMIUM_DISCORD_WEBHOOK_URL":"SWING_PLANS_FREE_DISCORD_WEBHOOK_URL"];
   try{const u=new URL(value||'');return u.origin==='https://discord.com'&&/^\/api\/webhooks\/\d+\/[A-Za-z0-9_-]+$/.test(u.pathname)?u:null;}catch{return null;}
 }
-export function swingDeliveryStatus(id:string){return database(db=>(db.prepare("SELECT delivery_id,channel_kind,state,receipt_id,status_message,updated_at_ms FROM platform_swing_plan_deliveries WHERE idea_id=? ORDER BY created_at_ms DESC LIMIT 50").all(id)));}
+export function swingDeliveryStatus(id:string){return database(db=>(db.prepare("SELECT d.delivery_id,d.channel_kind,d.state,d.receipt_id,d.status_message,d.updated_at_ms,p.version FROM platform_swing_plan_deliveries d JOIN platform_swing_plan_publications p ON p.publication_id=d.publication_id WHERE d.idea_id=? ORDER BY d.created_at_ms DESC LIMIT 50").all(id)));}
 export function resolveSwingDelivery(id:string,deliveryId:string,posted:boolean){
   return database(db=>db.transaction(()=>{
     const row=db.prepare('SELECT * FROM platform_swing_plan_deliveries WHERE idea_id=? AND delivery_id=?').get(id,deliveryId) as Delivery|undefined;
@@ -24,9 +24,14 @@ export function resolveSwingDelivery(id:string,deliveryId:string,posted:boolean)
     return {state,message};
   })());
 }
-export function previewSwingPost(id:string,kind:SwingChannel,comment:string){
+export function previewSwingPost(id:string,kind:SwingChannel,comment:string,deliveryId?:string){
   if(kind!=="premium"&&kind!=="free")throw new SwingPlanInputError("Choose a valid channel.");
   return database(db=>{
+    if(deliveryId){
+      const saved=db.prepare('SELECT d.*,p.version FROM platform_swing_plan_deliveries d JOIN platform_swing_plan_publications p ON p.publication_id=d.publication_id WHERE d.delivery_id=? AND d.idea_id=? AND d.channel_kind=?').get(deliveryId,id,kind) as (Delivery&{version:number})|undefined;
+      if(!saved)throw new SwingPlanInputError('Delivery record not found for this plan and channel.');
+      return {ideaId:saved.idea_id,publicationId:saved.publication_id,version:saved.version,configured:!!webhook(kind),payload:JSON.parse(saved.content_json) as Payload,previousAttempt:true,deliveryId:saved.delivery_id};
+    }
     const plan=new SwingPlanStore(db).published(id);if(!plan)throw new SwingPlanInputError("Publish this plan before sending its link.");
     const p=db.prepare("SELECT publication_id FROM platform_swing_plan_publications WHERE idea_id=? AND version=?").get(plan.id,plan.version) as {publication_id:string};
     const existing=db.prepare('SELECT content_json,state FROM platform_swing_plan_deliveries WHERE publication_id=? AND channel_kind=?').get(p.publication_id,kind) as Pick<Delivery,'content_json'|'state'>|undefined;
@@ -43,8 +48,8 @@ export function previewSwingPost(id:string,kind:SwingChannel,comment:string){
   });
 }
 /** No DB handle survives a network await. Claim before send, freeze payload and preserve ambiguity. */
-export async function sendSwingPost(id:string,kind:SwingChannel,comment:string,publicationId:string){
-  const preview=previewSwingPost(id,kind,comment);
+export async function sendSwingPost(id:string,kind:SwingChannel,comment:string,publicationId:string,deliveryId?:string){
+  const preview=previewSwingPost(id,kind,comment,deliveryId);
   if(preview.publicationId!==publicationId)throw new SwingPlanInputError("The published plan changed. Preview the current post before sending.");
   const url=webhook(kind);if(!url)throw new SwingPlanInputError("This swing-plan Discord channel is not configured yet.");
   const claim=database(db=>db.transaction(()=>{
