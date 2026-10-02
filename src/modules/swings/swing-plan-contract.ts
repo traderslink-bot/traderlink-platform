@@ -27,6 +27,12 @@ export function swingSafeUrl(value: string): string | null {
 export function swingBlockText(blocks: readonly SwingBlock[]): string {
   return blocks.map(block=>block.kind==="image"?block.alt:block.runs.map(run=>run.text).join("")).join("\n");
 }
+/** The built-in thesis keeps its identity when renamed or reordered. */
+export function swingPremiumComment(document: SwingPlanDocument): string {
+  if(document.premiumComment.trim())return document.premiumComment;
+  const thesis=document.sections.find(section=>section.id==='section-0');
+  return thesis?.visible?swingBlockText(thesis.blocks):'';
+}
 export function hasSwingContent(blocks: readonly SwingBlock[]): boolean {
   return blocks.some(block=>block.kind==="image" ? Boolean(swingSafeUrl(block.src)) : block.runs.some(run=>run.text.trim()));
 }

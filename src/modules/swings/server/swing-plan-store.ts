@@ -20,7 +20,7 @@ export class SwingPlanStore {
   private row(id:string){return this.db.prepare("SELECT * FROM platform_swing_plans WHERE idea_id=? OR slug=?").get(id,id) as PlanRow|undefined;}
   list():SwingPlanSummary[]{return (this.db.prepare("SELECT * FROM platform_swing_plans ORDER BY updated_at_ms DESC LIMIT 500").all() as PlanRow[]).map(r=>{
     const d=JSON.parse(r.draft_json) as SwingPlanDocument;return {id:r.idea_id,slug:r.slug,ticker:d.ticker,title:d.title,draftVersion:r.draft_version,publishedVersion:r.published_revision,status:d.status,updatedAt:r.updated_at_ms};});}
-  draft(id:string){const r=this.row(id);return r?{id:r.idea_id,slug:r.slug,version:r.draft_version,publishedVersion:r.published_revision,document:JSON.parse(r.draft_json) as SwingPlanDocument}:null;}
+  draft(id:string){const r=this.row(id);return r?{id:r.idea_id,slug:r.slug,version:r.draft_version,publishedVersion:r.published_revision,document:JSON.parse(r.draft_json) as SwingPlanDocument,publishedDocument:this.published(r.idea_id)?.document??null}:null;}
   /** Public columns only: never read research when resolving metadata or a locked page. */
   publicInfo(id:string){const r=this.db.prepare("SELECT idea_id,slug,published_revision,public_teaser_json FROM platform_swing_plans WHERE (idea_id=? OR slug=?) AND published_revision IS NOT NULL").get(id,id) as Pick<PlanRow,"idea_id"|"slug"|"published_revision"|"public_teaser_json">|undefined;
     return r?{id:r.idea_id,slug:r.slug,version:r.published_revision!,teaser:JSON.parse(r.public_teaser_json!) as SwingPublicTeaser}:null;}

@@ -53,3 +53,28 @@ is hardcoded to one idea and must be generalized without losing its historical I
   deployment. Migration 0154 is only registered in the prepared overlay and is unapplied.
 - See [handoff and remaining gates](premium-swing-plan-authoring-handoff.md). Channel
   confirmation and hosted acceptance remain necessary; overall goal is not complete.
+
+## Owner destination confirmation
+
+Owner replied "Confirmed" to the existing Swings / Free Chat destination question.
+Acknowledged existing Swings for Premium plan posts and existing Free Chat for free
+posts. Passed this decision to the coordinator; keep the separate swing-plan variable
+names and leave Watchlist configuration unchanged. This resolves the destination-choice
+gate, not actual configuration, deployment or real-message verification. Immutable
+source checkpoint remains `641eb2970db3da0ec9fe2b329e52f4f81128dc28`.
+# October 1 editor QA corrections
+
+Owner requested correction of the three QA findings. Published-version Discord
+controls now remain accessible during unsaved and saved draft changes. Owner-only
+draft responses include the immutable published document for message defaults;
+draft content never supplies those defaults. Successful save/import/publish actions
+update the local plan list directly, removing the secondary list-request failure
+that previously masked success or stopped the publish sequence. The default thesis
+uses its stable built-in section identity, survives rename/reorder, and is omitted
+when hidden/deleted. Explicit owner comments still take precedence. Help aligned.
+
+Focused in-memory authorship, mocked Discord delivery, and isolated SSR checks pass.
+Added checks cover published defaults during draft edits, renamed/reordered/hidden/
+deleted thesis handling, and editor control/list-refresh regressions. No real posts,
+provider calls, migrations or deployment performed. Hosted visual/end-to-end gates
+remain open; these corrections do not constitute hosted acceptance.
