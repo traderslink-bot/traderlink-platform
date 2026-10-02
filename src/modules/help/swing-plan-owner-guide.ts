@@ -1,5 +1,6 @@
 /** Owner-only guide: rendered in Swing Trade Plans, not the member Help index. */
 export const SWING_PLAN_OWNER_HELP = [
+  {title:'Unsent comment warning',text:'The warning clears for a comment when you restore its published default or successfully send that exact text. Failed or unconfirmed posts keep the warning. Retrying an older saved message does not discard a different new comment.'},
   {title:'Write and preview a plan',text:'Start a new plan or open a saved one. Add your thesis, research, entry and exit plan, key levels and risks. You can rename, reorder, hide or remove sections, and add your own. Blank and hidden sections do not appear to members. Select text to apply bold, italic, underline or a link; use the preview to see the member page.'},
   {title:'Company details',text:'Fetch company details to review the latest available profile. Use these details replaces the company fields in your draft only. You can correct the fields yourself or continue without a profile.'},
   {title:'Save versus publish',text:'Save draft keeps your work private. Publish plan updates the page Premium members can see. Neither action sends a Discord post. Publishing a later version keeps the same page link. Save and close stores your draft before closing the editor.'},

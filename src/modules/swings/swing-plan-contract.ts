@@ -14,6 +14,13 @@ export type SwingPlanDocument = {
   premiumComment: string; freeComment: string;
 };
 export const SWING_DEFAULT_SECTION_TITLES = ["Trade thesis", "DD & research", "Entry & exit plan", "Key levels", "Risks"] as const;
+export type SwingCommentDrafts=Record<string,Partial<Record<'premium'|'free',string>>>;
+export function updateSwingCommentDraft(current:SwingCommentDrafts,id:string,channel:'premium'|'free',value:string,baseline:string):SwingCommentDrafts {
+  const next={...current},comments={...current[id]};
+  if(value===baseline)delete comments[channel];else comments[channel]=value;
+  if(Object.keys(comments).length)next[id]=comments;else delete next[id];
+  return next;
+}
 export function newSwingPlan(): SwingPlanDocument {
   return { ticker: "", title: "", status: "open",
     teaser: {headline:"A swing trade plan for TradersLink Premium members.",title:"TradersLink Premium Swing Trade Plan",description:"Explore the research, trade thesis, planned entries and exits, key levels and risks."},

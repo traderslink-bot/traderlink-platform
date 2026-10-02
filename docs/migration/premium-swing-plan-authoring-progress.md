@@ -100,3 +100,11 @@ or automatically published. Saved plan comment defaults remain separate. Failed
 preview/history requests clear the prior preview to avoid a stale send button.
 Focused regressions cover route ordering and editor ownership in addition to the
 existing isolated delivery/storage/SSR checks. No deployment or real sends.
+# October 1 unsent-comment warning correction
+
+Returning a channel comment to its published default removes that local override.
+Confirmed successful delivery returns the exact comment from the frozen message;
+only an unchanged matching local draft is cleared. Failed/uncertain delivery and
+retries containing different text preserve new unsent work. Other plans/channels
+remain untouched. Focused regression checks cover restoring defaults, channel
+isolation, successful comments and frozen retry comments. No deployment or posts.

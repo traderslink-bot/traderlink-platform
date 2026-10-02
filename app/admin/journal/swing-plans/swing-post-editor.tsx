@@ -9,7 +9,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 type Channel='premium'|'free';
 type Preview={publicationId:string;version:number;deliveryId?:string;configured:boolean;previousAttempt:boolean;payload:{content:string;embeds:{title:string;description:string;url:string}[]}};
-export function SwingPostEditor({id,defaultComment,freeComment,drafts,onCommentChange}:{id:string;defaultComment:string;freeComment:string;drafts:Partial<Record<Channel,string>>;onCommentChange:(channel:Channel,value:string)=>void}){
+export function SwingPostEditor({id,defaultComment,freeComment,drafts,onCommentChange,onCommentSent}:{id:string;defaultComment:string;freeComment:string;drafts:Partial<Record<Channel,string>>;onCommentChange:(channel:Channel,value:string)=>void;onCommentSent:(channel:Channel,value:string)=>void}){
   const [channel,setChannel]=useState<Channel>('premium'),[preview,setPreview]=useState<Preview|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const comments={premium:drafts.premium??defaultComment,free:drafts.free??freeComment};
   const comment=comments[channel];
@@ -19,6 +19,8 @@ export function SwingPostEditor({id,defaultComment,freeComment,drafts,onCommentC
     const target=saved?.channel??channel;
     const r=await fetch('/api/admin/journal/swing-plans/discord',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','x-traderlink-journal-admin-request':'1'},body:JSON.stringify({action,id,channel:target,comment:comments[target],publicationId:preview?.publicationId,deliveryId:saved?.deliveryId??(action==='send'?preview?.deliveryId:undefined),...resolution})});
     const result=await r.json();if(!r.ok)throw Error(result.error||'Unable to send.');
+    // A saved retry may contain different text: do not clear an unrelated new draft.
+    if(action==='send'&&result.state==='sent'&&result.comment===comments[target].trim())onCommentSent(target,comments[target]);
     if(action==='preview'){setChannel(target);setPreview(result.preview);setDeliveries(result.deliveries);setCheckedAt(Date.now());}
     else{setMessage(result.message??'');setPreview(null);setDeliveries(result.deliveries??[]);setCheckedAt(Date.now());}
   }catch(e){setMessage(e instanceof Error?e.message:'Delivery unavailable.');}finally{setBusy(false);}};

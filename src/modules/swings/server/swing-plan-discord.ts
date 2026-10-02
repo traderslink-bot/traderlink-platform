@@ -7,6 +7,11 @@ import { SwingPlanInputError } from "./swing-plan-request";
 
 export type SwingChannel="premium"|"free";
 type Payload={content:string;embeds:{title:string;description:string;url:string;thumbnail:{url:string}}[];allowed_mentions:{parse:string[]}};
+function deliveredComment(row:Delivery):string {
+  const content=(JSON.parse(row.content_json) as Payload).content;
+  if(row.channel_kind==='free')return content.slice(0,content.lastIndexOf('\n\nhttps://app.traderslink.pro/swings/'));
+  return content.slice(content.indexOf('\n')+1,content.lastIndexOf('\n\nView my full research, entry and exit plan, key levels and risks.\n'));
+}
 type Delivery={delivery_id:string;idea_id:string;publication_id:string;channel_kind:SwingChannel;content_json:string;state:string;receipt_id:string|null;status_message:string;created_at_ms:number;updated_at_ms:number};
 const database=<T>(fn:Parameters<typeof withPlatformDatabase<T>>[1])=>withPlatformDatabase({mode:"runtime"},fn);
 function webhook(kind:SwingChannel):URL|null {
@@ -60,7 +65,7 @@ export async function sendSwingPost(id:string,kind:SwingChannel,comment:string,p
     else{const key=randomUUID();db.prepare("INSERT INTO platform_swing_plan_deliveries VALUES(?,?,?,?,?,'sending',NULL,'Sending…',?,?)").run(key,preview.ideaId,publicationId,kind,JSON.stringify(preview.payload),now,now);row=db.prepare("SELECT * FROM platform_swing_plan_deliveries WHERE delivery_id=?").get(key) as Delivery;}
     return {send:true,row};
   })());
-  if(!claim.send)return {state:claim.row.state,message:claim.row.status_message};
+  if(!claim.send)return {state:claim.row.state,message:claim.row.status_message,comment:claim.row.state==='sent'?deliveredComment(claim.row):undefined};
   let state='uncertain',receipt:string|null=null,message='Delivery could not be confirmed. Check the channel before sending again.';
   url.searchParams.set('wait','true');
   try{
@@ -69,5 +74,5 @@ export async function sendSwingPost(id:string,kind:SwingChannel,comment:string,p
     else if(response.status>=400&&response.status<500){state='failed';message=response.status===429?'Discord asked us to wait. Try again later.':'Discord did not accept the post. Check channel configuration and try again.';}
   }catch{/* Never expose a webhook URL or credential through a transport error. */}
   database(db=>db.prepare("UPDATE platform_swing_plan_deliveries SET state=?,receipt_id=?,status_message=?,updated_at_ms=? WHERE delivery_id=? AND state='sending'").run(state,receipt,message,Date.now(),claim.row.delivery_id));
-  return {state,message};
+  return {state,message,comment:state==='sent'?deliveredComment(claim.row):undefined};
 }
