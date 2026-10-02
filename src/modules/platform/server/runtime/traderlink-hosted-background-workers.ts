@@ -1,5 +1,6 @@
 import { runDailyTradeAnalyzerOnce } from "@/src/modules/level-analysis/server/daily-trade-analyzer-runtime";
 import { startHostedCoachingMaintenance } from "@/src/modules/communities/server/coaching-maintenance-runtime";
+import { startHostedCommunityDiscordDelivery } from "@/src/modules/communities/server/community-discord-delivery-runtime";
 
 import { openPlatformDatabase } from "../database/open-platform-database";
 import { PlatformRemoteNotificationDeliveryRepository } from "../notifications/platform-remote-notification-delivery-repository";
@@ -15,6 +16,7 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
   if (workersStarted) return;
   workersStarted = true;
   startHostedCoachingMaintenance();
+  startHostedCommunityDiscordDelivery();
 
   let analyzerRunning = false;
   const runAnalyzer = async (): Promise<void> => {
