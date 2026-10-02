@@ -89,3 +89,14 @@ link still opens the current published plan. Resolution/send retain refreshed hi
 Help updated. Mock checks cover old-version retry, wrong-plan/channel rejection,
 unchanged frozen payload, duplicate suppression and unchanged current publication.
 Focused authorship, delivery and SSR checks pass. No live sends or deployment.
+# October 1 delivery-history and comment retention corrections
+
+Delivery history now has an independent owner-authorized action/button with no
+comment or preview validation. Post comment overrides are kept in the parent editor
+by plan and channel, surviving child remounts on publication, closing/reopening,
+and switching plans. Blank overrides are preserved. Leaving/reloading the editor
+warns while these local comment drafts exist; they are not stored in browser storage
+or automatically published. Saved plan comment defaults remain separate. Failed
+preview/history requests clear the prior preview to avoid a stale send button.
+Focused regressions cover route ordering and editor ownership in addition to the
+existing isolated delivery/storage/SSR checks. No deployment or real sends.

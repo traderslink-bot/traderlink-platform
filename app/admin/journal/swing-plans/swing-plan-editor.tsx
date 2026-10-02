@@ -27,9 +27,11 @@ export function SwingPlanEditor({initialPlans}:{initialPlans:SwingPlanSummary[]}
   const [plans,setPlans]=useState(initialPlans),[draft,setDraft]=useState<Draft|null>(null),[doc,setDoc]=useState<SwingPlanDocument>(newSwingPlan),[dirty,setDirty]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[preview,setPreview]=useState<'member'|'locked'|null>(null);
   const [profile,setProfile]=useState<{label:string;value:string}[]|null>(null);
   const [editorOpen,setEditorOpen]=useState(true);
-  useEffect(()=>{const warn=(e:BeforeUnloadEvent)=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
+  const [postDrafts,setPostDrafts]=useState<Record<string,Partial<Record<'premium'|'free',string>>>>({});
+  const hasUnsavedWork=dirty||Object.keys(postDrafts).length>0;
+  useEffect(()=>{const warn=(e:BeforeUnloadEvent)=>{if(hasUnsavedWork){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[hasUnsavedWork]);
   useEffect(()=>{
-    if(!dirty)return;
+    if(!hasUnsavedWork)return;
     const guard=(event:MouseEvent)=>{
       const link=event.target instanceof Element?event.target.closest('a'):null;
       if(!link||link.target==='_blank'||!link.href||event.ctrlKey||event.metaKey||event.shiftKey||link.href===window.location.href)return;
@@ -37,7 +39,7 @@ export function SwingPlanEditor({initialPlans}:{initialPlans:SwingPlanSummary[]}
     };
     document.addEventListener('click',guard,true);
     return()=>document.removeEventListener('click',guard,true);
-  },[dirty]);
+  },[hasUnsavedWork]);
   const edit=(next:SwingPlanDocument)=>{setDoc(next);setDirty(true);};
   const run=async(fn:()=>Promise<void>)=>{setBusy(true);setMessage('');try{await fn();}catch(e){setMessage(e instanceof Error?e.message:'Action failed.');}finally{setBusy(false);}};
   const load=async(id:string)=>{if(!id)return;if(dirty&&!window.confirm('Discard unsaved changes and open this plan?'))return;await run(async()=>{const r=await request(undefined,id);if(!r.plan)throw Error('Plan not found.');setDraft(r.plan);setDoc(r.plan.document);setDirty(false);setProfile(null);setEditorOpen(true);});};
@@ -78,7 +80,7 @@ export function SwingPlanEditor({initialPlans}:{initialPlans:SwingPlanSummary[]}
       {draft?.publishedVersion&&<Button href={`/swings/${draft.slug}`} target="_blank">Open published plan</Button>}
       <Stack direction="row" sx={{gap:1}}><Button onClick={()=>void run(async()=>{await save();close();setMessage('Draft saved and closed.');})}>Save and close</Button><Button onClick={()=>{if(!dirty||window.confirm('Close without saving your changes?'))close();}}>Close editor</Button></Stack>
     </Stack></fieldset>}
-    {editorOpen&&draft?.publishedDocument&&<Box><Typography variant="body2">Discord posts use the published plan. Draft changes are not included.</Typography><SwingPostEditor key={`${draft.id}:${draft.publishedVersion}`} id={draft.id} defaultComment={swingPremiumComment(draft.publishedDocument)} freeComment={draft.publishedDocument.freeComment}/></Box>}
+    {editorOpen&&draft?.publishedDocument&&<Box><Typography variant="body2">Discord posts use the published plan. Draft changes are not included. Typed post comments are kept while this editor page stays open, including when you switch plans or publish.</Typography><SwingPostEditor key={`${draft.id}:${draft.publishedVersion}`} id={draft.id} defaultComment={swingPremiumComment(draft.publishedDocument)} freeComment={draft.publishedDocument.freeComment} drafts={postDrafts[draft.id]??{}} onCommentChange={(channel,value)=>setPostDrafts(current=>({...current,[draft.id]:{...current[draft.id],[channel]:value}}))}/></Box>}
     <Dialog open={!!preview} onClose={()=>setPreview(null)} maxWidth="md" fullWidth><DialogTitle>{preview==='member'?'Premium page preview':'Locked page preview'}<Button onClick={()=>setPreview(null)}>Close</Button></DialogTitle><DialogContent><SwingThemeSurface><div className={styles.page}>{preview==='member'?<SwingPlanContent document={doc}/>:<SwingLockedPreview teaser={doc.teaser.headline} slug={draft?.slug??'preview'}/>}</div></SwingThemeSurface></DialogContent></Dialog>
   </Stack>;
 }

@@ -69,7 +69,15 @@ async function main(){
   assert.equal(service.swingDeliveryStatus(draft.id).find(d=>d.delivery_id===retry.deliveryId).version,3);
   const postEditor=fs.readFileSync('app/admin/journal/swing-plans/swing-post-editor.tsx','utf8');
   assert(postEditor.includes('const comment=comments[channel]'));
-  assert(postEditor.includes('setComments(current=>({...current,[channel]:e.target.value}))'));
+  assert(postEditor.includes('onCommentChange(channel,e.target.value)'));
+  assert(postEditor.includes("act('history')"));
+  const routeSource=fs.readFileSync('app/api/admin/journal/swing-plans/discord/route.ts','utf8');
+  assert(routeSource.indexOf("b.action==='history'")<routeSource.indexOf('typeof b.comment'));
+  assert(routeSource.includes("{deliveries:swingDeliveryStatus(b.id)}"));
+  const editorSource=fs.readFileSync('app/admin/journal/swing-plans/swing-plan-editor.tsx','utf8');
+  assert(editorSource.includes('drafts={postDrafts[draft.id]??{}}'));
+  assert(editorSource.includes('dirty||Object.keys(postDrafts).length>0'));
+  assert(!editorSource.includes('setPostDrafts({})'));
   assert(!postEditor.includes("setComment(e.target.value==='free'"));
   const original=load('src/modules/swings/server/swing-plan-original.ts').originalSwingPlanDraft();
   const originalDraft=store.importOriginal(original,'owner');assert.equal(originalDraft.slug,'d59c2a78');assert.equal(store.publicInfo(originalDraft.id),null);
