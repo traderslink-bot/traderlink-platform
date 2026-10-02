@@ -7,6 +7,7 @@ import { readSwingVisits, readSwingActivityClock } from "@/src/modules/swings/se
 import { SWING_IDEA } from "@/src/modules/swings/swing-idea-catalog";
 import { JournalAdminPage } from "../journal-admin-ui";
 import styles from "./swing-activity.module.css";
+import { SwingPlanStore } from "@/src/modules/swings/server/swing-plan-store";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -31,16 +32,18 @@ export default async function SwingActivityPage({searchParams}:{searchParams:Pro
   const outcome=["full","locked"].includes(value("outcome"))?value("outcome"):"";
   const page=Math.min(100000,Math.max(0,Math.floor(Number(value("page"))||0)));
   const valid=Number.isFinite(from)&&Number.isFinite(start(untilDate))&&Number.isFinite(until)&&until>from;
-  const data=await withJournalAdminPageDatabase(db=>valid?readSwingVisits(db,{from,until,member,outcome,page}):null);
-  const href=(n:number)=>`?${new URLSearchParams({from:fromDate,until:untilDate,member,outcome,page:String(n)})}`;
+  const ideas=await withJournalAdminPageDatabase(db=>new SwingPlanStore(db).list());
+  const ideaId=ideas.some(i=>i.id===value("idea"))?value("idea"):SWING_IDEA.id;
+  const data=await withJournalAdminPageDatabase(db=>valid?readSwingVisits(db,{from,until,member,outcome,page,ideaId}):null);
+  const href=(n:number)=>`?${new URLSearchParams({idea:ideaId,from:fromDate,until:untilDate,member,outcome,page:String(n)})}`;
   return <JournalAdminPage><Typography variant="h1">Swing Idea Activity</Typography>
     <form className={styles.filters}>
-      <label>Idea<select name="idea" defaultValue={SWING_IDEA.id}><option value={SWING_IDEA.id}>CRML</option></select></label>
+      <label>Idea<select name="idea" defaultValue={ideaId}><option value={SWING_IDEA.id}>CRML</option>{ideas.filter(i=>i.id!==SWING_IDEA.id).map(i=><option key={i.id} value={i.id}>{i.ticker} — {i.title}</option>)}</select></label>
       <label>Member<input name="member" defaultValue={member} placeholder="Search member" maxLength={100}/></label>
       <label>From · ET<input type="date" name="from" defaultValue={fromDate} required/></label>
       <label>Through · ET<input type="date" name="until" defaultValue={untilDate} required/></label>
       <label>Viewed<select name="outcome" defaultValue={outcome}><option value="">All views</option><option value="full">Full idea</option><option value="locked">Locked preview</option></select></label>
-      <button type="submit">Apply</button><Link href="?from=2026-09-20">All recorded dates</Link>
+      <button type="submit">Apply</button><Link href={`?${new URLSearchParams({idea:ideaId,from:'2026-09-20'})}`}>All recorded dates</Link>
     </form>
     {!data?<p role="alert">Choose a valid start and end date.</p>:<>
       <div className={styles.metrics}><p>{hint("Recorded visits","Page openings recorded in this date range. Reloads and repeat visits count separately; this does not mean the entire idea was read.")}<strong>{data.totals.visits}</strong></p><p>Signed-in members<strong>{data.totals.members}</strong></p><p>Full idea<strong>{data.totals.full}</strong></p><p>Locked preview<strong>{data.totals.locked}</strong></p></div>

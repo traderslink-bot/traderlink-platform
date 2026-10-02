@@ -1,0 +1,65 @@
+// Isolated deterministic checkpoint: in-memory SQLite, fake credentials, mocked HTTP.
+// Never opens the application database or sends a real Discord/provider request.
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
+const deps='C:/Users/jerac/Documents/TraderLink/traderlink-platform/node_modules';
+const ts=require(deps+'/typescript'),SQLite=require(deps+'/better-sqlite3');
+const db=new SQLite(':memory:');db.pragma('foreign_keys=ON');
+const cache=new Map();let calls=0,transport=async()=>Response.json({id:'123456789012345678'});
+const fakeProcess={env:{SWING_PLANS_PREMIUM_DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/test-premium',SWING_PLANS_FREE_DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/456/test-free'}};
+const databaseMock={withPlatformDatabase:(_options,callback)=>callback(db)};
+function load(file){
+  file=path.resolve(file);if(cache.has(file))return cache.get(file);
+  const output=ts.transpileModule(fs.readFileSync(file,'utf8'),{fileName:file,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS},reportDiagnostics:true});
+  assert.equal(output.diagnostics.length,0);const mod={exports:{}};cache.set(file,mod.exports);
+  const req=name=>{
+    if(name==='server-only')return {};
+    if(name.endsWith('/open-platform-database'))return databaseMock;
+    if(name.startsWith('@/'))return load(name.slice(2)+'.ts');
+    if(name.startsWith('.'))return load(path.resolve(path.dirname(file),name+'.ts'));
+    return require(name);
+  };
+  vm.runInNewContext(output.outputText,{module:mod,exports:mod.exports,require:req,URL,Date,JSON,Set,Map,Error,TextDecoder,AbortSignal,process:fakeProcess,fetch:async(url,options)=>{assert(!db.inTransaction);calls++;return transport(url,options);}});
+  return mod.exports;
+}
+async function main(){
+  const migration=load('src/modules/platform/server/database/migrations/0154_platform_premium_swing_plan_authorship.ts').platformPremiumSwingPlanAuthorshipMigration;
+  for(const sql of migration.statements)db.exec(sql);
+  const contract=load('src/modules/swings/swing-plan-contract.ts'),Store=load('src/modules/swings/server/swing-plan-store.ts').SwingPlanStore;
+  const store=new Store(db),document=contract.newSwingPlan();document.ticker='ZZTEST';document.title='Private thesis';
+  const draft=store.save({document,expectedVersion:0,actor:'owner'});store.publish(draft.id,1);
+  const service=load('src/modules/swings/server/swing-plan-discord.ts');
+  const premium=service.previewSwingPost(draft.id,'premium','My thesis');
+  assert(premium.payload.content.includes('ZZTEST'));assert(!JSON.stringify(premium.payload.embeds).includes('ZZTEST'));
+  const free=service.previewSwingPost(draft.id,'free','Read my new plan');assert(!JSON.stringify(free.payload).includes('ZZTEST'));
+  assert.throws(()=>service.previewSwingPost(draft.id,'free','$ZZTEST new plan'));
+  const sent=await service.sendSwingPost(draft.id,'premium','My thesis',premium.publicationId);assert.equal(sent.state,'sent');
+  await service.sendSwingPost(draft.id,'premium','Changed comment',premium.publicationId);assert.equal(calls,1);
+  const previous=service.previewSwingPost(draft.id,'premium','Changed comment');assert(previous.previousAttempt);assert(previous.payload.content.includes('My thesis'));
+  transport=async()=>new Response('',{status:429});
+  const failed=await service.sendSwingPost(draft.id,'free','Read my new plan',free.publicationId);assert.equal(failed.state,'failed');assert.equal(calls,2);
+  transport=async(_url,options)=>{assert(JSON.parse(options.body).content.includes('Read my new plan'));return Response.json({id:'123456789012345679'});};
+  await service.sendSwingPost(draft.id,'free','Different message',free.publicationId);assert.equal(calls,3);
+  const second=store.save({id:draft.id,document,expectedVersion:1,actor:'owner'});store.publish(draft.id,second.version);
+  const update=service.previewSwingPost(draft.id,'premium','Update');assert(update.payload.content.includes('Updated'));
+  transport=async()=>{throw Error('simulated timeout');};
+  const uncertain=await service.sendSwingPost(draft.id,'premium','Update',update.publicationId);assert.equal(uncertain.state,'uncertain');
+  await service.sendSwingPost(draft.id,'premium','Update',update.publicationId);assert.equal(calls,4);
+  const receipt=service.swingDeliveryStatus(draft.id).find(d=>d.state==='uncertain');
+  assert.throws(()=>service.resolveSwingDelivery('another-plan',receipt.delivery_id,false));
+  service.resolveSwingDelivery(draft.id,receipt.delivery_id,false);
+  transport=async()=>Response.json({id:'123456789012345680'});
+  assert.equal((await service.sendSwingPost(draft.id,'premium','Update',update.publicationId)).state,'sent');assert.equal(calls,5);
+  const original=load('src/modules/swings/server/swing-plan-original.ts').originalSwingPlanDraft();
+  const originalDraft=store.importOriginal(original,'owner');assert.equal(originalDraft.slug,'d59c2a78');assert.equal(store.publicInfo(originalDraft.id),null);
+  assert.equal(store.importOriginal(original,'owner').version,1);
+  const originalSource=load('src/modules/swings/server/swing-idea-content.ts');
+  const plainOriginal=originalSource.SWING_SECTIONS.join('').replace(/<[^>]+>/g,'').replace(/\s/g,'');
+  const plainConverted=original.sections.map(s=>s.title+contract.swingBlockText(s.blocks)).join('').replace(/\s/g,'');
+  assert.equal(plainConverted,plainOriginal);assert(original.sections.some(s=>s.blocks.some(b=>b.runs?.some(r=>r.bold))));
+  const parser=load('src/modules/swings/server/swing-plan-request.ts');
+  assert.equal((await parser.readSwingPlanRequest(new Request('https://example.test',{method:'POST',body:'{"action":"save"}'}),100)).action,'save');
+  await assert.rejects(()=>parser.readSwingPlanRequest(new Request('https://example.test',{method:'POST',body:'[]'}),100),/Invalid submission/);
+  await assert.rejects(()=>parser.readSwingPlanRequest(new Request('https://example.test',{method:'POST',body:'{"large":"too long"}'}),4),/too large/);
+  console.log('PASS mocked delivery: private/free separation, frozen retries, no duplicate sends, channel isolation, uncertain delivery recovery, original wording/format conversion, bounded request parsing.');
+}
+main().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>db.close());

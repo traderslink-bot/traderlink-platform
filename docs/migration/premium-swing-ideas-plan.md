@@ -163,3 +163,7 @@ for five minutes. Failure returns no private content; the scoped Sign in path re
 OAuth evidence even for an existing session. No new secret, Whop entitlement or payment
 system is created. /swings explicitly requires online access and excludes offline
 projection capture. Coordinator reserved 0139 after exact 0138 predecessor.
+
+## Owner authoring extension
+
+Approved separate authoring work is controlled by [Premium swing plan authoring](premium-swing-plan-authoring-plan.md). Member navigation remains unchanged.
