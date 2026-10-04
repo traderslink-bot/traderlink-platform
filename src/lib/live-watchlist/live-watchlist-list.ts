@@ -13,6 +13,7 @@ export type LiveWatchlistListSymbol = Pick<LiveWatchlistSymbolState,
   "watchlistLifecycleLabelsVisible" | "watchlistLifecycle" | "latestPrice" |
   "latestPriceObservedAt" | "latestPriceSource" | "marketDataRevision"
 > & {
+  premiumTickerHidden?: boolean;
   companyInfo?: {
     updatedAt: number;
     country?: NonNullable<LiveWatchlistCardContent["metadata"]>[string];

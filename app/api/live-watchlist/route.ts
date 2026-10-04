@@ -1,3 +1,4 @@
+import { projectWatchlistTickersForViewer } from "@/src/modules/watchlist/server/access/watchlist-ticker-projection";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { authorizeWatchlistMemberRequest } from "@/src/lib/live-watchlist/live-watchlist-auth";
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const data = await measurePlatformRequestPhaseAsync("watchlist", () => new LiveWatchlistStore().listSymbols());
     return measurePlatformRequestPhase("json", () => NextResponse.json(
-      projectLiveWatchlistList(data), {
+      projectWatchlistTickersForViewer(projectLiveWatchlistList(data), request.headers), {
       headers: { "Cache-Control": "private, no-store" },
     }));
   });

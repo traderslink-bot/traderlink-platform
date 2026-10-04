@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+import { projectWatchlistTickersForViewer } from "@/src/modules/watchlist/server/access/watchlist-ticker-projection";
 import type { Metadata } from "next";
 
 import { WatchlistHomepageShell } from "./watchlist-homepage-shell";
@@ -36,7 +38,7 @@ export default async function LiveWatchlistPage({
     <WatchlistDashboardFrame>
       <div className="academy-container watchlist-container">
         <WatchlistVisitRecorder pageKey="index" pageKind="index" />
-        <LiveWatchlistIndexClient initialState={projectLiveWatchlistList(state)} />
+        <LiveWatchlistIndexClient initialState={projectWatchlistTickersForViewer(projectLiveWatchlistList(state), await headers())} />
       </div>
     </WatchlistDashboardFrame>
   );

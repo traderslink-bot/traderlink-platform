@@ -1,3 +1,4 @@
+import { projectWatchlistTickerForViewer } from "@/src/modules/watchlist/server/access/watchlist-ticker-projection";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { authorizeWatchlistMemberRequest } from "@/src/lib/live-watchlist/live-watchlist-auth";
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  return new Response(createLiveWatchlistStream(), {
+  return new Response(createLiveWatchlistStream(symbol => projectWatchlistTickerForViewer(symbol, request.headers)), {
     headers: {
       "Cache-Control": "no-cache, no-transform",
       "Content-Type": "text/event-stream; charset=utf-8",

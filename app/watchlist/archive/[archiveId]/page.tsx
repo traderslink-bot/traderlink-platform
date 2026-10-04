@@ -1,3 +1,5 @@
+import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
+import { PremiumTickerLock } from "@/app/watchlist/premium-ticker-lock";
 import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -78,6 +80,7 @@ export default async function LiveWatchlistArchiveDetailPage({
     notFound();
   }
 
+  if (!canViewWatchlistTicker(await headers(), archive.symbol)) return <WatchlistDashboardFrame><PremiumTickerLock /></WatchlistDashboardFrame>;
   return (
     <WatchlistDashboardFrame>
       <div className="academy-container">

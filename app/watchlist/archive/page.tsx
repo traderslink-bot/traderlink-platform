@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -73,11 +75,12 @@ export default async function LiveWatchlistArchivePage({
     limit: archivePageSize,
     offset: (currentPage - 1) * archivePageSize,
   });
+  const viewerHeaders = await headers();
   return (
     <WatchlistDashboardFrame>
       <div className="academy-container">
         <LiveWatchlistArchiveIndex
-          archives={archives.map(archive => ({ archiveId: archive.archiveId, symbol: archive.symbol,
+          archives={archives.filter(item => canViewWatchlistTicker(viewerHeaders, item.symbol)).map(archive => ({ archiveId: archive.archiveId, symbol: archive.symbol,
             archivedAt: archive.archivedAt, firstPostedAt: archive.firstPostedAt, lastActiveUpdatedAt: archive.lastActiveUpdatedAt }))}
           currentPage={currentPage}
           totalArchives={totalArchives}

@@ -2,6 +2,7 @@
 import { WatchlistFeatureMessage } from "./watchlist-feature-message";
 import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
 
+import { PremiumTickerLock } from "./premium-ticker-lock";
 import { PremiumAnalysisCard } from "./premium-analysis-card";
 import { SimpleAnalysisCard } from "./simple-analysis-card";
 import { AnalysisHistoryLines } from "./analysis-history-lines";
@@ -1390,7 +1391,11 @@ function WatchlistTickerTable({
         <span>Details</span>
       </div>
       {symbols.map((symbol) => {
-        const countryFlag = getWatchlistCountryFlag(symbol.companyInfo?.country);
+                  if (symbol.premiumTickerHidden) return <a key={symbol.symbol} href="https://whop.com/traderslink-1049/premium-access-2026" className={`watchlist-row ${compactRows.row}`}>
+            <span className={`watchlist-symbol-cell ${compactRows.ticker}`}><strong aria-label="Premium ticker"><span aria-hidden="true" style={{filter:"blur(4px)",userSelect:"none"}}>••••</span></strong><small style={{color:"#b45309",display:"block"}}>Premium members only</small></span>
+            <span className={compactRows.details} style={{color:"#b45309",fontWeight:700,textDecoration:"underline"}}>Access Premium</span>
+          </a>;
+const countryFlag = getWatchlistCountryFlag(symbol.companyInfo?.country);
         return (
           <Link
             key={symbol.symbol}
@@ -1658,7 +1663,9 @@ export function LiveWatchlistIndexClient({
   initialState: LiveWatchlistListPayload;
 }) {
   const [symbols, setSymbols] = useState(initialState.symbols);
-  const reverseSplits = useWatchlistReverseSplits(symbols.map((symbol) => symbol.symbol));
+  const knownListKeys = useRef(new Set(initialState.symbols.map(item => item.symbol)));
+  useEffect(() => { knownListKeys.current = new Set(symbols.map(item => item.symbol)); }, [symbols]);
+  const reverseSplits = useWatchlistReverseSplits(symbols.filter(symbol => !symbol.premiumTickerHidden).map((symbol) => symbol.symbol));
   const [marketDataStatus, setMarketDataStatus] = useState<LiveWatchlistMarketDataStatus>(
     initialState.marketDataStatus,
   );
@@ -1705,7 +1712,7 @@ export function LiveWatchlistIndexClient({
           current,
           incoming: payload.symbols,
           generatedAt: payload.generatedAt,
-        }));
+        }).filter(item => payload.symbols.some(next => next.symbol === item.symbol)));
         setMarketDataStatus(payload.marketDataStatus);
         setMarketDataUpdatedAt(payload.marketDataUpdatedAt);
       }
@@ -1718,6 +1725,8 @@ export function LiveWatchlistIndexClient({
     });
     stream.addEventListener("symbol", (event) => {
       const next = JSON.parse(event.data) as LiveWatchlistListSymbol | LiveWatchlistSymbolState;
+      if (!knownListKeys.current.has(next.symbol)) { void refresh(); return; }
+      if ("premiumTickerHidden" in next && next.premiumTickerHidden) return;
       setSymbols((current) => mergeLiveWatchlistListSymbol(current, "cards" in next ? projectLiveWatchlistListSymbol(next) : next));
     });
     stream.addEventListener("health", (event) => {
@@ -1930,6 +1939,7 @@ export function LiveWatchlistDetailClient({
 }) {
   const [symbol, setSymbol] = useState(initialSymbol);
   const [detailsDenied, setDetailsDenied] = useState(false);
+  const [premiumTickerDenied, setPremiumTickerDenied] = useState(false);
   const reverseSplits = useWatchlistReverseSplits(symbol.status === "deactivated" ? [] : [symbol.symbol]);
   const [marketDataStatus, setMarketDataStatus] =
     useState<LiveWatchlistMarketDataStatus>(initialMarketDataStatus);
@@ -1940,7 +1950,8 @@ export function LiveWatchlistDetailClient({
     const refreshController = createWatchlistRefreshController(async (signal) => {
       const response = await fetch(`/api/live-watchlist/symbols/${initialSymbol.symbol}`, { signal });
       if (response.status === 401 || response.status === 403) {
-        if (!cancelled) setDetailsDenied(true);
+        const denial = await response.json().catch(() => ({}));
+          if (!cancelled) { setPremiumTickerDenied(denial.code === "premium_ticker_required"); setDetailsDenied(true); }
         return;
       }
       if (!response.ok) {
@@ -2010,7 +2021,7 @@ export function LiveWatchlistDetailClient({
       }
     };
   }, [initialSymbol.symbol]);
-  if (detailsDenied) return <WatchlistFeatureMessage feature="ticker_details" />;
+  if (detailsDenied) return premiumTickerDenied ? <PremiumTickerLock /> : <WatchlistFeatureMessage feature="ticker_details" />;
 
   if (symbol.status === "deactivated") {
     return (

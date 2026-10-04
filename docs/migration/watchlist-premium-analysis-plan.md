@@ -36,3 +36,8 @@ Progress: [implementation record](watchlist-premium-analysis-progress.md).
 - That projection is called from the detail API, detail page, archive page and client reconciliation. All must retain existing membership gates while adding the independent Premium price restriction.
 - Numeric levels also occur in prose. Structured-field blurring alone does not meet the requested behavior.
 - Owner explicitly authorized coordinator contact. Allocated migration: `0155_platform_watchlist_premium_analysis_access`, predecessor `0154_platform_premium_swing_plan_authorship`. Exact source parent: `3fdd4241777e825195299c899754f933f1c2acaa`. Do not release 0155 ahead of 0154.
+
+
+## Owner-approved ticker access extension
+
+See [Premium-only ticker](watchlist-premium-ticker-plan.md). The child replaces unapplied0155 with0155_platform_watchlist_premium_access_controls; do not release the superseded analysis-only migration. Both controls are independent.

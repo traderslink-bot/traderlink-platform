@@ -1,3 +1,4 @@
+import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import type { NextRequest } from "next/server";
 import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
 import { authorizeWatchlistMemberRequest } from "@/src/lib/live-watchlist/live-watchlist-auth";
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
   if (!readWatchlistFeatureAccess(auth.principal.platformUserId).tickerDetails) return Response.json({ code: "membership_required" }, { status: 403, headers });
   const symbol = (await context.params).symbol.toUpperCase();
   if (!/^[A-Z][A-Z0-9.-]{0,15}$/u.test(symbol)) return Response.json({ error: "Ticker was not found." }, { status: 404, headers });
+  if (!canViewWatchlistTicker(request.headers, symbol)) return Response.json({ code: "premium_ticker_required" }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
   const ticker = await new LiveWatchlistStore().getSymbol(symbol);
   if (!ticker || ticker.status === "deactivated" || !Number.isSafeInteger(ticker.firstPostedAt) || !ticker.firstPostedAt || ticker.firstPostedAt <= 0) {
     return Response.json({ error: "Ticker was not found." }, { status: 404, headers });
