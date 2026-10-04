@@ -1,3 +1,5 @@
+import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
 import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
@@ -79,7 +81,7 @@ export default async function LiveWatchlistArchiveDetailPage({
   return (
     <WatchlistDashboardFrame>
       <div className="academy-container">
-        <LiveWatchlistArchiveDetailClient archive={{ ...archive, state: watchlistDetailProjection(archive.state, features.tradeAnalysis) }} />
+        <LiveWatchlistArchiveDetailClient archive={{ ...archive, state: watchlistDetailProjection(archive.state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(await headers(), archive.symbol)) }} />
       </div>
     </WatchlistDashboardFrame>
   );

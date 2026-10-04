@@ -1,3 +1,4 @@
+import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import Link from "next/link";
 import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
 import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
@@ -124,7 +125,7 @@ export default async function LiveWatchlistSymbolPage({
         <WatchlistVisitRecorder pageKey={state.symbol} pageKind="detail" />
         <LiveWatchlistDetailClient
           initialMarketDataStatus={health.marketDataStatus}
-          initialSymbol={watchlistDetailProjection(state, features.tradeAnalysis)}
+          initialSymbol={watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(requestHeaders, state.symbol))}
         />
       </div>
     </WatchlistDashboardFrame>

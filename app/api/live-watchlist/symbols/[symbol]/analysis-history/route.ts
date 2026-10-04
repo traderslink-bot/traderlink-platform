@@ -1,3 +1,4 @@
+import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { createHash } from "node:crypto";
 import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
 import { NextResponse, type NextRequest } from "next/server";
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
   if (!access.tickerDetails || !access.tradeAnalysis) return NextResponse.json({ code: "membership_required" }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
   const { symbol } = await context.params;
   if (!/^[A-Za-z0-9.^-]{1,16}$/.test(symbol)) return NextResponse.json({ error: "Invalid ticker." }, { status: 400 });
+  if (!canViewWatchlistAnalysisPrices(request.headers, symbol)) return NextResponse.json({ rows: [] }, { headers: { "Cache-Control": "private, no-store" } });
   const state = await new LiveWatchlistStore().getSymbol(symbol);
   const body = state?.cards.tradersLinkAiRead?.body;
   if (!body || state?.status === "deactivated") return NextResponse.json({ rows: [] });

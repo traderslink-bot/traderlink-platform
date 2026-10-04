@@ -1,0 +1,5 @@
+.notice { color: #b45309; font-size: 1.0625rem; line-height: 1.5; }
+.notice a { color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.price { display: inline-block; user-select: none; }
+.price > span { filter: blur(3px); }
+:global([data-theme="dark"]) .notice { color: #fb923c; }

@@ -2,6 +2,7 @@
 import { WatchlistFeatureMessage } from "./watchlist-feature-message";
 import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
 
+import { PremiumAnalysisCard } from "./premium-analysis-card";
 import { SimpleAnalysisCard } from "./simple-analysis-card";
 import { AnalysisHistoryLines } from "./analysis-history-lines";
 
@@ -1598,7 +1599,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
         showMeta={false}
         showOuterMeta={false}
       />
-      {symbol.membershipAnalysisAllowed === false ? <WatchlistFeatureMessage feature="trade_analysis" /> : symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
+      {symbol.membershipAnalysisAllowed === false ? <WatchlistFeatureMessage feature="trade_analysis" /> : symbol.premiumAnalysisPreview ? <PremiumAnalysisCard preview={symbol.premiumAnalysisPreview} symbol={symbol.symbol} /> : symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
         <TradersLinkAiReadCard
           card={tradersLinkAiReadCard}
           symbol={symbol}
@@ -1951,7 +1952,16 @@ export function LiveWatchlistDetailClient({
       };
       if (!cancelled) {
         setDetailsDenied(false);
-        setSymbol((current) => watchlistDetailProjection(reconcileLiveWatchlistSymbolState(current, payload.symbol), payload.symbol.membershipAnalysisAllowed !== false));
+        setSymbol((current) => {
+          const next = reconcileLiveWatchlistSymbolState(current, payload.symbol);
+          next.premiumAnalysisPricesAllowed = payload.symbol.premiumAnalysisPricesAllowed;
+          next.premiumAnalysisPreview = payload.symbol.premiumAnalysisPreview ?? null;
+          if (next.premiumAnalysisPricesAllowed === false) {
+            delete next.cards.tradersLinkAiRead;
+            delete next.cards.liveTraderRead;
+          }
+          return watchlistDetailProjection(next, payload.symbol.membershipAnalysisAllowed !== false);
+        });
         setMarketDataStatus(payload.marketDataStatus);
       }
     });

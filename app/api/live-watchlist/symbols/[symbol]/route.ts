@@ -1,3 +1,4 @@
+import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { NextResponse, type NextRequest } from "next/server";
 import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
 import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
@@ -32,6 +33,6 @@ export async function GET(
     generatedAt: Date.now(),
     marketDataStatus: health.marketDataStatus,
     marketDataUpdatedAt: health.marketDataUpdatedAt,
-    symbol: watchlistDetailProjection(state, features.tradeAnalysis),
+    symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol)),
   }, { headers: { "Cache-Control": "private, no-store" } });
 }

@@ -1,3 +1,4 @@
+import { WATCHLIST_PREMIUM_CONTROL } from "./watchlist-premium-control";
 import "server-only";
 
 import {
@@ -213,7 +214,7 @@ function runtimePath(view: WatchlistRuntimeConsoleView): string {
 }
 
 export function rewriteWatchlistRuntimeDocument(document: string): string {
-  const rewritten = document
+  const rewritten = document.replace("function attach(entry, actions, more = actions, options = actions, header = actions, listing = actions) {", "function attach(entry, actions, more = actions, options = actions, header = actions, listing = actions) { window.watchlistPremiumControl?.(entry.symbol, options);")
     .replaceAll(/(["'])\/api\/(?!admin\/watchlist\/runtime\/)/g, '$1/api/admin/watchlist/runtime/')
     .replaceAll(
       '"/ai-clean-read"',
@@ -224,8 +225,8 @@ export function rewriteWatchlistRuntimeDocument(document: string): string {
       '"/api/admin/watchlist/console/trade-plan-review"',
     );
   return rewritten.includes("</body>")
-    ? rewritten.replace("</body>", `${SECTION_NAVIGATION_INJECTION}</body>`)
-    : `${rewritten}${SECTION_NAVIGATION_INJECTION}`;
+    ? rewritten.replace("</body>", `${SECTION_NAVIGATION_INJECTION}${WATCHLIST_PREMIUM_CONTROL}</body>`)
+    : `${rewritten}${SECTION_NAVIGATION_INJECTION}${WATCHLIST_PREMIUM_CONTROL}`;
 }
 
 export async function readWatchlistRuntimeConsoleDocument(

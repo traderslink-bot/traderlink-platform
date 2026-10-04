@@ -476,6 +476,8 @@ export type LiveWatchlistLevelMap = {
 };
 
 export type LiveWatchlistSymbolState = {
+  premiumAnalysisPricesAllowed?: boolean;
+  premiumAnalysisPreview?: import("./premium-analysis-preview").PremiumAnalysisPreview | null;
   membershipAnalysisAllowed?: boolean;
   symbol: string;
   status: LiveWatchlistStatus;
