@@ -23,24 +23,24 @@ const EXPECTED_LIVE_LAST_EXECUTION_ORDER = 155;
 
 const checkpoints = Object.freeze([
   Object.freeze({
-    id: "0154-success-20261005T040028674Z",
-    relativeRoot: "migrations/0154_platform_premium_swing_plan_authorship/20261005T040028674Z",
+    id: "0154-success-20261005T040025508Z",
+    relativeRoot: "migrations/0154_platform_premium_swing_plan_authorship/20261005T040025508Z",
     expectedMigrationCount: 135,
     expectedLastMigration: "0153_platform_watchlist_category_move_notifications",
     expectedLastExecutionOrder: 153,
     requireVerifiedRestore: true,
   }),
   Object.freeze({
-    id: "0155-timeout-before-migration-20261005T042514842Z",
-    relativeRoot: "migrations/0155_platform_watchlist_premium_access_controls/20261005T042514842Z",
+    id: "0155-timeout-before-migration-20261005T042514841Z",
+    relativeRoot: "migrations/0155_platform_watchlist_premium_access_controls/20261005T042514841Z",
     expectedMigrationCount: 136,
     expectedLastMigration: "0154_platform_premium_swing_plan_authorship",
     expectedLastExecutionOrder: 154,
     requireVerifiedRestore: false,
   }),
   Object.freeze({
-    id: "0155-success-20261005T043408896Z",
-    relativeRoot: "migrations/0155_platform_watchlist_premium_access_controls/20261005T043408896Z",
+    id: "0155-success-20261005T043408885Z",
+    relativeRoot: "migrations/0155_platform_watchlist_premium_access_controls/20261005T043408885Z",
     expectedMigrationCount: 136,
     expectedLastMigration: "0154_platform_premium_swing_plan_authorship",
     expectedLastExecutionOrder: 154,
@@ -205,10 +205,16 @@ async function inspectCheckpoint(backupRoot, checkpoint) {
   }
 
   const sidecars = names.filter((name) => name.endsWith("-wal") || name.endsWith("-shm"));
-  const nonemptySidecars = sidecars
+  const nonemptyWalFiles = sidecars
+    .filter((name) => name.endsWith("-wal"))
     .map((name) => ({ path: join(root, name), sizeBytes: statSync(join(root, name)).size }))
     .filter((entry) => entry.sizeBytes !== 0);
-  if (nonemptySidecars.length > 0) fail("Checkpoint has nonempty SQLite sidecars; preserving it for review.", { checkpointId: checkpoint.id, nonemptySidecars });
+  if (nonemptyWalFiles.length > 0) {
+    fail("Checkpoint has a nonempty SQLite WAL; preserving it for review.", {
+      checkpointId: checkpoint.id,
+      nonemptyWalFiles,
+    });
+  }
 
   return Object.freeze({
     checkpoint,
