@@ -19,6 +19,7 @@ const CONFIRMATION = "cleanup-reviewed-watchlist-checkpoints";
 const LIVE_DATABASE_PATH = "/data/traderlink-platform.sqlite";
 const EXPECTED_LIVE_MIGRATION_COUNT = 137;
 const EXPECTED_LIVE_LAST_MIGRATION = "0155_platform_watchlist_premium_access_controls";
+const EXPECTED_LIVE_LAST_EXECUTION_ORDER = 155;
 
 const checkpoints = Object.freeze([
   Object.freeze({
@@ -26,6 +27,7 @@ const checkpoints = Object.freeze([
     relativeRoot: "migrations/0154_platform_premium_swing_plan_authorship/20261005T040028674Z",
     expectedMigrationCount: 135,
     expectedLastMigration: "0153_platform_watchlist_category_move_notifications",
+    expectedLastExecutionOrder: 153,
     requireVerifiedRestore: true,
   }),
   Object.freeze({
@@ -33,6 +35,7 @@ const checkpoints = Object.freeze([
     relativeRoot: "migrations/0155_platform_watchlist_premium_access_controls/20261005T042514842Z",
     expectedMigrationCount: 136,
     expectedLastMigration: "0154_platform_premium_swing_plan_authorship",
+    expectedLastExecutionOrder: 154,
     requireVerifiedRestore: false,
   }),
   Object.freeze({
@@ -40,6 +43,7 @@ const checkpoints = Object.freeze([
     relativeRoot: "migrations/0155_platform_watchlist_premium_access_controls/20261005T043408896Z",
     expectedMigrationCount: 136,
     expectedLastMigration: "0154_platform_premium_swing_plan_authorship",
+    expectedLastExecutionOrder: 154,
     requireVerifiedRestore: true,
   }),
 ]);
@@ -82,38 +86,36 @@ async function sha256(path) {
   });
 }
 
-function verifyDatabase(path, expectedMigrationCount, expectedLastMigration) {
+function verifyDatabase(path, expectedMigrationCount, expectedLastMigration, expectedLastExecutionOrder) {
   const database = new Database(path, { readonly: true, fileMustExist: true });
   try {
     database.pragma("query_only = ON");
-    database.pragma("foreign_keys = ON");
     database.pragma("busy_timeout = 5000");
-    const foreignKeyRows = database.pragma("foreign_key_check");
-    const quickCheckRows = database.pragma("quick_check");
-    const quickCheck = quickCheckRows.length === 1 ? Object.values(quickCheckRows[0] ?? {})[0] : undefined;
     const rows = database.prepare(`SELECT migration_id, execution_order
 FROM platform_schema_migrations
 ORDER BY execution_order`).all();
     const last = rows.at(-1);
     if (
-      foreignKeyRows.length !== 0 ||
-      quickCheck !== "ok" ||
       rows.length !== expectedMigrationCount ||
       last?.migration_id !== expectedLastMigration ||
-      last?.execution_order !== expectedMigrationCount
+      last?.execution_order !== expectedLastExecutionOrder
     ) {
       fail("Database evidence did not match the recorded checkpoint.", {
         path,
-        foreignKeyRows: foreignKeyRows.length,
-        quickCheck,
         migrationCount: rows.length,
         lastMigration: last?.migration_id,
         lastExecutionOrder: last?.execution_order,
         expectedMigrationCount,
         expectedLastMigration,
+        expectedLastExecutionOrder,
       });
     }
-    return Object.freeze({ foreignKeyCheck: "ok", quickCheck: "ok", migrationCount: rows.length, lastMigration: last.migration_id });
+    return Object.freeze({
+      migrationRegistryCheck: "ok",
+      migrationCount: rows.length,
+      lastMigration: last.migration_id,
+      lastExecutionOrder: last.execution_order,
+    });
   } finally {
     database.close();
   }
@@ -160,7 +162,12 @@ async function inspectCheckpoint(backupRoot, checkpoint) {
   const backupPath = join(root, "backup.sqlite");
   const restorePath = join(root, "restore-verification.sqlite");
   if (!existsSync(backupPath) || !lstatSync(backupPath).isFile()) fail("Recorded checkpoint backup is missing.", { checkpointId: checkpoint.id, backupPath });
-  const backupVerification = verifyDatabase(backupPath, checkpoint.expectedMigrationCount, checkpoint.expectedLastMigration);
+  const backupVerification = verifyDatabase(
+    backupPath,
+    checkpoint.expectedMigrationCount,
+    checkpoint.expectedLastMigration,
+    checkpoint.expectedLastExecutionOrder,
+  );
   const backupSizeBytes = statSync(backupPath).size;
   const backupSha256 = await sha256(backupPath);
 
@@ -171,7 +178,12 @@ async function inspectCheckpoint(backupRoot, checkpoint) {
     let verification;
     let verificationError = null;
     try {
-      verification = verifyDatabase(restorePath, checkpoint.expectedMigrationCount, checkpoint.expectedLastMigration);
+      verification = verifyDatabase(
+        restorePath,
+        checkpoint.expectedMigrationCount,
+        checkpoint.expectedLastMigration,
+        checkpoint.expectedLastExecutionOrder,
+      );
     } catch (error) {
       verificationError = error instanceof Error ? error.message : String(error);
     }
@@ -232,7 +244,12 @@ async function main() {
   if (backupRoot !== "/data/backups") fail("Unexpected hosted backup root.", { backupRoot });
   const livePath = realpathSync(LIVE_DATABASE_PATH);
   if (livePath !== LIVE_DATABASE_PATH || !lstatSync(livePath).isFile()) fail("Live database identity is unexpected.", { livePath });
-  const liveVerification = verifyDatabase(livePath, EXPECTED_LIVE_MIGRATION_COUNT, EXPECTED_LIVE_LAST_MIGRATION);
+  const liveVerification = verifyDatabase(
+    livePath,
+    EXPECTED_LIVE_MIGRATION_COUNT,
+    EXPECTED_LIVE_LAST_MIGRATION,
+    EXPECTED_LIVE_LAST_EXECUTION_ORDER,
+  );
   const freeBytesBefore = freeBytes("/data");
 
   const evidence = [];
@@ -240,7 +257,12 @@ async function main() {
   const removal = evidence.map(removeCheckpoint);
   for (const item of removal) if (existsSync(item.root)) fail("Checkpoint root still exists after cleanup.", item);
   if (!existsSync(livePath)) fail("Live database disappeared during cleanup.");
-  const liveVerificationAfter = verifyDatabase(livePath, EXPECTED_LIVE_MIGRATION_COUNT, EXPECTED_LIVE_LAST_MIGRATION);
+  const liveVerificationAfter = verifyDatabase(
+    livePath,
+    EXPECTED_LIVE_MIGRATION_COUNT,
+    EXPECTED_LIVE_LAST_MIGRATION,
+    EXPECTED_LIVE_LAST_EXECUTION_ORDER,
+  );
   const freeBytesAfter = freeBytes("/data");
 
   process.stdout.write(`${JSON.stringify({

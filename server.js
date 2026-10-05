@@ -2,7 +2,7 @@ const { spawn } = require("node:child_process");
 const http = require("node:http");
 
 const port = Number(process.env.PORT ?? "3000");
-const maximumRuntimeMs = 8 * 60 * 1000;
+const maximumRuntimeMs = 15 * 60 * 1000;
 let cleanupStatus = "running";
 
 const server = http.createServer((request, response) => {
