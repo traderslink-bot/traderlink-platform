@@ -19,7 +19,8 @@ export const WATCHLIST_PREMIUM_CONTROL = String.raw`<script>
   if (!item) { item = { loaded: false, busy: false, value: false, error: '', loading: false }; state.set(key,item); }
   const label = document.createElement('label'), input = document.createElement('input'), message = document.createElement('small');
   input.type = 'checkbox'; input.setAttribute('role','switch'); input.setAttribute('aria-label',symbol + ' Premium-only ' + control);
-  label.append(input,document.createTextNode('Premium-only ' + control)); container.append(label,message);
+  label.append(input,document.createTextNode('Premium-only ' + control));
+  const option=document.createElement('div');option.className='watchlist-access-option';option.append(label,message);container.append(option);
   message.setAttribute('role','status');
   const show = () => { input.checked=item.value; input.disabled=!item.loaded||item.busy; message.textContent=item.error||(!item.loaded?'Loading access…':item.busy?'Saving…':''); };
   const redraw = () => { show(); window.dispatchEvent(new Event('watchlist-review-updated')); };
@@ -37,7 +38,10 @@ export const WATCHLIST_PREMIUM_CONTROL = String.raw`<script>
     .finally(()=>{item.loading=false;show();});
   }
  }
- window.watchlistPremiumControl = (symbol,container) => { attach(symbol,container,'ticker'); attach(symbol,container,'analysis'); };
+ window.watchlistPremiumControl = (symbol,container) => {
+  const access=container.closest('.watchlist-grouped-actions')?.querySelector('.watchlist-access-controls') || container;
+  attach(symbol,access,'ticker'); attach(symbol,access,'analysis');
+ };
  window.dispatchEvent(new Event('watchlist-review-updated'));
 })();
 </script>`;
