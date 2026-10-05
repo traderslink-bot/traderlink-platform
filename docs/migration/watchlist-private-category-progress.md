@@ -38,3 +38,12 @@ Plan: [owner-approved contract](watchlist-private-category-plan.md).
 - Help updated in the candidate. Next.js guidance informed server-side rather than CSS-only privacy.
 - Status: SOURCE IMPLEMENTED / INTEGRATED ACCEPTANCE PENDING. No full build, rendered browser/device acceptance, hosted data changes, provider calls, notifications, push or deployment performed. Coordinator must run integrated build and hosted acceptance before release; focused checks do not establish live end-to-end delivery.
 - Deployment order: Platform before Runtime. Older Runtime does not recognize `private`; do not roll back category parsing with persisted Private entries without a deliberate compatibility plan. In-flight external requests already sent before a move cannot be recalled.
+
+## Pre-release QA corrections — October 4, 2026
+
+- Coordinator confirmed the original Private checkpoints remain undeployed and authorized correction of the two reproduced transition defects only.
+- Public-to-Private now awaits the website concealment acknowledgement before creating or attaching a new review cycle or persisting the Private category. A failed publication preserves the original category and review. A timeout can still mean the website accepted concealment without returning its acknowledgement; in that case the website stays hidden and a retry safely repeats concealment. No automatic public rollback is attempted.
+- A temporary per-symbol transition guard permits only the exact concealment marker, blocks concurrent category moves and ordinary publication while awaiting acknowledgement, and prevents a failed queued marker from replaying later against a public entry.
+- Existing-active activation requests involving Private use the same deliberate move path. Re-selecting Private is a no-op. Leaving Private retains the unapproved review until normal owner publication.
+- Regression command: `node --max-old-space-size=384 src/scripts/verify-watchlist-private-transition-fix.cjs`. PASS actual extracted move/activation/authorization methods for success, publication rejection, unchanged old review on failure, copied draft after acknowledgement, stale/reloaded marker denial, repeated Private selection, public transition remaining unapproved, and concurrent move exclusion.
+- No new migration, changed UI, provider calls, posts or deployment. Platform application source is unchanged; its child checkpoint records this correction and reproducible scripts. Runtime child changes only the manager. Integrated build and hosted acceptance remain coordinator responsibilities.
