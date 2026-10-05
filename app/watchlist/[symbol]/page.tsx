@@ -1,3 +1,4 @@
+import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { PremiumTickerLock } from "@/app/watchlist/premium-ticker-lock";
 import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
@@ -77,6 +78,7 @@ export default async function LiveWatchlistSymbolPage({
 
   const features = readWatchlistFeatureAccess(access.principal.platformUserId);
   if (!features.tickerDetails) return <WatchlistDashboardFrame><div className="academy-container watchlist-container"><WatchlistFeatureMessage feature="ticker_details" /><Link href="/watchlist">Back to watchlist</Link></div></WatchlistDashboardFrame>;
+  if (!canViewPrivateWatchlistTicker(requestHeaders, symbol)) notFound();
   if (!canViewWatchlistTicker(requestHeaders, symbol)) return <WatchlistDashboardFrame><PremiumTickerLock /></WatchlistDashboardFrame>;
   const state = await new LiveWatchlistStore().getSymbol(symbol);
   if (!state) {

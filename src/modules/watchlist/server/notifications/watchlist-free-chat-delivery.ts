@@ -1,3 +1,4 @@
+import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibility";
 import "server-only";
 
 /** Only server-exported, published approvals may be passed to this transport. */
@@ -42,6 +43,7 @@ export function freeChatPayload(publication: FreeChatPublication) {
 
 /** Caller claims a durable receipt BEFORE invoking this function. Never auto-retry uncertain delivery. */
 export async function deliverFreeChatPublication(publication: FreeChatPublication, transport: typeof fetch = fetch, environment = process.env): Promise<FreeChatDeliveryResult> {
+  if(isPrivateWatchlistTicker(publication.symbol)) throw new Error("Move this ticker out of Private before publishing.");
   const payload = freeChatPayload(publication);
   const webhook = freeChatWebhook(environment);
   if (!webhook) return { state: "failed", message: "Free Chat webhook is not configured." };

@@ -1,3 +1,4 @@
+import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { PremiumTickerLock } from "@/app/watchlist/premium-ticker-lock";
 import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
@@ -80,6 +81,7 @@ export default async function LiveWatchlistArchiveDetailPage({
     notFound();
   }
 
+  if (!canViewPrivateWatchlistTicker(await headers(), archive.symbol) || archive.state.watchlistGroup === "private") notFound();
   if (!canViewWatchlistTicker(await headers(), archive.symbol)) return <WatchlistDashboardFrame><PremiumTickerLock /></WatchlistDashboardFrame>;
   return (
     <WatchlistDashboardFrame>

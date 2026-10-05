@@ -1,3 +1,4 @@
+import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
 import "server-only";
 import type Database from "better-sqlite3";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -57,21 +58,22 @@ export function saveTickerPremiumOnly(database: Database.Database, input: {
   })();
 }
 
-export function readWatchlistTickerPolicy(requestHeaders: Headers): { all: boolean; restricted: ReadonlySet<string> } | null {
+export function readWatchlistTickerPolicy(requestHeaders: Headers): { all: boolean; owner: boolean; privateSymbols: ReadonlySet<string>; restricted: ReadonlySet<string> } | null {
   try {
-    if (hasWatchlistDashboardNavigationAccess(requireTraderLinkPlatformRequestIdentity(requestHeaders))) return { all: true, restricted: new Set() };
+    if (withJournalAdminDatabase(requestHeaders, () => true)) return { all: true, owner: true, privateSymbols: new Set(), restricted: new Set() };
   } catch { /* Normal free members may not have dashboard access. */ }
   try {
     const identity = requireTraderLinkPlatformDiscordMemberRequestIdentity(requestHeaders);
     const restricted = withReadonlyPlatformDatabase({}, db => db.prepare<[], { symbol: string }>(
       "SELECT symbol FROM platform_watchlist_analysis_visibility WHERE ticker_premium_only = 1").all());
-    return { all: Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord)), restricted: new Set(restricted.map(row => row.symbol)) };
+    const privateSymbols = withReadonlyPlatformDatabase({}, db => db.prepare<[], {symbol:string}>("SELECT symbol FROM live_watchlist_symbols WHERE json_extract(state_json,'$.watchlistGroup')='private'").all());
+    return { owner: false, privateSymbols: new Set(privateSymbols.map(row=>row.symbol)), all: Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord)), restricted: new Set(restricted.map(row => row.symbol)) };
   } catch { return null; }
 }
 
 export function canViewWatchlistTicker(requestHeaders: Headers, symbol: string): boolean {
   const policy = readWatchlistTickerPolicy(requestHeaders);
-  return Boolean(policy && (policy.all || !policy.restricted.has(symbol.toUpperCase())));
+  return Boolean(policy && (policy.owner || !policy.privateSymbols.has(symbol.toUpperCase())) && (policy.all || !policy.restricted.has(symbol.toUpperCase())));
 }
 
 /** Independent of generic analysis entitlements. Never authorize from a client flag. */
@@ -88,4 +90,16 @@ export function canViewWatchlistAnalysisPrices(requestHeaders: Headers, symbol: 
   } catch {
     return false;
   }
+}
+
+export function isPrivateWatchlistTicker(symbol: string): boolean {
+  return withReadonlyPlatformDatabase({}, db => {
+    const row=db.prepare<[string],{state_json:string}>("SELECT state_json FROM live_watchlist_symbols WHERE symbol=?").get(symbol.toUpperCase());
+    return row ? JSON.parse(row.state_json).watchlistGroup === "private" : false;
+  });
+}
+
+export function canViewPrivateWatchlistTicker(headers: Headers, symbol:string):boolean {
+  try { if(withJournalAdminDatabase(headers,()=>true))return true; }catch{}
+  try { return !isPrivateWatchlistTicker(symbol); }catch{return false;}
 }

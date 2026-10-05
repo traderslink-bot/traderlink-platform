@@ -22,10 +22,12 @@ export function concealWatchlistTicker(item: LiveWatchlistListSymbol): LiveWatch
 }
 
 export function projectWatchlistTickerForViewer(item: LiveWatchlistListSymbol, headers: Headers): LiveWatchlistListSymbol {
+  const policy=readWatchlistTickerPolicy(headers);
+  if(!policy || (!policy.owner && (item.watchlistGroup === "private" || policy.privateSymbols.has(item.symbol)))) return {symbol:"watchlist-refresh",status:"deactivated",updatedAt:0,firstPostedAt:null,latestPrice:null};
   return canViewWatchlistTicker(headers, item.symbol) ? item : concealWatchlistTicker(item);
 }
 
 export function projectWatchlistTickersForViewer(payload: LiveWatchlistListPayload, headers: Headers): LiveWatchlistListPayload {
   const policy = readWatchlistTickerPolicy(headers);
-  return { ...payload, symbols: payload.symbols.map(item => policy && (policy.all || !policy.restricted.has(item.symbol)) ? item : concealWatchlistTicker(item)) };
+  return { ...payload, symbols: payload.symbols.filter(item => policy && (policy.owner || (item.watchlistGroup !== "private" && !policy.privateSymbols.has(item.symbol)))).map(item => policy && (policy.all || !policy.restricted.has(item.symbol)) ? item : concealWatchlistTicker(item)) };
 }

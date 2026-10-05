@@ -1,3 +1,4 @@
+import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibility";
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
@@ -20,7 +21,7 @@ export function categoryMoveNotificationCopy(ticker:string,group:string){
 }
 /** Owner proxy snapshots current recipients before dispatch. Duplicate clicks keep the same set. */
 export function recordCategoryMoveIntent(body:string,actor:string){
- const input=JSON.parse(body);if(input.notify!==true)return;
+ const input=JSON.parse(body);if(input.notify!==true || input.to==='private' || (typeof input.symbol==='string' && isPrivateWatchlistTicker(input.symbol)))return;
  if(!uuid.test(input.id)||typeof input.symbol!=="string"||typeof input.to!=="string")throw Error("Invalid move request.");
  const ticker=input.symbol.trim().toUpperCase();categoryMoveNotificationCopy(ticker,input.to);
  withPlatformDatabase({mode:"runtime"},db=>db.transaction(()=>{
@@ -65,7 +66,7 @@ export async function runCategoryMoveNotifications(){
     const status=JSON.parse(response.body) as {moves?:{id:string;current:boolean}[]};currentMoves.set(row.operation_id,status.moves?.some(move=>move.id===row.operation_id&&move.current)===true);
    }
    const prefs=new WatchlistPublicationNotificationStore(db).readPreferences(row.user_id);
-   const visible=db.prepare<[string],{n:number}>("SELECT count(*) n FROM live_watchlist_symbols WHERE symbol=? AND status<>'deactivated'").get(row.ticker)?.n;
+   const visible=db.prepare<[string],{n:number}>("SELECT count(*) n FROM live_watchlist_symbols WHERE symbol=? AND status<>'deactivated' AND COALESCE(json_extract(state_json,'$.watchlistGroup'),'main')<>'private'").get(row.ticker)?.n;
    const state=row.expires_at_utc<=now?'expired':!(row.channel==='email'?prefs.emailEnabled:prefs.webPushEnabled)?'opted_out':!currentMoves.get(row.operation_id)||!visible||!watchlistNotificationAccess(db,row.user_id)?'inaccessible':'sending';
    db.prepare("UPDATE platform_watchlist_category_move_deliveries SET state=?,last_attempt_at_utc=?,attempt_count=attempt_count+? WHERE delivery_id=? AND state='pending'").run(state,new Date().toISOString(),state==='sending'?1:0,row.delivery_id);
    if(state!=='sending')continue;

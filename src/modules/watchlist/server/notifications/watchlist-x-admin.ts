@@ -1,3 +1,4 @@
+import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibility";
 import "server-only";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { readFreeChatReview, publishedFreeChatApprovals } from "./watchlist-free-chat-runtime";
@@ -11,6 +12,7 @@ export async function handleXAdmin(method:'GET'|'POST',url:URL,body:string|undef
   const input=method==='GET'?{symbol:url.searchParams.get('symbol')}:JSON.parse(body??'{}');
   if(method==='POST' && input.action==='count')return xCaptionStatus(input.caption);
   if(!input || !/^[A-Z][A-Z0-9.-]{0,12}$/.test(input.symbol??''))throw Error('Invalid ticker.');
+  if(isPrivateWatchlistTicker(input.symbol)) throw new Error("Move this ticker out of Private before publishing.");
   const review=await readFreeChatReview(input.symbol,owner);
   const approvals=publishedFreeChatApprovals(review).sort((a,b)=>b.revision-a.revision),latest=approvals[0];
   if(method==='POST' && review.cycleId!==input.cycleId)throw Error('Ticker changed. Reopen Post to X.');

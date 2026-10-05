@@ -199,8 +199,8 @@ function normalizeWatchlistLifecycle(
     : null;
 }
 
-function normalizeWatchlistGroup(value: unknown): "top_regular" | "main" | "postmarket" | "general" | "swings" | `top_watches:${string}` | undefined {
-  return value === "top_regular" || value === "main" || value === "postmarket" || value === "general" || value === "swings" || isTopWatchesGroup(value)
+function normalizeWatchlistGroup(value: unknown): "top_regular" | "main" | "postmarket" | "general" | "private" | "swings" | `top_watches:${string}` | undefined {
+  return value === "top_regular" || value === "main" || value === "postmarket" || value === "general" || value === "private" || value === "swings" || isTopWatchesGroup(value)
     ? value
     : undefined;
 }

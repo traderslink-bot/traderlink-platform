@@ -78,7 +78,7 @@ export async function deliverWatchlistNotifications(database: Database.Database,
       if (!candidate) return null;
       const preference = new WatchlistPublicationNotificationStore(database).readPreferences(candidate.user_id);
       const allowed = candidate.channel === "email" ? preference.emailEnabled : preference.webPushEnabled;
-      const visible = database.prepare<[string], { n: number }>("SELECT count(*) n FROM live_watchlist_symbols WHERE symbol=? AND status<>'deactivated'").get(candidate.ticker)?.n;
+      const visible = database.prepare<[string], { n: number }>("SELECT count(*) n FROM live_watchlist_symbols WHERE symbol=? AND status<>'deactivated' AND COALESCE(json_extract(state_json,'$.watchlistGroup'),'main')<>'private'").get(candidate.ticker)?.n;
       const state = !allowed ? "opted_out" : !visible || !access(database,candidate.user_id) ? "inaccessible" : "sending";
       database.prepare(`UPDATE platform_watchlist_notification_deliveries SET state=?,last_attempt_at_utc=?,
         attempt_count=attempt_count+? WHERE delivery_id=?`).run(state,now,state === "sending" ? 1 : 0,candidate.delivery_id);

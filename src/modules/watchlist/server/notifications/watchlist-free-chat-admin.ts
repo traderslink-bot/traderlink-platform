@@ -1,3 +1,4 @@
+import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibility";
 import "server-only";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { readFreeChatReview, publishedFreeChatApprovals } from "./watchlist-free-chat-runtime";
@@ -7,6 +8,7 @@ import { setFreeChatAutomatic, queueFreeChatPublication } from "./watchlist-free
 export async function handleFreeChatAdmin(method: "GET" | "POST", url: URL, body: string | undefined, ownerUserId: string) {
   const input = method === "GET" ? { symbol: url.searchParams.get("symbol") } : JSON.parse(body ?? "{}");
   if (!input || !/^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(input.symbol ?? "")) throw Error("Invalid ticker.");
+  if(isPrivateWatchlistTicker(input.symbol)) throw new Error("Move this ticker out of Private before publishing.");
   const review = await readFreeChatReview(input.symbol,ownerUserId);
   if (method === "POST" && input.cycleId !== review.cycleId) throw Error("Ticker changed. Reload its controls.");
   return withPlatformDatabase({mode:"runtime"}, database => {

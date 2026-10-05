@@ -1,7 +1,7 @@
 import { isTopWatchesGroup } from "./top-watches-group";
 import type { LiveWatchlistSymbolState } from "./live-watchlist-types";
 
-export type LiveWatchlistEntryGroup = "top_regular" | "main" | "postmarket" | "general" | "swings" | `top_watches:${string}`;
+export type LiveWatchlistEntryGroup = "top_regular" | "main" | "postmarket" | "general" | "private" | "swings" | `top_watches:${string}`;
 
 export function shouldShowReversalWatchlist(visible: boolean, symbolCount: number): boolean {
   return visible && symbolCount > 0;
@@ -20,7 +20,7 @@ export function getLiveWatchlistEntryGroup(
   if (
     symbol.watchlistGroup === "top_regular" ||
     symbol.watchlistGroup === "main" ||
-    symbol.watchlistGroup === "postmarket" || symbol.watchlistGroup === "general" || symbol.watchlistGroup === "swings" || isTopWatchesGroup(symbol.watchlistGroup)
+    symbol.watchlistGroup === "postmarket" || symbol.watchlistGroup === "general" || symbol.watchlistGroup === "private" || symbol.watchlistGroup === "swings" || isTopWatchesGroup(symbol.watchlistGroup)
   ) {
     return symbol.watchlistGroup;
   }

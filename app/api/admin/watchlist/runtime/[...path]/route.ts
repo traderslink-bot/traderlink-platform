@@ -1,3 +1,4 @@
+import { isPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { recordCategoryMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { handleXAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-x-admin";
 import { recordXApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-x-runtime";
@@ -17,6 +18,7 @@ export const runtime = "nodejs";
 type SupportedMethod = "GET" | "POST";
 
 const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/discord-text",
   "/api/watchlist/analysis-review/category-move",
   "/api/watchlist/analysis-review/x-post",
   "/api/watchlist/analysis-review/free-chat",
@@ -122,6 +124,26 @@ async function relay(
 
   const incomingUrl = new URL(request.url);
   let body = method === "POST" ? await request.text() : undefined;
+  if(pathname === "/api/watchlist/analysis-review/category-move" && method === "POST" && reviewActor && body) {
+    try {
+      const input=JSON.parse(body);
+      if(typeof input.symbol === "string" && input.to !== "private" && isPrivateWatchlistTicker(input.symbol)) {
+        const moved=await requestWatchlistRuntimeRaw({method:"POST",reviewActor,contentType:"application/json",path:pathname,body:JSON.stringify({...input,notify:false})});
+        if(!moved.ok)return new Response(moved.body,{status:moved.status,headers:{"content-type":moved.contentType,"cache-control":"private, no-store"}});
+        const current=await requestWatchlistRuntimeRaw({method:"GET",reviewActor,path:"/api/watchlist/analysis-review?symbol="+encodeURIComponent(input.symbol)});
+        if(!current.ok)throw new Error("Review unavailable.");
+        const review=JSON.parse(current.body).review;
+        if(!review || review.cancelled)throw new Error("Review unavailable.");
+        const hasDraft=Boolean(review.draft && ["original","edit"].includes(review.draft.body?.kind));
+        const approval={symbol:input.symbol,cycleId:review.cycleId,expectedHead:review.head,notifyUsers:input.notify===true,
+          ...(hasDraft?{draftRevision:review.draft.revision,previewHash:""}:{})};
+        recordWatchlistApprovalNotificationIntent(JSON.stringify(approval),reviewActor,!hasDraft);
+        const published=await requestWatchlistRuntimeRaw({method:"POST",reviewActor,contentType:"application/json",path:"/api/watchlist/analysis-review/"+(hasDraft?"approve":"publish-without-analysis"),body:JSON.stringify(approval)});
+        if(!published.ok)return new Response(published.body,{status:published.status,headers:{"content-type":published.contentType,"cache-control":"private, no-store"}});
+        return Response.json({ok:true,move:{destination:"skipped",notice:input.notify?"Ticker published. Check its notification delivery status.":"Ticker published. No notifications sent."}},{headers:{"cache-control":"private, no-store"}});
+      }
+    }catch{return Response.json({error:"Publication could not complete. Your saved analysis is preserved; check the ticker before retrying."},{status:409,headers:{"cache-control":"private, no-store"}});}
+  }
   if (pathname === "/api/watchlist/analysis-review/x-post" && reviewActor) {
     try { return Response.json(await handleXAdmin(method,incomingUrl,body,reviewActor.slice(15)),{headers:{"cache-control":"private, no-store"}}); }
     catch(error) { return Response.json({error:error instanceof Error && /^(Invalid|Shorten|Ticker changed|The published|Buffer X|X request|Unknown X)/.test(error.message) ? error.message : "X controls are unavailable. Try again."},{status:409,headers:{"cache-control":"private, no-store"}}); }

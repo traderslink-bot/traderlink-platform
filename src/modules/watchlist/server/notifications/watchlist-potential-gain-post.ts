@@ -1,3 +1,4 @@
+import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibility";
 import "server-only";
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
@@ -24,6 +25,7 @@ const receiptResult = (state: string, retryAt = 0) => ({ state, retryAt,
   message: state === "sent" ? "Posted to Discord." : state === "retry" ? "Discord asked us to wait. Try Send to Discord again after the wait shown." : state === "failed" ? "Discord did not accept the post. Close and reopen to try again." : "Delivery could not be confirmed. Check Discord before posting again." });
 
 export async function sendPotentialGainPost(database: Database.Database, input: { ownerUserId: string; symbol: string; requestId: string; message: string; png: Uint8Array }, transport: typeof fetch = fetch, environment = process.env) {
+  if(isPrivateWatchlistTicker(input.symbol))throw Error("Move this ticker out of Private before publishing.");
   validateGainPost(input);
   const hash = createHash("sha256").update(input.symbol).update("\0").update(input.message).update("\0").update(input.png).digest("hex");
   const existing = database.prepare<[string],Receipt>("SELECT * FROM platform_watchlist_potential_gain_posts WHERE request_id=?").get(input.requestId);

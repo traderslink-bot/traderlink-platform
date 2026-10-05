@@ -1,3 +1,4 @@
+import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { NextResponse, type NextRequest } from "next/server";
@@ -22,6 +23,7 @@ export async function GET(
   const { symbol } = await context.params;
   const features = readWatchlistFeatureAccess(auth.principal.platformUserId);
   if (!features.tickerDetails) return NextResponse.json({ code: "membership_required", feature: "watchlist.ticker_details" }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
+  if (!canViewPrivateWatchlistTicker(request.headers, symbol)) return Response.json({error:"Not found."},{status:404,headers:{"Cache-Control":"private, no-store"}});
   if (!canViewWatchlistTicker(request.headers, symbol)) return Response.json({ code: "premium_ticker_required" }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
   const store = new LiveWatchlistStore();
   const [state, health] = await Promise.all([

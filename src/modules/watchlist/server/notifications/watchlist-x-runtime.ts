@@ -1,3 +1,4 @@
+import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibility";
 import { cadenceXCaption } from "./watchlist-x-caption";
 import "server-only";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -32,6 +33,7 @@ export async function reconcileXPublications() {
     const posts = dbRun(db=>db.prepare<[number],XPost>(`SELECT * FROM platform_watchlist_x_posts
       WHERE state IN ('waiting','ready','accepted') AND next_attempt_at_ms<=? ORDER BY CASE WHEN state='accepted' THEN 0 ELSE 1 END,next_attempt_at_ms,requested_at_ms LIMIT 2`).all(Date.now()));
     for (let post of posts) {
+      if(isPrivateWatchlistTicker(post.ticker)){dbRun(db=>setXState(db,post.post_key,'cancelled','Ticker is Private.'));continue;}
       try {
         // Freeze destination per intent; credential/channel configuration changes never redirect it.
         if (post.channel_id !== config.channel) { dbRun(db=>setXState(db,post.post_key,'failed','X channel changed. Reconfigure the original destination before retrying.')); continue; }

@@ -1,3 +1,4 @@
+import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { createHash } from "node:crypto";
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
   const { symbol } = await context.params;
   if (!/^[A-Za-z0-9.^-]{1,16}$/.test(symbol)) return NextResponse.json({ error: "Invalid ticker." }, { status: 400 });
   if (!canViewWatchlistAnalysisPrices(request.headers, symbol)) return NextResponse.json({ rows: [] }, { headers: { "Cache-Control": "private, no-store" } });
+  if (!canViewPrivateWatchlistTicker(request.headers, symbol)) return Response.json({error:"Not found."},{status:404,headers:{"Cache-Control":"private, no-store"}});
   if (!canViewWatchlistTicker(request.headers, symbol)) return Response.json({ code: "premium_ticker_required" }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
   const state = await new LiveWatchlistStore().getSymbol(symbol);
   const body = state?.cards.tradersLinkAiRead?.body;

@@ -80,7 +80,7 @@ export default async function LiveWatchlistArchivePage({
     <WatchlistDashboardFrame>
       <div className="academy-container">
         <LiveWatchlistArchiveIndex
-          archives={archives.filter(item => canViewWatchlistTicker(viewerHeaders, item.symbol)).map(archive => ({ archiveId: archive.archiveId, symbol: archive.symbol,
+          archives={archives.filter(item => item.state.watchlistGroup !== "private" && canViewWatchlistTicker(viewerHeaders, item.symbol)).map(archive => ({ archiveId: archive.archiveId, symbol: archive.symbol,
             archivedAt: archive.archivedAt, firstPostedAt: archive.firstPostedAt, lastActiveUpdatedAt: archive.lastActiveUpdatedAt }))}
           currentPage={currentPage}
           totalArchives={totalArchives}

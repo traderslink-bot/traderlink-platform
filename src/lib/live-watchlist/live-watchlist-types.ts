@@ -12,7 +12,7 @@ export type LiveWatchlistCardKind =
   | "extendedQuote";
 
 export type LiveWatchlistStatus = "live" | "stale" | "deactivated";
-export type LiveWatchlistGroup = "top_regular" | "main" | "postmarket" | "general" | "swings" | `top_watches:${string}`;
+export type LiveWatchlistGroup = "top_regular" | "main" | "postmarket" | "general" | "private" | "swings" | `top_watches:${string}`;
 export type TradersLinkAiReadStatus = "analyzing" | "ready" | "failed";
 export type LiveWatchlistSlotState = "active" | "followup";
 export type LiveWatchlistMarketDataStatus = "live" | "stale" | "offline" | "starting" | "closed";
