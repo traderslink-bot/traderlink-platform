@@ -176,3 +176,5 @@ Owner-approved member-facing Analysis tooltip correction: [completed source and 
 OLOX candle preparation and status correction: [evidence and progress](watchlist-olox-preparation-progress.md).
 
 Owner-approved notification checkbox placement: [source and verification](watchlist-notify-placement-progress.md).
+
+Owner-approved ticker control cleanup: [implementation and verification](watchlist-control-cleanup-progress.md).
