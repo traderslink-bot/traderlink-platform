@@ -631,16 +631,16 @@ export function TradersLinkAiReadCard({
             <div className="watchlist-ai-read-scenario-grid">
               {showShallow && read.pullbackPlans.shallow ? (
                 <TradersLinkAiPullbackScenarioBlock
-                  heading="Shallow pullback — momentum retest"
-                  description="For traders seeking a controlled retest while momentum remains intact."
+                  heading="Pullback"
+                  description="A potential dip-buy area; wait for the confirmation described below."
                   scenario={read.pullbackPlans.shallow}
                   livePrice={currentLivePrice}
                 />
               ) : null}
               {showDeep && read.pullbackPlans.deep ? (
                 <TradersLinkAiPullbackScenarioBlock
-                  heading="Deep pullback — reset setup"
-                  description="For traders waiting for the accelerated move to unwind into its base."
+                  heading={showShallow ? "Deeper pullback" : "Pullback"}
+                  description="A lower area to watch for buyers to return, with its own confirmation and risk level."
                   scenario={read.pullbackPlans.deep}
                   livePrice={currentLivePrice}
                 />

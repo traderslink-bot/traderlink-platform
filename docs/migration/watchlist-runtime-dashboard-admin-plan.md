@@ -184,3 +184,6 @@ Global failure/recovery display: [progress](watchlist-recovery-display-progress.
 
 
 Publication price/time correction: [progress](watchlist-publication-origin-progress.md).
+
+
+Prompt/card QA refinement: [progress](watchlist-analysis-qa-refinement-progress.md).
