@@ -118,7 +118,7 @@ const detailCardHelpText: Record<string, string> = {
   "Known Recent News / SEC Filings":
     "Recent company news and SEC filings that may explain attention or volatility. Always open the source before relying on the headline.",
   "TradersLink Analysis":
-    "An AI-assisted day-trade preparation read using available session and historical price action, with supplied catalyst context. The owner can review, edit and approve the saved analysis.",
+    "This analysis helps you plan a trade by identifying potential entry areas, where price could move next, and levels that would weaken or invalidate the setup. Whether you trade pullbacks, breakouts or momentum, it identifies areas to watch as the trade develops.",
 };
 
 function formatPrice(value: number | null): string {

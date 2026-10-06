@@ -169,3 +169,5 @@ surface.
 
 The September 11 owner-approved additive workflow is tracked in
 [Main Watchlist analysis review](watchlist-inline-review-progress.md).
+
+Owner-approved member-facing Analysis tooltip correction: [completed source and verification](watchlist-analysis-tooltip-progress.md).
