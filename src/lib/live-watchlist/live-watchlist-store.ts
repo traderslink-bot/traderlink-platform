@@ -598,6 +598,7 @@ function mergeArchivedReactivationContext(
     ...archived,
     ...existing,
     firstPostedAt: existing.firstPostedAt ?? archived.firstPostedAt,
+    publication: existing.publication ?? archived.publication,
     potentialGain: existing.potentialGain ?? archived.potentialGain,
     companyName: existing.companyName ?? archived.companyName,
     latestPrice: existing.latestPrice ?? archived.latestPrice,
@@ -662,9 +663,16 @@ export function applyPatch(
   const cardTimes = Object.values(nextCards)
     .map((card) => card?.updatedAt)
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-  const nextFirstPostedAt = patchesFirstPostedAt
+  // Capture when this listing first reaches the public store, not draft creation
+  // or approval time. Replay, refresh, moves and startup snapshots cannot reset it.
+  const startsPublication = Object.prototype.hasOwnProperty.call(patch, "publicationPrice") && !baseExisting?.firstPostedAt;
+  const publication = baseExisting?.publication ?? (startsPublication ? {
+    postedAt: Date.now(),
+    price: typeof patch.publicationPrice === "number" && Number.isFinite(patch.publicationPrice) && patch.publicationPrice > 0 ? patch.publicationPrice : null,
+  } : undefined);
+  const nextFirstPostedAt = publication?.postedAt ?? baseExisting?.firstPostedAt ?? (patchesFirstPostedAt
     ? normalizeLiveWatchlistTimestamp(patch.firstPostedAt)
-    : baseExisting?.firstPostedAt ?? (cardTimes.length > 0 ? Math.min(...cardTimes) : null);
+    : cardTimes.length > 0 ? Math.min(...cardTimes) : null);
   const firstPrice = firstPublishedPrice(patch.cards);
   const resetPotentialGain = nextFirstPostedAt !== baseExisting?.firstPostedAt;
   const nextPotentialGain = firstPrice
@@ -683,6 +691,7 @@ export function applyPatch(
     status: nextStatus,
     updatedAt: Math.max(patch.updatedAt, baseExisting?.updatedAt ?? 0),
     firstPostedAt: nextFirstPostedAt,
+    publication,
     watchlistGroup:
       normalizeWatchlistGroup(patch.watchlistGroup) ??
       normalizeWatchlistGroup(baseExisting?.watchlistGroup),
@@ -794,6 +803,7 @@ function applyTickerDataPatch(
     status: existing?.status ?? "deactivated",
     updatedAt: Math.max(existing?.updatedAt ?? 0, patch.updatedAt),
     firstPostedAt: existing?.firstPostedAt ?? null,
+    publication: existing?.publication,
     watchlistGroup:
       normalizeWatchlistGroup(patch.watchlistGroup) ??
       normalizeWatchlistGroup(existing?.watchlistGroup),

@@ -181,3 +181,6 @@ Owner-approved ticker control cleanup: [implementation and verification](watchli
 
 
 Global failure/recovery display: [progress](watchlist-recovery-display-progress.md). This cumulative package also integrates the pending global automatic-notification Help update.
+
+
+Publication price/time correction: [progress](watchlist-publication-origin-progress.md).
