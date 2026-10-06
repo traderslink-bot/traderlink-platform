@@ -118,7 +118,7 @@ const detailCardHelpText: Record<string, string> = {
   "Known Recent News / SEC Filings":
     "Recent company news and SEC filings that may explain attention or volatility. Always open the source before relying on the headline.",
   "TradersLink Analysis":
-    "This analysis helps you plan a trade by identifying potential entry areas, where price could move next, and levels that would weaken or invalidate the setup. Whether you trade pullbacks, breakouts or momentum, it identifies areas to watch as the trade develops.",
+    "This analysis helps you plan a trade by identifying potential entry areas, where price could move next, and levels that would weaken or invalidate the setup. Whether you trade pullbacks, breakouts or momentum, it identifies areas to watch as the trade develops. Farther price levels provide context if the move continues—not an expectation that price will reach them. Reaching those areas may require substantially stronger volume and sustained buying momentum.",
 };
 
 function formatPrice(value: number | null): string {
