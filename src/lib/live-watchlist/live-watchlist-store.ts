@@ -532,6 +532,7 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
     reversalWatchlistVisible: state.reversalWatchlistVisible !== false,
     topRegularWatchlistVisible: state.topRegularWatchlistVisible !== false,
     potentialGainCardVisible: state.potentialGainCardVisible !== false,
+    failureRecoveryVisible: state.failureRecoveryVisible === true,
     watchlistLifecycleLabelsVisible: state.watchlistLifecycleLabelsVisible === true,
     watchlistLifecycle: normalizeWatchlistLifecycle(state.watchlistLifecycle),
     liveVolumeContext: normalizeLiveVolumeContext(state.liveVolumeContext),
@@ -711,6 +712,7 @@ export function applyPatch(
       typeof patch.potentialGainCardVisible === "boolean"
         ? patch.potentialGainCardVisible
         : baseExisting?.potentialGainCardVisible !== false,
+    failureRecoveryVisible: typeof patch.failureRecoveryVisible === "boolean" ? patch.failureRecoveryVisible : baseExisting?.failureRecoveryVisible === true,
     watchlistLifecycleLabelsVisible:
       typeof patch.watchlistLifecycleLabelsVisible === "boolean"
         ? patch.watchlistLifecycleLabelsVisible
@@ -821,6 +823,7 @@ function applyTickerDataPatch(
       typeof patch.potentialGainCardVisible === "boolean"
         ? patch.potentialGainCardVisible
         : existing?.potentialGainCardVisible !== false,
+    failureRecoveryVisible: typeof patch.failureRecoveryVisible === "boolean" ? patch.failureRecoveryVisible : existing?.failureRecoveryVisible === true,
     watchlistLifecycleLabelsVisible:
       typeof patch.watchlistLifecycleLabelsVisible === "boolean"
         ? patch.watchlistLifecycleLabelsVisible

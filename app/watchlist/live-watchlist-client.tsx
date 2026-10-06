@@ -503,6 +503,7 @@ export function TradersLinkAiReadCard({
   livePrice,
   liveVolumeContext,
   dipBuyPlanVisible = true,
+  failureRecoveryVisible = false,
   renderSectionEditor,
 }: {
   card: LiveWatchlistCardContent;
@@ -511,6 +512,7 @@ export function TradersLinkAiReadCard({
   livePrice: number | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
+  failureRecoveryVisible?: boolean;
   renderSectionEditor?: (sections: readonly string[]) => ReactNode;
 }) {
   const parsedRead = parseTradersLinkAiRead(card.body);
@@ -524,7 +526,7 @@ export function TradersLinkAiReadCard({
   const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
   const showShallow = (read.version === 3 || read.version === 4) && !hidden.has("shallow") && Boolean(read.pullbackPlans.shallow);
   const showDeep = (read.version === 3 || read.version === 4) && !hidden.has("deep") && Boolean(read.pullbackPlans.deep);
-  const showRecovery = (read.version === 3 || read.version === 4) && !hidden.has("failureRecovery") && Boolean(read.failureRecovery);
+  const showRecovery = failureRecoveryVisible && (read.version === 3 || read.version === 4) && !hidden.has("failureRecovery") && Boolean(read.failureRecovery);
   const currentLivePrice = livePrice ?? read.currentPrice;
   const momentumSetupFailed = read.momentumFailure.price !== null &&
     currentLivePrice <= read.momentumFailure.price;
@@ -675,8 +677,8 @@ export function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {renderSectionEditor?.(["downsideCheckpoints", "failureRecovery"])}
-      {(read.version === 3 || read.version === 4) && (downsideCheckpoints.length > 0 || showRecovery) ? (
+      {failureRecoveryVisible ? renderSectionEditor?.(["downsideCheckpoints", "failureRecovery"]) : null}
+      {failureRecoveryVisible && (read.version === 3 || read.version === 4) && (downsideCheckpoints.length > 0 || showRecovery) ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-downside">
           <h3>Failure and recovery</h3>
           {!hidden.has("momentumFailure") && <p>
@@ -1610,6 +1612,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
           symbol={symbol}
           livePrice={symbol.latestPrice}
           dipBuyPlanVisible={symbol.tradersLinkAiReadDipBuyPlanVisible !== false}
+          failureRecoveryVisible={symbol.failureRecoveryVisible === true}
         />
       ) : symbol.tradersLinkAiReadCardVisible !== false &&
         (symbol.tradersLinkAiReadStatus === "analyzing" ||

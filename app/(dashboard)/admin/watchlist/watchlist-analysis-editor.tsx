@@ -16,7 +16,7 @@ import { editLevelRows, type LevelRowAction } from "@/src/lib/live-watchlist/ana
 
 const AnalysisCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then(module => module.TradersLinkAiReadCard));
 type Review = { symbol: string; cycleId: string; head: number; draft: { revision: number; body: { payload: Record<string, unknown> } } | null };
-type Preview = { cycleId: string; draftRevision: number; publication: { website: { cards: { tradersLinkAiRead: LiveWatchlistCardContent }; tradersLinkAiReadDipBuyPlanVisible?: boolean } } };
+type Preview = { failureRecoveryVisible?: boolean; cycleId: string; draftRevision: number; publication: { website: { cards: { tradersLinkAiRead: LiveWatchlistCardContent }; tradersLinkAiReadDipBuyPlanVisible?: boolean } } };
 async function request<T>(symbol: string, path = "", body?: unknown, signal?: AbortSignal): Promise<T> {
   const response = await fetch("/api/admin/watchlist/runtime/watchlist/analysis-review" + path + (body ? "" : "?symbol=" + encodeURIComponent(symbol)), {
     method: body ? "POST" : "GET", cache: "no-store", signal: signal ?? AbortSignal.timeout(30000),
@@ -152,7 +152,7 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
     <DialogTitle id="inline-analysis-title">{symbol} — View / edit analysis</DialogTitle>
     <DialogContent>{error && <Alert severity="error">{error}</Alert>}{busy && <p role="status">{saving.current ? "Saving analysis…" : "Loading saved analysis…"}</p>}
       {editedCard && !previewValid && <Alert severity="info">Finish the incomplete fields to update the preview. Your editing fields remain available below.</Alert>}
-      {editedCard && card && <AnalysisCard card={previewValid ? editedCard : card} symbol={{}} livePrice={null} dipBuyPlanVisible={preview?.publication.website.tradersLinkAiReadDipBuyPlanVisible !== false} renderSectionEditor={sectionEditor} />}
+      {editedCard && card && <AnalysisCard card={previewValid ? editedCard : card} symbol={{}} livePrice={null} failureRecoveryVisible={preview?.failureRecoveryVisible === true} dipBuyPlanVisible={preview?.publication.website.tradersLinkAiReadDipBuyPlanVisible !== false} renderSectionEditor={sectionEditor} />}
     </DialogContent>
     <DialogActions><Button disabled={saving.current} onClick={close}>Close</Button><Button variant="contained" disabled={busy || !patch || !dirty} onClick={() => void save()}>Save and close</Button></DialogActions>
   </Dialog>;

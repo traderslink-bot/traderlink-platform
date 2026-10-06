@@ -178,3 +178,6 @@ OLOX candle preparation and status correction: [evidence and progress](watchlist
 Owner-approved notification checkbox placement: [source and verification](watchlist-notify-placement-progress.md).
 
 Owner-approved ticker control cleanup: [implementation and verification](watchlist-control-cleanup-progress.md).
+
+
+Global failure/recovery display: [progress](watchlist-recovery-display-progress.md). This cumulative package also integrates the pending global automatic-notification Help update.
