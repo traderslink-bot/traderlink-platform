@@ -91,6 +91,8 @@ export async function fetchWatchlistMoomooCandles(
     const access = new MoomooConnectionAccessService(connections);
     return await new MoomooDailyTradeKlineMarketDataProvider(
       () => access.accessToken(scope),
+      fetch,
+      { completeHistory: true },
     ).fetch(request);
   } finally {
     database.close();
