@@ -187,3 +187,8 @@ Publication price/time correction: [progress](watchlist-publication-origin-progr
 
 
 Prompt/card QA refinement: [progress](watchlist-analysis-qa-refinement-progress.md).
+
+
+## Durable Discord post drafts
+
+Owner-approved persistence correction: [implementation and verification](watchlist-durable-discord-drafts-progress.md). Local implementation and focused checks complete; coordinated release and hosted acceptance pending.
