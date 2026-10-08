@@ -1,5 +1,7 @@
 # Watchlist Runtime Dashboard Admin Plan
 
+October 8 owner-approved title: [Potential Targets heading](watchlist-potential-targets-heading-progress.md).
+
 September 23 analysis status wording: [completed local correction](watchlist-analysis-status-copy-progress.md).
 
 September 23 per-ticker analysis choice and notes: [approved plan](watchlist-trader-notes-plan.md).

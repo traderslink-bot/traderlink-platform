@@ -29,7 +29,7 @@ export function SimpleAnalysisCard({ read, renderSectionEditor }: {
     </section>)}
     {renderSectionEditor?.(["simpleUpside"])}
     {!hidden.has("targets") && simple.upside.length ? <section className="watchlist-ai-read-section">
-      <h3>Where it could go next</h3><ol className="watchlist-ai-read-targets">
+      <h3>Potential Targets (Volume Dependent)</h3><ol className="watchlist-ai-read-targets">
         {simple.upside.map((level,index)=><li key={index}><strong>{area(level.low,level.high)}</strong><span>{level.explanation}</span></li>)}
       </ol>
     </section> : null}

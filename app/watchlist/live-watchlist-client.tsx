@@ -584,7 +584,7 @@ export function TradersLinkAiReadCard({
       {renderSectionEditor?.(["targets"])}
       {read.version === 4 && !hidden.has("targets") ? (
         <section className="watchlist-ai-read-section">
-          <h3>Where the trade could go next</h3>
+          <h3>Potential Targets (Volume Dependent)</h3>
           <p>Conditional day-trade paths, not predictions. Each farther branch requires the prior area to hold.</p>
           <ol className="watchlist-ai-read-targets">
             <TradersLinkAiForwardHorizonBlock heading="Nearest realistic" horizon={read.forwardPlan.nearestRealistic} livePrice={currentLivePrice} />
@@ -595,7 +595,7 @@ export function TradersLinkAiReadCard({
         </section>
       ) : read.version !== 4 && !hidden.has("targets") && read.targets.length > 0 ? (
         <section className="watchlist-ai-read-section">
-          <h3>Where the trade could go next</h3>
+          <h3>Potential Targets (Volume Dependent)</h3>
           <ol className="watchlist-ai-read-targets">
             {read.targets.map((target, index) => (
               <li key={`${target.label}-${target.price ?? index}`}>

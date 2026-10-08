@@ -2,7 +2,7 @@
 export const analysisEditSections = {
   currentRead: "Analysis", needsToHold: "Structure Weakens", cautionBelow: "Caution below",
   momentumFailure: "Momentum failure", mustClear: "Must clear", breakoutContinuation: "Breakout continuation",
-  targets: "Where the trade could go next", shallow: "Pullback", deep: "Deeper pullback",
+  targets: "Potential Targets (Volume Dependent)", shallow: "Pullback", deep: "Deeper pullback",
   downsideCheckpoints: "Downside levels", failureRecovery: "Failure and recovery",
   catalystRealityCheck: "Catalyst / recent news", dilutionRisk: "Dilution risk",
   listingStatus: "Listing monitor", riskSummary: "Risk notes",

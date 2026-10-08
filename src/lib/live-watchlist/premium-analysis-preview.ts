@@ -28,7 +28,7 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
     add("currentRead", "", [simple.setup]);
     simple.pullbacks.forEach((zone, index) => add(index ? "deep" : "shallow", index ? "Deeper pullback" : "Pullback",
       [zone.explanation, zone.confirmation], true));
-    simple.upside.forEach(level => add("targets", "Where it could go next", [level.explanation], true));
+    simple.upside.forEach(level => add("targets", "Potential Targets (Volume Dependent)", [level.explanation], true));
   } else {
     add("currentRead", "", [read.currentRead]);
     for (const [key, title] of [["needsToHold", "Structure Weakens"], ["cautionBelow", "Caution below"],
@@ -37,7 +37,7 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
       const level = read[key];
       add(key, title, [level.rationale], level.price !== null);
     }
-    read.targets.forEach(level => add("targets", "Where it could go next", [level.condition], level.price !== null));
+    read.targets.forEach(level => add("targets", "Potential Targets (Volume Dependent)", [level.condition], level.price !== null));
     // Copy only descriptive strings from known display sections. Evidence IDs and
     // numeric fields never cross this boundary, including future unknown fields.
     if (read.version !== 2) {
