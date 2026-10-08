@@ -27,6 +27,7 @@ const watchlistTimeFormatter = new Intl.DateTimeFormat("en-US", {
 
 type PotentialPathSymbol = Pick<
   LiveWatchlistSymbolState,
+  | "premiumLevelsAllowed"
   | "symbol"
   | "latestPrice"
   | "updatedAt"
@@ -270,7 +271,14 @@ export function WatchlistV2PotentialPathCard({
           </dl>
         ) : null}
 
-        {levelMap ? (
+        {symbol.premiumLevelsAllowed === false ? (
+          <div>
+            <p style={{color:'#c76a00'}}>These levels are reserved for Premium members. <a href="https://whop.com/traderslink-1049/premium-access-2026" style={{color:'inherit',textDecoration:'underline',fontWeight:700}}>Access Premium</a></p>
+            <div className="watchlist-v2-level-columns">
+              {['Support','Resistance'].map(title=><section key={title} aria-label={title+' restricted to Premium members'}><h3>{title}</h3><div aria-hidden="true" style={{filter:'blur(5px)',userSelect:'none'}}>{[1,2,3].map(row=><p key={row}>$••.•• — ••••••</p>)}</div></section>)}
+            </div>
+          </div>
+        ) : levelMap ? (
           <>
             {showNearestLevels ? <WatchlistV2NearestLevels levelMap={levelMap} /> : null}
             <div className="watchlist-v2-level-columns">
@@ -283,7 +291,9 @@ export function WatchlistV2PotentialPathCard({
         )}
       </article>
 
-      {fullLadderBody ? (
+      {symbol.premiumLevelsAllowed === false ? (
+        <details className="watchlist-more-levels"><summary>Full ladder</summary><div className="watchlist-full-ladder-detail" aria-label="Full ladder restricted to Premium members"><p aria-hidden="true" style={{filter:'blur(5px)',userSelect:'none'}}>$••.•• — ••••••<br />$••.•• — ••••••</p></div></details>
+      ) : fullLadderBody ? (
         <details className="watchlist-more-levels">
           <summary>Full ladder</summary>
           <div className="watchlist-full-ladder-detail">
@@ -327,7 +337,7 @@ export function WatchlistPotentialPathCardArticle({
   showPrice?: boolean;
   symbol: PotentialPathSymbol;
 }) {
-  const hasContent = Boolean(card);
+  const hasContent = Boolean(card) || symbol.premiumLevelsAllowed === false;
 
   return (
     <article className="academy-card watchlist-content-card" data-card-label="Potential Path Levels">

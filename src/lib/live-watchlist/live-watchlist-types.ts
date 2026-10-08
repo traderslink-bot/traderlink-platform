@@ -55,6 +55,8 @@ export type LiveWatchlistCardPatch = {
   status?: LiveWatchlistStatus;
   updatedAt: number;
   firstPostedAt?: number | null;
+  /** Internal activation identity; independent of the displayed publication time. */
+  indicatorPublicationIdentity?: string;
   /** Present only on a first public listing, never on an analysis refresh. */
   publicationPrice?: number | null;
   watchlistGroup?: LiveWatchlistGroup;
@@ -189,7 +191,7 @@ export type TradersLinkAiReadPullbackScenario = {
   zoneHigh: number;
   confirmationPrice: number;
   confirmation: string;
-  invalidationPrice: number;
+  invalidationPrice: number | null;
   firstObjectivePrice: number | null;
   rationale: string;
   evidenceIds: string[];
@@ -480,6 +482,7 @@ export type LiveWatchlistLevelMap = {
 };
 
 export type LiveWatchlistSymbolState = {
+  premiumLevelsAllowed?: boolean;
   premiumAnalysisPricesAllowed?: boolean;
   premiumAnalysisPreview?: import("./premium-analysis-preview").PremiumAnalysisPreview | null;
   membershipAnalysisAllowed?: boolean;
@@ -488,6 +491,7 @@ export type LiveWatchlistSymbolState = {
   updatedAt: number;
   firstPostedAt: number | null;
   publication?: { postedAt: number; price: number | null };
+  indicatorPublicationIdentity?: string;
   watchlistGroup?: LiveWatchlistGroup;
   watchlistSlotState?: LiveWatchlistSlotState;
   reversalWatchEligible?: boolean;

@@ -3,7 +3,7 @@ import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/wa
 import type { NextRequest } from "next/server";
 import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
 import { authorizeWatchlistMemberRequest } from "@/src/lib/live-watchlist/live-watchlist-auth";
-import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import { LiveWatchlistStore, validIndicatorPublicationIdentity } from "@/src/lib/live-watchlist/live-watchlist-store";
 import { readCachedWatchlistIndicators } from "@/src/modules/watchlist/server/indicators/indicator-refresh-runtime";
 import { memberIndicatorSnapshot } from "@/src/lib/live-watchlist/indicators/indicator-member-snapshot";
 
@@ -23,8 +23,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
   if (!ticker || ticker.status === "deactivated" || !Number.isSafeInteger(ticker.firstPostedAt) || !ticker.firstPostedAt || ticker.firstPostedAt <= 0) {
     return Response.json({ error: "Ticker was not found." }, { status: 404, headers });
   }
-  if (ticker.indicatorCardVisible === false) return Response.json({ snapshot: null }, { headers });
-  const snapshot = readCachedWatchlistIndicators(symbol, `${symbol}:${ticker.firstPostedAt}`);
+  if (ticker.indicatorCardVisible === false || !validIndicatorPublicationIdentity(symbol, ticker.indicatorPublicationIdentity)) return Response.json({ snapshot: null }, { headers });
+  const snapshot = readCachedWatchlistIndicators(symbol, ticker.indicatorPublicationIdentity);
   // Explicit projection excludes provider identity, audit IDs, input candles and transport details.
   return Response.json({ snapshot: memberIndicatorSnapshot(snapshot) }, { headers });
 }

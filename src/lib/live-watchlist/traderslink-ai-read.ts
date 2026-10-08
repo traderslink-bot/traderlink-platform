@@ -401,7 +401,7 @@ function isPullbackScenario(value: unknown): value is TradersLinkAiReadPullbackS
     isPositivePrice(value.zoneHigh) &&
     isPositivePrice(value.confirmationPrice) &&
     typeof value.confirmation === "string" &&
-    isPositivePrice(value.invalidationPrice) &&
+    (value.invalidationPrice == null || isPositivePrice(value.invalidationPrice)) &&
     isNullablePrice(value.firstObjectivePrice) &&
     typeof value.rationale === "string" &&
     isEvidenceIds(value.evidenceIds);
@@ -434,7 +434,7 @@ export function resolveTradersLinkAiPullbackScenarioState(
   scenario: TradersLinkAiReadPullbackScenario,
   livePrice: number,
 ): TradersLinkAiPullbackScenarioState {
-  if (livePrice <= scenario.invalidationPrice) {
+  if (scenario.invalidationPrice != null && livePrice <= scenario.invalidationPrice) {
     return "Invalidated";
   }
   if (livePrice < scenario.zoneLow) {

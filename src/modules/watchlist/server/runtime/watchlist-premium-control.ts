@@ -14,12 +14,13 @@ export const WATCHLIST_PREMIUM_CONTROL = String.raw`<script>
   return result;
  }
  function attach(symbol, container, control) {
+  const labelText = control === 'levels' ? 'Premium-only support & resistance' : 'Premium-only ' + control;
   const key = symbol + ':' + control;
   let item = state.get(key);
   if (!item) { item = { loaded: false, busy: false, value: false, error: '', loading: false }; state.set(key,item); }
   const label = document.createElement('label'), input = document.createElement('input'), message = document.createElement('small');
-  input.type = 'checkbox'; input.setAttribute('role','switch'); input.setAttribute('aria-label',symbol + ' Premium-only ' + control);
-  label.append(input,document.createTextNode('Premium-only ' + control));
+  input.type = 'checkbox'; input.setAttribute('role','switch'); input.setAttribute('aria-label',symbol + ' ' + labelText);
+  label.append(input,document.createTextNode(labelText));
   const option=document.createElement('div');option.className='watchlist-access-option';option.append(label,message);container.append(option);
   message.setAttribute('role','status');
   const show = () => { input.checked=item.value; input.disabled=!item.loaded||item.busy; message.textContent=item.error||(!item.loaded?'Loading access…':item.busy?'Saving…':''); };
@@ -40,7 +41,7 @@ export const WATCHLIST_PREMIUM_CONTROL = String.raw`<script>
  }
  window.watchlistPremiumControl = (symbol,container) => {
   const access=container.closest('.watchlist-grouped-actions')?.querySelector('.watchlist-access-controls') || container;
-  attach(symbol,access,'ticker'); attach(symbol,access,'analysis');
+  attach(symbol,access,'ticker'); attach(symbol,access,'analysis'); attach(symbol,access,'levels');
  };
  window.dispatchEvent(new Event('watchlist-review-updated'));
 })();

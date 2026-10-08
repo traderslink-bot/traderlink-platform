@@ -431,14 +431,6 @@ function TradersLinkAiPullbackScenarioBlock({
           <dt>Required confirmation</dt>
           <dd>${formatPrice(scenario.confirmationPrice)} {scenario.confirmation}</dd>
         </div>
-        <div>
-          <dt>Invalidation</dt>
-          <dd>${formatPrice(scenario.invalidationPrice)}</dd>
-        </div>
-        {scenario.firstObjectivePrice !== null && <div>
-          <dt>First objective</dt>
-          <dd>${formatPrice(scenario.firstObjectivePrice)}</dd>
-        </div>}
       </dl>
       {scenario.rationale.trim() ? <p>{scenario.rationale}</p> : null}
     </div>
@@ -577,7 +569,7 @@ export function TradersLinkAiReadCard({
       ) : null}
       {(() => {
         const levels = [
-          ["needsToHold", "Support to watch", read.needsToHold],
+          ["needsToHold", "Structure Weakens", read.needsToHold],
           ["cautionBelow", "Caution below", read.cautionBelow],
           ["momentumFailure", "Momentum failure", read.momentumFailure],
           ["mustClear", "Must clear", read.mustClear],
@@ -640,7 +632,7 @@ export function TradersLinkAiReadCard({
               {showDeep && read.pullbackPlans.deep ? (
                 <TradersLinkAiPullbackScenarioBlock
                   heading={showShallow ? "Deeper pullback" : "Pullback"}
-                  description="A lower area to watch for buyers to return, with its own confirmation and risk level."
+                  description="A lower area to watch for buyers to return, with its own confirmation."
                   scenario={read.pullbackPlans.deep}
                   livePrice={currentLivePrice}
                 />
@@ -661,19 +653,9 @@ export function TradersLinkAiReadCard({
           </p>
           <p>{pullbackPlanStateCopy(pullbackPlan)}</p>
           <p>
-            This area comes from the analysis&apos;s Caution below and Support to watch levels. Acceptance
+            This area comes from the analysis&apos;s Caution below and Structure Weakens levels. Acceptance
             below ${formatPrice(pullbackPlan.zoneLow)} weakens the active pullback thesis.
           </p>
-          <p>
-            Momentum failure: acceptance below ${formatPrice(pullbackPlan.invalidationPrice)}{" "}
-            invalidates the setup; wait for new structure rather than averaging into the failure.
-          </p>
-          {pullbackPlan.firstBounceTarget !== null ? (
-            <p>
-              First objective after a confirmed hold or reclaim: {" "}
-              ${formatPrice(pullbackPlan.firstBounceTarget)}.
-            </p>
-          ) : null}
         </section>
       ) : null}
 
@@ -724,23 +706,6 @@ export function TradersLinkAiReadCard({
             </dl>
             {read.failureRecovery.rationale.trim() ? <p>{read.failureRecovery.rationale}</p> : null}</>
           ) : null}
-        </section>
-      ) : downsideCheckpoints.length > 0 ? (
-        <section className="watchlist-ai-read-section watchlist-ai-read-downside">
-          <h3>If momentum fails</h3>
-          <p>Lower structural areas exposed after the momentum-failure level gives way.</p>
-          <ol className="watchlist-ai-read-targets">
-            {downsideCheckpoints.map((checkpoint, index) => (
-              <li key={`${checkpoint.label}-${checkpoint.price ?? index}`}>
-                <strong>
-                  {checkpoint.price === null
-                    ? checkpoint.label
-                    : `$${formatPrice(checkpoint.price)}`}
-                </strong>
-                <span>{checkpoint.condition}</span>
-              </li>
-            ))}
-          </ol>
         </section>
       ) : null}
 
@@ -1968,6 +1933,8 @@ export function LiveWatchlistDetailClient({
         setDetailsDenied(false);
         setSymbol((current) => {
           const next = reconcileLiveWatchlistSymbolState(current, payload.symbol);
+          next.premiumLevelsAllowed = payload.symbol.premiumLevelsAllowed;
+          if(next.premiumLevelsAllowed !== false) { next.levelMap=payload.symbol.levelMap; next.nearestSupport=payload.symbol.nearestSupport; next.nearestResistance=payload.symbol.nearestResistance; next.nearestSupportLabel=payload.symbol.nearestSupportLabel; next.nearestResistanceLabel=payload.symbol.nearestResistanceLabel; for(const kind of ["levelMap","nearestSupportResistance","fullLadder"] as const) { if(payload.symbol.cards[kind]) next.cards[kind]=payload.symbol.cards[kind]; else delete next.cards[kind]; } }
           next.premiumAnalysisPricesAllowed = payload.symbol.premiumAnalysisPricesAllowed;
           next.premiumAnalysisPreview = payload.symbol.premiumAnalysisPreview ?? null;
           if (next.premiumAnalysisPricesAllowed === false) {

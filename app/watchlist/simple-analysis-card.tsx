@@ -26,17 +26,12 @@ export function SimpleAnalysisCard({ read, renderSectionEditor }: {
       <h3>{index===0?"Pullback":"Deeper pullback"}</h3>
       <strong>{area(plan.low,plan.high)}</strong><p>{plan.explanation}</p>
       {plan.confirmation.trim() ? <p><strong>Confirmation:</strong> {plan.confirmation}</p> : null}
-      <p><strong>Invalidation:</strong> {price(plan.invalidation)}</p>
     </section>)}
     {renderSectionEditor?.(["simpleUpside"])}
     {!hidden.has("targets") && simple.upside.length ? <section className="watchlist-ai-read-section">
       <h3>Where it could go next</h3><ol className="watchlist-ai-read-targets">
         {simple.upside.map((level,index)=><li key={index}><strong>{area(level.low,level.high)}</strong><span>{level.explanation}</span></li>)}
       </ol>
-    </section> : null}
-    {renderSectionEditor?.(["simpleInvalidation"])}
-    {!hidden.has("momentumFailure") && simple.invalidation ? <section className="watchlist-ai-read-section">
-      <h3>Thesis invalidation</h3><strong>{price(simple.invalidation.price)}</strong><p>{simple.invalidation.explanation}</p>
     </section> : null}
     <p className="watchlist-ai-read-meta">Analysis as of {new Date(read.dataAsOf).toLocaleString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})} ET.</p>
   </article>;

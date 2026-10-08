@@ -347,3 +347,7 @@ Formula conventions and parity fixtures must be recorded in the implementation p
 ## Per-ticker visibility and legacy retirement
 
 Owner-approved follow-up: [plan](watchlist-legacy-retirement-plan.md) and [progress](watchlist-legacy-retirement-progress.md). Local implementation and focused offline checks are complete; coordinated deployment and hosted/visual acceptance remain pending. Off hides the indicator card and suppresses its provider requests without disabling current Analysis or other market-data consumers.
+
+## Publication identity correction
+
+See [publication identity progress](watchlist-indicator-publication-identity-progress.md) for the owner-approved internal identity repair and remaining hosted acceptance boundary.

@@ -256,3 +256,8 @@ Coordinator reserved `0151_platform_watchlist_x_publications`. Adds only `platfo
 ## Premium swing plan authoring — October 1, 2026
 
 Reserved migration `0154_platform_premium_swing_plan_authorship`, exact predecessor `0153_platform_watchlist_category_move_notifications`. Adds four separate Platform authoring/publication/delivery tables; preserves migration 0139 visit records and all Watchlist storage. Registered in this candidate, unapplied at preparation. [Plan](premium-swing-plan-authoring-plan.md) · [Progress and release gates](premium-swing-plan-authoring-progress.md).
+
+
+## 0156 Platform Watchlist Premium support/resistance
+
+Reserved by Coordinator; predecessor 0155_platform_watchlist_premium_access_controls. New independent visibility and audit tables only; target migration count138. Registered, not applied by feature worker. See [progress and rollback boundary](watchlist-premium-levels-progress.md).

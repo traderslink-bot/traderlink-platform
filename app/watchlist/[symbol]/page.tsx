@@ -1,3 +1,4 @@
+import { canViewWatchlistLevels } from '@/src/modules/watchlist/server/access/watchlist-levels-visibility';
 import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { PremiumTickerLock } from "@/app/watchlist/premium-ticker-lock";
@@ -130,7 +131,7 @@ export default async function LiveWatchlistSymbolPage({
         <WatchlistVisitRecorder pageKey={state.symbol} pageKind="detail" />
         <LiveWatchlistDetailClient
           initialMarketDataStatus={health.marketDataStatus}
-          initialSymbol={watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(requestHeaders, state.symbol))}
+          initialSymbol={watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(requestHeaders, state.symbol), canViewWatchlistLevels(requestHeaders, state.symbol))}
         />
       </div>
     </WatchlistDashboardFrame>

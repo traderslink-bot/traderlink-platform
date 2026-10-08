@@ -1,6 +1,6 @@
 /** Only owner-editable fields cross the save boundary. Source evidence stays server-owned. */
 export const analysisEditSections = {
-  currentRead: "Analysis", needsToHold: "Support to watch", cautionBelow: "Caution below",
+  currentRead: "Analysis", needsToHold: "Structure Weakens", cautionBelow: "Caution below",
   momentumFailure: "Momentum failure", mustClear: "Must clear", breakoutContinuation: "Breakout continuation",
   targets: "Where the trade could go next", shallow: "Pullback", deep: "Deeper pullback",
   downsideCheckpoints: "Downside levels", failureRecovery: "Failure and recovery",
@@ -11,7 +11,7 @@ export type AnalysisEditSection = keyof typeof analysisEditSections;
 export type EditValue = string | number | boolean | null | EditValue[] | { [key: string]: EditValue };
 export type EditRecord = { [key: string]: EditValue };
 export const levelEditFields = ["label", "price", "rationale"];
-export const pullbackEditFields = ["zoneLow", "zoneHigh", "confirmationPrice", "confirmation", "invalidationPrice", "firstObjectivePrice", "rationale"];
+export const pullbackEditFields = ["zoneLow", "zoneHigh", "confirmationPrice", "confirmation", "rationale"];
 export const recoveryEditFields = ["recoveryZoneLow", "recoveryZoneHigh", "firstReclaimPrice", "setupRestorePrice", "firstObjectivePrice", "rationale"];
 export const isPriceField = (key: string) => key === "price" || /Price$|Low$|High$/.test(key);
 export function editRecord(value: unknown): EditRecord {

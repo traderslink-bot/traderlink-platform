@@ -622,9 +622,15 @@ function mergeArchivedReactivationContext(
   });
 }
 
+/** Exact publisher activation identity, never inferred from a displayed timestamp. */
+export function validIndicatorPublicationIdentity(_symbol: string, value: unknown): value is string {
+  return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
+}
+
 export function applyPatch(
   existing: LiveWatchlistSymbolState | null,
   patch: LiveWatchlistCardPatch,
+  restoredActivation = false,
 ): LiveWatchlistSymbolState {
   const symbol = normalizeSymbol(patch.symbol);
   const nextStatus = patch.status ?? existing?.status ?? "live";
@@ -632,6 +638,17 @@ export function applyPatch(
   const baseExisting = isReactivation && patch.preserveExistingOnReactivation !== true
     ? null
     : existing;
+  // Only first publication/reactivation may establish this identity. Ordinary
+  // updates cannot seed legacy rows or overwrite an already published identity.
+  const publishesActivation = Object.prototype.hasOwnProperty.call(patch, "publicationPrice")
+    && (!existing?.firstPostedAt || isReactivation || restoredActivation);
+  const previousIdentity = existing?.indicatorPublicationIdentity;
+  const candidateIdentity = patch.indicatorPublicationIdentity;
+  const advancesIdentity = validIndicatorPublicationIdentity(symbol, candidateIdentity)
+    && candidateIdentity !== previousIdentity;
+  const indicatorPublicationIdentity = publishesActivation
+    ? advancesIdentity ? candidateIdentity : undefined
+    : isReactivation || restoredActivation ? undefined : baseExisting?.indicatorPublicationIdentity;
   const nextCards = { ...(baseExisting?.cards ?? {}) };
   const patchesNearestCard = Object.prototype.hasOwnProperty.call(
     patch.cards,
@@ -692,6 +709,7 @@ export function applyPatch(
     updatedAt: Math.max(patch.updatedAt, baseExisting?.updatedAt ?? 0),
     firstPostedAt: nextFirstPostedAt,
     publication,
+    indicatorPublicationIdentity,
     watchlistGroup:
       normalizeWatchlistGroup(patch.watchlistGroup) ??
       normalizeWatchlistGroup(baseExisting?.watchlistGroup),
@@ -804,6 +822,7 @@ function applyTickerDataPatch(
     updatedAt: Math.max(existing?.updatedAt ?? 0, patch.updatedAt),
     firstPostedAt: existing?.firstPostedAt ?? null,
     publication: existing?.publication,
+    indicatorPublicationIdentity: existing?.indicatorPublicationIdentity,
     watchlistGroup:
       normalizeWatchlistGroup(patch.watchlistGroup) ??
       normalizeWatchlistGroup(existing?.watchlistGroup),
@@ -1052,6 +1071,7 @@ export class LiveWatchlistStore {
             ? mergeArchivedReactivationContext(existing, preservedArchiveState)
             : existing,
           { ...patch, symbol },
+          Boolean(preservedArchiveState && (!existing || existing.status === "deactivated")),
         );
         movedToFollowup =
           existing?.watchlistSlotState !== "followup" &&
@@ -1068,7 +1088,7 @@ export class LiveWatchlistStore {
     const existing = preservedArchiveState
       ? mergeArchivedReactivationContext(current, preservedArchiveState)
       : current;
-    const next = applyPatch(existing, { ...patch, symbol });
+    const next = applyPatch(existing, { ...patch, symbol }, Boolean(preservedArchiveState && (!current || current.status === "deactivated")));
     const movedToFollowup =
       existing?.watchlistSlotState !== "followup" &&
       next.watchlistSlotState === "followup";

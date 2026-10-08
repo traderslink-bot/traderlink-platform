@@ -1,3 +1,4 @@
+import { canViewWatchlistLevels } from '@/src/modules/watchlist/server/access/watchlist-levels-visibility';
 import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { PremiumTickerLock } from "@/app/watchlist/premium-ticker-lock";
@@ -86,7 +87,7 @@ export default async function LiveWatchlistArchiveDetailPage({
   return (
     <WatchlistDashboardFrame>
       <div className="academy-container">
-        <LiveWatchlistArchiveDetailClient archive={{ ...archive, state: watchlistDetailProjection(archive.state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(await headers(), archive.symbol)) }} />
+        <LiveWatchlistArchiveDetailClient archive={{ ...archive, state: watchlistDetailProjection(archive.state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(await headers(), archive.symbol), canViewWatchlistLevels(await headers(), archive.symbol)) }} />
       </div>
     </WatchlistDashboardFrame>
   );

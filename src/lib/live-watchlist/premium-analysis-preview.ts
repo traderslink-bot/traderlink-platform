@@ -27,12 +27,11 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
     const simple = read.simpleAnalysis;
     add("currentRead", "", [simple.setup]);
     simple.pullbacks.forEach((zone, index) => add(index ? "deep" : "shallow", index ? "Deeper pullback" : "Pullback",
-      [zone.explanation, zone.confirmation, "Invalidation: " + HIDDEN_ANALYSIS_PRICE], true));
+      [zone.explanation, zone.confirmation], true));
     simple.upside.forEach(level => add("targets", "Where it could go next", [level.explanation], true));
-    if (simple.invalidation) add("momentumFailure", "Thesis invalidation", [simple.invalidation.explanation], true);
   } else {
     add("currentRead", "", [read.currentRead]);
-    for (const [key, title] of [["needsToHold", "Support to watch"], ["cautionBelow", "Caution below"],
+    for (const [key, title] of [["needsToHold", "Structure Weakens"], ["cautionBelow", "Caution below"],
       ["momentumFailure", "Momentum failure"], ["mustClear", "Must clear"],
       ["breakoutContinuation", "Breakout continuation"]] as const) {
       const level = read[key];
@@ -45,9 +44,7 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
       for (const key of ["shallow", "deep"] as const) {
         const zone = read.pullbackPlans[key];
         if (zone) add(key, key === "deep" ? "Deeper pullback" : "Pullback", [zone.rationale,
-          "Required confirmation: " + HIDDEN_ANALYSIS_PRICE + " " + zone.confirmation,
-          "Invalidation: " + HIDDEN_ANALYSIS_PRICE,
-          ...(zone.firstObjectivePrice === null ? [] : ["First objective: " + HIDDEN_ANALYSIS_PRICE])], true);
+          "Required confirmation: " + HIDDEN_ANALYSIS_PRICE + " " + zone.confirmation], true);
       }
       if (read.failureRecovery) add("failureRecovery", "Recovery", [read.failureRecovery.rationale,
         "First reclaim: " + HIDDEN_ANALYSIS_PRICE, "Setup restored: " + HIDDEN_ANALYSIS_PRICE], true);

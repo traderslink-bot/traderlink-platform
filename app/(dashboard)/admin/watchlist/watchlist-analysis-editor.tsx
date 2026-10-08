@@ -103,16 +103,13 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
         onChange={event=>change([...path,key],["low","high","invalidation","price"].includes(key)?event.target.value===""?null:Number(event.target.value):event.target.value)} />);
       return keys.map(key=>{
         if(key==="simpleSetup") return <details key={key}><summary>Edit analysis</summary>{visibility("currentRead","analysis")}<TextField label="Analysis" value={simple.setup??""} fullWidth multiline disabled={busy} onChange={event=>change(["simpleAnalysis","setup"],event.target.value)} /></details>;
-        if(key==="simpleInvalidation") return <details key={key}><summary>Edit thesis invalidation</summary>{visibility("momentumFailure","thesis invalidation")}
-          <Button disabled={busy} onClick={()=>change(["simpleAnalysis","invalidation"],simple.invalidation?null:{price:null,explanation:""})}>{simple.invalidation?"Remove":"Add"} invalidation</Button>
-          {simple.invalidation?simpleFields(editRecord(simple.invalidation),["price","explanation"],["simpleAnalysis","invalidation"]):null}</details>;
         const name=key==="simplePullbacks"?"pullbacks":"upside";
         const list=simple[name] as EditValue[];
         return <details key={key}><summary>Edit {name==="pullbacks"?"pullbacks":"where it could go next"}</summary>
           {name==="pullbacks"?<>{visibility("shallow","first pullback")}{visibility("deep","second pullback")}</>:visibility("targets","where it could go next")}
           {list.map((item,index)=><fieldset key={index}><legend>{index+1}</legend>
             {name === "upside" ? rowControls(list,index,["simpleAnalysis",name],{low:null,high:null,explanation:""},5,"low") : null}
-            {simpleFields(editRecord(item),["low","high","explanation",...(name==="pullbacks"?["confirmation","invalidation"]:[])],["simpleAnalysis",name,index])}
+            {simpleFields(editRecord(item),["low","high","explanation",...(name==="pullbacks"?["confirmation"]:[])],["simpleAnalysis",name,index])}
             <Button disabled={busy} onClick={()=>change(["simpleAnalysis",name],list.filter((_,i)=>i!==index))}>Remove</Button></fieldset>)}
           <Button disabled={busy||list.length>=(name==="pullbacks"?2:5)} onClick={()=>{const item:EditRecord={low:null,high:null,explanation:""};if(name==="pullbacks"){item.confirmation="";item.invalidation=null;}change(["simpleAnalysis",name],[...list,item]);}}>Add</Button>
           {name === "upside" ? <Button disabled={busy || list.length < 2} onClick={() => change(["simpleAnalysis",name],editLevelRows(list,"sort",0,null,5,"low"))}>Sort by price</Button> : null}

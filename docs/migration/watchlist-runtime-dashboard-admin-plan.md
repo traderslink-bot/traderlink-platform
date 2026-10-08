@@ -192,3 +192,13 @@ Prompt/card QA refinement: [progress](watchlist-analysis-qa-refinement-progress.
 ## Durable Discord post drafts
 
 Owner-approved persistence correction: [implementation and verification](watchlist-durable-discord-drafts-progress.md). Local implementation and focused checks complete; coordinated release and hosted acceptance pending.
+
+
+## Premium-only Potential Path levels
+
+Owner-approved independent per-ticker control: [implementation, verification and release boundary](watchlist-premium-levels-progress.md). Local implementation complete; hosted acceptance pending coordinated migration/release.
+
+
+## Analysis section simplification
+
+Owner-approved removal and compatibility work: [progress](watchlist-analysis-section-removal-progress.md). Deployment remains separately coordinated.
