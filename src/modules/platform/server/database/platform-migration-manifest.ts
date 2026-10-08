@@ -1,3 +1,4 @@
+import { platformWatchlistPremiumSupportResistanceMigration } from './migrations/0156_platform_watchlist_premium_support_resistance';
 import { platformWatchlistPremiumAccessControlsMigration } from "./migrations/0155_platform_watchlist_premium_access_controls";
 import { platformPremiumSwingPlanAuthorshipMigration } from "./migrations/0154_platform_premium_swing_plan_authorship";
 import { platformWatchlistCategoryMoveNotificationsMigration } from "./migrations/0153_platform_watchlist_category_move_notifications";
@@ -651,6 +652,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0153_platform_watchlist_category_move_notifications.ts", migration: platformWatchlistCategoryMoveNotificationsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0154_platform_premium_swing_plan_authorship.ts", migration: platformPremiumSwingPlanAuthorshipMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0155_platform_watchlist_premium_access_controls.ts", migration: platformWatchlistPremiumAccessControlsMigration }),
+    Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0156_platform_watchlist_premium_support_resistance.ts",migration:platformWatchlistPremiumSupportResistanceMigration}),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -659,6 +661,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0156_platform_watchlist_premium_support_resistance": Object.freeze(["platform_watchlist_levels_visibility","platform_watchlist_levels_visibility_audit"]),
     "0155_platform_watchlist_premium_access_controls": Object.freeze(["platform_watchlist_analysis_visibility", "platform_watchlist_analysis_visibility_audit"]),
     "0154_platform_premium_swing_plan_authorship": Object.freeze(["platform_swing_plans", "platform_swing_plan_versions", "platform_swing_plan_publications", "platform_swing_plan_deliveries"]),
     "0153_platform_watchlist_category_move_notifications": Object.freeze([
