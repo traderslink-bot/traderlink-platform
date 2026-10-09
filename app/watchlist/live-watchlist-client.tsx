@@ -1594,7 +1594,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
         </article>
       ) : null}
       {symbol.indicatorCardVisible !== false ? (
-      <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.firstPostedAt}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} livePrice={symbol.latestPrice} />
+      <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.indicatorPublicationIdentity ?? "unassigned"}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} publicationIdentity={symbol.indicatorPublicationIdentity} livePrice={symbol.latestPrice} />
       ) : null}
       {recentNewsFilingsCard && showRecentNewsFilingsCard ? (
         <WatchlistDetailCardArticle

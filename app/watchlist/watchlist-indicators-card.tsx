@@ -14,15 +14,15 @@ type MemberSnapshot = WatchlistMemberIndicatorSnapshot;
 const timestamp = (time: number | null | undefined) => typeof time === "number" && Number.isFinite(time)
   ? `${new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(time)} ET` : "—";
 
-export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
-  symbol: string; firstPostedAt: number | null; livePrice: number | null;
+export function WatchlistIndicatorsCard({ symbol, firstPostedAt, publicationIdentity, livePrice }: {
+  symbol: string; firstPostedAt: number | null; publicationIdentity?: string; livePrice: number | null;
 }) {
   const [selected, setSelected] = useState<IndicatorTimeframe>("5m");
   const [snapshot, setSnapshot] = useState<MemberSnapshot | null>(null);
   const [openHelp, setOpenHelp] = useState<string | null>(null);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const id = useId();
-  const activationId = `${symbol}:${firstPostedAt}`;
+  const activationId = publicationIdentity ?? null;
   useEffect(() => {
     try { const saved = localStorage.getItem(PREFERENCE); if (FRAMES.includes(saved as IndicatorTimeframe)) setSelected(saved as IndicatorTimeframe); }
     catch { /* Preference persistence is optional. */ }
@@ -31,7 +31,7 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, livePrice }: {
     let active = true, pending = false;
     const controller = new AbortController();
     const read = async () => {
-      if (!active || pending || document.hidden || !firstPostedAt) return;
+      if (!active || pending || document.hidden || !firstPostedAt || !activationId) return;
       pending = true;
       const requestController = new AbortController();
       const cancel = () => requestController.abort();

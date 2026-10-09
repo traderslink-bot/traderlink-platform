@@ -351,3 +351,5 @@ Owner-approved follow-up: [plan](watchlist-legacy-retirement-plan.md) and [progr
 ## Publication identity correction
 
 See [publication identity progress](watchlist-indicator-publication-identity-progress.md) for the owner-approved internal identity repair and remaining hosted acceptance boundary.
+
+October 9 client identity correction: [progress](watchlist-indicator-client-identity-progress.md).
