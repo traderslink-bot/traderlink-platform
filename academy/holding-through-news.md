@@ -28,171 +28,59 @@ internal_links:
   - "/academy/stock-catalysts/"
   - "/academy/overnight-risk/"
   - "/academy/trade-review-and-improvement/"
-schema:
+schema: ["Article"]
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-10-08"
 meta_title: "Holding Through News In Trading"
 meta_description: "Learn what holding through news means, why catalyst risk matters, and how traders can review swing trades held through major news events."
 ---
+
 # Holding Through News
 
-The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+![Holding Through News diagram](/academy/images/risk-management-trade-planning/holding-through-news.svg)
 
-## Lesson Objective
+Holding through news means keeping a position while an event may change how the stock trades. Scheduled events include earnings releases and announced decisions. Unexpected filings or headlines can arrive without advance notice.
 
-By the end of this lesson, you should be able to:
+## Write The Event Plan Before The Release
 
-- Explain the core idea behind Holding Through News.
-- Identify the decision it is meant to control.
-- Connect the concept to position size, invalidation, loss control, and review.
-- Avoid treating risk rules as flexible only when emotions are high.
-- Use the lesson as part of a written trading plan and review process.
+Identify the event and its announced timing first. For a company release, check the issuer's investor-relations announcement for the date, time and timezone. “After market close” is a broad window, not necessarily an exact minute. If timing is unclear or changes, reconsider whether you can carry out the intended exit before it.
 
-Holding through news means keeping a position open while a known or possible news event could affect the stock. For swing traders, this can be one of the biggest risk decisions in the trade.
+Then decide whether the trade is intended to include the event. A day trader whose plan excludes earnings exposure writes: “Close this position before the scheduled release, confirm the exit filled and cancel unwanted remaining orders.” They allow time for execution instead of waiting until the announcement begins. If trading is halted before the exit can fill, the exposure remains and must be managed when trading becomes available.
 
-News can help a position. It can also hurt it. A headline can create a gap, a halt, a sharp fade, a liquidity change, or a move that does not match what the trader expected.
+A trader deliberately holding through the event has a different decision. They record why the position is being retained, how many shares will remain and what adverse-price scenarios would mean in dollars. They may reduce the position before the release, but they still hold exposure to an uncertain result. A planned stop distance alone is not enough to describe that exposure.
 
-The headline is only the start. Holding through news should be a planned decision, not something that happens because the trader does not want to close the trade.
+After the announcement, check the released information and current trading conditions before acting. If the position is still open, inspect any active orders before placing another exit. A changed quote, halt or partial fill can make the position different from what you expected.
 
-## Quick Definition
+## The Event And Price Response Are Different
 
-Holding through news means staying in a trade while news, filings, earnings, regulatory updates, financing announcements, or other catalysts may be released.
+A release that appears favorable can still be followed by falling prices. Traders may have expected better numbers, positions may already reflect the news, or new details may change its meaning. The headline alone does not determine the direction of the next trade.
 
-This can include holding through:
+Suppose a stock closes at $5.00 before a scheduled release. Two possible next-session prices are $5.50 and $4.40. These are alternative outcomes, not forecasts. On 100 shares bought at $5.00, they imply +$50.00 or −$60.00 of price change before costs if the shares exit at those prices.
 
-- Earnings reports.
-- Press releases.
-- Clinical trial results.
-- FDA decisions.
-- SEC filings.
-- Merger updates.
-- Contract announcements.
-- Financing or offering news.
-- Shareholder votes.
-- Sector or macro events.
+## Check Other Holdings Affected By The News
 
-Some news is scheduled. Some news is unexpected. Both can affect a swing trade.
+Several stocks in the same industry may respond to the same announcement, even when only one company is reporting. Review the combined shares and planned exits rather than considering the reporting company alone.
 
-News announced outside regular hours can have greater price impact when trading activity is limited, spreads are wider, and prices may not match the next regular-session open. News and filings should be checked from official company, filing, exchange, or regulator sources when they are central to the trade thesis.
+## Allow For Gaps, Halts And Changing Quotes
 
-## Why It Matters To Traders
+News can be followed by a trading halt or a rapid change in quotes. A stop order cannot ensure an immediate exit during unavailable trading, and its eventual fill can differ from the trigger price. A stop-limit can remain unfilled when its price restriction cannot be met.
 
-Holding through news matters because the trader may not be able to control the exit price once the news is released.
+Avoid calculating event exposure solely from a narrow stop distance. That calculation assumes an exit near the stop, which may be unavailable after news.
 
-A stock can gap above the trader's target. It can also gap below the risk level. In small caps, news can create extreme volatility, wide spreads, halts, or sudden changes in liquidity.
+After the event, review what was known before it, the quantity held, the intended action and the actual fills. Keep the decision separate from hindsight: a favorable outcome does not prove that the chosen exposure was appropriate, and an adverse outcome does not by itself show that a written rule was broken.
 
-This is where traders can get into trouble. They hold through a catalyst without clearly deciding whether they are comfortable with the risk.
+## Work Through Reducing The Position
 
-Traders should review:
+Suppose the trader holds 100 shares bought at $5.00 before the event. Selling 50 at $5.00 leaves 50 exposed. If the remaining shares later sell at $5.50, the event-related price gain is $25.00. If they sell at $4.40, the loss on those shares is $30.00. Costs from both exits still apply.
 
-- Whether the news was scheduled or unexpected.
-- Whether the position size fit the event risk.
-- Whether the catalyst was central to the trade idea.
-- Whether the trade still made sense after the news.
-- Whether the trader reacted to facts or emotion.
+Reducing the position cuts the dollar effect of either move compared with holding all 100. It also reduces the gain if the price rises. Closing all shares removes the position's future event exposure once the order fills, but the trader then does not participate in that position's later price move.
 
-A news hold should be intentional.
+## Why Good News Can Still Be Followed By A Price Drop
 
-## How It Works
+Suppose market participants expected revenue of $120 million, but the company reports $110 million, up from $100 million a year earlier. Revenue grew, yet the reported amount fell short of that expectation. That is one reason a positive-looking growth headline can coincide with a price decline. Other information and trading conditions also affect the response.
 
-Before holding through news, a trader should understand what type of event is coming.
+Before an earnings release, an expected revenue number is not the reported result. After a release, a reported increase in revenue does not by itself explain every part of the price response. Guidance, financing details, existing expectations and trading conditions may also matter.
 
-For example, holding through earnings is different from holding through a routine business update. Holding through clinical data is different from holding through a conference presentation. Holding through a possible offering risk is different from holding through sector momentum.
+Use what is actually known when making the pre-event decision: the event, position size, available exit conditions and written holding rule. Do not rewrite the original reason after seeing the outcome.
 
-The trader should also think about possible outcomes:
-
-- What happens if the news is better than expected?
-- What happens if the news disappoints?
-- What happens if the reaction is opposite of the headline?
-- What happens if liquidity dries up?
-- What happens if the stock gaps beyond the planned risk level?
-
-The goal is not to know the outcome in advance. The goal is to avoid pretending the risk does not exist.
-
-## Example Scenario
-
-Imagine a trader is holding a biotech stock because it has been trending higher into a data update.
-
-The trader knows results may be released after hours. The position is already up, but the stock could move sharply either way after the update.
-
-Before holding, the trader should review:
-
-- Is this event the reason for the trade?
-- Have I already captured part of the move?
-- What size makes sense if the stock gaps down?
-- Do I understand the possible reaction range?
-- Am I holding because the setup still fits the plan or because I want a big win?
-
-That last question matters. Sometimes holding through news is a strategy decision. Sometimes it is gambling dressed up as conviction.
-
-## Common Mistakes
-
-One common mistake is holding through news accidentally. A trader enters without checking the calendar, then finds out an event is coming after the position is already open.
-
-Another mistake is assuming good news means the stock will go up. Markets react to expectations, positioning, liquidity, and details.
-
-Traders also make mistakes when they use normal swing size for an event-risk trade. News can create a larger move than the chart suggested.
-
-Another mistake is ignoring filings. For small-cap traders, filings can be just as important as press releases.
-
-A final mistake is refusing to reassess after the news. If the news changes the trade thesis, the review notes should reflect that clearly.
-
-## Review Questions
-
-Holding through news should be reviewed separately from normal swing management.
-
-Useful review questions include:
-
-- Was the news event known before entry?
-- Did I intentionally hold through it?
-- Was the event central to the trade thesis?
-- Did I size the position for event risk?
-- What did the news actually say?
-- How did price react after the news?
-- Did the trade thesis improve, weaken, or fail?
-- Did I follow my plan after the reaction?
-
-This review can help traders identify whether they are taking planned event risk or simply hoping through catalysts.
-
-## Related Terms And Guides
-
-For more context, read:
-
-- [Swing trading](/academy/swing-trading/)
-- [Swing trading news risk](/academy/swing-trading-news-risk/)
-- [Stock catalysts](/academy/stock-catalysts/)
-- [Overnight risk](/academy/overnight-risk/)
-- [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## FAQ
-
-### What does holding through news mean?
-
-Holding through news means keeping a trade open while a news event, filing, earnings report, or catalyst could affect the stock.
-
-### Is holding through news risky?
-
-Yes. News can create gaps, sharp volatility, liquidity changes, and price movement beyond planned chart levels.
-
-### Should swing traders hold through news?
-
-That depends on the trader's plan and risk tolerance. The important part is making the decision intentionally before the event.
-
-### Can good news make a stock go down?
-
-Yes. A stock can fall after good news if expectations were higher, traders sell the news, or the details are weaker than the headline.
-
-### What should traders check before holding through news?
-
-Traders can check the event type, timing, position size, liquidity, filings, prior expectations, and what would invalidate the trade.
-
-### How should I review trades held through news?
-
-Track the known event, why you held, position size, news details, price reaction, and whether your post-news decisions followed the plan.
-
-## Related Lessons
-
-- [Overnight Risk](/academy/overnight-risk/)
-- [Trading Discipline](/academy/trading-discipline/)
-- [Risk Management](/academy/risk-management/)
-- [Trade Risk Review](/academy/trade-risk-review/)
+A rule such as “do not hold this day-trading position through the scheduled release” requires enough time to attempt the exit before the event. Waiting until the release is occurring and then discovering that trading is halted does not accomplish that rule. The order must fill for the exposure to end.

@@ -28,9 +28,9 @@ meta_description: "Learn gap fill trading as price moving back through a gap are
 
 # Gap Fill Trading: How Traders Read Gap Areas
 
-A gap happens when a stock opens meaningfully above or below where it traded in the prior session.
+An opening gap is the difference between the previous regular-session close and the next regular-session open.
 
-A gap fill happens when price later moves back through some or all of that empty space on the chart.
+A gap fill happens when price moves back toward the previous regular-session close. Reaching that close completes a close-to-open gap fill; moving partway toward it is a partial fill.
 
 Traders watch gaps because they can become important reference areas. A gap can show a major change in attention, news, demand, fear, or overnight pricing. But a gap is not a promise that price has to return to where it came from.
 
@@ -48,11 +48,11 @@ The better question is:
 
 ## What A Gap Is
 
-A gap is a space on the chart between where price traded in one session and where it opens or trades in the next session.
+This lesson compares the previous regular-session close with the next regular-session open. A full-range gap is different: the new session opens above the previous high or below the previous low. An opening gap from the close can still fall inside yesterday's range. Extended-hours trades may occur between the two regular sessions, so the close-to-open difference does not necessarily represent prices at which nobody traded.
 
 For example, if a stock closes at $4.00 and opens the next day at $5.25, there is a gap between $4.00 and $5.25.
 
-That empty area becomes the gap zone.
+The interval between those two prices is the gap zone.
 
 A gap can happen because of:
 
@@ -72,7 +72,7 @@ The reason for the gap matters. A gap caused by strong news may behave very diff
 
 A gap fill happens when price moves back into the gap area.
 
-If price fills the entire gap, it travels back through the full empty area.
+A full fill reaches the previous regular-session close.
 
 If price only fills part of the gap, it moves into the gap but does not reach the other side.
 
@@ -232,7 +232,7 @@ A trader may mark:
 
 * $4.00 as the prior close
 * $5.25 as the current open or gap top
-* $4.60 as the rough midpoint
+* $4.63 as the approximate midpoint
 * Nearby support and resistance inside the gap
 * The news catalyst that caused the move
 

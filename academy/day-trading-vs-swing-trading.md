@@ -20,7 +20,7 @@ academy_course: "Trading Foundations"
 learning_track: "Trading Foundations"
 internal_links: ["/academy/day-trading/", "/academy/swing-trading/", "/academy/risk-management/", "/academy/overnight-risk/", "/academy/swing-trade-journal/"]
 schema: ["FAQPage"]
-visual_assets: ["/academy/images/trading-foundations/session-liquidity-map.svg"]
+visual_assets: ["/academy/images/trading-foundations/day-vs-swing-holding-period.svg"]
 last_reviewed: "2026-05-19"
 meta_title: "Day Trading Vs Swing Trading"
 meta_description: "Compare day trading vs swing trading, including holding time, risk, trade planning, screen time, execution, position sizing, and review."
@@ -40,7 +40,7 @@ Neither style is automatically better. Neither style is automatically easier. Th
 
 A beginner should understand the difference before mixing them together inside the same trade.
 
-![Trading dashboard showing session context and timeframe review labels for beginner traders.](/academy/images/trading-foundations/session-liquidity-map.svg)
+![A day trade opens and closes on the same trading day; a swing trade stays open across days.](/academy/images/trading-foundations/day-vs-swing-holding-period.svg)
 
 ## What Day Trading Means
 

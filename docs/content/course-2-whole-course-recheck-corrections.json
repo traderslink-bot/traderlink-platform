@@ -1,0 +1,76 @@
+{
+  "academy\\support-levels.md": [
+    "A support break happens when price moves below a support area and cannot quickly recover it.",
+    "A support reclaim happens when price breaks below support, then moves back above that area and holds.",
+    "* VWAP area"
+  ],
+  "academy\\support-and-resistance.md": [
+    "A doji at support is different from a doji in the middle of random chop.",
+    "* VWAP area"
+  ],
+  "academy\\candle-behavior\\topping-tail-candle.md": [
+    "A topping tail shows failed upside continuation. Buyers pushed first, but the candle closed away from the high because sellers rejected the higher area."
+  ],
+  "academy\\candle-behavior\\standard-doji.md": [
+    "The read weakens if price keeps chopping inside the same small range. That means the doji did not lead to a clearer decision."
+  ],
+  "academy\\candle-behavior\\long-legged-doji.md": [
+    "The read weakens if the next candles stay trapped inside the same range. That means the market has not chosen a cleaner direction yet."
+  ],
+  "academy\\candle-behavior\\spinning-top.md": [
+    "The read weakens if price keeps chopping through the same area. That means the candle was just part of an unclear range."
+  ],
+  "academy\\candle-behavior\\high-wave-candle.md": [
+    "The read weakens if later price stays noisy inside the same wide range. That means the battle is still unresolved."
+  ],
+  "academy\\candle-behavior\\inside-bar.md": [
+    "The read weakens if price stays stuck inside the mother candle range. Until price holds outside it, the behavior is still compression."
+  ],
+  "academy\\candle-behavior\\outside-bar.md": [
+    "The read weakens if price remains trapped inside the outside bar range. That means the expansion did not lead to clean direction."
+  ],
+  "academy\\candle-behavior\\rising-three-methods.md": [
+    "Watch whether the final candle can push above the pause and whether price keeps holding the earlier strong candle range. That range is the structure behind the continuation read.\n\nThe read weakens if the middle candles break down through the first candle range. That means the pause is no longer controlled."
+  ],
+  "academy\\candle-behavior\\falling-three-methods.md": [
+    "Watch whether the final candle can push below the pause and whether price stays under the earlier strong candle range. That range is the structure behind the continuation read.\n\nThe read weakens if the middle candles reclaim the first candle range. That means the pause is no longer controlled."
+  ],
+  "academy\\candle-behavior\\gap-and-go.md": [
+    "Price starts away from the prior close instead of opening inside the prior range."
+  ],
+  "academy\\candle-behavior\\high-volume-green-candle.md": [
+    " Higher activity accompanied a break that did not hold."
+  ],
+  "academy\\candle-behavior\\high-volume-red-candle.md": [
+    " Higher activity accompanied a break that did not hold."
+  ],
+  "academy\\chart-patterns\\bull-flag.md": [
+    "- A support or higher-low area inside the flag."
+  ],
+  "academy\\chart-patterns\\bear-pennant.md": [
+    "- Where did the structure reclaim?"
+  ],
+  "academy\\chart-patterns\\cup-and-handle.md": [
+    "A cup and handle usually has two parts:"
+  ],
+  "academy\\chart-patterns\\descending-triangle.md": [
+    "Volume rises on the latest test, but price quickly reclaims the support area. The next read is whether the breakdown follows through or whether the reclaim changes the structure."
+  ],
+  "academy\\chart-patterns\\rectangle-pattern.md": [
+    "It weakens if price action becomes too messy to define the range or if a break outside the range immediately snaps back inside."
+  ],
+  "academy\\chart-patterns\\double-top.md": [
+    "A double top forms when price tests a similar resistance area twice and fails to hold above it."
+  ],
+  "academy\\chart-patterns\\triple-top.md": [
+    "A triple top forms when"
+  ],
+  "academy\\chart-patterns\\triple-bottom.md": [
+    "A triple bottom forms when"
+  ],
+  "academy\\chart-patterns.md": [
+    "One trader may call it a bull flag. Another may call it an ascending triangle. Another may simply say price is building under resistance.\n\nThe label debate is not the most important part.",
+    "If those answers are clear, the trader understands the setup even if the exact pattern name is debatable.",
+    "Yes. One trader may call a structure a bull flag while another calls it an ascending triangle. The behavior matters more than the label debate."
+  ]
+}

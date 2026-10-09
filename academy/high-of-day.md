@@ -42,6 +42,10 @@ The useful question is:
 
 ![Candlestick chart showing high of day as an intraday reference level with nearby PMH and PDH context.](/academy/images/chart-reading/high-of-day-level-map.svg)
 
+## The Old Level And The New Session High
+
+Once price trades above the old HOD, the new trade becomes HOD. If price then falls back below the old level, the session high does not move down. A failed HOD breakout refers to losing the earlier breakout level, not changing the highest price already traded.
+
 ## What High Of Day Means
 
 High of day is the current session’s highest traded price.
@@ -50,7 +54,7 @@ If a stock opens at $3.00 and pushes to $3.45, then $3.45 is high of day.
 
 If price later trades at $3.51, then $3.51 becomes the new high of day.
 
-HOD updates during the session whenever price trades above the prior session high.
+HOD updates during the session whenever price trades above the earlier high of the current session.
 
 For most intraday lessons, HOD usually refers to the regular session unless the platform or scanner is set to include extended-hours prints. That setting matters because premarket high and regular-session high of day are not always the same thing.
 
@@ -125,7 +129,7 @@ This does not mean every clean HOD test works. It means the chart has a better s
 
 ## Failed HOD Breakout
 
-A failed HOD breakout happens when price pushes above high of day but cannot stay above it.
+A failed HOD breakout happens when price makes a new session high, then falls back below the earlier high that served as the breakout level.
 
 ![Candlestick chart showing price breaking above high of day and failing back below the level.](/academy/images/chart-reading/high-of-day-failed-breakout.svg)
 
@@ -135,11 +139,11 @@ A failed HOD breakout may show:
 
 * Price breaks above HOD.
 * Volume fades after the break.
-* Price falls back below the HOD level.
+* Price falls back below the earlier HOD breakout level.
 * The next candles cannot reclaim it.
 * The move becomes a failed breakout area.
 
-The HOD level did not become useless. It became useful in a different way. It showed where price tried to make a fresh session high and failed.
+Price did make a fresh session high, but the breakout did not hold. The earlier high remains a reference level for watching whether price recovers or rejects there.
 
 ## Extension Risk Around HOD
 
@@ -182,7 +186,7 @@ A weaker HOD read might show:
 * Price went straight up without a controlled pullback.
 * The entry came far above $3.45.
 * Volume faded after the new high.
-* Price immediately fell back below HOD.
+* Price immediately fell back below the earlier $3.45 breakout level.
 * A larger resistance level was directly above the move.
 
 Both examples include a high of day test. They are not the same quality.
@@ -230,7 +234,7 @@ Common mistakes include:
 * Ignoring how far price is from support
 * Ignoring PMH, PDH, or daily resistance nearby
 * Treating every HOD break as a clean breakout
-* Holding after price fails back below HOD
+* Holding after price fails back below the earlier HOD breakout level
 * Ignoring volume fading into the new high
 * Entering far above the level that made the move interesting
 
@@ -298,7 +302,7 @@ HOD stands for high of day.
 
 ### How is high of day different from new high of day?
 
-High of day is the current session high level. New high of day is the event of price breaking above the previous session high of day level.
+High of day is the current session high level. New high of day is the event of price breaking above the earlier high of the current session.
 
 ### Is high of day the same as premarket high?
 
@@ -310,4 +314,4 @@ Traders watch HOD because it can act as intraday resistance, a breakout referenc
 
 ### What should beginners watch around HOD?
 
-Beginners should watch whether price builds below HOD, breaks and holds, fails back below it, or becomes extended into nearby resistance.
+Beginners should watch whether price builds below HOD, breaks and holds above the earlier high, falls back below that breakout level, or becomes extended into nearby resistance.

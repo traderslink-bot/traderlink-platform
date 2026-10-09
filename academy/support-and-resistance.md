@@ -38,7 +38,7 @@ If candlesticks show what happened during a period of time, support and resistan
 
 **Where did that candle happen?**
 
-A strong candle into resistance is different from a strong candle breaking out of a clean base. A doji at support is different from a doji in the middle of random chop. Location changes the meaning of the chart.
+A strong candle into resistance is different from a strong candle breaking out of a clean base. A doji—a candle whose open and close are nearly equal—at support is different from one in a sideways range. Location changes the meaning of the chart.
 
 ![Candlestick chart showing price bouncing near support and rejecting near resistance.](/academy/images/chart-reading/support-resistance-candlestick-diagram.svg)
 
@@ -188,7 +188,7 @@ A breakout that cannot hold above the old resistance is very different from a br
 
 ## A Realistic Example
 
-Imagine a stock gaps up after news and trades from $2.20 to $3.10 in premarket. It rejects near $3.15 two separate times before the open.
+Imagine a stock gaps up after news and trades from $2.20 to $3.15 in premarket. It rejects near $3.15 two separate times before the open.
 
 A trader may mark $3.15 as resistance.
 
@@ -218,7 +218,7 @@ A day trader may care more about:
 * High of day
 * Low of day
 * Opening range
-* VWAP area
+* VWAP area: the session's volume-weighted average price
 * Intraday swing highs and lows
 * Previous day high and low
 

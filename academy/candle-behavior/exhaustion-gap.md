@@ -54,11 +54,11 @@ Exhaustion gaps are most useful to study after a move is already extended and ne
 
 ![Exhaustion gap after an extended move with price failing to continue.](/academy/images/chart-reading/candle-behavior/exhaustion-gap-context.svg)
 
-Exhaustion gaps matter most after extended moves, heavy attention, or late-session chase behavior. The same gap early in a fresh move may be continuation, so the prior trend and location are important.
+Exhaustion gaps matter most after extended moves, heavy attention, or a late stage of an established trend. The same gap early in a fresh move may be continuation, so the prior trend and location are important.
 
 ## What It Shows
 
-The gap shows traders chasing in the direction of the existing move. The exhaustion read starts when price cannot keep accepting those new highs or lows and begins giving the gap back.
+The gap extends an existing move. The opening gap alone cannot establish exhaustion; the later failure to continue is the important evidence. The exhaustion read starts when price cannot keep accepting those new highs or lows and begins giving the gap back.
 
 ## What To Watch Next
 

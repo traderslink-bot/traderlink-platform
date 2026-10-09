@@ -1,5 +1,5 @@
 ---
-title: "Stock Volume: How Traders Read Participation"
+title: "Stock Volume"
 slug: "/academy/volume/"
 primary_keyword: "stock volume"
 secondary_keywords:
@@ -24,9 +24,7 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/gap-fill-trading/"
 recommended_next: "/academy/relative-volume/"
 visual_assets:
-  - "/academy/images/chart-reading/volume-expansion-at-level.svg"
-  - "/academy/images/chart-reading/volume-dry-up-before-move.svg"
-  - "/academy/images/chart-reading/volume-fade-after-spike.svg"
+  - "/academy/images/volume-liquidity-order-flow/volume.svg"
 internal_links:
   - "/academy/gap-fill-trading/"
   - "/academy/breakout-trading/"
@@ -48,192 +46,72 @@ meta_title: "Stock Volume Explained for Traders"
 meta_description: "Learn what stock volume means, how traders read participation, common volume mistakes, and how to review volume with structured review notes."
 ---
 
-# Stock Volume: How Traders Read Participation
+# Stock Volume
 
-Stock volume is the number of shares traded during a specific period. Traders watch volume because it helps show how much participation is behind a move.
+A chart tells you where a stock traded. Volume tells you how many shares traded during that period.
 
-This lesson begins the **Volume Liquidity And Order Flow** learning path. It builds on chart-reading lessons like [Gap Fill Trading](/academy/gap-fill-trading/), [Breakout Trading](/academy/breakout-trading/), and [Breakdown Trading](/academy/breakdown-trading/) because price levels are easier to review when you also understand participation.
+Suppose a stock moves from $10.00 to $10.20. That move could happen while 2,000 shares trade or while 200,000 shares trade. The price change is the same, but the amount of trading behind it is different.
 
+That is why volume belongs beside the candles and levels you learned in Chart Reading. It adds a measure of activity to the price movement. To understand it, start with what a volume bar actually counts.
 
-## Lesson Objective
+## What A Volume Bar Counts
 
-By the end of this lesson, you should be able to:
+On a five-minute chart, each completed volume bar shows the shares traded during the matching five-minute candle. A daily volume bar shows the day's trading volume. Check the chart settings to see whether it includes premarket and after-hours trades as well as the regular session.
 
-- Explain stock volume in volume, liquidity, or order-flow context.
-- Identify where it appears on a realistic chart or trading dashboard.
-- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
-- Avoid treating it as guaranteed confirmation.
+Imagine three trades during one interval: 100 shares, 250 shares and 150 shares. Together they contribute 500 shares of volume. Each transaction has a buyer and a seller; those shares are not counted twice simply because both sides participated.
 
-Volume is not a prediction tool by itself. High volume does not guarantee continuation, and low volume does not guarantee failure. The goal is to learn how volume changes the quality of what you are reviewing.
+Volume also does not tell you how many different people traded. The same shares can change hands repeatedly. A busy interval could involve many participants, repeated trading by fewer participants, or both.
 
-## What You Should Understand Before Reading This
+![Stock Volume](/academy/images/volume-liquidity-order-flow/volume.svg)
 
-Before studying volume, remember:
+## Read The Bar Beside Its Candle
 
-- Price shows where a stock moved.
-- Volume shows how much trading happened during that move.
-- Volume needs comparison, not just a single large bar.
-- A move can happen on thin volume, but it may be less reliable and harder to execute.
-- High volume can appear during strong moves, panic moves, failed moves, or exits.
-- Volume should be reviewed with level quality, liquidity, spread, catalyst, and risk.
+A tall volume bar means more shares traded than in a shorter bar on the same scale. Look directly above it to see what price did during that activity.
 
-The goal is not to treat volume as a trade signal. The goal is to ask whether the move had real participation and whether your execution matched that context.
+Did price move through a marked level? Did it trade in a small range? Did it move higher and then finish back below resistance?
 
-## Quick Definition
+The same amount of volume can accompany a large price move or very little movement. Read the candle and its location on the chart to see what happened during that trading. Volume alone does not explain why price moved or stalled.
 
-Stock volume measures how many shares changed hands during a period of time.
+Many charts color volume bars according to whether the candle closed above or below its open, or whether price rose or fell from the previous close. Check how your chart assigns colors. A green bar does not count buyers, and a red bar does not count sellers. Every completed trade has both sides.
 
-On a chart, volume usually appears as bars below the candles. Each bar lines up with one price candle.
+## Compare Like With Like
 
-Common timeframes include:
+Volume needs a reference point. A five-minute bar should first be compared with other five-minute bars, with attention to the session and time of day. Comparing it directly with a full day's volume mixes different periods.
 
-- One-minute volume.
-- Five-minute volume.
-- Hourly volume.
-- Daily volume.
-- Premarket volume.
-- After-hours volume.
+The stock matters too. Fifty thousand shares in five minutes may be unusual for one stock and ordinary for another. A large opening bar may also reflect a different trading environment from a midday bar.
 
-![Candlestick chart showing volume expansion as price tests a key level.](/academy/images/chart-reading/volume-expansion-at-level.svg)
+Start by asking whether activity increased or decreased within the chart you are reading. The next lesson, [Relative Volume](/academy/relative-volume/), explains how to make a more useful comparison with a stock's usual activity.
 
-The size of a volume bar matters most when compared with nearby bars. A candle that looks active on one stock might be normal on another stock.
+## The Same Level, Different Outcomes
 
-## Why Volume Matters
+In this example, a five-minute chart has resistance near $10.20. The previous three completed volume bars each showed about 20,000 shares.
 
-Volume matters because price movement without participation can be misleading.
+| Sequence | Shares traded | Price behavior |
+|---|---:|---|
+| First test | 15,000 | Price reaches $10.20 and closes at $10.16 |
+| Later test | 80,000 | Price trades above $10.20 and closes at $10.24 |
+| Next five-minute candle | 50,000 | Price trades back toward $10.20 and closes at $10.23 |
 
-For example, a stock may push above resistance on light volume and then fall back below the level. Another stock may test the same type of level with much stronger participation. The level still matters, but volume helps the trader review whether other market participants were active at that level.
+During the later test, 80,000 shares trade—four times the volume of a recent 20,000-share bar. Trading activity increases as price moves above resistance. Price then closes above the level in both that candle and the next one. High volume can also occur during breakouts that fail.
 
-Volume can help traders review:
+For comparison, imagine the same 80,000 shares trade as price moves above $10.20, but that candle closes at $10.17. The next closes at $10.12. Trading activity still increases, but price falls back below resistance.
 
-- Whether a breakout happened with increased participation.
-- Whether a breakdown happened on expanding activity.
-- Whether a move is losing participation after the first push.
-- Whether a stock is too thin for the trader's size.
-- Whether a news move brought real attention or only a brief spike.
-- Whether the trader chased the loudest candle instead of waiting for structure.
+Both examples have high volume during the resistance test. Their price outcomes differ. The candles show whether price holds above the level or falls back below it.
 
-Volume adds context. It does not remove risk.
+## Quiet Trading And Fading Activity
 
-## Reading Volume With Price
+When volume decreases while price trades in a narrowing range, fewer shares are changing hands as the price range tightens. Activity may pick up later, but the quiet period does not tell you when price will break out of the range or which way it will move.
 
-Volume should almost always be read with the candles above it.
+After a large burst, smaller bars show that fewer shares are trading in those later intervals. Price may continue, pause or reverse. Look at the price response rather than assuming that declining volume forces a reversal.
 
-A high-volume green candle through resistance is different from a high-volume red candle failing back below the same level. A big volume bar after a move is already extended is different from volume expanding as price leaves a clean base.
+For a swing trader, the same habit applies to daily bars: compare volume as price approaches or crosses a daily support or resistance area. Today's volume does not show how many shares will be available to buy or sell when the market opens tomorrow.
 
-Useful volume questions include:
+## What Volume Leaves Unanswered
 
-- Where did the volume appear?
-- Was price near a meaningful level?
-- Did volume expand before, during, or after the move?
-- Did the next candles hold the level or fade back?
-- Did the spread stay manageable?
-- Did volume continue, or was it one isolated burst?
+Volume measures completed trading. It does not show how many shares are currently available at a price for your next order, what spread you will face, or whether the quote will change before you fill. Those questions belong to liquidity and execution.
 
-This is why volume review connects directly to [relative volume](/academy/relative-volume/), [volume spikes](/academy/volume-spike/), and [liquidity](/academy/liquidity/).
+Try this question: a five-minute candle trades 100,000 shares but finishes back below resistance. What can you conclude?
 
-## Volume Expansion Near A Level
+The candle shows that 100,000 shares traded and price closed below resistance. To decide whether that volume was unusually high, compare it with other relevant five-minute periods. The bar does not identify the traders, explain their reasons, or predict the next candle.
 
-Volume expansion means current volume is clearly larger than recent volume.
-
-Expansion can matter when price is testing an important level, such as resistance, support, high of day, low of day, premarket high, or a prior gap area. It suggests more participants are active around that area.
-
-That does not mean the move will continue. It means the level is attracting attention and should be reviewed carefully.
-
-In a useful review, the trader might ask:
-
-- Did volume expand at the level or only after price was already extended?
-- Did price hold above the level after the expansion?
-- Did the next candles show follow-through or rejection?
-- Was the move supported by a catalyst?
-- Was liquidity good enough to execute without poor fills?
-
-## Low Volume And Dry-Up
-
-Low volume means fewer shares are trading. Sometimes that simply means there is little interest. Other times, volume dries up while price tightens near a level.
-
-![Candlestick chart showing volume drying up while price tightens near a resistance zone.](/academy/images/chart-reading/volume-dry-up-before-move.svg)
-
-Volume dry-up can be useful context when it appears with compression or consolidation. It can show that trading activity is narrowing before a larger decision area.
-
-But dry-up is not automatically bullish or bearish. A quiet stock can stay quiet, fail to move, or become difficult to trade because spreads widen and liquidity disappears.
-
-## Volume Fade After A Spike
-
-Many new traders notice the first big volume spike and assume the move is still early. Sometimes it is. Often, the first spike is already the loudest part of the move.
-
-![Candlestick chart showing volume fading after an early spike while price stops making clean progress.](/academy/images/chart-reading/volume-fade-after-spike.svg)
-
-Volume fade after a spike can tell a trader to review whether participation is leaving the move.
-
-This matters especially after:
-
-- News releases.
-- Premarket gap moves.
-- Opening-drive breakouts.
-- Halt resumptions.
-- Multi-day runner pushes.
-- Failed breakout attempts.
-
-The question is not "does fading volume mean price must reverse?" It does not. The better question is whether the trader entered after the strongest participation had already happened.
-
-## Realistic Example
-
-A stock trades between $2.20 and $2.35 for most of the morning. Volume is steady but not unusual.
-
-Later, price pushes into $2.35 resistance. The first test happens on light volume and rejects. Thirty minutes later, price returns to $2.35 with volume bars that are three to four times larger than the earlier candles.
-
-A trader reviewing the setup might note:
-
-- The level was already visible.
-- Volume expanded during the second test.
-- The spread stayed manageable.
-- Price held near the level for several candles instead of instantly fading.
-- The trade still needed risk planning because volume did not guarantee continuation.
-
-If the trader entered late after a large candle, the review should separate setup quality from execution quality. The level and volume may have been meaningful, but the entry may still have created poor risk.
-
-## Common Mistakes
-
-Common volume mistakes include:
-
-- Treating high volume as a guaranteed continuation signal.
-- Ignoring volume when a breakout or breakdown fails.
-- Chasing the first large volume candle after price is already extended.
-- Comparing a one-minute volume bar to a daily average without context.
-- Ignoring whether volume continues after the initial spike.
-- Trading thin stocks where volume looks active but liquidity is still poor.
-- Forgetting that high volume can also appear during selling, exits, panic, and failed moves.
-- Using volume without considering spread, float, catalyst, and level quality.
-
-The most important habit is to ask what the volume appeared with. Volume plus structure is more useful than volume alone.
-
-## FAQ
-
-### What is stock volume?
-
-Stock volume is the number of shares traded during a specific period of time.
-
-### Why is volume important in trading?
-
-Volume helps traders review how much participation happened during a move, level test, breakout, breakdown, or reversal attempt.
-
-### Is high volume bullish?
-
-Not always. High volume means high activity. It can happen during buying, selling, panic, exits, failed moves, or news reactions.
-
-### What is low volume?
-
-Low volume means fewer shares are trading. Low-volume stocks may have weaker liquidity, wider spreads, and more difficult execution.
-
-### What is volume dry-up?
-
-Volume dry-up means trading activity has decreased compared with recent candles. It can appear during compression or quiet periods, but it does not guarantee a future move.
-
-### How do traders use volume with support and resistance?
-
-Traders often review whether volume expands, fades, or stays thin when price tests, breaks, rejects, or reclaims a key level.
-
-### Can volume guarantee a move?
-
-No. Volume can support analysis, but it does not guarantee price direction, trade outcome, profitability, or reduced risk.
+When recording an example for later study, keep the timeframe, session and marked level with the screenshot. That preserves the context behind the volume reading.

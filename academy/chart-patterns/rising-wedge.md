@@ -60,13 +60,7 @@ Review the higher highs, higher lows, narrowing range, and the lower boundary pr
 
 ## Pattern Structure
 
-The pattern can show weakening progress. The next review is whether price loses structure or keeps grinding higher.
-
-- Higher highs and higher lows inside compression.
-- Converging upward boundaries.
-- Often slower momentum near the top.
-- Possible downside break or failed break.
-- Need for level and volume review.
+Connect the rising swing highs and rising swing lows. Both lines slope upward, but the lower boundary rises faster, so the range narrows. A break below the lower line is the bearish trigger commonly associated with this pattern. An upside break instead contradicts that trigger; a narrowing climb alone does not establish a reversal.
 
 ## Context That Matters
 
@@ -120,18 +114,6 @@ A rising wedge forms when price moves upward inside a narrowing structure.
 ### What weakens a rising wedge?
 
 It weakens if price keeps holding the lower boundary and expands higher with clean strength.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

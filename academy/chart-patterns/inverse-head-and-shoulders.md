@@ -61,13 +61,7 @@ Review the left shoulder, head, right shoulder, neckline, and the level that wou
 
 ## Pattern Structure
 
-The pattern can show improving structure, but it needs neckline and volume review.
-
-- Left shoulder reaction low.
-- Lower head reaction low.
-- Right shoulder higher reaction low.
-- Neckline resistance area.
-- Possible neckline break or failure.
+Draw the neckline through the two bounce highs between the three lows. The shoulders do not need identical prices, and the neckline can slope. Before price breaks above that resistance, the shape is a potential reversal. A neckline break completes the pattern; a retest that holds provides further evidence. Losing the right-shoulder low weakens the improving structure, while a new low below the head undermines the reversal.
 
 ## Context That Matters
 
@@ -122,18 +116,6 @@ An inverse head and shoulders forms when price makes a lower low between two hig
 ### What weakens an inverse head and shoulders?
 
 It weakens if the right shoulder fails, price cannot reclaim the neckline, or the breakout falls back below the neckline quickly.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

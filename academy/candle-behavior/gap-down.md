@@ -43,7 +43,7 @@ A gap down happens when a new session opens below the prior session close. It ca
 ## How To Identify It
 
 * **Opening location:** The current session starts below the prior close area.
-* **Gap space:** The important visual is the empty space between the prior close and current open.
+* **Gap space:** Compare the previous regular-session close with the current regular-session open. Extended-hours trades may occur between them. An opening gap from the close can still lie inside the previous session's high-low range.
 * **Reference levels:** Compare the open with the prior close, previous day low, premarket low, and nearby support.
 
 Start with the current session open. It should open below the prior session close, then be compared with the previous day low, premarket low, and nearby support.

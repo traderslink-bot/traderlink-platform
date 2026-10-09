@@ -27,7 +27,7 @@ internal_links:
   - "/academy/level-reclaim/"
   - "/academy/break-of-structure/"
   - "/academy/volume/"
-  - "/academy/swing-trading-workflow/"
+  - "/academy/swing-trading/"
 visual_assets:
   - "/academy/images/chart-reading/rounding-bottom-context.svg"
 schema:
@@ -92,7 +92,7 @@ Useful review questions:
 - [Level Reclaim](/academy/level-reclaim/)
 - [Break Of Structure](/academy/break-of-structure/)
 - [Volume](/academy/volume/)
-- [Swing Trading Workflow](/academy/swing-trading-workflow/)
+- [Swing Trading](/academy/swing-trading/)
 
 ## Key Takeaway
 

@@ -56,7 +56,7 @@ Topping tails matter most near resistance, after a fast move, or during a failed
 
 ## What It Shows
 
-A topping tail shows failed upside continuation. Buyers pushed first, but the candle closed away from the high because sellers rejected the higher area.
+A topping tail shows that price reached a high substantially above the open and close, then finished away from that high. The candle records the rejection of higher prices, but does not show the exact sequence of moves within the candle.
 
 ## What To Watch Next
 

@@ -123,7 +123,7 @@ The cleaner the build, the easier it is to define what the breakout is actually 
 
 Volume matters because a breakout usually needs participation.
 
-If price breaks a level on weak volume, the move may not have enough interest behind it. If volume expands into the break, more traders are participating in the move.
+Higher volume means more shares traded during that period. Compare activity before and during the break, then watch whether price holds above the level. Higher volume alone does not establish that the breakout will hold.
 
 But volume by itself is not the whole answer.
 

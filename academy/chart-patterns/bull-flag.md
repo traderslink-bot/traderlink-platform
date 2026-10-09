@@ -48,11 +48,11 @@ A bull flag can also fail quickly, especially when the entry is late or the stoc
 
 ## What It Is
 
-A bull flag is a continuation-context pattern made from an initial move, a controlled pause, and a level where the idea can hold or fail.
+A bull flag is a bullish continuation pattern made from an initial move, a controlled pause, and a level where the idea can hold or fail.
 
 - A strong initial move often called the flagpole.
 - A pullback or sideways consolidation.
-- A support or higher-low area inside the flag.
+- A lower flag boundary or established support beneath the pause.
 - Volume often cools during the pause.
 - A later break or failure needs review.
 
@@ -64,7 +64,7 @@ A bull flag is useful only when the structure creates a clear area where the ide
 
 - An initial move with real participation.
 - Controlled pullback instead of panic selling.
-- Higher lows or support inside the flag.
+- A tight downward-sloping or sideways pause above the earlier support area. Higher lows inside the flag are not required.
 - A clear upper flag area where pressure is being tested.
 - A lower flag or support area where the pattern would fail.
 - Volume review on the move, the pause, and any attempted continuation.
@@ -133,7 +133,7 @@ A final mistake is holding after the flag loses its support area.
 
 ## Key Takeaway
 
-The pattern name matters less than whether the structure was visible, reviewable, and tied to clear levels, volume, and risk.
+The pattern name matters less than whether the structure was visible and tied to clear levels, volume, and risk.
 
 ## FAQ
 

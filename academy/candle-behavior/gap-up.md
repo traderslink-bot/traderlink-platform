@@ -43,7 +43,7 @@ A gap up happens when a new session opens above the prior session close. The mov
 ## How To Identify It
 
 * **Opening location:** The current session starts above the prior close area.
-* **Gap space:** The important visual is the empty space between the prior close and current open.
+* **Gap space:** Compare the previous regular-session close with the current regular-session open. Extended-hours trades may occur between them. An opening gap from the close can still lie inside the previous session's high-low range.
 * **Reference levels:** Compare the open with the prior close, previous day high, premarket high, and nearby resistance.
 
 Start with the current session open. It should open above the prior session close, then be compared with the previous day high, premarket high, and nearby resistance.

@@ -56,12 +56,12 @@
     },
     {
       "course_id": "risk-management-trade-planning",
-      "current_status": "launch-polish needed",
-      "future_visual_need": "Six-SVG risk visual batch recommended.",
-      "primary_visual_asset": null,
+      "current_status": "ready",
+      "future_visual_need": "Approved 14-lesson image set integrated locally.",
+      "primary_visual_asset": "/academy/images/risk-management-trade-planning/trading-plan.svg",
       "module_visual_assets": [],
-      "launch_polish_needed": true,
-      "hard_asset_reference_ready": false
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": true
     },
     {
       "course_id": "technical-indicators-tools",

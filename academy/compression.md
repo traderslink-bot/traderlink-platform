@@ -144,7 +144,7 @@ This can set up a cleaner breakdown read later, but again, the breakdown still n
 
 ## Volume During Compression
 
-Volume often contracts during compression because price is tightening and fewer traders are willing to push the move yet.
+Volume may contract during compression: fewer shares trade in each comparable period. A tightening price range alone does not establish that volume is low; check the volume bars separately.
 
 Then, when price finally breaks the range, traders may look for volume to expand.
 

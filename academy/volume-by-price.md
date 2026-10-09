@@ -1,5 +1,5 @@
 ---
-title: "Volume By Price: How Traders Review Activity At Levels"
+title: "Volume By Price"
 slug: "/academy/volume-by-price/"
 primary_keyword: "volume by price"
 secondary_keywords:
@@ -24,8 +24,7 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/time-and-sales/"
 recommended_next: "/academy/unusual-volume/"
 visual_assets:
-  - "/academy/images/chart-reading/volume-by-price-profile-zones.svg"
-  - "/academy/images/chart-reading/volume-by-price-low-volume-area-review.svg"
+  - "/academy/images/volume-liquidity-order-flow/volume-by-price.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/support-and-resistance/"
@@ -43,170 +42,55 @@ meta_title: "Volume By Price Explained"
 meta_description: "Learn what volume by price means, why traders watch high-volume price areas, and how it can help review support, resistance, and execution."
 ---
 
-# Volume By Price: How Traders Review Activity At Levels
+# Volume By Price
 
-Volume by price shows how much trading activity happened at different price levels. Instead of only asking how much volume traded during a time period, it asks where that volume traded on the price chart.
+Volume by price organizes historical trading activity into price areas. It is often displayed as a volume profile: horizontal bars beside a price chart.
 
+Ordinary volume bars group shares by time. A volume profile groups activity by price over a selected period. It helps show where more or less trading occurred within that period.
 
-## Lesson Objective
+## Read The Horizontal Bars
 
-By the end of this lesson, you should be able to:
+Each row covers a price range, sometimes called a price bin. A longer bar means more volume has been assigned to that range than to a shorter bar on the same scale.
 
-- Explain volume by price in volume, liquidity, or order-flow context.
-- Identify where it appears on a realistic chart or trading dashboard.
-- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
-- Avoid treating it as guaranteed confirmation.
+In a simple example, suppose actual trades have been grouped into three non-overlapping ranges. Both periods below are complete regular sessions, with identical price-bin settings.
 
-Volume by price does not predict the future. It helps traders review where meaningful activity happened and whether those areas later became support, resistance, chop zones, rejection areas, or reclaim zones.
+| Price range | Monday shares | Tuesday shares |
+|---|---:|---:|
+| $10.00 up to $10.10 | 10,000 | 60,000 |
+| $10.10 up to $10.20 | 70,000 | 20,000 |
+| $10.20 up to $10.30 | 20,000 | 20,000 |
+| Total | 100,000 | 100,000 |
 
-## What You Should Understand Before Reading This
+Monday's busiest range is $10.10–$10.20. Tuesday's is $10.00–$10.10. Total volume is equal, but its distribution differs. An execution exactly at $10.10 belongs to the second range in this example, so it is not counted twice.
 
-Before studying volume by price, remember:
+Combine both sessions and the first range contains 70,000 shares, the second 90,000, and the third 40,000. The combined profile differs from either daily profile because it covers a different period.
 
-- Regular volume bars show how much traded during a candle or time period.
-- Time and sales shows actual prints.
-- Support and resistance are zones, not perfect lines.
-- High-volume price areas can be crowded and messy.
-- Low-volume areas can move quickly, but they do not have to.
-- Volume by price should support level review, not replace price action.
+![Volume By Price](/academy/images/volume-liquidity-order-flow/volume-by-price.svg)
 
-The goal is not to treat volume-by-price zones as automatic trade locations. The goal is to understand where trading activity was concentrated.
+## The Selected Window Matters
 
-## Quick Definition
+A profile for the morning can differ from one for the full session. A multi-day profile combines activity that a single-day profile separates. A visible-range tool may change when the chart is zoomed or scrolled.
 
-Volume by price organizes volume based on price levels instead of time.
+Choose the period that matches the question being studied. For an intraday level, that might be today's session. For a swing-trading comparison, it might be several completed days. Changing the window changes the trading included, rather than revealing a new order book.
 
-A regular volume bar shows how many shares traded during a candle.
+## How The Tool Builds The Profile
 
-Volume by price shows how much volume traded around each price area.
+Not every profile is built from individual executions. Some chart tools estimate activity across price rows using shorter-timeframe bars. Row width, available data and calculation choices can change the result.
 
-For example, if a stock traded heavy volume between `$2.40` and `$2.50`, that area may stand out as a high-activity zone.
+Some volume profiles use lower-timeframe bars to estimate activity in each price range. They may divide up and down volume according to price direction. Those colors do not count buyers and sellers separately.
 
-![Candlestick chart with a volume-by-price profile showing high-volume price zones.](/academy/images/chart-reading/volume-by-price-profile-zones.svg)
+Check the selected session, historical window and row size before comparing profiles. When a tool estimates volume from candles, its price rows may differ from counts built directly from individual trades.
 
-Traders may later watch that zone to see whether price accepts it, rejects it, holds above it, or fails below it.
+## Historical Activity And Current Orders
 
-Volume-by-price and volume-profile displays are charting-platform calculations based on trade data and user settings such as session, timeframe, aggregation, and data feed. Different settings can produce different zones, so the tool should be reviewed as context rather than as an official level.
+A long bar marks substantial historical activity in that range. It does not show how many orders are waiting there now, who still holds shares from that area, or how price must react when it returns.
 
-## Why Volume By Price Matters
+A shorter bar means less activity was assigned to that range during the selected period. It does not guarantee that price will move quickly through it next time. New orders and new information can change the market.
 
-Volume by price matters because markets often react around areas where a lot of trading previously happened.
+## Connect The Profile To Levels
 
-Heavy volume at a price area can suggest many traders made decisions there. Some may be holding from that zone. Some may be trapped. Some may want to exit if price returns. Others may watch it as a support or resistance area.
+Suppose Monday's busiest range overlaps a resistance area from earlier chart reactions. If price returns, compare its response with that historical context. It might reject the area, move through it, or trade sideways within it.
 
-This is not magic. It is context.
+The profile adds information about past trading; the current candles show the new response. Neither a long bar nor a familiar level guarantees support or resistance.
 
-Traders may use volume by price to review:
-
-- Where the stock spent the most active trading time.
-- Where price may face resistance after moving back up.
-- Where support may form after a breakout holds.
-- Whether a breakout cleared a high-volume area or failed inside it.
-- Whether a trade entry happened near a crowded price zone.
-- Whether price moved quickly through a low-volume area.
-
-The level still needs price reaction, volume, liquidity, and risk review.
-
-## High-Volume Price Areas
-
-High-volume price areas are zones where a lot of trading happened.
-
-These areas may become decision zones because many traders interacted with the stock there. Price may chop, hold, reject, reclaim, or fail around these areas.
-
-High-volume zones can be useful for review, but they are not guaranteed support or resistance.
-
-A good review asks:
-
-- Did price accept the zone or reject it?
-- Did volume expand when price returned?
-- Did liquidity improve or worsen?
-- Did price chop because many traders were active there?
-- Did the trader enter into a crowded zone without enough room?
-
-## Low-Volume Areas
-
-Low-volume areas are price ranges where relatively little trading occurred.
-
-Sometimes price can move quickly through these areas because there was less previous activity. But this is not automatic.
-
-![Candlestick chart with volume-by-price profile showing price moving through a low-volume area and stalling near a high-volume zone.](/academy/images/chart-reading/volume-by-price-low-volume-area-review.svg)
-
-Low-volume area review asks:
-
-- Did price move quickly through the area?
-- Did it stall when it reached a higher-volume zone?
-- Did the move happen on real volume or thin liquidity?
-- Did the trader chase after price had already crossed the low-volume area?
-- Did execution quality change during the move?
-
-Low-volume areas are context, not a guarantee of speed.
-
-## Volume By Price And Support Resistance
-
-Volume by price can support support and resistance review because it shows whether a level had meaningful participation.
-
-A resistance level with heavy previous volume may be more important than a random price line. A support level that formed during heavy volume may matter more than a level where price barely traded.
-
-Still, volume by price should not replace price action.
-
-A high-volume zone can fail. A low-volume area can become important later. A level can look obvious and still break down.
-
-The question is not "will this level work?" The better question is "how did price behave when it returned to an area where many traders previously acted?"
-
-## Realistic Example
-
-A stock runs from `$1.20` to `$2.00`, then spends most of the afternoon trading between `$1.65` and `$1.75`.
-
-The next morning, price gaps up and pulls back toward `$1.70`.
-
-A trader looking at volume by price might notice that `$1.65` to `$1.75` was the prior high-volume area. That zone may matter because many traders made decisions there the day before.
-
-The trader may then review:
-
-- Does price hold that zone or slice through it?
-- Does volume increase when price returns to the area?
-- Does the bid absorb selling, or does the spread widen?
-- Does the stock reclaim the zone after dipping below it?
-- Did the trader enter before seeing a reaction?
-
-The volume-by-price area does not tell the trader what to do. It helps frame the level.
-
-## Common Mistakes
-
-Common volume-by-price mistakes include:
-
-- Treating the biggest volume area as guaranteed support or resistance.
-- Ignoring the timeframe of the volume profile.
-- Adding too many zones until the chart becomes unusable.
-- Ignoring what happened after price reached the zone.
-- Using volume by price without support/resistance context.
-- Assuming low-volume areas must move quickly.
-- Forgetting that execution still depends on liquidity, spread, and order flow.
-
-Volume by price should clarify the chart, not make it more cluttered.
-
-## FAQ
-
-### What does volume by price mean?
-
-Volume by price shows how much trading volume happened at different price levels. It focuses on where volume traded, not just when it traded.
-
-### Is volume by price the same as volume profile?
-
-They are closely related. Many traders use volume profile tools to view volume by price areas on a chart.
-
-### Why do traders watch high-volume price areas?
-
-High-volume areas can show where a lot of trading decisions happened. Traders may watch those areas later for support, resistance, rejection, or reclaim behavior.
-
-### Does volume by price predict support and resistance?
-
-No. It can help identify areas worth reviewing, but it does not guarantee that price will hold, reject, reclaim, or break out.
-
-### What is a low-volume area?
-
-A low-volume area is a price range where relatively little trading occurred. Price may sometimes move quickly through these areas, but context still matters.
-
-### How can traders review volume by price in review notes?
-
-Traders can note whether entries and exits happened near high-volume zones, low-volume areas, support, resistance, or previous rejection areas, then compare those notes with execution quality and outcome.
+Does a profile containing 70,000 shares near $10.15 mean that 70,000 shares are available to sell there now? No. Those shares traded during the chosen period. Current available orders belong to market depth. [Unusual Volume](/academy/unusual-volume/) brings the course's activity and execution concepts together.

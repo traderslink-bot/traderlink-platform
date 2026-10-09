@@ -44,9 +44,9 @@ An evening star is a three-candle bearish reversal pattern. It shows buying pres
 
 * **Body:** First candle is a strong green body, second is small, third is a strong red body.
 * **Wicks:** The middle candle may have wicks, but its small body is the main pause clue.
-* **Relationship:** The third candle pushes back into the first candle range after the small middle candle.
+* **Relationship:** The third candle closes below the midpoint of the first green candle body.
 
-Look for a strong green candle, a smaller middle candle that shows hesitation, and a red candle that pushes back into the first candle range. The third candle is what makes the shift visible.
+Look for a long green candle, a small middle body above it, and a long red candle that closes below the midpoint of the first green body. In the classic daily pattern, the middle body gaps above the first body. Intraday charts may show a similar reversal sequence without that gap; distinguish that sequence from the classic pattern.
 
 ## Context
 

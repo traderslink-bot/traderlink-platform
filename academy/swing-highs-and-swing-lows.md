@@ -107,7 +107,7 @@ If the answer is no, it may just be noise.
 
 A swing point depends on the timeframe.
 
-A five-minute chart may show several intraday swing highs and lows. A daily chart may show only one or two larger swing points over the same period.
+A five-minute chart may show several swing highs and lows within one session. A daily chart compresses that entire session into one candle. Daily swing points therefore develop across several sessions, rather than showing each intraday turn.
 
 Neither one is automatically better. They answer different questions.
 

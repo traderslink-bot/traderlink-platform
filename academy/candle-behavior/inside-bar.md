@@ -62,7 +62,7 @@ An inside bar shows price getting smaller inside the prior candle range. Buyers 
 
 Watch whether price breaks above or below the mother candle range and actually holds outside it. A quick break that snaps back inside the range is not clean expansion.
 
-The read weakens if price stays stuck inside the mother candle range. Until price holds outside it, the behavior is still compression.
+If price stays inside the mother candle range, the compression continues. A move beyond its high or low is the next change to watch.
 
 ## Common Confusion
 

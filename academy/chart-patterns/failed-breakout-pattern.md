@@ -60,13 +60,7 @@ Review the breakout level, how quickly price fell back below it, and whether lat
 
 ## Pattern Structure
 
-The pattern shows a break attempt that did not hold.
-
-- Visible resistance or range high.
-- Break above the level.
-- Failure back below the level.
-- Possible trapped late entries.
-- Need to review volume and reclaim behavior.
+First identify resistance that existed before the move. For example, price repeatedly stalls at $4.00, breaks to $4.12, then closes back at $3.96. The move above $4.00 did not hold. If another bounce rejects near $4.00, the level remains resistance. If price reclaims $4.00 and builds above it instead, the failed-breakout interpretation weakens. A brief dip alone does not establish a lasting reversal.
 
 ## Context That Matters
 
@@ -120,18 +114,6 @@ A failed breakout happens when price moves beyond resistance but cannot hold abo
 ### Can a failed breakout turn bullish again?
 
 Yes. If price quickly reclaims the breakout level and starts holding above it, the failed breakout read may no longer be valid.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

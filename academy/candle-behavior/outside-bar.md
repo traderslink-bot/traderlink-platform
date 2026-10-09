@@ -62,7 +62,7 @@ An outside bar shows range expansion. Both sides of the prior candle were tested
 
 Watch which side of the outside bar range price respects next. Holding above or below that wide range gives a cleaner read than the outside bar alone.
 
-The read weakens if price remains trapped inside the outside bar range. That means the expansion did not lead to clean direction.
+If price remains inside the outside bar range, the earlier expansion has not produced directional follow-through. The outside bar still exists; its range now provides the boundaries to watch.
 
 ## Common Confusion
 

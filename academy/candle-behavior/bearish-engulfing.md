@@ -44,7 +44,7 @@ A bearish engulfing pattern uses two candles. The second red body takes back the
 
 * **Body:** First candle has a green body. Second candle has a larger red body.
 * **Wicks:** Wicks can vary, but the body relationship is the main visual clue.
-* **Relationship:** The red body opens above or near the prior body and closes below it, taking back the prior candle body.
+* **Relationship:** The red candle opens at or above the previous green close and closes below the previous green open. Its body covers the previous green body; it does not need to cover both wicks.
 
 Focus on the body relationship. The second candle should be a larger red body that covers the prior green body. The wicks can vary, but the body takeover is the main clue.
 

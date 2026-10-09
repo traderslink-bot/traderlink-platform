@@ -28,174 +28,55 @@ internal_links:
   - "/academy/swing-trading-news-risk/"
   - "/academy/gap-fill-trading/"
   - "/academy/trade-review-and-improvement/"
-schema:
+schema: ["Article"]
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-10-08"
 meta_title: "Overnight Risk Explained For Traders"
 meta_description: "Learn what overnight risk means, why gaps and news matter, and how swing traders can review risk when holding stocks overnight."
 ---
+
 # Overnight Risk
 
-The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+![Overnight Risk diagram](/academy/images/risk-management-trade-planning/overnight-risk.svg)
 
-## Lesson Objective
+Overnight risk comes from holding a position across trading days while prices, news and available liquidity can change. The next eligible trading price may be far from the previous close or the intended exit.
 
-By the end of this lesson, you should be able to:
+## Make The Holding Decision Before The Close
 
-- Explain the core idea behind Overnight Risk.
-- Identify the decision it is meant to control.
-- Connect the concept to position size, invalidation, loss control, and review.
-- Avoid treating risk rules as flexible only when emotions are high.
-- Use the lesson as part of a written trading plan and review process.
+First ask whether this was planned as a day trade or a swing trade. If the plan closes the position that day, an unrealized loss is not a reason to turn it into an overnight holding. A swing trade should already have a reason for holding across sessions and a plan for managing that exposure.
 
-Overnight risk is the risk that a position changes in value while the market is closed or while regular trading liquidity is limited. For swing traders, overnight risk matters because positions are held across sessions and price can move before the trader has a chance to react.
+For an intended swing, check what still supports the trade, the next known company events, the shares you would retain and your ability to monitor the next session. Then check the actual exit order and whether it remains active. These questions help choose between holding the full quantity, reducing it or closing it; they cannot remove unexpected news.
 
-A stock can close near support and open far below it the next morning. A company can release news after hours. A filing can change the story. Market futures can drop. A sector can weaken while the trader is still holding.
+Suppose a trader holds 100 shares bought at $5.00 with a $4.80 planned exit and intends to hold for several days while support holds. Before the close, they discover an earnings release scheduled before the next open. Their written swing plan excludes holding through earnings, so they arrange an exit before that event rather than assuming the stop will preserve the original $20.00 price-risk estimate.
 
-That sounds simple, but it matters. Holding overnight is not just holding longer. It changes the risk profile of the trade.
+In another case, there is no known release and the trader's plan permits holding. They still examine an adverse-price scenario: an exit at $4.40 would lose $60.00 on 100 shares before costs. Holding 50 would lose $30.00 under that same scenario. Those prices are used to understand exposure, not to predict the next open or establish the worst possible loss. If 50 shares still expose more than the plan permits, consider a smaller holding or close the position.
 
-## Quick Definition
+Write a short pre-close note: why hold, quantity retained, known events, active exit order and what to do if the next session opens below the intended stop. When trading resumes, confirm the position and order status before submitting another exit; do not assume yesterday's order has disappeared or filled.
 
-Overnight risk means the risk of holding a position outside regular trading hours, when news, gaps, liquidity changes, and market movement can affect price before the next session opens.
+## A Gap Can Pass The Stop
 
-Overnight risk can come from:
+A trader buys 100 shares at $5.00 and places a $4.80 sell stop that is eligible during the regular session. The planned price loss at $4.80 is $20.00.
 
-- Earnings reports.
-- Press releases.
-- SEC filings.
-- Offerings or financing news.
-- Analyst updates.
-- Sector news.
-- Market futures.
-- Global market events.
-- Low after-hours liquidity.
-- Gap up or gap down moves.
+Before the next regular session, news arrives. The next available fill after the order triggers is $4.40. The loss is 100 × ($5.00 − $4.40) = $60.00 before costs, three times the original $20.00 planned price risk.
 
-For swing traders, overnight risk should be part of the plan before the position is opened.
+The $4.80 stop was a trigger, not a guaranteed buyer at $4.80. A gap is a jump between available trading prices; it does not require continuous trading through every price in between.
 
-Trading outside regular hours can involve lower liquidity, wider spreads, greater volatility, changing prices, and partial or no executions. Margin use can also increase losses and create margin-call risk, so overnight exposure should be reviewed with account type and broker rules in mind.
+## Check Whether Your Exit Works Outside Regular Hours
 
-## Why It Matters To Traders
+Some stocks trade outside regular hours, but a particular broker, order type or venue may not provide the same access throughout that period. Spreads and available size can also differ. Seeing an extended-hours price does not establish that the planned stop is working there.
 
-Overnight risk matters because a planned exit level may not be available the next morning.
+Check the actual order's session eligibility, duration and trigger settings. A day order can expire while the position remains open. An order lasting longer still requires eligible trading and suitable handling when its condition occurs.
 
-A trader may think risk is limited to a chart level, but if the stock gaps below that level, the real loss can be larger than planned. This is especially important in small-cap stocks, earnings plays, biotech names, and news-driven tickers.
+## Compare Quantities Before Holding
 
-This is where traders can get into trouble. They size a swing trade based on normal intraday movement, then get surprised when overnight news creates a gap.
+In the gap example, 100 shares lose $60.00 at a $4.40 exit. Holding 50 shares through the same move would lose $30.00 before costs. Reducing quantity changes the dollar effect; it does not improve the fill price or remove uncertainty.
 
-Traders often review overnight risk to understand:
+If the trader sells 50 of the original shares at $5.00 before the close and later sells the remaining 50 at $4.40, the first exit contributes no price gain or loss and the second loses $30.00. Include both exits and their costs when reviewing the complete trade.
 
-- Whether the position size was appropriate.
-- Whether scheduled events were known.
-- Whether the stock had filing or dilution risk.
-- Whether after-hours liquidity was thin.
-- Whether the trade plan allowed for gap risk.
-- Whether holding overnight was intentional or accidental.
+## Check Events And Active Orders Before Holding
 
-## How It Works
+Before holding overnight, check whether an earnings release or other announced event is expected before the next session. Verify the issuer's current information and note the relevant timezone. Unexpected news remains possible even when the calendar looks clear.
 
-Overnight risk works differently from normal intraday risk because the market can move while the trader cannot easily manage the position.
+Then inspect the actual exit order: is it still active, how long does it last and during which sessions can it trigger or fill? A position can outlast a day order. A longer-duration order can remain active without guaranteeing access to every overnight market.
 
-A stop level may not protect the trader from a gap. Alerts may fire after the move has already happened. After-hours trading can have wider spreads and thinner liquidity.
-
-Before holding overnight, traders may ask:
-
-- Is there earnings soon?
-- Is there expected news?
-- Is this a small-cap stock with offering risk?
-- Is the spread manageable after hours?
-- Is my size too large for a possible gap?
-- Does the daily chart still support the hold?
-- Would I still accept the risk if the stock opened lower tomorrow?
-
-That last question can prevent a lot of emotional decisions.
-
-## Example Scenario
-
-Imagine a trader buys a stock at $4.20 because it broke above resistance and closed strong.
-
-The planned risk area is $3.90. After the close, the company announces financing. The next morning, the stock opens at $3.50.
-
-The trader planned risk around $3.90, but overnight news moved the stock below that level before the regular session opened.
-
-A useful review would ask:
-
-- Did I check for financing or filing risk?
-- Was the position size too large for overnight exposure?
-- Was holding overnight part of the plan?
-- Did the news invalidate the original setup?
-- Did I react with discipline after the gap?
-
-The point is not to avoid all overnight risk. The point is to know when the risk is being taken.
-
-## Common Mistakes
-
-One common mistake is accidentally holding overnight. A trader starts with a day trade, then refuses to close it and turns it into a swing trade without a plan.
-
-Another mistake is ignoring scheduled events. Earnings, FDA decisions, data releases, shareholder votes, and financing deadlines can all matter.
-
-Traders also make mistakes when they assume a stop loss removes overnight risk. A gap can open beyond a planned stop level.
-
-Another mistake is holding small-cap stocks overnight without checking filings, cash needs, offering history, or dilution risk.
-
-A final mistake is sizing too large because the chart looks clean during regular hours. Overnight gaps can change that quickly.
-
-## Review Questions
-
-Overnight risk should be reviewed any time a trade is held past the close.
-
-Useful review questions include:
-
-- Was holding overnight part of the original plan?
-- What was the reason for holding?
-- Did I check upcoming news or earnings?
-- Did I check filing or offering risk?
-- Did my position size account for gap risk?
-- Did the stock open near my expected area or gap away from it?
-- Did overnight news change the trade thesis?
-- Did I manage the next session based on the plan or emotion?
-
-These questions help traders separate planned swing trades from accidental overnight holds.
-
-## Related Terms And Guides
-
-For more context, read:
-
-- [Swing trading](/academy/swing-trading/)
-- [Swing trading risk management](/academy/swing-trading-risk-management/)
-- [Swing trading news risk](/academy/swing-trading-news-risk/)
-- [Gap fill trading](/academy/gap-fill-trading/)
-- [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## FAQ
-
-### What is overnight risk in trading?
-
-Overnight risk is the risk that a stock moves while the market is closed or while regular trading liquidity is limited.
-
-### Why is overnight risk important for swing traders?
-
-Swing traders hold positions across sessions, so news, filings, earnings, and market movement can affect price before the next regular session opens.
-
-### Can a stop loss protect against overnight risk?
-
-A stop can help define a plan, but it may not protect against a gap that opens beyond the planned stop area.
-
-### What causes overnight gaps?
-
-Overnight gaps can be caused by earnings, news, filings, analyst updates, sector moves, market futures, low liquidity, or unexpected events.
-
-### Should traders avoid holding overnight?
-
-That depends on the trader's strategy and risk plan. The key is to know when overnight risk is being taken and size the trade accordingly.
-
-### How should I review overnight risk?
-
-Track why the trade was held overnight, what risks were known, whether position size made sense, how the stock opened, and whether the plan was followed.
-
-## Related Lessons
-
-- [Profit Protection](/academy/profit-protection/)
-- [Holding Through News](/academy/holding-through-news/)
-- [Risk Management](/academy/risk-management/)
-- [Trade Risk Review](/academy/trade-risk-review/)
+The gap calculation describes one adverse outcome. A stock may also open higher or near its prior close. Choosing to hold should reflect the exposure being accepted before the outcome is known, rather than assuming a stop will preserve the original price-risk estimate.

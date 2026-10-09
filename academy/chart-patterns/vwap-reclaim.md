@@ -61,9 +61,9 @@ The key is not the line by itself. The key is behavior after the reclaim.
 
 ## What It Measures
 
-A VWAP reclaim uses VWAP as an intraday average-price reference. It measures how price behaves around that reference, not a complete read by itself.
+VWAP tracks the session's average traded price weighted by volume. A reclaim describes price crossing back above that reference after trading below it.
 
-VWAP itself is a volume weighted average price calculation, and platform values can vary based on session definition, data feed, tick-versus-bar calculation, and whether extended-hours data is included. A reclaim is therefore a review of price behavior around a charting reference, not a complete trading plan by itself.
+VWAP means volume-weighted average price: each traded price is weighted by the shares traded at that price. For example, 100 shares at $4.00 and 300 shares at $4.20 produce a VWAP of $4.15: ($400 + $1,260) divided by 400 shares. VWAP normally resets each session, and platform values can vary based on session definition, data feed, tick-versus-bar calculation, and whether extended-hours data is included. A reclaim is therefore a review of price behavior around a charting reference, not a complete trading plan by itself.
 
 ## How Traders Use It As Context
 
@@ -86,7 +86,7 @@ VWAP reclaims can mislead when traders enter late after a large reclaim candle, 
 
 A stock sells off after the open, bases below VWAP, then reclaims VWAP with stronger volume. Price pulls back to VWAP and holds while resistance is still above.
 
-That is a structured reclaim to review. A different stock spikes above VWAP on one candle, runs directly into resistance, and fails back below VWAP. That is a failed reclaim to review, a failed reclaim to review around the level.
+In this example, price holds above VWAP after reclaiming it. A different stock might spike above VWAP on one candle, meet resistance, and fall back below VWAP. That brief move above VWAP fails to hold.
 
 ## Common Mistakes
 
@@ -110,7 +110,7 @@ A final mistake is holding after VWAP is lost again even though the reclaim idea
 
 ## Key Takeaway
 
-A VWAP reclaim is a tool-based reclaim context, not a classic chart pattern. Review whether price reclaimed VWAP with structure or only crossed it briefly.
+A move back above VWAP is the reclaim. A later pullback that holds above it provides additional evidence; a quick fall below it shows the crossing did not hold.
 
 ## FAQ
 

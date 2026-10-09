@@ -61,13 +61,7 @@ Review the base quality, the range high, the volume on the break, and whether pr
 
 ## Pattern Structure
 
-The pattern shows price leaving a base, but the break still needs follow-through.
-
-- A sideways base or consolidation.
-- Clearly visible range high.
-- Volume and participation review.
-- Break above the range or failure back inside.
-- Retest or hold behavior after the break.
+Mark the upper edge of the base using repeated reaction highs, then mark its lower support boundary. A move above the upper edge is the breakout attempt. A pullback that holds near the old upper edge supports the continuation. Returning well inside the base means the first break did not hold; losing the base low is a larger structural failure.
 
 ## Context That Matters
 
@@ -122,18 +116,6 @@ A base breakout forms when price moves out of a sideways base or consolidation r
 ### What weakens a base breakout?
 
 It weakens if price breaks above the range and quickly falls back inside the base, especially when volume fades.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

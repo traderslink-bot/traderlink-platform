@@ -28,7 +28,7 @@ meta_description: "Learn Gap Fill behavior by prior close, current open, gap spa
 
 # Gap Fill
 
-A gap fill happens when price moves back into the empty space between the new session open and the prior session close.
+A gap fill is a retracement of the price difference between the previous regular-session close and the new regular-session open. A partial fill covers some of that difference; a full fill reaches the previous close.
 
 ![Gap followed by candles moving back into the open gap area.](/academy/images/chart-reading/candle-behavior/gap-fill-shape.svg)
 
@@ -68,7 +68,9 @@ The read weakens if price holds the opening side and refuses to move into the ga
 
 ## Common Confusion
 
-A gap fill can be partial. It does not have to return all the way to the prior close to be worth studying.
+Suppose the previous close is $4.00 and the next regular session opens at $5.00. A decline to $4.50 fills half of the $1.00 opening gap. Reaching $4.00 fills it completely. For a gap down, the direction reverses: price rises toward the previous close.
+
+The opening gap is a difference between two regular-session prices. It does not mean no shares traded at prices between them during extended hours. A partial fill is not a promise that price will reach the previous close.
 
 ## Key Takeaway
 

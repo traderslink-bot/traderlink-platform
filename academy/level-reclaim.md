@@ -168,7 +168,7 @@ If a trader labels a random bounce as a reclaim after the fact, the lesson becom
 
 ## Realistic Example
 
-A stock opens above premarket high at $4.20.
+Premarket high is $4.20. The stock opens at $4.25, above that level.
 
 After the open, price drops below $4.20 and trades down to $4.05. A few minutes later, price pushes back above $4.20 with stronger volume and holds between $4.22 and $4.30.
 

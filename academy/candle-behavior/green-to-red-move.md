@@ -28,7 +28,7 @@ meta_description: "Learn Green-To-Red Move behavior by prior close, session open
 
 # Green-To-Red Move
 
-A green-to-red move happens when price starts above a session reference and then moves back below it. In stocks, that reference is often the prior close or the current session open.
+A green-to-red move happens when a stock crosses from above its previous regular-session close to below it. The stock changes from being up to down on the day.
 
 ![Green candles above a prior close area followed by red candles moving below it.](/academy/images/chart-reading/candle-behavior/green-to-red-move-shape.svg)
 
@@ -38,15 +38,15 @@ A green-to-red move happens when price starts above a session reference and then
 * **Category:** Session And Gap Behavior
 * **Type:** Session Shift
 * **Number of candles:** Session sequence
-* **Typical context:** Intraday move from above a session reference to below it.
+* **Typical context:** Intraday move from above the previous close to below it.
 
 ## How To Identify It
 
 * **Starting location:** Price trades above the reference area first.
-* **Loss of level:** Price crosses back below the reference and starts holding below it.
-* **Reference levels:** The sequence needs a clear prior close, session open, VWAP, or premarket level.
+* **Loss of level:** Price crosses back below the reference.
+* **Reference levels:** Use the previous regular-session close to measure whether the stock is up or down on the day.
 
-Start with the reference line. Price should trade above it first, then cross back below it and begin holding below that area instead of immediately reclaiming.
+Start with the reference line. Price should trade above it first, then cross back below it. The crossing changes whether the stock is up or down from the previous close; holding on that side is a separate observation afterward.
 
 ## Context
 
@@ -54,11 +54,13 @@ Green-to-red behavior is session context, not a single candlestick pattern.
 
 ![Green-to-red move crossing below the prior close area after trading above it.](/academy/images/chart-reading/candle-behavior/green-to-red-move-context.svg)
 
-Green-to-red behavior matters most when the reference is clear, such as the prior close, open, VWAP, or premarket level. It is cleaner when the loss happens with volume and does not immediately bounce from support.
+Mark the previous close before studying the crossing. It is cleaner when the loss happens with volume and does not immediately bounce from support.
 
 ## What It Shows
 
-The move shows a session shift. Buyers had price green against the reference, then sellers lost that area and changed the intraday tone.
+Suppose yesterday's regular session closed at $5.00. Today the stock trades at $5.20, then crosses $5.00 and reaches $4.95. That is a green-to-red move: its change from the previous close switches from positive to negative.
+
+Crossing the previous close is the move itself. Staying below it afterward gives further information about whether the move holds; it is not required just to identify the crossing.
 
 ## What To Watch Next
 
@@ -68,11 +70,13 @@ The read weakens if price crosses down and immediately reclaims the reference. T
 
 ## Common Confusion
 
-Green-to-red is not a candle shape. It is a sequence around a session reference.
+A candle's color compares its own open and close. A stock's daily change compares its current price with the previous close. A green candle can form while the stock is still down on the day, and a red candle can form while the stock is still up.
+
+A move through VWAP or a premarket level is a reclaim or loss of that named level. Some traders also use red-to-green or green-to-red relative to the session open; when discussing that variation, state the opening price explicitly so the reference is clear.
 
 ## Key Takeaway
 
-A green-to-red move is session behavior, not a single candle. It shows price losing an important reference after starting above it.
+A green-to-red move crosses the previous close from above to below. Mark that price, identify the crossing, and then watch whether price stays on the new side or crosses back.
 
 ## Related Lessons
 

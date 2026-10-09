@@ -40,7 +40,7 @@ meta_description: "Learn what Wedge Pattern shows, why it can fail, and how to r
 
 **Best suited for:** day trading and swing trading.
 
-A wedge pattern forms when price compresses between two converging boundaries. The range gets tighter, which tells traders that expansion may be coming, but the direction still depends on how price leaves the wedge.
+A wedge pattern forms when price compresses between two converging boundaries that slope in the same direction. The range gets tighter, which tells traders that expansion may be coming, but the direction still depends on how price leaves the wedge.
 
 The value is in the compression and the boundaries, not the name. A wedge should make the chart easier to read, not more confusing.
 
@@ -48,7 +48,7 @@ The value is in the compression and the boundaries, not the name. A wedge should
 
 ## What It Is
 
-A wedge pattern forms when price compresses between converging trendlines.
+A wedge pattern forms when price compresses between converging trendlines that both slope upward or both slope downward. A symmetrical triangle differs: its upper boundary slopes down while its lower boundary slopes up.
 
 - Narrowing price range.
 - Converging upper and lower boundaries.
@@ -115,23 +115,11 @@ A wedge is compression structure. It should help define tightening behavior and 
 
 ### What is Wedge Pattern?
 
-A wedge pattern forms when price compresses between converging trendlines.
+A wedge pattern forms when price compresses between converging trendlines that both slope upward or both slope downward. A symmetrical triangle differs: its upper boundary slopes down while its lower boundary slopes up.
 
 ### What weakens a wedge pattern?
 
 It weakens if the boundaries are forced, the range is not actually tightening, or price breaks out and immediately falls back inside.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

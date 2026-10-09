@@ -36,17 +36,17 @@ Three black crows is a three-candle bearish pattern made of consecutive red bodi
 
 * **Name:** Three Black Crows
 * **Category:** Bearish Candle Patterns
-* **Type:** Bearish Continuation / Momentum
+* **Type:** Bearish Reversal
 * **Number of candles:** 3 candles
 * **Typical context:** After a failed push, distribution area, or early shift into seller control.
 
 ## How To Identify It
 
-* **Body:** Three meaningful red bodies, often stepping lower.
+* **Body:** Three long red bodies with successively lower closes.
 * **Wicks:** Small or moderate wicks. Strong closes near the lows make the pattern clearer.
-* **Relationship:** Each candle continues seller pressure from the prior candle.
+* **Relationship:** The second and third candles each open within the previous candle body and close below its close.
 
-Look for three red candles in a row, each closing weak and generally pushing lower than the prior candle. The bodies should be meaningful, not tiny candles with messy overlap.
+Look for three consecutive long red candles after an advance. Each closes near its low, and the second and third open within the preceding body. Three red candles with large lower wicks or gaps between their bodies do not have the same structure.
 
 ## Context
 

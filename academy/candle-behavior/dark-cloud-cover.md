@@ -42,11 +42,11 @@ Dark cloud cover is a two-candle bearish reversal pattern. The second candle ope
 
 ## How To Identify It
 
-* **Body:** First candle is green. Second candle is red and closes meaningfully into the prior green body.
+* **Body:** First candle is green. Second candle is red and closes below the midpoint of the prior green body, but above its open.
 * **Wicks:** Wicks are secondary. The close into the prior body is the key.
 * **Relationship:** The red candle does not need to cover the full green body like a bearish engulfing candle.
 
-Look for a green candle followed by a red candle that opens higher and then closes well into the prior green body. It does not have to engulf the whole candle; the failed higher open is the key.
+Look for a green candle followed by a red candle that opens above the previous close and closes below the midpoint of the green body. If the green candle opens at $4.60 and closes at $5.00, its body midpoint is $4.80. A red close at $4.70 gives back more than half of that body without engulfing it.
 
 ## Context
 
@@ -62,11 +62,11 @@ The first candle shows buyer control. The second candle starts with more strengt
 
 Watch whether price stays inside or below the prior green body and starts losing the red candle low. That shows the failed strength is being accepted.
 
-The read weakens if price cannot stay inside the prior green body. That means sellers did not take back enough of the prior move.
+The bearish interpretation weakens if price recovers above the second candle's high. A further decline below the prior green body supports the bearish interpretation rather than weakening it.
 
 ## Common Confusion
 
-Dark cloud cover is weaker visually than bearish engulfing because it only moves into the prior body.
+Dark cloud cover gives back more than half of the prior green body. A bearish engulfing pattern covers the entire prior body. Neither shape guarantees a reversal.
 
 ## Key Takeaway
 

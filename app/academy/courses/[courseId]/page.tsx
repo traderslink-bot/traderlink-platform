@@ -152,7 +152,9 @@ export default async function AcademyCoursePage({ params }: PageProps) {
           <p className="academy-body-copy">
             {hasSpecializedLessonGroups
               ? "Start with the guided core path, then use the candlestick and chart-pattern lessons when you want to study a specific candle, behavior, or pattern."
-              : "Start with the guided core path and move lesson by lesson. This course is intentionally focused on the first concepts a new trader needs before studying chart structure, volume, risk planning, or advanced workflows."}
+              : courseId === "volume-liquidity-order-flow"
+                ? "Follow the six modules in order, from volume and liquidity to quotes, execution, market depth and time and sales."
+                : "Start with the guided core path and move lesson by lesson. This course is intentionally focused on the first concepts a new trader needs before studying chart structure, volume, risk planning, or advanced workflows."}
           </p>
 
           <div className="academy-module-list">

@@ -60,13 +60,7 @@ Review the range high, range low, number of clean reactions, and what happens wh
 
 ## Pattern Structure
 
-The pattern shows balance inside a range.
-
-- Horizontal resistance area.
-- Horizontal support area.
-- Repeated reactions inside the range.
-- Possible break above or below the range.
-- Failed breaks back inside the rectangle.
+Draw horizontal boundaries around repeated reaction highs and lows. Inside the rectangle, price is still ranging. A move outside either boundary is a break attempt. The former upper boundary may become support after an upside break; the former lower boundary may become resistance after a downside break. A return into the range shows that the first attempt did not hold.
 
 ## Context That Matters
 
@@ -119,19 +113,7 @@ A rectangle pattern is a sideways range where price repeatedly reacts between su
 
 ### What weakens a rectangle pattern?
 
-It weakens if price action becomes too messy to define the range or if a break outside the range immediately snaps back inside.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
+The rectangle becomes harder to identify if its boundaries are no longer clear. A break that immediately returns inside the range weakens the breakout attempt, while the original range may remain intact.
 
 ### What should this pattern be compared with?
 

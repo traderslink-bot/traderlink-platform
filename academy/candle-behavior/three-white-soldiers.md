@@ -36,17 +36,17 @@ Three white soldiers is a three-candle bullish pattern made of consecutive green
 
 * **Name:** Three White Soldiers
 * **Category:** Bullish Candle Patterns
-* **Type:** Bullish Continuation / Momentum
+* **Type:** Bullish Reversal
 * **Number of candles:** 3 candles
 * **Typical context:** After a base, pullback, or early shift into buyer control.
 
 ## How To Identify It
 
-* **Body:** Three meaningful green bodies, often stepping higher.
+* **Body:** Three long green bodies with successively higher closes.
 * **Wicks:** Small or moderate wicks. Strong closes near the highs make the pattern clearer.
-* **Relationship:** Each candle continues buyer pressure from the prior candle.
+* **Relationship:** The second and third candles each open within the previous candle body and close above its close.
 
-Look for three green candles in a row, each closing strong and generally pushing higher than the prior candle. The bodies should be meaningful, not tiny candles with messy overlap.
+Look for three consecutive long green candles after a decline or base. Each closes near its high, and the second and third open within the preceding body. Three green candles with large upper wicks or gaps between their bodies do not have the same structure.
 
 ## Context
 

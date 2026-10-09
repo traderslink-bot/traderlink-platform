@@ -123,7 +123,7 @@ The cleaner the pressure into support, the easier it is to define what the break
 
 Volume matters because a breakdown usually needs participation.
 
-If price breaks support on weak volume, the move may not have enough pressure behind it. If volume expands into the break, more traders are participating in the move.
+Higher volume means more shares traded during that period. Compare activity before and during the break, then watch whether price stays below support. Higher volume alone does not establish that the breakdown will continue.
 
 But volume by itself is not the whole answer.
 

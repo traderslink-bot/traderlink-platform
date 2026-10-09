@@ -44,7 +44,7 @@ A bullish engulfing pattern uses two candles. The second green body takes back t
 
 * **Body:** First candle has a red body. Second candle has a larger green body.
 * **Wicks:** Wicks can vary, but the body relationship is the main visual clue.
-* **Relationship:** The green body opens below or near the prior body and closes above it, taking back the prior candle body.
+* **Relationship:** The green candle opens at or below the previous red close and closes above the previous red open. Its body covers the previous red body; it does not need to cover both wicks.
 
 Focus on the body relationship. The second candle should be a larger green body that covers the prior red body. The wicks can vary, but the body takeover is the main clue.
 

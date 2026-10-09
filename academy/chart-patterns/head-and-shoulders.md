@@ -56,7 +56,7 @@ A head and shoulders pattern is a weakening-structure pattern.
 - Neckline support area.
 - Neckline break, reclaim, or failed break.
 
-The right shoulder matters because it shows price failing to make another strong high.
+The right shoulder matters because it fails to reach the head. The three peaks are a potential reversal until price breaks below the neckline connecting the two intervening pullback lows.
 
 ## Pattern Structure
 
@@ -87,7 +87,7 @@ Head and shoulders patterns mislead when traders focus on the shape while ignori
 
 ## Example Chart Read
 
-A stock makes a new high, pulls back, pushes to a higher high on weaker volume, then forms a lower high near resistance. Price tests the neckline and briefly breaks it, but then reclaims. The next read is whether the neckline break holds or turns into a failed breakdown.
+A stock makes a new high, pulls back, pushes to a higher high on weaker volume, then forms a lower high near resistance. Price tests the neckline and briefly breaks it, but then reclaims. The reclaim means the first breakdown did not hold. Watch whether price stays above the neckline or loses it again.
 
 ## Common Mistakes
 
@@ -129,4 +129,4 @@ It can fail when the neckline holds, quickly reclaims, or the pattern was forced
 
 ### Is the neckline important?
 
-Yes. The neckline is the area that helps turn the shape into a reviewable structure.
+Yes. A break below neckline support confirms the reversal pattern; the three peaks alone do not.

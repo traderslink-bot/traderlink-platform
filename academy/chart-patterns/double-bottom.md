@@ -40,7 +40,7 @@ meta_description: "Learn what double bottoms show, why they can fail, and how to
 
 **Best suited for:** day trading and swing trading.
 
-A double bottom forms when price tests a similar support area twice and the second test holds or reclaims. It can show that sellers failed to push through the same area again.
+A potential double bottom forms when price tests a similar support area twice and the second test holds or reclaims. A break above the bounce high between the lows confirms the reversal pattern. It can show that sellers failed to push through the same area again.
 
 The useful read is whether support actually held, whether price reclaimed a meaningful area, and whether volume and structure improved after the second test.
 
@@ -57,6 +57,10 @@ A double bottom is a repeated-support pattern.
 - Reclaim, rejection, or failed reclaim after the second test.
 
 Two similar lows are not enough. The pattern needs context after the second test.
+
+## When The Reversal Is Confirmed
+
+The lows identify a potential double bottom. The neckline is resistance formed by the bounce highs between the lows. The reversal is confirmed by a break above that resistance, not by the repeated lows alone. If resistance holds, the downtrend may continue.
 
 ## Pattern Structure
 
@@ -87,7 +91,7 @@ Double bottoms mislead when traders call the pattern before price reacts after t
 
 ## Example Chart Read
 
-A stock sells into low of day, bounces, then revisits the same support zone. The second test holds with less selling pressure, and price reclaims the midpoint of the prior bounce. The next read is whether that reclaim holds or fails.
+Price falls to $4.80, bounces to $5.20, and returns to $4.82. The two lows suggest a potential double bottom, but resistance at $5.20 still matters. A later close at $5.25 breaks that neckline and confirms the reversal pattern. A pullback that then holds near $5.20 adds evidence that the former resistance is acting as support. A fall back below the neckline would weaken the breakout; a new low below the bottom zone would undermine the base.
 
 ## Common Mistakes
 
@@ -111,13 +115,13 @@ A final mistake is ignoring volume and market context.
 
 ## Key Takeaway
 
-A double bottom is repeated support plus reaction context. The important review is whether the second test held, reclaimed, or failed.
+Two tests of support suggest a potential double bottom. A break above the bounce high between them confirms the reversal pattern; a later hold or failure at that neckline shows how the breakout develops.
 
 ## FAQ
 
 ### What is a double bottom?
 
-A double bottom forms when price tests a similar support area twice and then reacts from that area.
+Two tests of a similar support area form a potential double bottom. A break above the bounce high between the tests confirms the reversal pattern.
 
 ### What makes it cleaner?
 
@@ -129,4 +133,4 @@ It can fail when support breaks, the reclaim does not hold, volume fades, or the
 
 ### Is the second low enough by itself?
 
-No. The reaction after the second low matters.
+No. Price must break above the bounce high between the two lows to confirm the reversal pattern.

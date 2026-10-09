@@ -60,13 +60,7 @@ Review the rate of acceleration, distance from support, volume behavior, and the
 
 ## Pattern Structure
 
-The pattern shows acceleration and extension, which usually makes risk harder to define.
-
-- Increasing candle range or speed.
-- Price stretching away from support or VWAP.
-- High attention and emotional pressure.
-- Possible halt or liquidity risk in small caps.
-- Sharp reversal or failed continuation risk.
+Compare successive advances over equal time intervals. A rise from $3.00 to $3.20, then $3.20 to $3.55, then $3.55 to $4.10 shows acceleration. If the nearest established support remains $3.20, buying at $4.10 leaves $0.90 per share between entry and that support. At 100 shares, that distance represents $90 of price risk before costs or slippage. Speed does not provide a nearby stop; the trader still needs an identifiable level and a position size that fits the risk.
 
 ## Context That Matters
 
@@ -120,18 +114,6 @@ A parabolic move is an accelerating price move where each push becomes faster an
 ### What changes a parabolic read?
 
 The read changes when price stops accelerating, loses the steep trend, or starts failing to hold higher support areas.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

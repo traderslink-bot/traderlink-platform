@@ -1,5 +1,5 @@
 ---
-title: "Relative Volume: How Traders Compare Current Activity To Normal Activity"
+title: "Relative Volume"
 slug: "/academy/relative-volume/"
 primary_keyword: "relative volume"
 secondary_keywords:
@@ -24,8 +24,7 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/volume/"
 recommended_next: "/academy/relative-volume-rvol/"
 visual_assets:
-  - "/academy/images/chart-reading/relative-volume-normal-vs-unusual.svg"
-  - "/academy/images/chart-reading/relative-volume-news-fade-review.svg"
+  - "/academy/images/volume-liquidity-order-flow/relative-volume.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/relative-volume-rvol/"
@@ -46,183 +45,53 @@ meta_title: "Relative Volume Explained for Traders"
 meta_description: "Learn what relative volume means, why unusual volume matters, common RVOL mistakes, and how to review high-relative-volume trades."
 ---
 
-# Relative Volume: How Traders Compare Current Activity To Normal Activity
+# Relative Volume
 
-Relative volume compares a stock's current volume to its normal volume. Traders use it to see whether a stock is trading with unusual activity.
+Relative volume compares a stock's current trading activity with its usual activity over a comparable period. It helps answer whether today's volume is ordinary for this stock or unusually high or low.
 
+A volume count becomes more meaningful when it has that comparison. Two stocks can each trade 500,000 shares this morning, yet only one may be having an unusually active morning.
 
-## Lesson Objective
+## Compare A Stock With Its Own History
 
-By the end of this lesson, you should be able to:
+Suppose Stock A usually trades about 100,000 shares from the regular-session open through 10:00 a.m. Today it trades 500,000 during that same period. Stock B usually trades 2 million shares by 10:00 a.m., but today trades only 500,000.
 
-- Explain relative volume in volume, liquidity, or order-flow context.
-- Identify where it appears on a realistic chart or trading dashboard.
-- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
-- Avoid treating it as guaranteed confirmation.
+| Stock | Usual volume by 10:00 a.m. | Today's volume by 10:00 a.m. | Comparison |
+|---|---:|---:|---|
+| A | 100,000 | 500,000 | Five times its usual activity |
+| B | 2,000,000 | 500,000 | One quarter of its usual activity |
 
-Relative volume is useful because raw volume can be misleading. One million shares can be huge for a quiet small-cap stock and normal for a heavily traded large-cap stock. Relative volume adds the missing comparison.
+Their current share counts are equal. Compared with their own histories, Stock A is unusually active and Stock B is quieter than usual.
 
-## What You Should Understand Before Reading This
+The comparison does not tell you which stock has more shares available at its current bid or ask. It measures completed trading, just as ordinary volume does.
 
-Before studying relative volume, remember:
+The image uses a separate, completed-day example. Each stock trades 500,000 shares on Friday. Stock A's earlier daily average is 100,000 shares, giving 5.00x RVOL; Stock B's is 2 million shares, giving 0.25x. The dashed lines mark those daily averages. This comparison uses finished days, while the table above compares trading through 10:00 a.m.
 
-- Volume measures total shares traded.
-- Relative volume compares current volume with normal activity.
-- High relative volume means activity is unusual, not automatically good.
-- Unusual volume can come from news, filings, sector attention, breakouts, breakdowns, panic, or exits.
-- Relative volume should be reviewed with price structure, catalyst, liquidity, spread, and risk.
-- Scanner activity can create excitement, but the trade still needs a plan.
+![Relative Volume](/academy/images/volume-liquidity-order-flow/relative-volume.svg)
 
-The goal is not to chase high-RVOL stocks. The goal is to understand when a stock is behaving differently from its usual baseline.
+## Match The Periods
 
-## Quick Definition
+For an intraday comparison, use the same session and the same elapsed time. Today's first 30 minutes should be compared with the first 30 minutes of earlier sessions, rather than with their entire days.
 
-Relative volume compares current trading activity with normal trading activity.
+An opening interval can also differ from a midday interval. A stock may regularly trade heavily just after the open and more slowly at lunch. Comparing midday volume only with the opening bars could make ordinary midday trading appear unusually quiet.
 
-For example:
+For a swing-trading example, compare completed daily volume with previous completed days. A daily candle still forming has had less time to accumulate shares, so its volume is not yet directly comparable with a finished day's count.
 
-- A stock normally trades 500,000 shares by midday.
-- Today it trades 3,000,000 shares by midday.
-- That activity is much higher than normal.
+## What “Usual” Means
 
-![Candlestick chart comparing normal volume with unusual relative volume.](/academy/images/chart-reading/relative-volume-normal-vs-unusual.svg)
+The comparison needs a chosen set of historical periods. An average of the previous ten sessions may differ from an average of the previous twenty. An unusually busy news day included in that history can raise the average.
 
-The exact calculation can vary by platform. Some tools compare current daily volume with average daily volume. Others compare current volume with the typical volume by the same time of day.
+For example, four earlier periods contain 100,000 shares each and a fifth contains 600,000. Their average is 200,000 shares. Today's 300,000 shares are 1.50 times that average, even though they are three times the count in each of the four quieter periods.
 
-The main idea is the same: relative volume asks, "Is today's activity normal for this stock?"
+Neither description changes today's volume. They use different comparisons. Knowing the historical periods prevents the average from being mistaken for a fixed definition of normal trading.
 
-## Why Relative Volume Matters
+## Connect Activity To Price
 
-Relative volume matters because it helps traders separate normal activity from unusual attention.
+Higher relative volume shows more trading than the chosen comparison period. Price can rise, fall or move sideways during that activity.
 
-Unusual volume can appear when:
+At resistance, an unusually active candle might close above the level or fall back below it. During a selloff, unusually high activity might accompany another decline. Relative volume cannot replace the price movement you are trying to understand.
 
-- News is released.
-- SEC filings are published.
-- A stock appears on scanners.
-- A sector gains attention.
-- Price tests a key level.
-- A breakout or breakdown attracts traders.
-- Panic selling or short-term momentum increases.
+A sudden large bar is a volume spike compared with nearby bars. Elevated relative volume can instead build across many intervals, without one dramatic spike. The two ideas overlap, but they answer different questions.
 
-High relative volume can improve attention and sometimes liquidity. It can also bring volatility, crowded trading, wide spreads, emotional chasing, and failed moves.
+If a stock has traded twice its usual volume by 10:00 a.m., has it already traded twice its usual full-day volume? No. The comparison only covers the period through 10:00 a.m. It does not determine the final day's total.
 
-Relative volume gets a stock on the review list. It does not complete the trade plan.
-
-## How Relative Volume Works
-
-Relative volume compares current activity to a baseline.
-
-That baseline may be:
-
-- Average daily volume.
-- Average volume at the same time of day.
-- Average volume over a recent period.
-- A platform-specific scanner formula.
-
-Because platforms calculate relative volume differently, two scanners may show different numbers for the same stock. That does not make the concept useless. It means the trader should understand what the tool is comparing.
-
-Useful review questions include:
-
-- What is normal volume for this stock?
-- How unusual is today's activity?
-- What caused the activity?
-- Is volume continuing or fading?
-- Is price holding meaningful levels?
-- Is liquidity actually better, or is the spread still difficult?
-
-## High Relative Volume With News
-
-High relative volume is common after news, filings, earnings, sector moves, or other catalysts.
-
-That catalyst matters. A stock with strong relative volume after meaningful news is different from a stock with high relative volume but no clear reason for attention.
-
-![Candlestick chart showing high relative volume after news followed by fading participation.](/academy/images/chart-reading/relative-volume-news-fade-review.svg)
-
-A useful review separates the activity from the quality:
-
-- The activity may be unusual.
-- The catalyst may or may not be meaningful.
-- The chart may or may not hold key levels.
-- The liquidity may or may not support the trader's size.
-- The trader may still have entered too late.
-
-This is why relative volume belongs with catalyst review, not just scanner review.
-
-## Relative Volume Versus Volume Spike
-
-Relative volume and volume spikes are connected, but they are not identical.
-
-Relative volume compares current activity to normal activity over a broader baseline.
-
-A volume spike is a sudden jump in activity during one candle or a short sequence of candles.
-
-A stock can have:
-
-- High relative volume because the whole day is unusually active.
-- A volume spike because one candle is much larger than nearby candles.
-- Both at the same time after news or a major level test.
-- A brief spike that fades while relative volume remains high for the day.
-
-Understanding the difference helps a trader avoid overreacting to one loud candle.
-
-## Realistic Example
-
-A small-cap stock usually trades 250,000 shares in a full day. By 10:30 a.m., it has already traded 6 million shares after a press release.
-
-That is unusual activity. A trader reviewing the stock might ask:
-
-- What did the press release actually say?
-- Was the move already extended by the time I noticed it?
-- Did price hold above a meaningful level?
-- Did volume continue after the opening spike?
-- Did the spread stay manageable?
-- Was the float small enough to create fast movement?
-- Was there dilution or filing risk nearby?
-
-High relative volume made the stock worth reviewing. It did not remove the need for structure, risk control, and execution discipline.
-
-## Common Mistakes
-
-Common relative volume mistakes include:
-
-- Treating high relative volume as an automatic trade signal.
-- Ignoring why volume is unusual.
-- Chasing after the stock has already made most of its move.
-- Ignoring float, spread, and liquidity.
-- Comparing RVOL numbers across platforms without understanding calculation differences.
-- Assuming high relative volume only happens during upward moves.
-- Ignoring volume fade after the first burst of attention.
-- Forgetting to review catalyst quality and filing risk in small caps.
-
-Relative volume is a context filter. It should help improve review, not create urgency by itself.
-
-## FAQ
-
-### What is relative volume?
-
-Relative volume compares a stock's current trading volume with its normal or average volume.
-
-### What does high relative volume mean?
-
-High relative volume means a stock is trading much more actively than usual. It shows unusual attention, but it does not guarantee a clean trade or continued movement.
-
-### Is relative volume the same as RVOL?
-
-RVOL is shorthand for relative volume. Some platforms use RVOL as a specific scanner metric, while the broader concept is current activity compared with normal activity.
-
-### Is high relative volume bullish?
-
-Not automatically. High relative volume can appear during buying, selling, panic, failed breakouts, news reactions, or exits.
-
-### Why do small-cap traders watch relative volume?
-
-Small-cap traders watch relative volume because unusual activity can appear when news, filings, low float, or scanner attention brings sudden participation.
-
-### Can relative volume be risky?
-
-Yes. High relative volume can bring fast movement, volatility, halts, wide spreads, crowded trades, and sharp fades.
-
-### Should traders track relative volume in review notes?
-
-Yes, if unusual volume was part of the trade idea. Tracking it can help traders review whether relative volume supported the setup or encouraged chasing.
+The next lesson, [Reading RVOL](/academy/relative-volume-rvol/), explains how chart tools and stock scanners turn these comparisons into a number. A stock scanner lists stocks that meet selected conditions, such as unusually high volume.

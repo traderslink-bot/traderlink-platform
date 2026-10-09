@@ -61,13 +61,7 @@ Review the flat resistance, the rising lows, and the point where that higher-low
 
 ## Pattern Structure
 
-The pattern shows pressure building below a visible level.
-
-- Flat or repeated resistance area.
-- Higher lows below resistance.
-- Compression as the range tightens.
-- Possible resistance break or failure.
-- Clear higher-low failure area.
+Draw horizontal resistance through the repeated highs and an upward-sloping support line through the rising lows. The rising lows narrow the distance to resistance. The pattern is still forming while price remains between the lines. A break above resistance completes the bullish attempt; losing the rising support line first changes that interpretation.
 
 ## Context That Matters
 
@@ -122,18 +116,6 @@ An ascending triangle forms when price presses against a similar resistance area
 ### What weakens an ascending triangle?
 
 It weakens if price loses the higher-low structure or breaks above resistance and falls back inside the range.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

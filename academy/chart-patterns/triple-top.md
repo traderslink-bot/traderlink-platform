@@ -40,9 +40,13 @@ meta_description: "Learn what triple tops show, where traders force them, and ho
 
 **Best suited for:** day trading and swing trading.
 
-A triple top forms when price tests a similar resistance area three times and cannot hold above it. It is a repeated-resistance structure, not a reason to assume the next move by itself.
+A potential triple top forms when price tests a similar resistance area three times and cannot hold above it. It is a repeated-resistance structure, not a reason to assume the next move by itself.
 
 ![Candlestick chart showing a triple top with three resistance tests.](/academy/images/chart-reading/triple-top-context.svg)
+
+## When The Reversal Is Confirmed
+
+The peaks identify a potential triple top. The neckline is support formed by the pullback lows between the peaks. The reversal is confirmed by a break below that support, not by the repeated peaks alone. If support holds, price may still be consolidating.
 
 ## What The Structure Looks Like
 

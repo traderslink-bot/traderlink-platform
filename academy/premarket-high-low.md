@@ -79,7 +79,7 @@ PML may act like:
 * A reclaim level
 * A warning area if early buyers lose control
 
-For example, if a stock pulls back to $2.20 before the open and holds there, $2.20 becomes the premarket low.
+If $2.20 is the lowest traded price across the entire premarket session, it is the premarket low. A later pullback that holds above an earlier low is a support level, but it does not replace that earlier premarket low.
 
 After the open, traders may watch whether price holds $2.20, breaks below it, flushes below and reclaims, or loses it cleanly.
 
@@ -195,14 +195,15 @@ The key question is whether price can stay back above PML. A quick reclaim that 
 
 ## Realistic Example
 
-A stock releases news at 7:00 a.m. and trades from $1.80 to a premarket high of $2.65.
+A stock releases news at 7:00 a.m. Its full premarket range is $1.80 to $2.65, with no earlier premarket trades outside that range.
 
 It pulls back to $2.20, then holds above $2.25 into the open.
 
 A trader may mark:
 
 * $2.65 as premarket high
-* $2.20 to $2.25 as premarket low/support area
+* $1.80 as premarket low
+* $2.20 to $2.25 as pullback support
 * Previous day high and low for broader context
 
 After the open, price pushes toward $2.65.
@@ -221,7 +222,7 @@ A weaker read might show:
 * Price falls back below PMH.
 * The move becomes a failed breakout.
 
-Later, if price loses $2.20 and then reclaims it, PML becomes part of the reclaim story.
+Later, if price loses $2.20 and then reclaims it, that is a reclaim of pullback support. The premarket low remains $1.80.
 
 The levels are not the full plan. They organize the open.
 

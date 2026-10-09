@@ -27,167 +27,73 @@ internal_links:
   - "/academy/risk-management/"
   - "/academy/profit-protection/"
   - "/academy/trade-review-and-improvement/"
-schema:
+schema: ["Article"]
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-10-08"
 meta_title: "Trade Management Explained"
 meta_description: "Learn what trade management means, why decisions after entry matter, common mistakes, and how to review trade management."
 ---
+
 # Trade Management
 
-The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+![Trade Management diagram](/academy/images/risk-management-trade-planning/trade-management.svg)
 
-## Lesson Objective
+Trade management covers decisions after entry: keeping the position, taking a partial exit, adding shares, changing an exit or closing the trade. Each decision changes the remaining quantity or the conditions under which it will leave.
 
-By the end of this lesson, you should be able to:
+## Plan The Decisions Before The Price Moves
 
-- Explain the core idea behind Trade Management.
-- Identify the decision it is meant to control.
-- Connect the concept to position size, invalidation, loss control, and review.
-- Avoid treating risk rules as flexible only when emotions are high.
-- Use the lesson as part of a written trading plan and review process.
+Start with what you expect to do at each important level. An exit should relate to the trade plan, not simply to whether the profit on screen feels large or small.
 
-Trade management is how a trader handles a position after entry. It includes holding, scaling, reducing, exiting, protecting profits, respecting risk, and deciding whether the original trade idea is still valid.
+Suppose a trader buys 200 shares at $5.00, with a $4.80 stop and a final target near $5.40. There is also a nearer resistance area around $5.30. Their plan is to sell 100 shares there because earlier advances stalled in that area. Selling half reduces what remains exposed if the advance stops, while keeping 100 shares available for a possible move to $5.40.
 
-A good entry helps, but it is not the whole trade. Many trades are won or lost after the entry because of how the trader manages the position.
+Before entry, the trader writes the rule for the remaining shares: keep the original stop until a new pullback forms above it and price begins recovering from that pullback. Then use a break of the new pullback low as the exit condition. If the final target is reached first, sell there. If neither exit occurs, close before the session ends. This gives the remainder an exit plan instead of keeping it open simply to seek a larger win.
 
-This is where traders can get into trouble. They focus so much on finding the setup that they do not have a clear plan for what to do after they are in.
+Suppose the first sale fills at $5.30 and a later pullback establishes a low at $4.95. When price breaks that low, the trader exits the remaining shares; the actual fill is $4.90. That exit realizes a loss on the remaining shares. It does not undo the first sale. The fill table below shows how the complete result is calculated.
 
-## Quick Definition
+## Decide Whether A Stop Change Fits The Chart
 
-Trade management is the process of managing a trade from entry to exit.
+After a partial exit, a trader might raise the stop because a new support area has formed. Identify the actual area and the condition that would show it failed. Do not move the stop to the entry price automatically just because the position is profitable; entry price alone does not explain where current support lies.
 
-It can include:
+A closer stop reduces the loss implied by its price, but can also exit ordinary fluctuations. Keeping the original stop leaves more movement available and more exposure. Write which approach belongs to this setup before the decision becomes urgent, then confirm the remaining order quantity.
 
-- Holding according to the plan.
-- Scaling out.
-- Adding only if planned.
-- Moving risk based on structure.
-- Exiting when the setup fails.
-- Protecting profits.
-- Avoiding emotional exits.
-- Avoiding emotional holds.
-- Reviewing whether decisions matched the plan.
+## Follow The Quantity Through Each Fill
 
-Trade management is not only about profit-taking. It is the full decision process after entry.
+A trader buys 200 shares at $5.00. They sell 100 shares at $5.30, then the remaining 100 at $4.90.
 
-## Why It Matters To Traders
+| Fill | Quantity | Price | Position after fill |
+|---|---|---|---|
+| Buy | 200 | $5.00 | 200 shares |
+| First sell | 100 | $5.30 | 100 shares |
+| Final sell | 100 | $4.90 | 0 shares |
 
-Trade management matters because the market keeps changing after entry.
+The first exit gains $30.00. The second loses $10.00. Total price P&L is +$20.00 before costs. P&L means profit or loss.
 
-A trade may start strong and then fail. A trade may pull back normally and then continue. A trade may hit the first target and still have room. A trade may show warning signs before the trader reacts.
+An entry-to-final-exit comparison alone would show a falling price and miss the profitable partial exit. Use all actual fills when calculating the complete trade.
 
-Without trade management rules, the trader may rely on emotion:
+## Adjust Orders After A Partial Exit
 
-- Exit too early because of fear.
-- Hold too long because of hope.
-- Add because they want to fix the trade.
-- Ignore invalidation because they want to be right.
-- Take profits randomly.
-- Give back gains without a plan.
+After selling half, verify that remaining exit orders match the 100 shares still held. Some brokers can link and resize orders, but that behavior depends on the order configuration. Do not assume every separate order adjusts itself after another fill.
 
-The entry is only one decision. Management is a series of decisions.
+An unadjusted sell order can leave more shares ordered for sale than the trader intends. Review quantity as well as price whenever the position changes.
 
-## How It Works
+## An Addition Changes Total Risk
 
-Trade management starts before the trade is opened.
+For a separate addition example, suppose the trader still holds 100 shares from $5.00 and keeps the original $4.80 exit. Here, remaining planned price risk is $20.00. Adding 100 shares at $5.20 adds $40.00 of price risk at the same exit, bringing the combined amount to $60.00 before costs.
 
-A trader can define:
+If this trader allows at most $50.00 of remaining planned price risk on the position, the $60.00 proposal does not fit. They skip that addition rather than treat the earlier realized gain as automatic permission to exceed the written rule.
 
-- What confirms the trade is working.
-- What invalidates the trade.
-- Where partial profits may be taken.
-- Whether adding is allowed.
-- Where risk should be reduced.
-- What time or level changes the plan.
-- What to do if the trade stalls.
+The addition may be above the original entry, but it still increases exposure. Recalculate the entire position and check the trade and account budgets before ordering.
 
-During the trade, the trader compares price action to the plan.
+## Compare Holding All Shares With Taking A Partial Exit
 
-If price reaches the planned target, the trader may scale or exit. If price loses the invalidation level, the trader may exit. If the trade is still working, the trader may hold according to the plan.
+In the example, the first 100-share sale realizes $30.00 and the remaining sale loses $10.00. If all 200 shares had instead remained open until a $4.90 exit, the price loss would have been $20.00. Taking the partial exit changed that particular outcome by $40.00 before costs.
 
-## Example Scenario
+That does not prove partial exits always improve results. If all shares could have exited later at $5.40, keeping the full 200 would have produced an $80.00 gain. Selling 100 at $5.30 and 100 at $5.40 would produce $70.00. The choice reduces remaining exposure while also reducing the quantity that can benefit from a later move.
 
-Imagine a trader buys a breakout at $2.50. The first target is $2.80, resistance is near $3.00, and the trade is wrong if price loses $2.40.
+## Write Exit And Addition Rules Before Entry
 
-A trade management plan might say:
+A plan can specify an intended partial exit near a marked level, a condition for keeping the rest and how to handle the remaining order quantity. It should also say whether additions are allowed and under what risk limit.
 
-- Hold while price stays above $2.40.
-- Take partial profit near $2.80 if momentum slows.
-- Watch $3.00 as major resistance.
-- Exit if the breakout fails and price cannot reclaim $2.50.
+For example, after a partial exit the trader may keep 100 shares with the original $4.80 stop. That leaves $20.00 of planned price risk from the $5.00 entry before costs. If they move the stop to $5.00, the planned price loss at that exact exit becomes zero, but a worse fill and costs can still produce a loss on those remaining shares.
 
-Without that plan, the trader may sell too early at $2.58 or hold too long after the stock loses $2.40.
-
-The management plan gives the trader something to review.
-
-## Common Mistakes
-
-One common mistake is having an entry plan but no exit plan.
-
-Another mistake is changing the plan because of every small candle. Normal price movement can cause emotional exits if the trader has no structure.
-
-Traders also make mistakes when they add to losing trades without a plan.
-
-Another mistake is cutting winners too early but holding losers too long. That pattern can damage performance even if the trader has good entries.
-
-A final mistake is not recording management decisions. If only entry and exit prices are tracked, the trader may miss the behavior that mattered most.
-
-## Review Questions
-
-Trade management review should study what happened after entry.
-
-Useful review questions include:
-
-- What was my management plan before entry?
-- Did I follow the plan?
-- Did I exit based on structure or emotion?
-- Did I hold after invalidation?
-- Did I cut a winner too early?
-- Did I protect profits according to the plan?
-- Did I add, reduce, or scale for a valid reason?
-- What management decision had the biggest impact on the trade?
-
-These questions help traders identify whether the issue was entry, management, or risk behavior.
-
-## Related Terms And Guides
-
-For more context, read:
-
-- [Trading plan](/academy/trading-plan/)
-- [Trading risk management](/academy/risk-management/)
-- [Profit protection](/academy/profit-protection/)
-- [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## FAQ
-
-### What is trade management?
-
-Trade management is how a trader handles a position after entry, including holding, scaling, exiting, reducing risk, and protecting profits.
-
-### Why is trade management important?
-
-It matters because many trades succeed or fail based on decisions made after entry, not just the entry itself.
-
-### Is trade management the same as risk management?
-
-They overlap, but they are not identical. Risk management focuses on controlling loss, while trade management includes the full decision process after entry.
-
-### What are common trade management mistakes?
-
-Common mistakes include exiting too early, holding losers too long, adding emotionally, ignoring invalidation, and taking profits randomly.
-
-### How can I improve trade management?
-
-Traders can define the plan before entry, track decisions during the trade, and review whether exits, scales, and holds followed the original structure.
-
-### How should I review trade management?
-
-Track the plan, key levels, adds, reductions, exits, emotional decisions, and whether the trade was managed according to the original thesis.
-
-## Related Lessons
-
-- [Daily Loss Limit](/academy/daily-loss-limit/)
-- [Profit Protection](/academy/profit-protection/)
-- [Risk Management](/academy/risk-management/)
-- [Trade Risk Review](/academy/trade-risk-review/)
+Record the reason and timing of each change. This helps distinguish a management rule applied consistently from changing the plan because the open profit felt uncomfortable.

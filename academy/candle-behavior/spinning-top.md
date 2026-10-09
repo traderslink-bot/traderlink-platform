@@ -62,7 +62,7 @@ A spinning top shows hesitation. Price moved above and below the open, but neith
 
 Watch whether the next candles break away from the spinning top range or keep rotating around it. The candle is more useful when the reaction after it becomes clear.
 
-The read weakens if price keeps chopping through the same area. That means the candle was just part of an unclear range.
+If price keeps moving back and forth through the same area, the hesitation continues. The spinning top has not been followed by a clear directional move.
 
 ## Common Confusion
 

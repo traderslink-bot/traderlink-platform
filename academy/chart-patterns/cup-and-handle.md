@@ -27,7 +27,7 @@ internal_links:
   - "/academy/consolidation/"
   - "/academy/resistance-levels/"
   - "/academy/volume/"
-  - "/academy/swing-trading-workflow/"
+  - "/academy/swing-trading/"
 visual_assets:
   - "/academy/images/chart-reading/cup-and-handle-context.svg"
 schema:
@@ -46,7 +46,7 @@ A cup and handle is a rounded base followed by a smaller pullback or consolidati
 
 ## What The Structure Looks Like
 
-A cup and handle usually has two parts:
+A cup and handle has a rounded cup followed by a smaller handle. Its main features are:
 
 - A rounded base that recovers toward prior resistance.
 - A handle that forms as a smaller pause or pullback near that resistance.
@@ -92,7 +92,7 @@ Useful review questions:
 - [Consolidation](/academy/consolidation/)
 - [Resistance Levels](/academy/resistance-levels/)
 - [Volume](/academy/volume/)
-- [Swing Trading Workflow](/academy/swing-trading-workflow/)
+- [Swing Trading](/academy/swing-trading/)
 
 ## Key Takeaway
 

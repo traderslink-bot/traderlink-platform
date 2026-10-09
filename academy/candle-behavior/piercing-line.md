@@ -42,11 +42,11 @@ A piercing line is a two-candle bullish reversal pattern. The second candle open
 
 ## How To Identify It
 
-* **Body:** First candle is red. Second candle is green and closes meaningfully into the prior red body.
+* **Body:** First candle is red. Second candle is green and closes above the midpoint of the prior red body, but below its open.
 * **Wicks:** Wicks are secondary. The close into the prior body is the key.
 * **Relationship:** The green candle does not need to cover the full red body like a bullish engulfing candle.
 
-Look for a red candle followed by a green candle that opens lower and closes deep inside the prior red body. It does not fully engulf the prior candle; it pierces into it.
+Look for a red candle followed by a green candle that opens lower and closes above the midpoint of the red body. If the red candle opens at $5.00 and closes at $4.60, its body midpoint is $4.80. A green close at $4.90 recovers more than half of that body without engulfing it. The classic daily pattern opens below the previous low; an intraday chart may show a smaller opening gap.
 
 ## Context
 
@@ -62,11 +62,11 @@ The first candle shows sellers in control. The second candle starts with more we
 
 Watch whether price can hold inside the prior red body and continue toward the top of that range. Holding the recovery is more important than the label.
 
-The read weakens if price cannot hold inside the prior red body. That means the bounce did not reclaim enough of the prior selling pressure.
+The bullish interpretation weakens if price falls below the second candle's low. A further rise above the prior red body supports the recovery rather than weakening it.
 
 ## Common Confusion
 
-Piercing line is weaker visually than bullish engulfing because it only moves into the prior body.
+A piercing line recovers more than half of the prior red body. A bullish engulfing pattern covers the entire prior body. Neither shape guarantees a reversal.
 
 ## Key Takeaway
 

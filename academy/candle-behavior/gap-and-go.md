@@ -42,7 +42,7 @@ A gap and go happens when price opens with a gap and then continues in the gap d
 
 ## How To Identify It
 
-* **Opening location:** Price starts away from the prior close instead of opening inside the prior range.
+* **Opening location:** The regular session opens above or below the previous regular-session close. That opening can still be inside the previous day's high-to-low range.
 * **Acceptance:** Price holds the opening side and keeps moving away from the gap area.
 * **Relationship:** The gap is followed by continuation instead of an immediate move back into the gap.
 

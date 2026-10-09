@@ -62,7 +62,7 @@ A doji shows balance by the close. Buyers and sellers both had a chance to move 
 
 Watch which side of the doji range breaks and whether price holds outside that range. The next candle often matters more than the doji itself.
 
-The read weakens if price keeps chopping inside the same small range. That means the doji did not lead to a clearer decision.
+If price keeps trading inside the same small range, the indecision continues. A move outside that range would give clearer evidence of direction.
 
 ## Common Confusion
 

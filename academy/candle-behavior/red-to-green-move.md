@@ -28,7 +28,7 @@ meta_description: "Learn Red-To-Green Move behavior by prior close, session open
 
 # Red-To-Green Move
 
-A red-to-green move happens when price starts below a session reference and then moves back above it. In stocks, that reference is often the prior close or the current session open.
+A red-to-green move happens when a stock crosses from below its previous regular-session close to above it. The stock changes from being down to up on the day.
 
 ![Red candles below a prior close area followed by green candles moving above it.](/academy/images/chart-reading/candle-behavior/red-to-green-move-shape.svg)
 
@@ -38,15 +38,15 @@ A red-to-green move happens when price starts below a session reference and then
 * **Category:** Session And Gap Behavior
 * **Type:** Session Shift
 * **Number of candles:** Session sequence
-* **Typical context:** Intraday move from below a session reference to above it.
+* **Typical context:** Intraday move from below the previous close to above it.
 
 ## How To Identify It
 
 * **Starting location:** Price trades below the reference area first.
-* **Reclaim:** Price crosses back above the reference and starts holding above it.
-* **Reference levels:** The sequence needs a clear prior close, session open, VWAP, or premarket level.
+* **Reclaim:** Price crosses back above the reference.
+* **Reference levels:** Use the previous regular-session close to measure whether the stock is up or down on the day.
 
-Start with the reference line. Price should trade below it first, then cross back above it and begin holding above that area instead of immediately fading.
+Start with the reference line. Price should trade below it first, then cross back above it. The crossing changes whether the stock is up or down from the previous close; holding on that side is a separate observation afterward.
 
 ## Context
 
@@ -54,11 +54,13 @@ Red-to-green behavior is session context, not a single candlestick pattern.
 
 ![Red-to-green move crossing above the prior close area after trading below it.](/academy/images/chart-reading/candle-behavior/red-to-green-move-context.svg)
 
-Red-to-green behavior matters most when the reference is clear, such as the prior close, open, VWAP, or premarket level. It is cleaner when the reclaim happens with volume and does not run straight into resistance.
+Mark the previous close before studying the crossing. It is cleaner when the reclaim happens with volume and does not run straight into resistance.
 
 ## What It Shows
 
-The move shows a session shift. Sellers had price red against the reference, then buyers reclaimed it and changed the intraday tone.
+Suppose yesterday's regular session closed at $5.00. Today the stock trades at $4.80, then crosses $5.00 and reaches $5.05. That is a red-to-green move: its change from the previous close switches from negative to positive.
+
+Crossing the previous close is the move itself. Staying above it afterward gives further information about whether the move holds; it is not required just to identify the crossing.
 
 ## What To Watch Next
 
@@ -68,11 +70,13 @@ The read weakens if price crosses up and immediately falls back below the refere
 
 ## Common Confusion
 
-Red-to-green is not a candle shape. It is a sequence around a session reference.
+A candle's color compares its own open and close. A stock's daily change compares its current price with the previous close. A green candle can form while the stock is still down on the day, and a red candle can form while the stock is still up.
+
+A move through VWAP or a premarket level is a reclaim or loss of that named level. Some traders also use red-to-green or green-to-red relative to the session open; when discussing that variation, state the opening price explicitly so the reference is clear.
 
 ## Key Takeaway
 
-A red-to-green move is session behavior, not a single candle. It shows price reclaiming an important reference after starting below it.
+A red-to-green move crosses the previous close from below to above. Mark that price, identify the crossing, and then watch whether price stays on the new side or crosses back.
 
 ## Related Lessons
 

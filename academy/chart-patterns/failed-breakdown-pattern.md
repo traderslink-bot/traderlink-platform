@@ -86,7 +86,7 @@ Useful review questions:
 - Did price reclaim the level or only bounce below it?
 - What did volume do during the break and reclaim?
 - Where did the failed-breakdown read stop making sense?
-- Was the entry close enough to a reviewable level?
+- Was the entry close enough to the reclaimed support level?
 
 ## Related Lessons
 

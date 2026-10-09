@@ -48,11 +48,11 @@ The important part is not the name. The useful read is whether the bounce stays 
 
 ## What It Is
 
-A bear flag is a continuation-context pattern made from an initial move down, a controlled pause, and a level where the structure can hold or fail.
+A bear flag is a bearish continuation pattern made from an initial move down, a controlled pause, and a level where the structure can hold or fail.
 
 - A strong first move lower.
 - A bounce or sideways pause after the drop.
-- Lower highs or a clear resistance area inside the flag.
+- A tight upward-sloping or sideways pause below the earlier resistance area.
 - Volume often cools during the pause.
 - The next move needs follow-through and level review.
 
@@ -66,7 +66,7 @@ The structure usually includes:
 
 - A visible breakdown or selloff.
 - A pause that stays below resistance.
-- Lower highs or a tight channel during the bounce.
+- A tight channel during the bounce, often with higher highs and higher lows within that small pause.
 - A lower flag area where pressure may be tested.
 - A reclaim area that would change the read.
 

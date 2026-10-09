@@ -36,7 +36,7 @@ These words are not just vocabulary. They describe what is actually happening in
 
 If a trader does not understand position size, average price, partial fills, partial exits, realized P&L, and unrealized P&L, it becomes much harder to review trades honestly later.
 
-![Educational dashboard map showing the Trading Foundations course path from trade mechanics through risk and review.](/academy/images/trading-foundations/trading-foundations-course-map.svg)
+![Buying and selling 100 shares, ending the position and calculating $20 profit before fees.](/academy/images/trading-foundations/trading-foundations-course-map.svg)
 
 ## Position
 

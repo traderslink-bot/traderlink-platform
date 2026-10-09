@@ -40,9 +40,13 @@ meta_description: "Learn what triple bottoms show, where traders force them, and
 
 **Best suited for:** day trading and swing trading.
 
-A triple bottom forms when price tests a similar support area three times and cannot stay below it. It is a repeated-support structure that needs reclaim, resistance, and volume review.
+A potential triple bottom forms when price tests a similar support area three times and cannot stay below it. It is a repeated-support structure that needs reclaim, resistance, and volume review.
 
 ![Candlestick chart showing a triple bottom with three support tests.](/academy/images/chart-reading/triple-bottom-context.svg)
+
+## When The Reversal Is Confirmed
+
+The lows identify a potential triple bottom. The neckline is resistance formed by the bounce highs between the lows. The reversal is confirmed by a break above that resistance, not by the repeated lows alone. If resistance holds, the downtrend may continue.
 
 ## What The Structure Looks Like
 

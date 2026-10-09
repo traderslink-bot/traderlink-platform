@@ -108,7 +108,7 @@ A stock falls from $4.20 to $3.70, then bounces to $3.95.
 
 Later, it drops to $3.45, then bounces only to $3.72.
 
-Then it fades again toward $3.30.
+Then it falls to $3.30.
 
 A trader might read the structure like this:
 
@@ -116,7 +116,7 @@ A trader might read the structure like this:
 * Bounce high near $3.95
 * Lower low near $3.45
 * Lower high near $3.72
-* Continued weakness if price later loses $3.45
+* Another lower low near $3.30 on the final decline
 
 That sequence shows weakening structure so far.
 

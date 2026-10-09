@@ -86,6 +86,9 @@ function renderBlock(block: MarkdownBlock) {
       <figure key={block.key} className="academy-md-figure">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={block.src} alt={block.alt} className="h-auto w-full" />
+        <a href={block.src} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm underline">
+          View full-size image
+        </a>
       </figure>
     );
   }

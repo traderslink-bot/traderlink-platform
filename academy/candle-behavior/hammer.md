@@ -46,7 +46,7 @@ A hammer shows lower rejection after weakness. Sellers pushed price down during 
 * **Wicks:** Long lower wick with little or no upper wick.
 * **Relationship:** The single candle matters most after price has already been moving down or testing a lower area.
 
-Start with the lower wick. The body should be small and near the high, showing price traded down first and then closed away from the low. Then check the location: the candle reads much better after weakness or into a support area than it does in the middle of a messy range.
+Start with the lower wick. The body should be small and near the high, showing price traded well below the body but closed away from the low. Then check the location: the candle reads much better after weakness or into a support area than it does in the middle of a messy range.
 
 ## Context
 
@@ -58,7 +58,7 @@ The shape matters most when it appears after selling pressure, near support, a p
 
 ## What It Shows
 
-A hammer shows that sellers had control early in the candle, but they could not keep price near the low. Buyers absorbed the push down and closed the candle near the upper part of its range.
+A hammer shows a low substantially below the open and close, with the close near the upper part of the range. The candle records those four prices; it does not show the exact sequence of every move within the period.
 
 ## What To Watch Next
 

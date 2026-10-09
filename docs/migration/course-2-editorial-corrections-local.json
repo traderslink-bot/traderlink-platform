@@ -1,0 +1,164 @@
+{
+  "academy\\support-and-resistance.md": [
+    "$2.20 to $3.10 in premarket"
+  ],
+  "academy\\support-levels.md": [
+    "Sometimes it comes from sellers taking profits."
+  ],
+  "academy\\swing-highs-and-swing-lows.md": [
+    "A five-minute chart may show several intraday swing highs an"
+  ],
+  "academy\\lower-highs-lower-lows.md": [
+    "Then it fades again toward $3.30.",
+    "Continued weakness if price later loses $3.45"
+  ],
+  "academy\\level-reclaim.md": [
+    "A stock opens above premarket high at $4.20."
+  ],
+  "academy\\high-of-day.md": [
+    "the prior session high",
+    "the previous session high of day level",
+    "Clarify updated extreme"
+  ],
+  "academy\\low-of-day.md": [
+    "the prior session low",
+    "the previous session low of day level",
+    "Clarify updated extreme"
+  ],
+  "academy\\premarket-high-low.md": [
+    "For example, if a stock pulls back to $2.20 before the open "
+  ],
+  "academy\\compression.md": [
+    "Volume often contracts during compression because price is t"
+  ],
+  "academy\\gap-fill-trading.md": [
+    "A gap fill happens when price later moves back through some ",
+    "A gap is a space on the chart between where price traded in ",
+    "$4.60 as the rough midpoint"
+  ],
+  "academy\\candle-behavior\\bullish-engulfing.md": [
+    "The green body opens below or near the prior body and closes"
+  ],
+  "academy\\candle-behavior\\bearish-engulfing.md": [
+    "The red body opens above or near the prior body and closes b"
+  ],
+  "academy\\candle-behavior\\dark-cloud-cover.md": [
+    "The read weakens if price cannot stay inside the prior green"
+  ],
+  "academy\\candle-behavior\\piercing-line.md": [
+    "The read weakens if price cannot hold inside the prior red b"
+  ],
+  "academy\\candle-behavior\\red-to-green-move.md": [
+    "and starts holding above it.",
+    "and begin holding above that area instead of immediately fad",
+    "Rechecked crossing wording"
+  ],
+  "academy\\candle-behavior\\green-to-red-move.md": [
+    "and starts holding below it.",
+    "and begin holding below that area instead of immediately rec",
+    "Rechecked crossing wording"
+  ],
+  "academy\\candle-behavior\\hammer.md": [
+    "showing price traded down first and then closed away from th",
+    "A hammer shows that sellers had control early in the candle,"
+  ],
+  "academy\\candle-behavior\\gap-up.md": [
+    "The important visual is the empty space between the prior cl"
+  ],
+  "academy\\candle-behavior\\gap-down.md": [
+    "The important visual is the empty space between the prior cl"
+  ],
+  "academy\\candle-behavior\\exhaustion-gap.md": [
+    "late-session chase behavior",
+    "The gap shows traders chasing in the direction of the existi"
+  ],
+  "academy\\chart-patterns\\bull-flag.md": [
+    "A bull flag is a continuation-context pattern",
+    "- Higher lows or support inside the flag.",
+    "Final plain-language check"
+  ],
+  "academy\\chart-patterns\\bear-flag.md": [
+    "A bear flag is a continuation-context pattern",
+    "- Lower highs or a clear resistance area inside the flag.",
+    "- Lower highs or a tight channel during the bounce."
+  ],
+  "academy\\chart-patterns\\double-top.md": [
+    "Neckline confirmation",
+    "Example Chart Read",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\double-bottom.md": [
+    "Neckline confirmation",
+    "Example Chart Read"
+  ],
+  "academy\\chart-patterns\\triple-top.md": [
+    "Neckline confirmation"
+  ],
+  "academy\\chart-patterns\\triple-bottom.md": [
+    "Neckline confirmation"
+  ],
+  "academy\\chart-patterns\\inverse-head-and-shoulders.md": [
+    "Pattern Structure",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\parabolic-move.md": [
+    "Pattern Structure",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\failed-breakout-pattern.md": [
+    "Pattern Structure",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\head-and-shoulders.md": [
+    "The right shoulder matters because it shows price failing to",
+    "The next read is whether the neckline break holds or turns i",
+    "The neckline is the area that helps turn the shape into a re"
+  ],
+  "academy\\chart-patterns\\vwap-reclaim.md": [
+    "VWAP itself is a volume weighted average price calculation,",
+    "A VWAP reclaim is a tool-based reclaim context"
+  ],
+  "academy\\candle-behavior\\high-volume-green-candle.md": [
+    "Direct teaching"
+  ],
+  "academy\\candle-behavior\\high-volume-red-candle.md": [
+    "Direct teaching"
+  ],
+  "academy\\chart-patterns\\wedge-pattern.md": [
+    "Wedge versus triangle",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\base-breakout.md": [
+    "Specific formation and confirmation",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\ascending-triangle.md": [
+    "Specific formation and confirmation",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\rising-wedge.md": [
+    "Specific formation and confirmation",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\falling-wedge.md": [
+    "Specific formation and confirmation",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\rectangle-pattern.md": [
+    "Specific formation and confirmation",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\chart-patterns\\channel-pattern.md": [
+    "Specific formation and confirmation",
+    "Remove repeated generic FAQ"
+  ],
+  "academy\\key-levels-trading.md": [
+    "Retain nearest support in map"
+  ],
+  "academy\\candle-behavior\\bottoming-tail-candle.md": [
+    "Final plain-language check"
+  ],
+  "academy\\chart-patterns\\failed-breakdown-pattern.md": [
+    "Final plain-language check"
+  ]
+}

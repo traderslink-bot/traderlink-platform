@@ -48,7 +48,7 @@ Support is useful because it helps answer three basic questions:
 
 Support shows that price found interest around an area before.
 
-Sometimes that interest comes from buyers stepping in. Sometimes it comes from sellers taking profits. Sometimes it comes from short sellers covering. Sometimes it comes from traders watching the same prior low or range bottom.
+Sometimes that interest comes from buyers stepping in. Sometimes it comes from selling pressure easing. Sometimes it comes from short sellers covering. Sometimes it comes from traders watching the same prior low or range bottom.
 
 You do not need to know every reason behind the reaction. The first job is to recognize that price reacted there.
 
@@ -127,7 +127,7 @@ This is an important beginner lesson. A stock can still be “at support” whil
 
 ## When Support Breaks
 
-A support break happens when price moves below a support area and cannot quickly recover it.
+A support break happens when price moves below a support area. What happens afterward shows whether the break holds or price recovers the level.
 
 ![Candlestick chart showing a support zone breaking with increased volume and a later retest.](/academy/images/chart-reading/support-level-break.svg)
 
@@ -147,7 +147,7 @@ The mistake beginners often make is treating a broken support level as if it is 
 
 ## When Support Reclaims
 
-A support reclaim happens when price breaks below support, then moves back above that area and holds.
+A support reclaim happens when price breaks below support, then moves back above that area. Holding above it afterward provides further evidence that the recovery is lasting.
 
 ![Candlestick chart showing price losing support, reclaiming the zone, and holding above it.](/academy/images/chart-reading/support-level-reclaim.svg)
 
@@ -210,7 +210,7 @@ A day trader may watch:
 * Low of day
 * Previous day low
 * Opening range low
-* VWAP area
+* VWAP area: the session's volume-weighted average price
 * Intraday pullback lows
 * Former intraday resistance that becomes support
 

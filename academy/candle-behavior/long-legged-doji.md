@@ -62,7 +62,7 @@ Buyers pushed price up and sellers pushed price down, but the candle closed near
 
 Watch whether price breaks above or below the full doji range and holds there. Until that happens, the candle is mostly showing a wide unresolved battle.
 
-The read weakens if the next candles stay trapped inside the same range. That means the market has not chosen a cleaner direction yet.
+If the next candles stay inside the same range, the indecision continues. Watch for a break of either boundary and whether price stays outside it.
 
 ## Common Confusion
 

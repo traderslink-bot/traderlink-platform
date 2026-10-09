@@ -1,5 +1,5 @@
 ---
-title: "Risk Reward Ratio"
+title: "Risk And Reward"
 slug: "/academy/risk-reward-ratio/"
 primary_keyword: "risk reward ratio"
 secondary_keywords:
@@ -27,153 +27,57 @@ internal_links:
   - "/academy/position-sizing/"
   - "/academy/stop-loss/"
   - "/academy/trade-review-and-improvement/"
-schema:
+schema: ["Article"]
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-10-08"
 meta_title: "Risk Reward Ratio Explained"
 meta_description: "Learn what risk reward ratio means in trading, why it matters, common mistakes, and how to review reward versus risk after trades."
 ---
-# Risk Reward Ratio
 
-The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+# Risk And Reward
 
-## Lesson Objective
+![Risk And Reward diagram](/academy/images/risk-management-trade-planning/risk-reward-ratio.svg)
 
-By the end of this lesson, you should be able to:
+Planned risk is the loss implied by the intended entry and exit. Planned reward is the gain implied by the intended entry and target. Comparing them helps describe a trade, but does not show how likely either exit is.
 
-- Explain the core idea behind Risk Reward Ratio.
-- Identify the decision it is meant to control.
-- Connect the concept to position size, invalidation, loss control, and review.
-- Avoid treating risk rules as flexible only when emotions are high.
-- Use the lesson as part of a written trading plan and review process.
+## Compare The Potential Gain With The Planned Loss
 
-Risk reward ratio compares how much a trader is willing to risk on a trade against how much they are trying to make. It is one way to think about whether the possible reward is worth the planned risk.
+The **reward-to-risk ratio** compares the potential gain with the planned loss. An entry at $5.00, stop at $4.80 and target at $5.40 has $0.20 risk and $0.40 potential reward per share.
 
-A risk reward ratio does not make a trade good by itself. A trade can have a strong-looking reward target and still be poorly planned, too late, too illiquid, or based on a weak setup.
+**$0.40 ÷ $0.20 = 2**, so the planned reward:risk is **2:1** before costs.
 
-That sounds simple, but it matters. Risk reward is useful only when the risk level, target area, and trade context are realistic.
+At 250 shares, the planned loss is $50.00 and target gain is $100.00. That means the potential gain is twice the planned loss. When reading a platform’s ratio, check which number refers to reward and which refers to risk.
 
-## Quick Definition
+## What 1R Means
 
-Risk reward ratio is the relationship between the potential loss and potential gain on a trade.
+**1R** is one unit of the trade's initial planned price risk. In this example, 1R is $50.00. A $100.00 price gain is +2R; a $50.00 price loss is −1R.
 
-For example, if a trader risks $100 to try to make $300, the trade has a 1:3 risk reward ratio.
+If the actual loss is $62.50, it is −1.25R relative to the original $50.00. Keep the original $50.00 risk amount when comparing planned risk with actual results. For example, changing the original risk to $62.50 afterward would label that loss −1R instead of −1.25R, obscuring how much it exceeded the original plan.
 
-If a trader risks $100 to try to make $100, the trade has a 1:1 risk reward ratio.
+## Check Whether The Target Fits The Chart
 
-The ratio is usually based on planned risk and planned target before the trade. After the trade, the trader can review whether the actual management matched the original plan.
+In a different chart example, an entry at $5.00 and stop at $4.80 produce $0.20 of planned risk. A target at $5.60 makes the drawn potential reward $0.60, or 3:1. But earlier advances have repeatedly stalled near $5.20. The attractive ratio has not explained how the stock would get through that nearer resistance.
 
-## Why It Matters To Traders
+If the trader's setup takes profit at that nearer level, the proposed $5.20 exit offers $0.20, or 1:1 before costs. They can evaluate that trade using how the same approach has actually performed, wait for a different entry or pass. Moving the target past resistance solely to obtain 3:1 does not solve the problem.
 
-Risk reward ratio matters because traders do not need every trade to work if losses are controlled and winners are large enough relative to risk.
+There is no ratio in this example that automatically approves an entry. The target needs a reason, the exit needs a reason, and actual win frequency and completed results determine whether the approach has been profitable over the sample. The Win Rate And Expectancy lesson connects those results.
 
-But risk reward is not magic. A trader cannot simply choose a far-away target and call the trade high reward. The target needs to be realistic based on support, resistance, volume, liquidity, volatility, and catalyst strength.
+## Compare Two Entry Prices
 
-This is where traders can get into trouble. They write down a 1:5 target that has no real chart basis, then hold too long when price never confirms the move.
+At the original $5.00 entry, the $5.40 target offers $0.40 per share against $0.20 of planned risk. If the actual entry rises to $5.10 while the stop and target remain unchanged, potential reward falls to $0.30 and planned risk rises to $0.30. The reward-to-risk ratio becomes 1:1.
 
-A useful risk reward review asks:
+The chart's target has not moved, but the entry changed the trade's proportions. Calculating the ratio from an intended entry after filling at a different price gives the wrong description. Recalculate from the relevant actual entry when reviewing a completed position.
 
-- Where is the trade idea wrong?
-- Where is the realistic target?
-- Is there enough room before resistance?
-- Is the position size built around the real risk?
-- Did the trader follow the plan after entry?
+## Include The Effect Of Partial Exits
 
-## How It Works
+Suppose 250 shares fill at $5.00. The trader sells 125 at $5.20 and 125 at $5.40. The gains are $25.00 and $50.00, for $75.00 before costs. Relative to the original $50.00 planned price risk, that gain is +1.5R, not +2R.
 
-A risk reward ratio starts with two points: the invalidation area and the target area.
+The farthest exit reached the target, but only half the position sold there. Use the entire fill sequence rather than labeling the trade by its best exit. Costs reduce the net result further.
 
-The invalidation area is where the trade idea is no longer working. The target area is where the trader expects price may reasonably move if the trade works.
+A ratio is useful for comparing the planned prices and describing actual results. It cannot replace a realistic target, appropriate size or evidence about how the approach has performed over comparable trades.
 
-A trader might look at:
+## Compare The Target Gain With Actual Results
 
-- Support and resistance.
-- Previous highs or lows.
-- Breakout levels.
-- Volume areas.
-- Trend structure.
-- Catalyst strength.
-- Spread and slippage.
+Planned reward:risk describes one proposed trade. Realized average win divided by realized average loss describes completed trades. These are different measurements.
 
-The ratio should come from the chart and trade plan, not from wishful thinking.
-
-## Example Scenario
-
-Imagine a trader buys a stock at $5.00. The setup is wrong below $4.80, so the planned risk is $0.20 per share. The next major resistance is near $5.60, so the potential reward is $0.60 per share.
-
-That is a 1:3 risk reward ratio before fees and slippage.
-
-But the trader still needs to review whether $5.60 is realistic. If the stock has weak volume, a wide spread, or heavy resistance at $5.20, the trade may not be as clean as the simple math suggests.
-
-The ratio helps frame the plan. It does not replace judgment.
-
-## Common Mistakes
-
-One common mistake is calculating risk reward after the trade instead of before entry.
-
-Another mistake is using a target that has no chart support. A far target can make the ratio look better, but that does not mean the trade is better.
-
-Traders also make mistakes when they ignore slippage. A planned loss may become larger if the stock is thin or moving fast.
-
-Another mistake is changing the target or risk level during the trade for emotional reasons. Sometimes the trade plan changes because the chart changes. Other times the trader is just avoiding a loss.
-
-A final mistake is treating risk reward as a guarantee. Even a clean ratio can fail if the setup does not work.
-
-## Review Questions
-
-Risk reward review should compare the planned trade to the actual trade.
-
-Useful review questions include:
-
-- What was the planned risk reward ratio before entry?
-- Was the target based on a real level?
-- Was the invalidation area clear?
-- Did the trade have enough room before resistance?
-- Did slippage change the real risk?
-- Did I take profits too early compared with the plan?
-- Did I hold too long after the target failed?
-- Did I move risk or target because of emotion?
-
-Over time, this helps traders see whether their planned reward is realistic or just optimistic.
-
-## Related Terms And Guides
-
-For more context, read:
-
-- [Trading risk management](/academy/risk-management/)
-- [Position sizing](/academy/position-sizing/)
-- [Stop loss](/academy/stop-loss/)
-- [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## FAQ
-
-### What is risk reward ratio in trading?
-
-Risk reward ratio compares the amount a trader is willing to risk on a trade with the amount they are trying to make.
-
-### What is a good risk reward ratio?
-
-There is no perfect ratio for every trader or setup. A useful ratio should be based on realistic risk, realistic targets, and the trader's process.
-
-### Is a 1:3 risk reward ratio always good?
-
-No. A 1:3 ratio can still be poor if the target is unrealistic, the setup is weak, or the trader does not follow the plan.
-
-### How do you calculate risk reward ratio?
-
-Compare the distance from entry to the planned risk area with the distance from entry to the planned target area.
-
-### Can a trade with low risk reward still work?
-
-Yes, but the trader should understand whether the potential reward justifies the risk and whether the setup fits their strategy.
-
-### How should I review risk reward?
-
-Record the planned risk, planned target, actual exit, slippage, whether the target was realistic, and whether you followed the plan.
-
-## Related Lessons
-
-- [Position Sizing](/academy/position-sizing/)
-- [Stop Loss](/academy/stop-loss/)
-- [Risk Management](/academy/risk-management/)
-- [Trade Risk Review](/academy/trade-risk-review/)
+To understand results across a sample, combine the sizes of actual wins and losses with how often each occurred. The Win Rate And Expectancy lesson works through that calculation. A large target alone is insufficient evidence that a trading approach has favorable results.

@@ -60,13 +60,7 @@ Review the lower highs, lower lows, narrowing range, and the upper boundary pric
 
 ## Pattern Structure
 
-The pattern can show slowing downside progress. The next review is whether price reclaims structure or stays weak.
-
-- Lower highs and lower lows inside compression.
-- Converging downward boundaries.
-- Often fading momentum near the lows.
-- Possible upside break or failed reclaim.
-- Need for support and volume review.
+Connect the falling swing highs and falling swing lows. Both lines slope downward, but the upper boundary falls faster, so the range narrows. A break above the upper line is the bullish trigger commonly associated with this pattern. Continued trading below that line leaves the recovery unconfirmed; a further downside break weakens it.
 
 ## Context That Matters
 
@@ -120,18 +114,6 @@ A falling wedge forms when price moves downward inside a narrowing structure.
 ### What weakens a falling wedge?
 
 It weakens if price keeps making clean lower lows or fails every attempt to reclaim the upper boundary.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

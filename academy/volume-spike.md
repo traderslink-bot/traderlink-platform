@@ -1,5 +1,5 @@
 ---
-title: "Volume Spike: How Traders Review Sudden Activity"
+title: "Volume Spikes"
 slug: "/academy/volume-spike/"
 primary_keyword: "volume spike"
 secondary_keywords:
@@ -24,8 +24,7 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/relative-volume-rvol/"
 recommended_next: "/academy/liquidity/"
 visual_assets:
-  - "/academy/images/chart-reading/volume-spike-follow-through-vs-fade.svg"
-  - "/academy/images/chart-reading/volume-spike-chase-risk.svg"
+  - "/academy/images/volume-liquidity-order-flow/volume-spike.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/relative-volume/"
@@ -45,172 +44,50 @@ meta_title: "Volume Spike Explained for Traders"
 meta_description: "Learn what a volume spike means, why sudden trading activity matters, common mistakes, and how to review volume-spike trades."
 ---
 
-# Volume Spike: How Traders Review Sudden Activity
+# Volume Spikes
 
-A volume spike happens when trading activity suddenly jumps above recent activity. Traders watch volume spikes because they can show that a stock is getting fresh attention, reacting to news, testing a key level, or entering a more volatile phase.
+A volume spike is a sharp increase in shares traded compared with nearby periods. On a chart, it often appears as a volume bar much taller than the bars around it.
 
+The bar marks a burst of trading. To understand that burst, look at where price was, how it moved during the candle, and what happened afterward.
 
-## Lesson Objective
+## A Burst At Resistance
 
-By the end of this lesson, you should be able to:
+In this example, a stock trades below resistance at $12.00. Its last four completed five-minute bars each contain about 10,000 shares. The next contains 60,000 as price moves above the level.
 
-- Explain volume spikes in volume, liquidity, or order-flow context.
-- Identify where it appears on a realistic chart or trading dashboard.
-- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
-- Avoid treating it as guaranteed confirmation.
+That is six times the volume of one of those recent bars. It is a clear local increase, although it does not tell us whether 60,000 shares is unusual for that time of day across earlier sessions.
 
-A volume spike can be important, but it does not guarantee continuation. It only tells you activity changed quickly. The better question is what price does after the spike appears.
+Imagine two possible price sequences following that burst:
 
-## What You Should Understand Before Reading This
+| Candle | Shares traded in both examples | Example A close | Example B close |
+|---|---:|---:|---:|
+| Spike candle | 60,000 | $12.10 | $11.98 |
+| Next candle | 35,000 | $12.08 | $11.90 |
+| Following candle | 25,000 | $12.15 | $11.85 |
 
-Before studying volume spikes, remember:
+In Example A, the spike candle closes above resistance and the next two candles also close above it. In Example B, price trades above the level during the spike but closes back below it and continues lower.
 
-- Volume measures participation.
-- Relative volume compares activity to normal activity.
-- A volume spike is a sudden jump in one candle or a short sequence.
-- Spikes can happen during upward moves, selloffs, failed moves, news, and exits.
-- A spike near a meaningful level can be more useful than a random spike in the middle of a range.
-- The first spike is often emotionally tempting because it looks urgent.
+The volume sequence is identical. The price response differs. A large burst can appear during a breakout that holds or an attempt that fails.
 
-The goal is not to react to every large volume bar. The goal is to review whether the spike created structure, liquidity, or chase risk.
+![Volume Spikes](/academy/images/volume-liquidity-order-flow/volume-spike.svg)
 
-## Quick Definition
+## Where The Spike Happens Matters
 
-A volume spike is a sudden increase in shares traded compared with nearby candles or the stock's normal activity.
+A spike during the first test of resistance differs from one after several large candles have already carried price far above that level. In the second case, the stock may be much farther from the area where the trading idea would fail.
 
-Volume spikes can happen during:
+Sudden activity can follow news, appear at the open, accompany a breakdown, or occur during a brief move with no known catalyst. A **catalyst** is an event, such as earnings or a company announcement, that may affect interest in the stock. The volume bar alone does not identify the cause.
 
-- News releases.
-- SEC filings.
-- Breakouts.
-- Breakdowns.
-- Gap fills.
-- Halts and resumptions.
-- Panic selling.
-- Market open volatility.
+The candle's position and closing price help explain the response. A large volume bar under a candle with a long upper wick shows substantial trading during a period when price moved higher and then gave back part of that move. It does not identify who bought or sold.
 
-![Candlestick chart comparing a volume spike that follows through with one that fades after the first burst.](/academy/images/chart-reading/volume-spike-follow-through-vs-fade.svg)
+## After The Burst
 
-The spike itself is not the full story. Traders need to review what price does after the activity appears.
+Smaller following bars mean fewer shares traded during those intervals. Price may still move higher, trade sideways or decline. Falling volume does not force a reversal.
 
-## Why Volume Spikes Matter
+The burst does not show how many shares are available for the next order. The spread and shares displayed at nearby prices can change even while the day's volume total remains high.
 
-Volume spikes matter because they can bring attention and liquidity into a stock quickly. A quiet stock can suddenly become active when news hits or when it appears on scanners.
+For a daily chart, the same idea applies over a longer period: a high-volume day shows a burst relative to surrounding days. It does not reveal the minute-by-minute trading within that day.
 
-For active traders, this can create opportunity and risk at the same time:
+## A Spike Versus High RVOL
 
-- More traders may be watching.
-- Liquidity may improve temporarily.
-- Spreads may still widen during fast movement.
-- Price can move farther than normal.
-- The move can fade just as quickly as it appeared.
-- Chasing can happen when the trader reacts late.
+A stock can accumulate high relative volume through sustained activity across the morning. Another can show a single local spike but remain below its usual day's activity. A spike compares the burst with nearby bars; RVOL uses the particular historical average chosen by the tool.
 
-A spike is a reason to pay attention, not a complete trade plan.
-
-## Volume Spike Versus Relative Volume
-
-Volume spikes and relative volume are connected but different.
-
-A volume spike is local. It compares one candle or a short burst to nearby activity.
-
-Relative volume is broader. It compares current activity to the stock's normal baseline.
-
-A stock can have a huge one-minute volume spike but only moderate relative volume for the full day. Another stock can have high relative volume all morning without one extreme spike.
-
-This distinction helps traders avoid treating every big candle as the same situation.
-
-## Follow-Through Versus Fade
-
-After a volume spike, traders should review whether price follows through or fades.
-
-Follow-through can mean:
-
-- Price holds above a level after the spike.
-- Volume remains elevated for several candles.
-- Pullbacks stay controlled.
-- Liquidity remains workable.
-- The move is tied to a meaningful catalyst.
-
-Fade can mean:
-
-- Price gives back the spike candle.
-- Volume drops sharply after the first burst.
-- The spread widens.
-- Price fails back below a key level.
-- Traders who entered late are left with poor risk.
-
-Neither outcome is guaranteed. The point is to review the behavior after the spike.
-
-## Chase Risk After The First Spike
-
-The first spike often creates urgency. It can make a trader feel like they are missing the move.
-
-![Candlestick chart showing chase risk after a late entry far above the first volume spike and nearest support.](/academy/images/chart-reading/volume-spike-chase-risk.svg)
-
-Chase risk increases when:
-
-- The trader enters after several large candles.
-- Price is far from the last support or consolidation area.
-- Volume is already fading.
-- The catalyst has not been reviewed.
-- The spread is widening.
-- The trader has no clear invalidation area.
-
-The spike may have been real, but the late entry can still be poor.
-
-## Realistic Example
-
-A stock trades quietly near $1.10 for most of the morning. A press release comes out, and one minute later volume jumps sharply while price moves toward $1.45.
-
-A structured review might ask:
-
-- What was the catalyst?
-- Did the spike happen near a key level?
-- Did price hold above that level after the spike?
-- Did volume continue for several candles or fade immediately?
-- Did liquidity improve or did the spread become unstable?
-- Did the trader enter before structure formed, during the spike, or after the move was already extended?
-
-The first volume spike got attention. The review decides whether the trade had quality.
-
-## Common Mistakes
-
-Common volume-spike mistakes include:
-
-- Treating every spike as directional confirmation.
-- Chasing the first candle without checking context.
-- Ignoring whether volume continues.
-- Ignoring spread and liquidity during fast movement.
-- Forgetting that volume can spike during selloffs too.
-- Entering after the move is already extended.
-- Failing to review the catalyst behind the spike.
-- Confusing scanner excitement with a planned setup.
-
-A volume spike should start a review process, not end it.
-
-## FAQ
-
-### What is a volume spike?
-
-A volume spike is a sudden increase in trading activity compared with nearby candles or normal activity.
-
-### Does a volume spike mean price will continue?
-
-No. A volume spike shows activity changed quickly, but it does not guarantee continuation, direction, profitability, or lower risk.
-
-### Can volume spike during a selloff?
-
-Yes. Volume can spike during buying, selling, panic, exits, failed breakouts, and news reactions.
-
-### Is a volume spike the same as high relative volume?
-
-No. A volume spike is a sudden short-term burst. Relative volume compares current activity to normal activity over a broader baseline.
-
-### Why do traders watch volume spikes?
-
-Traders watch volume spikes because they can show sudden attention, catalyst reaction, liquidity changes, or volatility.
-
-### Should volume spikes be tracked in review notes?
-
-Yes, if the spike affected the trade idea. Reviewing spike context can help traders identify chasing, late entries, and execution problems.
+If a spike occurs after price is already far above resistance, does it show that the move has just started? No. The earlier candles show how far price has already traveled. The next lesson, [Stock Liquidity](/academy/liquidity/), explains why current execution conditions also matter.

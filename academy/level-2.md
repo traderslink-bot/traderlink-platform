@@ -1,5 +1,5 @@
 ---
-title: "Level 2 Trading: How Traders Review Market Depth"
+title: "Level 2 And Market Depth"
 slug: "/academy/level-2/"
 primary_keyword: "Level 2 trading"
 secondary_keywords:
@@ -24,8 +24,7 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/market-orders-vs-limit-orders/"
 recommended_next: "/academy/time-and-sales/"
 visual_assets:
-  - "/academy/images/chart-reading/level-2-order-book-depth.svg"
-  - "/academy/images/chart-reading/level-2-depth-can-disappear.svg"
+  - "/academy/images/volume-liquidity-order-flow/level-2.svg"
 internal_links:
   - "/academy/bid-and-ask/"
   - "/academy/spread/"
@@ -44,173 +43,74 @@ meta_title: "Level 2 Trading Explained"
 meta_description: "Learn what Level 2 trading means, how traders read market depth, common mistakes, and how to review order book context."
 ---
 
-# Level 2 Trading: How Traders Review Market Depth
+# Level 2 And Market Depth
 
-Level 2 trading refers to watching visible market depth, including bids and asks at different price levels. Traders use Level 2 to see more than just the best bid and ask.
+Level 2 is a common name for a screen that shows bids and asks in more detail than a basic stock quote. It helps show the prices where buyers and sellers have placed visible orders, and how many shares they are offering to trade.
 
+The list of those bids and asks is called the order book. **Market depth** describes the displayed shares at the prices in that book. Orders can be added, changed, canceled or filled. **Order flow** includes those order changes and the trades that result when orders match.
 
-## Lesson Objective
+Your screen shows only the information supplied by its market-data service. Start with the prices and share quantities before trying to interpret fast changes.
 
-By the end of this lesson, you should be able to:
+## Reading The Rows
 
-- Explain Level 2 in volume, liquidity, or order-flow context.
-- Identify where it appears on a realistic chart or trading dashboard.
-- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
-- Avoid treating it as guaranteed confirmation.
+Bids show prices where buyers have placed visible orders. Asks, also called offers, show prices where sellers have placed visible orders. The highest bid and lowest ask are the best displayed prices. Other rows show bids at lower prices and asks at higher prices.
 
-Level 2 can be useful, but it can also be noisy. It should not be treated as a magic window into what price must do next.
+Some screens add together the shares offered at the same price. Others show separate rows for different firms or trading venues. A venue is an exchange or another market where orders can meet. Also check the size units: some screens show shares, while others show lots. A label of 10 could mean 10 shares or, on a display using 100-share lots, 1,000 shares.
 
-## What You Should Understand Before Reading This
+This example combines visible orders at each price on one fictional trading venue. All sizes are shown in shares.
 
-Before studying Level 2, remember:
+| Bid size | Bid price | Ask price | Ask size |
+|---:|---:|---:|---:|
+| 1,000 | $10.00 | $10.02 | 500 |
+| 2,000 | $9.99 | $10.04 | 1,500 |
+| 3,000 | $9.98 | $10.06 | 2,000 |
 
-- Bid and ask show the best visible buyer and seller prices.
-- Spread is the gap between the best bid and ask.
-- Liquidity affects whether orders can fill cleanly.
-- Order type affects how you interact with the quote.
-- Visible size can change, cancel, or disappear.
-- Time and sales shows actual trades, while Level 2 shows displayed interest.
+The displayed spread is $0.02. Sellers offer 500 shares at $10.02 and another 1,500 at $10.04. These are the visible orders at this moment. They may change before an incoming order reaches them.
 
-The goal is not to react to every order-book flicker. The goal is to understand whether visible depth supports or complicates execution.
+![Level 2 And Market Depth](/academy/images/volume-liquidity-order-flow/level-2.svg)
 
-## Quick Definition
+## Why An Order Can Fill At Several Prices
 
-Level 2 shows bid and ask orders at multiple price levels in the order book.
+Suppose a market order to buy 1,000 shares reaches this venue. For this example, assume the displayed orders stay unchanged, no other buyers arrive first, and no additional shares are available.
 
-A Level 2 screen may show:
+The first 500 shares fill at $10.02. The other 500 fill at $10.04. The purchase costs $10,030.00 before fees:
 
-- Bid prices.
-- Ask prices.
-- Displayed share size at each level.
-- Market makers or venues.
-- Market depth above and below the current price.
-- Changes in visible liquidity.
+- 500 × $10.02 = $5,010.00
+- 500 × $10.04 = $5,020.00
+- $10,030.00 ÷ 1,000 shares = $10.03 average fill price
 
-![Trading dashboard showing a Level 2 order book with stacked bid and ask depth beside price candles.](/academy/images/chart-reading/level-2-order-book-depth.svg)
+The average fill price is above the initial best ask because only half the required shares are offered there. In live trading, the result can differ: orders change, the broker may send the order to other venues, and some available shares may not be displayed.
 
-Traders use Level 2 to understand the current quote environment and possible execution conditions.
+## Displayed Size Can Change Without A Trade
 
-Market-depth products display visible order-book information from their markets or feeds. Level 2 data is useful context, but it is not a complete view of all hidden, routed, canceled, or off-exchange interest.
+Return to the example's best bid: 1,000 shares at $10.00.
 
-## Why Level 2 Matters
+| Time | Shares displayed at $10.00 | Trades shown |
+|---|---:|---|
+| 10:00:00 | 1,000 | Starting quote |
+| 10:00:01 | 700 | A 300-share trade at $10.00 is reported |
+| 10:00:02 | 200 | No further trade at $10.00 appears in this example |
 
-Level 2 matters because execution is not only about the candle.
+At 10:00:01, the displayed bid falls by 300 shares, and a 300-share trade appears at the same price. That trade may explain the decrease. Other orders could also have changed during that second, so the two observations do not prove that the trade was the only change.
 
-A stock can look strong on the chart but have:
+At 10:00:02, another 500 shares disappear from the displayed bid, but no matching trade appears. Those orders may have been canceled or changed. If the trade record is incomplete or delayed, a trade could also be missing. A smaller displayed bid does not automatically mean those shares were sold.
 
-- Thin liquidity above the ask.
-- A wide spread.
-- Quickly disappearing bids.
-- Large visible ask size near resistance.
-- Limited depth for the trader's position size.
-- A quote that changes faster than the trader can react.
+The same caution applies to a large ask that stays visible while trades occur at that price. Sellers may be adding shares as others trade. Seeing that behavior does not reveal who is behind the orders or what they intend to do next. A disappearing order also does not, by itself, prove manipulation.
 
-For small-cap and low-float traders, this matters even more. A stock can move several cents because there is not much size available at nearby levels.
+## What Your Screen Includes
 
-Level 2 can improve execution awareness. It should not replace the trade plan.
+Market-depth services differ in what they include. For example, Nasdaq TotalView shows displayed orders in the Nasdaq Market Center. Stocks listed on other exchanges can also trade there. That book still does not show every order on every market trading those stocks.
 
-## Reading Bid And Ask Stacks
+Check which markets your subscription includes, whether orders are grouped by price, how sizes are shown, and whether prices are delayed. Some orders are hidden rather than displayed. A firm or venue code on the screen does not identify the customer behind an order.
 
-Level 2 often shows a stack of bid prices below the current market and ask prices above it.
+## Connect The Book To The Chart And Tape
 
-Traders may watch:
+The chart shows price movement and important levels. The order book shows visible bids and asks. **Time and sales**, often called the tape, lists reported completed trades, including their prices and share quantities.
 
-- How much size is visible on the bid.
-- How much size is visible on the ask.
-- Whether the spread is tight or wide.
-- Whether bids are stepping up.
-- Whether asks are stacking above price.
-- Whether liquidity disappears during fast moves.
-- Whether price is trading through visible size.
+Near resistance, the book might show sellers offering shares at several nearby prices. The tape can show trades occurring at those prices. The chart then shows whether price moves above resistance and stays there or falls back below it. A large ask does not guarantee rejection, and a growing bid does not guarantee a rise.
 
-A stacked bid may show visible interest, but it does not guarantee support. A stacked ask may show visible supply, but it does not guarantee rejection.
+To study these changes later, save the relevant book and tape images with their times and market-data source. A chart alone cannot show which orders appeared or disappeared. Still images show individual moments; a recording can show changes between them.
 
-## Visible Depth Can Disappear
+Try this question: the displayed ask shrinks from 5,000 shares to 500. Did buyers necessarily purchase 4,500 shares?
 
-Level 2 displays visible orders, but not every order in the market is visible. Some orders may be hidden, routed elsewhere, canceled quickly, or changed as price moves.
-
-![Trading dashboard showing visible bid depth disappearing during a fast move.](/academy/images/chart-reading/level-2-depth-can-disappear.svg)
-
-This is why traders need caution with Level 2. Displayed size can look strong and then vanish. Ask size can look heavy and then get absorbed. The book can change quickly during news, halts, low float moves, or volume spikes.
-
-The review question is not "did Level 2 predict the move?" The better question is whether the trader used Level 2 as context or reacted emotionally to noise.
-
-## Level 2 And Time And Sales
-
-Level 2 and time and sales answer different questions.
-
-Level 2 shows displayed interest:
-
-- Who is bidding?
-- Who is asking?
-- Where is visible depth?
-- How wide is the quote?
-
-Time and sales shows completed trades:
-
-- What actually printed?
-- At what price?
-- How many shares?
-- How fast are trades going through?
-
-Level 2 is often more useful when reviewed with time and sales because visible orders can change, while prints show what actually executed.
-
-## Realistic Example
-
-A stock is trading near `$2.50`. The chart is approaching resistance at `$2.55`, and Level 2 shows large visible ask size between `$2.54` and `$2.56`.
-
-A trader reviewing the move might ask:
-
-- Is price actually trading through that ask size?
-- Are buyers printing trades at the ask?
-- Is the spread still manageable?
-- Are bids stepping up behind the move?
-- Did I enter because the chart was clean or because I reacted to Level 2 noise?
-- Did time and sales confirm what I thought I saw?
-
-The order book can provide context, but it does not guarantee visible size will hold, break, or stay visible.
-
-## Common Mistakes
-
-Common Level 2 trading mistakes include:
-
-- Treating visible orders as guaranteed support or resistance.
-- Overreacting to fast quote changes.
-- Ignoring the chart and only watching the book.
-- Confusing displayed size with actual executed buying or selling.
-- Trading too much size in thin books.
-- Using immediate orders when depth is poor.
-- Assuming Level 2 predicts the next move.
-- Forgetting that hidden liquidity and canceled orders can change the picture.
-
-Level 2 is most useful when it improves execution awareness, not when it creates panic.
-
-## FAQ
-
-### What is Level 2 trading?
-
-Level 2 trading means watching market depth, including visible bids and asks at multiple price levels in the order book.
-
-### What does Level 2 show?
-
-Level 2 shows bid prices, ask prices, displayed share size, and visible market depth beyond the best bid and ask.
-
-### Does Level 2 predict price movement?
-
-No. Level 2 provides context, but visible orders can change quickly and do not guarantee price direction, support, rejection, or continuation.
-
-### Why do day traders use Level 2?
-
-Day traders use Level 2 to evaluate spread, liquidity, depth, visible bid support, visible ask pressure, and execution conditions.
-
-### Is Level 2 useful for small-cap stocks?
-
-It can be useful because small-cap stocks may have thinner books and faster quote changes, but it can also be noisy and easy to overread.
-
-### Is Level 2 the same as time and sales?
-
-No. Level 2 shows visible bid and ask interest. Time and sales shows completed trades.
-
-### How should traders review Level 2 mistakes?
-
-Review whether the book was thin, whether spread and depth affected fills, whether time and sales confirmed the read, and whether the trader reacted to noise instead of following a plan.
+No. The screen shows 4,500 fewer shares offered for sale. Those orders may have traded, been canceled or changed. Check time and sales for reported trades, remembering that its coverage and timing must match the book you are watching. The next lesson, [Time And Sales](/academy/time-and-sales/), explains how to read that trade list.

@@ -79,7 +79,7 @@ Review whether the first move and compression were clean before the decision.
 - Was the first move strong enough to matter?
 - Did the pennant compress or simply chop?
 - Was nearby support too close?
-- Where did the structure reclaim?
+- Did price move back above the pennant's upper boundary?
 - Was the entry late relative to the pennant?
 
 ## Related Lessons

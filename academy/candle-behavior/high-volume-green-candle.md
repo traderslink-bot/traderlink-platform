@@ -28,7 +28,7 @@ meta_description: "Learn High-Volume Green Candle by shape, candle count, contex
 
 # High-Volume Green Candle
 
-A high-volume green candle shows buyer pressure paired with unusual activity. The candle body tells you direction; the volume tells you participation increased.
+A high-volume green candle closes above its open while more shares trade than in the periods used for comparison. The candle shows the price change from open to close; the volume bar shows how many shares traded during that same period.
 
 ![Large green candle shown with a taller volume bar than the surrounding candles.](/academy/images/chart-reading/candle-behavior/high-volume-green-candle-shape.svg)
 
@@ -42,11 +42,11 @@ A high-volume green candle shows buyer pressure paired with unusual activity. Th
 
 ## How To Identify It
 
-* **Body:** Green body that stands out from recent candles.
+* **Body:** The close is above the open. A large body is not required for high volume.
 * **Wicks:** Wicks can vary, but a close near the high makes the candle cleaner.
 * **Relationship:** The volume bar under the candle should be larger than nearby volume bars.
 
-Look for a meaningful green body and a volume bar that clearly stands out from nearby candles. The strongest examples close near the high instead of leaving a large upper wick.
+Compare volume bars from the same candle timeframe. A close near the high shows that price finished near that end of its range. A long upper wick shows that price moved away from that extreme before the close. Both can occur with high volume.
 
 ## Context
 
@@ -56,21 +56,23 @@ This candle matters most at breakouts, reclaims, support reactions, or the first
 
 ## What It Shows
 
-The candle shows buyers stepping in with more participation than normal. It can mark momentum entering, a level being reclaimed, or a move that attracted fresh attention.
+Suppose a five-minute candle opens at $5.00 and closes at $5.10 on 300,000 shares. The preceding three five-minute candles each traded about 100,000 shares. This candle traded about three times as many shares as those nearby periods. Its green body shows the direction from open to close; it does not classify every trade as a buy.
+
+A small body with high volume means substantial trading produced little net change between the open and close. That is different from a large body covering a wide price distance on the same volume.
 
 ## What To Watch Next
 
-Watch whether price holds the candle body or keeps building above it. Strong volume should leave behind an area buyers are willing to defend.
+If the candle closes above resistance, watch the next candles and any retest of the level. Does price remain above it, or does it cross back through? High volume does not guarantee that the level will hold.
 
-The read weakens if price immediately gives back the candle on heavy selling. That means the volume did not create lasting support.
+If price falls back below the breakout level, the break has failed to hold despite the increased activity.
 
 ## Common Confusion
 
-A big green candle without stronger volume is a price candle, not a high-volume green candle.
+A large green candle can have ordinary volume. A small green candle can have high volume. Body size measures the distance between open and close; volume measures shares traded. Compare each separately.
 
 ## Key Takeaway
 
-A high-volume green candle shows buyer pressure with increased participation. The next read is whether that participation creates support or gets fully erased.
+Read the candle direction, its volume relative to comparable periods, and its position around a price level. Then watch whether the move holds or reverses.
 
 ## Related Lessons
 

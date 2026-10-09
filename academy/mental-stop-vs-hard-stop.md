@@ -1,5 +1,5 @@
 ---
-title: "Mental Stop Vs Hard Stop"
+title: "Mental Stops And Stop Orders"
 slug: "/academy/mental-stop-vs-hard-stop/"
 primary_keyword: "mental stop vs hard stop"
 secondary_keywords:
@@ -27,157 +27,53 @@ internal_links:
   - "/academy/risk-management/"
   - "/academy/holding-losers-too-long/"
   - "/academy/trade-review-and-improvement/"
-schema:
+schema: ["Article"]
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-10-08"
 meta_title: "Mental Stop Vs Hard Stop"
 meta_description: "Learn the difference between mental stops and hard stops, common risks, stop discipline mistakes, and how to review stop decisions."
 ---
-# Mental Stop Vs Hard Stop
 
-The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+# Mental Stops And Stop Orders
 
-## Lesson Objective
+![Mental Stops And Stop Orders diagram](/academy/images/risk-management-trade-planning/mental-stop-vs-hard-stop.svg)
 
-By the end of this lesson, you should be able to:
+A mental stop is an exit you watch and carry out yourself. A submitted stop order, often called a hard stop, gives the broker an instruction to act when the order's trigger conditions occur. Both need a clear exit price or condition, but they place different demands on the trader.
 
-- Explain the core idea behind Mental Stop Vs Hard Stop.
-- Identify the decision it is meant to control.
-- Connect the concept to position size, invalidation, loss control, and review.
-- Avoid treating risk rules as flexible only when emotions are high.
-- Use the lesson as part of a written trading plan and review process.
+## A Mental Stop Requires You To Act
 
-Mental stop vs hard stop is a common trading risk-management comparison. A mental stop is a planned exit level the trader watches manually. A hard stop is an actual order placed with the broker to exit if price reaches a certain level.
+Suppose you buy 100 shares at $5.00 and decide to leave if price reaches $4.80. With a mental stop, no automatic exit has been submitted. You must see the price, place the sell order and wait for it to fill.
 
-Both can be useful. Both can create problems. The better choice depends on the trader, strategy, stock, liquidity, volatility, and discipline.
+That can become difficult when the stock moves quickly. You might hesitate, lose your connection or become distracted by another position. If you finally sell at $4.70, the price loss is $30.00 before costs instead of $20.00 at a $4.80 exit.
 
-This is where traders can get into trouble. A mental stop only works if the trader actually follows it. A hard stop only works as intended if the trader understands how the order can fill in real market conditions.
+The problem is not solved by merely writing “mental stop $4.80.” The exit only happens after an accepted order fills.
 
-## Quick Definition
+## How A Submitted Stop Starts The Exit
 
-A mental stop is a stop level the trader plans to follow manually.
+A regular sell stop at $4.80 becomes a market order when the broker's trigger conditions are met. You do not need to manually submit that exit at that moment. However, the stop price is a trigger, not a guaranteed execution price.
 
-A hard stop is a stop order placed with the broker.
+The Stop Losses And Invalidation lesson explains the order mechanics. This lesson focuses on how the planned exit is monitored and carried out. A stop-limit also acts on a trigger, but its limit can prevent a fill. Confirm which type you submitted rather than using “hard stop” as though all submitted orders work identically.
 
-For example, a trader may buy a stock at $5.00 and decide the trade is wrong below $4.80.
+## Choose An Exit You Can Carry Out
 
-If they only watch $4.80 and plan to exit manually, that is a mental stop.
+Suppose the planned exit is a price touch at $4.80, but the trader must leave the screen during the session. A mental stop requires someone to observe that touch and submit an exit. A price alert alone does not sell shares, and an alert received late does not restore the missed price. The trader must arrange an appropriate submitted order or reconsider opening the position under those conditions.
 
-If they place an actual stop order near $4.80, that is a hard stop.
+Now consider a trader whose plan intentionally waits for a five-minute close below a level. A basic stop at that level would not implement the same condition. Before entry, they determine how they will monitor the close and send the exit, or whether the broker supports that exact condition. They also size for the fact that waiting can allow more movement before acting.
 
-The goal of both is to help define risk. The execution is different.
+For either approach, confirm the intended condition, who or what detects it, what order starts the exit, the quantity and the sessions in which it can work. A submitted order should show an accepted active status; writing it in a journal is not the same as placing it. A manual approach needs an actual monitoring and reaction plan, not just the intention to be quick.
 
-## Why It Matters To Traders
+## Decide Before The Trade, Not During The Loss
 
-Stop type matters because it affects discipline and execution.
+A trader who plans a price-touch exit and changes it to “wait for the close” after price reaches the level has changed the exit. If they then wait for another candle, the original boundary keeps moving.
 
-A mental stop gives the trader flexibility. They can consider context, spread, volume, and whether a level is briefly tested or truly broken.
+A mental stop requires both monitoring and willingness to submit the exit. If you cannot watch the position continuously or have a habit of postponing losses, account for that limitation before choosing the approach. A submitted order can remove one manual step, but it still needs correct quantity, duration and session settings.
 
-But that flexibility can become a weakness if the trader hesitates, moves the stop, or refuses to exit.
+## Check What Happens If Trading Is Interrupted
 
-A hard stop can enforce a risk plan. It can help remove hesitation.
+A halt can prevent an immediate exit under either approach. After trading resumes, the next price may be below the planned exit. Likewise, an order eligible only during regular hours may not protect an extended-hours position in the way the trader expects.
 
-But hard stops can also trigger during quick wicks, fast moves, wide spreads, or low-liquidity conditions. The fill may not always match the exact stop price.
+If you take a partial exit, verify that the remaining stop quantity matches the remaining shares. If you close manually while a separate stop remains active, check and cancel the unwanted order. Broker-linked orders may coordinate this, but independent orders should not be assumed to resize or cancel themselves.
 
-There is no perfect stop type. There is only a stop process that needs review.
+## Check Why The Actual Exit Differed From The Plan
 
-## How It Works
-
-A mental stop relies on the trader's discipline.
-
-The trader sees price reach the stop area and must act. That requires focus and honesty. If the trader keeps moving the level, the mental stop is not really controlling risk.
-
-A hard stop relies on an order.
-
-The trader places the stop order ahead of time. If price reaches the stop trigger, the order activates according to the order type. Depending on the market, execution can be clean or messy.
-
-Traders should understand:
-
-- Stop market orders can fill at a different price than expected.
-- Stop limit orders may not fill if price moves through the limit.
-- Thin stocks can slip.
-- Fast markets can move before the order fills.
-- Mental stops can fail if discipline fails.
-
-Stop orders can prioritize getting out after the stop is triggered but may not protect the exact price, while stop-limit orders add price control but introduce no-fill risk.
-
-## Example Scenario
-
-Imagine a trader enters a volatile small-cap stock at $2.00. The invalidation area is $1.90.
-
-With a hard stop, the trader places a stop order. If the stock quickly wicks to $1.89 and reclaims, the trader may be stopped out even if the level recovers.
-
-With a mental stop, the trader watches the level. If the stock breaks and fails to reclaim, they exit manually. But if they hesitate and the stock drops to $1.70, the mental stop failed.
-
-The review should not ask which stop type is always better. It should ask which stop process the trader followed correctly.
-
-## Common Mistakes
-
-One common mistake is using a mental stop without discipline.
-
-Another mistake is using a hard stop without understanding liquidity, spread, and slippage.
-
-Traders also make mistakes when they place stops at obvious levels without considering volatility.
-
-Another mistake is moving either type of stop after price reaches it. Sometimes there is a valid reason. Often it is emotional loss avoidance.
-
-A final mistake is not recording stop behavior. If the trader does not track missed stops, late exits, or stop-outs from poor placement, the pattern can repeat.
-
-## Review Questions
-
-Stop type should be reviewed as part of risk management.
-
-Useful review questions include:
-
-- Did I use a mental stop or a hard stop?
-- Was the stop area defined before entry?
-- Did the stop match the trade structure?
-- Did I follow the mental stop?
-- Did the hard stop fill as expected?
-- Did spread or slippage affect the exit?
-- Did I move the stop emotionally?
-- Which stop type fits this setup better in future review?
-
-The goal is to build evidence about what works for the trader's behavior and the traded stocks.
-
-## Related Terms And Guides
-
-For more context, read:
-
-- [Stop loss](/academy/stop-loss/)
-- [Trading risk management](/academy/risk-management/)
-- [Holding losers too long](/academy/holding-losers-too-long/)
-- [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## FAQ
-
-### What is a mental stop?
-
-A mental stop is a planned exit level that the trader watches manually instead of placing as a broker order.
-
-### What is a hard stop?
-
-A hard stop is a stop order placed with the broker to trigger an exit if price reaches a certain level.
-
-### Is a mental stop better than a hard stop?
-
-Not always. A mental stop offers flexibility but requires discipline. A hard stop can enforce risk but may slip or trigger during volatility.
-
-### Can a hard stop fill at a different price?
-
-Yes. Depending on the order type, liquidity, spread, and market speed, the actual fill can differ from the stop trigger.
-
-### Why do mental stops fail?
-
-Mental stops fail when traders hesitate, move the level, hope for a bounce, or ignore the original invalidation area.
-
-### How should I review stop choices?
-
-Track the stop type, planned level, actual exit, slippage, whether the stop was followed, and whether the stop type fit the trade.
-
-## Related Lessons
-
-- [Stop Loss](/academy/stop-loss/)
-- [Max Loss](/academy/max-loss/)
-- [Risk Management](/academy/risk-management/)
-- [Trade Risk Review](/academy/trade-risk-review/)
+Record the intended condition, whether a broker order was active, when you acted and the actual fill. That separates a delayed decision from a gap, an inactive order or a worse execution price. Use the distinction when improving the exit process instead of labeling every larger loss a failure of discipline.

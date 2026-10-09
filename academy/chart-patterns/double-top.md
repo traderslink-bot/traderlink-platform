@@ -41,7 +41,7 @@ meta_description: "Learn what Double Top shows, why it can fail, and how to revi
 
 **Best suited for:** day trading and swing trading.
 
-A double top forms when price tests a similar resistance area twice and fails to hold above it. The second rejection matters because it shows buyers struggled at the same area again.
+Two tests of similar resistance form a potential double top. A break below the pullback low between the peaks confirms the reversal pattern. The second rejection matters because it shows buyers struggled at the same area again.
 
 The pattern is cleaner when both highs are easy to see and the pullback between them gives the chart a clear support area to watch.
 
@@ -49,7 +49,7 @@ The pattern is cleaner when both highs are easy to see and the pullback between 
 
 ## What It Is
 
-A double top forms when price tests a similar resistance area twice and fails to hold above it.
+Two tests of similar resistance form a potential double top. A break below the pullback low between the peaks confirms the reversal pattern.
 
 - First test into resistance.
 - Pullback from the first test.
@@ -58,6 +58,10 @@ A double top forms when price tests a similar resistance area twice and fails to
 - Possible support break or failed breakdown.
 
 Review the two resistance tests, the pullback between them, and the level price would need to lose for the pattern to matter.
+
+## When The Reversal Is Confirmed
+
+The peaks identify a potential double top. The neckline is support formed by the pullback lows between the peaks. The reversal is confirmed by a break below that support, not by the repeated peaks alone. If support holds, price may still be consolidating.
 
 ## Pattern Structure
 
@@ -86,7 +90,7 @@ Double tops mislead when traders call the pattern before the second rejection an
 
 ## Example Chart Read
 
-A stock tests high of day, pulls back, then tests the same area again and rejects. The useful read is whether the second test was weaker and whether price later lost or reclaimed the support between the two highs.
+Price rises to $5.20, pulls back to $4.80, and returns to $5.18. The two peaks suggest a potential double top. Support at $4.80 is the neckline. A later close at $4.75 breaks that support and confirms the reversal pattern. If price instead holds $4.80 and returns above the peaks, the chart has not completed a bearish reversal.
 
 ## Common Mistakes
 
@@ -117,23 +121,11 @@ A double top is repeated resistance plus follow-through context, not two similar
 
 ### What is Double Top?
 
-A double top forms when price tests a similar resistance area twice and fails to hold above it.
+Two tests of similar resistance form a potential double top. A break below the pullback low between the peaks confirms the reversal pattern.
 
 ### What weakens a double top?
 
 It weakens if price reclaims the resistance area and starts holding above the prior highs.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

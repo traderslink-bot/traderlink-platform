@@ -42,11 +42,13 @@ Rising three methods is a bullish continuation pattern. It shows a strong push u
 
 ## How To Identify It
 
-* **Body:** Large green candle first, several smaller candles inside the range, then a strong green continuation candle.
+* **Body:** One long green candle, three smaller pullback candles, and a final long green candle. The classic pattern has five candles.
 * **Wicks:** Wicks can vary, but the small middle candles should stay controlled inside the first candle range.
-* **Relationship:** The middle candles pause without fully undoing the first green candle.
+* **Relationship:** The three middle candles remain within the first candle's high-to-low range, including their wicks. The fifth candle closes above the first candle's high.
 
-Look for a strong green candle, several smaller pullback candles that stay inside its range, and a final green candle that continues higher. The pause should look controlled, not like a full breakdown.
+The middle candles usually move against the trend and have smaller bodies than the first candle. A final green candle that only breaks the small pause but closes inside the first candle's range does not complete the classic pattern.
+
+If the first candle has a high of $5.20 and a low of $4.80, the middle candles stay within that range. The fifth candle must close above $5.20 to complete the pattern.
 
 ## Context
 
@@ -60,9 +62,9 @@ The pattern shows buyers pushing, then absorbing a small pullback, then pressing
 
 ## What To Watch Next
 
-Watch whether the final candle can push above the pause and whether price keeps holding the earlier strong candle range. That range is the structure behind the continuation read.
+The fifth candle closes above the first candle's high to complete the pattern. After that close, watch whether later candles hold above the breakout or fall back into the pause. A fall below the first candle's low undermines the continuation.
 
-The read weakens if the middle candles break down through the first candle range. That means the pause is no longer controlled.
+During formation, a middle candle that trades below the first candle's low disqualifies the classic pattern.
 
 ## Common Confusion
 

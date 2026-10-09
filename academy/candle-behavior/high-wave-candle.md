@@ -62,7 +62,7 @@ Both sides pushed hard. Buyers forced price up, sellers forced price down, and t
 
 Watch whether price breaks out of the wide high-wave range or stays trapped inside it. A clean hold outside the range gives more information than the candle alone.
 
-The read weakens if later price stays noisy inside the same wide range. That means the battle is still unresolved.
+If later candles keep moving within the same wide range, the indecision remains unresolved. The long wicks alone do not establish a reversal.
 
 ## Common Confusion
 

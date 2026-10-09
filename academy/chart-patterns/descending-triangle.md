@@ -87,7 +87,7 @@ Descending triangles mislead when traders assume repeated support tests mean sup
 
 ## Example Chart Read
 
-A stock tests the same support zone three times while each bounce becomes weaker. Volume rises on the latest test, but price quickly reclaims the support area. The next read is whether the breakdown follows through or whether the reclaim changes the structure.
+A stock tests the same support zone three times while each bounce becomes weaker. Price briefly breaks below support on higher volume, then moves back above it. The first breakdown did not hold. Watch whether the reclaim holds or price breaks support again.
 
 ## Common Mistakes
 

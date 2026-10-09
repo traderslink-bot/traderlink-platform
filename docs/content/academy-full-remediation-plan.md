@@ -1,5 +1,35 @@
 # TradersLink Academy Full Remediation Plan
 
+## Course 4 local integration — 2026-10-08
+
+[Integration record](../migration/academy-course-4-risk-management-trade-planning-progress.md): all 14 approved lessons and SVGs now integrated locally, with launch registry and metadata updated. Academy counts and cards derive from that registry. Publication and deployed rendering remain outstanding.
+
+## Complete Course 2 editorial review
+
+[93-lesson checklist](../migration/academy-course-2-complete-editorial-qa.md) controls the owner-requested complete review. Complete: all 93 bodies read, necessary corrections applied, and local lesson/image references checked. Live rendering remains a separate verification boundary.
+
+## Course 2 follow-up QA — 2026-10-08
+
+The [follow-up QA record](../migration/academy-course-2-follow-up-qa-progress.md) records local text corrections, the 93-placement scope and 140-image source checks. No additional image changes were needed. Deployed rendering remains unverified; publication is not authorized.
+
+## Live Course 1 and Course 2 image QA — 2026-10-08
+
+Owner authorized local corrections after the audit. Follow the [correction progress record](../migration/academy-live-course-image-corrections-progress.md) and exact asset allowlist. Owner design acceptance and publication remain separate checkpoints.
+
+Owner-requested audit of all 149 unique images across the 107 lesson memberships is recorded in the [image QA report and progress record](live-course-image-qa/review.md), with the complete asset inventory, rendered review sheets and live-reference evidence. Confirmed teaching and layout defects remain open; this checkpoint approves neither a redesign nor publication. No live content or progress data changed.
+
+## Course 3 planning checkpoint — 2026-10-08
+
+Third all-image QA pass is recorded in the [image QA record](course-3-visual-preview/image-qa.md). Two remaining average-legend placement issues were corrected; all 14 assets and review renders are current. Integration and owner acceptance remain pending.
+
+Two complete owner-requested [image QA passes](course-3-visual-preview/image-qa.md) now record corrected arithmetic presentation, chart alignment, labeling and profile layout across all 14 visuals. Image enlargement remains an integration requirement for narrow screens. Owner visual and integrated-course acceptance remain pending.
+
+Visual design remains unapproved after two rejected attempts. The third revision uses [real TradingView and IBKR screenshot references](course-3-visual-preview/visual-references.md) to redesign the complete 14-file set. Current SVGs and image renders are refreshed in the preview; fresh local HTML browser review is blocked by the browser tool's `file:` URL policy. Owner design review remains the next checkpoint.
+
+The [standalone visual preview](course-3-visual-preview/index.html) is ready for owner review, with [exact asset decisions and QA](course-3-visual-preview/visual-review.md). It loads the 14 proposed live SVGs directly and supports desktop, phone width and dark appearance. Visual approval is pending; Academy integration remains unstarted.
+
+The owner-requested writing and design proposal for **Volume, Liquidity And Order Flow** is recorded in [the Course 3 plan](../migration/academy-course-3-volume-liquidity-order-flow-plan.md), with [checkpoint progress](../migration/academy-course-3-volume-liquidity-order-flow-progress.md). The plan contains the complete 14-lesson target inventory and editorial/visual approval checkpoints. Status: plan and three samples owner approved on 2026-10-08; [all 14 manuscripts](course-3-editorial-rewrites/course-3-manuscript-review.md) written, editorially reviewed and accepted by Codex under the owner's explicit delegation. Diagram audit is underway. Academy lesson and UI integration have not started.
+
 Created: 2026-05-18
 Last updated: 2026-05-18
 Branch target: `codex/trader-ui-product-pass`
@@ -920,3 +950,20 @@ Remaining recommendation:
 The Academy should not feel like a bunch of SEO pages. It should feel like a real beginner trading course created by someone who understands charts, small caps, risk, psychology, and post-trade improvement.
 
 The free lessons should teach first. The Trader Intelligence app should appear as the natural next step when the lesson makes the reader realize that tracking and reviewing their own trades would help.
+
+### Course 1 and 2 image correction checkpoint — 2026-10-08
+
+Authorized corrections and local SVG/raster QA are complete. [Exact-asset preview](live-course-image-qa/index.html) is ready. [Progress record](../migration/academy-live-course-image-corrections-progress.md) records scope and verification. Owner visual acceptance, integrated app verification and publication remain open.
+
+Second Course 1/2 image QA completed on 2026-10-08: all 150 local images reviewed, 12 caption/legend corrections made, preview refreshed. See the [QA record](live-course-image-qa/review.md). Visual acceptance and integrated/live verification remain pending.
+
+### Course 4 — Risk Management And Trade Planning
+
+[Complete Course 4 plan](../migration/academy-course-4-risk-management-trade-planning-plan.md) and [progress](../migration/academy-course-4-risk-management-trade-planning-progress.md). Existing 14-lesson inventory reviewed; writing/design/QA/integration plan awaiting owner review before implementation.
+
+Course 4 plan approved 2026-10-08. Complete manuscript/diagram preparation and local QA now finished; [visual preview](course-4-visual-preview/index.html) is ready. Visual acceptance, local integration and publication remain open; see the Course 4 progress record.
+
+
+### Course 2 fresh whole-course QA checkpoint — complete
+
+All 93 lessons were reread in full, 23 necessary lesson corrections were rechecked, and all 140 linked diagrams were freshly inspected. The full per-lesson record is in [the Course 2 QA record](../migration/academy-course-2-complete-editorial-qa.md#fresh-whole-course-review--2026-10-08). Local content QA is complete; publication and live application checks remain separate.

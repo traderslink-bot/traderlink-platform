@@ -56,7 +56,7 @@ Bottoming tails matter most near support, prior lows, reclaim areas, or after a 
 
 ## What It Shows
 
-A bottoming tail shows failed selling pressure. Price traded down first, buyers stepped in, and the candle closed away from the low instead of accepting that lower area.
+A bottoming tail shows failed selling pressure. Price traded substantially below its open and close, but finished away from the low. The candle alone does not establish the sequence of every intrabar move.
 
 ## What To Watch Next
 
@@ -70,7 +70,7 @@ A hammer is a specific bottoming-tail shape. Bottoming tail is the broader famil
 
 ## Key Takeaway
 
-A bottoming tail shows lower rejection. Price pushed down, failed to hold near the low, and closed back up. It matters most when that rejection happens near a level traders were already watching.
+A bottoming tail shows lower rejection: the low is well below the body, and the close is away from that low. It matters most when that rejection happens near a level traders were already watching.
 
 ## Related Lessons
 

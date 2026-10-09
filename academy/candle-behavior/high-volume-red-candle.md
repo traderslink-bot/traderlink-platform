@@ -28,7 +28,7 @@ meta_description: "Learn High-Volume Red Candle by shape, candle count, context,
 
 # High-Volume Red Candle
 
-A high-volume red candle shows seller pressure paired with unusual activity. The candle body tells you direction; the volume tells you participation increased.
+A high-volume red candle closes below its open while more shares trade than in the periods used for comparison. The candle shows the price change from open to close; the volume bar shows how many shares traded during that same period.
 
 ![Large red candle shown with a taller volume bar than the surrounding candles.](/academy/images/chart-reading/candle-behavior/high-volume-red-candle-shape.svg)
 
@@ -42,11 +42,11 @@ A high-volume red candle shows seller pressure paired with unusual activity. The
 
 ## How To Identify It
 
-* **Body:** Red body that stands out from recent candles.
+* **Body:** The close is below the open. A large body is not required for high volume.
 * **Wicks:** Wicks can vary, but a close near the low makes the candle cleaner.
 * **Relationship:** The volume bar under the candle should be larger than nearby volume bars.
 
-Look for a meaningful red body and a volume bar that clearly stands out from nearby candles. The strongest examples close near the low instead of leaving a large lower wick.
+Compare volume bars from the same candle timeframe. A close near the low shows that price finished near that end of its range. A long lower wick shows that price moved away from that extreme before the close. Both can occur with high volume.
 
 ## Context
 
@@ -56,21 +56,23 @@ This candle matters most at breakdowns, failed reclaims, resistance reactions, o
 
 ## What It Shows
 
-The candle shows sellers stepping in with more participation than normal. It can mark momentum leaving, a level being lost, or a move that forced traders to react.
+Suppose a five-minute candle opens at $5.10 and closes at $5.00 on 300,000 shares. The preceding three five-minute candles each traded about 100,000 shares. This candle traded about three times as many shares as those nearby periods. Its red body shows the direction from open to close; it does not classify every trade as a sell.
+
+A small body with high volume means substantial trading produced little net change between the open and close. That is different from a large body covering a wide price distance on the same volume.
 
 ## What To Watch Next
 
-Watch whether price stays below the candle body or rejects it on a bounce. Strong sell volume should leave behind an area price struggles to reclaim.
+If the candle closes below support, watch the next candles and any retest of the level. Does price remain below it, or does it cross back through? High volume does not guarantee that the level will hold.
 
-The read weakens if price immediately reclaims the candle on strong buying. That means the sell pressure did not hold.
+If price rises back above the broken support level, the break has failed to hold despite the increased activity.
 
 ## Common Confusion
 
-A big red candle without stronger volume is a price candle, not a high-volume red candle.
+A large red candle can have ordinary volume. A small red candle can have high volume. Body size measures the distance between open and close; volume measures shares traded. Compare each separately.
 
 ## Key Takeaway
 
-A high-volume red candle shows seller pressure with increased participation. The next read is whether that pressure creates resistance or gets fully erased.
+Read the candle direction, its volume relative to comparable periods, and its position around a price level. Then watch whether the move holds or reverses.
 
 ## Related Lessons
 

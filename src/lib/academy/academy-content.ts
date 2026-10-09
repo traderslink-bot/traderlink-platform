@@ -203,6 +203,8 @@ const visualOverrides = (visualOverridesData as VisualOverridesJson)
 const launchCourseIds = new Set([
   "trading-foundations",
   "chart-reading-market-structure",
+  "volume-liquidity-order-flow",
+  "risk-management-trade-planning",
 ]);
 
 export function getAcademyCourses(): AcademyCourse[] {

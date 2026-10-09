@@ -177,11 +177,12 @@ A cluttered map might mark all five levels on the active intraday chart, plus se
 
 A cleaner map may focus on:
 
-* $5.45 as the main intraday support area
+* $5.62 as the nearest pullback support
+* $5.45 as the main intraday support area below it
 * $6.00 as the nearest active resistance
 * $6.15 as the higher timeframe level just above resistance
 
-That map gives the trader enough structure to study the move.
+The $5.62 pullback is the first nearby support to watch. The lower $5.45 level matters if that nearer support fails. The distant $7.20 resistance can remain on the higher-timeframe chart until price approaches it.
 
 If price pushes into $6.00 and immediately rejects, the trader can review whether the entry chased into resistance. If price breaks $6.00 but cannot hold above it, the trader can study the failed breakout. If price pulls back toward $5.45, the trader can watch whether the main intraday support area still matters.
 

@@ -38,7 +38,7 @@ That is why day trading should not start with “find hot stocks.”
 
 It should start with mechanics, risk, execution, and review.
 
-![Trading dashboard showing premarket, open, midday, close, and after-hours liquidity context.](/academy/images/trading-foundations/session-liquidity-map.svg)
+![U.S. stock market sessions and regular-session periods in Eastern Time.](/academy/images/trading-foundations/session-liquidity-map.svg)
 
 ## What Day Trading Is
 

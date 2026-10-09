@@ -44,9 +44,9 @@ A morning star is a three-candle reversal pattern. It shows selling pressure, a 
 
 * **Body:** First candle is a strong red body, second is small, third is a strong green body.
 * **Wicks:** The middle candle may have wicks, but its small body is the main pause clue.
-* **Relationship:** The third candle pushes back into the first candle range after the small middle candle.
+* **Relationship:** The third candle closes above the midpoint of the first red candle body.
 
-Look for a strong red candle, a smaller middle candle that shows hesitation, and a green candle that pushes back into the first candle range. The third candle is what makes the shift visible.
+Look for a long red candle, a small middle body below it, and a long green candle that closes above the midpoint of the first red body. In the classic daily pattern, the middle body gaps below the first body and the third candle opens higher than the middle body. Intraday charts may show a similar reversal sequence without those gaps; distinguish that sequence from the classic pattern.
 
 ## Context
 

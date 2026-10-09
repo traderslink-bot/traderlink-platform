@@ -42,11 +42,13 @@ Falling three methods is a bearish continuation pattern. It shows a strong move 
 
 ## How To Identify It
 
-* **Body:** Large red candle first, several smaller candles inside the range, then a strong red continuation candle.
+* **Body:** One long red candle, three smaller pullback candles, and a final long red candle. The classic pattern has five candles.
 * **Wicks:** Wicks can vary, but the small middle candles should stay controlled inside the first candle range.
-* **Relationship:** The middle candles pause without fully undoing the first red candle.
+* **Relationship:** The three middle candles remain within the first candle's high-to-low range, including their wicks. The fifth candle closes below the first candle's low.
 
-Look for a strong red candle, several smaller bounce candles that stay inside its range, and a final red candle that continues lower. The pause should look controlled, not like a full reclaim.
+The middle candles usually move against the trend and have smaller bodies than the first candle. A final red candle that only breaks the small pause but closes inside the first candle's range does not complete the classic pattern.
+
+If the first candle has a high of $5.20 and a low of $4.80, the middle candles stay within that range. The fifth candle must close below $4.80 to complete the pattern.
 
 ## Context
 
@@ -60,9 +62,9 @@ The pattern shows sellers pressing, then absorbing a small bounce, then pressing
 
 ## What To Watch Next
 
-Watch whether the final candle can push below the pause and whether price stays under the earlier strong candle range. That range is the structure behind the continuation read.
+The fifth candle closes below the first candle's low to complete the pattern. After that close, watch whether later candles stay below the breakdown or return into the pause. A rise above the first candle's high undermines the continuation.
 
-The read weakens if the middle candles reclaim the first candle range. That means the pause is no longer controlled.
+During formation, a middle candle that trades above the first candle's high disqualifies the classic pattern.
 
 ## Common Confusion
 

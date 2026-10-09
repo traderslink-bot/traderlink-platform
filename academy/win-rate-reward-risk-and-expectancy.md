@@ -1,5 +1,5 @@
 ---
-title: "Win Rate, Reward/Risk, And Expectancy"
+title: "Win Rate And Expectancy"
 slug: "/academy/win-rate-reward-risk-and-expectancy/"
 primary_keyword: "trading expectancy"
 secondary_keywords:
@@ -28,163 +28,74 @@ internal_links:
   - "/academy/stop-loss/"
   - "/academy/trade-risk-review/"
   - "/academy/trade-review-and-improvement/"
-schema:
+schema: ["Article"]
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-10-08"
 meta_title: "Win Rate, Reward/Risk, And Trading Expectancy"
 meta_description: "Learn how win rate, reward/risk, average winner, average loser, and expectancy help traders review performance without assuming guarantees."
 ---
-# Win Rate, Reward/Risk, And Expectancy
 
-Many traders talk about risk/reward as if a clean ratio automatically makes a trade good. That is incomplete. A trading process also depends on win rate, average winner, average loser, costs, slippage, and sample size.
+# Win Rate And Expectancy
 
-Expectancy helps connect those pieces. It is a review concept, not a promise.
+![Win Rate And Expectancy diagram](/academy/images/risk-management-trade-planning/win-rate-reward-risk-and-expectancy.svg)
 
-## Lesson Objective
+Win rate is profitable trades divided by all completed trades in the stated sample. Expectancy, when calculated from completed results, is the average result per trade. Together they explain more than the percentage of winners alone.
 
-By the end of this lesson, you should be able to:
+## Calculate The Averages From Your Trade Log
 
-- Explain the difference between win rate and reward/risk.
-- Understand why a high win rate can still lose money.
-- Understand why a low win rate can still be workable only if winners are large enough.
-- Use expectancy as a review framework.
-- Avoid making conclusions from too small of a sample.
+Use the complete net result for each completed trade, including all partial exits and costs. Classify each as a win, loss or breakeven. Count all three groups in the total number of trades.
 
-## Quick Definition
+To find average win, add the net profits of the winning trades and divide by their count. If 55 winners earned $5,500.00, the average win is $100.00. To find average loss, add the dollar amounts lost on losing trades and divide by their count. If 45 losers lost $4,500.00, the average loss is $100.00. Use the positive loss amount when comparing sizes; subtract it when calculating the total result.
 
-Win rate is the percentage of trades that are profitable before considering the quality of the wins and losses.
+The full sample therefore earns $1,000.00 across 100 trades, or $10.00 per trade. That average is the observed expectancy. It describes the sample; it does not forecast the next trade.
 
-Reward/risk compares planned potential reward with planned risk.
+A few unusually large losses can change the average substantially. If 39 losses are $100.00 each and one is $1,000.00, the 40 losses total $4,900.00 and average $122.50. Looking only at the usual $100.00 loss misses the effect of that one trade. Inspect the larger loss to understand whether it involved quantity, execution or a change to the exit.
 
-Expectancy estimates the average result per trade over a sample, based on the relationship between wins, losses, and their sizes.
+## A 55% Or 60% Win Rate Can Be Profitable
 
-A simple version:
+Winning more often than losing can produce a profit when the average loss stays small enough relative to the average win. The size of the losses matters just as much as how many trades win.
 
-```text
-Expectancy = (Win rate x Average win) - (Loss rate x Average loss)
-```
+Consider two samples of 100 completed trades. Results in this table are after all trading costs.
 
-This formula is useful for review, but only when the sample is honest and the data is realistic.
+| Win rate | Wins | Losses | Average win | Average loss | Net total |
+|---|---|---|---|---|---|
+| 55% | 55 | 45 | $100.00 | $100.00 | +$1,000.00 |
+| 60% | 60 | 40 | $100.00 | $100.00 | +$2,000.00 |
 
-## Why Win Rate Alone Is Not Enough
+At 55%, winners contribute $5,500.00 and losses subtract $4,500.00. At 60%, the figures are $6,000.00 and $4,000.00. The average net result is +$10.00 and +$20.00 per trade respectively.
 
-A trader can win often and still lose overall if the losses are much larger than the wins.
+Now keep the 60% win rate and $100.00 average win, but let the average loss grow to $175.00. The winners still earn $6,000.00; the 40 losses now cost $7,000.00. The sample loses $1,000.00 despite winning six trades out of ten.
 
-For example:
+At a 55% win rate and $100.00 average win, the average loss must stay below approximately $122.22 for a positive average result when using net figures. At 60%, the corresponding breakeven average loss is $150.00. These two examples assume no breakeven trades. They follow from dividing total winning dollars by the number of losing trades. They describe the sample’s arithmetic, not suggested loss limits.
 
-- 70% win rate.
-- Average winner: $50.
-- Average loser: $150.
+Managing risk means controlling quantity, following planned exits and avoiding a few oversized losses that can erase many ordinary wins. It cannot guarantee a particular win rate or average loss. A stop can fill worse than planned, so actual completed results—not just the intended stop distance—belong in this comparison.
 
-That process may feel good because most trades are green, but one or two losses can erase many wins.
+## Work Through Ten Trades
 
-This is common when traders cut winners quickly and hold losers too long.
+Suppose four trades gained $100.00 each and six lost $50.00 each, before costs.
 
-## Why Reward/Risk Alone Is Not Enough
+| Result | Trades | Result per trade | Total |
+|---|---|---|---|
+| Wins | 4 | +$100.00 | +$400.00 |
+| Losses | 6 | −$50.00 | −$300.00 |
+| Entire sample | 10 | Average +$10.00 | +$100.00 |
 
-A trader can plan a 1:4 reward/risk trade, but if the target is unrealistic or the setup rarely follows through, the plan may not have positive expectancy.
+The win rate is 4 ÷ 10 = 40%. The average result is $100.00 ÷ 10 = +$10.00 per trade. The same calculation can be written as 0.40 × $100.00 − 0.60 × $50.00 = $10.00.
 
-Reward/risk must be connected to:
+This is the observed result of these ten trades. It is not a promise that the next trade, or the next ten, will earn that amount.
 
-- Realistic targets.
-- Historical or reviewed behavior.
-- Setup quality.
-- Liquidity.
-- Slippage.
-- Execution discipline.
-- Enough trade samples.
+## Costs Can Change The Answer
 
-A target written on paper does not mean the market is likely to reach it.
+If each completed trade incurred $12.00 of total costs, the sample's costs would be $120.00. The net result becomes $100.00 − $120.00 = −$20.00, or −$2.00 per trade.
 
-## How Expectancy Helps
+Use either net results throughout or a consistent calculation that subtracts costs once. Subtracting costs from already-net results counts them twice. The $12.00 figure is chosen for the example, not a claim about a broker's pricing.
 
-Expectancy asks whether the trader's actual results make sense across many trades.
+## Keep Breakeven Trades In The Sample
 
-It helps review questions like:
+Return to the ten-trade example before costs. If an eleventh trade has a $0.00 result before costs, the total remains $100.00 but the average becomes $100.00 ÷ 11 = approximately $9.09. The win rate becomes 4 ÷ 11 = approximately 36.36%. Losses are 6 ÷ 11 and breakeven trades 1 ÷ 11; loss rate is not automatically one minus win rate when breakeven trades exist.
 
-- Are winners big enough compared with losers?
-- Are losses being controlled?
-- Is the trader exiting winners too early?
-- Is the trader holding losers too long?
-- Is slippage changing the real math?
-- Is the sample large enough to trust?
+## Compare Trades Taken With The Same Approach
 
-Expectancy is not a prediction that the next trade will work. It is a way to review whether the process has been producing a positive or negative average result.
+State the period, costs and which completed trades belong to the sample. Mixing very different position sizes can make dollar averages reflect size changes as much as trade behavior. Results in R—units of each trade's original planned price risk—can help compare trades when that risk is recorded consistently.
 
-## Realistic Example
-
-A trader reviews 40 completed momentum trades.
-
-The trader won 18 and lost 22. The win rate is only 45%, which may feel low. But the average winner was $180 and the average loser was $80.
-
-The rough expectancy is:
-
-```text
-(0.45 x 180) - (0.55 x 80) = 81 - 44 = 37
-```
-
-That means the reviewed sample averaged about $37 per trade before fees and other costs.
-
-This does not guarantee future results. It simply shows that, in that sample, the average winner was large enough to offset the lower win rate.
-
-## The Sample Size Problem
-
-Expectancy is weak when the sample is too small or mixed.
-
-Five trades do not prove much. Ten trades may still be noise. A sample that mixes day trades, swing trades, news trades, scalps, and random mistakes may also be hard to interpret.
-
-Better review uses cleaner groups:
-
-- One setup type.
-- Similar market conditions.
-- Similar timeframe.
-- Similar risk rules.
-- Consistent execution rules.
-
-The goal is to compare like with like.
-
-## Common Mistakes
-
-One common mistake is chasing a high win rate while allowing large losses.
-
-Another mistake is using a theoretical reward/risk ratio instead of actual average winner and loser data.
-
-Traders also make mistakes when they ignore fees, borrow costs, spreads, and slippage.
-
-Another mistake is changing rules after only a few trades.
-
-A final mistake is treating expectancy as permanent. Market conditions, execution quality, and trader behavior can change.
-
-## Related Lessons
-
-- [Risk Reward Ratio](/academy/risk-reward-ratio/)
-- [Position Sizing](/academy/position-sizing/)
-- [Stop Loss](/academy/stop-loss/)
-- [Trade Risk Review](/academy/trade-risk-review/)
-- [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## FAQ
-
-### What is trading expectancy?
-
-Trading expectancy is an estimate of the average result per trade over a sample, based on win rate, average win, loss rate, and average loss.
-
-### Is high win rate always good?
-
-No. A high win rate can still lose money if losses are much larger than wins.
-
-### Is low win rate always bad?
-
-No. A lower win rate may still work in a reviewed sample if average winners are large enough compared with average losses, but that does not guarantee future results.
-
-### How many trades do I need to calculate expectancy?
-
-There is no perfect number, but very small samples are unreliable. Cleaner and larger samples usually give more useful review information.
-
-### Does positive expectancy guarantee future profit?
-
-No. Expectancy is based on reviewed data. Future results can change because of market conditions, execution, risk behavior, and sample quality.
-
-### Should beginners focus only on expectancy?
-
-No. Beginners should first learn risk control, position sizing, stops, execution, and review. Expectancy becomes more useful once trade samples are organized.
+A small sample can change sharply after one large win or loss. Look at the individual wins and losses, the circumstances and whether the same process was followed before treating its average as representative of future trading.

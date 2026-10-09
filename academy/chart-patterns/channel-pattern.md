@@ -60,13 +60,7 @@ Review whether the channel boundaries were respected enough times to matter and 
 
 ## Pattern Structure
 
-The pattern shows price moving inside a sloped range.
-
-- Repeated reactions at an upper channel area.
-- Repeated reactions at a lower channel area.
-- Trend direction inside the channel.
-- Possible break or failure outside the channel.
-- Volume and extension review.
+Draw one line through repeated swing lows and a roughly parallel line through swing highs. In a rising channel, the lower boundary is support; in a falling channel, the upper boundary is resistance. A boundary break changes the channel structure, but it does not by itself confirm an opposite trend. Look for the next swing sequence and any retest of the broken line.
 
 ## Context That Matters
 
@@ -120,18 +114,6 @@ A channel pattern forms when price moves between roughly parallel support and re
 ### What breaks a channel read?
 
 A channel read weakens when price leaves the channel and holds outside it, or when the boundaries no longer line up with real reactions.
-
-### What context matters most?
-
-Levels, trend, volume, liquidity, risk, and follow-through matter most.
-
-### Why do these trades fail?
-
-They often fail because entries are late, volume fades, a key level fails, or the pattern was forced.
-
-### How should it be reviewed?
-
-Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
 ### What should this pattern be compared with?
 

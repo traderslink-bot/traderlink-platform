@@ -1,5 +1,5 @@
 ---
-title: "Bid Ask Spread: How Traders Review Execution Cost"
+title: "Bid Ask Spread"
 slug: "/academy/spread/"
 primary_keyword: "bid ask spread"
 secondary_keywords:
@@ -24,8 +24,7 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/dollar-volume/"
 recommended_next: "/academy/bid-and-ask/"
 visual_assets:
-  - "/academy/images/chart-reading/spread-tight-vs-wide-market.svg"
-  - "/academy/images/chart-reading/spread-hidden-execution-cost.svg"
+  - "/academy/images/volume-liquidity-order-flow/spread.svg"
 internal_links:
   - "/academy/liquidity/"
   - "/academy/dollar-volume/"
@@ -44,180 +43,60 @@ meta_title: "Bid Ask Spread Explained"
 meta_description: "Learn what the bid ask spread is, why wide spreads affect execution, common mistakes, and how traders review spread problems."
 ---
 
-# Bid Ask Spread: How Traders Review Execution Cost
+# Bid Ask Spread
 
-The bid ask spread is the difference between the highest price buyers are bidding and the lowest price sellers are asking. Traders watch the spread because it affects entry price, exit price, slippage, position size, and the real cost of trading a stock.
+The bid ask spread is the gap between the best displayed buying price and the best displayed selling price. It affects how much price must change before a position bought at the ask can be sold at the bid without a loss.
 
+A narrow spread can make that gap smaller. A wide spread can make it large relative to the price movement a trader expects.
 
-## Lesson Objective
+## Calculate The Gap
 
-By the end of this lesson, you should be able to:
+With a $5.00 bid and $5.04 ask, the spread is $0.04 per share.
 
-- Explain spread in volume, liquidity, or order-flow context.
-- Identify where it appears on a realistic chart or trading dashboard.
-- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
-- Avoid treating it as guaranteed confirmation.
+To compare spreads across stock prices, express the gap as a percentage of a chosen reference price. Using the bid in this example:
 
-A chart may look clean, but a wide spread can make the trade much harder to execute well. Spread is not a small detail. It can change the trade before price moves at all.
+$0.04 ÷ $5.00 × 100 = **0.80%**.
 
-## What You Should Understand Before Reading This
+For a stock with a $50.00 bid and $50.04 ask, the same $0.04 gap is **0.08%** of the bid. The absolute gap is equal, but its size relative to the stock price differs.
 
-Before studying spread, remember:
+Tools may use the midpoint—the price halfway between bid and ask—instead. Different reference prices can produce slightly different percentages. Check which reference the tool uses before comparing its number with another calculation.
 
-- Liquidity affects whether a stock can be entered and exited cleanly.
-- Dollar volume adds traded-value context.
-- The last traded price is not the same as the current bid or ask.
-- A market order may fill at the available bid or ask, not the price you hoped for.
-- Wide spreads can increase slippage.
-- Spread should be reviewed before position size is chosen.
+![Bid Ask Spread](/academy/images/volume-liquidity-order-flow/spread.svg)
 
-The goal is not to avoid every spread. The goal is to know whether the spread fits the trade plan.
+## Crossing The Spread
 
-## Quick Definition
+Consider a micro-cap stock with a $1.10 bid and $1.18 ask. Its spread is $0.08 per share, or approximately **7.27%** of the bid: $0.08 ÷ $1.10 × 100.
 
-The bid ask spread is the gap between the bid price and the ask price.
+Suppose those quotes stay unchanged, with enough shares available for both trades. A trader buys 100 shares at the ask and immediately sells all 100 at the bid.
 
-- The bid is the highest price buyers are currently willing to pay.
-- The ask is the lowest price sellers are currently willing to accept.
-- The spread is the difference between those two prices.
+| Trade | Calculation | Value before fees |
+|---|---|---:|
+| Buy | 100 × $1.18 | $118.00 paid |
+| Sell | 100 × $1.10 | $110.00 received |
+| Difference | $110.00 − $118.00 | $8.00 loss |
 
-For example, if the bid is `$2.00` and the ask is `$2.05`, the spread is `$0.05`.
+The complete buy-and-sell sequence loses one full spread per share: $0.08 × 100 = $8.00 before fees. To recover the purchase cost by selling at the bid, the bid would need to reach the $1.18 entry price.
 
-![Trading dashboard comparing a tight spread with a wide spread.](/academy/images/chart-reading/spread-tight-vs-wide-market.svg)
+If the quote changes between entry and exit, the result changes too. Different fill prices, partial fills and fees also affect the final amount. The frozen quote makes the spread's contribution easy to see.
 
-A tight spread can make execution easier. A wide spread can make the trade more expensive before the setup has time to work or fail.
+## A Rising Last Price May Not Be Enough
 
-## Why Spread Matters
+After that $1.18 purchase, suppose the most recent trade occurs at $1.20, but the best bid is still $1.10. A chart may show a higher last price, while selling immediately at the bid would still produce a loss.
 
-Spread matters because it affects the trade before price even moves.
+The last trade reports what happened. The bid shows displayed buying interest now. For an exit, the available buying prices matter more than an isolated last price.
 
-If a trader buys at the ask and immediately needs to sell at the bid, the spread creates an instant disadvantage. On low-priced stocks, even a few cents can be a large percentage of the price.
+## Spread And Available Shares
 
-Spread affects:
+A $0.01 spread with only 100 shares at the best price does not guarantee that 5,000 shares can trade within that gap. A larger order may need other price levels.
 
-- Entry quality.
-- Exit quality.
-- Real risk.
-- Slippage.
-- Position size.
-- Whether a stop or target makes practical sense.
-- Whether a market order is too risky for the conditions.
+The spread can also widen when orders are removed. During premarket and after-hours trading, reduced interest can mean wider spreads or no quote at all.
 
-This is where traders get into trouble. They see a stock moving fast and enter without checking whether the spread is reasonable for the plan.
+There is no single spread suitable for every order size or trading plan. Compare the gap with the stock price, the intended size and the distance to the price where the trading idea would fail.
 
-## Tight Spread Versus Wide Spread
+## Limits And The Spread
 
-A tight spread usually appears when liquidity is stronger and buyers/sellers are active near the same price.
+A limit order placed inside the spread may offer a better price than crossing to the other side. It can remain unfilled if nobody trades with it. Setting a price changes the order's instructions; it does not make that price available.
 
-A wide spread often appears when:
+Does a $0.04 spread mean every buy always loses $0.04 immediately? No. The cost depends on where the order fills and the price available for a later sale. The example assumes buying at the ask and selling at an unchanged bid.
 
-- A stock is thinly traded.
-- The float is low.
-- The stock is moving quickly.
-- The market is premarket or after-hours.
-- News just hit.
-- Liquidity is uneven.
-- There is limited size on the bid or ask.
-
-Neither tight nor wide spread predicts direction. Spread describes execution conditions.
-
-## Hidden Execution Cost
-
-The spread can create hidden cost even if the chart level is correct.
-
-![Trading dashboard showing hidden execution cost when entering across a wide spread.](/academy/images/chart-reading/spread-hidden-execution-cost.svg)
-
-For example, a trader plans risk around a `$2.00` level. The quote shows:
-
-- Bid: `$1.96`
-- Ask: `$2.05`
-
-If the trader enters at `$2.05`, the trade is already farther from the planned level. If the trader exits into a `$1.96` bid, the actual loss may be larger than the chart plan suggested.
-
-This does not mean the trade cannot work. It means spread must be included in the risk review.
-
-## Spread During Fast Moves
-
-Spreads can widen during volatility.
-
-This often happens during:
-
-- News reactions.
-- Opening-drive moves.
-- Halt resumptions.
-- Low-float momentum.
-- Premarket or after-hours trading.
-- Volume spikes.
-- Failed breakouts or breakdowns.
-
-A trader may see price moving and assume liquidity is strong. But if the spread widens while the candle moves, execution can become worse.
-
-Before entering a fast move, ask:
-
-- Is the spread normal for this stock?
-- Did the spread widen during the move?
-- Is my order type appropriate?
-- Is my position size too large for the spread?
-- Would the spread make my planned stop too tight?
-
-## Realistic Example
-
-A stock is trading near `$1.00` and appears to be breaking above a level.
-
-The quote shows:
-
-- Bid: `$0.97`
-- Ask: `$1.05`
-
-That is an `$0.08` spread. On a `$1.00` stock, that is large.
-
-A trader reviewing the setup should ask:
-
-- Can I enter and exit cleanly?
-- Is the spread too wide for my planned risk?
-- Would a market order fill badly?
-- Is there enough size on the bid and ask?
-- Am I ignoring execution risk because the chart looks exciting?
-
-The chart setup may still move, but the spread changes the trade quality.
-
-## Common Mistakes
-
-Common spread mistakes include:
-
-- Using market orders in wide-spread stocks.
-- Ignoring spread in premarket.
-- Trading too much size for available liquidity.
-- Thinking the last price is the same as a realistic fill price.
-- Entering when the spread is larger than the planned risk.
-- Forgetting that spreads can widen during volatility.
-- Reviewing the chart as if the fill happened at the perfect price.
-- Ignoring spread when calculating stop distance and position size.
-
-Spread mistakes are execution mistakes. They may not show up if the trader only reviews the candle chart.
-
-## FAQ
-
-### What is the bid ask spread?
-
-The bid ask spread is the difference between the highest price buyers are bidding and the lowest price sellers are asking.
-
-### Why does spread matter in trading?
-
-Spread affects entries, exits, slippage, order fills, real risk, and the true cost of trading a stock.
-
-### Is a tight spread better?
-
-A tight spread can support cleaner execution, but it does not guarantee a good trade or a better outcome.
-
-### Why do spreads get wide?
-
-Spreads often widen when liquidity is thin, volatility is high, news hits, the stock is low float, or the market is premarket or after-hours.
-
-### Can a wide spread ruin a trade?
-
-A wide spread can make execution much harder and can make planned risk unrealistic, especially if the trader uses too much size or a poor order type.
-
-### Should traders track spread in review notes?
-
-Yes, especially when fills are worse than expected. Spread review can reveal execution problems that a chart-only review misses.
+[Market Orders And Limit Orders](/academy/market-orders-vs-limit-orders/) explains those choices and their fill limitations.

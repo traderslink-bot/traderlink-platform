@@ -1,5 +1,5 @@
 ---
-title: "Stock Liquidity: How Traders Review Clean Execution"
+title: "Stock Liquidity"
 slug: "/academy/liquidity/"
 primary_keyword: "stock liquidity"
 secondary_keywords:
@@ -24,8 +24,7 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/volume-spike/"
 recommended_next: "/academy/dollar-volume/"
 visual_assets:
-  - "/academy/images/chart-reading/liquidity-clean-vs-thin-market.svg"
-  - "/academy/images/chart-reading/liquidity-spread-depth-review.svg"
+  - "/academy/images/volume-liquidity-order-flow/liquidity.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/volume-spike/"
@@ -46,187 +45,78 @@ meta_title: "Stock Liquidity Explained for Traders"
 meta_description: "Learn what stock liquidity means, how it affects fills, spreads, slippage, order size, and how traders review liquidity problems."
 ---
 
-# Stock Liquidity: How Traders Review Clean Execution
+# Stock Liquidity
 
-Stock liquidity describes how easily shares can be bought or sold without causing a major price change. For active traders, liquidity matters because it affects entries, exits, spreads, slippage, order size, and whether the trade can be managed the way the chart suggests.
+Stock liquidity describes how easily shares can be bought or sold without substantially changing the price.
 
+For a trader, the practical question is whether enough shares are available near the current price to fill the order.
 
-## Lesson Objective
+A chart can show a steady price move while a wide spread or limited available shares makes buying and selling difficult. A stock may have traded millions of shares earlier but have very few shares available near its current price. That difference matters when entering or closing a position.
 
-By the end of this lesson, you should be able to:
+## Volume, Liquidity And Volatility
 
-- Explain liquidity in volume, liquidity, or order-flow context.
-- Identify where it appears on a realistic chart or trading dashboard.
-- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
-- Avoid treating it as guaranteed confirmation.
+These terms describe different things.
 
-A stock can look exciting on a chart and still be difficult to trade if liquidity is poor. Liquidity does not make a trade safe. It helps traders understand whether the market is active enough for their plan.
+| Term | What it describes |
+|---|---|
+| Volume | Shares that traded during a period |
+| Liquidity | How easily shares can be bought or sold without substantially changing the price |
+| Volatility | How much price varies over a period |
 
-## What You Should Understand Before Reading This
+An active, volatile stock can have a tight spread and many shares available near the current price. Another can have a wide spread and only a few shares available at each price. Both are moving, but buying and selling the same quantity may be easier in one than the other.
 
-Before studying liquidity, remember:
+Volume shows how many shares have already traded. It does not show how many are available for your next order.
 
-- Volume shows how many shares traded.
-- Relative volume shows whether activity is unusual.
-- A volume spike can bring attention, but attention can fade.
-- Liquidity is about executable shares, not only chart movement.
-- Spread, order-book depth, slippage, order type, and size all affect execution.
-- Poor liquidity can make a small planned risk much larger in real fills.
+![Stock Liquidity](/academy/images/volume-liquidity-order-flow/liquidity.svg)
 
-The goal is not to find "perfect" liquidity. The goal is to review whether the stock was liquid enough for the trader's size and plan.
+## Spread And Depth
 
-## Quick Definition
+Two visible clues are the spread and displayed depth.
 
-Stock liquidity is the ability to enter and exit a stock efficiently at prices close to where you expect.
+The **spread** is the difference between the best bid and best ask. **Market depth** shows the number of shares offered for purchase or sale at the prices included on your screen. Someone selling immediately generally trades with buyers on the bid side; someone buying immediately generally trades with sellers on the ask side.
 
-A more liquid stock usually has:
+A tight spread does not guarantee that a large order will fill near the quoted price. There may be only a few shares at that price. The order book—the list of displayed bids and asks—may show more shares at nearby prices. Those orders can change before yours arrives, and your screen may not include every market trading the stock.
 
-- Higher trading volume.
-- Tighter bid-ask spreads.
-- More shares available near the current price.
-- Smoother time and sales activity.
-- Easier entries and exits for normal-sized orders.
-- Less slippage under ordinary conditions.
+## Two Stocks With The Same Volume
 
-A less liquid stock may have wide spreads, thin order-book depth, sudden price jumps, and difficult exits.
+In this example, two stocks have each traded 1 million shares today. Their current quotes show:
 
-![Trading dashboard comparison showing clean liquidity versus thin liquidity with candles, spread, and depth context.](/academy/images/chart-reading/liquidity-clean-vs-thin-market.svg)
+| Quote detail | Stock A | Stock B |
+|---|---:|---:|
+| Best bid | $20.00 | $20.00 |
+| Displayed shares at best bid | 5,000 | 100 |
+| Best ask | $20.02 | $20.20 |
+| Displayed shares at best ask | 5,000 | 100 |
+| Spread | $0.02 | $0.20 |
 
-Liquidity is practical. It asks whether the trade can actually be executed near the plan.
+Stock A has a narrower spread and more shares displayed at the best bid and ask. Stock B has a wider spread and fewer shares at those prices, even though both stocks have traded the same number of shares today.
 
-Thinner trading, especially in extended-hours or volatile conditions, can mean less liquidity, wider spreads, partial fills, uncertain prices, and more difficult execution. Volume can support liquidity review, but volume alone does not guarantee clean fills.
+Suppose a trader wants to buy 1,000 shares. Stock A shows enough shares at its best ask to cover the order. Stock B shows only 100 there, so the remaining 900 would need other sellers. They might offer shares at higher prices, add shares at the same price, or be available on another exchange or trading venue. The quote alone cannot tell the trader where the entire order will fill.
 
-## Why Liquidity Matters
+Both stocks have the same day's volume, but different conditions for the next order. Last price is also insufficient: it is the price of the most recent completed trade, and shares may no longer be available there.
 
-Liquidity matters because the chart price is not always the price you can actually trade.
+## Order Size Matters
 
-A stock may show a last trade at `$2.00`, but if the bid is `$1.90` and the ask is `$2.10`, the real execution situation is very different from a stock with a `$1.99` bid and `$2.00` ask.
+An order for 100 shares may fill at one price, while an order for 10,000 shares may need shares at several prices.
 
-Liquidity affects:
+If an order buys all the available shares at one price, the rest may fill at higher prices. A sell order may similarly fill against bids at progressively lower prices. Whether that happens depends on the order's price limits and the shares available when it arrives.
 
-- Whether entries fill near the expected price.
-- Whether exits are available when the trade fails.
-- Whether position size is realistic.
-- Whether market orders create unwanted slippage.
-- Whether stops fill near the planned risk area.
-- Whether a trader can scale in or out without moving price.
+A limit order sets the highest price allowed for a buy or the lowest price allowed for a sell. It does not guarantee that all the requested shares will fill. A market order does not set that price limit. The later lessons on orders and slippage examine those differences in detail.
 
-This is where traders can get into trouble. They focus on candles and ignore whether they can enter and exit cleanly.
+## Conditions Can Change Between Entry And Exit
 
-## Liquidity Is More Than Volume
+Liquidity is a changing condition, not a permanent label attached to a ticker.
 
-High volume can help liquidity, but high volume is not the same as clean liquidity.
+During premarket and after-hours trading, fewer buyers and sellers can mean wider spreads and fewer shares available near the current price. News can also rapidly change prices and quotes.
 
-A stock may trade millions of shares and still have:
+A stock might trade heavily just after news and have fewer shares available later. An easy entry does not guarantee an easy exit. For a swing trade, the shares displayed today do not show what will be available in the next session.
 
-- A wide spread.
-- Thin bid and ask size.
-- Fast price gaps between trades.
-- Liquidity that appears only during one spike.
-- Weak exit liquidity after attention fades.
-- Volatile fills around news.
+## Checking Liquidity
 
-Clean liquidity usually combines volume, tight spread, stable depth, active participation, and order flow that does not jump erratically.
+Check the spread, the shares displayed near the current price, and the size of the order. Watch whether the spread widens or displayed shares disappear. Remember that the screen shows only the markets included in your data subscription.
 
-## Reading Spread And Depth
+When studying a past trade, a chart and fill prices do not show the exact spread or available shares at the time. A saved quote or order-book image can help, although a still image will miss changes between moments.
 
-The bid-ask spread shows the difference between what buyers are bidding and what sellers are asking. Depth shows how many shares are available near those prices.
+Consider this question: a stock traded 20 million shares this morning, but now shows a wide spread and only 100 shares at the best bid. Does that morning volume guarantee that a 5,000-share sell will fill near the current bid?
 
-![Trading dashboard showing bid ask spread and market depth as liquidity review context.](/academy/images/chart-reading/liquidity-spread-depth-review.svg)
-
-A tighter spread and stronger depth can make execution easier. A wide spread and thin depth can make the trade more expensive before price even moves.
-
-Useful review questions include:
-
-- What was the spread when I entered?
-- How much size was available on the bid and ask?
-- Did the spread widen during volatility?
-- Did my order type fit the liquidity conditions?
-- Did my position size exceed the available depth?
-- Did the stock become thinner after the first volume spike faded?
-
-Liquidity is not only about getting in. It is also about whether you can get out.
-
-## Liquidity During Premarket And News
-
-Liquidity can change quickly during premarket, after-hours, and news-driven moves.
-
-A stock may look active after a press release, but the spread can still be wide. A premarket candle may move sharply because only a small number of shares traded. A volume spike may briefly improve liquidity, then leave late traders with thinner exits.
-
-This matters because traders often underestimate liquidity risk when a stock is moving fast.
-
-Before trading a fast or early-session move, review:
-
-- Is the spread reasonable for the planned risk?
-- Is there enough size near the bid and ask?
-- Is volume continuing or fading?
-- Are fills happening smoothly on time and sales?
-- Would a smaller position size fit the available liquidity better?
-
-The answer may change within minutes.
-
-## Realistic Example
-
-A stock is up 80 percent on news and has traded 20 million shares by midday. At first glance, that sounds liquid.
-
-But a trader checks the quote and sees:
-
-- Bid: `$1.92`
-- Ask: `$2.05`
-- Limited size at both prices.
-- Trades printing several cents apart.
-- Volume fading after the opening spike.
-
-The chart may still look active, but execution risk is high. A trader using too much size may enter worse than planned and struggle to exit if the move fails.
-
-A useful review separates the idea from the execution:
-
-- The stock had attention.
-- The chart may have had a setup.
-- Liquidity conditions still made the trade harder.
-- The trader needed to adjust size, order type, or pass on the trade.
-
-## Common Mistakes
-
-Common liquidity mistakes include:
-
-- Assuming high volume always means clean fills.
-- Trading too much size in a thin stock.
-- Ignoring the bid-ask spread.
-- Using market orders when the spread is wide.
-- Entering premarket without checking liquidity.
-- Reviewing only the chart and ignoring actual fill prices.
-- Getting trapped because exit liquidity was thinner than entry liquidity.
-- Ignoring that liquidity can disappear after a volume spike fades.
-
-Liquidity is not a minor detail. It can change the entire risk profile of a trade.
-
-## FAQ
-
-### What is stock liquidity?
-
-Stock liquidity is how easily a stock can be bought or sold without causing a major price change or receiving poor execution.
-
-### Why is liquidity important for traders?
-
-Liquidity affects spreads, fills, slippage, position sizing, exits, and whether a trader can manage risk near the planned levels.
-
-### Is high volume the same as high liquidity?
-
-Not always. High volume can help liquidity, but traders should also check spread, order-book depth, fill quality, and whether volume is continuing or fading.
-
-### What is a thinly traded stock?
-
-A thinly traded stock has limited activity or limited shares available near the current price, which can make entries and exits harder.
-
-### Why are illiquid stocks risky?
-
-Illiquid stocks can have wide spreads, sudden price jumps, difficult exits, and larger slippage than expected.
-
-### How can traders review liquidity problems?
-
-Review spread, bid and ask size, fill prices, slippage, order type, position size, and whether the stock had enough depth when the trade was entered and exited.
-
-### Can liquidity guarantee clean execution?
-
-No. Better liquidity can support cleaner execution, but it does not guarantee fill quality, trade outcome, profitability, or reduced risk.
+No. Only 100 shares are currently displayed at that bid. The rest of the order needs other buyers, whose prices and available shares may differ. Earlier volume does not guarantee a fill for the next order.

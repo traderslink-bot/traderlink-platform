@@ -42,6 +42,10 @@ The useful question is:
 
 ![Candlestick chart showing low of day as an intraday reference level with nearby PML and PDL context.](/academy/images/chart-reading/low-of-day-level-map.svg)
 
+## The Old Level And The New Session Low
+
+Once price trades below the old LOD, the new trade becomes LOD. If price then rebounds above the old level, the session low does not move up. A reclaim refers to crossing back above the earlier support level, not changing the lowest price already traded.
+
 ## What Low Of Day Means
 
 Low of day is the current session’s lowest traded price.
@@ -50,7 +54,7 @@ If a stock opens at $4.20 and sells off to $3.75, then $3.75 is low of day.
 
 If price later trades at $3.68, then $3.68 becomes the new low of day.
 
-LOD updates during the session whenever price trades below the prior session low.
+LOD updates during the session whenever price trades below the earlier low of the current session.
 
 For most intraday lessons, LOD usually refers to the regular session unless the platform or scanner is set to include extended-hours prints. That setting matters because premarket low and regular-session low of day are not always the same thing.
 
@@ -125,7 +129,7 @@ This does not mean every clean LOD break continues lower. It means the chart has
 
 ## Failed LOD Breakdown
 
-A failed LOD breakdown happens when price breaks below low of day but cannot stay below it.
+A failed LOD breakdown happens when price makes a new session low, then rebounds above the earlier low that served as the breakdown level.
 
 ![Candlestick chart showing price breaking below low of day and reclaiming back above the level.](/academy/images/chart-reading/low-of-day-failed-breakdown.svg)
 
@@ -135,11 +139,11 @@ A failed LOD breakdown may show:
 
 * Price breaks below LOD.
 * Volume fades after the break.
-* Price reclaims the LOD level.
+* Price reclaims the earlier LOD support level.
 * The next candles hold above the reclaimed area.
 * The move becomes a failed breakdown area.
 
-The LOD level did not become useless. It became useful in a different way. It showed where price tried to make a fresh session low and failed.
+Price did make a fresh session low, but the breakdown did not hold. The earlier low remains a reference level for watching whether the rebound holds or price loses it again.
 
 ## Extension Risk Around LOD
 
@@ -182,7 +186,7 @@ A weaker LOD breakdown read might show:
 * Price went straight down without a controlled bounce.
 * The entry came far below $3.75.
 * Volume faded after the new low.
-* Price quickly reclaimed LOD.
+* Price quickly reclaimed the earlier $3.75 support level.
 * A larger support level was directly below the move.
 
 Both examples include a low of day test. They are not the same quality.
@@ -231,7 +235,7 @@ Common mistakes include:
 * Ignoring how far price is from the latest lower high
 * Ignoring PML, PDL, or daily support nearby
 * Treating every LOD break as a clean breakdown
-* Holding after price reclaims LOD against the idea
+* Holding a breakdown trade after price reclaims the earlier LOD support level
 * Entering far below the level that made the move interesting
 
 LOD should make the chart clearer. If it only creates panic or urgency, the trader may be reacting to weakness instead of reading the setup.
@@ -298,7 +302,7 @@ LOD stands for low of day.
 
 ### How is low of day different from new low of day?
 
-Low of day is the current session low level. New low of day is the event of price breaking below the previous session low of day level.
+Low of day is the current session low level. New low of day is the event of price breaking below the earlier low of the current session.
 
 ### Is low of day the same as premarket low?
 
@@ -310,4 +314,4 @@ Traders watch LOD because it can act as intraday support, a breakdown reference,
 
 ### What should beginners watch around LOD?
 
-Beginners should watch whether lower highs are pressing into LOD, whether price breaks and holds below it, whether it reclaims quickly, or whether it is extended into nearby support.
+Beginners should watch whether lower highs are pressing into LOD, whether price breaks and holds below the earlier low, whether it quickly reclaims that breakdown level, or whether it is extended into nearby support.

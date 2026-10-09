@@ -1,5 +1,5 @@
 ---
-title: "Max Loss Trading"
+title: "Maximum Loss Rules"
 slug: "/academy/max-loss/"
 primary_keyword: "max loss trading"
 secondary_keywords:
@@ -28,169 +28,71 @@ internal_links:
   - "/academy/position-sizing/"
   - "/academy/stop-loss/"
   - "/academy/trade-review-and-improvement/"
-schema:
+schema: ["Article"]
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-10-08"
 meta_title: "Max Loss Trading Rule Explained"
 meta_description: "Learn what max loss means in trading, why loss limits matter, common mistakes, and how traders can review max loss discipline."
 ---
-# Max Loss Trading
 
-The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+# Maximum Loss Rules
 
-## Lesson Objective
+![Maximum Loss Rules diagram](/academy/images/risk-management-trade-planning/max-loss.svg)
 
-By the end of this lesson, you should be able to:
+A maximum loss rule states how much loss triggers a specific action. A trader can set separate boundaries for one trade, the trading day, the week and a larger account drawdown. These boundaries answer different questions and can apply at the same time.
 
-- Explain the core idea behind Max Loss.
-- Identify the decision it is meant to control.
-- Connect the concept to position size, invalidation, loss control, and review.
-- Avoid treating risk rules as flexible only when emotions are high.
-- Use the lesson as part of a written trading plan and review process.
+## Separate The Trade Limit From The Account Limit
 
-Max loss trading refers to setting a maximum amount a trader is willing to lose on a trade, day, week, or account period before reducing risk or stopping. It is a risk-control rule designed to prevent one bad trade or one emotional session from becoming much worse.
+A per-trade budget controls the exposure taken on one position. A weekly limit can stop further trading after losses accumulate across several positions. Having room under the weekly limit does not permit a trade to exceed its own budget.
 
-A max loss rule does not make trading safe. It also does not guarantee that losses will stop at the exact planned number. But it gives the trader a clear line where risk needs to be reduced.
+For example, a trader chooses $50.00 of planned price risk per trade and a $300.00 weekly net loss threshold. The $50.00 calculation uses quantity and intended exit; the weekly total uses results from closed portions of positions, including partial exits, after costs. Both numbers are chosen examples, not recommended limits.
 
-This is where traders can get into trouble. They know they should stop, but they keep trading because they want to make it back.
+A stop that fills worse than intended can make a trade lose more than $50.00. The weekly total records the actual loss, rather than substituting the original budget.
 
-## Quick Definition
+## Write A Complete Loss Rule
 
-Max loss trading means defining the maximum loss a trader is willing to accept before taking action.
+A usable rule needs five answers: which losses count, over what period, which positions it covers, when it triggers and what happens next. “Maximum loss $300” leaves most of those questions unanswered.
 
-That action may include:
+Here is a complete weekly example: “From Monday through Friday, count net realized results from my day trades, including partial exits and costs. If the total shows a loss of $300.00 or more, cancel pending day-trade entries and open no more day trades until the next trading week. Manage any remaining day-trading positions under their written exit plans. A later gain from those exits does not restart trading that week.”
 
-- Exiting a trade.
-- Reducing position size.
-- Stopping for the day.
-- Pausing after a loss streak.
-- Avoiding new trades after emotional mistakes.
-- Reviewing the session before continuing.
+That rule defines the measurement and the action. If open losses should also trigger the pause, write that into the rule instead of assuming the realized counter includes them. Swing holdings require their own policy; the weekly pause does not silently close them.
 
-Max loss can apply to one trade or to an entire trading day.
+## Choose Limits Before A Losing Session
 
-## Why It Matters To Traders
+The dollar amount needs to fit your resources and trading process. Review ordinary completed losses, the size you use, costs and the possibility of a worse exit. A limit that permits a loss you cannot afford is unsuitable even if it matches another trader's rule. A threshold smaller than one ordinary planned loss may also conflict with the trades you intend to take; resolve that conflict by revisiting the size and plan before trading.
 
-Max loss matters because traders are most vulnerable after losses.
+Consider how the rules interact. A trader may have a $50.00 per-trade price-risk budget, a $150.00 daily stop and a $300.00 weekly pause. Each applies separately. After losing $250.00 earlier in the week, another $50.00 net loss reaches the weekly pause even if the current day has not reached its daily limit. None of these allowances requires taking another trade.
 
-A losing trade can trigger frustration. A second loss can lead to revenge trading. A third mistake can turn into a rule-breaking session if there is no hard stopping point.
+The pause should have a review routine. Check which trades followed the plan, whether losses came from repeated rule breaks or execution differences, and whether the current size still fits the account. Write any changes for the next permitted session. Waiting for the counter to reset without reviewing the problem misses the purpose of the pause.
 
-A max loss rule helps create structure before emotions take over.
+## Follow The Weekly Total
 
-Traders often use max loss rules to manage:
+| Day | Net realized result | Weekly total |
+|---|---|---|
+| Monday | −$80.00 | −$80.00 |
+| Tuesday | −$120.00 | −$200.00 |
+| Wednesday | −$100.00 | −$300.00 |
 
-- Oversizing.
-- Revenge trading.
-- Overtrading.
-- Loss spirals.
-- Emotional re-entries.
-- Holding losers too long.
-- Adding to failing trades.
-- Breaking discipline after a bad start.
+This example rule stops new entries when the week's net realized loss reaches $300.00. It applies on Wednesday; Thursday does not supply a fresh weekly allowance. Any open positions follow a separately written exit policy, and their risk remains relevant even though it has not yet become a realized result.
 
-The goal is not to avoid losing days. Losing days happen. The goal is to avoid unnecessary damage after the day is already not working.
+Write the reset boundary, such as the start of the next trading week. Resetting the counter early because a new opportunity appears removes the rule when it is most needed.
 
-## How It Works
+## Decide Whether Gains Offset Losses
 
-A max loss rule should be defined before trading begins.
+A net-loss rule subtracts profits from losses. A loss-only rule adds the net losses from losing trades and does not offset them with profitable trades. They can stop trading at different times.
 
-For example, a trader may decide:
+If trades finish with net results of −$100.00, +$60.00 and −$80.00, net loss is $120.00 while losing trades total $180.00. Under a chosen $150.00 loss-only threshold, the rule is reached; under a $150.00 net-loss threshold, it is not. Write which approach the rule uses before trading.
 
-- Maximum loss per trade.
-- Maximum loss per day.
-- Maximum number of losing trades in a row.
-- Maximum loss before size is reduced.
-- Maximum loss before stopping completely.
+## Set A Rule For Account Drawdown
 
-The rule should be realistic. If the max loss is too wide, it may not protect the trader. If it is too tight, normal trading variance may trigger it too quickly.
+An account drawdown measures a decline from a chosen starting value or an earlier account peak. Write which value your rule uses; otherwise the percentage is ambiguous. A fall from $10,000.00 to $9,500.00 is $500.00, or 5% of $10,000.00. If the account had first risen to $11,000.00, that same $9,500.00 balance would be $1,500.00 below the peak, or approximately 13.64% of $11,000.00. A rule measured from the peak differs from one measured from the original $10,000.00.
 
-A good max loss rule should match the trader's account size, strategy, volatility, and emotional discipline.
+For example, a rule using the original $10,000.00 might pause new entries at a 5% trading drawdown, which occurs at $9,500.00 before any deposits or withdrawals. A $500.00 withdrawal alone is not a $500.00 trading loss. Keep deposits and withdrawals separate when checking whether the trading-loss condition has occurred.
 
-## Example Scenario
+An account rule might call for pausing new trades and reviewing recent performance when a chosen decline occurs. That is a different boundary from a daily stop-trading rule, which the Daily Loss Limits lesson develops in detail.
 
-Imagine a trader sets a daily max loss rule of $300.
+## What To Do When The Limit Is Reached
 
-The trader loses $120 on the first trade and $100 on the second trade. They are down $220. The next trade should be smaller or more selective because the trader is close to the daily limit.
+A limit might stop new entries, cancel pending entries, reduce exposure or close positions. Specify the action and which positions it applies to. A weekly pause does not automatically close a swing trade.
 
-If the trader takes another full-size trade and loses $150, they have exceeded the max loss rule.
-
-A structured review should ask:
-
-- Was the max loss rule clear before the session?
-- Did the trader reduce size as losses built up?
-- Did the trader keep trading emotionally?
-- Was the final loss avoidable after the warning signs appeared?
-
-The problem is not only the loss. It is whether the rule was respected.
-
-## Common Mistakes
-
-One common mistake is setting a max loss rule but treating it like a suggestion.
-
-Another mistake is increasing size after losses to recover faster. That can turn a controlled red day into a much larger problem.
-
-Traders also make mistakes when they do not account for open positions. A trader may think they are within their limit, but unrealized losses can change quickly.
-
-Another mistake is using the same max loss rule in all market conditions. Higher volatility may require different sizing or stricter rules.
-
-A final mistake is failing to review why the max loss was hit. The rule stops the damage, but the review notes should explain what led to it.
-
-## Review Questions
-
-Max loss review should happen any time a trader approaches or hits a loss limit.
-
-Useful review questions include:
-
-- What was my max loss rule before the session?
-- Did I follow it?
-- Did I reduce size as losses built up?
-- Did I trade after hitting the limit?
-- What emotions were present near the limit?
-- Did one mistake cause the loss or did multiple rule breaks stack up?
-- Did I try to make it back quickly?
-- What rule would have reduced the damage?
-
-This kind of review can help traders spot loss spirals before they become a pattern.
-
-## Related Terms And Guides
-
-For more context, read:
-
-- [Trading risk management](/academy/risk-management/)
-- [Daily loss limit](/academy/daily-loss-limit/)
-- [Position sizing](/academy/position-sizing/)
-- [Stop loss](/academy/stop-loss/)
-- [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## FAQ
-
-### What is max loss in trading?
-
-Max loss is the maximum amount a trader is willing to lose on a trade, day, week, or account period before reducing risk or stopping.
-
-### Why do traders use max loss rules?
-
-Traders use max loss rules to prevent emotional trading, revenge trading, overtrading, and larger-than-planned losses.
-
-### Is max loss the same as a stop loss?
-
-No. A stop loss usually applies to one trade. Max loss can apply to a trade, a full day, or a broader trading period.
-
-### What happens after a trader hits max loss?
-
-That depends on the rule. Some traders stop for the day, reduce size, pause, or switch to review mode instead of continuing to trade.
-
-### Can a max loss rule prevent all losses?
-
-No. It can help control risk, but it cannot remove market risk, slippage, gap risk, or execution problems.
-
-### How should I review max loss rules?
-
-Track the rule, whether it was followed, what trades led to the limit, what emotions appeared, and whether any rule breaks made the loss worse.
-
-## Related Lessons
-
-- [Mental Stop Vs Hard Stop](/academy/mental-stop-vs-hard-stop/)
-- [Daily Loss Limit](/academy/daily-loss-limit/)
-- [Risk Management](/academy/risk-management/)
-- [Trade Risk Review](/academy/trade-risk-review/)
+Do not raise the limit during a losing period to make another trade possible. Review it later, alongside actual results, account circumstances and execution conditions. A chosen maximum is an action threshold; gaps, halts and fills can still push the final loss past it.

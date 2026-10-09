@@ -1,5 +1,5 @@
 ---
-title: "Time And Sales: How Traders Review Actual Prints"
+title: "Time And Sales"
 slug: "/academy/time-and-sales/"
 primary_keyword: "time and sales"
 secondary_keywords:
@@ -24,8 +24,7 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/level-2/"
 recommended_next: "/academy/volume-by-price/"
 visual_assets:
-  - "/academy/images/chart-reading/time-and-sales-prints-near-bid-ask.svg"
-  - "/academy/images/chart-reading/time-and-sales-speed-fade-review.svg"
+  - "/academy/images/volume-liquidity-order-flow/time-and-sales.svg"
 internal_links:
   - "/academy/level-2/"
   - "/academy/bid-and-ask/"
@@ -44,172 +43,54 @@ meta_title: "Time and Sales Explained"
 meta_description: "Learn what time and sales means, how traders read actual prints, common tape-reading mistakes, and how to review executions."
 ---
 
-# Time And Sales: How Traders Review Actual Prints
+# Time And Sales
 
-Time and sales shows the actual trades that have printed in a stock. Traders often call it the tape. While [Level 2](/academy/level-2/) shows visible bids and asks, time and sales shows what actually traded.
+Time and sales is a list of reported completed trades. Traders often call it the tape, and an individual reported trade a print.
 
+While an order book shows visible bids and asks, the tape shows shares that have traded. Together they help distinguish displayed orders from completed transactions.
 
-## Lesson Objective
+## Read A Trade Row
 
-By the end of this lesson, you should be able to:
+A typical row includes time, trade price and share quantity. Some platforms also show the reporting venue and trade conditions. **Trade conditions** are labels describing features of a report, such as a late report or a trade linked to an auction. Their meanings depend on the data service.
 
-- Explain time and sales in volume, liquidity, or order-flow context.
-- Identify where it appears on a realistic chart or trading dashboard.
-- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
-- Avoid treating it as guaranteed confirmation.
+Check whether the timestamp describes the trade time or reporting time, whether size is in shares or lots, and whether filters hide smaller trades. Some displays combine reports rather than presenting every execution as a separate row.
 
-Quotes can appear and disappear, but prints show completed transactions. That difference matters for execution review.
+![Time And Sales](/academy/images/volume-liquidity-order-flow/time-and-sales.svg)
 
-## What You Should Understand Before Reading This
+## Compare Prints With The Quote At The Time
 
-Before studying time and sales, remember:
+In this simplified example, each quote is the one available immediately before its matching trade. All sizes are actual shares.
 
-- Level 2 shows visible bid and ask interest.
-- Time and sales shows completed trades.
-- A print is not automatically a prediction.
-- Print speed can increase during volume spikes and news.
-- Prints near the ask and prints near the bid can provide context.
-- Tape reading can become overwhelming if it replaces the plan.
+| Time | Bid | Ask | Trade price | Shares traded |
+|---|---:|---:|---:|---:|
+| 10:15:00 | $10.00 | $10.02 | $10.02 | 200 |
+| 10:15:01 | $10.01 | $10.03 | $10.03 | 300 |
+| 10:15:02 | $10.01 | $10.03 | $10.01 | 100 |
 
-The goal is not to react to every print. The goal is to understand whether actual trades supported or contradicted what the chart and Level 2 appeared to show.
+The first two trades occur at their respective asks. The third occurs at its bid. The three reports total 600 shares.
 
-## Quick Definition
+An ask-side print can be consistent with an incoming buyer accepting an available offer. A bid-side print can be consistent with an incoming seller accepting a bid. Each trade still has both a buyer and seller. The comparison does not reveal their identities, positions or intentions.
 
-Time and sales is a real-time list of executed trades.
+After two trades at the ask, the next trade occurs at the bid. The first two rows therefore do not imply that later trades must continue at higher prices.
 
-It usually shows:
+## Colors Are Display Rules
 
-- Time of the trade.
-- Price of the trade.
-- Number of shares traded.
-- Whether trades are printing near the bid, ask, or between them.
-- Trade sequence and pace.
+Some platforms color prints according to their position relative to the bid and ask; others use price changes or custom settings. Check the platform's explanation before interpreting a color.
 
-![Trading dashboard showing time and sales prints near bid and ask quotes beside candles.](/academy/images/chart-reading/time-and-sales-prints-near-bid-ask.svg)
+Green does not universally mean a new long position, and red does not universally mean a new short position. A trade could open or close either side's position, which the tape does not disclose.
 
-Traders use it to understand actual executed activity, not only displayed interest.
+When quotes change quickly, a later screen image may show a different bid and ask from those available when the trade occurred. Comparing a past print with the current quote can therefore misclassify it.
 
-Time and sales is based on reported trade prints, but trade-reporting and data-feed rules can include corrections, cancellations, late reports, odd-lot handling, venue differences, and display choices by platform. Treat it as execution evidence, not a complete prediction tool.
+## Speed And Quantity
 
-## Why Time And Sales Matters
+A faster tape means more reports are appearing, but their share quantities still matter. Twenty reports of 100 shares total 2,000 shares. Two reports of 5,000 total 10,000. More rows do not necessarily mean more volume.
 
-Time and sales matters because it can confirm or challenge what a trader thinks they see.
+Reporting delays, combined reports and display filters can also change how fast the tape looks. Read reported shares and price movement alongside the pace.
 
-For example, Level 2 may show a large ask at resistance. If time and sales shows repeated prints going through that ask, buyers may be absorbing supply. If price keeps tapping the ask but cannot trade through it, the level may be rejecting.
+## Use The Chart For Location
 
-Time and sales can help review:
+Near resistance, repeated trades at rising prices show completed trading toward that area. The chart then shows whether price clears the level and remains above it or falls back below. Prints do not guarantee the next outcome.
 
-- Whether trades are printing near the ask.
-- Whether trades are printing near the bid.
-- Whether print speed is increasing or slowing.
-- Whether large prints are followed by continuation or rejection.
-- Whether liquidity is active enough for clean execution.
-- Whether the trader reacted to one print instead of context.
+For a swing trader, a brief intraday tape sequence is only a small part of the day's trading. It should not be treated as a complete explanation of a multi-day position.
 
-The tape can add context. It does not guarantee what price will do next.
-
-## Level 2 Versus Time And Sales
-
-Level 2 and time and sales are related but different.
-
-Level 2 shows displayed orders:
-
-- Visible bids.
-- Visible asks.
-- Displayed size.
-- Quote changes.
-
-Time and sales shows completed trades:
-
-- Actual printed price.
-- Actual share size.
-- Sequence of trades.
-- Pace of execution.
-
-When used together, Level 2 can show the displayed quote environment while time and sales shows what actually happened.
-
-## Tape Speed And Fade
-
-Print speed can increase when a stock becomes active. A faster tape may show that more transactions are happening.
-
-![Trading dashboard showing tape speed increasing during a volume burst and fading afterward.](/academy/images/chart-reading/time-and-sales-speed-fade-review.svg)
-
-But tape speed can also fade after the first burst of activity. If print speed slows while price stops making progress, the trader should review whether participation is leaving the move.
-
-This does not mean price must reverse. It means the environment changed and should be reviewed.
-
-## Reading Prints Near Bid And Ask
-
-Traders often watch whether trades print near the bid or near the ask.
-
-Prints near the ask may suggest buyers are willing to pay available offers. Prints near the bid may suggest sellers are hitting available bids.
-
-But this needs context:
-
-- Spread may be wide.
-- Prints can occur between bid and ask.
-- One large print may not represent sustained activity.
-- Dark pool or delayed reporting can complicate interpretation.
-- Fast conditions can make the tape hard to read.
-
-Tape reading works best when tied to levels, volume, liquidity, and the trade plan.
-
-## Realistic Example
-
-A stock is testing resistance at `$3.00`. Level 2 shows sellers at `$3.00`, but time and sales starts printing repeated trades at `$3.00` and `$3.01`.
-
-A trader reviewing the move might ask:
-
-- Are buyers absorbing the ask?
-- Is print speed increasing?
-- Is price holding above `$3.00` after trades go through?
-- Is volume supporting the move?
-- Did I enter because tape supported the level, or because I guessed?
-- Did the tape slow down after my entry?
-
-The tape can help add context, but it still does not guarantee a breakout will hold.
-
-## Common Mistakes
-
-Common time and sales mistakes include:
-
-- Reacting to every print without a plan.
-- Ignoring the chart level where prints are happening.
-- Confusing one large print with sustained buying or selling.
-- Reading tape without considering spread and liquidity.
-- Assuming green prints always mean price will continue up.
-- Assuming red prints always mean price will continue down.
-- Getting overwhelmed by speed and abandoning the trade plan.
-- Forgetting that Level 2 and tape should be reviewed together.
-
-Time and sales is useful when it supports better execution awareness, not when it creates panic.
-
-## FAQ
-
-### What is time and sales in trading?
-
-Time and sales is a real-time list of executed trades, showing when trades happened, at what price, and with how many shares.
-
-### Is time and sales the same as Level 2?
-
-No. Level 2 shows visible bids and asks. Time and sales shows actual completed trades.
-
-### What is tape reading?
-
-Tape reading is watching time and sales to understand executed buying and selling activity.
-
-### Does time and sales predict price direction?
-
-No. It provides execution context, but it does not guarantee price direction, continuation, rejection, or trade outcome.
-
-### Why do traders watch prints near the ask?
-
-Repeated prints near the ask can suggest buyers are actively paying available offers, but traders still need chart, volume, spread, and liquidity context.
-
-### Why do traders watch prints near the bid?
-
-Prints near the bid can suggest sellers are hitting available bids, but this also needs context because spread, liquidity, and order routing can affect interpretation.
-
-### How should traders review tape-reading mistakes?
-
-Review whether the tape supported the trade idea, whether print speed changed, whether Level 2 agreed, and whether the trader reacted emotionally to individual prints.
+If a 5,000-share print appears, does it prove that one institution just opened a position? No. The report gives quantity and price, not the customer's identity or whether the trade opened or closed a position. [Volume By Price](/academy/volume-by-price/) next organizes historical activity across price areas.

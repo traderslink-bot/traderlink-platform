@@ -204,9 +204,9 @@ The name is only useful after the structure makes sense.
 
 A stock runs after news, pulls back, and then starts holding higher lows under high of day.
 
-One trader may call it a bull flag. Another may call it an ascending triangle. Another may simply say price is building under resistance.
+Flat resistance with rising pullback lows describes an ascending triangle. A bull flag instead has a small, roughly parallel pullback channel after a strong rise. Both can follow an upward move, but their boundaries differ.
 
-The label debate is not the most important part.
+Identify the actual boundaries before choosing a name.
 
 The better questions are:
 
@@ -217,7 +217,7 @@ The better questions are:
 * Did volume support the break?
 * Where would the structure fail?
 
-If those answers are clear, the trader understands the setup even if the exact pattern name is debatable.
+Those answers connect the pattern to its price levels and failure area, rather than relying on the name alone.
 
 ## How To Use The Deep-Dive Lessons
 
@@ -337,7 +337,7 @@ No. Beginners should first learn the structure behind patterns, then use individ
 
 ### Can two traders name the same pattern differently?
 
-Yes. One trader may call a structure a bull flag while another calls it an ascending triangle. The behavior matters more than the label debate.
+Traders may disagree when a structure is unclear or still developing. Check the boundaries: a flag has roughly parallel edges, while an ascending triangle has flat resistance and rising lows. The names describe different structures.
 
 ### What should beginners check before naming a pattern?
 
