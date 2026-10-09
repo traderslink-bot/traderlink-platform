@@ -85,6 +85,13 @@ export default async function AcademyLessonPage({ params }: PageProps) {
       />
       <div className="academy-container-wide academy-grid-sidebar">
         <article className="academy-article">
+          <nav aria-label="Academy navigation">
+            <p>
+              <Link href="/academy/" className="academy-button academy-button-secondary">
+                Back to Academy
+              </Link>
+            </p>
+          </nav>
           {academyViewer ? null : (
             <div className="academy-progress-label">
               <p className="academy-progress-label-title">

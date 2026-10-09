@@ -4,7 +4,8 @@
   "captured_at": "2026-05-22",
   "protected_launch_course_ids": [
     "trading-foundations",
-    "chart-reading-market-structure"
+    "chart-reading-market-structure",
+    "technical-indicators-tools"
   ],
   "protected_lesson_slugs": [
     "/academy/basic-trading-terms-and-position-mechanics/",
@@ -113,6 +114,9 @@
     "/academy/trade-risk-review/",
     "/academy/trading-plan/",
     "/academy/trading-rules/",
-    "/academy/what-is-a-stock-and-how-does-a-trade-work/"
+    "/academy/what-is-a-stock-and-how-does-a-trade-work/",
+    "/academy/trading-indicators/",
+    "/academy/vwap/",
+    "/academy/ema/"
   ]
 }

@@ -65,12 +65,17 @@
     },
     {
       "course_id": "technical-indicators-tools",
-      "current_status": "launch-polish needed",
-      "future_visual_need": "Seven-SVG indicator visual batch recommended.",
-      "primary_visual_asset": null,
-      "module_visual_assets": [],
-      "launch_polish_needed": true,
-      "hard_asset_reference_ready": false
+      "current_status": "ready",
+      "future_visual_need": "More indicator lessons are planned.",
+      "primary_visual_asset": "/academy/images/technical-indicators/ema-fast-and-slow.svg",
+      "module_visual_assets": [
+        {
+          "module_id": "trend-tools",
+          "asset_path": "/academy/images/technical-indicators/ema-fast-and-slow.svg"
+        }
+      ],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": true
     },
     {
       "course_id": "trading-styles-playbooks",

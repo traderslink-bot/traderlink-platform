@@ -205,6 +205,7 @@ const launchCourseIds = new Set([
   "chart-reading-market-structure",
   "volume-liquidity-order-flow",
   "risk-management-trade-planning",
+  "technical-indicators-tools",
 ]);
 
 export function getAcademyCourses(): AcademyCourse[] {
