@@ -185,6 +185,16 @@ check.equal((database.prepare(`SELECT count(*) count FROM traderlink_community_c
 check.equal(archivePausedCoaching(database,"2026-09-20T12:00:00.000Z"),0);
 check.equal(archivePausedCoaching(database,"2026-10-11T12:00:00.000Z"),1);
 check.ok(platform.readSnapshot("first-room",actor).tradeReviews.some(item=>item.reviewId===reviewId),"Archived records preserved");
+check.ok(programs.readImage({communityId:first.communityId,actor:student,attachmentId:imageId}).content.length>0,"Archived student retains delivered review images despite role loss");
+check.ok(programs.readImage({communityId:first.communityId,actor,attachmentId:conversationImage}).content.equals(chart),"Archived coach retains shared conversation images");
+check.throws(()=>programs.addImage({...base,actor:student,targetType:"message",targetId:relationship,filename:"blocked.png",mediaType:"image/png",content:chart}),"Archived relationship cannot accept new images");
+check.throws(()=>journal.read({coachUserId:actor.userId,relationshipId:relationship}),"Archived relationship cannot read fresh Journal data");
+database.prepare("UPDATE traderlink_community_coaching_relationships SET status='ended' WHERE relationship_id=?").run(relationship);
+check.ok(programs.readImage({communityId:first.communityId,actor:student,attachmentId:imageId}).content.length>0,"Ended student retains delivered review images");
+check.ok(platform.readSnapshot("first-room",student).tradeReviews.some(item=>item.reviewId===reviewId&&item.deliveredAtUtc),"Ended student retains delivered review history");
+check.throws(()=>programs.readImage({communityId:first.communityId,actor:{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},attachmentId:imageId}),"Ended history still excludes unrelated users");
+check.throws(()=>platform.requestTradeReview({...base,actor:student,title:"New work",studentContext:""}),"Ended relationship cannot request new work");
+database.prepare("UPDATE traderlink_community_coaching_relationships SET status='active' WHERE relationship_id=?").run(relationship);
 const restoredAt="2026-10-12T12:00:00.000Z";
 database.prepare(`UPDATE platform_discord_memberships SET role_ids_json='["200001"]',last_verified_at_utc=? WHERE user_id=? AND guild_id=?`).run(restoredAt,OWNER,PILOT_GUILD);
 reconcileCoachingAccess(database,first.communityId,OWNER,restoredAt);

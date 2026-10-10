@@ -81,4 +81,12 @@ Workspace verification found canonical untracked community source predates the f
 - Tickers can be removed completely, including an empty list without deleting the publication. Surviving ticker notes are preserved through edits/reordering. This does not touch TraderLink's separate premium watchlist or impose its AI analysis.
 - Extended Communities fixture PASS for draft/archive reader isolation, author restore, reader write rejection, preserved analysis, full ticker removal and first-publication delivery/idempotence. UI browser verification and the broader alert/member-placement/delivery matrix remain open.
 
+## Retained coaching history slice
+
+- Student workspace includes ended relationships and archived records in its coach/plan selector. Retained reviews/messages/images remain readable; messaging/request/upload controls are not offered for inactive history. Agreements are read-only there.
+- Image reads authorize the original relationship participants independently of active coaching eligibility, while preserving unpublished review-image and removed-trade checks. This grants no new Journal permission and no access to unrelated users.
+- Archived relationships now fail new coaching mutations, new Journal grants, fresh Journal reads and agreement changes. Coach history/review/final pages use the same inactive state to disable editing and avoid attempting fresh Journal queries.
+- Focused coaching-remediation fixture PASS, extended with archived/ended image reads, unrelated-user rejection, retained delivered reviews, blocked new images/requests and blocked fresh Journal reads. Existing recurrence, agreement, privacy, role restoration and foreign-key checks continue to pass. Syntax/transpilation and diff checks pass; not a semantic build or browser acceptance.
+- Remaining D5 scope: verify navigation after actual Discord departure/ownership lifecycle, teaching history, deletion/export and final browser flows. This partial slice is not all of L03/L05.
+
 Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle and L01 independent-server proof; final integrated full QA. These slices do not complete L01–L09 or authorize a deploy.

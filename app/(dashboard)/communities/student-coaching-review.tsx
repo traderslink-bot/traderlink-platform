@@ -26,7 +26,7 @@ export function StudentCoachingReview({snapshot,review,isReview,paused,messaging
    {review.viewedAtUtc?<Typography color="text.secondary" variant="caption">Read {new Date(review.viewedAtUtc).toLocaleDateString("en-US",{timeZone:"UTC"})} UTC</Typography>:null}
    {review.followUpDueAtUtc&&review.deliveryState==="follow_up"?<Typography>Follow-up due {new Date(review.followUpDueAtUtc).toLocaleDateString("en-US",{timeZone:"UTC"})} UTC</Typography>:null}
    {snapshot.reviewReplies.filter(reply=>reply.reviewId===review.reviewId).map(reply=><Box key={reply.replyId}><Typography fontWeight={700} variant="body2">{reply.authorName}</Typography><Typography sx={{whiteSpace:"pre-wrap"}} variant="body2">{reply.body}</Typography></Box>)}
-   {messagingEnabled&&!["completed","cancelled"].includes(review.deliveryState)?<Box action={disabled?undefined:replyCommunityReviewAction} component="form">{hidden}<Stack direction="row" spacing={1}><TextField fullWidth label="Question or reply" multiline name="body" required/><Button disabled={disabled} type="submit">Send</Button></Stack></Box>:null}
+   {messagingEnabled&&!paused&&!["completed","cancelled"].includes(review.deliveryState)?<Box action={disabled?undefined:replyCommunityReviewAction} component="form">{hidden}<Stack direction="row" spacing={1}><TextField fullWidth label="Question or reply" multiline name="body" required/><Button disabled={disabled} type="submit">Send</Button></Stack></Box>:null}
   </Stack>:review.studentContext?<Typography sx={{mt:1}} variant="body2">{review.studentContext}</Typography>:null}
  </Box>;
 }

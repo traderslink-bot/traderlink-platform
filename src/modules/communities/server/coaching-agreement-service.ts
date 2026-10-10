@@ -18,7 +18,7 @@ export class CoachingAgreementService{
  constructor(private readonly db:Database.Database){}
  private relation(communityId:string,relationshipId:string,actor:Actor){
   assertCanonicalUuidV4(relationshipId,"relationshipId");
-  const row=this.db.prepare(`SELECT relationship_id,community_id,coach_user_id,student_user_id,plan_id,status FROM traderlink_community_coaching_relationships WHERE community_id=? AND relationship_id=?`).get(communityId,relationshipId) as Relation|undefined;
+  const row=this.db.prepare(`SELECT relationship_id,community_id,coach_user_id,student_user_id,plan_id,status FROM traderlink_community_coaching_relationships WHERE community_id=? AND relationship_id=? AND archived_at_utc IS NULL`).get(communityId,relationshipId) as Relation|undefined;
   if(!row||!["active","pending"].includes(row.status)||![row.coach_user_id,row.student_user_id].includes(actor.userId))platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED",{operation:"coaching_agreement"});
   if(row.coach_user_id===actor.userId)new TraderLinkCommunityRepository(this.db).requireCapability(communityId,actor.userId,"community.coaching.students");
   return row;
