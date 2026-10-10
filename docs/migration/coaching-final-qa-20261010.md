@@ -41,3 +41,14 @@ Controlling inventory: `traderlink-coaching-complete-qa-20261001.md` in the cano
   distinguishes live/fixture evidence and deferred activity presentation.
 - Production-parity staging reconciliation and final integrated smoke remain open;
   coordinator owns the release. No production coaching publication authorized.
+
+## Final-audit attachment response correction
+
+- Anonymous GET of the approved synthetic attachment returned empty HTTP500 twice.
+  Authorization prevented image disclosure, but expected denials were unhandled.
+- Route now maps known access/session/missing/invalid-input failures to an empty,
+  private no-store404. All identity/community/relationship/image guards remain;
+  unexpected storage/runtime errors still propagate. No UI or guide copy change.
+- Focused route regression covers denied cases, no DB image read after failed
+  identity, absent community, authorized bytes and unexpected error propagation.
+  Coordinator integration and fresh anonymous/authenticated retest required.
