@@ -31,7 +31,7 @@ describe("Discord Academy OAuth helpers", () => {
     );
 
     expect(url.searchParams.get("scope")).toBe(
-      "identify guilds guilds.members.read",
+      "identify email guilds guilds.members.read",
     );
   });
 

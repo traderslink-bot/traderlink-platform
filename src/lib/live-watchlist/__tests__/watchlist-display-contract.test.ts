@@ -19,17 +19,25 @@ describe("watchlist display contract", () => {
     join(process.cwd(), "app", "watchlist", "how-it-works", "page.tsx"),
     "utf8",
   );
+  const publicPreviewSource = readFileSync(
+    join(process.cwd(), "app", "watchlist", "watchlist-public-preview.tsx"), "utf8",
+  );
+  const dashboardFrameSource = readFileSync(
+    join(process.cwd(), "app", "watchlist", "watchlist-dashboard-frame.tsx"), "utf8",
+  );
+
+
 
   it("keeps pullback state logic without rendering a visible state badge", () => {
     expect(clientSource).toContain("resolveTradersLinkAiPullbackScenarioState(scenario, livePrice)");
     expect(clientSource).toContain('data-scenario-state={state.toLowerCase().replaceAll(" ", "-")}');
-    expect(clientSource).toContain('heading="Shallow pullback — momentum retest"');
-    expect(clientSource).toContain('heading="Deep pullback — reset setup"');
+    expect(clientSource).toContain('heading="Pullback"');
+    expect(clientSource).toContain('heading={showShallow ? "Deeper pullback" : "Pullback"}');
     expect(clientSource).not.toContain("<span>{state}</span>");
   });
 
   it("shows the price-delay note on the watchlist and ticker detail", () => {
-    expect(clientSource).toContain("Price <small className=\"watchlist-price-delay-note\">(delayed 15 sec)</small>");
+    expect(clientSource).toContain('Price {marketDataStatus === "live" ? <small className="watchlist-price-delay-note">(delayed 15 sec)</small> : null}');
     expect(clientSource).toContain("(delayed 15 sec)");
   });
 
@@ -39,25 +47,33 @@ describe("watchlist display contract", () => {
     expect(cssSource).toMatch(/\.watchlist-high-risk-warning p\s*\{[\s\S]*?font-size:\s*0\.86rem;/);
   });
 
-  it("labels every watchlist authentication action as Discord login", () => {
-    for (const source of accessPageSources) {
+  it("keeps the public preview and detail authentication actions explicit", () => {
+    expect(accessPageSources[0]).toContain("<WatchlistPublicPreview");
+    expect(publicPreviewSource).toContain("Already a member? Sign in");
+    expect(publicPreviewSource).toContain("/api/auth/discord/login?returnTo=");
+    for (const source of accessPageSources.slice(1)) {
       expect(source).toContain("Log in with Discord");
       expect(source).not.toContain("Refresh Discord access");
     }
   });
 
-  it("locks every watchlist surface to the light material theme", () => {
+  it("uses the shared dashboard frame and light Watchlist content surface", () => {
     for (const source of accessPageSources) {
-      expect(source).toContain('forcedTheme="light"');
+      expect(source).toContain("<WatchlistDashboardFrame>");
     }
+    expect(dashboardFrameSource).toContain("<TraderLinkPlatformDashboardFrame");
+    expect(dashboardFrameSource).toContain('data-academy-theme="light"');
+    expect(guidePageSource).toContain("<WatchlistDashboardFrame>");
     expect(guidePageSource).toContain('forcedTheme="light"');
   });
 
   it("never renders Stock Titan source text or links in Watchlist cards", () => {
-    expect(clientSource).toContain("function hasStockTitanReference");
-    expect(clientSource).toContain("const safeSources = read.sources.filter");
-    expect(clientSource).toContain("!hasStockTitanReference(article.url)");
-    expect(clientSource).toContain("return hasStockTitanReference(card.body) ? null");
+    expect(clientSource).toContain("const read = sanitizeTradersLinkAiReadForDisplay(parsedRead)");
+    expect(clientSource).toContain("function containsStockTitanReference");
+    expect(clientSource).toContain("read.sources.filter((source) => !sourceReferencesStockTitan(source))");
+    expect(clientSource).toContain(".filter((article) => !recentNewsArticleReferencesStockTitan(article))");
+    expect(clientSource).toContain("!containsStockTitanReference(card.body)");
+    expect(clientSource).toContain("currentRead: removeStockTitanReference(read.currentRead)");
   });
 
   it("stacks Potential Path support above resistance on phones", () => {

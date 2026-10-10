@@ -1152,7 +1152,7 @@ describe("LiveWatchlistStore", () => {
     expect(hidden.watchlistLifecycle?.status).toBe("recovery_attempt");
   });
 
-  it("allows a new activation patch to reset a stale first posted time", async () => {
+  it("preserves first publication time when a live ticker is patched again", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
     const store = new LiveWatchlistStore();
@@ -1188,7 +1188,7 @@ describe("LiveWatchlistStore", () => {
       },
     });
 
-    expect(updated.firstPostedAt).toBe(5000);
+    expect(updated.firstPostedAt).toBe(1000);
     expect(updated.updatedAt).toBe(5000);
   });
 

@@ -13,8 +13,9 @@ const page = source("app/(dashboard)/analytics/trade-explorer/page.tsx");
 const service = source("app/(dashboard)/analytics/trade-explorer/trade-explorer-service.ts");
 const table = source("src/modules/journal-analytics/server/analytics-table.ts");
 const population = source("src/modules/journal-analytics/server/analytics-population.ts");
-const helpOverview = source("app/(dashboard)/help/core-analytics/page.tsx");
-const helpGuides = source("src/modules/help/core-analytics-guides.ts");
+const helpOverview = source("src/modules/help/public-help-content.ts");
+const helpRoute = source("app/help/[collection]/page.tsx");
+const helpGuides = source("src/modules/help/trade-explorer-guides.ts");
 
 describe("Trade Explorer visible contract", () => {
   it("keeps the Next.js and account-scope boundary explicit", () => {
@@ -22,7 +23,8 @@ describe("Trade Explorer visible contract", () => {
     expect(action.startsWith('"use server";')).toBe(true);
     expect(service.startsWith('import "server-only";')).toBe(true);
     expect(client).not.toContain("export default async function TradeExplorerClient");
-    expect(action).toContain("requireTraderLinkPlatformPageScope()");
+    expect(action).toMatch(/requireTraderLinkPlatformPageScope\(\{\s*membershipFeatures: \["analytics\.trade_explorer"\]/u);
+    expect(page).toContain('requireMembershipPageScope("analytics.trade_explorer")');
     expect(service).toContain(
       "requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef)",
     );
@@ -40,38 +42,40 @@ describe("Trade Explorer visible contract", () => {
     expect(action).toContain("These results changed while you were paging.");
     expect(action).not.toContain("selected Trade Tracker account");
     expect(page).toContain("Explore your confirmed Trade Tracker results.");
-    expect(page).not.toMatch(/Journal/iu);
+    expect(page).toContain('title: "Trade Explorer | TraderLink Platform"');
   });
 
   it("shows every approved control and truthful default", () => {
     expect(service).toContain("direction: null");
-    expect(client).toContain('useState<ExplorerResultView>("trades")');
+    expect(client).toContain('initialResultView = "trades"');
+    expect(client).toContain('useState<ExplorerResultView>(initialResultView)');
+    expect(page).toContain('initialResultView={tickerView ? "tickers" : "trades"}');
     expect(client).toContain('useState<TradeExplorerTradeSort>("closed_desc")');
     for (const label of [
-      "From",
-      "To",
-      "Currency",
+      "Closed from",
+      "Closed to",
       "Ticker",
       "Direction",
       "Result basis",
       "Result",
       "View",
       "Sort trades",
-      "Rank by",
       "Results per page",
       "Entry weekday",
-      "Entry-time detail",
+      "Time bucket detail",
       "Entry time (HH:MM)",
     ]) expect(client).toContain(`label="${label}"`);
+    expect(client).toContain('label={resultView === "days" ? "Sort days" : "Rank by"}');
+    expect(helpGuides).toContain("Trade Explorer does not provide a separate currency override.");
     for (const label of [
       "Minimum hold (seconds)",
       "Maximum hold (seconds)",
-      "Minimum entered quantity",
-      "Maximum entered quantity",
-      "Minimum position size",
-      "Maximum position size",
-      "Minimum entry value",
-      "Maximum entry value",
+      "Minimum total entry shares",
+      "Maximum total entry shares",
+      "Minimum peak shares",
+      "Maximum peak shares",
+      "Minimum total entry value",
+      "Maximum total entry value",
     ]) expect(client).toContain(`exactField("${label}"`);
     expect(client).toContain("selectedMinute % entryTimeBucketMinutes === 0");
     for (const view of [
@@ -105,7 +109,7 @@ describe("Trade Explorer visible contract", () => {
     expect(client.match(/previewRequestRef\.current !== requestNumber/gu))
       .toHaveLength(4);
     expect(client).toContain("previewRequestRef.current += 1");
-    expect(client.match(/window\.location\.reload\(\)/gu)).toHaveLength(2);
+    expect(client.match(/window\.location\.reload\(\)/gu)).toHaveLength(6);
     expect(client.match(/setError\(RESULTS_UPDATE_FAILURE\)/gu)).toHaveLength(2);
     expect(service).toContain(
       "evidence.factSetRevisionSha256 !== response.factSetRevisionSha256",
@@ -133,17 +137,17 @@ describe("Trade Explorer visible contract", () => {
     expect(client).toContain("tradeExplorerMetricMatchesOutcome(metricId, query.outcome)");
     expect(client).toContain("tradeExplorerMetricForOutcome(current.metricId, outcome)");
     expect(client).toContain('? "Gross P/L" : "Net P/L"');
-    expect(client).toContain('? "Fee-covered trades" : "Closed trades"');
+    expect(client).toMatch(/\? "Fee-covered trades"\s*: "Completed trades"/u);
     expect(client).toContain(
       "preview.response.crossPartitionCounts.includedCount",
     );
     expect(client).toContain("No fee-covered trades match these filters.");
     expect(client).toContain("preview.evidenceUnavailableReason");
     expect(client).toContain(
-      "For manual trades, Gross and Net change P/L calculation only.",
+      "Manually entered trades with no fee entered are included in Net P/L.",
     );
     expect(client).toContain(
-      "Some older imported trades do not have fee details",
+      "When broker fee details are missing from imported trades, they are excluded from Net P/L.",
     );
     expect(client).toContain(
       "Results are ranked separately within each currency and trading timezone.",
@@ -167,13 +171,16 @@ describe("Trade Explorer visible contract", () => {
       "Closed",
       "Ticker",
       "Direction",
-      "Shares",
+      "Total entry shares",
+      "Peak shares held",
+      "Position size",
       "Avg entry",
       "Avg exit",
-      "Entry value",
-      "Return",
+      "Total entry value",
+      "Return on entry value",
       "Hold",
-      "Executions",
+      "Trading costs",
+      "Execution structure",
     ]) expect(client).toContain(`<TableCell>${label}</TableCell>`);
     expect(client).toContain('<TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell>');
     expect(client).toContain("clearExpandedTrade()");
@@ -193,7 +200,7 @@ describe("Trade Explorer visible contract", () => {
     expect(client).not.toContain('Chip label={query.currency ?? "All currencies"}');
     expect(client).toContain("formatJournalAnalyticsMoney(valueDecimal, currency)");
     expect(client).toContain('width: "max-content"');
-    expect(client).toContain("This Rank by result cannot be calculated");
+    expect(client).toContain('This {appliedResultView === "days" ? "Sort days" : "Rank by"} result cannot be calculated');
     expect(client).toContain("groupColumnDisplaysMetric(column, appliedQuery.metricId)");
     expect(client).not.toContain("dayStatisticIsSubset");
     expect(client).toContain("N/A means the matching trades do not have the facts");
@@ -203,15 +210,15 @@ describe("Trade Explorer visible contract", () => {
   });
 
   it("keeps the linked Help guide accurate for imported and manual trades", () => {
-    expect(helpOverview).toContain("confirmed Trade Tracker results");
-    expect(helpOverview).toContain("Core Analytics Help | TraderLink Platform");
-    expect(helpGuides).toContain("including imported and manually entered trades");
-    expect(helpGuides).toContain('section("use-trade-explorer"');
-    expect(helpGuides).toContain("Sort trades orders individual rows only by facts each trade has");
-    expect(helpGuides).toContain("Money results stay ranked within their recorded currency");
-    expect(helpGuides).toContain("never the opposite basis");
-    expect(helpGuides).toContain("makes impossible or unable to change the order");
-    expect(helpOverview).not.toMatch(/Journal/iu);
-    expect(helpGuides).not.toMatch(/Journal/iu);
+    expect(helpOverview).toContain('collection("trade-explorer", "Trade Explorer"');
+    expect(helpOverview).toContain("TRADE_EXPLORER_HELP_GUIDES");
+    expect(helpRoute).toContain("publicHelpCollectionById");
+    expect(helpGuides).toContain("Manually entered trades with no fee entered are included in Net P/L.");
+    expect(helpGuides).toContain('guide("use-trade-explorer"');
+    expect(helpGuides).toContain("Sort trades orders individual rows by facts each trade has");
+    expect(helpGuides).toContain("Money is displayed in the reporting currency selected in Account settings.");
+    expect(helpGuides).toContain("P/L that matches the selected Result basis");
+    expect(helpGuides).toContain("hides calculations that cannot produce a meaningful order");
+    expect(helpGuides).toContain("When broker fee details are missing from imported trades, they are excluded from Net P/L.");
   });
 });

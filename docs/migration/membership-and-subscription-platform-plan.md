@@ -1,5 +1,9 @@
 # TraderLink Membership And Subscription Platform Plan
 
+**2026-10-10 acceptance follow-up:** [Member browser enrollment and CI](membership-enrollment-ci-followup.md).
+Production moonmafia enrollment/trial/cleanup and focused CI checks passed. Final
+correction release is pending; payment-provider testing and legacy route-audit maintenance remain separate.
+
 **Owner-approved addition:** [Trade Analyzer and Levels Generator allowances](membership-generation-allowances-progress.md). Implementation is complete on the current-release source, with per-plan quantities, unlimited and configurable day-based resets. Static checks passed; runtime/owner acceptance and deployment remain pending.
 
 **Owner-approved addition:** [Independent Watchlist detail and preparation gates](watchlist-membership-feature-split-progress.md). Reconciled implementation is complete on current-release source, including analysis-history/indicator endpoints and compact list/stream transport. Runtime/owner acceptance remains pending and separate from the earlier QA inventory.

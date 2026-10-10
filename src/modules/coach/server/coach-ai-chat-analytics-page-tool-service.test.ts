@@ -58,6 +58,27 @@ describe("CoachAiChatAnalyticsPageToolService", () => {
     ]));
   });
 
+  it.each(TRADE_EXPLORER_TRADE_SORT_OPTIONS)("maps $value to the canonical analytics order", ({ value, order }) => {
+    const { analytics, service } = subject();
+    expect(COACH_AI_CHAT_TRADE_EXPLORER_TRADE_SORTS).toHaveLength(18);
+    const result = service.tradeExplorer(scope, accountId, {
+      contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+      toolName: "query_trade_explorer",
+      resultView: "trades",
+      tradeSort: value,
+      moneyBasis: "net",
+      pageSize: 25,
+      afterCursor: null,
+      filters: { currency: "USD" },
+    }, asOfUtc);
+    expect(result.result).toMatchObject({ tradeSort: value, evidenceUnavailableReason: null });
+    expect(analytics.getRoundTripAnalyticsTable).toHaveBeenCalledExactlyOnceWith(
+      scope,
+      expect.objectContaining({ accountIds: [accountId], table: { pageSize: 25, afterCursor: null } }),
+      order,
+    );
+  });
+
   it("uses the exact canonical contract for each current analytics page", () => {
     const { analytics, service } = subject();
     service.readPage(scope, accountId, {

@@ -120,7 +120,7 @@ describe("news article source canonicalization", () => {
       headline: "Eligible older PDSB article",
       articleText: "Processed article from the prior eligible session.",
       sourceUrl: "https://news.nuntiobot.com/article/pdsb-older-eligible",
-      publishedAt: "2026-09-05T15:00:00.000Z",
+      publishedAt: "2026-09-04T15:00:00.000Z",
     });
 
     const olderSelection = await findNewsArticleForWatchlistAi("PDSB", "2026-09-08");
@@ -129,10 +129,30 @@ describe("news article source canonicalization", () => {
       windowStartDateEt: "2026-09-02",
       windowEndDateEt: "2026-09-08",
       recency: "older_within_window",
-      publishedDateEt: "2026-09-05",
+      publishedDateEt: "2026-09-04",
       article: { headline: "Eligible older PDSB article" },
     });
 
+    await upsertNewsArticle({
+      sourceEventId: "pdsb-weekend-excluded",
+      ticker: "PDSB",
+      headline: "Weekend PDSB article",
+      articleText: "Processed article from Saturday, excluded from weekdays.",
+      sourceUrl: "https://news.nuntiobot.com/article/pdsb-weekend-excluded",
+      publishedAt: "2026-09-05T15:00:00.000Z",
+    });
+    expect(await findNewsArticleForWatchlistAi("PDSB", "2026-09-08"))
+      .toMatchObject({ publishedDateEt: "2026-09-04" });
+    for (const [ticker, date, eligible] of [["QABND", "2026-09-02", true], ["QAOLD", "2026-09-01", false]] as const) {
+      await upsertNewsArticle({
+        sourceEventId: `qa-window-${ticker}`, ticker,
+        headline: `Window boundary ${ticker}`,
+        articleText: "Synthetic processed boundary article.",
+        sourceUrl: `https://news.nuntiobot.com/article/qa-window-${ticker}`,
+        publishedAt: `${date}T15:00:00.000Z`,
+      });
+      expect((await findNewsArticleForWatchlistAi(ticker, "2026-09-08")) !== null).toBe(eligible);
+    }
     await upsertNewsArticle({
       sourceEventId: "psdb-current-session",
       ticker: "PDSB",

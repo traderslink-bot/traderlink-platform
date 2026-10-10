@@ -74,6 +74,15 @@ describe("Coach AI Chat administration repository", () => {
     try {
       const accountRef = fixture.repository.read().accounts[0]!.accountRef;
       expect(accountRef).toBeTruthy();
+      // Migration 0069 seeds complete default prices. Explicitly arrange the
+      // unconfigured state before checking the unchanged enablement guard.
+      fixture.repository.saveSettings({
+        modelId: "gpt-chat-test",
+        inputCostUsdPerMillionTokens: null,
+        cachedInputCostUsdPerMillionTokens: null,
+        cacheWriteInputCostUsdPerMillionTokens: null,
+        outputCostUsdPerMillionTokens: null,
+      });
       expect(() => fixture.repository.savePlatformControl({
         enabled: true,
         dailyRequestCap: 20,
