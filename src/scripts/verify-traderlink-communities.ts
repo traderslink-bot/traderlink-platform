@@ -164,16 +164,18 @@ try{
 
   assert(Boolean(database.prepare(`SELECT 1 FROM traderlink_community_operator_grants WHERE user_id=? AND status='active'`).get(OWNER)),"Pilot bootstrap must give the verified pilot owner Communities administration access.");
   const admin=new TraderLinkCommunityAdminRepository(database);
-  admin.configurePartner({actorUserId:OWNER,communityId:first.communityId,status:"active",commissionBasisPoints:2000,attributionDays:90,currency:"USD",atUtc:NOW});
-  admin.configurePartner({actorUserId:OWNER,communityId:second.communityId,status:"active",commissionBasisPoints:1000,attributionDays:90,currency:"USD",atUtc:NOW});
+  // Referral earnings are expressly deferred for launch. Financial lifecycle
+  // acceptance remains a future gate; this checks disabled behavior, not payouts.
+  admin.configurePartner({actorUserId:OWNER,communityId:first.communityId,status:"disabled",commissionBasisPoints:2000,attributionDays:90,currency:"USD",atUtc:NOW});
+  admin.configurePartner({actorUserId:OWNER,communityId:second.communityId,status:"disabled",commissionBasisPoints:1000,attributionDays:90,currency:"USD",atUtc:NOW});
   const attribution=admin.attributeMember({communityId:first.communityId,userId:OWNER,atUtc:NOW});
-  assert(attribution===admin.attributeMember({communityId:first.communityId,userId:OWNER,atUtc:NOW}),"First community attribution must remain deterministic.");
+  assert(attribution===null&&admin.attributeMember({communityId:first.communityId,userId:OWNER,atUtc:NOW})===null,"Disabled partner programs must not create attribution.");
   assert(admin.attributeMember({communityId:second.communityId,userId:OWNER,atUtc:NOW})===null,"A member cannot be attributed to a community they have not joined.");
   const billing=admin.applyTier2BillingEvent({providerEventRef:"qa-start",userId:OWNER,eventType:"tier2.started",periodKey:"2026-09",grossMinor:1000,currency:"USD",occurredAtUtc:NOW,processedAtUtc:NOW});
-  assert(billing.applied&&billing.commissionMinor===200,"Tier 2 commission must use configured basis points.");
+  assert(!billing.applied&&billing.commissionMinor===0,"Deferred Tier 2 commission must not accrue.");
   assert(!admin.applyTier2BillingEvent({providerEventRef:"qa-start",userId:OWNER,eventType:"tier2.started",periodKey:"2026-09",grossMinor:1000,currency:"USD",occurredAtUtc:NOW,processedAtUtc:NOW}).applied,"Billing event must be idempotent.");
   const expired=admin.applyTier2BillingEvent({providerEventRef:"qa-expired",userId:OWNER,eventType:"tier2.renewed",periodKey:"2027-01",grossMinor:1000,currency:"USD",occurredAtUtc:"2027-01-05T12:00:00.000Z",processedAtUtc:"2027-01-05T12:00:00.000Z"});
-  assert(expired.applied&&expired.commissionMinor===0,"Expired attribution must not earn a Tier 2 commission.");
+  assert(!expired.applied&&expired.commissionMinor===0,"Deferred partner renewals must not accrue.");
 
   platform.recordView({communityId:first.communityId,userId:OWNER,path:"/communities/first-room/alerts",objectType:"alerts",atUtc:NOW});
   assert((database.prepare(`SELECT views FROM traderlink_community_activity_daily_members WHERE community_id=? AND user_id=?`).get(first.communityId,OWNER) as {views:number}).views===1,"Named activity projection must remain community scoped.");
@@ -181,5 +183,5 @@ try{
 
   const finalForeignKeys=database.pragma("foreign_key_check") as unknown[];
   assert(finalForeignKeys.length===0,"Seeded Communities flow has foreign-key violations.");
-  console.log(JSON.stringify({capabilities:capabilityCount,communityIsolation:true,discordRoleMapping:true,foreignKeyViolations:0,journalGrantRevoked:true,namedActivity:true,ok:true,tables:expected.length,tier2Idempotent:true}));
+  console.log(JSON.stringify({capabilities:capabilityCount,communityIsolation:true,discordRoleMapping:true,foreignKeyViolations:0,journalGrantRevoked:true,namedActivity:true,ok:true,tables:expected.length,tier2Disabled:true}));
 }finally{database.close();}

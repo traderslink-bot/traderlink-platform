@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
 import Database from "better-sqlite3";
 import { platformIdentityMigration } from "../modules/platform/server/database/migrations/0001_platform_identity";
 import { journalAccountBoundaryMigration } from "../modules/journal/server/database/migrations/0002_journal_account_boundary";
@@ -11,6 +12,9 @@ import { approvedCommunityGuildIds, isFreshCommunityEvidence } from "../modules/
 import { onboardApprovedCommunity, verifyCommunityOwner } from "../modules/communities/server/community-onboarding-service";
 import { pruneCommunityNamedActivity } from "../modules/communities/server/community-activity-retention";
 import { isCommunityContentActivityPath } from "../modules/communities/server/community-activity-scope";
+import { TraderLinkCommunityAdminRepository } from "../modules/communities/server/traderlink-community-admin-repository";
+import { platformCoachingCommissionTermsMigration } from "../modules/platform/server/database/migrations/0159_platform_coaching_commission_terms";
+import { parseCommissionHundredths } from "../modules/communities/contracts/coaching-commission-settings";
 
 async function main() {
   const db = new Database(":memory:");
@@ -23,6 +27,7 @@ async function main() {
     for (const migration of [platformIdentityMigration, journalAccountBoundaryMigration, platformAuthenticationIdentitiesMigration, platformDiscordMembershipsMigration, communityWatchlistsMigration, traderLinkCommunitiesIdentityPermissionsMigration, traderLinkCommunitiesPartnerPlatformMigration]) {
       for (const statement of migration.statements) db.exec(statement);
     }
+    for (const statement of platformCoachingCommissionTermsMigration.statements) db.exec(statement);
     for (const [id, subject] of [[owner,"123456789"],[other,"987654321"]]) {
       db.prepare(`INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc) VALUES(?,'discord',?,'Test owner','active',?,?)`).run(id,subject,now,now);
       db.prepare(`INSERT INTO platform_auth_identities(user_id,auth_provider,auth_subject,status,linked_by_user_id,created_at_utc,updated_at_utc,last_authenticated_at_utc) VALUES(?,'discord',?,'active',?,?,?,?)`).run(id,subject,id,now,now,now);
@@ -58,6 +63,35 @@ async function main() {
     await assert.rejects(verifyCommunityOwner("900001","987654321","fixture-only",request),/Only the Discord server owner/);
     await assert.rejects(verifyCommunityOwner("900001","123456789","fixture-only",(async()=>new Response("{}",{status:403})) as typeof fetch),/unavailable/);
     const community = (db.prepare("SELECT community_id FROM traderlink_communities").get() as {community_id:string}).community_id;
+    const admin = new TraderLinkCommunityAdminRepository(db);
+    assert.throws(()=>admin.setCommunityStatus({actorUserId:other,communityId:community,status:"paused",atUtc:input.atUtc}));
+    db.prepare(`INSERT INTO traderlink_community_operator_grants(grant_id,user_id,status,granted_at_utc) VALUES(? ,?,'active',?)`).run("10000000-0000-4000-8000-000000000006",owner,now);
+    admin.setCommunityStatus({actorUserId:owner,communityId:community,status:"paused",atUtc:input.atUtc});
+    assert.equal((db.prepare("SELECT status FROM traderlink_communities WHERE community_id=?").get(community) as {status:string}).status,"paused");
+    assert.equal((db.prepare("SELECT count(*) n FROM traderlink_community_authorization_audit_events WHERE event_type='community.status.changed'").get() as {n:number}).n,1);
+    admin.setCommunityStatus({actorUserId:owner,communityId:community,status:"active",atUtc:input.atUtc});
+    const adminSource=readFileSync("app/admin/journal/communities/page.tsx","utf8");
+    for(const name of ["staff","audit"]) {
+      const query=adminSource.match(new RegExp("const "+name+"=database\\.prepare\\(`([\\s\\S]*?)`\\)"))?.[1];
+      assert.ok(query,`Missing ${name} query`);
+      db.prepare(query).all();
+    }
+    assert.equal(parseCommissionHundredths("12.34",10000),1234);
+    assert.throws(()=>parseCommissionHundredths("12.345",10000));
+    assert.throws(()=>parseCommissionHundredths("100.01",10000));
+    const feeInput={actorUserId:owner,communityId:community,coachUserId:null,feeBasisPoints:1234,status:"disabled" as const,notes:"Internal",atUtc:input.atUtc,minimumCommissionMinor:250,currency:"CAD",durationCount:7,durationUnit:"months"};
+    const feeId=admin.configureCoachFee(feeInput);
+    assert.deepEqual(db.prepare(`SELECT fee_basis_points,minimum_commission_minor,currency,duration_count,duration_unit,status FROM traderlink_community_coach_fee_rules WHERE fee_rule_id=?`).get(feeId),{fee_basis_points:1234,minimum_commission_minor:250,currency:"CAD",duration_count:7,duration_unit:"months",status:"disabled"});
+    assert.throws(()=>admin.configureCoachFee({...feeInput,status:"active"}),/not enabled/);
+    assert.throws(()=>admin.configureCoachFee({...feeInput,actorUserId:other}));
+    assert.throws(()=>admin.configureCoachFee({...feeInput,durationUnit:null}),/duration/);
+    assert.throws(()=>admin.configureCoachFee({...feeInput,minimumCommissionMinor:-1}),/minimum/);
+    assert.throws(()=>admin.configureCoachFee({...feeInput,coachUserId:other}),/Choose a coach/);
+    assert.throws(()=>db.prepare(`UPDATE traderlink_community_coach_fee_rules SET duration_unit=NULL WHERE fee_rule_id=?`).run(feeId));
+    assert.throws(()=>admin.configurePartner({actorUserId:owner,communityId:community,status:"active",commissionBasisPoints:1000,attributionDays:90,currency:"USD",atUtc:input.atUtc}),/not enabled/);
+    assert.equal(admin.attributeMember({communityId:community,userId:owner,atUtc:input.atUtc}),null);
+    assert.deepEqual(admin.applyTier2BillingEvent({providerEventRef:"fixture-event",userId:owner,eventType:"tier2.started",periodKey:"fixture",grossMinor:1000,currency:"USD",occurredAtUtc:input.atUtc,processedAtUtc:input.atUtc}),{applied:false,commissionMinor:0});
+    assert.equal((db.prepare("SELECT count(*) n FROM traderlink_community_partner_billing_events").get() as {n:number}).n,0);
     const old = new Date(Date.parse(now)-91*86400000).toISOString();
     const recent = new Date(Date.parse(now)-86400000).toISOString();
     for(const [id,at] of [["10000000-0000-4000-8000-000000000003",old],["10000000-0000-4000-8000-000000000004",recent]]) {

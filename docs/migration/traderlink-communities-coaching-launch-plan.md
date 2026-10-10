@@ -106,7 +106,9 @@ Done when owner/staff/member publication lifecycles, placements and Discord deli
 
 Done when retention tests cover every named table and boundaries hold. D5 and D7 are approved subject to the no-disclosure exception. Activity visual redesign is not required for this checkpoint.
 
-### L06 — Tier 2 partner earnings: finish or explicitly disable for launch
+### L06 — two separate commission programs, both disabled for launch
+
+Owner clarification confirmed: coaching commissions mean money paid **to TraderLink from a coach's coaching fees**. Referral/affiliate earnings mean money paid **by TraderLink to server owners for paid dashboard referrals**. These are separate programs, not two names for one ledger. Both remain disabled. Only the incoming coaching-fee program receives dormant owner-only percentage, optional minimum amount, duration and per-coach settings in this launch work. Neither saved settings, old active records nor incoming provider events may initiate accrual or money movement. Enabling either program later requires a separate owner decision and completed provider/financial QA.
 
 **Partially implemented, not launch-proven:** attribution, a billing-event endpoint and estimated earnings ledger exist. A live billing-to-earnings-to-payout workflow and commercial terms are not accepted. This is separate from coaches collecting their own fees.
 

@@ -36,6 +36,8 @@ Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-
 
 ## Implementation authorization
 
+Owner clarification: both commission programs remain disabled. Incoming coaching-fee commissions receive dormant configuration; outgoing referral/affiliate earnings remain deferred. No production deployment is authorized. Continue the full L01–L08 implementation and QA inventory, not only the commission slice.
+
 Owner authorized all remaining launch fixes and full QA, with no production deployment. The proposed disclosure text was removed from the controlling plan; no substitute is authorized. Commission activation, provider settlement and refund rules remain deferred. Configuration must stay dormant.
 
 Workspace verification found canonical untracked community source predates the final coaching correction checkout. Coordinator has been contacted under the existing release/workspace coordination authorization before changing runtime source. Existing unrelated/staged work and any Git lock will be preserved.
@@ -53,4 +55,14 @@ Workspace verification found canonical untracked community source predates the f
 - Before staging this slice, coordinator must configure the approved-guild allowlist explicitly (including the existing test guild), confirm dedicated bot credentials/client ID, and compose from current production while preserving approved staging work. No automatic admission fallback is built in.
 - Help inventory reviewed: no dedicated Communities/Coaching guide exists in the inspected feature registry. Full workflow Help remains an L07 deliverable; no activity disclosure is to be introduced there.
 
-Next: complete L01 role/channel validation and independent-server proof; L02 freshness/transfer/disconnect; remaining coaching/content lifecycle; dormant commission settings; final integrated full QA. This slice does not complete L01–L09 or authorize a deploy.
+## Dormant commission and administration correction slice
+
+- Both commercial programs remain disabled server-side. Referral attribution and billing events cannot accrue earnings, including with old active configuration. Removed unavailable owner earnings cards and active partner configuration controls.
+- Owner-only coaching commission settings preserve exact hundredths for percentage/minimum, USD/CAD currency and optional duration in days/weeks/months, scoped to a community or its coach. Saving always creates disabled terms; there is no collection, payout, refund or Whop integration.
+- Reserved migration `0159_platform_coaching_commission_terms`, order172, predecessor0158: four additive nullable columns on existing coach-fee rules. No existing records rewritten, no hosted migration applied. Integration must append to the coordinator's current manifest after0158, not replace it with this older checkout's manifest. Rollback code may ignore these nullable columns; do not attempt destructive down-migration.
+- Corrected community status audit writes and admin audit reads to the actual schema; administration staff inventory now includes Discord-mapped responsibilities instead of only historical manual assignments.
+- Focused foundation fixture PASS: unauthorized admin/fee actions rejected, status audit succeeds, exact commission precision/limits/target/duration validated, activation rejected, referral events create no earnings. Actual admin staff/audit SQL compiles against the fixture schema.
+- Existing Communities fixture PASS: 20 capabilities, community isolation, Discord role mapping, no foreign-key violations, Journal revocation, named activity and disabled Tier2 accrual.
+- React checklist applied to server-action authority and direct UI imports; existing dashboard shell retained. No production or staging deployment. Full semantic/build/browser and launch matrix remain open.
+
+Next: complete L01 role/channel validation and independent-server proof; L02 freshness/transfer/disconnect; remaining coaching/content lifecycle; final integrated full QA. These slices do not complete L01–L09 or authorize a deploy.
