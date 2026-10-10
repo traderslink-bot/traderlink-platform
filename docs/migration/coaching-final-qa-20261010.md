@@ -55,3 +55,6 @@ Controlling inventory: `traderlink-coaching-complete-qa-20261001.md` in the cano
 - Follow-up reproduced a Response-header TypeError for Unicode chart filenames.
   Content-Disposition now uses an ASCII fallback plus UTF-8 filename encoding;
   regression checks Unicode/emoji/quotes with unchanged authorized image bytes.
+- Final selector fixture exercises two own active coach/plan relationships,
+  switching/remounting, foreign/ended exclusion, stale fallback and single/empty
+  states. This is a component-contract check, not two live coach OAuth sessions.
