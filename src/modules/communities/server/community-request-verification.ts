@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { PlatformDiscordMembershipRepository } from "../../platform/server/authentication/platform-discord-membership-repository";
-import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
+import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4,createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
 import { isFreshCommunityEvidence } from "./community-launch-policy";
 import { reconcileCoachingAccess } from "./coaching-access-lifecycle";
 
@@ -22,6 +22,15 @@ export async function verifyCommunityRequestMember(db:Database.Database,input:{s
   if(!guildResponse.ok)return false;
   const guild=await guildResponse.json() as {id?:string;owner_id?:string};
   if(guild.id!==target.discord_guild_id||!guild.owner_id||!/^\d{1,32}$/.test(guild.owner_id))return false;
+  const owner=db.prepare("SELECT i.auth_subject,c.updated_at_utc FROM traderlink_communities c LEFT JOIN platform_auth_identities i ON i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.status='active' WHERE c.community_id=?").get(target.community_id) as {auth_subject:string|null;updated_at_utc:string};
+  if(owner.updated_at_utc<=input.atUtc&&owner.auth_subject!==guild.owner_id){
+   db.transaction(()=>{
+    db.prepare("UPDATE platform_discord_memberships SET guild_owner=0 WHERE guild_id=? AND last_verified_at_utc<=?").run(target.discord_guild_id,input.atUtc);
+    const changed=db.prepare("UPDATE traderlink_communities SET status='paused',updated_at_utc=? WHERE community_id=? AND status IN ('active','setup') AND updated_at_utc<=?").run(input.atUtc,target.community_id,input.atUtc);
+    if(changed.changes)db.prepare("INSERT INTO traderlink_community_authorization_audit_events(audit_event_id,community_id,actor_user_id,event_type,object_type,object_ref,detail_json,created_at_utc) VALUES(?,?,?,'community.owner.verification_changed','community',?,'{}',?)").run(createCanonicalUuidV4(),target.community_id,input.userId,target.community_id,input.atUtc);
+   })();
+   return false;
+  }
   const member=await memberResponse.json() as {code?:number;roles?:unknown;user?:{id?:string;username?:string;global_name?:string|null;avatar?:string|null};joined_at?:string|null};
   if(memberResponse.status===404&&member.code===10007){
    db.transaction(()=>{

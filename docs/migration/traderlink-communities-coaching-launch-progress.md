@@ -149,3 +149,11 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - Earlier receipts are preserved as history before the current row is reset; worker confirmation/failure appends its outcome transactionally. The unique logical object/destination delivery row is unchanged.
 - Real-schema in-memory fixture PASS for authorization, preserved legacy receipt, duplicate submit rejection, uncertain confirmation and restricted deletion. Mocked delivery fixture PASS for fresh resend nonce and both retained confirmed receipts, plus prior failure cases. Syntax checks PASS for12 changed/new TypeScript files. No real retry, hosted migration or deployment performed.
 - Browser presentation and final integrated semantic/migration/operations QA remain open. This is not a launch-readiness verdict. Both commission programs remain disabled.
+
+## Ownership change, recovery and disconnect slice
+
+- Fresh Discord guild evidence that no longer matches the connected owner pauses the community and clears stale cached owner flags. Provider failure does not manufacture a transfer. A paused owner no longer retains publishing/coaching capabilities; verified connection/settings access remains for an ordinary disconnect.
+- Added explicit platform-administration owner recovery. It verifies the proposed owner's linked active Discord account against fresh bot responses before updating community ownership and appending the owner event. Existing coaching participants, messages, private notes and Journal grants are not reassigned. Suspended communities/members require separate administrative resolution.
+- Activating an existing server through administration now also requires fresh owner verification. Owner settings offer disconnect by pausing the community without deleting records or uninstalling the Discord bot; recovery is explicit through platform administration.
+- Focused coaching/Communities/foundation fixtures PASS after adding separate linked owner identities, transfer pause, unauthorized recovery denial, retained grant equality and disconnected publishing checks. Changed-file syntax and diff checks PASS. No real server ownership, role, hosted data or deployment was changed.
+- Independent second-guild browser proof, user-facing error/retry verification, complete operational/deletion/export and final integrated QA remain open.

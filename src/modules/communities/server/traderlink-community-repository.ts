@@ -750,7 +750,7 @@ WHERE user_id = ? AND guild_id = ? AND last_verified_at_utc >= ?`)
         userId,
         isOwner: true,
         membershipStatus: membership.status,
-        capabilities: TRADERLINK_COMMUNITY_CAPABILITIES,
+        capabilities: community.status==="active"?TRADERLINK_COMMUNITY_CAPABILITIES:Object.freeze(["community.view","community.manage"] as const),
       });
     }
 

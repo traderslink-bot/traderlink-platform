@@ -10,6 +10,16 @@ export async function retryCommunityDeliveryAction(formData:FormData):Promise<vo
  revalidateCommunityPath(communitySlug,"channels");redirect(`/communities/${communitySlug}/manage/channels`);
 }
 
+export async function disconnectCommunityAction(formData:FormData):Promise<void>{
+ const communitySlug=required(formData,'communitySlug');const {identity}=await context(communitySlug,formData);
+ withPlatformDatabase({mode:'runtime'},database=>{
+  const community=database.prepare('SELECT community_id,owner_user_id FROM traderlink_communities WHERE slug=?').get(communitySlug) as {community_id:string;owner_user_id:string};
+  if(community.owner_user_id!==identity.scope.userId)throw new Error('Only the verified server owner can disconnect this community.');
+  new TraderLinkCommunityRepository(database).setStatus({communityId:community.community_id,actorUserId:identity.scope.userId,status:'paused',timestamp:createCanonicalUtcTimestamp()});
+ });
+ revalidatePath(`/communities/${communitySlug}`,'layout');redirect(`/communities/${communitySlug}/manage/settings`);
+}
+
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import {COACHING_REVIEW_FOCUS,isCoachingReviewKind,parseCoachingFocus,type CoachingFocusFeedback} from "@/src/modules/communities/contracts/coaching-review-workspace";
 

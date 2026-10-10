@@ -1,4 +1,5 @@
 import {platformCoachingReviewRequestAcceptanceMigration} from "../modules/platform/server/database/migrations/0160_platform_coaching_review_request_acceptance";
+import {recoverCommunityOwnership} from "../modules/communities/server/community-ownership-recovery";
 import {verifyCommunityRequestMember} from "../modules/communities/server/community-request-verification";
 
 
@@ -59,7 +60,7 @@ try{
   const insertUser=database.prepare(`INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc) VALUES(?, 'discord', ?, ?, 'active', ?, ?)`);
   const insertIdentity=database.prepare(`INSERT INTO platform_auth_identities(user_id,auth_provider,auth_subject,status,linked_by_user_id,created_at_utc,updated_at_utc,last_authenticated_at_utc) VALUES(?,'discord',?,'active',?,?,?,?)`);
   const insertDiscord=database.prepare(`INSERT INTO platform_discord_memberships(user_id,guild_id,username,global_display_name,avatar_hash,role_ids_json,guild_owner,joined_at_utc,first_verified_at_utc,last_verified_at_utc) VALUES(?,?,?,?,NULL,?,?,?,?,?)`);
-  for(const [id,subject,name] of [[OWNER,"123456789","Owner"],[MEMBER,"member-subject","Member"],[OUTSIDER,"outsider-subject","Outsider"]] as const){insertUser.run(id,subject,name,NOW,NOW);insertIdentity.run(id,subject,id,NOW,NOW,NOW);}
+  for(const [id,subject,name] of [[OWNER,"123456789","Owner"],[MEMBER,"987654321","Member"],[OUTSIDER,"outsider-subject","Outsider"]] as const){insertUser.run(id,subject,name,NOW,NOW);insertIdentity.run(id,subject,id,NOW,NOW,NOW);}
   insertDiscord.run(OWNER,PILOT_GUILD,"owner","Owner","[]",1,NOW,NOW,NOW);
   insertDiscord.run(MEMBER,PILOT_GUILD,"member","Member",JSON.stringify(["200001"]),0,NOW,NOW,NOW);
   insertDiscord.run(OUTSIDER,"900002","outsider","Outsider","[]",1,NOW,NOW,NOW);
@@ -295,11 +296,11 @@ await check.rejects(retryable());check.equal(await retryable(),true,"Failure rel
 check.equal((database.pragma("foreign_key_check") as unknown[]).length,0);
 const requestAt="2026-10-15T12:00:00.000Z";
 let providerCalls=0;
-const membershipResponse=(async(url)=>{providerCalls++;return new Response(JSON.stringify(String(url).includes('/members/')?{user:{id:"123456789",username:"owner"},roles:["200001","2","200001"]}:{id:PILOT_GUILD,owner_id:"987654321"}),{status:200});}) as typeof fetch;
+const membershipResponse=(async(url)=>{providerCalls++;return new Response(JSON.stringify(String(url).includes('/members/')?{user:{id:"123456789",username:"owner"},roles:["200001","2","200001"]}:{id:PILOT_GUILD,owner_id:"123456789"}),{status:200});}) as typeof fetch;
 check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:requestAt},membershipResponse),true);
 check.equal(providerCalls,2);
 check.equal((database.prepare("SELECT role_ids_json FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {role_ids_json:string}).role_ids_json,'["2","200001"]',"Provider roles are normalized");
-check.equal((database.prepare("SELECT guild_owner FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {guild_owner:number}).guild_owner,0,"Former owner does not retain owner evidence");
+check.equal((database.prepare("SELECT guild_owner FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {guild_owner:number}).guild_owner,1,"Verified owner evidence is refreshed");
 check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:"2026-10-15T12:04:59.000Z"},membershipResponse),true);
 check.equal(providerCalls,2,"Fresh evidence avoids redundant provider calls");
 check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:"2026-10-15T12:06:00.000Z"},fakeRequest(429,{})),false,"Expired evidence cannot authorize during rate limiting");
@@ -308,6 +309,23 @@ database.prepare("UPDATE traderlink_community_memberships SET status='suspended'
 check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:"2026-10-15T12:07:00.000Z"},membershipResponse),false,"Suspension cannot be undone by provider refresh");
 permissions.syncActiveMemberFromDiscord({communityId:first.communityId,userId:OWNER,timestamp:"2026-10-15T12:08:00.000Z"});
 check.equal(permissions.findMembership(first.communityId,OWNER)?.status,"suspended","OAuth synchronization must not clear suspension");
+database.prepare("UPDATE traderlink_community_memberships SET status='active' WHERE community_id=? AND user_id=?").run(first.communityId,OWNER);
+const changedOwner=(async(url)=>Response.json(String(url).includes('/members/')?{user:{id:'123456789',username:'owner'},roles:['200001']}:{id:PILOT_GUILD,owner_id:'987654321'})) as typeof fetch;
+check.equal(await verifyCommunityRequestMember(database,{slug:'first-room',userId:OWNER,botToken:'fixture',atUtc:'2026-10-15T12:10:00.000Z'},changedOwner),false,'Confirmed ownership change pauses access until explicit recovery');
+check.equal(permissions.findById(first.communityId)?.status,'paused');
+check.equal(permissions.resolveAccess(first.communityId,OWNER).capabilities.length,0,'Former owner cannot retain publishing or administration');
+check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.length,0,'Paused server cannot continue publishing through mapped roles');
+database.prepare("INSERT INTO traderlink_community_operator_grants(grant_id,user_id,status,granted_at_utc) VALUES('10000000-0000-4000-8000-000000000123',?,'active',?) ON CONFLICT(user_id) DO UPDATE SET status='active'").run(OWNER,requestAt);
+const beforeTransfer=JSON.stringify(database.prepare('SELECT * FROM traderlink_community_journal_grants ORDER BY grant_id').all());
+const recovery={actorUserId:OWNER,communityId:first.communityId,newOwnerUserId:MEMBER,atUtc:'2026-10-15T12:11:00.000Z',evidence:{guildId:PILOT_GUILD,discordUserId:'987654321',username:'new-owner',globalDisplayName:null,avatarHash:null,roleIds:['200001'],joinedAtUtc:null,verifiedAtUtc:'2026-10-15T12:11:00.000Z'}};
+check.throws(()=>recoverCommunityOwnership(database,{...recovery,actorUserId:MEMBER}),'Only platform operator may recover ownership');
+recoverCommunityOwnership(database,recovery);
+check.equal(permissions.findById(first.communityId)?.ownerUserId,MEMBER);
+check.equal(permissions.resolveAccess(first.communityId,MEMBER).isOwner,true);
+check.equal(JSON.stringify(database.prepare('SELECT * FROM traderlink_community_journal_grants ORDER BY grant_id').all()),beforeTransfer,'Ownership recovery must not transfer or modify Journal grants');
+permissions.setStatus({communityId:first.communityId,actorUserId:MEMBER,status:'paused',timestamp:'2026-10-15T12:12:00.000Z'});
+check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes('community.alerts.create'),false,'Disconnected owner cannot publish');
+check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes('community.manage'),true,'Disconnected verified owner retains connection settings');
 console.log(JSON.stringify({result:"passed",generated,checks:["unsigned","student acceptance","weekly generation","idempotence","month end","unscheduled","plan edits","revision conflicts","frozen terms","question renewal","follow-up expiry","draft privacy","session privacy","lesson edit/reuse","role pause/restore","archive preservation","foreign keys"]}));
 }finally{database.close();}
 }
