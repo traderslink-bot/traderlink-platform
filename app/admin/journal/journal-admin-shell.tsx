@@ -51,6 +51,7 @@ const navigation = [
   { href: "/admin/journal/analyzer", label: "Trade Analyzer", icon: <QueryStatsRoundedIcon /> },
   { href: "/admin/journal/links-quality", label: "Links AI Chat", icon: <FlagRoundedIcon /> },
   { href: "/admin/journal/notifications", label: "Notifications", icon: <NotificationsNoneRoundedIcon /> },
+  { href: "/admin/journal/discord-notifications", label: "Discord notification members", icon: <GroupRoundedIcon /> },
   { href: "/admin/journal/system", label: "System", icon: <HealthAndSafetyRoundedIcon /> },
   { href: "/admin/journal/errors", label: "Errors", icon: <ReportProblemRoundedIcon /> },
   { href: "/admin/journal/audit", label: "Audit", icon: <AssessmentRoundedIcon /> },
