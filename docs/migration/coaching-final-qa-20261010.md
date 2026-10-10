@@ -44,6 +44,9 @@ the next batch until the complete audit handoff. No production release authorize
   covers grid sizing plus days/custom dates/status/search/sort/count behavior.
 - Alert list had no links to existing detail/edit pages. Add Open for tracked
   alerts and author/manager Discord-only alerts; focused access-link checks pass.
+- Fresh plan lifecycle found status changes redirected to Coaching Work. Keep
+  publish/pause/archive on Coach Setup and invalidate both setup and work. Action
+  regression covers all three statuses; no status/access contract change.
 
 ### Fresh live results, not inferred from fixture tests
 
@@ -80,6 +83,9 @@ the next batch until the complete audit handoff. No production release authorize
   No new Discord post was sent. Composer uses author symbols/notes, not admin AI.
 - Teaching student-complete versus coach-published status remains separately
   controlled, as previously recorded; not automatically marked a defect.
+- Synthetic new-setup plan published, paused and archived successfully. No students
+  enrolled in it, no payment, other plans unchanged. The archived fixture disappears
+  from setup. Existing personal alert template reloads its required field correctly.
 
 ### Checkpoint checks
 
