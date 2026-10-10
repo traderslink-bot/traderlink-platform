@@ -23,7 +23,8 @@ describe("Trade Explorer visible contract", () => {
     expect(action.startsWith('"use server";')).toBe(true);
     expect(service.startsWith('import "server-only";')).toBe(true);
     expect(client).not.toContain("export default async function TradeExplorerClient");
-    expect(action).toContain("requireTraderLinkPlatformPageScope()");
+    expect(action).toMatch(/requireTraderLinkPlatformPageScope\(\{\s*membershipFeatures: \["analytics\.trade_explorer"\]/u);
+    expect(page).toContain('requireMembershipPageScope("analytics.trade_explorer")');
     expect(service).toContain(
       "requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef)",
     );
@@ -41,12 +42,14 @@ describe("Trade Explorer visible contract", () => {
     expect(action).toContain("These results changed while you were paging.");
     expect(action).not.toContain("selected Trade Tracker account");
     expect(page).toContain("Explore your confirmed Trade Tracker results.");
-    expect(page).not.toMatch(/Journal/iu);
+    expect(page).toContain('title: "Trade Explorer | TraderLink Platform"');
   });
 
   it("shows every approved control and truthful default", () => {
     expect(service).toContain("direction: null");
-    expect(client).toContain('useState<ExplorerResultView>("trades")');
+    expect(client).toContain('initialResultView = "trades"');
+    expect(client).toContain('useState<ExplorerResultView>(initialResultView)');
+    expect(page).toContain('initialResultView={tickerView ? "tickers" : "trades"}');
     expect(client).toContain('useState<TradeExplorerTradeSort>("closed_desc")');
     for (const label of [
       "From",
@@ -106,7 +109,7 @@ describe("Trade Explorer visible contract", () => {
     expect(client.match(/previewRequestRef\.current !== requestNumber/gu))
       .toHaveLength(4);
     expect(client).toContain("previewRequestRef.current += 1");
-    expect(client.match(/window\.location\.reload\(\)/gu)).toHaveLength(2);
+    expect(client.match(/window\.location\.reload\(\)/gu)).toHaveLength(6);
     expect(client.match(/setError\(RESULTS_UPDATE_FAILURE\)/gu)).toHaveLength(2);
     expect(service).toContain(
       "evidence.factSetRevisionSha256 !== response.factSetRevisionSha256",
@@ -134,7 +137,7 @@ describe("Trade Explorer visible contract", () => {
     expect(client).toContain("tradeExplorerMetricMatchesOutcome(metricId, query.outcome)");
     expect(client).toContain("tradeExplorerMetricForOutcome(current.metricId, outcome)");
     expect(client).toContain('? "Gross P/L" : "Net P/L"');
-    expect(client).toContain('? "Fee-covered trades" : "Closed trades"');
+    expect(client).toMatch(/\? "Fee-covered trades"\s*: "Completed trades"/u);
     expect(client).toContain(
       "preview.response.crossPartitionCounts.includedCount",
     );
