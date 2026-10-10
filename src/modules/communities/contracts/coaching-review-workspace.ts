@@ -19,6 +19,11 @@ export const COACHING_REVIEW_FOCUS = {
 export type CoachingReviewFocus = keyof typeof COACHING_REVIEW_FOCUS;
 export type CoachingFocusFeedback = Partial<Record<CoachingReviewFocus, string>>;
 
+export function editableReviewFocus(selected: readonly CoachingReviewFocus[], feedback: CoachingFocusFeedback): CoachingReviewFocus[] {
+  const written = (Object.keys(feedback) as CoachingReviewFocus[]).filter(key => feedback[key]?.trim());
+  return [...new Set([...selected, ...written])].filter(key => key !== "overall" && key !== "next_steps");
+}
+
 export function isCoachingReviewKind(value: unknown): value is CoachingReviewKind {
   return typeof value === "string" && Object.hasOwn(COACHING_REVIEW_TYPES, value);
 }
