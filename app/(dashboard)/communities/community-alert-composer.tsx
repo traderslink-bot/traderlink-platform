@@ -31,7 +31,7 @@ export function CommunityAlertComposer({snapshot,isReview}:{snapshot:TraderLinkC
       <TextField defaultValue={audience?.audienceId} label="Audience" name="audienceId" select>
         {snapshot.audiences.filter(item=>item.status==="active").map(item=><MenuItem key={item.audienceId} value={item.audienceId}>{item.name}</MenuItem>)}
       </TextField>
-      <Button disabled={isReview} type="submit" variant="contained">Publish alert</Button>
+      <Stack direction="row" spacing={1}><Button disabled={isReview} name="status" value="draft" type="submit" variant="outlined">Save draft</Button><Button disabled={isReview} name="status" value="published" type="submit" variant="contained">Publish alert</Button></Stack>
     </Stack>
   </Box>;
 }

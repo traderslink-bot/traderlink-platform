@@ -134,3 +134,10 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - Pending review requests no longer offer the review-and-send action; the final preview also labels pending acceptance and disables sending. Existing server-side acceptance guards remain authoritative. Accepted scope is visible in the review agreement.
 - Coach student list adds an Ended view with a read-only history entry point. It does not offer restore/archive actions for ended relationships or count them as work due. Removed the misleading role-only failure paragraph; the status label remains.
 - Lightweight syntax checks pass for the three UI files. Staging Chrome identifies TradersLink and Bullrun correctly and the existing coach workspace loads from normal navigation. These UI corrections require the eventual integrated staging/browser pass; they are not marked launch-complete.
+
+## Alert lifecycle correction
+
+- Added Published/Drafts/Archived views and save-draft/unpublish/restore controls. Unpublished alerts are returned only to authorized authors/managers; ordinary readers cannot open them. First publication queues delivery transactionally; edits and restoration do not silently resend.
+- Multiline alert bodies now accept ordinary line breaks, including template-generated fields. Template submission checks active status and personal ownership/shared scope before reading its fields. Draft/archived detail pages do not generate named content activity.
+- Focused Communities fixture PASS for multiline drafts, author recovery, reader isolation, unauthorized restoration, first-publication-only delivery and existing feature regressions. Changed-file syntax and diff checks PASS. Browser verification on the eventual integrated candidate remains open.
+- Coordinator reserved source-only0162 (order175 after0161) for append-only delivery-attempt history and a current-attempt key. Not implemented/applied yet. Explicit retry/resend remains open and must preserve all previous receipts.

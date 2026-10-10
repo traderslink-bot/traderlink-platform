@@ -54,7 +54,7 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
     const alertSlug=requestedPath.match(/\/alerts\/([^/?#]+)/u)?.[1];
     const watchlistId=requestedPath.match(/\/server-watchlists\/([^/?#]+)/u)?.[1];
     const tracked=alertSlug
-      ? current.alerts.some(alert=>alert.slug===alertSlug&&alert.publishingMode==="tracked_page")
+      ? current.alerts.some(alert=>alert.slug===alertSlug&&alert.status==="published"&&alert.publishingMode==="tracked_page")
       : watchlistId
         ? current.watchlists.some(watchlist=>watchlist.watchlistId===watchlistId&&watchlist.status==="published"&&watchlist.publishingMode==="tracked_page")
         : true;
