@@ -9,6 +9,10 @@ const source = fs.readFileSync(path.join(root, 'app/(dashboard)/communities/comm
 const events = [];
 let deny = false;
 class Repository {
+  updatePlanStatus(input) {
+    if (deny) throw new Error('Access denied');
+    events.push(['plan-status', input.planId, input.status]);
+  }
   sendCoachingMessage(input) {
     if (deny) throw new Error('Access denied');
     events.push(['message', input.relationshipId, input.body]);
@@ -52,5 +56,14 @@ vm.runInNewContext(compiled, {
   events.length = 0; deny = true;
   await assert.rejects(exportsObject.sendCommunityCoachingMessageAction(form), /Access denied/);
   assert.equal(events.length, 0);
+  deny = false;
+  const planForm = new FormData();
+  planForm.set('communitySlug', 'test-community'); planForm.set('planId', 'qa-plan');
+  for (const status of ['active','paused','archived']) {
+    events.length = 0; planForm.set('status', status);
+    await assert.rejects(exportsObject.updateCommunityCoachingPlanStatusAction(planForm), /Unexpected redirect: \/communities\/test-community\/workspace\/setup\?updated=/);
+    assert.deepEqual(events[0], ['plan-status','qa-plan',status]);
+    assert.ok(events.some(event => event[0] === 'revalidate' && event[1] === '/communities/test-community/workspace/setup'));
+  }
   console.log('PASS: canonical student navigation, preserved coach page, both views invalidated, authorization failure unchanged');
 })().catch(error => { console.error(error); process.exitCode = 1; });
