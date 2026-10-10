@@ -21,7 +21,9 @@ export async function GET(request:Request,{params}:{params:Promise<{communitySlu
       return new TraderLinkCommunityCoachingProgramService(database).readImage({communityId:community.community_id,actor,attachmentId});
     });
     if(!image)return unavailable();
-    return new Response(new Uint8Array(image.content),{headers:{"Content-Type":image.mediaType,"Content-Disposition":`inline; filename="${image.filename.replaceAll('"',"")}"`,"Cache-Control":"private, no-store"}});
+    const fallbackName=image.filename.replace(/[^\x20-\x7e]|["\\]/g,"_");
+    const encodedName=encodeURIComponent(image.filename).replace(/['()*]/g,character=>`%${character.charCodeAt(0).toString(16).toUpperCase()}`);
+    return new Response(new Uint8Array(image.content),{headers:{"Content-Type":image.mediaType,"Content-Disposition":`inline; filename="${fallbackName}"; filename*=UTF-8''${encodedName}`,"Cache-Control":"private, no-store"}});
   } catch (error) {
     // Use one non-disclosing response for absent, invalid and inaccessible images.
     // Unexpected database/runtime failures still propagate for operational diagnosis.

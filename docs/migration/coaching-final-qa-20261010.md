@@ -52,3 +52,6 @@ Controlling inventory: `traderlink-coaching-complete-qa-20261001.md` in the cano
 - Focused route regression covers denied cases, no DB image read after failed
   identity, absent community, authorized bytes and unexpected error propagation.
   Coordinator integration and fresh anonymous/authenticated retest required.
+- Follow-up reproduced a Response-header TypeError for Unicode chart filenames.
+  Content-Disposition now uses an ASCII fallback plus UTF-8 filename encoding;
+  regression checks Unicode/emoji/quotes with unchanged authorized image bytes.
