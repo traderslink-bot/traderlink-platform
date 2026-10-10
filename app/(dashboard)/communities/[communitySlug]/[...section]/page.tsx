@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { TRADERLINK_COMMUNITY_SECTIONS, type TraderLinkCommunitySection } from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import { CommunityDashboard } from "../../community-dashboard";
 import { loadCommunityDashboard } from "../../community-dashboard-loader";
+import { readCommunityDiscordResources } from "@/src/modules/communities/server/community-discord-resources";
 
 function resolveSection(parts:readonly string[]):TraderLinkCommunitySection{
   const value=parts[0]==="manage"?(parts[1]??"manage"):parts[0];
@@ -28,5 +29,8 @@ export default async function CommunitySectionPage({params}:{params:Promise<{com
     (resolved==="channels"&&(owner||capabilities.includes("community.discord.manage")))||
     (resolved==="settings"&&(owner||capabilities.includes("community.manage")));
   if(!allowed)notFound();
-  return <CommunityDashboard discordClientId={process.env.TRADERLINK_COMMUNITIES_DISCORD_CLIENT_ID?.trim()||null} isReview={loaded.isReview} section={resolved} snapshot={loaded.snapshot}/>;
+  const discordResources = !loaded.isReview && (resolved === "roles" || resolved === "channels")
+    ? await readCommunityDiscordResources(loaded.snapshot.community.discordGuildId, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "").catch(() => null)
+    : null;
+  return <CommunityDashboard discordResources={discordResources} discordClientId={process.env.TRADERLINK_COMMUNITIES_DISCORD_CLIENT_ID?.trim()||null} isReview={loaded.isReview} section={resolved} snapshot={loaded.snapshot}/>;
 }

@@ -95,13 +95,23 @@ async function main() {
     const old = new Date(Date.parse(now)-91*86400000).toISOString();
     const recent = new Date(Date.parse(now)-86400000).toISOString();
     for(const [id,at] of [["10000000-0000-4000-8000-000000000003",old],["10000000-0000-4000-8000-000000000004",recent]]) {
-      db.prepare(`INSERT INTO traderlink_community_activity_events(event_id,community_id,user_id,event_type,object_type,path,occurred_at_utc) VALUES(?,?,?,'page.view','community','/community',?)`).run(id,community,owner,at);
-      db.prepare(`INSERT INTO traderlink_community_activity_daily_members(community_id,activity_day,path,user_id,views,first_viewed_at_utc,last_viewed_at_utc) VALUES(?,?,'/community',?,1,?,?)`).run(community,at.slice(0,10),owner,at,at);
+      db.prepare(`INSERT INTO traderlink_community_activity_events(event_id,community_id,user_id,event_type,object_type,path,occurred_at_utc) VALUES(?,?,?,'page.view','community','/communities/independent-room',?)`).run(id,community,owner,at);
+      db.prepare(`INSERT INTO traderlink_community_activity_daily_members(community_id,activity_day,path,user_id,views,first_viewed_at_utc,last_viewed_at_utc) VALUES(?,?,'/communities/independent-room',?,1,?,?)`).run(community,at.slice(0,10),owner,at,at);
     }
-    assert.deepEqual(pruneCommunityNamedActivity(db,now,1),{events:1,dailyMembers:1});
-    assert.deepEqual(pruneCommunityNamedActivity(db,now,1),{events:0,dailyMembers:0});
+    assert.deepEqual(pruneCommunityNamedActivity(db,now,1),{events:1,dailyMembers:1,privateEvents:0,privateDailyMembers:0});
+    assert.deepEqual(pruneCommunityNamedActivity(db,now,1),{events:0,dailyMembers:0,privateEvents:0,privateDailyMembers:0});
     assert.equal((db.prepare("SELECT count(*) n FROM traderlink_community_activity_daily_members").get() as {n:number}).n,1);
     assert.throws(()=>pruneCommunityNamedActivity(db,now,0));
+    const paths=["/communities/independent-room/alerts","/communities/independent-room/alerts/test-id","/communities/independent-room/watchlists","/communities/independent-room/server-watchlists/abc","/communities/independent-room/coaches/abc","/communities/independent-room/workspace/students/private","/communities/independent-room/coaching","/communities/independent-room/manage","/communities/independent-room/alerts?private=note","/communities/other-room/alerts","/communities/independent-room/alerts/a/b","/communities/independent-room/alerts/"];
+    for(const [index,path] of paths.entries()){
+      db.prepare(`INSERT INTO traderlink_community_activity_events(event_id,community_id,user_id,event_type,object_type,path,occurred_at_utc) VALUES(?,?,?,'page.view','community',?,?)`).run(`10000000-0000-4000-8000-${String(index+100).padStart(12,"0")}`,community,owner,path,recent);
+      db.prepare(`INSERT INTO traderlink_community_activity_daily_members(community_id,activity_day,path,user_id,views,first_viewed_at_utc,last_viewed_at_utc) VALUES(?,?,?,?,1,?,?)`).run(community,recent.slice(0,10),path,owner,recent,recent);
+    }
+    const expectedRemoved=paths.filter(path=>!isCommunityContentActivityPath("independent-room",path)).length;
+    const cleaned=pruneCommunityNamedActivity(db,now);
+    assert.equal(cleaned.privateEvents,expectedRemoved);
+    assert.equal(cleaned.privateDailyMembers,expectedRemoved);
+    assert.equal((db.prepare("SELECT count(*) n FROM traderlink_community_activity_events").get() as {n:number}).n,1+paths.length-expectedRemoved);
     assert.deepEqual(db.pragma("foreign_key_check"),[]);
     console.log("PASS: approved guild onboarding, fresh ownership, reconnect preservation, no operator/test grants, rollback, retention of both named tables.");
   } finally {

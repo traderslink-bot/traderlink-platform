@@ -65,4 +65,13 @@ Workspace verification found canonical untracked community source predates the f
 - Existing Communities fixture PASS: 20 capabilities, community isolation, Discord role mapping, no foreign-key violations, Journal revocation, named activity and disabled Tier2 accrual.
 - React checklist applied to server-action authority and direct UI imports; existing dashboard shell retained. No production or staging deployment. Full semantic/build/browser and launch matrix remain open.
 
-Next: complete L01 role/channel validation and independent-server proof; L02 freshness/transfer/disconnect; remaining coaching/content lifecycle; final integrated full QA. These slices do not complete L01–L09 or authorize a deploy.
+## Discord selections and activity reconciliation slice
+
+- Existing role/channel forms now select resources returned by the connected Discord guild. Save actions re-fetch and validate the selection after checking the actor's capability; names come from Discord, not client fields. No Discord resource is created or edited.
+- Channel choices evaluate bot base permissions and everyone/role/member overrides; unsupported forum/thread destinations are excluded, unavailable posting destinations disabled. Failures do not fall back to another guild/channel. Permission behavior follows [Discord's permissions reference](https://docs.discord.com/developers/topics/permissions).
+- Focused Discord-resource fixture PASS for guild isolation, private-channel overrides, missing permissions, unsupported channel types, malformed responses and 403/404/429/500. This is not a live second-guild installation test.
+- Activity writes now independently enforce the content-only route allowlist. The maintenance worker removes historical private/invalid page paths from both named tables in bounded batches, in addition to 90-day expiry. Legacy per-community retention settings cannot extend retention; saves accept only the approved90 days. No hosted records were deleted in this local slice.
+- Foundation fixture PASS includes matching JS/SQL path boundaries and retention idempotence. Existing Communities and coaching-remediation fixtures PASS; recurrence, role pause/restore, archive preservation and foreign-key checks remain intact.
+- Browser presentation, semantic hosted checks, full backlog drain and independent server acceptance remain open. No staging/production changes.
+
+Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle and L01 independent-server proof; final integrated full QA. These slices do not complete L01–L09 or authorize a deploy.
