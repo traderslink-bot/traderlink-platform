@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const source = fs.readFileSync(path.resolve(__dirname, '../../app/api/communities/[communitySlug]/coaching/attachments/[attachmentId]/route.ts'), 'utf8');
 const output = {};
-let failure, failureAt, databaseReads = 0, missingCommunity = false;
+let failure, failureAt, databaseReads = 0, missingCommunity = false, filename = 'chart.png';
 const denied = code => Object.assign(new Error(code), {code, platform: true});
 vm.runInNewContext(ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022}}).outputText, {
   exports: output, Response, Uint8Array,
@@ -13,7 +13,7 @@ vm.runInNewContext(ts.transpileModule(source, {compilerOptions: {module: ts.Modu
     if (id.endsWith('/require-platform-request-scope')) return {requireTraderLinkPlatformRequestIdentity() {if(failureAt === 'identity') throw failure; return {};}};
     if (id.endsWith('/open-readonly-platform-database')) return {withReadonlyPlatformDatabase(_options, read) {databaseReads++; return read({prepare: () => ({get: () => missingCommunity ? undefined : {community_id: 'community'}})});}};
     if (id.endsWith('/traderlink-community-viewer')) return {resolveTraderLinkCommunityViewer() {if(failureAt === 'viewer') throw failure; return {userId: 'student'};}};
-    if (id.endsWith('/traderlink-community-coaching-program-service')) return {TraderLinkCommunityCoachingProgramService: class {readImage() {if(failureAt === 'image') throw failure; return {content: Buffer.from([1,2,3]), mediaType: 'image/png', filename: 'chart.png'};}}};
+    if (id.endsWith('/traderlink-community-coaching-program-service')) return {TraderLinkCommunityCoachingProgramService: class {readImage() {if(failureAt === 'image') throw failure; return {content: Buffer.from([1,2,3]), mediaType: 'image/png', filename};}}};
     if (id.endsWith('/platform-migration-contract')) return {isTraderLinkPlatformError: error => error?.platform === true};
     throw new Error(`Unexpected import ${id}`);
   },
@@ -46,9 +46,14 @@ const context = {params: Promise.resolve({communitySlug: 'test', attachmentId: '
   assert.equal(response.headers.get('Content-Type'), 'image/png');
   assert.equal(response.headers.get('Cache-Control'), 'private, no-store');
   assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [1,2,3]);
+  filename = '图表 📈 "review".png';
+  const unicode = await output.GET(request, context);
+  assert.equal(unicode.status, 200);
+  assert.ok(unicode.headers.get('Content-Disposition').includes(`filename*=UTF-8''${encodeURIComponent(filename)}`));
+  assert.deepEqual([...new Uint8Array(await unicode.arrayBuffer())], [1,2,3]);
   failureAt = 'image'; failure = denied('TRADERLINK_PLATFORM_SCHEMA_MISMATCH');
   await assert.rejects(output.GET(request, context), error => error === failure);
   failure = new Error('Unexpected runtime failure');
   await assert.rejects(output.GET(request, context), error => error === failure);
-  console.log('PASS: anonymous/invalid/denied/missing image responses, authorized bytes, no-store and unexpected error propagation');
+  console.log('PASS: anonymous/invalid/denied/missing image responses, authorized bytes, Unicode filenames, no-store and unexpected error propagation');
 })().catch(error => {console.error(error); process.exitCode = 1;});
