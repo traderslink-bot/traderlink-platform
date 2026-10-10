@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import { platformCoachingContentDeliveryReceiptsMigration } from "../modules/platform/server/database/migrations/0161_platform_coaching_content_delivery_receipts";
+import {platformCoachingDeliveryAttemptHistoryMigration} from "../modules/platform/server/database/migrations/0162_platform_coaching_delivery_attempt_history";
 
 import { TraderLinkCommunityDiscordDeliveryService } from "../modules/communities/server/traderlink-community-discord-delivery-service";
 
@@ -32,7 +33,8 @@ CREATE TABLE traderlink_community_watchlist_placements(watchlist_id TEXT,communi
   database.prepare(`INSERT INTO traderlink_community_alerts(alert_id,slug,title,symbol,body) VALUES('alert','opening-plan','Opening plan','ABC','Watch the opening range.')`).run();
   database.prepare(`INSERT INTO traderlink_community_server_watchlists(watchlist_id,title,status,description) VALUES('watchlist','Morning watchlist','published','Private watchlist notes')`).run();
   database.prepare(`INSERT INTO traderlink_community_server_watchlist_symbols VALUES('watchlist','ABC','Entry note',0)`).run();
-  for(const statement of platformCoachingContentDeliveryReceiptsMigration.statements)database.exec(statement);
+  database.exec("CREATE TABLE platform_users(user_id TEXT PRIMARY KEY)");
+  for(const statement of [...platformCoachingContentDeliveryReceiptsMigration.statements,...platformCoachingDeliveryAttemptHistoryMigration.statements])database.exec(statement);
   const insertDelivery=database.prepare(`INSERT INTO traderlink_community_content_deliveries(delivery_id,community_id,object_type,object_id,destination_id,status,attempt_count,last_error,requested_at_utc,delivered_at_utc,updated_at_utc) VALUES(?,?,?,?,?,'pending',0,NULL,'2026-09-06T12:00:00.000Z',NULL,'2026-09-06T12:00:00.000Z')`);
   insertDelivery.run("alert-delivery","community","alert","alert","alerts-destination");
   insertDelivery.run("watchlist-delivery","community","watchlist","watchlist","watchlists-destination");
@@ -123,7 +125,15 @@ CREATE TABLE traderlink_community_watchlist_placements(watchlist_id TEXT,communi
     assert(outcome('preflight').delivery_outcome==='pending'&&posts===beforePreflight,'Preflight outage remains retryable without a post.');
     mode='ok';clock='2026-10-10T12:02:00.000Z';await worker.runAvailable();
     assert(outcome('preflight').delivery_outcome==='confirmed','Safe preflight retry recovers.');
-    console.log(JSON.stringify({ok:true,exactLinks:true,ownerChannels:true,mentionsSuppressed:true,publishingModes:true,noReplay:true,cutoff:true,receipts:true,tenantValidation:true,publicationRecheck:true,noTruncation:true,rateLimit:true,uncertainSendHeld:true,preflightRecovery:true}));
+    const history=database.prepare("SELECT count(*) n FROM traderlink_community_delivery_attempt_history WHERE delivery_id='alert-delivery' AND discord_message_id='100001' AND outcome='confirmed'").get() as {n:number};
+    assert(history.n===1,'Confirmed receipt has one append-only history event.');
+    let resendNonce='';
+    const resendFetch=(async(input,init)=>{if(init?.method==='POST')resendNonce=JSON.parse(String(init.body)).nonce;return controlledFetch(input,init);}) as typeof fetch;
+    database.prepare("UPDATE traderlink_community_content_deliveries SET current_attempt_key='new-explicit-attempt',status='pending',delivery_outcome='pending',attempt_count=0 WHERE delivery_id='alert-delivery'").run();
+    await new TraderLinkCommunityDiscordDeliveryService(database,{botToken:'test-only',publicOrigin:'https://staging.example',now:()=>clock},resendFetch).runAvailable();
+    assert(resendNonce!==JSON.parse(JSON.stringify(requests[0].body)).nonce,'Explicit resend must use a different nonce from the prior confirmed send.');
+    assert((database.prepare("SELECT count(*) n FROM traderlink_community_delivery_attempt_history WHERE delivery_id='alert-delivery' AND outcome='confirmed'").get() as {n:number}).n===2,'Later confirmation appends rather than replaces the earlier receipt.');
+    console.log(JSON.stringify({ok:true,exactLinks:true,ownerChannels:true,mentionsSuppressed:true,publishingModes:true,noReplay:true,cutoff:true,receipts:true,tenantValidation:true,publicationRecheck:true,noTruncation:true,rateLimit:true,uncertainSendHeld:true,preflightRecovery:true,attemptHistory:true,freshResendNonce:true}));
   } finally {
     globalThis.fetch=originalFetch;
     database.close();

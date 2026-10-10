@@ -64,7 +64,8 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
       FROM traderlink_community_coaching_relationships
       WHERE community_id=? AND status='active' GROUP BY plan_id`).all(current.community.communityId) as {plan_id:string;count:number}[];
     const counts=new Map(planCounts.map(row=>[row.plan_id,row.count]));
-    return {...current,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
+    const deliveries=!historyOnly&&requestedPath.endsWith('/manage/channels')&&capabilities.has('community.discord.manage')?database.prepare(`SELECT d.delivery_id deliveryId,coalesce(d.current_attempt_key,d.delivery_id) attemptKey,d.object_type objectType,x.name channelName,d.status,d.delivery_outcome outcome,d.discord_message_id messageId,d.last_error error,d.updated_at_utc updatedAtUtc FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id WHERE d.community_id=? ORDER BY d.updated_at_utc DESC LIMIT 100`).all(current.community.communityId) as NonNullable<TraderLinkCommunityDashboardSnapshot['deliveries']>:[];
+    return {...current,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
   });
   return Object.freeze({snapshot,isReview:false});
 }

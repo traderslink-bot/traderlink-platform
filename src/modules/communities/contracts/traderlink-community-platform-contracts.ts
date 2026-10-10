@@ -296,6 +296,7 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
   }>;
   audiences: readonly TraderLinkCommunityAudience[];
   channels: readonly TraderLinkCommunityChannel[];
+  deliveries?:readonly Readonly<{deliveryId:string;attemptKey:string;objectType:string;channelName:string;status:string;outcome:string;messageId:string|null;error:string|null;updatedAtUtc:string}>[];
   members: readonly TraderLinkCommunityMemberSummary[];
   staffRoles: readonly Readonly<{
     roleId: string;

@@ -141,3 +141,11 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - Multiline alert bodies now accept ordinary line breaks, including template-generated fields. Template submission checks active status and personal ownership/shared scope before reading its fields. Draft/archived detail pages do not generate named content activity.
 - Focused Communities fixture PASS for multiline drafts, author recovery, reader isolation, unauthorized restoration, first-publication-only delivery and existing feature regressions. Changed-file syntax and diff checks PASS. Browser verification on the eventual integrated candidate remains open.
 - Coordinator reserved source-only0162 (order175 after0161) for append-only delivery-attempt history and a current-attempt key. Not implemented/applied yet. Explicit retry/resend remains open and must preserve all previous receipts.
+
+## Explicit delivery retry and resend slice
+
+- Implemented reserved0162 after0161 at order175: new attempt-event history and nullable current-attempt key. Existing rows retain their keys/statuses; no implicit resend/backfill send occurs. Delivery/community deletion is restricted while history exists; actor deletion nulls the actor reference without removing receipts.
+- Owner/authorized Discord managers can retry or explicitly send again from Discord deliveries. Uncertain results require the checked-Discord confirmation. Optimistic attempt-key validation rejects repeated form submission. Worker revalidates destination and publication before sending; a new explicit attempt uses a new nonce.
+- Earlier receipts are preserved as history before the current row is reset; worker confirmation/failure appends its outcome transactionally. The unique logical object/destination delivery row is unchanged.
+- Real-schema in-memory fixture PASS for authorization, preserved legacy receipt, duplicate submit rejection, uncertain confirmation and restricted deletion. Mocked delivery fixture PASS for fresh resend nonce and both retained confirmed receipts, plus prior failure cases. Syntax checks PASS for12 changed/new TypeScript files. No real retry, hosted migration or deployment performed.
+- Browser presentation and final integrated semantic/migration/operations QA remain open. This is not a launch-readiness verdict. Both commission programs remain disabled.

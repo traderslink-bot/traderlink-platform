@@ -60,6 +60,7 @@ import { traderLinkCommunitiesCoachingDeliveryWorkflowMigration } from "@/src/mo
 import { platformCoachingCommissionTermsMigration } from "./migrations/0159_platform_coaching_commission_terms";
 import { platformCoachingReviewRequestAcceptanceMigration } from "./migrations/0160_platform_coaching_review_request_acceptance";
 import { platformCoachingContentDeliveryReceiptsMigration } from "./migrations/0161_platform_coaching_content_delivery_receipts";
+import { platformCoachingDeliveryAttemptHistoryMigration } from "./migrations/0162_platform_coaching_delivery_attempt_history";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -671,6 +672,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0161_platform_coaching_content_delivery_receipts.ts",
       migration: platformCoachingContentDeliveryReceiptsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0162_platform_coaching_delivery_attempt_history.ts",
+      migration: platformCoachingDeliveryAttemptHistoryMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -1155,6 +1160,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0159_platform_coaching_commission_terms": Object.freeze([]),
     "0160_platform_coaching_review_request_acceptance": Object.freeze([]),
     "0161_platform_coaching_content_delivery_receipts": Object.freeze([]),
+    "0162_platform_coaching_delivery_attempt_history": Object.freeze(["traderlink_community_delivery_attempt_history"]),
     "0144_traderlink_communities_review_workspace_metadata": Object.freeze([]),
     "0145_traderlink_communities_coaching_delivery_workflow": Object.freeze([
       "traderlink_community_coaching_agreements",

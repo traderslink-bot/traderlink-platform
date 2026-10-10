@@ -1,3 +1,6 @@
+import {CommunityDeliveryRetryService} from "../modules/communities/server/community-delivery-retry-service";
+import {platformCoachingContentDeliveryReceiptsMigration} from "../modules/platform/server/database/migrations/0161_platform_coaching_content_delivery_receipts";
+import {platformCoachingDeliveryAttemptHistoryMigration} from "../modules/platform/server/database/migrations/0162_platform_coaching_delivery_attempt_history";
 import {platformCoachingReviewRequestAcceptanceMigration} from "../modules/platform/server/database/migrations/0160_platform_coaching_review_request_acceptance";
 
 import Database from "better-sqlite3";
@@ -45,7 +48,7 @@ function expectDenied(operation:()=>unknown,message:string):void{let denied=fals
 const database=new Database(":memory:");
 try{
   database.pragma("foreign_keys = ON");
-  for(const migration of [platformIdentityMigration,journalAccountBoundaryMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,communityWatchlistsMigration,traderLinkCommunitiesIdentityPermissionsMigration,traderLinkCommunitiesPartnerPlatformMigration,traderLinkCommunitiesDiscordFeatureAccessMigration,traderLinkCommunitiesServerWatchlistsMigration,traderLinkCommunitiesWorkspaceToolsMigration,traderLinkCommunitiesCoachingWorkspaceMigration,traderLinkCommunitiesCoachingProgramsMigration,traderLinkCommunitiesCoachingPlanBuilderMigration,traderLinkCommunitiesCoachingServiceMeasurementMigration,traderLinkCommunitiesReviewCoachingSectionsMigration,traderLinkCommunitiesReviewWorkflowMigration,traderLinkCommunitiesReviewWorkspaceMetadataMigration,traderLinkCommunitiesCoachingDeliveryWorkflowMigration,platformCoachingReviewRequestAcceptanceMigration]){
+  for(const migration of [platformIdentityMigration,journalAccountBoundaryMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,communityWatchlistsMigration,traderLinkCommunitiesIdentityPermissionsMigration,traderLinkCommunitiesPartnerPlatformMigration,traderLinkCommunitiesDiscordFeatureAccessMigration,traderLinkCommunitiesServerWatchlistsMigration,traderLinkCommunitiesWorkspaceToolsMigration,traderLinkCommunitiesCoachingWorkspaceMigration,traderLinkCommunitiesCoachingProgramsMigration,traderLinkCommunitiesCoachingPlanBuilderMigration,traderLinkCommunitiesCoachingServiceMeasurementMigration,traderLinkCommunitiesReviewCoachingSectionsMigration,traderLinkCommunitiesReviewWorkflowMigration,traderLinkCommunitiesReviewWorkspaceMetadataMigration,traderLinkCommunitiesCoachingDeliveryWorkflowMigration,platformCoachingReviewRequestAcceptanceMigration,platformCoachingContentDeliveryReceiptsMigration,platformCoachingDeliveryAttemptHistoryMigration]){
     for(const statement of migration.statements)database.exec(statement);
   }
   const expected=["traderlink_communities","traderlink_community_memberships","traderlink_community_alerts","traderlink_community_watchlist_placements","traderlink_community_server_watchlists","traderlink_community_server_watchlist_symbols","traderlink_community_network_settings","traderlink_community_coach_profiles","traderlink_community_coaching_plans","traderlink_community_coaching_relationships","traderlink_community_journal_grants","traderlink_community_activity_events","traderlink_community_activity_daily_members","traderlink_community_partner_programs","traderlink_community_partner_earnings","traderlink_community_partner_billing_events","traderlink_community_coach_fee_rules","traderlink_community_alert_templates","traderlink_community_alert_template_fields","traderlink_community_alert_field_values","traderlink_community_coaching_messages","traderlink_community_coaching_trade_reviews","traderlink_community_coaching_review_trades","traderlink_community_coaching_sessions","traderlink_community_coaching_teaching_items","traderlink_community_coaching_teaching_students","traderlink_community_coaching_attachments","traderlink_community_coaching_review_replies"];
@@ -148,6 +151,20 @@ try{
   platform.updateAlert({...alertUpdate,status:'draft'});
   platform.updateAlert({...alertUpdate,status:'published'});
   assert((database.prepare("SELECT count(*) n FROM traderlink_community_content_deliveries WHERE object_id=?").get(draftAlert) as {n:number}).n===1,'First publication queues once; restoration and edits do not resend.');
+  const delivery=database.prepare("SELECT delivery_id FROM traderlink_community_content_deliveries WHERE object_id=?").get(draftAlert) as {delivery_id:string};
+  database.prepare("UPDATE traderlink_community_content_deliveries SET status='delivered',delivery_outcome='confirmed',discord_message_id='123456',delivered_at_utc=? WHERE delivery_id=?").run(NOW,delivery.delivery_id);
+  const retries=new CommunityDeliveryRetryService(database);
+  const resend={communityId:first.communityId,actorUserId:OWNER,deliveryId:delivery.delivery_id,expectedAttemptKey:delivery.delivery_id,confirmUncertain:false,atUtc:NOW};
+  expectDenied(()=>retries.request({...resend,actorUserId:readerId}),'Readers cannot resend community posts.');
+  retries.request(resend);
+  const reset=database.prepare("SELECT current_attempt_key,status FROM traderlink_community_content_deliveries WHERE delivery_id=?").get(delivery.delivery_id) as {current_attempt_key:string;status:string};
+  assert(reset.status==='pending'&&reset.current_attempt_key!==delivery.delivery_id,'Explicit resend creates a new attempt without duplicating delivery.');
+  assert(Boolean(database.prepare("SELECT 1 FROM traderlink_community_delivery_attempt_history WHERE delivery_id=? AND discord_message_id='123456' AND outcome='confirmed'").get(delivery.delivery_id)),'Resend preserves historical receipt.');
+  expectDenied(()=>retries.request(resend),'Double submission cannot schedule another resend.');
+  database.prepare("UPDATE traderlink_community_content_deliveries SET status='failed',delivery_outcome='uncertain' WHERE delivery_id=?").run(delivery.delivery_id);
+  expectDenied(()=>retries.request({...resend,expectedAttemptKey:reset.current_attempt_key}),'Uncertain sends require explicit Discord inspection.');
+  retries.request({...resend,expectedAttemptKey:reset.current_attempt_key,confirmUncertain:true});
+  expectDenied(()=>database.prepare("DELETE FROM traderlink_community_content_deliveries WHERE delivery_id=?").run(delivery.delivery_id),'Attempt history prevents accidental receipt deletion.');
   database.exec("ROLLBACK TO watchlist_lifecycle; RELEASE watchlist_lifecycle");
   assert((database.prepare(`SELECT count(*) count FROM traderlink_community_content_deliveries WHERE object_id IN (?,?)`).get(alertId,serverWatchlistId) as {count:number}).count===2,"Published alert and server watchlist must each queue exactly one configured destination.");
   expectDenied(()=>database.prepare(`INSERT INTO traderlink_community_content_deliveries(delivery_id,community_id,object_type,object_id,destination_id,status,attempt_count,last_error,requested_at_utc,delivered_at_utc,updated_at_utc) SELECT '10000000-0000-4000-8000-000000000140',community_id,object_type,object_id,destination_id,'pending',0,NULL,requested_at_utc,NULL,updated_at_utc FROM traderlink_community_content_deliveries WHERE object_id=? LIMIT 1`).run(alertId),"Delivery queue must reject duplicate object and destination rows.");
