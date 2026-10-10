@@ -164,3 +164,9 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - Scheduled generation requires both participants' verification within five minutes, excluding stale agreements before the bounded batch selection so they cannot crowd out fresh agreements. Existing work and history are preserved.
 - Focused synthetic remediation fixture passes, including ownership change, rate-limit stop, departure/restoration, stale scheduler exclusion and fresh recurring generation. No live Discord changes or hosted migrations were performed. This internal correction requires no Help copy changes.
 - Chrome coach and Bullrun staging sessions are available again. They still show the earlier staging build, not these local corrections. Full integrated and operational QA remains open; neither commissions nor production deployment is enabled.
+
+## Additive analytics grant correction
+
+- Chrome confirmed the previous-review next-focus reminder in Bullrun's upcoming review. The Analysis tools drawer returned unavailable. Source inspection found that the preferred trade grant hid a separate analytics grant for the same student account.
+- Analysis scope now combines active grants only for the original relationship, coach, student and selected Journal account. Revoking analytics removes analytics access even when trade sharing remains; revoking trades preserves analytics without trade evidence.
+- Focused synthetic remediation fixture passes for the combined grants and revocations. This does not yet prove the hosted drawer is repaired: corrected candidate deployment and browser retest remain required. No Journal sharing was changed on staging, and no UI copy/Help changes were needed.

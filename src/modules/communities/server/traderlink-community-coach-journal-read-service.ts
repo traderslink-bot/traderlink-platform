@@ -31,9 +31,12 @@ export class TraderLinkCommunityCoachJournalReadService{
   constructor(private readonly database:Database.Database){}
   readAnalysisScope(input:Readonly<{coachUserId:string;relationshipId:string}>):Readonly<{scope:WorkspaceAccessScope;canReadTrades:boolean}>{
     const {grant,scope}=this.grant(input);
-    const fields=JSON.parse(grant.shared_fields_json) as string[];
-    if(!["complete","analytics"].includes(grant.data_scope)&&!fields.includes("analytics"))platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED",{operation:"coach_analytics_read"});
-    return {scope,canReadTrades:["trades","complete"].includes(grant.data_scope)};
+    // Independent grants are additive only within this relationship and selected account.
+    const grants=this.database.prepare(`SELECT data_scope,shared_fields_json FROM traderlink_community_journal_grants
+      WHERE relationship_id=? AND coach_user_id=? AND student_user_id=? AND journal_account_id=? AND status='active'`)
+      .all(input.relationshipId,input.coachUserId,grant.student_user_id,grant.journal_account_id) as {data_scope:string;shared_fields_json:string}[];
+    if(!grants.some(item=>["complete","analytics"].includes(item.data_scope)||(JSON.parse(item.shared_fields_json) as string[]).includes("analytics")))platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED",{operation:"coach_analytics_read"});
+    return {scope,canReadTrades:grants.some(item=>["trades","complete"].includes(item.data_scope))};
   }
 
   readReviewContext(input:Readonly<{coachUserId:string;relationshipId:string;periodStart?:string;periodEnd?:string;selectedIds?:readonly string[];includeRules:boolean;includeJournal:boolean;includeDayJournal?:boolean}>){
