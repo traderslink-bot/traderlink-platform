@@ -31,8 +31,7 @@ jobs:
       - name: Run focused tests without external network
         shell: bash
         run: |
-          set -o pipefail
-          log_file="$(mktemp)"
+          results_file="/tmp/focused-vitest-results.json"
           set +e
           sudo --preserve-env=PATH,GITHUB_WORKSPACE unshare --net -- bash -c '
             ip link set lo up
@@ -49,26 +48,38 @@ jobs:
               src/modules/journal-analytics/presentation/trade-explorer-ui-contract.test.ts \
               --maxWorkers=1 \
               --fileParallelism=false \
-              --testTimeout=30000
-          ' 2>&1 | tee "$log_file"
-          test_status="${PIPESTATUS[0]}"
+              --testTimeout=30000 \
+              --reporter=json \
+              --outputFile=/tmp/focused-vitest-results.json
+          '
+          test_status="$?"
           set -e
-          if [ "$test_status" -ne 0 ]; then
-            {
-              echo "### Focused Vitest failure output"
-              echo '```text'
-              tail -n 350 "$log_file"
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-            node - "$log_file" <<'NODE'
+          if [ -f "$results_file" ]; then
+            node - "$results_file" <<'NODE'
           const fs = require("node:fs");
-          const lines = fs.readFileSync(process.argv[2], "utf8").split(/\r?\n/u);
-          const tail = lines.slice(-220).join("\n").slice(-12000);
-          const escaped = tail
-            .replaceAll("%", "%25")
-            .replaceAll("\r", "%0D")
-            .replaceAll("\n", "%0A");
-          console.log(`::error title=Focused Vitest failure::${escaped}`);
+          const path = require("node:path");
+          const report = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          const rows = [];
+          for (const file of report.testResults ?? []) {
+            for (const assertion of file.assertionResults ?? []) {
+              if (assertion.status === "failed") {
+                rows.push({
+                  file: path.relative(process.cwd(), file.name).replaceAll("\\", "/"),
+                  title: assertion.fullName || assertion.title || "Focused Vitest assertion",
+                  message: (assertion.failureMessages ?? []).join("\n"),
+                });
+              }
+            }
+          }
+          if (rows.length === 0 && report.success === false) {
+            rows.push({file: ".github/workflows/membership-ci-focused-verification.yml", title: "Focused Vitest failure", message: JSON.stringify(report).slice(-10000)});
+          }
+          for (const row of rows) {
+            const clean = row.message.replace(/\u001b\[[0-9;]*m/gu, "").slice(-8000);
+            const escaped = clean.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+            console.log(`::error file=${row.file},title=${row.title.replaceAll(",", " ")}::${escaped}`);
+          }
+          console.log(`Focused results: ${report.numPassedTests ?? 0} passed, ${report.numFailedTests ?? 0} failed, ${report.numPendingTests ?? 0} pending.`);
           NODE
           fi
           exit "$test_status"
