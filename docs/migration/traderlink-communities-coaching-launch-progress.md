@@ -11,12 +11,12 @@ Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-
 
 | Work | State | Evidence / next gate |
 | --- | --- | --- |
-| L01 Independent onboarding | Open; confirmed pilot-specific source | Test guild/role/channel bootstrap and operator grant require replacement |
-| L02 Access/lifecycle/isolation | Open; partial pilot proof | D1–D3 and independent second-server acceptance |
-| L03 Coaching lifecycle | Open; existing core pilot passes retained | Extra-request rules and former-student history; D4–D5 |
-| L04 Publishing/watchlists | Open; mixed existing proof and gaps | Archive recovery, item removal, placement loop, delivery/edit policy; D6 |
-| L05 Activity/privacy | Open; named-retention gap identified | D5/D7; named daily storage included in retention |
-| L06 Partner earnings | Conditional; not launch accepted | D8; finish enabled program or explicitly disable/defer |
+| L01 Independent onboarding | Source corrected; independent hosted acceptance open | Allowlisted owner onboarding and real resource selectors implemented; second-guild end-to-end proof remains |
+| L02 Access/lifecycle/isolation | Source/fixture corrections pass; integrated acceptance open | Fresh requests/background evidence, ownership pause/recovery and retained history implemented; live two-guild lifecycle remains |
+| L03 Coaching lifecycle | Source/fixture corrections pass; hosted retests open | Pending extra requests, ended history, same-account additive analytics fixed; complete integrated coach/student matrix remains |
+| L04 Publishing/watchlists | Source/fixture corrections pass; integrated publication QA open | Draft/archive recovery, item removal, receipts/explicit resend implemented; publishing UI lane and latest member-placement integration require coordination |
+| L05 Activity/privacy | Retention corrections pass; shared-account lifecycle audit open | Both named tables and private paths handled; shared-community account-erasure policy/verification remains |
+| L06 Both commission programs | Disabled in source and fixtures; hosted confirmation open | Incoming dormant owner settings only; no accrual, payout or provider activation |
 | L07 Operations/integration | Launch verification open | Final candidate, current-production parity and recovery evidence |
 | L08 Complete acceptance matrix | Not started for public/multi-server launch | Pilot QA retained separately; final integrated candidate required |
 | L09 Owner acceptance/release | Not approved | Final verdict and explicit coordinated production authorization |
@@ -177,3 +177,10 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - All eight isolated checks pass sequentially: review context, prior-review reminders, work filters, student selection, attachment route, action navigation, index navigation and plan-role selection. These are focused source checks, not a substitute for real database authorization fixtures or hosted end-to-end QA.
 - Re-ran the real-schema Communities fixture: isolation, role mapping, Journal revocation, named activity, disabled Tier 2 accrual and zero foreign-key violations pass. Mocked Discord delivery fixture passes receipt/history, destination validation, publication recheck, rate limiting, uncertain-send hold and fresh explicit resend nonce checks. No actual Discord post was sent.
 - Existing student conversation images both decode in Bullrun Chrome at 640x360; this confirms persisted receipt rendering, not a new upload. Existing completed review, shared session notes and lessons render. Analysis tools remains unavailable on the earlier deployed baseline pending the additive-grant correction's hosted retest.
+
+## Immutable-source migration QA
+
+- Added a read-only Git-source/in-memory SQLite verification script for production `ba5e4a3b`, staging `d4cc8b7` and candidate `e84318dd6`. It never copies a repository or opens a hosted database. Only reserved0159–0162 are taken from the old feature manifest.
+- SQL statements for common migrations match. Fresh combined SQL initialization and empty-schema SQL upgrade from production140/staging154 to158 entries pass quick-check and foreign-key checks (374 tables). This does not substitute for populated rows, migration-ledger verification or backup/restore.
+- The script deliberately reports failure for25 existing production/staging execution-order differences (for example market-halt lifecycle121 versus144). The staging lineage has already remapped these historical orders. Coordinator must preserve the existing staging manifest prefix for staging; production needs its own explicit ledger-compatible integration, not wholesale staging-manifest replacement. No applied history has been edited.
+- Coordinator notified of overlapping publishing work in another lane and asked to preserve current feature source, provide explicit disjoint handoff and integrated verification results. No deploy has been initiated from this lane.
