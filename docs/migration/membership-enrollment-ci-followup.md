@@ -1,7 +1,7 @@
 # Member browser enrollment and CI follow-up
 
 Status: membership enrollment and targeted corrections verified; final production
-release pending. Payment-provider acceptance remains separate. Legacy architecture
+release and post-release browser smoke checks passed. Payment-provider acceptance remains separate. Legacy architecture
 inventory maintenance is explicitly outside this release, not reported as green.
 
 Owner scope: complete ordinary-member browser enrollment QA and investigate/fix
@@ -237,3 +237,40 @@ Release parent independently verified as remote main
 f6cfb7d3d8aa70ed2164ebf5d0916bc7dda041a1. The coordinator must recheck Railway
 configured source main, source parent and release ownership before publication;
 then verify deployment and health. This document does not claim deployment.
+
+### Production release and final browser acceptance
+
+The preceding pending-release paragraph is superseded by this completed record.
+Coordinator published ba5e4a3b54520908d1ea6c33f0c667f904fd4c13 on main, parent
+f6cfb7d3d8aa70ed2164ebf5d0916bc7dda041a1. Railway deployment
+7809c86c-e6d5-482a-b4b7-35397fccfb37 is SUCCESS/RUNNING; hosted compile,
+TypeScript, Academy registry and 279-page generation passed. Exact runtime image:
+sha256:45763cc32312965fd0552c3a5f49661709c2d81bc1e7bcd4af9a5c2603efeda6.
+Independent post-release checks confirmed remote main equals the published SHA
+and public health ready/sqlite_single_node with 140 migrations. No schema delta.
+
+Final live browser checks passed after production success:
+
+- Correct reconnected Chrome profile visibly identified as moonmafia.
+- Applied the offered app update in the test profile with no unsaved edits.
+- Plan & billing renders; no active plans and no Stripe subscription remain.
+- View plans loads the expected no-active-offers state, without leaking private
+  synthetic plans. No offers were published merely for the smoke check.
+- Moonmafia remains denied owner Journal Administration.
+- Owner profile opens Memberships and Features successfully, including all
+  private Watchlist, notifications, news delays and generation allowance controls.
+- Owner overview confirms zero active offers, entitlements, trials and usable
+  private links after the earlier synthetic-record cleanup.
+
+No paid AI/provider call, payment, real notification, migration or production
+record mutation was used in this final browser pass. An existing PWA install
+prompt was dismissed without enabling notifications or clearing demo data.
+Duration grammar is source/lint verified; no active offer was recreated just to
+show it. Coach sort behavior is covered by the remote mocked all-eighteen mapping
+cases, not a paid live chat. No new membership-release finding was observed.
+
+Payment processor integration/testing remains the separate final goal. Legacy
+route coverage remains the explicit separate backlog accepted by the coordinator,
+not a claim that broad repository CI passes. Owner visual/design acceptance is
+still the owner's review. This post-release note is local documentation only;
+do not trigger another production deployment solely to publish it.
