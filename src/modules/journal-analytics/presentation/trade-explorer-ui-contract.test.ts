@@ -200,7 +200,7 @@ describe("Trade Explorer visible contract", () => {
     expect(client).not.toContain('Chip label={query.currency ?? "All currencies"}');
     expect(client).toContain("formatJournalAnalyticsMoney(valueDecimal, currency)");
     expect(client).toContain('width: "max-content"');
-    expect(client).toContain("This Rank by result cannot be calculated");
+    expect(client).toContain('This {appliedResultView === "days" ? "Sort days" : "Rank by"} result cannot be calculated');
     expect(client).toContain("groupColumnDisplaysMetric(column, appliedQuery.metricId)");
     expect(client).not.toContain("dayStatisticIsSubset");
     expect(client).toContain("N/A means the matching trades do not have the facts");
