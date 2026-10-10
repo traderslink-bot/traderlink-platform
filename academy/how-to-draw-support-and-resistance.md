@@ -131,6 +131,8 @@ The point is not to make the chart more complicated. The point is to make sure y
 
 A chart can have many historical levels. You do not need all of them on the active chart.
 
+Keep several levels when each affects the plan. These can include nearby support, the first resistance above price, the next resistance beyond it, and a higher-timeframe level. Two highs at nearly the same price support the same resistance zone; do not discard one reaction just because it happened earlier.
+
 For the current trade idea, the most useful levels are usually:
 
 * The closest support below price
