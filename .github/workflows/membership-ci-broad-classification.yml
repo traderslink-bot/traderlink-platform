@@ -95,6 +95,12 @@ jobs:
               }
             }
           }
+          const suites = (report.testResults ?? []).map((file) => ({
+            file: path.relative(process.cwd(), file.name).replaceAll("\\", "/"),
+            status: file.status,
+            message: file.message ?? "",
+            assertionCount: file.assertionResults?.length ?? 0,
+          }));
           const summary = {
             success: report.success,
             passedTests: report.numPassedTests ?? 0,
@@ -102,6 +108,9 @@ jobs:
             pendingTests: report.numPendingTests ?? 0,
             totalTestSuites: report.numTotalTestSuites ?? report.testResults?.length ?? 0,
             failures,
+            failedTestSuites: report.numFailedTestSuites ?? null,
+            suites,
+            runtimeErrors: report.numRuntimeErrorTestSuites ?? null,
           };
           fs.writeFileSync(".ci-artifacts/full-vitest-summary.json", JSON.stringify(summary, null, 2));
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
@@ -118,6 +127,12 @@ jobs:
             const escaped = message.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
             console.log(`::error file=${row.file},title=${row.title.replaceAll(",", " ")}::${escaped}`);
           }
+          for (const suite of suites.filter((file) => file.status === "failed" || file.message)) {
+            const message = `${suite.status}: ${suite.message}`.replace(/\u001b\[[0-9;]*m/gu, "").slice(-7000);
+            const escaped = message.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+            console.log(`::error file=${suite.file},title=Suite result::${escaped}`);
+          }
+          console.log(`Suite totals: failed=${summary.failedTestSuites}, runtimeErrors=${summary.runtimeErrors}`);
           NODE
           exit "$test_status"
 
@@ -127,5 +142,6 @@ jobs:
         with:
           name: membership-ci-broad-classification-${{ github.sha }}
           path: .ci-artifacts/
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 7
