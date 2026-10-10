@@ -1,0 +1,284 @@
+"use server";
+
+import {COACHING_REVIEW_FOCUS,isCoachingReviewKind,parseCoachingFocus,type CoachingFocusFeedback} from "@/src/modules/communities/contracts/coaching-review-workspace";
+
+import { refresh, revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { createCanonicalUtcTimestamp, TraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { TraderLinkCommunityPlatformRepository } from "@/src/modules/communities/server/traderlink-community-platform-repository";
+import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
+import { TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES, type TraderLinkCommunityFixedResponsibility } from "@/src/modules/communities/contracts/traderlink-community-contracts";
+import { resolveTraderLinkCommunityViewer } from "@/src/modules/communities/server/traderlink-community-viewer";
+import { TraderLinkCommunityCoachingProgramService } from "@/src/modules/communities/server/traderlink-community-coaching-program-service";
+import {CoachingAgreementService} from "@/src/modules/communities/server/coaching-agreement-service";
+
+export async function sendCoachMessageWithFeedbackAction(_previous:{message:string},formData:FormData):Promise<{message:string}>{
+ try {
+  await sendCommunityCoachingMessageAction(formData);
+  return {message:""};
+ } catch(error) {
+  if(error instanceof TraderLinkPlatformError && error.code==="TRADERLINK_WORKSPACE_ACCESS_DENIED" && error.safeContext.operation==="coaching_access_paused") {
+   refresh();
+   return {message:"Coaching access is paused."};
+  }
+  throw error;
+ }
+}
+
+export async function coachingAgreementAction(formData:FormData):Promise<void>{
+ const communitySlug=required(formData,"communitySlug"),relationshipId=required(formData,"relationshipId"),intent=required(formData,"intent");
+ const {identity}=await context(communitySlug);
+ withPlatformDatabase({mode:"runtime"},database=>{
+  const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
+  const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};
+  const input={communityId:community.community_id,relationshipId,actor,atUtc:createCanonicalUtcTimestamp()};
+  const service=new CoachingAgreementService(database);
+  if(intent==="propose")service.propose({...input,startDate:String(formData.get("startDate")??"")||undefined,dueTimeUtc:required(formData,"dueTimeUtc"),customIntervalDays:formData.get("customIntervalDays")?Number(formData.get("customIntervalDays")):undefined,priceAmountMinor:formData.get("price")?Math.round(Number(formData.get("price"))*100):undefined,coverageDays:Object.fromEntries([...formData.entries()].filter(([key])=>key.startsWith("coverageDays:")).map(([key,value])=>[key.slice(13),Number(value)])),quantities:Object.fromEntries([...formData.entries()].filter(([key])=>key.startsWith("quantity:")).map(([key,value])=>[key.slice(9),Number(value)]))});
+  else if(intent==="accept")service.accept({...input,agreementId:required(formData,"agreementId")});
+  else if(intent==="generate")service.generate({...input,throughDate:required(formData,"throughDate")});
+  else throw new Error("Choose a coaching agreement action.");
+ });
+ revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);revalidatePath("/communities/coaching");
+}
+
+export async function saveCoachingSessionAction(formData:FormData):Promise<void>{
+ const communitySlug=required(formData,"communitySlug"),relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);
+ withPlatformDatabase({mode:"runtime"},database=>{
+  const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};
+  new TraderLinkCommunityCoachingProgramService(database).updateSession({communityId:community.community_id,actor,relationshipId,sessionId:required(formData,"sessionId"),title:required(formData,"title"),agenda:String(formData.get("agenda")??""),notes:String(formData.get("notes")??""),privateNotes:String(formData.get("privateNotes")??""),meetingUrl:String(formData.get("meetingUrl")??""),durationMinutes:formData.get("durationMinutes")?Number(formData.get("durationMinutes")):null,scheduledAtUtc:optionalUtcDate(formData,"scheduledAt"),attendance:required(formData,"attendance") as "not_recorded"|"attended"|"missed"|"excused",status:required(formData,"status") as "scheduled"|"completed"|"cancelled",atUtc:createCanonicalUtcTimestamp()});
+ });revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);
+}
+
+export async function archiveCoachingStudentAction(formData:FormData):Promise<void>{
+ const communitySlug=required(formData,"communitySlug"),relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);
+ withPlatformDatabase({mode:"runtime"},database=>{
+  const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};
+  new TraderLinkCommunityRepository(database).requireCapability(community.community_id,actor.userId,"community.coaching.students");
+  const changed=database.prepare(`UPDATE traderlink_community_coaching_relationships SET archived_at_utc=? WHERE relationship_id=? AND community_id=? AND coach_user_id=?`).run(formData.get("intent")==="restore"?null:createCanonicalUtcTimestamp(),relationshipId,community.community_id,actor.userId);
+  if(changed.changes!==1)throw new Error("Student workspace unavailable.");
+ });revalidateCommunityPath(communitySlug,"workspace/students");
+}
+
+export async function saveCoachingTeachingDetailsAction(formData:FormData):Promise<void>{
+ const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);
+ withPlatformDatabase({mode:"runtime"},database=>{
+  const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};
+  const service=new TraderLinkCommunityCoachingProgramService(database),atUtc=createCanonicalUtcTimestamp();
+  const details={communityId:community.community_id,actor,teachingId:required(formData,"teachingId"),title:required(formData,"title"),body:String(formData.get("body")??""),deliveryUrl:String(formData.get("deliveryUrl")??""),recordingUrl:String(formData.get("recordingUrl")??""),deliveryKind:required(formData,"deliveryKind") as "live"|"recorded"|"resource",scheduledAtUtc:optionalUtcDate(formData,"scheduledAt"),availableAtUtc:optionalUtcDate(formData,"availableAt"),dueAtUtc:optionalUtcDate(formData,"dueAt"),status:required(formData,"status") as "draft"|"published"|"completed"|"cancelled",atUtc};
+  service.updateTeachingDetails(details);
+ });revalidateCommunityPath(communitySlug,"workspace/teaching");
+}
+
+function required(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  if (typeof value !== "string" || !value.trim()) throw new Error(`${key} is required.`);
+  return value;
+}
+
+function revalidateCommunityPath(communitySlug: string, path: string): void {
+  revalidatePath(`/communities/${communitySlug}`);
+  revalidatePath(path === "coaching" ? "/communities/coaching" : `/communities/${communitySlug}/${path}`);
+  refresh();
+}
+
+function updatedCommunityUrl(communitySlug: string, path: string): string {
+  const pathname = path === "coaching" ? "/communities/coaching" : `/communities/${communitySlug}/${path}`;
+  return `${pathname}?updated=${Date.now().toString(36)}`;
+}
+
+function optionalUtcDate(formData:FormData,key:string):string|undefined{
+ const value=String(formData.get(key)??"").trim();if(!value)return undefined;
+ if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{3})?)?Z?$/.test(value))throw new Error("Choose a valid date and time.");
+ const date=new Date(value.endsWith("Z")?value:`${value}Z`);if(!Number.isFinite(date.getTime()))throw new Error("Choose a valid date and time.");return date.toISOString();
+}
+
+async function context(slug: string) {
+  const identity = await requireTraderLinkPlatformPageIdentity();
+  return { identity, slug };
+}
+
+export async function createCommunityAlertAction(formData: FormData): Promise<void> {
+  const communitySlug=required(formData,"communitySlug"); const {identity}=await context(communitySlug);
+  withPlatformDatabase({mode:"runtime"},database=>{ const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug); const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}; const repository=new TraderLinkCommunityPlatformRepository(database); const atUtc=createCanonicalUtcTimestamp(); const selectedAudience=String(formData.get("audienceId")??"");const audienceId=selectedAudience||repository.ensureDefaultAudience({communityId:community.community_id,actorUserId:actor.userId,atUtc});const templateId=String(formData.get("templateId")??"");let symbol=String(formData.get("symbol")??"");let body=String(formData.get("body")??"");if(templateId){const fields=database.prepare(`SELECT field_key,label,field_type,required FROM traderlink_community_alert_template_fields WHERE template_id=? AND community_id=? ORDER BY ordinal`).all(templateId,community.community_id) as {field_key:string;label:string;field_type:string;required:number}[];if(!fields.length)throw new Error("Alert template not found.");const values=fields.map(field=>{const value=String(formData.get(`template:${field.field_key}`)??"").trim();if(field.required&&!value)throw new Error(`${field.label} is required.`);if(field.field_type==="ticker"&&value)symbol=value;return value?`${field.label}: ${value}`:"";}).filter(Boolean);body=values.join("\n");}repository.createAlert({communityId:community.community_id,actor,title:required(formData,"title"),symbol,body:body.trim()||required(formData,"body"),audienceId,publish:true,publishingMode:String(formData.get("publishingMode")??"tracked_page") as "tracked_page"|"discord_post",atUtc}); });
+  revalidateCommunityPath(communitySlug,"alerts"); redirect(updatedCommunityUrl(communitySlug,"alerts"));
+}
+
+export async function createCommunityAlertTemplateAction(formData:FormData):Promise<void>{
+  const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);
+  const count=Math.min(20,Math.max(1,Number(formData.get("fieldCount")??1)));
+  const allowedTypes=new Set(["text","number","price","ticker","date","time","choice","notes"]);
+  const fields=Array.from({length:count},(_,index)=>{const label=required(formData,`fieldLabel:${index}`);const type=required(formData,`fieldType:${index}`);if(!allowedTypes.has(type))throw new Error("Unsupported alert-template field type.");return {label,type:type as "text"|"number"|"price"|"ticker"|"date"|"time"|"choice"|"notes",required:formData.get(`fieldRequired:${index}`)==="on",placeholder:String(formData.get(`fieldPlaceholder:${index}`)??"")};});
+  withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).createAlertTemplate({communityId:community.community_id,actor,title:required(formData,"title"),scope:required(formData,"scope") as "personal"|"community",fields,atUtc:createCanonicalUtcTimestamp()});});
+  revalidateCommunityPath(communitySlug,"alerts");redirect(updatedCommunityUrl(communitySlug,"alerts"));
+}
+
+export async function archiveCommunityAlertTemplateAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).archiveAlertTemplate({communityId:community.community_id,actor,templateId:required(formData,"templateId"),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"alerts");redirect(updatedCommunityUrl(communitySlug,"alerts"));}
+
+export async function updateCommunityAlertAction(formData:FormData):Promise<void>{
+  const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);
+  withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateAlert({communityId:community.community_id,actor,alertId:required(formData,"alertId"),title:required(formData,"title"),symbol:String(formData.get("symbol")??""),body:required(formData,"body"),audienceId:String(formData.get("audienceId")??"")||undefined,publishingMode:formData.has("publishingMode")?String(formData.get("publishingMode")) as "tracked_page"|"discord_post":undefined,status:required(formData,"status") as "published"|"archived",atUtc:createCanonicalUtcTimestamp()});});
+  revalidateCommunityPath(communitySlug,"alerts");redirect(updatedCommunityUrl(communitySlug,"alerts"));
+}
+
+export async function createCommunityServerWatchlistAction(formData:FormData):Promise<void>{
+  const communitySlug=required(formData,"communitySlug");
+  const {identity}=await context(communitySlug);
+  withPlatformDatabase({mode:"runtime"},database=>{
+    const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
+    const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};
+    new TraderLinkCommunityPlatformRepository(database).createServerWatchlist({
+      communityId:community.community_id,
+      actor,
+      title:required(formData,"title"),
+      description:String(formData.get("description")??""),
+      symbols:required(formData,"symbols").split(/[\s,]+/u),
+      publish:true,
+      publishingMode:String(formData.get("publishingMode")??"tracked_page") as "tracked_page"|"discord_post",
+      atUtc:createCanonicalUtcTimestamp(),
+    });
+  });
+  revalidateCommunityPath(communitySlug,"watchlists");
+  redirect(updatedCommunityUrl(communitySlug,"watchlists"));
+}
+
+export async function updateCommunityServerWatchlistAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateServerWatchlist({communityId:community.community_id,actor,watchlistId:required(formData,"watchlistId"),title:required(formData,"title"),description:String(formData.get("description")??""),symbols:required(formData,"symbols").split(/[\s,]+/u),publishingMode:String(formData.get("publishingMode")??"tracked_page") as "tracked_page"|"discord_post",status:required(formData,"status") as "published"|"archived",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"watchlists");redirect(updatedCommunityUrl(communitySlug,"watchlists"));}
+
+export async function saveCommunityCoachAction(formData: FormData): Promise<void> {
+  const communitySlug=required(formData,"communitySlug"); const {identity}=await context(communitySlug);
+  withPlatformDatabase({mode:"runtime"},database=>{ const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug); const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}; new TraderLinkCommunityPlatformRepository(database).upsertCoach({communityId:community.community_id,actor,userId:actor.userId,displayName:required(formData,"displayName"),headline:String(formData.get("headline")??""),biography:String(formData.get("biography")??""),deliverySummary:String(formData.get("deliverySummary")??""),capacity:Number(required(formData,"capacity")),active:true,atUtc:createCanonicalUtcTimestamp()}); });
+  revalidateCommunityPath(communitySlug,"workspace"); redirect(updatedCommunityUrl(communitySlug,"workspace"));
+}
+
+export async function createCommunityCoachingPlanAction(formData: FormData): Promise<void> {
+  const communitySlug=required(formData,"communitySlug"); const {identity}=await context(communitySlug);
+  const itemTypes=["trade_review","trading_day_review","performance_review","rules_review","strategy_review","risk_review","goal_review","student_check_in","review_follow_up","private_session","group_lesson","questions","custom_task"] as const;
+  const selected=itemTypes.filter(type=>formData.get(`item:${type}`)==="on");
+  const price=String(formData.get("price")??"").trim();
+  const quoteRequired=formData.get("quoteRequired")==="on";
+  const priceAmountMinor=price?Math.round(Number(price)*100):undefined;
+  withPlatformDatabase({mode:"runtime"},database=>{ const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug); const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}; const repository=new TraderLinkCommunityPlatformRepository(database); const atUtc=createCanonicalUtcTimestamp(); const audienceId=repository.ensureDefaultAudience({communityId:community.community_id,actorUserId:actor.userId,atUtc}); repository.createPlan({saveExisting:formData.get("intent")==="save",planId:String(formData.get("planId")??"")||undefined,expectedRevision:Number(formData.get("expectedRevision")??1),builderConfig:JSON.parse(String(formData.get("builderConfig")??"{}")),communityId:community.community_id,actor,coachProfileId:required(formData,"coachProfileId"),name:required(formData,"name"),description:String(formData.get("description")??""),cadence:"custom",studentCapacity:Number(formData.get("studentCapacity")??10),messagingIncluded:selected.includes("questions")||selected.includes("review_follow_up"),tradeReviewsIncluded:selected.includes("trade_review")||selected.includes("trading_day_review"),sessionsIncluded:selected.includes("private_session"),teachingIncluded:selected.includes("group_lesson"),priceLabel:quoteRequired?"Quote required":price?`$${price}`:"",priceAmountMinor,currency:String(formData.get("currency")??"USD"),billingCadence:required(formData,"billingCadence") as "weekly"|"monthly"|"one_time"|"custom",quoteRequired,paymentInstructions:String(formData.get("paymentInstructions")??""),audienceId,requiredDiscordRoleId:String(formData.get("requiredDiscordRoleId")??"")||undefined,planStyle:String(formData.get("planStyle")??"structured") as "structured"|"custom",autoArchiveAfterDays:formData.get("autoArchiveAfterDays")?Number(formData.get("autoArchiveAfterDays")):undefined,items:selected.map(type=>({focusAreas:parseCoachingFocus(formData.getAll(`focus:${type}`)),itemType:type,frequency:String(formData.get(`frequency:${type}`)??"weekly") as "weekly"|"every_two_weeks"|"monthly"|"once"|"custom",coveragePeriod:String(formData.get(`coverage:${type}`)??"previous_7_days") as "single_item"|"previous_7_days"|"since_last_review"|"calendar_week"|"previous_month"|"custom",quantity:Math.max(1,Number(formData.get(`quantity:${type}`)??1)),dueOffsetDays:Math.max(0,Number(formData.get(`due:${type}`)??2)),selectionMode:String(formData.get(`selection:${type}`)??"not_applicable") as "not_applicable"|"coach"|"student"|"coach_or_student",followUpDays:Math.max(0,Number(formData.get(`followUp:${type}`)??0)),measurementKind:String(formData.get(`measurement:${type}`)??"reviews") as "trades"|"trading_days"|"reviews"|"check_ins"|"sessions"|"lessons"|"questions"|"custom",plannedMinutes:formData.get(`minutes:${type}`)?Math.max(1,Number(formData.get(`minutes:${type}`))):null,timelineEnabled:formData.get(`timeline:${type}`)==="on",reviewDepth:String(formData.get(`depth:${type}`)??"standard") as "standard"|"trades_only"|"complete_day"})),journalScopes:formData.getAll("journalScope").filter((value):value is string=>typeof value==="string").map(dataScope=>({dataScope:dataScope as "trades"|"trade_notes"|"rules"|"tags"|"analytics"|"open_positions"|"journal_notes",required:true})),publish:formData.get("intent")==="publish",atUtc}); });
+  revalidateCommunityPath(communitySlug,"workspace/setup"); redirect(updatedCommunityUrl(communitySlug,"workspace/setup"));
+}
+
+export async function updateCommunityCoachingPlanStatusAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updatePlanStatus({communityId:community.community_id,actor,planId:required(formData,"planId"),status:required(formData,"status") as "active"|"paused"|"archived",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"workspace");redirect(updatedCommunityUrl(communitySlug,"workspace"));}
+
+export async function setCommunityMemberStatusAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).setMemberStatus({communityId:community.community_id,actor,userId:required(formData,"userId"),status:required(formData,"status") as "active"|"suspended",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/members");redirect(updatedCommunityUrl(communitySlug,"manage/members"));}
+
+export async function requestCommunityCoachingAction(formData: FormData): Promise<void> {
+  const communitySlug=required(formData,"communitySlug"); const {identity}=await context(communitySlug);
+  withPlatformDatabase({mode:"runtime"},database=>{ const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug); const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}; new TraderLinkCommunityPlatformRepository(database).requestCoaching({communityId:community.community_id,actor,planId:required(formData,"planId"),atUtc:createCanonicalUtcTimestamp()}); });
+  revalidateCommunityPath(communitySlug,"coaching"); redirect(updatedCommunityUrl(communitySlug,"coaching"));
+}
+
+export async function saveCommunityDiscordRoleFeaturesAction(formData:FormData):Promise<void>{
+  const communitySlug=required(formData,"communitySlug");
+  const {identity}=await context(communitySlug);
+  const responsibilities=formData.getAll("responsibilities")
+    .filter((item):item is string=>typeof item==="string")
+    .filter((item):item is TraderLinkCommunityFixedResponsibility=>item in TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES);
+  withPlatformDatabase({mode:"runtime"},database=>{
+    const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
+    const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};
+    new TraderLinkCommunityRepository(database).saveDiscordFeatureMapping({
+      communityId:community.community_id,
+      actorUserId:actor.userId,
+      discordRoleId:required(formData,"discordRoleId"),
+      discordRoleName:required(formData,"discordRoleName"),
+      responsibilities,
+      timestamp:createCanonicalUtcTimestamp(),
+    });
+  });
+  revalidateCommunityPath(communitySlug,"manage/team");
+  redirect(updatedCommunityUrl(communitySlug,"manage/team"));
+}
+
+export async function pauseCommunityDiscordRoleFeaturesAction(formData:FormData):Promise<void>{
+  const communitySlug=required(formData,"communitySlug");
+  const {identity}=await context(communitySlug);
+  withPlatformDatabase({mode:"runtime"},database=>{
+    const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
+    const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}|undefined;
+    if(!community)throw new Error("Community not found.");
+    new TraderLinkCommunityRepository(database).pauseDiscordFeatureMapping({communityId:community.community_id,actorUserId:actor.userId,discordRoleId:required(formData,"discordRoleId"),timestamp:createCanonicalUtcTimestamp()});
+  });
+  revalidateCommunityPath(communitySlug,"manage/team");
+  redirect(updatedCommunityUrl(communitySlug,"manage/team"));
+}
+
+export async function saveCommunityDiscordDestinationAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).saveDiscordDestination({communityId:community.community_id,actor,name:required(formData,"name"),discordChannelId:required(formData,"discordChannelId"),contentType:required(formData,"contentType") as "alerts"|"watchlists"|"coaching"|"general",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/channels");redirect(updatedCommunityUrl(communitySlug,"manage/channels"));}
+
+export async function saveCommunitySettingsAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateSettings({communityId:community.community_id,actor,displayName:required(formData,"displayName"),description:String(formData.get("description")??""),retentionDays:90,visibilityStatus:"not_configured",visibilityCopy:"",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/settings");redirect(updatedCommunityUrl(communitySlug,"manage/settings"));}
+
+export async function saveCommunityAlertTemplatePolicyAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).setPersonalAlertTemplatesEnabled({communityId:community.community_id,actor,enabled:formData.get("enabled")==="on",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/settings");redirect(updatedCommunityUrl(communitySlug,"manage/settings"));}
+
+export async function sendCommunityCoachingMessageAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).sendCoachingMessage({communityId:community.community_id,actor,relationshipId,body:required(formData,"body"),atUtc:createCanonicalUtcTimestamp()});});revalidatePath("/communities/coaching");revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);}
+
+export async function requestCommunityTradeReviewAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).requestTradeReview({communityId:community.community_id,actor,relationshipId:required(formData,"relationshipId"),title:required(formData,"title"),studentContext:String(formData.get("studentContext")??""),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"coaching");redirect(updatedCommunityUrl(communitySlug,"coaching"));}
+
+export async function updateCommunityTradeReviewAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const reviewId=required(formData,"reviewId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateTradeReview({communityId:community.community_id,actor,reviewId,coachFeedback:String(formData.get("coachFeedback")??""),wentWell:String(formData.get("wentWell")??""),needsWork:String(formData.get("needsWork")??""),nextFocus:String(formData.get("nextFocus")??""),coachPrivateNotes:String(formData.get("coachPrivateNotes")??""),previousFocusStatus:(String(formData.get("previousFocusStatus")??"")||null) as "not_evaluated"|"improving"|"still_struggling"|"achieved"|"replaced"|null,previousFocusAssessment:String(formData.get("previousFocusAssessment")??""),status:"in_review",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);redirect(updatedCommunityUrl(communitySlug,`workspace/students/${relationshipId}/reviews/${reviewId}`));}
+
+export async function grantCoachJournalAccessAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);if(!identity.scope.activeAccountId)throw new Error("Select a Journal account before sharing.");const dataScope=required(formData,"dataScope");if(!["summary","trades","analytics"].includes(dataScope))throw new Error("Choose a supported Journal sharing scope.");withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).grantJournal({communityId:community.community_id,actor,relationshipId:required(formData,"relationshipId"),journalAccountId:identity.scope.activeAccountId as string,dataScope:dataScope as "summary"|"trades"|"analytics",sharedFields:formData.getAll("sharedField").filter((value):value is string=>typeof value==="string"),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"coaching");redirect(updatedCommunityUrl(communitySlug,"coaching"));}
+
+export async function revokeCoachJournalAccessAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>new TraderLinkCommunityPlatformRepository(database).revokeJournal({actorUserId:identity.scope.userId,grantId:required(formData,"grantId"),atUtc:createCanonicalUtcTimestamp()}));revalidateCommunityPath(communitySlug,"coaching");redirect(updatedCommunityUrl(communitySlug,"coaching"));}
+
+export async function setCoachingRelationshipStatusAction(formData:FormData):Promise<void>{const identity=await requireTraderLinkPlatformPageIdentity();const relationshipId=required(formData,"relationshipId");const communitySlug=withPlatformDatabase({mode:"runtime"},database=>{const community=database.prepare(`SELECT c.community_id,c.slug FROM traderlink_community_coaching_relationships r JOIN traderlink_communities c ON c.community_id=r.community_id WHERE r.relationship_id=?`).get(relationshipId) as {community_id:string;slug:string}|undefined;if(!community)throw new Error("Coaching relationship not found.");const actor=resolveTraderLinkCommunityViewer(database,identity,community.slug);new TraderLinkCommunityPlatformRepository(database).setRelationshipStatus({communityId:community.community_id,actor,relationshipId,status:required(formData,"status") as "active"|"declined"|"ended",atUtc:createCanonicalUtcTimestamp()});return community.slug;});revalidateCommunityPath(communitySlug,"workspace");redirect(updatedCommunityUrl(communitySlug,"workspace"));}
+
+export async function setStudentCoachingServicesAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).setStudentServices({communityId:community.community_id,actor,relationshipId,messagingEnabled:formData.get("messagingEnabled")==="on",tradeReviewsEnabled:formData.get("tradeReviewsEnabled")==="on",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);redirect(updatedCommunityUrl(communitySlug,`workspace/students/${relationshipId}`));}
+
+export async function createCommunityCoachingTaskAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};const rawDue=String(formData.get("dueAt")??"").trim();new TraderLinkCommunityPlatformRepository(database).createCoachingTask({communityId:community.community_id,actor,relationshipId,title:required(formData,"title"),dueAtUtc:rawDue?new Date(rawDue).toISOString():undefined,priority:(formData.get("priority")==="high"?"high":"normal"),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);redirect(updatedCommunityUrl(communitySlug,`workspace/students/${relationshipId}`));}
+
+export async function updateCommunityCoachingTaskAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateCoachingTaskStatus({communityId:community.community_id,actor,taskId:required(formData,"taskId"),status:required(formData,"status") as "open"|"completed"|"cancelled",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);redirect(updatedCommunityUrl(communitySlug,`workspace/students/${relationshipId}`));}
+
+export async function createCommunityCoachingRecordAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};const atUtc=createCanonicalUtcTimestamp();new TraderLinkCommunityPlatformRepository(database).createCoachingRecord({communityId:community.community_id,actor,relationshipId,recordType:formData.get("recordType")==="note"?"note":"session",visibility:formData.get("visibility")==="coach_private"?"coach_private":"shared",title:required(formData,"title"),body:String(formData.get("body")??""),occurredAtUtc:atUtc,atUtc});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);redirect(updatedCommunityUrl(communitySlug,`workspace/students/${relationshipId}`));}
+
+export async function createCommunityExpandedReviewAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityCoachingProgramService(database).createReview({communityId:community.community_id,actor,relationshipId,workspaceKind:isCoachingReviewKind(formData.get("workspaceKind"))?formData.get("workspaceKind") as import("@/src/modules/communities/contracts/coaching-review-workspace").CoachingReviewKind:undefined,focusAreas:parseCoachingFocus(formData.getAll("focusArea")),reviewType:required(formData,"reviewType") as "single_trade"|"multiple_trades"|"weekly"|"monthly"|"general"|"session"|"custom",title:required(formData,"title"),context:String(formData.get("context")??""),periodStart:String(formData.get("periodStart")??"")||undefined,periodEnd:String(formData.get("periodEnd")??"")||undefined,dueAtUtc:optionalUtcDate(formData,"dueAt"),roundTripIds:formData.getAll("roundTripId").filter((value):value is string=>typeof value==="string"),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);redirect(updatedCommunityUrl(communitySlug,formData.get("returnTo")==="student"?"coaching":`workspace/students/${relationshipId}`));}
+
+async function reviewWorkflow(formData:FormData,run:(service:TraderLinkCommunityCoachingProgramService,input:{communityId:string;actor:ReturnType<typeof resolveTraderLinkCommunityViewer>;communitySlug:string;relationshipId:string;reviewId:string;atUtc:string})=>void){const communitySlug=required(formData,"communitySlug"),relationshipId=required(formData,"relationshipId"),reviewId=required(formData,"reviewId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};run(new TraderLinkCommunityCoachingProgramService(database),{communityId:community.community_id,actor,communitySlug,relationshipId,reviewId,atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}/reviews/${reviewId}`);revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}/reviews/${reviewId}/final`);revalidateCommunityPath(communitySlug,"workspace");revalidateCommunityPath(communitySlug,"coaching");revalidatePath("/communities/coaching");}
+
+export async function startCommunityReviewAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.startReview(input));}
+export async function setCommunityReviewDueDateAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.setReviewDueDate({...input,dueAtUtc:optionalUtcDate(formData,"dueAt")}));}
+export async function loadStudentReviewTradesAction(formData:FormData){
+ const communitySlug=required(formData,"communitySlug"),relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);
+ const {TraderLinkCommunityCoachJournalReadService}=await import("@/src/modules/communities/server/traderlink-community-coach-journal-read-service");
+ return withPlatformDatabase({mode:"runtime"},database=>{
+  const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
+  const relationship=database.prepare(`SELECT r.coach_user_id FROM traderlink_community_coaching_relationships r JOIN traderlink_communities c ON c.community_id=r.community_id WHERE r.relationship_id=? AND c.slug=? AND r.student_user_id=? AND r.status='active' AND r.student_trade_reviews_enabled=1`).get(relationshipId,communitySlug,actor.userId) as {coach_user_id:string}|undefined;
+  if(!relationship)throw new Error("Coaching access is unavailable.");
+  return new TraderLinkCommunityCoachJournalReadService(database).read({coachUserId:relationship.coach_user_id,relationshipId}).trades;
+ });
+}
+export async function selectCommunityReviewTradesAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.selectTrades({...input,roundTripIds:formData.getAll("roundTripId").filter((value):value is string=>typeof value==="string")}));}
+export async function removeCommunityReviewTradesAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.removeTrades({...input,roundTripIds:formData.getAll("roundTripId").filter((value):value is string=>typeof value==="string")}));}
+export async function saveCommunityReviewTradeAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.saveTradeReview({...input,roundTripId:required(formData,"roundTripId"),feedback:required(formData,"feedback")}));}
+export async function addCommunityReviewActionItemAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>{service.addReviewAction({...input,title:required(formData,"title"),details:String(formData.get("details")??""),dueAtUtc:optionalUtcDate(formData,"dueAt")});});}
+export async function deliverCommunityReviewAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.deliverReview(input));}
+export async function markCommunityReviewViewedAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.markReviewViewed(input));}
+export async function updateCommunityReviewActionItemAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.updateReviewAction({...input,actionId:required(formData,"actionId"),state:required(formData,"state") as "open"|"completed"|"removed"}));}
+export async function setCommunityReviewLifecycleAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>{service.setReviewLifecycle({...input,state:required(formData,"state") as "follow_up"|"completed"|"cancelled",followUpDueAtUtc:optionalUtcDate(formData,"followUpDueAt")});});}
+
+export async function replyCommunityReviewAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.replyToReview({...input,body:required(formData,"body")}));}
+
+export async function createCommunityCoachingSessionAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityCoachingProgramService(database).createSession({communityId:community.community_id,actor,relationshipId,title:required(formData,"title"),agenda:String(formData.get("agenda")??""),scheduledAtUtc:optionalUtcDate(formData,"scheduledAt"),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);redirect(updatedCommunityUrl(communitySlug,`workspace/students/${relationshipId}`));}
+
+export async function completeCommunityCoachingSessionAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityCoachingProgramService(database).completeSession({communityId:community.community_id,actor,relationshipId,sessionId:required(formData,"sessionId"),notes:String(formData.get("notes")??""),atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);redirect(updatedCommunityUrl(communitySlug,`workspace/students/${relationshipId}`));}
+
+export async function createCommunityTeachingAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityCoachingProgramService(database).createTeaching({sourceTeachingId:String(formData.get("sourceTeachingId")??"")||undefined,communityId:community.community_id,actor,title:required(formData,"title"),teachingType:required(formData,"teachingType") as "lesson"|"class"|"assignment",body:String(formData.get("body")??""),deliveryUrl:String(formData.get("deliveryUrl")??""),scheduledAtUtc:optionalUtcDate(formData,"scheduledAt"),audienceMode:required(formData,"audienceMode") as "all_students"|"plan"|"selected_students",planId:String(formData.get("planId")??"")||undefined,relationshipIds:formData.getAll("relationshipId").filter((value):value is string=>typeof value==="string"),publish:formData.get("publish")==="on",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"workspace/teaching");redirect(updatedCommunityUrl(communitySlug,"workspace/teaching"));}
+
+export async function updateCommunityTeachingStudentAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityCoachingProgramService(database).updateTeachingStudent({communityId:community.community_id,actor,relationshipId,teachingId:required(formData,"teachingId"),status:required(formData,"status") as "attending"|"completed"|"excused",atUtc:createCanonicalUtcTimestamp()});});const destination=formData.get("returnTo")==="teaching"?"workspace/teaching":"coaching";revalidateCommunityPath(communitySlug,destination);redirect(updatedCommunityUrl(communitySlug,destination));}
+
+export async function uploadCommunityCoachingImageAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const image=formData.get("image");if([...formData.values()].filter(value=>value instanceof File).length!==1)throw new Error("Select one image at a time.");if(!(image instanceof File)||image.size<1)throw new Error("Select an image.");if(image.size>8388608)throw new Error("Images must be 8 MB or smaller.");if(!["image/png","image/jpeg","image/webp"].includes(image.type))throw new Error("Use a PNG, JPEG, or WebP image.");const {identity}=await context(communitySlug);const content=Buffer.from(await image.arrayBuffer());withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityCoachingProgramService(database).addImage({communityId:community.community_id,actor,relationshipId,targetType:required(formData,"targetType") as "message"|"review"|"session"|"teaching"|"submission",targetId:required(formData,"targetId"),reviewId:String(formData.get("reviewId")??"")||undefined,roundTripId:String(formData.get("roundTripId")??"")||undefined,filename:image.name,mediaType:image.type as "image/png"|"image/jpeg"|"image/webp",content,atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}`);revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}/reviews/${String(formData.get("reviewId")??"")}`);revalidatePath("/communities/coaching");const reviewId=String(formData.get("reviewId")??"");redirect(updatedCommunityUrl(communitySlug,formData.get("returnTo")==="student"?"coaching":reviewId?`workspace/students/${relationshipId}/reviews/${reviewId}`:`workspace/students/${relationshipId}`));}
+
+export async function setCommunityReviewWorkspaceAction(formData:FormData):Promise<void>{
+ const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const reviewId=required(formData,"reviewId");const {identity}=await context(communitySlug);
+ withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare("SELECT community_id FROM traderlink_communities WHERE slug=?").get(communitySlug) as {community_id:string};new TraderLinkCommunityCoachingProgramService(database).setWorkspace({communityId:community.community_id,actor,relationshipId,reviewId,workspaceKind:formData.get("workspaceKind"),focusAreas:formData.getAll("focusArea"),periodStart:String(formData.get("periodStart")??"")||undefined,periodEnd:String(formData.get("periodEnd")??"")||undefined,atUtc:createCanonicalUtcTimestamp()});});
+ revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}/reviews/${reviewId}`);
+}
+export async function saveCommunityReviewFocusAction(formData:FormData):Promise<void>{
+ const communitySlug=required(formData,"communitySlug");const relationshipId=required(formData,"relationshipId");const reviewId=required(formData,"reviewId");const {identity}=await context(communitySlug);
+ const feedback:CoachingFocusFeedback={};for(const key of Object.keys(COACHING_REVIEW_FOCUS) as (keyof CoachingFocusFeedback)[])if(formData.has(`focusFeedback:${key}`))feedback[key]=String(formData.get(`focusFeedback:${key}`)??"");
+ withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare("SELECT community_id FROM traderlink_communities WHERE slug=?").get(communitySlug) as {community_id:string};new TraderLinkCommunityCoachingProgramService(database).saveFocusFeedback({communityId:community.community_id,actor,relationshipId,reviewId,feedback,atUtc:createCanonicalUtcTimestamp()});});
+ revalidateCommunityPath(communitySlug,`workspace/students/${relationshipId}/reviews/${reviewId}`);
+}
