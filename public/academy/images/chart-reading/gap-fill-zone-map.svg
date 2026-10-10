@@ -11,7 +11,7 @@
   <line x1="78" y1="254" x2="678" y2="254" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
   <line x1="78" y1="204" x2="678" y2="204" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5 7" opacity=".85" />
   <text x="88" y="146" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Current open</text>
-  <text x="88" y="276" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Prior close</text>
+  <text x="88" y="338" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Prior close</text>
   <text x="520" y="198" fill="#fbbf24" font-family="Arial, sans-serif" font-size="12">Partial fill</text>
   <text x="526" y="236" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12">Gap area</text>
   <text x="500" y="276" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12">Full fill area</text>
@@ -29,4 +29,4 @@
       <line x1="490" y1="210" x2="490" y2="286" /><rect x="480" y="230" width="20" height="36" />
     </g>
   </g>
-  <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" /><text x="44" y="410.0" font-family="Arial, sans-serif" font-size="20" fill="#e1e7ef">Volume</text><line x1="58" y1="501.0" x2="704" y2="501.0" stroke="#303a49" /><rect x="103.0" y="478.5" width="18" height="22.5" fill="#21c784" /><rect x="157.0" y="466.0" width="18" height="35.0" fill="#21c784" /><rect x="211.0" y="466.0" width="18" height="35.0" fill="#ef4444" /><rect x="265.0" y="436.0" width="18" height="65.0" fill="#21c784" /><rect x="319.0" y="448.5" width="18" height="52.5" fill="#ef4444" /><rect x="373.0" y="458.5" width="18" height="42.5" fill="#ef4444" /><rect x="427.0" y="458.5" width="18" height="42.5" fill="#ef4444" /><rect x="481.0" y="468.5" width="18" height="32.5" fill="#ef4444" /></svg>
+  <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" /><text x="44" y="410.0" font-family="Arial, sans-serif" font-size="20" fill="#e1e7ef">Volume</text><line x1="58" y1="501.0" x2="704" y2="501.0" stroke="#303a49" /><rect x="103.0" y="478.5" width="18" height="22.5" fill="#21c784" /><rect x="157.0" y="466.0" width="18" height="35.0" fill="#21c784" /><rect x="211.0" y="466.0" width="18" height="35.0" fill="#ef4444" /><rect x="265.0" y="436.0" width="18" height="65.0" fill="#21c784" /><rect x="319.0" y="448.5" width="18" height="52.5" fill="#ef4444" /><rect x="373.0" y="458.5" width="18" height="42.5" fill="#ef4444" /><rect x="427.0" y="458.5" width="18" height="42.5" fill="#ef4444" /><rect x="481.0" y="468.5" width="18" height="32.5" fill="#ef4444" /><path id="round3-zone-leader" d="M88 322 L68 322 L68 254 L78 254" fill="none" stroke="#9cc8ff" stroke-width="1.5"/></svg>

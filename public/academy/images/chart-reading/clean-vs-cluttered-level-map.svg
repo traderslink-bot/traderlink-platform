@@ -34,8 +34,8 @@
         <line x1="310" y1="126" x2="310" y2="190" /><rect x="301" y="144" width="18" height="30" />
       </g>
     </g>
-    <circle cx="214" cy="166" r="6" fill="#e8f1ff" />
-    <text x="225" y="171" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Current price</text>
+    <circle cx="310" cy="174" r="6" fill="#e8f1ff" /><line x1="310" y1="182" x2="310" y2="193" stroke="#e8f1ff" />
+    <text x="275" y="203" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Current price</text>
   </g>
   <g transform="translate(480 112)">
     <rect width="400" height="300" rx="14" fill="#0b1626" stroke="#1f3554" />

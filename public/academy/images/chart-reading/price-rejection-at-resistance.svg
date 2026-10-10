@@ -39,6 +39,6 @@
       <rect x="614" y="242" width="20" height="36" />
     </g>
   </g>
-  <text x="326" y="112" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Wick rejects above level</text>
-  <text x="424" y="296" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="13">Follow-through confirms failed hold</text>
-  </svg>
+  <text x="385" y="110" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Wick rejects above level</text>
+  <text x="424" y="338" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="13">Follow-through confirms failed hold</text>
+</svg>

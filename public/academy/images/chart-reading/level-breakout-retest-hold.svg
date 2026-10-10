@@ -14,7 +14,7 @@
   <rect x="64" y="206" width="626" height="38" fill="#1d4ed8" opacity=".2" />
   <line x1="64" y1="206" x2="690" y2="206" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
   <line x1="64" y1="244" x2="690" y2="244" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
-  <text x="482" y="200" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Old resistance / retest zone</text>
+  <text x="70" y="202" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Old resistance / retest zone</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
       <line x1="96" y1="254" x2="96" y2="312" />
@@ -39,6 +39,6 @@
       <rect x="350" y="154" width="20" height="62" />
     </g>
   </g>
-  <text x="268" y="140" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break above level</text>
+  <text x="268" y="124" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break above level</text>
   <text x="382" y="270" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="13">Retest holds above zone</text>
-  </svg>
+</svg>

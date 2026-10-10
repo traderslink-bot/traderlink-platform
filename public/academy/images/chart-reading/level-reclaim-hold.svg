@@ -14,7 +14,7 @@
   <rect x="64" y="206" width="626" height="40" fill="#1d4ed8" opacity=".2" />
   <line x1="64" y1="206" x2="690" y2="206" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
   <line x1="64" y1="246" x2="690" y2="246" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
-  <text x="514" y="200" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Reclaimed level</text>
+  <text x="520" y="330" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Reclaimed level</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
       <line x1="96" y1="178" x2="96" y2="250" />
@@ -39,6 +39,7 @@
       <rect x="218" y="258" width="20" height="44" />
     </g>
   </g>
-  <text x="150" y="330" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Level lost first</text>
+  <text x="150" y="348" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Level lost first</text>
   <text x="354" y="150" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Reclaim and hold</text>
-  </svg>
+  <path d="M695 316V226H687" fill="none" stroke="#9cc8ff" stroke-width="2" data-all-course-qa="zone-leader" />
+</svg>

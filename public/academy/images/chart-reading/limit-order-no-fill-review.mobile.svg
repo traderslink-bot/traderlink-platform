@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 808.1999999999998" role="img">
+  <title>Buy limit remains unfilled</title>
+  <rect width="720" height="808.1999999999998" fill="#10151e" />
+  <text x="28" y="56" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef" font-weight="700">Buy limit remains</text>
+  <text x="28" y="121.0" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef" font-weight="700">unfilled</text>
+  <rect x="18" y="201.0" width="684" height="66" rx="10" fill="#283443" />
+  <text x="30" y="246.0" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Time</text>
+  <text x="254" y="246.0" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Best ask</text>
+  <text x="478" y="246.0" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Buy limit</text>
+  <rect x="18" y="267.0" width="684" height="78" rx="10" fill="#1d2734" />
+  <text x="30" y="319.0" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">10:00</text>
+  <text x="254" y="319.0" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">$2.04</text>
+  <text x="478" y="319.0" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">$2.00</text>
+  <rect x="18" y="345.0" width="684" height="78" rx="10" fill="#171e29" />
+  <text x="30" y="397.0" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">10:01</text>
+  <text x="254" y="397.0" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">$2.06</text>
+  <text x="478" y="397.0" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">$2.00</text>
+  <rect x="18" y="423.0" width="684" height="78" rx="10" fill="#1d2734" />
+  <text x="30" y="475.0" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">10:02</text>
+  <text x="254" y="475.0" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">$2.10</text>
+  <text x="478" y="475.0" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">$2.00</text>
+  <text x="28" y="571.0" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">Order: buy 100 shares at a $2.00</text>
+  <text x="28" y="617.8" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">limit</text>
+  <text x="28" y="694.5999999999999" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">No seller offers shares at $2.00</text>
+  <text x="28" y="741.3999999999999" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">or lower.</text>
+</svg>

@@ -41,5 +41,5 @@
   </g>
   <path d="M410 246 L410 114" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6 6" />
   <text x="424" y="244" fill="#fbbf24" font-family="Arial, sans-serif" font-size="13">Entry far above level</text>
-  <text x="470" y="74" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Next resistance nearby</text>
-  </svg>
+  <text x="570" y="100" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Next resistance nearby</text>
+</svg>

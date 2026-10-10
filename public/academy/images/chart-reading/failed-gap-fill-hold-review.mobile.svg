@@ -1,11 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 760 1076.2272727272727">
-  <title id="title">Failed Gap Fill Hold</title>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 760 1142.4772727272727">
+  <title id="title">Partial Gap Fill And Rebound</title>
   <desc id="desc">Educational candlestick chart showing price entering a gap area but failing to continue filling the gap and holding above the gap midpoint.</desc>
-  <rect width="760" height="1076.2272727272727" rx="18" fill="#07111f" />
-  <text x="36" y="54" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="53" font-weight="700">Failed Gap Fill Hold</text>
-  <text x="36" y="128.25" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">A gap can partially fill and still</text>
-  <text x="36" y="173.25" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">hold above the full gap area.</text>
-  <svg x="0" y="222.25" width="760" height="528.9772727272727" viewBox="28 40 704 490.0" overflow="hidden">
+  <rect width="760" height="1142.4772727272727" rx="18" fill="#07111f" />
+  <text x="36" y="54" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="53" font-weight="700">Partial Gap Fill And</text>
+  <text x="36" y="120.25" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="53" font-weight="700">Rebound</text>
+  <text x="36" y="194.5" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">A gap can partially fill and still</text>
+  <text x="36" y="239.5" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">hold above the full gap area.</text>
+  <svg x="0" y="288.5" width="760" height="528.9772727272727" viewBox="28 40 704 490.0" overflow="hidden">
     <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554" />
     <g stroke="#18304e" stroke-width="1">
       <line x1="58" y1="116" x2="704" y2="116" />
@@ -56,9 +57,9 @@
     <rect x="481.0" y="451.4761904761905" width="18" height="49.52380952380952" fill="#ef4444" />
     <rect x="535.0" y="451.4761904761905" width="18" height="49.52380952380952" fill="#21c784" />
   </svg>
-  <text x="36" y="786.2272727272727" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="36">Gap zone</text>
-  <text x="36" y="841.2272727272727" fill="#fbbf24" font-family="Arial, sans-serif" font-size="36">Gap midpoint</text>
-  <text x="36" y="896.2272727272727" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="36">Price enters gap</text>
-  <text x="36" y="951.2272727272727" fill="#fecaca" font-family="Arial, sans-serif" font-size="36">Partial fill stops above midpoint</text>
-  <text x="36" y="1006.2272727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">Rebounds within gap</text>
+  <text x="36" y="852.4772727272727" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="36">Gap zone</text>
+  <text x="36" y="907.4772727272727" fill="#fbbf24" font-family="Arial, sans-serif" font-size="36">Gap midpoint</text>
+  <text x="36" y="962.4772727272727" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="36">Price enters gap</text>
+  <text x="36" y="1017.4772727272727" fill="#fecaca" font-family="Arial, sans-serif" font-size="36">Partial fill stops above midpoint</text>
+  <text x="36" y="1072.4772727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">Rebounds within gap</text>
 </svg>

@@ -26,7 +26,7 @@
   </defs>
   <rect class="panel" x="14" y="14" width="732" height="368" rx="8" />
   <text class="txt title" x="34" y="46">Plan risk before the trade, review behavior after it</text>
-  <text class="txt small muted" x="34" y="68">Course 1 keeps risk concrete: invalidation, size, stop behavior, and completed-trade review.</text>
+  <text class="txt small muted" x="34" y="68">Compare planned risk, position size, stop execution, and the decisions made during the trade.</text>
   <g transform="translate(42 98)">
     <rect class="box" x="0" y="0" width="206" height="238" rx="7" />
     <text class="txt label" x="18" y="30">Pre-trade plan</text>

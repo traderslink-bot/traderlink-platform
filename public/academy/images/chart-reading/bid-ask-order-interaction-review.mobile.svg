@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1240.3999999999999" role="img">
+  <title>Buying at the ask / selling at the bid</title>
+  <rect width="720" height="1240.3999999999999" fill="#10151e" />
+  <text x="28" y="56" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef" font-weight="700">Buying at the ask /</text>
+  <text x="28" y="121.0" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef" font-weight="700">selling at the bid</text>
+  <rect x="18" y="186.0" width="332" height="150" rx="10" fill="#172b28" />
+  <rect x="370" y="186.0" width="332" height="150" rx="10" fill="#30202a" />
+  <text x="38" y="230.0" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Bid</text>
+  <text x="390" y="230.0" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Ask</text>
+  <text x="38" y="292.0" font-family="Arial, sans-serif" font-size="54" fill="#56d9a2" font-weight="700">$2.00</text>
+  <text x="390" y="292.0" font-family="Arial, sans-serif" font-size="54" fill="#ff8d9c" font-weight="700">$2.04</text>
+  <text x="28" y="386.0" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Displayed size: 500 shares each</text>
+  <rect x="18" y="447.8" width="684" height="230" rx="10" fill="#1d2734" />
+  <text x="38" y="499.8" font-family="Arial, sans-serif" font-size="42" fill="#e1e7ef" font-weight="700">Market buy</text>
+  <text x="38" y="551.8" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Shares</text>
+  <text x="390" y="551.8" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">100</text>
+  <text x="38" y="599.8" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Fill</text>
+  <text x="390" y="599.8" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">$2.04</text>
+  <text x="38" y="647.8" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Value</text>
+  <text x="390" y="647.8" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">$204.00</text>
+  <rect x="18" y="707.8" width="684" height="230" rx="10" fill="#1d2734" />
+  <text x="38" y="759.8" font-family="Arial, sans-serif" font-size="42" fill="#e1e7ef" font-weight="700">Market sell</text>
+  <text x="38" y="811.8" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Shares</text>
+  <text x="390" y="811.8" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">100</text>
+  <text x="38" y="859.8" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Fill</text>
+  <text x="390" y="859.8" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">$2.00</text>
+  <text x="38" y="907.8" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">Value</text>
+  <text x="390" y="907.8" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">$200.00</text>
+  <text x="28" y="987.8" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">Spread: $0.04 per share</text>
+  <text x="28" y="1054.8" font-family="Arial, sans-serif" font-size="40" fill="#e1e7ef">100 shares × $0.04 = $4.00</text>
+  <text x="28" y="1126.8" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">With the quote unchanged; before</text>
+  <text x="28" y="1173.6" font-family="Arial, sans-serif" font-size="36" fill="#aeb9c8">fees</text>
+</svg>

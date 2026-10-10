@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 760 1077.4772727272727">
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 760 1122.4772727272727">
   <title id="title">Extended Breakdown Chase Risk</title>
   <desc id="desc">Educational candlestick chart showing a breakdown far below support with chase-risk context labels.</desc>
-  <rect width="760" height="1077.4772727272727" rx="18" fill="#07111f" />
+  <rect width="760" height="1122.4772727272727" rx="18" fill="#07111f" />
   <text x="36" y="54" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="53" font-weight="700">Extended Breakdown</text>
   <text x="36" y="120.25" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="53" font-weight="700">Chase Risk</text>
   <text x="36" y="194.5" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">A breakdown can be real and still</text>
@@ -42,7 +42,6 @@
         <rect x="518" y="250" width="20" height="34" />
       </g>
     </g>
-    <path d="M270 204 C350 232 440 270 530 296" fill="none" stroke="#fecaca" stroke-width="3" stroke-dasharray="7 7" />
     <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
     </g>
     <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" />
@@ -57,8 +56,12 @@
     <rect x="411.0" y="470.82142857142856" width="18" height="30.17857142857143" fill="#21c784" />
     <rect x="465.0" y="452.25" width="18" height="48.75" fill="#ef4444" />
     <rect x="519.0" y="466.17857142857144" width="18" height="34.82142857142857" fill="#21c784" />
+    <line x1="290" y1="340" x2="692" y2="340" stroke="#21c784" stroke-width="2" stroke-dasharray="7 7" data-lower-support="true" />
+    <circle cx="366" cy="318" r="5" fill="#fecaca" />
+    <line x1="552" y1="280" x2="366" y2="318" stroke="#fecaca" stroke-width="2" />
   </svg>
   <text x="36" y="897.4772727272727" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="36">Original support zone</text>
-  <text x="36" y="952.4772727272727" fill="#fecaca" font-family="Arial, sans-serif" font-size="36">Entry far below level</text>
-  <text x="36" y="1007.4772727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">Support nearby</text>
+  <text x="36" y="952.4772727272727" fill="#fecaca" font-family="Arial, sans-serif" font-size="36">Late short entry below</text>
+  <text x="36" y="997.4772727272727" fill="#fecaca" font-family="Arial, sans-serif" font-size="36">broken support</text>
+  <text x="36" y="1052.4772727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">Lower support below entry</text>
 </svg>
