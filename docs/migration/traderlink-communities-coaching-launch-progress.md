@@ -23,6 +23,8 @@ Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-
 
 ## Decision log
 
+Account-deletion amendment approved: optional transfer, 60-day admin-only coaching-evidence archive, then permanent cleanup; private student Journals excluded except information already embedded in coaching evidence. [Implementation record](traderlink-coaching-deletion-archive-progress.md). Implementation and QA remain open; this decision is not deployment proof.
+
 | Decision | State |
 | --- | --- |
 | D1 Admission and connecting authority | Approved |
@@ -190,3 +192,11 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - Recovery now rejects evidence older than the community's latest update, a newer proposed-owner verification or a newer verified guild-owner record. An old verification cannot silently undo a later disconnect or overwrite newer member evidence.
 - Focused real-schema remediation fixture passes both race regressions and existing transfer/private-grant-preservation checks. No hosted ownership changes were made.
 - Shared-community account erasure remains an explicit policy gap: the generic orphan cleanup can remove shared descendants when an owner account is deleted. Asked the owner asynchronously whether transfer must precede owner-account deletion; no erasure behavior or real records were changed while that decision is pending.
+
+## Owner-approved deletion and publishing checkpoint
+
+The preceding pending deletion decision is superseded by the approved 60-day policy and existing-coaching-only continuation. Implementation/evidence is tracked in [Deletion archive progress](traderlink-coaching-deletion-archive-progress.md); publishing handoff is tracked in [Publishing setup corrections](community-publishing-setup-corrections-20261010.md). Both slices now belong to this coaching chat; preserve the unrelated September 28 live-QA document edit.
+
+Focused real-schema checks pass for participant-only evidence capture, atomic account erasure, unrelated active coaching preservation, archive expiry/cleanup, restricted Discord refresh and role removal, and publishing retry/rollback. Ten lightweight UI/route/context regression checks pass. Admin archive presentation and restricted page data use the existing application/admin boundaries. React review retained existing Material components and checked server-only authorization, accessible controls and reduced client data. The already-approved account deletion wording is used; no new activity disclosure or generic explanatory page copy was introduced. Publishing Help changes are preserved. The deletion implementation requires no additional public Help prose beyond the approved confirmation at this checkpoint.
+
+Not launch-complete: source integration/semantic build against latest production, populated staging migration/backup/restore verification, deployed admin/archive and coaching browser checks, analytics drawer retest and independent second-server acceptance remain open. Coordinator's separate production release is now 58f50b2c; this feature has not been deployed. Both commissions remain disabled.

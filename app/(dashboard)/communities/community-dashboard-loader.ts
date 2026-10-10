@@ -20,7 +20,8 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
   const suffix=requested.slice(`/communities/${communitySlug}`.length);
   const historyPath=suffix==="/coaching"||suffix==="/workspace"||suffix==="/workspace/students"||/^\/workspace\/students\/[^/?#]+(?:\/reviews\/[^/?#]+(?:\/final)?)?$/.test(suffix);
   let historyOnly=false;
-  try{await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}
+  const existingCoachingPage=historyPath||/^\/workspace\/(coachingwork|reviews|sessions)$/.test(suffix);
+  try{await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,existingCoachingOnly:existingCoachingPage,relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}
   catch(error){if(!historyPath)throw error;historyOnly=true;}
   const snapshot=withPlatformDatabase({mode:"runtime"},database=>{
     const viewer=historyOnly?{userId:identity.scope.userId,displayName:identity.displayName??"Member",discordRoleIds:[]}:resolveTraderLinkCommunityViewer(database,identity,communitySlug);
@@ -65,6 +66,18 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
       WHERE community_id=? AND status='active' GROUP BY plan_id`).all(current.community.communityId) as {plan_id:string;count:number}[];
     const counts=new Map(planCounts.map(row=>[row.plan_id,row.count]));
     const deliveries=!historyOnly&&requestedPath.endsWith('/manage/channels')&&capabilities.has('community.discord.manage')?database.prepare(`SELECT d.delivery_id deliveryId,coalesce(d.current_attempt_key,d.delivery_id) attemptKey,d.object_type objectType,x.name channelName,d.status,d.delivery_outcome outcome,d.discord_message_id messageId,d.last_error error,d.updated_at_utc updatedAtUtc FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id WHERE d.community_id=? ORDER BY d.updated_at_utc DESC LIMIT 100`).all(current.community.communityId) as NonNullable<TraderLinkCommunityDashboardSnapshot['deliveries']>:[];
+    const deletedOwner=database.prepare("SELECT 1 FROM traderlink_communities c JOIN platform_users u ON u.user_id=c.owner_user_id WHERE c.community_id=? AND u.auth_provider='deleted' AND u.status='disabled'").get(current.community.communityId);
+    if(deletedOwner&&!historyOnly){
+      // readSnapshot's SQL restricts relationships to this viewer; all review,
+      // message and attachment collections derive from those relationship IDs.
+      // The remediation fixture verifies that invariant. This only removes
+      // general community data; it never grants additional data or authority.
+      const ownRelationships=current.relationships.filter(row=>row.coachUserId===identity.scope.userId||row.studentUserId===identity.scope.userId);
+      if(!existingCoachingPage||!ownRelationships.some(row=>row.status==='active'&&!row.archivedAtUtc))notFound();
+      return {...current,relationships:ownRelationships,deliveries:[],alerts:[],watchlists:[],alertTemplates:[],audiences:[],channels:[],members:[],staffRoles:[],plans:[],coaches:[],
+        community:{...current.community,isOwner:false,memberCount:0},viewer:{...current.viewer,capabilities:current.viewer.capabilities.filter(capability=>capability.startsWith('community.coaching.')&&capability!=='community.coaching.manage_all')},
+        settings:{description:'',personalAlertTemplatesEnabled:false},analytics:{views30Days:0,uniqueMembers30Days:0,alertViews30Days:0,watchlistViews30Days:0,coachingViews30Days:0,topPages:[],namedMemberPages:[]},referrals:{attributedMembers:0,tier2Members:0,estimatedEarningsMinor:0,currency:'USD',commissionLabel:'Not configured'}};
+    }
     return {...current,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
   });
   return Object.freeze({snapshot,isReview:false});

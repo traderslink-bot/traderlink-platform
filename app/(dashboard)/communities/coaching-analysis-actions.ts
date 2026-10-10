@@ -8,7 +8,7 @@ import {getReplacementDailyTradeAnalyzerReplay} from "../trade-tracker/trade-tra
 
 async function analysisScope(relationshipId:string){
  const identity=await requireTraderLinkPlatformPageIdentity();
- await requireCommunityRequestAccess({userId:identity.scope.userId,relationshipId});
+ await requireCommunityRequestAccess({userId:identity.scope.userId,relationshipId,existingCoachingOnly:true});
  return withReadonlyPlatformDatabase({},db=>new TraderLinkCommunityCoachJournalReadService(db).readAnalysisScope({coachUserId:identity.scope.userId,relationshipId}));
 }
 export async function loadCoachingAnalysisAction(relationshipId:string,input?:unknown,afterCursor?:string|null){

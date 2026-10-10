@@ -89,6 +89,7 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Sign in with the Discord account that belongs to the connected server. Every verified active member can use TraderLink; the server owner does not choose which roles may create an account." }),
           Object.freeze({ kind: "paragraph", text: "The owner can use current Discord roles to limit only that server's alerts, watchlists or coaching plans. If your role changes, access changes after TraderLink receives a fresh Discord membership check." }),
           Object.freeze({ kind: "link", href: "/communities", label: "Open My Communities", text: "Choose one of your connected Discord communities." }),
+          Object.freeze({ kind: "paragraph", text: "Server owners select an approved server, install the TraderLink Discord app and connect it. Role and channel setup uses the names fetched from Discord; you do not need to copy IDs. If a channel is unavailable, check the bot's View Channel and Send Messages permissions, then refresh. Saving channel settings does not send a test message." }),
         ]),
       }),
       Object.freeze({
@@ -100,7 +101,9 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Server owners and assigned staff can publish alerts to the audience and Discord channel chosen by the owner.",
             "A regular member can share an already-published personal Community Watchlist. The member remains its named owner; sharing does not create a server-owned copy.",
-            "A Discord post links back to the exact TraderLink page. TraderLink does not decide whether the server's alert or watchlist is a paid service.",
+            "Choose a tracked page link or a full Discord post. Publishing saves the item in TraderLink; check Discord channels for delivery status. A save confirmation does not mean Discord delivery succeeded.",
+            "Official server watchlists support Notes, DD research and source links for each ticker. Open a ticker's research section while creating or editing the watchlist. This is your own research; saving it does not generate AI analysis.",
+            "A failed save keeps your entries. Retry an unchanged submission to check the same save without creating a second alert or watchlist. Published content can be edited, unpublished or archived; previously sent Discord messages are not silently reposted.",
           ]) }),
         ]),
       }),

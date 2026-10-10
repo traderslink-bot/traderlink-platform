@@ -1,6 +1,5 @@
 "use client";
 
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
@@ -8,13 +7,14 @@ import TextField from "@mui/material/TextField";
 import { useState } from "react";
 
 import type { TraderLinkCommunityDashboardSnapshot } from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
-import { createCommunityAlertAction } from "./community-actions";
+import { saveCommunityAlertWithFeedback } from "./community-publication-actions";
+import { CommunityPublicationForm } from "./community-publication-form";
 
 export function CommunityAlertComposer({snapshot,isReview}:{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}) {
   const [templateId,setTemplateId]=useState("");
   const template=snapshot.alertTemplates.find(item=>item.templateId===templateId);
   const audience=snapshot.audiences.find(item=>item.status==="active");
-  return <Box action={isReview?undefined:createCommunityAlertAction} component="form">
+  return <CommunityPublicationForm action={saveCommunityAlertWithFeedback} disabled={isReview}>
     <input name="communitySlug" type="hidden" value={snapshot.community.slug}/>
     <input name="templateId" type="hidden" value={templateId}/>
     <Stack spacing={2}>
@@ -33,5 +33,5 @@ export function CommunityAlertComposer({snapshot,isReview}:{snapshot:TraderLinkC
       </TextField>
       <Stack direction="row" spacing={1}><Button disabled={isReview} name="status" value="draft" type="submit" variant="outlined">Save draft</Button><Button disabled={isReview} name="status" value="published" type="submit" variant="contained">Publish alert</Button></Stack>
     </Stack>
-  </Box>;
+  </CommunityPublicationForm>;
 }

@@ -12,13 +12,24 @@ import Link from "next/link";
 
 import { DashboardMetricCard, DashboardPanel } from "@/app/dashboard-ui";
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
+import { readCoachingDeletionArchive } from "@/src/modules/communities/server/coaching-deletion-archive";
 import { configureCommunityCoachFeeAction, setCommunityStatusAction, recoverCommunityOwnerAction } from "@/app/(dashboard)/admin/communities/admin-actions";
 
 type CommunityRow=Readonly<{communityId:string;slug:string;name:string;status:string;guildId:string;members:number;coaches:number;alerts:number;watchlists:number;pending:number}>;
 type AdminItem=Readonly<{community:string;name:string;detail:string;status:string}>;
 type FeeRule=Readonly<{id:string;community:string;coach:string;percent:number;minimum:number|null;currency:string|null;durationCount:number|null;durationUnit:string|null}>;
 
-export default async function JournalCommunitiesAdminPage(){
+export default async function JournalCommunitiesAdminPage({searchParams}:{searchParams:Promise<{archive?:string;archivePage?:string;recordPage?:string}>}){
+  const query=await searchParams;
+  const archivePage=/^\d{1,6}$/.test(query.archivePage??'')?Number(query.archivePage):0;
+  const recordPage=/^\d{1,6}$/.test(query.recordPage??'')?Number(query.recordPage):0;
+  const archiveData=await withJournalAdminPageDatabase(database=>{
+    const now=new Date().toISOString();
+    const rows=database.prepare(`SELECT archive_id id,community_name name,created_at_utc created,expires_at_utc expires
+      FROM community_deletion_archives WHERE expires_at_utc>? ORDER BY created_at_utc DESC,archive_id LIMIT 21 OFFSET ?`).all(now,archivePage*20) as {id:string;name:string;created:string;expires:string}[];
+    const selected=query.archive&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(query.archive)?readCoachingDeletionArchive(database,query.archive,now,recordPage):null;
+    return {rows:rows.slice(0,20),hasNext:rows.length>20,selected};
+  });
   const snapshot=await withJournalAdminPageDatabase((database)=>{
     const rows=database.prepare(`SELECT c.community_id communityId,c.slug,c.display_name name,c.status,c.discord_guild_id guildId,
   (SELECT count(*) FROM traderlink_community_memberships m WHERE m.community_id=c.community_id AND m.status='active') members,
@@ -54,6 +65,16 @@ FROM traderlink_communities c ORDER BY c.updated_at_utc DESC`).all() as Communit
   });
   return <Stack spacing={3}>
     <Stack direction="row" spacing={1} sx={{alignItems:"center"}}><ForumRoundedIcon color="primary"/><Typography component="h1" variant="h1">Communities</Typography></Stack>
+    <DashboardPanel title="Coaching deletion archives"><Stack spacing={1.5}>
+      {archiveData.rows.map(row=><Stack key={row.id} direction={{xs:'column',sm:'row'}} spacing={1} sx={{justifyContent:'space-between'}}><Typography>{row.name} · {row.created.slice(0,10)} · Expires {row.expires.slice(0,10)}</Typography><Button component={Link} href={`?archive=${row.id}&archivePage=${archivePage}`} variant="outlined">Open archive</Button></Stack>)}
+      {archiveData.rows.length===0?<Typography>No active archives</Typography>:null}
+      <Stack direction="row" spacing={1}>{archivePage>0?<Button component={Link} href={`?archivePage=${archivePage-1}`}>Previous</Button>:null}{archiveData.hasNext?<Button component={Link} href={`?archivePage=${archivePage+1}`}>Next</Button>:null}</Stack>
+      {archiveData.selected?<Stack spacing={1}>
+        {archiveData.selected.records.map(record=><Box component="details" key={record.record_id}><Typography component="summary" sx={{cursor:'pointer',fontWeight:700}}>{archiveLabel(record.record_kind)}</Typography><ArchiveFields value={JSON.parse(record.payload_json)}/></Box>)}
+        {archiveData.selected.files.map(file=><Button key={file.attachment_id} component="a" href={`/api/admin/communities/coaching-archives/${query.archive}?attachment=${file.attachment_id}`} target="_blank" rel="noopener noreferrer">{file.filename}</Button>)}
+        <Stack direction="row" spacing={1}>{recordPage>0?<Button component={Link} href={`?archive=${query.archive}&archivePage=${archivePage}&recordPage=${recordPage-1}`}>Previous records</Button>:null}{archiveData.selected.hasMore?<Button component={Link} href={`?archive=${query.archive}&archivePage=${archivePage}&recordPage=${recordPage+1}`}>Next records</Button>:null}</Stack>
+      </Stack>:null}
+    </Stack></DashboardPanel>
     <Grid container spacing={2}><Grid size={{xs:6,lg:3}}><DashboardMetricCard caption={`${snapshot.rows.filter(row=>row.status==="active").length} active`} label="Discord servers" value={String(snapshot.rows.length)}/></Grid><Grid size={{xs:6,lg:3}}><DashboardMetricCard caption="Verified memberships" label="Members" value={snapshot.members.toLocaleString()}/></Grid><Grid size={{xs:6,lg:3}}><DashboardMetricCard caption="Alerts and watchlists" label="Published content" value={snapshot.contentCount.toLocaleString()}/></Grid><Grid size={{xs:6,lg:3}}><DashboardMetricCard caption="Pending or failed" label="Delivery queue" value={snapshot.pending.toLocaleString()}/></Grid></Grid>
     <DashboardPanel title="Connected Discord servers"><Stack spacing={1.5}>{snapshot.rows.map(row=><Stack direction={{xs:"column",md:"row"}} key={row.slug} sx={{alignItems:{md:"center"},border:1,borderColor:"divider",borderRadius:2,justifyContent:"space-between",p:2}}><Stack><Typography style={{fontWeight:800}}>{row.name}</Typography><Typography color="text.secondary" variant="caption">Guild {row.guildId} · {row.members} members · {row.coaches} coaches · {row.alerts} alerts · {row.watchlists} watchlists · {row.status}</Typography></Stack><Button component={Link} href={`/communities/${row.slug}/manage`} size="small" variant="outlined">Open server dashboard</Button></Stack>)}{!snapshot.rows.length?<Typography color="text.secondary">No Discord servers have been connected.</Typography>:null}</Stack></DashboardPanel>
     <Grid container spacing={2}>
@@ -79,5 +100,17 @@ FROM traderlink_communities c ORDER BY c.updated_at_utc DESC`).all() as Communit
   </Stack>;
 }
 
+function archiveLabel(value:string){return value.replace(/_json$/,'').replaceAll('_',' ').replace(/\b\w/g,letter=>letter.toUpperCase());}
+function ArchiveFields({value}:{value:unknown}){
+  if(value===null||value===undefined)return null;
+  if(Array.isArray(value))return <Stack spacing={1}>{value.map((item,index)=><ArchiveFields key={index} value={item}/>)}</Stack>;
+  if(typeof value!=='object')return <Typography sx={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{String(value)}</Typography>;
+  return <Box component="dl" sx={{m:0,p:1}}>{Object.entries(value).filter(([key,entry])=>entry!==null&&entry!==''&&!key.endsWith('_id')).map(([key,entry])=>{
+    let content:unknown=entry;
+    if(key.endsWith('_json')&&typeof entry==='string'){try{content=JSON.parse(entry);}catch{content=entry;}}
+    if(['status','state','delivery_state','acceptance_state','record_type','visibility'].includes(key)&&typeof content==='string')content=archiveLabel(content);
+    return <Box key={key} sx={{mb:1}}><Typography component="dt" fontWeight={700}>{archiveLabel(key)}</Typography><Box component="dd" sx={{m:0}}><ArchiveFields value={content}/></Box></Box>;
+  })}</Box>;
+}
 function CommunitySelect({rows}:{rows:readonly CommunityRow[]}){return <TextField label="Community" name="communityId" select required>{rows.map(row=><MenuItem key={row.communityId} value={row.communityId}>{row.name}</MenuItem>)}</TextField>}
 function AdminList({items,title}:{items:readonly AdminItem[];title:string}){return <DashboardPanel title={title}><Stack divider={<Divider/>}>{items.slice(0,20).map((item,index)=><Stack direction={{xs:"column",sm:"row"}} key={`${item.community}-${item.name}-${index}`} sx={{alignItems:{sm:"center"},justifyContent:"space-between",py:1.25}}><Box><Typography style={{fontWeight:800}}>{item.name}</Typography><Typography color="text.secondary" variant="caption">{item.community} · {item.detail}</Typography></Box><Chip color={item.status==="active"||item.status==="published"?"success":"warning"} label={item.status} size="small"/></Stack>)}</Stack></DashboardPanel>}

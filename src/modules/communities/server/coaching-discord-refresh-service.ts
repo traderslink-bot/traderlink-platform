@@ -26,7 +26,7 @@ export class CoachingDiscordRefreshService {
    return response;
   };
   for (const target of targets) {
-   const verified = await verifyCommunityRequestMember(this.db, {slug:target.slug,userId:target.user_id,botToken:this.botToken,atUtc}, request);
+   const verified = await verifyCommunityRequestMember(this.db, {slug:target.slug,userId:target.user_id,botToken:this.botToken,atUtc,existingCoachingOnly:true}, request);
    const evidence = this.db.prepare("SELECT last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(target.user_id,target.discord_guild_id) as {last_verified_at_utc:string}|undefined;
    if (verified || evidence?.last_verified_at_utc === atUtc) refreshed++; else unavailable++;
    if (rateLimited) break;

@@ -3,7 +3,7 @@ import {openPlatformDatabase} from "../../platform/server/database/open-platform
 import {verifyCommunityRequestMember} from "./community-request-verification";
 
 /** Authenticated identity is supplied by the server entry point, never a form field. */
-export async function requireCommunityRequestAccess(input:{userId:string;slug?:string;relationshipId?:string;taskId?:string;reviewId?:string;verifyParticipants?:boolean}){
+export async function requireCommunityRequestAccess(input:{userId:string;slug?:string;relationshipId?:string;taskId?:string;reviewId?:string;verifyParticipants?:boolean;existingCoachingOnly?:boolean}){
  const db=openPlatformDatabase({mode:"runtime"});
  try{
   let relationshipId=input.relationshipId;
@@ -19,6 +19,6 @@ export async function requireCommunityRequestAccess(input:{userId:string;slug?:s
   const atUtc=new Date().toISOString(),botToken=process.env.TRADERLINK_DISCORD_BOT_TOKEN??"";
   const users=new Set([input.userId,...(relationship&&input.verifyParticipants!==false?[relationship.student_user_id,relationship.coach_user_id]:[])]);
   // At most the authenticated actor and two original participants, never an entire server.
-  for(const userId of users)if(!await verifyCommunityRequestMember(db,{slug,userId,atUtc,botToken}))throw new Error("Discord access could not be verified. Try again shortly.");
+  for(const userId of users)if(!await verifyCommunityRequestMember(db,{slug,userId,atUtc,botToken,existingCoachingOnly:input.existingCoachingOnly,relationshipId}))throw new Error("Discord access could not be verified. Try again shortly.");
  }finally{db.close();}
 }

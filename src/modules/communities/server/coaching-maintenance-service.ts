@@ -5,6 +5,7 @@ import { CoachingDiscordRefreshService } from "./coaching-discord-refresh-servic
 import { CoachingAgreementService } from "./coaching-agreement-service";
 import { coachingEntitlement, archivePausedCoaching } from "./coaching-access-lifecycle";
 import { pruneCommunityNamedActivity } from "./community-activity-retention";
+import { purgeExpiredCoachingDeletionArchives } from "./coaching-deletion-archive";
 
 /** One bounded pass; callers own the connection and must close it in finally. */
 export async function runCoachingMaintenance(
@@ -17,6 +18,7 @@ export async function runCoachingMaintenance(
   if (!Number.isInteger(limit) || limit < 1 || limit > 25) throw new Error("Invalid maintenance batch size.");
   const token = options.botToken?.trim();
   const activityRetention = pruneCommunityNamedActivity(db, atUtc);
+  const deletionArchivesPurged = purgeExpiredCoachingDeletionArchives(db, atUtc);
   const access = token
     ? await new CoachingDiscordRefreshService(db, token, options.request).runAvailable(limit, atUtc)
     : { refreshed: 0, unavailable: 0 };
@@ -60,7 +62,7 @@ export async function runCoachingMaintenance(
     await setImmediate();
   }
   const archived = archivePausedCoaching(db, atUtc);
-  return { ok: failed === 0, access, checked: rows.length, created, failed, archived, activityRetention, roleRefreshConfigured: Boolean(token) };
+  return { ok: failed === 0, access, checked: rows.length, created, failed, archived, activityRetention, deletionArchivesPurged, roleRefreshConfigured: Boolean(token) };
 }
 
 /** Shared by the hosted timer: a slow provider pass never overlaps the next tick. */

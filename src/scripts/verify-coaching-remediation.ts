@@ -1,4 +1,6 @@
 import {platformCoachingReviewRequestAcceptanceMigration} from "../modules/platform/server/database/migrations/0160_platform_coaching_review_request_acceptance";
+import {platformCoachingDeletionArchivesMigration} from "../modules/platform/server/database/migrations/0164_platform_coaching_deletion_archives";
+import {captureCoachingDeletionEvidence, purgeExpiredCoachingDeletionArchives, readCoachingDeletionArchive} from "../modules/communities/server/coaching-deletion-archive";
 import {recoverCommunityOwnership} from "../modules/communities/server/community-ownership-recovery";
 import {verifyCommunityRequestMember} from "../modules/communities/server/community-request-verification";
 
@@ -332,6 +334,31 @@ permissions.syncActiveMemberFromDiscord({communityId:first.communityId,userId:OW
 check.equal(permissions.findMembership(first.communityId,OWNER)?.status,"suspended","OAuth synchronization must not clear suspension");
 database.prepare("UPDATE traderlink_community_memberships SET status='active' WHERE community_id=? AND user_id=?").run(first.communityId,OWNER);
 const changedOwner=(async(url)=>Response.json(String(url).includes('/members/')?{user:{id:'123456789',username:'owner'},roles:['200001']}:{id:PILOT_GUILD,owner_id:'987654321'})) as typeof fetch;
+database.exec('SAVEPOINT deleted_owner_coaching_access');
+database.prepare("UPDATE traderlink_community_coaching_agreements SET terms_json=json_set(terms_json,'$.requiredDiscordRoleId','200001') WHERE relationship_id=? AND status='accepted'").run(relationship);
+insertDiscord.run(OUTSIDER,PILOT_GUILD,'fixture-owner','Fixture owner','[]',1,NOW,NOW,NOW);
+database.prepare('UPDATE traderlink_communities SET owner_user_id=? WHERE community_id=?').run(OUTSIDER,first.communityId);
+database.prepare("UPDATE platform_users SET auth_provider='deleted',status='disabled' WHERE user_id=?").run(OUTSIDER);
+database.prepare("UPDATE traderlink_community_coaching_relationships SET status='active',archived_at_utc=NULL WHERE relationship_id=?").run(relationship);
+const remainingMember=(async(url)=>Response.json(String(url).includes('/members/')?{user:{id:'123456789',username:'remaining-student'},roles:['200001']}:{id:PILOT_GUILD,owner_id:'555555555'})) as typeof fetch;
+const retainedInput={slug:'first-room',userId:OWNER,botToken:'fixture',atUtc:'2026-10-15T12:09:00.000Z',relationshipId:relationship};
+check.equal(await verifyCommunityRequestMember(database,retainedInput,remainingMember),false,'Relationship ID cannot authorize general access after owner deletion');
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true},remainingMember),true,'Existing student can refresh Discord for existing coaching only');
+check.equal(await verifyCommunityRequestMember(database,retainedInput,remainingMember),false,'Fresh cached evidence does not grant general access');
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true,relationshipId:'10000000-0000-4000-8000-000000000999'},remainingMember),false,'Unrelated relationship is denied');
+check.equal(permissions.findById(first.communityId)?.status,'active','Coaching refresh does not pause surviving work');
+const scopedDeletedOwnerSnapshot=platform.readSnapshot('first-room',student);
+check.ok(scopedDeletedOwnerSnapshot.relationships.every(row=>row.studentUserId===student.userId||row.coachUserId===student.userId),'Snapshot relationships are already restricted to original viewer participation');
+const ownedRelationshipIds=new Set(scopedDeletedOwnerSnapshot.relationships.map(row=>row.relationshipId));
+check.ok(scopedDeletedOwnerSnapshot.coachingMessages.every(row=>ownedRelationshipIds.has(row.relationshipId)),'Snapshot messages remain participant scoped');
+check.ok(scopedDeletedOwnerSnapshot.tradeReviews.every(row=>ownedRelationshipIds.has(row.relationshipId)),'Snapshot reviews remain participant scoped');
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true,atUtc:'2026-10-15T12:20:00.000Z'},fakeRequest(429,{})),false,'Deleted owner exception does not bypass stale Discord evidence');
+const removedRole=(async(url)=>Response.json(String(url).includes('/members/')?{user:{id:'123456789',username:'remaining-student'},roles:[]}:{id:PILOT_GUILD,owner_id:'555555555'})) as typeof fetch;
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true,atUtc:'2026-10-15T12:21:00.000Z'},removedRole),true,'Membership refresh still records actual provider roles');
+check.equal(coachingEntitlement(database,relationship)?.present,false,'Required role removal still blocks coaching after owner deletion');
+database.prepare("UPDATE traderlink_community_coaching_relationships SET status='ended' WHERE relationship_id=?").run(relationship);
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true,atUtc:'2026-10-15T12:21:01.000Z'},remainingMember),false,'Ended relationships cannot use the exception');
+database.exec('ROLLBACK TO deleted_owner_coaching_access; RELEASE deleted_owner_coaching_access');
 check.equal(await verifyCommunityRequestMember(database,{slug:'first-room',userId:OWNER,botToken:'fixture',atUtc:'2026-10-15T12:10:00.000Z'},changedOwner),false,'Confirmed ownership change pauses access until explicit recovery');
 check.equal(permissions.findById(first.communityId)?.status,'paused');
 check.equal(permissions.resolveAccess(first.communityId,OWNER).capabilities.length,0,'Former owner cannot retain publishing or administration');
@@ -354,7 +381,30 @@ check.throws(()=>recoverCommunityOwnership(database,{...recovery,atUtc:'2026-10-
 check.equal(permissions.findById(first.communityId)?.status,'paused');
 check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes('community.alerts.create'),false,'Disconnected owner cannot publish');
 check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes('community.manage'),true,'Disconnected verified owner retains connection settings');
-console.log(JSON.stringify({result:"passed",generated,checks:["unsigned","student acceptance","weekly generation","idempotence","month end","unscheduled","plan edits","revision conflicts","frozen terms","question renewal","follow-up expiry","draft privacy","session privacy","lesson edit/reuse","role pause/restore","archive preservation","foreign keys"]}));
+for(const statement of platformCoachingDeletionArchivesMigration.statements) database.exec(statement);
+const deletionAt='2026-10-16T12:00:00.000Z';
+check.throws(()=>captureCoachingDeletionEvidence(database,MEMBER,deletionAt),/transaction/);
+const beforeArchiveJournal=JSON.stringify(database.prepare('SELECT * FROM journal_accounts ORDER BY account_id').all());
+database.exec('SAVEPOINT failed_archive');
+database.transaction(()=>captureCoachingDeletionEvidence(database,MEMBER,deletionAt))();
+check.ok(database.prepare('SELECT 1 FROM community_deletion_archives').get());
+database.exec('ROLLBACK TO failed_archive; RELEASE failed_archive');
+check.equal(database.prepare('SELECT count(*) n FROM community_deletion_archives').get()?.n,0,'Failed erasure rolls back archive too');
+const archiveCount=database.transaction(()=>captureCoachingDeletionEvidence(database,MEMBER,deletionAt))();
+check.ok(archiveCount>0);
+check.equal(database.transaction(()=>captureCoachingDeletionEvidence(database,MEMBER,'2026-10-17T12:00:00.000Z'))(),0,'Retry cannot extend retention');
+const archiveRow=database.prepare('SELECT archive_id,expires_at_utc FROM community_deletion_archives LIMIT 1').get() as {archive_id:string;expires_at_utc:string};
+check.equal(archiveRow.expires_at_utc,new Date(Date.parse(deletionAt)+60*86400000).toISOString());
+check.ok(readCoachingDeletionArchive(database,archiveRow.archive_id,new Date(Date.parse(archiveRow.expires_at_utc)-1).toISOString()));
+check.equal(readCoachingDeletionArchive(database,archiveRow.archive_id,archiveRow.expires_at_utc),null,'Expired archive unreadable before cleanup');
+check.equal(JSON.stringify(database.prepare('SELECT * FROM journal_accounts ORDER BY account_id').all()),beforeArchiveJournal,'Capture never reads or mutates Journal content');
+const kinds=database.prepare('SELECT DISTINCT record_kind FROM community_deletion_archive_records').all() as {record_kind:string}[];
+check.ok(!kinds.some(row=>/journal|grant|execution|account/.test(row.record_kind)));
+check.equal(purgeExpiredCoachingDeletionArchives(database,new Date(Date.parse(archiveRow.expires_at_utc)-1).toISOString()),0);
+while(purgeExpiredCoachingDeletionArchives(database,archiveRow.expires_at_utc,1)>0) { /* bounded batch replay */ }
+for(const table of ['community_deletion_archives','community_deletion_archive_records','community_deletion_archive_files'])check.equal(database.prepare(`SELECT count(*) n FROM ${table}`).get()?.n,0,'Expiry removes evidence and binary attachments');
+check.equal((database.pragma('foreign_key_check') as unknown[]).length,0);
+console.log(JSON.stringify({result:"passed",generated,checks:["unsigned","student acceptance","weekly generation","idempotence","month end","unscheduled","plan edits","revision conflicts","frozen terms","question renewal","follow-up expiry","draft privacy","session privacy","lesson edit/reuse","role pause/restore","archive preservation","foreign keys","deletion archive rollback, expiry, cleanup and Journal isolation"]}));
 }finally{database.close();}
 }
 void main().catch(error=>{console.error(error);process.exitCode=1;});

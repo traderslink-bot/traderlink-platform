@@ -12,6 +12,18 @@ This is the controlling **remaining-launch-work** plan. The earlier partner-plat
 
 Progress: [Launch progress and decision record](traderlink-communities-coaching-launch-progress.md).
 
+Active L01/L04 correction slice: [Publish feedback, ticker research and bot setup](community-publishing-setup-corrections-20261010.md). Preserve this slice alongside concurrent coaching work; no real notifications or paid AI calls during its QA.
+
+### Account deletion amendment — owner approved
+
+Deleting a server owner's account without transferring ownership must keep other coaches' existing student relationships active. Do not close or archive those relationships solely because the owner deleted their account. Preserve their shared community dependencies without granting a replacement owner access to private coaching; ownership recovery remains separately verified. The deleting participant's own coaching records follow the retention policy below.
+
+Owner-approved access boundary: while ownership awaits recovery, original coaches and students may continue only their existing coaching relationships. Retain Discord membership, role and Journal-permission checks. Do not grant general community access, new relationships or replacement ownership through this exception.
+
+Ownership transfer is offered, not required before account deletion. Preserve relevant coaching evidence for exactly 60 days after deletion, accessible only through authenticated TraderLink platform administration. At expiry, deny reads and permanently purge the archive, including its attachments. Retain agreements, promised/outstanding work, delivered reviews, relevant communications and trade information already embedded in coaching records. Do not copy a student's private Journal, imported statements, credentials or live Journal grants into the archive. Ordinary role loss/inactivity remains distinct from account deletion and does not start this clock. Account deletion must not silently cascade away evidence before it is captured, or extend an existing archive's deadline when another participant later deletes their account. Transfer must preserve the continuing community's unrelated records.
+
+Track implementation and exact evidence in [Account-deletion archive progress](traderlink-coaching-deletion-archive-progress.md). Account-closure wording accurately describing temporary retention was approved verbatim by the owner. Both commission programs remain disabled and production deployment remains prohibited.
+
 ## 1. Actual readiness
 
 The existing single-server private-pilot checkpoint passed. The complete feature is **not yet accepted for multi-server launch**. Independent onboarding is not the only remaining item.
