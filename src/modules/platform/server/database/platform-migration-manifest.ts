@@ -1,3 +1,8 @@
+import { platformMembershipFeatureCopyMigration } from "./migrations/0157_platform_membership_feature_copy";
+import { platformMemberPrivateWatchlistsMigration } from "./migrations/0158_platform_member_private_watchlists";
+import { platformWatchlistPremiumSupportResistanceMigration } from './migrations/0156_platform_watchlist_premium_support_resistance';
+import { platformWatchlistPremiumAccessControlsMigration } from "./migrations/0155_platform_watchlist_premium_access_controls";
+import { platformPremiumSwingPlanAuthorshipMigration } from "./migrations/0154_platform_premium_swing_plan_authorship";
 import { platformWatchlistCategoryMoveNotificationsMigration } from "./migrations/0153_platform_watchlist_category_move_notifications";
 import { platformWatchlistNotificationUpdateContextMigration } from "./migrations/0152_platform_watchlist_notification_update_context";
 import { platformWatchlistXPublicationsMigration } from "./migrations/0151_platform_watchlist_x_publications";
@@ -185,6 +190,11 @@ const stagingAppendOrders: Readonly<Record<string, number>> = Object.freeze({
   "0151_platform_watchlist_x_publications": 164,
   "0152_platform_watchlist_notification_update_context": 165,
   "0153_platform_watchlist_category_move_notifications": 166,
+  "0154_platform_premium_swing_plan_authorship": 167,
+  "0155_platform_watchlist_premium_access_controls": 168,
+  "0156_platform_watchlist_premium_support_resistance": 169,
+  "0157_platform_membership_feature_copy": 170,
+  "0158_platform_member_private_watchlists": 171,
 });
 
 const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
@@ -690,6 +700,11 @@ const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0151_platform_watchlist_x_publications.ts", migration: platformWatchlistXPublicationsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0152_platform_watchlist_notification_update_context.ts", migration: platformWatchlistNotificationUpdateContextMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0153_platform_watchlist_category_move_notifications.ts", migration: platformWatchlistCategoryMoveNotificationsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0154_platform_premium_swing_plan_authorship.ts", migration: platformPremiumSwingPlanAuthorshipMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0155_platform_watchlist_premium_access_controls.ts", migration: platformWatchlistPremiumAccessControlsMigration }),
+    Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0156_platform_watchlist_premium_support_resistance.ts",migration:platformWatchlistPremiumSupportResistanceMigration}),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0157_platform_membership_feature_copy.ts", migration: platformMembershipFeatureCopyMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0158_platform_member_private_watchlists.ts", migration: platformMemberPrivateWatchlistsMigration }),
     Object.freeze({
       sourcePath: "src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions.ts",
       migration: traderLinkCommunitiesIdentityPermissionsMigration,
@@ -764,6 +779,11 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0157_platform_membership_feature_copy": Object.freeze(["platform_membership_feature_copy"]),
+    "0158_platform_member_private_watchlists": Object.freeze(["platform_watchlist_plan_policies", "platform_watchlist_plan_policy_plans", "platform_private_watchlist_entries", "platform_private_watchlist_operations", "platform_private_watchlist_plan_periods", "platform_private_watchlist_member_overrides"]),
+    "0156_platform_watchlist_premium_support_resistance": Object.freeze(["platform_watchlist_levels_visibility","platform_watchlist_levels_visibility_audit"]),
+    "0155_platform_watchlist_premium_access_controls": Object.freeze(["platform_watchlist_analysis_visibility", "platform_watchlist_analysis_visibility_audit"]),
+    "0154_platform_premium_swing_plan_authorship": Object.freeze(["platform_swing_plans", "platform_swing_plan_versions", "platform_swing_plan_publications", "platform_swing_plan_deliveries"]),
     "0153_platform_watchlist_category_move_notifications": Object.freeze([
       "platform_watchlist_category_move_intents",
       "platform_watchlist_category_move_deliveries",

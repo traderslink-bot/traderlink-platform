@@ -1,8 +1,12 @@
 name: Coaching staging verification
 
 on:
+  workflow_dispatch:
   push:
-    branches: [codex/coaching-staging-integration-20260926]
+    branches:
+      - codex/coaching-staging-integration-20260926
+      - codex/coaching-parity-recovery-20261010
+      - codex/coaching-production-parity-staging-20261010
 
 permissions:
   contents: read
