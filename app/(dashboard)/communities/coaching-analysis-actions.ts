@@ -1,4 +1,5 @@
 "use server";
+import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import {requireTraderLinkPlatformPageIdentity,currentJournalAccountSelectionRef} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {withReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {TraderLinkCommunityCoachJournalReadService} from "@/src/modules/communities/server/traderlink-community-coach-journal-read-service";
@@ -7,6 +8,7 @@ import {getReplacementDailyTradeAnalyzerReplay} from "../trade-tracker/trade-tra
 
 async function analysisScope(relationshipId:string){
  const identity=await requireTraderLinkPlatformPageIdentity();
+ await requireCommunityRequestAccess({userId:identity.scope.userId,relationshipId});
  return withReadonlyPlatformDatabase({},db=>new TraderLinkCommunityCoachJournalReadService(db).readAnalysisScope({coachUserId:identity.scope.userId,relationshipId}));
 }
 export async function loadCoachingAnalysisAction(relationshipId:string,input?:unknown,afterCursor?:string|null){

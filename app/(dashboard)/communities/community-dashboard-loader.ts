@@ -1,3 +1,4 @@
+import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -15,10 +16,16 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
     return Object.freeze({snapshot:createTraderLinkCommunityReviewFixture(role),isReview:true});
   }
   const identity=await requireTraderLinkPlatformServerComponentPageIdentity();
+  const requested=path??`/communities/${communitySlug}`;
+  const suffix=requested.slice(`/communities/${communitySlug}`.length);
+  const historyPath=suffix==="/coaching"||suffix==="/workspace"||suffix==="/workspace/students"||/^\/workspace\/students\/[^/?#]+(?:\/reviews\/[^/?#]+(?:\/final)?)?$/.test(suffix);
+  let historyOnly=false;
+  try{await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}
+  catch(error){if(!historyPath)throw error;historyOnly=true;}
   const snapshot=withPlatformDatabase({mode:"runtime"},database=>{
-    const viewer=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
+    const viewer=historyOnly?{userId:identity.scope.userId,displayName:identity.displayName??"Member",discordRoleIds:[]}:resolveTraderLinkCommunityViewer(database,identity,communitySlug);
     const repository=new TraderLinkCommunityPlatformRepository(database);
-    const current=repository.readSnapshot(communitySlug,viewer);
+    let current=repository.readSnapshot(communitySlug,viewer,{historyOnly});
     const capabilities=new Set(current.viewer.capabilities);
     const requestedPath=path??"";
     const permitted=requestedPath.includes("/alerts")
@@ -43,7 +50,7 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
                         ? capabilities.has("community.manage")
               : true;
     const ownCoachingHistory=requestedPath===`/communities/${communitySlug}/coaching`&&current.relationships.some(relationship=>relationship.studentUserId===viewer.userId);
-    if(!permitted&&!ownCoachingHistory)notFound();
+    if(!permitted&&!ownCoachingHistory){if(!historyPath)notFound();current=repository.readSnapshot(communitySlug,viewer,{historyOnly:true});historyOnly=true;}
     const alertSlug=requestedPath.match(/\/alerts\/([^/?#]+)/u)?.[1];
     const watchlistId=requestedPath.match(/\/server-watchlists\/([^/?#]+)/u)?.[1];
     const tracked=alertSlug
@@ -52,7 +59,7 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
         ? current.watchlists.some(watchlist=>watchlist.watchlistId===watchlistId&&watchlist.status==="published"&&watchlist.publishingMode==="tracked_page")
         : true;
     const activityPath=path??`/communities/${communitySlug}`;
-    if(tracked&&isCommunityContentActivityPath(communitySlug,activityPath))repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:activityPath,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});
+    if(!historyOnly&&tracked&&isCommunityContentActivityPath(communitySlug,activityPath))repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:activityPath,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});
     const planCounts=database.prepare(`SELECT plan_id, count(*) AS count
       FROM traderlink_community_coaching_relationships
       WHERE community_id=? AND status='active' GROUP BY plan_id`).all(current.community.communityId) as {plan_id:string;count:number}[];

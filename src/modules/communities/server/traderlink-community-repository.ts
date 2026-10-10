@@ -353,7 +353,7 @@ WHERE community_id = ? AND status IN ('setup', 'active', 'paused')`)
   first_verified_at_utc, updated_at_utc
 ) VALUES (?, ?, 'active', ?, ?, ?)
 ON CONFLICT(community_id, user_id) DO UPDATE SET
-  status = 'active',
+  status = CASE WHEN traderlink_community_memberships.status='suspended' THEN 'suspended' ELSE 'active' END,
   discord_verified_at_utc = excluded.discord_verified_at_utc,
   updated_at_utc = excluded.updated_at_utc`).run(
         input.communityId,
@@ -788,9 +788,10 @@ WHERE grant_row.community_id = ?
     JOIN platform_discord_memberships discord
       ON discord.guild_id = mapped_community.discord_guild_id
      AND discord.user_id = ?
-    JOIN json_each(discord.role_ids_json) current_role
+    LEFT JOIN json_each(discord.role_ids_json) current_role
       ON current_role.value = mapping.discord_role_id
     WHERE mapping.community_id = ? AND mapping.status = 'active'
+      AND (mapping.discord_role_id=mapped_community.discord_guild_id OR current_role.value IS NOT NULL)
   )
 ORDER BY grant_row.capability_key`).all(
       communityId,

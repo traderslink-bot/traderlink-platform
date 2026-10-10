@@ -24,6 +24,6 @@ export function resolveTraderLinkCommunityViewer(
   return Object.freeze({
     userId: identity.scope.userId,
     displayName: identity.displayName ?? membership.globalDisplayName ?? membership.username,
-    discordRoleIds: membership.roleIds,
+    discordRoleIds: Object.freeze([...new Set([community.discord_guild_id,...membership.roleIds])]),
   });
 }

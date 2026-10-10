@@ -24,6 +24,8 @@ LIMIT 1`).get(item.communityId, identity.scope.userId);
         return `/communities/${item.slug}/coaches`;
       }
     }
+    const history=database.prepare(`SELECT c.slug,r.student_user_id FROM traderlink_community_coaching_relationships r JOIN traderlink_communities c ON c.community_id=r.community_id WHERE r.status IN ('active','ended') AND (r.student_user_id=? OR r.coach_user_id=?) ORDER BY r.requested_at_utc DESC LIMIT 1`).get(identity.scope.userId,identity.scope.userId) as {slug:string;student_user_id:string}|undefined;
+    if(history)return `/communities/${history.slug}/${history.student_user_id===identity.scope.userId?"coaching":"workspace/students"}`;
     return "/communities";
   });
 

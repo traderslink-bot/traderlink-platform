@@ -1,4 +1,5 @@
 import {platformCoachingReviewRequestAcceptanceMigration} from "../modules/platform/server/database/migrations/0160_platform_coaching_review_request_acceptance";
+import {verifyCommunityRequestMember} from "../modules/communities/server/community-request-verification";
 
 
 
@@ -81,6 +82,10 @@ try{
   permissions.syncActiveMemberFromDiscord({communityId:first.communityId,userId:MEMBER,timestamp:NOW});
 
 permissions.saveDiscordFeatureMapping({communityId:first.communityId,actorUserId:OWNER,discordRoleId:"200001",discordRoleName:"Coaching",responsibilities:["coach"],timestamp:NOW});
+database.exec("SAVEPOINT everyone_mapping");
+permissions.saveDiscordFeatureMapping({communityId:first.communityId,actorUserId:OWNER,discordRoleId:PILOT_GUILD,discordRoleName:"Everyone",responsibilities:["alerts-access"],timestamp:NOW});
+check.ok(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes("community.alerts.view"),"Everyone mapping works without a fabricated member role");
+database.exec("ROLLBACK TO everyone_mapping; RELEASE everyone_mapping");
 const everyone=platform.ensureDefaultAudience({communityId:first.communityId,actorUserId:OWNER,atUtc:NOW});
   const coach=platform.upsertCoach({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},userId:MEMBER,displayName:"Member Coach",headline:"",biography:"",deliverySummary:"",capacity:1,active:true,atUtc:NOW});
   const plan=platform.createPlan({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},coachProfileId:coach,name:"One review",description:"",cadence:"trade_reviews",tradeReviewLimit:1,studentCapacity:1,messagingIncluded:true,tradeReviewsIncluded:true,sessionsIncluded:true,teachingIncluded:true,priceLabel:"Handled in Discord",priceAmountMinor:5000,currency:"USD",billingCadence:"monthly",quoteRequired:false,paymentInstructions:"Contact the server owner.",audienceId:everyone,requiredDiscordRoleId:"200001",planStyle:"structured",items:[{itemType:"trade_review",frequency:"weekly",coveragePeriod:"previous_7_days",quantity:1,dueOffsetDays:2,selectionMode:"coach_or_student",followUpDays:0,measurementKind:"trades",plannedMinutes:null,timelineEnabled:true,reviewDepth:"standard"}],journalScopes:[{dataScope:"trades",required:true}],publish:true,atUtc:NOW});
@@ -250,6 +255,12 @@ check.equal(coachingEntitlement(database,relationship)?.present,true,"Provider f
 await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(404,{code:10007})).runAvailable(25,"2026-10-13T12:10:00.000Z");
 check.equal(coachingEntitlement(database,relationship)?.present,false,"Confirmed departed member pauses coaching");
 check.equal((database.prepare("SELECT status FROM traderlink_community_memberships WHERE community_id=? AND user_id=?").get(first.communityId,OWNER) as {status:string}).status,"inactive","Departure removes community membership eligibility");
+check.throws(()=>platform.readSnapshot("first-room",student),"Departed member cannot read normal community content");
+const retained=platform.readSnapshot("first-room",student,{historyOnly:true});
+check.ok(retained.tradeReviews.some(review=>review.reviewId===reviewId&&review.deliveredAtUtc),"Departed participant can still read delivered history");
+check.equal(retained.relationships.find(row=>row.relationshipId===relationship)?.accessStatus,"access_paused");
+for(const entries of [retained.alerts,retained.watchlists,retained.members,retained.staffRoles,retained.channels,retained.alertTemplates,retained.plans,retained.teachingItems])check.equal(entries.length,0,"History mode grants no community content or directory access");
+check.throws(()=>platform.readSnapshot("first-room",{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},{historyOnly:true}),"History mode requires original relationship participation");
 check.equal((database.prepare("SELECT guild_owner FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {guild_owner:number}).guild_owner,0,"Departure clears stale owner evidence");
 database.exec("SAVEPOINT no_required_role");
 database.prepare("UPDATE traderlink_community_coaching_agreements SET terms_json=json_set(terms_json,'$.requiredDiscordRoleId',NULL) WHERE relationship_id=? AND status='accepted'").run(relationship);
@@ -282,6 +293,21 @@ let failures=0;
 const retryable=nonOverlappingCoachingMaintenance(async()=>{if(failures++===0)throw new Error("Fixture failure");return true;});
 await check.rejects(retryable());check.equal(await retryable(),true,"Failure releases overlap guard");
 check.equal((database.pragma("foreign_key_check") as unknown[]).length,0);
+const requestAt="2026-10-15T12:00:00.000Z";
+let providerCalls=0;
+const membershipResponse=(async(url)=>{providerCalls++;return new Response(JSON.stringify(String(url).includes('/members/')?{user:{id:"123456789",username:"owner"},roles:["200001","2","200001"]}:{id:PILOT_GUILD,owner_id:"987654321"}),{status:200});}) as typeof fetch;
+check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:requestAt},membershipResponse),true);
+check.equal(providerCalls,2);
+check.equal((database.prepare("SELECT role_ids_json FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {role_ids_json:string}).role_ids_json,'["2","200001"]',"Provider roles are normalized");
+check.equal((database.prepare("SELECT guild_owner FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {guild_owner:number}).guild_owner,0,"Former owner does not retain owner evidence");
+check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:"2026-10-15T12:04:59.000Z"},membershipResponse),true);
+check.equal(providerCalls,2,"Fresh evidence avoids redundant provider calls");
+check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:"2026-10-15T12:06:00.000Z"},fakeRequest(429,{})),false,"Expired evidence cannot authorize during rate limiting");
+check.equal(coachingEntitlement(database,relationship)?.present,true,"Rate limiting does not manufacture role removal");
+database.prepare("UPDATE traderlink_community_memberships SET status='suspended' WHERE community_id=? AND user_id=?").run(first.communityId,OWNER);
+check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:"2026-10-15T12:07:00.000Z"},membershipResponse),false,"Suspension cannot be undone by provider refresh");
+permissions.syncActiveMemberFromDiscord({communityId:first.communityId,userId:OWNER,timestamp:"2026-10-15T12:08:00.000Z"});
+check.equal(permissions.findMembership(first.communityId,OWNER)?.status,"suspended","OAuth synchronization must not clear suspension");
 console.log(JSON.stringify({result:"passed",generated,checks:["unsigned","student acceptance","weekly generation","idempotence","month end","unscheduled","plan edits","revision conflicts","frozen terms","question renewal","follow-up expiry","draft privacy","session privacy","lesson edit/reuse","role pause/restore","archive preservation","foreign keys"]}));
 }finally{database.close();}
 }

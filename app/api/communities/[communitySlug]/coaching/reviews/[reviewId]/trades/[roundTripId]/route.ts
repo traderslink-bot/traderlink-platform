@@ -1,3 +1,4 @@
+import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import {requireTraderLinkPlatformRequestIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {withReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {TraderLinkCommunityCoachJournalReadService} from "@/src/modules/communities/server/traderlink-community-coach-journal-read-service";
@@ -7,6 +8,7 @@ export async function GET(request:Request,{params}:{params:Promise<{communitySlu
  try {
  const {communitySlug,reviewId,roundTripId}=await params;
  const identity=requireTraderLinkPlatformRequestIdentity(request.headers);
+ await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,reviewId});
  const result=withReadonlyPlatformDatabase({},database=>{
   const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
   const row=database.prepare(`SELECT review.relationship_id FROM traderlink_community_coaching_trade_reviews review WHERE review.review_id=? AND review.community_id=(SELECT community_id FROM traderlink_communities WHERE slug=?)`).get(reviewId,communitySlug) as {relationship_id:string}|undefined;

@@ -1,6 +1,5 @@
 import {requireTraderLinkPlatformRequestIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {withReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import {resolveTraderLinkCommunityViewer} from "@/src/modules/communities/server/traderlink-community-viewer";
 import {TraderLinkCommunityCoachingProgramService} from "@/src/modules/communities/server/traderlink-community-coaching-program-service";
 import {isTraderLinkPlatformError} from "@/src/modules/platform/server/database/platform-migration-contract";
 
@@ -15,7 +14,7 @@ export async function GET(request:Request,{params}:{params:Promise<{communitySlu
     const {communitySlug,attachmentId}=await params;
     const identity=requireTraderLinkPlatformRequestIdentity(request.headers);
     const image=withReadonlyPlatformDatabase({},database=>{
-      const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
+      const actor={userId:identity.scope.userId,displayName:identity.displayName??"Member",discordRoleIds:[]};
       const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}|undefined;
       if(!community)return null;
       return new TraderLinkCommunityCoachingProgramService(database).readImage({communityId:community.community_id,actor,attachmentId});
