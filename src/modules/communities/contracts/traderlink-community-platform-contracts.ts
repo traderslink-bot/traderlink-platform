@@ -94,6 +94,7 @@ export type TraderLinkCommunityCoach = Readonly<{
 }>;
 
 export type TraderLinkCommunityCoachingPlan = Readonly<{
+  activeStudents?: number;
   revision?: number;
   builderConfig?: import("./coaching-plan-configuration").CoachingPlanConfiguration;
   planId: string;

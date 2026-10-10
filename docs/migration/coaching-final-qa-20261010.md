@@ -2,6 +2,79 @@
 
 Status: in progress; staging and full inventory acceptance remain open.
 
+## Fresh new-user audit on production-parity staging
+
+Coordinator confirmed source2029377, deployment54f772fb-09ee-487e-9d08-74f0cd4dd461,
+schema154 ready and preservation of current production Academy/private Watchlist.
+The owner requested a fresh setup-to-delivery audit, not a last-fix smoke pass.
+No further coaching deployment is authorized by this record; coordinator is holding
+the next batch until the complete audit handoff. No production release authorized.
+
+### Local corrections awaiting integrated staging retest
+
+- Re-entering the already-connected pilot server's onboarding crashed. Return its
+  established community for the same verified owner without recreating settings,
+  roles, channels or operator grants. Closed pilot restriction remains intact.
+- Overview advertised Alerts/Watchlists destinations to members without access.
+  Render those links only under their existing capability checks.
+- Team exposed internal capability names. Complete the existing label map.
+- Coach availability used obsolete global capacity. Directory/profile now use
+  per-plan active counts, omit unpublished offers, disable full/self enrollment,
+  and link existing enrollments to My coaching/View request.
+- A new plan silently selected the first mapped Discord role (an alerts role).
+  Start empty, require explicit selection to publish, show known role names and
+  preserve an existing saved role even if mappings later change.
+- Student-requested review focus read mutable plan items. A new regression proved
+  accepted execution focus incorrectly became risk after a plan edit. Read accepted
+  agreement items first; legacy arrangements without an agreement retain fallback.
+- Discord-only official watchlists hid their own edit-page link. Restore the link
+  for author/authorized manager only; member access is unchanged.
+
+### Fresh live results, not inferred from fixture tests
+
+- Onboarding failure reproduced; existing server preserved. Settings unchanged-save
+  persisted. Team/role/channel setup inspected without altering permissions.
+- New unpublished plan saved/reopened with two weekly complete trading days,
+  three-day deadline, capacity3, USD0 and unscheduled custom coaching.
+- Student message persisted/received, allowance2 to1. Existing student and coach
+  images decoded640x360 for both accounts after schema154 integration.
+- New student AAPL request626a058e progressed from student selection to inline
+  saved feedback, To review0/Saved1, shared notes/executions drawer, overall and
+  previous-focus notes, final preview, Delivered, and student-confirmed Viewed.
+  Coach-private canary absent from final preview and student rendering.
+- Follow-up submission was attempted but receipt is NOT confirmed: Chrome's
+  connection detached immediately afterward. Do not resend without checking.
+- New task dueOctober11 appeared for both parties; number-of-days1 excluded it,
+  number-of-days2 included it with matching counts. Task remains open.
+
+### Checkpoint checks
+
+- Ten bounded component/route/navigation/context scripts pass, including new
+  onboarding, capacity/link and explicit-role regressions.
+- In-memory remediation, community20-capability/28-table isolation/grants and
+  four-mode Discord delivery scripts pass. These are not fresh hosted deliveries.
+- Targeted lint of12 changed/new source files: zero errors; six pre-existing
+  unused legacy-component warnings remain. React memo dependency issue found in
+  this pass was corrected and lint rerun. No local production build performed.
+- Existing help workflow remains accurate for these bug fixes; no new guide copy.
+
+### Readiness / product gaps still requiring explicit disposition
+
+- NOT ready for public multi-server onboarding: action hardcodes pilot guild,
+  test roles/channels and pilot-owner operator bootstrap. Do not merely remove
+  the gate; production onboarding needs isolated per-server setup and no automatic
+  platform-operator grant for arbitrary server owners.
+- Ad-hoc student review requests have no automatic deadline. Coach can assign
+  one; recurrence-generated reviews have agreed due dates. Define how an extra
+  student request consumes an agreed review before inventing quota/deadline rules.
+- Archived official watchlists have no visible recovery list. Discord-only edits
+  do not rewrite old Discord posts. Record as product lifecycle gaps, not tested
+  features. Community watchlists do not force owner-admin AI analysis.
+- Final hosted retests, remaining fresh UI inventory and responsive/console pass
+  remain open. Chrome recovery tried stale-tab refresh, documented troubleshooting,
+  current-profile discovery and fresh tab; fresh coach tab briefly worked then
+  detached again. Code QA continued; owner notified to reconnect profiles.
+
 Controlling inventory: `traderlink-coaching-complete-qa-20261001.md` in the canonical repository.
 
 ## Confirmed corrections

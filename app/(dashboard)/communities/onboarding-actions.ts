@@ -17,6 +17,13 @@ export async function onboardDiscordCommunityAction(formData:FormData):Promise<v
   const discordGuildId=value(formData,"discordGuildId");
   if(discordGuildId!==PRIVATE_PILOT_GUILD_ID) throw new Error("Communities onboarding is currently limited to the private pilot server.");
   const community=withPlatformDatabase({mode:"runtime"},database=>database.transaction(()=>{
+    // Re-entering onboarding must not recreate or reset an existing community.
+    // Require both the established owner and verified Discord ownership.
+    const existing=database.prepare(`SELECT c.slug FROM traderlink_communities c
+      JOIN traderlink_community_discord_guild_candidates g
+        ON g.discord_guild_id=c.discord_guild_id AND g.user_id=c.owner_user_id
+      WHERE c.discord_guild_id=? AND c.owner_user_id=? AND g.guild_owner=1`).get(discordGuildId,identity.scope.userId) as {slug:string}|undefined;
+    if(existing) return existing;
     const permissions=new TraderLinkCommunityRepository(database);
     const created=permissions.createFromVerifiedDiscordOwner({ownerUserId:identity.scope.userId,discordGuildId,slug:value(formData,"slug"),displayName:value(formData,"displayName"),timestamp});
     const platform=new TraderLinkCommunityPlatformRepository(database); platform.ensureDefaultAudience({communityId:created.communityId,actorUserId:identity.scope.userId,atUtc:timestamp});

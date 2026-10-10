@@ -113,7 +113,18 @@ export class TraderLinkCommunityCoachingProgramService{
    const add=this.database.prepare(`INSERT INTO traderlink_community_coaching_review_trades(review_id,community_id,round_trip_id,ordinal,selected_by_user_id,selection_source,workflow_state,updated_at_utc,trade_label) VALUES(?,?,?,?,?,?,'queued',?,?)`);
    ids.forEach((tradeId,index)=>{const trade=available.get(tradeId)!;add.run(id,input.communityId,tradeId,index,input.actor.userId,isCoach?"coach":"student",input.atUtc,`${trade.symbol} · ${trade.openedAtUtc.slice(0,10)} · ${trade.direction}`);});
    if(isCoach&&input.workspaceKind)this.setWorkspace({...input,workspaceKind:input.workspaceKind,reviewId:id,focusAreas:input.focusAreas??[]});
-   if(!isCoach){const item=this.database.prepare("SELECT focus_areas_json FROM traderlink_community_coaching_plan_items WHERE plan_id=? AND item_type='trade_review' LIMIT 1").get(relation.plan_id) as {focus_areas_json:string}|undefined;this.database.prepare("UPDATE traderlink_community_coaching_trade_reviews SET workspace_kind='trade',focus_areas_json=? WHERE review_id=?").run(JSON.stringify(parseCoachingFocus(JSON.parse(item?.focus_areas_json??"[]"))),id);}
+   if(!isCoach){
+    const accepted=this.database.prepare("SELECT terms_json FROM traderlink_community_coaching_agreements WHERE relationship_id=? AND community_id=? AND status='accepted'").get(input.relationshipId,input.communityId) as {terms_json:string}|undefined;
+    let focus:unknown=[];
+    if(accepted){
+     const terms=JSON.parse(accepted.terms_json) as import("../contracts/coaching-agreements").CoachingAgreementTerms;
+     focus=terms.items.find(item=>item.itemType==='trade_review')?.focusAreas??[];
+    }else{
+     const item=this.database.prepare("SELECT focus_areas_json FROM traderlink_community_coaching_plan_items WHERE plan_id=? AND item_type='trade_review' LIMIT 1").get(relation.plan_id) as {focus_areas_json:string}|undefined;
+     focus=JSON.parse(item?.focus_areas_json??"[]");
+    }
+    this.database.prepare("UPDATE traderlink_community_coaching_trade_reviews SET workspace_kind='trade',focus_areas_json=? WHERE review_id=?").run(JSON.stringify(parseCoachingFocus(focus)),id);
+   }
   })();
   return id;
  }

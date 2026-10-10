@@ -44,7 +44,8 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
   const [billing, setBilling] = useState<string>(plan?.billingCadence??"monthly");
   const [quote, setQuote] = useState(plan?.quoteRequired??false);
   const [capacity, setCapacity] = useState(String(plan?.studentCapacity??10));
-  const roles = useMemo(() => Array.from(new Set([...snapshot.audiences.flatMap(x => x.discordRoleIds), ...snapshot.staffRoles.flatMap(x => x.discordRoleIds)])), [snapshot]);
+  const [coachingRole, setCoachingRole] = useState(plan?.requiredDiscordRoleId??"");
+  const roles = useMemo(() => Array.from(new Set([...snapshot.audiences.flatMap(x => x.discordRoleIds), ...snapshot.staffRoles.flatMap(x => x.discordRoleIds), ...(plan?.requiredDiscordRoleId?[plan.requiredDiscordRoleId]:[])])), [snapshot,plan]);
   const active = PLAN_OFFERS.filter(offer => selected.includes(offer.type));
   const toggle = (type:ItemType) => setSelected(current => current.includes(type) ? current.filter(item => item!==type) : [...current, type]);
   const update = (type:ItemType, patch:Partial<OfferSettings>) => setSettings(current => ({...current, [type]:{...current[type], ...patch}}));
@@ -108,8 +109,9 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
           <Box component="details" sx={{border:1, borderColor:"divider", borderRadius:2, p:2}}>
             <Box component="summary" sx={{cursor:"pointer", fontWeight:700}}>Discord enrollment settings</Box>
             <Stack spacing={2} sx={{mt:2}}>
-              <TextField defaultValue={plan?.requiredDiscordRoleId??roles[0]??""} fullWidth label="Discord coaching role" name="requiredDiscordRoleId" required select={roles.length>0}>
-                {roles.map(role => <MenuItem key={role} value={role}>{role}</MenuItem>)}
+              <TextField value={coachingRole} onChange={event=>setCoachingRole(event.target.value)} fullWidth label="Discord coaching role" name="requiredDiscordRoleId" select={roles.length>0}>
+                <MenuItem value="">Select role</MenuItem>
+                {roles.map(role => <MenuItem key={role} value={role}>{snapshot.staffRoles.find(item=>item.discordRoleIds.includes(role))?.name??role}</MenuItem>)}
               </TextField>
               <TextField defaultValue={plan?.paymentInstructions??""} fullWidth multiline minRows={2} label="Payment and enrollment instructions" name="paymentInstructions"/>
               <TextField defaultValue={plan?.autoArchiveAfterDays??""} fullWidth label="Archive paused students after" name="autoArchiveAfterDays" select>
@@ -139,8 +141,8 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
             </Box>)}
             {description ? <Typography variant="body2" sx={{whiteSpace:"pre-wrap"}}>{description}</Typography> : null}
             {tooLong ? <Typography color="error" role="alert">Plan details exceed 4,000 characters.</Typography> : null}
-            <Button disabled={isReview || !active.length || tooLong} name="intent" type="submit" value={plan?"save":"draft"} variant="outlined">{plan?"Save changes":"Save draft"}</Button>
-            {plan?.status!=="active"?<Button disabled={isReview || !active.length || tooLong || !roles.length} name="intent" type="submit" value="publish" variant="contained">Publish plan</Button>:null}
+            <Button disabled={isReview || !active.length || tooLong || (plan?.status==="active"&&!coachingRole)} name="intent" type="submit" value={plan?"save":"draft"} variant="outlined">{plan?"Save changes":"Save draft"}</Button>
+            {plan?.status!=="active"?<Button disabled={isReview || !active.length || tooLong || !coachingRole} name="intent" type="submit" value="publish" variant="contained">Publish plan</Button>:null}
             {onCancel?<Button type="button" onClick={onCancel}>Cancel edit</Button>:null}
             <Button href="#coach-plan-builder" sx={{display:{lg:"none"}}}>Back to plan</Button>
           </Stack>

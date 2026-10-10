@@ -51,7 +51,11 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
         ? current.watchlists.some(watchlist=>watchlist.watchlistId===watchlistId&&watchlist.publishingMode==="tracked_page")
         : true;
     if(tracked)repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:path??`/communities/${communitySlug}`,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});
-    return current;
+    const planCounts=database.prepare(`SELECT plan_id, count(*) AS count
+      FROM traderlink_community_coaching_relationships
+      WHERE community_id=? AND status='active' GROUP BY plan_id`).all(current.community.communityId) as {plan_id:string;count:number}[];
+    const counts=new Map(planCounts.map(row=>[row.plan_id,row.count]));
+    return {...current,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
   });
   return Object.freeze({snapshot,isReview:false});
 }
