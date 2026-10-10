@@ -170,3 +170,8 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - Chrome confirmed the previous-review next-focus reminder in Bullrun's upcoming review. The Analysis tools drawer returned unavailable. Source inspection found that the preferred trade grant hid a separate analytics grant for the same student account.
 - Analysis scope now combines active grants only for the original relationship, coach, student and selected Journal account. Revoking analytics removes analytics access even when trade sharing remains; revoking trades preserves analytics without trade evidence.
 - Focused synthetic remediation fixture passes for the combined grants and revocations. This does not yet prove the hosted drawer is repaired: corrected candidate deployment and browser retest remain required. No Journal sharing was changed on staging, and no UI copy/Help changes were needed.
+
+## Focused QA harness reconciliation
+
+- Updated four isolated scripts that still assumed removed viewer-auth calls, no retained ended-history selection, or no history fallback query. Assertions now cover the authenticated attachment actor/community, fresh-request denial, own ended history and both student/coach history destinations.
+- All eight isolated checks pass sequentially: review context, prior-review reminders, work filters, student selection, attachment route, action navigation, index navigation and plan-role selection. These are focused source checks, not a substitute for real database authorization fixtures or hosted end-to-end QA.

@@ -21,7 +21,7 @@ const render = () => output.StudentCoachingWorkspace({snapshot, isReview: false}
 let tree = render();
 let [selector, workspace] = tree.props.children;
 assert.equal(selector.props.label, 'Coach and plan');
-assert.deepEqual(Array.from(selector.props.children, item => item.props.value), ['a', 'b']);
+assert.deepEqual(Array.from(selector.props.children, item => item.props.value), ['a', 'b', 'ended']);
 assert.equal(workspace.props.relationshipId, 'a');
 assert.equal(workspace.key, 'a');
 selector.props.onChange({target: {value: 'b'}});
@@ -38,5 +38,7 @@ snapshot.relationships = [row('a')];
 selection = undefined;
 assert.equal(render().props.children[0], null, 'One relationship does not need a selector');
 snapshot.relationships = [row('foreign', 'other-student'), row('ended', 'student', 'ended')];
+assert.equal(render().props.children[1].props.relationshipId, 'ended', 'Original student can select retained ended history');
+snapshot.relationships = [row('foreign', 'other-student')];
 assert.equal(render().props.title, 'No active coaching');
-console.log('PASS: own active coach/plan options, switching and remounting, foreign/stale fallback, single and empty states');
+console.log('PASS: own active and ended coach/plan options, switching and remounting, foreign/stale fallback, single and empty states');

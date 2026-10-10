@@ -28,6 +28,7 @@ vm.runInNewContext(compiled, {
     if (id === 'next/cache') return { refresh: () => events.push(['refresh']), revalidatePath: value => events.push(['revalidate', value]) };
     if (id === 'next/navigation') return { redirect: value => { throw new Error(`Unexpected redirect: ${value}`); } };
     if (id.endsWith('/require-platform-request-scope')) return { requireTraderLinkPlatformPageIdentity: async () => ({ scope: { userId: 'qa-coach' } }) };
+    if (id.endsWith('/community-request-access')) return {requireCommunityRequestAccess: async input => {assert.equal(input.userId,'qa-coach');if(deny)throw new Error('Access denied');}};
     if (id.endsWith('/open-platform-database')) return { withPlatformDatabase: (_options, callback) => callback({ prepare: () => ({ get: () => ({ community_id: 'qa-community' }) }) }) };
     if (id.endsWith('/platform-migration-contract')) return { createCanonicalUtcTimestamp: () => '2026-09-28T00:00:00.000Z' };
     if (id.endsWith('/traderlink-community-viewer')) return { resolveTraderLinkCommunityViewer: () => ({ userId: 'qa-coach' }) };

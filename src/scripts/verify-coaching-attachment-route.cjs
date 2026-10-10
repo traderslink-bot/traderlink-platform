@@ -10,10 +10,9 @@ const denied = code => Object.assign(new Error(code), {code, platform: true});
 vm.runInNewContext(ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022}}).outputText, {
   exports: output, Response, Uint8Array,
   require(id) {
-    if (id.endsWith('/require-platform-request-scope')) return {requireTraderLinkPlatformRequestIdentity() {if(failureAt === 'identity') throw failure; return {};}};
+    if (id.endsWith('/require-platform-request-scope')) return {requireTraderLinkPlatformRequestIdentity() {if(failureAt === 'identity') throw failure; return {scope:{userId:'student'},displayName:'Student'};}};
     if (id.endsWith('/open-readonly-platform-database')) return {withReadonlyPlatformDatabase(_options, read) {databaseReads++; return read({prepare: () => ({get: () => missingCommunity ? undefined : {community_id: 'community'}})});}};
-    if (id.endsWith('/traderlink-community-viewer')) return {resolveTraderLinkCommunityViewer() {if(failureAt === 'viewer') throw failure; return {userId: 'student'};}};
-    if (id.endsWith('/traderlink-community-coaching-program-service')) return {TraderLinkCommunityCoachingProgramService: class {readImage() {if(failureAt === 'image') throw failure; return {content: Buffer.from([1,2,3]), mediaType: 'image/png', filename};}}};
+    if (id.endsWith('/traderlink-community-coaching-program-service')) return {TraderLinkCommunityCoachingProgramService: class {readImage(input) {assert.equal(input.actor.userId,'student');assert.equal(input.communityId,'community');assert.equal(input.attachmentId,'image');if(failureAt === 'image') throw failure; return {content: Buffer.from([1,2,3]), mediaType: 'image/png', filename};}}};
     if (id.endsWith('/platform-migration-contract')) return {isTraderLinkPlatformError: error => error?.platform === true};
     throw new Error(`Unexpected import ${id}`);
   },
@@ -25,7 +24,7 @@ const context = {params: Promise.resolve({communitySlug: 'test', attachmentId: '
     ['identity', 'TRADERLINK_WORKSPACE_ACCESS_DENIED'],
     ['identity', 'TRADERLINK_AUTH_SESSION_INVALID'],
     ['identity', 'TRADERLINK_DASHBOARD_ACCESS_DENIED'],
-    ['viewer', 'TRADERLINK_WORKSPACE_NOT_FOUND'],
+    ['image', 'TRADERLINK_WORKSPACE_NOT_FOUND'],
     ['image', 'TRADERLINK_WORKSPACE_ACCESS_DENIED'],
     ['image', 'TRADERLINK_ACCOUNT_ACCESS_DENIED'],
     ['image', 'TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED'],

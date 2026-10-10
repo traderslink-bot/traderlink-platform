@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const source = fs.readFileSync(path.resolve(__dirname, '../../app/(dashboard)/communities/coaching/page.tsx'), 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-async function check(capabilities, enrolled, expected, communities = [{ communityId: 'test', slug: 'test-community' }]) {
+async function check(capabilities, enrolled, expected, communities = [{ communityId: 'test', slug: 'test-community' }], history) {
   const output = {};
   let destination;
   vm.runInNewContext(compiled, { exports: output, require(id) {
@@ -15,7 +15,8 @@ async function check(capabilities, enrolled, expected, communities = [{ communit
       listForUser() { return communities; }
       resolveAccess() { return { capabilities }; }
     } };
-    if (id.endsWith('/open-readonly-platform-database')) return { withReadonlyPlatformDatabase: (_, callback) => callback({ prepare: () => ({ get: (community, user) => {
+    if (id.endsWith('/open-readonly-platform-database')) return { withReadonlyPlatformDatabase: (_, callback) => callback({ prepare: sql => ({ get: (community, user) => {
+      if(sql.includes('SELECT c.slug')){assert.equal(community,'student');assert.equal(user,'student');return history;}
       assert.equal(community, 'test'); assert.equal(user, 'student');
       return enrolled ? { found: 1 } : undefined;
     } }) }) };
@@ -33,5 +34,7 @@ async function check(capabilities, enrolled, expected, communities = [{ communit
   await check(['community.coaching.offer'], true, '/communities/test-community/coaching');
   await check([], false, '/communities');
   await check([], false, '/communities', []);
-  console.log('PASS: eight coaching entry-point cases; student ownership and destination permissions preserved');
+  await check([], false, '/communities/past/coaching', [], {slug:'past',student_user_id:'student'});
+  await check([], false, '/communities/past/workspace/students', [], {slug:'past',student_user_id:'other'});
+  console.log('PASS: ten coaching entry-point cases; student ownership, retained history and destination permissions preserved');
 })().catch(error => { console.error(error); process.exitCode = 1; });
