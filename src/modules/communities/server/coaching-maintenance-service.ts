@@ -4,6 +4,7 @@ import { assertCanonicalUtcTimestamp } from "../../platform/server/database/plat
 import { CoachingDiscordRefreshService } from "./coaching-discord-refresh-service";
 import { CoachingAgreementService } from "./coaching-agreement-service";
 import { coachingEntitlement, archivePausedCoaching } from "./coaching-access-lifecycle";
+import { pruneCommunityNamedActivity } from "./community-activity-retention";
 
 /** One bounded pass; callers own the connection and must close it in finally. */
 export async function runCoachingMaintenance(
@@ -15,6 +16,7 @@ export async function runCoachingMaintenance(
   const limit = options.limit ?? 5;
   if (!Number.isInteger(limit) || limit < 1 || limit > 25) throw new Error("Invalid maintenance batch size.");
   const token = options.botToken?.trim();
+  const activityRetention = pruneCommunityNamedActivity(db, atUtc);
   const access = token
     ? await new CoachingDiscordRefreshService(db, token, options.request).runAvailable(limit, atUtc)
     : { refreshed: 0, unavailable: 0 };
@@ -50,7 +52,7 @@ export async function runCoachingMaintenance(
     await setImmediate();
   }
   const archived = archivePausedCoaching(db, atUtc);
-  return { ok: failed === 0, access, checked: rows.length, created, failed, archived, roleRefreshConfigured: Boolean(token) };
+  return { ok: failed === 0, access, checked: rows.length, created, failed, archived, activityRetention, roleRefreshConfigured: Boolean(token) };
 }
 
 /** Shared by the hosted timer: a slow provider pass never overlaps the next tick. */

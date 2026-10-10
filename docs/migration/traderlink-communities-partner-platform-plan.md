@@ -1,5 +1,11 @@
 # TraderLink Communities Partner Platform Plan
 
+**Controlling remaining-launch work:** [Complete launch plan](traderlink-communities-coaching-launch-plan.md)
+and [progress](traderlink-communities-coaching-launch-progress.md). Owner approved
+D1–D7, explicitly rejected the activity disclosure/similar added copy, deferred
+referral earnings, and requested dormant customizable coaching-fee commissions.
+Implementation and full QA are authorized; production deployment is prohibited.
+
 **Paused coach messaging correction:** [Approved correction and staging acceptance](traderlink-coaching-paused-message-progress.md).
 
 **Status:** Page composition and initial Light/Dark visual direction are owner

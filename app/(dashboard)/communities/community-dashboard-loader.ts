@@ -6,6 +6,7 @@ import { TraderLinkCommunityPlatformRepository } from "@/src/modules/communities
 import { createTraderLinkCommunityReviewFixture } from "@/src/modules/communities/server/traderlink-community-review-fixture";
 import { resolveTraderLinkCommunityViewer } from "@/src/modules/communities/server/traderlink-community-viewer";
 import { notFound } from "next/navigation";
+import { isCommunityContentActivityPath } from "@/src/modules/communities/server/community-activity-scope";
 
 export async function loadCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}>>{
   if(communitySlug==="review") {
@@ -50,7 +51,8 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
       : watchlistId
         ? current.watchlists.some(watchlist=>watchlist.watchlistId===watchlistId&&watchlist.publishingMode==="tracked_page")
         : true;
-    if(tracked)repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:path??`/communities/${communitySlug}`,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});
+    const activityPath=path??`/communities/${communitySlug}`;
+    if(tracked&&isCommunityContentActivityPath(communitySlug,activityPath))repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:activityPath,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});
     const planCounts=database.prepare(`SELECT plan_id, count(*) AS count
       FROM traderlink_community_coaching_relationships
       WHERE community_id=? AND status='active' GROUP BY plan_id`).all(current.community.communityId) as {plan_id:string;count:number}[];
