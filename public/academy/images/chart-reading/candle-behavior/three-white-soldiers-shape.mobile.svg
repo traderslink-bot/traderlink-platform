@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720.0 595.0" role="img">
+  <title>Three white soldiers</title>
+  <rect x="0" y="0" width="720" height="595.0" fill="#10151e" />
+  <rect x="0" y="0" width="720" height="54" fill="#283443" />
+  <text x="22" y="50" font-family="Arial, sans-serif" font-size="49.84615384615385" fill="#e1e7ef">Three white soldiers</text>
+  <line x1="240" y1="168" x2="240" y2="342" stroke="#e1e7ef" stroke-width="2" />
+  <rect x="208" y="180" width="64" height="150" fill="#26b99a" />
+  <line x1="360" y1="123" x2="360" y2="257" stroke="#e1e7ef" stroke-width="2" />
+  <rect x="328" y="135" width="64" height="110" fill="#26b99a" />
+  <line x1="480" y1="78" x2="480" y2="207" stroke="#e1e7ef" stroke-width="2" />
+  <rect x="448" y="90" width="64" height="105" fill="#26b99a" />
+  <text x="30" y="480.0" font-family="Arial, sans-serif" font-size="33.23076923076923" fill="#e1e7ef">Each new open is inside the</text>
+  <text x="30" y="517.44" font-family="Arial, sans-serif" font-size="33.23076923076923" fill="#e1e7ef">previous candle body.</text>
+</svg>

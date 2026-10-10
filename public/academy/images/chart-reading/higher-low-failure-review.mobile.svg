@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 760 1022.4772727272727">
+  <title id="title">Higher Low Failure Review</title>
+  <desc id="desc">Educational candlestick chart showing an uptrend losing the latest higher low and shifting into a spread/depth area with volume context.</desc>
+  <rect width="760" height="1022.4772727272727" rx="18" fill="#07111f" />
+  <text x="36" y="54" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="53" font-weight="700">Higher Low Failure</text>
+  <text x="36" y="120.25" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="53" font-weight="700">Review</text>
+  <text x="36" y="194.5" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">When the latest higher-low area</text>
+  <text x="36" y="239.5" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">fails, watch whether the structure</text>
+  <text x="36" y="284.5" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">changed.</text>
+  <svg x="0" y="333.5" width="760" height="528.9772727272727" viewBox="28 40 704 490.0" overflow="hidden">
+    <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554" />
+    <g stroke="#18304e" stroke-width="1">
+      <line x1="58" y1="116" x2="704" y2="116" />
+      <line x1="58" y1="166" x2="704" y2="166" />
+      <line x1="58" y1="216" x2="704" y2="216" />
+      <line x1="58" y1="266" x2="704" y2="266" />
+    </g>
+    <rect x="350" y="210" width="172" height="36" fill="#1d4ed8" opacity=".18" />
+    <line x1="350" y1="210" x2="522" y2="210" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
+    <line x1="350" y1="246" x2="522" y2="246" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
+    <g stroke-linecap="round" stroke-width="3">
+      <g stroke="#21c784" fill="#21c784">
+        <line x1="96" y1="270" x2="96" y2="324" />
+        <rect x="86" y="288" width="20" height="22" />
+        <line x1="150" y1="220" x2="150" y2="292" />
+        <rect x="140" y="240" width="20" height="34" />
+        <line x1="204" y1="238" x2="204" y2="306" />
+        <rect x="194" y="256" width="20" height="30" />
+        <line x1="258" y1="174" x2="258" y2="254" />
+        <rect x="248" y="194" width="20" height="40" />
+        <line x1="312" y1="214" x2="312" y2="284" />
+        <rect x="302" y="234" width="20" height="30" />
+        <line x1="366" y1="140" x2="366" y2="224" />
+        <rect x="356" y="160" width="20" height="44" />
+        <line x1="420" y1="208" x2="420" y2="268" />
+        <rect x="410" y="224" width="20" height="28" />
+      </g>
+      <g stroke="#ef4444" fill="#ef4444">
+        <line x1="474" y1="166" x2="474" y2="250" />
+        <rect x="464" y="188" width="20" height="42" />
+        <line x1="528" y1="222" x2="528" y2="304" />
+        <rect x="518" y="242" width="20" height="42" />
+        <line x1="582" y1="246" x2="582" y2="326" />
+        <rect x="572" y="266" width="20" height="40" />
+        <line x1="636" y1="236" x2="636" y2="318" />
+        <rect x="626" y="256" width="20" height="42" />
+      </g>
+    </g>
+    <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+      <text x="138" y="214" fill="#bbf7d0" font-size="36">HH</text>
+      <text x="198" y="322" fill="#bbf7d0" font-size="36">HL</text>
+      <text x="350" y="132" fill="#bbf7d0" font-size="36">HH</text>
+    </g>
+    <path d="M506 244 L532 268" stroke="#fecaca" stroke-width="2" />
+    <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" />
+    <text x="44" y="410.0" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">Volume</text>
+    <line x1="58" y1="501.0" x2="704" y2="501.0" stroke="#303a49" />
+    <rect x="87.0" y="479.3333333333333" width="18" height="21.666666666666664" fill="#21c784" />
+    <rect x="141.0" y="484.75" width="18" height="16.25" fill="#21c784" />
+    <rect x="195.0" y="479.3333333333333" width="18" height="21.666666666666664" fill="#21c784" />
+    <rect x="249.0" y="473.9166666666667" width="18" height="27.083333333333336" fill="#21c784" />
+    <rect x="303.0" y="479.3333333333333" width="18" height="21.666666666666664" fill="#21c784" />
+    <rect x="357.0" y="482.0416666666667" width="18" height="18.958333333333336" fill="#21c784" />
+    <rect x="411.0" y="479.3333333333333" width="18" height="21.666666666666664" fill="#21c784" />
+    <rect x="465.0" y="476.625" width="18" height="24.375" fill="#ef4444" />
+    <rect x="519.0" y="436.0" width="18" height="65.0" fill="#ef4444" />
+    <rect x="573.0" y="457.6666666666667" width="18" height="43.33333333333333" fill="#ef4444" />
+    <rect x="627.0" y="463.0833333333333" width="18" height="37.91666666666667" fill="#ef4444" />
+  </svg>
+  <text x="36" y="897.4772727272727" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="36">Latest higher low zone</text>
+  <text x="36" y="952.4772727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">Latest HL</text>
+</svg>

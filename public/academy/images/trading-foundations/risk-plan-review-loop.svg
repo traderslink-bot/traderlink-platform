@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="396" viewBox="0 0 760 396" role="img" aria-labelledby="title desc">
   <title id="title">Risk Plan And Review Loop</title>
   <desc id="desc">Trading review dashboard showing a risk plan, position size, stop or invalidation area, execution notes, and post-trade review loop.</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#08111f"/>
-      <stop offset="1" stop-color="#111827"/>
+      <stop offset="0" stop-color="#08111f" />
+      <stop offset="1" stop-color="#111827" />
     </linearGradient>
     <style>
       .panel{fill:url(#bg);stroke:#24405f;stroke-width:1.5}
@@ -24,37 +24,37 @@
       .grid{stroke:#24364f;stroke-width:1}
     </style>
   </defs>
-  <rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
+  <rect class="panel" x="14" y="14" width="732" height="368" rx="8" />
   <text class="txt title" x="34" y="46">Plan risk before the trade, review behavior after it</text>
   <text class="txt small muted" x="34" y="68">Course 1 keeps risk concrete: invalidation, size, stop behavior, and completed-trade review.</text>
   <g transform="translate(42 98)">
-    <rect class="box" x="0" y="0" width="206" height="244" rx="7"/>
+    <rect class="box" x="0" y="0" width="206" height="238" rx="7" />
     <text class="txt label" x="18" y="30">Pre-trade plan</text>
     <text class="txt small muted" x="18" y="62">Setup criteria written</text>
     <text class="txt small muted" x="18" y="90">Risk area defined</text>
     <text class="txt small muted" x="18" y="118">Position size checked</text>
     <text class="txt small muted" x="18" y="146">Session notes added</text>
     <text class="txt small muted" x="18" y="174">Stop or invalidation chosen</text>
-    <rect class="chart" x="18" y="196" width="170" height="28" rx="4"/>
-    <rect class="cyan" x="30" y="207" width="36" height="6"/>
-    <rect class="amber" x="76" y="207" width="36" height="6"/>
-    <rect class="red" x="122" y="207" width="36" height="6"/>
+    <rect class="chart" x="18" y="196" width="170" height="28" rx="4" />
+    <rect class="cyan" x="30" y="207" width="36" height="6" />
+    <rect class="amber" x="76" y="207" width="36" height="6" />
+    <rect class="red" x="122" y="207" width="36" height="6" />
   </g>
   <g transform="translate(282 98)">
-    <rect class="chart" x="0" y="0" width="214" height="244" rx="7"/>
-    <line class="grid" x1="0" y1="52" x2="214" y2="52"/>
-    <line class="grid" x1="0" y1="104" x2="214" y2="104"/>
-    <line class="grid" x1="0" y1="156" x2="214" y2="156"/>
-    <line class="risk" x1="0" y1="168" x2="214" y2="168"/>
+    <rect class="chart" x="0" y="0" width="214" height="214" rx="7" />
+    <line class="grid" x1="0" y1="52" x2="214" y2="52" />
+    <line class="grid" x1="0" y1="104" x2="214" y2="104" />
+    <line class="grid" x1="0" y1="156" x2="214" y2="156" />
+    <line class="risk" x1="0" y1="168" x2="214" y2="168" />
     <text class="txt small amber" x="12" y="190">Invalidation area</text>
-    <polyline class="line" points="18,136 48,118 78,128 108,86 138,94 168,72 196,96" fill="none"/>
-    <circle class="cyan" cx="48" cy="118" r="5"/>
-    <circle class="amber" cx="108" cy="86" r="5"/>
-    <circle class="red" cx="196" cy="96" r="5"/>
+    <polyline class="line" points="18,136 48,118 78,128 108,86 138,94 168,72 196,96" fill="none" />
+    <circle class="cyan" cx="48" cy="118" r="5" />
+    <circle class="amber" cx="108" cy="86" r="5" />
+    <circle class="red" cx="196" cy="96" r="5" />
     <text class="txt small muted" x="12" y="28">Chart notes</text>
   </g>
   <g transform="translate(532 98)">
-    <rect class="box" x="0" y="0" width="180" height="244" rx="7"/>
+    <rect class="box" x="0" y="0" width="180" height="208" rx="7" />
     <text class="txt label" x="18" y="30">Post-trade review</text>
     <text class="txt small muted" x="18" y="62">Planned risk</text>
     <text class="txt small muted" x="18" y="88">Actual risk</text>
@@ -63,14 +63,14 @@
     <text class="txt small muted" x="18" y="166">Rule follow-through</text>
     <text class="txt small muted" x="18" y="192">One improvement note</text>
   </g>
-  <g transform="translate(124 364)">
-    <circle class="cyan" cx="0" cy="0" r="7"/>
-    <line class="line" x1="10" y1="0" x2="166" y2="0"/>
-    <circle class="amber" cx="180" cy="0" r="7"/>
-    <line class="line" x1="190" y1="0" x2="346" y2="0"/>
-    <circle class="red" cx="360" cy="0" r="7"/>
-    <line class="line" x1="370" y1="0" x2="526" y2="0"/>
-    <circle class="cyan" cx="540" cy="0" r="7"/>
+  <g transform="translate(124 350)">
+    <circle class="cyan" cx="0" cy="0" r="7" />
+    <line class="line" x1="10" y1="0" x2="166" y2="0" />
+    <circle class="amber" cx="180" cy="0" r="7" />
+    <line class="line" x1="190" y1="0" x2="346" y2="0" />
+    <circle class="red" cx="360" cy="0" r="7" />
+    <line class="line" x1="370" y1="0" x2="526" y2="0" />
+    <circle class="cyan" cx="540" cy="0" r="7" />
     <text class="txt small muted" x="-20" y="24">Plan</text>
     <text class="txt small muted" x="154" y="24">Execute</text>
     <text class="txt small muted" x="332" y="24">Review</text>

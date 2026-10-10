@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="1869" viewBox="0 0 600 1869" role="img"><title>Clean Versus Cluttered Level Map</title><desc>Enlarged labels with original plotted shapes for small screens.</desc><rect width="600" height="1869" rx="14" fill="#07111f"/><text x="20" y="70" font-size="42" fill="#e8f1ff" font-family="Arial,sans-serif">Clean Versus Cluttered</text><text x="20" y="122" font-size="42" fill="#e8f1ff" font-family="Arial,sans-serif">Level Map</text><text x="20" y="178" font-size="30" fill="#8ea6c8" font-family="Arial,sans-serif">A useful level map makes price</text><text x="20" y="218" font-size="30" fill="#8ea6c8" font-family="Arial,sans-serif">location easier to read.</text><text x="20" y="278" font-size="34" fill="#e8f1ff" font-family="Arial,sans-serif">Clean level map</text><svg x="20" y="294" width="560" height="420" viewBox="0 0 400 300"><g xmlns="http://www.w3.org/2000/svg">
+    <rect width="400" height="300" rx="14" fill="#0b1626" stroke="#1f3554" />
+    <g stroke="#18304e" stroke-width="1">
+      <line x1="28" y1="78" x2="372" y2="78" /><line x1="28" y1="126" x2="372" y2="126" /><line x1="28" y1="174" x2="372" y2="174" /><line x1="28" y1="222" x2="372" y2="222" />
+    </g>
+    <rect x="38" y="206" width="322" height="30" fill="#1d4ed8" opacity=".18" />
+    <line x1="38" y1="206" x2="360" y2="206" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
+    <line x1="38" y1="236" x2="360" y2="236" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
+    <rect x="38" y="92" width="322" height="30" fill="#f59e0b" opacity=".16" />
+    <line x1="38" y1="92" x2="360" y2="92" stroke="#fbbf24" stroke-width="2" stroke-dasharray="7 7" />
+    <line x1="38" y1="122" x2="360" y2="122" stroke="#fbbf24" stroke-width="2" stroke-dasharray="7 7" />
+    <line x1="38" y1="62" x2="360" y2="62" stroke="#ef4444" stroke-width="2" stroke-dasharray="5 7" />
+    <line x1="38" y1="254" x2="360" y2="254" stroke="#ef4444" stroke-width="2" stroke-dasharray="5 7" />
+    <g stroke-linecap="round" stroke-width="3">
+      <g stroke="#21c784" fill="#21c784">
+        <line x1="70" y1="220" x2="70" y2="258" /><rect x="61" y="230" width="18" height="16" />
+        <line x1="118" y1="196" x2="118" y2="244" /><rect x="109" y="210" width="18" height="22" />
+        <line x1="166" y1="166" x2="166" y2="224" /><rect x="157" y="182" width="18" height="28" />
+        <line x1="214" y1="132" x2="214" y2="198" /><rect x="205" y="150" width="18" height="32" />
+      </g>
+      <g stroke="#ef4444" fill="#ef4444">
+        <line x1="262" y1="116" x2="262" y2="184" /><rect x="253" y="134" width="18" height="34" />
+        <line x1="310" y1="126" x2="310" y2="190" /><rect x="301" y="144" width="18" height="30" />
+      </g>
+    </g>
+    <circle cx="214" cy="166" r="6" fill="#e8f1ff" />
+    <g><circle cx="54.0" cy="191.0" r="15" fill="#07111f" stroke="#9cc8ff" /><text x="46.0" y="200.0" font-size="28" fill="#9cc8ff" font-family="Arial,sans-serif">1</text></g><g><circle cx="240.0" cy="77.0" r="15" fill="#07111f" stroke="#fcd34d" /><text x="232.0" y="86.0" font-size="28" fill="#fcd34d" font-family="Arial,sans-serif">2</text></g><g><circle cx="226.0" cy="47.0" r="15" fill="#07111f" stroke="#fecaca" /><text x="218.0" y="56.0" font-size="28" fill="#fecaca" font-family="Arial,sans-serif">3</text></g><g><circle cx="54.0" cy="263.0" r="15" fill="#07111f" stroke="#fecaca" /><text x="46.0" y="272.0" font-size="28" fill="#fecaca" font-family="Arial,sans-serif">4</text></g><g><circle cx="231.0" cy="162.0" r="15" fill="#07111f" stroke="#e8f1ff" /><text x="223.0" y="171.0" font-size="28" fill="#e8f1ff" font-family="Arial,sans-serif">5</text></g></g>
+  </svg><text x="20" y="779" font-size="30" fill="#9cc8ff" font-family="Arial,sans-serif">1. Nearest support</text><text x="20" y="835" font-size="30" fill="#fcd34d" font-family="Arial,sans-serif">2. Nearest resistance</text><text x="20" y="891" font-size="30" fill="#fecaca" font-family="Arial,sans-serif">3. Next trouble area</text><text x="20" y="947" font-size="30" fill="#fecaca" font-family="Arial,sans-serif">4. Clear invalidation area</text><text x="20" y="1003" font-size="30" fill="#e8f1ff" font-family="Arial,sans-serif">5. Current price</text><text x="20" y="1063" font-size="34" fill="#e8f1ff" font-family="Arial,sans-serif">Cluttered level map</text><svg x="20" y="1079" width="560" height="420" viewBox="0 0 400 300"><g xmlns="http://www.w3.org/2000/svg">
+    <rect width="400" height="300" rx="14" fill="#0b1626" stroke="#1f3554" />
+    <g stroke="#18304e" stroke-width="1">
+      <line x1="28" y1="78" x2="372" y2="78" /><line x1="28" y1="126" x2="372" y2="126" /><line x1="28" y1="174" x2="372" y2="174" /><line x1="28" y1="222" x2="372" y2="222" />
+    </g>
+    <g stroke-width="2" stroke-dasharray="5 6" opacity=".78">
+      <line x1="38" y1="58" x2="360" y2="58" stroke="#fbbf24" /><line x1="38" y1="86" x2="360" y2="86" stroke="#60a5fa" />
+      <line x1="38" y1="102" x2="360" y2="102" stroke="#fbbf24" /><line x1="38" y1="118" x2="360" y2="118" stroke="#60a5fa" />
+      <line x1="38" y1="136" x2="360" y2="136" stroke="#fbbf24" /><line x1="38" y1="152" x2="360" y2="152" stroke="#60a5fa" />
+      <line x1="38" y1="170" x2="360" y2="170" stroke="#fbbf24" /><line x1="38" y1="188" x2="360" y2="188" stroke="#60a5fa" />
+      <line x1="38" y1="206" x2="360" y2="206" stroke="#fbbf24" /><line x1="38" y1="226" x2="360" y2="226" stroke="#60a5fa" />
+      <line x1="38" y1="254" x2="360" y2="254" stroke="#ef4444" />
+    </g>
+    <g stroke-linecap="round" stroke-width="3">
+      <g stroke="#21c784" fill="#21c784">
+        <line x1="70" y1="220" x2="70" y2="258" /><rect x="61" y="230" width="18" height="16" />
+        <line x1="118" y1="196" x2="118" y2="244" /><rect x="109" y="210" width="18" height="22" />
+        <line x1="166" y1="166" x2="166" y2="224" /><rect x="157" y="182" width="18" height="28" />
+        <line x1="214" y1="132" x2="214" y2="198" /><rect x="205" y="150" width="18" height="32" />
+      </g>
+      <g stroke="#ef4444" fill="#ef4444">
+        <line x1="262" y1="116" x2="262" y2="184" /><rect x="253" y="134" width="18" height="34" />
+        <line x1="310" y1="126" x2="310" y2="190" /><rect x="301" y="144" width="18" height="30" />
+      </g>
+    </g>
+    <g fill="#fecaca" font-family="Arial, sans-serif" font-size="12" font-weight="700">
+      </g>
+  <g><circle cx="56.0" cy="267.0" r="15" fill="#07111f" stroke="#e8f1ff" /><text x="48.0" y="276.0" font-size="28" fill="#e8f1ff" font-family="Arial,sans-serif">6</text></g><g><circle cx="186.0" cy="63.0" r="15" fill="#07111f" stroke="#e8f1ff" /><text x="178.0" y="72.0" font-size="28" fill="#e8f1ff" font-family="Arial,sans-serif">7</text></g><g><circle cx="194.0" cy="133.0" r="15" fill="#07111f" stroke="#e8f1ff" /><text x="186.0" y="142.0" font-size="28" fill="#e8f1ff" font-family="Arial,sans-serif">8</text></g><g><circle cx="208.0" cy="235.0" r="15" fill="#07111f" stroke="#e8f1ff" /><text x="200.0" y="244.0" font-size="28" fill="#e8f1ff" font-family="Arial,sans-serif">9</text></g></g>
+  </svg><text x="20" y="1564" font-size="30" fill="#e8f1ff" font-family="Arial,sans-serif">6. Too many small levels</text><text x="20" y="1620" font-size="30" fill="#e8f1ff" font-family="Arial,sans-serif">7. Far-away levels</text><text x="20" y="1676" font-size="30" fill="#e8f1ff" font-family="Arial,sans-serif">8. Repeated lines inside one zone</text><text x="20" y="1732" font-size="30" fill="#e8f1ff" font-family="Arial,sans-serif">9. Harder to read</text><text x="20" y="1788" font-size="30" fill="#8ea6c8" font-family="Arial,sans-serif">A good level map should make price</text><text x="20" y="1828" font-size="30" fill="#8ea6c8" font-family="Arial,sans-serif">location clearer.</text></svg>

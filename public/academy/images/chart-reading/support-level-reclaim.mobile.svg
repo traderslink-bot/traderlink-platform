@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 760 1021.2272727272727">
+  <title id="title">Support Level Reclaim</title>
+  <desc id="desc">Educational candlestick chart showing price losing a support zone, reclaiming it, and holding above the zone.</desc>
+  <rect width="760" height="1021.2272727272727" rx="18" fill="#07111f" />
+  <text x="36" y="54" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="53" font-weight="700">Support Level Reclaim</text>
+  <text x="36" y="128.25" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">Reclaim attempt: watch hold or</text>
+  <text x="36" y="173.25" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">failure behavior.</text>
+  <svg x="0" y="222.25" width="760" height="528.9772727272727" viewBox="28 40 704 490.0" overflow="hidden">
+    <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554" />
+    <g stroke="#18304e" stroke-width="1">
+      <line x1="58" y1="118" x2="704" y2="118" />
+      <line x1="58" y1="170" x2="704" y2="170" />
+      <line x1="58" y1="222" x2="704" y2="222" />
+      <line x1="58" y1="274" x2="704" y2="274" />
+    </g>
+    <rect x="64" y="218" width="626" height="42" fill="#1d4ed8" opacity=".2" />
+    <line x1="64" y1="218" x2="690" y2="218" stroke="#3b82f6" stroke-width="2" stroke-dasharray="7 7" />
+    <line x1="64" y1="260" x2="690" y2="260" stroke="#3b82f6" stroke-width="2" stroke-dasharray="7 7" />
+    <g stroke-linecap="round" stroke-width="3">
+      <g stroke="#21c784" fill="#21c784">
+        <line x1="96" y1="178" x2="96" y2="250" />
+        <rect x="86" y="198" width="20" height="34" />
+        <line x1="294" y1="226" x2="294" y2="312" />
+        <rect x="284" y="248" width="20" height="38" />
+        <line x1="360" y1="206" x2="360" y2="286" />
+        <rect x="350" y="224" width="20" height="42" />
+        <line x1="426" y1="172" x2="426" y2="262" />
+        <rect x="416" y="196" width="20" height="44" />
+        <line x1="492" y1="164" x2="492" y2="246" />
+        <rect x="482" y="184" width="20" height="40" />
+        <line x1="558" y1="152" x2="558" y2="238" />
+        <rect x="548" y="170" width="20" height="42" />
+        <line x1="624" y1="142" x2="624" y2="226" />
+        <rect x="614" y="160" width="20" height="38" />
+      </g>
+      <g stroke="#ef4444" fill="#ef4444">
+        <line x1="162" y1="158" x2="162" y2="260" />
+        <rect x="152" y="178" width="20" height="58" />
+        <line x1="228" y1="210" x2="228" y2="318" />
+        <rect x="218" y="236" width="20" height="58" />
+      </g>
+    </g>
+    <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" />
+    <text x="44" y="410.0" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">Volume</text>
+    <line x1="58" y1="501.0" x2="704" y2="501.0" stroke="#303a49" />
+    <rect x="87.0" y="475.3939393939394" width="18" height="25.606060606060606" fill="#21c784" />
+    <rect x="153.0" y="447.8181818181818" width="18" height="53.18181818181819" fill="#ef4444" />
+    <rect x="219.0" y="437.969696969697" width="18" height="63.03030303030303" fill="#ef4444" />
+    <rect x="285.0" y="445.8484848484849" width="18" height="55.151515151515156" fill="#21c784" />
+    <rect x="351.0" y="436.0" width="18" height="65.0" fill="#21c784" />
+    <rect x="417.0" y="455.6969696969697" width="18" height="45.303030303030305" fill="#21c784" />
+    <rect x="483.0" y="463.57575757575756" width="18" height="37.42424242424243" fill="#21c784" />
+    <rect x="549.0" y="471.45454545454544" width="18" height="29.545454545454543" fill="#21c784" />
+    <rect x="615.0" y="467.5151515151515" width="18" height="33.484848484848484" fill="#21c784" />
+  </svg>
+  <text x="36" y="786.2272727272727" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="36">Support zone</text>
+  <text x="36" y="841.2272727272727" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="36">Initial hold</text>
+  <text x="36" y="896.2272727272727" fill="#fecaca" font-family="Arial, sans-serif" font-size="36">Brief loss of support</text>
+  <text x="36" y="951.2272727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">Reclaim and hold above zone</text>
+</svg>

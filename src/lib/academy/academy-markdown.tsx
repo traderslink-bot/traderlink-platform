@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { AcademyImage } from "./academy-image";
+import mobileImages from "./academy-mobile-images.json";
 
 import {
   getAcademyLesson,
@@ -83,13 +85,8 @@ function renderBlock(block: MarkdownBlock) {
 
   if (block.type === "image") {
     return (
-      <figure key={block.key} className="academy-md-figure">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={block.src} alt={block.alt} className="h-auto w-full" />
-        <a href={block.src} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm underline">
-          View full-size image
-        </a>
-      </figure>
+      <AcademyImage key={block.key} src={block.src} alt={block.alt}
+        mobileSrc={(mobileImages as Record<string, string>)[block.src]} />
     );
   }
 

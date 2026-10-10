@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720.0 595.0" role="img">
+  <title>Three black crows</title>
+  <rect x="0" y="0" width="720" height="595.0" fill="#10151e" />
+  <rect x="0" y="0" width="720" height="54" fill="#283443" />
+  <text x="22" y="50" font-family="Arial, sans-serif" font-size="49.84615384615385" fill="#e1e7ef">Three black crows</text>
+  <line x1="240" y1="128" x2="240" y2="292" stroke="#e1e7ef" stroke-width="2" />
+  <rect x="208" y="140" width="64" height="140" fill="#f16c78" />
+  <line x1="360" y1="208" x2="360" y2="352" stroke="#e1e7ef" stroke-width="2" />
+  <rect x="328" y="220" width="64" height="120" fill="#f16c78" />
+  <line x1="480" y1="273" x2="480" y2="412" stroke="#e1e7ef" stroke-width="2" />
+  <rect x="448" y="285" width="64" height="115" fill="#f16c78" />
+  <text x="30" y="480.0" font-family="Arial, sans-serif" font-size="33.23076923076923" fill="#e1e7ef">Each new open is inside the</text>
+  <text x="30" y="517.44" font-family="Arial, sans-serif" font-size="33.23076923076923" fill="#e1e7ef">previous candle body.</text>
+</svg>

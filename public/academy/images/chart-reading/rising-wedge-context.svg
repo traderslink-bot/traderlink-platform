@@ -1,1 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 570" role="img"><title>Rising wedge</title><rect x="0" y="0" width="720" height="570" fill="#10151e" /><rect x="0" y="0" width="720" height="54" fill="#283443" /><text x="22" y="36" font-family="Arial, sans-serif" font-size="26" fill="#e1e7ef">Rising wedge</text><line x1="120" y1="210" x2="600" y2="110" stroke="#77aaff" stroke-width="2" /><line x1="120" y1="420" x2="600" y2="170" stroke="#77aaff" stroke-width="2" /><line x1="145" y1="339.9791666666667" x2="145" y2="413.9791666666667" stroke="#e1e7ef" stroke-width="2" /><rect x="134" y="351.9791666666667" width="22" height="50" fill="#26b99a" /><line x1="210" y1="186.25" x2="210" y2="260.25" stroke="#e1e7ef" stroke-width="2" /><rect x="199" y="198.25" width="22" height="50" fill="#f16c78" /><line x1="275" y1="272.2708333333333" x2="275" y2="346.2708333333333" stroke="#e1e7ef" stroke-width="2" /><rect x="264" y="284.2708333333333" width="22" height="50" fill="#26b99a" /><line x1="340" y1="159.16666666666666" x2="340" y2="233.16666666666666" stroke="#e1e7ef" stroke-width="2" /><rect x="329" y="171.16666666666666" width="22" height="50" fill="#f16c78" /><line x1="405" y1="204.5625" x2="405" y2="278.5625" stroke="#e1e7ef" stroke-width="2" /><rect x="394" y="216.5625" width="22" height="50" fill="#26b99a" /><line x1="470" y1="132.08333333333331" x2="470" y2="206.08333333333331" stroke="#e1e7ef" stroke-width="2" /><rect x="459" y="144.08333333333331" width="22" height="50" fill="#f16c78" /><line x1="535" y1="136.85416666666666" x2="535" y2="210.85416666666666" stroke="#e1e7ef" stroke-width="2" /><rect x="524" y="148.85416666666666" width="22" height="50" fill="#26b99a" /><text x="30" y="510" font-family="Arial, sans-serif" font-size="24" fill="#e1e7ef">Both boundaries slope up and converge.</text><text x="30" y="550" font-family="Arial, sans-serif" font-size="23" fill="#aeb9c8">A channel has parallel boundaries.</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 720 653.6545454545454">
+  <title>Rising wedge</title>
+  <rect width="720" height="653.6545454545454" fill="#10151e" />
+  <text x="28" y="31.2" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#e1e7ef">Rising wedge</text>
+  <svg x="0" y="46.2" width="720" height="497.45454545454544" viewBox="85.0 75.0 550.0 380.0">
+    <title>Rising wedge</title>
+    <rect x="0" y="0" width="720" height="570" fill="#10151e" />
+    <line x1="120" y1="210" x2="600" y2="110" stroke="#77aaff" stroke-width="2" />
+    <line x1="120" y1="420" x2="600" y2="170" stroke="#77aaff" stroke-width="2" />
+    <line x1="145" y1="339.9791666666667" x2="145" y2="413.9791666666667" stroke="#e1e7ef" stroke-width="2" />
+    <rect x="134" y="351.9791666666667" width="22" height="50" fill="#26b99a" />
+    <line x1="210" y1="186.25" x2="210" y2="260.25" stroke="#e1e7ef" stroke-width="2" />
+    <rect x="199" y="198.25" width="22" height="50" fill="#f16c78" />
+    <line x1="275" y1="272.2708333333333" x2="275" y2="346.2708333333333" stroke="#e1e7ef" stroke-width="2" />
+    <rect x="264" y="284.2708333333333" width="22" height="50" fill="#26b99a" />
+    <line x1="340" y1="159.16666666666666" x2="340" y2="233.16666666666666" stroke="#e1e7ef" stroke-width="2" />
+    <rect x="329" y="171.16666666666666" width="22" height="50" fill="#f16c78" />
+    <line x1="405" y1="204.5625" x2="405" y2="278.5625" stroke="#e1e7ef" stroke-width="2" />
+    <rect x="394" y="216.5625" width="22" height="50" fill="#26b99a" />
+    <line x1="470" y1="132.08333333333331" x2="470" y2="206.08333333333331" stroke="#e1e7ef" stroke-width="2" />
+    <rect x="459" y="144.08333333333331" width="22" height="50" fill="#f16c78" />
+    <line x1="535" y1="136.85416666666666" x2="535" y2="210.85416666666666" stroke="#e1e7ef" stroke-width="2" />
+    <rect x="524" y="148.85416666666666" width="22" height="50" fill="#26b99a" />
+    </svg>
+  <text x="28" y="573.6545454545454" font-family="Arial, sans-serif" font-size="20" fill="#e1e7ef">Both boundaries slope up and converge.</text><text x="28" y="608.6545454545454" font-family="Arial, sans-serif" font-size="20" fill="#aeb9c8">A channel has parallel boundaries.</text></svg>

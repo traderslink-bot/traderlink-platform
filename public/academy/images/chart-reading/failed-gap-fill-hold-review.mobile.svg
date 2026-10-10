@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 760 1076.2272727272727">
+  <title id="title">Failed Gap Fill Hold</title>
+  <desc id="desc">Educational candlestick chart showing price entering a gap area but failing to continue filling the gap and holding above the gap midpoint.</desc>
+  <rect width="760" height="1076.2272727272727" rx="18" fill="#07111f" />
+  <text x="36" y="54" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="53" font-weight="700">Failed Gap Fill Hold</text>
+  <text x="36" y="128.25" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">A gap can partially fill and still</text>
+  <text x="36" y="173.25" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="36">hold above the full gap area.</text>
+  <svg x="0" y="222.25" width="760" height="528.9772727272727" viewBox="28 40 704 490.0" overflow="hidden">
+    <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554" />
+    <g stroke="#18304e" stroke-width="1">
+      <line x1="58" y1="116" x2="704" y2="116" />
+      <line x1="58" y1="166" x2="704" y2="166" />
+      <line x1="58" y1="216" x2="704" y2="216" />
+      <line x1="58" y1="266" x2="704" y2="266" />
+    </g>
+    <rect x="78" y="150" width="600" height="110" fill="#1d4ed8" opacity=".14" />
+    <line x1="78" y1="150" x2="678" y2="150" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
+    <line x1="78" y1="260" x2="678" y2="260" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
+    <line x1="78" y1="205" x2="678" y2="205" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5 7" opacity=".85" />
+    <g stroke-linecap="round" stroke-width="3">
+      <g stroke="#21c784" fill="#21c784">
+        <line x1="112" y1="149" x2="112" y2="181" />
+        <rect x="102" y="158" width="20" height="14" />
+        <line x1="220" y1="176" x2="220" y2="202" />
+        <rect x="210" y="185" width="20" height="14" />
+        <line x1="328" y1="174" x2="328" y2="202" />
+        <rect x="318" y="183" width="20" height="14" />
+        <line x1="436" y1="165" x2="436" y2="197" />
+        <rect x="426" y="174" width="20" height="14" />
+        <line x1="544" y1="150" x2="544" y2="182" />
+        <rect x="534" y="159" width="20" height="14" />
+      </g>
+      <g stroke="#ef4444" fill="#ef4444">
+        <line x1="166" y1="160" x2="166" y2="192" />
+        <rect x="156" y="169" width="20" height="14" />
+        <line x1="274" y1="175" x2="274" y2="202" />
+        <rect x="264" y="184" width="20" height="14" />
+        <line x1="382" y1="174" x2="382" y2="202" />
+        <rect x="372" y="183" width="20" height="14" />
+        <line x1="490" y1="167" x2="490" y2="199" />
+        <rect x="480" y="176" width="20" height="14" />
+      </g>
+    </g>
+    <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+    </g>
+    <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" />
+    <text x="44" y="410.0" font-family="Arial, sans-serif" font-size="36" fill="#e1e7ef">Volume</text>
+    <line x1="58" y1="501.0" x2="704" y2="501.0" stroke="#303a49" />
+    <rect x="103.0" y="448.3809523809524" width="18" height="52.61904761904762" fill="#21c784" />
+    <rect x="157.0" y="448.3809523809524" width="18" height="52.61904761904762" fill="#ef4444" />
+    <rect x="211.0" y="436.0" width="18" height="65.0" fill="#21c784" />
+    <rect x="265.0" y="460.76190476190476" width="18" height="40.23809523809524" fill="#ef4444" />
+    <rect x="319.0" y="460.76190476190476" width="18" height="40.23809523809524" fill="#21c784" />
+    <rect x="373.0" y="460.76190476190476" width="18" height="40.23809523809524" fill="#ef4444" />
+    <rect x="427.0" y="473.14285714285717" width="18" height="27.857142857142854" fill="#21c784" />
+    <rect x="481.0" y="451.4761904761905" width="18" height="49.52380952380952" fill="#ef4444" />
+    <rect x="535.0" y="451.4761904761905" width="18" height="49.52380952380952" fill="#21c784" />
+  </svg>
+  <text x="36" y="786.2272727272727" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="36">Gap zone</text>
+  <text x="36" y="841.2272727272727" fill="#fbbf24" font-family="Arial, sans-serif" font-size="36">Gap midpoint</text>
+  <text x="36" y="896.2272727272727" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="36">Price enters gap</text>
+  <text x="36" y="951.2272727272727" fill="#fecaca" font-family="Arial, sans-serif" font-size="36">Partial fill stops above midpoint</text>
+  <text x="36" y="1006.2272727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">Rebounds within gap</text>
+</svg>

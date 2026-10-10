@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="1280" viewBox="0 0 600 1280" role="img"><title>Bid and ask quote mechanics</title><rect width="600" height="1280" fill="#08111f" /><text x="24" y="55" font-family="Arial,sans-serif" font-size="42" fill="#e8f1ff">Bid and ask are the live</text><text x="24" y="107" font-family="Arial,sans-serif" font-size="42" fill="#e8f1ff">quote, not the last</text><text x="24" y="159" font-family="Arial,sans-serif" font-size="42" fill="#e8f1ff">candle</text><text x="24" y="225" font-family="Arial,sans-serif" font-size="30" fill="#8ea6c8">The last trade can differ from the</text><text x="24" y="265" font-family="Arial,sans-serif" font-size="30" fill="#8ea6c8">price available to enter or exit</text><text x="24" y="305" font-family="Arial,sans-serif" font-size="30" fill="#8ea6c8">now.</text><svg x="24" y="359" width="552" height="410" viewBox="64 100 500 370"><line x1="72" y1="128" x2="548" y2="128" stroke="#182943" />
+  <line x1="72" y1="188" x2="548" y2="188" stroke="#182943" />
+  <line x1="72" y1="248" x2="548" y2="248" stroke="#182943" />
+  <line x1="72" y1="308" x2="548" y2="308" stroke="#182943" />
+  <g stroke-width="3" stroke-linecap="round" transform="matrix(1.75 0 0 1 -54 0)">
+    <line x1="108" y1="292" x2="108" y2="248" stroke="#22c55e" /><rect x="97" y="264" width="22" height="20" fill="#22c55e" rx="3" />
+    <line x1="150" y1="268" x2="150" y2="220" stroke="#22c55e" /><rect x="139" y="236" width="22" height="22" fill="#22c55e" rx="3" />
+    <line x1="192" y1="248" x2="192" y2="196" stroke="#ef4444" /><rect x="181" y="214" width="22" height="24" fill="#ef4444" rx="3" />
+    <line x1="234" y1="256" x2="234" y2="204" stroke="#22c55e" /><rect x="223" y="224" width="22" height="22" fill="#22c55e" rx="3" />
+    <line x1="276" y1="230" x2="276" y2="174" stroke="#22c55e" /><rect x="265" y="194" width="22" height="24" fill="#22c55e" rx="3" />
+    <line x1="318" y1="222" x2="318" y2="168" stroke="#ef4444" /><rect x="307" y="188" width="22" height="22" fill="#ef4444" rx="3" />
+  </g>
+  <line x1="72" y1="340" x2="548" y2="340" stroke="#2a3d5c" />
+  <g transform="matrix(1.75 0 0 1 -54 0)">
+    <rect x="97" y="416" width="22" height="42" fill="#22c55e" opacity="0.6" />
+    <rect x="139" y="382" width="22" height="76" fill="#22c55e" opacity="0.74" />
+    <rect x="181" y="402" width="22" height="56" fill="#ef4444" opacity="0.62" />
+    <rect x="223" y="392" width="22" height="66" fill="#22c55e" opacity="0.68" />
+    <rect x="265" y="366" width="22" height="92" fill="#22c55e" opacity="0.82" />
+    <rect x="307" y="410" width="22" height="48" fill="#ef4444" opacity="0.58" />
+  </g>
+  </svg><text x="24" y="809" font-family="Arial,sans-serif" font-size="34" fill="#e8f1ff">Quote panel</text><text x="24" y="867" font-family="Arial,sans-serif" font-size="34" fill="#e8f1ff">Last trade: $2.00</text><text x="24" y="925" font-family="Arial,sans-serif" font-size="34" fill="#e8f1ff">Bid $1.98</text><text x="24" y="983" font-family="Arial,sans-serif" font-size="34" fill="#e8f1ff">Ask $2.03</text><text x="24" y="1041" font-family="Arial,sans-serif" font-size="34" fill="#e8f1ff">Spread: $0.05</text><text x="24" y="1099" font-family="Arial,sans-serif" font-size="30" fill="#bbf7d0">Bid size</text><rect x="190" y="1075" width="174" height="24" rx="4" fill="#22c55e" opacity=".6" /><text x="24" y="1147" font-family="Arial,sans-serif" font-size="30" fill="#fecdd3">Ask size</text><rect x="190" y="1123" width="138" height="24" rx="4" fill="#ef4444" opacity=".6" /><text x="24" y="1202" font-family="Arial,sans-serif" font-size="30" fill="#e8f1ff">Quote is what matters for fills.</text></svg>

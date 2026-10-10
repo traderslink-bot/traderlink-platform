@@ -1,0 +1,12 @@
+.trigger { display: block; width: 100%; padding: 0; margin: 0; border: 0; border-radius: inherit; background: transparent; line-height: 0; cursor: zoom-in; }
+.trigger img { margin: 0; }
+.dialog { width: calc(100vw - 24px); max-width: 1400px; height: calc(100dvh - 24px); max-height: 100dvh; margin: auto; padding: 0; border: 0; border-radius: 8px; background: #091321; color: #fff; }
+.dialog[open] { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.dialog::backdrop { background: rgb(0 0 0 / 75%); }
+.controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 10px; background: #fff; }
+.controls button { min-height: 44px; padding: 8px 14px; border: 1px solid #011e56; border-radius: 8px; background: #fff; color: #011e56; font: inherit; cursor: pointer; }
+.viewport { min-height: 0; overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y pinch-zoom; }
+.viewport .detail { display: block; max-width: none; height: auto; }
+.controls button:focus-visible, .viewport:focus-visible { outline: 3px solid #45c1ff; outline-offset: 2px; }
+
+.trigger:focus-visible { outline: 3px solid #45c1ff; outline-offset: -3px; }

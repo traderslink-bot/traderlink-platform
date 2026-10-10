@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="1813" viewBox="0 0 600 1813" role="img"><title>Clean Versus Forced Chart Pattern</title><desc>Enlarged labels with original plotted shapes for small screens.</desc><rect width="600" height="1813" rx="14" fill="#07111f"/><text x="20" y="70" font-size="42" fill="#e8f1ff" font-family="Arial,sans-serif">Clean Versus Forced Chart</text><text x="20" y="122" font-size="42" fill="#e8f1ff" font-family="Arial,sans-serif">Pattern</text><text x="20" y="178" font-size="30" fill="#8ea6c8" font-family="Arial,sans-serif">Structure should make sense before</text><text x="20" y="218" font-size="30" fill="#8ea6c8" font-family="Arial,sans-serif">the pattern name matters.</text><text x="20" y="278" font-size="34" fill="#e8f1ff" font-family="Arial,sans-serif">Clean pattern</text><svg x="20" y="294" width="560" height="420" viewBox="0 0 400 300"><g xmlns="http://www.w3.org/2000/svg">
+    <rect width="400" height="300" rx="14" fill="#0b1626" stroke="#1f3554" />
+    <g stroke="#18304e" stroke-width="1">
+      <line x1="28" y1="78" x2="372" y2="78" /><line x1="28" y1="126" x2="372" y2="126" /><line x1="28" y1="174" x2="372" y2="174" /><line x1="28" y1="222" x2="372" y2="222" />
+    </g>
+    <rect x="54" y="196" width="290" height="28" fill="#1d4ed8" opacity=".18" />
+    <rect x="54" y="104" width="290" height="28" fill="#f59e0b" opacity=".16" />
+    <line x1="54" y1="104" x2="344" y2="104" stroke="#fbbf24" stroke-width="2" stroke-dasharray="7 7" />
+    <line x1="54" y1="224" x2="344" y2="224" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
+    <g stroke-linecap="round" stroke-width="3">
+      <g stroke="#21c784" fill="#21c784">
+        <line x1="80" y1="208" x2="80" y2="248" /><rect x="71" y="218" width="18" height="18" />
+        <line x1="128" y1="172" x2="128" y2="226" /><rect x="119" y="188" width="18" height="24" />
+        <line x1="176" y1="130" x2="176" y2="202" /><rect x="167" y="150" width="18" height="34" />
+        <line x1="224" y1="166" x2="224" y2="222" /><rect x="215" y="182" width="18" height="26" />
+        <line x1="272" y1="118" x2="272" y2="188" /><rect x="263" y="138" width="18" height="32" />
+      </g>
+      <g stroke="#ef4444" fill="#ef4444">
+        <line x1="320" y1="108" x2="320" y2="178" /><rect x="311" y="128" width="18" height="32" />
+      </g>
+    </g>
+    <g font-family="Arial, sans-serif" font-size="12" font-weight="700">
+      </g>
+  <g><circle cx="68.0" cy="233.0" r="15" fill="#07111f" stroke="#9cc8ff" /><text x="60.0" y="242.0" font-size="28" fill="#9cc8ff" font-family="Arial,sans-serif">1</text></g><g><circle cx="224.0" cy="87.0" r="15" fill="#07111f" stroke="#fcd34d" /><text x="216.0" y="96.0" font-size="28" fill="#fcd34d" font-family="Arial,sans-serif">2</text></g><g><circle cx="60.0" cy="63.0" r="15" fill="#07111f" stroke="#bbf7d0" /><text x="52.0" y="72.0" font-size="28" fill="#bbf7d0" font-family="Arial,sans-serif">3</text></g><g><circle cx="210.0" cy="241.0" r="15" fill="#07111f" stroke="#fecaca" /><text x="202.0" y="250.0" font-size="28" fill="#fecaca" font-family="Arial,sans-serif">4</text></g></g>
+  </svg><text x="20" y="779" font-size="30" fill="#9cc8ff" font-family="Arial,sans-serif">1. Clear support</text><text x="20" y="835" font-size="30" fill="#fcd34d" font-family="Arial,sans-serif">2. Clear resistance</text><text x="20" y="891" font-size="30" fill="#bbf7d0" font-family="Arial,sans-serif">3. Visible structure before move</text><text x="20" y="947" font-size="30" fill="#fecaca" font-family="Arial,sans-serif">4. Failure area is easy to see</text><text x="20" y="1007" font-size="34" fill="#e8f1ff" font-family="Arial,sans-serif">Forced pattern</text><svg x="20" y="1023" width="560" height="420" viewBox="0 0 400 300"><g xmlns="http://www.w3.org/2000/svg">
+    <rect width="400" height="300" rx="14" fill="#0b1626" stroke="#1f3554" />
+    <g stroke="#18304e" stroke-width="1">
+      <line x1="28" y1="78" x2="372" y2="78" /><line x1="28" y1="126" x2="372" y2="126" /><line x1="28" y1="174" x2="372" y2="174" /><line x1="28" y1="222" x2="372" y2="222" />
+    </g>
+    <path d="M58 234 C92 176 120 226 150 166 C176 118 205 238 235 142 C264 84 300 218 342 126" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="7 7" opacity=".75" />
+    <path d="M58 202 C100 246 133 152 170 214 C203 270 244 126 288 188 C308 216 324 170 342 206" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" opacity=".72" />
+    <g stroke-linecap="round" stroke-width="3">
+      <g stroke="#21c784" fill="#21c784">
+        <line x1="72" y1="190" x2="72" y2="254" /><rect x="63" y="208" width="18" height="28" />
+        <line x1="120" y1="132" x2="120" y2="230" /><rect x="111" y="156" width="18" height="54" />
+        <line x1="216" y1="150" x2="216" y2="256" /><rect x="207" y="176" width="18" height="58" />
+        <line x1="312" y1="118" x2="312" y2="214" /><rect x="303" y="142" width="18" height="52" />
+      </g>
+      <g stroke="#ef4444" fill="#ef4444">
+        <line x1="168" y1="128" x2="168" y2="238" /><rect x="159" y="154" width="18" height="62" />
+        <line x1="264" y1="104" x2="264" y2="246" /><rect x="255" y="132" width="18" height="92" />
+        <line x1="344" y1="158" x2="344" y2="254" /><rect x="335" y="182" width="18" height="50" />
+      </g>
+    </g>
+    <g font-family="Arial, sans-serif" font-size="12" font-weight="700">
+      </g>
+  <g><circle cx="58.0" cy="63.0" r="15" fill="#07111f" stroke="#fecaca" /><text x="50.0" y="72.0" font-size="28" fill="#fecaca" font-family="Arial,sans-serif">5</text></g><g><circle cx="236.0" cy="67.0" r="15" fill="#07111f" stroke="#fecaca" /><text x="228.0" y="76.0" font-size="28" fill="#fecaca" font-family="Arial,sans-serif">6</text></g><g><circle cx="54.0" cy="265.0" r="15" fill="#07111f" stroke="#fecaca" /><text x="46.0" y="274.0" font-size="28" fill="#fecaca" font-family="Arial,sans-serif">7</text></g><g><circle cx="232.0" cy="241.0" r="15" fill="#07111f" stroke="#fecaca" /><text x="224.0" y="250.0" font-size="28" fill="#fecaca" font-family="Arial,sans-serif">8</text></g></g>
+  </svg><text x="20" y="1508" font-size="30" fill="#fecaca" font-family="Arial,sans-serif">5. Messy candles</text><text x="20" y="1564" font-size="30" fill="#fecaca" font-family="Arial,sans-serif">6. Unclear levels</text><text x="20" y="1620" font-size="30" fill="#fecaca" font-family="Arial,sans-serif">7. Pattern only obvious after move</text><text x="20" y="1676" font-size="30" fill="#fecaca" font-family="Arial,sans-serif">8. No clear failure area</text><text x="20" y="1732" font-size="30" fill="#8ea6c8" font-family="Arial,sans-serif">Name the pattern only after the</text><text x="20" y="1772" font-size="30" fill="#8ea6c8" font-family="Arial,sans-serif">structure makes sense.</text></svg>
