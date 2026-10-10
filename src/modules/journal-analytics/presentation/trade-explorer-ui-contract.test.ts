@@ -15,7 +15,7 @@ const table = source("src/modules/journal-analytics/server/analytics-table.ts");
 const population = source("src/modules/journal-analytics/server/analytics-population.ts");
 const helpOverview = source("src/modules/help/public-help-content.ts");
 const helpRoute = source("app/help/[collection]/page.tsx");
-const helpGuides = source("src/modules/help/core-analytics-guides.ts");
+const helpGuides = source("src/modules/help/trade-explorer-guides.ts");
 
 describe("Trade Explorer visible contract", () => {
   it("keeps the Next.js and account-scope boundary explicit", () => {
@@ -52,30 +52,30 @@ describe("Trade Explorer visible contract", () => {
     expect(page).toContain('initialResultView={tickerView ? "tickers" : "trades"}');
     expect(client).toContain('useState<TradeExplorerTradeSort>("closed_desc")');
     for (const label of [
-      "From",
-      "To",
-      "Currency",
+      "Closed from",
+      "Closed to",
       "Ticker",
       "Direction",
       "Result basis",
       "Result",
       "View",
       "Sort trades",
-      "Rank by",
       "Results per page",
       "Entry weekday",
-      "Entry-time detail",
+      "Time bucket detail",
       "Entry time (HH:MM)",
     ]) expect(client).toContain(`label="${label}"`);
+    expect(client).toContain('label={resultView === "days" ? "Sort days" : "Rank by"}');
+    expect(helpGuides).toContain("Trade Explorer does not provide a separate currency override.");
     for (const label of [
       "Minimum hold (seconds)",
       "Maximum hold (seconds)",
-      "Minimum entered quantity",
-      "Maximum entered quantity",
-      "Minimum position size",
-      "Maximum position size",
-      "Minimum entry value",
-      "Maximum entry value",
+      "Minimum total entry shares",
+      "Maximum total entry shares",
+      "Minimum peak shares",
+      "Maximum peak shares",
+      "Minimum total entry value",
+      "Maximum total entry value",
     ]) expect(client).toContain(`exactField("${label}"`);
     expect(client).toContain("selectedMinute % entryTimeBucketMinutes === 0");
     for (const view of [
@@ -144,10 +144,10 @@ describe("Trade Explorer visible contract", () => {
     expect(client).toContain("No fee-covered trades match these filters.");
     expect(client).toContain("preview.evidenceUnavailableReason");
     expect(client).toContain(
-      "For manual trades, Gross and Net change P/L calculation only.",
+      "Manually entered trades with no fee entered are included in Net P/L.",
     );
     expect(client).toContain(
-      "Some older imported trades do not have fee details",
+      "When broker fee details are missing from imported trades, they are excluded from Net P/L.",
     );
     expect(client).toContain(
       "Results are ranked separately within each currency and trading timezone.",
@@ -171,13 +171,16 @@ describe("Trade Explorer visible contract", () => {
       "Closed",
       "Ticker",
       "Direction",
-      "Shares",
+      "Total entry shares",
+      "Peak shares held",
+      "Position size",
       "Avg entry",
       "Avg exit",
-      "Entry value",
-      "Return",
+      "Total entry value",
+      "Return on entry value",
       "Hold",
-      "Executions",
+      "Trading costs",
+      "Execution structure",
     ]) expect(client).toContain(`<TableCell>${label}</TableCell>`);
     expect(client).toContain('<TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell>');
     expect(client).toContain("clearExpandedTrade()");
@@ -207,15 +210,15 @@ describe("Trade Explorer visible contract", () => {
   });
 
   it("keeps the linked Help guide accurate for imported and manual trades", () => {
-    expect(helpOverview).toContain('collection("core-analytics", "Analytics"');
-    expect(helpOverview).toContain("compare completed trades by ticker, timing and execution characteristics");
+    expect(helpOverview).toContain('collection("trade-explorer", "Trade Explorer"');
+    expect(helpOverview).toContain("TRADE_EXPLORER_HELP_GUIDES");
     expect(helpRoute).toContain("publicHelpCollectionById");
-    expect(helpGuides).toContain("including imported and manually entered trades");
-    expect(helpGuides).toContain('section("use-trade-explorer"');
-    expect(helpGuides).toContain("Sort trades orders individual rows only by facts each trade has");
-    expect(helpGuides).toContain("Money results stay ranked within their recorded currency");
-    expect(helpGuides).toContain("never the opposite basis");
-    expect(helpGuides).toContain("makes impossible or unable to change the order");
-    expect(helpGuides).not.toMatch(/Journal/iu);
+    expect(helpGuides).toContain("Manually entered trades with no fee entered are included in Net P/L.");
+    expect(helpGuides).toContain('guide("use-trade-explorer"');
+    expect(helpGuides).toContain("Sort trades orders individual rows by facts each trade has");
+    expect(helpGuides).toContain("Money is displayed in the reporting currency selected in Account settings.");
+    expect(helpGuides).toContain("P/L that matches the selected Result basis");
+    expect(helpGuides).toContain("hides calculations that cannot produce a meaningful order");
+    expect(helpGuides).toContain("When broker fee details are missing from imported trades, they are excluded from Net P/L.");
   });
 });
