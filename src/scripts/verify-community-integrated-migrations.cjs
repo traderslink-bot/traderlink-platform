@@ -35,7 +35,7 @@ const byId=new Map(), orderConflicts=[];
 for(const [sourceIndex,manifest] of manifests.entries()) for(const migration of manifest){
  // The feature checkout intentionally predates later production ordering.
  // Never replace integrated history with its old manifest; append reserved additions only.
- if(sourceIndex===2&&!/^016[012]_|^0159_/.test(migration.migrationId))continue;
+ if(sourceIndex===2&&!/^016[0-4]_|^0159_/.test(migration.migrationId))continue;
  const prior=byId.get(migration.migrationId);
  if(prior){
   assert.equal(contract.calculatePlatformMigrationChecksum(prior),contract.calculatePlatformMigrationChecksum(migration),`Changed historical migration ${migration.migrationId}`);

@@ -195,6 +195,8 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 
 ## Owner-approved deletion and publishing checkpoint
 
+Immutable integration inventory and release boundaries: [October 10 staging integration handoff](traderlink-coaching-staging-integration-handoff-20261010.md). Runtime source is pinned to1a5b83da5; coordinator owns the separate current-production-parity/staging-ledger integration. This is not a deployed or launch-accepted state.
+
 The preceding pending deletion decision is superseded by the approved 60-day policy and existing-coaching-only continuation. Implementation/evidence is tracked in [Deletion archive progress](traderlink-coaching-deletion-archive-progress.md); publishing handoff is tracked in [Publishing setup corrections](community-publishing-setup-corrections-20261010.md). Both slices now belong to this coaching chat; preserve the unrelated September 28 live-QA document edit.
 
 Focused real-schema checks pass for participant-only evidence capture, atomic account erasure, unrelated active coaching preservation, archive expiry/cleanup, restricted Discord refresh and role removal, and publishing retry/rollback. Ten lightweight UI/route/context regression checks pass. Admin archive presentation and restricted page data use the existing application/admin boundaries. React review retained existing Material components and checked server-only authorization, accessible controls and reduced client data. The already-approved account deletion wording is used; no new activity disclosure or generic explanatory page copy was introduced. Publishing Help changes are preserved. The deletion implementation requires no additional public Help prose beyond the approved confirmation at this checkpoint.
