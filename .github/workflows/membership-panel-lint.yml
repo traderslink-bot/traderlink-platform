@@ -1,0 +1,26 @@
+name: Membership panel targeted lint
+
+on:
+  push:
+    branches:
+      - codex/membership-panel-lint-20261010
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Lint exact candidate files
+        run: npx eslint app/admin/journal/memberships/management-panels.tsx scripts/check-membership-panel-regressions.cjs
