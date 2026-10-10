@@ -1,0 +1,120 @@
+name: Membership CI targeted follow-up
+
+on:
+  push:
+    branches:
+      - codex/membership-ci-targeted-verification-20261010
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out verification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Rebuild SQLite native binding
+        run: npm rebuild better-sqlite3
+
+      - name: Run three affected tests without external network
+        shell: bash
+        run: |
+          mkdir -p .ci-artifacts
+          set +e
+          sudo --preserve-env=PATH,GITHUB_WORKSPACE unshare --net -- bash -c '
+            ip link set lo up
+            cd "$GITHUB_WORKSPACE"
+            npm exec -- vitest run \
+              src/modules/coach/server/coach-ai-chat-administration-repository.test.ts \
+              src/lib/news/__tests__/news-article-store.test.ts \
+              src/modules/coach/server/coach-ai-chat-analytics-page-tool-service.test.ts \
+              --maxWorkers=1 \
+              --fileParallelism=false \
+              --testTimeout=30000 \
+              --reporter=json \
+              --outputFile=.ci-artifacts/targeted-vitest-results.json
+          '
+          test_status="$?"
+          set -e
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const reportPath = ".ci-artifacts/targeted-vitest-results.json";
+          const summaryPath = ".ci-artifacts/targeted-vitest-summary.json";
+          if (!fs.existsSync(reportPath)) {
+            fs.writeFileSync(summaryPath, JSON.stringify({reportMissing: true}, null, 2));
+            console.log("::error title=Targeted Vitest report missing::The test process did not produce its JSON report.");
+          } else {
+            const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+            const failures = [];
+            const suiteMessages = [];
+            for (const file of report.testResults ?? []) {
+              const fileName = path.relative(process.cwd(), file.name).replaceAll("\\", "/");
+              if (file.message) suiteMessages.push({file: fileName, status: file.status, message: file.message});
+              for (const assertion of file.assertionResults ?? []) {
+                if (assertion.status === "failed") {
+                  failures.push({
+                    file: fileName,
+                    title: assertion.fullName || assertion.title || "Vitest assertion",
+                    messages: assertion.failureMessages ?? [],
+                  });
+                }
+              }
+            }
+            const summary = {
+              success: report.success,
+              passedTests: report.numPassedTests ?? 0,
+              failedTests: report.numFailedTests ?? 0,
+              pendingTests: report.numPendingTests ?? 0,
+              totalTestSuites: report.numTotalTestSuites ?? report.testResults?.length ?? 0,
+              failedTestSuites: report.numFailedTestSuites ?? 0,
+              failures,
+              suiteMessages,
+            };
+            fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+              "## Targeted Membership CI follow-up",
+              `- Passed tests: ${summary.passedTests}`,
+              `- Failed tests: ${summary.failedTests}`,
+              `- Pending tests: ${summary.pendingTests}`,
+              `- Total suites: ${summary.totalTestSuites}`,
+              `- Failed suites: ${summary.failedTestSuites}`,
+              `- Assertion failures: ${failures.length}`,
+              `- Suite-level messages: ${suiteMessages.length}`,
+              "",
+            ].join("\n"));
+            for (const row of failures) {
+              const message = row.messages.join("\n").replace(/\u001b\[[0-9;]*m/gu, "").slice(-7000);
+              const escaped = message.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+              console.log(`::error file=${row.file},title=${row.title.replaceAll(",", " ")}::${escaped}`);
+            }
+            for (const row of suiteMessages) {
+              const message = String(row.message).replace(/\u001b\[[0-9;]*m/gu, "").slice(-7000);
+              const escaped = message.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+              console.log(`::error file=${row.file},title=Suite-level ${row.status || "failure"}::${escaped}`);
+            }
+          }
+          NODE
+          exit "$test_status"
+
+      - name: Upload complete targeted test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: membership-ci-targeted-${{ github.sha }}
+          path: .ci-artifacts/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
