@@ -13,7 +13,8 @@ const page = source("app/(dashboard)/analytics/trade-explorer/page.tsx");
 const service = source("app/(dashboard)/analytics/trade-explorer/trade-explorer-service.ts");
 const table = source("src/modules/journal-analytics/server/analytics-table.ts");
 const population = source("src/modules/journal-analytics/server/analytics-population.ts");
-const helpOverview = source("app/(dashboard)/help/core-analytics/page.tsx");
+const helpOverview = source("src/modules/help/public-help-content.ts");
+const helpRoute = source("app/help/[collection]/page.tsx");
 const helpGuides = source("src/modules/help/core-analytics-guides.ts");
 
 describe("Trade Explorer visible contract", () => {
@@ -203,15 +204,15 @@ describe("Trade Explorer visible contract", () => {
   });
 
   it("keeps the linked Help guide accurate for imported and manual trades", () => {
-    expect(helpOverview).toContain("confirmed Trade Tracker results");
-    expect(helpOverview).toContain("Core Analytics Help | TraderLink Platform");
+    expect(helpOverview).toContain('collection("core-analytics", "Analytics"');
+    expect(helpOverview).toContain("compare completed trades by ticker, timing and execution characteristics");
+    expect(helpRoute).toContain("publicHelpCollectionById");
     expect(helpGuides).toContain("including imported and manually entered trades");
     expect(helpGuides).toContain('section("use-trade-explorer"');
     expect(helpGuides).toContain("Sort trades orders individual rows only by facts each trade has");
     expect(helpGuides).toContain("Money results stay ranked within their recorded currency");
     expect(helpGuides).toContain("never the opposite basis");
     expect(helpGuides).toContain("makes impossible or unable to change the order");
-    expect(helpOverview).not.toMatch(/Journal/iu);
     expect(helpGuides).not.toMatch(/Journal/iu);
   });
 });

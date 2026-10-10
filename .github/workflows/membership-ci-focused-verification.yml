@@ -1,0 +1,49 @@
+name: Membership CI focused verification
+
+on:
+  push:
+    branches:
+      - codex/membership-ci-focused-verification-20261010
+
+permissions:
+  contents: read
+
+jobs:
+  focused-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out verification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Rebuild SQLite native binding
+        run: npm rebuild better-sqlite3
+
+      - name: Run focused tests without external network
+        run: |
+          sudo --preserve-env=PATH,GITHUB_WORKSPACE unshare --net -- bash -c '
+            ip link set lo up
+            cd "$GITHUB_WORKSPACE"
+            npm exec -- vitest run \
+              src/lib/academy/__tests__/academy-content.test.ts \
+              src/lib/academy/__tests__/discord-auth-routes.test.ts \
+              src/lib/academy/__tests__/discord-oauth.test.ts \
+              src/lib/trade-candle-analysis/trend-momentum-execution-page.test.ts \
+              src/lib/trade-candle-analysis/trend-momentum-qa-followup.test.ts \
+              src/lib/live-watchlist/__tests__/watchlist-display-contract.test.ts \
+              src/lib/live-watchlist/__tests__/live-watchlist-store.test.ts \
+              src/lib/live-watchlist/__tests__/live-watchlist-store-neon-concurrency.test.ts \
+              src/modules/journal-analytics/presentation/trade-explorer-ui-contract.test.ts \
+              --maxWorkers=1 \
+              --fileParallelism=false \
+              --testTimeout=30000
+          '

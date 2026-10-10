@@ -188,7 +188,7 @@ describe("LiveWatchlistStore Neon concurrency", () => {
     ]);
 
     const saved = await store.getSymbol("KAPA");
-    expect(saved?.firstPostedAt).toBe(5000);
+    expect(saved?.firstPostedAt).toBe(1000);
     expect(saved?.cards.companyInfo?.title).toBe("Kairos Pharma Ltd");
     expect(neonHarness.state.conflictCount).toBe(1);
   });

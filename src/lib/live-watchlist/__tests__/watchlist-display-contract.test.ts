@@ -23,8 +23,8 @@ describe("watchlist display contract", () => {
   it("keeps pullback state logic without rendering a visible state badge", () => {
     expect(clientSource).toContain("resolveTradersLinkAiPullbackScenarioState(scenario, livePrice)");
     expect(clientSource).toContain('data-scenario-state={state.toLowerCase().replaceAll(" ", "-")}');
-    expect(clientSource).toContain('heading="Shallow pullback — momentum retest"');
-    expect(clientSource).toContain('heading="Deep pullback — reset setup"');
+    expect(clientSource).toContain('heading="Pullback"');
+    expect(clientSource).toContain('heading={showShallow ? "Deeper pullback" : "Pullback"}');
     expect(clientSource).not.toContain("<span>{state}</span>");
   });
 

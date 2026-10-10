@@ -97,7 +97,8 @@ test("basis override retains saved fees, supports both bases, and leaves origina
 test("PWA notice stays below menus in both appearances and does not activate an update", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const postMessage = vi.fn();
-  const registration = { waiting: { postMessage }, installing: null, update: vi.fn().mockResolvedValue(undefined),
+  const registration = { waiting: { postMessage, state: "installed", addEventListener: vi.fn(), removeEventListener: vi.fn() },
+    installing: null, update: vi.fn().mockResolvedValue(undefined),
     addEventListener: vi.fn(), removeEventListener: vi.fn() };
   const original = Object.getOwnPropertyDescriptor(navigator, "serviceWorker");
   Object.defineProperty(navigator, "serviceWorker", { configurable: true, value: {
