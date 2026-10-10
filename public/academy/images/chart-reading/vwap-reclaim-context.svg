@@ -31,8 +31,8 @@
       <rect x="543" y="230" width="34" height="56" fill="#22c55e" />
     </g>
     <g opacity="1">
-      <line x1="655" y1="222" x2="655" y2="332" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round" />
-      <rect x="638" y="254" width="34" height="50" fill="#ef4444" />
+      <line x1="655" y1="218" x2="655" y2="257" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round" />
+      <rect x="638" y="226" width="34" height="16" fill="#ef4444" />
     </g>
     <g opacity="1">
       <line x1="750" y1="166" x2="750" y2="294" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round" />

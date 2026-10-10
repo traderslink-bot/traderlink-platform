@@ -103,23 +103,23 @@
       <circle cx="550" cy="486" r="5" fill="#8cf0cc" />
       <rect x="95" y="720" width="1010" height="26" rx="10" fill="#122238" />
     </g>
-    <circle cx="924.0" cy="149.0" r="35" fill="#07111f" stroke="#64748b" stroke-width="3" />
-    <text x="924.0" y="167.0" font-family="Arial" font-size="56" text-anchor="middle" fill="#64748b">1</text>
-    <circle cx="842.0" cy="250.0" r="35" fill="#07111f" stroke="#9fd1ff" stroke-width="3" />
-    <text x="842.0" y="268.0" font-family="Arial" font-size="56" text-anchor="middle" fill="#9fd1ff">2</text>
-    <circle cx="879.0" cy="515.0" r="35" fill="#07111f" stroke="#b5f5de" stroke-width="3" />
-    <text x="879.0" y="533.0" font-family="Arial" font-size="56" text-anchor="middle" fill="#b5f5de">3</text>
-    <circle cx="919.0" cy="557.0" r="35" fill="#07111f" stroke="#64748b" stroke-width="3" />
-    <text x="919.0" y="575.0" font-family="Arial" font-size="56" text-anchor="middle" fill="#64748b">4</text>
+    <circle cx="350" cy="175" r="35" fill="#07111f" stroke="#a8b9ce" stroke-width="3" />
+    <text x="350" y="193" font-family="Arial" font-size="56" text-anchor="middle" fill="#a8b9ce">1</text>
+    <circle cx="1070" cy="296" r="35" fill="#07111f" stroke="#9fd1ff" stroke-width="3" />
+    <text x="1070" y="314" font-family="Arial" font-size="56" text-anchor="middle" fill="#9fd1ff">2</text>
+    <circle cx="780" cy="486" r="35" fill="#07111f" stroke="#b5f5de" stroke-width="3" />
+    <text x="780" y="504" font-family="Arial" font-size="56" text-anchor="middle" fill="#b5f5de">3</text>
+    <circle cx="350" cy="550" r="35" fill="#07111f" stroke="#a8b9ce" stroke-width="3" />
+    <text x="350" y="568" font-family="Arial" font-size="56" text-anchor="middle" fill="#a8b9ce">4</text>
     <circle cx="595" cy="260" r="35" fill="#07111f" stroke="#d7ecff" stroke-width="3" />
     <text x="595" y="278" font-family="Arial" font-size="56" text-anchor="middle" fill="#d7ecff">5</text>
     <circle cx="595" cy="520" r="35" fill="#07111f" stroke="#c9f7e7" stroke-width="3" />
     <text x="595" y="538" font-family="Arial" font-size="56" text-anchor="middle" fill="#c9f7e7">6</text>
   </svg>
-  <text x="36" y="754.6481481481482" font-family="Arial" font-size="36" fill="#64748b">1. Far resistance: track later</text>
+  <text x="36" y="754.6481481481482" font-family="Arial" font-size="36" fill="#a8b9ce">1. Far resistance: track later</text>
   <text x="36" y="813.6481481481482" font-family="Arial" font-size="36" fill="#9fd1ff">2. Nearest Actionable Resistance</text>
   <text x="36" y="872.6481481481482" font-family="Arial" font-size="36" fill="#b5f5de">3. Nearest Actionable Support</text>
-  <text x="36" y="931.6481481481482" font-family="Arial" font-size="36" fill="#64748b">4. Far support: track later</text>
+  <text x="36" y="931.6481481481482" font-family="Arial" font-size="36" fill="#a8b9ce">4. Far support: track later</text>
   <text x="36" y="990.6481481481482" font-family="Arial" font-size="36" fill="#d7ecff">5. Closest resistance can affect</text>
   <text x="36" y="1035.6481481481483" font-family="Arial" font-size="36" fill="#d7ecff">the next decision</text>
   <text x="36" y="1094.6481481481483" font-family="Arial" font-size="36" fill="#c9f7e7">6. Closest support defines nearby</text>

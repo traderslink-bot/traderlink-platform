@@ -57,9 +57,15 @@
     <rect x="465.0" y="446.0" width="18" height="55.0" fill="#ef4444" />
     <rect x="519.0" y="461.0" width="18" height="40.0" fill="#21c784" />
     <rect x="573.0" y="441.0" width="18" height="60.0" fill="#ef4444" />
+    <line x1="366" y1="242" x2="366" y2="208" stroke="#fecaca" stroke-width="2" />
+    <circle cx="366" cy="263" r="21" fill="#07111f" stroke="#fecaca" stroke-width="2" data-event="1" />
+    <text x="366" y="275" text-anchor="middle" fill="#fecaca" font-family="Arial" font-size="34">1</text>
+    <line x1="610" y1="120" x2="528" y2="148" stroke="#bbf7d0" stroke-width="2" />
+    <circle cx="610" cy="110" r="21" fill="#07111f" stroke="#bbf7d0" stroke-width="2" data-event="2" />
+    <text x="610" y="122" text-anchor="middle" fill="#bbf7d0" font-family="Arial" font-size="34">2</text>
   </svg>
   <text x="36" y="786.2272727272727" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="36">Old HOD zone</text>
   <text x="36" y="841.2272727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">NHOD attempt</text>
-  <text x="36" y="896.2272727272727" fill="#fecaca" font-family="Arial, sans-serif" font-size="36">Failed hold</text>
-  <text x="36" y="951.2272727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">Hold area</text>
+  <text x="36" y="896.2272727272727" fill="#fecaca" font-family="Arial, sans-serif" font-size="36">1. Failed hold</text>
+  <text x="36" y="951.2272727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">2. Hold area</text>
 </svg>

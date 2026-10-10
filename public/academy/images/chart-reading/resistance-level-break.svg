@@ -14,7 +14,7 @@
   <rect x="64" y="174" width="626" height="42" fill="#1d4ed8" opacity=".2" />
   <line x1="64" y1="174" x2="690" y2="174" stroke="#3b82f6" stroke-width="2" stroke-dasharray="7 7" />
   <line x1="64" y1="216" x2="690" y2="216" stroke="#3b82f6" stroke-width="2" stroke-dasharray="7 7" />
-  <text x="514" y="168" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="15" font-weight="700">Prior resistance zone</text>
+  <text x="70" y="168" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="15" font-weight="700">Prior resistance zone</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
       <line x1="96" y1="244" x2="96" y2="306" />
@@ -39,6 +39,18 @@
       <rect x="482" y="154" width="20" height="46" />
     </g>
   </g>
-  <text x="338" y="126" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break above zone</text>
-  <text x="492" y="238" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="13">Retest holds above old resistance</text>
-  <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" /><text x="44" y="410.0" font-family="Arial, sans-serif" font-size="20" fill="#e1e7ef">Volume</text><line x1="58" y1="501.0" x2="704" y2="501.0" stroke="#303a49" /><rect x="87.0" y="478.7142857142857" width="18" height="22.285714285714285" fill="#21c784" /><rect x="153.0" y="475.0" width="18" height="26.0" fill="#21c784" /><rect x="219.0" y="469.42857142857144" width="18" height="31.57142857142857" fill="#ef4444" /><rect x="285.0" y="436.0" width="18" height="65.0" fill="#21c784" /><rect x="351.0" y="441.57142857142856" width="18" height="59.42857142857142" fill="#21c784" /><rect x="417.0" y="450.85714285714283" width="18" height="50.142857142857146" fill="#21c784" /><rect x="483.0" y="465.7142857142857" width="18" height="35.285714285714285" fill="#ef4444" /><rect x="549.0" y="456.42857142857144" width="18" height="44.57142857142857" fill="#21c784" /><rect x="615.0" y="447.1428571428571" width="18" height="53.85714285714286" fill="#21c784" /></svg>
+  <text x="270" y="126" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break above zone</text>
+  <text x="492" y="238" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="13">Retest holds in the zone</text>
+  <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" />
+  <text x="44" y="410.0" font-family="Arial, sans-serif" font-size="20" fill="#e1e7ef">Volume</text>
+  <line x1="58" y1="501.0" x2="704" y2="501.0" stroke="#303a49" />
+  <rect x="87.0" y="478.7142857142857" width="18" height="22.285714285714285" fill="#21c784" />
+  <rect x="153.0" y="475.0" width="18" height="26.0" fill="#21c784" />
+  <rect x="219.0" y="469.42857142857144" width="18" height="31.57142857142857" fill="#ef4444" />
+  <rect x="285.0" y="436.0" width="18" height="65.0" fill="#21c784" />
+  <rect x="351.0" y="441.57142857142856" width="18" height="59.42857142857142" fill="#21c784" />
+  <rect x="417.0" y="450.85714285714283" width="18" height="50.142857142857146" fill="#21c784" />
+  <rect x="483.0" y="465.7142857142857" width="18" height="35.285714285714285" fill="#ef4444" />
+  <rect x="549.0" y="456.42857142857144" width="18" height="44.57142857142857" fill="#21c784" />
+  <rect x="615.0" y="447.1428571428571" width="18" height="53.85714285714286" fill="#21c784" />
+</svg>

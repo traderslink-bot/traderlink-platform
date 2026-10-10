@@ -14,7 +14,7 @@
   <rect x="64" y="184" width="626" height="38" fill="#1d4ed8" opacity=".2" />
   <line x1="64" y1="184" x2="690" y2="184" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
   <line x1="64" y1="222" x2="690" y2="222" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" />
-  <text x="508" y="178" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Breakout level zone</text>
+  <text x="508" y="338" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Breakout level zone</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
       <line x1="96" y1="248" x2="96" y2="306" />
@@ -39,5 +39,5 @@
       <rect x="482" y="150" width="20" height="42" />
     </g>
   </g>
-  <text x="332" y="136" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break above level</text>
-  <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" /><text x="44" y="410.0" font-family="Arial, sans-serif" font-size="20" fill="#e1e7ef">Volume</text><line x1="58" y1="501.0" x2="704" y2="501.0" stroke="#303a49" /><rect x="87.0" y="481.6756756756757" width="18" height="19.324324324324326" fill="#21c784" /><rect x="153.0" y="478.1621621621622" width="18" height="22.83783783783784" fill="#21c784" /><rect x="219.0" y="474.64864864864865" width="18" height="26.351351351351354" fill="#21c784" /><rect x="285.0" y="439.51351351351354" width="18" height="61.486486486486484" fill="#21c784" /><rect x="351.0" y="436.0" width="18" height="65.0" fill="#21c784" /><rect x="417.0" y="446.5405405405405" width="18" height="54.45945945945946" fill="#21c784" /><rect x="483.0" y="458.8378378378378" width="18" height="42.16216216216216" fill="#ef4444" /><rect x="549.0" y="450.05405405405406" width="18" height="50.945945945945944" fill="#21c784" /><rect x="615.0" y="443.02702702702703" width="18" height="57.972972972972975" fill="#21c784" /></svg>
+  <text x="332" y="108" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break above level</text>
+  <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" /><text x="44" y="410.0" font-family="Arial, sans-serif" font-size="20" fill="#e1e7ef">Volume</text><line x1="58" y1="501.0" x2="704" y2="501.0" stroke="#303a49" /><rect x="87.0" y="481.6756756756757" width="18" height="19.324324324324326" fill="#21c784" /><rect x="153.0" y="478.1621621621622" width="18" height="22.83783783783784" fill="#21c784" /><rect x="219.0" y="474.64864864864865" width="18" height="26.351351351351354" fill="#21c784" /><rect x="285.0" y="439.51351351351354" width="18" height="61.486486486486484" fill="#21c784" /><rect x="351.0" y="436.0" width="18" height="65.0" fill="#21c784" /><rect x="417.0" y="446.5405405405405" width="18" height="54.45945945945946" fill="#21c784" /><rect x="483.0" y="458.8378378378378" width="18" height="42.16216216216216" fill="#ef4444" /><rect x="549.0" y="450.05405405405406" width="18" height="50.945945945945944" fill="#21c784" /><rect x="615.0" y="443.02702702702703" width="18" height="57.972972972972975" fill="#21c784" /><path id="round3-zone-leader" d="M678 324 L700 324 L700 203 L690 203" fill="none" stroke="#9cc8ff" stroke-width="1.5"/></svg>

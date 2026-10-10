@@ -1,4 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 2476.8613138686133" role="img"><title>Plan risk before the trade, review behavior after it</title><rect width="720" height="2476.8613138686133" fill="#10151e"/><defs xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 2476.8613138686133" role="img">
+  <title>Plan risk before the trade, review behavior after it</title>
+  <rect width="720" height="2476.8613138686133" fill="#10151e" />
+  <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0" stop-color="#08111f" />
       <stop offset="1" stop-color="#111827" />
@@ -21,7 +24,13 @@
       .grid{stroke:#24364f;stroke-width:1}
     </style>
   </defs>
-  <text x="32" y="58" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef">Plan risk before the</text><text x="32" y="112" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef">trade, review behavior</text><text x="32" y="166" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef">after it</text><text x="32" y="230" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Course 1 keeps risk concrete:</text><text x="32" y="274" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">invalidation, size, stop behavior,</text><text x="32" y="318" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">and completed-trade review.</text><g xmlns="http://www.w3.org/2000/svg" transform="translate(20 354) scale(2.4817518248175183)">
+  <text x="32" y="58" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef">Plan risk before the</text>
+  <text x="32" y="112" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef">trade, review behavior</text>
+  <text x="32" y="166" font-family="Arial, sans-serif" font-size="50" fill="#e1e7ef">after it</text>
+  <text x="32" y="230" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Compare planned risk, position</text>
+  <text x="32" y="274" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">size, stop execution, and the</text>
+  <text x="32" y="318" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">decisions made during the trade.</text>
+  <g transform="translate(20 354) scale(2.4817518248175183)">
     <rect class="box" x="0" y="0" width="274" height="238" rx="7" />
     <text class="txt label" x="18" y="30">Pre-trade plan</text>
     <text class="txt small muted" x="18" y="62">Setup criteria written</text>
@@ -34,7 +43,7 @@
     <rect class="amber" x="98" y="207" width="52" height="6" />
     <rect class="red" x="166" y="207" width="52" height="6" />
   </g>
-  <g xmlns="http://www.w3.org/2000/svg" transform="translate(20 974.6569343065694) scale(3.177570093457944)">
+  <g transform="translate(20 974.6569343065694) scale(3.177570093457944)">
     <rect class="chart" x="0" y="0" width="214" height="214" rx="7" />
     <line class="grid" x1="0" y1="52" x2="214" y2="52" />
     <line class="grid" x1="0" y1="104" x2="214" y2="104" />
@@ -47,7 +56,7 @@
     <circle class="red" cx="196" cy="96" r="5" />
     <text class="txt small muted" x="12" y="28">Chart notes</text>
   </g>
-  <g xmlns="http://www.w3.org/2000/svg" transform="translate(20 1684.6569343065694) scale(2.4817518248175183)">
+  <g transform="translate(20 1684.6569343065694) scale(2.4817518248175183)">
     <rect class="box" x="0" y="0" width="274" height="208" rx="7" />
     <text class="txt label" x="18" y="30">Post-trade review</text>
     <text class="txt small muted" x="18" y="62">Planned risk</text>
@@ -57,4 +66,12 @@
     <text class="txt small muted" x="18" y="166">Rule follow-through</text>
     <text class="txt small muted" x="18" y="192">One improvement note</text>
   </g>
-  <circle cx="40" cy="2220.8613138686133" r="10" fill="#38bdf8"/><text x="70" y="2230.8613138686133" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Plan</text><circle cx="40" cy="2290.8613138686133" r="10" fill="#38bdf8"/><text x="70" y="2300.8613138686133" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Execute</text><circle cx="40" cy="2360.8613138686133" r="10" fill="#38bdf8"/><text x="70" y="2370.8613138686133" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Review</text><circle cx="40" cy="2430.8613138686133" r="10" fill="#38bdf8"/><text x="70" y="2440.8613138686133" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Adjust rules</text></svg>
+  <circle cx="40" cy="2220.8613138686133" r="10" fill="#38bdf8" />
+  <text x="70" y="2230.8613138686133" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Plan</text>
+  <circle cx="40" cy="2290.8613138686133" r="10" fill="#38bdf8" />
+  <text x="70" y="2300.8613138686133" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Execute</text>
+  <circle cx="40" cy="2360.8613138686133" r="10" fill="#38bdf8" />
+  <text x="70" y="2370.8613138686133" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Review</text>
+  <circle cx="40" cy="2430.8613138686133" r="10" fill="#38bdf8" />
+  <text x="70" y="2440.8613138686133" font-family="Arial, sans-serif" font-size="34" fill="#e1e7ef">Adjust rules</text>
+</svg>

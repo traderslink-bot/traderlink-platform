@@ -49,4 +49,5 @@
   </g>
   <circle cx="626" cy="254" r="7" fill="#e8f1ff" />
   <text x="590" y="336" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="13">Current price area</text>
-  </svg>
+  <path d="M690 322V254H633" fill="none" stroke="#d7ecff" stroke-width="2" data-all-course-qa="leader" />
+</svg>

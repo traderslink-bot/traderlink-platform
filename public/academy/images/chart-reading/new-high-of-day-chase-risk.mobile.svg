@@ -45,7 +45,6 @@
         <rect x="626" y="188" width="20" height="42" />
       </g>
     </g>
-    <path d="M338 256 C420 236 500 210 626 196" fill="none" stroke="#fecaca" stroke-width="3" stroke-dasharray="7 7" />
     <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
     </g>
     <rect x="28" y="385.0" width="704" height="135" rx="10" fill="#0b1626" stroke="#1f3554" />
@@ -62,6 +61,7 @@
     <rect x="519.0" y="446.4" width="18" height="54.6" fill="#ef4444" />
     <rect x="573.0" y="464.6" width="18" height="36.400000000000006" fill="#ef4444" />
     <rect x="627.0" y="472.4" width="18" height="28.6" fill="#ef4444" />
+    <path d="M340 242H692 M680 114V242 M674 114H686 M674 242H686" fill="none" stroke="#fecaca" stroke-width="2" stroke-dasharray="5 5" data-all-course-qa="distance" />
   </svg>
   <text x="36" y="852.4772727272727" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="36">Nearest support / higher low</text>
   <text x="36" y="907.4772727272727" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="36">Repeated fresh highs</text>

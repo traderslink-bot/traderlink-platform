@@ -40,5 +40,5 @@
     </g>
   </g>
   <text x="270" y="132" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break attempt</text>
-  <text x="372" y="306" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Fails back below zone</text>
-  </svg>
+  <text x="372" y="342" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Fails back below zone</text>
+</svg>
