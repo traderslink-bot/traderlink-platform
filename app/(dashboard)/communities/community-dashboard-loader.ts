@@ -49,7 +49,7 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
     const tracked=alertSlug
       ? current.alerts.some(alert=>alert.slug===alertSlug&&alert.publishingMode==="tracked_page")
       : watchlistId
-        ? current.watchlists.some(watchlist=>watchlist.watchlistId===watchlistId&&watchlist.publishingMode==="tracked_page")
+        ? current.watchlists.some(watchlist=>watchlist.watchlistId===watchlistId&&watchlist.status==="published"&&watchlist.publishingMode==="tracked_page")
         : true;
     const activityPath=path??`/communities/${communitySlug}`;
     if(tracked&&isCommunityContentActivityPath(communitySlug,activityPath))repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:activityPath,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});

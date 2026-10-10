@@ -13,13 +13,13 @@ export function CommunityWatchlistComposer({communitySlug,isReview}:{communitySl
     <input name="communitySlug" type="hidden" value={communitySlug}/>
     <Stack spacing={2}>
       <TextField label="Watchlist title" name="title" required/>
-      <TextField label="Symbols" name="symbols" placeholder="NVDA, TSLA, SPY" required/>
+      <TextField label="Symbols" name="symbols" placeholder="NVDA, TSLA, SPY"/>
       <TextField label="Notes" minRows={3} multiline name="description"/>
       <TextField defaultValue="tracked_page" label="Publishing" name="publishingMode" select>
         <MenuItem value="tracked_page">Tracked TraderLink page</MenuItem>
         <MenuItem value="discord_post">Full Discord post</MenuItem>
       </TextField>
-      <Button disabled={isReview} type="submit" variant="contained">Publish watchlist</Button>
+      <Stack direction="row" spacing={1}><Button disabled={isReview} name="intent" type="submit" value="draft" variant="outlined">Save draft</Button><Button disabled={isReview} name="intent" type="submit" value="publish" variant="contained">Publish watchlist</Button></Stack>
     </Stack>
   </Box>;
 }

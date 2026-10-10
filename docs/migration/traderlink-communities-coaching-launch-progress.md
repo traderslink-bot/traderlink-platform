@@ -74,4 +74,11 @@ Workspace verification found canonical untracked community source predates the f
 - Foundation fixture PASS includes matching JS/SQL path boundaries and retention idempotence. Existing Communities and coaching-remediation fixtures PASS; recurrence, role pause/restore, archive preservation and foreign-key checks remain intact.
 - Browser presentation, semantic hosted checks, full backlog drain and independent server acceptance remain open. No staging/production changes.
 
+## Official server watchlist recovery slice
+
+- Added Published/Drafts/Archived workspace views. Only authors with publishing permission or authorized managers receive unpublished records; ordinary readers do not. Draft/archived pages are excluded from named content activity.
+- Added save-draft, unpublish and restore-draft controls. First publication queues delivery; ordinary edits/archive/restore do not automatically resend Discord posts.
+- Tickers can be removed completely, including an empty list without deleting the publication. Surviving ticker notes are preserved through edits/reordering. This does not touch TraderLink's separate premium watchlist or impose its AI analysis.
+- Extended Communities fixture PASS for draft/archive reader isolation, author restore, reader write rejection, preserved analysis, full ticker removal and first-publication delivery/idempotence. UI browser verification and the broader alert/member-placement/delivery matrix remain open.
+
 Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle and L01 independent-server proof; final integrated full QA. These slices do not complete L01–L09 or authorize a deploy.

@@ -145,8 +145,8 @@ export async function createCommunityServerWatchlistAction(formData:FormData):Pr
       actor,
       title:required(formData,"title"),
       description:String(formData.get("description")??""),
-      symbols:required(formData,"symbols").split(/[\s,]+/u),
-      publish:true,
+      symbols:String(formData.get("symbols")??"").split(/[\s,]+/u),
+      publish:formData.get("intent")!=="draft",
       publishingMode:String(formData.get("publishingMode")??"tracked_page") as "tracked_page"|"discord_post",
       atUtc:createCanonicalUtcTimestamp(),
     });
@@ -155,7 +155,7 @@ export async function createCommunityServerWatchlistAction(formData:FormData):Pr
   redirect(updatedCommunityUrl(communitySlug,"watchlists"));
 }
 
-export async function updateCommunityServerWatchlistAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateServerWatchlist({communityId:community.community_id,actor,watchlistId:required(formData,"watchlistId"),title:required(formData,"title"),description:String(formData.get("description")??""),symbols:required(formData,"symbols").split(/[\s,]+/u),publishingMode:String(formData.get("publishingMode")??"tracked_page") as "tracked_page"|"discord_post",status:required(formData,"status") as "published"|"archived",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"watchlists");redirect(updatedCommunityUrl(communitySlug,"watchlists"));}
+export async function updateCommunityServerWatchlistAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateServerWatchlist({communityId:community.community_id,actor,watchlistId:required(formData,"watchlistId"),title:required(formData,"title"),description:String(formData.get("description")??""),symbols:String(formData.get("symbols")??"").split(/[\s,]+/u),publishingMode:String(formData.get("publishingMode")??"tracked_page") as "tracked_page"|"discord_post",status:required(formData,"status") as "draft"|"published"|"archived",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"watchlists");redirect(updatedCommunityUrl(communitySlug,"watchlists"));}
 
 export async function saveCommunityCoachAction(formData: FormData): Promise<void> {
   const communitySlug=required(formData,"communitySlug"); const {identity}=await context(communitySlug);

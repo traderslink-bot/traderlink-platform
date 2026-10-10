@@ -69,7 +69,7 @@ export type TraderLinkCommunityWatchlistPlacement = Readonly<{
   authorName: string;
   title: string;
   audienceId: string;
-  status: "published" | "removed";
+  status: "draft" | "published" | "archived" | "removed";
   sharedAtUtc: string;
   sourceKind?: "member" | "server";
   description?: string;
