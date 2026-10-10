@@ -18,7 +18,7 @@ owner-test allowlist if production-only Discord behavior requires it.
 
 **Current coach plan-builder revision:** [Coach Plan Offers Redesign](traderlink-coach-plan-offers-redesign-progress.md). Owner rejected the generic identical-checkbox setup; preserve the review workspace while revising the offer builder.
 
-**Current whole-coaching QA:** [Coaching feature QA — 2026-09-27](traderlink-coaching-full-qa-20260927.md). Presentation fixes are live and verified. The complete inventory audit identifies eight open functional/accessibility issues; whole-feature acceptance has not passed. Student-authenticated and external-service checks remain explicitly unverified.
+**Current whole-coaching QA:** [Complete QA inventory and evidence](traderlink-coaching-complete-qa-20261001.md), with [October 10 final correction and staging record](coaching-final-qa-20261010.md). Current private-pilot QA checkpoint is complete, including final archived-student lesson-audience correction and hosted retest. All thirteen areas retain explicit dated live/fixture boundaries. Public multi-server launch is NOT ready: pilot-specific onboarding and privileged bootstrap require a reviewed per-server setup before opening access. Activity presentation remains owner-deferred. The [September 27 audit](traderlink-coaching-full-qa-20260927.md) is historical, not the current unresolved-defect list.
 
 **Owner-authorized full remediation:** [Coaching QA Remediation](traderlink-coaching-qa-remediation-progress.md). All six areas followed by full QA in one continuous goal; preserve the approved interfaces and existing records.
 

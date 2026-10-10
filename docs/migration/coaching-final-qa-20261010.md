@@ -1,6 +1,45 @@
 # Coaching final QA continuation — October 10
 
-Status: in progress; staging and full inventory acceptance remain open.
+Status: current private-pilot QA checkpoint complete; final fixes deployed and
+retested. Public multi-server launch is NOT ready. Historical pending statements
+below are superseded by this final disposition, not erased.
+
+## Final disposition
+
+- Final staging source `d4cc8b7ed6f60609b4fafbbfcb1fa82f8fb214d6`, deployment
+  `957306ce-052d-4ae9-bcd7-ee276da82c79`, image
+  `sha256:2e508f6c0ddb5f1dd4aa5fa67f378ecfde714a06386d241b980ede356b3ea0fc`.
+  Coordinator confirmed SUCCESS/RUNNING, HTTP200 ready/sqlite_single_node/schema154,
+  empty deployment-error query and hosted registry/compile/TypeScript/280-page
+  generation. Includes production Academy `3b52308aa97541a9c7d47cc818f660ab465e9dc6`,
+  all earlier coaching and archived-audience fix497aab8e. No production coaching,
+  schema/configuration change or hosted data reset.
+- Fresh Chrome archive regression PASS: archived only TEST Student - Synthetic;
+  recipient picker excluded it; an All students draft saved with only Bullrun
+  (1 student, draft). Bullrun did not receive/see the unpublished lesson. Restored
+  synthetic student to Active, original2 work due and Journal shared. Bullrun
+  remained Active with6 work due. Existing teaching recipients/history untouched.
+- Draft `QA20261010 — archived audience regression` intentionally retained as
+  unpublished test evidence. Final navigation test plan remains archived.
+- Original review69865 remains Performance September18–25, To review3/Saved2,
+  Rules/Journal/Next steps and original feedback/summary/private notes. Student
+  images decode640x360; draft lesson and private canary absent from student view.
+- Post-fix final rerun of all thirteen bounded scripts passes. Full in-memory
+  coaching lifecycle, community isolation/grants/20capabilities/28tables and
+  four-mode Discord delivery also pass. Focused last-three-file lint zero errors;
+  no local production build. Final coach console captured no errors.
+- Help workflow unchanged by these corrections; no additional public copy needed.
+- QA verdict: suitable for continued owner testing of the closed pilot; NOT public
+  go-live approval. Onboarding still hardcodes pilot guild/test roles/channels and
+  privileged bootstrap. Public multi-server setup needs reviewed per-server owner
+  authorization without platform-operator escalation. Ad-hoc request quota/deadline,
+  watchlist archive recovery/edit-to-Discord behavior and ended-student history are
+  explicit product decisions, not capabilities falsely marked complete. Activity
+  presentation stays owner-deferred. Future syndication/network/commissions excluded.
+- All thirteen inventory areas reconciled in the canonical complete QA record,
+  distinguishing fresh live checks, historical live evidence and fixture-only
+  boundaries. No claim of exhaustive penetration/load testing, real payment
+  settlement, native video or paid analysis accuracy.
 
 ## Latest final-build retest and additional finding
 
