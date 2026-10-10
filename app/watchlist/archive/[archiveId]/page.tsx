@@ -1,3 +1,5 @@
+import { WatchlistPlanUpgrade } from "@/app/watchlist/watchlist-plan-upgrade";
+import { readWatchlistUpgradeLinks } from "@/src/modules/watchlist/server/access/watchlist-plan-policy";
 import { canViewWatchlistLevels } from '@/src/modules/watchlist/server/access/watchlist-levels-visibility';
 import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
@@ -7,7 +9,6 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { readWatchlistFeatureAccess } from "@/src/modules/watchlist/server/access/watchlist-feature-access";
 import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
-import { WatchlistFeatureMessage } from "../../watchlist-feature-message";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -76,18 +77,18 @@ export default async function LiveWatchlistArchiveDetailPage({
   }
 
   const features = readWatchlistFeatureAccess(access.principal.platformUserId);
-  if (!features.tickerDetails) return <WatchlistDashboardFrame><div className="academy-container"><WatchlistFeatureMessage feature="ticker_details" /><Link href="/watchlist">Back to watchlist</Link></div></WatchlistDashboardFrame>;
   const archive = await new LiveWatchlistStore().getArchive(archiveId);
   if (!archive) {
     notFound();
   }
 
   if (!canViewPrivateWatchlistTicker(await headers(), archive.symbol) || archive.state.watchlistGroup === "private") notFound();
-  if (!canViewWatchlistTicker(await headers(), archive.symbol)) return <WatchlistDashboardFrame><PremiumTickerLock /></WatchlistDashboardFrame>;
+  if (!features.tickerDetails) return <WatchlistDashboardFrame><div className="academy-container"><WatchlistPlanUpgrade feature="Ticker details" href={readWatchlistUpgradeLinks(archive.symbol).ticker === undefined ? "/plans?feature=watchlist.ticker_details" : readWatchlistUpgradeLinks(archive.symbol).ticker} /><Link href="/watchlist">Back to watchlist</Link></div></WatchlistDashboardFrame>;
+  if (!canViewWatchlistTicker(await headers(), archive.symbol)) return <WatchlistDashboardFrame><PremiumTickerLock upgradeHref={readWatchlistUpgradeLinks(archive.symbol).ticker} /></WatchlistDashboardFrame>;
   return (
     <WatchlistDashboardFrame>
       <div className="academy-container">
-        <LiveWatchlistArchiveDetailClient archive={{ ...archive, state: watchlistDetailProjection(archive.state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(await headers(), archive.symbol), canViewWatchlistLevels(await headers(), archive.symbol)) }} />
+        <LiveWatchlistArchiveDetailClient archive={{ ...archive, state: watchlistDetailProjection(archive.state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(await headers(), archive.symbol), canViewWatchlistLevels(await headers(), archive.symbol), readWatchlistUpgradeLinks(archive.symbol)) }} />
       </div>
     </WatchlistDashboardFrame>
   );

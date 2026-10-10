@@ -1,3 +1,4 @@
+import { canNotifyWatchlistTicker } from "../access/watchlist-plan-policy";
 import "server-only";
 import type Database from "better-sqlite3";
 import * as webPush from "web-push";
@@ -79,7 +80,7 @@ export async function deliverWatchlistNotifications(database: Database.Database,
       const preference = new WatchlistPublicationNotificationStore(database).readPreferences(candidate.user_id);
       const allowed = candidate.channel === "email" ? preference.emailEnabled : preference.webPushEnabled;
       const visible = database.prepare<[string], { n: number }>("SELECT count(*) n FROM live_watchlist_symbols WHERE symbol=? AND status<>'deactivated' AND COALESCE(json_extract(state_json,'$.watchlistGroup'),'main')<>'private'").get(candidate.ticker)?.n;
-      const state = !allowed ? "opted_out" : !visible || !access(database,candidate.user_id) ? "inaccessible" : "sending";
+      const state = !allowed ? "opted_out" : !visible || !canNotifyWatchlistTicker(database,candidate.user_id,candidate.ticker,candidate.notification_kind) || !access(database,candidate.user_id) ? "inaccessible" : "sending";
       database.prepare(`UPDATE platform_watchlist_notification_deliveries SET state=?,last_attempt_at_utc=?,
         attempt_count=attempt_count+? WHERE delivery_id=?`).run(state,now,state === "sending" ? 1 : 0,candidate.delivery_id);
       return state === "sending" ? { ...candidate,attempt_count:candidate.attempt_count+1 } : false;

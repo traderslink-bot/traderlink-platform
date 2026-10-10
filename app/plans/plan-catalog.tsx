@@ -1,4 +1,7 @@
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import styles from "./plan-catalog.module.css";
+import { defaultMembershipFeatureCopy } from "@/src/modules/platform/contracts/membership-feature-copy";
+import { formatMembershipNewsDelay, isMembershipNewsDelay } from "@/src/modules/platform/contracts/membership-news-delays";
+import { formatWatchlistBudget } from "@/src/modules/platform/contracts/membership-watchlist-budget";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
@@ -25,10 +28,10 @@ export function PlanCatalog({
   title?: string;
 }) {
   return (
-    <Box component="main" sx={{ bgcolor: "#f5f7fb", minHeight: "70vh", py: { xs: 6, md: 9 } }}>
+    <Box component="main" className={styles.page}>
       <Container maxWidth="lg">
         <Stack spacing={4}>
-          <Stack spacing={1} sx={{ maxWidth: 760 }}>
+          <Stack spacing={1} className={styles.heading} sx={{ maxWidth: 760 }}>
             {privateOffer ? <Chip color="primary" label="Private offer" sx={{ alignSelf: "flex-start" }} /> : null}
             <Typography component="h1" variant="h1">{title}</Typography>
             <Stack direction="row" spacing={2} sx={{ pt: 1 }}>
@@ -38,37 +41,52 @@ export function PlanCatalog({
           </Stack>
           {plans.length === 0 ? (
             <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 3, md: 5 } }}>
-              <Typography component="h2" variant="h2">Plans are coming soon</Typography>
+              <Typography component="h2" variant="h2">No plans are available</Typography>
               <Typography color="text.secondary" sx={{ mt: 1 }}>
-                You can still use TraderLink through the free TradersLink Discord. Join the Discord, then sign in again to refresh your access.
+                There are no active offers on this page right now.
               </Typography>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mt: 3 }}>
-                <Button href="https://discord.gg/9dmGpfpRDD" variant="contained">Join Free Discord</Button>
-                <Button href="/api/auth/discord/login?prompt=consent&returnTo=%2Fworkspace" variant="outlined">Try Discord sign-in again</Button>
-              </Stack>
             </Paper>
           ) : (
-            <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" } }}>
+            <Box className={styles.grid}>
               {plans.map((plan) => (
-                <Paper key={plan.planVersionId} variant="outlined" sx={{ borderRadius: 3, display: "flex", flexDirection: "column", p: 3 }}>
-                  <Typography component="h2" variant="h2">{plan.name}</Typography>
-                  {plan.description ? <Typography color="text.secondary" sx={{ mt: 1 }}>{plan.description}</Typography> : null}
-                  <Stack spacing={1.25} sx={{ my: 3 }}>
-                    {plan.features.map((feature) => (
-                      <Stack direction="row" key={`${feature.label}-${feature.limitValue ?? "included"}`} spacing={1} sx={{ alignItems: "center" }}>
-                        <CheckCircleRoundedIcon color="success" fontSize="small" />
-                        <Typography variant="body2">
-                          {feature.label}{feature.limitValue === null ? feature.kind === "limit" ? ": Unlimited" : "" : `: ${feature.limitValue}`}
-                          {feature.metered && feature.limitValue !== null ? feature.resetDays ? ` every ${feature.resetDays} days` : " · no reset" : ""}
-                        </Typography>
-                      </Stack>
-                    ))}
-                  </Stack>
-                  <Stack spacing={1.5} sx={{ mt: "auto" }}>
+                <article key={plan.planVersionId} className={styles.frame}>
+                  <div className={styles.card}>
+                  <h2 className={styles.name}>{plan.name}</h2>
+                  {plan.offers.map(offer => <div key={offer.offerId}>
+                    <div className={styles.price}>{membershipOfferPrice(offer)}</div>
+                    {plan.offers.length > 1 ? <div>{offer.name}</div> : null}
+                  </div>)}
+                  {plan.description ? <p className={styles.description}>{plan.description}</p> : null}
+                  <ul className={styles.features}>
+                    {plan.features.map((feature) => {
+                      const fallback = defaultMembershipFeatureCopy(feature.featureKey, feature.label);
+                      const brief = feature.brief ?? fallback.brief;
+                      const details = feature.details ?? fallback.details;
+                      return <li key={feature.featureKey} className={styles.feature}>
+                        <strong>{feature.label}</strong>
+                        {feature.kind === "limit" ? <span className={styles.allowance}>
+                          {isMembershipNewsDelay(feature.featureKey) ? formatMembershipNewsDelay(feature.limitValue)
+                            : feature.featureKey === "private_watchlist.cost_microusd" ? formatWatchlistBudget(feature.limitValue)
+                              : feature.limitValue === null ? "Unlimited" : feature.limitValue}
+                          {feature.metered && feature.limitValue !== null
+                            ? feature.privatePeriod ? feature.privatePeriod.kind === "calendar_month" ? " per calendar month (UTC)"
+                              : feature.privatePeriod.kind === "lifetime" ? " · no reset"
+                                : ` every ${feature.privatePeriod.days} ${feature.privatePeriod.days === 1 ? "day" : "days"}`
+                              : feature.resetDays === undefined ? " · reset period unavailable"
+                              : feature.resetDays === null ? " · no reset"
+                                : ` every ${feature.resetDays} ${feature.resetDays === 1 ? "day" : "days"}`
+                            : null}
+                        </span> : null}
+                        {brief ? <p>{brief}</p> : null}
+                        {details ? <details><summary aria-label={`More details about ${feature.label}`}>More details</summary><p>{details}</p></details> : null}
+                      </li>;
+                    })}
+                  </ul>
+                  <Stack spacing={1.5} className={styles.footer}>
                     {plan.offers.map((offer) => (
-                      <Box key={offer.offerId} sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
+                      <Box key={offer.offerId} className={styles.offer}>
                         <Typography sx={{ fontSize: "1.15rem", fontWeight: 850 }}>{membershipOfferPrice(offer)}</Typography>
-                        <Typography color="text.secondary" variant="caption">{offer.name}</Typography>
+                        <Typography variant="caption">{offer.name}</Typography>
                         {offer.accessDurationDays ? <Typography variant="body2">Includes {offer.accessDurationDays} days of access.</Typography> : null}
                         {!offer.automaticConfirmation && offer.billingKind !== "free" ? <Typography variant="body2">Payment uses {offer.providerLabel}. The owner confirms access after payment.</Typography> : null}
                         <MembershipForm action={selectMembershipAction} label={offer.billingKind === "free" ? "Get access" : "Choose this plan"}>
@@ -88,7 +106,8 @@ export function PlanCatalog({
                       </Box>
                     ))}
                   </Stack>
-                </Paper>
+                  </div>
+                </article>
               ))}
             </Box>
           )}

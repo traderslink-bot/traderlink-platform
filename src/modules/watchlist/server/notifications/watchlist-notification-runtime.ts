@@ -1,4 +1,4 @@
-import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { evaluateMembershipFeature, hasPlatformMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { reconcileXPublications } from "./watchlist-x-runtime";
 import { reconcileFreeChatPublications } from "./watchlist-free-chat-runtime";
 import "server-only";
@@ -22,6 +22,7 @@ export function watchlistNotificationAccess(database: Database.Database, userId:
   const active = database.prepare<[string], { n: number }>(`SELECT count(*) n FROM platform_users u
     WHERE u.user_id=? AND u.status='active' AND EXISTS(SELECT 1 FROM platform_auth_identities a
     WHERE a.user_id=u.user_id AND a.status='active' AND a.auth_provider='discord')`).get(userId);
+  if (active?.n && hasPlatformMembershipFeature(database, userId, "watchlist.access")) return true;
   return Boolean(active?.n && new PlatformDiscordMembershipRepository(database)
     .findCurrent(userId, resolveTraderLinkDiscordGuildId(process.env)));
 }

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { assertMembershipNotification, canReceiveMembershipNotification } from "../../platform/server/membership/membership-notification-access";
 
 import type { WorkspaceAccessScope } from "../../platform/contracts/workspace-access-scope";
 import {
@@ -219,6 +220,7 @@ ORDER BY ticker ASC`).all(
   }>): boolean {
     assertActive(this.database, input.scope);
     assertCanonicalUtcTimestamp(input.updatedAtUtc, "marketHaltPreferenceUpdatedAt");
+    if (input.enabled) assertMembershipNotification(this.database, input.scope.userId, "market_halt");
     this.database.prepare(`INSERT INTO news_market_halt_preferences (user_id, enabled, updated_at_utc)
 VALUES (?, ?, ?)
 ON CONFLICT(user_id) DO UPDATE SET enabled = excluded.enabled, updated_at_utc = excluded.updated_at_utc`).run(
@@ -424,7 +426,7 @@ WHERE ticker = ? AND halt_date_et = ? AND first_halt_id = ? AND ended_at_utc IS 
         occurredAtUtc: input.occurredAtUtc,
       });
     }
-    const subscriptions = this.database.prepare<[string, string], { subscription_id: string }>(`SELECT subscription.subscription_id
+    const subscriptions = this.database.prepare<[string, string], { subscription_id: string; user_id: string }>(`SELECT subscription.subscription_id, subscription.user_id
 FROM platform_web_push_subscriptions subscription
 JOIN news_market_halt_preferences preference
   ON preference.user_id = subscription.user_id AND preference.enabled = 1
@@ -440,6 +442,7 @@ available_at_utc, last_attempt_at_utc, delivered_at_utc, failure_code, created_a
 ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?, NULL, NULL, NULL, ?, ?)`);
     let count = 0;
     this.database.transaction(() => subscriptions.forEach((subscription) => {
+      if (!canReceiveMembershipNotification(this.database, subscription.user_id, "market_halt")) return;
       count += insert.run(
         createCanonicalUuidV4(),
         input.event.halt_id,

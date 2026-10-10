@@ -5,6 +5,8 @@ import { PlatformMembershipRepository } from "./platform-membership-repository";
 import { membershipFeaturesFromForm } from "./platform-membership-features";
 import { parseMembershipAmount } from "../../contracts/platform-membership-pricing";
 import { evaluateMembershipFeature } from "./platform-membership-access";
+import { managePrivateWatchlistAllowance } from "../../../watchlist/server/private/private-watchlist-management";
+import { saveWatchlistPlanPolicy } from "../../../watchlist/server/access/watchlist-plan-policy";
 
 const uuid = z.uuid();
 const timestamp = z.iso.datetime({ precision: 3 });
@@ -25,6 +27,29 @@ export class PlatformMembershipManagement {
       let target = "";
       let details: Record<string, string> = {};
       switch (operation) {
+        case "watchlist_plan_policy":
+          target = blank(form, "symbol").toUpperCase();
+          saveWatchlistPlanPolicy(this.database, actorUserId, { symbol: target, control: blank(form, "control"), mode: blank(form, "mode"),
+            planIds: form.getAll("planId").map(value => String(value)) });
+          details = { control: blank(form, "control"), mode: blank(form, "mode") };
+          break;
+        case "private_watchlist_period":
+        case "private_watchlist_override":
+        case "private_watchlist_override_remove":
+          target = managePrivateWatchlistAllowance(this.database, actorUserId, form, at);
+          details = { meter: blank(form, "meter") };
+          break;
+        case "feature_copy": {
+          repository.synchronizeBuiltInFeatures(actorUserId, at);
+          target = text.parse(blank(form, "featureKey"));
+          if (!this.database.prepare("SELECT 1 FROM platform_membership_feature_definitions WHERE feature_key=?").get(target)) throw new Error("Choose a registered feature.");
+          if (!this.database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_membership_feature_copy'").get()) throw new Error("Publish the feature description migration before saving descriptions.");
+          this.database.prepare(`INSERT INTO platform_membership_feature_copy (feature_key,brief,details,updated_by_user_id,updated_at_utc)
+VALUES (?,?,?,?,?) ON CONFLICT(feature_key) DO UPDATE SET brief=excluded.brief,details=excluded.details,
+updated_by_user_id=excluded.updated_by_user_id,updated_at_utc=excluded.updated_at_utc`)
+            .run(target, blank(form, "brief"), blank(form, "details"), actorUserId, at);
+          break;
+        }
         case "check_feature_access": {
           const decision = evaluateMembershipFeature(this.database, uuid.parse(blank(form, "userId")), text.parse(blank(form, "featureKey")),
             blank(form, "requestedTotal") ? z.coerce.number().int().safe().nonnegative().parse(blank(form, "requestedTotal")) : undefined, at);
@@ -71,8 +96,14 @@ export class PlatformMembershipManagement {
             (plan_version_id,plan_id,version_number,public_description,lifecycle_state,created_by_user_id,created_at_utc)
             SELECT ?,?,MAX(version_number)+1,?,'draft',?,? FROM platform_membership_plan_versions WHERE plan_id=?`)
             .run(target, source.plan_id, source.public_description, actorUserId, at, source.plan_id);
-          this.database.prepare(`INSERT INTO platform_membership_plan_features (plan_version_id,feature_key,feature_kind,limit_value,reset_days) SELECT ?,feature_key,feature_kind,limit_value,reset_days
+          const featureColumns = this.database.prepare("PRAGMA table_info(platform_membership_plan_features)").all() as { name: string }[];
+          const resetColumn = featureColumns.some(column => column.name === "reset_days") ? ",reset_days" : "";
+          this.database.prepare(`INSERT INTO platform_membership_plan_features (plan_version_id,feature_key,feature_kind,limit_value${resetColumn}) SELECT ?,feature_key,feature_kind,limit_value${resetColumn}
             FROM platform_membership_plan_features WHERE plan_version_id=?`).run(target, sourceId);
+          if (this.database.prepare("SELECT 1 FROM sqlite_schema WHERE name='platform_private_watchlist_plan_periods' AND type='table'").get()) {
+            this.database.prepare(`INSERT INTO platform_private_watchlist_plan_periods SELECT ?,meter,period_kind,period_days
+FROM platform_private_watchlist_plan_periods WHERE plan_version_id=?`).run(target, sourceId);
+          }
           break;
         }
         case "edit_draft": {

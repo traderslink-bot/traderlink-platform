@@ -1,4 +1,6 @@
 import "server-only";
+import { readMembershipNewsDelaySeconds } from "../../platform/server/membership/membership-news-delay";
+import { assertMembershipNotification } from "../../platform/server/membership/membership-notification-access";
 
 import type Database from "better-sqlite3";
 
@@ -160,8 +162,11 @@ FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
 WHERE article.route_tag IN (${placeholders(tags)})
+  AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
+  AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
 ORDER BY article.published_at DESC, article.id
-LIMIT ?`).all(input.scope.userId, ...tags, limit) as ArticleRow[];
+LIMIT ?`).all(input.scope.userId, ...tags,
+      ...Array(2).fill(readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds")), limit) as ArticleRow[];
     return Object.freeze(rows.map(rowToArticle));
   }
 
@@ -182,7 +187,10 @@ FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
 WHERE article.id = ? AND article.route_tag IN (${placeholders(tags)})
-LIMIT 1`).get(input.scope.userId, input.articleId, ...tags) as ArticleRow | undefined;
+  AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
+  AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
+LIMIT 1`).get(input.scope.userId, input.articleId, ...tags,
+      ...Array(2).fill(readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds"))) as ArticleRow | undefined;
     return row ? rowToArticle(row) : null;
   }
 
@@ -195,7 +203,10 @@ FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
 WHERE receipt.article_id IS NULL
-  AND article.route_tag IN (${placeholders(tags)})`).get(scope.userId, ...tags) as { count: number };
+  AND article.route_tag IN (${placeholders(tags)})
+  AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
+  AND julianday(article.published_at) <= julianday('now') - ? / 86400.0`).get(scope.userId, ...tags,
+        ...Array(2).fill(readMembershipNewsDelaySeconds(this.database, scope.userId, "news.visibility_delay_seconds"))) as { count: number };
       return [channel, count.count];
     })) as Record<PressReleaseChannel, number>;
     return Object.freeze(counts);
@@ -209,9 +220,12 @@ WHERE receipt.article_id IS NULL
     assertActiveUser(this.database, input.scope);
     assertCanonicalUtcTimestamp(input.readAtUtc, "newsArticleReadAt");
     const eligible = this.database.prepare(`SELECT 1 AS found FROM news_articles
-WHERE id = ? AND route_tag IN (${placeholders(ALL_ELIGIBLE_ROUTE_TAGS)})`).get(
+WHERE id = ? AND route_tag IN (${placeholders(ALL_ELIGIBLE_ROUTE_TAGS)})
+  AND julianday(created_at) <= julianday('now') - ? / 86400.0
+  AND julianday(published_at) <= julianday('now') - ? / 86400.0`).get(
       input.articleId,
       ...ALL_ELIGIBLE_ROUTE_TAGS,
+      ...Array(2).fill(readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds")),
     );
     if (!eligible) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
     this.database.prepare(`INSERT OR IGNORE INTO news_article_read_receipts (
@@ -231,10 +245,13 @@ WHERE id = ? AND route_tag IN (${placeholders(ALL_ELIGIBLE_ROUTE_TAGS)})`).get(
   article_id, user_id, read_at_utc
 )
 SELECT article.id, ?, ? FROM news_articles article
-WHERE article.route_tag IN (${placeholders(tags)})`).run(
+WHERE article.route_tag IN (${placeholders(tags)})
+  AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
+  AND julianday(article.published_at) <= julianday('now') - ? / 86400.0`).run(
       input.scope.userId,
       input.readAtUtc,
       ...tags,
+      ...Array(2).fill(readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds")),
     );
     return result.changes;
   }
@@ -254,6 +271,7 @@ WHERE user_id = ? AND enabled = 1 ORDER BY channel`).all(scope.userId);
   }>): readonly PressReleasePushChannel[] {
     assertActiveUser(this.database, input.scope);
     assertCanonicalUtcTimestamp(input.updatedAtUtc, "newsPushPreferenceUpdatedAt");
+    if (input.channels.length) assertMembershipNotification(this.database, input.scope.userId, "press_release");
     const requested = new Set<PressReleasePushChannel>();
     for (const channel of input.channels) {
       if (!isPressReleasePushChannel(channel)) {

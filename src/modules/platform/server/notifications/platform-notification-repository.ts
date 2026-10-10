@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { assertMembershipNotification } from "../membership/membership-notification-access";
 
 import {
   DEFAULT_PLATFORM_NOTIFICATION_PREFERENCES,
@@ -293,6 +294,7 @@ WHERE user_id = ?`).all(scope.userId);
     this.assertActiveScope(input.scope);
     assertCanonicalUtcTimestamp(input.updatedAtUtc, "notificationPreferencesUpdatedAtUtc");
     const selected = new Set(input.categories.map(parseCategory));
+    for (const category of selected) assertMembershipNotification(this.database, input.scope.userId, category);
     const save = this.database.transaction(() => {
       for (const category of PLATFORM_NOTIFICATION_CATEGORIES) {
         this.database.prepare(`INSERT INTO platform_notification_delivery_preferences (
@@ -324,6 +326,7 @@ ON CONFLICT(user_id, category) DO UPDATE SET
     this.assertActiveScope(input.scope);
     assertCanonicalUtcTimestamp(input.updatedAtUtc, "notificationPreferencesUpdatedAtUtc");
     const selected = new Set(input.categories.map(parseCategory));
+    for (const category of selected) assertMembershipNotification(this.database, input.scope.userId, category);
     const save = this.database.transaction(() => {
       for (const category of PLATFORM_NOTIFICATION_CATEGORIES) {
         this.database.prepare(`INSERT INTO platform_notification_delivery_preferences (
@@ -355,6 +358,7 @@ ON CONFLICT(user_id, category) DO UPDATE SET
     this.assertActiveScope(input.scope);
     assertCanonicalUtcTimestamp(input.updatedAtUtc, "notificationPreferencesUpdatedAtUtc");
     const selected = new Set(input.categories.map(parseCategory));
+    for (const category of selected) assertMembershipNotification(this.database, input.scope.userId, category);
     const save = this.database.transaction(() => {
       for (const category of PLATFORM_NOTIFICATION_CATEGORIES) {
         this.database.prepare(`INSERT INTO platform_notification_delivery_preferences (

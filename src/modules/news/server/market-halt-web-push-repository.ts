@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { canReceiveMembershipNotification } from "../../platform/server/membership/membership-notification-access";
 
 import type { PlatformWebPushEncryptionConfiguration } from "../../platform/server/notifications/platform-web-push-configuration";
 import type { PlatformWebPushClaimedDelivery } from "../../platform/server/notifications/platform-web-push-repository";
@@ -84,6 +85,10 @@ WHERE state = 'pending' AND created_at_utc <= ?`).run(nowUtc, staleAlertBefore);
   ORDER BY delivery.available_at_utc, delivery.created_at_utc
         LIMIT 1`).get(nowUtc);
         if (!row) return null;
+        if (!canReceiveMembershipNotification(this.database, row.user_id, "market_halt")) {
+          this.database.prepare("UPDATE news_market_halt_push_deliveries SET state='expired', failure_code='membership_required', updated_at_utc=? WHERE delivery_id=? AND state='pending'").run(nowUtc, row.delivery_id);
+          return undefined;
+        }
         const claimed = this.database.prepare(`UPDATE news_market_halt_push_deliveries
   SET state = 'sending', attempt_count = attempt_count + 1, last_attempt_at_utc = ?, updated_at_utc = ?
   WHERE delivery_id = ? AND state = 'pending'`).run(nowUtc, nowUtc, row.delivery_id);

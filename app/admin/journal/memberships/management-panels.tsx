@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { FeatureLimitField } from "./feature-limit-field";
 import { GenerationResetField } from "./generation-reset-field";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -13,6 +14,9 @@ import { membershipWhopConfiguration } from "@/src/modules/platform/server/membe
 import { readMembershipWebhookFailures } from "@/src/modules/platform/server/membership/platform-membership-webhook-health";
 import { membershipOwnerGrantRecurrence } from "@/src/modules/platform/contracts/platform-membership-owner-grant";
 import { MembershipMemberPicker } from "./member-picker";
+import { PrivateWatchlistAllowanceSettings } from "./private-watchlist-allowance-settings";
+import { WatchlistPlanSettings } from "./watchlist-plan-settings";
+import { readMembershipFeatureCopy, defaultMembershipFeatureCopy } from "@/src/modules/platform/server/membership/membership-feature-copy";
 
 type Option = { id: string; label: string };
 function Select({ name, label, options, defaultValue = "" }: { name: string; label: string; options: readonly (string | Option)[]; defaultValue?: string }) {
@@ -36,7 +40,22 @@ export function MembershipManagementPanels({ database, section }: { database: Da
   const offers = database.prepare(`SELECT o.offer_id id,p.name||' · '||o.name||' · '||o.status label FROM platform_membership_offers o
     JOIN platform_membership_plan_versions v ON v.plan_version_id=o.plan_version_id JOIN platform_membership_plans p ON p.plan_id=v.plan_id ORDER BY p.name,o.name`).all() as Option[];
   const providers = database.prepare("SELECT provider_key id,label FROM platform_membership_provider_definitions ORDER BY label").all() as Option[];
+  const featureCopy = section === "Features" ? readMembershipFeatureCopy(database) : new Map();
   if (section === "Features") return <JournalAdminPanel title="Features">
+    <PrivateWatchlistAllowanceSettings database={database} />
+    <WatchlistPlanSettings database={database} />
+    <Typography sx={{ mb: 2 }}>Descriptions appear on public and invitation plan cards. Editing text does not change access, prices or allowances.</Typography>
+    <Stack spacing={2} sx={{ mb: 3 }}>{readMembershipFeatures(database).map(feature => {
+      const copy = featureCopy.get(feature.key) ?? defaultMembershipFeatureCopy(feature.key, feature.label);
+      return <details key={feature.key}>
+        <summary>{feature.label} descriptions</summary>
+        <MembershipForm key={`${feature.key}:${copy.brief}:${copy.details}`} action={manageMembershipAction} label="Save descriptions">
+          <Command operation="feature_copy" /><input type="hidden" name="featureKey" value={feature.key} />
+          <TextField name="brief" label="Brief description" multiline minRows={2} defaultValue={copy.brief} />
+          <TextField name="details" label="Expandable details" multiline minRows={4} defaultValue={copy.details} />
+        </MembershipForm>
+      </details>;
+    })}</Stack>
     <Stack spacing={1} sx={{ mb: 3 }}>{readMembershipFeatures(database).map((f) => <Typography key={f.key}>{f.label} · {f.key} · {policies.get(f.key) ?? "off"}</Typography>)}</Stack>
     <MembershipForm action={manageMembershipAction} label="Save feature"><Command operation="feature" />
       <Field name="featureKey" label="Feature key" required hint="Use the same key when connecting the feature in app code." />
@@ -230,7 +249,7 @@ export function MembershipManagementPanels({ database, section }: { database: Da
           <TextField name="publicDescription" label="Public description" multiline defaultValue={draft.public_description} />
           {features.map((feature) => <Stack key={feature.key} direction="row" spacing={2}>
             <MembershipCheckbox name="features" value={feature.key} defaultChecked={selected.has(feature.key)} label={feature.label} />
-            {feature.kind === "limit" ? <TextField name={`limit:${feature.key}`} label="Limit" helperText="Blank means unlimited." type="number" defaultValue={selected.get(feature.key)?.limit_value ?? ""} /> : null}
+            {feature.kind === "limit" ? <FeatureLimitField featureKey={feature.key} value={selected.get(feature.key)?.limit_value} /> : null}
             <GenerationResetField featureKey={feature.key} value={selected.get(feature.key)?.reset_days} />
           </Stack>)}
         </MembershipForm><Stack sx={{ mt: 2 }}><MembershipForm action={manageMembershipAction} label="Publish version"><Command operation="publish" /><input type="hidden" name="planVersionId" value={draft.id} /></MembershipForm></Stack></JournalAdminPanel>;

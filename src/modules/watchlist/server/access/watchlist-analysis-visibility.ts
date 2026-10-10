@@ -2,9 +2,10 @@ import { withJournalAdminDatabase } from "@/src/modules/platform/server/administ
 import "server-only";
 import type Database from "better-sqlite3";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { requireTraderLinkPlatformDiscordMemberRequestIdentity, requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { hasWatchlistDashboardNavigationAccess } from "./watchlist-dashboard-navigation-access";
 import { hasPlatformDiscordPremiumAccess } from "./platform-discord-watchlist-entitlement";
+import { readWatchlistPlanDecisions } from "./watchlist-plan-policy";
+import { requireTraderLinkPlatformAuthenticatedRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export const analysisVisibilitySymbol = /^[A-Z0-9][A-Z0-9.^-]{0,15}$/;
 
@@ -63,11 +64,14 @@ export function readWatchlistTickerPolicy(requestHeaders: Headers): { all: boole
     if (withJournalAdminDatabase(requestHeaders, () => true)) return { all: true, owner: true, privateSymbols: new Set(), restricted: new Set() };
   } catch { /* Normal free members may not have dashboard access. */ }
   try {
-    const identity = requireTraderLinkPlatformDiscordMemberRequestIdentity(requestHeaders);
+    const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders, { membershipFeatures: ["watchlist.access"] });
     const restricted = withReadonlyPlatformDatabase({}, db => db.prepare<[], { symbol: string }>(
       "SELECT symbol FROM platform_watchlist_analysis_visibility WHERE ticker_premium_only = 1").all());
     const privateSymbols = withReadonlyPlatformDatabase({}, db => db.prepare<[], {symbol:string}>("SELECT symbol FROM live_watchlist_symbols WHERE json_extract(state_json,'$.watchlistGroup')='private'").all());
-    return { owner: false, privateSymbols: new Set(privateSymbols.map(row=>row.symbol)), all: Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord)), restricted: new Set(restricted.map(row => row.symbol)) };
+    const blocked = new Set(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord) ? [] : restricted.map(row => row.symbol));
+    const plans = withReadonlyPlatformDatabase({}, db => readWatchlistPlanDecisions(db, identity.scope.userId, "ticker"));
+    for (const [symbol, allowed] of plans) { if (allowed) blocked.delete(symbol); else blocked.add(symbol); }
+    return { owner: false, privateSymbols: new Set(privateSymbols.map(row=>row.symbol)), all: false, restricted: blocked };
   } catch { return null; }
 }
 
@@ -79,10 +83,12 @@ export function canViewWatchlistTicker(requestHeaders: Headers, symbol: string):
 /** Independent of generic analysis entitlements. Never authorize from a client flag. */
 export function canViewWatchlistAnalysisPrices(requestHeaders: Headers, symbol: string): boolean {
   try {
-    if (hasWatchlistDashboardNavigationAccess(requireTraderLinkPlatformRequestIdentity(requestHeaders))) return true;
-  } catch { /* Ordinary Discord members may not have dashboard access. */ }
+    if (withJournalAdminDatabase(requestHeaders, () => true)) return true;
+  } catch { /* Ordinary member. */ }
   try {
-    const identity = requireTraderLinkPlatformDiscordMemberRequestIdentity(requestHeaders);
+    const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders, { membershipFeatures: ["watchlist.access"] });
+    const decision = withReadonlyPlatformDatabase({}, db => readWatchlistPlanDecisions(db, identity.scope.userId, "analysis").get(symbol.toUpperCase()));
+    if (decision !== undefined) return decision;
     if (hasWatchlistDashboardNavigationAccess(identity)) return true;
     const restricted = withReadonlyPlatformDatabase({}, db => readAnalysisPremiumOnly(db, symbol.toUpperCase()));
     if (!restricted) return true;

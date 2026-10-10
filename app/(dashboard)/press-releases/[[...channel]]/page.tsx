@@ -6,7 +6,6 @@ import {
 } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import {
   hasPressReleaseDashboardAccess,
-  resolveTraderLinkPlatformPressReleaseAccess,
 } from "@/src/modules/news/server/press-release-dashboard-access";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -66,14 +65,10 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
       <DashboardPage>
         <DashboardPanel title={pressReleaseChannelDefinition(channel).label}>
           <DashboardUnavailableState
-            actionHref="/account"
-            actionLabel="View account"
-            description={resolveTraderLinkPlatformPressReleaseAccess() === "all_discord_members"
-              ? "Sign in with a verified TradersLink Discord account to read Press Releases."
-              : "Press Releases are available to TradersLink Premium members."}
-            title={resolveTraderLinkPlatformPressReleaseAccess() === "all_discord_members"
-              ? "Discord access required"
-              : "Premium access required"}
+            actionHref="/plans?feature=news.access"
+            actionLabel="View plans with this feature"
+            description="Your current access does not include Dashboard news. View available plans or contact the owner about private access."
+            title="Dashboard news access required"
           />
         </DashboardPanel>
       </DashboardPage>

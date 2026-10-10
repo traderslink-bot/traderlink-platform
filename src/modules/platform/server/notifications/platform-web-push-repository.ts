@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
+import { canReceiveMembershipNotification } from "../membership/membership-notification-access";
 import { readClaimedWebPushSubscription } from "./platform-web-push-claim-subscription";
 
 import type { WorkspaceAccessScope } from "../../contracts/workspace-access-scope";
@@ -44,6 +45,7 @@ type TerminalFailureRow = Readonly<{
 }>;
 
 type ClaimedDeliveryRow = SubscriptionRow & Readonly<{
+  category: PlatformNotificationCategory;
   attempt_count: number;
   delivery_id: string;
   destination_path: string | null;
@@ -295,7 +297,7 @@ WHERE state IN ('pending', 'sending') AND subscription_id IN (
     const enabled = this.database.prepare<[string, string], { enabled: number }>(`SELECT web_push_enabled AS enabled
 FROM platform_notification_delivery_preferences
 WHERE user_id = ? AND category = ?`).get(input.userId, input.category)?.enabled === 1;
-    if (!enabled) return;
+    if (!enabled || !canReceiveMembershipNotification(this.database, input.userId, input.category)) return;
     const subscriptions = this.database.prepare<[string], { subscription_id: string }>(`SELECT subscription_id
 FROM platform_web_push_subscriptions WHERE user_id = ? AND state = 'active'`).all(input.userId);
     for (const subscription of subscriptions) {
@@ -363,7 +365,7 @@ FROM platform_notifications WHERE notification_id = ? AND recipient_user_id = ? 
           nowUtc, new Date(Date.parse(nowUtc) - 60_000).toISOString(),
         );
         const row = this.database.prepare<[string, string | null, string | null], ClaimedDeliveryRow>(`SELECT
-    delivery.delivery_id, delivery.attempt_count, notification.destination_path, notification.source_event_key,
+    delivery.delivery_id, delivery.attempt_count, notification.destination_path, notification.source_event_key, notification.category,
     subscription.subscription_id, subscription.user_id, subscription.device_ref,
     subscription.endpoint_hash, subscription.key_version,
     subscription.initialization_vector, subscription.ciphertext,
@@ -377,6 +379,12 @@ FROM platform_notifications WHERE notification_id = ? AND recipient_user_id = ? 
   ORDER BY delivery.available_at_utc, delivery.created_at_utc
   LIMIT 1`).get(nowUtc, onlyDeliveryRef, onlyDeliveryRef);
         if (!row) return null;
+        if (!canReceiveMembershipNotification(this.database, row.user_id, row.category)) {
+          this.database.prepare(`UPDATE platform_web_push_deliveries
+SET state='failed', failure_code='membership_required', updated_at_utc=?
+WHERE delivery_id=? AND state='pending'`).run(nowUtc, row.delivery_id);
+          return undefined;
+        }
         const claimed = this.database.prepare(`UPDATE platform_web_push_deliveries
   SET state = 'sending', attempt_count = attempt_count + 1,
       last_attempt_at_utc = ?, updated_at_utc = ?

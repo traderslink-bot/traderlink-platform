@@ -482,6 +482,7 @@ export type LiveWatchlistLevelMap = {
 };
 
 export type LiveWatchlistSymbolState = {
+  watchlistUpgradeLinks?: Partial<Record<"ticker" | "analysis" | "levels", string | null>>;
   premiumLevelsAllowed?: boolean;
   premiumAnalysisPricesAllowed?: boolean;
   premiumAnalysisPreview?: import("./premium-analysis-preview").PremiumAnalysisPreview | null;

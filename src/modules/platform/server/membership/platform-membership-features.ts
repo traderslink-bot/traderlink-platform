@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { PLATFORM_MEMBERSHIP_FEATURES, type PlatformMembershipFeatureGrant } from "../../contracts/platform-membership-contracts";
+import { parseWatchlistBudgetUsd } from "../../contracts/membership-watchlist-budget";
 
 export type MembershipFeatureOption = { key: string; label: string; kind: "boolean" | "limit"; module: string };
 
@@ -24,6 +25,10 @@ export function membershipFeaturesFromForm(database: Database.Database, form: Fo
     const metered = key === "trade_analyzer.analyses" || key === "levels.generations";
     if (metered && reset !== null && reset !== "" && (typeof reset !== "string" || !/^\d+$/.test(reset) || !Number.isSafeInteger(Number(reset)) || Number(reset) < 1)) {
       throw new Error(`Enter a positive whole-number reset interval for ${feature.label}.`);
+    }
+    if (key === "private_watchlist.cost_microusd" && form.get(`unit:${key}`) === "USD") {
+      if (value !== null && typeof value !== "string") throw new Error("Enter a USD budget.");
+      return { featureKey: key, limitValue: parseWatchlistBudgetUsd(value ?? "") };
     }
     if (feature.kind === "limit" && value !== null && value !== "" && (typeof value !== "string" || !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)))) {
       throw new Error(`Enter a whole-number limit for ${feature.label}.`);

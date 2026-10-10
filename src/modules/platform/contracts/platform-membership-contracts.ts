@@ -1,4 +1,11 @@
+import { MEMBERSHIP_NOTIFICATION_FEATURES } from "./membership-notification-features";
+import { MEMBERSHIP_NEWS_DELAY_FEATURES } from "./membership-news-delays";
+import { MEMBERSHIP_PRIVATE_WATCHLIST_FEATURES } from "./membership-private-watchlist-features";
+
 export const PLATFORM_MEMBERSHIP_FEATURES = Object.freeze([
+  ...MEMBERSHIP_PRIVATE_WATCHLIST_FEATURES,
+  ...MEMBERSHIP_NOTIFICATION_FEATURES,
+  ...MEMBERSHIP_NEWS_DELAY_FEATURES,
   { key: "dashboard.access", label: "Dashboard", kind: "boolean", module: "platform" },
   { key: "journal.access", label: "Journal", kind: "boolean", module: "journal" },
   { key: "journal.accounts", label: "Journal accounts", kind: "limit", module: "journal" },

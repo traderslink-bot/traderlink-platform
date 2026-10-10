@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { openPlatformDatabase, withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -35,6 +36,7 @@ export async function saveDiscordDmNotificationCategories(
     revalidatePath("/account");
     return Object.freeze({ ok: true as const, categories: preferences.discordDmCategories });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) return { ok: false, message: "Your current plan does not include one of these notifications. View Plans to change access." };
     const invalid = isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
     return Object.freeze({
@@ -69,6 +71,7 @@ export async function saveWebPushNotificationCategories(
     revalidatePath("/account/preferences");
     return Object.freeze({ ok: true as const, categories: preferences.webPushCategories });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) return { ok: false, message: "Your current plan does not include one of these notifications. View Plans to change access." };
     const invalid = isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
     return Object.freeze({
@@ -116,6 +119,7 @@ export async function saveEmailNotificationCategories(
     revalidatePath("/account/preferences");
     return Object.freeze({ ok: true as const, categories: preferences.emailCategories });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) return { ok: false, message: "Your current plan does not include one of these notifications. View Plans to change access." };
     const invalid = isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
     return Object.freeze({
@@ -258,6 +262,7 @@ export async function savePressReleasePushChannels(
     revalidatePath("/account/preferences");
     return Object.freeze({ ok: true as const, channels: saved });
   } catch (error) {
+    if (isMembershipAccessDenied(error)) return { ok: false, message: "Your current plan does not include press release notifications. View Plans to change access." };
     const invalid = isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
     return Object.freeze({
@@ -284,7 +289,8 @@ export async function saveMarketHaltAlertsEnabled(
     );
     revalidatePath("/account/preferences");
     return Object.freeze({ enabled: saved, ok: true as const });
-  } catch {
+  } catch (error) {
+    if (isMembershipAccessDenied(error)) return { ok: false, message: "Your current plan does not include halt notifications. View Plans to change access." };
     return Object.freeze({
       ok: false as const,
       message: "Your halt alert choice could not be saved. Try again.",

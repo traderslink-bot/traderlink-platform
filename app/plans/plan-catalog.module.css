@@ -1,0 +1,22 @@
+.page { min-height: 70vh; padding: 48px 20px 72px; background: #173b78; }
+.heading { color: white; margin-bottom: 32px; }
+.heading a { color: #d8f0ff; border-color: #8ed6ff; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); gap: 24px; align-items: stretch; }
+.frame { padding: 10px; border: 1px solid #d5e4f2; border-radius: 24px; background: white; box-shadow: 0 20px 42px #00133f40; min-width: 0; }
+.card { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 24px; border: 1px solid #011e56; border-radius: 16px; color: white; background: radial-gradient(circle at 100% 0, #509ddb4d, transparent 38%), linear-gradient(155deg, #011e56, #00133f); overflow-wrap: anywhere; }
+.name { color: white; margin: 0 0 16px; font-size: 1.65rem; line-height: 1.2; }
+.price { font-size: 1.8rem; font-weight: 850; line-height: 1.25; color: #8ed6ff; margin: 8px 0; }
+.description { white-space: pre-wrap; line-height: 1.55; }
+.features { display: grid; gap: 12px; padding: 0; margin: 24px 0; list-style: none; }
+.feature { border: 1px solid #d5e4f2; border-radius: 12px; background: #f8fbff; color: #011e56; padding: 16px; }
+.feature p { color: #4c627a; font-size: .9rem; margin: 8px 0 0; white-space: pre-wrap; line-height: 1.5; }
+.feature summary { cursor: pointer; font-size: .88rem; font-weight: 700; margin-top: 12px; }
+.feature summary:focus-visible { outline: 2px solid #011e56; outline-offset: 4px; }
+.allowance { display: block; margin-top: 6px; font-weight: 750; }
+.footer { margin-top: auto; padding-top: 24px; }
+.offer { border-top: 1px solid #8ed6ff66; padding-top: 20px; margin-top: 16px; }
+.footer button[type=submit] { background: #84d2ff; color: #001a4a; border: 1px solid #ffffff99; border-radius: 6px; min-height: 46px; font-weight: 900; box-shadow: 0 7px 16px #0003; }
+.footer button[type=submit]:hover { background: #b2e6ff; }
+.footer button[type=submit]:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+.footer button[type=submit]:disabled { background: #a5b8c6; color: #294253; }
+@media (max-width: 480px) { .page { padding: 24px 12px 40px; } .card { padding: 20px 16px; } }

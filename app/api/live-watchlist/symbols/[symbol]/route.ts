@@ -1,3 +1,4 @@
+import { readWatchlistUpgradeLinks } from "@/src/modules/watchlist/server/access/watchlist-plan-policy";
 import { canViewWatchlistLevels } from '@/src/modules/watchlist/server/access/watchlist-levels-visibility';
 import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
@@ -23,9 +24,9 @@ export async function GET(
 
   const { symbol } = await context.params;
   const features = readWatchlistFeatureAccess(auth.principal.platformUserId);
-  if (!features.tickerDetails) return NextResponse.json({ code: "membership_required", feature: "watchlist.ticker_details" }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
+  if (!features.tickerDetails) return NextResponse.json({ code: "membership_required", feature: "watchlist.ticker_details", upgradeHref: readWatchlistUpgradeLinks(symbol).ticker === undefined ? "/plans?feature=watchlist.ticker_details" : readWatchlistUpgradeLinks(symbol).ticker }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
   if (!canViewPrivateWatchlistTicker(request.headers, symbol)) return NextResponse.json({error:"Not found."},{status:404,headers:{"Cache-Control":"private, no-store"}});
-  if (!canViewWatchlistTicker(request.headers, symbol)) return NextResponse.json({ code: "premium_ticker_required" }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
+  if (!canViewWatchlistTicker(request.headers, symbol)) return NextResponse.json({ code: "premium_ticker_required", upgradeHref: readWatchlistUpgradeLinks(symbol).ticker }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
   const store = new LiveWatchlistStore();
   const [state, health] = await Promise.all([
     store.getSymbol(symbol),
@@ -38,6 +39,6 @@ export async function GET(
     generatedAt: Date.now(),
     marketDataStatus: health.marketDataStatus,
     marketDataUpdatedAt: health.marketDataUpdatedAt,
-    symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol), canViewWatchlistLevels(request.headers, state.symbol)),
+    symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol), canViewWatchlistLevels(request.headers, state.symbol), readWatchlistUpgradeLinks(state.symbol)),
   }, { headers: { "Cache-Control": "private, no-store" } });
 }

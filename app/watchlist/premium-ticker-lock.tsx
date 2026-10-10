@@ -1,7 +1,8 @@
-export function PremiumTickerLock() {
+import { WatchlistPlanUpgrade } from "./watchlist-plan-upgrade";
+export function PremiumTickerLock({ upgradeHref }: { upgradeHref?: string | null }) {
   return <section className="academy-card watchlist-access-card">
-    <h2 className="academy-card-title">This ticker is reserved for Premium members.</h2>
-    <p>Already Premium? <a href="/api/auth/discord/login?returnTo=%2Fwatchlist">Sign in</a></p>
-    <a href="https://whop.com/traderslink-1049/premium-access-2026" style={{ color: "#b45309", fontWeight: 700, textDecoration: "underline" }}>Access Premium</a>
+    <h2 className="academy-card-title">Ticker access required</h2>
+    <p>Already have access? <a href="/api/auth/discord/login?returnTo=%2Fwatchlist">Sign in</a></p>
+    <WatchlistPlanUpgrade href={upgradeHref} feature="Ticker" />
   </section>;
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import { canReceiveMembershipNotification } from "../membership/membership-notification-access";
 
 import { createCanonicalUtcTimestamp } from "../database/platform-migration-contract";
 import {
@@ -44,6 +45,10 @@ export class PlatformRemoteNotificationDeliveryService {
     const claimedAtUtc = createCanonicalUtcTimestamp();
     const claimed = this.repository.claimNext(claimedAtUtc);
     if (!claimed) return false;
+    if (!canReceiveMembershipNotification(this.repository.database, claimed.recipientUserId, claimed.category)) {
+      this.repository.complete({ deliveryRef: claimed.deliveryRef, resultCode: "membership_required", timestamp: createCanonicalUtcTimestamp() });
+      return true;
+    }
     let result: PlatformNotificationDeliveryResult;
     try {
       if (claimed.channel === "discord_dm") {

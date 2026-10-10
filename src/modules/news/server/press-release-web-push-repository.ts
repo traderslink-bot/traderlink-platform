@@ -1,6 +1,9 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { delayedNewsAvailableAt, readMembershipNewsNotificationDelaySeconds } from "../../platform/server/membership/membership-news-delay";
+import { canReceiveMembershipNotification } from "../../platform/server/membership/membership-notification-access";
+import { hasPlatformMembershipFeature } from "../../platform/server/membership/platform-membership-access";
 
 import {
   pressReleaseChannelDefinition,
@@ -30,6 +33,9 @@ type SubscriptionRow = Readonly<{
 }>;
 
 type ClaimedDeliveryRow = SubscriptionRow & Readonly<{
+  channel: string;
+  article_created_at: string;
+  article_published_at: string;
   attempt_count: number;
   delivery_id: string;
   destination_path: string;
@@ -74,6 +80,7 @@ function compact(value: string, maximum: number): string {
 }
 
 export class PressReleaseWebPushRepository {
+  private refreshedInitialSchedules = false;
   constructor(
     private readonly database: Database.Database,
     private readonly configuration: PlatformWebPushEncryptionConfiguration,
@@ -83,10 +90,14 @@ export class PressReleaseWebPushRepository {
   enqueueArticle(article: PublishedPressRelease): number {
     const channel = deliveryChannel(article.routeTag);
     if (!channel) return 0;
+    const storedArticle = this.database.prepare("SELECT created_at FROM news_articles WHERE id=?").get(article.id) as { created_at: string } | undefined;
+    if (!storedArticle) return 0;
     const enabledUsers = this.database.prepare<[string], { user_id: string }>(`SELECT user_id
 FROM news_press_release_push_preferences
 WHERE channel = ? AND enabled = 1`).all(channel);
     const eligibleUserIds = enabledUsers.map((row) => row.user_id).filter((userId) => {
+      if (!canReceiveMembershipNotification(this.database, userId, "press_release")) return false;
+      if (hasPlatformMembershipFeature(this.database, userId, "notifications.press_release")) return true;
       if (this.environment.NODE_ENV !== "production") return true;
       const membership = this.database.prepare<[string, string], MembershipRow>(`SELECT guild_owner, role_ids_json
 FROM platform_discord_memberships
@@ -108,6 +119,8 @@ WHERE user_id = ? AND guild_id = ?`).get(
     let enqueued = 0;
     this.database.transaction(() => {
       for (const userId of eligibleUserIds) {
+        const availableAt = delayedNewsAvailableAt(storedArticle.created_at, article.publishedAt,
+          readMembershipNewsNotificationDelaySeconds(this.database, userId));
         const subscriptions = this.database.prepare<[string], { subscription_id: string }>(`SELECT subscription_id
 FROM platform_web_push_subscriptions
 WHERE user_id = ? AND state = 'active'`).all(userId);
@@ -125,7 +138,7 @@ WHERE user_id = ? AND state = 'active'`).all(userId);
             destinationPath,
             title,
             body,
-            article.publishedAt,
+            availableAt,
             article.publishedAt,
             article.publishedAt,
           );
@@ -138,6 +151,28 @@ WHERE user_id = ? AND state = 'active'`).all(userId);
 
   claimNext(nowUtc: string): PlatformWebPushClaimedDelivery | null {
     assertCanonicalUtcTimestamp(nowUtc, "newsWebPushClaimedAt");
+    // Refresh once per dispatcher repository, including future rows that the due
+    // query cannot see. A membership_delay marker is only set AFTER a provider
+    // retry becomes due, so refreshing those rows cannot bypass retry backoff.
+    if (!this.refreshedInitialSchedules) {
+      this.database.transaction(() => {
+        const users = this.database.prepare<[], { user_id: string }>(`SELECT DISTINCT subscription.user_id
+FROM news_press_release_push_deliveries delivery
+JOIN platform_web_push_subscriptions subscription ON subscription.subscription_id=delivery.subscription_id
+WHERE delivery.state='pending' AND (delivery.attempt_count=0 OR delivery.failure_code='membership_delay') AND subscription.state='active'`).all();
+        const update = this.database.prepare(`UPDATE news_press_release_push_deliveries AS delivery
+SET available_at_utc=(SELECT strftime('%Y-%m-%dT%H:%M:%fZ',
+  MIN(julianday('9999-12-31T23:59:59.999Z'),
+    MAX(julianday(article.created_at), julianday(article.published_at)) + ? / 86400.0))
+  FROM news_articles article WHERE article.id=delivery.article_id), updated_at_utc=?
+WHERE delivery.state='pending' AND (delivery.attempt_count=0 OR delivery.failure_code='membership_delay')
+AND delivery.subscription_id IN (SELECT subscription_id FROM platform_web_push_subscriptions WHERE user_id=? AND state='active')`);
+        for (const user of users) {
+          update.run(readMembershipNewsNotificationDelaySeconds(this.database, user.user_id), nowUtc, user.user_id);
+        }
+      }).immediate();
+      this.refreshedInitialSchedules = true;
+    }
     const staleBefore = new Date(Date.parse(nowUtc) - 5 * 60_000).toISOString();
     for (let quarantined = 0; quarantined < 100; quarantined += 1) {
       const result = this.database.transaction(() => {
@@ -148,13 +183,14 @@ WHERE user_id = ? AND state = 'active'`).all(userId);
   SET state = 'pending', available_at_utc = ?, updated_at_utc = ?
   WHERE state = 'sending' AND last_attempt_at_utc <= ? AND attempt_count < 5`).run(nowUtc, nowUtc, staleBefore);
         const row = this.database.prepare<[string], ClaimedDeliveryRow>(`SELECT
-    delivery.delivery_id, delivery.attempt_count, delivery.destination_path,
-    delivery.notification_title, delivery.notification_body,
+    delivery.delivery_id, delivery.attempt_count, delivery.destination_path, delivery.channel,
+    delivery.notification_title, delivery.notification_body, article.created_at AS article_created_at, article.published_at AS article_published_at,
     subscription.subscription_id, subscription.user_id, subscription.device_ref,
     subscription.endpoint_hash, subscription.key_version,
     subscription.initialization_vector, subscription.ciphertext,
     subscription.authentication_tag
   FROM news_press_release_push_deliveries delivery
+  JOIN news_articles article ON article.id = delivery.article_id
   JOIN platform_web_push_subscriptions subscription
     ON subscription.subscription_id = delivery.subscription_id
   WHERE delivery.state = 'pending' AND delivery.available_at_utc <= ?
@@ -162,6 +198,30 @@ WHERE user_id = ? AND state = 'active'`).all(userId);
   ORDER BY delivery.available_at_utc, delivery.created_at_utc
   LIMIT 1`).get(nowUtc);
         if (!row) return null;
+        // Check only the selected user's channel (the preference primary key),
+        // not every pending delivery on every claim. Keep this in the claim
+        // transaction so an opt-out cannot race between this check and claiming.
+        const optedIn = this.database.prepare(`SELECT 1 FROM news_press_release_push_preferences
+WHERE user_id=? AND channel=? AND enabled=1`).get(row.user_id, row.channel);
+        if (!optedIn) {
+          this.database.prepare(`UPDATE news_press_release_push_deliveries
+SET state='expired', failure_code='preference_disabled', updated_at_utc=?
+WHERE delivery_id=? AND state='pending'`).run(nowUtc, row.delivery_id);
+          return undefined;
+        }
+        const availableAt = delayedNewsAvailableAt(row.article_created_at, row.article_published_at,
+          readMembershipNewsNotificationDelaySeconds(this.database, row.user_id));
+        if (availableAt > nowUtc) {
+          this.database.prepare("UPDATE news_press_release_push_deliveries SET available_at_utc=?, failure_code='membership_delay', updated_at_utc=? WHERE delivery_id=? AND state='pending'")
+            .run(availableAt, nowUtc, row.delivery_id);
+          return undefined;
+        }
+        if (!canReceiveMembershipNotification(this.database, row.user_id, "press_release")) {
+          this.database.prepare(`UPDATE news_press_release_push_deliveries
+SET state='expired', failure_code='membership_required', updated_at_utc=?
+WHERE delivery_id=? AND state='pending'`).run(nowUtc, row.delivery_id);
+          return undefined;
+        }
         const claimed = this.database.prepare(`UPDATE news_press_release_push_deliveries
   SET state = 'sending', attempt_count = attempt_count + 1,
       last_attempt_at_utc = ?, updated_at_utc = ?

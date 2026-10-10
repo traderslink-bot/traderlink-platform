@@ -1,3 +1,4 @@
+import { canNotifyWatchlistTicker } from "../access/watchlist-plan-policy";
 import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibility";
 import "server-only";
 import { randomUUID } from "node:crypto";
@@ -67,7 +68,7 @@ export async function runCategoryMoveNotifications(){
    }
    const prefs=new WatchlistPublicationNotificationStore(db).readPreferences(row.user_id);
    const visible=db.prepare<[string],{n:number}>("SELECT count(*) n FROM live_watchlist_symbols WHERE symbol=? AND status<>'deactivated' AND COALESCE(json_extract(state_json,'$.watchlistGroup'),'main')<>'private'").get(row.ticker)?.n;
-   const state=row.expires_at_utc<=now?'expired':!(row.channel==='email'?prefs.emailEnabled:prefs.webPushEnabled)?'opted_out':!currentMoves.get(row.operation_id)||!visible||!watchlistNotificationAccess(db,row.user_id)?'inaccessible':'sending';
+   const state=row.expires_at_utc<=now?'expired':!(row.channel==='email'?prefs.emailEnabled:prefs.webPushEnabled)?'opted_out':!currentMoves.get(row.operation_id)||!visible||!watchlistNotificationAccess(db,row.user_id)||!canNotifyWatchlistTicker(db,row.user_id,row.ticker,'listing')?'inaccessible':'sending';
    db.prepare("UPDATE platform_watchlist_category_move_deliveries SET state=?,last_attempt_at_utc=?,attempt_count=attempt_count+? WHERE delivery_id=? AND state='pending'").run(state,new Date().toISOString(),state==='sending'?1:0,row.delivery_id);
    if(state!=='sending')continue;
    let result;try{result=await sendWatchlistNotification(db,{...row,event_id:row.operation_id,notification_kind:'listing',owner_approved:1,analysis_update_context_json:null},categoryMoveNotificationCopy(row.ticker,row.destination_group));}catch{result={sent:false,retry:true,code:'provider_unavailable'};}

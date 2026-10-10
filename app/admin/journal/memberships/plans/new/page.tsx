@@ -1,4 +1,5 @@
 import Button from "@mui/material/Button";
+import { FeatureLimitField } from "../../feature-limit-field";
 import { GenerationResetField } from "../../generation-reset-field";
 import { MembershipCheckbox } from "../../membership-checkbox";
 import MenuItem from "@mui/material/MenuItem";
@@ -45,7 +46,7 @@ export default async function NewMembershipPlanPage() {
                 <Stack direction={{ xs: "column", sm: "row" }} key={feature.key} sx={{ alignItems: { sm: "center" }, gap: 1.5, justifyContent: "space-between" }}>
                   <MembershipCheckbox name="features" value={feature.key} label={feature.label} />
                   {feature.kind === "limit" ? (
-                    <TextField slotProps={{ htmlInput: { min: 0, step: 1 } }} label="Limit" helperText="Blank means unlimited." name={`limit:${feature.key}`} size="small" sx={{ width: { sm: 160 } }} type="number" />
+                    <FeatureLimitField featureKey={feature.key} />
                   ) : null}
                   <GenerationResetField featureKey={feature.key} />
                 </Stack>

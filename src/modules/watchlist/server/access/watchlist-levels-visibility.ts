@@ -2,9 +2,11 @@ import 'server-only';
 import type Database from 'better-sqlite3';
 import { withReadonlyPlatformDatabase } from '@/src/modules/platform/server/database/open-readonly-platform-database';
 import { withJournalAdminDatabase } from '@/src/modules/platform/server/administration/platform-admin-authorization';
-import { requireTraderLinkPlatformDiscordMemberRequestIdentity } from '@/src/modules/platform/server/authentication/require-platform-request-scope';
+import { evaluateMembershipFeature } from '@/src/modules/platform/server/membership/platform-membership-access';
 import { hasPlatformDiscordPremiumAccess } from './platform-discord-watchlist-entitlement';
 import { analysisVisibilitySymbol } from './watchlist-analysis-visibility';
+import { readWatchlistPlanDecisions } from './watchlist-plan-policy';
+import { requireTraderLinkPlatformAuthenticatedRequestIdentity } from '@/src/modules/platform/server/authentication/require-platform-request-scope';
 
 export function readLevelsPremiumOnly(db: Database.Database, symbol: string): boolean {
   if (!analysisVisibilitySymbol.test(symbol)) throw Error('Invalid ticker.');
@@ -25,9 +27,13 @@ export function saveLevelsPremiumOnly(db: Database.Database,input:{symbol:string
 }
 export function canViewWatchlistLevels(headers:Headers,symbol:string):boolean {
   try{if(withJournalAdminDatabase(headers,()=>true))return true;}catch{/* Ordinary member. */}
-  try{
-    const identity=requireTraderLinkPlatformDiscordMemberRequestIdentity(headers);
-    if(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord))return true;
-    return !withReadonlyPlatformDatabase({},db=>readLevelsPremiumOnly(db,symbol.toUpperCase()));
-  }catch{return false;}
+  try {
+    const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(headers, { membershipFeatures: ["watchlist.access"] });
+    return withReadonlyPlatformDatabase({}, db => {
+      if (!evaluateMembershipFeature(db, identity.scope.userId, "watchlist.levels").allowed) return false;
+      const decision = readWatchlistPlanDecisions(db, identity.scope.userId, "levels").get(symbol.toUpperCase());
+      if (decision !== undefined) return decision;
+      return !readLevelsPremiumOnly(db, symbol.toUpperCase()) || Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord));
+    });
+  } catch { return false; }
 }

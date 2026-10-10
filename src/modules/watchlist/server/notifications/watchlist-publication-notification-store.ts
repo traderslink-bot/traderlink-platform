@@ -1,3 +1,5 @@
+import { assertMembershipNotification, canReceiveMembershipNotification } from "@/src/modules/platform/server/membership/membership-notification-access";
+import { canNotifyWatchlistTicker } from "../access/watchlist-plan-policy";
 import { randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
 import {
@@ -23,12 +25,14 @@ export class WatchlistPublicationNotificationStore {
     const row = this.database.prepare<[string], { web_push_enabled: number; email_enabled: number }>(
       `SELECT web_push_enabled,email_enabled FROM platform_watchlist_notification_preferences WHERE user_id=?`,
     ).get(userId);
-    return Object.freeze({ webPushEnabled: row?.web_push_enabled === 1, emailEnabled: row?.email_enabled === 1 });
+    const allowed = canReceiveMembershipNotification(this.database, userId, "watchlist");
+    return Object.freeze({ webPushEnabled: allowed && row?.web_push_enabled === 1, emailEnabled: allowed && row?.email_enabled === 1 });
   }
 
   savePreference(userId: string, channel: WatchlistNotificationChannel, enabled: boolean, now: Date): void {
     if (!userIdPattern.test(userId) || typeof enabled !== "boolean" ||
       !["web_push", "email"].includes(channel)) throw new Error("Invalid notification preference.");
+    if (enabled) assertMembershipNotification(this.database, userId, "watchlist");
     const column = channel === "web_push" ? "web_push_enabled" : "email_enabled";
     this.database.prepare(`INSERT INTO platform_watchlist_notification_preferences(user_id,${column},updated_at_utc)
       VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET ${column}=excluded.${column},updated_at_utc=excluded.updated_at_utc`)
@@ -66,6 +70,7 @@ export class WatchlistPublicationNotificationStore {
         for (const recipient of input.recipients(event)) {
           if (!userIdPattern.test(recipient.userId) || !userIdPattern.test(recipient.targetRef) ||
             !["web_push", "email"].includes(recipient.channel)) throw new Error("Invalid notification recipient.");
+          if (!canNotifyWatchlistTicker(this.database, recipient.userId, event.ticker, kind)) continue;
           const consent = this.readPreferences(recipient.userId);
           if (!(recipient.channel === "web_push" ? consent.webPushEnabled : consent.emailEnabled)) continue;
           enqueued += this.database.prepare(`INSERT OR IGNORE INTO platform_watchlist_notification_deliveries

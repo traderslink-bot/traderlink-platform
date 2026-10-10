@@ -1,5 +1,5 @@
 "use client";
-import { WatchlistFeatureMessage } from "./watchlist-feature-message";
+import { WatchlistPlanUpgrade } from "./watchlist-plan-upgrade";
 import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
 
 import { PremiumTickerLock } from "./premium-ticker-lock";
@@ -873,7 +873,7 @@ function TechnicalContextLines({ card }: { card: LiveWatchlistCardContent }) {
   );
 }
 
-function TechnicalContextCard({ card }: { card: LiveWatchlistCardContent }) {
+export function TechnicalContextCard({ card }: { card: LiveWatchlistCardContent }) {
   return (
     <div className="watchlist-trader-read watchlist-structured-card-body">
       <TechnicalContextLines card={card} />
@@ -1571,7 +1571,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
         showMeta={false}
         showOuterMeta={false}
       />
-      {symbol.membershipAnalysisAllowed === false ? <WatchlistFeatureMessage feature="trade_analysis" /> : symbol.premiumAnalysisPreview ? <PremiumAnalysisCard preview={symbol.premiumAnalysisPreview} symbol={symbol.symbol} /> : symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
+      {symbol.membershipAnalysisAllowed === false ? <WatchlistPlanUpgrade feature="Trade analysis & preparation" href={symbol.watchlistUpgradeLinks?.analysis === undefined ? "/plans?feature=watchlist.trade_analysis" : symbol.watchlistUpgradeLinks.analysis} /> : symbol.premiumAnalysisPreview ? <PremiumAnalysisCard preview={symbol.premiumAnalysisPreview} symbol={symbol.symbol} upgradeHref={symbol.watchlistUpgradeLinks?.analysis} /> : symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
         <TradersLinkAiReadCard
           card={tradersLinkAiReadCard}
           symbol={symbol}
@@ -1908,6 +1908,7 @@ export function LiveWatchlistDetailClient({
   const [symbol, setSymbol] = useState(initialSymbol);
   const [detailsDenied, setDetailsDenied] = useState(false);
   const [premiumTickerDenied, setPremiumTickerDenied] = useState(false);
+  const [tickerUpgradeHref, setTickerUpgradeHref] = useState<string | null | undefined>(initialSymbol.watchlistUpgradeLinks?.ticker);
   const reverseSplits = useWatchlistReverseSplits(symbol.status === "deactivated" ? [] : [symbol.symbol]);
   const [marketDataStatus, setMarketDataStatus] =
     useState<LiveWatchlistMarketDataStatus>(initialMarketDataStatus);
@@ -1919,7 +1920,7 @@ export function LiveWatchlistDetailClient({
       const response = await fetch(`/api/live-watchlist/symbols/${initialSymbol.symbol}`, { signal });
       if (response.status === 401 || response.status === 403) {
         const denial = await response.json().catch(() => ({}));
-          if (!cancelled) { setPremiumTickerDenied(denial.code === "premium_ticker_required"); setDetailsDenied(true); }
+          if (!cancelled) { setPremiumTickerDenied(denial.code === "premium_ticker_required"); setTickerUpgradeHref(denial.upgradeHref); setDetailsDenied(true); }
         return;
       }
       if (!response.ok) {
@@ -1934,6 +1935,7 @@ export function LiveWatchlistDetailClient({
         setSymbol((current) => {
           const next = reconcileLiveWatchlistSymbolState(current, payload.symbol);
           next.premiumLevelsAllowed = payload.symbol.premiumLevelsAllowed;
+          next.watchlistUpgradeLinks = payload.symbol.watchlistUpgradeLinks;
           if(next.premiumLevelsAllowed !== false) { next.levelMap=payload.symbol.levelMap; next.nearestSupport=payload.symbol.nearestSupport; next.nearestResistance=payload.symbol.nearestResistance; next.nearestSupportLabel=payload.symbol.nearestSupportLabel; next.nearestResistanceLabel=payload.symbol.nearestResistanceLabel; for(const kind of ["levelMap","nearestSupportResistance","fullLadder"] as const) { if(payload.symbol.cards[kind]) next.cards[kind]=payload.symbol.cards[kind]; else delete next.cards[kind]; } }
           next.premiumAnalysisPricesAllowed = payload.symbol.premiumAnalysisPricesAllowed;
           next.premiumAnalysisPreview = payload.symbol.premiumAnalysisPreview ?? null;
@@ -1991,7 +1993,7 @@ export function LiveWatchlistDetailClient({
       }
     };
   }, [initialSymbol.symbol]);
-  if (detailsDenied) return premiumTickerDenied ? <PremiumTickerLock /> : <WatchlistFeatureMessage feature="ticker_details" />;
+  if (detailsDenied) return premiumTickerDenied ? <PremiumTickerLock upgradeHref={tickerUpgradeHref} /> : <WatchlistPlanUpgrade feature="Ticker details" href={tickerUpgradeHref === undefined ? "/plans?feature=watchlist.ticker_details" : tickerUpgradeHref} />;
 
   if (symbol.status === "deactivated") {
     return (

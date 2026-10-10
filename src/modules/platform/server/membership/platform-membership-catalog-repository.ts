@@ -1,6 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import type Database from "better-sqlite3";
 import { membershipWhopConfiguration } from "./platform-membership-provider-readiness";
+import { readMembershipFeatureCopy, defaultMembershipFeatureCopy } from "./membership-feature-copy";
+import type { PrivateWatchlistPeriod } from "../../contracts/membership-private-watchlist-features";
 
 import {
   assertCanonicalUtcTimestamp,
@@ -34,7 +36,7 @@ export type PlatformMembershipCatalogPlan = Readonly<{
   planVersionId: string;
   name: string;
   description: string;
-  features: readonly Readonly<{ label: string; kind: string; limitValue: number | null; resetDays?: number | null; metered?: boolean }>[];
+  features: readonly Readonly<{ featureKey: string; label: string; kind: string; limitValue: number | null; resetDays?: number | null; metered?: boolean; privatePeriod?: PrivateWatchlistPeriod; brief?: string; details?: string }>[];
   offers: readonly PlatformMembershipCatalogOffer[];
 }>;
 
@@ -44,10 +46,11 @@ type CatalogRow = Readonly<{
   plan_name: string;
   public_description: string;
   feature_label: string | null;
+  feature_key: string | null;
   feature_kind: string | null;
   limit_value: number | null;
   reset_days: number | null;
-  feature_key: string | null;
+  has_reset_days: number;
   offer_id: string;
   offer_name: string;
   provider: string;
@@ -90,7 +93,7 @@ function shape(rows: readonly CatalogRow[]): readonly PlatformMembershipCatalogP
     planVersionId: string;
     name: string;
     description: string;
-    features: Map<string, { label: string; kind: string; limitValue: number | null; resetDays: number | null; metered: boolean }>;
+    features: Map<string, { featureKey: string; label: string; kind: string; limitValue: number | null; resetDays?: number | null; metered: boolean }>;
     offers: Map<string, PlatformMembershipCatalogOffer>;
   }>();
   for (const row of rows) {
@@ -103,11 +106,12 @@ function shape(rows: readonly CatalogRow[]): readonly PlatformMembershipCatalogP
       offers: new Map(),
     };
     if (row.feature_label) {
-      plan.features.set(`${row.feature_label}:${row.limit_value ?? ""}`, {
+      plan.features.set(row.feature_key ?? row.feature_label, {
+        featureKey: row.feature_key ?? "",
         label: row.feature_label,
         kind: row.feature_kind ?? "boolean",
         limitValue: row.limit_value,
-        resetDays: row.reset_days,
+        resetDays: row.has_reset_days ? row.reset_days : undefined,
         metered: row.feature_key === "trade_analyzer.analyses" || row.feature_key === "levels.generations",
       });
     }
@@ -142,7 +146,7 @@ function shape(rows: readonly CatalogRow[]): readonly PlatformMembershipCatalogP
 }
 
 const CATALOG_SELECT = `SELECT plan.plan_id,version.plan_version_id,plan.name plan_name,
-  version.public_description,definition.label feature_label,feature.feature_kind,feature.limit_value,feature.reset_days,feature.feature_key,
+  version.public_description,definition.label feature_label,feature.feature_key,feature.feature_kind,feature.limit_value,
   offer.offer_id,offer.name offer_name,offer.provider,provider.label provider_label,offer.channel,offer.billing_kind,
   offer.currency,offer.initial_amount_minor,offer.renewal_amount_minor,
   offer.billing_period_days,offer.billing_interval,offer.billing_interval_count,offer.access_duration_days,offer.external_checkout_url
@@ -156,6 +160,32 @@ LEFT JOIN platform_membership_feature_definitions definition ON definition.featu
 export class PlatformMembershipCatalogRepository {
   constructor(private readonly database: Database.Database) {}
 
+  private catalogSelect(): string {
+    // Read current-release allowance metadata without making older databases fail
+    // or misrepresenting a missing column as an intentionally non-resetting plan.
+    const columns = this.database.prepare("PRAGMA table_info(platform_membership_plan_features)").all() as { name: string }[];
+    const hasResetDays = columns.some(column => column.name === "reset_days");
+    return CATALOG_SELECT.replace("SELECT plan.plan_id,", `SELECT ${hasResetDays ? "feature.reset_days" : "NULL"} AS reset_days, ${hasResetDays ? 1 : 0} AS has_reset_days, plan.plan_id,`);
+  }
+
+  private withFeatureCopy(plans: readonly PlatformMembershipCatalogPlan[]): readonly PlatformMembershipCatalogPlan[] {
+    const copy = readMembershipFeatureCopy(this.database);
+    const periods = this.tableExists("platform_private_watchlist_plan_periods")
+      ? this.database.prepare("SELECT meter,period_kind kind,period_days days FROM platform_private_watchlist_plan_periods WHERE plan_version_id=?")
+      : null;
+    return plans.map(plan => {
+      const savedPeriods = periods?.all(plan.planVersionId) as (PrivateWatchlistPeriod & { meter: string })[] | undefined;
+      return { ...plan, features: plan.features.map(feature => ({
+        ...feature, ...(copy.get(feature.featureKey) ?? defaultMembershipFeatureCopy(feature.featureKey, feature.label)),
+        ...(["private_watchlist.ticker_additions", "private_watchlist.generations", "private_watchlist.cost_microusd"].includes(feature.featureKey) ? {
+          metered: true,
+          privatePeriod: savedPeriods ? savedPeriods.find(period => `private_watchlist.${period.meter}` === feature.featureKey)
+            ?? { kind: "calendar_month" as const, days: null } : undefined,
+        } : {}),
+      })) };
+    });
+  }
+
   readSharedPageTitle(secret: string): string {
     const row = this.database.prepare("SELECT name FROM platform_membership_share_links WHERE secret_sha256=?")
       .get(createHash("sha256").update(secret, "utf8").digest("hex")) as { name: string } | undefined;
@@ -164,15 +194,21 @@ export class PlatformMembershipCatalogRepository {
 
   readPublicPlans(featureKey?: string): readonly PlatformMembershipCatalogPlan[] {
     if (!isPlatformMembershipCatalogAvailable(this.database)) return Object.freeze([]);
-    const rows = this.database.prepare(`${CATALOG_SELECT}
+    const requireNotificationMaster = featureKey?.startsWith("notifications.") && featureKey !== "notifications.access" &&
+      Boolean(this.database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_membership_feature_policies'").get()) &&
+      Boolean(this.database.prepare("SELECT 1 FROM platform_membership_feature_policies WHERE feature_key='notifications.access' AND enforcement_mode='enforced'").get());
+    const rows = this.database.prepare(`${this.catalogSelect()}
 WHERE plan.status='active' AND plan.visibility='public'
   AND version.lifecycle_state='published' AND offer.status='active'
   AND offer.channel IN ('website','both')
   AND (? IS NULL OR EXISTS (SELECT 1 FROM platform_membership_plan_features requested
     WHERE requested.plan_version_id=version.plan_version_id AND requested.feature_key=?
-      AND (requested.feature_kind='boolean' OR requested.limit_value IS NULL OR requested.limit_value>0)))
-ORDER BY plan.display_order,plan.name,offer.name,definition.label`).all(featureKey ?? null, featureKey ?? null) as CatalogRow[];
-    return this.withTrials(shape(rows), createCanonicalUtcTimestamp());
+      AND (requested.feature_kind='boolean' OR requested.limit_value IS NULL OR requested.limit_value>0
+        OR requested.feature_key IN ('news.visibility_delay_seconds','news.notification_delay_seconds'))))
+  AND (?=0 OR EXISTS (SELECT 1 FROM platform_membership_plan_features master
+    WHERE master.plan_version_id=version.plan_version_id AND master.feature_key='notifications.access'))
+ORDER BY plan.display_order,plan.name,offer.name,definition.label`).all(featureKey ?? null, featureKey ?? null, requireNotificationMaster ? 1 : 0) as CatalogRow[];
+    return this.withFeatureCopy(this.withTrials(shape(rows), createCanonicalUtcTimestamp()));
   }
 
   readSharedPlans(secret: string, atUtc = createCanonicalUtcTimestamp()): readonly PlatformMembershipCatalogPlan[] | null {
@@ -184,12 +220,12 @@ FROM platform_membership_share_links
 WHERE secret_sha256=? AND status='active' AND (expires_at_utc IS NULL OR expires_at_utc>?)
   AND (maximum_claims IS NULL OR claim_count<maximum_claims)`).get(hash, atUtc);
     if (!link) return null;
-    const rows = this.database.prepare(`${CATALOG_SELECT}
+    const rows = this.database.prepare(`${this.catalogSelect()}
 JOIN platform_membership_share_link_offers shared ON shared.offer_id=offer.offer_id
 WHERE shared.share_link_id=? AND plan.status='active'
   AND version.lifecycle_state='published' AND offer.status='active'
 ORDER BY shared.display_order,plan.name,offer.name,definition.label`).all(link.share_link_id) as CatalogRow[];
-    return this.withTrials(shape(rows), atUtc);
+    return this.withFeatureCopy(this.withTrials(shape(rows), atUtc));
   }
 
   createShareLink(input: Readonly<{

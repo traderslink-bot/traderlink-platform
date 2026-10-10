@@ -32,7 +32,7 @@ export async function manageMembershipAction(_previous: MembershipActionState, f
   try {
     const requestHeaders = await headers();
     const success = withJournalAdminDatabase(requestHeaders, (database, scope) => {
-      if (["grant", "check_feature_access"].includes(String(form.get("operation"))) && form.has("userRef")) {
+      if (["grant", "check_feature_access", "private_watchlist_override", "private_watchlist_override_remove"].includes(String(form.get("operation"))) && form.has("userRef")) {
         const context = createJournalAdminReadContext({ database, scope });
         const member = resolveJournalAdminInternalId(context, required(form, "userRef"), ["user"]);
         form.set("userId", member.internalId);
@@ -41,6 +41,7 @@ export async function manageMembershipAction(_previous: MembershipActionState, f
     });
     revalidatePath("/admin/journal/memberships");
     revalidatePath("/plans");
+    revalidatePath("/watchlist", "layout");
     return { error: null, success };
   } catch (error) {
     if (error instanceof ZodError) return { error: "Check required fields, dates and numbers, then try again.", success: null };
@@ -51,6 +52,7 @@ export async function manageMembershipAction(_previous: MembershipActionState, f
       : "The change could not be saved. Check the fields and your owner access, then try again." };
   }
 }
+
 export async function manageStripeSubscriptionAction(_previous: MembershipActionState, form: FormData): Promise<MembershipActionState> {
   try {
     const requestHeaders = await headers();

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { canReceiveMembershipNotification } from "../membership/membership-notification-access";
 
 import type { PlatformNotificationCategory } from "../../contracts/platform-notification-contracts";
 import {
@@ -56,6 +57,7 @@ export class PlatformRemoteNotificationDeliveryRepository {
     assertCanonicalUuidV4(input.notificationRef, "remoteNotificationRef");
     assertCanonicalUuidV4(input.userId, "remoteNotificationUserId");
     assertCanonicalUtcTimestamp(input.occurredAtUtc, "remoteNotificationOccurredAt");
+    if (!canReceiveMembershipNotification(this.database, input.userId, input.category)) return;
     const preference = this.database.prepare<[string, PlatformNotificationCategory], Readonly<{
       discord_dm_enabled: number;
       email_enabled: number;

@@ -1,4 +1,6 @@
 import "server-only";
+import { withReadonlyPlatformDatabase } from "../../platform/server/database/open-readonly-platform-database";
+import { evaluateMembershipFeature, hasPlatformMembershipFeature } from "../../platform/server/membership/platform-membership-access";
 
 import type { TraderLinkPlatformRequestIdentity } from "../../platform/server/authentication/require-platform-request-scope";
 import { hasPlatformDiscordPremiumAccess } from "../../watchlist/server/access/platform-discord-watchlist-entitlement";
@@ -45,6 +47,12 @@ export function hasPressReleaseDashboardAccess(
   environment: NodeJS.ProcessEnv = process.env,
 ): boolean {
   if (identity.mode === "local_development") return true;
+  const newsAccess = withReadonlyPlatformDatabase({}, database => ({
+    decision: evaluateMembershipFeature(database, identity.scope.userId, "news.access"),
+    granted: hasPlatformMembershipFeature(database, identity.scope.userId, "news.access"),
+  }));
+  if (!newsAccess.decision.allowed) return false;
+  if (newsAccess.granted || newsAccess.decision.ownerBypass) return true;
   return identity.discord !== null && hasPressReleaseDashboardDiscordAccess(
     identity.discord,
     environment,

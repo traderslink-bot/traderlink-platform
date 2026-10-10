@@ -5,6 +5,7 @@ import { withReadonlyPlatformDatabase } from
 import { PlatformMembershipCatalogRepository } from
   "@/src/modules/platform/server/membership/platform-membership-catalog-repository";
 import { PlanCatalog } from "./plan-catalog";
+import { filterWatchlistPublicPlans } from "@/src/modules/watchlist/server/access/watchlist-plan-policy";
 
 export const metadata: Metadata = {
   title: "Plans | TradersLink",
@@ -13,13 +14,15 @@ export const metadata: Metadata = {
 };
 export const dynamic = "force-dynamic";
 
-export default async function PlansPage({ searchParams }: { searchParams: Promise<{ feature?: string | string[] }> }) {
-  const requested = (await searchParams).feature;
-  const feature = typeof requested === "string" ? requested : undefined;
+export default async function PlansPage({ searchParams }: { searchParams: Promise<{ feature?: string; watchlistTicker?: string; watchlistControl?: string }> }) {
+  const { feature, watchlistTicker, watchlistControl } = await searchParams;
   let plans = Object.freeze([]) as ReturnType<PlatformMembershipCatalogRepository["readPublicPlans"]>;
   try {
-    plans = withReadonlyPlatformDatabase({}, (database) =>
-      new PlatformMembershipCatalogRepository(database).readPublicPlans(feature));
+    plans = withReadonlyPlatformDatabase({}, (database) => {
+      const publicPlans = new PlatformMembershipCatalogRepository(database).readPublicPlans(feature);
+      return watchlistTicker && (watchlistControl === "ticker" || watchlistControl === "analysis" || watchlistControl === "levels")
+        ? filterWatchlistPublicPlans(database, watchlistTicker.toUpperCase(), watchlistControl, publicPlans) : publicPlans;
+    });
   } catch {
     // Public rendering stays truthful while the membership migration or hosted
     // storage is not available. It never invents plans or prices.

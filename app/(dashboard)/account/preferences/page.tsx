@@ -1,3 +1,6 @@
+import { PLATFORM_NOTIFICATION_CATEGORIES } from "@/src/modules/platform/contracts/platform-notification-contracts";
+import { canReceiveMembershipNotification } from "@/src/modules/platform/server/membership/membership-notification-access";
+import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
 import type { Metadata } from "next";
 
 import { DashboardPanel } from "../../../dashboard-template";
@@ -24,8 +27,13 @@ export const revalidate = 0;
 
 export default async function AccountPreferencesPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { appearance, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) =>
+  const { allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
+      allowedCategories: PLATFORM_NOTIFICATION_CATEGORIES.filter(category => canReceiveMembershipNotification(database, scope.userId, category)),
+      allowHalts: canReceiveMembershipNotification(database, scope.userId, "market_halt"),
+      allowPressReleases: canReceiveMembershipNotification(database, scope.userId, "press_release"),
+      allowWatchlist: canReceiveMembershipNotification(database, scope.userId, "watchlist"),
+      marketHaltAlertsEnabled: new MarketHaltAlertRepository(database).read(scope).enabled,
       watchlistPreferences: new WatchlistPublicationNotificationStore(database).readPreferences(scope.userId),
       appearance: new PlatformUserPreferenceRepository(database).getActiveWorkspaceAppearance(scope),
       notificationPreferences: new PlatformNotificationRepository(database).readPreferences(scope),
@@ -46,6 +54,7 @@ export default async function AccountPreferencesPage() {
       pressReleasePushChannels: new PressReleaseDashboardRepository(database).readPushPreferences(scope),
     }));
   const preferencesKey = JSON.stringify({
+    allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled,
     discord: notificationPreferences.discordDmCategories,
     email: notificationPreferences.emailCategories,
     emailState: notificationEmailStatus.state,
@@ -66,6 +75,11 @@ export default async function AccountPreferencesPage() {
       <DashboardPanel title="Notifications">
         <NotificationPreferences
           key={preferencesKey}
+          allowedCategories={allowedCategories}
+          allowHalts={allowHalts}
+          allowPressReleases={allowPressReleases}
+          allowWatchlist={allowWatchlist}
+          initialMarketHaltAlertsEnabled={marketHaltAlertsEnabled}
           initialDiscordDmCategories={notificationPreferences.discordDmCategories}
           initialEmailCategories={notificationPreferences.emailCategories}
           initialEmailStatus={notificationEmailStatus}
