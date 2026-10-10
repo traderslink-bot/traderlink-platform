@@ -86,8 +86,14 @@ export const COACH_AI_CHAT_TRADE_EXPLORER_TRADE_SORTS = Object.freeze([
   "hold_asc",
   "shares_desc",
   "shares_asc",
+  "maximum_position_desc",
+  "maximum_position_asc",
   "entry_value_desc",
   "entry_value_asc",
+  "executions_desc",
+  "executions_asc",
+  "trading_costs_desc",
+  "trading_costs_asc",
 ] as const satisfies readonly TradeExplorerTradeSort[]);
 
 export const COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS = Object.freeze([
