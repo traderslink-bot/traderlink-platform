@@ -20,6 +20,8 @@ export type PlatformDatabaseOpenMode = "runtime" | "initializer";
 
 export const TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID_ENV =
   "TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID" as const;
+export const TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_PREDECESSOR_COUNT_ENV =
+  "TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_PREDECESSOR_COUNT" as const;
 
 const runtimeIntegrityCacheKey =
   "__traderlinkPlatformRuntimeDatabaseIntegrityFingerprints" as const;
@@ -760,10 +762,32 @@ function runtimeVerificationManifest(
       stage: "runtime_compatibility_target",
     });
   }
+  const configuredPredecessorCount =
+    environment[TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_PREDECESSOR_COUNT_ENV];
+  const predecessorCount = configuredPredecessorCount === undefined
+    ? platformMigrationManifest.length - 1
+    : Number(configuredPredecessorCount);
+  if (
+    !Number.isSafeInteger(predecessorCount) ||
+    predecessorCount < 1 ||
+    predecessorCount >= platformMigrationManifest.length ||
+    (configuredPredecessorCount !== undefined &&
+      String(predecessorCount) !== configuredPredecessorCount)
+  ) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "runtime_compatibility_predecessor",
+    });
+  }
   const applied = readAppliedPlatformMigrations(database);
-  return applied.length === platformMigrationManifest.length
-    ? platformMigrationManifest
-    : platformMigrationManifest.slice(0, -1);
+  if (applied.length === platformMigrationManifest.length) {
+    return platformMigrationManifest;
+  }
+  if (applied.length !== predecessorCount) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "runtime_compatibility_applied_count",
+    });
+  }
+  return platformMigrationManifest.slice(0, predecessorCount);
 }
 
 export function verifyPlatformRuntimeDatabaseIntegrity(

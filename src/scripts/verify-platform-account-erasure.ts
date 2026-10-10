@@ -292,6 +292,40 @@ function main(): void {
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM journal_accounts WHERE account_id = ?", fixture.accountThree) === 1, "other_user_account_preserved");
       requireEvidence(beforeDeleteGuardCount(database) === guardsBefore, "account_delete_restored_guards");
 
+      // This fixture owner is also the coach; no unrelated coach is removed.
+      const communityId=createCanonicalUuidV4(), audienceId=createCanonicalUuidV4(), profileId=createCanonicalUuidV4();
+      const planId=createCanonicalUuidV4(), relationshipId=createCanonicalUuidV4(), messageId=createCanonicalUuidV4();
+      database.prepare(`INSERT INTO platform_auth_identities(user_id,auth_provider,auth_subject,status,linked_by_user_id,created_at_utc,updated_at_utc,last_authenticated_at_utc)
+        VALUES(?,'discord','987654322','active',?,?,?,?)`).run(fixture.userOne,fixture.userOne,TIMESTAMP,TIMESTAMP,TIMESTAMP);
+      database.prepare(`INSERT INTO platform_discord_memberships(user_id,guild_id,username,role_ids_json,guild_owner,first_verified_at_utc,last_verified_at_utc)
+        VALUES(?,'987654321','synthetic-coach','[]',1,?,?)`).run(fixture.userOne,TIMESTAMP,TIMESTAMP);
+      database.prepare(`INSERT INTO traderlink_communities(community_id,discord_guild_id,slug,display_name,status,owner_user_id,created_at_utc,updated_at_utc)
+        VALUES(?,'987654321','erasure-fixture','Synthetic coaching','active',?,?,?)`).run(communityId,fixture.userOne,TIMESTAMP,TIMESTAMP);
+      database.prepare(`INSERT INTO traderlink_community_audiences(audience_id,community_id,name,mode,status,created_by_user_id,created_at_utc,updated_at_utc)
+        VALUES(?,?,'Everyone','everyone','active',?,?,?)`).run(audienceId,communityId,fixture.userOne,TIMESTAMP,TIMESTAMP);
+      database.prepare(`INSERT INTO traderlink_community_coach_profiles(coach_profile_id,community_id,user_id,coach_slug,display_name,status,created_at_utc,updated_at_utc)
+        VALUES(?,?,?,'synthetic-coach','Synthetic coach','active',?,?)`).run(profileId,communityId,fixture.userOne,TIMESTAMP,TIMESTAMP);
+      database.prepare(`INSERT INTO traderlink_community_coaching_plans(plan_id,coach_profile_id,community_id,name,description,cadence,price_label,payment_instructions,audience_id,status,created_at_utc,updated_at_utc)
+        VALUES(?,?,?,'Synthetic plan','','custom','No payment','',?,'active',?,?)`).run(planId,profileId,communityId,audienceId,TIMESTAMP,TIMESTAMP);
+      database.prepare(`INSERT INTO traderlink_community_coaching_relationships(relationship_id,community_id,coach_profile_id,coach_user_id,student_user_id,plan_id,status,requested_at_utc)
+        VALUES(?,?,?,?,?,?,'active',?)`).run(relationshipId,communityId,profileId,fixture.userOne,fixture.userTwo,planId,TIMESTAMP);
+      database.prepare(`INSERT INTO traderlink_community_coaching_messages(message_id,relationship_id,community_id,author_user_id,body,created_at_utc)
+        VALUES(?,?,?,?,'Synthetic agreed coaching obligation',?)`).run(messageId,relationshipId,communityId,fixture.userOne,TIMESTAMP);
+      const image=Buffer.from([1,2,3]);
+      database.prepare(`INSERT INTO traderlink_community_coaching_attachments(attachment_id,relationship_id,community_id,uploaded_by_user_id,target_type,target_id,filename,media_type,byte_length,sha256,content,created_at_utc)
+        VALUES(?,?,?,?,'message',?,'synthetic.png','image/png',3,?,?,?)`).run(createCanonicalUuidV4(),relationshipId,communityId,fixture.userOne,messageId,createHash('sha256').update(image).digest('hex'),image,TIMESTAMP);
+
+      const survivingStudent = createCanonicalUuidV4(), survivingProfile = createCanonicalUuidV4();
+      const survivingPlan = createCanonicalUuidV4(), survivingRelationship = createCanonicalUuidV4();
+      database.prepare(`INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc)
+        VALUES(?,'synthetic',?,'Surviving student','active',?,?)`).run(survivingStudent,survivingStudent,TIMESTAMP,TIMESTAMP);
+      database.prepare(`INSERT INTO traderlink_community_coach_profiles(coach_profile_id,community_id,user_id,coach_slug,display_name,status,created_at_utc,updated_at_utc)
+        VALUES(?,?,?,'surviving-coach','Surviving coach','active',?,?)`).run(survivingProfile,communityId,fixture.userTwo,TIMESTAMP,TIMESTAMP);
+      database.prepare(`INSERT INTO traderlink_community_coaching_plans(plan_id,coach_profile_id,community_id,name,description,cadence,price_label,payment_instructions,audience_id,status,created_at_utc,updated_at_utc)
+        VALUES(?,?,?,'Surviving plan','','custom','No payment','',?,'active',?,?)`).run(survivingPlan,survivingProfile,communityId,audienceId,TIMESTAMP,TIMESTAMP);
+      database.prepare(`INSERT INTO traderlink_community_coaching_relationships(relationship_id,community_id,coach_profile_id,coach_user_id,student_user_id,plan_id,status,requested_at_utc)
+        VALUES(?,?,?,?,?,?,'active',?)`).run(survivingRelationship,communityId,survivingProfile,fixture.userTwo,survivingStudent,survivingPlan,TIMESTAMP);
+
       service.eraseTraderLinkAccount({
         userId: fixture.userOne,
         workspaceId: fixture.workspaceOne,
@@ -299,13 +333,20 @@ function main(): void {
         allowedAccountIds: [fixture.accountTwo],
         activeAccountId: fixture.accountTwo,
       });
-      requireEvidence(count(database, "SELECT COUNT(*) AS count FROM platform_users WHERE user_id = ?", fixture.userOne) === 0, "user_removed");
+      requireEvidence(count(database, "SELECT COUNT(*) AS count FROM platform_users WHERE user_id = ? AND status='disabled' AND auth_provider='deleted' AND display_name='Deleted account'", fixture.userOne) === 1, "shared_reference_anonymized_and_disabled");
+      requireEvidence(count(database, "SELECT COUNT(*) AS count FROM platform_auth_identities WHERE user_id = ?", fixture.userOne) === 0, "deleted_login_identities_removed");
+      requireEvidence(count(database, "SELECT COUNT(*) AS count FROM traderlink_community_coaching_relationships WHERE relationship_id = ? AND status='active'", survivingRelationship) === 1, "unrelated_coaching_stays_active");
+      requireEvidence(count(database, "SELECT COUNT(*) AS count FROM community_deletion_archives WHERE source_relationship_id = ?", survivingRelationship) === 0, "unrelated_coaching_not_archived");
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM platform_workspaces WHERE workspace_id = ?", fixture.workspaceOne) === 0, "workspace_removed");
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM journal_accounts WHERE account_id = ?", fixture.accountTwo) === 0, "remaining_account_removed");
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM platform_users WHERE user_id = ?", fixture.userTwo) === 1, "other_user_preserved");
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM platform_workspaces WHERE workspace_id = ?", fixture.workspaceTwo) === 1, "other_workspace_preserved");
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM journal_accounts WHERE account_id = ?", fixture.accountThree) === 1, "other_user_account_still_preserved");
       requireEvidence(beforeDeleteGuardCount(database) === guardsBefore, "full_delete_restored_guards");
+      requireEvidence(count(database,"SELECT count(*) count FROM community_deletion_archives WHERE source_relationship_id=?",relationshipId)===1,"coaching_evidence_survives_account_erasure");
+      requireEvidence(count(database,"SELECT count(*) count FROM community_deletion_archive_records WHERE record_kind='messages' AND json_extract(payload_json,'$.body')='Synthetic agreed coaching obligation'")===1,"coaching_message_retained");
+      requireEvidence(count(database,"SELECT count(*) count FROM community_deletion_archive_files WHERE length(content)=3")===1,"coaching_image_retained");
+      requireEvidence(count(database,"SELECT count(*) count FROM traderlink_community_coaching_relationships WHERE relationship_id=?",relationshipId)===0,"closed_coach_relationship_removed_from_live_workspace");
       requireEvidence(database.prepare("PRAGMA foreign_key_check").all().length === 0, "foreign_keys_clean");
     } finally {
       database.close();
@@ -323,6 +364,7 @@ try {
 } catch (error) {
   console.error(JSON.stringify({
     code: isTraderLinkPlatformError(error) ? error.code : "TRADERLINK_ACCOUNT_ERASURE_VERIFICATION_FAILED",
+    check: error instanceof Error ? error.message : "unknown_synthetic_failure",
   }));
   process.exitCode = 1;
 }

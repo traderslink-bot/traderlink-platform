@@ -130,7 +130,7 @@ export function AccountErasureControls({
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Alert severity="error">
               {dialog === "traderlink_account"
-                ? "This is permanent. Your workspace, every Trade Tracker account and all associated live data will be deleted. You will be signed out."
+                ? "Your account and private Journal will be deleted, and you will be signed out. Relevant coaching records will remain accessible only to TraderLink administration for 60 days, then be permanently deleted. You can transfer community ownership before deleting your account."
                 : "This is permanent. This Trade Tracker account and everything inside it will be deleted. Your other Trade Tracker accounts will not be changed."}
             </Alert>
             <Typography color="text.secondary" variant="body2">
