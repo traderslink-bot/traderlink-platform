@@ -7,7 +7,7 @@ content_type: "academy_lesson"
 product_area: "Education"
 availability: "educational"
 academy_course: "Technical Indicators And Tools"
-academy_module: "VWAP And EMA"
+academy_module: "VWAP And Moving Averages"
 academy_order: 2
 recommended_previous: "/academy/trading-indicators/"
 recommended_next: "/academy/ema/"

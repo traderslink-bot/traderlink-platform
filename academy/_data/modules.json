@@ -275,8 +275,17 @@
     {
       "course_id": "technical-indicators-tools",
       "module_id": "trend-tools",
-      "module_title": "VWAP And EMA",
+      "module_title": "VWAP And Moving Averages",
       "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "technical-indicators-tools",
+      "module_id": "momentum-tools",
+      "module_title": "Momentum Indicators",
+      "module_order": 3,
       "module_type": "standard",
       "display_behavior": "expanded",
       "progress_enabled": true

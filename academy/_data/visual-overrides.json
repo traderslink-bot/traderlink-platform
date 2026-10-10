@@ -72,6 +72,10 @@
         {
           "module_id": "trend-tools",
           "asset_path": "/academy/images/technical-indicators/ema-fast-and-slow.svg"
+        },
+        {
+          "module_id": "momentum-tools",
+          "asset_path": "/academy/images/technical-indicators/rsi-calculation.svg"
         }
       ],
       "launch_polish_needed": false,

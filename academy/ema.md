@@ -7,10 +7,10 @@ content_type: "academy_lesson"
 product_area: "Education"
 availability: "educational"
 academy_course: "Technical Indicators And Tools"
-academy_module: "VWAP And EMA"
+academy_module: "VWAP And Moving Averages"
 academy_order: 3
 recommended_previous: "/academy/vwap/"
-recommended_next: null
+recommended_next: "/academy/sma/"
 ---
 
 # EMA: Periods, Trends And Pullbacks
@@ -35,7 +35,7 @@ Nine five-minute bars represent 45 minutes of trading intervals. Nine daily bars
 
 An EMA does not simply take the last nine closes and discard everything earlier. Its previous value carries diminishing influence from older prices. The period setting controls how strongly new prices affect that running calculation.
 
-This distinction explains why a 9 EMA is different from a nine-period simple moving average. A simple moving average, or SMA, gives equal weight to the input prices in its selected window. A forthcoming SMA lesson will explain that calculation in detail.
+This distinction explains why a 9 EMA is different from a nine-period simple moving average. A simple moving average, or SMA, gives equal weight to the input prices in its selected window. The SMA lesson explains that calculation in detail.
 
 ## How A New Close Changes The EMA
 
