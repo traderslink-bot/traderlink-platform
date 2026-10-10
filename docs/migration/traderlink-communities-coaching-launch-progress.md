@@ -128,3 +128,9 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - Provider429 responses schedule bounded retries. Lost POST responses,5xx responses and invalid receipts are held for explicit reconciliation, not automatically reposted. Stable nonce protection is supplementary, not a durable exactly-once guarantee. Stale-send recovery is bounded to25 rows.
 - In-memory delivery fixture PASS: exact links/channels, full-post mode, no replay, receipts, publication changes during verification, oversized content, rate-limit delay, uncertain send cases, safe preflight recovery and historical migration compatibility. All HTTP is mocked; no test messages were sent.
 - Chrome reconnected; staging TradersLink account sign-in verified. Browser baseline does not contain these local corrections. Explicit resend/reconciliation UI, broader delivery integration, semantic checks and full launch QA remain open. Neither commission enabled; no deployment performed.
+
+## Acceptance and history navigation follow-up
+
+- Pending review requests no longer offer the review-and-send action; the final preview also labels pending acceptance and disables sending. Existing server-side acceptance guards remain authoritative. Accepted scope is visible in the review agreement.
+- Coach student list adds an Ended view with a read-only history entry point. It does not offer restore/archive actions for ended relationships or count them as work due. Removed the misleading role-only failure paragraph; the status label remains.
+- Lightweight syntax checks pass for the three UI files. Staging Chrome identifies TradersLink and Bullrun correctly and the existing coach workspace loads from normal navigation. These UI corrections require the eventual integrated staging/browser pass; they are not marked launch-complete.
