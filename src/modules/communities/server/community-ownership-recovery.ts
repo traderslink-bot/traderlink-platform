@@ -10,8 +10,10 @@ export function recoverCommunityOwnership(database:Database.Database,input:{acto
  assertCanonicalUuidV4(input.communityId,'communityId');assertCanonicalUuidV4(input.newOwnerUserId,'newOwnerUserId');assertCanonicalUtcTimestamp(input.atUtc,'atUtc');
  if(!isFreshCommunityEvidence(input.evidence.verifiedAtUtc,input.atUtc))throw new Error('Refresh Discord ownership verification.');
  database.transaction(()=>{
-  const community=database.prepare("SELECT discord_guild_id,owner_user_id,status FROM traderlink_communities WHERE community_id=?").get(input.communityId) as {discord_guild_id:string;owner_user_id:string;status:string}|undefined;
+  const community=database.prepare("SELECT discord_guild_id,owner_user_id,status,updated_at_utc FROM traderlink_communities WHERE community_id=?").get(input.communityId) as {discord_guild_id:string;owner_user_id:string;status:string;updated_at_utc:string}|undefined;
   if(!community||community.discord_guild_id!==input.evidence.guildId||community.status==='suspended')throw new Error('Community recovery is unavailable.');
+  const newerEvidence=database.prepare("SELECT 1 FROM platform_discord_memberships WHERE guild_id=? AND last_verified_at_utc>? AND (user_id=? OR guild_owner=1) LIMIT 1").get(community.discord_guild_id,input.evidence.verifiedAtUtc,input.newOwnerUserId);
+  if(community.updated_at_utc>input.evidence.verifiedAtUtc||newerEvidence)throw new Error('Refresh Discord ownership verification.');
   const identity=database.prepare("SELECT 1 FROM platform_auth_identities i JOIN platform_users u ON u.user_id=i.user_id AND u.status='active' WHERE i.user_id=? AND i.auth_provider='discord' AND i.status='active' AND i.auth_subject=?").get(input.newOwnerUserId,input.evidence.discordUserId);
   const membership=database.prepare("SELECT status FROM traderlink_community_memberships WHERE community_id=? AND user_id=?").get(input.communityId,input.newOwnerUserId) as {status:string}|undefined;
   if(!identity||membership?.status==='suspended')throw new Error('An active linked Discord account is required.');

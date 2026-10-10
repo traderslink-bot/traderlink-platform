@@ -340,11 +340,18 @@ database.prepare("INSERT INTO traderlink_community_operator_grants(grant_id,user
 const beforeTransfer=JSON.stringify(database.prepare('SELECT * FROM traderlink_community_journal_grants ORDER BY grant_id').all());
 const recovery={actorUserId:OWNER,communityId:first.communityId,newOwnerUserId:MEMBER,atUtc:'2026-10-15T12:11:00.000Z',evidence:{guildId:PILOT_GUILD,discordUserId:'987654321',username:'new-owner',globalDisplayName:null,avatarHash:null,roleIds:['200001'],joinedAtUtc:null,verifiedAtUtc:'2026-10-15T12:11:00.000Z'}};
 check.throws(()=>recoverCommunityOwnership(database,{...recovery,actorUserId:MEMBER}),'Only platform operator may recover ownership');
+database.exec('SAVEPOINT newer_ownership_evidence');
+database.prepare('UPDATE platform_discord_memberships SET last_verified_at_utc=? WHERE user_id=? AND guild_id=?').run('2026-10-15T12:11:30.000Z',MEMBER,PILOT_GUILD);
+check.throws(()=>recoverCommunityOwnership(database,{...recovery,atUtc:'2026-10-15T12:12:00.000Z'}),/Refresh Discord ownership/,'Older recovery cannot overwrite newer member evidence');
+check.equal(permissions.findById(first.communityId)?.status,'paused');
+database.exec('ROLLBACK TO newer_ownership_evidence; RELEASE newer_ownership_evidence');
 recoverCommunityOwnership(database,recovery);
 check.equal(permissions.findById(first.communityId)?.ownerUserId,MEMBER);
 check.equal(permissions.resolveAccess(first.communityId,MEMBER).isOwner,true);
 check.equal(JSON.stringify(database.prepare('SELECT * FROM traderlink_community_journal_grants ORDER BY grant_id').all()),beforeTransfer,'Ownership recovery must not transfer or modify Journal grants');
 permissions.setStatus({communityId:first.communityId,actorUserId:MEMBER,status:'paused',timestamp:'2026-10-15T12:12:00.000Z'});
+check.throws(()=>recoverCommunityOwnership(database,{...recovery,atUtc:'2026-10-15T12:13:00.000Z'}),/Refresh Discord ownership/,'Older recovery cannot undo a newer disconnect');
+check.equal(permissions.findById(first.communityId)?.status,'paused');
 check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes('community.alerts.create'),false,'Disconnected owner cannot publish');
 check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes('community.manage'),true,'Disconnected verified owner retains connection settings');
 console.log(JSON.stringify({result:"passed",generated,checks:["unsigned","student acceptance","weekly generation","idempotence","month end","unscheduled","plan edits","revision conflicts","frozen terms","question renewal","follow-up expiry","draft privacy","session privacy","lesson edit/reuse","role pause/restore","archive preservation","foreign keys"]}));

@@ -184,3 +184,9 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - SQL statements for common migrations match. Fresh combined SQL initialization and empty-schema SQL upgrade from production140/staging154 to158 entries pass quick-check and foreign-key checks (374 tables). This does not substitute for populated rows, migration-ledger verification or backup/restore.
 - The script deliberately reports failure for25 existing production/staging execution-order differences (for example market-halt lifecycle121 versus144). The staging lineage has already remapped these historical orders. Coordinator must preserve the existing staging manifest prefix for staging; production needs its own explicit ledger-compatible integration, not wholesale staging-manifest replacement. No applied history has been edited.
 - Coordinator notified of overlapping publishing work in another lane and asked to preserve current feature source, provide explicit disjoint handoff and integrated verification results. No deploy has been initiated from this lane.
+
+## Ownership recovery concurrency QA
+
+- Recovery now rejects evidence older than the community's latest update, a newer proposed-owner verification or a newer verified guild-owner record. An old verification cannot silently undo a later disconnect or overwrite newer member evidence.
+- Focused real-schema remediation fixture passes both race regressions and existing transfer/private-grant-preservation checks. No hosted ownership changes were made.
+- Shared-community account erasure remains an explicit policy gap: the generic orphan cleanup can remove shared descendants when an owner account is deleted. Asked the owner asynchronously whether transfer must precede owner-account deletion; no erasure behavior or real records were changed while that decision is pending.
