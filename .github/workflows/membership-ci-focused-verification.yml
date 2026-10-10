@@ -29,7 +29,11 @@ jobs:
         run: npm rebuild better-sqlite3
 
       - name: Run focused tests without external network
+        shell: bash
         run: |
+          set -o pipefail
+          log_file="$(mktemp)"
+          set +e
           sudo --preserve-env=PATH,GITHUB_WORKSPACE unshare --net -- bash -c '
             ip link set lo up
             cd "$GITHUB_WORKSPACE"
@@ -46,4 +50,25 @@ jobs:
               --maxWorkers=1 \
               --fileParallelism=false \
               --testTimeout=30000
-          '
+          ' 2>&1 | tee "$log_file"
+          test_status="${PIPESTATUS[0]}"
+          set -e
+          if [ "$test_status" -ne 0 ]; then
+            {
+              echo "### Focused Vitest failure output"
+              echo '```text'
+              tail -n 350 "$log_file"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            node - "$log_file" <<'NODE'
+          const fs = require("node:fs");
+          const lines = fs.readFileSync(process.argv[2], "utf8").split(/\r?\n/u);
+          const tail = lines.slice(-220).join("\n").slice(-12000);
+          const escaped = tail
+            .replaceAll("%", "%25")
+            .replaceAll("\r", "%0D")
+            .replaceAll("\n", "%0A");
+          console.log(`::error title=Focused Vitest failure::${escaped}`);
+          NODE
+          fi
+          exit "$test_status"
