@@ -1,0 +1,28 @@
+name: Membership panel verification
+
+on:
+  push:
+    branches:
+      - codex/membership-panel-verification-20261010
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Verify panel composition and draft headings
+        run: node scripts/check-membership-panel-regressions.cjs
+      - name: Check membership types without executing application code
+        run: node scripts/check-membership-types.cjs
