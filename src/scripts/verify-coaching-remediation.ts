@@ -250,7 +250,7 @@ service.accept({...base,atUtc:restoredAt,actor:student,agreementId:batchAgreemen
 check.equal(service.generate({...base,atUtc:restoredAt,throughDate:"2026-10-12"}),120,"Large batches save bounded progress");
 check.equal(service.generate({...base,atUtc:restoredAt,throughDate:"2026-10-12"}),30,"Next batch resumes remaining slots");
 check.equal(service.generate({...base,atUtc:restoredAt,throughDate:"2026-10-12"}),0,"Finished batch stays idempotent");
-const fakeRequest=(status:number,body:unknown)=>(async(url)=>new Response(JSON.stringify(status===200?{user:{id:String(url).split("/").at(-1)},...(body as object)}:body),{status})) as typeof fetch;
+const fakeRequest=(status:number,body:unknown)=>(async(url)=>String(url).includes('/members/')?new Response(JSON.stringify(status===200?{user:{id:String(url).split("/").at(-1),username:"fixture"},...(body as object)}:body),{status}):new Response(JSON.stringify({id:PILOT_GUILD,owner_id:"123456789"}),{status:200})) as typeof fetch;
 await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(403,{message:"Missing access"})).runAvailable(25,"2026-10-13T12:00:00.000Z");
 check.equal(coachingEntitlement(database,relationship)?.present,true,"Provider failures do not remove roles");
 await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(404,{code:10007})).runAvailable(25,"2026-10-13T12:10:00.000Z");
@@ -272,8 +272,20 @@ check.equal(coachingEntitlement(database,relationship)?.present,false,"Wrong Dis
 await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(200,{roles:["200001"]})).runAvailable(25,"2026-10-13T12:20:00.000Z");
 check.equal(coachingEntitlement(database,relationship)?.present,true,"Verified role restore resumes access");
 check.equal((database.prepare("SELECT status FROM traderlink_community_memberships WHERE community_id=? AND user_id=?").get(first.communityId,OWNER) as {status:string}).status,"active");
+database.exec("SAVEPOINT background_owner_change");
+let ownershipReads=0;
+await new CoachingDiscordRefreshService(database,"fixture-token",(async(url)=>{
+ ownershipReads++;
+ return String(url).includes('/members/')?new Response(JSON.stringify({user:{id:String(url).split('/').at(-1),username:'fixture'},roles:['200001']})):new Response(JSON.stringify({id:PILOT_GUILD,owner_id:'999999999'}));
+}) as typeof fetch).runAvailable(25,"2026-10-13T12:26:00.000Z");
+check.ok(ownershipReads>=2,"Background refresh reads guild ownership and member evidence");
+check.equal((database.prepare("SELECT status FROM traderlink_communities WHERE community_id=?").get(first.communityId) as {status:string}).status,'paused',"Background ownership change pauses community");
+database.exec("ROLLBACK TO background_owner_change; RELEASE background_owner_change");
+let rateLimitReads=0;
+await new CoachingDiscordRefreshService(database,"fixture-token",(async()=>{rateLimitReads++;return new Response('{}',{status:429});}) as typeof fetch).runAvailable(25,"2026-10-13T12:26:00.000Z");
+check.equal(rateLimitReads,2,"A rate limit stops the batch after its concurrent guild/member pair");
 const maintenance=await runCoachingMaintenance(database,{atUtc:"2026-10-13T12:30:00.000Z",limit:1});
-check.equal(maintenance.checked,1,"Maintenance processes the eligible agreement");
+check.equal(maintenance.checked,0,"Maintenance excludes expired participant verification before selecting its batch");
 check.equal(maintenance.created,0,"Maintenance cannot duplicate already generated work");
 check.equal(maintenance.roleRefreshConfigured,false,"No token means no fabricated provider verification");
 check.equal((await runCoachingMaintenance(database,{atUtc:"2026-10-13T12:31:00.000Z",limit:1})).checked,0,"Hourly watermark prevents repeated agreement work");
@@ -281,6 +293,7 @@ const scheduledPlan=platform.readSnapshot("first-room",actor).plans.find(item=>i
 platform.createPlan({...edit,expectedRevision:scheduledPlan.revision,items:[{...included,frequency:"weekly",quantity:3}]});
 const scheduledAgreement=service.propose({...base,atUtc:"2026-10-14T12:00:00.000Z",startDate:"2026-10-14",dueTimeUtc:"17:00"});
 service.accept({...base,atUtc:"2026-10-14T12:00:00.000Z",actor:student,agreementId:scheduledAgreement});
+database.prepare("UPDATE platform_discord_memberships SET last_verified_at_utc=? WHERE guild_id=?").run("2026-10-14T12:00:00.000Z",PILOT_GUILD);
 check.equal((await runCoachingMaintenance(database,{atUtc:"2026-10-14T12:01:00.000Z",limit:1})).created,5,"Maintenance creates upcoming weekly work without manual scheduling");
 check.equal((await runCoachingMaintenance(database,{atUtc:"2026-10-14T14:01:00.000Z",limit:1})).created,0,"Next eligible maintenance pass is idempotent");
 let releasePass!:()=>void;

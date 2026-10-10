@@ -28,9 +28,17 @@ export async function runCoachingMaintenance(
     JOIN traderlink_communities community ON community.community_id=relationship.community_id
     WHERE relationship.status='active' AND relationship.archived_at_utc IS NULL
       AND community.status='active'
+      AND EXISTS (SELECT 1 FROM platform_discord_memberships m
+        WHERE m.user_id=relationship.student_user_id AND m.guild_id=community.discord_guild_id
+          AND m.last_verified_at_utc BETWEEN ? AND ?)
+      AND EXISTS (SELECT 1 FROM platform_discord_memberships m
+        WHERE m.user_id=relationship.coach_user_id AND m.guild_id=community.discord_guild_id
+          AND m.last_verified_at_utc BETWEEN ? AND ?)
       AND (agreement.last_scheduled_at_utc IS NULL OR agreement.last_scheduled_at_utc<?)
     ORDER BY coalesce(agreement.last_scheduled_at_utc,''), agreement.agreement_id LIMIT ?
-  `).all(new Date(Date.parse(atUtc) - 3_600_000).toISOString(), limit) as {
+  `).all(new Date(Date.parse(atUtc) - 300_000).toISOString(), atUtc,
+    new Date(Date.parse(atUtc) - 300_000).toISOString(), atUtc,
+    new Date(Date.parse(atUtc) - 3_600_000).toISOString(), limit) as {
     agreement_id: string; community_id: string; relationship_id: string; coach_user_id: string;
   }[];
   let created = 0, failed = 0;

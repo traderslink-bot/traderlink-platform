@@ -157,3 +157,10 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - Activating an existing server through administration now also requires fresh owner verification. Owner settings offer disconnect by pausing the community without deleting records or uninstalling the Discord bot; recovery is explicit through platform administration.
 - Focused coaching/Communities/foundation fixtures PASS after adding separate linked owner identities, transfer pause, unauthorized recovery denial, retained grant equality and disconnected publishing checks. Changed-file syntax and diff checks PASS. No real server ownership, role, hosted data or deployment was changed.
 - Independent second-guild browser proof, user-facing error/retry verification, complete operational/deletion/export and final integrated QA remain open.
+
+## Background verification correction
+
+- Background refresh now uses the same guild-owner and member verification as protected requests, for both original relationship participants. Confirmed ownership changes pause the community; unavailable provider responses do not fabricate removal. A rate limit stops the batch after the current concurrent guild/member request pair.
+- Scheduled generation requires both participants' verification within five minutes, excluding stale agreements before the bounded batch selection so they cannot crowd out fresh agreements. Existing work and history are preserved.
+- Focused synthetic remediation fixture passes, including ownership change, rate-limit stop, departure/restoration, stale scheduler exclusion and fresh recurring generation. No live Discord changes or hosted migrations were performed. This internal correction requires no Help copy changes.
+- Chrome coach and Bullrun staging sessions are available again. They still show the earlier staging build, not these local corrections. Full integrated and operational QA remains open; neither commissions nor production deployment is enabled.
