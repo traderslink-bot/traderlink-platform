@@ -104,3 +104,10 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 - In-memory coaching and Communities fixtures PASS after updating their student request flows to explicitly accept work. New checks cover coach authority, required scope/deadline, unscheduled work, duplicate acceptance, cancellation and preservation of historical rows. These are not browser or hosted proof.
 - App shutdown recovery verified existing branch/path and checkpointd91a2f437. Default sandbox Git traversal failed; approved escalation succeeded without Git configuration/index repair. Preexisting live-QA report edits remain untouched.
 - Full launch QA, access freshness/ownership lifecycle and integrated staging/browser verification remain open. Both commissions remain disabled; no deployment performed.
+
+## Confirmed Discord departure correction
+
+- Membership refresh validates the returned Discord identity and bounded role list, normalizes duplicate/unsorted roles to the existing database contract, and validates its timestamp.
+- Confirmed unknown-member responses clear that guild's cached owner flag and mark only that community membership inactive. Successful member verification restores inactive membership but never overrides a suspended membership. Provider failure/rate limiting does not fabricate role removal.
+- Coaching eligibility now requires an active community and membership even when the agreement requires no additional Discord role. This closes the no-role departure loophole without deleting retained coaching records.
+- Coaching and Communities fixtures PASS for departure, mismatched provider identity, restoration, no-role plans, retained records and existing regressions. Request-time freshness, owner transfer and departed-member history navigation are still open L02 work, not implied complete by these checks.
