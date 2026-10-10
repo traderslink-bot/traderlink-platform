@@ -13,6 +13,12 @@ Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-
 
 ## Implementation and verification
 
+### October 10 — post-shutdown action audit
+
+Current source supersedes the historical unresolved implementation notes below: shared-record preservation and the narrowly scoped deleted-owner exception are implemented. Hosted acceptance remains open. Two missed action callers were corrected: relationship status updates and student review trade loading now request existing-coaching-only access. The underlying verifier still requires an active, unarchived relationship and original participant; this does not permit new relationships, general community access, or revival of ended relationships after owner deletion.
+
+Focused action navigation and coaching remediation checks passed after these corrections. The first account-erasure rerun encountered a local evidence-vault write failure; the rerun with access to the disposable fixture directory passed (`disposable_synthetic_only`). Help guidance was inspected; these corrections restore the approved access behavior and introduce no new user-facing controls or copy. Both commissions remain disabled; no production deployment.
+
 ### October 10 continuation
 
 The owner subsequently approved an existing-coaching-only access exception. Implemented an explicit server-side intent gate before cached membership acceptance: deleted-owner communities deny general requests; only active, unarchived original coaching participants qualify, optionally scoped to the exact relationship. Discord fetch/role refresh, failure denial, service permissions and Journal grants remain in place. Background coaching refresh and existing review/message/image/task/read paths use that intent; publishing, setup and new-plan paths do not. No replacement owner is assigned.

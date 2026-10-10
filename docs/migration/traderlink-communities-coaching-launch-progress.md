@@ -2,6 +2,10 @@
 
 Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-plan.md).
 
+## 2026-10-10 — post-shutdown recovery
+
+Saved checkpoint dcd734b19 was intact. Coordinator confirmed staging-only authorization and retains integration/deployment ownership. Two additional existing-coaching action callers were corrected; see [deletion/access progress](traderlink-coaching-deletion-archive-progress.md). This is not full staging QA or launch acceptance. Both commissions remain disabled and production is not authorized.
+
 ## 2026-10-10 — consolidated planning checkpoint
 
 - Reconciled original product obligations, latest private-pilot QA, known lifecycle gaps and onboarding/activity source findings into one remaining-launch-work register.

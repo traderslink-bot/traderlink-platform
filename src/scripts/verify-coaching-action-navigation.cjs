@@ -8,7 +8,11 @@ const root = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(path.join(root, 'app/(dashboard)/communities/community-actions.ts'), 'utf8');
 const events = [];
 let deny = false;
+let lastAccess;
 class Repository {
+  setRelationshipStatus(input) {
+    events.push(['relationship-status', input.relationshipId, input.status]);
+  }
   updatePlanStatus(input) {
     if (deny) throw new Error('Access denied');
     events.push(['plan-status', input.planId, input.status]);
@@ -28,8 +32,8 @@ vm.runInNewContext(compiled, {
     if (id === 'next/cache') return { refresh: () => events.push(['refresh']), revalidatePath: value => events.push(['revalidate', value]) };
     if (id === 'next/navigation') return { redirect: value => { throw new Error(`Unexpected redirect: ${value}`); } };
     if (id.endsWith('/require-platform-request-scope')) return { requireTraderLinkPlatformPageIdentity: async () => ({ scope: { userId: 'qa-coach' } }) };
-    if (id.endsWith('/community-request-access')) return {requireCommunityRequestAccess: async input => {assert.equal(input.userId,'qa-coach');if(deny)throw new Error('Access denied');}};
-    if (id.endsWith('/open-platform-database')) return { withPlatformDatabase: (_options, callback) => callback({ prepare: () => ({ get: () => ({ community_id: 'qa-community' }) }) }) };
+    if (id.endsWith('/community-request-access')) return {requireCommunityRequestAccess: async input => {lastAccess=input;assert.equal(input.userId,'qa-coach');if(deny)throw new Error('Access denied');}};
+    if (id.endsWith('/open-platform-database')) return { withPlatformDatabase: (_options, callback) => callback({ prepare: () => ({ get: () => ({ community_id: 'qa-community', slug: 'test-community' }) }) }) };
     if (id.endsWith('/platform-migration-contract')) return { createCanonicalUtcTimestamp: () => '2026-09-28T00:00:00.000Z' };
     if (id.endsWith('/traderlink-community-viewer')) return { resolveTraderLinkCommunityViewer: () => ({ userId: 'qa-coach' }) };
     if (id.endsWith('/traderlink-community-platform-repository')) return { TraderLinkCommunityPlatformRepository: Repository };
@@ -66,5 +70,19 @@ vm.runInNewContext(compiled, {
     assert.deepEqual(events[0], ['plan-status','qa-plan',status]);
     assert.ok(events.some(event => event[0] === 'revalidate' && event[1] === '/communities/test-community/workspace/setup'));
   }
-  console.log('PASS: canonical student navigation, preserved coach page, both views invalidated, authorization failure unchanged');
+  events.length = 0;
+  form.set('status', 'ended');
+  await assert.rejects(exportsObject.setCoachingRelationshipStatusAction(form), /Unexpected redirect: \/communities\/test-community\/workspace\?updated=/);
+  assert.equal(lastAccess.existingCoachingOnly, true);
+  assert.equal(lastAccess.relationshipId, 'qa-student');
+  assert.deepEqual(events[0], ['relationship-status', 'qa-student', 'ended']);
+  events.length = 0; deny = true;
+  await assert.rejects(exportsObject.setCoachingRelationshipStatusAction(form), /Access denied/);
+  assert.equal(events.length, 0);
+  await assert.rejects(exportsObject.loadStudentReviewTradesAction(form), /Access denied/);
+  assert.equal(lastAccess.existingCoachingOnly, true);
+  assert.equal(lastAccess.relationshipId, 'qa-student');
+  assert.equal(lastAccess.verifyParticipants, true);
+  assert.equal(events.length, 0);
+  console.log('PASS: canonical navigation, narrow existing-coaching action intent, authorization failure prevents writes');
 })().catch(error => { console.error(error); process.exitCode = 1; });
