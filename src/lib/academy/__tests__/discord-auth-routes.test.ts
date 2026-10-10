@@ -28,8 +28,9 @@ afterEach(() => {
 });
 
 describe("Discord Academy auth routes", () => {
-  it("keeps users with an active Platform session out of Discord OAuth", async () => {
-    const sessionToken = createPlatformSession({ roles: [] });
+  it("keeps users with an active dashboard-authorized Platform session out of Discord OAuth", async () => {
+    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");
+    const sessionToken = createPlatformSession({ roles: ["200"] });
 
     const response = await loginGET(
       new NextRequest(
@@ -72,7 +73,7 @@ describe("Discord Academy auth routes", () => {
     );
   });
 
-  it("refreshes Discord roles when an Academy member without Premium requests the watchlist", async () => {
+  it("reuses a free Discord member session for the requested watchlist without requiring Premium", async () => {
     const sessionToken = createPlatformSession({ roles: [] });
     vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");
     vi.stubEnv("DISCORD_CLIENT_ID", "client-id");
@@ -89,13 +90,11 @@ describe("Discord Academy auth routes", () => {
       ),
     );
 
-    const authorizeUrl = new URL(response.headers.get("location") ?? "");
-    expect(authorizeUrl.origin).toBe("https://discord.com");
-    expect(authorizeUrl.searchParams.get("prompt")).toBe("consent");
-    expect(authorizeUrl.searchParams.get("scope")).toContain("guilds.members.read");
-
-    const setCookieHeader = getSetCookieHeaders(response).join("\n");
-    expect(setCookieHeader).toContain(`${ACADEMY_OAUTH_PROMPT_COOKIE}=consent`);
+    expect(response.headers.get("location")).toBe(
+      "https://traderslink.pro/watchlist/ALBT",
+    );
+    expect(getSetCookieHeaders(response).join("\n"))
+      .not.toContain(`${ACADEMY_OAUTH_PROMPT_COOKIE}=consent`);
   });
 
   it("reuses a Premium member session for the requested watchlist page", async () => {

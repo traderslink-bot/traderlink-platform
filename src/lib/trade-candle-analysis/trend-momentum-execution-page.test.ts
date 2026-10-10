@@ -5,7 +5,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { TrendMomentumProjection } from "./trend-momentum-analytics";
 import { TrendMomentumExecutionComparison } from "../../../app/(dashboard)/analytics/trend-momentum-execution-comparison";
 
-const projection = { records: [
+const projection = { tradeCount: 2, analyzedTradeCount: 2, indicatorTradeCount: 0,
+  trades: [
+    { tradeId: "t", direction: "long", analyzed: true, indicators: null },
+    { tradeId: "short", direction: "short", analyzed: true, indicators: null },
+  ], records: [
   { tradeId: "t", direction: "long", executionKind: "partial_exit", executionPriceDecimal: "10", pnlDecimal: null,
     context: { oneMinute: { alignment: "above" }, fiveMinute: { alignment: "below", currentWordingEligible: true, ageSeconds: 90 } } },
   { tradeId: "short", direction: "short", executionKind: "partial_exit", executionPriceDecimal: "10", pnlDecimal: "999",

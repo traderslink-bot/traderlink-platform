@@ -1,0 +1,131 @@
+name: Membership CI broad classification
+
+on:
+  push:
+    branches:
+      - codex/membership-ci-final-verification-20261010
+
+permissions:
+  contents: read
+
+jobs:
+  broad-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out verification branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Rebuild SQLite native binding
+        run: npm rebuild better-sqlite3
+
+      - name: Verify duration copy source
+        shell: bash
+        run: |
+          npm exec -- eslint app/plans/plan-catalog.tsx
+          node <<'NODE'
+          const fs = require("node:fs");
+          const ts = require("typescript");
+          const path = "app/plans/plan-catalog.tsx";
+          const source = fs.readFileSync(path, "utf8");
+          for (const expected of [
+            'offer.accessDurationDays === 1 ? "day" : "days"',
+            'trial.durationDays === 1 ? "day" : "days"',
+          ]) {
+            if (!source.includes(expected)) throw new Error(`Missing duration grammar guard: ${expected}`);
+          }
+          const output = ts.transpileModule(source, {
+            fileName: path,
+            compilerOptions: {jsx: ts.JsxEmit.Preserve, target: ts.ScriptTarget.ES2022},
+            reportDiagnostics: true,
+          });
+          const errors = (output.diagnostics ?? []).filter((item) => item.category === ts.DiagnosticCategory.Error);
+          if (errors.length > 0) throw new Error(ts.formatDiagnosticsWithColorAndContext(errors, {
+            getCanonicalFileName: (name) => name,
+            getCurrentDirectory: () => process.cwd(),
+            getNewLine: () => "\n",
+          }));
+          NODE
+
+      - name: Run full test suite without external network
+        id: full_tests
+        shell: bash
+        run: |
+          mkdir -p .ci-artifacts
+          set +e
+          sudo --preserve-env=PATH,GITHUB_WORKSPACE unshare --net -- bash -c '
+            ip link set lo up
+            cd "$GITHUB_WORKSPACE"
+            npm exec -- vitest run \
+              --maxWorkers=1 \
+              --fileParallelism=false \
+              --testTimeout=30000 \
+              --reporter=json \
+              --outputFile=.ci-artifacts/full-vitest-results.json
+          '
+          test_status="$?"
+          set -e
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const reportPath = ".ci-artifacts/full-vitest-results.json";
+          if (!fs.existsSync(reportPath)) {
+            fs.writeFileSync(".ci-artifacts/full-vitest-summary.json", JSON.stringify({reportMissing: true}, null, 2));
+            process.exit(0);
+          }
+          const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+          const failures = [];
+          for (const file of report.testResults ?? []) {
+            for (const assertion of file.assertionResults ?? []) {
+              if (assertion.status === "failed") {
+                failures.push({
+                  file: path.relative(process.cwd(), file.name).replaceAll("\\", "/"),
+                  title: assertion.fullName || assertion.title || "Vitest assertion",
+                  messages: assertion.failureMessages ?? [],
+                });
+              }
+            }
+          }
+          const summary = {
+            success: report.success,
+            passedTests: report.numPassedTests ?? 0,
+            failedTests: report.numFailedTests ?? 0,
+            pendingTests: report.numPendingTests ?? 0,
+            totalTestSuites: report.numTotalTestSuites ?? report.testResults?.length ?? 0,
+            failures,
+          };
+          fs.writeFileSync(".ci-artifacts/full-vitest-summary.json", JSON.stringify(summary, null, 2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+            "## Full Vitest classification",
+            `- Passed: ${summary.passedTests}`,
+            `- Failed: ${summary.failedTests}`,
+            `- Pending: ${summary.pendingTests}`,
+            `- Suites: ${summary.totalTestSuites}`,
+            `- Failure records: ${failures.length}`,
+            "",
+          ].join("\n"));
+          for (const row of failures.slice(0, 50)) {
+            const message = row.messages.join("\n").replace(/\u001b\[[0-9;]*m/gu, "").slice(-7000);
+            const escaped = message.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+            console.log(`::error file=${row.file},title=${row.title.replaceAll(",", " ")}::${escaped}`);
+          }
+          NODE
+          exit "$test_status"
+
+      - name: Upload complete machine-readable test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: membership-ci-broad-classification-${{ github.sha }}
+          path: .ci-artifacts/
+          if-no-files-found: warn
+          retention-days: 7

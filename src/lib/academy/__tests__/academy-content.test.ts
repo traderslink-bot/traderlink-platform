@@ -89,6 +89,9 @@ describe("academy content loader", () => {
     expect(getLaunchAcademyCourseIds()).toEqual([
       "trading-foundations",
       "chart-reading-market-structure",
+      "volume-liquidity-order-flow",
+      "risk-management-trade-planning",
+      "technical-indicators-tools",
     ]);
     expect(getLaunchAcademyPathHubIds()).toEqual([]);
     expect(params).toContain("what-is-a-stock-and-how-does-a-trade-work");
@@ -102,17 +105,15 @@ describe("academy content loader", () => {
     expect(params).not.toContain("sec-filings/form-8-k");
   });
 
-  it("uses launch course context and navigation for cross-listed foundation lessons", () => {
+  it("uses the open canonical course context for cross-listed lessons", () => {
     const lesson = getAcademyLesson("/academy/trading-plan/");
 
     expect(lesson?.contexts[0]).toMatchObject({
-      courseId: "trading-foundations",
-      moduleTitle: "Planning And Rules",
-      displayOrder: 9,
+      courseId: "risk-management-trade-planning",
+      moduleTitle: "Planning",
+      displayOrder: 1,
     });
-    expect(lesson?.previousLesson?.slug).toBe(
-      "/academy/day-trading-vs-swing-trading/",
-    );
+    expect(lesson?.previousLesson).toBeNull();
     expect(lesson?.nextLesson?.slug).toBe("/academy/trading-rules/");
   });
 
