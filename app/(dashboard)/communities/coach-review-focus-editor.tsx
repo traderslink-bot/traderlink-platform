@@ -4,14 +4,14 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import {CommunityTypography as Typography} from "./community-typography";
 import {DashboardPanel} from "@/app/dashboard-ui";
-import {COACHING_REVIEW_FOCUS,type CoachingReviewFocus} from "@/src/modules/communities/contracts/coaching-review-workspace";
+import {COACHING_REVIEW_FOCUS,editableReviewFocus} from "@/src/modules/communities/contracts/coaching-review-workspace";
 import type {TraderLinkCommunityTradeReview} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import type {TraderLinkCommunityCoachJournalReadService} from "@/src/modules/communities/server/traderlink-community-coach-journal-read-service";
 import {saveCommunityReviewFocusAction} from "./community-actions";
 
 type Context=ReturnType<TraderLinkCommunityCoachJournalReadService["readReviewContext"]>;
 export function CoachReviewFocusEditor({communitySlug,relationshipId,review,context,disabled}:{communitySlug:string;relationshipId:string;review:TraderLinkCommunityTradeReview;context:Context|null;disabled:boolean}){
- const focus=([...new Set([...(review.focusAreas??[]),...Object.keys(review.focusFeedback??{})])] as CoachingReviewFocus[]).filter(key=>!["overall","next_steps"].includes(key));
+ const focus=editableReviewFocus(review.focusAreas??[],review.focusFeedback??{});
  return <Stack spacing={2}>
   {review.workspaceKind==="performance"?<DashboardPanel title="Performance"><Stack spacing={1}>{context?.metrics.length?context.metrics.map(row=><Box key={row.currency}><Typography fontWeight={700}>{row.currency} · {row.closedTrades} closed trades</Typography><Typography>{row.basis}: {row.pnl===null?"Unavailable":Number(row.pnl).toLocaleString("en-US",{maximumFractionDigits:2})} · {row.winners} winners · {row.losers} losers</Typography>{context.previous?.find(prior=>prior.currency===row.currency)?<Typography variant="body2">Previous period: {context.previous.filter(prior=>prior.currency===row.currency).map(prior=>`${prior.closedTrades} closed trades · ${prior.basis}: ${prior.pnl===null?"Unavailable":Number(prior.pnl).toLocaleString("en-US",{maximumFractionDigits:2})}`).join("")}</Typography>:null}</Box>):<Typography>Performance data unavailable</Typography>}{context?<Typography variant="caption">Coverage: {context.coverage}</Typography>:null}</Stack></DashboardPanel>:null}
   {focus.length?<Box component="form" action={disabled?undefined:saveCommunityReviewFocusAction}><input type="hidden" name="communitySlug" value={communitySlug}/><input type="hidden" name="relationshipId" value={relationshipId}/><input type="hidden" name="reviewId" value={review.reviewId}/><Stack spacing={2}>

@@ -9,7 +9,9 @@ const compiled = ts.transpileModule(source, {compilerOptions:{module:ts.ModuleKi
 assert.equal(compiled.diagnostics.length, 0);
 const exportsObject = {};
 vm.runInNewContext(compiled.outputText, {exports:exportsObject});
-const {previousDeliveredFocus, coachingReviewLabel} = exportsObject;
+const {previousDeliveredFocus, coachingReviewLabel, editableReviewFocus} = exportsObject;
+assert.equal(JSON.stringify(editableReviewFocus(['rules','next_steps'],{execution:'',risk:'  ',journal:'Keep this feedback'})),JSON.stringify(['rules','journal']));
+assert.equal(JSON.stringify(editableReviewFocus(['execution'],{execution:''})),JSON.stringify(['execution']));
 const review = (reviewId, deliveredAtUtc, overrides={}) => ({reviewId, relationshipId:'student-a', nextFocus:'Practice entries', deliveredAtUtc, cancelledAtUtc:null, ...overrides});
 const old = review('old','2026-10-01T12:00:00.000Z',{updatedAtUtc:'2026-10-10T12:00:00.000Z'});
 const recent = review('recent','2026-10-08T12:00:00.000Z');
