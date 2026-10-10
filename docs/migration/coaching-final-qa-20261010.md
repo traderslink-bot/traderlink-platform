@@ -23,3 +23,21 @@ Controlling inventory: `traderlink-coaching-complete-qa-20261001.md` in the cano
 - Synthetic performance period September 23–25: 3 closed trades, net 30, 2 winners/1 loser; preceding September 20–22: 2 closed trades, net 10. Trading-day September 25 shows only NVDA journal notes. Strategy execution/risk feedback saved and survived reload, then restored to blank. Custom type with both dates empty saved and survived reload.
 - Student Bullrun uploaded the approved synthetic chart through Chrome; new attachment 2749c217-31a3-4cce-98d1-04b92f5979b7 appeared for both parties, and coach image decoded at 640x360. Previous coach attachment remains intact.
 - In-memory coaching remediation, community isolation/capabilities/grants, and four-mode Discord delivery verifiers pass again on October 10.
+
+## Correction-build acceptance
+
+- Staging17dfd695: custom Bullrun review a69f9cce saved with no trades/dates, delivered,
+  acknowledged Viewed; private canary absent from student and final preview.
+- Pre-created draft682f38d5 shows the new delivered next-focus reminder.
+- Cleared/deselected Execution/Risk editors absent; remaining feedback saves.
+  Synthetic draft69865 restored to Performance September18–25 and original focus,
+  with two saved/three queued trade reviews and original notes preserved.
+- Selected-student reuse saved to a new unpublished one-student draft, original
+  assignment unchanged. Student image receipt confirmed on both sides.
+- Final focused rerun passes remediation, community, delivery, navigation, reminder
+  and reader-context scripts. Reader-context script uses mocked annotation
+  collaborators and is not described as hosted day-note evidence.
+- Canonical complete QA report now reconciles all thirteen inventory areas and
+  distinguishes live/fixture evidence and deferred activity presentation.
+- Production-parity staging reconciliation and final integrated smoke remain open;
+  coordinator owns the release. No production coaching publication authorized.
