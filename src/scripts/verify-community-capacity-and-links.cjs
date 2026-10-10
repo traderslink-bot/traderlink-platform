@@ -21,9 +21,16 @@ assert.equal(availability.coachingPlanHasSpace({...plan,activeStudents:10}),fals
 assert.equal(availability.coachingPlanHasSpace({...plan,status:'paused'}),false);
 assert.equal(availability.coachAcceptsStudents([plan],'coach'),true);
 assert.equal(availability.coachAcceptsStudents([plan],'another'),false);
-const components=load('app/(dashboard)/communities/community-dashboard.tsx',id=>id.endsWith('/coaching-plan-availability')?availability:new Proxy({},{get:(_t,key)=>String(key)}),'\nexports.qaHome=Home; exports.qaCoaches=Coaches; exports.qaWatchlists=WatchlistList; exports.qaLabels=communityCapabilityLabels;');
+const components=load('app/(dashboard)/communities/community-dashboard.tsx',id=>id.endsWith('/coaching-plan-availability')?availability:new Proxy({},{get:(_t,key)=>String(key)}),'\nexports.qaHome=Home; exports.qaCoaches=Coaches; exports.qaWatchlists=WatchlistList; exports.qaAlerts=AlertList; exports.qaLabels=communityCapabilityLabels;');
 function nodes(tree){if(!tree||typeof tree!=='object')return [];if(Array.isArray(tree))return tree.flatMap(nodes);return [tree,...nodes(tree.props?.children),...nodes(tree.props?.action)];}
 const snapshot={viewer:{capabilities:[]},community:{memberCount:1},alerts:[],watchlists:[],coaches:[]};
+const alertSnapshot={community:{slug:'test'},viewer:{userId:'owner',capabilities:['community.alerts.create']},alerts:[{alertId:'alert',slug:'example',publishingMode:'discord_post',authorUserId:'owner',publishedAtUtc:null}]};
+const alertLinks=()=>nodes(components.qaAlerts({snapshot:alertSnapshot})).filter(n=>n.props?.href);
+assert.equal(alertLinks()[0].props.href,'/communities/test/alerts/example');
+alertSnapshot.viewer.userId='another';assert.equal(alertLinks().length,0);
+alertSnapshot.viewer.capabilities.push('community.alerts.manage_all');assert.equal(alertLinks().length,1);
+alertSnapshot.viewer.capabilities=[];assert.equal(alertLinks().length,0);
+alertSnapshot.alerts[0].publishingMode='tracked_page';assert.equal(alertLinks().length,1);
 assert.equal(nodes(components.qaHome({snapshot,base:'/test'})).filter(n=>n.props?.href).length,0);
 snapshot.viewer.capabilities=['community.alerts.view','community.watchlists.view'];
 assert.deepEqual(nodes(components.qaHome({snapshot,base:'/test'})).filter(n=>n.props?.href).map(n=>n.props.href),['/test/alerts','/test/watchlists']);

@@ -29,6 +29,21 @@ the next batch until the complete audit handoff. No production release authorize
   agreement items first; legacy arrangements without an agreement retain fallback.
 - Discord-only official watchlists hid their own edit-page link. Restore the link
   for author/authorized manager only; member access is unchanged.
+- Coach student cards offered Reply on drafts/completed/cancelled reviews despite
+  server rejection. Show replies only after delivery in Delivered, Viewed or
+  Follow-up states; disable paused access and require a nonempty body. Capitalize
+  status labels. Focused component regression passes.
+- Student review read/action/follow-up dates used the browser default timezone.
+  Live read receipt changed dates after hydration and React418 was logged. Specify
+  en-US/UTC with a visible UTC suffix, matching coaching timestamps. Component
+  regression renders identically under UTC and America/Toronto. Hosted error-free
+  retest remains required; do not call the local fix a verified hosted resolution.
+- Coaching Work metric cards used grow columns for every plan, clipping desktop
+  labels and overflowing mobile. Use two/three/four responsive columns and scoped
+  wrapping labels without changing the shared dashboard card. Component check
+  covers grid sizing plus days/custom dates/status/search/sort/count behavior.
+- Alert list had no links to existing detail/edit pages. Add Open for tracked
+  alerts and author/manager Discord-only alerts; focused access-link checks pass.
 
 ### Fresh live results, not inferred from fixture tests
 
@@ -42,10 +57,29 @@ the next batch until the complete audit handoff. No production release authorize
   saved feedback, To review0/Saved1, shared notes/executions drawer, overall and
   previous-focus notes, final preview, Delivered, and student-confirmed Viewed.
   Coach-private canary absent from final preview and student rendering.
-- Follow-up submission was attempted but receipt is NOT confirmed: Chrome's
-  connection detached immediately afterward. Do not resend without checking.
+- Follow-up receipt confirmed after reconnect, coach reply received by Bullrun,
+  follow-up due date saved, then Completed persisted on both sides with conversation
+  intact. No duplicate student reply submitted.
 - New task dueOctober11 appeared for both parties; number-of-days1 excluded it,
-  number-of-days2 included it with matching counts. Task remains open.
+  number-of-days2 included it with matching counts. Completed by coach, removed
+  from student Upcoming, and retained in coach task history.
+- Fresh session: Oct12 15:00UTC,30minutes, synthetic external meeting link and agenda
+  reached Bullrun. Completed shared notes moved into student history, no private
+  canary disclosed, coach completion persisted after reload.
+- Selected-student reuse draft published as Resource assignment to Bullrun only,
+  dueOct13 16:00UTC. Student received it and marked complete; coach shows1of1
+  completed. Original assignment remains unchanged.
+- Student390px dark-mode viewport has no horizontal overflow; agreement and teaching
+  cards visually inspected. Override reset. Coach teaching console had no captured
+  errors; student console exposed the date hydration bug above.
+- Work desktop1440 table/search/month placement inspected. Mobile390 exposed metric
+  overflow above. Browser custom-date entry did not stick; not counted as live pass.
+  Exact range filtering passes the isolated component check only. Overrides reset.
+- Tracked official watchlist edit added MSFT beside AAPL and persisted; a subsequent
+  removal restored AAPL only, verified from the list. Original notes/title unchanged.
+  No new Discord post was sent. Composer uses author symbols/notes, not admin AI.
+- Teaching student-complete versus coach-published status remains separately
+  controlled, as previously recorded; not automatically marked a defect.
 
 ### Checkpoint checks
 
@@ -57,6 +91,9 @@ the next batch until the complete audit handoff. No production release authorize
   unused legacy-component warnings remain. React memo dependency issue found in
   this pass was corrected and lint rerun. No local production build performed.
 - Existing help workflow remains accurate for these bug fixes; no new guide copy.
+- Additional reply/date/work-filter regressions and expanded alert-link regression
+  pass. Eight-file targeted lint: zero errors, the same six existing legacy unused
+  component warnings. Hosted fixes and final console/responsive retest still open.
 
 ### Readiness / product gaps still requiring explicit disposition
 
