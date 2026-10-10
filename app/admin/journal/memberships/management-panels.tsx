@@ -42,8 +42,9 @@ export function MembershipManagementPanels({ database, section }: { database: Da
   const providers = database.prepare("SELECT provider_key id,label FROM platform_membership_provider_definitions ORDER BY label").all() as Option[];
   const featureCopy = section === "Features" ? readMembershipFeatureCopy(database) : new Map();
   if (section === "Features") return <JournalAdminPanel title="Features">
-    <PrivateWatchlistAllowanceSettings database={database} />
-    <WatchlistPlanSettings database={database} />
+    {/* These hook-free helpers must read synchronously before the database callback closes. */}
+    {PrivateWatchlistAllowanceSettings({ database })}
+    {WatchlistPlanSettings({ database })}
     <Typography sx={{ mb: 2 }}>Descriptions appear on public and invitation plan cards. Editing text does not change access, prices or allowances.</Typography>
     <Stack spacing={2} sx={{ mb: 3 }}>{readMembershipFeatures(database).map(feature => {
       const copy = featureCopy.get(feature.key) ?? defaultMembershipFeatureCopy(feature.key, feature.label);
@@ -233,8 +234,8 @@ export function MembershipManagementPanels({ database, section }: { database: Da
   }
   if (section === "Plans") {
     const plans = database.prepare("SELECT plan_id id,name,visibility,internal_note FROM platform_membership_plans ORDER BY name").all() as { id: string; name: string; visibility: string; internal_note: string }[];
-    const drafts = database.prepare(`SELECT v.plan_version_id id,p.name,v.public_description FROM platform_membership_plan_versions v
-      JOIN platform_membership_plans p ON p.plan_id=v.plan_id WHERE v.lifecycle_state='draft' ORDER BY p.name,v.version_number`).all() as { id: string; name: string; public_description: string }[];
+    const drafts = database.prepare(`SELECT v.plan_version_id id,p.name,v.version_number,v.public_description FROM platform_membership_plan_versions v
+      JOIN platform_membership_plans p ON p.plan_id=v.plan_id WHERE v.lifecycle_state='draft' ORDER BY p.name,v.version_number`).all() as { id: string; name: string; version_number: number; public_description: string }[];
     const features = readMembershipFeatures(database);
     return <Stack spacing={3}>
       {plans.map((plan) => <JournalAdminPanel key={plan.id} title={plan.name}><MembershipForm action={manageMembershipAction} label="Save plan details"><Command operation="plan_details" /><input type="hidden" name="planId" value={plan.id} />
@@ -245,7 +246,7 @@ export function MembershipManagementPanels({ database, section }: { database: Da
       <JournalAdminPanel title="Plan versions"><MembershipForm action={manageMembershipAction} label="Create new draft version"><Command operation="new_version" /><Select name="planVersionId" label="Copy version" options={versions} /></MembershipForm></JournalAdminPanel>
       {drafts.map((draft) => {
         const selected = new Map((database.prepare("SELECT feature_key,limit_value,reset_days FROM platform_membership_plan_features WHERE plan_version_id=?").all(draft.id) as { feature_key: string; limit_value: number | null; reset_days: number | null }[]).map((f) => [f.feature_key, f]));
-        return <JournalAdminPanel key={draft.id} title={draft.name}><MembershipForm action={manageMembershipAction} label="Save draft"><Command operation="edit_draft" /><input type="hidden" name="planVersionId" value={draft.id} />
+        return <JournalAdminPanel key={draft.id} title={`${draft.name} · Draft version ${draft.version_number}`}><MembershipForm action={manageMembershipAction} label="Save draft"><Command operation="edit_draft" /><input type="hidden" name="planVersionId" value={draft.id} />
           <TextField name="publicDescription" label="Public description" multiline defaultValue={draft.public_description} />
           {features.map((feature) => <Stack key={feature.key} direction="row" spacing={2}>
             <MembershipCheckbox name="features" value={feature.key} defaultChecked={selected.has(feature.key)} label={feature.label} />
