@@ -1,7 +1,7 @@
 import {CoachReviewScopeFields} from "../../../../../../coach-review-scope-fields";
 import {CoachingAnalysisDrawer} from "../../../../../../coaching-analysis-drawer";
 import {CoachReviewFocusEditor} from "../../../../../../coach-review-focus-editor";
-import {coachingReviewLabel} from "@/src/modules/communities/contracts/coaching-review-workspace";
+import {coachingReviewLabel,previousDeliveredFocus} from "@/src/modules/communities/contracts/coaching-review-workspace";
 import {setCommunityReviewWorkspaceAction} from "../../../../../../community-actions";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
@@ -27,7 +27,7 @@ export default async function CoachReviewWorkspacePage({params}:{params:Promise<
  const relationship=snapshot.relationships.find(item=>item.relationshipId===relationshipId&&item.coachUserId===snapshot.viewer.userId);
  const review=snapshot.tradeReviews.find(item=>item.reviewId===reviewId&&item.relationshipId===relationshipId);
  if(!relationship||!review)notFound();
- const previous=snapshot.tradeReviews.find(item=>item.relationshipId===relationshipId&&item.reviewId!==reviewId&&Boolean(item.nextFocus)&&Boolean(item.deliveredAtUtc)&&item.updatedAtUtc<review.updatedAtUtc);
+ const previous=previousDeliveredFocus(snapshot.tradeReviews,review);
  const fixtureTrades:readonly CoachStudentJournalTrade[]=Object.freeze([{roundTripId:"10000000-0000-4000-8000-000000000050",symbol:"NVDA",direction:"long",openedAtUtc:"2026-09-04T14:05:00.000Z",closedAtUtc:"2026-09-04T15:12:00.000Z",state:"ready_closed",quantityDecimal:"100",entryPriceDecimal:"117.20",exitPriceDecimal:"119.06",netPnlDecimal:"186",grossPnlDecimal:"186",currency:"USD"},{roundTripId:"10000000-0000-4000-8000-000000000051",symbol:"AMD",direction:"long",openedAtUtc:"2026-09-04T15:10:00.000Z",closedAtUtc:"2026-09-04T16:01:00.000Z",state:"ready_closed",quantityDecimal:"200",entryPriceDecimal:"154.10",exitPriceDecimal:"154.66",netPnlDecimal:"112",grossPnlDecimal:"112",currency:"USD"},{roundTripId:"10000000-0000-4000-8000-000000000066",symbol:"TSLA",direction:"short",openedAtUtc:"2026-09-04T16:12:00.000Z",closedAtUtc:"2026-09-04T17:06:00.000Z",state:"ready_closed",quantityDecimal:"50",entryPriceDecimal:"231.30",exitPriceDecimal:"232.79",netPnlDecimal:"-74.5",grossPnlDecimal:"-74.5",currency:"USD"},{roundTripId:"10000000-0000-4000-8000-000000000067",symbol:"MSFT",direction:"long",openedAtUtc:"2026-09-03T14:20:00.000Z",closedAtUtc:"2026-09-03T15:15:00.000Z",state:"ready_closed",quantityDecimal:"40",entryPriceDecimal:"417.10",exitPriceDecimal:"418.30",netPnlDecimal:"48",grossPnlDecimal:"48",currency:"USD"}]);
  const canReadJournal=relationship.accessStatus!=="access_paused"&&snapshot.journalGrants.some(grant=>grant.relationshipId===relationshipId&&grant.status==="active"&&["trades","complete"].includes(grant.dataScope));const journalTrades=isReview?fixtureTrades:canReadJournal?withReadonlyPlatformDatabase({},database=>new TraderLinkCommunityCoachJournalReadService(database).read({coachUserId:snapshot.viewer.userId,relationshipId}).trades):[];
  const selected=snapshot.reviewTrades.filter(item=>item.reviewId===reviewId);

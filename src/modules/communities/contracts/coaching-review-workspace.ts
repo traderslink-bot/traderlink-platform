@@ -40,3 +40,18 @@ export function coachingReviewLabel(kind: CoachingReviewKind | null | undefined,
   return ({ single_trade: "Trade review", multiple_trades: "Trade review", weekly: "Weekly review",
     monthly: "Monthly review", general: "General review", session: "Session review", custom: "Custom review" } as Record<string, string>)[legacy] ?? "Review";
 }
+
+type FocusReview = Readonly<{
+  reviewId: string;
+  relationshipId: string;
+  nextFocus: string;
+  deliveredAtUtc: string | null;
+  cancelledAtUtc: string | null;
+}>;
+
+export function previousDeliveredFocus<T extends FocusReview>(reviews: readonly T[], current: FocusReview): T | undefined {
+  return reviews.filter(item => item.relationshipId === current.relationshipId &&
+    item.reviewId !== current.reviewId && item.nextFocus.trim() && item.deliveredAtUtc &&
+    !item.cancelledAtUtc && (!current.deliveredAtUtc || item.deliveredAtUtc < current.deliveredAtUtc))
+    .sort((a, b) => b.deliveredAtUtc!.localeCompare(a.deliveredAtUtc!))[0];
+}
