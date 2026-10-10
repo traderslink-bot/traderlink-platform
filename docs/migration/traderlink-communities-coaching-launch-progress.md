@@ -95,3 +95,12 @@ Workspace verification found canonical untracked community source predates the f
 - Existing joining/publishing/coaching sections remain. Full workflow Help alignment is still open; do not treat the earlier incomplete inventory as proof that no guide existed.
 
 Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle and L01 independent-server proof; final integrated full QA. These slices do not complete L01–L09 or authorize a deploy.
+
+## Extra review request acceptance slice
+
+- New student review requests remain pending until their coach accepts an explicit scope and scheduled due date or unscheduled work. Student deadlines are ignored; accepting does not mark work started or consume a recurring agreement occurrence. Repeat acceptance preserves the accepted scope.
+- Pending requests have a distinct searchable/filterable label and request action. They do not count as due work. Existing inline trade review tools remain; editing/delivery is guarded server-side until acceptance. Pending requests can be cancelled without accepting them.
+- Reserved additive migration0160 follows0159 at order173. Existing rows default to accepted, without invented acceptance dates or changed review content. No hosted migration applied. Integrate only the new manifest entry into the current production manifest.
+- In-memory coaching and Communities fixtures PASS after updating their student request flows to explicitly accept work. New checks cover coach authority, required scope/deadline, unscheduled work, duplicate acceptance, cancellation and preservation of historical rows. These are not browser or hosted proof.
+- App shutdown recovery verified existing branch/path and checkpointd91a2f437. Default sandbox Git traversal failed; approved escalation succeeded without Git configuration/index repair. Preexisting live-QA report edits remain untouched.
+- Full launch QA, access freshness/ownership lifecycle and integrated staging/browser verification remain open. Both commissions remain disabled; no deployment performed.

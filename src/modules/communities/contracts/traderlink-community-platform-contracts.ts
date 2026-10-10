@@ -175,6 +175,9 @@ export type TraderLinkCommunityCoachingMessage = Readonly<{
 }>;
 
 export type TraderLinkCommunityTradeReview = Readonly<{
+  acceptanceState?: "pending" | "accepted";
+  acceptedAtUtc?: string | null;
+  acceptedScope?: string;
   agreedTradeCount?:number|null;
   workspaceKind?: import("./coaching-review-workspace").CoachingReviewKind | null;
   focusAreas?: readonly import("./coaching-review-workspace").CoachingReviewFocus[];

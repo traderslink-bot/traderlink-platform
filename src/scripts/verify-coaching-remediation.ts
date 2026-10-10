@@ -1,3 +1,4 @@
+import {platformCoachingReviewRequestAcceptanceMigration} from "../modules/platform/server/database/migrations/0160_platform_coaching_review_request_acceptance";
 
 
 
@@ -37,12 +38,21 @@ import {CoachingDiscordRefreshService} from "../modules/communities/server/coach
 import {runCoachingMaintenance,nonOverlappingCoachingMaintenance} from "../modules/communities/server/coaching-maintenance-service";
 import {TraderLinkCommunityCoachJournalReadService} from "../modules/communities/server/traderlink-community-coach-journal-read-service";
 const NOW="2026-09-05T12:00:00.000Z";
+// The additive migration must not reclassify previously created or delivered work.
+{
+ const legacy=new Database(":memory:");
+ try{
+  legacy.exec("CREATE TABLE platform_users(user_id TEXT PRIMARY KEY); CREATE TABLE traderlink_community_coaching_trade_reviews(review_id TEXT PRIMARY KEY,status TEXT,coach_feedback TEXT); INSERT INTO traderlink_community_coaching_trade_reviews VALUES('historical','completed','Preserved feedback');");
+  for(const statement of platformCoachingReviewRequestAcceptanceMigration.statements)legacy.exec(statement);
+  check.deepEqual(legacy.prepare("SELECT status,coach_feedback,acceptance_state,accepted_at_utc,accepted_scope FROM traderlink_community_coaching_trade_reviews").get(),{status:"completed",coach_feedback:"Preserved feedback",acceptance_state:"accepted",accepted_at_utc:null,accepted_scope:""});
+ }finally{legacy.close();}
+}
 const OWNER="10000000-0000-4000-8000-000000000001",MEMBER="10000000-0000-4000-8000-000000000002",OUTSIDER="10000000-0000-4000-8000-000000000003",WORKSPACE="10000000-0000-4000-8000-000000000004",ACCOUNT="10000000-0000-4000-8000-000000000005",OUTSIDER_WORKSPACE="10000000-0000-4000-8000-000000000007",OUTSIDER_ACCOUNT="10000000-0000-4000-8000-000000000008",PILOT_GUILD="1433570740430573642";
 function assert(value:unknown,message:string):asserts value{check.ok(value,message);}
 async function main(){
 const database=new Database(":memory:");database.pragma("foreign_keys=ON");
 try{
-  for(const migration of [platformIdentityMigration,journalAccountBoundaryMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,communityWatchlistsMigration,traderLinkCommunitiesIdentityPermissionsMigration,traderLinkCommunitiesPartnerPlatformMigration,traderLinkCommunitiesDiscordFeatureAccessMigration,traderLinkCommunitiesServerWatchlistsMigration,traderLinkCommunitiesWorkspaceToolsMigration,traderLinkCommunitiesCoachingWorkspaceMigration,traderLinkCommunitiesCoachingProgramsMigration,traderLinkCommunitiesCoachingPlanBuilderMigration,traderLinkCommunitiesCoachingServiceMeasurementMigration,traderLinkCommunitiesReviewCoachingSectionsMigration,traderLinkCommunitiesReviewWorkflowMigration,traderLinkCommunitiesReviewWorkspaceMetadataMigration,traderLinkCommunitiesCoachingDeliveryWorkflowMigration]){
+  for(const migration of [platformIdentityMigration,journalAccountBoundaryMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,communityWatchlistsMigration,traderLinkCommunitiesIdentityPermissionsMigration,traderLinkCommunitiesPartnerPlatformMigration,traderLinkCommunitiesDiscordFeatureAccessMigration,traderLinkCommunitiesServerWatchlistsMigration,traderLinkCommunitiesWorkspaceToolsMigration,traderLinkCommunitiesCoachingWorkspaceMigration,traderLinkCommunitiesCoachingProgramsMigration,traderLinkCommunitiesCoachingPlanBuilderMigration,traderLinkCommunitiesCoachingServiceMeasurementMigration,traderLinkCommunitiesReviewCoachingSectionsMigration,traderLinkCommunitiesReviewWorkflowMigration,traderLinkCommunitiesReviewWorkspaceMetadataMigration,traderLinkCommunitiesCoachingDeliveryWorkflowMigration,platformCoachingReviewRequestAcceptanceMigration]){
     for(const statement of migration.statements)database.exec(statement);
   }
   const insertUser=database.prepare(`INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc) VALUES(?, 'discord', ?, ?, 'active', ?, ?)`);
@@ -129,6 +139,27 @@ acceptedFocus.items.find((item: {itemType:string})=>item.itemType==="trade_revie
 database.prepare("UPDATE traderlink_community_coaching_agreements SET terms_json=? WHERE agreement_id=?").run(JSON.stringify(acceptedFocus),revisedId);
 database.prepare("UPDATE traderlink_community_coaching_plan_items SET focus_areas_json=? WHERE plan_id=? AND item_type='trade_review'").run(JSON.stringify(["risk"]),plan);
 const studentFocusReview=programs.createReview({...base,actor:student,title:"Frozen focus request",context:"",reviewType:"multiple_trades",roundTripIds:[]});
+const pendingRequest=()=>database.prepare("SELECT acceptance_state,status,due_at_utc,accepted_scope,accepted_at_utc FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(studentFocusReview) as {acceptance_state:string;status:string;due_at_utc:string|null;accepted_scope:string;accepted_at_utc:string|null};
+check.equal(pendingRequest().acceptance_state,"pending");
+check.equal(pendingRequest().due_at_utc,null,"Student submission does not promise a due date");
+check.throws(()=>programs.startReview({...base,reviewId:studentFocusReview}),"Pending request cannot start");
+check.throws(()=>programs.saveFocusFeedback({...base,reviewId:studentFocusReview,feedback:{}}),"Pending request cannot be edited as accepted work");
+check.throws(()=>programs.acceptReviewRequest({...base,actor:student,reviewId:studentFocusReview,scope:"Student acceptance",schedule:"unscheduled"}),"Only coach accepts");
+check.throws(()=>programs.acceptReviewRequest({...base,reviewId:studentFocusReview,scope:"",schedule:"unscheduled"}),"Scope is required");
+check.throws(()=>programs.acceptReviewRequest({...base,reviewId:studentFocusReview,scope:"Review requested trades",schedule:"scheduled"}),"Scheduled work requires a due date");
+programs.acceptReviewRequest({...base,reviewId:studentFocusReview,scope:"Review requested trades",schedule:"unscheduled"});
+check.equal(pendingRequest().acceptance_state,"accepted");
+check.equal(pendingRequest().status,"requested","Acceptance does not falsely mark work started");
+check.equal(pendingRequest().due_at_utc,null,"Unscheduled custom work remains valid");
+programs.acceptReviewRequest({...base,reviewId:studentFocusReview,scope:"Repeated click",schedule:"unscheduled"});
+check.equal(pendingRequest().accepted_scope,"Review requested trades","Acceptance retry preserves accepted scope");
+const scheduledRequest=programs.createReview({...base,actor:student,title:"Scheduled request",context:"",reviewType:"multiple_trades",roundTripIds:[],dueAtUtc:"2026-09-07T12:00:00.000Z"});
+check.equal((database.prepare("SELECT due_at_utc FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(scheduledRequest) as {due_at_utc:null}).due_at_utc,null,"Student cannot impose a deadline");
+programs.acceptReviewRequest({...base,reviewId:scheduledRequest,scope:"Three requested trades",schedule:"scheduled",dueAtUtc:"2026-09-09T12:00:00.000Z"});
+check.equal((database.prepare("SELECT due_at_utc FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(scheduledRequest) as {due_at_utc:string}).due_at_utc,"2026-09-09T12:00:00.000Z");
+const declinedRequest=programs.createReview({...base,actor:student,title:"Declined request",context:"",reviewType:"multiple_trades",roundTripIds:[]});
+programs.setReviewLifecycle({...base,reviewId:declinedRequest,state:"cancelled"});
+check.throws(()=>programs.acceptReviewRequest({...base,reviewId:declinedRequest,scope:"Too late",schedule:"unscheduled"}),"Cancelled request cannot be accepted");
 check.deepEqual(JSON.parse((database.prepare("SELECT focus_areas_json FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(studentFocusReview) as {focus_areas_json:string}).focus_areas_json),["execution"],"Student request uses accepted focus rather than a later plan edit");
 const chart=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf6kAAAAASUVORK5CYII=","base64");
 const conversationImage=programs.addImage({...base,actor:student,targetType:"message",targetId:relationship,filename:"conversation-chart.png",mediaType:"image/png",content:chart});

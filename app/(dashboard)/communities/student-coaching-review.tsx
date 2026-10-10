@@ -10,7 +10,7 @@ import {CommunityTypography as Typography} from "./community-typography";
 export function StudentCoachingReview({snapshot,review,isReview,paused,messagingEnabled}:{snapshot:TraderLinkCommunityDashboardSnapshot;review:TraderLinkCommunityTradeReview;isReview:boolean;paused:boolean;messagingEnabled:boolean}){
  const delivered=Boolean(review.deliveredAtUtc);
  const disabled=isReview||paused;
- const status=review.deliveryState==="draft"?(review.status==="requested"?"Not started":"In progress"):review.deliveryState==="follow_up"?"Follow-up required":review.deliveryState.charAt(0).toUpperCase()+review.deliveryState.slice(1);
+ const status=review.deliveryState==="draft"?(review.acceptanceState==="pending"?"Pending acceptance":review.status==="requested"?"Not started":"In progress"):review.deliveryState==="follow_up"?"Follow-up required":review.deliveryState.charAt(0).toUpperCase()+review.deliveryState.slice(1);
  const sections=[...Object.entries(review.focusFeedback??{}).map(([key,value])=>[COACHING_REVIEW_FOCUS[key as CoachingReviewFocus],value]),["Review",review.coachFeedback],["What went well",review.wentWell],["What needs work",review.needsWork],["Progress on previous focus",review.previousFocusAssessment],["Next focus",review.nextFocus]].filter(([,body])=>Boolean(body));
  const trades=snapshot.reviewTrades.filter(item=>item.reviewId===review.reviewId&&item.workflowState==="saved");
  const actions=snapshot.reviewActions.filter(item=>item.reviewId===review.reviewId);
