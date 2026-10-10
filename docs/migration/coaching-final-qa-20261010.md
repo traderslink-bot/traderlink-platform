@@ -2,6 +2,34 @@
 
 Status: in progress; staging and full inventory acceptance remain open.
 
+## Latest final-build retest and additional finding
+
+- Coordinator deployed integrated staging source `5fbb0548a805cfe06e20e263ce3949f23e73fe5b`,
+  deployment `d6cb6bfe-5cd3-46e4-a105-91982b6b87ef`, healthy schema154. Remote build,
+  TypeScript, registry, 280-page generation and startup checks passed. Production
+  `8c55699203102f0c70e582099b2287a0abf408e1` was not changed by coaching.
+- Fresh Chrome retests pass: verified-owner onboarding reentry, role labels,
+  capability-gated member links, per-plan capacity/current enrollment links,
+  empty-role publish protection and explicit role choice, draft/publish/pause/archive
+  staying on Coach Setup, author-only Discord watchlist link, both alert detail/edit
+  links, delivered-only reply controls and stable UTC student dates. Disposable
+  navigation plan archived with no enrollment/payment; existing plans preserved.
+- Work metrics now wrap at mobile390 and desktop1440. Settled page scrollWidth
+  equals clientWidth (375 mobile,1425 desktop); desktop table and four-column
+  metrics visibly confirmed. Temporary viewport reset. Coach/student console
+  checks after corrections contain no captured errors.
+- All thirteen bounded component/route/navigation scripts pass again after these
+  hosted retests. This is not a claim that every historical browser scenario was
+  rerun on this exact build; the canonical inventory retains dated evidence.
+- Final source audit found new lesson creation included archived students, unlike
+  publication-time audience expansion. In-memory regression reproduced one
+  archived enrollment where zero was expected. Creation now excludes archived
+  relationships for all/plan/selected audiences; picker does likewise. Regression
+  covers all three modes and rejects publishing an archived-only audience. Full
+  in-memory coaching lifecycle passes after correction. Existing teaching/history
+  recipients are not deleted. This follow-on still requires integrated staging
+  release and browser retest before the QA can close.
+
 ## Fresh new-user audit on production-parity staging
 
 Coordinator confirmed source2029377, deployment54f772fb-09ee-487e-9d08-74f0cd4dd461,

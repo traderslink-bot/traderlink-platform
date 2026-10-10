@@ -190,6 +190,11 @@ database.prepare(`UPDATE platform_discord_memberships SET role_ids_json='["20000
 reconcileCoachingAccess(database,first.communityId,OWNER,restoredAt);
 check.equal(coachingEntitlement(database,relationship)?.present,true);
 check.equal((database.prepare(`SELECT count(*) count FROM traderlink_community_coaching_notices WHERE kind='access_restored'`).get() as {count:number}).count,2);
+for(const audienceMode of ["all_students","plan","selected_students"] as const){
+ const archivedAudienceLesson=programs.createTeaching({...base,title:`Archived audience ${audienceMode}`,teachingType:"lesson",body:"Synthetic audience regression",deliveryUrl:"",audienceMode,planId:plan,relationshipIds:[relationship],publish:false});
+ check.equal((database.prepare(`SELECT count(*) count FROM traderlink_community_coaching_teaching_students WHERE teaching_id=? AND relationship_id=?`).get(archivedAudienceLesson,relationship) as {count:number}).count,0,"Archived students must not receive newly created lessons");
+ check.throws(()=>programs.createTeaching({...base,title:"No eligible students",teachingType:"lesson",body:"",deliveryUrl:"",audienceMode,planId:plan,relationshipIds:[relationship],publish:true}),"An archived-only audience cannot publish");
+}
 database.prepare(`UPDATE traderlink_community_coaching_relationships SET archived_at_utc=NULL WHERE relationship_id=?`).run(relationship);
 const latestPlan=platform.readSnapshot("first-room",actor).plans.find(item=>item.planId===plan)!;
 platform.createPlan({...edit,expectedRevision:latestPlan.revision,items:[{...included,itemType:"private_session",measurementKind:"sessions",frequency:"once",quantity:150,selectionMode:"not_applicable"}],sessionsIncluded:true});
