@@ -107,3 +107,102 @@ workflow: all nine suites in one worker, no file parallelism, isolated network
 namespace during execution, native SQLite. The last correction matches the
 conditional Sort days/Rank by unavailable-result label. This is not yet a claim
 that broad repository CI passes. Singular/plural display patch remains pending.
+
+### Broad classification after desktop restart
+
+Run 38077363957 at c813f492d8cf0b9bacf24bcc8a5a58b4da8da642 completed
+with failure, not cancellation. Check 114287036510 exposes ten failed assertions
+in five files. Coordinator recovered a 35m50s test step, below the timeout.
+Artifact upload omitted include-hidden-files, so the hidden .ci-artifacts report
+was not retained. Assertion annotations alone do not establish complete failure
+counts: suite-level import/runtime errors are not emitted by that postprocessor.
+No broad rerun or production deployment has been requested at this checkpoint.
+
+Exact-candidate source classification and proposed batch:
+
+- Real Coach contract mismatch: the Chat whitelist contains twelve Trade Explorer
+  sorts while canonical page ordering contains eighteen. Maximum-position,
+  execution-count and trading-cost ascending/descending sorts are missing.
+  Preserve the parity check; propose adding the six choices and exercising all
+  eighteen canonical ordering mappings with mocked analytics, no provider calls.
+- Coach administration fixture assumes absent pricing. Migration 0069 now seeds
+  complete default pricing. Explicitly clear all four price fields in the isolated
+  test fixture before asserting enablement rejection; preserve cross-admin and
+  invalid-reference checks. No production settings or migration changes.
+- News fixture incorrectly treats Saturday 2026-09-05 as an eligible weekday.
+  Use Friday 2026-09-04 for the eligible article, and add explicit weekend and
+  inclusive-window boundary checks. Do not change the production selector.
+- Seven route/template assertions reflect the prior architecture: shared frame
+  delegation, moved navigation surfaces, and a comment-only DashboardShell match.
+  The frozen 136-route containment matrix versus 291 discovered routes requires
+  explicit replacement-boundary reconciliation, not broad exclusions or accepting
+  any guard-name string. This part remains under investigation.
+- Verification harness must retain hidden reports and include suite-level status,
+  message and failed-suite counts, not only individual assertion failures.
+
+Classification sent to the release coordinator. Runtime behavior changes remain
+unapplied; no claim of overall CI acceptance. Browser enrollment acceptance and
+synthetic-record cleanup remain passed. Payment-provider testing remains separate.
+
+### Corrective commits and read-only route inventory
+
+Owner explicitly approved the six Coach sort additions in this chat. Prepared
+immutable local commits without moving a branch or touching the shared index:
+
+- cf441bc43f15960ef9e7a420eb8917f9f4ee4370, parent c813f492: two test-fixture
+  corrections and branch-only complete-report upload/diagnostic correction.
+- 4c431e1ec701660f73f2133108e8d554111e1303, parent cf441bc4: six Coach sort
+  enum additions plus all-eighteen canonical analytics call mapping cases.
+  Precise source of mismatch is the OpenAI adapter Zod enum; the analytics service
+  already derives the full canonical set. No provider call is needed to test it.
+
+Both patch compositions pass git diff --check and TypeScript syntax transpilation.
+The workflow's two JavaScript blocks parse. Remote targeted execution requested;
+no local test suite/build/server or production deployment. AI Chat Help's existing
+sort examples remain accurate and nonexhaustive; no guide change is required.
+
+Read-only inventory can be reproduced with
+`node scripts/inspect-membership-ci-route-boundaries.cjs c813f492d8cf0b9bacf24bcc8a5a58b4da8da642 --guards`.
+It reads Git objects and executes only pure source-analysis helpers/configuration;
+it does not import the application, run tests, open databases or make network calls.
+
+- Exact inventory: 136 matrix entries, 291 discovered routes, 157 missing matrix
+  entries (42 pages and 115 APIs), two matrix entries absent from discovery.
+- All 115 scanner findings are unclassified APIs. No method/wrapper mismatch is
+  reported among already-classified routes. This is NOT proof the 115 unclassified
+  APIs are safe; the old checker never evaluates their boundaries after that result.
+- Two unmatched old entries: analytics/performance page and Discord login API.
+  The login route still exists but no longer satisfies the old discovery heuristic.
+- Five navigation false mismatches resolve to the standalone Watchlist page and
+  four explicit channels handled by press-releases/[[...channel]]/page.tsx.
+  Watchlist delegates through WatchlistDashboardFrame into the shared frame;
+  the four channel cases are explicit in resolveChannel and retain identity/news
+  permission checks. No navigation or page movement is proposed.
+- Shared dashboard layout delegates to dashboard-layout-frame, which performs
+  ServerComponentPageIdentity or explicit Watchlist/billing identity checks and
+  renders the canonical template. Tests must follow that delegation, not require
+  authentication/template calls to remain textually in the old layout file.
+- The sole duplicate-shell textual match is a comment in feature-help-link.tsx.
+  A source/AST check should ignore comments, not whitelist that entire component.
+- Sidebar navigation consumes DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS from the
+  canonical configuration. Obsolete title/group symbol assertions should track
+  actual imported configuration while retaining the no-local-duplicate check.
+- Source evidence across unclassified APIs includes platform request scopes,
+  Journal admin wrappers, cron-secret gates, session-specific sign-out helpers,
+  and development-only launcher bridges. These are distinct boundary contracts;
+  a broad guard-name regex cannot serve as acceptance. The inventory's candidate
+  calls are triage evidence only. Full method-level reconciliation is still open.
+
+No route containment test, matrix, guard, shell or navigation source was changed.
+
+The complete [read-only reconciliation proposal](membership-route-boundary-reconciliation.md)
+links the explicit 291-route / 202-API-method evidence inventory, documents the
+five navigation exceptions and shared-frame guard chain, and identifies every
+remaining method-level review. It remains a proposal, not a passing replacement
+matrix. Targeted remote run38084260708 at739ffccc0608e73acddda747ddf2f2c41c7f55fc
+is verifying the independent fixture/sort batch; do not start another run.
+
+Targeted run38084260708 completed SUCCESS, independently verified through GitHub
+on 2026-10-10 (job114307323855). The three-file remote check passes for the owner-
+approved sort parity/mappings and both fixture corrections. Route contract review
+and broad acceptance remain open; no production release was performed here.

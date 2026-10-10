@@ -1,0 +1,66 @@
+diff --git a/src/modules/coach/server/coach-ai-chat-administration-repository.test.ts b/src/modules/coach/server/coach-ai-chat-administration-repository.test.ts
+--- a/src/modules/coach/server/coach-ai-chat-administration-repository.test.ts
++++ b/src/modules/coach/server/coach-ai-chat-administration-repository.test.ts
+@@ -76,0 +77,9 @@
++      // Migration 0069 seeds complete default prices. Explicitly arrange the
++      // unconfigured state before checking the unchanged enablement guard.
++      fixture.repository.saveSettings({
++        modelId: "gpt-chat-test",
++        inputCostUsdPerMillionTokens: null,
++        cachedInputCostUsdPerMillionTokens: null,
++        cacheWriteInputCostUsdPerMillionTokens: null,
++        outputCostUsdPerMillionTokens: null,
++      });
+diff --git a/src/lib/news/__tests__/news-article-store.test.ts b/src/lib/news/__tests__/news-article-store.test.ts
+--- a/src/lib/news/__tests__/news-article-store.test.ts
++++ b/src/lib/news/__tests__/news-article-store.test.ts
+@@ -123 +123 @@
+-      publishedAt: "2026-09-05T15:00:00.000Z",
++      publishedAt: "2026-09-04T15:00:00.000Z",
+@@ -132 +132 @@
+-      publishedDateEt: "2026-09-05",
++      publishedDateEt: "2026-09-04",
+@@ -135,0 +136,20 @@
++    await upsertNewsArticle({
++      sourceEventId: "pdsb-weekend-excluded",
++      ticker: "PDSB",
++      headline: "Weekend PDSB article",
++      articleText: "Processed article from Saturday, excluded from weekdays.",
++      sourceUrl: "https://news.nuntiobot.com/article/pdsb-weekend-excluded",
++      publishedAt: "2026-09-05T15:00:00.000Z",
++    });
++    expect(await findNewsArticleForWatchlistAi("PDSB", "2026-09-08"))
++      .toMatchObject({ publishedDateEt: "2026-09-04" });
++    for (const [ticker, date, eligible] of [["QABND", "2026-09-02", true], ["QAOLD", "2026-09-01", false]] as const) {
++      await upsertNewsArticle({
++        sourceEventId: `qa-window-${ticker}`, ticker,
++        headline: `Window boundary ${ticker}`,
++        articleText: "Synthetic processed boundary article.",
++        sourceUrl: `https://news.nuntiobot.com/article/qa-window-${ticker}`,
++        publishedAt: `${date}T15:00:00.000Z`,
++      });
++      expect((await findNewsArticleForWatchlistAi(ticker, "2026-09-08")) !== null).toBe(eligible);
++    }
+diff --git a/.github/workflows/membership-ci-broad-classification.yml b/.github/workflows/membership-ci-broad-classification.yml
+--- a/.github/workflows/membership-ci-broad-classification.yml
++++ b/.github/workflows/membership-ci-broad-classification.yml
+@@ -97,0 +98,6 @@
++          const suites = (report.testResults ?? []).map((file) => ({
++            file: path.relative(process.cwd(), file.name).replaceAll("\\", "/"),
++            status: file.status,
++            message: file.message ?? "",
++            assertionCount: file.assertionResults?.length ?? 0,
++          }));
+@@ -104,0 +111,3 @@
++            failedTestSuites: report.numFailedTestSuites ?? null,
++            suites,
++            runtimeErrors: report.numRuntimeErrorTestSuites ?? null,
+@@ -120,0 +130,6 @@
++          for (const suite of suites.filter((file) => file.status === "failed" || file.message)) {
++            const message = `${suite.status}: ${suite.message}`.replace(/\u001b\[[0-9;]*m/gu, "").slice(-7000);
++            const escaped = message.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
++            console.log(`::error file=${suite.file},title=Suite result::${escaped}`);
++          }
++          console.log(`Suite totals: failed=${summary.failedTestSuites}, runtimeErrors=${summary.runtimeErrors}`);
+@@ -128,0 +145 @@
++          include-hidden-files: true
