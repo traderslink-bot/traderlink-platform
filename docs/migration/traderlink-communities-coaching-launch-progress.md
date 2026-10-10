@@ -53,7 +53,7 @@ Workspace verification found canonical untracked community source predates the f
 - Existing `verify-coaching-remediation.ts`: PASS including recurrence, limits, role pause/restore, archive preservation and maintenance. Used shared installed dependencies plus a test-only shim for Next's build-time `server-only` marker; actual service/authorization/database logic was not mocked.
 - `git diff --check`: PASS. Browser QA, semantic hosted build and independent-guild acceptance remain open. Neither staging nor production has been changed by this slice.
 - Before staging this slice, coordinator must configure the approved-guild allowlist explicitly (including the existing test guild), confirm dedicated bot credentials/client ID, and compose from current production while preserving approved staging work. No automatic admission fallback is built in.
-- Help inventory reviewed: no dedicated Communities/Coaching guide exists in the inspected feature registry. Full workflow Help remains an L07 deliverable; no activity disclosure is to be introduced there.
+- Initial Help lookup missed the Communities section in `src/modules/help/traderslink-app-guides.ts`; corrected in the later Help audit below. Full workflow Help remains an L07 deliverable; no activity disclosure is to be introduced there.
 
 ## Dormant commission and administration correction slice
 
@@ -88,5 +88,10 @@ Workspace verification found canonical untracked community source predates the f
 - Archived relationships now fail new coaching mutations, new Journal grants, fresh Journal reads and agreement changes. Coach history/review/final pages use the same inactive state to disable editing and avoid attempting fresh Journal queries.
 - Focused coaching-remediation fixture PASS, extended with archived/ended image reads, unrelated-user rejection, retained delivered reviews, blocked new images/requests and blocked fresh Journal reads. Existing recurrence, agreement, privacy, role restoration and foreign-key checks continue to pass. Syntax/transpilation and diff checks pass; not a semantic build or browser acceptance.
 - Remaining D5 scope: verify navigation after actual Discord departure/ownership lifecycle, teaching history, deletion/export and final browser flows. This partial slice is not all of L03/L05.
+
+## Help audit correction
+
+- Found the existing Discord Communities guide in `src/modules/help/traderslink-app-guides.ts`. Removed its entire activity-disclosure section without replacement, per the owner's explicit instruction. It also contained a now-invalid claim that named daily totals could remain longer than90 days.
+- Existing joining/publishing/coaching sections remain. Full workflow Help alignment is still open; do not treat the earlier incomplete inventory as proof that no guide existed.
 
 Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle and L01 independent-server proof; final integrated full QA. These slices do not complete L01–L09 or authorize a deploy.

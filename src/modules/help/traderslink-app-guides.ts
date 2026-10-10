@@ -114,16 +114,6 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "callout", title: "Coaching never opens your Journal automatically", text: "You must separately choose a specific Journal account and data scope for an active coach. You can revoke that read access at any time. A coach cannot edit your executions, P/L, broker evidence or Journal facts." }),
         ]),
       }),
-      Object.freeze({
-        id: "community-activity",
-        title: "Community activity visible to owners",
-        summary: "Understand which named activity a server owner can see.",
-        keywords: Object.freeze(["activity", "views", "privacy", "server owner", "tracking"]),
-        blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "The community owner and authorized administrators can see your name, last community activity and visits to that server's TraderLink pages and posts. Named event details are normally retained for 90 days, while daily member-and-page totals may remain longer." }),
-          Object.freeze({ kind: "paragraph", text: "Community reporting excludes your Journal trades, P/L, broker information, private AI conversations and coach-only data. A server owner receives no access to communities they do not own." }),
-        ]),
-      }),
     ]),
   }),
 ]);
