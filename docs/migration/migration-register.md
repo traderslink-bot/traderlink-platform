@@ -1,5 +1,7 @@
 # Watchlist Free Chat migration reservation
 
+**Journal Administration members (2026-10-10):** [Member directory progress](journal-admin-member-directory-progress.md) records the approved summary, search, combined filters, pagination and membership details. Local implementation does not authorize deployment.
+
 `0149_watchlist_free_chat` (execution order 149) is Coordinator-reserved after `0148_platform_membership_platform`. Adds cycle-scoped, default-off automatic sharing preferences and version-bound Free Chat delivery receipts. Registered but unapplied. No historical backfill or existing notification mutation. Coordinator must verify predecessor/schema 130, back up, apply only 0149 and verify schema 131. After application, rollback must retain migration identity/tables and disable only the Free Chat worker/UI; do not deploy an older manifest or discard delivery receipts. See [plan](watchlist-free-chat-plan.md) and [progress](watchlist-free-chat-progress.md).
 
 # Premium Swing Ideas migration reservation

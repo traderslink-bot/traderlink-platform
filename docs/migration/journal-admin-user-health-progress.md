@@ -1,5 +1,12 @@
 # Journal Administration User Health Progress
 
+## 2026-10-10 Member directory correction
+
+The owner-approved member summary, search, combined filters, pagination and
+membership details are implemented locally. Follow the [dedicated progress
+record](journal-admin-member-directory-progress.md) for static checks, visual
+acceptance and the separate hosted reconciliation/deployment gate.
+
 **Status:** In progress — owner alert and manual-entry issue extension
 
 **Started:** 2026-08-24

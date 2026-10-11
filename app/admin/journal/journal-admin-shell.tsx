@@ -39,7 +39,7 @@ const drawerWidth = 270;
 
 const navigation = [
   { href: "/admin/journal", label: "Overview", icon: <DashboardRoundedIcon /> },
-  { href: "/admin/journal/users", label: "Users", icon: <GroupRoundedIcon /> },
+  { href: "/admin/journal/users", label: "Members", icon: <GroupRoundedIcon /> },
   { href: "/admin/journal/memberships", label: "Memberships", icon: <LoyaltyRoundedIcon /> },
   { href: "/admin/journal/imports", label: "Imports", icon: <CloudUploadRoundedIcon /> },
   { href: "/admin/journal/statement-formats", label: "Statement Formats", icon: <SchemaRoundedIcon /> },
