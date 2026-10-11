@@ -24,7 +24,7 @@ assert.equal(availability.coachAcceptsStudents([plan],'another'),false);
 const components=load('app/(dashboard)/communities/community-dashboard.tsx',id=>id.endsWith('/coaching-plan-availability')?availability:new Proxy({},{get:(_t,key)=>String(key)}),'\nexports.qaHome=Home; exports.qaCoaches=Coaches; exports.qaWatchlists=WatchlistList; exports.qaAlerts=AlertList; exports.qaLabels=communityCapabilityLabels;');
 function nodes(tree){if(!tree||typeof tree!=='object')return [];if(Array.isArray(tree))return tree.flatMap(nodes);return [tree,...nodes(tree.props?.children),...nodes(tree.props?.action)];}
 const snapshot={viewer:{capabilities:[]},community:{memberCount:1},alerts:[],watchlists:[],coaches:[]};
-const alertSnapshot={community:{slug:'test'},viewer:{userId:'owner',capabilities:['community.alerts.create']},alerts:[{alertId:'alert',slug:'example',publishingMode:'discord_post',authorUserId:'owner',publishedAtUtc:null}]};
+const alertSnapshot={community:{slug:'test'},viewer:{userId:'owner',capabilities:['community.alerts.create']},alerts:[{alertId:'alert',slug:'example',status:'published',publishingMode:'discord_post',authorUserId:'owner',publishedAtUtc:null}]};
 const alertLinks=()=>nodes(components.qaAlerts({snapshot:alertSnapshot})).filter(n=>n.props?.href);
 assert.equal(alertLinks()[0].props.href,'/communities/test/alerts/example');
 alertSnapshot.viewer.userId='another';assert.equal(alertLinks().length,0);
@@ -36,7 +36,7 @@ snapshot.viewer.capabilities=['community.alerts.view','community.watchlists.view
 assert.deepEqual(nodes(components.qaHome({snapshot,base:'/test'})).filter(n=>n.props?.href).map(n=>n.props.href),['/test/alerts','/test/watchlists']);
 const contracts=load('src/modules/communities/contracts/traderlink-community-contracts.ts',()=>new Proxy({},{get:(_t,key)=>String(key)}));
 for(const capability of contracts.TRADERLINK_COMMUNITY_CAPABILITIES)assert.ok(components.qaLabels[capability],`Missing label: ${capability}`);
-const watchlistSnapshot={community:{slug:'test'},viewer:{userId:'owner',capabilities:['community.watchlists.publish_staff']},watchlists:[{sourceKind:'server',publishingMode:'discord_post',authorUserId:'owner',watchlistId:'watchlist',sharedAtUtc:null}]};
+const watchlistSnapshot={community:{slug:'test'},viewer:{userId:'owner',capabilities:['community.watchlists.publish_staff']},watchlists:[{sourceKind:'server',status:'published',publishingMode:'discord_post',authorUserId:'owner',watchlistId:'watchlist',sharedAtUtc:null}]};
 assert.equal(nodes(components.qaWatchlists({snapshot:watchlistSnapshot})).filter(n=>n.props?.href).length,1,'Author can reopen a Discord-only watchlist');
 watchlistSnapshot.viewer.userId='another';
 assert.equal(nodes(components.qaWatchlists({snapshot:watchlistSnapshot})).filter(n=>n.props?.href).length,0,'Other publishers do not receive a management link');
