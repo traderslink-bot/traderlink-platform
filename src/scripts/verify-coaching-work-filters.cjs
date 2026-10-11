@@ -33,4 +33,11 @@ change('Start date','2026-10-09');change('End date','2026-10-16');change('Sort',
 const metrics=render().filter(n=>n.props?.size&&nodes(n).some(child=>child.props?.label==='Total due'));
 assert.equal(metrics[0].props.size.lg,3);
 assert.equal(output.qaMetric({label:'Long plan name',value:'1'}).props.sx['& .MuiTypography-caption'].whiteSpace,'normal');
-console.log('PASS: day range, overdue inclusion, searchable statuses, completed exclusion, exact custom dates, sorting and bounded wrapping metric grid');
+snapshot.tradeReviews=['delivered','viewed','completed','cancelled','follow_up'].map(deliveryState=>({reviewId:deliveryState,relationshipId:'r',title:`Review ${deliveryState}`,deliveryState,dueAtUtc:'2026-10-09T17:00:00Z',followUpDueAtUtc:'2026-10-09T17:00:00Z'}));
+change('Work status','all');change('Due status','overdue');
+assert.ok(ids().includes('review:follow_up'));
+for(const status of ['delivered','viewed','completed','cancelled'])assert.ok(!ids().includes(`review:${status}`),`${status} must not match overdue`);
+change('Due status','all');change('Search','overdue');
+for(const status of ['delivered','viewed','completed','cancelled'])assert.ok(!ids().includes(`review:${status}`),`${status} must not match overdue search`);
+change('Search','');change('Work status','delivered');assert.deepEqual(ids(),['review:delivered']);
+console.log('PASS: ranges, sorting, counts, status search and delivered/viewed/completed/cancelled exclusion from due filters; follow-up remains due');

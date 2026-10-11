@@ -4,6 +4,12 @@ Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-
 
 ## 2026-10-10 — post-shutdown recovery
 
+### Continued hosted regression — due filter correction
+
+On staging `310957a4`, delivered review `682f38d5-307d-482e-b244-9fa6a7b602eb` incorrectly matched the Overdue filter despite displaying no due badge. Corrected filtering/search to derive due state from lifecycle status, excluding delivered/viewed/completed/cancelled work from due-status matches while preserving scheduled follow-up. Focused range/count/sort/status regression passes; staging retest required after coordinator integration. No new UI copy, controls or Help changes are required for this correction.
+
+Additional hosted results: chart rendered AAPL; synthetic summary and coach-private note saved; final preview omitted the private note; delivery changed Draft to Delivered. Student-side receipt remains open. The selected-student synthetic assignment was marked Completed through Edit lesson, persisted and disappeared from active work; totals dropped appropriately. Student completion alone is separate from the coach-controlled lesson lifecycle, so no automatic completion change was made.
+
 Coordinator subsequently confirmed staging source `310957a4dab145ca0c826229e3fb1e3bb02bf6ff`, deployment `f858b298-7b1d-4f72-a0c9-01937c6374dc`, schema 160 and one healthy running instance; production unchanged. Chrome hosted checks now confirm coach workspace/review loading, the previous-focus reminder, and the repaired shared analytics/Trade Explorer drawer (one synthetic AAPL trade, $20 net). Analyzer drill-down correctly reports no saved analysis for that fixture. These are partial hosted results, not complete launch acceptance. Checkpoint backup remains with the coordinator; remaining two-account, publishing, lifecycle and operational QA is still open.
 
 Saved checkpoint dcd734b19 was intact. Coordinator confirmed staging-only authorization and retains integration/deployment ownership. Two additional existing-coaching action callers were corrected; see [deletion/access progress](traderlink-coaching-deletion-archive-progress.md). This is not full staging QA or launch acceptance. Both commissions remain disabled and production is not authorized.
