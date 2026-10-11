@@ -389,7 +389,7 @@ database.exec('SAVEPOINT failed_archive');
 database.transaction(()=>captureCoachingDeletionEvidence(database,MEMBER,deletionAt))();
 check.ok(database.prepare('SELECT 1 FROM community_deletion_archives').get());
 database.exec('ROLLBACK TO failed_archive; RELEASE failed_archive');
-check.equal(database.prepare('SELECT count(*) n FROM community_deletion_archives').get()?.n,0,'Failed erasure rolls back archive too');
+check.equal((database.prepare('SELECT count(*) n FROM community_deletion_archives').get() as {n:number}|undefined)?.n,0,'Failed erasure rolls back archive too');
 const archiveCount=database.transaction(()=>captureCoachingDeletionEvidence(database,MEMBER,deletionAt))();
 check.ok(archiveCount>0);
 check.equal(database.transaction(()=>captureCoachingDeletionEvidence(database,MEMBER,'2026-10-17T12:00:00.000Z'))(),0,'Retry cannot extend retention');
@@ -402,7 +402,7 @@ const kinds=database.prepare('SELECT DISTINCT record_kind FROM community_deletio
 check.ok(!kinds.some(row=>/journal|grant|execution|account/.test(row.record_kind)));
 check.equal(purgeExpiredCoachingDeletionArchives(database,new Date(Date.parse(archiveRow.expires_at_utc)-1).toISOString()),0);
 while(purgeExpiredCoachingDeletionArchives(database,archiveRow.expires_at_utc,1)>0) { /* bounded batch replay */ }
-for(const table of ['community_deletion_archives','community_deletion_archive_records','community_deletion_archive_files'])check.equal(database.prepare(`SELECT count(*) n FROM ${table}`).get()?.n,0,'Expiry removes evidence and binary attachments');
+for(const table of ['community_deletion_archives','community_deletion_archive_records','community_deletion_archive_files'])check.equal((database.prepare(`SELECT count(*) n FROM ${table}`).get() as {n:number}|undefined)?.n,0,'Expiry removes evidence and binary attachments');
 check.equal((database.pragma('foreign_key_check') as unknown[]).length,0);
 console.log(JSON.stringify({result:"passed",generated,checks:["unsigned","student acceptance","weekly generation","idempotence","month end","unscheduled","plan edits","revision conflicts","frozen terms","question renewal","follow-up expiry","draft privacy","session privacy","lesson edit/reuse","role pause/restore","archive preservation","foreign keys","deletion archive rollback, expiry, cleanup and Journal isolation"]}));
 }finally{database.close();}
