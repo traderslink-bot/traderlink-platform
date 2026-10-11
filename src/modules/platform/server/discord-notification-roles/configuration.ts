@@ -34,6 +34,17 @@ export function notificationRoleConfiguration(
   catch { return null; }
   if (!mapping || typeof mapping !== "object" || Array.isArray(mapping)) return null;
   const values = mapping as Record<string, unknown>;
+  // Upgrade this server's existing seven-role environment without a hosted mutation.
+  // Explicit mappings remain authoritative; other guilds require all thirteen IDs.
+  const legacyKeys = ["watchlist", "trading_tips", "day_trade", "swing_trade", "im_in", "im_out", "watching"];
+  if (guildId === "1433570740430573642" && Object.keys(values).length === legacyKeys.length
+    && legacyKeys.every(key => isDiscordId(values[key]))) {
+    Object.assign(values, {
+      live_scanner: "1558619263173009578", news_scanner: "1558619323461926962",
+      news_30m_mc: "1558619363773251657", news_50m_mc: "1558619397721956453",
+      news_100m_mc: "1558619443322691666", halt_alerts: "1558619478936395818",
+    });
+  }
   if (Object.keys(values).length !== notificationRoles.length) return null;
   const roleIds = {} as Record<NotificationRoleKey, string>;
   for (const role of notificationRoles) {

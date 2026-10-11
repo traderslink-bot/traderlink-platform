@@ -181,6 +181,31 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
     ]),
   }),
   Object.freeze({
+    slug: "discord-server-notification-roles",
+    title: "Discord notification roles",
+    description: "Choose which TradersLink server mentions you want to receive.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "choose-server-mentions",
+        title: "Choose your notifications",
+        summary: "Use the Notifications panel in the TradersLink Discord server when it is available.",
+        keywords: Object.freeze(["Discord", "roles", "mentions", "watchlist", "trading tips", "swing trade", "I'm in", "I'm out", "watching"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "steps", items: Object.freeze([
+            Object.freeze({ title: "1. Open the panel", text: "In the server's notification channel, select Choose notifications. Your current choices appear in a response only you can see." }),
+            Object.freeze({ title: "2. Choose your mentions", text: "Choose from the twelve topics shown in the panel, including TradersLink posts, Community posts and Stock tools, then select Save. Day trade is currently omitted; any existing day trade role stays unchanged." }),
+            Object.freeze({ title: "3. Change your choices", text: "Reopen Choose notifications whenever you want. To turn them all off, select Clear selection, then Save. Closing without saving leaves your roles unchanged." }),
+          ]) }),
+          Object.freeze({ kind: "paragraph", text: "@I'm in, @I'm out and @watching subscribe you to other members' entry, exit and watching posts. Choosing them does not announce a trade or record a position." }),
+          Object.freeze({ kind: "callout", title: "Discord notification settings", text: "These roles only subscribe you to mentions. Your Discord notification settings, muted channels and role-mention suppression may prevent a phone or desktop alert. You also need access to the channel where a post appears." }),
+          Object.freeze({ kind: "paragraph", text: "These choices do not change your other Discord roles, server access, membership, TradersLink account notifications or Discord direct-message preferences." }),
+          Object.freeze({ kind: "paragraph", text: "Your selector response is private to you, but Discord role assignments are visible to server administrators. The server owner can review notification roles and Premium Member role status in Journal Administration." }),
+          Object.freeze({ kind: "paragraph", text: "If saving fails, reopen the panel to check your current roles before trying again. Some choices may have been applied. If the panel is unavailable, contact a moderator." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
     slug: "email-notifications",
     title: "Email notifications",
     description: "Choose which TradersLink updates you would like by email.",
