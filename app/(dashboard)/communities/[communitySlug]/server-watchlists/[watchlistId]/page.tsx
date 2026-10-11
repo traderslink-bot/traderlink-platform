@@ -33,8 +33,8 @@ export default async function ServerWatchlistPage({ params }: { params: Promise<
       <Typography color="text.secondary">{watchlist.authorName}</Typography>
     </Stack></DashboardPanel>
     {watchlist.symbols?.map(symbol => <DashboardPanel key={symbol} title={symbol}><Stack spacing={2}>
-      {research[symbol]?.notes ? <Stack><Typography fontWeight={700}>Notes</Typography><Typography sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{research[symbol].notes}</Typography></Stack> : null}
-      {research[symbol]?.research ? <Stack><Typography fontWeight={700}>DD research</Typography><Typography sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{research[symbol].research}</Typography></Stack> : null}
+      {research[symbol]?.notes ? <Stack><Typography sx={{ fontWeight: 700 }}>Notes</Typography><Typography sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{research[symbol].notes}</Typography></Stack> : null}
+      {research[symbol]?.research ? <Stack><Typography sx={{ fontWeight: 700 }}>DD research</Typography><Typography sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{research[symbol].research}</Typography></Stack> : null}
       {research[symbol]?.sources.map((source, index) => <Link key={`${index}-${source}`} href={source} target="_blank" rel="noopener noreferrer" sx={{ overflowWrap: "anywhere" }}>{source}</Link>)}
     </Stack></DashboardPanel>)}
     {canManage ? <DashboardPanel title="Edit watchlist"><CommunityWatchlistEditor communitySlug={communitySlug} watchlist={watchlist} research={research} isReview={isReview}/></DashboardPanel> : null}
