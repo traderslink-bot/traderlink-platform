@@ -1,7 +1,7 @@
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { createCanonicalUtcTimestamp, isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import type { TraderLinkCommunityDashboardSnapshot } from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import { TraderLinkCommunityPlatformRepository } from "@/src/modules/communities/server/traderlink-community-platform-repository";
 import { createTraderLinkCommunityReviewFixture } from "@/src/modules/communities/server/traderlink-community-review-fixture";
@@ -10,6 +10,15 @@ import { notFound } from "next/navigation";
 import { isCommunityContentActivityPath } from "@/src/modules/communities/server/community-activity-scope";
 
 export async function loadCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}>>{
+  try {
+    return await loadAuthorizedCommunityDashboard(communitySlug,path);
+  } catch (error) {
+    if(isTraderLinkPlatformError(error)&&(error.code==="TRADERLINK_WORKSPACE_ACCESS_DENIED"||error.code==="TRADERLINK_WORKSPACE_NOT_FOUND"))notFound();
+    throw error;
+  }
+}
+
+async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}>>{
   if(communitySlug==="review") {
     if(process.env.NODE_ENV==="production"&&process.env.RAILWAY_ENVIRONMENT_NAME!=="staging") notFound();
     const role=path?.includes("/workspace")?"coach":"owner";

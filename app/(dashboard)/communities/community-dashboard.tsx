@@ -36,7 +36,6 @@ import { CommunityWatchlistComposer } from "./community-watchlist-composer";
 import { CommunityCoachMessagingPanel } from "./community-coach-messaging-panel";
 import { CoachingWorkPage } from "./coach-workspace-navigation";
 import { StudentCoachingWorkspace } from "./student-coaching-workspace";
-import { StudentJournalSharing } from "./student-journal-sharing";
 
 const manageTabs = [{section:"manage",label:"Owner dashboard"},{section:"team",label:"Team"},{section:"roles",label:"Discord role access"},{section:"members",label:"Members"},{section:"activity",label:"Activity"},{section:"channels",label:"Discord channels"},{section:"settings",label:"Settings"}] as const;
 
@@ -50,7 +49,7 @@ function has(snapshot:TraderLinkCommunityDashboardSnapshot,key:string){ return s
 
 export function CommunityDashboard({snapshot,section,isReview=false,baseOverride,discordClientId=null,discordResources=null,reviewAppearance="light"}:{snapshot:TraderLinkCommunityDashboardSnapshot;section:TraderLinkCommunitySection;isReview?:boolean;baseOverride?:string;discordClientId?:string|null;discordResources?:CommunityDiscordResources|null;reviewAppearance?:"light"|"dark"}){
   const base=baseOverride??`/communities/${snapshot.community.slug}`;
-  if(section==="coaching")return <DashboardPage><Typography component="h1" variant="h1">My coaching</Typography><StudentCoachingWorkspace isReview={isReview} snapshot={snapshot}/><StudentJournalSharing isReview={isReview} snapshot={snapshot}/></DashboardPage>;
+  if(section==="coaching")return <DashboardPage><Typography component="h1" variant="h1">My coaching</Typography><StudentCoachingWorkspace isReview={isReview} snapshot={snapshot}/></DashboardPage>;
   const href=(path:string)=>isReview&&reviewAppearance==="dark"?`${path}?appearance=dark`:path;
   const canCoach=has(snapshot,"community.coaching.offer");
   const canViewCoaches=has(snapshot,"community.coaching.view")||canCoach||has(snapshot,"community.coaching.manage_all");

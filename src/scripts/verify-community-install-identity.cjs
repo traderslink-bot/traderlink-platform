@@ -18,6 +18,7 @@ async function check(file, dedicated, expected) {
       if (id === 'next/navigation') return { notFound() { throw new Error('Unexpected access denial'); } };
       if (id.endsWith('/traderlink-community-platform-contracts')) return { TRADERLINK_COMMUNITY_SECTIONS: ['channels'] };
       if (id.endsWith('/community-dashboard')) return { CommunityDashboard: 'dashboard' };
+      if (id.endsWith('/community-discord-resources')) return { readCommunityDiscordResources: async () => ({ roles: [], channels: [] }) };
       if (id.endsWith('/community-dashboard-loader')) return { loadCommunityDashboard: async () => ({ isReview: false, snapshot: { viewer: { capabilities: [] }, community: { isOwner: true } } }) };
       throw new Error(`Unexpected import ${id}`);
     },
