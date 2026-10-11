@@ -1,0 +1,75 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import Database from "better-sqlite3";
+import { platformIdentityMigration } from "../modules/platform/server/database/migrations/0001_platform_identity";
+import { journalAccountBoundaryMigration } from "../modules/journal/server/database/migrations/0002_journal_account_boundary";
+import { platformAuthenticationIdentitiesMigration } from "../modules/platform/server/database/migrations/0012_platform_authentication_identities";
+import { platformDiscordMembershipsMigration } from "../modules/platform/server/database/migrations/0017_platform_discord_memberships";
+import { communityWatchlistsMigration } from "../modules/community/server/database/migrations/0076_community_watchlists";
+import { traderLinkCommunitiesIdentityPermissionsMigration } from "../modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions";
+import { traderLinkCommunitiesPartnerPlatformMigration } from "../modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
+import { traderLinkCommunitiesDiscordFeatureAccessMigration } from "../modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access";
+import { traderLinkCommunitiesServerWatchlistsMigration } from "../modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists";
+import { traderLinkCommunitiesWorkspaceToolsMigration } from "../modules/communities/server/database/migrations/0126_traderlink_communities_workspace_tools";
+import { platformCommunityPublicationFeedbackMigration } from "../modules/platform/server/database/migrations/0163_platform_community_publication_feedback";
+import { TraderLinkCommunityRepository } from "../modules/communities/server/traderlink-community-repository";
+import { TraderLinkCommunityPlatformRepository } from "../modules/communities/server/traderlink-community-platform-repository";
+import { saveCommunityPublication } from "../modules/communities/server/community-publication-service";
+import { parseWatchlistResearch } from "../modules/communities/contracts/community-watchlist-research";
+
+let networkCalls = 0;
+globalThis.fetch = async () => { networkCalls++; throw new Error("Network forbidden in publication QA"); };
+const db = new Database(":memory:");
+const now = "2026-10-10T22:00:00.000Z";
+try {
+  db.pragma("foreign_keys = ON");
+  for (const migration of [platformIdentityMigration, journalAccountBoundaryMigration, platformAuthenticationIdentitiesMigration, platformDiscordMembershipsMigration, communityWatchlistsMigration, traderLinkCommunitiesIdentityPermissionsMigration, traderLinkCommunitiesPartnerPlatformMigration, traderLinkCommunitiesDiscordFeatureAccessMigration, traderLinkCommunitiesServerWatchlistsMigration, traderLinkCommunitiesWorkspaceToolsMigration, platformCommunityPublicationFeedbackMigration]) for (const sql of migration.statements) db.exec(sql);
+  const owners = [randomUUID(), randomUUID()];
+  const permissions = new TraderLinkCommunityRepository(db);
+  const communities = owners.map((owner, index) => {
+    const guild = String(900001 + index), subject = String(800001 + index);
+    db.prepare(`INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc) VALUES(?,'discord',?,'QA owner','active',?,?)`).run(owner, subject, now, now);
+    db.prepare(`INSERT INTO platform_auth_identities(user_id,auth_provider,auth_subject,status,linked_by_user_id,created_at_utc,updated_at_utc,last_authenticated_at_utc) VALUES(?,'discord',?,'active',?,?,?,?)`).run(owner, subject, owner, now, now, now);
+    db.prepare(`INSERT INTO platform_discord_memberships(user_id,guild_id,username,global_display_name,avatar_hash,role_ids_json,guild_owner,joined_at_utc,first_verified_at_utc,last_verified_at_utc) VALUES(?,?,'qa','QA owner',NULL,'[]',1,?,?,?)`).run(owner, guild, now, now, now);
+    const community = permissions.createFromVerifiedDiscordOwner({ ownerUserId: owner, discordGuildId: guild, slug: `qa-room-${index}`, displayName: "QA room", timestamp: now });
+    db.prepare(`UPDATE traderlink_communities SET status='active' WHERE community_id=?`).run(community.communityId);
+    return community;
+  });
+  const actor = { userId: owners[0], displayName: "QA owner", discordRoleIds: [] };
+  const repository = new TraderLinkCommunityPlatformRepository(db);
+  const audience = repository.ensureDefaultAudience({ communityId: communities[0].communityId, actorUserId: actor.userId, atUtc: now });
+  repository.saveDiscordDestination({ communityId: communities[0].communityId, actor, name: "mock-only", discordChannelId: "700001", contentType: "alerts", atUtc: now });
+  function form(values: Record<string, string>) { const result = new FormData(); Object.entries({ requestId: randomUUID(), publishingMode: "tracked_page", status: "published", ...values }).forEach(([key, value]) => result.set(key, value)); return result; }
+  function save(kind: "alert" | "watchlist", values: FormData) { return saveCommunityPublication(db, { communityId: communities[0].communityId, communitySlug: "qa-room-0", actor, kind, form: values, atUtc: now }); }
+  const alert = form({ title: "Multiline alert", symbol: "ABC", audienceId: audience, body: "First line\nSecond line\r\nThird line\twith tab" });
+  const result = save("alert", alert);
+  assert.equal(result.message, "Alert published.");
+  assert.deepEqual(save("alert", alert), result);
+  assert.equal((db.prepare(`SELECT count(*) n FROM traderlink_community_alerts`).get() as { n: number }).n, 1);
+  assert.equal((db.prepare(`SELECT count(*) n FROM traderlink_community_content_deliveries`).get() as { n: number }).n, 1);
+  alert.set("body", "Changed payload"); assert.throws(() => save("alert", alert), /request has changed/);
+  const otherAudience = repository.ensureDefaultAudience({ communityId: communities[1].communityId, actorUserId: owners[1], atUtc: now });
+  assert.throws(() => save("alert", form({ title: "Wrong audience", body: "No", audienceId: otherAudience })), /available audience/);
+  const research = { ABC: { notes: "Notes\nsecond line", research: "Author DD, no AI", sources: ["https://example.com/filing"] }, XYZ: { notes: "Second ticker", research: "", sources: [] } };
+  const watchlist = form({ title: "Research list", symbols: "ABC,XYZ", tickerResearch: JSON.stringify(research), status: "draft" });
+  const saved = save("watchlist", watchlist); const watchlistId = saved.href!.split("/").at(-1)!;
+  const readResearch = () => JSON.parse((db.prepare(`SELECT ticker_research_json FROM traderlink_community_server_watchlists WHERE watchlist_id=?`).get(watchlistId) as { ticker_research_json: string }).ticker_research_json);
+  assert.deepEqual(readResearch(), research);
+  assert.deepEqual(save("watchlist", watchlist), saved);
+  const edit = form({ watchlistId, title: "Research list", symbols: "ABC", tickerResearch: JSON.stringify({ ABC: research.ABC }), status: "published" });
+  save("watchlist", edit); assert.deepEqual(readResearch(), { ABC: research.ABC });
+  const before = JSON.stringify(readResearch());
+  assert.throws(() => saveCommunityPublication(db, { communityId: communities[1].communityId, communitySlug: "qa-room-1", actor: { ...actor, userId: owners[1] }, kind: "watchlist", form: edit, atUtc: now }));
+  assert.equal(JSON.stringify(readResearch()), before);
+  assert.throws(() => parseWatchlistResearch(JSON.stringify({ ABC: { ...research.ABC, sources: ["javascript:alert(1)"] } }), ["ABC"]), /http or https/);
+  assert.throws(() => parseWatchlistResearch(JSON.stringify({ ABC: { ...research.ABC, sources: ["https://user:secret@example.com"] } }), ["ABC"]), /http or https/);
+  assert.throws(() => save("alert", form({ title: "Bad body", body: "bad\u0000text", audienceId: audience })));
+  assert.equal((db.prepare(`SELECT count(*) n FROM traderlink_community_alerts`).get() as { n: number }).n, 1);
+  assert.equal(networkCalls, 0); assert.deepEqual(db.pragma("foreign_key_check"), []);
+  save("alert", form({ title: "A".repeat(140), body: "Long title allowed by the existing title contract", audienceId: audience }));
+  const unicode = save("alert", form({ title: "研究", body: "Unicode title preserved", audienceId: audience }));
+  assert.match(unicode.href!, /\/alerts\/alert-/);
+  assert.throws(() => save("watchlist", form({ watchlistId, title: "Research list", symbols: "ABC" })), /research editor/);
+  assert.equal(JSON.stringify(readResearch()), before);
+  console.log(JSON.stringify({ ok: true, multilineAlert: true, retryReceipt: true, singleQueuedDelivery: true, notesDdRoundTrip: true, tickerRemoval: true, crossCommunityDenied: true, unsafeLinksDenied: true, rollback: true, networkCalls, realNotifications: 0, paidAiCalls: 0 }));
+} finally { db.close(); }

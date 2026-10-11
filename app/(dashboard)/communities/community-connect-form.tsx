@@ -1,0 +1,27 @@
+"use client";
+
+import Button from "@mui/material/Button";
+import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useState } from "react";
+import { CommunityPublicationForm } from "./community-publication-form";
+import { connectCommunityWithFeedback } from "./community-setup-feedback-actions";
+
+export function CommunityConnectForm({ guilds, clientId }: { guilds: readonly { guildId: string; guildName: string }[]; clientId: string | null }) {
+  const [guildId, setGuildId] = useState(guilds[0]?.guildId ?? "");
+  const installUrl = clientId && /^\d{1,32}$/.test(clientId) && guildId
+    ? `https://discord.com/oauth2/authorize?client_id=${clientId}&scope=bot%20applications.commands&permissions=3072&guild_id=${guildId}&disable_guild_select=true` : null;
+  return <CommunityPublicationForm action={connectCommunityWithFeedback} disabled={!guilds.length}>
+    <Stack spacing={2}>
+      <TextField label="Discord server" name="discordGuildId" select required value={guildId} onChange={event => setGuildId(event.target.value)}>
+        {guilds.map(guild => <MenuItem key={guild.guildId} value={guild.guildId}>{guild.guildName}</MenuItem>)}
+      </TextField>
+      {installUrl ? <Button href={installUrl} rel="noopener noreferrer" target="_blank" variant="outlined">Install TraderLink Discord app</Button> : <Typography>Discord installation is unavailable. Contact TraderLink support.</Typography>}
+      <TextField label="Community name" name="displayName" required/>
+      <TextField label="URL name" name="slug" required/>
+      <Button type="submit" variant="contained">Connect server</Button>
+    </Stack>
+  </CommunityPublicationForm>;
+}
