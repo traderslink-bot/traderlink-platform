@@ -2,6 +2,19 @@
 
 Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-plan.md).
 
+## 2026-10-11 — owner and admin coaching the same student
+
+- Reconnected Chrome; verified owner TradersLink, second coach moonmafia and student Bullrun identities. Created dedicated Discord `test-admin-community` role and mapped only the staging community Admin responsibility; did not grant Discord Administrator or reuse the live Admin role. Moonmafia also received the existing test coaching, alert and watchlist roles.
+- Moonmafia created/published `QA Moonmafia shared student`: zero dollars, one trade weekly, two-day delivery, ten-student capacity, explicitly synthetic/no payment or coaching obligation. Bullrun requested enrollment; moonmafia accepted. Bullrun accepted the nonbinding test agreement and now selects either coach independently.
+- Owner explicitly approved Bullrun's staging trade history/notes grant to moonmafia. Existing TradersLink trade/notes and analytics grants remain intact. Moonmafia reads the synthetic AAPL trade (10 shares, 100 entry, 102 exit, net20).
+- Bullrun submitted the selected AAPL trade to moonmafia. Coach accepted scope, expanded inline feedback, saved it (To review1->0, Saved0->1, In progress), saved summary plus private canary, previewed and delivered. Bullrun received trade feedback/summary without the private canary; explicit acknowledgement persisted Viewed and moonmafia sees its timestamp. Relationship `243f1583-bb22-4e39-a09a-7ae146f48f49`, review `42040648-600a-4af8-a9e3-bed59ed9c756`.
+- Switching Bullrun to TradersLink restores the owner's prior messages, images, reviews and history without moonmafia's review. Owner access to moonmafia's private relationship returns404; admin access to owner's private relationship returns404; each own relationship opens successfully. These are hosted positive/negative controls, not merely fixture results.
+- Both coaches published distinct synthetic official watchlists via UI. Moonmafia `b41f101c-0eb6-4311-880d-77abb3cfdcf8`; TradersLink `c6397e58-e054-48b3-89a6-75956fd628cd`. Both Discord watchlist receipts report Delivered with message IDs. Moonmafia alert `qa-moonmafia-shared-student-alert` published and delivered; owner alert `qa-traderslink-shared-student-alert` published, receipt recheck pending. No real watchlist edited.
+- Found recipient-context mismatch: top coach selection did not update the independent Journal-sharing default. Corrected source by nesting keyed sharing with the selected relationship, deriving the submitted recipient from that relationship, retaining read-only coach identification, all existing grants/revoke actions, and server authorization. Switching coaches resets unsaved scope/checkbox choices. No automatic grant or new copy. Three-file TypeScript syntax check passed; staging integration/retest remains required. Help's existing explicit sharing/privacy contract remains accurate; no guide text change needed. React review preserves the app's MUI shell, uses existing state/keys rather than effects, and adds no fetching or dependency.
+- Open: coaching-plan Discord delivery at03:11UTC reports destination unavailable/inaccessible for the configured private coaching channel; coordinator asked to inspect. Alert/watchlist channels work. Independent first-server onboarding, remaining launch operations and corrected-build full acceptance are still open. No production release or commission activation.
+- Targeted ESLint on the three changed TSX files: zero errors, seven preexisting unused-code warnings in community-dashboard. Used the canonical installed lint configuration because the feature lane has no local dependency installation. Exact diff whitespace check passed. No full build or broad suite run. Hosted recipient-switch retest is pending deployment, not marked passed by syntax/lint checks.
+
+
 ## 2026-10-10 — post-shutdown recovery
 
 ### Owner-requested repeat QA — source 9cbe4bae5

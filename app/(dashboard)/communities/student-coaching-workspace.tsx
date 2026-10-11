@@ -3,6 +3,7 @@ import {useState} from "react";
 import {CoachingAgreementPanel} from "./coaching-agreement-panel";
 import {StudentReviewRequest} from "./student-review-request";
 import {StudentCoachingReview} from "./student-coaching-review";
+import {StudentJournalSharing} from "./student-journal-sharing";
 import {Box,Button,Chip,Grid,MenuItem,Stack,TextField} from "@mui/material";
 import {DashboardPanel,DashboardUnavailableState} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
@@ -13,8 +14,8 @@ export function StudentCoachingWorkspace({snapshot,isReview}:{snapshot:TraderLin
  const relationships=snapshot.relationships.filter(item=>item.studentUserId===snapshot.viewer.userId&&["active","ended"].includes(item.status));
  const [selectedId,setSelectedId]=useState(relationships[0]?.relationshipId??"");
  const selected=relationships.find(item=>item.relationshipId===selectedId)??relationships[0];
- if(!selected)return <DashboardUnavailableState compact description="" title="No active coaching"/>;
- return <Stack spacing={2}>{relationships.length>1?<TextField label="Coach and plan" select value={selected.relationshipId} onChange={event=>setSelectedId(event.target.value)}>{relationships.map(item=><MenuItem key={item.relationshipId} value={item.relationshipId}>{item.coachDisplayName} · {item.planName}</MenuItem>)}</TextField>:null}<StudentRelationshipWorkspace key={selected.relationshipId} snapshot={snapshot} isReview={isReview} relationshipId={selected.relationshipId}/></Stack>;
+ if(!selected)return <Stack spacing={2}><DashboardUnavailableState compact description="" title="No active coaching"/><StudentJournalSharing snapshot={snapshot} isReview={isReview} selectedRelationshipId=""/></Stack>;
+ return <Stack spacing={2}>{relationships.length>1?<TextField label="Coach and plan" select value={selected.relationshipId} onChange={event=>setSelectedId(event.target.value)}>{relationships.map(item=><MenuItem key={item.relationshipId} value={item.relationshipId}>{item.coachDisplayName} · {item.planName}</MenuItem>)}</TextField>:null}<StudentRelationshipWorkspace key={selected.relationshipId} snapshot={snapshot} isReview={isReview} relationshipId={selected.relationshipId}/><StudentJournalSharing key={`sharing-${selected.relationshipId}`} snapshot={snapshot} isReview={isReview} selectedRelationshipId={selected.relationshipId}/></Stack>;
 }
 function StudentRelationshipWorkspace({snapshot,isReview,relationshipId}:{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean;relationshipId:string}){
  const relationship=snapshot.relationships.find(item=>item.relationshipId===relationshipId&&item.studentUserId===snapshot.viewer.userId&&["active","ended"].includes(item.status));
