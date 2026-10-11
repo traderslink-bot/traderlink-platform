@@ -42,6 +42,7 @@ if (mode === "types") {
     return content === undefined ? undefined : ts.createSourceFile(file, content, languageVersion);
   };
   const roots = files.filter(file => (
+    (file.startsWith("src/types/") && file.endsWith(".d.ts")) ||
     file.startsWith("app/admin/journal/memberships/unified-plan-") ||
     file.startsWith("src/scripts/verify-membership-plan-") ||
     file === "src/scripts/verify-membership-discord-editor.ts" ||
