@@ -8,7 +8,7 @@ import {
   isDiscordId, notificationRoleConfiguration, notificationRoleSelectorEnabled,
   type NotificationRoleConfiguration,
 } from "./configuration";
-import { NotificationRoleDiscordApi } from "./discord-api";
+import { NotificationRoleApiError, NotificationRoleDiscordApi } from "./discord-api";
 
 const expired = "This selection has expired. Choose notifications again.";
 const unavailable = "Notification selection is temporarily unavailable. Please contact a moderator.";
@@ -155,29 +155,52 @@ export function dispatchNotificationRoleInteraction(payload: unknown, config: No
         response: { type: 6 },
         work: async () => {
           const release = await acquire();
-          const api = new NotificationRoleDiscordApi(config);
           let content = failed;
+          let phase = "verify";
+          const startedAt = Date.now();
+          let completedChanges = 0;
+          let totalChanges = 0;
           try {
             if (!active(config) || state.sessions.get(session.id) !== session || session.expiresAt <= Date.now()) throw new Error("Expired");
-            await api.verifySetup();
-            const current = new Set(await api.memberRoles(memberId));
-            for (const role of selectableNotificationRoles) {
+            await new NotificationRoleDiscordApi(config, Date.now() + 25_000, phase).verifySetup();
+            phase = "read-current";
+            const current = new Set(await new NotificationRoleDiscordApi(config, Date.now() + 15_000, phase).memberRoles(memberId));
+            const changes = selectableNotificationRoles.filter(role => current.has(config.roleIds[role.key]) !== desired.has(role.key));
+            totalChanges = changes.length;
+            phase = "write";
+            const writeApi = new NotificationRoleDiscordApi(config, Date.now() + 90_000, phase);
+            for (const role of changes) {
               if (!active(config) || session.expiresAt <= Date.now()) throw new Error("Disabled");
               const present = desired.has(role.key);
-              if (current.has(config.roleIds[role.key]) !== present) await api.setRole(memberId, role.key, present);
+              await writeApi.setRole(memberId, role.key, present);
+              completedChanges += 1;
             }
-            const actual = new Set(await api.memberRoles(memberId));
+            phase = "readback";
+            const actual = new Set(await new NotificationRoleDiscordApi(config, Date.now() + 15_000, phase).memberRoles(memberId));
             if (!selectableNotificationRoles.every(role => actual.has(config.roleIds[role.key]) === desired.has(role.key))) throw new Error("Partial");
             const labels = selectableNotificationRoles.filter(role => desired.has(role.key)).map(role => role.label);
             content = labels.length ? `Saved. You're subscribed to: ${labels.join(", ")}.` : "Saved. You're not subscribed to any of these notifications.";
-          } catch {
+          } catch (error) {
             // Discord has no multi-role transaction. Do not undo unrelated moderator changes or claim success.
             content = failed;
+            console.warn("Discord notification selector save failed", {
+              category: error instanceof NotificationRoleApiError ? error.category : "state-or-readback",
+              httpStatus: error instanceof NotificationRoleApiError ? error.httpStatus : undefined,
+              retryDelaySeconds: error instanceof NotificationRoleApiError ? error.retryDelaySeconds : undefined,
+              phase, elapsedMs: Date.now() - startedAt, completedChanges, totalChanges,
+            });
           } finally {
             state.sessions.delete(session.id);
             release();
           }
-          await new NotificationRoleDiscordApi(config, Date.now() + 5_000).editInteraction(token, privateNotice(content)).catch(() => {});
+          await new NotificationRoleDiscordApi(config, Date.now() + 10_000, "confirmation")
+            .editInteraction(token, privateNotice(content)).catch(error => {
+              console.warn("Discord notification selector confirmation failed", {
+                category: error instanceof NotificationRoleApiError ? error.category : "confirmation",
+                httpStatus: error instanceof NotificationRoleApiError ? error.httpStatus : undefined,
+                phase: "confirmation", elapsedMs: Date.now() - startedAt, completedChanges, totalChanges,
+              });
+            });
         },
       };
     }

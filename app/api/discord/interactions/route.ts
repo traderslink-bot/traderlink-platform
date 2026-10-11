@@ -5,7 +5,8 @@ import { readDiscordInteractionBody, validDiscordInteractionSignature } from "@/
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 45;
+// Save phases: verify25s + current15s + writes90s + readback15s + confirmation10s.
+export const maxDuration = 180;
 
 export async function POST(request: Request): Promise<Response> {
   const headers = { "Cache-Control": "no-store" };

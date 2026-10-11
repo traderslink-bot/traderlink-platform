@@ -8,17 +8,20 @@ type DiscordMember = { roles: string[]; user: { id: string } };
 type DiscordChannel = { id: string; guild_id: string; type: number; permission_overwrites?: { id: string; type: number; allow: string; deny: string }[] };
 
 export class NotificationRoleApiError extends Error {
-  constructor() { super("Discord notification roles are unavailable"); }
+  constructor(readonly category = "invalid-response", readonly httpStatus?: number, readonly retryDelaySeconds?: number) {
+    super("Discord notification roles are unavailable");
+  }
 }
 
 /** Bounded REST calls; never surface Discord bodies, URLs or credentials in errors/logs. */
 export class NotificationRoleDiscordApi {
-  constructor(private readonly config: NotificationRoleConfiguration, private readonly deadline = Date.now() + 25_000) {}
+  constructor(private readonly config: NotificationRoleConfiguration, private readonly deadline = Date.now() + 25_000,
+    private readonly phase = "request") {}
 
   private async request(path: string, method = "GET", payload?: unknown, authenticated = true): Promise<unknown> {
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
       const remaining = this.deadline - Date.now();
-      if (remaining <= 0) throw new NotificationRoleApiError();
+      if (remaining <= 0) throw new NotificationRoleApiError("deadline");
       let response: Response;
       try {
         response = await fetch(`${apiOrigin}${path}`, {
@@ -30,19 +33,23 @@ export class NotificationRoleDiscordApi {
           },
           ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
         });
-      } catch { throw new NotificationRoleApiError(); }
+      } catch { throw new NotificationRoleApiError("transport-or-timeout"); }
       if (response.status === 429) {
         const limit = await response.json().catch(() => null) as { retry_after?: unknown } | null;
         const seconds = limit?.retry_after;
         if (typeof seconds !== "number" || !Number.isFinite(seconds) || seconds < 0
-          || seconds > 3 || Date.now() + seconds * 1_000 >= this.deadline) throw new NotificationRoleApiError();
+          || Date.now() + Math.max(50, Math.ceil(seconds * 1_000)) + 1_000 >= this.deadline) {
+          throw new NotificationRoleApiError("rate-limit-budget", 429, typeof seconds === "number" && Number.isFinite(seconds) ? seconds : undefined);
+        }
+        console.warn("Discord notification selector retry", { category: "rate-limit", httpStatus: 429,
+          retryDelaySeconds: seconds, phase: this.phase });
         await new Promise(resolve => setTimeout(resolve, Math.max(50, Math.ceil(seconds * 1_000))));
         continue;
       }
-      if (!response.ok) throw new NotificationRoleApiError();
+      if (!response.ok) throw new NotificationRoleApiError("http", response.status);
       return response.status === 204 ? null : response.json().catch(() => { throw new NotificationRoleApiError(); });
     }
-    throw new NotificationRoleApiError();
+    throw new NotificationRoleApiError("retry-limit", 429);
   }
 
   async memberRoles(memberId: string): Promise<string[]> {
