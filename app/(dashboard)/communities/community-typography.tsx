@@ -1,3 +1,5 @@
+"use client";
+
 import MuiTypography from "@mui/material/Typography";
 import type {TypographyProps} from "@mui/material/Typography";
 

@@ -88,6 +88,7 @@ async function deliverDiscordAnnouncement(publicationId: string): Promise<boolea
     return false;
   }
 }
+  draft?: Readonly<{ id: string; updatedAtUtc: string }>,
 
 export async function createCommunityWatchlist(
   input: CreateCommunityWatchlistInput,
@@ -96,6 +97,7 @@ export async function createCommunityWatchlist(
     const scope = await requireTraderLinkPlatformPageScope({
       membershipFeatures: ["community.access"],
     });
+        draft,
     const created = withPlatformDatabase({ mode: "runtime" }, (database) =>
       new CommunityWatchlistRepository(database).create({
         userId: scope.userId,
