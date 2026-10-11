@@ -142,7 +142,8 @@ export function dispatchNotificationRoleInteraction(payload: unknown, config: No
       if (!Array.isArray(data.values) || data.values.length > selectableNotificationRoles.length
         || !data.values.every(isSelectableNotificationRoleKey) || new Set(data.values).size !== data.values.length) return notice(unavailable);
       session.selected = [...data.values] as NotificationRoleKey[];
-      result = { response: { type: 7, data: privateSelectorPayload(session.id, session.selected, "Unsaved changes") } };
+      // Keep the client-owned dropdown stable; a full ephemeral re-render can stall desktop Save.
+      result = { response: { type: 6 } };
     } else if (action === "clear") {
       session.selected = [];
       result = { response: { type: 7, data: privateSelectorPayload(session.id, [], "Selection cleared. Select Save to turn these notifications off.") } };
@@ -152,7 +153,7 @@ export function dispatchNotificationRoleInteraction(payload: unknown, config: No
       session.busy = true;
       const desired = new Set(session.selected);
       result = {
-        response: { type: 6 },
+        response: { type: 7, data: privateNotice("Saving your notifications…") },
         work: async () => {
           const release = await acquire();
           let content = failed;

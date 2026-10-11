@@ -34,7 +34,7 @@ export function notificationPanelPayload() {
     allowed_mentions: noMentions,
     embeds: [{
       title: "Choose your notifications",
-      description: "Select the topics you want alerts for on your phone. We use Discord @mentions to notify you when something you’ve selected is posted. You can return here anytime to change your selections or unsubscribe.",
+      description: "Select the topics you want alerts for. Tap the save button after you select. We use Discord @mentions to notify you when something you’ve selected is posted. You can return here anytime to change your selections or unsubscribe.",
       color: 0x5865f2,
       fields: [
         { name: "TradersLink", value: "• **@watchlist** — Ticker added to watchlist\n• **@swing trade** — Posts in #this-guy-swing-trades\n• **@trading tips** — Trading tips", inline: false },
