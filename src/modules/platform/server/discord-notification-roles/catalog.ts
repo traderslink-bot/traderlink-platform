@@ -41,7 +41,7 @@ export function notificationPanelPayload() {
         { name: "Community", value: "• **@I'm in** — Members sharing that they entered a stock\n• **@I'm out** — Members sharing that they exited a stock\n• **@watching** — Members sharing stocks they are watching", inline: false },
         { name: "Stock tools", value: "• **@live scanner** — #live-stock-scanner\n• **@news scanner** — #news-scanner\n• **@news 30m mc** — #news-under-30m-mc\n• **@news 50m mc** — #news-under-50m-mc\n• **@news 100m mc** — #news-under-100m-mc\n• **@halt alerts** — #halt-alerts", inline: false },
       ],
-      footer: { text: "Phone alerts depend on your Discord and phone notification settings. These roles control notifications only; your membership controls channel access. Your selections are private. Select your topics, then press Save." },
+      footer: { text: "Alerts depend on your Discord and device notification settings. Your selections control notification preference; your membership controls channel access. Your selections are private. Select your topics, then press Save." },
     }],
     components: [{ type: 1, components: [
       { type: 2, style: 1, label: "Choose notifications", custom_id: openSelectorId },
