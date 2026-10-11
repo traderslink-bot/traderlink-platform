@@ -18,6 +18,7 @@ const sessionLifetime = 10 * 60_000;
 type Session = {
   id: string; memberId: string; guildId: string; version: string;
   expiresAt: number; selected: NotificationRoleKey[]; busy: boolean;
+  redrawTail?: Promise<void>; redrawRevision?: number;
 };
 type Callback = { type: number; data?: Record<string, unknown> };
 type Dispatch = { response: Callback; work?: () => Promise<void> };
@@ -39,6 +40,33 @@ function prune(now: number) {
 
 function notice(content: string): Dispatch {
   return { response: { type: 4, data: { ...privateNotice(content), flags: 64 } } };
+}
+
+/** ACK first, then serialize private redraws. Superseded drafts never redraw after Save. */
+function draftRedraw(session: Session, config: NotificationRoleConfiguration, token: string, content: string): Dispatch {
+  const previous = session.redrawTail ?? Promise.resolve();
+  const revision = session.redrawRevision = (session.redrawRevision ?? 0) + 1;
+  let finish!: () => void;
+  session.redrawTail = new Promise<void>(resolve => { finish = resolve; });
+  return {
+    response: { type: 6 },
+    work: async () => {
+      const startedAt = Date.now();
+      try {
+        await previous;
+        if (state.sessions.get(session.id) !== session || session.busy
+          || session.redrawRevision !== revision || session.expiresAt <= Date.now() || !active(config)) return;
+        await new NotificationRoleDiscordApi(config, Date.now() + 5_000, "draft-redraw")
+          .editInteraction(token, privateSelectorPayload(session.id, session.selected, content));
+      } catch (error) {
+        console.warn("Discord notification selector redraw failed", {
+          category: error instanceof NotificationRoleApiError ? error.category : "draft-redraw",
+          httpStatus: error instanceof NotificationRoleApiError ? error.httpStatus : undefined,
+          phase: "draft-redraw", elapsedMs: Date.now() - startedAt,
+        });
+      } finally { finish(); }
+    },
+  };
 }
 
 /** Reserve order before returning the acknowledgement; all member writes are serialized. */
@@ -143,10 +171,10 @@ export function dispatchNotificationRoleInteraction(payload: unknown, config: No
       if (!isSelectableNotificationRoleKey(key)) return notice(unavailable);
       session.selected = session.selected.includes(key)
         ? session.selected.filter((value: NotificationRoleKey) => value !== key) : [...session.selected, key];
-      result = { response: { type: 7, data: privateSelectorPayload(session.id, session.selected, "Unsaved changes") } };
+      result = draftRedraw(session, config, token, "Unsaved changes");
     } else if (action === "clear") {
       session.selected = [];
-      result = { response: { type: 7, data: privateSelectorPayload(session.id, [], "Selection cleared. Select Save to turn these notifications off.") } };
+      result = draftRedraw(session, config, token, "Selection cleared. Select Save to turn these notifications off.");
     } else {
       const acquire = reserve(memberKey);
       if (!acquire) return notice("Please wait for your current selection to finish, then try again.");
@@ -162,6 +190,19 @@ export function dispatchNotificationRoleInteraction(payload: unknown, config: No
           let completedChanges = 0;
           let totalChanges = 0;
           try {
+            if (session.redrawTail) {
+              // An already-sent draft PATCH may finish after the immediate Saving ACK.
+              // Drain it, then restore Saving before any role writes or final confirmation.
+              await session.redrawTail;
+              await new NotificationRoleDiscordApi(config, Date.now() + 5_000, "saving-redraw")
+                .editInteraction(token, privateNotice("Saving your notifications…")).catch(error => {
+                  console.warn("Discord notification selector saving redraw failed", {
+                    category: error instanceof NotificationRoleApiError ? error.category : "saving-redraw",
+                    httpStatus: error instanceof NotificationRoleApiError ? error.httpStatus : undefined,
+                    phase: "saving-redraw", elapsedMs: Date.now() - startedAt,
+                  });
+                });
+            }
             if (!active(config) || state.sessions.get(session.id) !== session || session.expiresAt <= Date.now()) throw new Error("Expired");
             await new NotificationRoleDiscordApi(config, Date.now() + 25_000, phase).verifySetup();
             phase = "read-current";
