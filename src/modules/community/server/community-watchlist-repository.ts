@@ -195,7 +195,10 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
       const draft = input.draft ? this.database.prepare<[string, string, string], { slug: string }>(
         "SELECT slug FROM community_watchlists WHERE watchlist_id=? AND owner_user_id=? AND status='draft' AND updated_at_utc=?",
       ).get(input.draft.id, input.userId, input.draft.updatedAtUtc) : null;
-      if (input.draft && !draft) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      if (input.draft && !draft) {
+        const owned = this.database.prepare("SELECT 1 FROM community_watchlists WHERE watchlist_id=? AND owner_user_id=?").get(input.draft.id, input.userId);
+        platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED", owned ? { reason: "watchlist_draft_changed" } : {});
+      }
       const profile = this.ensureProfile(input.userId, profileTags, input.timestamp);
       const watchlistId = input.draft?.id ?? createCanonicalUuidV4();
       const slug = draft?.slug ?? normalizeSlug(title, `watchlist-${watchlistId.slice(0, 6)}`);

@@ -2,7 +2,10 @@
 
 import MuiTypography from "@mui/material/Typography";
 import type {TypographyProps} from "@mui/material/Typography";
+import {useTheme} from "@mui/material/styles";
 
 export function CommunityTypography({fontWeight,style,...props}:TypographyProps&{fontWeight?:number}){
- return <MuiTypography {...props} style={{...style,fontWeight}}/>;
+ const theme=useTheme();
+ const color=props.color==="text.secondary"?theme.palette.text.secondary:undefined;
+ return <MuiTypography {...props} style={{color,...style,fontWeight}}/>;
 }

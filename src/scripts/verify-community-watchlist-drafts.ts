@@ -36,7 +36,8 @@ export function verifyCommunityWatchlistDrafts(database: Database.Database, owne
     assert.equal(saved.publicationId, null);
     assert.equal(repository.findOwnedDraft(ownerId, draftId)?.watchlist.tickers[0].symbol, "MSFT");
     assert.equal(repository.findOwnedDraft(ownerId, draftId)?.watchlist.description, "Updated draft");
-    assert.throws(() => repository.create({ userId: ownerId, timestamp: publishedAt, watchlist: updated, draft: { id: draftId, updatedAtUtc: at } }));
+    assert.throws(() => repository.create({ userId: ownerId, timestamp: publishedAt, watchlist: updated, draft: { id: draftId, updatedAtUtc: at } }), (error: unknown) =>
+      error instanceof Error && "safeContext" in error && (error.safeContext as Record<string, unknown>).reason === "watchlist_draft_changed");
     assert.equal(repository.findOwnedDraft(ownerId, draftId)?.watchlist.description, "Updated draft");
     const published = repository.create({ userId: ownerId, timestamp: publishedAt, watchlist: { ...updated, publish: true }, draft: { id: draftId, updatedAtUtc: later } });
     assert.equal(published.detailHref, initial.detailHref);

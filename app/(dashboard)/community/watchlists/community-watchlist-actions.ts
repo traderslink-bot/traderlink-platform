@@ -124,6 +124,9 @@ export async function createCommunityWatchlist(
     if (isMembershipAccessDenied(error)) {
       return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE });
     }
+    if (isTraderLinkPlatformError(error) && error.safeContext.reason === "watchlist_draft_changed") {
+      return Object.freeze({ ok: false as const, message: "This draft has changed. Refresh this page before saving again." });
+    }
     const accessChanged = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",
       "TRADERLINK_WORKSPACE_ACCESS_DENIED",
