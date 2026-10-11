@@ -60,7 +60,7 @@ export function saveCommunityPublication(db: Database.Database, input: {
       if (symbol && !/^[A-Z0-9][A-Z0-9.-]{0,14}$/.test(symbol)) throw new CommunityPublicationInputError("Check the ticker symbol.");
       const audienceId = String(form.get("audienceId") ?? "") || repository.ensureDefaultAudience({ communityId, actorUserId: actor.userId, atUtc });
       if (!db.prepare(`SELECT 1 FROM traderlink_community_audiences WHERE audience_id=? AND community_id=? AND status='active'`).get(audienceId, communityId)) throw new CommunityPublicationInputError("Choose an available audience for this server.");
-      const details = { communityId, actor, title, symbol, body, audienceId, publishingMode: mode, atUtc };
+      const details = { communityId, actor, title, symbol, body, audienceId, publishingMode: mode as "tracked_page" | "discord_post", atUtc };
       if (existingId) { repository.updateAlert({ ...details, alertId: existingId, status }); id = existingId; }
       else { id = repository.createAlert({ ...details, publish: status === "published" }); }
       const row = db.prepare(`SELECT slug FROM traderlink_community_alerts WHERE alert_id=? AND community_id=?`).get(id, communityId) as { slug: string };
@@ -75,7 +75,7 @@ export function saveCommunityPublication(db: Database.Database, input: {
       let research;
       try { research = parseWatchlistResearch(String(form.get("tickerResearch") ?? "{}"), symbols); }
       catch (error) { throw new CommunityPublicationInputError(error instanceof SyntaxError ? "Check your ticker notes and research." : (error as Error).message); }
-      const details = { communityId, actor, title, description, symbols, publishingMode: mode, atUtc };
+      const details = { communityId, actor, title, description, symbols, publishingMode: mode as "tracked_page" | "discord_post", atUtc };
       if (existingId) { repository.updateServerWatchlist({ ...details, watchlistId: existingId, status }); id = existingId; }
       else { id = repository.createServerWatchlist({ ...details, publish: status === "published" }); }
       db.prepare(`UPDATE traderlink_community_server_watchlists SET ticker_research_json=? WHERE watchlist_id=? AND community_id=?`).run(JSON.stringify(research), id, communityId);
