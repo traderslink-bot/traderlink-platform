@@ -7,6 +7,7 @@ on:
       - codex/coaching-staging-integration-20260926
       - codex/coaching-parity-recovery-20261010
       - codex/coaching-production-parity-staging-20261010
+      - codex/coaching-staging-verification-20261010-v2
 
 permissions:
   contents: read
