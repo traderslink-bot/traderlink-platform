@@ -13,19 +13,20 @@ import { createAndRestoreVerifyPlatformDatabaseBackup } from "@/src/modules/plat
 import { loadAccountIdentityConfiguration } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 
-const predecessorCount = 149;
-const completedCount = 154;
+const predecessorCount = 154;
+const completedCount = 160;
 const prefix = platformMigrationManifest.slice(0, predecessorCount);
 const expected = [
-  "0154_platform_premium_swing_plan_authorship",
-  "0155_platform_watchlist_premium_access_controls",
-  "0156_platform_watchlist_premium_support_resistance",
-  "0157_platform_membership_feature_copy",
-  "0158_platform_member_private_watchlists",
+  "0159_platform_coaching_commission_terms",
+  "0160_platform_coaching_review_request_acceptance",
+  "0161_platform_coaching_content_delivery_receipts",
+  "0162_platform_coaching_delivery_attempt_history",
+  "0163_platform_community_publication_feedback",
+  "0164_platform_coaching_deletion_archives",
 ];
 assert.equal(platformMigrationManifest.length, completedCount);
 assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.migrationId), expected);
-assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), expected.map((_, i) => 167 + i));
+assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), expected.map((_, i) => 172 + i));
 
 function open(path: string) {
   const db = new Database(path, { fileMustExist: true });
@@ -95,7 +96,7 @@ async function main() {
   if (count === predecessorCount) {
     const disk = statfsSync(root);
     assert(disk.bavail * disk.bsize > statSync(sourcePath).size * 4 + 1024 ** 3, "Insufficient backup/rehearsal headroom");
-    const checkpoint = join(root, "coaching-staging-checkpoints", "20261010-production-parity-0158");
+    const checkpoint = join(root, "coaching-staging-checkpoints", "20261010-coaching-0159-to-0164");
     const backupPath = join(checkpoint, "backup.sqlite");
     const restoreVerificationPath = join(checkpoint, "restore-verification.sqlite");
     const evidence = await createAndRestoreVerifyPlatformDatabaseBackup({
