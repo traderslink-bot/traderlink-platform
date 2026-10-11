@@ -1,5 +1,9 @@
 # TraderLink Membership And Subscription Platform Plan
 
+**Current owner-approved work:** [Unified plan editor and complete correction inventory](membership-unified-plan-editor-progress.md).
+Publication, bulk access updates and default-on notification integration are under
+combined QA. Do not deploy until the full checkpoint passes.
+
 **2026-10-10 acceptance follow-up:** [Member browser enrollment and CI](membership-enrollment-ci-followup.md).
 Production moonmafia enrollment/trial/cleanup and focused CI checks passed. Final
 correction release is pending; payment-provider testing and legacy route-audit maintenance remain separate.

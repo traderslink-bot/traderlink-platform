@@ -13,6 +13,13 @@ metric reconciliation.
 
 **Implementation tracker:** [Journal Administration Dashboard Progress](journal-admin-dashboard-progress.md)
 
+**Member directory correction (2026-10-10):** Owner-approved summary, search,
+combined filters, full pagination and desktop/mobile membership details are
+tracked in [Member directory progress](journal-admin-member-directory-progress.md).
+Local completion, owner review and hosted reconciliation are separate gates.
+Local implementation and focused lint/TypeScript review are complete; rendered
+owner acceptance and production reconciliation remain pending.
+
 **User administration extension:** [Journal Administration User Health Plan](journal-admin-user-health-plan.md) and its [progress tracker](journal-admin-user-health-progress.md). It is complete and deployed with truthful user-state labels, user import/broker support evidence, Academy-to-Journal journey visibility and guarded account controls; hosted health is ready at migration 0084.
 
 **Latest implementation checkpoint:** 2026-08-03. The private shell and all

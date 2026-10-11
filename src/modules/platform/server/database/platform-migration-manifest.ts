@@ -1,4 +1,5 @@
 import { platformMembershipFeatureCopyMigration } from "./migrations/0157_platform_membership_feature_copy";
+import { platformMembershipUnifiedEditorMigration } from "./migrations/0165_platform_membership_unified_editor";
 import { platformMemberPrivateWatchlistsMigration } from "./migrations/0158_platform_member_private_watchlists";
 import { platformWatchlistPremiumSupportResistanceMigration } from './migrations/0156_platform_watchlist_premium_support_resistance';
 import { platformWatchlistPremiumAccessControlsMigration } from "./migrations/0155_platform_watchlist_premium_access_controls";
@@ -791,6 +792,7 @@ const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
       sourcePath: "src/modules/platform/server/database/migrations/0164_platform_coaching_deletion_archives.ts",
       migration: platformCoachingDeletionArchivesMigration,
     }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0165_platform_membership_unified_editor.ts", migration: platformMembershipUnifiedEditorMigration }),
   ]);
 
 export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[] = Object.freeze(
@@ -1353,6 +1355,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0162_platform_coaching_delivery_attempt_history": Object.freeze(["traderlink_community_delivery_attempt_history"]),
     "0163_platform_community_publication_feedback": Object.freeze(["traderlink_community_publication_receipts"]),
     "0164_platform_coaching_deletion_archives": Object.freeze(["community_deletion_archives", "community_deletion_archive_records", "community_deletion_archive_files"]),
+    "0165_platform_membership_unified_editor": Object.freeze(["platform_notification_default_on", "platform_membership_page_plans", "platform_membership_discord_retained_access", "platform_membership_usage_carryovers", "platform_membership_editor_drafts", "platform_membership_editor_receipts", "platform_membership_plan_presentations", "platform_membership_feature_usage_anchors", "platform_membership_trial_lineage", "platform_membership_trial_terms"]),
     "0144_traderlink_communities_review_workspace_metadata": Object.freeze([]),
     "0145_traderlink_communities_coaching_delivery_workflow": Object.freeze([
       "traderlink_community_coaching_agreements",

@@ -9,6 +9,9 @@ import {
 } from "./market-halt-discord-repository";
 
 const DISCORD_API = "https://discord.com/api/v10";
+const TRADERSLINK_TOOLS_GUILD_ID = "1433570740430573642";
+const HALT_ALERTS_CHANNEL_ID = "1552678787676774490";
+const HALT_ALERTS_ROLE_ID = "1558619478936395818";
 
 function secondsToMilliseconds(value: unknown): number | undefined {
   const seconds = typeof value === "number" ? value : typeof value === "string" && value.trim() ? Number(value) : NaN;
@@ -61,11 +64,15 @@ export class MarketHaltDiscordDeliveryService {
     try {
       // All retries occur within two minutes, inside Discord's recent-nonce window.
       const nonce = createHash("sha256").update(`halt-discord:${delivery.delivery_id}`).digest("hex").slice(0, 25);
+      const mentionHaltRole = /^true$/i.test(process.env.TRADERSLINK_TOOLS_ROLE_MENTIONS_ENABLED || "false") &&
+        this.configuration.guildId === TRADERSLINK_TOOLS_GUILD_ID &&
+        this.configuration.channelId === HALT_ALERTS_CHANNEL_ID &&
+        delivery.channel_id === HALT_ALERTS_CHANNEL_ID;
       const response = await this.fetcher(`${DISCORD_API}/channels/${delivery.channel_id}/messages`, {
         headers: this.headers(), method: "POST", redirect: "error", signal: AbortSignal.timeout(8_000),
         body: JSON.stringify({
-          allowed_mentions: { parse: [] },
-          content: `${delivery.notification_title}\n\n${delivery.notification_body}`,
+          allowed_mentions: mentionHaltRole ? { parse: [], roles: [HALT_ALERTS_ROLE_ID] } : { parse: [] },
+          content: `${delivery.notification_title}\n\n${delivery.notification_body}${mentionHaltRole ? `\n\n<@&${HALT_ALERTS_ROLE_ID}>` : ""}`,
           enforce_nonce: true,
           nonce,
         }),

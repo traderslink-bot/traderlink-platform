@@ -1,5 +1,6 @@
 import "server-only";
 import { canReceiveMembershipNotification } from "../membership/membership-notification-access";
+import { notificationPreferenceEnabled } from "./platform-notification-defaults";
 
 import { createCanonicalUtcTimestamp } from "../database/platform-migration-contract";
 import {
@@ -45,6 +46,14 @@ export class PlatformRemoteNotificationDeliveryService {
     const claimedAtUtc = createCanonicalUtcTimestamp();
     const claimed = this.repository.claimNext(claimedAtUtc);
     if (!claimed) return false;
+    const preference = this.repository.database.prepare(`SELECT discord_dm_enabled,email_enabled
+      FROM platform_notification_delivery_preferences WHERE user_id=? AND category=?`).get(claimed.recipientUserId, claimed.category) as
+        { discord_dm_enabled: number; email_enabled: number } | undefined;
+    const stored = claimed.channel === "discord_dm" ? preference?.discord_dm_enabled : preference?.email_enabled;
+    if (!notificationPreferenceEnabled(this.repository.database, stored)) {
+      this.repository.complete({ deliveryRef: claimed.deliveryRef, resultCode: "preference_disabled", timestamp: createCanonicalUtcTimestamp() });
+      return true;
+    }
     if (!canReceiveMembershipNotification(this.repository.database, claimed.recipientUserId, claimed.category)) {
       this.repository.complete({ deliveryRef: claimed.deliveryRef, resultCode: "membership_required", timestamp: createCanonicalUtcTimestamp() });
       return true;

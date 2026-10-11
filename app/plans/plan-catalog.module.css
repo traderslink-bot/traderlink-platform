@@ -19,4 +19,5 @@
 .footer button[type=submit]:hover { background: #b2e6ff; }
 .footer button[type=submit]:focus-visible { outline: 2px solid white; outline-offset: 4px; }
 .footer button[type=submit]:disabled { background: #a5b8c6; color: #294253; }
+.previewAction { background: #a5b8c6; color: #294253; border: 1px solid #ffffff99; border-radius: 6px; min-height: 46px; font-weight: 900; width: 100%; }
 @media (max-width: 480px) { .page { padding: 24px 12px 40px; } .card { padding: 20px 16px; } }

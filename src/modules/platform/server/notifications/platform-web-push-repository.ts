@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
+import { notificationPreferenceEnabled } from "./platform-notification-defaults";
 import { canReceiveMembershipNotification } from "../membership/membership-notification-access";
 import { readClaimedWebPushSubscription } from "./platform-web-push-claim-subscription";
 
@@ -294,9 +295,10 @@ WHERE state IN ('pending', 'sending') AND subscription_id IN (
     occurredAtUtc: string;
     userId: string;
   }>): void {
-    const enabled = this.database.prepare<[string, string], { enabled: number }>(`SELECT web_push_enabled AS enabled
+    const stored = this.database.prepare<[string, string], { enabled: number }>(`SELECT web_push_enabled AS enabled
 FROM platform_notification_delivery_preferences
-WHERE user_id = ? AND category = ?`).get(input.userId, input.category)?.enabled === 1;
+WHERE user_id = ? AND category = ?`).get(input.userId, input.category)?.enabled;
+    const enabled = notificationPreferenceEnabled(this.database, stored);
     if (!enabled || !canReceiveMembershipNotification(this.database, input.userId, input.category)) return;
     const subscriptions = this.database.prepare<[string], { subscription_id: string }>(`SELECT subscription_id
 FROM platform_web_push_subscriptions WHERE user_id = ? AND state = 'active'`).all(input.userId);
@@ -379,6 +381,13 @@ FROM platform_notifications WHERE notification_id = ? AND recipient_user_id = ? 
   ORDER BY delivery.available_at_utc, delivery.created_at_utc
   LIMIT 1`).get(nowUtc, onlyDeliveryRef, onlyDeliveryRef);
         if (!row) return null;
+        const preference = this.database.prepare("SELECT web_push_enabled enabled FROM platform_notification_delivery_preferences WHERE user_id=? AND category=?")
+          .get(row.user_id, row.category) as { enabled: number } | undefined;
+        if (!row.source_event_key.startsWith("push_test_") && !notificationPreferenceEnabled(this.database, preference?.enabled)) {
+          this.database.prepare(`UPDATE platform_web_push_deliveries SET state='failed',failure_code='preference_disabled',updated_at_utc=?
+            WHERE delivery_id=? AND state='pending'`).run(nowUtc, row.delivery_id);
+          return undefined;
+        }
         if (!canReceiveMembershipNotification(this.database, row.user_id, row.category)) {
           this.database.prepare(`UPDATE platform_web_push_deliveries
 SET state='failed', failure_code='membership_required', updated_at_utc=?

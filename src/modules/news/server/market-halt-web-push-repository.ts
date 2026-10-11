@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { notificationDefaultEnabled } from "../../platform/server/notifications/platform-notification-defaults";
 import { canReceiveMembershipNotification } from "../../platform/server/membership/membership-notification-access";
 
 import type { PlatformWebPushEncryptionConfiguration } from "../../platform/server/notifications/platform-web-push-configuration";
@@ -58,10 +59,10 @@ WHERE state = 'pending' AND created_at_utc <= ?`).run(nowUtc, staleAlertBefore);
         this.database.prepare(`UPDATE news_market_halt_push_deliveries
   SET state = 'expired', failure_code = 'alerts_disabled', updated_at_utc = ?
       WHERE state = 'pending' AND (
-    NOT EXISTS (SELECT 1 FROM news_market_halt_preferences preference
-      JOIN platform_web_push_subscriptions subscription ON subscription.user_id = preference.user_id
+    NOT EXISTS (SELECT 1 FROM platform_web_push_subscriptions subscription
+      LEFT JOIN news_market_halt_preferences preference ON subscription.user_id = preference.user_id
       WHERE subscription.subscription_id = news_market_halt_push_deliveries.subscription_id
-        AND preference.enabled = 1)
+        AND COALESCE(preference.enabled, ${notificationDefaultEnabled(this.database)}) = 1)
     OR EXISTS (SELECT 1 FROM news_market_halt_muted_tickers muted
       JOIN platform_web_push_subscriptions subscription ON subscription.user_id = muted.user_id
       JOIN news_market_halt_events halt ON halt.halt_id = news_market_halt_push_deliveries.halt_id

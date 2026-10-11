@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
-import { assertMembershipNotification } from "../membership/membership-notification-access";
+import { assertMembershipNotification, canReceiveMembershipNotification } from "../membership/membership-notification-access";
+import { notificationDefaultEnabled } from "./platform-notification-defaults";
 
 import {
   DEFAULT_PLATFORM_NOTIFICATION_PREFERENCES,
@@ -269,13 +270,17 @@ WHERE recipient_user_id = ? AND read_at_utc IS NULL
     const rows = this.database.prepare<[string], PreferenceRow>(`SELECT category, discord_dm_enabled, email_enabled, web_push_enabled
 FROM platform_notification_delivery_preferences
 WHERE user_id = ?`).all(scope.userId);
-    const enabled = new Set(rows
+    const byCategory = new Map(rows.map(row => [row.category, row]));
+    const defaults = notificationDefaultEnabled(this.database);
+    const effective = PLATFORM_NOTIFICATION_CATEGORIES.filter(category => canReceiveMembershipNotification(this.database, scope.userId, category))
+      .map(category => byCategory.get(category) ?? { category, discord_dm_enabled: defaults, email_enabled: defaults, web_push_enabled: defaults });
+    const enabled = new Set(effective
       .filter((row) => row.discord_dm_enabled === 1)
       .map((row) => parseCategory(row.category)));
-    const webPushEnabled = new Set(rows
+    const webPushEnabled = new Set(effective
       .filter((row) => row.web_push_enabled === 1)
       .map((row) => parseCategory(row.category)));
-    const emailEnabled = new Set(rows
+    const emailEnabled = new Set(effective
       .filter((row) => row.email_enabled === 1)
       .map((row) => parseCategory(row.category)));
     return Object.freeze({
@@ -297,15 +302,18 @@ WHERE user_id = ?`).all(scope.userId);
     for (const category of selected) assertMembershipNotification(this.database, input.scope.userId, category);
     const save = this.database.transaction(() => {
       for (const category of PLATFORM_NOTIFICATION_CATEGORIES) {
+        if (!canReceiveMembershipNotification(this.database, input.scope.userId, category)) continue;
         this.database.prepare(`INSERT INTO platform_notification_delivery_preferences (
-  user_id, category, discord_dm_enabled, updated_at_utc
-) VALUES (?, ?, ?, ?)
+  user_id, category, discord_dm_enabled, email_enabled, web_push_enabled, updated_at_utc
+) VALUES (?, ?, ?, ?, ?, ?)
 ON CONFLICT(user_id, category) DO UPDATE SET
   discord_dm_enabled = excluded.discord_dm_enabled,
   updated_at_utc = excluded.updated_at_utc`).run(
           input.scope.userId,
           category,
           selected.has(category) ? 1 : 0,
+          notificationDefaultEnabled(this.database),
+          notificationDefaultEnabled(this.database),
           input.updatedAtUtc,
         );
       }
@@ -329,14 +337,17 @@ ON CONFLICT(user_id, category) DO UPDATE SET
     for (const category of selected) assertMembershipNotification(this.database, input.scope.userId, category);
     const save = this.database.transaction(() => {
       for (const category of PLATFORM_NOTIFICATION_CATEGORIES) {
+        if (!canReceiveMembershipNotification(this.database, input.scope.userId, category)) continue;
         this.database.prepare(`INSERT INTO platform_notification_delivery_preferences (
-  user_id, category, discord_dm_enabled, web_push_enabled, updated_at_utc
-) VALUES (?, ?, 0, ?, ?)
+  user_id, category, discord_dm_enabled, email_enabled, web_push_enabled, updated_at_utc
+) VALUES (?, ?, ?, ?, ?, ?)
 ON CONFLICT(user_id, category) DO UPDATE SET
   web_push_enabled = excluded.web_push_enabled,
   updated_at_utc = excluded.updated_at_utc`).run(
           input.scope.userId,
           category,
+          notificationDefaultEnabled(this.database),
+          notificationDefaultEnabled(this.database),
           selected.has(category) ? 1 : 0,
           input.updatedAtUtc,
         );
@@ -361,14 +372,17 @@ ON CONFLICT(user_id, category) DO UPDATE SET
     for (const category of selected) assertMembershipNotification(this.database, input.scope.userId, category);
     const save = this.database.transaction(() => {
       for (const category of PLATFORM_NOTIFICATION_CATEGORIES) {
+        if (!canReceiveMembershipNotification(this.database, input.scope.userId, category)) continue;
         this.database.prepare(`INSERT INTO platform_notification_delivery_preferences (
   user_id, category, discord_dm_enabled, web_push_enabled, email_enabled, updated_at_utc
-) VALUES (?, ?, 0, 0, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?)
 ON CONFLICT(user_id, category) DO UPDATE SET
   email_enabled = excluded.email_enabled,
   updated_at_utc = excluded.updated_at_utc`).run(
           input.scope.userId,
           category,
+          notificationDefaultEnabled(this.database),
+          notificationDefaultEnabled(this.database),
           selected.has(category) ? 1 : 0,
           input.updatedAtUtc,
         );
