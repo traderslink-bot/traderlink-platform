@@ -117,7 +117,7 @@ CREATE TABLE traderlink_community_watchlist_placements(watchlist_id TEXT,communi
       mode=failure;insertDelivery.run(failure,'community','alert','alert','alerts-destination');
       await worker.runAvailable();
       assert(outcome(failure).delivery_outcome==='uncertain','Unconfirmed POST cannot be treated as safely retryable.');
-      const beforeRetry=posts;mode='ok';await worker.runAvailable();
+      const beforeRetry:number=posts;mode='ok';await worker.runAvailable();
       assert(posts===beforeRetry,'Uncertain delivery must not automatically replay.');
     }
     mode='preflight-outage';insertDelivery.run('preflight','community','alert','alert','alerts-destination');
