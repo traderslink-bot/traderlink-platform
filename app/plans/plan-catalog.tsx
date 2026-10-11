@@ -52,6 +52,7 @@ export function PlanCatalog({
                 <article key={plan.planVersionId} className={styles.frame}>
                   <div className={styles.card}>
                   <h2 className={styles.name}>{plan.name}</h2>
+                  {plan.displayPrices?.map((price, index) => <div key={index}><div className={styles.price}>{price.price}</div><div>{price.name}</div></div>)}
                   {plan.offers.map(offer => <div key={offer.offerId}>
                     <div className={styles.price}>{membershipOfferPrice(offer)}</div>
                     {plan.offers.length > 1 ? <div>{offer.name}</div> : null}
@@ -83,19 +84,20 @@ export function PlanCatalog({
                     })}
                   </ul>
                   <Stack spacing={1.5} className={styles.footer}>
+                    {plan.displayOnly ? <Typography>Enrollment is not open for this plan.</Typography> : null}
                     {plan.offers.map((offer) => (
                       <Box key={offer.offerId} className={styles.offer}>
                         <Typography sx={{ fontSize: "1.15rem", fontWeight: 850 }}>{membershipOfferPrice(offer)}</Typography>
                         <Typography variant="caption">{offer.name}</Typography>
-                        {offer.accessDurationDays ? <Typography variant="body2">Includes {offer.accessDurationDays} {offer.accessDurationDays === 1 ? "day" : "days"} of access.</Typography> : null}
+                        {offer.accessDurationDays ? <Typography variant="body2">Includes {offer.accessDurationDays} days of access.</Typography> : null}
                         {!offer.automaticConfirmation && offer.billingKind !== "free" ? <Typography variant="body2">Payment uses {offer.providerLabel}. The owner confirms access after payment.</Typography> : null}
                         <MembershipForm action={selectMembershipAction} label={offer.billingKind === "free" ? "Get access" : "Choose this plan"}>
                           <input type="hidden" name="offerId" value={offer.offerId} />
                           {secret ? <input type="hidden" name="secret" value={secret} /> : null}
                         </MembershipForm>
                         {offer.trials.map((trial) => <Box key={trial.id} sx={{ mt: 2 }}>
-                          <Typography>{trial.name} · {trial.durationDays} {trial.durationDays === 1 ? "day" : "days"} · {trial.amount === 0 ? "Free" : formatMembershipMoney(trial.amount, offer.currency)}</Typography>
-                          <Typography variant="body2">{offer.billingKind === "recurring" && (trial.amount > 0 || trial.paymentMethodRequired)
+                          <Typography>{trial.name} · {trial.durationDays} days · {trial.amount === 0 ? "Free" : formatMembershipMoney(trial.amount, offer.currency)}</Typography>
+                          <Typography variant="body2">{(trial.endBehavior ?? (offer.billingKind === "recurring" && (trial.amount > 0 || trial.paymentMethodRequired) ? "renew" : "end_access")) === "renew"
                             ? `Renews after the trial: ${membershipOfferPrice({ ...offer, initialAmountMinor: offer.renewalAmountMinor })}`
                             : "Access ends when the trial ends."}</Typography>
                           <MembershipForm action={selectMembershipAction} label="Start trial">

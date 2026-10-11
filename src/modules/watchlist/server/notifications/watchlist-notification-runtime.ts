@@ -1,3 +1,4 @@
+import { readWatchlistNotificationCandidates } from "./watchlist-notification-candidates";
 import { evaluateMembershipFeature, hasPlatformMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { reconcileXPublications } from "./watchlist-x-runtime";
 import { reconcileFreeChatPublications } from "./watchlist-free-chat-runtime";
@@ -45,9 +46,7 @@ export function recordWatchlistApprovalNotificationIntent(body: string, actor: s
     ).get(intentId);
     if (existing) return;
     const recipients: Recipient[] = [];
-    const users = database.prepare<[], { user_id: string; web_push_enabled: number; email_enabled: number }>(
-      "SELECT user_id,web_push_enabled,email_enabled FROM platform_watchlist_notification_preferences WHERE web_push_enabled=1 OR email_enabled=1",
-    ).all();
+    const users = readWatchlistNotificationCandidates(database);
     for (const user of users) {
       if (!watchlistNotificationAccess(database, user.user_id)) continue;
       if (user.web_push_enabled) for (const target of database.prepare<[string], { id: string }>(

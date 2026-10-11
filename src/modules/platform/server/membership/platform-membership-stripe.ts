@@ -42,7 +42,7 @@ export async function createMembershipStripeCheckout(reserved: ReturnType<Platfo
   if (offer.provider_configuration_state === "test" && process.env.STRIPE_SECRET_KEY && !/^(sk|rk)_test_/.test(process.env.STRIPE_SECRET_KEY)) {
     throw new Error("This offer is in test mode, but Stripe has a live key configured.");
   }
-  const recurring = offer.billing_kind === "recurring";
+  const recurring = offer.billing_kind === "recurring" && !(trialDays && reserved.trialEndBehavior === "end_access");
   const initial = trialDays ? trialAmount ?? 0 : offer.initial_amount_minor;
   if (!offer.currency || initial === null) throw new Error("This offer has no payment terms.");
   const origin = membershipAppOrigin();
