@@ -4,7 +4,7 @@ type Role = { id: string; name: string; permissions: string };
 type Overwrite = { id: string; type: number; allow: string; deny: string };
 const snowflake = /^\d{1,32}$/u;
 const bitfield = /^\d{1,32}$/u;
-const REQUIRED = 1024n | 2048n; // View channel and send messages.
+const REQUIRED = BigInt(1024) | BigInt(2048); // View channel and send messages.
 
 export function canBotPublish(guildId: string, botId: string, memberRoles: readonly string[], roles: readonly Role[], overwrites: readonly Overwrite[]): boolean {
   const everyone = roles.find(role => role.id === guildId);
@@ -12,11 +12,11 @@ export function canBotPublish(guildId: string, botId: string, memberRoles: reado
   const selected = new Set(memberRoles);
   let permissions = BigInt(everyone.permissions);
   for (const role of roles) if (selected.has(role.id)) permissions |= BigInt(role.permissions);
-  if (permissions & 8n) return true;
+  if (permissions & BigInt(8)) return true;
   const apply = (deny: bigint, allow: bigint) => { permissions = (permissions & ~deny) | allow; };
   const base = overwrites.find(item => item.type === 0 && item.id === guildId);
   if (base) apply(BigInt(base.deny), BigInt(base.allow));
-  let deny = 0n, allow = 0n;
+  let deny = BigInt(0), allow = BigInt(0);
   for (const item of overwrites) if (item.type === 0 && item.id !== guildId && selected.has(item.id)) { deny |= BigInt(item.deny); allow |= BigInt(item.allow); }
   apply(deny, allow);
   const personal = overwrites.find(item => item.type === 1 && item.id === botId);

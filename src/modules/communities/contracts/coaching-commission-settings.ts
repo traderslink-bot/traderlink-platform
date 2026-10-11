@@ -6,7 +6,7 @@ export function parseCommissionHundredths(value: string, maximum = Number.MAX_SA
   const text = value.trim();
   if (!/^\d+(?:\.\d{1,2})?$/u.test(text)) throw new Error("Enter a number with up to two decimal places.");
   const [whole, fraction = ""] = text.split(".");
-  const minor = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0"));
+  const minor = BigInt(whole) * BigInt(100) + BigInt(fraction.padEnd(2, "0"));
   if (minor > BigInt(maximum)) throw new Error("Amount is outside the supported range.");
   return Number(minor);
 }
