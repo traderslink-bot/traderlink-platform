@@ -22,7 +22,7 @@ export function CommunityWatchlistResearchFields({ initialSymbols = [], initialR
     <TextField label="Tickers" name="symbols" placeholder="NVDA, TSLA, SPY" value={symbolsText} onChange={event => setSymbolsText(event.target.value)}/>
     <input type="hidden" name="tickerResearch" value={JSON.stringify(Object.fromEntries(symbols.map(symbol => [symbol, research[symbol] ?? { notes: "", research: "", sources: [] }])))} />
     {symbols.map(symbol => <Accordion key={symbol} disableGutters>
-      <AccordionSummary aria-controls={`research-${symbol}`} id={`ticker-${symbol}`}><Typography fontWeight={700}>{symbol} — Notes and DD research</Typography></AccordionSummary>
+      <AccordionSummary aria-controls={`research-${symbol}`} id={`ticker-${symbol}`}><Typography sx={{ fontWeight: 700 }}>{symbol} — Notes and DD research</Typography></AccordionSummary>
       <AccordionDetails id={`research-${symbol}`}><Stack spacing={2}>
         <TextField label="Notes" multiline minRows={2} value={research[symbol]?.notes ?? ""} onChange={event => update(symbol, "notes", event.target.value)}/>
         <TextField label="DD research" multiline minRows={4} value={research[symbol]?.research ?? ""} onChange={event => update(symbol, "research", event.target.value)}/>

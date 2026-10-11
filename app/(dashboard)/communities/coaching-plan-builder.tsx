@@ -71,7 +71,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
           <Box>
             <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center",mb:1.5}}><Typography component="h3" variant="h3">Coaching included</Typography><Button href="#coach-plan-preview" size="small">Preview</Button></Stack>
             {(["Reviews", "Sessions and support"] as const).map(group => <Box key={group} sx={{mb:2}}>
-              <Typography fontWeight={700} sx={{mb:1}}>{group}</Typography>
+              <Typography sx={{ fontWeight: 700, mb:1}}>{group}</Typography>
               <Grid container spacing={1}>
                 {PLAN_OFFERS.filter(offer => offer.group===group).map(offer => {
                   const added = selected.includes(offer.type);
@@ -84,7 +84,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
                         "&:hover":{borderColor:color,bgcolor:alpha(color,.2),boxShadow:added?`inset 0 0 0 1px ${color}`:"none"},
                         "&.Mui-focusVisible":{outline:`3px solid ${color}`,outlineOffset:3},
                       };}}>
-                      <Typography component="span" fontWeight={750} sx={{color:"inherit"}}>{offer.label}</Typography>
+                      <Typography component="span" sx={{ fontWeight: 750, color:"inherit"}}>{offer.label}</Typography>
                       <Typography component="span" id={`offer-description-${offer.type}`} variant="body2" sx={{color:"text.primary",fontWeight:400,lineHeight:1.5}}>{offer.description}</Typography>
                       <Chip component="span" size="small" label={added ? "Added" : "+"} sx={theme => ({mt:"auto",color:offerColor(offer,theme.palette.mode),bgcolor:"transparent",border:"1px solid currentColor",fontWeight:800})}/>
                     </Button>
@@ -125,7 +125,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
         <Box id="coach-plan-preview" sx={{position:{lg:"sticky"}, top:{lg:24}, scrollMarginTop:80, border:1, borderColor:"divider", borderRadius:2, p:2.5, bgcolor:"background.paper"}}>
           <Stack spacing={2}>
             <Typography component="h3" variant="h3">Plan preview</Typography>
-            <Typography fontWeight={800}>{name || "Untitled plan"}</Typography>
+            <Typography sx={{ fontWeight: 800 }}>{name || "Untitled plan"}</Typography>
             <Stack direction="row" spacing={1} sx={{flexWrap:"wrap", gap:1}}>
               <Chip color="success" label={quote ? "Quote required" : price ? currency+" "+price : "Price not set"}/>
               <Chip color="info" label={{weekly:"Weekly billing",monthly:"Monthly billing",one_time:"One-time",custom:"Custom billing"}[billing]}/>
@@ -133,7 +133,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
             </Stack>
             <Divider/>
             {!active.length ? <Typography color="text.secondary">No services selected</Typography> : active.map(offer => <Box key={offer.type}>
-              <Typography fontWeight={800}>{offer.label}</Typography>
+              <Typography sx={{ fontWeight: 800 }}>{offer.label}</Typography>
               <Stack direction="row" sx={{flexWrap:"wrap", gap:.75, mt:1}}>
                 {offerSummary(offer, settings[offer.type]).map(text => <Chip key={text} size="small" variant="outlined" label={text} sx={theme => ({color:offerColor(offer,theme.palette.mode),borderColor:alpha(offerColor(offer,theme.palette.mode),.5),height:"auto", "& .MuiChip-label":{whiteSpace:"normal", py:.5}})}/>)}
               </Stack>
@@ -176,7 +176,7 @@ function OfferEditor({offer, value, onChange, onRemove}:{
     </Stack>
     <Stack spacing={2}>
       {offer.type==="performance_review" ? <Box>
-        <Typography fontWeight={700}>Include in performance review</Typography>
+        <Typography sx={{ fontWeight: 700 }}>Include in performance review</Typography>
         <Chip label="Performance results and comparisons" size="small" color="success" sx={{my:1}}/>
         <Grid container>{PERFORMANCE_INCLUSIONS.map(item=><Grid key={item.key} size={{xs:12,sm:6}}><FormControlLabel label={item.label} control={<Checkbox checked={value.focus.includes(item.key)} onChange={()=>focusToggle(item.key)}/>}/></Grid>)}</Grid>
       </Box> : null}
