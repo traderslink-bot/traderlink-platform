@@ -263,6 +263,12 @@ function readPlatformRuntimeDatabaseStructureFingerprint(
   ].join(":");
 }
 
+function readPlatformRuntimeDatabaseFileIdentity(
+  structureFingerprint: string,
+): string {
+  return structureFingerprint.split(":").slice(0, 2).join(":");
+}
+
 function readVerifiedRuntimeDatabaseFingerprints(): Map<
   string,
   RuntimeIntegrityState | string
@@ -794,8 +800,11 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
       check: "quick_check",
     });
   }
+  const databaseFileIdentityChanged = existing &&
+    readPlatformRuntimeDatabaseFileIdentity(existing.structureFingerprint) !==
+      readPlatformRuntimeDatabaseFileIdentity(structureFingerprint);
   const needsFullVerification = existing && (existing.requiresFullVerification ||
-    existing.structureFingerprint !== structureFingerprint);
+    databaseFileIdentityChanged);
   if (needsFullVerification && existing.quickCheckInFlight) {
     // Full synchronous revalidation must not overlap the old native reader.
     // Identity/structure recovery is distinct from ordinary operational pending.
@@ -885,11 +894,19 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
     database,
     verificationManifest,
   );
+  const inFlightDataScanInvalidated = existing.quickCheckInFlight;
   existing.dataGeneration += 1;
   existing.dirtySinceForeignKeyCheck = true;
   existing.dirtySinceQuickCheck = true;
   existing.fingerprint = fingerprint;
   existing.structureFingerprint = structureFingerprint;
+  if (inFlightDataScanInvalidated) {
+    // A completed write makes the reader's captured data generation stale. Keep
+    // the last verified baseline available, release the stale reader, and start
+    // the replacement only after its process has actually exited.
+    existing.generation += 1;
+    existing.cancelWorker?.();
+  }
   schedulePlatformRuntimeQuickCheck(databasePath, existing, Date.now());
 }
 
