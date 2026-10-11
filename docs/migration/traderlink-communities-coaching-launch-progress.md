@@ -4,7 +4,11 @@ Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-
 
 ## 2026-10-10 — post-shutdown recovery
 
+Coordinator subsequently confirmed staging source `310957a4dab145ca0c826229e3fb1e3bb02bf6ff`, deployment `f858b298-7b1d-4f72-a0c9-01937c6374dc`, schema 160 and one healthy running instance; production unchanged. Chrome hosted checks now confirm coach workspace/review loading, the previous-focus reminder, and the repaired shared analytics/Trade Explorer drawer (one synthetic AAPL trade, $20 net). Analyzer drill-down correctly reports no saved analysis for that fixture. These are partial hosted results, not complete launch acceptance. Checkpoint backup remains with the coordinator; remaining two-account, publishing, lifecycle and operational QA is still open.
+
 Saved checkpoint dcd734b19 was intact. Coordinator confirmed staging-only authorization and retains integration/deployment ownership. Two additional existing-coaching action callers were corrected; see [deletion/access progress](traderlink-coaching-deletion-archive-progress.md). This is not full staging QA or launch acceptance. Both commissions remain disabled and production is not authorized.
+
+Hosted follow-up on the same integrated build: the existing synthetic Bullrun review `682f38d5-307d-482e-b244-9fa6a7b602eb` passed Find trades (All shared trades), select all, Add to review, inline trade feedback save, To review 1→0 / Saved 0→1, and saved-row persistence after full reload. Shared trade details returned both executions and the approved synthetic Journal note. The review remains an unsent draft; no payment or real trading record was changed. Chrome currently exposes only the coach session, so fresh student-side upload/receipt remains unverified in this continuation.
 
 ## 2026-10-10 — consolidated planning checkpoint
 
