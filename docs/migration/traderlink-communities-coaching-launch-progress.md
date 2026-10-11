@@ -4,6 +4,14 @@ Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-
 
 ## 2026-10-10 — post-shutdown recovery
 
+### Owner-requested repeat QA — source 9cbe4bae5
+
+- Re-read the exact four-commit correction range from 4db2da6c0 through 9cbe4bae5. Only the preexisting September28 QA-document edit remains dirty and was preserved.
+- Re-ran all fourteen lightweight regression scripts: PASS. Re-ran real-schema launch-foundation and coaching-remediation fixtures: PASS, including recurrence, frozen/revised agreements, question renewal, follow-up expiry, privacy, role restoration, archive rollback/expiry/cleanup and Journal isolation. Exact-range diff check: PASS.
+- Staging health currently reports ready, sqlite_single_node, migrationCount160. Fresh Chrome workspace reload preserves the follow-up work and counts. Current Overdue selection shows four overdue active tasks and excludes the follow-up due October12; this alone does not prove the finalized-review regression because fixture due dates differ.
+- Deployed Coaching Work heading still computes rgb(23,23,23) in dark mode. The local text.primary correction is therefore not accepted as hosted-verified. Coordinator was asked for exact current source/deployment and integration status; no new deployment proof received during this audit.
+- Verdict: focused local correction QA passes; full launch/staging acceptance remains open. No production changes or commission activation performed. Outstanding corrected-build browser retest, staging admin authority/operations and independent-server gates remain explicitly open.
+
 ### Continued hosted regression — due filter correction
 
 Fourteen lightweight regression scripts pass at the continued checkpoint: page denial, action navigation, attachment route, deletion archive route, coaching index, plan role selection, review context/reminders, student selection, work filters, capacity/links, bot install identity, onboarding action reentry and publication feedback UI. Three older harnesses were reconciled to current contracts: explicit publication status, Discord-resource import, and onboarding's fresh-verification/service boundary instead of removed inline SQL. Assertions preserve identity/admission/linked-account denial and distinguish mocked action proof from the separate real-schema launch-foundation proof. No real network calls were made by these harnesses.
