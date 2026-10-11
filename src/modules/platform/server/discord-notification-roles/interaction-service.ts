@@ -130,20 +130,20 @@ export function dispatchNotificationRoleInteraction(payload: unknown, config: No
       },
     };
   } else {
-    const match = /^tl:nr:v1:([a-f\d]{32}):(select|clear|save)$/u.exec(data.custom_id);
+    const match = /^tl:nr:v1:([a-f\d]{32}):(toggle:([a-z_\d]+)|clear|save)$/u.exec(data.custom_id);
     if (!match || typeof message.flags !== "number" || (message.flags & 64) === 0) return notice(expired);
     const session = state.sessions.get(match[1]);
     if (!session || session.memberId !== memberId || session.guildId !== config.guildId
       || session.version !== config.version || session.expiresAt <= now) return notice(expired);
     if (session.busy) return notice("Your choices are being saved. Please wait, then choose notifications again.");
     const action = match[2];
-    if ((action === "select" && data.component_type !== 3) || (action !== "select" && data.component_type !== 2)) return notice(expired);
-    if (action === "select") {
-      if (!Array.isArray(data.values) || data.values.length > selectableNotificationRoles.length
-        || !data.values.every(isSelectableNotificationRoleKey) || new Set(data.values).size !== data.values.length) return notice(unavailable);
-      session.selected = [...data.values] as NotificationRoleKey[];
-      // Keep the client-owned dropdown stable; a full ephemeral re-render can stall desktop Save.
-      result = { response: { type: 6 } };
+    if (data.component_type !== 2) return notice(expired);
+    if (action.startsWith("toggle:")) {
+      const key = match[3];
+      if (!isSelectableNotificationRoleKey(key)) return notice(unavailable);
+      session.selected = session.selected.includes(key)
+        ? session.selected.filter((value: NotificationRoleKey) => value !== key) : [...session.selected, key];
+      result = { response: { type: 7, data: privateSelectorPayload(session.id, session.selected, "Unsaved changes") } };
     } else if (action === "clear") {
       session.selected = [];
       result = { response: { type: 7, data: privateSelectorPayload(session.id, [], "Selection cleared. Select Save to turn these notifications off.") } };

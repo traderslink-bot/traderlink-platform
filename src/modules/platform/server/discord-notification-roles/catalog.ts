@@ -54,15 +54,16 @@ export function privateSelectorPayload(sessionId: string, selected: readonly Not
   return {
     content,
     allowed_mentions: noMentions,
-    embeds: [{ title: "Your notifications", color: 0x5865f2 }],
+    embeds: [{ title: "Your notifications", color: 0x5865f2,
+      description: "Tap a topic to select or deselect it. A checkmark means selected. Tap Save to apply your choices." }],
     components: [
-      { type: 1, components: [{
-        type: 3, custom_id: `${prefix}:select`, placeholder: "Select notifications",
-        min_values: 0, max_values: selectableNotificationRoles.length,
-        options: selectableNotificationRoles.map(role => ({
-          label: role.label, value: role.key, description: role.description, default: selected.includes(role.key),
+      ...[[0, 3], [3, 6], [6, 10], [10, 12]].map(([start, end]) => ({
+        type: 1, components: selectableNotificationRoles.slice(start, end).map(role => ({
+          type: 2, style: selected.includes(role.key) ? 3 : 2,
+          label: `${selected.includes(role.key) ? "✓ " : ""}${role.label}`,
+          custom_id: `${prefix}:toggle:${role.key}`,
         })),
-      }] },
+      })),
       { type: 1, components: [
         { type: 2, style: 1, label: "Save", custom_id: `${prefix}:save` },
         { type: 2, style: 2, label: "Clear selection", custom_id: `${prefix}:clear` },
