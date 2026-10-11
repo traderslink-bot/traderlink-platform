@@ -1,0 +1,105 @@
+name: Membership unified editor remote QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/membership-unified-editor-remote-qa-20261010
+
+permissions:
+  contents: read
+
+concurrency:
+  group: membership-unified-editor-remote-qa
+  cancel-in-progress: false
+
+jobs:
+  exact-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      MEMBERSHIP_CANDIDATE: 358052b4a84af66ea951298aad7de5a0d0e6a25b
+    steps:
+      - name: Check out QA branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Check exact candidate types
+        id: types
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          node scripts/check-membership-candidate.cjs "$MEMBERSHIP_CANDIDATE" types 2>&1 | tee types.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            tail -n 80 types.log | while IFS= read -r line; do printf '::error title=Membership types::%s\n' "$line"; done
+          fi
+          exit "$status"
+      - name: Lint exact candidate changes
+        id: lint
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          node scripts/check-membership-candidate.cjs "$MEMBERSHIP_CANDIDATE" lint 2>&1 | tee lint.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            tail -n 80 lint.log | while IFS= read -r line; do printf '::error title=Membership lint::%s\n' "$line"; done
+          fi
+          exit "$status"
+      - name: Run exact candidate offline proof
+        id: proof
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          node scripts/check-membership-candidate.cjs "$MEMBERSHIP_CANDIDATE" proof 2>&1 | tee proof.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            tail -n 80 proof.log | while IFS= read -r line; do printf '::error title=Membership proof::%s\n' "$line"; done
+          fi
+          exit "$status"
+      - name: Replay exact candidate schema in memory
+        id: schema
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          node scripts/check-membership-candidate.cjs "$MEMBERSHIP_CANDIDATE" schema 2>&1 | tee schema.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            tail -n 80 schema.log | while IFS= read -r line; do printf '::error title=Membership schema::%s\n' "$line"; done
+          fi
+          exit "$status"
+      - name: Build QA branch
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          npm run build 2>&1 | tee build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            tail -n 80 build.log | while IFS= read -r line; do printf '::error title=Membership build::%s\n' "$line"; done
+          fi
+          exit "$status"
+      - name: Enforce all gates
+        if: always()
+        shell: bash
+        run: |
+          printf 'types=%s lint=%s proof=%s schema=%s build=%s\n' '${{ steps.types.outcome }}' '${{ steps.lint.outcome }}' '${{ steps.proof.outcome }}' '${{ steps.schema.outcome }}' '${{ steps.build.outcome }}'
+          test '${{ steps.types.outcome }}' = success
+          test '${{ steps.lint.outcome }}' = success
+          test '${{ steps.proof.outcome }}' = success
+          test '${{ steps.schema.outcome }}' = success
+          test '${{ steps.build.outcome }}' = success
