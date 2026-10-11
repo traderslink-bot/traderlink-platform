@@ -244,7 +244,49 @@ try{
   assert((database.prepare(`SELECT views FROM traderlink_community_activity_daily_members WHERE community_id=? AND user_id=?`).get(first.communityId,OWNER) as {views:number}).views===1,"Named activity projection must remain community scoped.");
   assert(!(database.prepare(`SELECT 1 FROM traderlink_community_activity_daily_members WHERE community_id=?`).get(second.communityId)),"Activity must not cross communities.");
 
+  // Owner and Discord-mapped admin both coach the same student. This fixture
+  // proves service boundaries, not a fresh hosted Discord installation.
+  database.exec("SAVEPOINT two_coaches_one_student");
+  const sharedStudent="10000000-0000-4000-8000-000000000777";
+  insertUser.run(sharedStudent,"shared-student","Shared student",NOW,NOW);
+  insertIdentity.run(sharedStudent,"shared-student",sharedStudent,NOW,NOW,NOW);
+  insertDiscord.run(sharedStudent,PILOT_GUILD,"shared-student","Shared student",JSON.stringify(["200003"]),0,NOW,NOW,NOW);
+  permissions.syncActiveMemberFromDiscord({communityId:first.communityId,userId:sharedStudent,timestamp:NOW});
+  permissions.saveDiscordFeatureMapping({communityId:first.communityId,actorUserId:OWNER,discordRoleId:"200001",discordRoleName:"QA admin coach",responsibilities:["community-admin","coach","alerts-publish","alerts-access","server-watchlists-publish","server-watchlists-access"],timestamp:NOW});
+  permissions.saveDiscordFeatureMapping({communityId:first.communityId,actorUserId:OWNER,discordRoleId:"200003",discordRoleName:"QA student",responsibilities:["coaching-access"],timestamp:NOW});
+  const ownerActor={userId:OWNER,displayName:"Owner coach",discordRoleIds:[]};
+  const adminActor={userId:MEMBER,displayName:"Admin coach",discordRoleIds:["200001"]};
+  const studentActor={userId:sharedStudent,displayName:"Shared student",discordRoleIds:["200003"]};
+  const ownerProfile=platform.upsertCoach({communityId:first.communityId,actor:ownerActor,userId:OWNER,displayName:"Owner coach",headline:"",biography:"",deliverySummary:"",capacity:10,active:true,atUtc:NOW});
+  const pairs=[];
+  for(const [actor,profile] of [[ownerActor,ownerProfile],[adminActor,coach]] as const){
+    const ownPlan=platform.createPlan({communityId:first.communityId,actor,coachProfileId:profile,name:`${actor.displayName} shared student plan`,description:"Synthetic QA",cadence:"monthly",tradeReviewLimit:1,studentCapacity:10,messagingIncluded:true,tradeReviewsIncluded:true,sessionsIncluded:true,teachingIncluded:true,priceLabel:"Test only",priceAmountMinor:0,currency:"USD",billingCadence:"monthly",quoteRequired:false,paymentInstructions:"No payment",audienceId:everyone,requiredDiscordRoleId:"200003",planStyle:"structured",items:[{itemType:"trade_review",frequency:"weekly",coveragePeriod:"previous_7_days",quantity:1,dueOffsetDays:2,selectionMode:"coach_or_student",followUpDays:0,measurementKind:"trades",plannedMinutes:null,timelineEnabled:true,reviewDepth:"standard"}],journalScopes:[],publish:true,atUtc:NOW});
+    const ownRelationship=platform.requestCoaching({communityId:first.communityId,actor:studentActor,planId:ownPlan,atUtc:NOW});
+    platform.setRelationshipStatus({communityId:first.communityId,actor,relationshipId:ownRelationship,status:"active",atUtc:NOW});
+    platform.setStudentServices({communityId:first.communityId,actor,relationshipId:ownRelationship,messagingEnabled:true,tradeReviewsEnabled:true,atUtc:NOW});
+    const ownMessage=platform.sendCoachingMessage({communityId:first.communityId,actor,relationshipId:ownRelationship,body:`${actor.displayName} only message`,atUtc:NOW});
+    const ownPrivate=platform.createCoachingRecord({communityId:first.communityId,actor,relationshipId:ownRelationship,recordType:"session",visibility:"coach_private",title:`${actor.displayName} private`,body:"Private coaching note",occurredAtUtc:NOW,atUtc:NOW});
+    const ownAlert=platform.createAlert({communityId:first.communityId,actor,title:`${actor.displayName} alert`,body:"Synthetic",audienceId:everyone,publish:true,atUtc:NOW});
+    const ownWatchlist=platform.createServerWatchlist({communityId:first.communityId,actor,title:`${actor.displayName} watchlist`,description:"Independent author notes",symbols:["ABC"],publish:true,atUtc:NOW});
+    pairs.push({actor,ownRelationship,ownMessage,ownPrivate,ownAlert,ownWatchlist});
+  }
+  assert(pairs[0].ownRelationship!==pairs[1].ownRelationship,"Same student must have distinct coach relationships.");
+  for(const pair of pairs){
+    const other=pairs.find(item=>item!==pair)!;
+    const own=platform.readSnapshot("first-room",pair.actor);
+    assert(own.relationships.some(row=>row.relationshipId===pair.ownRelationship),"Coach sees own student relationship.");
+    assert(own.coachingMessages.some(row=>row.messageId===pair.ownMessage),"Coach sees own message.");
+    assert(own.coachingRecords.some(row=>row.recordId===pair.ownPrivate),"Coach sees own private note.");
+    assert(!own.relationships.some(row=>row.relationshipId===other.ownRelationship),"Owner/admin must not see the other coach's relationship.");
+    assert(!own.coachingMessages.some(row=>row.messageId===other.ownMessage),"Owner/admin must not see the other coach's messages.");
+    assert(!own.coachingRecords.some(row=>row.recordId===other.ownPrivate),"Owner/admin must not see the other coach's private notes.");
+    expectDenied(()=>platform.sendCoachingMessage({communityId:first.communityId,actor:pair.actor,relationshipId:other.ownRelationship,body:"Wrong coach",atUtc:NOW}),"Owner/admin cannot send messages into another coach's relationship.");
+    assert(own.alerts.some(row=>row.alertId===pair.ownAlert)&&own.watchlists.some(row=>row.watchlistId===pair.ownWatchlist),"Both coaches can publish their own alerts and watchlists.");
+  }
+  const sharedView=platform.readSnapshot("first-room",studentActor);
+  for(const pair of pairs){assert(sharedView.relationships.some(row=>row.relationshipId===pair.ownRelationship),"Student sees both coach relationships.");assert(sharedView.coachingMessages.some(row=>row.messageId===pair.ownMessage),"Student receives each coach's messages.");assert(!sharedView.coachingRecords.some(row=>row.recordId===pair.ownPrivate),"Student cannot see coach-private notes.");}
+  database.exec("ROLLBACK TO two_coaches_one_student; RELEASE two_coaches_one_student");
   const finalForeignKeys=database.pragma("foreign_key_check") as unknown[];
   assert(finalForeignKeys.length===0,"Seeded Communities flow has foreign-key violations.");
-  console.log(JSON.stringify({capabilities:capabilityCount,communityIsolation:true,discordRoleMapping:true,foreignKeyViolations:0,journalGrantRevoked:true,namedActivity:true,ok:true,tables:expected.length,tier2Disabled:true}));
+  console.log(JSON.stringify({capabilities:capabilityCount,communityIsolation:true,discordRoleMapping:true,foreignKeyViolations:0,journalGrantRevoked:true,namedActivity:true,twoCoachesSharedStudent:true,ok:true,tables:expected.length,tier2Disabled:true}));
 }finally{database.close();}

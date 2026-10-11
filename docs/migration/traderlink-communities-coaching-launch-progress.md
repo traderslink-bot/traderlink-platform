@@ -231,6 +231,14 @@ Next: L02 freshness/transfer/disconnect; remaining coaching/content lifecycle an
 
 ## Owner-approved deletion and publishing checkpoint
 
+### First-owner journey and two coaches sharing one student — October 11 QA
+
+- Requested scenario: first-time server connection; owner and a community admin each coach the same student and each publish alerts and official server watchlists.
+- Hosted owner onboarding currently shows `No approved server available`. Refresh Discord servers reached Discord authorization, where Chrome automation could not attach. Owner asked to finish that refresh; coordinator asked to inspect candidate/allowlist evidence and identify an independent test guild. Existing community must not be reset to simulate first-time onboarding.
+- Existing owner role-mapping UI loads real Discord roles and offers Community Admin, coaching, alerts and server-watchlist responsibilities. No new hosted permissions granted. Asked whether the connected moonmafia account is the intended second coach/admin; TradersLink is owner/coach and Bullrun the shared student.
+- Expanded `verify-traderlink-communities.ts` with an isolated in-memory two-coach fixture, separate student role, two plans and two active relationships. Both coaches publish alerts/watchlists; the student receives both coaches' messages. Positive own-message/private-note controls pass. Owner/admin cannot read or send into the other coach's relationship; student cannot read private coach notes. Foreign-key check passes. Fixture changes roll back and never touch hosted data.
+- Browser onboarding and the complete three-account journey remain pending; this service-level pass is not end-to-end acceptance or launch readiness. No production deployment or commission activation. No product UI or Help changes in this QA slice.
+
 Immutable integration inventory and release boundaries: [October 10 staging integration handoff](traderlink-coaching-staging-integration-handoff-20261010.md). Runtime source is pinned to1a5b83da5; coordinator owns the separate current-production-parity/staging-ledger integration. This is not a deployed or launch-accepted state.
 
 The preceding pending deletion decision is superseded by the approved 60-day policy and existing-coaching-only continuation. Implementation/evidence is tracked in [Deletion archive progress](traderlink-coaching-deletion-archive-progress.md); publishing handoff is tracked in [Publishing setup corrections](community-publishing-setup-corrections-20261010.md). Both slices now belong to this coaching chat; preserve the unrelated September 28 live-QA document edit.
