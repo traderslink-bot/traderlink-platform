@@ -16,7 +16,7 @@ export function CommunityWatchlistResearchFields({ initialSymbols = [], initialR
   const [research, setResearch] = useState<CommunityWatchlistResearch>(initialResearch);
   const symbols = [...new Set(symbolsText.normalize("NFKC").toUpperCase().split(/[\s,]+/u).filter(Boolean))];
   function update(symbol: string, field: keyof CommunityTickerResearch, value: string) {
-    setResearch(current => ({ ...current, [symbol]: { notes: "", research: "", sources: [], ...current[symbol], [field]: field === "sources" ? value.split("\n") : value } }));
+    setResearch(current => ({ ...current, [symbol]: { ...(current[symbol] ?? { notes: "", research: "", sources: [] }), [field]: field === "sources" ? value.split("\n") : value } }));
   }
   return <Stack spacing={2}>
     <TextField label="Tickers" name="symbols" placeholder="NVDA, TSLA, SPY" value={symbolsText} onChange={event => setSymbolsText(event.target.value)}/>
