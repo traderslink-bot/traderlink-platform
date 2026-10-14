@@ -1,0 +1,10 @@
+.row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.row > * { min-width: 0; overflow-wrap: anywhere; }
+.single { display: block; }
+.notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+.notes h3 { white-space: normal; font-weight: 700; }
+.side { display: grid; gap: 1rem; }
+.side section { margin: 0; }
+.sectionTitle { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+.sectionTitle h3 { margin: 0; }
+@media (max-width: 760px) { .row { grid-template-columns: minmax(0, 1fr); gap: .75rem; } }

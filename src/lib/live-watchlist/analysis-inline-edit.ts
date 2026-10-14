@@ -24,6 +24,8 @@ function pick(value: unknown, fields: string[]): EditRecord {
 export function makeAnalysisEdit(payload: Record<string, unknown>): EditRecord {
   if (payload.analysisFormat === "simple") return {
     simpleAnalysis:structuredClone(payload.simpleAnalysis) as EditValue,
+    catalystRealityCheck:pick(payload.catalystRealityCheck,["summary","dayTradeRelevance"]),
+    riskSummary:structuredClone(payload.riskSummary ?? []) as EditValue,
     ownerHiddenSections:structuredClone(payload.ownerHiddenSections ?? []) as EditValue,
   };
   const result: EditRecord = {};

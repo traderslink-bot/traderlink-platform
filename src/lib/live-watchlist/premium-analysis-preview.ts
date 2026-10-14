@@ -26,6 +26,9 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
   if (read.analysisFormat === "simple" && read.simpleAnalysis) {
     const simple = read.simpleAnalysis;
     add("currentRead", "", [simple.setup]);
+    if (simple.breakout) add("breakoutContinuation", "Breakout", [simple.breakout.explanation, simple.breakout.confirmation], true);
+    if (read.catalystRealityCheck.sourceUrls.length) add("catalystRealityCheck", "Catalyst / recent news", [read.catalystRealityCheck.summary, read.catalystRealityCheck.dayTradeRelevance]);
+    add("riskSummary", "Risk notes", read.riskSummary);
     simple.pullbacks.forEach((zone, index) => add(index ? "deep" : "shallow", index ? "Deeper pullback" : "Pullback",
       [zone.explanation, zone.confirmation], true));
     simple.upside.forEach(level => add("targets", "Potential Targets (Volume Dependent)", [level.explanation], true));

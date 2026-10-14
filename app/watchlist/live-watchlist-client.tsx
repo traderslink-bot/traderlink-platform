@@ -1,4 +1,7 @@
 "use client";
+import { AnalysisTraderNotes } from "./analysis-trader-notes";
+import analysisLayout from "./analysis-layout.module.css";
+
 import { WatchlistPlanUpgrade } from "./watchlist-plan-upgrade";
 import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
 
@@ -490,6 +493,7 @@ function shouldShowTradersLinkAiLiveVolumeConfirmation(args: {
 }
 
 export function TradersLinkAiReadCard({
+  traderNotes,
   card,
   symbol,
   livePrice,
@@ -498,6 +502,7 @@ export function TradersLinkAiReadCard({
   failureRecoveryVisible = false,
   renderSectionEditor,
 }: {
+  traderNotes?: string | null;
   card: LiveWatchlistCardContent;
     symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus"> &
       Partial<Pick<LiveWatchlistSymbolState, "firstPostedAt">>;
@@ -512,7 +517,7 @@ export function TradersLinkAiReadCard({
     return <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />;
   }
   const read = sanitizeTradersLinkAiReadForDisplay(parsedRead);
-  if (read.analysisFormat === "simple") return <SimpleAnalysisCard read={read} renderSectionEditor={renderSectionEditor} />;
+  if (read.analysisFormat === "simple") return <SimpleAnalysisCard read={read} traderNotes={traderNotes} olderArticleDate={olderTradersLinkArticlePublicationDate(read) ? formatArticleDate(olderTradersLinkArticlePublicationDate(read)!) : null} renderSectionEditor={renderSectionEditor} />;
   const hidden = new Set(read.ownerHiddenSections ?? []);
   const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read);
   const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
@@ -554,8 +559,10 @@ export function TradersLinkAiReadCard({
         </div>
       </div>
 
+      <div className={traderNotes?.trim() ? analysisLayout.row : analysisLayout.single}><div>
       {renderSectionEditor?.(["bias", "currentRead"])}
       {!hidden.has("currentRead") && read.currentRead.trim() ? <p>{read.currentRead}</p> : null}
+      </div><AnalysisTraderNotes body={traderNotes} /></div>
       {!hidden.has("momentumFailure") && !hidden.has("shallow") && !hidden.has("deep") && liveVolumeContext && shouldShowTradersLinkAiLiveVolumeConfirmation({
         read,
         livePrice: currentLivePrice,
@@ -977,6 +984,7 @@ function sanitizeTradersLinkAiReadForDisplay(
     ...(read.simpleAnalysis ? {simpleAnalysis:{
       ...read.simpleAnalysis,
       setup:removeStockTitanReference(read.simpleAnalysis.setup),
+      breakout:read.simpleAnalysis.breakout ? {...read.simpleAnalysis.breakout, explanation:removeStockTitanReference(read.simpleAnalysis.breakout.explanation), confirmation:removeStockTitanReference(read.simpleAnalysis.breakout.confirmation)} : null,
       pullbacks:read.simpleAnalysis.pullbacks.map(plan=>({...plan,explanation:removeStockTitanReference(plan.explanation),confirmation:removeStockTitanReference(plan.confirmation)})),
       upside:read.simpleAnalysis.upside.map(level=>({...level,explanation:removeStockTitanReference(level.explanation)})),
       invalidation:read.simpleAnalysis.invalidation ? {...read.simpleAnalysis.invalidation,explanation:removeStockTitanReference(read.simpleAnalysis.invalidation.explanation)} : null,
@@ -1574,6 +1582,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
       {symbol.membershipAnalysisAllowed === false ? <WatchlistPlanUpgrade feature="Trade analysis & preparation" href={symbol.watchlistUpgradeLinks?.analysis === undefined ? "/plans?feature=watchlist.trade_analysis" : symbol.watchlistUpgradeLinks.analysis} /> : symbol.premiumAnalysisPreview ? <PremiumAnalysisCard preview={symbol.premiumAnalysisPreview} symbol={symbol.symbol} upgradeHref={symbol.watchlistUpgradeLinks?.analysis} /> : symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
         <TradersLinkAiReadCard
           card={tradersLinkAiReadCard}
+          traderNotes={symbol.cards.traderNotes?.body}
           symbol={symbol}
           livePrice={symbol.latestPrice}
           dipBuyPlanVisible={symbol.tradersLinkAiReadDipBuyPlanVisible !== false}
@@ -1586,7 +1595,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
       ) : symbol.tradersLinkAiReadCardVisible !== false ? (
         <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />
       ) : null}
-      {symbol.cards.traderNotes?.body?.trim() ? (
+      {symbol.cards.traderNotes?.body?.trim() && !(symbol.membershipAnalysisAllowed !== false && !symbol.premiumAnalysisPreview && symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard && parseTradersLinkAiRead(tradersLinkAiReadCard.body)) ? (
         <article className="academy-card watchlist-content-card" data-card-label="Trader notes" style={{ gridColumn: "1", minWidth: 0 }}>
           <h2 style={{ fontWeight: 700 }}>TRADER NOTES</h2>
           <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{symbol.cards.traderNotes.body}</div>
