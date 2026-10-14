@@ -52,3 +52,7 @@
 No Platform production build, broad test suite, deployment, Railway
 configuration, DNS, or public route change is part of the active visual
 checkpoint.
+
+## 2026-10-13 Features navigation repair
+
+The Journal, Analyzer, and Analytics static headers had a later CSS rule placing them beneath hero content. Candidate repair raises that header rule to 30 on all three pages. [Verification and publication boundary](static-features-navigation-fix-2026-10-13.md). Owner review and publication remain pending.

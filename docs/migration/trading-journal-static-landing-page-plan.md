@@ -102,3 +102,7 @@ approved footer, and `https://traderslink.pro/beta` for every signup CTA.
 
 Do not deploy until the owner gives explicit final visual approval and the
 Coordinator opens the static release lane.
+
+## Features navigation maintenance
+
+Repair and verification: [Static Features navigation repair](static-features-navigation-fix-2026-10-13.md).
