@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - codex/coaching-review-required-work-20261015
       - codex/coaching-coordinator-staging-20261015
       - codex/coaching-staging-integration-20260926
       - codex/coaching-parity-recovery-20261010
@@ -35,4 +36,18 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: node --import tsx src/scripts/coaching-staging-maintenance.ts --rehearse
       - run: npx tsx src/scripts/verify-community-watchlist-drafts.ts
+      - name: Agreed review readiness regression
+        run: npx vitest run src/modules/communities/contracts/coaching-review-readiness.test.ts --maxWorkers=1 --no-file-parallelism --reporter=dot
+      - name: Coaching route counts and controls
+        run: node src/scripts/verify-coaching-review-required-work-ui.cjs
+      - name: Coaching real-schema service regression
+        run: |
+          node --import tsx - <<'NODE'
+          const Module = require('node:module');
+          const resolve = Module._resolveFilename;
+          Module._resolveFilename = function(name, ...args) {
+            return resolve.call(this, name === 'server-only' ? 'next/dist/compiled/server-only/empty.js' : name, ...args);
+          };
+          require('./src/scripts/verify-coaching-remediation.ts');
+          NODE
       - run: npm run build
