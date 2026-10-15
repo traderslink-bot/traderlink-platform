@@ -3,8 +3,11 @@ import { assertCanonicalUtcTimestamp } from "../../platform/server/database/plat
 import { verifyCommunityRequestMember } from "./community-request-verification";
 
 type Target = { slug: string; discord_guild_id: string; user_id: string };
+
+/** Scheduling position only; never membership or authorization evidence. */
+export type CoachingDiscordRefreshCursor = { after: string | null };
 export class CoachingDiscordRefreshService {
- constructor(private readonly db: Database.Database, private readonly botToken: string, private readonly request: typeof fetch = fetch) {}
+ constructor(private readonly db: Database.Database, private readonly botToken: string, private readonly request: typeof fetch = fetch, private readonly cursor: CoachingDiscordRefreshCursor = { after: null }) {}
  async runAvailable(limit = 25, atUtc = new Date().toISOString()) {
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error("Invalid refresh batch size.");
   assertCanonicalUtcTimestamp(atUtc, "atUtc");
@@ -18,7 +21,8 @@ export class CoachingDiscordRefreshService {
   JOIN platform_auth_identities i ON i.user_id=p.user_id AND i.auth_provider='discord' AND i.status='active'
   LEFT JOIN platform_discord_memberships m ON m.user_id=p.user_id AND m.guild_id=c.discord_guild_id
   WHERE m.last_verified_at_utc IS NULL OR m.last_verified_at_utc<?
-  ORDER BY coalesce(m.last_verified_at_utc,''),p.user_id LIMIT ?`).all(cutoff, limit) as Target[];
+  ORDER BY CASE WHEN (c.discord_guild_id || ':' || p.user_id)>? THEN 0 ELSE 1 END,
+   c.discord_guild_id,p.user_id LIMIT ?`).all(cutoff, this.cursor.after ?? '', limit) as Target[];
   let refreshed = 0, unavailable = 0, rateLimited = false;
   const request: typeof fetch = async (url, options) => {
    const response = await this.request(url, options);
@@ -27,6 +31,8 @@ export class CoachingDiscordRefreshService {
   };
   for (const target of targets) {
    const verified = await verifyCommunityRequestMember(this.db, {slug:target.slug,userId:target.user_id,botToken:this.botToken,atUtc,existingCoachingOnly:true}, request);
+   // Advance after failures and suspensions too; stale evidence remains stale.
+   this.cursor.after = `${target.discord_guild_id}:${target.user_id}`;
    const evidence = this.db.prepare("SELECT last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(target.user_id,target.discord_guild_id) as {last_verified_at_utc:string}|undefined;
    if (verified || evidence?.last_verified_at_utc === atUtc) refreshed++; else unavailable++;
    if (rateLimited) break;

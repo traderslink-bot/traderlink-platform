@@ -12,8 +12,12 @@ import { CommunityConnectForm } from "../community-connect-form";
 export default async function CommunityOnboardingPage() {
   const identity = await requireTraderLinkPlatformServerComponentPageIdentity();
   const guilds = withReadonlyPlatformDatabase({}, database => (
-    database.prepare("SELECT discord_guild_id guildId,guild_name guildName FROM traderlink_community_discord_guild_candidates WHERE user_id=? AND guild_owner=1 ORDER BY guild_name")
-      .all(identity.scope.userId) as { guildId: string; guildName: string }[]
+    database.prepare(`SELECT candidate.discord_guild_id guildId,candidate.guild_name guildName,
+      community.slug connectedSlug FROM traderlink_community_discord_guild_candidates candidate
+      LEFT JOIN traderlink_communities community ON community.discord_guild_id=candidate.discord_guild_id
+        AND community.owner_user_id=candidate.user_id
+      WHERE candidate.user_id=? AND candidate.guild_owner=1 ORDER BY candidate.guild_name`)
+      .all(identity.scope.userId) as { guildId: string; guildName: string; connectedSlug: string | null }[]
   ).filter(guild => isApprovedCommunityGuild(guild.guildId)));
   const clientId = process.env.TRADERLINK_COMMUNITIES_DISCORD_CLIENT_ID?.trim();
   return <DashboardPage>

@@ -1,6 +1,10 @@
 import "server-only";
+import type { CoachingDiscordRefreshCursor } from "./coaching-discord-refresh-service";
 import { openPlatformDatabase } from "../../platform/server/database/open-platform-database";
 import { nonOverlappingCoachingMaintenance, runCoachingMaintenance } from "./coaching-maintenance-service";
+
+// Retained across per-pass database connections. Restarting resets scheduling only.
+const refreshCursor: CoachingDiscordRefreshCursor = { after: null };
 
 // The route and the hosted timer share this process-local overlap guard. Occurrence
 // uniqueness and transactional creation also protect a retry from another module.
@@ -10,6 +14,7 @@ export const runHostedCoachingMaintenance = nonOverlappingCoachingMaintenance(as
     return await runCoachingMaintenance(database, {
       botToken: process.env.TRADERLINK_DISCORD_BOT_TOKEN,
       limit: 5,
+      refreshCursor,
     });
   } finally { database.close(); }
 });

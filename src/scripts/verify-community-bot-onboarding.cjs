@@ -55,10 +55,15 @@ const component = load('app/(dashboard)/communities/community-connect-form.tsx',
   throw new Error(`Unexpected component dependency ${id}`);
 });
 const tree = component.CommunityConnectForm({ guilds: [{ guildId: '900001', guildName: 'Discord name' }], clientId: '123456' });
-const fields = tree.props.children.props.children.filter(item => item.type === 'TextField');
+function descendants(node) {
+  if (Array.isArray(node)) return node.flatMap(descendants);
+  if (!node || typeof node !== 'object') return [];
+  return [node, ...descendants(node.props?.children)];
+}
+const fields = descendants(tree).filter(item => item.type === 'TextField');
 assert.deepEqual(Array.from(fields, item => item.props.label), ['Discord server']);
 assert.equal(fields[0].props.select, true, 'Servers are discovered choices, never a raw-ID input');
-const install = tree.props.children.props.children.find(item => item.props?.href);
+const install = descendants(tree).find(item => item.props?.href);
 assert.match(install.props.href, /scope=bot%20applications.commands/);
 assert.match(install.props.href, /guild_id=900001/);
 

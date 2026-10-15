@@ -1,5 +1,57 @@
 # Communities and Coaching — complete launch plan
 
+## Current implementation reconciliation — October15 completion audit
+
+The [consolidated13-area Coaching audit](coaching-completion-audit-20261015.md)
+replaces the inaccessible canonical-report dependency and distinguishes recorded
+live proof, isolated checks and actual remaining work. Historical pending
+statements below must be read against that current matrix. Existing extra-request,
+retained-history, recurrence, session and review implementations are not new TODOs.
+Two defects were reproduced and corrected locally: inactive lesson recipients no
+longer satisfy publication, and bounded Discord refresh rotates past failed or
+suspended participants. Focused service regressions pass; combined build/release
+verification remains deferred to the owner-directed checkpoint. Five focused bot
+onboarding checks also pass; signed-in existing-server and genuine first-install
+acceptance remain separate, as recorded in the consolidated audit. The subsequent
+PC report identified existing-connection presentation and channel recovery gaps;
+these and the adjacent misleading channel-settings install prompt are now
+corrected locally as one batch, with Help, SQL/component regressions and four
+isolated Light/Navy desktop/mobile browser cases. They are not yet deployed. Both accepted
+UI fixes stay closed and the owner's optional browser deferrals remain in force.
+No push, deployment, hosted mutation or new participant test is authorized here.
+
+## Current bounded acceptance — signed-in PC retest reconciled
+
+Both reported UI fixes are **PASS / CLOSED**: notice-visible coaching workspace
+and final preview in Light/Navy desktop/mobile, correct hit targets/Return,
+normal Update app with saved draft preserved, and UTC/New York preview labels
+for the same instant. PC did not independently verify the release SHA; build,
+deployment and migration proof remains the separate Codespaces release record.
+No protected review or Journal record was changed; previews were cancelled.
+
+The owner declines further work on the optional winter, cross-date and nonempty
+offline-queue staging browser cases. These are **deferred / untested in staging**,
+not defects or blockers for these two fixes; isolated proof remains isolated.
+No speculative code fix, repeated passed test or deployment is requested.
+[Detailed PC evidence, owner disposition and remaining scope](coaching-ui-timezone-qa-20261015.md).
+This is not whole-feature launch certification. Other launch inventory and owner
+acceptance remain separate; already passed lifecycle cases stay passed.
+
+## Acceptance continuation — 2026-10-15
+
+PC-reported zero-trade draft/privacy/final-preview matrix passes are preserved. New actual action-handler and route-count regressions pass with isolated real services/schema; no runtime change or deployment. Remaining gates are the PC workspace theme/mobile matrix, actual Return navigation/toast occlusion and signed-in fulfilled/summary-only cases with authorized fixtures. [Acceptance proof and exact fixture approval proposal](coaching-required-trade-acceptance-handoff-20261015.md).
+
+
+## Staging release checkpoint — 2026-10-15
+
+Owner-authorized required-review-work fix `fdfca103c` is live in staging deployment `55bde668-caf3-4fc7-8565-69510eecabcf` SUCCESS. Verified source, one running instance/original volume, overlap0/drain30, health200, unchanged exact160-entry ledger and compiled validation/guidance. Full remote build/regressions passed. No production or protected business-data/role/grant changes. Coordinator slot handed back. Remaining gate: PC signed-in acceptance on unused agreement-generated synthetic review work; preserve completed evidence and existing agreements. [Complete release proof and acceptance scope](coaching-feature-findings-2026-10-14.md).
+
+
+## Remote verification checkpoint — 2026-10-15
+
+Required-review-work correction passed full remote production build/TypeScript, focused readiness/route/service regressions and disposable migration rehearsal in [Actions38793234549](https://github.com/traderslink-bot/traderlink-platform/actions/runs/38793234549). Build gate is satisfied for fix `fdfca103c`; tested candidate `58a91d60e` differs only by CI workflow changes. Staging/production refs unchanged. Separate Coordinator staging authorization and new signed-in synthetic browser acceptance remain required. Earlier local SIGTERM and baseline legacy test failures remain historical evidence, not a failed remote build.
+
+
 ## Current bounded correction — agreed review work (2026-10-15)
 
 The PC staging acceptance uncovered a completion-integrity gap: an overall summary could satisfy an empty selection despite an accepted one-trade agreement. The local correction now shares original-agreement quantity/readiness across both coach pages and validates required work at delivery/completion on the server. It preserves zero-trade/custom work and student-controlled Journal access. Focused verification passes; full-build and hosted/browser gates remain open. This is a correction to existing agreed work, not a change to plan requirements or acceptance history. [Progress](traderlink-communities-coaching-launch-progress.md) and [evidence](coaching-feature-findings-2026-10-14.md). No release authorized.
@@ -266,3 +318,28 @@ These must not be advertised as delivered. Optional expansion ideas discovered i
 - Source inspected for this plan: `app/(dashboard)/communities/onboarding-actions.ts`; community platform/admin repositories and snapshots; coaching Discord refresh/access lifecycle; community dashboard and publishing views. Source inspection identifies work, not a claim of new browser acceptance.
 
 Definition of done: all required register items pass; every inventory row is reconciled; conditional functionality is either accepted and proven or expressly deferred and unavailable; current-production integration, operational recovery and owner acceptance are recorded; production publication remains explicitly authorized. Until then, say **private-pilot checkpoint complete, launch work incomplete**.
+
+
+## Owner direction — batch full-build verification
+
+The owner explicitly directed that the small lesson-publication correction does
+not need a standalone full build now. Its focused regression, lint and targeted
+TypeScript checks are sufficient to continue development. Defer the full build
+to the next combined implementation/release-verification checkpoint. Do not
+retry it for this correction or treat it as a blocker to further Coaching work.
+No build pass, push or deployment is implied. Next local work: reconcile worker/
+recurrence and attachment operating-readiness evidence; implement only
+demonstrated gaps, retaining existing accepted browser results and deferrals.
+
+
+## Coaching worker/storage continuation — combined build deferred
+
+Owner explicitly defers standalone full builds to the next combined checkpoint.
+Continued local implementation found and reproduced refresh starvation: failing
+or suspended oldest memberships monopolized bounded worker passes. An explicit
+process-local cursor now rotates attempts across ticks/connections without
+fabricating fresh evidence or bypassing roles. Provider/suspension/wrap regressions
+pass. Populated synthetic image bytes also survive SQLite backup/restore/readonly
+reopening with both participant reads and outsider denial. These are isolated
+proofs, not hosted load/recovery certification. No full build, push, deployment or
+hosted record/Discord change. See the [current consolidated audit](coaching-completion-audit-20261015.md).

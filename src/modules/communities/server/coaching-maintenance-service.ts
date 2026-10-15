@@ -1,7 +1,7 @@
 import type Database from "better-sqlite3";
 import { setImmediate } from "node:timers/promises";
 import { assertCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
-import { CoachingDiscordRefreshService } from "./coaching-discord-refresh-service";
+import { CoachingDiscordRefreshService, type CoachingDiscordRefreshCursor } from "./coaching-discord-refresh-service";
 import { CoachingAgreementService } from "./coaching-agreement-service";
 import { coachingEntitlement, archivePausedCoaching } from "./coaching-access-lifecycle";
 import { pruneCommunityNamedActivity } from "./community-activity-retention";
@@ -10,7 +10,7 @@ import { purgeExpiredCoachingDeletionArchives } from "./coaching-deletion-archiv
 /** One bounded pass; callers own the connection and must close it in finally. */
 export async function runCoachingMaintenance(
   db: Database.Database,
-  options: { atUtc?: string; botToken?: string; limit?: number; request?: typeof fetch } = {},
+  options: { atUtc?: string; botToken?: string; limit?: number; request?: typeof fetch; refreshCursor?: CoachingDiscordRefreshCursor } = {},
 ) {
   const atUtc = options.atUtc ?? new Date().toISOString();
   assertCanonicalUtcTimestamp(atUtc, "atUtc");
@@ -20,7 +20,7 @@ export async function runCoachingMaintenance(
   const activityRetention = pruneCommunityNamedActivity(db, atUtc);
   const deletionArchivesPurged = purgeExpiredCoachingDeletionArchives(db, atUtc);
   const access = token
-    ? await new CoachingDiscordRefreshService(db, token, options.request).runAvailable(limit, atUtc)
+    ? await new CoachingDiscordRefreshService(db, token, options.request, options.refreshCursor).runAvailable(limit, atUtc)
     : { refreshed: 0, unavailable: 0 };
   const rows = db.prepare(`SELECT agreement.agreement_id, relationship.community_id,
     relationship.relationship_id, relationship.coach_user_id

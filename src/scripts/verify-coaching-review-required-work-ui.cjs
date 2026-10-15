@@ -33,8 +33,8 @@ function load(file){
  const review=fixture.tradeReviews[0],relationship=fixture.relationships[0];
  const route=path.join(root,'app/(dashboard)/communities/[communitySlug]/workspace/students/[relationshipId]/reviews/[reviewId]');
  const Workspace=load(path.join(route,'page.tsx')).default,Final=load(path.join(route,'final/page.tsx')).default;
- async function render(required,deliveryState='draft'){
-  snapshot={...fixture,journalGrants:[],reviewTrades:[],reviewActions:[],tradeReviews:[{...review,acceptanceState:'accepted',agreedTradeCount:required,coachFeedback:'Synthetic summary',deliveryState}]};
+ async function render(required,deliveryState='draft',states=[]){
+  snapshot={...fixture,journalGrants:[],reviewTrades:states.map((workflowState,index)=>({...fixture.reviewTrades[index%fixture.reviewTrades.length],reviewId:review.reviewId,workflowState})),reviewActions:[],tradeReviews:[{...review,acceptanceState:'accepted',agreedTradeCount:required,coachFeedback:'Synthetic summary',deliveryState}]};
   const params=Promise.resolve({communitySlug:'test-community',relationshipId:relationship.relationshipId,reviewId:review.reviewId});
   const workspace=new JSDOM(renderToStaticMarkup(await Workspace({params}))).window.document;
   const final=new JSDOM(renderToStaticMarkup(await Final({params}))).window.document;
@@ -47,6 +47,21 @@ function load(file){
  for(const doc of [missing.workspace,missing.final])assert.ok(doc.body.textContent.includes('Only the student can grant Journal access'));
  const button=(doc,label)=>[...doc.querySelectorAll('button')].find(item=>item.textContent.startsWith(label));
  assert.equal(button(missing.final,'Send review').disabled,true);
+ const partial=await render(2,'draft',['saved','queued']);
+ assert.ok(partial.workspace.body.textContent.includes('Trade reviews saved: 1 of 2'));
+ assert.ok(partial.workspace.body.textContent.includes('Final review: Not ready'));
+ assert.ok(partial.final.body.textContent.includes('1 / 2'));
+ assert.equal(button(partial.final,'Send review').disabled,true);
+ const fulfilled=await render(1,'draft',['saved']);
+ assert.ok(fulfilled.workspace.body.textContent.includes('Trade reviews saved: 1 of 1'));
+ assert.ok(fulfilled.workspace.body.textContent.includes('Final review: Ready'));
+ assert.ok(fulfilled.final.body.textContent.includes('1 / 1'));
+ assert.equal(button(fulfilled.final,'Send review').disabled,false);
+ const removed=await render(1,'draft',['removed']);
+ assert.ok(removed.workspace.body.textContent.includes('Final review: Not ready'));
+ assert.ok(removed.final.body.textContent.includes('0 / 1'));
+ assert.equal(button(removed.final,'Send review').disabled,true);
+ assert.equal(button(missing.final,'Return to workspace').getAttribute('href'),`/communities/test-community/workspace/students/${relationship.relationshipId}/reviews/${review.reviewId}`);
  const summary=await render(null);
  assert.ok(summary.workspace.body.textContent.includes('Final review: Ready'));
  assert.equal(button(summary.final,'Send review').disabled,false);
@@ -54,5 +69,5 @@ function load(file){
  assert.equal(button(invalidDelivered.final,'Complete').disabled,true);
  const summaryDelivered=await render(null,'delivered');
  assert.equal(button(summaryDelivered.final,'Complete').disabled,false);
- console.log('PASS: actual workspace/final routes agree on 0 of 1, Not ready, privacy guidance, blocked send/complete and legitimate summary-only actions');
+ console.log('PASS: actual workspace/final routes agree for zero, partial 1/2, fulfilled 1/1, removed required feedback, summary-only controls and Return link target (not browser navigation)');
 })().catch(error=>{console.error(error);process.exitCode=1;});
