@@ -1,4 +1,5 @@
 "use client";
+import {coachingAccessNoticeMessage} from "@/src/modules/communities/contracts/coaching-access";
 import {Box,Button,Chip,Grid,Stack,TextField,Typography} from "@mui/material";
 import {DashboardPanel} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
@@ -13,7 +14,7 @@ export function CoachingAgreementPanel({snapshot,relationshipId,disabled=false}:
  const accepted=agreements.find(item=>item.status==="accepted"),proposed=agreements.find(item=>item.status==="proposed");
  const hidden=<><input type="hidden" name="communitySlug" value={snapshot.community.slug}/><input type="hidden" name="relationshipId" value={relationshipId}/></>;
  return <DashboardPanel title="Coaching agreement"><Stack spacing={2}>
-  {(snapshot.coachingNotices??[]).filter(notice=>notice.relationshipId===relationshipId).slice(0,5).map(notice=><Typography key={notice.noticeId} role="status">{notice.body} · {notice.createdAtUtc.slice(0,10)}</Typography>)}
+  {(snapshot.coachingNotices??[]).filter(notice=>notice.relationshipId===relationshipId).slice(0,5).map(notice=><Typography key={notice.noticeId} role="status">{coachingAccessNoticeMessage(notice.body)} · {notice.createdAtUtc.slice(0,10)}</Typography>)}
   {[proposed,accepted].filter(item=>!!item).map(agreement=><Box key={agreement.agreementId} sx={{border:1,borderColor:"divider",borderRadius:2,p:2}}>
    <Stack direction="row" spacing={1}><Typography sx={{fontWeight:800}}>{agreement.terms.planName}</Typography><Chip color={agreement.status==="accepted"?"success":"warning"} label={agreement.status==="accepted"?"Accepted":"Awaiting acceptance"}/></Stack>
    <Typography>{agreement.terms.currency} {(agreement.terms.priceAmountMinor/100).toFixed(2)} · {agreement.terms.billingCadence.replaceAll("_"," ")}</Typography>

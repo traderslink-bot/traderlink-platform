@@ -1,3 +1,10 @@
+# 2026-10-15 — moonmafia access pause: local correction, no release
+
+- Read-only staging/Discord evidence confirms the required `test-community` role is absent from the linked moonmafia account. The four assigned staff roles do not meet this plan requirement. Cached/current roles match; deployment source is `3dfe06ddb2584eaaf00e3fde609d63b13daf124d`; commercial coaching policy is off.
+- Isolated local branch `codex/coaching-access-pause-20261015` in `/workspaces/traderlink-coaching-access-pause` corrects misleading denial explanations and adds actionable server-owner/admin guidance while preserving all access checks.
+- Real-schema regression covers reason distinctions, stale/provider failure, role restoration, no-role membership requirement, notice wording and other-student isolation. Targeted lint passes; TypeScript verification recorded in findings.
+- No deployments, Coordinator messages, hosted writes, Discord role/channel changes or Bullrun agreement/Journal-grant changes. Help remains accurate; hosted browser acceptance/new production build are not claimed. [Findings and retest scope](../../docs/migration/coaching-feature-findings-2026-10-14.md).
+
 # 2026-10-15 - Current migration reconciliation and approved Coordinator request
 
 - Owner approved the single staging allowlist variable for the Coordinator. Shared release queue/status now contain exact target, approval, exclusions and verification steps. Receipt/execution unconfirmed; feature chat made no hosted mutation.

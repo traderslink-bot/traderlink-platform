@@ -1,5 +1,36 @@
 # Coaching feature and Discord bot findings — 2026-10-14
 
+## 2026-10-15 — moonmafia staging access pause: proven role mismatch and local correction
+
+Scope: read-only staging diagnosis and a local fix based on the deployed source. No deployment, Coordinator messages, Discord changes, hosted writes, or changes to Bullrun's relationships, agreements or Journal grants.
+
+### Proven cause
+
+At 17:39 UTC, staging deployment `b0d0f728-45b3-4808-8cb9-2d5e4902404a` was successful at source `3dfe06ddb2584eaaf00e3fde609d63b13daf124d`. Scoped read-only SQLite queries and Discord guild/member/role GETs traced the supplied synthetic relationship `5d7956a4-a4f2-4e65-92b7-af8feadfbf29` to the reported plan in `test-community`. The persisted required role is `1546028813106941952` (`test-community`), exists in the correct guild, and is not @everyone.
+
+The community, community member and relationship are active; the relationship is not archived and has no agreement. There is one active linked Discord identity. Discord returned the same member identity and role set as the stored record. The current display name matches moonmafia; the stored and current Discord username match each other. Verification was 247 seconds old. Both the cached and direct Discord responses lack the required role. The four assigned test roles were `test-coach-community`, `test-alerts-community`, `test-watchlist-community` and `test-admin-community`. Those roles do not satisfy the plan's distinct requirement.
+
+The deployed `coachingEntitlement` checks community status, community membership, verified Discord evidence and the plan/accepted-agreement role. It does not call `evaluateMembershipFeature`; staging's `coaching.access` policy is off. A commercial membership denial is therefore not the cause and no additional commercial gate is introduced. The existing access pause is correct for the verified requirement. Actual restoration needs a separately authorized role/policy decision by the owner; this patch does not grant access.
+
+Sanitized diagnostic artifact in the existing development candidate: `artifacts/coaching-access-pause/staging-readonly.json`. Only booleans, counts, role names and the supplied target were retained; credentials and unrelated customer records were not exported.
+
+### Local correction
+
+The defect is the explanation: every pause notice claimed a role was removed, even when no prior role possession was established or another condition denied access. `coaching-access.ts` defines four reasons and shared actionable messages. The student banner and new participant notices distinguish a missing role, inactive community membership, a paused community and unavailable verification. At the owner's request, the copy directs members to the server owner or administrator and tells owners what to check; retrying alone is not the resolution. An exact legacy role-removed notice is displayed as the neutral heading without rewriting stored history.
+
+`coaching-access-lifecycle.ts` returns the reason and literal role presence while preserving its original entitlement truth table and frozen agreement requirements. `traderlink-community-platform-repository.ts` passes the reason to participants; restricted history after failed refresh reports verification unavailable instead of pretending roles disappeared. Known inactive membership and paused-community reasons take precedence. Existing authorization, sharing, archive and notification deduplication remain intact. No schema/migration changes.
+
+Changed implementation files: `src/modules/communities/contracts/coaching-access.ts`, `src/modules/communities/contracts/traderlink-community-platform-contracts.ts`, `src/modules/communities/server/coaching-access-lifecycle.ts`, `src/modules/communities/server/traderlink-community-platform-repository.ts`, `app/(dashboard)/communities/student-coaching-workspace.tsx`, `app/(dashboard)/communities/coaching-agreement-panel.tsx`; regression additions in `src/scripts/verify-coaching-remediation.ts`.
+
+### Verification and remaining acceptance
+
+The real-schema in-memory remediation script passes with added checks for reason precedence, absent/present roles, provider failure with retained cached roles, restricted history, confirmed departure, restoration, participant notice wording, legacy notice normalization and isolation of a second student's relationship. Existing stale evidence/rate-limit, wrong identity, frozen terms, no-role membership requirement, archive and Journal isolation checks also pass. The standalone harness resolves only Next's build-time `server-only` marker to Next's empty marker; actual service and authorization code is exercised.
+
+Targeted ESLint passes. Targeted TypeScript (the seven changed implementation/test files and their transitive dependencies) passes. React review: pure shared text helpers, no new state/effects/fetches, unchanged disabled actions and shared theme components; both components consume the same contracts. Help guide reviewed: its role-dependent access and separate Journal-consent explanation remain accurate; no workflow change requires a guide edit.
+
+Local proof is not staging acceptance. The patch is isolated in `/workspaces/traderlink-coaching-access-pause`, branch `codex/coaching-access-pause-20261015`, based on the verified deployed SHA. No signed-in hosted browser QA or new full production build is claimed. After a separately authorized release, verify the target still pauses for the actual missing role and shows the actionable explanation; test confirmed role restoration only with separate authorization. Verify both participant views, old/new notices, Light/Navy desktop/mobile, refresh failure, and Bullrun remaining unchanged. No deployment or Coordinator handoff is authorized by this record.
+
+
 ## Current checkpoint — October 15
 
 **Not yet launch-ready.** Implementation corrections are preserved locally in
