@@ -14,7 +14,7 @@ const compiled = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
-function harness() {
+function harness(options = {}) {
   let now = 0;
   let modified = 0;
   let inode = 1;
@@ -23,10 +23,11 @@ function harness() {
   let structureChecks = 0;
   const timers = new Set();
   const workers = [];
+  const helpers = [];
   const database = { pragma: () => [{ schema_version: schema }] };
   const context = {
     exports: {},
-    process: { execPath: '/node', env: {} },
+    process: { execPath: '/node', env: {}, platform: options.linux ? 'linux' : 'win32' },
     Date: { now: () => now },
     console: { info() {}, warn() {} },
     setTimeout(callback, delay) {
@@ -37,17 +38,21 @@ function harness() {
     clearTimeout: (timer) => timers.delete(timer),
     require(name) {
       if (name === 'node:fs') return {
-        existsSync: () => true,
+        existsSync: (path) => path === '/app/bin/traderlink-integrity-cache-release'
+          ? options.helperAvailable !== false : true,
         statSync: () => ({ dev: 1, ino: inode, size: 100, mtimeMs: modified }),
       };
       if (name === 'node:path') return require(name);
-      if (name === 'node:child_process') return { spawn() {
+      if (name === 'node:child_process') return { spawn(command, args) {
+        if (command !== '/node' && options.spawnThrows) throw new Error('spawn unavailable');
         return new class extends EventEmitter {
           constructor() {
             super();
             this.signals = [];
             this.channel = { unref() {} };
-            workers.push(this);
+            this.command = command;
+            this.args = args;
+            (command === '/node' ? workers : helpers).push(this);
           }
           send(data, callback) { this.data = data; callback(null); }
           unref() {}
@@ -90,6 +95,7 @@ function harness() {
     state,
     advance,
     workers,
+    helpers,
     change() { modified += 1; },
     changeSchemaCounter() { schema += 1; modified += 1; },
     replaceFile() { inode += 1; modified += 1; },
@@ -115,6 +121,71 @@ function completeReader(h, reader) {
     foreignKeyDurationMs: 0, quickCheckDurationMs: 0 });
   reader.emit('exit', 0);
 }
+
+test('Linux cache advice runs only after successful reader exit and retains the slot', () => {
+  const h = harness({ linux: true });
+  const reader = startInitialReader(h);
+  assert.equal(h.helpers.length, 0);
+  completeReader(h, reader);
+  assert.equal(h.helpers.length, 1);
+  assert.equal(h.helpers[0].command, '/app/bin/traderlink-integrity-cache-release');
+  assert.deepEqual(Array.from(h.helpers[0].args), ['/test.sqlite', '1', '1']);
+  assert.equal(h.state().quickCheckInFlight, true);
+  h.change(); h.open(); h.advance(1000);
+  assert.equal(h.workers.length, 1);
+  h.helpers[0].emit('close', 0);
+  assert.equal(h.state().quickCheckInFlight, false);
+  assert.equal(h.state().foreignKeyCheckFailed, false);
+  assert.equal(h.state().quickCheckFailed, false);
+});
+
+test('cache helper deadline kills only the helper and waits for actual close', () => {
+  const h = harness({ linux: true });
+  completeReader(h, startInitialReader(h));
+  h.advance(2000);
+  assert.deepEqual(h.helpers[0].signals, ['SIGKILL']);
+  assert.equal(h.state().quickCheckInFlight, true);
+  assert.equal(h.state().quickCheckFailed, false);
+  h.helpers[0].emit('close', null);
+  assert.equal(h.state().quickCheckInFlight, false);
+  h.helpers[0].emit('close', null);
+  assert.equal(h.state().quickCheckInFlight, false);
+});
+
+test('failed or unavailable cache advice preserves verified integrity', () => {
+  for (const options of [{ linux: false }, { linux: true, helperAvailable: false },
+    { linux: true, spawnThrows: true }, { linux: true }]) {
+    const h = harness(options);
+    completeReader(h, startInitialReader(h));
+    if (h.helpers.length) {
+      h.helpers[0].emit('error', new Error('ENOENT'));
+      h.helpers[0].emit('close', -2);
+    }
+    assert.equal(h.state().quickCheckInFlight, false);
+    assert.equal(h.state().requiresFullVerification, false);
+    assert.equal(h.state().foreignKeyCheckFailed, false);
+    assert.equal(h.state().quickCheckFailed, false);
+  }
+});
+
+test('failed integrity never starts cache advice', () => {
+  const h = harness({ linux: true });
+  const reader = startInitialReader(h);
+  reader.emit('message', { ...reader.data, kind: 'result', status: 'foreign_key_failed' });
+  reader.emit('exit', 0);
+  assert.equal(h.helpers.length, 0);
+  assert.equal(h.state().foreignKeyCheckFailed, true);
+});
+
+test('schema change cancels advice without releasing its slot before close', () => {
+  const h = harness({ linux: true });
+  completeReader(h, startInitialReader(h));
+  h.changeSchemaCounter(); h.open();
+  assert.deepEqual(h.helpers[0].signals, ['SIGKILL']);
+  assert.equal(h.state().quickCheckInFlight, true);
+  h.helpers[0].emit('close', null);
+  assert.equal(h.state().quickCheckInFlight, false);
+});
 
 test('a same-file write retains the snapshot without blocking requests', () => {
   const h = harness();
