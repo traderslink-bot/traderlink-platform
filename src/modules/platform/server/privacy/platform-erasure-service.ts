@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { captureCoachingDeletionEvidence } from "../../../communities/server/coaching-deletion-archive";
 
 import { JournalAccountRepository, type JournalAccountRecord } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
@@ -357,6 +358,13 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
     if (scope.workspaceRole !== "owner") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
     assertSoleWorkspaceOwner(this.database, scope);
     return withPermanentDeleteTransaction(this.database, () => {
+      captureCoachingDeletionEvidence(this.database, scope.userId, createCanonicalUtcTimestamp());
+      // Only this participant's relationships end. Community ownership alone
+      // must not close another coach's work or move it into the deletion archive.
+      if (tables(this.database).includes("traderlink_community_coaching_relationships")) {
+        this.database.prepare(`DELETE FROM traderlink_community_coaching_relationships
+WHERE coach_user_id = ? OR student_user_id = ?`).run(scope.userId, scope.userId);
+      }
       const accountIds = this.database.prepare<[string], { account_id: string }>(`SELECT account_id
 FROM journal_accounts WHERE workspace_id = ?`).all(scope.workspaceId).map((row) => row.account_id);
       const artifacts = readPrivateArtifacts(this.database, accountIds);
@@ -381,7 +389,22 @@ FROM journal_accounts WHERE workspace_id = ?`).all(scope.workspaceId).map((row) 
       deleteOrphanedForeignKeyRows(this.database);
       this.database.prepare("DELETE FROM platform_workspace_memberships WHERE user_id = ?").run(scope.userId);
       this.database.prepare("DELETE FROM platform_workspaces WHERE workspace_id = ?").run(scope.workspaceId);
-      const removed = this.database.prepare("DELETE FROM platform_users WHERE user_id = ?").run(scope.userId);
+      // Shared community authorship/ownership is not a login. Keep an anonymous,
+      // disabled reference only when surviving shared rows still require it.
+      // All identities, sessions, memberships and private workspace data above
+      // are removed. Never assign ownership or grant access to another user.
+      const sharedReference = tables(this.database)
+        .filter((table) => table.startsWith("traderlink_communit"))
+        .some((table) => foreignKeys(this.database, table)
+          .filter((key) => key.table === "platform_users" && key.to === "user_id")
+          .some((key) => Boolean(this.database.prepare(
+            `SELECT 1 FROM ${identifier(table)} WHERE ${identifier(key.from)} = ? LIMIT 1`,
+          ).get(scope.userId))));
+      const removed = sharedReference
+        ? this.database.prepare(`UPDATE platform_users SET auth_provider = 'deleted',
+auth_subject = ?, display_name = 'Deleted account', status = 'disabled', updated_at_utc = ?
+WHERE user_id = ?`).run(createCanonicalUuidV4(), createCanonicalUtcTimestamp(), scope.userId)
+        : this.database.prepare("DELETE FROM platform_users WHERE user_id = ?").run(scope.userId);
       if (removed.changes !== 1) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       deleteOrphanedForeignKeyRows(this.database);
       const privateArtifactsPurged = unsharedArtifacts(this.database, artifacts);

@@ -352,6 +352,8 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
         averageEntryPriceDecimal: "2.50",
         projectionState: "legitimate_open" as const,
         style: Object.freeze({
+          positionRef,
+          swingPlan: null,
           revision: 1,
           tradeStyle: "swing" as const,
           openStatus: "swing" as const,
@@ -436,6 +438,7 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
           changes.push(input);
           return Object.freeze({
             positionRef,
+            swingPlan: null,
             revision: 1,
             tradeStyle: input.tradeStyle,
             openStatus: input.openStatus,
@@ -668,6 +671,8 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
         averageEntryPriceDecimal: "2.50",
         projectionState: "legitimate_open" as const,
         style: Object.freeze({
+          positionRef,
+          swingPlan: null,
           revision: 1,
           tradeStyle: "swing" as const,
           openStatus: "swing" as const,

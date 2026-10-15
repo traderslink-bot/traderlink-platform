@@ -79,6 +79,7 @@ import {
   isDashboardNavigationItem,
   type DashboardNavigationDrawerItem,
   type DashboardNavigationGroup,
+  type DashboardNavigationGroupItem,
   type DashboardNavigationIconKey,
   type DashboardNavigationItem,
 } from "./dashboard-navigation";
@@ -377,6 +378,9 @@ export function DashboardShell({
   watchlistMemberNavigationAccess = false,
   ownerMarketDataAccess = false,
   watchlistAdminNavigationAccess = false,
+  communityNavigationHref = null,
+  coachingNavigationHref = null,
+  communityWatchlistsNavigationAccess = false,
 }: {
   children: ReactNode;
   initialMarketHaltAlertsEnabled?: boolean;
@@ -388,6 +392,9 @@ export function DashboardShell({
   watchlistMemberNavigationAccess?: boolean;
   ownerMarketDataAccess?: boolean;
   watchlistAdminNavigationAccess?: boolean;
+  communityNavigationHref?: string | null;
+  coachingNavigationHref?: string | null;
+  communityWatchlistsNavigationAccess?: boolean;
 }) {
   const theme = useTheme();
   const pathname = usePathname();
@@ -411,10 +418,37 @@ export function DashboardShell({
 
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
   const accountMenuOpen = Boolean(accountMenuAnchor);
-  const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
-    section.group.id !== "stockTools"
-      ? section
-      : Object.freeze({
+  const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS
+    .filter((section) =>
+      section.group.id !== "communities" || communityNavigationHref !== null)
+    .map((section) => {
+      if (section.group.id === "communities") {
+        return Object.freeze({
+          ...section,
+          group: Object.freeze({
+            ...section.group,
+            items: Object.freeze(section.group.items.flatMap<DashboardNavigationGroupItem>((item) => {
+              if (!isDashboardNavigationItem(item)) return [item];
+              if (item.href === "/communities") {
+                return communityNavigationHref
+                  ? [Object.freeze({ ...item, href: communityNavigationHref })]
+                  : [];
+              }
+              if (item.href === "/communities/coaching") {
+                return coachingNavigationHref
+                  ? [Object.freeze({ ...item, href: coachingNavigationHref })]
+                  : [];
+              }
+              if (item.href === "/community/watchlists") {
+                return communityWatchlistsNavigationAccess ? [item] : [];
+              }
+              return [item];
+            })),
+          }),
+        });
+      }
+      if (section.group.id !== "stockTools") return section;
+      return Object.freeze({
         ...section,
         group: Object.freeze({
           ...section.group,
@@ -427,7 +461,8 @@ export function DashboardShell({
               (item.href !== "/reverse-splits" || ownerMarketDataAccess)
             ))),
         }),
-      }));
+      });
+    });
   const closeMobile = () => setMobileOpen(false);
   const setDesktopNavigationCollapsed = (nextCollapsed: boolean) => {
     setCollapsed(nextCollapsed);
@@ -568,7 +603,7 @@ export function DashboardShell({
           }
           sx={{ flexGrow: 1, overflowY: "auto", py: 1.25 }}
         >
-          <List disablePadding>
+          <List component="div" disablePadding>
             <NavigationLink
               collapsed={compact}
               offline={offline}
@@ -685,13 +720,14 @@ export function DashboardShell({
                         />
                         </Box>
                       ) : offline || item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id ? null : (
-                        <NavigationDrawerButton
-                          collapsed={compact}
-                          grouped
-                          item={item}
-                          key={item.id}
-                          onOpen={openMarketHaltAlerts}
-                        />
+                        <Box component="li" key={item.id} sx={{ listStyle: "none" }}>
+                          <NavigationDrawerButton
+                            collapsed={compact}
+                            grouped
+                            item={item}
+                            onOpen={openMarketHaltAlerts}
+                          />
+                        </Box>
                       ))}
                     </List>
                   </Collapse>

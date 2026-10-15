@@ -20,6 +20,7 @@ export type TraderLinkChartPalette = Readonly<{
 }>;
 
 export type TraderLinkPalette = Readonly<{
+  linkText: string;
   appBar: string;
   chart: TraderLinkChartPalette;
   navigation: string;
@@ -38,6 +39,7 @@ declare module "@mui/material/styles" {
 }
 
 const lightPalette = Object.freeze({
+  linkText: traderIntelligencePrimaryAction,
   appBar: "#ffffff",
   chart: Object.freeze({
     actionHover: "#0b3475",
@@ -57,6 +59,7 @@ const lightPalette = Object.freeze({
 });
 
 const darkPalette = Object.freeze({
+  linkText: "#79aaf1",
   appBar: "#121d2b",
   chart: Object.freeze({
     actionHover: "#285a9f",
@@ -134,6 +137,7 @@ export function createTraderMaterialTheme(appearance: PlatformAppearance) {
       button: { fontWeight: 650, letterSpacing: 0, textTransform: "none" },
     },
     components: {
+      MuiTab: {styleOverrides: {root: {"&.Mui-selected": {color: palette.traderLink.linkText}}}},
       MuiButton: {
         defaultProps: { disableElevation: true },
         styleOverrides: {

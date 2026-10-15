@@ -134,6 +134,8 @@ export type JournalAnalyticsLegacyMigrationMetricId =
   (typeof JOURNAL_ANALYTICS_LEGACY_MIGRATION_METRIC_IDS)[number];
 
 export const JOURNAL_ANALYTICS_ADDITIONAL_CAPABILITY_IDS = Object.freeze([
+  "average_trade_return",
+  "median_trade_return",
   "ready_closed_count",
   "legitimate_open_count",
   "needs_decision_count",

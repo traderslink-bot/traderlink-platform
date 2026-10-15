@@ -12,6 +12,8 @@ import {
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
 import { JournalAdminAccessDenied } from "./journal-admin-access-denied";
 import { JournalAdminShell } from "./journal-admin-shell";
+import { DashboardMuiProviders } from "@/app/mui-provider";
+import { isPlatformAppearance, type PlatformAppearance } from "@/src/modules/platform/contracts/platform-appearance";
 
 export const metadata: Metadata = {
   title: "Journal Administration | TraderLink Platform",
@@ -32,6 +34,7 @@ function environmentLabel(): "Local" | "Preview" | "Production" {
 
 export default async function JournalAdminLayout({ children }: { children: ReactNode }) {
   let shell: Readonly<{
+    appearance: PlatformAppearance;
     alertCount: number;
     dataAsOfUtc: string;
     operatorRole: string;
@@ -46,7 +49,11 @@ export default async function JournalAdminLayout({ children }: { children: React
         ? database.prepare<[], { count: number }>(`SELECT COUNT(*) AS count
 FROM coach_ai_chat_quality_cases WHERE case_state = 'open'`).get()!.count
         : 0;
+      const preference=database.prepare("SELECT appearance_mode FROM platform_user_preferences WHERE user_id=?").get(scope.userId) as {appearance_mode:string}|undefined;
+      const appearanceMode=preference?.appearance_mode;
+      const appearance:PlatformAppearance=isPlatformAppearance(appearanceMode)?appearanceMode:"light";
       return Object.freeze({
+        appearance,
         alertCount: overview.imports.systemFailed +
           overview.formats.privacyReviewRequired + recentMoomooErrors + linksQualityAlerts,
         dataAsOfUtc: overview.coverage.dataAsOfUtc,
@@ -73,13 +80,13 @@ FROM coach_ai_chat_quality_cases WHERE case_state = 'open'`).get()!.count
     throw error;
   }
   return (
-    <JournalAdminShell
+    <DashboardMuiProviders appearance={shell.appearance}><JournalAdminShell
       alertCount={shell.alertCount}
       dataAsOfUtc={shell.dataAsOfUtc}
       environment={environmentLabel()}
       operatorRole={shell.operatorRole}
     >
       {children}
-    </JournalAdminShell>
+    </JournalAdminShell></DashboardMuiProviders>
   );
 }

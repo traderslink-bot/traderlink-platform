@@ -1,3 +1,90 @@
+# 2026-10-15 - Current migration reconciliation and approved Coordinator request
+
+- Owner approved the single staging allowlist variable for the Coordinator. Shared release queue/status now contain exact target, approval, exclusions and verification steps. Receipt/execution unconfirmed; feature chat made no hosted mutation.
+- Verified-source comparison: candidate/staging match all160 migration entries; production140 has identical shared SQL but25 order conflicts. Unchanged candidate correctly rejects constructed production metadata.
+- Added an immutable-source/in-memory-only reconciliation checker. A production-prefix-preserving20-migration append proposal passes empty upgrade/fresh SQL, quick-check and foreign keys, with zero pilot communities/grants/roles/destinations. Runtime manifest/history unchanged; checker always reports releaseReady:false.
+- Targeted syntax/lint and immutable-source SQL proof pass; mutable-ref negative CLI check passes. Staging-only exact-ledger SSH attempt lacked an available key and never executed remotely; no key/access changes made.
+- [Handoff with exact command and proposal](../../docs/migration/coaching-completion-coordinator-handoff-20261015.md). L07 exact live-ledger/lineage, final full build/integration/operations, L08 participants and L09 acceptance remain open.
+
+# 2026-10-15 - Final Coaching corrections pass compiled browser regression
+
+- Runtime source `3d0d0af1f`: real concurrent edit advances one revision; stale save is rejected; draft, original expected revision and inline error survive both appearance refreshes. Mobile error is visible; both themes have zero Axe violations.
+- Protected admin passes all four desktop/mobile Light/Navy Axe views, overflow and measured header-overlap checks. Final mobile screenshots visually inspected.
+- Experimental two-route compile output is browser evidence only; generate hit Next's proxy rename error. Final normal full build again received external SIGTERM despite 4 GiB available at start; full-build acceptance stays open. Source TypeScript checks were not relaxed.
+- Live Railway config verifies production `main`, staging `staging`, one replica and `/data` each, no staged changes. Actual production deployment matches `32775de0136b`; staging remains `53f598ee153b`. Both health endpoints 200/ready, counts140/160, not exact ledger proof.
+- Staging onboarding is blocked by the unset approved-guild allowlist. No hosted mutation, real Discord send, source integration or release. Both commissions off; no coach bulk export.
+- Owned synthetic QA server stopped; generated service worker restored. [Coordinator handoff](../../docs/migration/coaching-completion-coordinator-handoff-20261015.md) lists the concrete single-variable proposal and outstanding L07-L09 gates. [All findings](../../docs/migration/coaching-feature-findings-2026-10-14.md).
+
+# 2026-10-15 - Railway read-only diagnosis and release boundary
+
+- Railway CLI login is verified after owner approval; no plugin installation is required.
+- Existing TradersLink bot identity, installation and coach-channel view/send are confirmed by GET-only checks. Staging's unset approved-guild allowlist blocks onboarding; changing it remains a Coordinator/owner hosted-action boundary.
+- Exact-main temporary-index three-way application passes mechanically; ordered live migration metadata, actual integration and final whole-app build remain unverified.
+- Final two-route compile/retest is active for the retained-conflict/background-refresh and mobile admin-header fixes. No auth/TypeScript gate disabled, push, hosted mutation or real message.
+- [Findings](../../docs/migration/coaching-feature-findings-2026-10-14.md) and [progress](../../docs/migration/traderlink-communities-coaching-launch-progress.md) contain the evidence and open gates.
+
+# 2026-10-15 - Coaching draft survives background refresh
+
+- Final regression found appearance-triggered refresh remounting a conflicted editor against a newer plan revision. Capture the selected editing snapshot until Cancel/explicit Edit; preserve the original stale revision and draft. Focused component regression passes.
+- Protected admin header timestamp now truncates as a block at mobile width; measured overlap is removed.
+- On `000b67b45`, full TypeScript and scoped build passed; 32 themed/responsive Axe views passed. All five review kinds and archive authorization/expiry passed focused retries after harness corrections.
+- Rebuild and retest the final draft-refresh correction; whole-app build remains separate from scoped proof. No publication, hosted mutation or real Discord message.
+
+# 2026-10-15 - Final Coaching regression and export decision
+
+- Owner excludes coach export/bulk download of student records; Coaching stays in-app. Updated controlling plan/progress. No export API or privacy contract added.
+- Candidate remains `/workspaces/traderlink-coaching-development`, `codex/coaching-bot-onboarding-review-20261014`; main owner work preserved.
+- Full build passed on `21da0b800`; actual standalone thirteen-case batch found an admin rendering defect, with all other cases passing including a focused lifecycle retry. Additional Axe/mobile checks found a dark link and off-screen save error.
+- Corrections are in final production build and affected-flow regression. Hosted source integration, operating readiness and real Discord/participant acceptance remain external gates. No hosted mutations or publication.
+- [Findings](../../docs/migration/coaching-feature-findings-2026-10-14.md).
+
+# 2026-10-14 - Full Coaching build and strict compiler pass; extended browser QA active
+
+- Normal production build passed all 280 pages, full TypeScript and tracing.
+  Separate strict standalone TypeScript passed after current-contract fixture repairs.
+- Catalog correction registers two implemented trade-return capabilities; focused
+  metric, Trade Explorer, admin and Swing reruns pass.
+- Plan builder, populated trade delivery, session/lesson and mocked bot onboarding
+  browser paths pass. Final affected-flow regression remains in progress.
+- Additional fixes under verification: selected-coach sharing controls, retained
+  inline plan-save errors, publication hydration readiness, navigation semantics
+  and shared-token contrast. Help updated for save recovery and selected sharing.
+- Existing template-verifier and shared-shell lint failures are explicitly recorded
+  in the findings. No hosted writes, push, staging integration or release occurred.
+- Continue final browser/operational fixture QA and checkpoint the isolated candidate.
+
+# 2026-10-14 - Coaching completion run active
+
+- Working in `/workspaces/traderlink-coaching-development` on
+  `codex/coaching-bot-onboarding-review-20261014`; main owner work is preserved.
+- Fixed and verified the missing five-minute owner-evidence age check protecting
+  Coaching archives and other platform administration. Focused admin tests pass.
+- Additional candidate corrections: named enrollment roles for ordinary coaches,
+  explicit currency labels, consistent public coach names, profile-save return to
+  Setup, Edit hydration readiness and the two omitted implemented analytics IDs.
+- Full inventory browser QA is active using disposable populated Journal data,
+  real sessions/actions and mocked Discord GET responses. Current rebuild includes
+  the latest corrections; scripts/evidence live under `artifacts/coaching-completion`.
+- Strict test-fixture reconciliation is ongoing. No push, hosted mutation or
+  deployment occurred. Railway integration was discovered and suggested, but its
+  installation/connection has not been confirmed.
+- Continue all documented acceptance work; do not mark launch complete from local
+  fixtures. [Findings](../../docs/migration/coaching-feature-findings-2026-10-14.md).
+
+# 2026-10-14 - Coaching enrollment fixed; local journey passes
+
+- Active candidate: `/workspaces/traderlink-coaching-development`, branch
+  `codex/coaching-bot-onboarding-review-20261014`; no release or main integration.
+- Fixed Students → Requests acceptance/decline path discovered by compiled-app QA.
+- Fresh synthetic browser journey passes 15 enrollment, agreement, sharing,
+  review/privacy, reply, isolation and revocation checks. Focused regressions,
+  targeted lint and full-project TypeScript pass; current browser build is bounded
+  to feature routes, distinct from the earlier complete production build.
+- Findings: [Coaching report](../../docs/migration/coaching-feature-findings-2026-10-14.md).
+- Resume with broader Coaching acceptance (plan builder and populated reviews).
+  Reuse the existing Railway staging bot in normal TradersLink private channels;
+  a second server is optional. No hosted mutations or publication authorized.
+
 # 2026-08-27 - Daily Trade Tracker Analyzer reliability and presentation implementation awaiting review
 
 - The owner reported that the connected account's AEMD trade remained on
@@ -21482,3 +21569,28 @@ Current best next step:
 - Discord delivery, final chart-update events, and AI Review failure alerts
   remain separate hosted/retry-contract gates. Do not activate them merely
   because local in-app notification writers are accepted.
+
+
+# 2026-10-14 human Coaching continuation
+
+Owner priority is the coach/student `/communities` feature, not Links AI Chat.
+The bot handles Discord setup while Coaching stays in the app. Candidate
+`bffd5faab` is isolated in `/workspaces/traderlink-coaching-development` on
+`codex/coaching-bot-onboarding-review-20261014`. Verified server identity now
+supplies community name/URL without requiring manual entry. Existing owner,
+approval, role/channel and Journal-sharing boundaries remain intact.
+In-memory Coaching and onboarding checks, focused UI/action checks, strict
+TypeScript and lint pass. Full build was interrupted during compilation and remains unverified; see
+`docs/migration/coaching-feature-findings-2026-10-14.md`. Next: prove the complete coach/student journey and two-coach/consent/role
+lifecycle, retaining the full Coaching acceptance inventory. No release authorized.
+
+
+# 2026-10-14 Coaching candidate build verified
+
+The current isolated Coaching candidate now passes full compilation, TypeScript,
+all 280 pages and tracing. Existing staging bot and prior private-channel test
+were confirmed by the owner; reuse that bot for `traderslink tests`. Owner OAuth
+entry was verified to use staging callback and owned-server discovery. Next:
+obtain the server-selector result and complete the second-server setup and
+coach/student journey. Preserve the normal server's private channels; no hosted
+change or deployment is authorized by this local checkpoint.

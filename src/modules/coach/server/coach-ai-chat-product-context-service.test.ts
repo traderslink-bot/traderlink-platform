@@ -102,6 +102,7 @@ function fixture() {
       })])),
       readPreferences: vi.fn(() => Object.freeze({
         discordDmCategories: Object.freeze([]),
+        emailCategories: Object.freeze([]),
         webPushCategories: Object.freeze([]),
       })),
     },

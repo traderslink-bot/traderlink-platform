@@ -51,6 +51,14 @@ export default function PrivacyPolicyPage() {
             account.
           </li>
           <li>
+            For a Discord community you join through TradersLink, your current
+            server membership and roles, the community pages and posts you
+            view, and the time of those visits. The community owner and
+            authorized administrators can see this named community activity.
+            This does not give them access to your trading journal, broker
+            information, private AI conversations or coaching records.
+          </li>
+          <li>
             Questions, support messages, feedback and information you choose to
             submit through optional AI-assisted features.
           </li>
@@ -77,9 +85,11 @@ export default function PrivacyPolicyPage() {
         <p>
           We may receive account, membership, entitlement or transaction-status
           information from services you use with TradersLink, including Discord,
-          Whop and a broker connection you choose to enable. Payment providers
-          process payment-card details under their own terms; TradersLink does
-          not need your full card number to confirm access.
+          a TradersLink billing provider and a broker connection you choose to
+          enable. Community owners handle payment for their own alerts,
+          watchlists and coaching outside TradersLink and use Discord roles to
+          control those services. Their payment providers process payment-card
+          details under their own terms.
         </p>
       </section>
 
@@ -94,6 +104,11 @@ export default function PrivacyPolicyPage() {
             save;
           </li>
           <li>save Academy progress, preferences and account settings;</li>
+          <li>
+            show Discord-community content to eligible members, report named
+            page and post activity to that community owner, and calculate
+            approved Tier 2 partner attribution;
+          </li>
           <li>provide support and respond to privacy requests;</li>
           <li>
             understand website use and improve the service through optional
@@ -151,9 +166,10 @@ export default function PrivacyPolicyPage() {
             TradersLink;
           </li>
           <li>
-            Discord for sign-in and community access, Whop for paid-access
-            status, Google for optional Analytics, and an AI or broker provider
-            when you choose a feature that requires that provider;
+            Discord for sign-in, server membership, role verification and
+            community delivery; Google for optional Analytics; and an AI,
+            billing or broker provider when you choose a feature that requires
+            that provider;
           </li>
           <li>
             professional advisers, regulators, courts or law enforcement where
@@ -189,6 +205,12 @@ export default function PrivacyPolicyPage() {
           to provide the service, maintain security and records, resolve disputes
           and meet legal obligations. Retention varies according to the type of
           information and why it was collected.
+        </p>
+        <p>
+          Named community page-view events are normally retained for 90 days.
+          Daily member-and-page totals may be retained longer so community
+          owners can understand historical engagement without preserving every
+          individual event. A community can choose a shorter named-event period.
         </p>
         <p>
           Account holders can use the Delete Account section of Account Settings to
