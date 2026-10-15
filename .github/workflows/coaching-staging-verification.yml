@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - codex/coaching-ui-timezone-verification-20261015
       - codex/coaching-coordinator-staging-20261015
       - codex/coaching-staging-integration-20260926
       - codex/coaching-parity-recovery-20261010
@@ -35,4 +36,6 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: node --import tsx src/scripts/coaching-staging-maintenance.ts --rehearse
       - run: npx tsx src/scripts/verify-community-watchlist-drafts.ts
+      - name: Manual account timezone regression
+        run: npx vitest run src/modules/journal/server/manual-trades/journal-manual-trade-command-service.test.ts -t "manual entry account timezone contract" --maxWorkers=1 --no-file-parallelism --reporter=dot
       - run: npm run build
