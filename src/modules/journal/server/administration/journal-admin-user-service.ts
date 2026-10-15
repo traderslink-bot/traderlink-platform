@@ -357,6 +357,7 @@ function mapUser(
 }
 
 export type JournalAdminUserFilters = Readonly<{
+  search?: string;
   status?: "active" | "disabled";
   provider?: string;
   productionRegistered?: boolean;
@@ -384,18 +385,17 @@ export class JournalAdminUserService {
   list(input: Readonly<{
     cursor?: string | null;
     pageSize?: number;
+    offset?: number;
     filters?: JournalAdminUserFilters;
-  }> = {}): JournalAdminPage<JournalAdminUserListItem> {
+  }> = {}): JournalAdminPage<JournalAdminUserListItem> & Readonly<{ totalCount: number; offset: number }> {
     const pageSize = journalAdminPageSize(input.pageSize);
     const filters = input.filters ?? {};
     const clauses: string[] = [];
     const bindings: Array<string | number> = [];
-    if (input.cursor) {
-      const cursor = resolveJournalAdminInternalId(this.context, input.cursor, ["user"]);
-      clauses.push(`(user.created_at_utc < (SELECT created_at_utc FROM platform_users WHERE user_id = ?)
-        OR (user.created_at_utc = (SELECT created_at_utc FROM platform_users WHERE user_id = ?)
-          AND user.user_id < ?))`);
-      bindings.push(cursor.internalId, cursor.internalId, cursor.internalId);
+    const search = filters.search?.trim().slice(0, 100);
+    if (search) {
+      clauses.push("instr(lower(user.display_name), lower(?)) > 0");
+      bindings.push(search);
     }
     if (filters.status) {
       clauses.push("user.status = ?");
@@ -469,7 +469,7 @@ export class JournalAdminUserService {
     if (filters.filter === "manual_entries") clauses.push("COALESCE(manual.manual_execution_count, 0) > 0");
     if (filters.filter === "manual_entry_issues") clauses.push("COALESCE(manual_failures.manual_entry_failure_count, 0) > 0");
     if (filters.filter === "broker_connected") clauses.push("COALESCE(brokers.has_connected, 0) = 1");
-    if (filters.filter === "broker_statement_source") clauses.push("COALESCE(brokers.has_connected, 0) = 0 AND COALESCE(brokers.has_attention, 0) = 0 AND COALESCE(brokers.has_disconnected, 0) = 0 AND COALESCE(brokers.broker_source_count, 0) > 0");
+    if (filters.filter === "broker_statement_source") clauses.push("broker_status = 'statement_source'");
     if (filters.filter === "no_broker_evidence") clauses.push("COALESCE(brokers.broker_source_count, 0) = 0 AND COALESCE(brokers.has_connected, 0) = 0 AND COALESCE(brokers.has_attention, 0) = 0 AND COALESCE(brokers.has_disconnected, 0) = 0 AND COALESCE(attempts_broker.has_failed_connection_attempt, 0) = 0");
     if (filters.view === "new_academy_members") {
       clauses.push("COALESCE(academy.academy_completion_count, 0) > 0 AND session.last_session_at_utc IS NULL");
@@ -488,20 +488,84 @@ export class JournalAdminUserService {
       clauses.push(`(COALESCE(decisions.unresolved_decision_count, 0) > 0
         OR (attempts.latest_failed_import_at_utc IS NOT NULL AND attempts.latest_failed_import_at_utc >= ?)
         OR (manual_failures.latest_manual_entry_failure_at_utc IS NOT NULL AND manual_failures.latest_manual_entry_failure_at_utc >= ?)
-        OR COALESCE(brokers.has_attention, 0) = 1 OR COALESCE(brokers.has_disconnected, 0) = 1
-        OR COALESCE(attempts_broker.has_failed_connection_attempt, 0) = 1)`);
-      bindings.push(dateThreshold(this.context.now, 30), dateThreshold(this.context.now, 30));
+        OR broker_status IN ('attention_required', 'disconnected')
+        OR (last_auth_at_utc IS NOT NULL AND last_auth_at_utc <= ?
+          AND COALESCE(broker_executions.broker_execution_count, 0) = 0
+          AND COALESCE(manual.manual_execution_count, 0) = 0))`);
+      bindings.push(dateThreshold(this.context.now, 30), dateThreshold(this.context.now, 30), dateThreshold(this.context.now, 14));
+    }
+    const filterWhere = clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "";
+    // Basic directory counts do not need to build the Journal activity aggregates.
+    const countSql = filters.filter || filters.view
+      ? `SELECT COUNT(*) AS totalCount FROM (${USER_SELECT}${filterWhere})`
+      : `SELECT COUNT(*) AS totalCount FROM platform_users user${filterWhere}`;
+    const { totalCount } = this.context.database.prepare<unknown[], { totalCount: number }>(countSql).get(...bindings)!;
+    const requestedOffset = input.offset !== undefined && Number.isSafeInteger(input.offset) && input.offset > 0 ? input.offset : 0;
+    const offset = input.cursor ? 0 : Math.min(Math.floor(requestedOffset / pageSize) * pageSize, Math.max(0, Math.ceil(totalCount / pageSize) - 1) * pageSize);
+    if (input.cursor) {
+      const cursor = resolveJournalAdminInternalId(this.context, input.cursor, ["user"]);
+      clauses.push(`(user.created_at_utc < (SELECT created_at_utc FROM platform_users WHERE user_id = ?)
+        OR (user.created_at_utc = (SELECT created_at_utc FROM platform_users WHERE user_id = ?)
+          AND user.user_id < ?))`);
+      bindings.push(cursor.internalId, cursor.internalId, cursor.internalId);
     }
     const where = clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "";
     const rows = this.context.database.prepare<unknown[], UserRow>(`${USER_SELECT}${where}
-ORDER BY user.created_at_utc DESC, user.user_id DESC LIMIT ?`)
-      .all(...bindings, pageSize + 1);
+ORDER BY user.created_at_utc DESC, user.user_id DESC LIMIT ? OFFSET ?`)
+      .all(...bindings, pageSize + 1, offset);
     const visible = rows.slice(0, pageSize).map((row) => mapUser(this.context, row));
     return Object.freeze({
       items: Object.freeze(visible),
+      totalCount,
+      offset,
       nextCursor: rows.length > pageSize ? visible.at(-1)?.userRef ?? null : null,
       coverage: journalAdminCoverage(this.context),
     });
+  }
+
+  memberSummary() {
+    return this.context.database.prepare<[], { total: number; enabled: number; disabled: number; discordLinked: number }>(`SELECT
+      COUNT(*) AS total,
+      COALESCE(SUM(status = 'active'), 0) AS enabled,
+      COALESCE(SUM(status = 'disabled'), 0) AS disabled,
+      COALESCE(SUM(EXISTS (SELECT 1 FROM platform_auth_identities identity
+        WHERE identity.user_id = user.user_id AND identity.auth_provider = 'discord')), 0) AS discordLinked
+      FROM platform_users user`).get()!;
+  }
+
+  directory(input: Readonly<{ page?: number; filters?: JournalAdminUserFilters }> = {}) {
+    return this.context.database.transaction(() => {
+      const pageSize = 50;
+      const page = input.page !== undefined && Number.isSafeInteger(input.page) && input.page > 0 ? input.page : 1;
+      const users = this.list({ pageSize, offset: Math.min(page - 1, Math.floor(Number.MAX_SAFE_INTEGER / pageSize)) * pageSize, filters: input.filters });
+      const membershipAvailable = ["platform_membership_entitlements", "platform_membership_plan_versions", "platform_membership_plans"].every((name) =>
+        !!this.context.database.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(name));
+      const visibleIds = users.items.map((user) => resolveJournalAdminInternalId(this.context, user.userRef, ["user"]).internalId);
+      const grants = membershipAvailable && visibleIds.length > 0
+        ? this.context.database.prepare<unknown[], { user_id: string; name: string; source_type: string; ends_at_utc: string | null }>(`SELECT DISTINCT
+          entitlement.user_id, plan.name, entitlement.source_type, entitlement.ends_at_utc
+          FROM platform_membership_entitlements entitlement
+          JOIN platform_membership_plan_versions version ON version.plan_version_id = entitlement.plan_version_id
+          JOIN platform_membership_plans plan ON plan.plan_id = version.plan_id
+          WHERE entitlement.user_id IN (${visibleIds.map(() => "?").join(",")})
+            AND entitlement.status = 'active' AND entitlement.starts_at_utc <= ?
+            AND (entitlement.ends_at_utc IS NULL OR entitlement.ends_at_utc > ?)
+          ORDER BY plan.name, entitlement.source_type, entitlement.ends_at_utc`).all(...visibleIds, this.context.now.toISOString(), this.context.now.toISOString())
+        : [];
+      return Object.freeze({
+        ...users,
+        summary: Object.freeze(this.memberSummary()),
+        page: Math.floor(users.offset / pageSize) + 1,
+        pageCount: Math.max(1, Math.ceil(users.totalCount / pageSize)),
+        membershipAvailable,
+        items: Object.freeze(users.items.map((user, index) => Object.freeze({
+          ...user,
+          memberships: Object.freeze(grants.filter((grant) => grant.user_id === visibleIds[index]).map((grant) => Object.freeze({
+            planName: grant.name, source: grant.source_type, endsAtUtc: grant.ends_at_utc,
+          }))),
+        }))),
+      });
+    })();
   }
 
   detail(userRef: string): JournalAdminUserDetail | null {

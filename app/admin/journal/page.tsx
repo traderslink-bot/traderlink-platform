@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { JournalAdminOverviewService } from "@/src/modules/journal/server/administration/journal-admin-overview-service";
+import { JournalAdminUserService } from "@/src/modules/journal/server/administration/journal-admin-user-service";
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
 import {
   JournalAdminEmpty,
@@ -25,13 +26,14 @@ export const metadata: Metadata = { title: "Overview | Journal Administration" }
 export const dynamic = "force-dynamic";
 
 export default async function JournalAdminOverviewPage() {
-  const overview = await withJournalAdminPageDatabase((database, scope) =>
-    new JournalAdminOverviewService({ database, scope }).read());
+  const { overview, members } = await withJournalAdminPageDatabase((database, scope) =>
+    database.transaction(() => ({
+      overview: new JournalAdminOverviewService({ database, scope }).read(),
+      members: new JournalAdminUserService({ database, scope }).memberSummary(),
+    }))());
   return (
     <JournalAdminPage>
       <JournalAdminPageHeader
-        description="A privacy-safe view of account growth, statement imports, format-learning work, Data Decisions and operational health across the Journal."
-        eyebrow="Private owner access"
         title="Journal Administration"
       />
 
@@ -45,14 +47,24 @@ export default async function JournalAdminOverviewPage() {
 
       <JournalAdminMetricGrid>
         <JournalAdminMetricCard
-          caption={`${formatAdminInteger(overview.users.new30Days)} joined in 30 days`}
-          label="Registered users"
-          value={formatAdminInteger(overview.users.registeredProduction)}
+          caption={`${formatAdminInteger(members.enabled)} enabled · ${formatAdminInteger(members.disabled)} disabled`}
+          label="Platform members"
+          value={formatAdminInteger(members.total)}
         />
         <JournalAdminMetricCard
-          caption={`${formatAdminInteger(overview.users.signedIn7Days)} signed in during 7 days`}
-          label="Journal-activated users"
+          caption={`${formatAdminInteger(overview.users.new30Days)} linked in 30 days`}
+          label="Discord-linked members"
+          value={formatAdminInteger(members.discordLinked)}
+        />
+        <JournalAdminMetricCard
+          caption="Members with accepted imported or manual executions"
+          label="Journal-activated members"
           value={formatAdminInteger(overview.users.journalActivated)}
+        />
+        <JournalAdminMetricCard
+          caption="Discord sessions seen during the last 7 days"
+          label="Recently signed-in members"
+          value={formatAdminInteger(overview.users.signedIn7Days)}
         />
         <JournalAdminMetricCard
           caption={`${formatAdminInteger(overview.users.multipleAccountUsers)} users have multiple accounts`}
@@ -85,6 +97,10 @@ export default async function JournalAdminOverviewPage() {
           value={formatAdminPercentage(overview.imports.commitRate.percentage)}
         />
       </JournalAdminMetricGrid>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+        <Link href="/admin/journal/users" style={{ color: "#011E56", fontWeight: 750 }}>View all {formatAdminInteger(members.total)} members</Link>
+        <Typography variant="body2" color="text.secondary">Totals include every Platform account. Discord server membership alone does not create a Platform account.</Typography>
+      </Stack>
 
       <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" } }}>
         <JournalAdminPanel title="Import health">

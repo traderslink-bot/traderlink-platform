@@ -21,7 +21,8 @@ assert.equal(availability.coachingPlanHasSpace({...plan,activeStudents:10}),fals
 assert.equal(availability.coachingPlanHasSpace({...plan,status:'paused'}),false);
 assert.equal(availability.coachAcceptsStudents([plan],'coach'),true);
 assert.equal(availability.coachAcceptsStudents([plan],'another'),false);
-const components=load('app/(dashboard)/communities/community-dashboard.tsx',id=>id.endsWith('/coaching-plan-availability')?availability:new Proxy({},{get:(_t,key)=>String(key)}),'\nexports.qaHome=Home; exports.qaCoaches=Coaches; exports.qaWatchlists=WatchlistList; exports.qaAlerts=AlertList; exports.qaLabels=communityCapabilityLabels;');
+const presentation=load('src/modules/communities/contracts/coaching-plan-presentation.ts',id=>{throw new Error(id);});
+const components=load('app/(dashboard)/communities/community-dashboard.tsx',id=>id.endsWith('/coaching-plan-availability')?availability:id.endsWith('/coaching-plan-presentation')?presentation:new Proxy({},{get:(_t,key)=>String(key)}),'\nexports.qaHome=Home; exports.qaCoaches=Coaches; exports.qaWatchlists=WatchlistList; exports.qaAlerts=AlertList; exports.qaLabels=communityCapabilityLabels;');
 function nodes(tree){if(!tree||typeof tree!=='object')return [];if(Array.isArray(tree))return tree.flatMap(nodes);return [tree,...nodes(tree.props?.children),...nodes(tree.props?.action)];}
 const snapshot={viewer:{capabilities:[]},community:{memberCount:1},alerts:[],watchlists:[],coaches:[]};
 const alertSnapshot={community:{slug:'test'},viewer:{userId:'owner',capabilities:['community.alerts.create']},alerts:[{alertId:'alert',slug:'example',status:'published',publishingMode:'discord_post',authorUserId:'owner',publishedAtUtc:null}]};
@@ -45,6 +46,7 @@ assert.equal(nodes(components.qaWatchlists({snapshot:watchlistSnapshot})).filter
 let profileSnapshot={viewer:{userId:'student'},coaches:[{coachProfileId:'coach',slug:'coach',status:'active',userId:'owner',activeStudents:2,capacity:2}],plans:[plan],relationships:[]};
 const page=load('app/(dashboard)/communities/[communitySlug]/coaches/[coachSlug]/page.tsx',id=>{
   if(id.endsWith('/coaching-plan-availability'))return availability;
+  if(id.endsWith('/coaching-plan-presentation'))return presentation;
   if(id.endsWith('/community-dashboard-loader'))return {loadCommunityDashboard:async()=>({snapshot:profileSnapshot,isReview:false})};
   return new Proxy({},{get:(_t,key)=>String(key)});
 });

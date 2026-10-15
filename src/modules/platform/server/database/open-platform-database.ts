@@ -73,6 +73,53 @@ const PLATFORM_RUNTIME_CHILD_KILL_GRACE_MS = 5_000;
 const PLATFORM_RUNTIME_RETRY_MIN_MS = 5_000;
 const PLATFORM_RUNTIME_RETRY_MAX_MS = 60_000;
 const PLATFORM_RUNTIME_SCAN_IDLE_MULTIPLIER = 10;
+const PLATFORM_RUNTIME_CACHE_HELPER = "/app/bin/traderlink-integrity-cache-release";
+const PLATFORM_RUNTIME_CACHE_HELPER_TIMEOUT_MS = 2_000;
+
+// Advisory only: integrity success is established before entering this helper.
+// Keep the scan slot until actual helper exit; never block the request thread.
+function releasePlatformIntegrityScanCache(
+  databasePath: string,
+  structureFingerprint: string,
+  released: () => void,
+): ChildProcess | null {
+  if (process.platform !== "linux" || !existsSync(PLATFORM_RUNTIME_CACHE_HELPER)) return null;
+  const [device, inode] = structureFingerprint.split(":");
+  if (!/^\d+$/.test(device ?? "") || !/^\d+$/.test(inode ?? "")) return null;
+  let helper: ChildProcess;
+  try {
+    helper = spawn(PLATFORM_RUNTIME_CACHE_HELPER, [databasePath, device, inode], {
+      stdio: "ignore", windowsHide: true,
+      env: { NODE_ENV: "production" },
+    });
+  } catch {
+    return null;
+  }
+  let finished = false;
+  let timedOut = false;
+  const startedAt = Date.now();
+  const deadline = setTimeout(() => {
+    timedOut = true;
+    try { console.warn("TraderLink integrity cache-advice deadline reached."); } catch { /* Advisory only. */ }
+    try { helper.kill("SIGKILL"); } catch { /* Actual close still owns the slot. */ }
+  }, PLATFORM_RUNTIME_CACHE_HELPER_TIMEOUT_MS);
+  deadline.unref();
+  helper.on("error", () => { /* A spawn error is followed by close. */ });
+  helper.once("close", (code: number | null) => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(deadline);
+    try {
+      console.info("TraderLink integrity file-cache advice finished.", {
+        outcome: timedOut ? "timeout" : code === 0 ? "advised" : "unavailable",
+        durationMs: Math.max(0, Date.now() - startedAt),
+      });
+    } catch { /* Advisory diagnostics cannot revoke verified integrity. */ }
+    released();
+  });
+  helper.unref();
+  return helper;
+}
 const PLATFORM_RUNTIME_QUICK_CHECK_WORKER_SOURCE = String.raw`
 const { statSync } = require("node:fs");
 process.once("message", (workerData) => {
@@ -263,6 +310,12 @@ function readPlatformRuntimeDatabaseStructureFingerprint(
     details.ino,
     String(readSinglePlatformDatabasePragmaValue(database, "schema_version")),
   ].join(":");
+}
+
+function readPlatformRuntimeDatabaseFileIdentity(
+  structureFingerprint: string,
+): string {
+  return structureFingerprint.split(":").slice(0, 2).join(":");
 }
 
 function readVerifiedRuntimeDatabaseFingerprints(): Map<
@@ -542,11 +595,23 @@ function startPlatformRuntimeQuickCheck(
     }
     settled = true;
     recordRelease();
-    state.quickCheckInFlight = false;
-    state.cancelWorker = null;
     phase = "exit";
     log(exitOutcome ?? "worker_released");
-    schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
+    const releaseSlot = () => {
+      state.quickCheckInFlight = false;
+      state.cancelWorker = null;
+      schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
+    };
+    const cacheHelper = exitOutcome === "ok"
+      ? releasePlatformIntegrityScanCache(databasePath, expectedStructureFingerprint, releaseSlot)
+      : null;
+    if (cacheHelper) {
+      state.cancelWorker = () => {
+        try { cacheHelper.kill("SIGKILL"); } catch { /* Wait for actual close. */ }
+      };
+    } else {
+      releaseSlot();
+    }
   };
   child.once("exit", onExit);
   // spawn errors may emit close without ever creating a process or emitting exit.
@@ -818,8 +883,11 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
       check: "quick_check",
     });
   }
+  const databaseFileIdentityChanged = existing &&
+    readPlatformRuntimeDatabaseFileIdentity(existing.structureFingerprint) !==
+      readPlatformRuntimeDatabaseFileIdentity(structureFingerprint);
   const needsFullVerification = existing && (existing.requiresFullVerification ||
-    existing.structureFingerprint !== structureFingerprint);
+    databaseFileIdentityChanged);
   if (needsFullVerification && existing.quickCheckInFlight) {
     // Full synchronous revalidation must not overlap the old native reader.
     // Identity/structure recovery is distinct from ordinary operational pending.
@@ -909,11 +977,23 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
     database,
     verificationManifest,
   );
+  const inFlightStructureScanInvalidated = existing.quickCheckInFlight &&
+    existing.structureFingerprint !== structureFingerprint;
   existing.dataGeneration += 1;
   existing.dirtySinceForeignKeyCheck = true;
   existing.dirtySinceQuickCheck = true;
   existing.fingerprint = fingerprint;
   existing.structureFingerprint = structureFingerprint;
+  if (inFlightStructureScanInvalidated) {
+    // A schema change invalidates the reader's captured structure even when the
+    // restored manifest is valid. Release it before checking the new structure.
+    existing.generation += 1;
+    existing.cancelWorker?.();
+  }
+  // Ordinary WAL writes do not invalidate the child's read-only transaction.
+  // Let that snapshot finish; dirty flags retain newer writes for the next
+  // cadence-limited pass. Cancelling on every write can starve verification and
+  // repeatedly read the same database pages without completing a check.
   schedulePlatformRuntimeQuickCheck(databasePath, existing, Date.now());
 }
 

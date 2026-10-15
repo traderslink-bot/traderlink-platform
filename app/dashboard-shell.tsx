@@ -603,7 +603,7 @@ export function DashboardShell({
           }
           sx={{ flexGrow: 1, overflowY: "auto", py: 1.25 }}
         >
-          <List disablePadding>
+          <List component="div" disablePadding>
             <NavigationLink
               collapsed={compact}
               offline={offline}
@@ -720,13 +720,14 @@ export function DashboardShell({
                         />
                         </Box>
                       ) : offline || item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id ? null : (
-                        <NavigationDrawerButton
-                          collapsed={compact}
-                          grouped
-                          item={item}
-                          key={item.id}
-                          onOpen={openMarketHaltAlerts}
-                        />
+                        <Box component="li" key={item.id} sx={{ listStyle: "none" }}>
+                          <NavigationDrawerButton
+                            collapsed={compact}
+                            grouped
+                            item={item}
+                            onOpen={openMarketHaltAlerts}
+                          />
+                        </Box>
                       ))}
                     </List>
                   </Collapse>

@@ -10,6 +10,7 @@ const events = [];
 let deny = false;
 let lastAccess;
 class Repository {
+  upsertCoach(input) { events.push(["coach-profile",input.displayName]); }
   setRelationshipStatus(input) {
     events.push(['relationship-status', input.relationshipId, input.status]);
   }
@@ -47,6 +48,10 @@ vm.runInNewContext(compiled, {
   revalidateCommunityPath('test-community', 'coaching');
   assert(events.some(event => event[0] === 'revalidate' && event[1] === '/communities/coaching'));
   assert(!events.some(event => event[1] === '/communities/test-community/coaching'));
+  events.length = 0;
+  const profileForm=new FormData();profileForm.set('communitySlug','test-community');profileForm.set('displayName','Public coach');profileForm.set('capacity','10');
+  await assert.rejects(exportsObject.saveCommunityCoachAction(profileForm), /Unexpected redirect: \/communities\/test-community\/workspace\/setup\?updated=/);
+  assert.deepEqual(events[0],['coach-profile','Public coach']);
   events.length = 0;
   const form = new FormData();
   form.set('communitySlug', 'test-community'); form.set('relationshipId', 'qa-student'); form.set('body', 'Synthetic test');

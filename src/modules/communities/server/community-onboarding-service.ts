@@ -15,12 +15,13 @@ export async function verifyCommunityOwner(guildId: string, discordUserId: strin
     request(`https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}`, { ...options, signal: AbortSignal.timeout(8000) }),
   ]);
   if (!guildResponse.ok || !memberResponse.ok) throw new Error("Discord server verification unavailable.");
-  const guild = await guildResponse.json() as { id?: string; owner_id?: string };
+  const guild = await guildResponse.json() as { id?: string; owner_id?: string; name?: string };
   const member = await memberResponse.json() as { user?: { id?: string; username?: string; global_name?: string | null; avatar?: string | null }; roles?: unknown; joined_at?: string | null };
   if (guild.id !== guildId || guild.owner_id !== discordUserId || member.user?.id !== discordUserId) throw new Error("Only the Discord server owner can connect this server.");
+  if (typeof guild.name !== "string" || !guild.name.trim() || guild.name.trim().length > 120 || /[\u0000-\u001f\u007f]/u.test(guild.name)) throw new Error("Discord server verification unavailable.");
   if (!member.user.username || !Array.isArray(member.roles) || member.roles.length > 250 || member.roles.some(role => typeof role !== "string" || !snowflake.test(role))) throw new Error("Discord server verification unavailable.");
   return {
-    guildId, discordUserId, username: member.user.username,
+    guildId, guildName: guild.name.trim(), discordUserId, username: member.user.username,
     globalDisplayName: member.user.global_name ?? null, avatarHash: member.user.avatar ?? null,
     roleIds: member.roles as string[], joinedAtUtc: member.joined_at ? new Date(member.joined_at).toISOString() : null,
     verifiedAtUtc: createCanonicalUtcTimestamp(),
@@ -28,7 +29,7 @@ export async function verifyCommunityOwner(guildId: string, discordUserId: strin
 }
 
 export function onboardApprovedCommunity(db: Database.Database, input: {
-  userId: string; slug: string; displayName: string;
+  userId: string; slug?: string; displayName?: string;
   evidence: Awaited<ReturnType<typeof verifyCommunityOwner>>; atUtc: string;
 }) {
   const { evidence } = input;
@@ -45,8 +46,18 @@ export function onboardApprovedCommunity(db: Database.Database, input: {
       roleIds: evidence.roleIds, guildOwner: true, joinedAtUtc: evidence.joinedAtUtc, verifiedAtUtc: evidence.verifiedAtUtc,
     });
     if (existing) return { slug: existing.slug };
+    const displayName = input.displayName ?? evidence.guildName;
+    let slug = input.slug;
+    if (!slug) {
+      const nameSlug = evidence.guildName.normalize("NFKD").replace(/[\u0300-\u036f]/gu, "").toLowerCase()
+        .replace(/[^a-z0-9]+/gu, "-").replace(/^-+|-+$/gu, "").slice(0, 48).replace(/-+$/gu, "");
+      const base = nameSlug ? (nameSlug.length >= 3 && /^[a-z]/u.test(nameSlug) ? nameSlug : `community-${nameSlug}`) : "community";
+      slug = base;
+      let suffix = 2;
+      while (db.prepare("SELECT 1 FROM traderlink_communities WHERE slug=?").get(slug)) slug = `${base}-${suffix++}`;
+    }
     const permissions = new TraderLinkCommunityRepository(db);
-    const created = permissions.createFromVerifiedDiscordOwner({ ownerUserId: input.userId, discordGuildId: evidence.guildId, slug: input.slug, displayName: input.displayName, timestamp: input.atUtc });
+    const created = permissions.createFromVerifiedDiscordOwner({ ownerUserId: input.userId, discordGuildId: evidence.guildId, slug, displayName, timestamp: input.atUtc });
     db.prepare(`INSERT INTO traderlink_community_audiences(audience_id,community_id,name,mode,status,created_by_user_id,created_at_utc,updated_at_utc) VALUES(?,?,'Everyone','everyone','active',?,?,?)`).run(createCanonicalUuidV4(), created.communityId, input.userId, input.atUtc, input.atUtc);
     db.prepare(`INSERT INTO traderlink_community_settings(community_id,description,named_activity_retention_days,visibility_status,visibility_copy,updated_at_utc) VALUES(?,'',90,'not_configured','',?)`).run(created.communityId, input.atUtc);
     db.prepare(`INSERT INTO traderlink_community_partner_programs(community_id,status,commission_basis_points,attribution_days,currency,updated_by_user_id,updated_at_utc) VALUES(?,'disabled',NULL,90,'USD',?,?)`).run(created.communityId, input.userId, input.atUtc);

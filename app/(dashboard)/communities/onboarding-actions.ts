@@ -25,7 +25,7 @@ export async function onboardDiscordCommunityAction(formData: FormData): Promise
   // No SQLite write transaction is held while calling Discord.
   const evidence = await verifyCommunityOwner(discordGuildId, linked.auth_subject, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "");
   const community = withPlatformDatabase({ mode: "runtime" }, database => onboardApprovedCommunity(database, {
-    userId: identity.scope.userId, slug: value(formData, "slug"), displayName: value(formData, "displayName"),
+    userId: identity.scope.userId,
     evidence, atUtc: createCanonicalUtcTimestamp(),
   }));
   revalidatePath("/communities");

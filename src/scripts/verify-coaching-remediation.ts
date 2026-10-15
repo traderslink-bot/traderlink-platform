@@ -109,6 +109,8 @@ check.equal(generated,5,"One weekly trade review per period");
 check.equal(service.generate({...base,throughDate:"2026-09-30"}),0,"Repeated scheduling is idempotent");
 const snapshot=platform.readSnapshot("first-room",actor);
 check.equal(snapshot.coachingAgreements?.[0]?.status,"accepted");
+check.equal(snapshot.relationships.find(row=>row.relationshipId===relationship)?.coachDisplayName,"Member Coach","Use the public coach profile consistently in relationship views");
+check.ok(snapshot.coachingRoleOptions?.some(role=>role.id==="200001"&&role.name==="Coaching"),"Ordinary coaches receive named enrollment roles without role-management authority");
 const terms=snapshot.coachingAgreements![0].terms;
 check.equal(coachingPeriod({...terms,startDate:"2026-01-31"},{...terms.items[0],frequency:"monthly"},1)?.start,"2026-02-28");
 check.equal(coachingPeriod({...terms,startDate:"2026-01-31"},{...terms.items[0],frequency:"monthly"},2)?.start,"2026-03-31","Monthly cadence retains original anchor");
@@ -365,7 +367,7 @@ check.equal(permissions.resolveAccess(first.communityId,OWNER).capabilities.leng
 check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.length,0,'Paused server cannot continue publishing through mapped roles');
 database.prepare("INSERT INTO traderlink_community_operator_grants(grant_id,user_id,status,granted_at_utc) VALUES('10000000-0000-4000-8000-000000000123',?,'active',?) ON CONFLICT(user_id) DO UPDATE SET status='active'").run(OWNER,requestAt);
 const beforeTransfer=JSON.stringify(database.prepare('SELECT * FROM traderlink_community_journal_grants ORDER BY grant_id').all());
-const recovery={actorUserId:OWNER,communityId:first.communityId,newOwnerUserId:MEMBER,atUtc:'2026-10-15T12:11:00.000Z',evidence:{guildId:PILOT_GUILD,discordUserId:'987654321',username:'new-owner',globalDisplayName:null,avatarHash:null,roleIds:['200001'],joinedAtUtc:null,verifiedAtUtc:'2026-10-15T12:11:00.000Z'}};
+const recovery={actorUserId:OWNER,communityId:first.communityId,newOwnerUserId:MEMBER,atUtc:'2026-10-15T12:11:00.000Z',evidence:{guildId:PILOT_GUILD,guildName:"Synthetic coaching community",discordUserId:'987654321',username:'new-owner',globalDisplayName:null,avatarHash:null,roleIds:['200001'],joinedAtUtc:null,verifiedAtUtc:'2026-10-15T12:11:00.000Z'}};
 check.throws(()=>recoverCommunityOwnership(database,{...recovery,actorUserId:MEMBER}),'Only platform operator may recover ownership');
 database.exec('SAVEPOINT newer_ownership_evidence');
 database.prepare('UPDATE platform_discord_memberships SET last_verified_at_utc=? WHERE user_id=? AND guild_id=?').run('2026-10-15T12:11:30.000Z',MEMBER,PILOT_GUILD);

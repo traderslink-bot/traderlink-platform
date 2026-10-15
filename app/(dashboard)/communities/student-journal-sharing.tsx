@@ -9,7 +9,7 @@ import {CommunityTypography as Typography} from "./community-typography";
 export function StudentJournalSharing({snapshot,isReview,selectedRelationshipId}:{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean;selectedRelationshipId:string}){
  const relationships=snapshot.relationships.filter(item=>item.relationshipId===selectedRelationshipId&&item.studentUserId===snapshot.viewer.userId&&item.status==="active"&&!item.archivedAtUtc&&item.accessStatus==="active");
  const [scope,setScope]=useState("trades");
- const active=snapshot.journalGrants.filter(item=>item.studentUserId===snapshot.viewer.userId&&item.status==="active");
+ const active=snapshot.journalGrants.filter(item=>item.studentUserId===snapshot.viewer.userId&&item.relationshipId===selectedRelationshipId&&item.status==="active");
  return <DashboardPanel title="Journal sharing">
   {relationships.length?<Box action={isReview?undefined:grantCoachJournalAccessAction} component="form"><input name="communitySlug" type="hidden" value={snapshot.community.slug}/><Stack spacing={1.5}>
    <input name="relationshipId" type="hidden" value={relationships[0].relationshipId}/>

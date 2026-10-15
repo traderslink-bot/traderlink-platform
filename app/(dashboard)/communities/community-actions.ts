@@ -24,7 +24,7 @@ import {requireCommunityRequestAccess} from "@/src/modules/communities/server/co
 import {COACHING_REVIEW_FOCUS,isCoachingReviewKind,parseCoachingFocus,type CoachingFocusFeedback} from "@/src/modules/communities/contracts/coaching-review-workspace";
 
 import { refresh, revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -182,7 +182,18 @@ export async function updateCommunityServerWatchlistAction(formData:FormData):Pr
 export async function saveCommunityCoachAction(formData: FormData): Promise<void> {
   const communitySlug=required(formData,"communitySlug"); const {identity}=await context(communitySlug,formData);
   withPlatformDatabase({mode:"runtime"},database=>{ const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug); const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string}; new TraderLinkCommunityPlatformRepository(database).upsertCoach({communityId:community.community_id,actor,userId:actor.userId,displayName:required(formData,"displayName"),headline:String(formData.get("headline")??""),biography:String(formData.get("biography")??""),deliverySummary:String(formData.get("deliverySummary")??""),capacity:Number(required(formData,"capacity")),active:true,atUtc:createCanonicalUtcTimestamp()}); });
-  revalidateCommunityPath(communitySlug,"workspace"); redirect(updatedCommunityUrl(communitySlug,"workspace"));
+  revalidateCommunityPath(communitySlug,"workspace/setup"); redirect(updatedCommunityUrl(communitySlug,"workspace/setup"));
+}
+
+export async function saveCoachingPlanWithFeedbackAction(_previous:{error:string},formData:FormData):Promise<{error:string}>{
+  try {
+    await createCommunityCoachingPlanAction(formData);
+    return {error:""};
+  } catch(error) {
+    unstable_rethrow(error);
+    if(error instanceof TraderLinkPlatformError&&error.safeContext.field==="planRevision")return {error:"This plan changed in another window. Your entries are still here. Copy any changes you want to keep, then reload the plan before saving again."};
+    return {error:"We couldn't save this plan. Your entries are still here. Check your settings and access, then try again. If the connection was interrupted, reload to check whether the plan was saved before creating another."};
+  }
 }
 
 export async function createCommunityCoachingPlanAction(formData: FormData): Promise<void> {

@@ -4,14 +4,19 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
-import { useRef, useState, useTransition, type ReactNode, type FormEvent } from "react";
+import { useRef, useState, useSyncExternalStore, useTransition, type ReactNode, type FormEvent } from "react";
 import type { CommunityPublicationFeedback } from "@/src/modules/communities/contracts/community-publication-feedback";
+
+const subscribeHydration=()=>()=>{};
+const clientReady=()=>true;
+const serverReady=()=>false;
 
 export function CommunityPublicationForm({ action, children, disabled = false }: {
   action: (data: FormData) => Promise<CommunityPublicationFeedback>;
   children: ReactNode;
   disabled?: boolean;
 }) {
+  const ready=useSyncExternalStore(subscribeHydration,clientReady,serverReady);
   const [feedback, setFeedback] = useState<CommunityPublicationFeedback>({ status: "idle", message: "" });
   const [pending, startTransition] = useTransition();
   const submitting = useRef(false);
@@ -19,7 +24,7 @@ export function CommunityPublicationForm({ action, children, disabled = false }:
   const previousPayload = useRef("");
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (disabled || submitting.current) return;
+    if (disabled || !ready || submitting.current) return;
     const native = event.nativeEvent as SubmitEvent;
     const data = new FormData(event.currentTarget, native.submitter);
     const payload = JSON.stringify([...data.entries()]);
@@ -34,12 +39,12 @@ export function CommunityPublicationForm({ action, children, disabled = false }:
       finally { submitting.current = false; }
     });
   }
-  return <Box component="form" onSubmit={submit}>
+  return <Box component="form" method="post" onSubmit={submit}>
     <Stack spacing={2}>
       {feedback.message ? <Alert role={feedback.status === "error" ? "alert" : "status"} severity={feedback.status === "error" ? "error" : feedback.status === "success" ? "success" : "info"}>
         {feedback.message}{feedback.href ? <Button component="a" href={feedback.href} size="small">View saved item</Button> : null}
       </Alert> : null}
-      <Box component="fieldset" disabled={disabled || pending} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>{children}</Box>
+      <Box component="fieldset" disabled={disabled || !ready || pending} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>{children}</Box>
     </Stack>
   </Box>;
 }

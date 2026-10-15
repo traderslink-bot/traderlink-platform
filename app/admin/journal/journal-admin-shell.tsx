@@ -32,6 +32,7 @@ import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Image from "next/image";
+import { useTheme } from "@mui/material/styles";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -40,7 +41,7 @@ const drawerWidth = 270;
 
 const navigation = [
   { href: "/admin/journal", label: "Overview", icon: <DashboardRoundedIcon /> },
-  { href: "/admin/journal/users", label: "Users", icon: <GroupRoundedIcon /> },
+  { href: "/admin/journal/users", label: "Members", icon: <GroupRoundedIcon /> },
   { href: "/admin/journal/memberships", label: "Memberships", icon: <LoyaltyRoundedIcon /> },
   { href: "/admin/journal/communities", label: "Communities", icon: <ForumRoundedIcon /> },
   { href: "/admin/journal/imports", label: "Imports", icon: <CloudUploadRoundedIcon /> },
@@ -91,6 +92,7 @@ export function JournalAdminShell({
   environment: "Local" | "Preview" | "Production";
   operatorRole: string;
 }) {
+  const theme=useTheme();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const drawer = (
@@ -101,14 +103,14 @@ export function JournalAdminShell({
             alt="TraderLink"
             height={35}
             priority
-            src="/logo-horizontal-main.png"
+            src={theme.palette.mode==="dark"?"/logo-horizontal-dark.png":"/logo-horizontal-main.png"}
             style={{ display: "block", height: 35, objectFit: "contain", width: 170 }}
             width={170}
           />
         </Link>
       </Toolbar>
       <Box sx={{ px: 2, pb: 1.5 }}>
-        <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+        <Typography color="traderLink.linkText" sx={{ fontWeight: 800 }} variant="caption">
           Journal Administration
         </Typography>
         <Typography color="text.secondary" variant="body2">
@@ -116,7 +118,7 @@ export function JournalAdminShell({
         </Typography>
       </Box>
       <Divider />
-      <List sx={{ flex: 1, px: 1, py: 1.5 }}>
+      <List component="div" sx={{ flex: 1, px: 1, py: 1.5 }}>
         {navigation.map((item) => (
           <ListItemButton
             aria-current={active(pathname, item.href) ? "page" : undefined}
@@ -165,7 +167,7 @@ export function JournalAdminShell({
   );
 
   return (
-    <Box sx={{ bgcolor: "background.default", display: "flex", minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: "background.default", color: "text.primary", display: "flex", minHeight: "100vh" }}>
       <AppBar
         color="inherit"
         elevation={0}
@@ -189,7 +191,7 @@ export function JournalAdminShell({
             <Typography component="div" noWrap sx={{ fontWeight: 800 }}>
               {title(pathname)}
             </Typography>
-            <Typography color="text.secondary" noWrap variant="caption">
+            <Typography color="text.secondary" component="div" noWrap variant="caption">
               Data as of {formatUtcTimestamp(dataAsOfUtc)}
             </Typography>
           </Box>

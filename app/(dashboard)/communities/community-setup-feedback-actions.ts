@@ -19,18 +19,15 @@ function refreshSafely(path: string) { try { revalidatePath(path); } catch { /* 
 export async function connectCommunityWithFeedback(form: FormData): Promise<CommunityPublicationFeedback> {
   const identity = await requireTraderLinkPlatformPageIdentity();
   const guildId = String(form.get("discordGuildId") ?? "");
-  const slug = String(form.get("slug") ?? "").trim();
-  const displayName = String(form.get("displayName") ?? "").trim();
   if (!isApprovedCommunityGuild(guildId)) return failure("Choose a server approved for connection.");
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || !displayName) return failure("Enter a community name and a URL name using lowercase letters, numbers and hyphens.");
   const linked = withPlatformDatabase({ mode: "runtime" }, db => db.prepare(`SELECT auth_subject FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'`).get(identity.scope.userId) as { auth_subject: string } | undefined);
   if (!linked) return failure("Connect your Discord account, then refresh the server list.");
   let evidence;
   try { evidence = await verifyCommunityOwner(guildId, linked.auth_subject, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? ""); }
   catch { return failure("We couldn't verify this server connection. Install the TraderLink Discord app in this server, check its access, then try again as the server owner."); }
   let community;
-  try { community = withPlatformDatabase({ mode: "runtime" }, db => onboardApprovedCommunity(db, { userId: identity.scope.userId, slug, displayName, evidence, atUtc: new Date().toISOString() })); }
-  catch { return failure("We couldn't connect this community. Check that the URL name is available and that server ownership hasn't changed. Your entries are still here."); }
+  try { community = withPlatformDatabase({ mode: "runtime" }, db => onboardApprovedCommunity(db, { userId: identity.scope.userId, evidence, atUtc: new Date().toISOString() })); }
+  catch { return failure("We couldn't connect this server. Check that server ownership hasn't changed, then try again."); }
   refreshSafely("/communities");
   return { status: "success", message: "Discord server connected. Choose your roles and publishing channels in community settings.", href: `/communities/${encodeURIComponent(community.slug)}/manage` };
 }

@@ -91,7 +91,7 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Sign in with the Discord account that belongs to the connected server. Every verified active member can use TraderLink; the server owner does not choose which roles may create an account." }),
           Object.freeze({ kind: "paragraph", text: "The owner can use current Discord roles to limit only that server's alerts, watchlists or coaching plans. If your role changes, access changes after TraderLink receives a fresh Discord membership check." }),
           Object.freeze({ kind: "link", href: "/communities", label: "Open My Communities", text: "Choose one of your connected Discord communities." }),
-          Object.freeze({ kind: "paragraph", text: "Server owners select an approved server, install the TraderLink Discord app and connect it. Role and channel setup uses the names fetched from Discord; you do not need to copy IDs. If a channel is unavailable, check the bot's View Channel and Send Messages permissions, then refresh. Saving channel settings does not send a test message." }),
+          Object.freeze({ kind: "paragraph", text: "Server owners select an approved server, install the TraderLink Discord app and connect it. TraderLink uses the verified Discord server name and creates its community URL automatically. Role and channel setup uses the names fetched from Discord; you do not need to copy IDs. If a channel is unavailable, check the bot's View Channel and Send Messages permissions, then refresh. Saving channel settings does not send a test message." }),
         ]),
       }),
       Object.freeze({
@@ -115,7 +115,8 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "The coach controls their plan while you control every Journal share.",
         keywords: Object.freeze(["coach", "coaching", "Journal sharing", "revoke", "payment"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Coaches create their own plans, delivery details, displayed prices and student limits. The coach or server handles payment in Discord; TraderLink does not provide checkout or collect a launch coaching commission." }),
+          Object.freeze({ kind: "paragraph", text: "Coaches create their own plans, delivery details, displayed prices and student limits. New student requests appear under Students → Requests, where the coach can accept or decline them. The coach or server handles payment in Discord; TraderLink does not provide checkout or collect a launch coaching commission." }),
+          Object.freeze({ kind: "paragraph", text: "Plan save errors keep your entries in the editor. If the plan changed in another window, copy the changes you want to keep and reload before saving again. After an interrupted connection, check Coach Setup for a saved plan before creating another. When you switch coaches, Journal sharing shows only the selected coaching relationship." }),
           Object.freeze({ kind: "callout", title: "Coaching never opens your Journal automatically", text: "You must separately choose a specific Journal account and data scope for an active coach. You can revoke that read access at any time. A coach cannot edit your executions, P/L, broker evidence or Journal facts." }),
         ]),
       }),

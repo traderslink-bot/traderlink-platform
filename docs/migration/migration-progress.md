@@ -1,5 +1,12 @@
 # TraderLink Platform Migration Progress
 
+## 2026-10-10 Journal Administration member directory
+
+The [member directory progress record](journal-admin-member-directory-progress.md)
+tracks the approved full directory, accurate population totals and responsive
+membership/activity layout. Local implementation is separate from owner visual
+acceptance and production release; the owner requested completion before deployment.
+
 ## Reverse splits: dashboard, Watchlist and notifications
 
 Owner-approved scope and the local source-only checkpoint are tracked in the

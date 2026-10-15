@@ -39,3 +39,19 @@ Account-deletion confirmation wording was approved verbatim by the owner and app
 Initial focused coaching fixture passed archive capture rollback, retry deadline stability, exact 60-day read expiry and bounded cleanup including attachment bytes. Full erasure integration, surviving transferred-community records, protected admin presentation and hosted backup/cleanup proof remain open.
 
 The expanded disposable full-account-erasure fixture passed preservation of the deleting coach's message and attachment evidence, removal of that participant's live relationship, and preservation of the other user's Journal. This does not yet prove preservation of unrelated coaches when a community owner is deleted. The earlier proposed community-wide relationship deletion was rejected and was not applied; the owner's clarification above replaces that proposal. Shared community foreign-key preservation remains an implementation and acceptance gate.
+
+
+### October 14 — admin evidence freshness correction
+
+The completion run found that the recovered platform-admin authorization checked
+owner identity and the singleton grant but omitted the required five-minute
+membership evidence age. It now rejects stale, future-dated and invalid evidence
+before archive access or other administrative operations. The existing grant,
+owner identity and protected local-review checks remain mandatory.
+
+The three focused admin authorization tests pass, covering fresh owner plus grant,
+missing grant, stale/future evidence, non-owner and the protected loopback boundary.
+The fixture now includes an explicit synthetic session identity. No hosted grant,
+Discord ownership, account deletion or archive data was changed. This restores an
+existing internal access contract; no public Help wording change is required.
+Expanded archive browser acceptance remains in the active completion run.

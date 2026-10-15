@@ -1,3 +1,4 @@
+import {coachingPlanPriceLabel} from "@/src/modules/communities/contracts/coaching-plan-presentation";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
@@ -17,7 +18,7 @@ export default async function CommunityCoachPage({params}:{params:Promise<{commu
   const plans=loaded.snapshot.plans.filter(plan=>plan.coachProfileId===coach.coachProfileId&&plan.status==="active");
   const accepting=coach.status==="active"&&coachAcceptsStudents(plans,coach.coachProfileId);
   return <DashboardPage>
-    <Typography component="a" href={`/communities/${communitySlug}/coaches`} sx={{color:"primary.main",fontWeight:800,textDecoration:"none"}}>← Back to coaches</Typography>
+    <Typography component="a" href={`/communities/${communitySlug}/coaches`} sx={{color:"traderLink.linkText",fontWeight:800,textDecoration:"none"}}>← Back to coaches</Typography>
     <Grid container spacing={2}>
       <Grid size={{xs:12,lg:5}}><DashboardPanel hideHeader><Stack spacing={1.5}>
         <Stack direction="row" sx={{justifyContent:"space-between"}}><Typography component="h1" variant="h1">{coach.displayName}</Typography><Chip color={accepting?"success":"default"} label={accepting?"Accepting students":"At capacity"}/></Stack>
@@ -31,7 +32,7 @@ export default async function CommunityCoachPage({params}:{params:Promise<{commu
           const existing=loaded.snapshot.relationships.find(r=>r.planId===plan.planId&&r.studentUserId===loaded.snapshot.viewer.userId&&(r.status==="active"||r.status==="pending"));
           const canRequest=coach.status==="active"&&coach.userId!==loaded.snapshot.viewer.userId&&coachingPlanHasSpace(plan);
           return <Stack key={plan.planId} sx={{border:1,borderColor:"divider",borderRadius:2,p:2}} spacing={1}>
-            <Stack direction="row" sx={{justifyContent:"space-between"}}><Typography variant="h2">{plan.name}</Typography><Typography color="primary.main" style={{fontWeight:900}}>{plan.priceLabel}</Typography></Stack>
+            <Stack direction="row" sx={{justifyContent:"space-between"}}><Typography variant="h2">{plan.name}</Typography><Typography color="primary.main" style={{fontWeight:900}}>{coachingPlanPriceLabel(plan)}</Typography></Stack>
             <Typography color="text.secondary" variant="body2">{plan.description}</Typography>
             <Typography variant="body2">{plan.paymentInstructions}</Typography>
             <Typography variant="caption">{plan.activeStudents??0} of {plan.studentCapacity} places filled</Typography>

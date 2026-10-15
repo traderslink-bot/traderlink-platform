@@ -28,14 +28,14 @@ vm.runInNewContext(ts.transpileModule(source, {compilerOptions: {module: ts.Modu
     if(id.endsWith('/community-launch-policy')) return {isApprovedCommunityGuild: guild => guild==='1433570740430573642'};
     if(id.endsWith('/community-onboarding-service')) return {
       verifyCommunityOwner: async (guild,subject,token) => {assert.equal(guild,'1433570740430573642');assert.equal(subject,'discord-owner');assert.equal(token,'synthetic-test-token');verified++;return {verified:true};},
-      onboardApprovedCommunity: (_db,input) => {assert.equal(input.userId,'owner');assert.equal(input.evidence.verified,true);if(match)return {slug:'existing-community'};writes++;throw new Error('normal verified creation');},
+      onboardApprovedCommunity: (_db,input) => {assert.equal(input.userId,'owner');assert.equal(input.evidence.verified,true);assert.equal(input.slug,undefined);assert.equal(input.displayName,undefined);if(match)return {slug:'existing-community'};writes++;throw new Error('normal verified creation');},
     };
     if(id.endsWith('/traderlink-community-repository')) return {TraderLinkCommunityRepository: class {createFromVerifiedDiscordOwner() {writes++; throw new Error('normal verified creation');}}};
     if(id.endsWith('/traderlink-community-platform-repository')) return {};
     throw new Error(`Unexpected import ${id}`);
   },
 });
-const form = new FormData(); form.set('discordGuildId', '1433570740430573642'); form.set('slug', 'new-name'); form.set('displayName', 'New name');
+const form = new FormData(); form.set('discordGuildId', '1433570740430573642');
 (async () => {
   await assert.rejects(output.onboardDiscordCommunityAction(form), e => e.url === '/communities/existing-community/manage');
   assert.equal(writes, 0, 'Reentry must not reset settings, roles, grants, channels or display name');

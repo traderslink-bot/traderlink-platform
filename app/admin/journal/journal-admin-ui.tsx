@@ -17,19 +17,19 @@ export function JournalAdminPageHeader({
   eyebrow,
   title,
 }: {
-  description: string;
-  eyebrow: string;
+  description?: string;
+  eyebrow?: string;
   title: string;
 }) {
   return (
     <Box>
-      <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+      {eyebrow ? <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
         {eyebrow}
-      </Typography>
+      </Typography> : null}
       <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">{title}</Typography>
-      <Typography color="text.secondary" sx={{ maxWidth: 820, mt: 1 }} variant="body2">
+      {description ? <Typography color="text.secondary" sx={{ maxWidth: 820, mt: 1 }} variant="body2">
         {description}
-      </Typography>
+      </Typography> : null}
     </Box>
   );
 }

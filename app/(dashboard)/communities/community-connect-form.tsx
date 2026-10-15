@@ -19,8 +19,6 @@ export function CommunityConnectForm({ guilds, clientId }: { guilds: readonly { 
         {guilds.map(guild => <MenuItem key={guild.guildId} value={guild.guildId}>{guild.guildName}</MenuItem>)}
       </TextField>
       {installUrl ? <Button href={installUrl} rel="noopener noreferrer" target="_blank" variant="outlined">Install TraderLink Discord app</Button> : <Typography>Discord installation is unavailable. Contact TraderLink support.</Typography>}
-      <TextField label="Community name" name="displayName" required/>
-      <TextField label="URL name" name="slug" required/>
       <Button type="submit" variant="contained">Connect server</Button>
     </Stack>
   </CommunityPublicationForm>;

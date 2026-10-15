@@ -114,7 +114,8 @@ Done when owner/staff/member publication lifecycles, placements and Discord deli
 - Inventory which pages generate events. Keep private Journal data, coaching conversations, private drafts and private notes outside community-owner activity detail. Verify capability checks for named versus aggregate reports.
 - Make counts, page identity, time range and unique-member semantics accurate. Do not claim complete Discord channel usage statistics.
 - Do not add the rejected activity disclosure or similar copy anywhere. Keep technical retention/access behavior correct without reintroducing descriptive cards or the removed team-access banner.
-- Verify account-deletion/export handling for coaching, attachments and activity against existing platform behavior. Define relationships between retained delivery records, deleted accounts and revoked Journal access.
+- Verify account-deletion handling for coaching, attachments and activity against existing platform behavior. Define relationships between retained delivery records, deleted accounts and revoked Journal access.
+- Owner decision (2026-10-15): Coaching stays in the app; this release does not add coach export or bulk download of student records. The Coaching analysis drawer renders authorized results in-app and exposes no CSV/export action. Shared attachments retain their existing scoped access; a future personal Platform export is separate scope.
 
 Done when retention tests cover every named table and boundaries hold. D5 and D7 are approved subject to the no-disclosure exception. Activity visual redesign is not required for this checkpoint.
 

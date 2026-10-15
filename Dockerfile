@@ -9,6 +9,10 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
+COPY scripts/platform/integrity-cache-release.c /tmp/integrity-cache-release.c
+RUN mkdir -p /app/bin \
+  && cc -O2 -std=c11 -Wall -Wextra -Werror \
+    /tmp/integrity-cache-release.c -o /app/bin/traderlink-integrity-cache-release
 
 FROM base AS builder
 COPY --from=dependencies /app/node_modules ./node_modules
@@ -26,6 +30,7 @@ RUN groupadd --system --gid 1001 nodejs \
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=dependencies --chown=nextjs:nodejs /app/bin/traderlink-integrity-cache-release ./bin/traderlink-integrity-cache-release
 
 USER nextjs
 EXPOSE 3000

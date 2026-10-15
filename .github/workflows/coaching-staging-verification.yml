@@ -4,10 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - codex/coaching-coordinator-staging-20261015
       - codex/coaching-staging-integration-20260926
       - codex/coaching-parity-recovery-20261010
       - codex/coaching-production-parity-staging-20261010
       - codex/coaching-staging-verification-20261010-v2
+      - codex/coaching-draft-edit-qa-20261011
 
 permissions:
   contents: read
@@ -32,4 +34,5 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: node --import tsx src/scripts/coaching-staging-maintenance.ts --rehearse
+      - run: npx tsx src/scripts/verify-community-watchlist-drafts.ts
       - run: npm run build

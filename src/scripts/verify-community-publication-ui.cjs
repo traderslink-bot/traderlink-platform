@@ -28,6 +28,9 @@ function component(relative) {
 }
 async function main() {
   const { CommunityPublicationForm } = component('app/(dashboard)/communities/community-publication-form.tsx');
+  const serverMarkup=require('react-dom/server').renderToString(React.createElement(CommunityPublicationForm,{action:async()=>({status:'idle',message:''})},React.createElement('button',{type:'submit'},'Save')));
+  assert.match(serverMarkup,/<fieldset[^>]*disabled=""/,'Submission is disabled until hydration attaches its handler');
+  assert.match(serverMarkup,/<form[^>]*method="post"/,'The fallback never puts publication fields in a GET URL');
   const root = createRoot(document.getElementById('root'));
   const requests = []; let resolve; let reject;
   const action = data => { requests.push(Object.fromEntries(data)); return new Promise((yes, no) => { resolve = yes; reject = no; }); };

@@ -41,8 +41,13 @@ async function main() {
     assert.equal(isFreshCommunityEvidence("invalid", now), false);
     const request = (async (url: string | URL | Request) => new Response(JSON.stringify(String(url).includes("/members/")
       ? { user: { id:"123456789", username:"owner" }, roles:[], joined_at:null }
-      : { id:"900001", owner_id:"123456789" }), {status:200})) as typeof fetch;
+      : { id:"900001", owner_id:"123456789", name:"Independent room" }), {status:200})) as typeof fetch;
     const evidence = await verifyCommunityOwner("900001", "123456789", "fixture-only", request);
+    const missingName = (async (url: string | URL | Request) => new Response(JSON.stringify(String(url).includes("/members/")
+      ? { user: { id:"123456789", username:"owner" }, roles:[] }
+      : { id:"900001", owner_id:"123456789" }), {status:200})) as typeof fetch;
+    await assert.rejects(verifyCommunityOwner("900001", "123456789", "fixture-only", missingName), /verification unavailable/, "Missing verified names cannot be replaced with browser input");
+
     const input = { userId:owner, slug:"independent-room", displayName:"Independent room", evidence, atUtc:evidence.verifiedAtUtc };
     process.env.TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS = "";
     assert.throws(() => onboardApprovedCommunity(db,input), /not been approved/);
@@ -55,6 +60,22 @@ async function main() {
     assert.equal((db.prepare("SELECT status FROM traderlink_community_partner_programs").get() as {status:string}).status,"disabled");
     assert.equal(onboardApprovedCommunity(db,{...input,slug:"do-not-reset",displayName:"Do not reset"}).slug,created.slug);
     assert.equal((db.prepare("SELECT display_name FROM traderlink_communities").get() as {display_name:string}).display_name,"Independent room");
+    db.exec("SAVEPOINT automatic_identity");
+    process.env.TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS = "900001,900002,900003,900004,900005,900006";
+    const automatic = (guildId: string, guildName: string) => onboardApprovedCommunity(db, {
+      userId: owner, evidence: {...evidence, guildId, guildName}, atUtc: evidence.verifiedAtUtc,
+    });
+    const second = automatic("900002", "Independent room");
+    assert.equal(second.slug, "independent-room-2", "Automatic URLs must not collide with another server");
+    assert.equal(automatic("900003", "Independent room").slug, "independent-room-3");
+    assert.equal(automatic("900002", "Renamed server").slug, second.slug, "Reconnect retains the original URL");
+    assert.equal((db.prepare("SELECT display_name FROM traderlink_communities WHERE discord_guild_id='900002'").get() as {display_name:string}).display_name, "Independent room", "Reconnect preserves saved setup");
+    assert.equal(automatic("900004", "交易社区 🚀").slug, "community", "Non-Latin names retain their display name with a valid URL");
+    assert.equal(automatic("900005", "123 Traders").slug, "community-123-traders");
+    assert.equal(automatic("900006", "A").slug, "community-a", "Short server names still produce valid community URLs");
+    assert.equal((db.prepare("SELECT count(*) n FROM traderlink_community_operator_grants").get() as {n:number}).n, 0);
+    db.exec("ROLLBACK TO automatic_identity; RELEASE automatic_identity");
+    process.env.TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS = "900001,900002";
     assert.throws(() => onboardApprovedCommunity(db,{...input,userId:other}), /connection required/);
     assert.throws(() => onboardApprovedCommunity(db,{...input,userId:other,evidence:{...evidence,discordUserId:"987654321"}}), /transfer requires/);
     assert.throws(() => onboardApprovedCommunity(db,{...input,atUtc:new Date(Date.parse(evidence.verifiedAtUtc)+300001).toISOString()}), /Refresh Discord/);

@@ -16,7 +16,7 @@ import { editLevelRows, type LevelRowAction } from "@/src/lib/live-watchlist/ana
 
 const AnalysisCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then(module => module.TradersLinkAiReadCard));
 type Review = { symbol: string; cycleId: string; head: number; draft: { revision: number; body: { payload: Record<string, unknown> } } | null };
-type Preview = { failureRecoveryVisible?: boolean; cycleId: string; draftRevision: number; publication: { website: { cards: { tradersLinkAiRead: LiveWatchlistCardContent }; tradersLinkAiReadDipBuyPlanVisible?: boolean } } };
+type Preview = { failureRecoveryVisible?: boolean; cycleId: string; draftRevision: number; publication: { website: { cards: { tradersLinkAiRead: LiveWatchlistCardContent; traderNotes?: LiveWatchlistCardContent }; tradersLinkAiReadDipBuyPlanVisible?: boolean } } };
 async function request<T>(symbol: string, path = "", body?: unknown, signal?: AbortSignal): Promise<T> {
   const response = await fetch("/api/admin/watchlist/runtime/watchlist/analysis-review" + path + (body ? "" : "?symbol=" + encodeURIComponent(symbol)), {
     method: body ? "POST" : "GET", cache: "no-store", signal: signal ?? AbortSignal.timeout(30000),
@@ -103,6 +103,14 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
         onChange={event=>change([...path,key],["low","high","invalidation","price"].includes(key)?event.target.value===""?null:Number(event.target.value):event.target.value)} />);
       return keys.map(key=>{
         if(key==="simpleSetup") return <details key={key}><summary>Edit analysis</summary>{visibility("currentRead","analysis")}<TextField label="Analysis" value={simple.setup??""} fullWidth multiline disabled={busy} onChange={event=>change(["simpleAnalysis","setup"],event.target.value)} /></details>;
+        if(key==="simpleBreakout") return <details key={key}><summary>Edit breakout</summary>{visibility("breakoutContinuation","breakout")}
+          <Button disabled={busy} onClick={()=>change(["simpleAnalysis","breakout"],simple.breakout?null:{price:null,explanation:"",confirmation:""})}>{simple.breakout?"Remove breakout":"Add breakout"}</Button>
+          {simple.breakout?simpleFields(editRecord(simple.breakout),["price","explanation","confirmation"],["simpleAnalysis","breakout"]):null}</details>;
+        if(key==="catalystRealityCheck") return <details key={key}><summary>Edit catalyst / recent news</summary>{visibility(key,"catalyst / recent news")}
+          {simpleFields(editRecord(patch[key]),["summary","dayTradeRelevance"],[key])}</details>;
+        if(key==="riskSummary") { const risks=(patch.riskSummary ?? []) as EditValue[]; return <details key={key}><summary>Edit risk notes</summary>{visibility(key,"risk notes")}
+          {risks.map((item,index)=><div key={index}><TextField label="Risk note" value={item??""} fullWidth multiline disabled={busy} onChange={event=>change([key,index],event.target.value)} /><Button disabled={busy} onClick={()=>change([key],risks.filter((_,i)=>i!==index))}>Remove</Button></div>)}
+          <Button disabled={busy || risks.length>=20} onClick={()=>change([key],[...risks,""])}>Add risk note</Button></details>; }
         const name=key==="simplePullbacks"?"pullbacks":"upside";
         const list=simple[name] as EditValue[];
         return <details key={key}><summary>Edit {name==="pullbacks"?"pullbacks":"where it could go next"}</summary>
@@ -149,7 +157,7 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
     <DialogTitle id="inline-analysis-title">{symbol} — View / edit analysis</DialogTitle>
     <DialogContent>{error && <Alert severity="error">{error}</Alert>}{busy && <p role="status">{saving.current ? "Saving analysis…" : "Loading saved analysis…"}</p>}
       {editedCard && !previewValid && <Alert severity="info">Finish the incomplete fields to update the preview. Your editing fields remain available below.</Alert>}
-      {editedCard && card && <AnalysisCard card={previewValid ? editedCard : card} symbol={{}} livePrice={null} failureRecoveryVisible={preview?.failureRecoveryVisible === true} dipBuyPlanVisible={preview?.publication.website.tradersLinkAiReadDipBuyPlanVisible !== false} renderSectionEditor={sectionEditor} />}
+      {editedCard && card && <AnalysisCard traderNotes={preview?.publication.website.cards.traderNotes?.body} card={previewValid ? editedCard : card} symbol={{}} livePrice={null} failureRecoveryVisible={preview?.failureRecoveryVisible === true} dipBuyPlanVisible={preview?.publication.website.tradersLinkAiReadDipBuyPlanVisible !== false} renderSectionEditor={sectionEditor} />}
     </DialogContent>
     <DialogActions><Button disabled={saving.current} onClick={close}>Close</Button><Button variant="contained" disabled={busy || !patch || !dirty} onClick={() => void save()}>Save and close</Button></DialogActions>
   </Dialog>;
