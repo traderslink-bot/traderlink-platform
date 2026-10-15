@@ -894,19 +894,23 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
     database,
     verificationManifest,
   );
-  const inFlightDataScanInvalidated = existing.quickCheckInFlight;
+  const inFlightStructureScanInvalidated = existing.quickCheckInFlight &&
+    existing.structureFingerprint !== structureFingerprint;
   existing.dataGeneration += 1;
   existing.dirtySinceForeignKeyCheck = true;
   existing.dirtySinceQuickCheck = true;
   existing.fingerprint = fingerprint;
   existing.structureFingerprint = structureFingerprint;
-  if (inFlightDataScanInvalidated) {
-    // A completed write makes the reader's captured data generation stale. Keep
-    // the last verified baseline available, release the stale reader, and start
-    // the replacement only after its process has actually exited.
+  if (inFlightStructureScanInvalidated) {
+    // A schema change invalidates the reader's captured structure even when the
+    // restored manifest is valid. Release it before checking the new structure.
     existing.generation += 1;
     existing.cancelWorker?.();
   }
+  // Ordinary WAL writes do not invalidate the child's read-only transaction.
+  // Let that snapshot finish; dirty flags retain newer writes for the next
+  // cadence-limited pass. Cancelling on every write can starve verification and
+  // repeatedly read the same database pages without completing a check.
   schedulePlatformRuntimeQuickCheck(databasePath, existing, Date.now());
 }
 
