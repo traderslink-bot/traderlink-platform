@@ -1,3 +1,4 @@
+import { gainPublicationEvidence } from "@/src/lib/live-watchlist/gain-starting-point";
 import "server-only";
 
 import { createHash } from "node:crypto";
@@ -56,7 +57,7 @@ function evidenceJson(state: LiveWatchlistSymbolState, price: number, observedAt
   return JSON.stringify({
     latestPrice: price,
     latestPriceObservedAt: observedAt,
-    potentialGain: state.potentialGain ?? null,
+    potentialGain: gainPublicationEvidence(state),
     symbol: state.symbol,
   });
 }
@@ -85,7 +86,7 @@ ON CONFLICT(candidate_id, evidence_kind, observed_at_ms, evidence_sha256) DO NOT
 }
 
 function statePostedPrice(state: LiveWatchlistSymbolState): number | null {
-  const potential = state.potentialGain?.startingPrice;
+  const potential = gainPublicationEvidence(state)?.startingPrice;
   return validPrice(potential) ? potential : null;
 }
 

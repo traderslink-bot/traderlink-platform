@@ -1,3 +1,4 @@
+import { gainPublicationEvidence } from "@/src/lib/live-watchlist/gain-starting-point";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
@@ -22,6 +23,7 @@ function recorderFixture() {
   } });
   const requireStub = (name: string): unknown => {
     if (name === "server-only") return {};
+      if (name.endsWith("gain-starting-point")) return { gainPublicationEvidence };
     if (name.endsWith("open-platform-database")) return { openPlatformDatabase: () => openDb };
     if (name.endsWith("platform-migration-contract")) return { createCanonicalUuidV4: randomUUID };
     if (name.endsWith("traderslink-ai-read")) return { parseTradersLinkAiRead: () => null };
@@ -38,7 +40,7 @@ const state = { symbol: "PDSB", firstPostedAt: at, latestPrice: 0.65, latestPric
 test("a new lower low clears the earlier recovery and preserves its price evidence", () => {
   const { db, record } = recorderFixture();
   const quote = (price: number, offset: number) => record({
-    ...state, potentialGain: { startingPrice: 10 }, latestPrice: price,
+    ...state, potentialGain: { startingPrice: 10, startingPriceAt: at, postedAt: at, highPrice: 10, highPriceAt: at, potentialGainPct: 0 }, latestPrice: price,
     latestPriceObservedAt: at + offset, updatedAt: at + offset,
   });
   const recovery = () => db.prepare(`SELECT low_accepted_price_text, low_accepted_at_ms,
@@ -72,7 +74,7 @@ test("a later price cannot create a fabricated original publication baseline", (
 test("known baseline survives missing later metadata and removal freezes evidence", () => {
   const { db, record } = recorderFixture();
   try {
-    record({ ...state, potentialGain: { startingPrice: 0.5 } });
+    record({ ...state, potentialGain: { startingPrice: 0.5, startingPriceAt: at, postedAt: at, highPrice: 0.5, highPriceAt: at, potentialGainPct: 0 } });
     record({ ...state, latestPrice: 0.6, latestPriceObservedAt: at + 2000, updatedAt: at + 2000 });
     assert.equal((db.prepare("SELECT first_posted_price_text FROM platform_watchlist_recap_candidates").get() as { first_posted_price_text: string }).first_posted_price_text, "0.5");
     record({ ...state, status: "deactivated", latestPriceObservedAt: at + 3000, updatedAt: at + 3000 });

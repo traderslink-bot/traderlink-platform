@@ -1,3 +1,4 @@
+import { prepareGain, observeGain, changeGainStart } from "./gain-starting-point";
 import { isTopWatchesGroup } from "./top-watches-group";
 import { neon } from "@neondatabase/serverless";
 import type Database from "better-sqlite3";
@@ -229,10 +230,10 @@ function parseState(raw: string): LiveWatchlistSymbolState | null {
     if (!parsed.symbol || !parsed.cards) {
       return null;
     }
-    return deriveStateFields({
+    return deriveStateFields(prepareGain({
       ...parsed,
       firstPostedAt: parsed.firstPostedAt ?? null,
-    });
+    }));
   } catch {
     return null;
   }
@@ -441,52 +442,6 @@ function normalizePotentialGain(
   return value;
 }
 
-function potentialGainFromPrice(
-  existing: LiveWatchlistSymbolState["potentialGain"],
-  postedAt: number | null,
-  price: number | null,
-  observedAt: number,
-): LiveWatchlistSymbolState["potentialGain"] {
-  if (postedAt === null || !validPotentialGainPrice(price) || !Number.isFinite(observedAt)) {
-    return normalizePotentialGain(existing);
-  }
-
-  if (!existing || existing.postedAt !== postedAt) {
-    return {
-      postedAt,
-      startingPrice: price,
-      startingPriceAt: observedAt,
-      highPrice: price,
-      highPriceAt: observedAt,
-      potentialGainPct: 0,
-    };
-  }
-
-  if (price <= existing.highPrice) {
-    return normalizePotentialGain(existing);
-  }
-
-  return {
-    ...existing,
-    highPrice: price,
-    highPriceAt: observedAt,
-    potentialGainPct: ((price - existing.startingPrice) / existing.startingPrice) * 100,
-  };
-}
-
-function firstPublishedPrice(
-  cards: LiveWatchlistCardPatch["cards"],
-): { price: number; observedAt: number } | null {
-  const candidates = Object.values(cards)
-    .filter((card): card is LiveWatchlistCardContent => Boolean(card))
-    .filter((card) => validPotentialGainPrice(card.priceWhenPosted))
-    .sort((left, right) => left.updatedAt - right.updatedAt);
-  const first = candidates[0];
-  return first && validPotentialGainPrice(first.priceWhenPosted)
-    ? { price: first.priceWhenPosted, observedAt: first.updatedAt }
-    : null;
-}
-
 function latestPublishedPrice(
   cards: LiveWatchlistSymbolState["cards"],
 ): { price: number; observedAt: number } | null {
@@ -600,6 +555,7 @@ function mergeArchivedReactivationContext(
     firstPostedAt: existing.firstPostedAt ?? archived.firstPostedAt,
     publication: existing.publication ?? archived.publication,
     potentialGain: existing.potentialGain ?? archived.potentialGain,
+    gainTracking: existing.gainTracking ?? archived.gainTracking,
     companyName: existing.companyName ?? archived.companyName,
     latestPrice: existing.latestPrice ?? archived.latestPrice,
     latestPriceSource: existing.latestPriceSource ?? archived.latestPriceSource,
@@ -690,20 +646,8 @@ export function applyPatch(
   const nextFirstPostedAt = publication?.postedAt ?? baseExisting?.firstPostedAt ?? (patchesFirstPostedAt
     ? normalizeLiveWatchlistTimestamp(patch.firstPostedAt)
     : cardTimes.length > 0 ? Math.min(...cardTimes) : null);
-  const firstPrice = firstPublishedPrice(patch.cards);
-  const resetPotentialGain = nextFirstPostedAt !== baseExisting?.firstPostedAt;
-  const nextPotentialGain = firstPrice
-    ? potentialGainFromPrice(
-        resetPotentialGain ? null : baseExisting?.potentialGain,
-        nextFirstPostedAt,
-        firstPrice.price,
-        firstPrice.observedAt,
-      )
-    : resetPotentialGain
-      ? null
-      : baseExisting?.potentialGain ?? null;
 
-  return deriveStateFields({
+  return deriveStateFields(prepareGain({
     symbol,
     status: nextStatus,
     updatedAt: Math.max(patch.updatedAt, baseExisting?.updatedAt ?? 0),
@@ -774,7 +718,8 @@ export function applyPatch(
       patch.tradersLinkAiReadStatus === "ready"
         ? patch.updatedAt
         : baseExisting?.tradersLinkAiReadStatusUpdatedAt,
-    potentialGain: nextPotentialGain,
+    potentialGain: baseExisting?.potentialGain ?? null,
+    gainTracking: baseExisting?.gainTracking,
     companyName: baseExisting?.companyName ?? null,
     latestPrice: recomputesCardPrice ? null : baseExisting?.latestPrice ?? null,
     latestPriceSource: preservesTickerPrice ? "ticker" : "card",
@@ -791,7 +736,7 @@ export function applyPatch(
     extendedQuote: baseExisting?.extendedQuote ?? null,
     latestTraderReadHeadline: baseExisting?.latestTraderReadHeadline ?? null,
     cards: nextCards,
-  });
+  }));
 }
 
 function applyTickerDataPatch(
@@ -813,6 +758,7 @@ function applyTickerDataPatch(
     return existing;
   }
 
+  const gainState = existing ? observeGain(existing, patch.latestPrice, observedAt) : { potentialGain: null, gainTracking: undefined };
   return deriveStateFields({
     symbol: normalizeSymbol(patch.symbol),
     // Ticker-data patches are price/level updates, never lifecycle transitions.
@@ -879,12 +825,8 @@ function applyTickerDataPatch(
         : existing?.tradersLinkAiReadDipBuyPlanVisible !== false,
     tradersLinkAiReadStatus: existing?.tradersLinkAiReadStatus,
     tradersLinkAiReadStatusUpdatedAt: existing?.tradersLinkAiReadStatusUpdatedAt,
-    potentialGain: potentialGainFromPrice(
-      existing?.potentialGain,
-      existing?.firstPostedAt ?? null,
-      patch.latestPrice,
-      observedAt,
-    ),
+    potentialGain: gainState.potentialGain,
+    gainTracking: gainState.gainTracking,
     companyName: existing?.companyName ?? null,
     latestPrice: patch.latestPrice,
     latestPriceSource: "ticker",
@@ -1084,7 +1026,10 @@ export class LiveWatchlistStore {
       return next;
     }
 
-    const current = await this.getSymbol(symbol);
+    const db = await getSqliteDatabase();
+    const { next, movedToFollowup } = db.transaction(() => {
+      const row = db.prepare("SELECT state_json FROM live_watchlist_symbols WHERE symbol = ?").get(symbol) as { state_json: string } | undefined;
+      const current = row ? parseState(row.state_json) : null;
     const existing = preservedArchiveState
       ? mergeArchivedReactivationContext(current, preservedArchiveState)
       : current;
@@ -1092,7 +1037,6 @@ export class LiveWatchlistStore {
     const movedToFollowup =
       existing?.watchlistSlotState !== "followup" &&
       next.watchlistSlotState === "followup";
-    const db = await getSqliteDatabase();
     db.prepare(
       `
         INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json, revision)
@@ -1104,6 +1048,8 @@ export class LiveWatchlistStore {
           revision = live_watchlist_symbols.revision + 1
       `,
     ).run(symbol, next.status, next.updatedAt, JSON.stringify(next));
+      return { next, movedToFollowup };
+    })();
     if (next.status === "deactivated" || movedToFollowup) {
       await this.createArchiveIfEligible(next);
     }
@@ -1119,9 +1065,11 @@ export class LiveWatchlistStore {
       );
     }
 
-    const existing = await this.getSymbol(symbol);
-    const next = applyTickerDataPatch(existing, { ...patch, symbol });
     const db = await getSqliteDatabase();
+    const next = db.transaction(() => {
+      const row = db.prepare("SELECT state_json FROM live_watchlist_symbols WHERE symbol = ?").get(symbol) as { state_json: string } | undefined;
+      const existing = row ? parseState(row.state_json) : null;
+    const next = applyTickerDataPatch(existing, { ...patch, symbol });
     db.prepare(
       `
         INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json, revision)
@@ -1133,7 +1081,25 @@ export class LiveWatchlistStore {
           revision = live_watchlist_symbols.revision + 1
       `,
     ).run(symbol, next.status, next.updatedAt, JSON.stringify(next));
+      return next;
+    })();
     return next;
+  }
+
+  async setGainStartingPoint(symbolInput: string, input: Parameters<typeof changeGainStart>[1]): Promise<LiveWatchlistSymbolState> {
+    const symbol = normalizeSymbol(symbolInput);
+    const change = (state: LiveWatchlistSymbolState | null) => {
+      if (!state) throw new Error("Ticker is not published.");
+      return changeGainStart(state, input, this.now());
+    };
+    if (!shouldUseSqliteFallback()) return mutateNeonSymbolState(symbol, change);
+    const db = await getSqliteDatabase();
+    return db.transaction(() => {
+      const row = db.prepare("SELECT state_json FROM live_watchlist_symbols WHERE symbol = ?").get(symbol) as { state_json: string } | undefined;
+      const next = change(row ? parseState(row.state_json) : null);
+      db.prepare("UPDATE live_watchlist_symbols SET state_json = ?, revision = revision + 1 WHERE symbol = ?").run(JSON.stringify(next), symbol);
+      return next;
+    })();
   }
 
   async getSymbol(symbolInput: string): Promise<LiveWatchlistSymbolState | null> {

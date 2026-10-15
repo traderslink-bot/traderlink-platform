@@ -1,3 +1,4 @@
+import { gainPublicationEvidence } from "@/src/lib/live-watchlist/gain-starting-point";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
@@ -26,6 +27,7 @@ function fixture() {
     const mod = { exports: {} };
     const stub = (name: string): unknown => {
       if (name === "server-only") return {};
+      if (name.endsWith("gain-starting-point")) return { gainPublicationEvidence };
       if (name.endsWith("open-platform-database")) return { openPlatformDatabase: () => openDb };
       if (name.endsWith("platform-migration-contract")) return { createCanonicalUuidV4: randomUUID };
       if (name.endsWith("traderslink-ai-read")) return { parseTradersLinkAiRead: () => null };
@@ -44,7 +46,7 @@ function fixture() {
   const service = load<typeof Service>("src/modules/watchlist/server/daily-recaps/daily-recap-owner-service.ts");
   const recorder = load<{ recordWatchlistDailyRecapEvidence: (value: unknown) => void }>("src/modules/watchlist/server/daily-recaps/watchlist-daily-recap-evidence-recorder.ts");
   const at = Date.parse("2026-09-08T13:30:00Z");
-  recorder.recordWatchlistDailyRecapEvidence({ symbol: "PDSB", firstPostedAt: at, latestPrice: 0.65, latestPriceObservedAt: at + 1000, updatedAt: at + 1000, status: "active", cards: {}, potentialGain: { startingPrice: 0.5 } });
+  recorder.recordWatchlistDailyRecapEvidence({ symbol: "PDSB", firstPostedAt: at, latestPrice: 0.65, latestPriceObservedAt: at + 1000, updatedAt: at + 1000, status: "active", cards: {}, potentialGain: { startingPrice: 0.5, startingPriceAt: at, postedAt: at, highPrice: 0.5, highPriceAt: at, potentialGainPct: 0 } });
   const candidateId = (db.prepare("SELECT candidate_id FROM platform_watchlist_recap_candidates").get() as { candidate_id: string }).candidate_id;
   return { db, service, userId, candidateId, record: recorder.recordWatchlistDailyRecapEvidence, complete: () => { assert.ok(complete); complete(); } };
 }
@@ -74,7 +76,7 @@ test("saved body keeps original ticker associations when selections change", asy
     assert.equal(items[0].candidateId, f.candidateId);
     f.service.setDailyRecapSelection({ candidateId: f.candidateId, userId: f.userId, selected: false });
     const at = Date.parse("2026-09-08T14:30:00Z");
-    f.record({ symbol: "OTHER", firstPostedAt: at, latestPrice: 1.2, latestPriceObservedAt: at + 1, updatedAt: at + 1, status: "active", cards: {}, potentialGain: { startingPrice: 1 } });
+    f.record({ symbol: "OTHER", firstPostedAt: at, latestPrice: 1.2, latestPriceObservedAt: at + 1, updatedAt: at + 1, status: "active", cards: {}, potentialGain: { startingPrice: 1, startingPriceAt: at, postedAt: at, highPrice: 1, highPriceAt: at, potentialGainPct: 0 } });
     const other = f.service.readDailyRecapOwnerCandidates(date).find((candidate) => candidate.symbol === "OTHER")!;
     f.service.generateDailyRecapCandidate(other.candidateId, f.userId);
     f.service.setDailyRecapSelection({ candidateId: other.candidateId, userId: f.userId, selected: true });

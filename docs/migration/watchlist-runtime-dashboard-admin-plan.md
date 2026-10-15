@@ -204,3 +204,8 @@ Owner-approved independent per-ticker control: [implementation, verification and
 ## Analysis section simplification
 
 Owner-approved removal and compatibility work: [progress](watchlist-analysis-section-removal-progress.md). Deployment remains separately coordinated.
+
+
+## Gain starting point — October 15, 2026
+
+Owner-approved publication baseline and per-ticker correction controls: [plan](watchlist-gain-starting-point-plan.md), [progress](watchlist-gain-starting-point-progress.md). Source candidate only; not deployed.

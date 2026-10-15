@@ -1498,7 +1498,7 @@ export function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState
           </div>
           <div className="watchlist-potential-gain-stats">
             <div className="watchlist-potential-gain-stat">
-              <span>Added to watchlist</span>
+              <span>Starting price</span>
               <strong>${formatPrice(gain.startingPrice)}</strong>
             </div>
             <div className="watchlist-potential-gain-stat">
@@ -1511,10 +1511,8 @@ export function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState
             </div>
           </div>
           <p className="watchlist-potential-gain-note">
-            {gain.startingPriceAt - gain.postedAt <= 5 * 60 * 1000
-              ? `Tracked from posting at ${formatDateTime(gain.postedAt)}.`
-              : `Tracking began at ${formatDateTime(gain.startingPriceAt)} after the ticker was posted at ${formatDateTime(gain.postedAt)}.`}{" "}
-            Based on observed live prices after tracking began.
+            {`Measured from ${formatDateTime(gain.postedAt)}.`}{" "}
+              Based on observed live prices after tracking began.
           </p>
         </>
       ) : (

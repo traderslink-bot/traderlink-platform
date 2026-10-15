@@ -510,6 +510,7 @@ export type LiveWatchlistSymbolState = {
   tradersLinkAiReadStatus?: TradersLinkAiReadStatus;
   tradersLinkAiReadStatusUpdatedAt?: number;
   potentialGain?: LiveWatchlistPotentialGain | null;
+  gainTracking?: import("./gain-starting-point").GainTracking;
   companyName: string | null;
   latestPrice: number | null;
   latestPriceSource?: "ticker" | "card" | null;

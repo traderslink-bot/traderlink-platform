@@ -17,6 +17,7 @@ import { WatchlistAnalysisEditor } from "./watchlist-analysis-editor";
 const AnalysisPreviewCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then((module) => module.TradersLinkAiReadCard));
 const DeferredAdminPanel = dynamic(() => import("./watchlist-deferred-admin-panel").then(module => module.WatchlistDeferredAdminPanel), { loading: () => <p role="status">Loading section…</p> });
 const IndicatorAuditPanel = dynamic(() => import("./watchlist-indicator-audit-panel"));
+const GainStartingPoint = dynamic(() => import("./watchlist-gain-starting-point").then(m => m.WatchlistGainStartingPoint));
 const PotentialGainPost = dynamic(() => import("./watchlist-potential-gain-post").then(module => module.WatchlistPotentialGainPost));
 const RUNTIME_SECTIONS = [
   ["watchlist", "Watchlist"], ["runtime", "Runtime"], ["market-data", "Market Data"],
@@ -47,6 +48,7 @@ export function WatchlistRuntimeAdminClient() {
   }, []);
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
   const [gainPostSymbol, setGainPostSymbol] = useState<string | null>(null);
+  const [gainStartSymbol, setGainStartSymbol] = useState<string | null>(null);
   const [analysisPreview, setAnalysisPreview] = useState<{
     card: LiveWatchlistCardContent; dipBuyPlanVisible: boolean;
   } | null>(null);
@@ -91,6 +93,7 @@ export function WatchlistRuntimeAdminClient() {
       const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown; symbol?: unknown };
       if (message.source !== "traderslink-watchlist-admin") return;
       if (message.type === "navigation-ready") { syncNavigation(); return; }
+      if (message.type === "gain-starting-point" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainStartSymbol(message.symbol); return; }
       if (message.type === "post-potential-gain" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainPostSymbol(message.symbol); return; }
       if (message.type === "open-usage") { selectUsage(); return; }
       if (message.type === "open-recaps") { selectRecaps(); return; }
@@ -106,6 +109,7 @@ export function WatchlistRuntimeAdminClient() {
 
   return (
     <>
+      {gainStartSymbol && <GainStartingPoint key={gainStartSymbol} symbol={gainStartSymbol} onClose={() => setGainStartSymbol(null)} />}
       {gainPostSymbol && <PotentialGainPost key={gainPostSymbol} symbol={gainPostSymbol} onClose={() => setGainPostSymbol(null)} />}
       {editingSymbol && <WatchlistAnalysisEditor key={editingSymbol} symbol={editingSymbol} onClose={() => setEditingSymbol(null)} onSaved={() => frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-editor", type: "saved" }, window.location.origin)} />}
       <Dialog open={analysisPreview !== null} onClose={() => setAnalysisPreview(null)} fullWidth maxWidth="lg" aria-labelledby="analysis-preview-title">
