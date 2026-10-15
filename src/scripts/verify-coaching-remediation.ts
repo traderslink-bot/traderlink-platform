@@ -8,6 +8,7 @@ import {verifyCommunityRequestMember} from "../modules/communities/server/commun
 
 
 import Database from "better-sqlite3";
+import {coachingAccessPauseMessage,coachingAccessNoticeMessage} from "../modules/communities/contracts/coaching-access";
 
 import { platformIdentityMigration } from "../modules/platform/server/database/migrations/0001_platform_identity";
 import { journalAccountBoundaryMigration } from "../modules/journal/server/database/migrations/0002_journal_account_boundary";
@@ -224,13 +225,43 @@ check.throws(()=>programs.updateTeachingDetails({...base,teachingId,title:"Lesso
 const reused=programs.createTeaching({...base,sourceTeachingId:teachingId,title:"Reused lesson",teachingType:"lesson",body:"Lesson content",deliveryUrl:"https://example.com/lesson",audienceMode:"all_students",relationshipIds:[],publish:false});
 check.notEqual(reused,teachingId);
 check.equal(platform.readSnapshot("first-room",actor).teachingItems.find(item=>item.teachingId===reused)?.recordingUrl,"https://example.com/recording");
+// Diagnose denial causes without broadening the existing entitlement truth table.
+check.equal(coachingEntitlement(database,relationship)?.pauseReason,null);
+for(const [mutation,reason] of [
+ ["UPDATE traderlink_communities SET status='paused'", "community_inactive"],
+ ["UPDATE traderlink_community_memberships SET status='inactive'", "server_membership_inactive"],
+ ["UPDATE platform_discord_memberships SET role_ids_json='[]'", "required_role_missing"],
+] as const){
+ database.exec("SAVEPOINT access_reason");
+ database.exec(mutation);
+ check.equal(coachingEntitlement(database,relationship)?.present,false);
+ check.equal(coachingEntitlement(database,relationship)?.pauseReason,reason);
+ database.exec("ROLLBACK TO access_reason; RELEASE access_reason");
+}
+// A second relationship with a different student remains eligible when the first pauses.
+database.exec("SAVEPOINT access_isolation");
+const isolatedRelationship="10000000-0000-4000-8000-000000000099";
+const fixtureRelationship=database.prepare("SELECT * FROM traderlink_community_coaching_relationships WHERE relationship_id=?").get(relationship) as Record<string,unknown>;
+const relationshipColumns=Object.keys(fixtureRelationship);
+database.prepare(`INSERT INTO traderlink_community_coaching_relationships (${relationshipColumns.join(",")}) VALUES (${relationshipColumns.map(()=>"?").join(",")})`).run(...relationshipColumns.map(column=>column==="relationship_id"?isolatedRelationship:column==="student_user_id"?MEMBER:fixtureRelationship[column]));
+database.prepare(`UPDATE platform_discord_memberships SET role_ids_json='[]' WHERE user_id=? AND guild_id=?`).run(OWNER,PILOT_GUILD);
+reconcileCoachingAccess(database,first.communityId,OWNER,NOW);
+check.equal(coachingEntitlement(database,relationship)?.pauseReason,"required_role_missing");
+check.equal(coachingEntitlement(database,isolatedRelationship)?.present,true);
+check.equal(database.prepare("SELECT 1 FROM traderlink_community_coaching_access_state WHERE relationship_id=?").get(isolatedRelationship),undefined,"Other student's access state is untouched");
+database.exec("ROLLBACK TO access_isolation; RELEASE access_isolation");
 const roleTime="2026-09-10T12:00:00.000Z";
 database.prepare(`UPDATE platform_discord_memberships SET role_ids_json='[]',last_verified_at_utc=? WHERE user_id=? AND guild_id=?`).run(roleTime,OWNER,PILOT_GUILD);
 reconcileCoachingAccess(database,first.communityId,OWNER,roleTime);
 reconcileCoachingAccess(database,first.communityId,OWNER,roleTime);
 check.equal(coachingEntitlement(database,relationship)?.present,false);
+check.equal(coachingEntitlement(database,relationship)?.pauseReason,"required_role_missing");
+check.equal(platform.readSnapshot("first-room",actor).relationships.find(row=>row.relationshipId===relationship)?.accessPauseReason,"required_role_missing");
 check.throws(()=>programs.createReview({...base,title:"Blocked",context:"",reviewType:"custom",roundTripIds:[]}),"Role removal blocks new work");
 check.equal((database.prepare(`SELECT count(*) count FROM traderlink_community_coaching_notices WHERE kind='access_paused'`).get() as {count:number}).count,2,"One pause notice for each party");
+check.equal((database.prepare("SELECT body FROM traderlink_community_coaching_notices WHERE relationship_id=? AND kind='access_paused' LIMIT 1").get(relationship) as {body:string}).body,coachingAccessPauseMessage("required_role_missing"));
+check.equal(coachingAccessNoticeMessage("Coaching access paused — required Discord role removed"),"Coaching access paused");
+check.equal(coachingAccessNoticeMessage("Coaching access restored"),"Coaching access restored");
 check.equal(archivePausedCoaching(database,"2026-09-20T12:00:00.000Z"),0);
 check.equal(archivePausedCoaching(database,"2026-10-11T12:00:00.000Z"),1);
 check.ok(platform.readSnapshot("first-room",actor).tradeReviews.some(item=>item.reviewId===reviewId),"Archived records preserved");
@@ -265,6 +296,7 @@ check.equal(service.generate({...base,atUtc:restoredAt,throughDate:"2026-10-12"}
 const fakeRequest=(status:number,body:unknown)=>(async(url)=>String(url).includes('/members/')?new Response(JSON.stringify(status===200?{user:{id:String(url).split("/").at(-1),username:"fixture"},...(body as object)}:body),{status}):new Response(JSON.stringify({id:PILOT_GUILD,owner_id:"123456789"}),{status:200})) as typeof fetch;
 await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(403,{message:"Missing access"})).runAvailable(25,"2026-10-13T12:00:00.000Z");
 check.equal(coachingEntitlement(database,relationship)?.present,true,"Provider failures do not remove roles");
+check.equal(platform.readSnapshot("first-room",student,{historyOnly:true}).relationships.find(row=>row.relationshipId===relationship)?.accessPauseReason,"discord_verification_unavailable","Failed refresh restricts history without claiming the cached role was removed");
 await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(404,{code:10007})).runAvailable(25,"2026-10-13T12:10:00.000Z");
 check.equal(coachingEntitlement(database,relationship)?.present,false,"Confirmed departed member pauses coaching");
 check.equal((database.prepare("SELECT status FROM traderlink_community_memberships WHERE community_id=? AND user_id=?").get(first.communityId,OWNER) as {status:string}).status,"inactive","Departure removes community membership eligibility");
@@ -272,6 +304,7 @@ check.throws(()=>platform.readSnapshot("first-room",student),"Departed member ca
 const retained=platform.readSnapshot("first-room",student,{historyOnly:true});
 check.ok(retained.tradeReviews.some(review=>review.reviewId===reviewId&&review.deliveredAtUtc),"Departed participant can still read delivered history");
 check.equal(retained.relationships.find(row=>row.relationshipId===relationship)?.accessStatus,"access_paused");
+check.equal(retained.relationships.find(row=>row.relationshipId===relationship)?.accessPauseReason,"server_membership_inactive");
 for(const entries of [retained.alerts,retained.watchlists,retained.members,retained.staffRoles,retained.channels,retained.alertTemplates,retained.plans,retained.teachingItems])check.equal(entries.length,0,"History mode grants no community content or directory access");
 check.throws(()=>platform.readSnapshot("first-room",{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},{historyOnly:true}),"History mode requires original relationship participation");
 check.equal((database.prepare("SELECT guild_owner FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {guild_owner:number}).guild_owner,0,"Departure clears stale owner evidence");
@@ -283,6 +316,7 @@ await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(200
 check.equal(coachingEntitlement(database,relationship)?.present,false,"Wrong Discord identity cannot restore membership");
 await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(200,{roles:["200001"]})).runAvailable(25,"2026-10-13T12:20:00.000Z");
 check.equal(coachingEntitlement(database,relationship)?.present,true,"Verified role restore resumes access");
+check.equal(coachingEntitlement(database,relationship)?.pauseReason,null);
 check.equal((database.prepare("SELECT status FROM traderlink_community_memberships WHERE community_id=? AND user_id=?").get(first.communityId,OWNER) as {status:string}).status,"active");
 database.exec("SAVEPOINT background_owner_change");
 let ownershipReads=0;

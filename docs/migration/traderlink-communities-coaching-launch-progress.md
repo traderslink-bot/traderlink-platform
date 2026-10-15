@@ -1,5 +1,12 @@
 # Communities and Coaching launch progress
 
+## 2026-10-15 — moonmafia access pause diagnosed; local reason-specific fix
+
+Verified deployed source `3dfe06ddb2584eaaf00e3fde609d63b13daf124d` and scoped read-only Discord/SQLite evidence: the linked account lacks the plan's `test-community` role; its four staff test roles are different. Fresh stored roles match Discord exactly. Commercial `coaching.access` enforcement is off and absent from this deployed entitlement path. The pause correctly enforces the persisted requirement.
+
+Local patch preserves access rules and adds actionable reason-specific student messages/new notices, neutral display for legacy misleading notices, and participant-scoped reason data. Owner approved the message direction and requested useful server-owner/admin escalation. Real-schema remediation and targeted lint pass; TypeScript verification is tracked in the findings. No hosted mutation, Bullrun change, role change, deployment or Coordinator message. Staging acceptance remains open pending a separately authorized release/retest. See [full evidence, changed files and retest boundary](coaching-feature-findings-2026-10-14.md).
+
+
 Controlling plan: [Complete launch plan](traderlink-communities-coaching-launch-plan.md).
 
 Current external-action handoff: [Coordinator review](coaching-completion-coordinator-handoff-20261015.md).

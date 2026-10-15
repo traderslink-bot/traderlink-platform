@@ -141,6 +141,7 @@ export type TraderLinkCommunityRelationship = Readonly<{
   planName: string;
   status: "pending" | "active" | "ended" | "declined";
   accessStatus: "pending" | "active" | "access_paused" | "ended";
+  accessPauseReason?: import("./coaching-access").CoachingAccessPauseReason | null;
   requiredDiscordRoleId: string | null;
   requiredRolePresent: boolean;
   requestedAtUtc: string;
