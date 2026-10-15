@@ -135,8 +135,8 @@ export function PwaUpdateNotice({ paused = false }: { paused?: boolean }) {
   }
 
   if ((!waiting && !applying && !reloadReady && !activationDelayed) || paused) return null;
-  return <Alert severity="info" sx={{ position: "fixed", bottom: 16, right: 16,
-    width: "calc(100vw - 32px)", maxWidth: 420, zIndex: (theme) => theme.zIndex.modal - 1 }}>
+  return <Alert severity="info" sx={{ mb: 2, width: "100%", boxSizing: "border-box",
+    "& .MuiAlert-message": { minWidth: 0, width: "100%", overflowWrap: "anywhere" } }}>
     <Stack spacing={1}>
       <span>{reloadReady
         ? "The update is ready to open. Save any edits, then reload the app. Offline entries already saved on this device will remain."

@@ -165,12 +165,14 @@ async function TraderLinkPlatformDashboardFrameContent({
           coachingNavigationHref={dashboardContext.coachingNavigationHref}
           communityWatchlistsNavigationAccess={dashboardContext.communityWatchlistsNavigationAccess}
         >
+          <div data-pwa-offline-exclude>
+            <PwaLifecycle
+              accountSelectionRef={accountSelectionRef}
+              offlineScopeRef={offlineScopeRef}
+            />
+          </div>
           {children}
         </TraderLinkPlatformDashboardTemplate>
-        <PwaLifecycle
-          accountSelectionRef={accountSelectionRef}
-          offlineScopeRef={offlineScopeRef}
-        />
           {dashboardContext.demoActivationPending ? <DemoSessionActivation scopeRef={offlineScopeRef} /> : null}
       </>
     </DashboardMuiProviders>

@@ -82,12 +82,12 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
       Object.freeze({
         id: "enter-executions",
         title: "Enter executions from your broker",
-        summary: "Use the broker-shown date, Eastern Time, ticker, side, quantity, price and fees.",
+        summary: "Use the broker-shown date, time, ticker, side, quantity, price and fees in the selected account timezone.",
         keywords: Object.freeze(["manual entry", "date", "time", "ticker", "side", "quantity", "price", "fees"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Open the manual trade form and copy each fill from your broker. Accurate details improve the chart review now and any later statement matching." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
-            "Use the execution date and Eastern Time shown by the broker. If you do not have the broker timestamp, use the time of the matching one-minute chart candle.",
+            "Enter the execution date and time in the selected account timezone named in the form. Convert a broker or chart time to that timezone when needed. Confirmation shows full dates, the account timezone and UTC offset before saving.",
             "The execution form stays available when you reopen a traded day, so you can add a missed fill as well as edit an earlier one.",
             "Enter the ticker, Buy or Sell side, filled quantity and execution price for every fill.",
             "Enter fees only when the broker reports them. Leaving an unknown fee blank is more accurate than guessing.",
