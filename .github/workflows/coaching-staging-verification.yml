@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - codex/coaching-coordinator-staging-20261015
       - codex/coaching-staging-integration-20260926
       - codex/coaching-parity-recovery-20261010
       - codex/coaching-production-parity-staging-20261010
