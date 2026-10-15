@@ -1,5 +1,53 @@
 # Coaching feature and Discord bot findings — 2026-10-14
 
+## 2026-10-15 — agreed trade work enforced before review delivery and completion
+
+**Status: local correction and focused QA pass; not deployed. Full-build and signed-in browser acceptance remain open.**
+
+The owner's PC QA reported that review `31ea4d91-dcae-4e88-96f6-d1505f2f3644` under synthetic moonmafia relationship `5d7956a4-a4f2-4e65-92b7-af8feadfbf29` was delivered and completed with zero trades despite an accepted one-trade requirement. That completed evidence, all hosted agreements/grants, Bullrun and Discord settings were left untouched. Read-only Railway metadata confirmed deployment `e9b28b33-e9fd-44a6-8aa3-2b896fa6045c` SUCCESS on reported source `a78a4d0c941755038c0859d0cf858622c06ae666`. No hosted business-data inspection or mutation was needed for this correction.
+
+### Reproduced cause and correction
+
+A real-schema in-memory reproduction generated a review from accepted terms requiring one trade, left Journal access off, saved only an overall summary and called the actual delivery service. Before the fix, delivery succeeded (the regression failed with “Missing expected exception”). The workspace already exposed the original occurrence agreement's quantity as `agreedTradeCount`, but its Ready predicate compared saved trades only to selected trades. Final preview used selected trades for its denominator and readiness. Delivery checked only selected trades and whether any summary/action existed; completion checked only prior delivery.
+
+`coaching-review-required-work.ts` now resolves the required trade quantity from the agreement occurrence that originally generated the review, not the mutable plan or the relationship's newest agreement. Superseded original agreements still govern their already-generated work. This reader is shared with the dashboard snapshot projection. Custom/unlinked reviews and non-trade items acquire no invented minimum.
+
+`coaching-review-readiness.ts` supplies one calculation for both pages and the service guard: saved trades must meet the original required quantity; every additional selected trade must also be saved; removed trades do not count; an empty summary-only review still cannot be delivered. The displayed denominator is the greater of agreed trades and selected trades, so zero selected trades under a one-trade agreement remains `0 / 1`. For legitimate zero-trade work, actual summary/focus/action content can satisfy readiness.
+
+Delivery and completion call the same server-side validation after existing authorization/state checks and before any lifecycle writes. A crafted direct call cannot substitute an overall summary for required work, including on a previously delivered insufficient row. Rejection preserves saved summary/private draft fields and emits no delivery event. This change does not rewrite old completed rows or silently repair historical evidence.
+
+Both coach pages display the same count/readiness and actionable missing-work notice; final Send/Complete controls use the same result. When required work is missing and trade sharing is off, the notice explains that only the student can choose to share trades for that relationship. There is no new grant, Journal read, permission bypass or universal sharing requirement. Previously saved trade evidence can fulfill agreed work without reopening a revoked Journal. Help Center Coaching/Journal guidance was updated to explain that an overall summary cannot replace agreed trade feedback.
+
+### Changed files
+
+- `src/modules/communities/contracts/coaching-review-readiness.ts` — shared counts/readiness and actionable wording.
+- `src/modules/communities/server/coaching-review-required-work.ts` — original agreement quantity lookup and server validation.
+- `src/modules/communities/server/traderlink-community-platform-repository.ts` — use shared original-agreement count reader.
+- `src/modules/communities/server/traderlink-community-coaching-program-service.ts` — validate delivery and completion.
+- `app/(dashboard)/communities/coaching-review-readiness-notice.tsx` — shared theme-inheriting notice.
+- Both `.../reviews/[reviewId]/page.tsx` and `.../reviews/[reviewId]/final/page.tsx` — unified progress, readiness and controls.
+- `src/modules/help/traderslink-app-guides.ts` — corresponding Help update.
+- `src/scripts/verify-coaching-remediation.ts` — real-schema regression additions.
+- `src/modules/communities/contracts/coaching-review-readiness.test.ts` — focused readiness cases.
+- `src/scripts/verify-coaching-review-required-work-ui.cjs` — actual route-render counts/control checks with synthetic data and inert surrounding controls.
+- This findings record, Coaching launch plan/progress and existing project log — local checkpoint and remaining gates.
+
+### Verification
+
+- Real-schema in-memory remediation script: PASS. New cases cover one required/zero saved with Journal off, direct draft completion, previously delivered invalid completion, two required/one saved rejected at both delivery/completion, two fulfilled accepted, extra unfinished selections blocked, removed extras ignored, frozen original occurrence terms, unchanged drafts/events, no automatic grants, and legitimate custom summary-only delivery/completion. Existing privacy/isolation/archive regressions also pass. Only Next's standalone `server-only` marker uses the existing test bootstrap; real authorization/service/database logic is exercised.
+- Focused Vitest readiness suite: **11 tests pass** (including explicit zero required, null/no requirement, removed selections, pending acceptance and actionable privacy wording).
+- Actual workspace/final route-render harness: PASS for `0 of 1`, `Not ready`, `0 / 1`, guidance, disabled Send/Complete and legitimate summary-only controls. Journal reads throw in this fixture to prove the no-sharing path does not read private trades. This is rendered component/control-flow proof with inert UI surroundings, not browser or CSS proof.
+- Targeted ESLint and TypeScript: PASS. New CJS harness syntax/lint: PASS. Diff whitespace check: PASS.
+- Required legacy dashboard-template test: **4 failed / 3 passed**. The unchanged baseline `/tmp/traderlink-coaching-stage-20261015` at `00bb751a797ce7d7de2fea22fbb830b1a09a3a0b` reproduces the same four failure names; relevant shared template/shell/navigation/layout/test source is byte-identical to the current release parent. Failures concern old template wrapper/navigation/local-shell/header assumptions, including `DASHBOARD_ROUTE_TITLES` in the inherited shell. No unrelated shell rewrite was made. Exact comparison saved in the artifact directory.
+- Full local production build: **interrupted**, not passed. Academy registry validation passed; Webpack/service-worker compilation started, then Next reported `build worker exited with code: null and signal: SIGTERM`, without a compiler diagnostic. Build used real cached Google Font responses, unchanged compilation/type checks, a 2048MiB heap and no hosted operations or release. The signal sender/cause was not established. Its generated deletion of `public/sw.js` was restored from this isolated worktree's unchanged HEAD. No broad retry, process killing or source workaround.
+
+Artifacts: `/workspaces/traderlink-coaching-review-required-work/artifacts/coaching-review-required-work/` (`remediation.log`, `readiness.log`, `route-render.log`, `lint.log`, `types.log`, `dashboard-template*.log`, comparison JSON and `build.log`). Source branch `codex/coaching-review-required-work-20261015` is isolated from the owner's dirty main checkout and earlier candidates.
+
+### Remaining acceptance
+
+Obtain a completed full build for this correction before release. No push/deployment, Railway changes, migrations, role/channel/plan requirement changes or business-data mutations are authorized/performed by this task. A separately authorized release must precede hosted acceptance. Use new synthetic reviews for missing/partial/fulfilled trade work and summary-only work; leave the already completed evidence review intact. Check both signed-in pages, draft retention after rejection, direct server rejection, and disabled/error/success states in desktop/mobile Light/Navy. The notice uses existing DashboardPanel/Typography theme tokens with no page-local styling, SVG or canvas; visual/Axe acceptance is not claimed. Existing completed evidence remains historical and readable; no automatic retroactive state change is introduced.
+
+
 Staging follow-up: [exact candidate, owner release request and execution checks](coaching-access-pause-staging-release-20261015.md). No release performed yet.
 
 ## 2026-10-15 — moonmafia staging access pause: proven role mismatch and local correction

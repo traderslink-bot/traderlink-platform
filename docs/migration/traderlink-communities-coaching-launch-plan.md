@@ -1,5 +1,10 @@
 # Communities and Coaching — complete launch plan
 
+## Current bounded correction — agreed review work (2026-10-15)
+
+The PC staging acceptance uncovered a completion-integrity gap: an overall summary could satisfy an empty selection despite an accepted one-trade agreement. The local correction now shares original-agreement quantity/readiness across both coach pages and validates required work at delivery/completion on the server. It preserves zero-trade/custom work and student-controlled Journal access. Focused verification passes; full-build and hosted/browser gates remain open. This is a correction to existing agreed work, not a change to plan requirements or acceptance history. [Progress](traderlink-communities-coaching-launch-progress.md) and [evidence](coaching-feature-findings-2026-10-14.md). No release authorized.
+
+
 Date: 2026-10-10. Status: implementation authorized. D1–D7 approved with the explicit D7 exception below. Partner earnings activation deferred. Production deployment prohibited.
 
 ## Owner approval and exceptions — controlling amendment

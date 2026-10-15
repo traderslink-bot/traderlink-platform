@@ -1,3 +1,10 @@
+# 2026-10-15 — agreed Coaching review work enforced locally
+
+- PC QA found a review delivered/completed with zero trades under an accepted one-trade agreement. Reproduced in real-schema memory-only fixtures; staging/completed evidence untouched.
+- Isolated branch `codex/coaching-review-required-work-20261015`, `/workspaces/traderlink-coaching-review-required-work`, base deployed `a78a4d0c941755038c0859d0cf858622c06ae666`. Shared original-agreement counts/readiness now govern both coach pages and server delivery/completion. Privacy/drafts/legitimate summary-only work preserved; Help updated.
+- Service regression,11 unit cases, actual route-render checks, targeted TypeScript/lint and CJS syntax pass. Legacy dashboard-template checker reproduces4 unchanged baseline failures. Full local build worker received SIGTERM; full-build acceptance remains open.
+- No deployment/push, hosted record/grant/agreement/role/channel/plan mutations or Bullrun changes. Next release gate is full-build proof, then separately authorized staging release and new synthetic browser acceptance. [Full findings/file list](../../docs/migration/coaching-feature-findings-2026-10-14.md).
+
 # 2026-10-15 — moonmafia access pause: local correction, no release
 
 - Read-only staging/Discord evidence confirms the required `test-community` role is absent from the linked moonmafia account. The four assigned staff roles do not meet this plan requirement. Cached/current roles match; deployment source is `3dfe06ddb2584eaaf00e3fde609d63b13daf124d`; commercial coaching policy is off.

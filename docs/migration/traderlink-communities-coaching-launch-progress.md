@@ -1,5 +1,12 @@
 # Communities and Coaching launch progress
 
+## 2026-10-15 — review completion must satisfy agreed trade work (local only)
+
+Reproduced the PC-reported zero-trade delivery against an accepted one-trade agreement in a real-schema in-memory fixture. Added a shared original-occurrence agreement count reader and readiness calculation across workspace, final preview, delivery and completion. Missing/partial trade work cannot be satisfied by an overall summary or direct lifecycle calls. Drafts/privacy and legitimate summary-only/custom work are preserved; Help guidance updated.
+
+Real-schema service regression,11 focused readiness tests, actual route-render control checks, targeted lint/TypeScript and CJS syntax pass. Legacy template test repeats the same4 baseline failures; full production build was terminated by SIGTERM without a compiler diagnostic and remains open. No deployment or hosted record/role/grant/plan changes. Existing completed QA evidence and Bullrun untouched. [Root cause, complete file list, evidence and remaining gates](coaching-feature-findings-2026-10-14.md).
+
+
 ## 2026-10-15 — moonmafia access pause diagnosed; local reason-specific fix
 
 Verified deployed source `3dfe06ddb2584eaaf00e3fde609d63b13daf124d` and scoped read-only Discord/SQLite evidence: the linked account lacks the plan's `test-community` role; its four staff test roles are different. Fresh stored roles match Discord exactly. Commercial `coaching.access` enforcement is off and absent from this deployed entitlement path. The pause correctly enforces the persisted requirement.

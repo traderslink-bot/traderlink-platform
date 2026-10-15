@@ -1,3 +1,5 @@
+import {coachingReviewReadiness} from "../modules/communities/contracts/coaching-review-readiness";
+import {coachingReviewRequiredTradeCount} from "../modules/communities/server/coaching-review-required-work";
 import {platformCoachingReviewRequestAcceptanceMigration} from "../modules/platform/server/database/migrations/0160_platform_coaching_review_request_acceptance";
 import {platformCoachingDeletionArchivesMigration} from "../modules/platform/server/database/migrations/0164_platform_coaching_deletion_archives";
 import {captureCoachingDeletionEvidence, purgeExpiredCoachingDeletionArchives, readCoachingDeletionArchive} from "../modules/communities/server/coaching-deletion-archive";
@@ -196,6 +198,62 @@ check.equal(analysisAccess.canReadTrades,true);check.deepEqual(analysisAccess.sc
 platform.revokeJournal({actorUserId:OWNER,grantId:fullGrant,atUtc:NOW});
 platform.revokeJournal({actorUserId:OWNER,grantId:analyticsGrant,atUtc:NOW});
 check.throws(()=>journal.readAnalysisScope({coachUserId:MEMBER,relationshipId:relationship}),"Revoked analysis grants stop access");
+// Reproduce generated-agreement work with Journal sharing off, entirely in memory.
+database.exec("SAVEPOINT required_review_work");
+const requiredReviewId=(database.prepare("SELECT work_id FROM traderlink_community_coaching_occurrences WHERE agreement_id=? AND work_type='review' ORDER BY period_start LIMIT 1").get(agreementId) as {work_id:string}).work_id;
+const workInput={...base,reviewId:requiredReviewId};
+const workRow=()=>database.prepare("SELECT * FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(requiredReviewId);
+const progress=()=>{
+ const snapshot=platform.readSnapshot("first-room",actor);
+ return coachingReviewReadiness(snapshot.tradeReviews.find(row=>row.reviewId===requiredReviewId)!,snapshot.reviewTrades.filter(row=>row.reviewId===requiredReviewId),snapshot.reviewActions.filter(row=>row.reviewId===requiredReviewId));
+};
+const missingTrade=(error:unknown)=>(error as {safeContext?:{field?:string}}).safeContext?.field==="requiredTradeReviews";
+check.equal((database.prepare("SELECT count(*) count FROM traderlink_community_journal_grants WHERE relationship_id=? AND status='active'").get(relationship) as {count:number}).count,0);
+platform.updateTradeReview({...workInput,coachFeedback:"Synthetic summary without any reviewed trades",wentWell:"",needsWork:"",nextFocus:"",coachPrivateNotes:"Keep this draft",previousFocusStatus:null,previousFocusAssessment:"",status:"in_review"});
+const draftBefore=workRow();
+const eventsBefore=database.prepare("SELECT count(*) count FROM traderlink_community_coaching_review_events WHERE review_id=?").get(requiredReviewId);
+check.equal(coachingReviewRequiredTradeCount(database,requiredReviewId),1,"Generated review keeps its original agreement requirement after later revisions");
+check.deepEqual([progress().saved,progress().total,progress().ready],[0,1,false]);
+check.throws(()=>programs.deliverReview(workInput),missingTrade,"A summary cannot fulfill the agreement's one required trade");
+check.deepEqual(workRow(),draftBefore,"Rejected delivery preserves all draft fields");
+check.deepEqual(database.prepare("SELECT count(*) count FROM traderlink_community_coaching_review_events WHERE review_id=?").get(requiredReviewId),eventsBefore,"Rejected delivery emits no lifecycle event");
+check.throws(()=>programs.setReviewLifecycle({...workInput,state:"completed"}),"Draft completion cannot bypass delivery");
+// Simulate a previously delivered invalid row without touching any hosted evidence.
+database.exec("SAVEPOINT old_invalid_delivery");
+database.prepare("UPDATE traderlink_community_coaching_trade_reviews SET delivery_state='delivered',delivered_at_utc=? WHERE review_id=?").run(NOW,requiredReviewId);
+const deliveredBefore=workRow();
+check.throws(()=>programs.setReviewLifecycle({...workInput,state:"completed"}),missingTrade,"Previously delivered insufficient work cannot bypass completion validation");
+check.deepEqual(workRow(),deliveredBefore);
+database.exec("ROLLBACK TO old_invalid_delivery; RELEASE old_invalid_delivery");
+// Saved trade evidence is synthetic fixture state, not fabricated Journal facts or a grant.
+const insertSaved=database.prepare("INSERT INTO traderlink_community_coaching_review_trades(review_id,community_id,round_trip_id,ordinal,workflow_state,coach_feedback,saved_at_utc,updated_at_utc) VALUES(?,?,?,?,'saved','Synthetic saved feedback',?,?)");
+insertSaved.run(requiredReviewId,first.communityId,"10000000-0000-4000-8000-000000000090",0,NOW,NOW);
+check.deepEqual([progress().saved,progress().total,progress().ready],[1,1,true]);
+// A two-trade fixture must reject one saved trade, then accept two. Terms stay linked to their occurrence.
+database.exec("SAVEPOINT two_required_trades");
+database.prepare("UPDATE traderlink_community_coaching_agreements SET terms_json=json_set(terms_json,'$.items[0].quantity',2) WHERE agreement_id=?").run(agreementId);
+check.deepEqual([progress().saved,progress().total,progress().ready],[1,2,false]);
+check.throws(()=>programs.deliverReview(workInput),missingTrade);
+database.prepare("UPDATE traderlink_community_coaching_trade_reviews SET delivery_state='delivered',delivered_at_utc=? WHERE review_id=?").run(NOW,requiredReviewId);
+check.throws(()=>programs.setReviewLifecycle({...workInput,state:"completed"}),missingTrade,"Partial saved work cannot bypass completion either");
+database.prepare("UPDATE traderlink_community_coaching_trade_reviews SET delivery_state='draft',delivered_at_utc=NULL WHERE review_id=?").run(requiredReviewId);
+insertSaved.run(requiredReviewId,first.communityId,"10000000-0000-4000-8000-000000000091",1,NOW,NOW);
+check.deepEqual([progress().saved,progress().total,progress().ready],[2,2,true]);
+programs.deliverReview(workInput);
+programs.setReviewLifecycle({...workInput,state:"completed"});
+check.equal((workRow() as {delivery_state:string}).delivery_state,"completed");
+database.exec("ROLLBACK TO two_required_trades; RELEASE two_required_trades");
+// Every extra selected trade needs feedback, even after the agreement minimum is met.
+database.prepare("INSERT INTO traderlink_community_coaching_review_trades(review_id,community_id,round_trip_id,ordinal,workflow_state) VALUES(?,?,?,1,'queued')").run(requiredReviewId,first.communityId,"10000000-0000-4000-8000-000000000091");
+check.equal(progress().ready,false);
+check.throws(()=>programs.deliverReview(workInput),error=>(error as {safeContext?:{field?:string}}).safeContext?.field==="unfinishedTradeReviews");
+database.prepare("UPDATE traderlink_community_coaching_review_trades SET workflow_state='removed' WHERE review_id=? AND ordinal=1").run(requiredReviewId);
+check.equal(progress().ready,true,"Removed extras do not count as unfinished work");
+programs.deliverReview(workInput);
+programs.setReviewLifecycle({...workInput,state:"completed"});
+check.equal((workRow() as {delivery_state:string}).delivery_state,"completed");
+check.equal((database.prepare("SELECT count(*) count FROM traderlink_community_journal_grants WHERE relationship_id=? AND status='active'").get(relationship) as {count:number}).count,0,"Delivery never grants Journal access");
+database.exec("ROLLBACK TO required_review_work; RELEASE required_review_work");
 const reviewId=programs.createReview({...base,title:"Delivery QA",context:"",reviewType:"custom",roundTripIds:[]});
 const imageId=programs.addImage({...base,targetType:"review",targetId:reviewId,reviewId,filename:"chart.png",mediaType:"image/png",content:Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf6kAAAAASUVORK5CYII=","base64")});
 check.throws(()=>programs.readImage({communityId:first.communityId,actor:student,attachmentId:imageId}),"Unsent review images hidden from students");
@@ -203,7 +261,12 @@ programs.saveFocusFeedback({...base,reviewId,feedback:{}});
 check.throws(()=>programs.deliverReview({...base,reviewId}),"Empty reviews cannot be sent");
 platform.updateTradeReview({...base,reviewId,coachFeedback:"Shared review",wentWell:"",needsWork:"",nextFocus:"Practice entries",coachPrivateNotes:"Private QA note",previousFocusStatus:null,previousFocusAssessment:"",status:"in_review"});
 check.equal(platform.readSnapshot("first-room",student).tradeReviews.find(item=>item.reviewId===reviewId)?.coachFeedback,"");
+check.equal(coachingReviewRequiredTradeCount(database,reviewId),null,"Custom reviews have no invented trade requirement");
 programs.deliverReview({...base,reviewId});
+database.exec("SAVEPOINT summary_only_completion");
+programs.setReviewLifecycle({...base,reviewId,state:"completed"});
+check.equal((database.prepare("SELECT delivery_state FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(reviewId) as {delivery_state:string}).delivery_state,"completed","Legitimate summary-only work can complete");
+database.exec("ROLLBACK TO summary_only_completion; RELEASE summary_only_completion");
 check.ok(programs.readImage({communityId:first.communityId,actor:student,attachmentId:imageId}).content.length>0,"Delivered chart available to intended student");
 check.throws(()=>programs.readImage({communityId:first.communityId,actor:{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},attachmentId:imageId}),"Images isolated from unrelated users");
 check.throws(()=>programs.replyToReview({...base,actor:student,reviewId,body:"Before read"}),"Follow-up starts after read confirmation");
