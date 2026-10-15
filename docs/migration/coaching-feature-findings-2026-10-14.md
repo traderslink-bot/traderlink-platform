@@ -1,5 +1,7 @@
 # Coaching feature and Discord bot findings — 2026-10-14
 
+Staging follow-up: [exact candidate, owner release request and execution checks](coaching-access-pause-staging-release-20261015.md). No release performed yet.
+
 ## 2026-10-15 — moonmafia staging access pause: proven role mismatch and local correction
 
 Scope: read-only staging diagnosis and a local fix based on the deployed source. No deployment, Coordinator messages, Discord changes, hosted writes, or changes to Bullrun's relationships, agreements or Journal grants.
