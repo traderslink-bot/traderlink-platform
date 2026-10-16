@@ -1,4 +1,5 @@
 "use server";
+import type {CommunityPublicationFeedback} from "@/src/modules/communities/contracts/community-publication-feedback";
 import {CommunityDeliveryRetryService} from "@/src/modules/communities/server/community-delivery-retry-service";
 
 export async function retryCommunityDeliveryAction(formData:FormData):Promise<void>{
@@ -92,6 +93,17 @@ export async function saveCoachingTeachingDetailsAction(formData:FormData):Promi
   const details={communityId:community.community_id,actor,teachingId:required(formData,"teachingId"),title:required(formData,"title"),body:String(formData.get("body")??""),deliveryUrl:String(formData.get("deliveryUrl")??""),recordingUrl:String(formData.get("recordingUrl")??""),deliveryKind:required(formData,"deliveryKind") as "live"|"recorded"|"resource",scheduledAtUtc:optionalUtcDate(formData,"scheduledAt"),availableAtUtc:optionalUtcDate(formData,"availableAt"),dueAtUtc:optionalUtcDate(formData,"dueAt"),status:required(formData,"status") as "draft"|"published"|"completed"|"cancelled",atUtc};
   service.updateTeachingDetails(details);
  });revalidateCommunityPath(communitySlug,"workspace/teaching");
+}
+
+export async function saveCoachingTeachingWithFeedbackAction(formData:FormData):Promise<CommunityPublicationFeedback>{
+ try {
+  await saveCoachingTeachingDetailsAction(formData);
+  return {status:"success",message:"Lesson saved."};
+ } catch(error) {
+  unstable_rethrow(error);
+  if(error instanceof Error&&error.message==="Choose students before publishing this lesson.")return {status:"error",message:"Choose active students before publishing this lesson. Restore an archived student or create a lesson for the correct students or plan."};
+  return {status:"error",message:"We couldn't save this lesson. Your entries are still here. Check your settings and access, then try again."};
+ }
 }
 
 function required(formData: FormData, key: string): string {

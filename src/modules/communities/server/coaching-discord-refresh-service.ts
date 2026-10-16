@@ -4,13 +4,15 @@ import { verifyCommunityRequestMember } from "./community-request-verification";
 
 type Target = { slug: string; discord_guild_id: string; user_id: string };
 
-/** Scheduling position only; never membership or authorization evidence. */
-export type CoachingDiscordRefreshCursor = { after: string | null };
+/** Scheduling position and provider cooldown only; never authorization evidence. */
+export type CoachingDiscordRefreshCursor = { after: string | null; retryAfterUtc?: string | null };
 export class CoachingDiscordRefreshService {
  constructor(private readonly db: Database.Database, private readonly botToken: string, private readonly request: typeof fetch = fetch, private readonly cursor: CoachingDiscordRefreshCursor = { after: null }) {}
  async runAvailable(limit = 25, atUtc = new Date().toISOString()) {
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error("Invalid refresh batch size.");
   assertCanonicalUtcTimestamp(atUtc, "atUtc");
+  if (this.cursor.retryAfterUtc && Date.parse(this.cursor.retryAfterUtc) > Date.parse(atUtc)) return { refreshed: 0, unavailable: 0 };
+  this.cursor.retryAfterUtc = null;
   const cutoff = new Date(Date.parse(atUtc) - 300_000).toISOString();
   const targets = this.db.prepare(`WITH participants AS (
    SELECT community_id, student_user_id user_id FROM traderlink_community_coaching_relationships WHERE status='active' AND archived_at_utc IS NULL
@@ -22,11 +24,23 @@ export class CoachingDiscordRefreshService {
   LEFT JOIN platform_discord_memberships m ON m.user_id=p.user_id AND m.guild_id=c.discord_guild_id
   WHERE m.last_verified_at_utc IS NULL OR m.last_verified_at_utc<?
   ORDER BY CASE WHEN (c.discord_guild_id || ':' || p.user_id)>? THEN 0 ELSE 1 END,
-   c.discord_guild_id,p.user_id LIMIT ?`).all(cutoff, this.cursor.after ?? '', limit) as Target[];
+   (c.discord_guild_id || ':' || p.user_id) LIMIT ?`).all(cutoff, this.cursor.after ?? '', limit) as Target[];
   let refreshed = 0, unavailable = 0, rateLimited = false;
   const request: typeof fetch = async (url, options) => {
    const response = await this.request(url, options);
-   if (response.status === 429) rateLimited = true;
+   if (response.status === 429) {
+    rateLimited = true;
+    const header = Number(response.headers.get("Retry-After"));
+    let bodyDelay: unknown;
+    try { bodyDelay = (await response.clone().json() as { retry_after?: unknown }).retry_after; } catch { /* Use the header or conservative fallback. */ }
+    const responseAt = Math.max(Date.now(), Date.parse(atUtc));
+    const delays = [header, bodyDelay].filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0 && value <= (8.64e15 - responseAt) / 1000);
+    const delayMs = Math.ceil((delays.length ? Math.max(...delays) : 60) * 1000);
+    // Use response time in production and retain deterministic future fixture time.
+    const retryAt = responseAt + delayMs;
+    const existing = Date.parse(this.cursor.retryAfterUtc ?? "");
+    if (Number.isFinite(retryAt) && retryAt <= 8.64e15) this.cursor.retryAfterUtc = new Date(Math.max(Number.isFinite(existing) ? existing : 0, retryAt)).toISOString();
+   }
    return response;
   };
   for (const target of targets) {

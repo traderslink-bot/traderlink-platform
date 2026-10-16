@@ -367,3 +367,226 @@ release, PC must retest connected-state/manage navigation and channel guidance.
 First-time independent-server install/consent/return and actual submission/failure
 recovery remain separate acceptance, not a reason to repeat passed discovery or
 Coaching journeys. Local component evidence does not certify those live flows.
+
+
+## Combined staging release verified — October 15, evening Toronto
+
+Owner explicitly directed combined verification/build and staging deployment of
+lesson validation, Discord refresh scheduling and onboarding/guidance. This chat
+acted as the previously owner-assigned Coordinator. This supersedes earlier
+build-deferral/no-deployment wording for this exact correction batch only.
+
+- Configured staging source **staging**; exact remote/release parent
+  `a9c119625f1ecb13d81e65bd9148159a03da57ec`; published **e2da9c38c8c0be2efa968e7026db3e4f2d281e8f**.
+  Clean isolated release worktree `/workspaces/traderlink-coaching-combined-release`.
+  Complete17-path allowlist and recovery image/deployment recorded in
+  `/workspaces/traderslink-coordinator/preservation/coaching-combined-batch-20261015/release.json`.
+  Unrelated source/docs/CI history and dirty shared worktrees were preserved.
+- [CI38821841169](https://github.com/traderslink-bot/traderlink-platform/actions/runs/38821841169)
+  **SUCCESS** on `d4534545701841c65d98c3289f9dc9f3d188fe2e`; only verification
+  workflow differs from release, runtime identical. Full production build,
+  TypeScript and all281 pages pass. Disposable migration rehearsal, draft/review
+  checks, lesson six inactive/three restoration cases with preserved drafts,
+  refresh failure/suspension/wrap retry and all focused onboarding checks pass.
+  This closes the deferred combined-build gate; no duplicate local build run.
+- Railway **7c975e9e-a30d-445a-a3b5-69b1c7442191 SUCCESS**, image
+  `sha256:dd54d85fa76c5c25d387ea822e23e151a4d7f89ead1da90eb2c276581e185a35`.
+  One RUNNING instance `ec31cc9f-fb21-421a-96f3-e7c91fa12f0b`; original isolated
+  volume retained, overlap0/drain30, no staged configuration. Previous deployment
+  `b1bd4046-cfa9-41ae-9cca-1186b9ac742a` REMOVED; prior compatible image retained
+  as recovery reference. No schema/dependency/configuration change.
+- Health **HTTP200/ready/sqlite_single_node**. Before/after exact160 migration
+  IDs/orders/checksums match. No database content scan/hash or migration executed
+  on staging. Compiled server/client checks find all six correction markers.
+  Signed-out onboarding, channel settings and student coaching redirect307.
+- Natural hosted worker startup logs show60-second schedule, batch5 and Discord
+  refresh configured; first maintenance pass observed. No maintenance exception
+  in the filtered startup/pass logs. This proves scheduling/execution, not live
+  provider failure fairness, rate-limit/load capacity or every participant refresh.
+- Production configured source remains **main**, remote
+  `78bf4421b815e079a31b1135d771572a0e979a13` unchanged. No production/static/
+  Watchlist Runtime release, manual hosted-data/settings/role/channel/grant change,
+  test message or new fixture. Existing workers continue normal behavior.
+
+Coordinator slot handed back after these checks. [PC retest prompt](coaching-combined-staging-retest-pc-20261015.md)
+is ready for actual signed-in existing-server presentation/guidance. Lesson
+rejection/restoration needs an approved disposable fixture; no real relationship
+may be archived/ended to manufacture it. Do not force hosted failures or claim
+page stability proves refresh fairness. Independent-server install/consent/return
+and production readiness remain separate acceptance. No whole-feature launch
+certification or signed-in browser pass follows from this release.
+
+
+## Remaining acceptance — approved synthetic staging fixtures, October 15 Toronto
+
+Owner authorized isolated fixture creation and testing, preserving all pre-existing
+records and prohibiting production deployment. Staging source verified unchanged
+at `e2da9c38c8c0be2efa968e7026db3e4f2d281e8f`, deployment
+`7c975e9e-a30d-445a-a3b5-69b1c7442191`. This section supersedes the earlier
+fixture-authorization blocker; it does not authorize another staging release.
+
+### Acceptance matrix
+
+| Item | Status | Exact evidence / remaining boundary |
+| --- | --- | --- |
+| Inspect/reuse suitable disposable fixtures | PASS | Prefix-specific read-only inventory found none; only the records below were created. No duplicate retries. |
+| Saved draft with exactly one intended recipient | PASS | Selected-student draft has precisely the new relationship; initial full content/recipient state retained. |
+| Archived and ended recipient rejection | PASS | Deployed exported action source with real services/staging DB rejects both; full draft/recipient snapshots unchanged. Request identity and Next cache adapters isolated, not signed-in HTTP proof. |
+| Retained wrong-plan recipient rejection | PASS | New Plan-B draft deliberately seeded with exactly one new assignment to the Plan-A relationship; relationship restored active/unarchived through actual archive action before rejection. Exact intended row and draft preserved. |
+| Eligibility restoration | PASS | Actual restore/archive actions and relationship status service; corrected reuse publishes through actual lesson-save action only to the new moonmafia relationship. No ad hoc relationship/plan repair. |
+| No notifications/Discord/unrelated writes | PASS | Connection-local TEMP write guards prohibit every non-fixture table mutation, including delivery/notification/Journal/grant tables. Successful action runs attempted none; network disabled. Scoped protected-record metadata unchanged. Natural pre-existing workers were not stopped/frozen. |
+| Clear visible hosted error | BLOCKED | Deployed editor lacks inline feedback handling; new safe-feedback action/editor fix passes locally, including four actual-component browser views. Separately authorized staging release and signed-in PC retest still required. |
+| Natural 60-second/batch-5 worker startup/execution | PASS | Existing sanitized startup/first natural pass on this exact deployment remains valid; current fixture inventory also observes natural membership refresh. No jobs forced. |
+| Eligible batch coverage, normal wrap, suspensions/ineligible cases and recovery | PASS | Seven eligible participants with limit5; all covered without starvation. Suspended members have no provider I/O/freshness change; archived/ended/pending relationships and paused communities excluded; fresh evidence skipped. Failure/timeout recovery preserves relationship lifecycle, verified roles, Journal and operator grants. Isolated evidence only. |
+| Cross-guild wrap under persistent failure | BLOCKED | New regression reproduced prefix-guild key-order mismatch: only2 of4 targets visited. Local fix uses the same composite key for ordering/comparison; all4 targets visited over two wraps. Deployed source still requires correction release. |
+| Provider Retry-After handling | BLOCKED | Deployed code retried at60s despite synthetic120s delay (4 requests versus expected2). Local fix retains cooldown across service instances; header/body maximum, decimals, malformed/oversized fallback and recovery pass. No real failures/rate limits manufactured. |
+| Shared maintenance overlap/retry guard | PASS | Existing isolated overlap prevention and guard release after exceptions retained in remediation suite. No hosted overlap/load/crash experiment. |
+| Sanitized failed-request metadata during next staging retest | NOT TESTED | Privacy-tested collector prepared; isolated browser captures0 failures but that is not staging proof. PC must attach it for the new lesson checks. |
+| Unconnected-server presentation on staging | NOT TESTED | Inspect an already discovered unconnected approved server only if present; do not install/connect or grant scopes. Earlier isolated presentation proof retained. |
+| Genuine first install/consent/return/connection submission | BLOCKED | No new Discord installation/server connection authority; exact safe plan and additional authority below/in PC prompt. |
+
+**Feature not complete.** The three reproduced code defects below are fixed and
+verified locally, but release/full-build verification for this new correction
+batch and signed-in acceptance remain open. Earlier review-count/timezone/update-
+notice/existing-connection/channel-presentation passes remain closed.
+
+### Every persistent new fixture identifier
+
+All titles/names start `QA ONLY — Lesson publication validation`. No account,
+trade, Journal grant, agreement, review or existing plan was created/modified.
+Lessons do not require an accepted agreement for this service path; no acceptance
+or frozen terms were invented. New plans are $0/custom, capacity1, lesson-only,
+no Journal scope, using the already-mapped required role1546028813106941952.
+No Discord role assignment was made.
+
+| Record | Identifier | Final state |
+| --- | --- | --- |
+| Plan A | `8cf418a8-2374-4a73-a60f-09f477e9f1bf` | active; new relationship belongs here |
+| Plan B mismatch | `620b72e7-47e8-4b73-aae5-ad7811c46b44` | active; no matching relationship |
+| Plan-A lesson item | `bbe5e337-f1c2-4544-9ebc-cc579b06ed77` | one unscheduled lesson item; no recurring work |
+| Plan-B lesson item | `55ca84a5-b9fa-4109-bdd6-eaa351d66b77` | one unscheduled lesson item; no recurring work |
+| Relationship | `d96396a0-f6fe-40f2-bf0a-4788ac88eab7` | active, archived `2026-10-16T00:03:57.606Z`; original coach/student only |
+| Selected draft | `f1f6f333-63d0-48b7-a072-9345ad3cef90` | draft; selected_students; plan NULL; one assigned recipient |
+| Plan-mismatch draft | `27a399cb-a2e7-468a-9485-81e35500506e` | draft; plan audience B; one intentionally wrong-plan assigned recipient |
+| Corrected reuse | `6d130d19-cd76-44f9-9e49-d66435521688` | published; plan audience A; one assigned recipient |
+
+Three new recipient rows have composite identifiers:
+`f1f6f333-63d0-48b7-a072-9345ad3cef90 / d96396a0-f6fe-40f2-bf0a-4788ac88eab7`,
+`27a399cb-a2e7-468a-9485-81e35500506e / d96396a0-f6fe-40f2-bf0a-4788ac88eab7` and
+`6d130d19-cd76-44f9-9e49-d66435521688 / d96396a0-f6fe-40f2-bf0a-4788ac88eab7`.
+These eight UUID entities and three composite rows are retained; nothing deleted.
+
+Content is unchanged after rejection:
+
+- Selected: title `QA ONLY — Lesson publication validation — selected draft`;
+  body `QA ONLY saved content — keep this exact text after rejected publication.`
+- Mismatch: title `QA ONLY — Lesson publication validation — plan mismatch draft`;
+  body `QA ONLY plan-B draft; plan-A student is not an eligible recipient.`
+- Corrected: title `QA ONLY — Lesson publication validation — corrected plan A`;
+  same body as mismatch source. All links/times blank, delivery kind live.
+
+Routes: coach lessons `/communities/test-community/workspace/teaching`, new
+student workspace `/communities/test-community/workspace/students/d96396a0-f6fe-40f2-bf0a-4788ac88eab7`,
+Students `/communities/test-community/workspace/students` (Archived tab), student
+`/communities/test-community/coaching` (Coach and plan: the new Plan A).
+
+### Actions, restoration, write boundaries and retained failed attempts
+
+1. Initial guarded run refused stale membership before any write. Natural worker
+   later refreshed both accounts; no manual refresh, role change or fabricated
+   verification. Evidence `execute-fixture-first-no-writes.result.json`.
+2. Creating a plan as published would queue its normal coaching Discord delivery.
+   TEMP guard rejected that insert; the product transaction rolled back, leaving
+   no new plan/item/delivery. Inventory confirmed zero prefix records before retry.
+   Rolled-back attempted IDs (not persistent fixtures): plan
+   `9d6008c8-44c9-48ee-bc01-3ebb58cba7c6`, item
+   `6b44fb4d-5691-442e-a8ce-0c1558b3632c`. Evidence
+   `execute-fixture-delivery-guard-rollback.result.json`. No message queued/sent.
+3. Successful fixture run used supported draft-plan creation then plan activation,
+   which does not enqueue that announcement. Student request and coach acceptance
+   services created only the new relationship. Existing plan requirements and
+   agreements remained untouched.
+4. Actual exported `archiveCoachingStudentAction` archived/restored the new
+   relationship; actual `saveCoachingTeachingDetailsAction` rejected publication
+   with `Choose students before publishing this lesson.` The supported relationship
+   service also ended/reactivated only the new relationship; ended rejection and
+   successful publication after restoration both recorded. Selected lesson then
+   returned to draft through its normal save action.
+5. Plan-B draft initially had0 recipients because supported creation correctly
+   excluded the Plan-A student. To exercise retained wrong-plan state, the second
+   approved fixture phase inserted exactly one new assigned row for this new
+   draft/relationship. This was fixture construction, not relationship/plan repair.
+   With the relationship restored active/unarchived, actual publication rejected
+   and preserved all draft/recipient columns exactly. Corrected Plan-A reuse was
+   saved draft/published using the normal lesson action, then the relationship was
+   archived again using its actual action. Final mismatch draft/assignment retained.
+6. TEMP guards existed only on each operator connection, denying unrelated writes
+   and all notifications/outboxes/grants/agreements/Journal writes. No persistent
+   triggers/settings/migrations added. Fixture source uses actual deployed action
+   code/services with approved operator request identity/cache adapters; it does
+   not mint sessions, add runtime bypasses or prove signed-in browser behavior.
+   Unused Journal-reader dependency was fail-closed in the operator bundle.
+7. Final scoped read-only verification confirms two plans, one relationship, three
+   lessons, zero agreements/grants and zero content deliveries for either new plan.
+   Both commission feature flags remain false; partner program disabled and no
+   target coach fee rule created. Bullrun and all protected records are outside
+   the write allowlist. No data contents were hashed or broadly scanned.
+
+All code/probes/JSON/mutation attempt logs and final screenshots retained under
+`/workspaces/traderslink-coordinator/preservation/coaching-acceptance-20261015/`.
+Key files: `execute-fixture.cjs.result.json`, `execute-mismatch.cjs.result.json`,
+`verify-fixture.cjs.result.json`, `browser-lesson-feedback/`. Framework adapters,
+source commit and exact initial/final states are explicit in the evidence.
+
+### Three reproduced defects, intended corrections and verification
+
+- **Missing lesson feedback:** editor directly submitted a throwing action. New
+  allowlisted validation response via existing CommunityPublicationForm displays
+  actionable text, preserves draft inputs, hides unexpected internal error text
+  and preserves Next redirect/control exceptions. Underlying service checks stay.
+  Regression failed first (no feedback action), then passed; real-schema action
+  tests preserve stored drafts/recipients, including retained wrong-plan case.
+- **Rate delay lost between ticks:** old worker stopped the current batch only.
+  New optional process-local cooldown shares the existing cursor across per-pass
+  connections, takes the longer valid header/body retry delay, supports decimals
+  and uses60s fallback for malformed/oversized values. No busy wait/retry loop,
+  no auth freshness/role alteration. [Discord's official rate-limit contract](https://github.com/discord/discord-api-docs/blob/main/developers/topics/rate-limits.mdx)
+  requires honoring Retry-After/retry_after. The isolated first failing check was
+  4 requests instead of2; corrected test skips early calls and resumes normally.
+- **Guild prefix ordering:** cursor compared a composite key while query ordered
+  separate columns. Prefix-like snowflakes make these orderings differ. Now both
+  use the identical key; four guild/user pairs each visited twice despite all
+  attempts failing. Query runs in real SQLite with isolated provider adapter.
+
+Focused checks pass: remediation/service/action tests, four actual React/MUI
+Light/Navy desktop/mobile feedback cases, cross-guild SQL regression, metadata
+privacy regression, targeted lint with0 warnings/errors, strict semantic
+TypeScript5 files/0 diagnostics. UI screenshots inspected; shared theme preserved,
+Help guide aligned. Browser fixture omits full app shell/font pipeline and real
+server/session transport. No new full build or staging release performed in this
+acceptance task; owner requested release coordination separately.
+
+### Exact remaining boundaries
+
+- New correction batch: separately authorize Coordinator staging release and its
+  combined full-build gate, then PC signed-in error/retry/preservation acceptance.
+- Hosted timer startup/pass evidence belongs to deployed e2da9c38c; new cooldown
+  and cross-guild corrections currently have isolated proof only. Process-local
+  cursor/cooldown reset on process restart; cross-process/global-token coordination,
+  restart/failure injection and load capacity are not certified by these tests.
+- PC must capture sanitized failures during the next lesson retest. Do not export
+  HAR, headers, cookies, bodies, query strings or raw failure URLs. A returned
+  validation error may use HTTP200; record UI result separately from HTTP failures.
+- Unconnected server: inspect an existing discovered option without clicking
+  Install/Connect or consenting to new OAuth scopes. If absent, report unavailable;
+  do not create a server/connection or alter allowlist to manufacture the view.
+- First install: owner must separately approve the exact owned server, staging
+  admission/allowlist change if needed, dedicated bot installation with the
+  displayed minimum permissions, any login consent, and creation of that new app
+  community connection. Agree preservation/recovery before action. Test consent,
+  actual Discord completion and app return/Connect behavior as observed; do not
+  assume automatic callback. Channel/role creation or delivery tests require
+  their own exact authority; no Discord message is implied. Use only named
+  discovered resources; members never supply bot credentials/raw IDs.
+
+[Self-contained PC prompt](coaching-combined-staging-retest-pc-20261015.md).
