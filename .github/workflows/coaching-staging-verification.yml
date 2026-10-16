@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - codex/coaching-acceptance-verification-20261015
+      - codex/coaching-combined-verification-20261015
+      - codex/coaching-review-required-work-20261015
       - codex/coaching-coordinator-staging-20261015
       - codex/coaching-staging-integration-20260926
       - codex/coaching-parity-recovery-20261010
@@ -35,4 +38,44 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: node --import tsx src/scripts/coaching-staging-maintenance.ts --rehearse
       - run: npx tsx src/scripts/verify-community-watchlist-drafts.ts
+      - name: Agreed review readiness regression
+        run: npx vitest run src/modules/communities/contracts/coaching-review-readiness.test.ts --maxWorkers=1 --no-file-parallelism --reporter=dot
+      - name: Coaching route counts and controls
+        run: node src/scripts/verify-coaching-review-required-work-ui.cjs
+      - name: Coaching real-schema service regression
+        run: |
+          node --import tsx - <<'NODE'
+          const Module = require('node:module');
+          const resolve = Module._resolveFilename;
+          Module._resolveFilename = function(name, ...args) {
+            return resolve.call(this, name === 'server-only' ? 'next/dist/compiled/server-only/empty.js' : name, ...args);
+          };
+          require('./src/scripts/verify-coaching-remediation.ts');
+          NODE
+      - name: Combined onboarding presentation and boundaries
+        run: |
+          node src/scripts/verify-community-onboarding-presentation.cjs
+          node src/scripts/verify-community-bot-onboarding.cjs
+          node src/scripts/verify-community-onboarding-reentry.cjs
+          node src/scripts/verify-community-install-identity.cjs
+      - name: Discord resources and onboarding foundation
+        run: |
+          node --import tsx - <<'NODE'
+          const Module = require('node:module');
+          const resolve = Module._resolveFilename;
+          Module._resolveFilename = function(name, ...args) {
+            return resolve.call(this, name === 'server-only' ? 'next/dist/compiled/server-only/empty.js' : name, ...args);
+          };
+          (async () => {
+            await import('./src/scripts/verify-community-discord-resources.ts');
+            await import('./src/scripts/verify-community-launch-foundation.ts');
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+      - name: Correction action, multi-guild coverage and privacy regression
+        run: |
+          node src/scripts/coaching-lesson-action-acceptance.cjs
+          node src/scripts/verify-coaching-refresh-guild-coverage.cjs
+          node src/scripts/coaching-failed-request-metadata.cjs
+      - name: Changed runtime and Help lint
+        run: npx eslint 'app/(dashboard)/communities/community-actions.ts' 'app/(dashboard)/communities/coaching-teaching-editor.tsx' 'app/(dashboard)/communities/community-connect-form.tsx' 'app/(dashboard)/communities/community-dashboard.tsx' 'app/(dashboard)/communities/onboarding/page.tsx' src/modules/communities/server/coaching-discord-refresh-service.ts src/modules/communities/server/coaching-maintenance-runtime.ts src/modules/communities/server/coaching-maintenance-service.ts src/modules/communities/server/traderlink-community-coaching-program-service.ts src/modules/help/traderslink-app-guides.ts
       - run: npm run build
