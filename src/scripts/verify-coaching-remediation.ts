@@ -1,0 +1,742 @@
+import {createLessonActionHarness} from "./coaching-lesson-action-acceptance.cjs";
+import {runLessonFixtureAcceptance} from "./coaching-lesson-fixture-acceptance.cjs";
+import {createReviewActionHarness,reviewActionState,withSyntheticJournalFacts} from "./coaching-review-action-acceptance.cjs";
+import {coachingReviewReadiness} from "../modules/communities/contracts/coaching-review-readiness";
+import {coachingReviewRequiredTradeCount} from "../modules/communities/server/coaching-review-required-work";
+import {platformCoachingReviewRequestAcceptanceMigration} from "../modules/platform/server/database/migrations/0160_platform_coaching_review_request_acceptance";
+import {platformCoachingDeletionArchivesMigration} from "../modules/platform/server/database/migrations/0164_platform_coaching_deletion_archives";
+import {captureCoachingDeletionEvidence, purgeExpiredCoachingDeletionArchives, readCoachingDeletionArchive} from "../modules/communities/server/coaching-deletion-archive";
+import {recoverCommunityOwnership} from "../modules/communities/server/community-ownership-recovery";
+import {verifyCommunityRequestMember} from "../modules/communities/server/community-request-verification";
+
+
+
+
+import Database from "better-sqlite3";
+import {coachingAccessPauseMessage,coachingAccessNoticeMessage} from "../modules/communities/contracts/coaching-access";
+
+import { platformIdentityMigration } from "../modules/platform/server/database/migrations/0001_platform_identity";
+import { journalAccountBoundaryMigration } from "../modules/journal/server/database/migrations/0002_journal_account_boundary";
+import { platformAuthenticationIdentitiesMigration } from "../modules/platform/server/database/migrations/0012_platform_authentication_identities";
+import { platformDiscordMembershipsMigration } from "../modules/platform/server/database/migrations/0017_platform_discord_memberships";
+import { communityWatchlistsMigration } from "../modules/community/server/database/migrations/0076_community_watchlists";
+import { traderLinkCommunitiesIdentityPermissionsMigration } from "../modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions";
+import { traderLinkCommunitiesPartnerPlatformMigration } from "../modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
+import { traderLinkCommunitiesDiscordFeatureAccessMigration } from "../modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access";
+import { traderLinkCommunitiesServerWatchlistsMigration } from "../modules/communities/server/database/migrations/0124_traderlink_communities_server_watchlists";
+import { traderLinkCommunitiesPrivatePilotBootstrapMigration } from "../modules/communities/server/database/migrations/0125_traderlink_communities_private_pilot_bootstrap";
+import { traderLinkCommunitiesWorkspaceToolsMigration } from "../modules/communities/server/database/migrations/0126_traderlink_communities_workspace_tools";
+import { traderLinkCommunitiesCoachingWorkspaceMigration } from "../modules/communities/server/database/migrations/0127_traderlink_communities_coaching_workspace";
+import { traderLinkCommunitiesCoachingProgramsMigration } from "../modules/communities/server/database/migrations/0128_traderlink_communities_coaching_programs";
+import { traderLinkCommunitiesCoachingPlanBuilderMigration } from "../modules/communities/server/database/migrations/0129_traderlink_communities_coaching_plan_builder";
+import { traderLinkCommunitiesCoachingServiceMeasurementMigration } from "../modules/communities/server/database/migrations/0130_traderlink_communities_coaching_service_measurement";
+import { traderLinkCommunitiesReviewCoachingSectionsMigration } from "../modules/communities/server/database/migrations/0131_traderlink_communities_review_coaching_sections";
+import { TraderLinkCommunityRepository } from "../modules/communities/server/traderlink-community-repository";
+import { TraderLinkCommunityPlatformRepository } from "../modules/communities/server/traderlink-community-platform-repository";
+import { TraderLinkCommunityCoachingProgramService } from "../modules/communities/server/traderlink-community-coaching-program-service";
+
+
+import {strict as check} from "node:assert";
+import {copyFileSync,mkdtempSync,rmSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
+import {traderLinkCommunitiesReviewWorkflowMigration} from "../modules/communities/server/database/migrations/0143_traderlink_communities_review_workflow";
+import {traderLinkCommunitiesReviewWorkspaceMetadataMigration} from "../modules/communities/server/database/migrations/0144_traderlink_communities_review_workspace_metadata";
+import {traderLinkCommunitiesCoachingDeliveryWorkflowMigration} from "../modules/communities/server/database/migrations/0145_traderlink_communities_coaching_delivery_workflow";
+import {CoachingAgreementService} from "../modules/communities/server/coaching-agreement-service";
+import {coachingPeriod,coachingReviewCoverage} from "../modules/communities/contracts/coaching-agreements";
+import {coachingEntitlement,reconcileCoachingAccess,archivePausedCoaching} from "../modules/communities/server/coaching-access-lifecycle";
+import {questionAllowance} from "../modules/communities/server/coaching-service-limits";
+import {CoachingDiscordRefreshService} from "../modules/communities/server/coaching-discord-refresh-service";
+import {runCoachingMaintenance,nonOverlappingCoachingMaintenance} from "../modules/communities/server/coaching-maintenance-service";
+import {TraderLinkCommunityCoachJournalReadService} from "../modules/communities/server/traderlink-community-coach-journal-read-service";
+const NOW="2026-09-05T12:00:00.000Z";
+// The additive migration must not reclassify previously created or delivered work.
+{
+ const legacy=new Database(":memory:");
+ try{
+  legacy.exec("CREATE TABLE platform_users(user_id TEXT PRIMARY KEY); CREATE TABLE traderlink_community_coaching_trade_reviews(review_id TEXT PRIMARY KEY,status TEXT,coach_feedback TEXT); INSERT INTO traderlink_community_coaching_trade_reviews VALUES('historical','completed','Preserved feedback');");
+  for(const statement of platformCoachingReviewRequestAcceptanceMigration.statements)legacy.exec(statement);
+  check.deepEqual(legacy.prepare("SELECT status,coach_feedback,acceptance_state,accepted_at_utc,accepted_scope FROM traderlink_community_coaching_trade_reviews").get(),{status:"completed",coach_feedback:"Preserved feedback",acceptance_state:"accepted",accepted_at_utc:null,accepted_scope:""});
+ }finally{legacy.close();}
+}
+const OWNER="10000000-0000-4000-8000-000000000001",MEMBER="10000000-0000-4000-8000-000000000002",OUTSIDER="10000000-0000-4000-8000-000000000003",WORKSPACE="10000000-0000-4000-8000-000000000004",ACCOUNT="10000000-0000-4000-8000-000000000005",OUTSIDER_WORKSPACE="10000000-0000-4000-8000-000000000007",OUTSIDER_ACCOUNT="10000000-0000-4000-8000-000000000008",PILOT_GUILD="1433570740430573642";
+function assert(value:unknown,message:string):asserts value{check.ok(value,message);}
+async function main(){
+const database=new Database(":memory:");database.pragma("foreign_keys=ON");
+try{
+  for(const migration of [platformIdentityMigration,journalAccountBoundaryMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,communityWatchlistsMigration,traderLinkCommunitiesIdentityPermissionsMigration,traderLinkCommunitiesPartnerPlatformMigration,traderLinkCommunitiesDiscordFeatureAccessMigration,traderLinkCommunitiesServerWatchlistsMigration,traderLinkCommunitiesWorkspaceToolsMigration,traderLinkCommunitiesCoachingWorkspaceMigration,traderLinkCommunitiesCoachingProgramsMigration,traderLinkCommunitiesCoachingPlanBuilderMigration,traderLinkCommunitiesCoachingServiceMeasurementMigration,traderLinkCommunitiesReviewCoachingSectionsMigration,traderLinkCommunitiesReviewWorkflowMigration,traderLinkCommunitiesReviewWorkspaceMetadataMigration,traderLinkCommunitiesCoachingDeliveryWorkflowMigration,platformCoachingReviewRequestAcceptanceMigration]){
+    for(const statement of migration.statements)database.exec(statement);
+  }
+  const insertUser=database.prepare(`INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc) VALUES(?, 'discord', ?, ?, 'active', ?, ?)`);
+  const insertIdentity=database.prepare(`INSERT INTO platform_auth_identities(user_id,auth_provider,auth_subject,status,linked_by_user_id,created_at_utc,updated_at_utc,last_authenticated_at_utc) VALUES(?,'discord',?,'active',?,?,?,?)`);
+  const insertDiscord=database.prepare(`INSERT INTO platform_discord_memberships(user_id,guild_id,username,global_display_name,avatar_hash,role_ids_json,guild_owner,joined_at_utc,first_verified_at_utc,last_verified_at_utc) VALUES(?,?,?,?,NULL,?,?,?,?,?)`);
+  for(const [id,subject,name] of [[OWNER,"123456789","Owner"],[MEMBER,"987654321","Member"],[OUTSIDER,"outsider-subject","Outsider"]] as const){insertUser.run(id,subject,name,NOW,NOW);insertIdentity.run(id,subject,id,NOW,NOW,NOW);}
+  insertDiscord.run(OWNER,PILOT_GUILD,"owner","Owner","[]",1,NOW,NOW,NOW);
+  insertDiscord.run(MEMBER,PILOT_GUILD,"member","Member",JSON.stringify(["200001"]),0,NOW,NOW,NOW);
+  insertDiscord.run(OUTSIDER,"900002","outsider","Outsider","[]",1,NOW,NOW,NOW);
+  database.prepare(`INSERT INTO platform_workspaces(workspace_id,display_name,default_trading_timezone,status,created_at_utc,updated_at_utc) VALUES(?,?,'America/Toronto','active',?,?)`).run(WORKSPACE,"Member workspace",NOW,NOW);
+  database.prepare(`INSERT INTO platform_workspaces(workspace_id,display_name,default_trading_timezone,status,created_at_utc,updated_at_utc) VALUES(?,?,'America/Toronto','active',?,?)`).run(OUTSIDER_WORKSPACE,"Outsider workspace",NOW,NOW);
+  database.prepare(`INSERT INTO platform_workspace_memberships(workspace_id,user_id,role,status,created_by_user_id,created_at_utc,updated_at_utc) VALUES(?,?,'owner','active',?,?,?)`).run(WORKSPACE,OWNER,OWNER,NOW,NOW);
+  database.prepare(`INSERT INTO platform_workspace_memberships(workspace_id,user_id,role,status,created_by_user_id,created_at_utc,updated_at_utc) VALUES(?,?,'owner','active',?,?,?)`).run(OUTSIDER_WORKSPACE,OUTSIDER,OUTSIDER,NOW,NOW);
+  database.prepare(`INSERT INTO journal_accounts(account_id,workspace_id,display_name,base_currency,trading_timezone,status,created_by_user_id,created_at_utc,updated_at_utc) VALUES(?,?,?,'USD','America/Toronto','active',?,?,?)`).run(ACCOUNT,WORKSPACE,"Trading account",OWNER,NOW,NOW);
+  database.prepare(`INSERT INTO journal_accounts(account_id,workspace_id,display_name,base_currency,trading_timezone,status,created_by_user_id,created_at_utc,updated_at_utc) VALUES(?,?,?,'USD','America/Toronto','active',?,?,?)`).run(OUTSIDER_ACCOUNT,OUTSIDER_WORKSPACE,"Outsider account",OUTSIDER,NOW,NOW);
+
+  const permissions=new TraderLinkCommunityRepository(database);
+  const platform=new TraderLinkCommunityPlatformRepository(database);
+  const first=permissions.createFromVerifiedDiscordOwner({ownerUserId:OWNER,discordGuildId:PILOT_GUILD,slug:"first-room",displayName:"First Room",timestamp:NOW});
+  for(const statement of traderLinkCommunitiesPrivatePilotBootstrapMigration.statements)database.exec(statement);
+  assert((database.prepare(`SELECT count(*) count FROM traderlink_community_discord_role_mappings WHERE community_id=? AND status='active'`).get(first.communityId) as {count:number}).count===3,"Pilot bootstrap must install only the three server-feature Discord role mappings; test-community is superseded by the automatic all-member baseline.");
+  assert((database.prepare(`SELECT count(*) count FROM traderlink_community_discord_destinations WHERE community_id=? AND status='active'`).get(first.communityId) as {count:number}).count===3,"Pilot bootstrap must install the three supplied Discord channel destinations.");
+  const second=permissions.createFromVerifiedDiscordOwner({ownerUserId:OUTSIDER,discordGuildId:"900002",slug:"second-room",displayName:"Second Room",timestamp:NOW});
+  permissions.setStatus({communityId:first.communityId,actorUserId:OWNER,status:"active",timestamp:NOW});
+  permissions.setStatus({communityId:second.communityId,actorUserId:OUTSIDER,status:"active",timestamp:NOW});
+  permissions.syncActiveMemberFromDiscord({communityId:first.communityId,userId:MEMBER,timestamp:NOW});
+
+permissions.saveDiscordFeatureMapping({communityId:first.communityId,actorUserId:OWNER,discordRoleId:"200001",discordRoleName:"Coaching",responsibilities:["coach"],timestamp:NOW});
+database.exec("SAVEPOINT everyone_mapping");
+permissions.saveDiscordFeatureMapping({communityId:first.communityId,actorUserId:OWNER,discordRoleId:PILOT_GUILD,discordRoleName:"Everyone",responsibilities:["alerts-access"],timestamp:NOW});
+check.ok(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes("community.alerts.view"),"Everyone mapping works without a fabricated member role");
+database.exec("ROLLBACK TO everyone_mapping; RELEASE everyone_mapping");
+const everyone=platform.ensureDefaultAudience({communityId:first.communityId,actorUserId:OWNER,atUtc:NOW});
+  const coach=platform.upsertCoach({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},userId:MEMBER,displayName:"Member Coach",headline:"",biography:"",deliverySummary:"",capacity:1,active:true,atUtc:NOW});
+  const plan=platform.createPlan({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},coachProfileId:coach,name:"One review",description:"",cadence:"trade_reviews",tradeReviewLimit:1,studentCapacity:1,messagingIncluded:true,tradeReviewsIncluded:true,sessionsIncluded:true,teachingIncluded:true,priceLabel:"Handled in Discord",priceAmountMinor:5000,currency:"USD",billingCadence:"monthly",quoteRequired:false,paymentInstructions:"Contact the server owner.",audienceId:everyone,requiredDiscordRoleId:"200001",planStyle:"structured",items:[{itemType:"trade_review",frequency:"weekly",coveragePeriod:"previous_7_days",quantity:1,dueOffsetDays:2,selectionMode:"coach_or_student",followUpDays:0,measurementKind:"trades",plannedMinutes:null,timelineEnabled:true,reviewDepth:"standard"}],journalScopes:[{dataScope:"trades",required:true}],publish:true,atUtc:NOW});
+  database.prepare(`UPDATE platform_discord_memberships SET role_ids_json=? WHERE user_id=? AND guild_id=?`).run(JSON.stringify(["200001"]),OWNER,PILOT_GUILD);
+  const relationship=platform.requestCoaching({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},planId:plan,atUtc:NOW});
+  assert(platform.requestCoaching({communityId:first.communityId,actor:{userId:OWNER,displayName:"Owner",discordRoleIds:[]},planId:plan,atUtc:NOW})===relationship,"Repeated coaching requests must remain idempotent while pending.");
+  platform.setRelationshipStatus({communityId:first.communityId,actor:{userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]},relationshipId:relationship,status:"active",atUtc:NOW});
+
+const actor={userId:MEMBER,displayName:"Coach",discordRoleIds:["200001"]},student={userId:OWNER,displayName:"Student",discordRoleIds:["200001"]};
+const service=new CoachingAgreementService(database);
+const base={communityId:first.communityId,relationshipId:relationship,actor,atUtc:NOW};
+const agreementId=service.propose({...base,startDate:"2026-09-01",dueTimeUtc:"17:00"});
+check.equal(service.generate({...base,throughDate:"2026-09-30"}),0,"Unsigned agreement creates no work");
+check.throws(()=>service.accept({...base,agreementId}),"Coach cannot accept for student");
+service.accept({...base,actor:student,agreementId});
+const generated=service.generate({...base,throughDate:"2026-09-30"});
+check.equal(generated,5,"One weekly trade review per period");
+check.equal(service.generate({...base,throughDate:"2026-09-30"}),0,"Repeated scheduling is idempotent");
+const snapshot=platform.readSnapshot("first-room",actor);
+check.equal(snapshot.coachingAgreements?.[0]?.status,"accepted");
+check.equal(snapshot.relationships.find(row=>row.relationshipId===relationship)?.coachDisplayName,"Member Coach","Use the public coach profile consistently in relationship views");
+check.ok(snapshot.coachingRoleOptions?.some(role=>role.id==="200001"&&role.name==="Coaching"),"Ordinary coaches receive named enrollment roles without role-management authority");
+const terms=snapshot.coachingAgreements![0].terms;
+check.equal(coachingPeriod({...terms,startDate:"2026-01-31"},{...terms.items[0],frequency:"monthly"},1)?.start,"2026-02-28");
+check.equal(coachingPeriod({...terms,startDate:"2026-01-31"},{...terms.items[0],frequency:"monthly"},2)?.start,"2026-03-31","Monthly cadence retains original anchor");
+check.equal(coachingPeriod({...terms,startDate:null},terms.items[0],0),null);
+const period={start:"2026-09-02",end:"2026-09-08"};
+check.deepEqual(coachingReviewCoverage(terms,{...terms.items[0],coveragePeriod:"calendar_week"},period),{start:"2026-08-31",end:"2026-09-06"});
+check.deepEqual(coachingReviewCoverage(terms,{...terms.items[0],coveragePeriod:"previous_month"},period),{start:"2026-08-01",end:"2026-08-31"});
+check.deepEqual(coachingReviewCoverage(terms,{...terms.items[0],coveragePeriod:"since_last_review"},period,"2026-09-03"),{start:"2026-09-04",end:"2026-09-08"});
+check.deepEqual(coachingReviewCoverage({...terms,coverageDays:{[terms.items[0].planItemId]:3}},{...terms.items[0],coveragePeriod:"custom"},period),{start:"2026-09-06",end:"2026-09-08"});
+check.throws(()=>coachingReviewCoverage(terms,{...terms.items[0],coveragePeriod:"custom"},period),"Custom coverage must be agreed explicitly");
+check.throws(()=>service.generate({...base,actor:{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},throughDate:"2026-09-30"}),"Unrelated coach cannot schedule this student");
+const original=snapshot.plans.find(item=>item.planId===plan)!;
+const edit={...original,communityId:first.communityId,actor,planId:plan,expectedRevision:original.revision,saveExisting:true,atUtc:NOW,publish:false,tradeReviewLimit:original.tradeReviewLimit??undefined,priceAmountMinor:original.priceAmountMinor??undefined,requiredDiscordRoleId:original.requiredDiscordRoleId??undefined,autoArchiveAfterDays:30,name:"Updated offer",description:"First line\nSecond line",builderConfig:{about:"Updated offer",offers:{trade_review:{details:"Review each trade",resources:["Analytics reports"]}}}};
+platform.createPlan(edit);
+check.throws(()=>platform.createPlan(edit),"Stale editor cannot overwrite newer plan");
+const edited=platform.readSnapshot("first-room",actor).plans.find(item=>item.planId===plan)!;
+check.equal(edited.status,"active","Editing a published plan retains publication");
+check.equal(edited.builderConfig?.offers.trade_review?.resources[0],"Analytics reports");
+check.equal(service.generate({...base,throughDate:"2026-09-30"}),0,"Editing does not recreate scheduled work");
+check.equal(platform.readSnapshot("first-room",actor).coachingAgreements?.find(item=>item.agreementId===agreementId)?.terms.planName,"One review","Accepted agreement stays frozen");
+const included=edited.items[0];
+platform.createPlan({...edit,expectedRevision:edited.revision,items:[included,{...included,itemType:"questions",measurementKind:"questions",quantity:2,selectionMode:"not_applicable"},{...included,itemType:"review_follow_up",measurementKind:"reviews",followUpDays:3,selectionMode:"not_applicable"}],messagingIncluded:true});
+const revisedId=service.propose({...base,startDate:"2026-09-01",dueTimeUtc:"17:00"});
+service.accept({...base,actor:student,agreementId:revisedId});
+service.accept({...base,actor:student,agreementId:revisedId});
+check.equal(service.generate({...base,throughDate:"2026-09-30"}),0,"Agreement revisions preserve existing periods");
+platform.sendCoachingMessage({...base,actor:student,body:"First question"});
+platform.sendCoachingMessage({...base,actor:student,body:"Second question"});
+check.throws(()=>platform.sendCoachingMessage({...base,actor:student,body:"Third question"}),"Question limit enforced");
+check.equal(questionAllowance(database,relationship,OWNER,NOW)?.remaining,0);
+platform.sendCoachingMessage({...base,actor:student,body:"Next week",atUtc:"2026-09-08T12:00:00.000Z"});
+check.equal(questionAllowance(database,relationship,OWNER,"2026-09-08T12:00:00.000Z")?.remaining,1);
+const programs=new TraderLinkCommunityCoachingProgramService(database);
+const acceptedFocus = JSON.parse((database.prepare("SELECT terms_json FROM traderlink_community_coaching_agreements WHERE agreement_id=?").get(revisedId) as {terms_json:string}).terms_json);
+acceptedFocus.items.find((item: {itemType:string})=>item.itemType==="trade_review").focusAreas=["execution"];
+database.prepare("UPDATE traderlink_community_coaching_agreements SET terms_json=? WHERE agreement_id=?").run(JSON.stringify(acceptedFocus),revisedId);
+database.prepare("UPDATE traderlink_community_coaching_plan_items SET focus_areas_json=? WHERE plan_id=? AND item_type='trade_review'").run(JSON.stringify(["risk"]),plan);
+const studentFocusReview=programs.createReview({...base,actor:student,title:"Frozen focus request",context:"",reviewType:"multiple_trades",roundTripIds:[]});
+const pendingRequest=()=>database.prepare("SELECT acceptance_state,status,due_at_utc,accepted_scope,accepted_at_utc FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(studentFocusReview) as {acceptance_state:string;status:string;due_at_utc:string|null;accepted_scope:string;accepted_at_utc:string|null};
+check.equal(pendingRequest().acceptance_state,"pending");
+check.equal(pendingRequest().due_at_utc,null,"Student submission does not promise a due date");
+check.throws(()=>programs.startReview({...base,reviewId:studentFocusReview}),"Pending request cannot start");
+check.throws(()=>programs.saveFocusFeedback({...base,reviewId:studentFocusReview,feedback:{}}),"Pending request cannot be edited as accepted work");
+check.throws(()=>programs.acceptReviewRequest({...base,actor:student,reviewId:studentFocusReview,scope:"Student acceptance",schedule:"unscheduled"}),"Only coach accepts");
+check.throws(()=>programs.acceptReviewRequest({...base,reviewId:studentFocusReview,scope:"",schedule:"unscheduled"}),"Scope is required");
+check.throws(()=>programs.acceptReviewRequest({...base,reviewId:studentFocusReview,scope:"Review requested trades",schedule:"scheduled"}),"Scheduled work requires a due date");
+programs.acceptReviewRequest({...base,reviewId:studentFocusReview,scope:"Review requested trades",schedule:"unscheduled"});
+check.equal(pendingRequest().acceptance_state,"accepted");
+check.equal(pendingRequest().status,"requested","Acceptance does not falsely mark work started");
+check.equal(pendingRequest().due_at_utc,null,"Unscheduled custom work remains valid");
+programs.acceptReviewRequest({...base,reviewId:studentFocusReview,scope:"Repeated click",schedule:"unscheduled"});
+check.equal(pendingRequest().accepted_scope,"Review requested trades","Acceptance retry preserves accepted scope");
+const scheduledRequest=programs.createReview({...base,actor:student,title:"Scheduled request",context:"",reviewType:"multiple_trades",roundTripIds:[],dueAtUtc:"2026-09-07T12:00:00.000Z"});
+check.equal((database.prepare("SELECT due_at_utc FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(scheduledRequest) as {due_at_utc:null}).due_at_utc,null,"Student cannot impose a deadline");
+programs.acceptReviewRequest({...base,reviewId:scheduledRequest,scope:"Three requested trades",schedule:"scheduled",dueAtUtc:"2026-09-09T12:00:00.000Z"});
+check.equal((database.prepare("SELECT due_at_utc FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(scheduledRequest) as {due_at_utc:string}).due_at_utc,"2026-09-09T12:00:00.000Z");
+const declinedRequest=programs.createReview({...base,actor:student,title:"Declined request",context:"",reviewType:"multiple_trades",roundTripIds:[]});
+programs.setReviewLifecycle({...base,reviewId:declinedRequest,state:"cancelled"});
+check.throws(()=>programs.acceptReviewRequest({...base,reviewId:declinedRequest,scope:"Too late",schedule:"unscheduled"}),"Cancelled request cannot be accepted");
+check.deepEqual(JSON.parse((database.prepare("SELECT focus_areas_json FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(studentFocusReview) as {focus_areas_json:string}).focus_areas_json),["execution"],"Student request uses accepted focus rather than a later plan edit");
+const chart=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf6kAAAAASUVORK5CYII=","base64");
+const conversationImage=programs.addImage({...base,actor:student,targetType:"message",targetId:relationship,filename:"conversation-chart.png",mediaType:"image/png",content:chart});
+check.ok(programs.readImage({communityId:first.communityId,actor,attachmentId:conversationImage}).content.equals(chart),"Conversation-root images reach the coach");
+check.throws(()=>programs.addImage({...base,actor:student,targetType:"message",targetId:OUTSIDER,filename:"wrong-thread.png",mediaType:"image/png",content:chart}),"Images cannot target another conversation");
+const journal=new TraderLinkCommunityCoachJournalReadService(database);
+check.throws(()=>journal.readAnalysisScope({coachUserId:MEMBER,relationshipId:relationship}),"No account data without a grant");
+const analyticsGrant=platform.grantJournal({...base,actor:student,journalAccountId:ACCOUNT,dataScope:"analytics"});
+check.equal(journal.readAnalysisScope({coachUserId:MEMBER,relationshipId:relationship}).canReadTrades,false,"Analytics-only sharing excludes trade details");
+const separateTradesGrant=platform.grantJournal({...base,actor:student,journalAccountId:ACCOUNT,dataScope:"trades"});
+check.equal(journal.readAnalysisScope({coachUserId:MEMBER,relationshipId:relationship}).canReadTrades,true,"Independent trade and analytics grants combine for the same account");
+database.exec("SAVEPOINT revoke_analytics_only");
+platform.revokeJournal({actorUserId:OWNER,grantId:analyticsGrant,atUtc:NOW});
+check.throws(()=>journal.readAnalysisScope({coachUserId:MEMBER,relationshipId:relationship}),"Trade sharing alone cannot retain revoked analytics access");
+database.exec("ROLLBACK TO revoke_analytics_only; RELEASE revoke_analytics_only");
+platform.revokeJournal({actorUserId:OWNER,grantId:separateTradesGrant,atUtc:NOW});
+check.equal(journal.readAnalysisScope({coachUserId:MEMBER,relationshipId:relationship}).canReadTrades,false,"Revoking trade sharing preserves analytics without trade evidence");
+check.throws(()=>journal.readAnalysisScope({coachUserId:OUTSIDER,relationshipId:relationship}),"Different coach cannot use student's analysis scope");
+check.throws(()=>platform.grantJournal({...base,actor:student,journalAccountId:OUTSIDER_ACCOUNT,dataScope:"complete"}),"Student cannot share another account");
+const fullGrant=platform.grantJournal({...base,actor:student,journalAccountId:ACCOUNT,dataScope:"complete"});
+const analysisAccess=journal.readAnalysisScope({coachUserId:MEMBER,relationshipId:relationship});
+check.equal(analysisAccess.canReadTrades,true);check.deepEqual(analysisAccess.scope.allowedAccountIds,[ACCOUNT]);
+platform.revokeJournal({actorUserId:OWNER,grantId:fullGrant,atUtc:NOW});
+platform.revokeJournal({actorUserId:OWNER,grantId:analyticsGrant,atUtc:NOW});
+check.throws(()=>journal.readAnalysisScope({coachUserId:MEMBER,relationshipId:relationship}),"Revoked analysis grants stop access");
+// Reproduce generated-agreement work with Journal sharing off, entirely in memory.
+database.exec("SAVEPOINT required_review_work");
+const requiredReviewId=(database.prepare("SELECT work_id FROM traderlink_community_coaching_occurrences WHERE agreement_id=? AND work_type='review' ORDER BY period_start LIMIT 1").get(agreementId) as {work_id:string}).work_id;
+const workInput={...base,reviewId:requiredReviewId};
+const actionProofNames:string[]=[];
+const actionHarness=createReviewActionHarness({database,actor,Service:TraderLinkCommunityCoachingProgramService,atUtc:NOW,relationshipId:relationship});
+async function rejectsActualAction(kind:"deliver"|"complete",label:string){
+ const before=reviewActionState(database,requiredReviewId);
+ const hiddenBefore=platform.readSnapshot("first-room",student).tradeReviews.find(row=>row.reviewId===requiredReviewId);
+ actionHarness.effects.length=0;
+ const form=actionHarness.form(requiredReviewId,kind==="complete"?{state:"completed"}:{});
+ await check.rejects(kind==="complete"?actionHarness.lifecycle(form):actionHarness.deliver(form),missingTrade,label);
+ check.deepEqual(reviewActionState(database,requiredReviewId),before,label+": persisted review, selection, events and notification/outbox counts unchanged");
+ check.deepEqual(platform.readSnapshot("first-room",student).tradeReviews.find(row=>row.reviewId===requiredReviewId),hiddenBefore,label+": student publication unchanged");
+ check.equal(actionHarness.effects.length,0,label+": no successful revalidation/refresh");
+ actionProofNames.push(label);
+}
+
+const workRow=()=>database.prepare("SELECT * FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(requiredReviewId);
+const progress=()=>{
+ const snapshot=platform.readSnapshot("first-room",actor);
+ return coachingReviewReadiness(snapshot.tradeReviews.find(row=>row.reviewId===requiredReviewId)!,snapshot.reviewTrades.filter(row=>row.reviewId===requiredReviewId),snapshot.reviewActions.filter(row=>row.reviewId===requiredReviewId));
+};
+const missingTrade=(error:unknown)=>(error as {safeContext?:{field?:string}}).safeContext?.field==="requiredTradeReviews";
+check.equal((database.prepare("SELECT count(*) count FROM traderlink_community_journal_grants WHERE relationship_id=? AND status='active'").get(relationship) as {count:number}).count,0);
+platform.updateTradeReview({...workInput,coachFeedback:"Synthetic summary without any reviewed trades",wentWell:"",needsWork:"",nextFocus:"",coachPrivateNotes:"Keep this draft",previousFocusStatus:null,previousFocusAssessment:"",status:"in_review"});
+const draftBefore=workRow();
+const eventsBefore=database.prepare("SELECT count(*) count FROM traderlink_community_coaching_review_events WHERE review_id=?").get(requiredReviewId);
+check.equal(coachingReviewRequiredTradeCount(database,requiredReviewId),1,"Generated review keeps its original agreement requirement after later revisions");
+check.deepEqual([progress().saved,progress().total,progress().ready],[0,1,false]);
+check.throws(()=>programs.deliverReview(workInput),missingTrade,"A summary cannot fulfill the agreement's one required trade");
+await rejectsActualAction("deliver","actual delivery action rejects 1 required / 0 saved with summary");
+check.equal((workRow() as {delivered_at_utc:string|null}).delivered_at_utc,null,"Rejected actual delivery never sets a delivery timestamp");
+check.deepEqual(workRow(),draftBefore,"Rejected delivery preserves all draft fields");
+check.deepEqual(database.prepare("SELECT count(*) count FROM traderlink_community_coaching_review_events WHERE review_id=?").get(requiredReviewId),eventsBefore,"Rejected delivery emits no lifecycle event");
+check.throws(()=>programs.setReviewLifecycle({...workInput,state:"completed"}),"Draft completion cannot bypass delivery");
+// Simulate a previously delivered invalid row without touching any hosted evidence.
+database.exec("SAVEPOINT old_invalid_delivery");
+database.prepare("UPDATE traderlink_community_coaching_trade_reviews SET delivery_state='delivered',delivered_at_utc=? WHERE review_id=?").run(NOW,requiredReviewId);
+const deliveredBefore=workRow();
+check.throws(()=>programs.setReviewLifecycle({...workInput,state:"completed"}),missingTrade,"Previously delivered insufficient work cannot bypass completion validation");
+await rejectsActualAction("complete","actual Complete action rejects legacy delivered 1 required / 0 saved");
+check.deepEqual(workRow(),deliveredBefore);
+database.exec("ROLLBACK TO old_invalid_delivery; RELEASE old_invalid_delivery");
+// Positive action path: real grant checks/select/save handlers, isolated synthetic Journal facts.
+database.exec("SAVEPOINT positive_journal_action_fixture");
+const syntheticTrade={roundTripId:"10000000-0000-4000-8000-000000000090",symbol:"QAONLY",direction:"long" as const,openedAtUtc:"2026-09-01T14:00:00.000Z",closedAtUtc:"2026-09-01T14:01:00.000Z",state:"ready_closed",quantityDecimal:"1",entryPriceDecimal:"10",exitPriceDecimal:"10.10",netPnlDecimal:"0.10",grossPnlDecimal:"0.10",currency:"USD"};
+await withSyntheticJournalFacts(TraderLinkCommunityCoachJournalReadService,syntheticTrade,async()=>{
+ await check.rejects(actionHarness.select(actionHarness.form(requiredReviewId,{roundTripId:syntheticTrade.roundTripId})),"Real reader rejects synthetic trade selection while sharing is off");
+ platform.grantJournal({...base,actor:student,journalAccountId:ACCOUNT,dataScope:"trades"});
+ await actionHarness.select(actionHarness.form(requiredReviewId,{roundTripId:syntheticTrade.roundTripId}));
+ check.deepEqual([progress().saved,progress().total,progress().ready],[0,1,false],"Selected but unfinished feedback is not saved required work");
+ await rejectsActualAction("deliver","actual delivery action rejects selected but unsaved required feedback");
+ await actionHarness.saveTrade(actionHarness.form(requiredReviewId,{roundTripId:syntheticTrade.roundTripId,feedback:"Synthetic valid trade feedback"}));
+ check.deepEqual([progress().saved,progress().total,progress().ready],[1,1,true]);
+ const savedEvidence=database.prepare("SELECT workflow_state,coach_feedback,saved_at_utc FROM traderlink_community_coaching_review_trades WHERE review_id=? AND round_trip_id=?").get(requiredReviewId,syntheticTrade.roundTripId) as {workflow_state:string;coach_feedback:string;saved_at_utc:string};
+ check.equal(savedEvidence.workflow_state,"saved");check.equal(savedEvidence.coach_feedback,"Synthetic valid trade feedback");check.equal(savedEvidence.saved_at_utc,NOW);
+ await actionHarness.remove(actionHarness.form(requiredReviewId,{roundTripId:syntheticTrade.roundTripId}));
+ check.deepEqual([progress().saved,progress().total,progress().ready],[0,1,false]);
+ await rejectsActualAction("deliver","actual remove of required saved feedback invalidates readiness and delivery");
+ await actionHarness.select(actionHarness.form(requiredReviewId,{roundTripId:syntheticTrade.roundTripId}));
+ await actionHarness.saveTrade(actionHarness.form(requiredReviewId,{roundTripId:syntheticTrade.roundTripId,feedback:"Synthetic restored trade feedback"}));
+ await actionHarness.deliver(actionHarness.form(requiredReviewId));
+ await actionHarness.lifecycle(actionHarness.form(requiredReviewId,{state:"completed"}));
+ check.equal((workRow() as {delivery_state:string}).delivery_state,"completed");
+ actionProofNames.push("actual select/save/deliver/Complete accepts 1 required / 1 valid saved with isolated Journal grant");
+});
+database.exec("ROLLBACK TO positive_journal_action_fixture; RELEASE positive_journal_action_fixture");
+// Saved trade evidence is synthetic fixture state, not fabricated Journal facts or a grant.
+const insertSaved=database.prepare("INSERT INTO traderlink_community_coaching_review_trades(review_id,community_id,round_trip_id,ordinal,workflow_state,coach_feedback,saved_at_utc,updated_at_utc) VALUES(?,?,?,?,'saved','Synthetic saved feedback',?,?)");
+insertSaved.run(requiredReviewId,first.communityId,"10000000-0000-4000-8000-000000000090",0,NOW,NOW);
+check.deepEqual([progress().saved,progress().total,progress().ready],[1,1,true]);
+// A two-trade fixture must reject one saved trade, then accept two. Terms stay linked to their occurrence.
+database.exec("SAVEPOINT two_required_trades");
+database.prepare("UPDATE traderlink_community_coaching_agreements SET terms_json=json_set(terms_json,'$.items[0].quantity',2) WHERE agreement_id=?").run(agreementId);
+database.prepare("INSERT INTO traderlink_community_coaching_review_trades(review_id,community_id,round_trip_id,ordinal,workflow_state,coach_feedback) VALUES(?,?,?,1,'queued','Synthetic incomplete trade draft')").run(requiredReviewId,first.communityId,"10000000-0000-4000-8000-000000000091");
+check.deepEqual([progress().saved,progress().total,progress().ready],[1,2,false]);
+await rejectsActualAction("deliver","actual delivery action rejects 2 required / 1 saved plus 1 unfinished trade draft");
+check.throws(()=>programs.deliverReview(workInput),missingTrade);
+database.prepare("UPDATE traderlink_community_coaching_trade_reviews SET delivery_state='delivered',delivered_at_utc=? WHERE review_id=?").run(NOW,requiredReviewId);
+check.throws(()=>programs.setReviewLifecycle({...workInput,state:"completed"}),missingTrade,"Partial saved work cannot bypass completion either");
+database.prepare("UPDATE traderlink_community_coaching_trade_reviews SET delivery_state='draft',delivered_at_utc=NULL WHERE review_id=?").run(requiredReviewId);
+database.prepare("UPDATE traderlink_community_coaching_review_trades SET workflow_state='saved',saved_at_utc=?,updated_at_utc=? WHERE review_id=? AND ordinal=1").run(NOW,NOW,requiredReviewId);
+check.deepEqual([progress().saved,progress().total,progress().ready],[2,2,true]);
+programs.deliverReview(workInput);
+programs.setReviewLifecycle({...workInput,state:"completed"});
+check.equal((workRow() as {delivery_state:string}).delivery_state,"completed");
+database.exec("ROLLBACK TO two_required_trades; RELEASE two_required_trades");
+// Every extra selected trade needs feedback, even after the agreement minimum is met.
+database.prepare("INSERT INTO traderlink_community_coaching_review_trades(review_id,community_id,round_trip_id,ordinal,workflow_state) VALUES(?,?,?,1,'queued')").run(requiredReviewId,first.communityId,"10000000-0000-4000-8000-000000000091");
+check.equal(progress().ready,false);
+check.throws(()=>programs.deliverReview(workInput),error=>(error as {safeContext?:{field?:string}}).safeContext?.field==="unfinishedTradeReviews");
+database.prepare("UPDATE traderlink_community_coaching_review_trades SET workflow_state='removed' WHERE review_id=? AND ordinal=1").run(requiredReviewId);
+check.equal(progress().ready,true,"Removed extras do not count as unfinished work");
+database.exec("SAVEPOINT remove_required_saved_trade");
+await actionHarness.remove(actionHarness.form(requiredReviewId,{roundTripId:"10000000-0000-4000-8000-000000000090"}));
+check.deepEqual([progress().saved,progress().total,progress().ready],[0,1,false]);
+await rejectsActualAction("deliver","removing required saved feedback blocks actual delivery again");
+database.exec("ROLLBACK TO remove_required_saved_trade; RELEASE remove_required_saved_trade");
+await actionHarness.deliver(actionHarness.form(requiredReviewId));
+check.equal((workRow() as {delivery_state:string}).delivery_state,"delivered","Actual delivery action accepts fulfilled work");
+await actionHarness.lifecycle(actionHarness.form(requiredReviewId,{state:"completed"}));
+check.equal((workRow() as {delivery_state:string}).delivery_state,"completed","Actual completion action accepts fulfilled work");
+check.equal((database.prepare("SELECT count(*) count FROM traderlink_community_journal_grants WHERE relationship_id=? AND status='active'").get(relationship) as {count:number}).count,0,"Delivery never grants Journal access");
+actionProofNames.push("actual delivery/Complete accepts fulfilled persisted trade evidence");
+database.exec("ROLLBACK TO required_review_work; RELEASE required_review_work");
+const reviewId=programs.createReview({...base,title:"Delivery QA",context:"",reviewType:"custom",roundTripIds:[]});
+const imageId=programs.addImage({...base,targetType:"review",targetId:reviewId,reviewId,filename:"chart.png",mediaType:"image/png",content:Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf6kAAAAASUVORK5CYII=","base64")});
+check.throws(()=>programs.readImage({communityId:first.communityId,actor:student,attachmentId:imageId}),"Unsent review images hidden from students");
+programs.saveFocusFeedback({...base,reviewId,feedback:{}});
+check.throws(()=>programs.deliverReview({...base,reviewId}),"Empty reviews cannot be sent");
+platform.updateTradeReview({...base,reviewId,coachFeedback:"Shared review",wentWell:"",needsWork:"",nextFocus:"Practice entries",coachPrivateNotes:"Private QA note",previousFocusStatus:null,previousFocusAssessment:"",status:"in_review"});
+check.equal(platform.readSnapshot("first-room",student).tradeReviews.find(item=>item.reviewId===reviewId)?.coachFeedback,"");
+check.equal(coachingReviewRequiredTradeCount(database,reviewId),null,"Custom reviews have no invented trade requirement");
+await actionHarness.deliver(actionHarness.form(reviewId));
+database.exec("SAVEPOINT summary_only_completion");
+await actionHarness.lifecycle(actionHarness.form(reviewId,{state:"completed"}));
+check.equal((database.prepare("SELECT delivery_state FROM traderlink_community_coaching_trade_reviews WHERE review_id=?").get(reviewId) as {delivery_state:string}).delivery_state,"completed","Legitimate summary-only work can complete");
+database.exec("ROLLBACK TO summary_only_completion; RELEASE summary_only_completion");
+actionProofNames.push("actual delivery/Complete preserves legitimate summary-only compatibility");
+console.log(JSON.stringify({actionAcceptance:"passed",cases:actionProofNames}));
+check.ok(programs.readImage({communityId:first.communityId,actor:student,attachmentId:imageId}).content.length>0,"Delivered chart available to intended student");
+check.throws(()=>programs.readImage({communityId:first.communityId,actor:{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},attachmentId:imageId}),"Images isolated from unrelated users");
+check.throws(()=>programs.replyToReview({...base,actor:student,reviewId,body:"Before read"}),"Follow-up starts after read confirmation");
+programs.markReviewViewed({...base,actor:student,reviewId});
+programs.replyToReview({...base,actor:student,reviewId,body:"Follow-up"});
+check.throws(()=>programs.replyToReview({...base,actor:student,reviewId,body:"Late follow-up",atUtc:"2026-09-09T12:00:00.000Z"}),"Follow-up expiry enforced");
+check.equal(platform.readSnapshot("first-room",student).tradeReviews.find(item=>item.reviewId===reviewId)?.coachPrivateNotes,"");
+const sessionId=programs.createSession({...base,title:"Session",agenda:"Agenda"});
+programs.updateSession({...base,sessionId,title:"Session",agenda:"Shared agenda",notes:"Shared notes",privateNotes:"Private notes",meetingUrl:"https://example.com/meeting",durationMinutes:45,scheduledAtUtc:"2026-09-10T14:00:00.000Z",attendance:"attended",status:"completed"});
+const studentSession=platform.readSnapshot("first-room",student).coachingSessions.find(item=>item.sessionId===sessionId)!;
+check.equal(studentSession.coachPrivateNotes,"");check.equal(studentSession.durationMinutes,45);check.equal(studentSession.meetingUrl,"https://example.com/meeting");
+const teachingId=programs.createTeaching({...base,title:"Lesson",teachingType:"lesson",body:"Lesson content",deliveryUrl:"https://example.com/lesson",audienceMode:"all_students",relationshipIds:[],publish:false});
+check.ok(!platform.readSnapshot("first-room",student).teachingItems.some(item=>item.teachingId===teachingId),"Draft lesson hidden from students");
+programs.updateTeachingDetails({...base,teachingId,title:"Lesson",body:"Lesson content",deliveryUrl:"https://example.com/lesson",recordingUrl:"https://example.com/recording",deliveryKind:"recorded",status:"published"});
+check.equal(platform.readSnapshot("first-room",student).teachingItems.find(item=>item.teachingId===teachingId)?.recordingUrl,"https://example.com/recording");
+programs.updateTeachingStudent({...base,teachingId,status:"completed"});
+check.equal(platform.readSnapshot("first-room",actor).teachingItems.find(item=>item.teachingId===teachingId)?.students[0]?.status,"completed","Coach can record lesson progress");
+check.throws(()=>programs.updateTeachingDetails({...base,teachingId,title:"Lesson",body:"",deliveryUrl:"javascript:alert(1)",recordingUrl:"",deliveryKind:"live",status:"published"}),"Only web links accepted");
+const reused=programs.createTeaching({...base,sourceTeachingId:teachingId,title:"Reused lesson",teachingType:"lesson",body:"Lesson content",deliveryUrl:"https://example.com/lesson",audienceMode:"all_students",relationshipIds:[],publish:false});
+check.notEqual(reused,teachingId);
+check.equal(platform.readSnapshot("first-room",actor).teachingItems.find(item=>item.teachingId===reused)?.recordingUrl,"https://example.com/recording");
+// A draft audience must still contain a current student when it is published.
+for(const audienceMode of ["all_students","plan","selected_students"] as const){
+ const draft=programs.createTeaching({...base,title:`Pending ${audienceMode}`,teachingType:"lesson",body:"Saved draft content",deliveryUrl:"",audienceMode,planId:plan,relationshipIds:[relationship],publish:false});
+ for(const inactive of ["archived","ended"] as const){
+  database.exec("SAVEPOINT stale_teaching_audience");
+  if(inactive==="archived")database.prepare("UPDATE traderlink_community_coaching_relationships SET archived_at_utc=? WHERE relationship_id=?").run(NOW,relationship);
+  else database.prepare("UPDATE traderlink_community_coaching_relationships SET status='ended' WHERE relationship_id=?").run(relationship);
+  const previous=database.prepare("SELECT * FROM traderlink_community_coaching_teaching_items WHERE teaching_id=?").get(draft);
+  const recipients=database.prepare("SELECT * FROM traderlink_community_coaching_teaching_students WHERE teaching_id=?").all(draft);
+  check.throws(()=>programs.updateTeachingDetails({...base,teachingId:draft,title:"Do not overwrite on rejection",body:"Changed",deliveryUrl:"",recordingUrl:"",deliveryKind:"live",status:"published"}),/Choose students before publishing this lesson\./,`Cannot publish a ${audienceMode} draft to only ${inactive} students`);
+  check.deepEqual(database.prepare("SELECT * FROM traderlink_community_coaching_teaching_items WHERE teaching_id=?").get(draft),previous,"Rejected publication preserves the saved draft");
+  check.deepEqual(database.prepare("SELECT * FROM traderlink_community_coaching_teaching_students WHERE teaching_id=?").all(draft),recipients,"Rejected publication preserves audience history");
+  database.exec("ROLLBACK TO stale_teaching_audience; RELEASE stale_teaching_audience");
+ }
+ programs.updateTeachingDetails({...base,teachingId:draft,title:`Pending ${audienceMode}`,body:"Saved draft content",deliveryUrl:"",recordingUrl:"",deliveryKind:"live",status:"published"});
+ check.equal(platform.readSnapshot("first-room",student).teachingItems.find(item=>item.teachingId===draft)?.status,"published","Restored current student permits normal publication");
+}
+console.log(JSON.stringify({teachingAudienceAcceptance:"passed",inactiveCases:6,restoredCases:3,preservesDraftAndRecipients:true}));
+// The same fixture workflow will run against approved isolated staging records.
+database.exec("SAVEPOINT lesson_fixture_workflow");
+const fixtureCoach={userId:MEMBER,displayName:"Member",discordRoleIds:["200001"]};
+const lessonActions=createLessonActionHarness({database,actor:fixtureCoach,Service:TraderLinkCommunityCoachingProgramService,Permissions:TraderLinkCommunityRepository,atUtc:NOW});
+const fixtureProof=await runLessonFixtureAcceptance({database,platform,programs,actions:{...lessonActions,slug:"first-room"},communityId:first.communityId,coach:fixtureCoach,student:{userId:OWNER,displayName:"Owner",discordRoleIds:["200001"]},coachProfileId:coach,audienceId:everyone,requiredRoleId:"200001",atUtc:NOW});
+check.equal(fixtureProof.evidence.length,5);
+check.equal(fixtureProof.final.selected.lesson.status,"draft");
+check.equal(fixtureProof.final.mismatch.lesson.status,"draft");
+check.equal(fixtureProof.final.restored.lesson.status,"published");
+
+const restoreLessonRecipient=new FormData();for(const [key,value]of Object.entries({communitySlug:"first-room",relationshipId:fixtureProof.ids.relationshipId,intent:"restore"}))restoreLessonRecipient.set(key,value);
+await lessonActions.archive(restoreLessonRecipient);
+const retainedMismatch=programs.createTeaching({...base,title:"QA ONLY retained wrong-plan recipient",teachingType:"lesson",body:"Preserve intended recipient",deliveryUrl:"",audienceMode:"plan",planId:fixtureProof.ids.planA,relationshipIds:[],publish:false});
+// Deliberately inconsistent historical state is constructed ONLY in this in-memory fixture.
+database.prepare("UPDATE traderlink_community_coaching_teaching_items SET plan_id=? WHERE teaching_id=?").run(fixtureProof.ids.planB,retainedMismatch);
+const mismatchDraftBefore=database.prepare("SELECT * FROM traderlink_community_coaching_teaching_items WHERE teaching_id=?").get(retainedMismatch);
+const mismatchRecipientsBefore=database.prepare("SELECT * FROM traderlink_community_coaching_teaching_students WHERE teaching_id=?").all(retainedMismatch);
+check.equal(mismatchRecipientsBefore.length,1);
+const mismatchForm=new FormData();for(const[key,value]of Object.entries({communitySlug:"first-room",teachingId:retainedMismatch,title:"QA ONLY retained wrong-plan recipient",body:"Preserve intended recipient",deliveryKind:"live",status:"published"}))mismatchForm.set(key,value);
+await check.rejects(lessonActions.save(mismatchForm),/Choose students before publishing/);
+check.equal((await lessonActions.feedback(mismatchForm)).status,"error");
+check.deepEqual(database.prepare("SELECT * FROM traderlink_community_coaching_teaching_items WHERE teaching_id=?").get(retainedMismatch),mismatchDraftBefore);
+check.deepEqual(database.prepare("SELECT * FROM traderlink_community_coaching_teaching_students WHERE teaching_id=?").all(retainedMismatch),mismatchRecipientsBefore);
+database.exec("ROLLBACK TO lesson_fixture_workflow; RELEASE lesson_fixture_workflow");
+console.log(JSON.stringify({lessonFixtureActionAcceptance:"passed",archived:true,ended:true,planMismatch:true,supportedRestoreAndReuse:true,actualExportedAction:true,retainedWrongPlanRecipientInMemoryOnly:true}));
+
+// Persist populated synthetic coaching media through SQLite backup and restore.
+const mediaFixture=mkdtempSync(join(tmpdir(),"traderlink-coaching-media-fixture-"));
+try{
+ const backupPath=join(mediaFixture,"backup.sqlite"),restoredPath=join(mediaFixture,"restored.sqlite");
+ await database.backup(backupPath);
+ copyFileSync(backupPath,restoredPath);
+ const restored=new Database(restoredPath,{readonly:true,fileMustExist:true});
+ try{
+  const reader=new TraderLinkCommunityCoachingProgramService(restored);
+  for(const participant of [actor,student]){
+   const image=reader.readImage({communityId:first.communityId,actor:participant,attachmentId:conversationImage});
+   check.deepEqual(image.content,chart,"Persisted attachment bytes survive backup, restore and readonly reopening");
+   check.equal(image.mediaType,"image/png");
+  }
+  check.throws(()=>reader.readImage({communityId:first.communityId,actor:{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},attachmentId:conversationImage}),"Restored media retains original participant authorization");
+ }finally{restored.close();}
+ console.log(JSON.stringify({coachingMediaStorage:"passed",syntheticOnly:true,backupRestoreReadonlyReopen:true,authorizedParticipants:2,outsiderDenied:true}));
+}finally{rmSync(mediaFixture,{recursive:true,force:true});}
+// Diagnose denial causes without broadening the existing entitlement truth table.
+check.equal(coachingEntitlement(database,relationship)?.pauseReason,null);
+for(const [mutation,reason] of [
+ ["UPDATE traderlink_communities SET status='paused'", "community_inactive"],
+ ["UPDATE traderlink_community_memberships SET status='inactive'", "server_membership_inactive"],
+ ["UPDATE platform_discord_memberships SET role_ids_json='[]'", "required_role_missing"],
+] as const){
+ database.exec("SAVEPOINT access_reason");
+ database.exec(mutation);
+ check.equal(coachingEntitlement(database,relationship)?.present,false);
+ check.equal(coachingEntitlement(database,relationship)?.pauseReason,reason);
+ database.exec("ROLLBACK TO access_reason; RELEASE access_reason");
+}
+// A second relationship with a different student remains eligible when the first pauses.
+database.exec("SAVEPOINT access_isolation");
+const isolatedRelationship="10000000-0000-4000-8000-000000000099";
+const fixtureRelationship=database.prepare("SELECT * FROM traderlink_community_coaching_relationships WHERE relationship_id=?").get(relationship) as Record<string,unknown>;
+const relationshipColumns=Object.keys(fixtureRelationship);
+database.prepare(`INSERT INTO traderlink_community_coaching_relationships (${relationshipColumns.join(",")}) VALUES (${relationshipColumns.map(()=>"?").join(",")})`).run(...relationshipColumns.map(column=>column==="relationship_id"?isolatedRelationship:column==="student_user_id"?MEMBER:fixtureRelationship[column]));
+database.prepare(`UPDATE platform_discord_memberships SET role_ids_json='[]' WHERE user_id=? AND guild_id=?`).run(OWNER,PILOT_GUILD);
+reconcileCoachingAccess(database,first.communityId,OWNER,NOW);
+check.equal(coachingEntitlement(database,relationship)?.pauseReason,"required_role_missing");
+check.equal(coachingEntitlement(database,isolatedRelationship)?.present,true);
+check.equal(database.prepare("SELECT 1 FROM traderlink_community_coaching_access_state WHERE relationship_id=?").get(isolatedRelationship),undefined,"Other student's access state is untouched");
+database.exec("ROLLBACK TO access_isolation; RELEASE access_isolation");
+const roleTime="2026-09-10T12:00:00.000Z";
+database.prepare(`UPDATE platform_discord_memberships SET role_ids_json='[]',last_verified_at_utc=? WHERE user_id=? AND guild_id=?`).run(roleTime,OWNER,PILOT_GUILD);
+reconcileCoachingAccess(database,first.communityId,OWNER,roleTime);
+reconcileCoachingAccess(database,first.communityId,OWNER,roleTime);
+check.equal(coachingEntitlement(database,relationship)?.present,false);
+check.equal(coachingEntitlement(database,relationship)?.pauseReason,"required_role_missing");
+check.equal(platform.readSnapshot("first-room",actor).relationships.find(row=>row.relationshipId===relationship)?.accessPauseReason,"required_role_missing");
+check.throws(()=>programs.createReview({...base,title:"Blocked",context:"",reviewType:"custom",roundTripIds:[]}),"Role removal blocks new work");
+check.equal((database.prepare(`SELECT count(*) count FROM traderlink_community_coaching_notices WHERE kind='access_paused'`).get() as {count:number}).count,2,"One pause notice for each party");
+check.equal((database.prepare("SELECT body FROM traderlink_community_coaching_notices WHERE relationship_id=? AND kind='access_paused' LIMIT 1").get(relationship) as {body:string}).body,coachingAccessPauseMessage("required_role_missing"));
+check.equal(coachingAccessNoticeMessage("Coaching access paused — required Discord role removed"),"Coaching access paused");
+check.equal(coachingAccessNoticeMessage("Coaching access restored"),"Coaching access restored");
+check.equal(archivePausedCoaching(database,"2026-09-20T12:00:00.000Z"),0);
+check.equal(archivePausedCoaching(database,"2026-10-11T12:00:00.000Z"),1);
+check.ok(platform.readSnapshot("first-room",actor).tradeReviews.some(item=>item.reviewId===reviewId),"Archived records preserved");
+check.ok(programs.readImage({communityId:first.communityId,actor:student,attachmentId:imageId}).content.length>0,"Archived student retains delivered review images despite role loss");
+check.ok(programs.readImage({communityId:first.communityId,actor,attachmentId:conversationImage}).content.equals(chart),"Archived coach retains shared conversation images");
+check.throws(()=>programs.addImage({...base,actor:student,targetType:"message",targetId:relationship,filename:"blocked.png",mediaType:"image/png",content:chart}),"Archived relationship cannot accept new images");
+check.throws(()=>journal.read({coachUserId:actor.userId,relationshipId:relationship}),"Archived relationship cannot read fresh Journal data");
+database.prepare("UPDATE traderlink_community_coaching_relationships SET status='ended' WHERE relationship_id=?").run(relationship);
+check.ok(programs.readImage({communityId:first.communityId,actor:student,attachmentId:imageId}).content.length>0,"Ended student retains delivered review images");
+check.ok(platform.readSnapshot("first-room",student).tradeReviews.some(item=>item.reviewId===reviewId&&item.deliveredAtUtc),"Ended student retains delivered review history");
+check.throws(()=>programs.readImage({communityId:first.communityId,actor:{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},attachmentId:imageId}),"Ended history still excludes unrelated users");
+check.throws(()=>platform.requestTradeReview({...base,actor:student,title:"New work",studentContext:""}),"Ended relationship cannot request new work");
+database.prepare("UPDATE traderlink_community_coaching_relationships SET status='active' WHERE relationship_id=?").run(relationship);
+const restoredAt="2026-10-12T12:00:00.000Z";
+database.prepare(`UPDATE platform_discord_memberships SET role_ids_json='["200001"]',last_verified_at_utc=? WHERE user_id=? AND guild_id=?`).run(restoredAt,OWNER,PILOT_GUILD);
+reconcileCoachingAccess(database,first.communityId,OWNER,restoredAt);
+check.equal(coachingEntitlement(database,relationship)?.present,true);
+check.equal((database.prepare(`SELECT count(*) count FROM traderlink_community_coaching_notices WHERE kind='access_restored'`).get() as {count:number}).count,2);
+for(const audienceMode of ["all_students","plan","selected_students"] as const){
+ const archivedAudienceLesson=programs.createTeaching({...base,title:`Archived audience ${audienceMode}`,teachingType:"lesson",body:"Synthetic audience regression",deliveryUrl:"",audienceMode,planId:plan,relationshipIds:[relationship],publish:false});
+ check.equal((database.prepare(`SELECT count(*) count FROM traderlink_community_coaching_teaching_students WHERE teaching_id=? AND relationship_id=?`).get(archivedAudienceLesson,relationship) as {count:number}).count,0,"Archived students must not receive newly created lessons");
+ check.throws(()=>programs.createTeaching({...base,title:"No eligible students",teachingType:"lesson",body:"",deliveryUrl:"",audienceMode,planId:plan,relationshipIds:[relationship],publish:true}),"An archived-only audience cannot publish");
+}
+database.prepare(`UPDATE traderlink_community_coaching_relationships SET archived_at_utc=NULL WHERE relationship_id=?`).run(relationship);
+const latestPlan=platform.readSnapshot("first-room",actor).plans.find(item=>item.planId===plan)!;
+platform.createPlan({...edit,expectedRevision:latestPlan.revision,items:[{...included,itemType:"private_session",measurementKind:"sessions",frequency:"once",quantity:150,selectionMode:"not_applicable"}],sessionsIncluded:true});
+const batchAgreement=service.propose({...base,atUtc:restoredAt,startDate:"2026-10-12",dueTimeUtc:"17:00"});
+service.accept({...base,atUtc:restoredAt,actor:student,agreementId:batchAgreement});
+check.equal(service.generate({...base,atUtc:restoredAt,throughDate:"2026-10-12"}),120,"Large batches save bounded progress");
+check.equal(service.generate({...base,atUtc:restoredAt,throughDate:"2026-10-12"}),30,"Next batch resumes remaining slots");
+check.equal(service.generate({...base,atUtc:restoredAt,throughDate:"2026-10-12"}),0,"Finished batch stays idempotent");
+const fakeRequest=(status:number,body:unknown)=>(async(url)=>String(url).includes('/members/')?new Response(JSON.stringify(status===200?{user:{id:String(url).split("/").at(-1),username:"fixture"},...(body as object)}:body),{status}):new Response(JSON.stringify({id:PILOT_GUILD,owner_id:"123456789"}),{status:200})) as typeof fetch;
+await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(403,{message:"Missing access"})).runAvailable(25,"2026-10-13T12:00:00.000Z");
+check.equal(coachingEntitlement(database,relationship)?.present,true,"Provider failures do not remove roles");
+check.equal(platform.readSnapshot("first-room",student,{historyOnly:true}).relationships.find(row=>row.relationshipId===relationship)?.accessPauseReason,"discord_verification_unavailable","Failed refresh restricts history without claiming the cached role was removed");
+await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(404,{code:10007})).runAvailable(25,"2026-10-13T12:10:00.000Z");
+check.equal(coachingEntitlement(database,relationship)?.present,false,"Confirmed departed member pauses coaching");
+check.equal((database.prepare("SELECT status FROM traderlink_community_memberships WHERE community_id=? AND user_id=?").get(first.communityId,OWNER) as {status:string}).status,"inactive","Departure removes community membership eligibility");
+check.throws(()=>platform.readSnapshot("first-room",student),"Departed member cannot read normal community content");
+const retained=platform.readSnapshot("first-room",student,{historyOnly:true});
+check.ok(retained.tradeReviews.some(review=>review.reviewId===reviewId&&review.deliveredAtUtc),"Departed participant can still read delivered history");
+check.equal(retained.relationships.find(row=>row.relationshipId===relationship)?.accessStatus,"access_paused");
+check.equal(retained.relationships.find(row=>row.relationshipId===relationship)?.accessPauseReason,"server_membership_inactive");
+for(const entries of [retained.alerts,retained.watchlists,retained.members,retained.staffRoles,retained.channels,retained.alertTemplates,retained.plans,retained.teachingItems])check.equal(entries.length,0,"History mode grants no community content or directory access");
+check.throws(()=>platform.readSnapshot("first-room",{userId:OUTSIDER,displayName:"Outsider",discordRoleIds:[]},{historyOnly:true}),"History mode requires original relationship participation");
+check.equal((database.prepare("SELECT guild_owner FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {guild_owner:number}).guild_owner,0,"Departure clears stale owner evidence");
+database.exec("SAVEPOINT no_required_role");
+database.prepare("UPDATE traderlink_community_coaching_agreements SET terms_json=json_set(terms_json,'$.requiredDiscordRoleId',NULL) WHERE relationship_id=? AND status='accepted'").run(relationship);
+check.equal(coachingEntitlement(database,relationship)?.present,false,"No-role plans still require current server membership");
+database.exec("ROLLBACK TO no_required_role; RELEASE no_required_role");
+await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(200,{user:{id:"999999"},roles:["200001"]})).runAvailable(25,"2026-10-13T12:16:00.000Z");
+check.equal(coachingEntitlement(database,relationship)?.present,false,"Wrong Discord identity cannot restore membership");
+await new CoachingDiscordRefreshService(database,"fixture-token",fakeRequest(200,{roles:["200001"]})).runAvailable(25,"2026-10-13T12:20:00.000Z");
+check.equal(coachingEntitlement(database,relationship)?.present,true,"Verified role restore resumes access");
+check.equal(coachingEntitlement(database,relationship)?.pauseReason,null);
+check.equal((database.prepare("SELECT status FROM traderlink_community_memberships WHERE community_id=? AND user_id=?").get(first.communityId,OWNER) as {status:string}).status,"active");
+database.exec("SAVEPOINT background_owner_change");
+let ownershipReads=0;
+await new CoachingDiscordRefreshService(database,"fixture-token",(async(url)=>{
+ ownershipReads++;
+ return String(url).includes('/members/')?new Response(JSON.stringify({user:{id:String(url).split('/').at(-1),username:'fixture'},roles:['200001']})):new Response(JSON.stringify({id:PILOT_GUILD,owner_id:'999999999'}));
+}) as typeof fetch).runAvailable(25,"2026-10-13T12:26:00.000Z");
+check.ok(ownershipReads>=2,"Background refresh reads guild ownership and member evidence");
+check.equal((database.prepare("SELECT status FROM traderlink_communities WHERE community_id=?").get(first.communityId) as {status:string}).status,'paused',"Background ownership change pauses community");
+database.exec("ROLLBACK TO background_owner_change; RELEASE background_owner_change");
+let rateLimitReads=0;
+await new CoachingDiscordRefreshService(database,"fixture-token",(async()=>{rateLimitReads++;return new Response('{}',{status:429});}) as typeof fetch).runAvailable(25,"2026-10-13T12:26:00.000Z");
+check.equal(rateLimitReads,2,"A rate limit stops the batch after its concurrent guild/member pair");
+// A persistently failing participant must not monopolize bounded refresh passes.
+for(const failureMode of ["provider","suspended"] as const){
+ database.exec("SAVEPOINT coaching_refresh_fairness");
+ database.prepare("UPDATE platform_discord_memberships SET last_verified_at_utc='2026-10-13T13:00:00.000Z' WHERE guild_id=?").run(PILOT_GUILD);
+ if(failureMode==="suspended")database.prepare("UPDATE traderlink_community_memberships SET status='suspended' WHERE community_id=? AND user_id=?").run(first.communityId,OWNER);
+ const refreshState={after:null as string|null};
+ const refreshedMembers:string[]=[];
+ const request=(async(url)=>{
+  const value=String(url);
+  if(!value.includes('/members/'))return new Response(JSON.stringify({id:PILOT_GUILD,owner_id:"123456789"}));
+  const id=value.split('/').at(-1)!;refreshedMembers.push(id);
+  return id==="123456789"?new Response('{}',{status:403}):new Response(JSON.stringify({user:{id,username:"fixture"},roles:["200001"]}));
+ }) as typeof fetch;
+ const firstPass=await new CoachingDiscordRefreshService(database,"fixture-token",request,refreshState).runAvailable(1,"2026-10-13T13:30:00.000Z");
+ check.equal(firstPass.unavailable,1,"First unavailable participant is counted honestly");
+ const secondPass=await new CoachingDiscordRefreshService(database,"fixture-token",request,refreshState).runAvailable(1,"2026-10-13T13:31:00.000Z");
+ check.equal(secondPass.refreshed,1,`${failureMode} failure must not starve the next participant`);
+ check.ok(refreshedMembers.includes("987654321"),"A later participant gets provider verification");
+ const wrappedPass=await new CoachingDiscordRefreshService(database,"fixture-token",request,refreshState).runAvailable(1,"2026-10-13T13:32:00.000Z");
+ check.equal(wrappedPass.unavailable,1,"Cursor wraps and retries the unavailable participant rather than skipping it permanently");
+ check.equal((database.prepare("SELECT last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {last_verified_at_utc:string}).last_verified_at_utc,"2026-10-13T13:00:00.000Z","Failure never manufactures fresh verification");
+ database.exec("ROLLBACK TO coaching_refresh_fairness; RELEASE coaching_refresh_fairness");
+}
+console.log(JSON.stringify({coachingRefreshFairness:"passed",providerFailure:true,suspendedParticipant:true,wrapRetry:true,preservesStaleEvidence:true}));
+
+// Provider-global Retry-After must survive new service instances between ticks.
+database.exec("SAVEPOINT coaching_rate_limit_acceptance");
+const retryBase=Date.now()+10_000;
+const retryCursor={after:null as string|null};
+let backoffReads=0;
+const limitedRequest=(async()=>{backoffReads++;return new Response(JSON.stringify({retry_after:120,global:true}),{status:429,headers:{"Retry-After":"120"}});}) as typeof fetch;
+await new CoachingDiscordRefreshService(database,"fixture",limitedRequest,retryCursor).runAvailable(5,new Date(retryBase).toISOString());
+check.equal(backoffReads,2,"One concurrent guild/member pair before stopping rate-limited batch");
+await new CoachingDiscordRefreshService(database,"fixture",limitedRequest,retryCursor).runAvailable(5,new Date(retryBase+60_000).toISOString());
+check.equal(backoffReads,2,"A new worker service must respect the provider Retry-After instead of retrying early");
+
+let recoveryReads=0;
+const healthyRetry=(async(url)=>{recoveryReads++;const value=String(url);return new Response(JSON.stringify(value.includes("/members/")?{user:{id:value.split("/").at(-1),username:"fixture"},roles:["200001"]}:{id:PILOT_GUILD,owner_id:"123456789"}));}) as typeof fetch;
+check.equal((await new CoachingDiscordRefreshService(database,"fixture",healthyRetry,retryCursor).runAvailable(1,new Date(retryBase+120_001).toISOString())).refreshed,1,"Normal provider evidence resumes after cooldown");
+check.equal(recoveryReads,2);
+for(const variant of [{header:"1.5",body:{retry_after:180},delay:180},{header:"90.25",body:{},delay:90.25},{header:"bad",body:{retry_after:-1},delay:60},{header:"1e99",body:{retry_after:1e99},delay:60}]){
+ database.exec("SAVEPOINT retry_variant");
+ const cursor={after:null as string|null};let reads=0;
+ const mock=(async()=>{reads++;return new Response(JSON.stringify(variant.body),{status:429,headers:{"Retry-After":variant.header}});}) as typeof fetch;
+ await new CoachingDiscordRefreshService(database,"fixture",mock,cursor).runAvailable(5,new Date(retryBase+300_000).toISOString());
+ await new CoachingDiscordRefreshService(database,"fixture",mock,cursor).runAvailable(5,new Date(retryBase+300_000+variant.delay*1000-1).toISOString());
+ check.equal(reads,2,"Header/body maximum, decimal seconds and malformed fallback never retry early");
+ await new CoachingDiscordRefreshService(database,"fixture",healthyRetry,cursor).runAvailable(1,new Date(retryBase+300_000+variant.delay*1000+1).toISOString());
+ database.exec("ROLLBACK TO retry_variant; RELEASE retry_variant");
+}
+console.log(JSON.stringify({coachingRetryAfterAcceptance:"passed",retainedAcrossServices:true,headerAndBody:true,decimalSeconds:true,malformedFallback:true,recovery:true}));
+database.exec("ROLLBACK TO coaching_rate_limit_acceptance; RELEASE coaching_rate_limit_acceptance");
+
+database.exec("SAVEPOINT coaching_refresh_coverage");
+const coverageTime="2026-10-13T14:00:00.000Z";
+database.prepare("UPDATE platform_discord_memberships SET last_verified_at_utc=? WHERE guild_id=?").run("2026-10-13T13:40:00.000Z",PILOT_GUILD);
+const syntheticTargets:{userId:string;subject:string;kind:string}[]=[];
+for(let index=1;index<=9;index++){
+ const userId=`20000000-0000-4000-8000-${index.toString(16).padStart(12,"0")}`,subject=String(800000000+index);
+ const kind=index<=5?"eligible":index===6?"suspended":index===7?"archived":index===8?"ended":"pending";
+ insertUser.run(userId,subject,"Synthetic coverage "+index,NOW,NOW);insertIdentity.run(userId,subject,userId,NOW,NOW,NOW);
+ insertDiscord.run(userId,PILOT_GUILD,"fixture","Fixture",JSON.stringify(["200001"]),0,NOW,NOW,"2026-10-13T13:40:00.000Z");
+ permissions.syncActiveMemberFromDiscord({communityId:first.communityId,userId,timestamp:"2026-10-13T13:40:00.000Z"});
+ database.prepare(`INSERT INTO traderlink_community_coaching_relationships(relationship_id,community_id,coach_profile_id,coach_user_id,student_user_id,plan_id,status,requested_at_utc,started_at_utc,ended_at_utc,archived_at_utc) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run(`30000000-0000-4000-8000-${index.toString(16).padStart(12,"0")}`,first.communityId,coach,MEMBER,userId,plan,kind==="ended"?"ended":kind==="pending"?"pending":"active",NOW,kind==="pending"?null:NOW,kind==="ended"?NOW:null,kind==="archived"?NOW:null);
+ if(kind==="suspended")database.prepare("UPDATE traderlink_community_memberships SET status='suspended' WHERE community_id=? AND user_id=?").run(first.communityId,userId);
+ syntheticTargets.push({userId,subject,kind});
+}
+const relationStates=database.prepare("SELECT relationship_id,status,plan_id,archived_at_utc FROM traderlink_community_coaching_relationships ORDER BY relationship_id").all();
+const operatorStates=database.prepare("SELECT * FROM traderlink_community_operator_grants ORDER BY grant_id").all();
+const grantStates=database.prepare("SELECT * FROM traderlink_community_journal_grants ORDER BY grant_id").all();
+const calls:string[]=[];let unavailableProvider=true;
+const coverageRequest=(async(url)=>{const value=String(url);calls.push(value);return new Response(JSON.stringify(value.includes("/members/")?{user:{id:value.split("/").at(-1),username:"fixture"},roles:["200001"]}:{id:PILOT_GUILD,owner_id:"123456789"}),{status:unavailableProvider&&value.endsWith("/members/123456789")?403:200});}) as typeof fetch;
+const coverageCursor={after:null as string|null};
+for(let batch=0;batch<3;batch++){
+ const before=calls.length;
+ await new CoachingDiscordRefreshService(database,"fixture",coverageRequest,coverageCursor).runAvailable(5,new Date(Date.parse(coverageTime)+batch*60_000).toISOString());
+ check.ok(calls.length-before<=10,"Each five-target batch makes at most ten requests and performs no immediate retries");
+}
+for(const target of syntheticTargets){
+ const reads=calls.filter(url=>url.endsWith("/members/"+target.subject)).length;
+ if(target.kind==="eligible")check.equal(reads,1,"Every eligible target is covered once before becoming stale again");
+ else check.equal(reads,0,"Suspended, archived, ended and pending participants do not reach provider I/O");
+}
+check.ok(calls.filter(url=>url.endsWith('/members/123456789')).length>=2,"Failure is revisited after wrap without starving later targets");
+const ownerBeforeRecovery=database.prepare("SELECT role_ids_json,last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {role_ids_json:string;last_verified_at_utc:string};
+check.equal(ownerBeforeRecovery.last_verified_at_utc,"2026-10-13T13:40:00.000Z");
+unavailableProvider=false;
+await new CoachingDiscordRefreshService(database,"fixture",coverageRequest,coverageCursor).runAvailable(5,"2026-10-13T14:03:00.000Z");
+check.equal((database.prepare("SELECT last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {last_verified_at_utc:string}).last_verified_at_utc,"2026-10-13T14:03:00.000Z");
+check.deepEqual(database.prepare("SELECT relationship_id,status,plan_id,archived_at_utc FROM traderlink_community_coaching_relationships ORDER BY relationship_id").all(),relationStates,"Verification does not rewrite relationship lifecycle or plan");
+check.deepEqual(database.prepare("SELECT * FROM traderlink_community_journal_grants ORDER BY grant_id").all(),grantStates,"Recovery grants no Journal access");
+check.deepEqual(database.prepare("SELECT * FROM traderlink_community_operator_grants ORDER BY grant_id").all(),operatorStates,"Recovery grants no operator access");
+check.equal((database.prepare("SELECT role_ids_json FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {role_ids_json:string}).role_ids_json,ownerBeforeRecovery.role_ids_json,"Successful recovery retains exactly the verified role set");
+for(const target of syntheticTargets.filter(item=>item.kind!=="eligible"))check.equal((database.prepare("SELECT last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(target.userId,PILOT_GUILD) as {last_verified_at_utc:string}).last_verified_at_utc,"2026-10-13T13:40:00.000Z","Skipped target evidence stays stale");
+const beforeFreshPass=calls.length;
+await new CoachingDiscordRefreshService(database,"fixture",coverageRequest,coverageCursor).runAvailable(5,"2026-10-13T14:04:00.000Z");
+check.equal(calls.length,beforeFreshPass,"Fresh eligible evidence and suspended members do not cause provider requests");
+database.exec("SAVEPOINT coverage_paused_community");
+database.prepare("UPDATE traderlink_communities SET status='paused' WHERE community_id=?").run(first.communityId);
+await new CoachingDiscordRefreshService(database,"fixture",coverageRequest,coverageCursor).runAvailable(5,"2026-10-13T14:10:00.000Z");
+check.equal(calls.length,beforeFreshPass,"Paused community is excluded before provider requests");
+database.exec("ROLLBACK TO coverage_paused_community; RELEASE coverage_paused_community");
+const transportCursor={after:null as string|null};let transportReads=0;
+const transportFailure=(async(_url,options)=>{transportReads++;check.ok(options?.signal,"Provider I/O has an abort deadline");throw new DOMException("Synthetic timeout","AbortError");}) as typeof fetch;
+check.equal((await new CoachingDiscordRefreshService(database,"fixture",transportFailure,transportCursor).runAvailable(1,"2026-10-13T14:10:00.000Z")).unavailable,1);
+check.equal(transportReads,2,"Aborted I/O makes at most the one concurrent request pair, with no immediate retry");
+check.equal((database.prepare("SELECT last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {last_verified_at_utc:string}).last_verified_at_utc,"2026-10-13T14:03:00.000Z");
+check.equal((await new CoachingDiscordRefreshService(database,"fixture",coverageRequest,transportCursor).runAvailable(1,"2026-10-13T14:11:00.000Z")).refreshed,1,"A transport failure does not starve the next target");
+const noCalls=calls.length;
+for(const invalid of [0,101,1.5])await check.rejects(new CoachingDiscordRefreshService(database,"fixture",coverageRequest,coverageCursor).runAvailable(invalid,coverageTime),/Invalid refresh batch/);
+check.equal(calls.length,noCalls);
+database.exec("ROLLBACK TO coaching_refresh_coverage; RELEASE coaching_refresh_coverage");
+console.log(JSON.stringify({coachingRefreshCoverage:"passed",batchLimit:5,eligibleParticipants:7,wraparound:true,suspendedAndInactiveSkipped:true,recoveryWithoutLifecycleOrJournalGrantChanges:true,invalidBatchDenied:true,pausedCommunityAndFreshEvidenceSkipped:true,abortedTransportBounded:true}));
+const maintenance=await runCoachingMaintenance(database,{atUtc:"2026-10-13T12:30:00.000Z",limit:1});
+check.equal(maintenance.checked,0,"Maintenance excludes expired participant verification before selecting its batch");
+check.equal(maintenance.created,0,"Maintenance cannot duplicate already generated work");
+check.equal(maintenance.roleRefreshConfigured,false,"No token means no fabricated provider verification");
+check.equal((await runCoachingMaintenance(database,{atUtc:"2026-10-13T12:31:00.000Z",limit:1})).checked,0,"Hourly watermark prevents repeated agreement work");
+const scheduledPlan=platform.readSnapshot("first-room",actor).plans.find(item=>item.planId===plan)!;
+platform.createPlan({...edit,expectedRevision:scheduledPlan.revision,items:[{...included,frequency:"weekly",quantity:3}]});
+const scheduledAgreement=service.propose({...base,atUtc:"2026-10-14T12:00:00.000Z",startDate:"2026-10-14",dueTimeUtc:"17:00"});
+service.accept({...base,atUtc:"2026-10-14T12:00:00.000Z",actor:student,agreementId:scheduledAgreement});
+database.prepare("UPDATE platform_discord_memberships SET last_verified_at_utc=? WHERE guild_id=?").run("2026-10-14T12:00:00.000Z",PILOT_GUILD);
+check.equal((await runCoachingMaintenance(database,{atUtc:"2026-10-14T12:01:00.000Z",limit:1})).created,5,"Maintenance creates upcoming weekly work without manual scheduling");
+check.equal((await runCoachingMaintenance(database,{atUtc:"2026-10-14T14:01:00.000Z",limit:1})).created,0,"Next eligible maintenance pass is idempotent");
+let releasePass!:()=>void;
+let passes=0;
+const deferred=new Promise<void>(resolve=>{releasePass=resolve;});
+const guarded=nonOverlappingCoachingMaintenance(async()=>{passes++;await deferred;return passes;});
+const activePass=guarded();
+check.equal(await guarded(),null,"Concurrent maintenance tick is skipped");
+releasePass();check.equal(await activePass,1);check.equal(await guarded(),2,"Later pass resumes after completion");
+let failures=0;
+const retryable=nonOverlappingCoachingMaintenance(async()=>{if(failures++===0)throw new Error("Fixture failure");return true;});
+await check.rejects(retryable());check.equal(await retryable(),true,"Failure releases overlap guard");
+check.equal((database.pragma("foreign_key_check") as unknown[]).length,0);
+const requestAt="2026-10-15T12:00:00.000Z";
+let providerCalls=0;
+const membershipResponse=(async(url)=>{providerCalls++;return new Response(JSON.stringify(String(url).includes('/members/')?{user:{id:"123456789",username:"owner"},roles:["200001","2","200001"]}:{id:PILOT_GUILD,owner_id:"123456789"}),{status:200});}) as typeof fetch;
+check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:requestAt},membershipResponse),true);
+check.equal(providerCalls,2);
+check.equal((database.prepare("SELECT role_ids_json FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {role_ids_json:string}).role_ids_json,'["2","200001"]',"Provider roles are normalized");
+check.equal((database.prepare("SELECT guild_owner FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(OWNER,PILOT_GUILD) as {guild_owner:number}).guild_owner,1,"Verified owner evidence is refreshed");
+check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:"2026-10-15T12:04:59.000Z"},membershipResponse),true);
+check.equal(providerCalls,2,"Fresh evidence avoids redundant provider calls");
+check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:"2026-10-15T12:06:00.000Z"},fakeRequest(429,{})),false,"Expired evidence cannot authorize during rate limiting");
+check.equal(coachingEntitlement(database,relationship)?.present,true,"Rate limiting does not manufacture role removal");
+database.prepare("UPDATE traderlink_community_memberships SET status='suspended' WHERE community_id=? AND user_id=?").run(first.communityId,OWNER);
+check.equal(await verifyCommunityRequestMember(database,{slug:"first-room",userId:OWNER,botToken:"fixture",atUtc:"2026-10-15T12:07:00.000Z"},membershipResponse),false,"Suspension cannot be undone by provider refresh");
+permissions.syncActiveMemberFromDiscord({communityId:first.communityId,userId:OWNER,timestamp:"2026-10-15T12:08:00.000Z"});
+check.equal(permissions.findMembership(first.communityId,OWNER)?.status,"suspended","OAuth synchronization must not clear suspension");
+database.prepare("UPDATE traderlink_community_memberships SET status='active' WHERE community_id=? AND user_id=?").run(first.communityId,OWNER);
+const changedOwner=(async(url)=>Response.json(String(url).includes('/members/')?{user:{id:'123456789',username:'owner'},roles:['200001']}:{id:PILOT_GUILD,owner_id:'987654321'})) as typeof fetch;
+database.exec('SAVEPOINT deleted_owner_coaching_access');
+database.prepare("UPDATE traderlink_community_coaching_agreements SET terms_json=json_set(terms_json,'$.requiredDiscordRoleId','200001') WHERE relationship_id=? AND status='accepted'").run(relationship);
+insertDiscord.run(OUTSIDER,PILOT_GUILD,'fixture-owner','Fixture owner','[]',1,NOW,NOW,NOW);
+database.prepare('UPDATE traderlink_communities SET owner_user_id=? WHERE community_id=?').run(OUTSIDER,first.communityId);
+database.prepare("UPDATE platform_users SET auth_provider='deleted',status='disabled' WHERE user_id=?").run(OUTSIDER);
+database.prepare("UPDATE traderlink_community_coaching_relationships SET status='active',archived_at_utc=NULL WHERE relationship_id=?").run(relationship);
+const remainingMember=(async(url)=>Response.json(String(url).includes('/members/')?{user:{id:'123456789',username:'remaining-student'},roles:['200001']}:{id:PILOT_GUILD,owner_id:'555555555'})) as typeof fetch;
+const retainedInput={slug:'first-room',userId:OWNER,botToken:'fixture',atUtc:'2026-10-15T12:09:00.000Z',relationshipId:relationship};
+check.equal(await verifyCommunityRequestMember(database,retainedInput,remainingMember),false,'Relationship ID cannot authorize general access after owner deletion');
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true},remainingMember),true,'Existing student can refresh Discord for existing coaching only');
+check.equal(await verifyCommunityRequestMember(database,retainedInput,remainingMember),false,'Fresh cached evidence does not grant general access');
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true,relationshipId:'10000000-0000-4000-8000-000000000999'},remainingMember),false,'Unrelated relationship is denied');
+check.equal(permissions.findById(first.communityId)?.status,'active','Coaching refresh does not pause surviving work');
+const scopedDeletedOwnerSnapshot=platform.readSnapshot('first-room',student);
+check.ok(scopedDeletedOwnerSnapshot.relationships.every(row=>row.studentUserId===student.userId||row.coachUserId===student.userId),'Snapshot relationships are already restricted to original viewer participation');
+const ownedRelationshipIds=new Set(scopedDeletedOwnerSnapshot.relationships.map(row=>row.relationshipId));
+check.ok(scopedDeletedOwnerSnapshot.coachingMessages.every(row=>ownedRelationshipIds.has(row.relationshipId)),'Snapshot messages remain participant scoped');
+check.ok(scopedDeletedOwnerSnapshot.tradeReviews.every(row=>ownedRelationshipIds.has(row.relationshipId)),'Snapshot reviews remain participant scoped');
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true,atUtc:'2026-10-15T12:20:00.000Z'},fakeRequest(429,{})),false,'Deleted owner exception does not bypass stale Discord evidence');
+const removedRole=(async(url)=>Response.json(String(url).includes('/members/')?{user:{id:'123456789',username:'remaining-student'},roles:[]}:{id:PILOT_GUILD,owner_id:'555555555'})) as typeof fetch;
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true,atUtc:'2026-10-15T12:21:00.000Z'},removedRole),true,'Membership refresh still records actual provider roles');
+check.equal(coachingEntitlement(database,relationship)?.present,false,'Required role removal still blocks coaching after owner deletion');
+database.prepare("UPDATE traderlink_community_coaching_relationships SET status='ended' WHERE relationship_id=?").run(relationship);
+check.equal(await verifyCommunityRequestMember(database,{...retainedInput,existingCoachingOnly:true,atUtc:'2026-10-15T12:21:01.000Z'},remainingMember),false,'Ended relationships cannot use the exception');
+database.exec('ROLLBACK TO deleted_owner_coaching_access; RELEASE deleted_owner_coaching_access');
+check.equal(await verifyCommunityRequestMember(database,{slug:'first-room',userId:OWNER,botToken:'fixture',atUtc:'2026-10-15T12:10:00.000Z'},changedOwner),false,'Confirmed ownership change pauses access until explicit recovery');
+check.equal(permissions.findById(first.communityId)?.status,'paused');
+check.equal(permissions.resolveAccess(first.communityId,OWNER).capabilities.length,0,'Former owner cannot retain publishing or administration');
+check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.length,0,'Paused server cannot continue publishing through mapped roles');
+database.prepare("INSERT INTO traderlink_community_operator_grants(grant_id,user_id,status,granted_at_utc) VALUES('10000000-0000-4000-8000-000000000123',?,'active',?) ON CONFLICT(user_id) DO UPDATE SET status='active'").run(OWNER,requestAt);
+const beforeTransfer=JSON.stringify(database.prepare('SELECT * FROM traderlink_community_journal_grants ORDER BY grant_id').all());
+const recovery={actorUserId:OWNER,communityId:first.communityId,newOwnerUserId:MEMBER,atUtc:'2026-10-15T12:11:00.000Z',evidence:{guildId:PILOT_GUILD,guildName:"Synthetic coaching community",discordUserId:'987654321',username:'new-owner',globalDisplayName:null,avatarHash:null,roleIds:['200001'],joinedAtUtc:null,verifiedAtUtc:'2026-10-15T12:11:00.000Z'}};
+check.throws(()=>recoverCommunityOwnership(database,{...recovery,actorUserId:MEMBER}),'Only platform operator may recover ownership');
+database.exec('SAVEPOINT newer_ownership_evidence');
+database.prepare('UPDATE platform_discord_memberships SET last_verified_at_utc=? WHERE user_id=? AND guild_id=?').run('2026-10-15T12:11:30.000Z',MEMBER,PILOT_GUILD);
+check.throws(()=>recoverCommunityOwnership(database,{...recovery,atUtc:'2026-10-15T12:12:00.000Z'}),/Refresh Discord ownership/,'Older recovery cannot overwrite newer member evidence');
+check.equal(permissions.findById(first.communityId)?.status,'paused');
+database.exec('ROLLBACK TO newer_ownership_evidence; RELEASE newer_ownership_evidence');
+recoverCommunityOwnership(database,recovery);
+check.equal(permissions.findById(first.communityId)?.ownerUserId,MEMBER);
+check.equal(permissions.resolveAccess(first.communityId,MEMBER).isOwner,true);
+check.equal(JSON.stringify(database.prepare('SELECT * FROM traderlink_community_journal_grants ORDER BY grant_id').all()),beforeTransfer,'Ownership recovery must not transfer or modify Journal grants');
+permissions.setStatus({communityId:first.communityId,actorUserId:MEMBER,status:'paused',timestamp:'2026-10-15T12:12:00.000Z'});
+check.throws(()=>recoverCommunityOwnership(database,{...recovery,atUtc:'2026-10-15T12:13:00.000Z'}),/Refresh Discord ownership/,'Older recovery cannot undo a newer disconnect');
+check.equal(permissions.findById(first.communityId)?.status,'paused');
+check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes('community.alerts.create'),false,'Disconnected owner cannot publish');
+check.equal(permissions.resolveAccess(first.communityId,MEMBER).capabilities.includes('community.manage'),true,'Disconnected verified owner retains connection settings');
+for(const statement of platformCoachingDeletionArchivesMigration.statements) database.exec(statement);
+const deletionAt='2026-10-16T12:00:00.000Z';
+check.throws(()=>captureCoachingDeletionEvidence(database,MEMBER,deletionAt),/transaction/);
+const beforeArchiveJournal=JSON.stringify(database.prepare('SELECT * FROM journal_accounts ORDER BY account_id').all());
+database.exec('SAVEPOINT failed_archive');
+database.transaction(()=>captureCoachingDeletionEvidence(database,MEMBER,deletionAt))();
+check.ok(database.prepare('SELECT 1 FROM community_deletion_archives').get());
+database.exec('ROLLBACK TO failed_archive; RELEASE failed_archive');
+check.equal((database.prepare('SELECT count(*) n FROM community_deletion_archives').get() as {n:number}|undefined)?.n,0,'Failed erasure rolls back archive too');
+const archiveCount=database.transaction(()=>captureCoachingDeletionEvidence(database,MEMBER,deletionAt))();
+check.ok(archiveCount>0);
+check.equal(database.transaction(()=>captureCoachingDeletionEvidence(database,MEMBER,'2026-10-17T12:00:00.000Z'))(),0,'Retry cannot extend retention');
+const archiveRow=database.prepare('SELECT archive_id,expires_at_utc FROM community_deletion_archives LIMIT 1').get() as {archive_id:string;expires_at_utc:string};
+check.equal(archiveRow.expires_at_utc,new Date(Date.parse(deletionAt)+60*86400000).toISOString());
+check.ok(readCoachingDeletionArchive(database,archiveRow.archive_id,new Date(Date.parse(archiveRow.expires_at_utc)-1).toISOString()));
+check.equal(readCoachingDeletionArchive(database,archiveRow.archive_id,archiveRow.expires_at_utc),null,'Expired archive unreadable before cleanup');
+check.equal(JSON.stringify(database.prepare('SELECT * FROM journal_accounts ORDER BY account_id').all()),beforeArchiveJournal,'Capture never reads or mutates Journal content');
+const kinds=database.prepare('SELECT DISTINCT record_kind FROM community_deletion_archive_records').all() as {record_kind:string}[];
+check.ok(!kinds.some(row=>/journal|grant|execution|account/.test(row.record_kind)));
+check.equal(purgeExpiredCoachingDeletionArchives(database,new Date(Date.parse(archiveRow.expires_at_utc)-1).toISOString()),0);
+while(purgeExpiredCoachingDeletionArchives(database,archiveRow.expires_at_utc,1)>0) { /* bounded batch replay */ }
+for(const table of ['community_deletion_archives','community_deletion_archive_records','community_deletion_archive_files'])check.equal((database.prepare(`SELECT count(*) n FROM ${table}`).get() as {n:number}|undefined)?.n,0,'Expiry removes evidence and binary attachments');
+check.equal((database.pragma('foreign_key_check') as unknown[]).length,0);
+console.log(JSON.stringify({result:"passed",generated,checks:["unsigned","student acceptance","weekly generation","idempotence","month end","unscheduled","plan edits","revision conflicts","frozen terms","question renewal","follow-up expiry","draft privacy","session privacy","lesson edit/reuse","role pause/restore","archive preservation","foreign keys","deletion archive rollback, expiry, cleanup and Journal isolation"]}));
+}finally{database.close();}
+}
+void main().catch(error=>{console.error(error);process.exitCode=1;});

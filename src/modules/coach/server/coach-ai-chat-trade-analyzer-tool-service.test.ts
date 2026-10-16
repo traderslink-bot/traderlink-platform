@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { DailyTradeLongTermAnalyticsModel } from
+import type { DailyTradeLongTermAnalyticsModel, DailyTradeLongTermAnalyticsV2Model } from
   "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
@@ -22,8 +22,8 @@ const scope: WorkspaceAccessScope = Object.freeze({
 });
 const emptyBreakdown = Object.freeze([]);
 
-function model(): DailyTradeLongTermAnalyticsModel {
-  return Object.freeze({
+function model(): DailyTradeLongTermAnalyticsV2Model {
+  const base:DailyTradeLongTermAnalyticsModel = Object.freeze({
     analyzedExecutionCount: 2,
     analyzedTradeCount: 1,
     averageAdditionalOpportunityDecimal: "2.5",
@@ -110,6 +110,9 @@ function model(): DailyTradeLongTermAnalyticsModel {
       direction: "long" as const,
       executionCount: 2,
       greenToRedStatus: "green_no_red" as const,
+      finalExitPriceDecimal: null,
+      postExitThirtyMinuteMoveDecimal: null,
+      postExitThirtyMinutePriceDecimal: null,
       malformedSnapshotCount: 0,
       peakToExitMinutes: 2,
       returnPercent: 25,
@@ -119,6 +122,15 @@ function model(): DailyTradeLongTermAnalyticsModel {
       trackerDate: "2026-08-14",
     })]),
     winRatePercent: 100,
+  });
+  const pair = Object.freeze({long:emptyBreakdown,short:emptyBreakdown});
+  const context = Object.freeze({atr14Percent:emptyBreakdown,candleLocation:emptyBreakdown,ema9:emptyBreakdown,ema9FiveMinute:emptyBreakdown,relativeVolume:emptyBreakdown,vwap:emptyBreakdown});
+  return Object.freeze({...base,directionTradeCounts:{long:1,short:0},entryContext:context,
+    entryContextByDirection:{long:context,short:context},entryTimeByDirection:pair,eventPaths:[],executionContextRows:[],
+    exitContextByDirection:pair,exitExecutionContextByDirection:{long:context,short:context},greenToRedByDirection:pair,
+    greenToRedDamageByDirection:{long:base.greenToRedDamage,short:base.greenToRedDamage},greenToRedOpportunity:{rows:[],tradeCountsByDirection:{long:0,short:0}},holdingDurationByDirection:pair,
+    meaningfulProfit:{endedFlatTradeCount:0,endedGreenTradeCount:0,endedRedTradeCount:0,noScaleEndedRedActualPnlDecimal:null,noScaleEndedRedDifferenceDecimal:null,noScaleEndedRedPotentialPnlDecimal:null,noScaleEndedRedTradeCount:0,rows:[],thresholdCounts:[],thresholdCountsByDirection:pair,totalActualPnlDecimal:null,totalDifferenceDecimal:null,totalPotentialPnlDecimal:null,tradeCount:0},
+    profitZones:{recordsByDirection:pair,rowsByDirection:pair,tradeCountsByDirection:{long:0,short:0}},scalingOut:{noScaleEndedRedTradeCount:0,noScaleTradeCount:1,rows:[],scaledOutTradeCount:0,tradeCount:1},
   });
 }
 

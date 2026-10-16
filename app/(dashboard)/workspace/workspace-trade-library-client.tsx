@@ -173,7 +173,7 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
       </Stack>}
       <Stack spacing={1.25} sx={{ p: embedded ? 0 : 2 }}>
         <Stack direction="row" spacing={1}>{fixedSymbol ? <TextField disabled label="Ticker" size="small" sx={{ width: { xs: 150, sm: 180 } }} value={symbol} /> : <TextField label="Ticker" onChange={(event) => { setError(null); setSymbol(event.target.value.toUpperCase()); }} size="small" sx={{ width: { xs: 150, sm: 180 } }} value={symbol} />}<TextField label="Day Trade/Swing" onChange={(event) => { setError(null); setWorkspaceStyle(event.target.value as "day_trade" | "swing"); }} select size="small" sx={{ width: 154 }} value={workspaceStyle}><MenuItem value="day_trade">Day Trade</MenuItem><MenuItem value="swing">Swing</MenuItem></TextField></Stack>
-        <Typography color="text.secondary" variant="body2">Times use Eastern Time.</Typography>
+        <Typography color="text.secondary" variant="body2">Times use your account timezone: {accountTimezone}.</Typography>
         <Typography color="text.secondary" variant="body2">Entering the correct execution time keeps your trades in order. Trade Analyzer uses 1-minute candles, so you can enter the time from the matching chart candle when you do not have the broker timestamp.</Typography>
         <Typography color="text.secondary" variant="body2">Entering multiple trades? <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 750, textDecoration: "none" }} variant="inherit">Use Trade Tracker to review your day.</Typography></Typography>
         {rows.map((row, index) => <Box key={row.id} sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2, p: 1.25 }}>
@@ -197,7 +197,7 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
       <Dialog fullWidth maxWidth="sm" onClose={saving ? undefined : () => setSubmissionConfirmation(null)} open={submissionConfirmation !== null}>
         <DialogTitle>Confirm trade entries</DialogTitle>
         <DialogContent><Stack spacing={1.5}><Typography>{submissionConfirmation ? workspaceSubmissionSummary(submissionConfirmation.preview) : ""}</Typography>
-          {submissionConfirmation ? <ManualTradePostEntryReview analyzerGroupRefs={[]} analyzerUses={null} groups={submissionConfirmation.preview.groups} merges={logicalTradeMerges} onAnalyzerGroupRefsChange={() => undefined} onError={setError} onMergesChange={setLogicalTradeMerges} /> : null}
+          {submissionConfirmation ? <ManualTradePostEntryReview timezone={accountTimezone} analyzerGroupRefs={[]} analyzerUses={null} groups={submissionConfirmation.preview.groups} merges={logicalTradeMerges} onAnalyzerGroupRefsChange={() => undefined} onError={setError} onMergesChange={setLogicalTradeMerges} /> : null}
           {error ? <Typography color="error.main" variant="body2">{error}</Typography> : null}
         </Stack></DialogContent>
         <DialogActions><Button disabled={saving} onClick={() => setSubmissionConfirmation(null)}>Cancel</Button><Button disabled={saving} onClick={() => void confirmSubmission()} variant="contained">{saving ? "Saving..." : "Confirm trades"}</Button></DialogActions>

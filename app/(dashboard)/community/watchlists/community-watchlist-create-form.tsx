@@ -20,6 +20,7 @@ import {
   COMMUNITY_PROFILE_TAGS,
   COMMUNITY_WATCHLIST_TAGS,
   type CommunityTickerInput,
+  type CommunityWatchlistDraft,
 } from "@/src/modules/community/contracts/community-watchlist-contracts";
 import { DashboardPage, DashboardPanel, DashboardPrimaryAction, DashboardSecondaryAction } from "../../../dashboard-template";
 import { createCommunityWatchlist } from "./community-watchlist-actions";
@@ -48,16 +49,16 @@ function TagPicker({ available, maximum = 20, selected, onChange }: { available:
   </Stack>;
 }
 
-export function CommunityWatchlistCreateForm() {
+export function CommunityWatchlistCreateForm({ draft }: { draft?: CommunityWatchlistDraft }) {
   const router = useRouter();
   const [working, startTransition] = useTransition();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [profileTags, setProfileTags] = useState<readonly string[]>(["Small caps", "Premarket"]);
-  const [watchlistTags, setWatchlistTags] = useState<readonly string[]>(["Small cap", "Premarket"]);
+  const [title, setTitle] = useState(draft?.watchlist.title ?? "");
+  const [description, setDescription] = useState(draft?.watchlist.description ?? "");
+  const [profileTags, setProfileTags] = useState<readonly string[]>(draft?.watchlist.profileTags ?? ["Small caps", "Premarket"]);
+  const [watchlistTags, setWatchlistTags] = useState<readonly string[]>(draft?.watchlist.tags ?? ["Small cap", "Premarket"]);
   const [tickerText, setTickerText] = useState("");
-  const [tickers, setTickers] = useState<readonly DraftTicker[]>([]);
-  const [sendDiscord, setSendDiscord] = useState(true);
+  const [tickers, setTickers] = useState<readonly DraftTicker[]>(() => draft?.watchlist.tickers.map((ticker, id) => ({ ...ticker, id })) ?? []);
+  const [sendDiscord, setSendDiscord] = useState(!draft);
   const [message, setMessage] = useState<string | null>(null);
   const tickerCount = useMemo(() => tickers.filter((ticker) => ticker.symbol.trim()).length, [tickers]);
 
@@ -84,7 +85,7 @@ export function CommunityWatchlistCreateForm() {
           catalyst: ticker.catalyst,
           catalystDate: ticker.catalystDate,
         })), publish, sendDiscord: publish && sendDiscord,
-      });
+      }, draft ? { id: draft.id, updatedAtUtc: draft.updatedAtUtc } : undefined);
       if (!result.ok) { setMessage(result.message); return; }
       setMessage(result.message);
       router.push(publish ? result.href : "/community/watchlists");
@@ -94,7 +95,7 @@ export function CommunityWatchlistCreateForm() {
   return (
     <DashboardPage>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
-        <Typography component="h1" variant="h1">Create watchlist</Typography>
+        <Typography component="h1" variant="h1">{draft ? "Edit draft" : "Create watchlist"}</Typography>
         <DashboardSecondaryAction component={Link} href="/community/watchlists">Back to watchlists</DashboardSecondaryAction>
       </Stack>
       <DashboardPanel title="Watchlist details">

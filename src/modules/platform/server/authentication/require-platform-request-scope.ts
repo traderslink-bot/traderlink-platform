@@ -16,6 +16,7 @@ import { validateDevelopmentDashboardRequest } from "./development-dashboard-net
 import { readJournalAccountSelectionCookie } from "./journal-account-selection-cookie";
 import { PlatformDiscordMembershipRepository } from "./platform-discord-membership-repository";
 import { PlatformDashboardMemberAccessRepository } from "./platform-dashboard-member-access-repository";
+import { findActiveOnboardedCommunityGuild } from "./platform-community-dashboard-access";
 import { resolveTraderLinkDiscordGuildId } from "./platform-discord-configuration";
 import { PlatformSessionRepository } from "./platform-session-repository";
 import {
@@ -134,11 +135,15 @@ function resolveTraderLinkPlatformRequestIdentity(
       if (!session || session.authProvider !== "discord") {
         platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       }
-      const membership = new PlatformDiscordMembershipRepository(database)
-        .findCurrent(
-          session.userId,
-          resolveTraderLinkDiscordGuildId(environment),
-        );
+      const memberships = new PlatformDiscordMembershipRepository(database);
+      const configuredMembership = memberships.findCurrent(
+        session.userId,
+        resolveTraderLinkDiscordGuildId(environment),
+      );
+      const communityGuildId = findActiveOnboardedCommunityGuild(database, session.userId);
+      const membership = configuredMembership ?? (communityGuildId
+        ? memberships.findCurrent(session.userId, communityGuildId)
+        : null);
       const membershipDashboardAccess = hasPlatformMembershipFeature(
         database,
         session.userId,
@@ -167,6 +172,7 @@ function resolveTraderLinkPlatformRequestIdentity(
       if (
         options.requireDashboardAccess &&
         !membershipDashboardAccess &&
+        !communityGuildId &&
         !new PlatformDashboardMemberAccessRepository(database)
           .read().allowAllDiscordMembers &&
         !hasPlatformDiscordPremiumAccess({

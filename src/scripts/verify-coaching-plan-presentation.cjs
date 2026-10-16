@@ -1,0 +1,5 @@
+const assert=require('node:assert/strict'),ts=require('typescript'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const output={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname,'../modules/communities/contracts/coaching-plan-presentation.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:output});
+const price=(patch)=>output.coachingPlanPriceLabel({quoteRequired:false,priceAmountMinor:4999,currency:'CAD',priceLabel:'$49.99',...patch});
+assert.equal(price({}),'CAD 49.99');assert.equal(price({currency:'USD'}),'USD 49.99');assert.equal(price({priceAmountMinor:0}),'CAD 0.00');assert.equal(price({quoteRequired:true}),'Quote required');assert.equal(price({priceAmountMinor:null,priceLabel:'Contact for custom terms'}),'Contact for custom terms');assert.equal(price({priceAmountMinor:null,priceLabel:''}),'Contact coach');
+console.log('PASS: numeric currency labels, exact cents, zero price, quotes and legacy fallback');

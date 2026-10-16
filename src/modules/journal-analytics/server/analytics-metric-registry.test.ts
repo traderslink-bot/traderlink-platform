@@ -73,6 +73,7 @@ function row(
     enteredQuantityDecimal: "10",
     exitQuantityDecimal: "10",
     maximumPositionQuantityDecimal: "10",
+    maximumPositionValueDecimal: "100",
     entryNotionalDecimal: "100",
     exitNotionalDecimal: String(100 + comparison),
   });
@@ -191,7 +192,7 @@ function population(): JournalAnalyticsPopulation {
 
 describe("Journal Analytics complete metric registry", () => {
   it("classifies every legacy and additional capability exactly once", () => {
-    expect(JOURNAL_ANALYTICS_LEGACY_MIGRATION_METRIC_IDS).toHaveLength(126);
+    expect(JOURNAL_ANALYTICS_LEGACY_MIGRATION_METRIC_IDS).toHaveLength(129);
     expect(new Set(JOURNAL_ANALYTICS_CAPABILITY_IDS).size)
       .toBe(JOURNAL_ANALYTICS_CAPABILITY_IDS.length);
     expect(JOURNAL_ANALYTICS_ADDITIONAL_CAPABILITY_IDS.length).toBeGreaterThan(0);

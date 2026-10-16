@@ -32,7 +32,18 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=dependencies --chown=nextjs:nodejs /app/bin/traderlink-integrity-cache-release ./bin/traderlink-integrity-cache-release
 
+COPY --from=builder --chown=nextjs:nodejs /app/src ./src
+COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/staging-release-entrypoint-20261016.cjs ./scripts/platform/staging-release-entrypoint-20261016.cjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/staging-release-manifest-20261016.json ./scripts/platform/staging-release-manifest-20261016.json
+COPY --from=dependencies /app/node_modules/tsx ./node_modules/tsx
+COPY --from=dependencies /app/node_modules/esbuild ./node_modules/esbuild
+COPY --from=dependencies /app/node_modules/@esbuild ./node_modules/@esbuild
+COPY --from=dependencies /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
+COPY --from=dependencies /app/node_modules/resolve-pkg-maps ./node_modules/resolve-pkg-maps
+ENV TRADERLINK_STAGING_IMAGE_ROLE=recovery
+
 USER nextjs
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["node", "scripts/platform/staging-release-entrypoint-20261016.cjs"]

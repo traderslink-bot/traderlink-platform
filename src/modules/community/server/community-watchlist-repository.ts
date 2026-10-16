@@ -3,6 +3,7 @@ import { assertMembershipFeature } from "../../platform/server/membership/platfo
 
 import type {
   CommunityProfile,
+  CommunityWatchlistDraft,
   CommunityWatchlistDetail,
   CommunityWatchlistSummary,
   CommunityWatchlistTickerPreview,
@@ -113,6 +114,7 @@ function summary(
 ): CommunityWatchlistSummary {
   return Object.freeze({
     authorHandle: row.handle,
+    ...(row.status === "draft" ? { draftId: row.watchlist_id } : {}),
     description: row.description,
     href: `/community/${row.handle}/watchlists/${row.slug}`,
     status: row.status,
@@ -155,13 +157,17 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
     return Object.freeze({ handle });
   }
 
-  create(input: Readonly<{ userId: string; timestamp: string; watchlist: CreateCommunityWatchlistInput }>): Readonly<{
+  create(input: Readonly<{ userId: string; timestamp: string; watchlist: CreateCommunityWatchlistInput; draft?: Readonly<{ id: string; updatedAtUtc: string }> }>): Readonly<{
     detailHref: string;
     publicationId: string | null;
   }> {
     assertMembershipFeature(this.database, input.userId, "community.access");
     assertCanonicalUuidV4(input.userId, "userId");
     assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    if (input.draft) {
+      assertCanonicalUuidV4(input.draft.id, "draftId");
+      assertCanonicalUtcTimestamp(input.draft.updatedAtUtc, "updatedAtUtc");
+    }
     const title = normalizeText(input.watchlist.title, 25, "title");
     if (!title) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "title" });
     const description = normalizeText(input.watchlist.description ?? "", 180, "description");
@@ -186,10 +192,23 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tickers" });
     }
     const create = () => {
+      const draft = input.draft ? this.database.prepare<[string, string, string], { slug: string }>(
+        "SELECT slug FROM community_watchlists WHERE watchlist_id=? AND owner_user_id=? AND status='draft' AND updated_at_utc=?",
+      ).get(input.draft.id, input.userId, input.draft.updatedAtUtc) : null;
+      if (input.draft && !draft) {
+        const owned = this.database.prepare("SELECT 1 FROM community_watchlists WHERE watchlist_id=? AND owner_user_id=?").get(input.draft.id, input.userId);
+        platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED", owned ? { reason: "watchlist_draft_changed" } : {});
+      }
       const profile = this.ensureProfile(input.userId, profileTags, input.timestamp);
-      const watchlistId = createCanonicalUuidV4();
-      const slug = normalizeSlug(title, `watchlist-${watchlistId.slice(0, 6)}`);
+      const watchlistId = input.draft?.id ?? createCanonicalUuidV4();
+      const slug = draft?.slug ?? normalizeSlug(title, `watchlist-${watchlistId.slice(0, 6)}`);
       const status = input.watchlist.publish ? "published" : "draft";
+      if (draft) {
+        this.database.prepare(`UPDATE community_watchlists SET title=?,description=?,tags_json=?,status=?,published_at_utc=?,updated_at_utc=? WHERE watchlist_id=? AND owner_user_id=? AND status='draft'`).run(
+          title, description, JSON.stringify(tags), status, input.watchlist.publish ? input.timestamp : null, input.timestamp, watchlistId, input.userId,
+        );
+        this.database.prepare("DELETE FROM community_watchlist_tickers WHERE watchlist_id=?").run(watchlistId);
+      } else {
       this.database.prepare(`INSERT INTO community_watchlists (
   watchlist_id, owner_user_id, slug, title, description, tags_json, status,
   published_at_utc, created_at_utc, updated_at_utc
@@ -197,6 +216,7 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
         watchlistId, input.userId, slug, title, description, JSON.stringify(tags), status,
         input.watchlist.publish ? input.timestamp : null, input.timestamp, input.timestamp,
       );
+      }
       const insertTicker = this.database.prepare(`INSERT INTO community_watchlist_tickers (
   ticker_id, watchlist_id, symbol, ordinal, tags_json, why_watching, plan,
   personal_target, catalyst, catalyst_date, posted_reference_price, posted_at_utc
@@ -239,6 +259,18 @@ WHERE watchlist.owner_user_id = ?
 GROUP BY watchlist.watchlist_id
 ORDER BY watchlist.updated_at_utc DESC`).all(userId);
     return Object.freeze(rows.map((row) => summary(row)));
+  }
+
+  findOwnedDraft(userId: string, draftId: string): CommunityWatchlistDraft | null {
+    assertCanonicalUuidV4(userId, "userId");
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(draftId)) return null;
+    const row = this.database.prepare<[string, string], WatchlistRow>(`SELECT w.*,p.profile_tags_json FROM community_watchlists w JOIN community_profiles p ON p.user_id=w.owner_user_id WHERE w.watchlist_id=? AND w.owner_user_id=? AND w.status='draft'`).get(draftId, userId);
+    if (!row) return null;
+    const tickers = this.database.prepare<[string], TickerRow>("SELECT * FROM community_watchlist_tickers WHERE watchlist_id=? ORDER BY ordinal").all(draftId);
+    return Object.freeze({ id: draftId, updatedAtUtc: row.updated_at_utc, watchlist: {
+      title: row.title, description: row.description, tags: parseTags(row.tags_json), profileTags: parseTags(row.profile_tags_json),
+      tickers: tickers.map(tickerPreview), publish: false, sendDiscord: false,
+    } });
   }
 
   listShared(): readonly CommunityWatchlistSummary[] {

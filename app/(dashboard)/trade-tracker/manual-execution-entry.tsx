@@ -232,6 +232,7 @@ export function ManualExecutionEntry({
         offlineScopeRef={offlineScopeRef}
       />
       <ExecutionEntryCard
+      accountTimezone={accountTimezone}
       collapsed={collapsed}
       allowMultipleTradingDates={tracker !== "day"}
       entryMode={tracker}
@@ -257,7 +258,7 @@ export function ManualExecutionEntry({
       }}>
         <DialogTitle>Review trades found</DialogTitle>
         <DialogContent><Stack spacing={1.5}>
-          {pendingReview ? <ManualTradePostEntryReview analyzerGroupRefs={analyzerGroupRefs} analyzerUses={analyzerUses} groups={pendingReview.preview.groups} merges={logicalTradeMerges} onAnalyzerGroupRefsChange={setAnalyzerGroupRefs} onError={setReviewError} onMergesChange={setLogicalTradeMerges} /> : null}
+          {pendingReview ? <ManualTradePostEntryReview timezone={accountTimezone} analyzerGroupRefs={analyzerGroupRefs} analyzerUses={analyzerUses} groups={pendingReview.preview.groups} merges={logicalTradeMerges} onAnalyzerGroupRefsChange={setAnalyzerGroupRefs} onError={setReviewError} onMergesChange={setLogicalTradeMerges} /> : null}
           {reviewError ? <Typography color="error.main" variant="body2">{reviewError}</Typography> : null}
         </Stack></DialogContent>
         <DialogActions><Button onClick={() => {

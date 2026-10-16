@@ -1,0 +1,817 @@
+[
+  {
+    "migration_id": "0001_platform_identity",
+    "execution_order": 1,
+    "checksum_sha256": "e2ccbc367e274162b0a9141dc73eddf68bf5624ff4fca4ca06f97efe6d00cbb8"
+  },
+  {
+    "migration_id": "0002_journal_account_boundary",
+    "execution_order": 2,
+    "checksum_sha256": "ff4bbc84114a8d99b5d06192fe3e3e094069c11a1a7eb1868fc35ce912c071d7"
+  },
+  {
+    "migration_id": "0003_journal_import_evidence",
+    "execution_order": 3,
+    "checksum_sha256": "e282c5212122f09df7d170f91e953b91d9e0b3ca78d2a1650194c0526fd2779d"
+  },
+  {
+    "migration_id": "0004_journal_execution_ledger",
+    "execution_order": 4,
+    "checksum_sha256": "98c50d4343e171e1dc75fd1f55cefe49851d9d64b8c703cafcd4ac28bcde7d58"
+  },
+  {
+    "migration_id": "0005_journal_data_decisions",
+    "execution_order": 5,
+    "checksum_sha256": "feed08930e139aecb964d04bb2a9df3d1c2785d8a11dfcd75f0de83632537fbb"
+  },
+  {
+    "migration_id": "0006_journal_round_trip_projection",
+    "execution_order": 6,
+    "checksum_sha256": "2bf47f22ef05aea1b2fe59564dbc9c844f9bfd023b2265f04c62903e50609bd9"
+  },
+  {
+    "migration_id": "0007_journal_annotations",
+    "execution_order": 7,
+    "checksum_sha256": "cc5c706fed7ce7c4f856a400152f48296f6213cb086acce4b201947c6bfc38d9"
+  },
+  {
+    "migration_id": "0008_journal_analytics_saved_views",
+    "execution_order": 8,
+    "checksum_sha256": "b152896c81ffc7e8702399ed91768cebf32bf705f7b66b3c6b7e520607694d46"
+  },
+  {
+    "migration_id": "0009_level_analysis_candle_review",
+    "execution_order": 9,
+    "checksum_sha256": "5e0fd37edd1b3310aa91fb2d5cae4c772675cc57481ff39c8a2d5cf3ecd77589"
+  },
+  {
+    "migration_id": "0010_level_analysis_deliveries",
+    "execution_order": 10,
+    "checksum_sha256": "88e1f5cc1e180c1ed0774358d2efb4cf0e8565779cdd5c9790d9b6ef2cba6e52"
+  },
+  {
+    "migration_id": "0011_journal_level_analysis_links",
+    "execution_order": 11,
+    "checksum_sha256": "b8cc72242ebd7544ec29ca11ca0946a5eb16e9301652f4cc0cdab174b54473af"
+  },
+  {
+    "migration_id": "0012_platform_authentication_identities",
+    "execution_order": 12,
+    "checksum_sha256": "f933c39e9341d34d1697a6375034a6d5bf4efb19a9c911e556a1ecdb209927f3"
+  },
+  {
+    "migration_id": "0013_academy_progress",
+    "execution_order": 13,
+    "checksum_sha256": "5d36e7a28e9830d647db2ce9eac131b29ab1dde8a0b15b63813ac939321cfbb5"
+  },
+  {
+    "migration_id": "0014_watchlist_storage",
+    "execution_order": 14,
+    "checksum_sha256": "84c03b1338ef1c73bccb80e4ca68a6090f90fb0a608fbe56a1bf78325b4829b3"
+  },
+  {
+    "migration_id": "0015_news_content",
+    "execution_order": 15,
+    "checksum_sha256": "906df8ac278decbb4243da72589561643d48225bc4bed1f978c0b4c06e8fc31e"
+  },
+  {
+    "migration_id": "0016_affiliate_attribution",
+    "execution_order": 16,
+    "checksum_sha256": "6ce7e7777ab1441e96757578af59527191f0e4a68915d243c3dc330edfa0e442"
+  },
+  {
+    "migration_id": "0017_platform_discord_memberships",
+    "execution_order": 17,
+    "checksum_sha256": "b9599e947b4e45a4b9e4ee730d701682ad2d5e23cf68ac1c6fcbb3f68a37c6f4"
+  },
+  {
+    "migration_id": "0018_platform_hosted_transfer_events",
+    "execution_order": 18,
+    "checksum_sha256": "d79bb695d5c365343ad381801770281f8291a7c51d8212178b424747a3b8fca8"
+  },
+  {
+    "migration_id": "0019_platform_administration",
+    "execution_order": 19,
+    "checksum_sha256": "4d0dc9b90ce07ba094181a333b039e312cc47540539f207856882cf0a785ad89"
+  },
+  {
+    "migration_id": "0020_journal_import_operations",
+    "execution_order": 20,
+    "checksum_sha256": "e5557f13ca58c31857c0c9e837ba125642b0c791620377340a22651ccdf398ac"
+  },
+  {
+    "migration_id": "0021_journal_trade_tracking_and_reconciliation",
+    "execution_order": 21,
+    "checksum_sha256": "9076ddd508fc67f0bfc366730f964e16ddc767d421c89fc7801e478d0f30521d"
+  },
+  {
+    "migration_id": "0022_journal_trading_day_reviews",
+    "execution_order": 22,
+    "checksum_sha256": "001b8ba03d7ed88c986aec7d6a5cd76920a0b677a19279afa08138321c31e327"
+  },
+  {
+    "migration_id": "0023_daily_trade_yahoo_analyzer",
+    "execution_order": 23,
+    "checksum_sha256": "3c693a87929e80d8bb149be89680b5ff1e03cdf4f607b40044a579681f0b6e2d"
+  },
+  {
+    "migration_id": "0024_platform_currency_preferences",
+    "execution_order": 24,
+    "checksum_sha256": "d208cef6f83c3a6d5592565fb6602e6257f6df813b0e6ab579f3a62f5e2663f1"
+  },
+  {
+    "migration_id": "0025_coach_weekly_reviews",
+    "execution_order": 25,
+    "checksum_sha256": "5669c1cdc0878c0e990c78cb9a69afda345a04a34f43229f198d810f0dec4be0"
+  },
+  {
+    "migration_id": "0026_coach_monthly_reviews",
+    "execution_order": 26,
+    "checksum_sha256": "f4453e11bba42782923c64f856dbbb1303b39c986dbdb2ad47c51a928eca0bfd"
+  },
+  {
+    "migration_id": "0027_coach_ai_generation_cost_tracking",
+    "execution_order": 27,
+    "checksum_sha256": "58c4280cbf9d86b7929dbc3f47e72fa3625fc237037830d7fcb6336748540a6a"
+  },
+  {
+    "migration_id": "0028_coach_ai_review_generation_attempts",
+    "execution_order": 28,
+    "checksum_sha256": "39d672884ba1bb4d837d60091797ce48e241fd5b9790fdb16b1d8fbe18d00a9d"
+  },
+  {
+    "migration_id": "0029_coach_ai_chat_foundation",
+    "execution_order": 29,
+    "checksum_sha256": "3bca0e24435ad3c342f0d8b52a5a7391f5cd849abfbf27fcc69ed04ef336b50e"
+  },
+  {
+    "migration_id": "0030_coach_ai_chat_provider_controls",
+    "execution_order": 30,
+    "checksum_sha256": "90e0a92c8200f27af38fb097c3e76bf3c97f3ede7cbf10b3512899e346bb1daf"
+  },
+  {
+    "migration_id": "0031_coach_ai_chat_setting_change_drafts",
+    "execution_order": 31,
+    "checksum_sha256": "2cb6295c93a07ff85ca42628356542d1931ea6cac7dac9ffbe2c448bbf9eb58c"
+  },
+  {
+    "migration_id": "0032_coach_ai_review_provider_controls",
+    "execution_order": 32,
+    "checksum_sha256": "5a29d535b1d509e475ca29ea5439931e4d4200d5a74b2710c71561e3956c406a"
+  },
+  {
+    "migration_id": "0033_platform_moomoo_connections",
+    "execution_order": 33,
+    "checksum_sha256": "ab5ff4598c5634cdc2aaa6d28087c7408cb9907b3cd9bc8fa36201809435d9b2"
+  },
+  {
+    "migration_id": "0034_platform_moomoo_reconnection",
+    "execution_order": 34,
+    "checksum_sha256": "7e548d2ed3924d59e8d212ec9d2555f5fe9856a37a20d891e0eb77d8dddab075"
+  },
+  {
+    "migration_id": "0035_platform_reporting_currency_coverage",
+    "execution_order": 35,
+    "checksum_sha256": "f2b72bd2b09b4a0b2faf80c1b0a9b0766c48ff759fe192c13ff3057c80bd2872"
+  },
+  {
+    "migration_id": "0036_daily_trade_moomoo_analyzer",
+    "execution_order": 36,
+    "checksum_sha256": "c33f0c5f135e637affb7679d0a1cd604a4c122f6d48729f1235234343fde411b"
+  },
+  {
+    "migration_id": "0037_coach_ai_review_periods_v2",
+    "execution_order": 37,
+    "checksum_sha256": "519e715d05abf78ae1a98f1a2332cd1832fe9391a6daeeb8b2db11b3a75e1102"
+  },
+  {
+    "migration_id": "0038_daily_trade_exact_turnover",
+    "execution_order": 38,
+    "checksum_sha256": "cf2894a9ba0ef26f8e4725dff8a96cb0d2ea60f5cf748ba7ec905cd4368de19f"
+  },
+  {
+    "migration_id": "0039_coach_us_equities_review_calendars",
+    "execution_order": 39,
+    "checksum_sha256": "54ff5489bd560a8726e7394ce729fa94a5d1a68f2f0a927a954ec13de5e78005"
+  },
+  {
+    "migration_id": "0040_daily_trade_path_materialization",
+    "execution_order": 40,
+    "checksum_sha256": "728753b43430ec48cc3a0c9b2a720f1495a7689ea9bdb60ae774ea43df72b8cd"
+  },
+  {
+    "migration_id": "0041_coach_ai_review_reservation_scope_trigger",
+    "execution_order": 41,
+    "checksum_sha256": "50daa074ecfe8638f9dd457e5255a80396ad7248c33c94188776090893a2d187"
+  },
+  {
+    "migration_id": "0042_daily_trade_pattern_context_v2",
+    "execution_order": 42,
+    "checksum_sha256": "bd4149443745e91c338f4ca910cc1c8f7edc523491efce458b2d0e08239f7d57"
+  },
+  {
+    "migration_id": "0043_coach_ai_review_timing_modes",
+    "execution_order": 43,
+    "checksum_sha256": "df75b2fb810ff39e0d4bd24b2053b6acda90a89d9343bb5cdd78437d62e57608"
+  },
+  {
+    "migration_id": "0044_coach_ai_review_scheduler_health_v2",
+    "execution_order": 44,
+    "checksum_sha256": "7df3efeb4fc753136611ea4952e1154053525299686155449e12597dac2c19f7"
+  },
+  {
+    "migration_id": "0045_platform_whop_ai_review_entitlements",
+    "execution_order": 45,
+    "checksum_sha256": "50ca610f47fbfcb23e5821c7fa960ada2e0c1f6d831e931034bdc54ab7f34da3"
+  },
+  {
+    "migration_id": "0046_coach_ai_review_cached_input_pricing",
+    "execution_order": 46,
+    "checksum_sha256": "863c7c270f68fe2f1ea8520496aa4cb72af0cbf96a374879477cfdf84a71f65c"
+  },
+  {
+    "migration_id": "0047_moomoo_execution_import_foundation",
+    "execution_order": 47,
+    "checksum_sha256": "bd3feb877d97d9cd869ca9645aa695c2d3ae9e19db8dd5d0bfa749c005c7a5b4"
+  },
+  {
+    "migration_id": "0048_platform_whop_ai_review_reconciliation",
+    "execution_order": 48,
+    "checksum_sha256": "35c9eb597c733b4dc7227d53051b51317ea19c8e8a85779cfcd7325a289805e0"
+  },
+  {
+    "migration_id": "0049_coach_ai_review_rolling_spend_guard",
+    "execution_order": 49,
+    "checksum_sha256": "fb4ee4bc0486fccb716c5874fb2a1252937628040eb93c4c95c0d0a3ba53a302"
+  },
+  {
+    "migration_id": "0050_coach_ai_review_subscriber_budget_safeguards",
+    "execution_order": 50,
+    "checksum_sha256": "cfd86bb2033e93b92076b55cedb3d927612299bbd8b2f9e028524426f99678aa"
+  },
+  {
+    "migration_id": "0051_coach_ai_review_cache_write_accounting",
+    "execution_order": 51,
+    "checksum_sha256": "227b31cda28576ba30d062ba73df51810e72389c1dc728910df519c0ed74b92a"
+  },
+  {
+    "migration_id": "0052_journal_rule_review_notes",
+    "execution_order": 52,
+    "checksum_sha256": "fdaffca224a3b74aef370b192d34e81e8ed71e67f23cf5c52df936535c8e35f8"
+  },
+  {
+    "migration_id": "0053_platform_notifications",
+    "execution_order": 53,
+    "checksum_sha256": "07e3602156388c2c3bb1092507ecf0cff3f282bf174c465bbf625645ec997deb"
+  },
+  {
+    "migration_id": "0054_journal_ai_import_repair",
+    "execution_order": 54,
+    "checksum_sha256": "5203c2b413666e6c86109674ae538cdda475441bfed3362e697d63cfd0cceeb7"
+  },
+  {
+    "migration_id": "0055_coach_ai_chat_action_drafts",
+    "execution_order": 55,
+    "checksum_sha256": "c8c26c85c8eae506b7e2ab45002fce80d8d254be4502240e3dd75fd2c3ef410c"
+  },
+  {
+    "migration_id": "0056_coach_ai_chat_action_expansion",
+    "execution_order": 56,
+    "checksum_sha256": "431e514bb193596f1ab16e3e60d6626887ffc6bbfb86a908f01ad38a2b045f7c"
+  },
+  {
+    "migration_id": "0057_journal_ai_chat_trade_style_source",
+    "execution_order": 57,
+    "checksum_sha256": "2227196b289119d324c4f522bf42b74adb20f8f5eee99a817bb2655c35bb40d4"
+  },
+  {
+    "migration_id": "0058_coach_ai_chat_cache_accounting",
+    "execution_order": 58,
+    "checksum_sha256": "720b4449bc4ea86a6198cd884f47d7208e3eabf6b71ca04b846009648492c168"
+  },
+  {
+    "migration_id": "0059_daily_trade_pattern_occurrences",
+    "execution_order": 59,
+    "checksum_sha256": "c9260853c58030613eccc7993410e23bfa1148f18fb5e9fb8f5df0781fec086b"
+  },
+  {
+    "migration_id": "0060_trade_explorer_comparison_studies",
+    "execution_order": 60,
+    "checksum_sha256": "17fa55083f406c3fdeccc0208fdc63f06a07c5a7a17e030cd1a79197ee6ac0b3"
+  },
+  {
+    "migration_id": "0061_journal_rule_ideas",
+    "execution_order": 61,
+    "checksum_sha256": "31c23a47b897a92a3a268f7d04d6eba4db004d86f811bfcaf8a40dfcf9d9cad2"
+  },
+  {
+    "migration_id": "0062_coach_ai_review_luna_pricing_refresh",
+    "execution_order": 62,
+    "checksum_sha256": "e0d76d95cb0d3d1df994fc12faa6c968a70484345ad6171733be829a18f7828c"
+  },
+  {
+    "migration_id": "0063_platform_notification_coverage",
+    "execution_order": 63,
+    "checksum_sha256": "0767fc22c9bb3c1cdca1332d0e0738c6595ddcf0d3dafafe940f48b4b0d10cf9"
+  },
+  {
+    "migration_id": "0064_platform_web_push",
+    "execution_order": 64,
+    "checksum_sha256": "9894843839609cc2018c474010a1d56f8fd3cc318c0f28457de3e8cea68973d7"
+  },
+  {
+    "migration_id": "0065_coach_ai_review_insight_persistence",
+    "execution_order": 65,
+    "checksum_sha256": "528f247af2669fc4f291dcef004a35f0fca0900c06d511941be8d0cd8137ce0b"
+  },
+  {
+    "migration_id": "0066_coach_ai_review_authored_output",
+    "execution_order": 66,
+    "checksum_sha256": "9c30676d904e6d3f84abed230ab76cd4a30203f972842f7658825b320d61aa99"
+  },
+  {
+    "migration_id": "0067_coach_ai_chat_relationship_memory",
+    "execution_order": 67,
+    "checksum_sha256": "2cdf4ba000176ad444fa0f94d4038681a805ca6e0d9e81a7a624e92a6aebe5db"
+  },
+  {
+    "migration_id": "0068_coach_ai_chat_deterministic_fast_path",
+    "execution_order": 68,
+    "checksum_sha256": "86eefeeda424a1281b0aa3c1c0f26f12fd3f2b2793062676dcca07094f01c539"
+  },
+  {
+    "migration_id": "0069_coach_ai_chat_luna_default",
+    "execution_order": 69,
+    "checksum_sha256": "a5b7c655e1a27c9a215836abbce4919912ea9ad141da5adea1d559780acd18b2"
+  },
+  {
+    "migration_id": "0070_news_press_release_dashboard",
+    "execution_order": 70,
+    "checksum_sha256": "953b8ebf6fbefd7008b1bd0022b37efdf7ed886323a3b6f35c2c80584d5cecca"
+  },
+  {
+    "migration_id": "0071_coach_ai_chat_quality_feedback",
+    "execution_order": 71,
+    "checksum_sha256": "2c253f596cc8cf13b0d456430320c2932a1fb493e058078e46dfe0447d70d064"
+  },
+  {
+    "migration_id": "0072_news_market_halt_alerts",
+    "execution_order": 72,
+    "checksum_sha256": "49039dc7ec68925e53672b6306d982d169e5bae127e278644dee08ae45a3ee1d"
+  },
+  {
+    "migration_id": "0073_news_market_halt_daily_mutes",
+    "execution_order": 73,
+    "checksum_sha256": "d3bf321eae08e08d4ee199362ae7a432528dbb18e1a65446cb96434282c2952b"
+  },
+  {
+    "migration_id": "0074_journal_multi_tracker_statement_imports",
+    "execution_order": 74,
+    "checksum_sha256": "8995327ac5fa3b04863bbce8af846a3d98ee88532c20ec19b27c040e92f79c04"
+  },
+  {
+    "migration_id": "0075_journal_swing_position_plans",
+    "execution_order": 75,
+    "checksum_sha256": "9e63e22b54a354ad8dad08d4ea3dc6911dd311573ff08716c955191a845a3c58"
+  },
+  {
+    "migration_id": "0076_community_watchlists",
+    "execution_order": 76,
+    "checksum_sha256": "318a3d928371c33906a275b57b9613717eb96b8ac74c186a01518d6f0c942b14"
+  },
+  {
+    "migration_id": "0077_platform_dashboard_member_access",
+    "execution_order": 77,
+    "checksum_sha256": "910e63bce40d85aa683a1e05596753f9a02cf916ddbfb07ac9764bc3efe9e760"
+  },
+  {
+    "migration_id": "0078_platform_session_client_labels",
+    "execution_order": 78,
+    "checksum_sha256": "a6beb4a5300ec50a05ccbaf3ecada5a7e3b7f07e564382a26c9201cdead72426"
+  },
+  {
+    "migration_id": "0079_news_week_ahead",
+    "execution_order": 79,
+    "checksum_sha256": "11c5a15c3e1b925742793cff2f870d171a5f12088e8f1fd5c1aab05262cf55bd"
+  },
+  {
+    "migration_id": "0080_platform_market_news_notifications",
+    "execution_order": 80,
+    "checksum_sha256": "18993799620ed4d0b99283b670d77262830bf8739a5d8ba592e25bfdc5cb09ff"
+  },
+  {
+    "migration_id": "0082_community_watchlist_follows",
+    "execution_order": 82,
+    "checksum_sha256": "6b8bd1655ab378d93f91b33b56ce158d61eb8783c35206953f8876dd3dc23bdf"
+  },
+  {
+    "migration_id": "0083_platform_notification_remote_delivery",
+    "execution_order": 83,
+    "checksum_sha256": "778aced55f0caaf360b58383b8f7fac2ca411c7e5d348df6c0c982011f3eebee"
+  },
+  {
+    "migration_id": "0084_platform_broker_connection_attempts",
+    "execution_order": 84,
+    "checksum_sha256": "3392bd60eb2ec74c0294d98d935fbfa33f8b465481abf8bffda0807eda148567"
+  },
+  {
+    "migration_id": "0085_journal_manual_entry_failures",
+    "execution_order": 85,
+    "checksum_sha256": "5367ea59a2dff387174429a821afa8656025cd379b533c8b5f3741ea4e3e4d62"
+  },
+  {
+    "migration_id": "0086_community_profiles",
+    "execution_order": 86,
+    "checksum_sha256": "e8ba9da9b0d2570a9e9bc589f12979bfabcb8466d934a0985eb13f48db4236b5"
+  },
+  {
+    "migration_id": "0087_community_ticker_company_facts",
+    "execution_order": 87,
+    "checksum_sha256": "f9b4e57bc25103b56f88bc372a524f338f84c528944f7fb4a42655334ab3dd78"
+  },
+  {
+    "migration_id": "0088_platform_newsletter_opt_in",
+    "execution_order": 88,
+    "checksum_sha256": "e6cf0c15cb9cd53d15522a8f7095ad9b14a741765de96791a334e401d725c76c"
+  },
+  {
+    "migration_id": "0089_platform_stock_levels_usage",
+    "execution_order": 89,
+    "checksum_sha256": "2829b7e569c4e708b6b38800df6d1041701ae5dc5c443b225e976360de0c4302"
+  },
+  {
+    "migration_id": "0090_platform_stock_levels_saved_maps",
+    "execution_order": 90,
+    "checksum_sha256": "508aa5dc3a8697ab1fe975ebaf107d2d8d9b17161dd54949689947957681d74a"
+  },
+  {
+    "migration_id": "0091_platform_stock_levels_activity",
+    "execution_order": 91,
+    "checksum_sha256": "b2d77ce60312ebd6e226565175343ac8ff5b4612d8ff0ef04ccda37a1ff83369"
+  },
+  {
+    "migration_id": "0092_platform_watchlist_usage",
+    "execution_order": 92,
+    "checksum_sha256": "e8911e76b05e1739a820fea635c286edae3255e57debba44607fe22fbd6cfa96"
+  },
+  {
+    "migration_id": "0093_platform_watchlist_usage_presence_signals",
+    "execution_order": 93,
+    "checksum_sha256": "5fe1126cf757e6a657b6fb84518a7ce1b373c4f6ce4d41c119be18a4799d439c"
+  },
+  {
+    "migration_id": "0094_platform_moomoo_oauth_pending_attempts",
+    "execution_order": 94,
+    "checksum_sha256": "d368f1ffe5e34e2668bd676e9a3065775d0a21b762d248ac56c8c9023f8bcf2d"
+  },
+  {
+    "migration_id": "0095_journal_demo_trade_data",
+    "execution_order": 95,
+    "checksum_sha256": "ee55f3e14d181e8d831e4c5c35863e46ae171515dcaf4aa2fec7abdf23e329d0"
+  },
+  {
+    "migration_id": "0096_journal_demo_pack_applications",
+    "execution_order": 96,
+    "checksum_sha256": "f53d9eec4893958b128639c9ca034bfe1dea3e42384fc2d8d91fa61b9d023ec3"
+  },
+  {
+    "migration_id": "0097_journal_demo_materializer_provenance_guard",
+    "execution_order": 97,
+    "checksum_sha256": "bc0b851bbaede0cc4c080cb5c643d2f20779d30acde02203ef3f91bdabf5b2ec"
+  },
+  {
+    "migration_id": "0098_journal_demo_lifecycle",
+    "execution_order": 98,
+    "checksum_sha256": "8563a2b4189af86ed885752a3e5881e27e523e31ff5dc6cbc46790ddf8d46743"
+  },
+  {
+    "migration_id": "0099_daily_trade_execution_mismatches",
+    "execution_order": 99,
+    "checksum_sha256": "5cea2ba2cd5876e2744520a7f333b182b08b8c6b1d027eead16bf4c44dcabe2d"
+  },
+  {
+    "migration_id": "0103_platform_appearance_preferences",
+    "execution_order": 103,
+    "checksum_sha256": "87374ddcb7394835b7be476e4269852416bb42fa1e303915d5327def25d80ac6"
+  },
+  {
+    "migration_id": "0104_news_market_halt_scheduler_health",
+    "execution_order": 104,
+    "checksum_sha256": "843f58cc5795e6f929ffe6cb6d6284c23bd90341409cc6e1cfb81b5d97abdc17"
+  },
+  {
+    "migration_id": "0100_journal_workspace_trade_library_projection",
+    "execution_order": 105,
+    "checksum_sha256": "c2892c0a102dbe0197e0da0ebb9d3892d0cc5732f78f147e9cce9e51d19a462d"
+  },
+  {
+    "migration_id": "0101_workspace_trade_library_sort_facts",
+    "execution_order": 106,
+    "checksum_sha256": "44f1feb33856a31e3401091725cb61338fa7294d0248da591b43a94b638460ea"
+  },
+  {
+    "migration_id": "0102_workspace_trade_library_hold_duration",
+    "execution_order": 107,
+    "checksum_sha256": "036ac04a01fd26f98737ab9d49f59a6c78d947ce7876df5f103729936dfba044"
+  },
+  {
+    "migration_id": "0108_journal_workspace_trade_style_source",
+    "execution_order": 108,
+    "checksum_sha256": "b3c8eda4b1d16c86805d9c51166d4da1ebc0132d9d9d0d86b6e90aa5bbc7604c"
+  },
+  {
+    "migration_id": "0110_platform_default_dark_appearance",
+    "execution_order": 110,
+    "checksum_sha256": "ee4abf1c1b2c8a9b694b232e6c7b44722b4145c5f85eb4f3a0e5dd45d905c9fe"
+  },
+  {
+    "migration_id": "0111_journal_shared_notes",
+    "execution_order": 111,
+    "checksum_sha256": "e16b9130c13c1dc1ac66d0bb554f5d8a7d45d56e606bcf5404b5e99da799e1b8"
+  },
+  {
+    "migration_id": "0112_journal_trading_day_tags",
+    "execution_order": 112,
+    "checksum_sha256": "76b34f7687eab40c6024cc19ee529597bed626008d2f92030e01ea69281dff79"
+  },
+  {
+    "migration_id": "0113_journal_workspace_rule_results_card",
+    "execution_order": 113,
+    "checksum_sha256": "924c3f38b693ef62ed191109b8bba455b2514a1927a3c7b0c4af8126f360ece7"
+  },
+  {
+    "migration_id": "0114_journal_workspace_pr_scanner_card",
+    "execution_order": 114,
+    "checksum_sha256": "51eb82fbc945d8feef46d0a2d15fb7acc63329fba85c55c9088da77616746d4e"
+  },
+  {
+    "migration_id": "0115_platform_pnl_reporting_preference",
+    "execution_order": 115,
+    "checksum_sha256": "602681c0bb6d5ed1cc20a7283b5e333d2a610dc77d17686af89b4ee4954237c6"
+  },
+  {
+    "migration_id": "0116_journal_manual_fee_input_state",
+    "execution_order": 116,
+    "checksum_sha256": "ff47203dc700f48e76aa09cc97319194c61a410ccd514abb1ce9d60913c53c7f"
+  },
+  {
+    "migration_id": "0117_trade_explorer_saved_views",
+    "execution_order": 117,
+    "checksum_sha256": "6d9d9cceafa053cf3f42acb031be0db5b9fbcf949c70649c1ce39014f1cebdf6"
+  },
+  {
+    "migration_id": "0118_journal_logical_trades",
+    "execution_order": 118,
+    "checksum_sha256": "b4520008891cd29f7a805d2098c5327613dfca657adb1182332a27fc055923ff"
+  },
+  {
+    "migration_id": "0119_shared_trade_analyzer_beta",
+    "execution_order": 119,
+    "checksum_sha256": "01f14b4c66210bb5ba717a277c31f5e95a7eed6caeb75a0a017e8acfc02ac529"
+  },
+  {
+    "migration_id": "0120_journal_workspace_top_tickers_card",
+    "execution_order": 120,
+    "checksum_sha256": "cf8ddc82292c1a4cc2ab6c7cfab9f7e9a12c5d5961af3b120bbf59d4e687131b"
+  },
+  {
+    "migration_id": "0121_traderlink_communities_identity_permissions",
+    "execution_order": 121,
+    "checksum_sha256": "f99821f279d6468940d6f97b2c1d268a527fea54f1356115eb07df7e6433e1e4"
+  },
+  {
+    "migration_id": "0122_traderlink_communities_partner_platform",
+    "execution_order": 122,
+    "checksum_sha256": "90eb501961e064691d50be9c4886dc21b0d6f2ef80bba485b23efce88cbfb51a"
+  },
+  {
+    "migration_id": "0123_traderlink_communities_discord_feature_access",
+    "execution_order": 123,
+    "checksum_sha256": "4c56e6c8340da418f9d671cae6ca33a08ab6ec755c23177655a17b53b3fbed0f"
+  },
+  {
+    "migration_id": "0124_traderlink_communities_server_watchlists",
+    "execution_order": 124,
+    "checksum_sha256": "c9ef1df3e74a831436045a46f3b8233732b44758cff961ec24c013804388fbdd"
+  },
+  {
+    "migration_id": "0125_traderlink_communities_private_pilot_bootstrap",
+    "execution_order": 125,
+    "checksum_sha256": "e9966a07f5e2f538f9ec3879dd88b955f8730cffe007750efe3d53aaa9c8ea4c"
+  },
+  {
+    "migration_id": "0126_traderlink_communities_workspace_tools",
+    "execution_order": 126,
+    "checksum_sha256": "ce06fb6c5363fa5d33c65c09b85c6680d71abd78ac1a11d9c602a488c65e4a94"
+  },
+  {
+    "migration_id": "0127_traderlink_communities_coaching_workspace",
+    "execution_order": 127,
+    "checksum_sha256": "831716b905d6a5926fb5e0c73a9d89887893ad098497a44f579fd82e03f053d7"
+  },
+  {
+    "migration_id": "0128_traderlink_communities_coaching_programs",
+    "execution_order": 128,
+    "checksum_sha256": "e00510417d0d06e7c83ca1dc54bd2f094c2285936b574a328e1554ba8f41f071"
+  },
+  {
+    "migration_id": "0129_traderlink_communities_coaching_plan_builder",
+    "execution_order": 129,
+    "checksum_sha256": "801e363530cd244588eb8aeb94f7b89a4af7982358d907ab10724a917e79135d"
+  },
+  {
+    "migration_id": "0130_traderlink_communities_coaching_service_measurement",
+    "execution_order": 130,
+    "checksum_sha256": "adb055637912305dc4a44d364f7afabe42a5dade7ef65a16d4e466535ca193dd"
+  },
+  {
+    "migration_id": "0131_traderlink_communities_review_coaching_sections",
+    "execution_order": 131,
+    "checksum_sha256": "3d4d7f554e3330a66ed9d1892393bdf6c0c8437b80a0586968becbc6f107444b"
+  },
+  {
+    "migration_id": "0121_news_market_halt_delivery_lifecycle",
+    "execution_order": 144,
+    "checksum_sha256": "8429555906b74265e46d339aea3488cfdd54e3119edde377aa14a1f4f1b04b16"
+  },
+  {
+    "migration_id": "0122_journal_demo_august_provenance_guard",
+    "execution_order": 145,
+    "checksum_sha256": "6bd71154c3846de5b348a7afedb289e11bedbb2a4b71a5bed6c1ac9d9a0ceb9f"
+  },
+  {
+    "migration_id": "0132_journal_demo_v10_provenance_guard",
+    "execution_order": 146,
+    "checksum_sha256": "6943301ea76b012e7318bcea6b53635a02d85c632ca6879f074fd566b550dac6"
+  },
+  {
+    "migration_id": "0133_platform_watchlist_daily_recaps",
+    "execution_order": 147,
+    "checksum_sha256": "c8b8ca5f5c13d0e3ce2dca3ff25e530e299120cdfb41d100884f63e96f5c5a88"
+  },
+  {
+    "migration_id": "0134_daily_trade_analyzer_trend_momentum_history",
+    "execution_order": 148,
+    "checksum_sha256": "7e27ad1c042a0fa66521a4a6f1014127156b3c8a19c597d3ed39f1397d90df5a"
+  },
+  {
+    "migration_id": "0135_daily_trade_analyzer_manual_retry_requests",
+    "execution_order": 149,
+    "checksum_sha256": "d00e39e47a829009a88a17d4b803d3451c6b2b2b3a8f7794e82d03f024febd91"
+  },
+  {
+    "migration_id": "0136_shared_trade_analyzer_owner_exemptions",
+    "execution_order": 150,
+    "checksum_sha256": "8e107e8dbe67f8b81f2c59b9184e6223eeae3e357e0a7058237dfa29cbcbde7f"
+  },
+  {
+    "migration_id": "0137_platform_watchlist_publication_notifications",
+    "execution_order": 151,
+    "checksum_sha256": "aaeb896e18c383ae57989a8a02cf36620f7b8c751675c660f9d57f709b7b9627"
+  },
+  {
+    "migration_id": "0138_platform_watchlist_notification_action_identity",
+    "execution_order": 152,
+    "checksum_sha256": "8d5106a37965e2dc1d4b028193fc6cfcb5844a0c5417ae6bab7006994576c7d3"
+  },
+  {
+    "migration_id": "0139_platform_premium_swing_idea_visit_events",
+    "execution_order": 153,
+    "checksum_sha256": "c57f28ed50ceac1dfda41fd96e058bbdaddfe8b47fdeb30d89a7f03a25b64c4a"
+  },
+  {
+    "migration_id": "0140_news_market_halt_discord_deliveries",
+    "execution_order": 154,
+    "checksum_sha256": "0b439e613c7259749de8422b2e66f22fc53a8469b98d5913c97178fcb25d0c0a"
+  },
+  {
+    "migration_id": "0142_news_reverse_split_alerts",
+    "execution_order": 155,
+    "checksum_sha256": "4d88aa953849d78e82b1d8d26c700da0b128f80678f3721b1e942dbd221f3f7d"
+  },
+  {
+    "migration_id": "0143_traderlink_communities_review_workflow",
+    "execution_order": 156,
+    "checksum_sha256": "d48bf6d7d2e2fac8957afe131973e8fa1322d1977153569a905cffc1b72ebf4d"
+  },
+  {
+    "migration_id": "0144_traderlink_communities_review_workspace_metadata",
+    "execution_order": 157,
+    "checksum_sha256": "b62e7ced8b8e9a592fbb54fa67ec46361788f173e018adff985b93fac0d49c9d"
+  },
+  {
+    "migration_id": "0145_traderlink_communities_coaching_delivery_workflow",
+    "execution_order": 158,
+    "checksum_sha256": "34fa1cee33f895509f862dd208df64e0beba86c0d5f2104eca2065734563a0a1"
+  },
+  {
+    "migration_id": "0146_watchlist_owner_review_notifications",
+    "execution_order": 159,
+    "checksum_sha256": "a79ce1cd43880e2813fd63aac2bf7fab4bc6ef647805055ec4d55ce6b9babe46"
+  },
+  {
+    "migration_id": "0147_watchlist_potential_gain_posts",
+    "execution_order": 160,
+    "checksum_sha256": "889c5657bf44c8ad323fc0a9eb045349d59b7133803f05576ed4a780e8a7f21d"
+  },
+  {
+    "migration_id": "0148_platform_membership_platform",
+    "execution_order": 161,
+    "checksum_sha256": "8e6e6b678e9215620f80097e1321d83789f8c82b163ffac1d394f184a3bcc19c"
+  },
+  {
+    "migration_id": "0149_watchlist_free_chat",
+    "execution_order": 162,
+    "checksum_sha256": "bbee69af1f84675e924ca52c3cfad76a8c5845d2e7b76a2075ee0f19cf5442bf"
+  },
+  {
+    "migration_id": "0150_platform_membership_generation_allowances",
+    "execution_order": 163,
+    "checksum_sha256": "5b01e82d980c31247683f3312eb42310603388869f0ede8eb65076042b1ee24c"
+  },
+  {
+    "migration_id": "0151_platform_watchlist_x_publications",
+    "execution_order": 164,
+    "checksum_sha256": "a541381f7e71d7638f42ab843d80453eb98f27ded1179f8789963aa61efb1345"
+  },
+  {
+    "migration_id": "0152_platform_watchlist_notification_update_context",
+    "execution_order": 165,
+    "checksum_sha256": "a4cd12712b9e2f57060423f82c5213bfaf022622f50822ef73f6524fbf577ad7"
+  },
+  {
+    "migration_id": "0153_platform_watchlist_category_move_notifications",
+    "execution_order": 166,
+    "checksum_sha256": "bb72c662cd4c18891c30bb59efecfb6e31f758c98fa178f5b0db95d1dbc8cfde"
+  },
+  {
+    "migration_id": "0154_platform_premium_swing_plan_authorship",
+    "execution_order": 167,
+    "checksum_sha256": "e1452f960ea932f08f69cbe543703f69a84b66dd09c1690258fee47074d3d7d9"
+  },
+  {
+    "migration_id": "0155_platform_watchlist_premium_access_controls",
+    "execution_order": 168,
+    "checksum_sha256": "fb32b112ae1c9f758cc667cd46e8f537f1a8043a9bd48add2d22b5be8663fe59"
+  },
+  {
+    "migration_id": "0156_platform_watchlist_premium_support_resistance",
+    "execution_order": 169,
+    "checksum_sha256": "fb79e7101c26bbeb190cb31e23e54ac1044198de11f38151b262e0b09f1ca70d"
+  },
+  {
+    "migration_id": "0157_platform_membership_feature_copy",
+    "execution_order": 170,
+    "checksum_sha256": "ce4f129a5b1e8cc17c448ab8ca046d77a3017f8db3ac483dee19fdea7b6bc2aa"
+  },
+  {
+    "migration_id": "0158_platform_member_private_watchlists",
+    "execution_order": 171,
+    "checksum_sha256": "1415714ccf78970370ecc63ccdd823d8883140ddac44cf4c43f530496e2b5416"
+  },
+  {
+    "migration_id": "0159_platform_coaching_commission_terms",
+    "execution_order": 172,
+    "checksum_sha256": "5d78c3bc58e707b76e3bc47a1ee45734e75924f233ed0cbfda640a2cd7869a29"
+  },
+  {
+    "migration_id": "0160_platform_coaching_review_request_acceptance",
+    "execution_order": 173,
+    "checksum_sha256": "816667e0786c3ed26a23f2ae0df7d28bbf5c7e8b1824c3ce791f6d5d2b2859c6"
+  },
+  {
+    "migration_id": "0161_platform_coaching_content_delivery_receipts",
+    "execution_order": 174,
+    "checksum_sha256": "3395732bfd31218bfbf6585395630e466138ed730fe44790f68f50b68fe7f856"
+  },
+  {
+    "migration_id": "0162_platform_coaching_delivery_attempt_history",
+    "execution_order": 175,
+    "checksum_sha256": "9a3581fc0681053d9a6e29ccb57965ff80909a016b289e8c2493848e4bb39c11"
+  },
+  {
+    "migration_id": "0163_platform_community_publication_feedback",
+    "execution_order": 176,
+    "checksum_sha256": "4097b270f84d264d363d178a52be9200064e4a512950ae6995138db2a0902fdc"
+  },
+  {
+    "migration_id": "0164_platform_coaching_deletion_archives",
+    "execution_order": 177,
+    "checksum_sha256": "b61f28e1486de0f7baa49d9992603de4216e4f694c4874b01ccc915d25477547"
+  },
+  {
+    "migration_id": "0165_platform_membership_unified_editor",
+    "execution_order": 178,
+    "checksum_sha256": "e05c1c35b540c43438faa272399dfd0b73b6cfb94f155fa638d899b43b6db76d"
+  },
+  {
+    "migration_id": "0166_platform_multi_provider_login",
+    "execution_order": 179,
+    "checksum_sha256": "1610b37db7b1dc20dc0a649d57c4d5609a7eda8f8f384ee4bf6a21095a683558"
+  },
+  {
+    "migration_id": "0167_platform_membership_addon_amendments",
+    "execution_order": 180,
+    "checksum_sha256": "b468f6dc957235c4c1f562f58ca6eef06672c2917c30fd183c54610e11c0f5fc"
+  }
+]

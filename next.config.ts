@@ -204,6 +204,12 @@ const legacyTopLevelReplacementRedirects = [
 ] as const;
 
 const nextConfig: NextConfig = {
+  experimental: {
+    cpus: 2,
+    webpackBuildWorker: true,
+    webpackMemoryOptimizations: true,
+    serverActions: { bodySizeLimit: "10mb" },
+  },
   output: "standalone",
   serverExternalPackages: ["levels-system-v2", "better-sqlite3"],
   async headers() {

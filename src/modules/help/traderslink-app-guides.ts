@@ -71,8 +71,55 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Installing TradersLink does not turn on notifications by itself. In the installed app, open Account Preferences and choose Turn on notifications. Your browser asks for permission only after you select that action." }),
           Object.freeze({ kind: "paragraph", text: "Alert category choices apply to your account's connected devices. You can turn push off on this device without changing your in-app updates or Discord choices. Removing offline page data does not turn push off. Lock-screen messages for account and trading updates stay generic and do not show trade or account details." }),
-          Object.freeze({ kind: "paragraph", text: "In Account Preferences, choose Send test notification to check that an alert appears on the device you are using. When an app update is ready, save any edits before choosing Update app. If the update takes longer than expected or has already been applied in another tab, choose Reload app to reopen the app. Offline entries already saved on your device will remain." }),
+          Object.freeze({ kind: "paragraph", text: "In Account Preferences, choose Send test notification to check that an alert appears on the device you are using. When an app update is ready, a notice appears above the dashboard content. Save any edits before choosing Update app. If the update takes longer than expected or has already been applied in another tab, choose Reload app to reopen the app. Offline entries already saved on your device will remain." }),
           Object.freeze({ kind: "link", href: "/account/preferences#push-notifications", label: "Open Push notifications", text: "Use Account Preferences to turn alerts on or off and choose the categories this device may receive." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
+    slug: "discord-communities",
+    title: "Discord communities in TradersLink",
+    description: "Join your server workspace, open role-based posts, share watchlists and control coaching Journal access.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "joining-a-community",
+        title: "Join through your Discord server",
+        summary: "A connected server gives all verified members a TraderLink account path.",
+        keywords: Object.freeze(["Discord community", "server", "roles", "join TraderLink", "membership"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Sign in with the Discord account that belongs to the connected server. Every verified active member can use TraderLink; the server owner does not choose which roles may create an account." }),
+          Object.freeze({ kind: "paragraph", text: "The owner can use current Discord roles to limit only that server's alerts, watchlists or coaching plans. If your role changes, access changes after TraderLink receives a fresh Discord membership check." }),
+          Object.freeze({ kind: "link", href: "/communities", label: "Open My Communities", text: "Choose one of your connected Discord communities." }),
+          Object.freeze({ kind: "paragraph", text: "Server owners select an approved server and choose Recheck installation. If the app is missing, install the TraderLink Discord app in the Discord tab, return to TraderLink and choose Recheck installation again. Opening or cancelling installation does not confirm success. Discord app installed and ready to connect enables Connect server after current owner verification. If verification is unavailable, ask the server owner to check the app’s Discord access or contact TraderLink support, then recheck. Installation verification does not save a connection or send a message. An existing connection shows Server connected and Manage community; use Manage community to open its settings. This connection status does not confirm current bot access. Channel settings show Discord app detected after successful bot discovery; individual channels may still need permission changes. TraderLink uses the verified Discord server name and creates its community URL automatically. Role and channel setup uses the names fetched from Discord; you do not need to copy IDs. If a channel is unavailable, ask the server owner or someone who manages channel permissions to check the bot's View Channel and Send Messages access, channel-specific overrides and any bot timeout, then refresh. Saving channel settings does not send a test message." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "posts-and-watchlists",
+        title: "Alerts and shared watchlists",
+        summary: "Open server posts in TraderLink and share a watchlist you own.",
+        keywords: Object.freeze(["alerts", "watchlists", "share to community", "Discord channel"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "bullets", items: Object.freeze([
+            "Server owners and assigned staff can publish alerts to the audience and Discord channel chosen by the owner.",
+            "A regular member can share an already-published personal Community Watchlist. The member remains its named owner; sharing does not create a server-owned copy.",
+            "Choose a tracked page link or a full Discord post. Publishing saves the item in TraderLink; check Discord channels for delivery status. A save confirmation does not mean Discord delivery succeeded.",
+            "Official server watchlists support Notes, DD research and source links for each ticker. Open a ticker's research section while creating or editing the watchlist. This is your own research; saving it does not generate AI analysis.",
+            "A failed save keeps your entries. Retry an unchanged submission to check the same save without creating a second alert or watchlist. Published content can be edited, unpublished or archived; previously sent Discord messages are not silently reposted.",
+          ]) }),
+        ]),
+      }),
+      Object.freeze({
+        id: "coaching-and-journal-privacy",
+        title: "Coaching and Journal privacy",
+        summary: "The coach controls their plan while you control every Journal share.",
+        keywords: Object.freeze(["coach", "coaching", "Journal sharing", "revoke", "payment"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Coaches create their own plans, delivery details, displayed prices and student limits. New student requests appear under Students → Requests, where the coach can accept or decline them. The coach or server handles payment in Discord; TraderLink does not provide checkout or collect a launch coaching commission." }),
+          Object.freeze({ kind: "paragraph", text: "Plan save errors keep your entries in the editor. If the plan changed in another window, copy the changes you want to keep and reload before saving again. After an interrupted connection, check Coach Setup for a saved plan before creating another. When you switch coaches, Journal sharing shows only the selected coaching relationship." }),
+          Object.freeze({ kind: "paragraph", text: "A review that requires trades under your accepted agreement cannot be sent or completed until the required trade feedback is saved. An overall summary does not replace those trade reviews. If Journal access is off and the coach needs trades, the student must choose whether to share trades for that coaching relationship. Summary-only reviews remain available when no trade work is required." }),
+          Object.freeze({ kind: "paragraph", text: "A lesson needs at least one active, unarchived student who matches its audience before publication. If publication is rejected, the saved lesson and recipients stay unchanged and your entries remain in the editor. Restore an archived student or create a lesson for the correct students or plan, then try again." }),
+          Object.freeze({ kind: "callout", title: "Coaching never opens your Journal automatically", text: "You must separately choose a specific Journal account and data scope for an active coach. You can revoke that read access at any time. A coach cannot edit your executions, P/L, broker evidence or Journal facts." }),
         ]),
       }),
     ]),
