@@ -13,26 +13,26 @@ const db = new Database(process.env.TRADERLINK_PLATFORM_DB_PATH, {readonly:true,
 db.pragma('query_only=ON');
 const rows = db.prepare('SELECT migration_id,execution_order,checksum_sha256 FROM platform_schema_migrations ORDER BY execution_order').all();
 db.close();
-assert([160,163].includes(rows.length), 'Unexpected migration state: keep this deployment closed');
+assert([163,164].includes(rows.length), 'Unexpected migration state: keep this deployment closed');
 assert.deepEqual(rows, expected.slice(0,rows.length));
 assert(['recovery','final'].includes(process.env.TRADERLINK_STAGING_IMAGE_ROLE));
-if (rows.length === 160 && process.env.TRADERLINK_STAGING_IMAGE_ROLE === 'final') {
+if (rows.length === 163 && process.env.TRADERLINK_STAGING_IMAGE_ROLE === 'final') {
   // Prebuild the exact final image without running new-schema application code.
   // The Coordinator performs the guarded migration separately over SSH.
   http.createServer((req,res) => {
     res.setHeader('Content-Type','application/json');
     res.setHeader('Cache-Control','no-store');
     res.statusCode=req.url==='/api/platform/health'?200:503;
-    res.end(JSON.stringify({status:'maintenance_ready',migrationCount:160,expectedMigrationCount:163,source:process.env.RAILWAY_GIT_COMMIT_SHA}));
+    res.end(JSON.stringify({status:'maintenance_ready',migrationCount:163,expectedMigrationCount:164,source:process.env.RAILWAY_GIT_COMMIT_SHA}));
   }).listen(Number(process.env.PORT||3000),'0.0.0.0');
-  console.log(JSON.stringify({stage:'final_image_prebuilt_awaiting_guarded_migration',migrationCount:160}));
+  console.log(JSON.stringify({stage:'final_image_prebuilt_awaiting_guarded_migration',migrationCount:163}));
 } else {
   // Child-process-only compatibility controls; no Railway variable is changed.
   delete process.env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID;
   delete process.env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_PREDECESSOR_COUNT;
-  if (rows.length === 160) {
-    process.env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID='0167_platform_membership_addon_amendments';
-    process.env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_PREDECESSOR_COUNT='160';
+  if (rows.length === 163) {
+    process.env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID='0168_platform_community_destination_publishers';
+    process.env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_PREDECESSOR_COUNT='163';
   }
   console.log(JSON.stringify({stage:'staging_application_start',role:process.env.TRADERLINK_STAGING_IMAGE_ROLE,migrationCount:rows.length}));
   require(path.join(process.cwd(),'server.js'));

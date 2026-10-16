@@ -1,6 +1,7 @@
 import { platformMembershipAddonAmendmentsMigration } from "./migrations/0167_platform_membership_addon_amendments";
 import { platformMultiProviderLoginMigration } from "./migrations/0166_platform_multi_provider_login";
 import { platformMembershipUnifiedEditorMigration } from "./migrations/0165_platform_membership_unified_editor";
+import {platformCommunityDestinationPublishersMigration} from "./migrations/0168_platform_community_destination_publishers";
 import { platformMembershipFeatureCopyMigration } from "./migrations/0157_platform_membership_feature_copy";
 import { platformMemberPrivateWatchlistsMigration } from "./migrations/0158_platform_member_private_watchlists";
 import { platformWatchlistPremiumSupportResistanceMigration } from './migrations/0156_platform_watchlist_premium_support_resistance';
@@ -797,6 +798,7 @@ const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0165_platform_membership_unified_editor.ts", migration: platformMembershipUnifiedEditorMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0166_platform_multi_provider_login.ts", migration: platformMultiProviderLoginMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0167_platform_membership_addon_amendments.ts", migration: platformMembershipAddonAmendmentsMigration }),
+    Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0168_platform_community_destination_publishers.ts",migration:platformCommunityDestinationPublishersMigration}),
   ]);
 
 export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[] = Object.freeze(
@@ -1362,6 +1364,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0161_platform_coaching_content_delivery_receipts": Object.freeze([]),
     "0162_platform_coaching_delivery_attempt_history": Object.freeze(["traderlink_community_delivery_attempt_history"]),
     "0163_platform_community_publication_feedback": Object.freeze(["traderlink_community_publication_receipts"]),
+    "0168_platform_community_destination_publishers": Object.freeze(["traderlink_community_destination_publishers","traderlink_community_publication_distribution","traderlink_community_destination_audit"]),
     "0164_platform_coaching_deletion_archives": Object.freeze(["community_deletion_archives", "community_deletion_archive_records", "community_deletion_archive_files"]),
     "0144_traderlink_communities_review_workspace_metadata": Object.freeze([]),
     "0145_traderlink_communities_coaching_delivery_workflow": Object.freeze([

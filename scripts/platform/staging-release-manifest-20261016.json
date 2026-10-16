@@ -813,5 +813,10 @@
     "migration_id": "0167_platform_membership_addon_amendments",
     "execution_order": 180,
     "checksum_sha256": "b468f6dc957235c4c1f562f58ca6eef06672c2917c30fd183c54610e11c0f5fc"
+  },
+  {
+    "migration_id": "0168_platform_community_destination_publishers",
+    "execution_order": 181,
+    "checksum_sha256": "e2d7d3aefbee0a4c33407c37352496038d7a0084106551ee50ef7e88d4808fcd"
   }
 ]

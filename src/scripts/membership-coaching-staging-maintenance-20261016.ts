@@ -12,13 +12,13 @@ import { createAndRestoreVerifyPlatformDatabaseBackup } from "@/src/modules/plat
 import { loadAccountIdentityConfiguration } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 
-const predecessorCount = 160;
-const completedCount = 163;
+const predecessorCount = 163;
+const completedCount = 164;
 const prefix = platformMigrationManifest.slice(0, predecessorCount);
-const expected = ["0165_platform_membership_unified_editor", "0166_platform_multi_provider_login", "0167_platform_membership_addon_amendments"];
+const expected = ["0168_platform_community_destination_publishers"];
 assert.equal(platformMigrationManifest.length, completedCount);
 assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.migrationId), expected);
-assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), expected.map((_, i) => 178 + i));
+assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), expected.map((_, i) => 181 + i));
 
 function open(path: string) {
   const db = new Database(path, { fileMustExist: true });
@@ -88,7 +88,7 @@ async function main() {
   if (count === predecessorCount) {
     const disk = statfsSync(root);
     assert(disk.bavail * disk.bsize > statSync(sourcePath).size * 4 + 1024 ** 3, "Insufficient backup/rehearsal headroom");
-    const checkpoint = join(root, "coaching-staging-checkpoints", "20261016-membership-coaching-0165-to-0167");
+    const checkpoint = join(root, "coaching-staging-checkpoints", "20261016-community-destination-0168");
     const backupPath = join(checkpoint, "backup.sqlite");
     const restoreVerificationPath = join(checkpoint, "restore-verification.sqlite");
     const evidence = await createAndRestoreVerifyPlatformDatabaseBackup({
