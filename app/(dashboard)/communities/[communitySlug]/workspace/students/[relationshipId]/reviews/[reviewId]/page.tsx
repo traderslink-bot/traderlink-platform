@@ -17,7 +17,6 @@ import {DashboardPage,DashboardPanel} from "@/app/dashboard-ui";
 import {withReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {TraderLinkCommunityCoachJournalReadService,type CoachStudentJournalTrade} from "@/src/modules/communities/server/traderlink-community-coach-journal-read-service";
 import {loadCommunityDashboard} from "../../../../../../community-dashboard-loader";
-import {CoachWorkspaceNavigation} from "../../../../../../coach-workspace-navigation";
 import {CoachReviewEditor} from "../../../../../../coach-review-editor";
 import {CoachTradeReviewWorkspacePersistent} from "../../../../../../coach-trade-review-workspace-persistent";
 import {CommunityTypography as Typography} from "../../../../../../community-typography";
@@ -40,7 +39,7 @@ export default async function CoachReviewWorkspacePage({params}:{params:Promise<
  const progress=coachingReviewReadiness(review,selected,actions);
  const trades=selected.filter(item=>item.workflowState!=="removed");
  return <DashboardPage>
-  <CoachWorkspaceNavigation slug={communitySlug}/>
+
   <CoachingAnalysisDrawer communitySlug={communitySlug} relationshipId={relationshipId} reviewId={reviewId} disabled={isReview||pending||relationship.accessStatus!=="active"} readOnly={pending||review.deliveryState!=="draft"}/>
   <Stack direction={{xs:"column",sm:"row"}} spacing={1} sx={{alignItems:{sm:"center"},justifyContent:"space-between"}}><Box><Typography component="h1" variant="h1">{review.title}</Typography><Typography color="text.secondary">{relationship.studentDisplayName} · {relationship.planName}</Typography></Box><Stack direction="row" spacing={1}><Button href={`/communities/${communitySlug}/workspace/students/${relationshipId}`} variant="outlined">Student workspace</Button><Button disabled={pending} href={`/communities/${communitySlug}/workspace/students/${relationshipId}/reviews/${reviewId}/final`} variant="contained">Review and send</Button></Stack></Stack>
   {pending?<DashboardPanel title="Review request"><Box component="form" action={isReview?undefined:acceptCommunityReviewRequestAction}><input name="communitySlug" type="hidden" value={communitySlug}/><input name="relationshipId" type="hidden" value={relationshipId}/><input name="reviewId" type="hidden" value={reviewId}/><Stack spacing={2}><Chip label="Pending acceptance" color="warning"/>{review.studentContext?<Typography>{review.studentContext}</Typography>:null}<TextField name="scope" label="Accepted scope" required multiline minRows={2} slotProps={{htmlInput:{maxLength:4000}}}/><TextField name="schedule" label="Schedule" select defaultValue="unscheduled" slotProps={{select:{native:true}}}><option value="unscheduled">Unscheduled</option><option value="scheduled">Set due date</option></TextField><TextField name="dueAt" label="Due date (UTC)" type="datetime-local" slotProps={{inputLabel:{shrink:true}}}/><Button type="submit" variant="contained" disabled={isReview||relationship.accessStatus!=="active"}>Accept request</Button></Stack></Box></DashboardPanel>:null}
