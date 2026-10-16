@@ -2,6 +2,7 @@ import type Database from "better-sqlite3";
 import { privateWatchlistPeriodStart, type PrivateWatchlistMeter, type PrivateWatchlistPeriod } from "../../../platform/contracts/membership-private-watchlist-features";
 import { evaluateMembershipFeature } from "../../../platform/server/membership/platform-membership-access";
 import { PlatformMembershipRepository } from "../../../platform/server/membership/platform-membership-repository";
+import { membershipUsageAnchor, membershipUsageStart } from "../../../platform/server/membership/membership-plan-usage";
 
 type PolicyRow = { limit_value: number | null; period_kind: PrivateWatchlistPeriod["kind"]; period_days: number | null; anchor: string };
 
@@ -26,9 +27,10 @@ export function privateWatchlistRemaining(database: Database.Database, userId: s
   const override = database.prepare(`SELECT limit_value,period_kind,period_days,starts_at_utc anchor
 FROM platform_private_watchlist_member_overrides WHERE user_id=? AND meter=? AND starts_at_utc<=?
 AND (ends_at_utc IS NULL OR ends_at_utc>?)`).get(userId, meter, at, at) as PolicyRow | undefined;
-  const remaining = (policy: PolicyRow): number | null => {
+  const remaining = (policy: PolicyRow, version?: string): number | null => {
     if (policy.limit_value === null) return null;
-    const start = privateWatchlistPeriodStart({ kind: policy.period_kind, days: policy.period_days }, policy.anchor, at);
+    let start = privateWatchlistPeriodStart({ kind: policy.period_kind, days: policy.period_days }, policy.anchor, at);
+    if (version) start = membershipUsageStart(database, userId, version, `private_watchlist.${meter}`, start, at);
     return Math.max(0, policy.limit_value - used(database, userId, meter, start));
   };
   if (override) return remaining(override);
@@ -44,7 +46,8 @@ JOIN platform_membership_plan_versions v ON v.plan_version_id=f.plan_version_id
 LEFT JOIN platform_private_watchlist_plan_periods p ON p.plan_version_id=f.plan_version_id AND p.meter=?
 WHERE f.plan_version_id=? AND f.feature_key=? AND f.feature_kind='limit'`).get(meter, version, key) as PolicyRow | undefined;
     if (!policy) continue;
-    const available = remaining(policy);
+    policy.anchor = membershipUsageAnchor(database, version, key, policy.anchor);
+    const available = remaining(policy, version);
     if (available === null) return null;
     best = Math.max(best, available);
   }

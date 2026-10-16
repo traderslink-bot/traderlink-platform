@@ -1,22 +1,70 @@
-.page { min-height: 70vh; padding: 48px 20px 72px; background: #173b78; }
-.heading { color: white; margin-bottom: 32px; }
+.page { min-height: 70vh; padding: 4.53rem 20px; background: #173b78; }
+.heading { color: white; margin-bottom: 0; padding-bottom: 4.53rem; }
 .heading a { color: #d8f0ff; border-color: #8ed6ff; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); gap: 24px; align-items: stretch; }
-.frame { padding: 10px; border: 1px solid #d5e4f2; border-radius: 24px; background: white; box-shadow: 0 20px 42px #00133f40; min-width: 0; }
-.card { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 24px; border: 1px solid #011e56; border-radius: 16px; color: white; background: radial-gradient(circle at 100% 0, #509ddb4d, transparent 38%), linear-gradient(155deg, #011e56, #00133f); overflow-wrap: anywhere; }
-.name { color: white; margin: 0 0 16px; font-size: 1.65rem; line-height: 1.2; }
-.price { font-size: 1.8rem; font-weight: 850; line-height: 1.25; color: #8ed6ff; margin: 8px 0; }
-.description { white-space: pre-wrap; line-height: 1.55; }
-.features { display: grid; gap: 12px; padding: 0; margin: 24px 0; list-style: none; }
-.feature { border: 1px solid #d5e4f2; border-radius: 12px; background: #f8fbff; color: #011e56; padding: 16px; }
-.feature p { color: #4c627a; font-size: .9rem; margin: 8px 0 0; white-space: pre-wrap; line-height: 1.5; }
-.feature summary { cursor: pointer; font-size: .88rem; font-weight: 700; margin-top: 12px; }
-.feature summary:focus-visible { outline: 2px solid #011e56; outline-offset: 4px; }
-.allowance { display: block; margin-top: 6px; font-weight: 750; }
-.footer { margin-top: auto; padding-top: 24px; }
-.offer { border-top: 1px solid #8ed6ff66; padding-top: 20px; margin-top: 16px; }
-.footer button[type=submit] { background: #84d2ff; color: #001a4a; border: 1px solid #ffffff99; border-radius: 6px; min-height: 46px; font-weight: 900; box-shadow: 0 7px 16px #0003; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 368px)); gap: 20px; align-items: start; justify-content: center; }
+.frame { padding: 5px; border: 1px solid #d5e4f2; border-radius: 18px; background: white; outline: 1px solid #011e56; outline-offset: 0; box-shadow: 0 8px 24px #00133f30; min-width: 0; }
+.card { box-sizing: border-box; display: flex; flex-direction: column; padding: 20px; border: 1px solid #011e56; border-radius: 12px; color: white; background: radial-gradient(circle at 100% 0, #509ddb4d, transparent 38%), linear-gradient(155deg, #011e56, #00133f); overflow-wrap: anywhere; }
+.cardHeader { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px; align-items: start; }
+.name { color: #8ed6ff; margin: 0; font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
+.headerPrices { min-width: 0; text-align: right; container-type: inline-size; }
+.priceBlock { margin: 0 0 8px; }
+.price { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; color: white; margin: 0; }
+.amount { font-size: min(6.84rem, calc(var(--price-fit) * .95)); font-weight: 800; line-height: 1; letter-spacing: -.04em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.currencySymbol { font-size: .45em; vertical-align: top; line-height: 1.5; margin-right: .05em; }
+.currency { color: #d8f0ff; font-size: .875rem; font-weight: 700; }
+.period { color: #d8f0ff; font-size: 1rem; line-height: 1.2; min-height: 1.2em; }
+.priceNote { color: #d8f0ff; margin: 8px 0 0; font-size: .8125rem; line-height: 1.45; }
+.priceUnavailable { color: #d8f0ff; margin: 0 0 12px; font-size: 1.125rem; line-height: 1.4; }
+.priceUnavailable .amount { font: inherit; letter-spacing: normal; }
+.description { white-space: pre-wrap; line-height: 1.45; font-size: .875rem; margin: 8px 0 0; }
+.features { padding: 0 12px; margin: 18px 0 0; list-style: none; border: 1px solid #d5e4f2; border-radius: 8px; background: #f8fbff; color: #011e56; }
+.feature { padding: 0; border-bottom: 1px solid #d5e4f2; font-size: .875rem; line-height: 1.4; }
+.feature:last-child { border-bottom: 0; }
+.featureTitle { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; row-gap: 2px; font-size: .83125rem; }
+.featureContent, .feature summary { display: block; padding: 10px 0; }
+.feature summary { position: relative; cursor: pointer; padding-right: 20px; list-style: none; }
+.feature summary::-webkit-details-marker { display: none; }
+.feature summary::after { content: ""; position: absolute; right: 2px; top: 14px; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
+.feature details[open] > summary::after { transform: rotate(225deg); top: 17px; }
+.feature summary:hover { color: #174d87; }
+.feature summary:focus-visible { outline: 2px solid #011e56; outline-offset: 2px; border-radius: 2px; }
+.brief { display: block; color: #000; font-size: .65625rem; margin-top: 3px; white-space: pre-wrap; line-height: 1.4; }
+.feature p { color: #000; font-size: .65625rem; margin: 0 0 10px; white-space: pre-wrap; line-height: 1.45; }
+.allowance { font-size: .8125rem; font-weight: 700; }
+.footer { margin-top: auto; padding-top: 16px; container-type: inline-size; }
+.purchaseNotice { font-size: .75rem; line-height: 1.66; min-height: 1.66em; }
+@container (max-width: 300px) { .purchaseNotice { min-height: 3.32em; } }
+.offer { border-top: 1px solid #8ed6ff66; padding-top: 12px; margin-top: 8px; }
+.footer button[type=submit] { background: #84d2ff; color: #001a4a; border: 1px solid #ffffff99; border-radius: 6px; min-height: 40px; font-weight: 900; box-shadow: 0 7px 16px #0003; }
 .footer button[type=submit]:hover { background: #b2e6ff; }
 .footer button[type=submit]:focus-visible { outline: 2px solid white; outline-offset: 4px; }
 .footer button[type=submit]:disabled { background: #a5b8c6; color: #294253; }
-@media (max-width: 480px) { .page { padding: 24px 12px 40px; } .card { padding: 20px 16px; } }
+.previewAction { background: #84d2ff; color: #001a4a; border: 1px solid #ffffff99; border-radius: 6px; min-height: 40px; font: inherit; font-weight: 900; display: block; width: 160px; max-width: 100%; align-self: center; margin: 8px auto 0; box-shadow: 0 7px 16px #0003; cursor: not-allowed; }
+@media (max-width: 480px) { .page { padding: 4.53rem 12px; } .card { padding: 18px 14px; } }
+
+.addonSection { margin-top: 4.53rem; color: white; }
+.addonSectionTitle { font-size: 2rem; margin: 0; text-align: center; }
+.addonSectionDescription { text-align: center; margin: 12px 0 24px; }
+.addonGrid { display: grid; gap: 20px; max-width: 760px; margin: 0 auto; }
+.addonFrame .card { position: relative; padding: 52px 24px 24px; }
+.addonFrame .cardHeader { grid-template-columns: minmax(0, 1fr) 180px; align-items: center; }
+.addonFrame .name { font-size: 2rem; }
+.addonFrame .amount { font-size: min(4.5rem, calc(var(--price-fit) * .75)); }
+.addonFrame .features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
+.addonBadge { position: absolute; top: 16px; left: 24px; background: #8ed6ff; color: #011e56; border-radius: 4px; padding: 4px 10px; font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.addonInstruction { color: #d8f0ff; font-size: .8125rem; margin: 16px 0 0; }
+@media (max-width: 600px) {
+  .addonFrame .card { padding: 48px 16px 20px; }
+  .addonFrame .cardHeader { grid-template-columns: minmax(0, 1fr) 120px; gap: 10px; }
+  .addonFrame .name { font-size: 1.5rem; }
+  .addonFrame .amount { font-size: min(3.5rem, calc(var(--price-fit) * .75)); }
+  .addonFrame .features { grid-template-columns: minmax(0, 1fr); }
+  .addonBadge { left: 16px; }
+}
+
+.discordRequirement { margin: 12px 0; font-size: .875rem; line-height: 1.45; color: inherit; }
+.discordRequirement a { color: inherit; text-decoration: underline; }
+
+.addonUpgradeLink { color: #7dd3fc; text-decoration: underline; text-underline-offset: 3px; }
+.addonUpgradeLink:hover { color: #fff; }
+.addonUpgradeLink:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 2px; }

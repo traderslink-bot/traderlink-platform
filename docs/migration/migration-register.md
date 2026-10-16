@@ -77,6 +77,21 @@ application remains Coordinator-owned and has not been performed by this task.
 **Progressive Web App:** The owner-approved [TraderLink Platform PWA Plan](traderlink-platform-pwa-plan.md) and [progress tracker](traderlink-platform-pwa-progress.md) preserve the complete dashboard and add offline Daily/Swing/Quick Trade Entry, bounded last-synced dashboard projections, retry-safe foreground and best-effort background sync, opt-in privacy-safe Web Push and one corrected icon family. PWA 1 is authorized locally; no deployment or production push activation is implied.
 **Rule:** A legacy item cannot be removed until its row is `Owner accepted` and its legacy dependency check is complete.
 
+**TraderLink Communities partner platform:** [Communities Partner Platform
+Plan](traderlink-communities-partner-platform-plan.md), its [complete progress
+record](traderlink-communities-partner-platform-progress.md) and
+[Communities 1 foundation record](traderlink-communities-1-identity-permissions-progress.md)
+register additive migrations `0121_traderlink_communities_identity_permissions`
+and `0122_traderlink_communities_partner_platform`. They store Discord-backed
+community identity, verified Platform-user membership, owner-controlled custom
+roles and capabilities, Discord-role mappings and immutable authorization
+audit history, along with community content, audiences, delivery attempts,
+coaching relationships and revocable Journal grant references, named activity,
+and provider-neutral Tier 2 attribution. They store no payment credentials,
+coaching transactions, Discord tokens or Journal facts. The focused disposable
+database proof passes; migration execution remains a separate deployment
+boundary.
+
 **Trade Explorer saved views:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
 and its [progress record](trade-explorer-platform-progress.md) register additive
 migration `0117_trade_explorer_saved_views`, appended after production migration
@@ -263,3 +278,25 @@ Reserved migration `0154_platform_premium_swing_plan_authorship`, exact predeces
 ## 0156 Platform Watchlist Premium support/resistance
 
 Reserved by Coordinator; predecessor 0155_platform_watchlist_premium_access_controls. New independent visibility and audit tables only; target migration count138. Registered, not applied by feature worker. See [progress and rollback boundary](watchlist-premium-levels-progress.md).
+
+
+## Multi-provider login candidate reservation (2026-10-14)
+
+`0166_platform_multi_provider_login`, order 179, follows the membership candidate
+0165/order 178. Adds credential/token/throttle/verified-email/audit storage and
+permits explicitly verified reconnect to the same immutable identity owner.
+Candidate-only reservation under owner implementation authorization; reconcile
+complete canonical predecessor with Coordinator before release. No existing or
+hosted database applied. Rollback retains identities, credential records, tables
+and ledger; disable provider entry while preserving enrolled users recovery.
+
+
+## Add-on subscription amendments candidate reservation
+
+0167_platform_membership_addon_amendments, order180, exact candidate predecessor
+0166_platform_multi_provider_login/order179. Reserved in isolated Membership QA
+after checking canonical register, Coordinator handoff and sibling migration paths
+for conflicting0167/order180 reservations. One additive durable amendment table.
+Reconcile the full candidate predecessor/lineage with Coordinator before any
+release or existing/hosted database application. No such application authorized.
+See membership-plan-addons-plan.md for the approved immediate-proration contract.

@@ -16,6 +16,7 @@ import { validateDevelopmentDashboardRequest } from "./development-dashboard-net
 import { readJournalAccountSelectionCookie } from "./journal-account-selection-cookie";
 import { PlatformDiscordMembershipRepository } from "./platform-discord-membership-repository";
 import { PlatformDashboardMemberAccessRepository } from "./platform-dashboard-member-access-repository";
+import { findActiveOnboardedCommunityGuild } from "./platform-community-dashboard-access";
 import { resolveTraderLinkDiscordGuildId } from "./platform-discord-configuration";
 import { PlatformSessionRepository } from "./platform-session-repository";
 import {
@@ -116,7 +117,10 @@ function resolveTraderLinkPlatformRequestIdentity(
       discord: null,
     }));
   }
-  if (environment.NODE_ENV !== "production") {
+  if (environment.NODE_ENV !== "production" && !(
+    environment.NODE_ENV === "development" &&
+    environment.TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_SESSIONS === "true"
+  )) {
     platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   }
   const token = readSingleCookie(
@@ -131,14 +135,18 @@ function resolveTraderLinkPlatformRequestIdentity(
         new PlatformSessionRepository(database),
         { now: options.now },
       ).resolve(token);
-      if (!session || session.authProvider !== "discord") {
+      if (!session || !["discord", "google", "email"].includes(session.authProvider)) {
         platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       }
-      const membership = new PlatformDiscordMembershipRepository(database)
-        .findCurrent(
-          session.userId,
-          resolveTraderLinkDiscordGuildId(environment),
-        );
+      const discordConnected = Boolean(database.prepare("SELECT 1 FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").get(session.userId));
+      const memberships = new PlatformDiscordMembershipRepository(database);
+      const configuredMembership = discordConnected ? memberships.findCurrent(
+        session.userId, resolveTraderLinkDiscordGuildId(environment),
+      ) : null;
+      const communityGuildId = discordConnected ? findActiveOnboardedCommunityGuild(database, session.userId) : null;
+      const membership = configuredMembership ?? (communityGuildId
+        ? memberships.findCurrent(session.userId, communityGuildId)
+        : null);
       const membershipDashboardAccess = hasPlatformMembershipFeature(
         database,
         session.userId,
@@ -167,6 +175,7 @@ function resolveTraderLinkPlatformRequestIdentity(
       if (
         options.requireDashboardAccess &&
         !membershipDashboardAccess &&
+        !communityGuildId &&
         !new PlatformDashboardMemberAccessRepository(database)
           .read().allowAllDiscordMembers &&
         !hasPlatformDiscordPremiumAccess({

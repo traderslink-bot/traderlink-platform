@@ -1,3 +1,6 @@
+import { headers } from "next/headers";
+import { DiscordConnectionNotice } from "./discord-connection-notice";
+import { readMembershipDiscordConnection } from "@/src/modules/platform/server/membership/membership-discord-connection";
 import { hasOwnerMarketDataAccess } from "@/src/modules/level-analysis/server/owner-market-data-access";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
@@ -29,6 +32,7 @@ import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-earl
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { DashboardMuiProviders } from "./mui-provider";
+import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
 
 async function TraderLinkPlatformDashboardFrameContent({
   children,
@@ -41,9 +45,11 @@ async function TraderLinkPlatformDashboardFrameContent({
   watchlistMemberAccess?: boolean;
   billingMemberAccess?: boolean;
 }) {
+  const requestPath = (await headers()).get("x-traderlink-page-path");
+  const workspaceLanding = requestPath === "/workspace" || requestPath === "/workspace/";
   let identity;
   try {
-    identity = billingMemberAccess
+    identity = (billingMemberAccess || workspaceLanding)
       ? await requireTraderLinkPlatformBillingPageIdentity()
       : watchlistMemberAccess
       ? await requireTraderLinkPlatformAuthenticatedPageIdentity({
@@ -66,15 +72,19 @@ async function TraderLinkPlatformDashboardFrameContent({
       redirect("/access-required");
     }
     if (
-      process.env.NODE_ENV === "production" &&
+      (process.env.NODE_ENV === "production" ||
+        (process.env.NODE_ENV === "development" &&
+          process.env.TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_SESSIONS === "true")) &&
       isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED"
     ) {
-      redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent(loginReturnTo)}`);
+      redirect(`/login?returnTo=${encodeURIComponent(requestPath?.startsWith("/account/") ? requestPath : loginReturnTo)}`);
     }
     throw error;
   }
   const scope = identity.scope;
+  const discordConnection = identity.mode === "platform_session"
+    ? withReadonlyPlatformDatabase({}, database => readMembershipDiscordConnection(database, scope.userId)) : null;
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const scannerEarlyAccess = hasScannerEarlyAccess(identity);
   const ownerMarketDataAccess = hasOwnerMarketDataAccess(identity);
@@ -93,6 +103,18 @@ async function TraderLinkPlatformDashboardFrameContent({
         .requireAccountRecord(scope, scope.activeAccountId)
       : null;
     const marketHaltAlerts = new MarketHaltAlertRepository(database);
+    const communityRepository = new TraderLinkCommunityRepository(database);
+    const communityAccess = communityRepository.listForUser(scope.userId)
+      .map((community) => ({
+        community,
+        access: communityRepository.resolveAccess(community.communityId, scope.userId),
+      }))
+      .filter((entry) => entry.access.capabilities.includes("community.view"));
+    const firstCommunity = communityAccess[0] ?? null;
+    const firstCoachingCommunity = communityAccess.find((entry) =>
+      entry.access.capabilities.includes("community.coaching.view") ||
+      entry.access.capabilities.includes("community.coaching.offer"),
+    ) ?? null;
     return Object.freeze({
       demoActivationPending,
       activeAccount,
@@ -107,6 +129,17 @@ async function TraderLinkPlatformDashboardFrameContent({
       pressReleaseUnreadCounts: canReadPressReleases
         ? new PressReleaseDashboardRepository(database).unreadCounts(scope)
         : null,
+      communityNavigationHref: firstCommunity
+        ? `/communities/${firstCommunity.community.slug}`
+        : null,
+      coachingNavigationHref: firstCoachingCommunity
+        ? `/communities/${firstCoachingCommunity.community.slug}/coaching`
+        : null,
+      communityWatchlistsNavigationAccess: communityAccess.some((entry) =>
+        entry.access.capabilities.includes("community.watchlists.view") ||
+        entry.access.capabilities.includes("community.watchlists.share_own") ||
+        entry.access.capabilities.includes("community.watchlists.publish_staff"),
+      ),
     });
   });
   const accountSelectionRef = scope.activeAccountId
@@ -136,14 +169,20 @@ async function TraderLinkPlatformDashboardFrameContent({
           scannerEarlyAccess={scannerEarlyAccess}
           watchlistMemberNavigationAccess
           ownerMarketDataAccess={ownerMarketDataAccess}
-        watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
+          watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
+          communityNavigationHref={dashboardContext.communityNavigationHref}
+          coachingNavigationHref={dashboardContext.coachingNavigationHref}
+          communityWatchlistsNavigationAccess={dashboardContext.communityWatchlistsNavigationAccess}
         >
+          {discordConnection && requestPath !== "/account/login" ? <DiscordConnectionNotice required={discordConnection.required} connected={discordConnection.connected} joined={discordConnection.joined} /> : null}
+          <div data-pwa-offline-exclude>
+            <PwaLifecycle
+              accountSelectionRef={accountSelectionRef}
+              offlineScopeRef={offlineScopeRef}
+            />
+          </div>
           {children}
         </TraderLinkPlatformDashboardTemplate>
-        <PwaLifecycle
-          accountSelectionRef={accountSelectionRef}
-          offlineScopeRef={offlineScopeRef}
-        />
           {dashboardContext.demoActivationPending ? <DemoSessionActivation scopeRef={offlineScopeRef} /> : null}
       </>
     </DashboardMuiProviders>

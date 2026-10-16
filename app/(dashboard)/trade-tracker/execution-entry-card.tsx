@@ -66,6 +66,7 @@ function normalizedDecimal(value: string): string {
 }
 
 export function ExecutionEntryCard({
+  accountTimezone = "America/New_York",
   collapsed,
   initialExecutions = [],
   onCollapsedChange,
@@ -79,6 +80,7 @@ export function ExecutionEntryCard({
   sessionDate,
   submittedCount,
 }: {
+  accountTimezone?: string;
   collapsed: boolean;
   initialExecutions?: ExecutionDraft[];
   onCollapsedChange: (collapsed: boolean) => void;
@@ -295,7 +297,7 @@ export function ExecutionEntryCard({
             Enter your day’s buy and sell executions. Your trades will appear below, grouped by ticker.
           </Typography>
           <Typography sx={{ fontWeight: 800, mt: 1.5 }} variant="body2">
-            Times use Eastern Time.
+            Times use your account timezone: {accountTimezone}.
           </Typography>
           <Typography color="text.secondary" sx={{ maxWidth: { md: 620 } }} variant="body2">
             Entering the correct execution time keeps your trades in order.{" "}
@@ -308,7 +310,7 @@ export function ExecutionEntryCard({
       ) : (
         <>
           <Typography sx={{ fontWeight: 800 }} variant="body2">
-            Times use Eastern Time.
+            Times use your account timezone: {accountTimezone}.
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
             Enter the exact execution time shown by your broker. Trade replay and analysis use this time to match each execution to the correct chart candle.

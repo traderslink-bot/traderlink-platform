@@ -1,3 +1,4 @@
+import { PlatformMembershipCatalogRepository, isPlatformMembershipCatalogAvailable } from "@/src/modules/platform/server/membership/platform-membership-catalog-repository";
 import { PLATFORM_NOTIFICATION_CATEGORIES } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import { canReceiveMembershipNotification } from "@/src/modules/platform/server/membership/membership-notification-access";
 import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
@@ -27,8 +28,12 @@ export const revalidate = 0;
 
 export default async function AccountPreferencesPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) =>
+  const { upgradePlans, allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
+      upgradePlans: Object.fromEntries([...PLATFORM_NOTIFICATION_CATEGORIES, "market_halt", "press_release", "watchlist"].map(category => [
+        category, isPlatformMembershipCatalogAvailable(database) ? new PlatformMembershipCatalogRepository(database)
+          .readPublicPlans(`notifications.${category}`).map(plan => plan.name) : [],
+      ])),
       allowedCategories: PLATFORM_NOTIFICATION_CATEGORIES.filter(category => canReceiveMembershipNotification(database, scope.userId, category)),
       allowHalts: canReceiveMembershipNotification(database, scope.userId, "market_halt"),
       allowPressReleases: canReceiveMembershipNotification(database, scope.userId, "press_release"),
@@ -54,13 +59,10 @@ export default async function AccountPreferencesPage() {
       pressReleasePushChannels: new PressReleaseDashboardRepository(database).readPushPreferences(scope),
     }));
   const preferencesKey = JSON.stringify({
-    allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled,
-    discord: notificationPreferences.discordDmCategories,
-    email: notificationPreferences.emailCategories,
+    // Reset when authorization/destination readiness changes, not after a save.
+    // A save must preserve feedback and unsaved choices in the other channels.
+    allowedCategories, allowHalts, allowPressReleases, allowWatchlist,
     emailState: notificationEmailStatus.state,
-    pressRelease: pressReleasePushChannels,
-    push: notificationPreferences.webPushCategories,
-    watchlist: watchlistPreferences,
   });
 
   return (
@@ -76,6 +78,7 @@ export default async function AccountPreferencesPage() {
         <NotificationPreferences
           key={preferencesKey}
           allowedCategories={allowedCategories}
+          upgradePlans={upgradePlans}
           allowHalts={allowHalts}
           allowPressReleases={allowPressReleases}
           allowWatchlist={allowWatchlist}

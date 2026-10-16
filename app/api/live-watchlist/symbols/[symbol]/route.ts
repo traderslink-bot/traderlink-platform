@@ -39,6 +39,6 @@ export async function GET(
     generatedAt: Date.now(),
     marketDataStatus: health.marketDataStatus,
     marketDataUpdatedAt: health.marketDataUpdatedAt,
-    symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol), canViewWatchlistLevels(request.headers, state.symbol), readWatchlistUpgradeLinks(state.symbol)),
+    symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol), canViewWatchlistLevels(request.headers, state.symbol), readWatchlistUpgradeLinks(state.symbol), features.indicators),
   }, { headers: { "Cache-Control": "private, no-store" } });
 }

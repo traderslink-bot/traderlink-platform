@@ -1,7 +1,8 @@
 import type { PlatformNotificationCategory } from "./platform-notification-contracts";
 
 export const MEMBERSHIP_NOTIFICATION_FEATURES = Object.freeze([
-  { key: "news.access", label: "Dashboard news", kind: "boolean", module: "news" },
+  { key: "news.access", label: "Stock Press Releases", kind: "boolean", module: "news" },
+  { key: "news.week_ahead", label: "Week Ahead", kind: "boolean", module: "news" },
   { key: "notifications.access", label: "Notifications", kind: "boolean", module: "notifications" },
   { key: "notifications.market_halt", label: "Halt notifications", kind: "boolean", module: "notifications" },
   { key: "notifications.press_release", label: "Press release notifications", kind: "boolean", module: "notifications" },

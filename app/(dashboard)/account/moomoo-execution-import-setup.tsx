@@ -1,5 +1,7 @@
 "use client";
 
+import { isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
+import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -41,8 +43,10 @@ type SafeLinkedAccount = Readonly<{
 }>;
 
 type SafeFailurePacket = Readonly<{
+  code?: string;
   message?: string;
   reportedToAdmin?: boolean;
+  upgradeHref?:string;
 }>;
 
 function accountDescription(account: SafeLinkedAccount): string {
@@ -81,11 +85,13 @@ export function MoomooExecutionImportSetup({
   const [selectedRef, setSelectedRef] = useState("");
   const [loading, setLoading] = useState(false);
   const [eligibilityChecked, setEligibilityChecked] = useState(false);
+  const [upgradeHref,setUpgradeHref]=useState<string|null>(null);
   const [error, setError] = useState<string | null>(null);
   const [earliestDates, setEarliestDates] = useState<Readonly<Record<string, string>>>({});
   const anyImportActive = linkedAccounts.some((account) => importActive(account.latestImport));
 
   const showFailure = (packet: SafeFailurePacket, fallback: string) => {
+    setUpgradeHref(isMembershipRequired(packet)?packet.upgradeHref==="/plans?feature=broker.connections"?packet.upgradeHref:"/plans?feature=journal.imports":null);
     const message = packet.message || fallback;
     setError(packet.reportedToAdmin
       ? `${message} The details were automatically sent to TradersLink administration, and we are working on it.`
@@ -107,6 +113,7 @@ export function MoomooExecutionImportSetup({
       }
       setLinkedAccounts(packet.accounts);
     } catch {
+      setUpgradeHref(null);
       setError("Import progress could not be loaded. Try again.");
     }
   }, []);
@@ -121,6 +128,7 @@ export function MoomooExecutionImportSetup({
     if (loading) return;
     setLoading(true);
     setError(null);
+    setUpgradeHref(null);
     try {
       const response = await fetch("/api/connections/moomoo/trading-accounts", {
         cache: "no-store",
@@ -137,6 +145,7 @@ export function MoomooExecutionImportSetup({
       setEligibilityChecked(true);
       setSelectedRef(packet.accounts.length === 1 ? packet.accounts[0]?.selectionRef ?? "" : "");
     } catch {
+      setUpgradeHref(null);
       setError("Moomoo trading accounts could not be loaded. Try again.");
     } finally {
       setLoading(false);
@@ -147,6 +156,7 @@ export function MoomooExecutionImportSetup({
     if (!selectedRef || loading) return;
     setLoading(true);
     setError(null);
+    setUpgradeHref(null);
     try {
       const response = await fetch("/api/connections/moomoo/trading-accounts", {
         method: "POST",
@@ -178,6 +188,7 @@ export function MoomooExecutionImportSetup({
       setAvailableAccounts([]);
       setSelectedRef("");
     } catch {
+      setUpgradeHref(null);
       setError("The Moomoo account could not be linked. Confirm the account and try again.");
     } finally {
       setLoading(false);
@@ -195,6 +206,7 @@ export function MoomooExecutionImportSetup({
     if (loading) return;
     setLoading(true);
     setError(null);
+    setUpgradeHref(null);
     try {
       const response = await fetch("/api/connections/moomoo/imports", {
         method: "POST",
@@ -219,6 +231,7 @@ export function MoomooExecutionImportSetup({
           ? Object.freeze({ ...candidate, latestImport: packet.job as SafeImportJob })
           : candidate));
     } catch {
+      setUpgradeHref(null);
       setError("The import could not be started. Try again.");
     } finally {
       setLoading(false);
@@ -370,11 +383,12 @@ export function MoomooExecutionImportSetup({
       ) : null}
 
       <Typography color="text.secondary" variant="caption">
-        Historical executions can be added to your Trade Tracker without creating old Daily Trade Tracker review work. Trade analysis begins with trading dates covered by an active paid analyzer plan. Statement imports remain available whether or not Moomoo execution access is available.
+        Historical executions can be added to your Trade Tracker without creating old Daily Trade Tracker review work. Trade analysis begins with trading dates covered by an active paid analyzer plan. Statement uploads are a separate way to import trades when your plan includes Import broker statements.
       </Typography>
       {error ? (
         <Alert severity="error">
           {error}
+          {upgradeHref ? <Box><Button href={upgradeHref} variant="contained" sx={{mt:1}}>Explore plans and add-ons</Button></Box> : null}
         </Alert>
       ) : null}
     </Stack>

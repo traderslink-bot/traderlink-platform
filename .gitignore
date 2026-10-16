@@ -64,3 +64,9 @@ public/sw.js
 public/sw.js.map
 public/swe-worker-*.js
 public/swe-worker-*.js.map
+
+# Isolated multi-provider login QA build output
+/.next-login-qa/
+
+# Isolated registered feature preview output
+/.next-feature-previews/

@@ -59,6 +59,7 @@ export type CommunityWatchlistTickerPreview = Readonly<{
 }>;
 
 export type CommunityWatchlistSummary = Readonly<{
+  draftId?: string;
   authorHandle: string;
   description: string;
   href: string;
@@ -68,6 +69,12 @@ export type CommunityWatchlistSummary = Readonly<{
   tags: readonly string[];
   title: string;
   tickerPreviews: readonly CommunityWatchlistTickerPreview[];
+}>;
+
+export type CommunityWatchlistDraft = Readonly<{
+  id: string;
+  updatedAtUtc: string;
+  watchlist: CreateCommunityWatchlistInput;
 }>;
 
 export type CommunityWatchlistDetail = Readonly<{

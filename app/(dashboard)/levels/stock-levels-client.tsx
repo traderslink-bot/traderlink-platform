@@ -223,7 +223,9 @@ export function StockLevelsClient() {
   const hasNoRequestLimit = quotaFeedback?.remainingHourly === null &&
     quotaFeedback?.remainingNewYorkDay === null && quotaFeedback?.resetAt === null;
   const membership = quotaFeedback?.membership;
-  const feedback = membership
+  const feedback = membership && membership.included === false
+    ? "Unlock Levels Generator to create support and resistance maps."
+    : membership
     ? `${membership.remaining === null ? "Unlimited generations" : `${membership.remaining} generations remaining`}${membership.resetsAtUtc ? ` · resets ${new Date(membership.resetsAtUtc).toLocaleString()}` : membership.remaining === null ? "" : " · no scheduled reset"}`
     : hasNoRequestLimit
     ? "No request limit"
@@ -252,7 +254,7 @@ export function StockLevelsClient() {
           </DashboardPrimaryAction>
         </Box>
         <Typography color="text.secondary" variant="body2">{feedback}</Typography>
-        {membership?.remaining === 0 ? <Button href="/plans?feature=levels.generations" variant="outlined">View plans with more generations</Button> : null}
+        {membership?.remaining === 0 ? <Button href="/plans?feature=levels.generations" variant="outlined">{membership.included === false ? "Unlock Levels Generator" : "View plans with more generations"}</Button> : null}
       </DashboardPanel>
 
       {generatedResults.length > 0 ? (

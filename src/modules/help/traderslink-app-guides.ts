@@ -2,6 +2,26 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "login-and-connected-accounts", title: "Sign in and connect login methods",
+    description: "Use Google, email and password, or Discord with the same TradersLink account.",
+    sections: Object.freeze([
+      Object.freeze({id:"choose-login",title:"Choose a sign-in method",summary:"Discord is optional for app login.",keywords:Object.freeze(["Google","email","password","Discord","sign in"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"Open Sign in and choose Google, Discord, or email and password. Availability depends on the service being configured. Email registration asks you to verify your address before signing in. Ordinary sign-in opens Workspace; a sign-in requested by another page returns to that page."}),
+        Object.freeze({kind:"paragraph",text:"Use a password with at least 8 characters. The confirmation field must match your password. Repeating a pending email registration or Add email with the original password sends a fresh verification link; use the newest email. Open the newest verification email and click Confirm Email Address. The link verifies automatically without asking for your password or requiring a signed-in browser; then sign in normally. If the email does not arrive, use Resend verification email on Sign in, with that address and password."}),
+      ])}),
+      Object.freeze({id:"connect-methods",title:"Connect another login method",summary:"Keep your Journal and plan on one account.",keywords:Object.freeze(["link","Account","Login methods"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"Sign in to your existing account, then open Account → Login methods. Connect Google or Discord, or add and verify email and password. An active signed-in session is enough; there is no five-minute sign-in-again requirement. Matching email addresses do not automatically combine separate accounts."}),
+        Object.freeze({kind:"paragraph",text:"At least one login method must stay connected. Disconnecting Discord stops linked Discord benefits; your Journal and purchased app access remain on your account. Sign in again after disconnecting the method used for your current session."}),
+        Object.freeze({kind:"paragraph",text:"Discord is optional for entering the app. Plans and add-ons that need Discord explain this before signup. You can sign up and use the app first, then connect Discord under Account → Login methods. Connecting Discord and joining the TradersLink server are separate steps. Login methods shows your server status and an invitation. After connecting from Workspace, a confirmation explains the server; existing members can select Open Discord server, while people who have not joined can select Join Discord server. Use Join Discord server for the invitation to its community and chats. For an active plan with Discord benefits, the reminder stays until your account is connected and server membership has been confirmed. After joining, select Check membership to verify through Discord without switching your TradersLink account. Use the Discord account you already connected. A successful check returns to Workspace. The general community invitation does not require a plan and can be dismissed with Later."}),
+        Object.freeze({kind:"paragraph",text:"Disconnecting email also turns off password recovery for that address and cancels outstanding email links. To reconnect it, sign in with another connected method and use the existing email and password in Login methods."}),
+      ])}),
+      Object.freeze({id:"recover-password",title:"Recover your password",summary:"Change your password without creating another account.",keywords:Object.freeze(["forgot password","reset","verification"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"Choose Forgot password and enter your email. If eligible, you receive a reset link that expires after 30 minutes. Open it, enter a new password and sign in again. Resetting signs out existing sessions."}),
+        Object.freeze({kind:"paragraph",text:"Reset and verification links work once. Request another email when a link has expired. An OAuth-only account needs you to sign in with its existing provider and add email and password in Login methods before password recovery can be used."}),
+      ])}),
+    ]),
+  }),
+  Object.freeze({
     slug: "using-traderslink-app",
     title: "Using the TradersLink app",
     description: "Install TradersLink, keep useful pages on your device, enter trades offline and choose alerts for this device.",
@@ -71,8 +91,56 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Installing TradersLink does not turn on notifications by itself. In the installed app, open Account Preferences and choose Turn on notifications. Your browser asks for permission only after you select that action." }),
           Object.freeze({ kind: "paragraph", text: "Alert category choices apply to your account's connected devices. You can turn push off on this device without changing your in-app updates or Discord choices. Removing offline page data does not turn push off. Lock-screen messages for account and trading updates stay generic and do not show trade or account details." }),
-          Object.freeze({ kind: "paragraph", text: "In Account Preferences, choose Send test notification to check that an alert appears on the device you are using. When an app update is ready, save any edits before choosing Update app. If the update takes longer than expected or has already been applied in another tab, choose Reload app to reopen the app. Offline entries already saved on your device will remain." }),
+          Object.freeze({ kind: "paragraph", text: "In Account Preferences, choose Send test notification to check that an alert appears on the device you are using. When an app update is ready, a notice appears above the dashboard content. Save any edits before choosing Update app. If the update takes longer than expected or has already been applied in another tab, choose Reload app to reopen the app. Offline entries already saved on your device will remain." }),
           Object.freeze({ kind: "link", href: "/account/preferences#push-notifications", label: "Open Push notifications", text: "Use Account Preferences to turn alerts on or off and choose the categories this device may receive." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
+    slug: "discord-communities",
+    title: "Discord communities in TradersLink",
+    description: "Join your server workspace, open role-based posts, share watchlists and control coaching Journal access.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "joining-a-community",
+        title: "Join through your Discord server",
+        summary: "A connected server gives all verified members a TraderLink account path.",
+        keywords: Object.freeze(["Discord community", "server", "roles", "join TraderLink", "membership"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Sign in with the Discord account that belongs to the connected server. Every verified active member can use TraderLink; the server owner does not choose which roles may create an account." }),
+          Object.freeze({ kind: "paragraph", text: "The owner can use current Discord roles to limit only that server's alerts, watchlists or coaching plans. If your role changes, access changes after TraderLink receives a fresh Discord membership check." }),
+          Object.freeze({ kind: "link", href: "/communities", label: "Open My Communities", text: "Choose one of your connected Discord communities." }),
+          Object.freeze({ kind: "paragraph", text: "Server owners select an approved server and choose Recheck installation. If the app is missing, install the TraderLink Discord app in the Discord tab, return to TraderLink and choose Recheck installation again. Opening or cancelling installation does not confirm success. Discord app installed and ready to connect enables Connect server after current owner verification. If verification is unavailable, ask the server owner to check the app’s Discord access or contact TraderLink support, then recheck. Installation verification does not save a connection or send a message. An existing connection shows Server connected and Manage community; use Manage community to open its settings. This connection status does not confirm current bot access. Channel settings show Discord app detected after successful bot discovery; individual channels may still need permission changes. TraderLink uses the verified Discord server name and creates its community URL automatically. Role and channel setup uses the names fetched from Discord; you do not need to copy IDs. If a channel is unavailable, ask the server owner or someone who manages channel permissions to check the bot's View Channel and Send Messages access, channel-specific overrides and any bot timeout, then refresh. Saving channel settings does not send a test message." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "posts-and-watchlists",
+        title: "Alerts and shared watchlists",
+        summary: "Open server posts in TraderLink and share a watchlist you own.",
+        keywords: Object.freeze(["alerts", "watchlists", "share to community", "Discord channel"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "bullets", items: Object.freeze([
+            "Server owners and assigned staff can publish alerts to the audience and Discord channel chosen by the owner.",
+            "A regular member can share an already-published personal Community Watchlist. The member remains its named owner; sharing does not create a server-owned copy.",
+            "Choose a tracked page link or a full Discord post. Publishing saves the item in TraderLink; check Discord channels for delivery status. A save confirmation does not mean Discord delivery succeeded.",
+            "Official server watchlists support Notes, DD research and source links for each ticker. Open a ticker's research section while creating or editing the watchlist. This is your own research; saving it does not generate AI analysis.",
+            "A failed save keeps your entries. Retry an unchanged submission to check the same save without creating a second alert or watchlist. Published content can be edited, unpublished or archived; previously sent Discord messages are not silently reposted.",
+          ]) }),
+        ]),
+      }),
+      Object.freeze({
+        id: "coaching-and-journal-privacy",
+        title: "Coaching and Journal privacy",
+        summary: "The coach controls their plan while you control every Journal share.",
+        keywords: Object.freeze(["coach", "coaching", "Journal sharing", "revoke", "payment"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Coaches create their own plans, delivery details, displayed prices and student limits. New student requests appear under Students → Requests, where the coach can accept or decline them. The coach or server handles payment in Discord; TraderLink does not provide checkout or collect a launch coaching commission." }),
+          Object.freeze({ kind: "paragraph", text: "Save your coach profile before creating a plan. A Discord coaching role is required to publish a plan; Choose coaching role opens the required setting, and drafts can be saved first. Use Edit on a selected service card or its Plan preview entry to go to that service's options, including How often and Period covered where available. Switching plans or reusing a lesson asks before discarding unsaved entries. Keep editing returns to the current draft. Plan save errors keep your entries in the editor. If the plan changed in another window, copy the changes you want to keep and reload before saving again. After an interrupted connection, check Coach Setup for a saved plan before creating another. When you switch coaches, Journal sharing shows only the selected coaching relationship." }),
+          Object.freeze({ kind: "paragraph", text: "A review that requires trades under your accepted agreement cannot be sent or completed until the required trade feedback is saved. An overall summary does not replace those trade reviews. If Journal access is off and the coach needs trades, the student must choose whether to share trades for that coaching relationship. Summary-only reviews remain available when no trade work is required." }),
+          Object.freeze({ kind: "paragraph", text: "Save draft keeps a new lesson private. Publish lesson is a separate action. During saving or publishing, editing and Reuse are temporarily unavailable. Saved lesson editors also lock their text and selection controls until the save finishes. If the save is rejected, you can continue editing the retained entries. Choose an audience, then check its recipient count and names before publishing. Plan and student selectors appear only for their matching audience type. A lesson needs at least one active, unarchived student who matches its audience before publication. If publication is rejected, the saved lesson and recipients stay unchanged and your entries remain in the editor. Restore an archived student or create a lesson for the correct students or plan, then try again." }),
+          Object.freeze({ kind: "paragraph", text: "My coaching shows coaching you receive as a student, including pending and declined requests. Coach workspace manages the students you coach. Coaching Work session links open the selected session in its student workspace. For a Custom date range, the end date must be on or after the start date; correct the dates or use Clear filters if an error appears. If Coaching Work has no matching results, check the displayed filters or choose Clear filters to return to Upcoming, five days and active work. Private coach notes are not included in the student's final review. Before sending a chart, check its selected filename and preview; Remove selected image clears it without sending. While an image is sending, selection and removal are unavailable until it finishes." }),
+          Object.freeze({ kind: "callout", title: "Coaching never opens your Journal automatically", text: "You must separately choose a specific Journal account and data scope for an active coach. You can revoke that read access at any time. A coach cannot edit your executions, P/L, broker evidence or Journal facts." }),
         ]),
       }),
     ]),

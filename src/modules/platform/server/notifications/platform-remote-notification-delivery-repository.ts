@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { notificationPreferenceEnabled } from "./platform-notification-defaults";
 import { canReceiveMembershipNotification } from "../membership/membership-notification-access";
 
 import type { PlatformNotificationCategory } from "../../contracts/platform-notification-contracts";
@@ -64,13 +65,12 @@ export class PlatformRemoteNotificationDeliveryRepository {
     }>>(`SELECT discord_dm_enabled, email_enabled
 FROM platform_notification_delivery_preferences
 WHERE user_id = ? AND category = ?`).get(input.userId, input.category);
-    if (!preference) return;
     const insert = this.database.prepare(`INSERT OR IGNORE INTO platform_notification_remote_deliveries (
   delivery_id, notification_id, recipient_user_id, channel, target_ref, state,
   attempt_count, available_at_utc, last_attempt_at_utc, delivered_at_utc,
   provider_message_id, failure_code, created_at_utc, updated_at_utc
 ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, NULL, NULL, NULL, NULL, ?, ?)`);
-    if (preference.discord_dm_enabled === 1) {
+    if (notificationPreferenceEnabled(this.database, preference?.discord_dm_enabled)) {
       const identity = this.database.prepare<[string], { found: number }>(`SELECT 1 AS found
 FROM platform_auth_identities
 WHERE user_id = ? AND auth_provider = 'discord' AND status = 'active'`).get(input.userId);
@@ -81,7 +81,7 @@ WHERE user_id = ? AND auth_provider = 'discord' AND status = 'active'`).get(inpu
         );
       }
     }
-    if (preference.email_enabled === 1) {
+    if (notificationPreferenceEnabled(this.database, preference?.email_enabled)) {
       const email = this.database.prepare<[string], { email_address_id: string }>(`SELECT email_address_id
 FROM platform_notification_email_addresses
 WHERE user_id = ? AND state = 'confirmed'

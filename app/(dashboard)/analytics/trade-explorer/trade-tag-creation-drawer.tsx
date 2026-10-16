@@ -9,6 +9,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { JournalUpgradeLink } from "../../membership-journal-upgrade-link";
+import { isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 import { useState } from "react";
 
 import { createTradeExplorerTag } from "./trade-review-actions";
@@ -27,12 +29,14 @@ export function TradeTagCreationDrawer({
 }>) {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function create(): Promise<void> {
     if (!name.trim() || busy) return;
     setBusy(true);
     setError(null);
+    setUpgradeRequired(false);
     try {
       const result = await createTradeExplorerTag({
         expectedAccountSelectionRef,
@@ -43,6 +47,7 @@ export function TradeTagCreationDrawer({
           window.location.reload();
           return;
         }
+        setUpgradeRequired(isMembershipRequired(result));
         setError(result.message);
         return;
       }
@@ -82,7 +87,7 @@ export function TradeTagCreationDrawer({
           slotProps={{ htmlInput: { maxLength: 40 } }}
           value={name}
         />
-        {error ? <Alert severity="error">{error}</Alert> : null}
+        {error ? <Alert severity="error">{error}{upgradeRequired ? <Box><JournalUpgradeLink /></Box> : null}</Alert> : null}
         <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
           <Button disabled={busy} onClick={onClose}>Cancel</Button>
           <Button disabled={busy || !name.trim()} onClick={() => void create()} variant="contained">

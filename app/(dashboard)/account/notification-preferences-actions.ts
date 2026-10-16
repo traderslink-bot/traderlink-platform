@@ -276,7 +276,7 @@ export async function savePressReleasePushChannels(
 
 export async function saveMarketHaltAlertsEnabled(
   enabled: boolean,
-): Promise<Readonly<{ ok: true; enabled: boolean }> | Readonly<{ ok: false; message: string }>> {
+): Promise<Readonly<{ ok: true; enabled: boolean }> | Readonly<{ ok: false; message: string; code?: "membership_required" }>> {
   try {
     const scope = await requireTraderLinkPlatformPageScope();
     const saved = withPlatformDatabase(
@@ -290,7 +290,7 @@ export async function saveMarketHaltAlertsEnabled(
     revalidatePath("/account/preferences");
     return Object.freeze({ enabled: saved, ok: true as const });
   } catch (error) {
-    if (isMembershipAccessDenied(error)) return { ok: false, message: "Your current plan does not include halt notifications. View Plans to change access." };
+    if (isMembershipAccessDenied(error)) return { ok: false, code: "membership_required", message: "Stay informed when trading pauses. Unlock Market halts to receive eligible halt alerts." };
     return Object.freeze({
       ok: false as const,
       message: "Your halt alert choice could not be saved. Try again.",

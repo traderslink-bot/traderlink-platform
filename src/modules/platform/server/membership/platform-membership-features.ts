@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 import { PLATFORM_MEMBERSHIP_FEATURES, type PlatformMembershipFeatureGrant } from "../../contracts/platform-membership-contracts";
 import { parseWatchlistBudgetUsd } from "../../contracts/membership-watchlist-budget";
+import { membershipProductLabel } from "../../contracts/membership-product-features";
 
 export type MembershipFeatureOption = { key: string; label: string; kind: "boolean" | "limit"; module: string };
 
@@ -12,7 +13,7 @@ export function readMembershipFeatures(database: Database.Database): MembershipF
     if (feature.selectable) merged.set(feature.key, feature);
     else merged.delete(feature.key);
   }
-  return [...merged.values()];
+  return [...merged.values()].map(feature => ({ ...feature, label: membershipProductLabel(feature.key, feature.label) }));
 }
 
 export function membershipFeaturesFromForm(database: Database.Database, form: FormData): PlatformMembershipFeatureGrant[] {

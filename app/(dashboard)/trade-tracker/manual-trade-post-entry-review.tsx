@@ -1,5 +1,5 @@
 "use client";
-import { TradeAnalyzerAllowanceSummary } from "../trade-analyzer-allowance-summary";
+import { TradeAnalyzerAllowanceSummary, TradeAnalyzerUpgradeLink } from "../trade-analyzer-allowance-summary";
 import type { SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 
 import Decimal from "decimal.js";
@@ -22,9 +22,10 @@ function marketDate(timestamp: string): string {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-function timeLabel(timestamp: string): string {
+function timeLabel(timestamp: string, timezone: string): string {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York", hour: "numeric", minute: "2-digit",
+    timeZone: timezone, year: "numeric", month: "short", day: "numeric",
+    hour: "numeric", minute: "2-digit", timeZoneName: "shortOffset",
   }).format(new Date(timestamp));
 }
 
@@ -35,6 +36,7 @@ function accumulatedShares(group: JournalManualTradePreviewGroup): string {
 }
 
 export function ManualTradePostEntryReview({
+  timezone = "America/New_York",
   analyzerGroupRefs,
   analyzerUses,
   groups,
@@ -43,6 +45,7 @@ export function ManualTradePostEntryReview({
   onError,
   onMergesChange,
 }: Readonly<{
+  timezone?: string;
   analyzerGroupRefs: readonly string[];
   analyzerUses: AnalyzerUses | null;
   groups: readonly JournalManualTradePreviewGroup[];
@@ -98,6 +101,7 @@ export function ManualTradePostEntryReview({
   };
 
   return <Stack spacing={1.5}>
+    <Typography color="text.secondary" variant="body2">Times shown in your account timezone: {timezone}.</Typography>
     {showAnalyzer ? <Box>
       <Typography sx={{ fontWeight: 800 }} variant="body2">Analyzer uses</Typography>
       <TradeAnalyzerAllowanceSummary availability={analyzerUses} selected={0} />
@@ -118,11 +122,12 @@ export function ManualTradePostEntryReview({
           <Box>
             <Typography sx={{ fontWeight: 850 }}>{first.symbol} · {first.direction === "long" ? "Long" : "Short"}</Typography>
             <Typography color="text.secondary" variant="body2">
-              {members.reduce((count, member) => count + member.allocations.length, 0)} executions · {members.reduce((total, member) => total.plus(accumulatedShares(member)), new Decimal(0)).toFixed()} shares · {timeLabel(first.openedAtUtc)}–{timeLabel(last.lastExecutionAtUtc)}
+              {members.reduce((count, member) => count + member.allocations.length, 0)} executions · {members.reduce((total, member) => total.plus(accumulatedShares(member)), new Decimal(0)).toFixed()} shares · {timeLabel(first.openedAtUtc, timezone)}–{timeLabel(last.lastExecutionAtUtc, timezone)}
             </Typography>
           </Box>
-          <Stack direction="row" spacing={1}>
-            {analyzerEligible && showAnalyzer ? <FormControlLabel control={<Checkbox checked={analyzerGroupRefs.includes(representative)} onChange={(event) => toggleAnalyzer(representative, event.target.checked)} />} label="Analyze" /> : null}
+          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
+            {analyzerEligible && showAnalyzer ? <FormControlLabel control={<Checkbox disabled={analyzerUses?.membership?.included === false} checked={analyzerGroupRefs.includes(representative)} onChange={(event) => toggleAnalyzer(representative, event.target.checked)} />} label="Analyze" /> : null}
+            {analyzerEligible && showAnalyzer ? <TradeAnalyzerUpgradeLink availability={analyzerUses} /> : null}
             {unit.groupRefs.length > 1 ? <Button onClick={() => {
               onAnalyzerGroupRefsChange(analyzerGroupRefs.filter((ref) => ref !== representative));
               onMergesChange(merges.filter((merge) => merge.groupRefs[0] !== representative));
@@ -141,7 +146,7 @@ export function ManualTradePostEntryReview({
             onError(null);
             setSelected((current) => event.target.checked ? [...current, group.groupRef] : current.filter((ref) => ref !== group.groupRef));
             setSelectedStyle("");
-          }} />} label={`${group.symbol} · ${timeLabel(group.openedAtUtc)}–${timeLabel(group.lastExecutionAtUtc)}`} />;
+          }} />} label={`${group.symbol} · ${timeLabel(group.openedAtUtc, timezone)}–${timeLabel(group.lastExecutionAtUtc, timezone)}`} />;
         })}
       </Stack>
       {selectedGroups.length > 1 && requiredStyle === null ? <TextField label="Trade type" onChange={(event) => setSelectedStyle(event.target.value as "day" | "swing")} select size="small" sx={{ mb: 1, minWidth: 170 }} value={selectedStyle}>

@@ -1,7 +1,7 @@
 // Public chrome is opt-in by content route, not merely by domain: installed
 // apps and dashboard pages can also run through the public-domain proxy.
 const publicPageRoots = [
-  "/academy", "/help", "/news", "/small-cap-stocks",
+  "/academy", "/help", "/news", "/small-cap-stocks", "/plans",
 ] as const;
 const publicPages = new Set([
   "/", "/trading-journal", "/trade-analyzer", "/trade-analytics",

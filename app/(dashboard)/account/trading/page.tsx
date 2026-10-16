@@ -1,3 +1,4 @@
+import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -44,14 +45,18 @@ export default async function AccountTradingPage({
 }) {
   const query = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
-  const { moomooAccountLinks, moomooConnection, moomooImportUnavailable, profile } = withReadonlyPlatformDatabase({}, (database) => {
+  const { moomooAccountLinks, moomooConnection, moomooImportUnavailable, brokerMembershipAllowed, profile } = withReadonlyPlatformDatabase({}, (database) => {
     const currentProfile = new PlatformAccountProfileReadService(database).get(scope);
     const currentAccount = currentProfile.journalAccounts.find((account) => account.active);
-    const currentMoomooConnection = new MoomooConnectionRepository(database).find(scope);
+    const connectionRepository=new MoomooConnectionRepository(database);
+    const currentMoomooConnection = connectionRepository.find(scope);
+    let brokerMembershipAllowed=true;
+    try { connectionRepository.assertAuthorizationAllowed(scope); }
+    catch(error) { if(!isMembershipAccessDenied(error))throw error;brokerMembershipAllowed=false; }
     let linkedAccounts: ReturnType<MoomooExecutionImportCommandService["list"]> = [];
     let importUnavailable = false;
     if (
-      currentAccount &&
+      brokerMembershipAllowed && currentAccount &&
       currentMoomooConnection?.state === "active" &&
       currentMoomooConnection.authorizedScopes.includes("trade:read")
     ) {
@@ -69,6 +74,7 @@ export default async function AccountTradingPage({
       }
     }
     return Object.freeze({
+      brokerMembershipAllowed,
       moomooAccountLinks: linkedAccounts,
       moomooConnection: currentMoomooConnection,
       moomooImportUnavailable: importUnavailable,
@@ -141,11 +147,15 @@ export default async function AccountTradingPage({
             Moomoo trade imports are temporarily unavailable. Your Trade Tracker accounts and saved data are not affected.
           </Alert>
         ) : null}
-        <BrokerConnectionPicker moomooConnectionState={moomooPresentationState} />
-        {moomooMarketDataReady ? (
+        {!brokerMembershipAllowed || query.moomoo==='membership-required'?<Alert severity="info" sx={{mb:2}}>
+          Connect your broker and keep trades flowing into your Journal. Choose a plan or add-on with an available broker connection. Your saved trades and connection are preserved.
+          <Box sx={{mt:1}}><Button href="/plans?feature=broker.connections" variant="contained">Explore broker connection plans and add-ons</Button></Box>
+        </Alert>:null}
+        <BrokerConnectionPicker moomooConnectionState={moomooPresentationState} membershipAllowed={brokerMembershipAllowed} />
+        {moomooConnection && moomooConnection.state !== "revoked" ? (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" }, mt: 2 }}>
             <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo</Typography>
-            <Chip color="success" label="Connected" size="small" />
+            <Chip color={moomooMarketDataReady?"success":"warning"} label={moomooMarketDataReady?"Connected":"Reconnect needed"} size="small" />
             <MoomooConnectionSettings state="active" />
           </Stack>
         ) : null}
@@ -155,11 +165,11 @@ export default async function AccountTradingPage({
               <Typography variant="body2">
                 Reconnect Moomoo to continue importing trades.
               </Typography>
-              <MoomooConnectionSettings state="reauthorization_required" />
+              <MoomooConnectionSettings state="reauthorization_required" membershipAllowed={brokerMembershipAllowed} />
             </Stack>
           </Alert>
         ) : null}
-        {moomooMarketDataReady && activeAccount && !moomooImportUnavailable ? (
+        {brokerMembershipAllowed && moomooMarketDataReady && activeAccount && !moomooImportUnavailable ? (
           <MoomooExecutionImportSetup
             activeAccountName={activeAccount.displayName}
             activeAccountSelectionRef={activeAccount.selectionRef}

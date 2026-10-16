@@ -7,7 +7,10 @@ import {
   JOURNAL_OFFLINE_ROUTE_VIEW_VERSION,
   journalOfflineRouteCoverage,
 } from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
-import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPreviewPageScope, requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+
+import { Alert, Button, Stack, Typography } from "@mui/material";
+import { DashboardPage } from "@/app/dashboard-template";
 
 import { readTradeExplorerPageModel } from "../trade-explorer-service";
 import { listTradeExplorerComparisonStudies } from "../trade-explorer-comparison-study-runtime";
@@ -22,6 +25,14 @@ export const metadata: Metadata = {
 };
 
 export default async function TradeExplorerComparisonPage() {
+  const comparisonScope = await requireMembershipPreviewPageScope("analytics.compare_trades");
+  if (!comparisonScope) return <DashboardPage>
+    <Typography component="h1" variant="h1">Compare Trades</Typography>
+    <Alert severity="info" sx={{ mt: 2, maxWidth: 560 }}>
+      Discover what sets your trades apart. Unlock Compare Trades to explore the differences between your trading results.
+      <Stack sx={{ mt: 1, alignItems: "flex-start" }}><Button href="/plans?feature=analytics.compare_trades" variant="contained">Unlock Compare Trades</Button></Stack>
+    </Alert>
+  </DashboardPage>;
   const scope = await requireMembershipPageScope("analytics.trade_explorer");
   const [model, studies] = await Promise.all([
     readTradeExplorerPageModel(scope),

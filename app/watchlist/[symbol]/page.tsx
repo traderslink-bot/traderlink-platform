@@ -1,3 +1,4 @@
+import { WatchlistMembershipNotice } from "../watchlist-membership-notice";
 import { WatchlistPlanUpgrade } from "@/app/watchlist/watchlist-plan-upgrade";
 import { readWatchlistUpgradeLinks } from "@/src/modules/watchlist/server/access/watchlist-plan-policy";
 import { canViewWatchlistLevels } from '@/src/modules/watchlist/server/access/watchlist-levels-visibility';
@@ -49,9 +50,10 @@ export default async function LiveWatchlistSymbolPage({
   );
   const access = await authorizeWatchlistPageAccess();
   if (!access.ok) {
+    if (access.reason === "membership_required") return <WatchlistMembershipNotice />;
     const returnTo = `/watchlist/${encodeURIComponent(symbol.toUpperCase())}`;
     if (access.reason === "login_required" && !authStatus && !isPreviewCrawler) {
-      redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`);
+      redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`);
     }
     return (
       <AcademyShell forcedTheme="light">
@@ -63,13 +65,13 @@ export default async function LiveWatchlistSymbolPage({
                 Log in to view ticker details
               </h1>
               <p className="academy-lede">
-                Log in with your TradersLink Discord account to view ticker details.
+                Sign in to TradersLink to view ticker details.
               </p>
               <Link
-                href={`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`}
+                href={`/login?returnTo=${encodeURIComponent(returnTo)}`}
                 className="academy-card-action"
               >
-                Log in with Discord
+                Sign in
               </Link>
             </div>
           </section>
@@ -132,7 +134,7 @@ export default async function LiveWatchlistSymbolPage({
         <WatchlistVisitRecorder pageKey={state.symbol} pageKind="detail" />
         <LiveWatchlistDetailClient
           initialMarketDataStatus={health.marketDataStatus}
-          initialSymbol={watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(requestHeaders, state.symbol), canViewWatchlistLevels(requestHeaders, state.symbol), readWatchlistUpgradeLinks(state.symbol))}
+          initialSymbol={watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(requestHeaders, state.symbol), canViewWatchlistLevels(requestHeaders, state.symbol), readWatchlistUpgradeLinks(state.symbol), features.indicators)}
         />
       </div>
     </WatchlistDashboardFrame>

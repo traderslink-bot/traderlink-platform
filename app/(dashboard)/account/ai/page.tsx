@@ -1,3 +1,4 @@
+import { hasPlatformMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import type { Metadata } from "next";
 
 import { DashboardPanel } from "../../../dashboard-template";
@@ -35,8 +36,9 @@ export default async function AccountAiPage() {
   }
 
   const scope = await requireTraderLinkPlatformPageScope();
-  const { aiReviewAccess, aiReviewSettings } = withReadonlyPlatformDatabase({}, (database) =>
+  const { aiReviewAccess, aiReviewSettings, planIncluded } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
+      planIncluded:hasPlatformMembershipFeature(database,scope.userId,"ai.reviews"),
       aiReviewSettings: new CoachReviewDeliveryScheduleRepository(database).readV2(scope),
       aiReviewAccess: isWhopAiReviewEntitlementSchemaAvailable(database)
         ? new WhopAiReviewEntitlementRepository(database).readAccess(scope.userId)
@@ -56,6 +58,7 @@ export default async function AccountAiPage() {
       </DashboardPanel>
       <DashboardPanel title="AI Review subscription">
         <AiReviewSubscriptionStatus
+          planIncluded={planIncluded}
           access={aiReviewAccess}
           billingPortalUrl={whopUrls.billingPortalUrl}
           checkoutUrl={whopUrls.checkoutUrl}

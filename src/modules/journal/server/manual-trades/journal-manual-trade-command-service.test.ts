@@ -46,7 +46,7 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-function setup() {
+function setup(options: { timezone?: string; otherTimezone?: string; timestamp?: string } = {}) {
   const root = mkdtempSync(join(tmpdir(), "traderlink-manual-trade-"));
   roots.push(root);
   const database = openPlatformDatabase({
@@ -57,7 +57,7 @@ function setup() {
   runPlatformMigrations(database);
   const userId = createCanonicalUuidV4();
   const workspaceId = createCanonicalUuidV4();
-  const timestamp = "2026-08-02T23:00:00.000Z";
+  const timestamp = options.timestamp ?? "2026-08-02T23:00:00.000Z";
   new PlatformUserRepository(database, { allowedAuthProviders: ["test"] }).createUser({
     userId,
     authProvider: "test",
@@ -94,14 +94,14 @@ function setup() {
     workspaceId,
     displayName: "Journal",
     baseCurrency: "USD",
-    tradingTimezone: "America/New_York",
+    tradingTimezone: options.timezone ?? "America/New_York",
     now: new Date(timestamp),
   });
   const otherAccount = accounts.createAccount(initialScope, {
     workspaceId,
     displayName: "Other Journal",
     baseCurrency: "USD",
-    tradingTimezone: "America/New_York",
+    tradingTimezone: options.otherTimezone ?? "America/New_York",
     now: new Date(timestamp),
   });
   const scope: WorkspaceAccessScope = {
@@ -551,4 +551,61 @@ FROM journal_trade_style_plans`).get()).toEqual({
       context.database.close();
     }
   });
+});
+
+
+describe("manual entry account timezone contract", () => {
+  it.each([
+    ["2026-10-15", "14:00:00", "2026-10-15", "10:00:00", "2026-10-15T14:00:00.000Z"],
+    ["2026-01-15", "15:00:00", "2026-01-15", "10:00:00", "2026-01-15T15:00:00.000Z"],
+    ["2026-10-15", "00:30:00", "2026-10-14", "20:30:00", "2026-10-15T00:30:00.000Z"],
+  ])("previews and persists UTC %s %s and Eastern %s %s as %s", (utcDate, utcTime, nyDate, nyTime, expected) => {
+    const context = setup({ timezone: "UTC", otherTimezone: "America/New_York", timestamp: "2026-12-15T23:00:00.000Z" });
+    try {
+      for (const [scope, timezone, date, time] of [
+        [context.scope, "UTC", utcDate, utcTime],
+        [{ ...context.scope, activeAccountId: context.otherAccountScope.accountId }, "America/New_York", nyDate, nyTime],
+      ] as const) {
+        const entries = [{ clientRowRef: "timezone-row", localDate: date, localTime: time,
+          sourceTimezone: timezone, normalizedSymbol: "QAONLY", tradeCurrency: "USD",
+          side: "buy" as const, quantityDecimal: "1", priceDecimal: "10", feesDecimal: null }];
+        const selectionRef = (timezone === "UTC" ? "a" : "b").repeat(64);
+        const preview = context.previews.preview(scope, { accountSelectionRef: selectionRef, tracker: "workspace", workspaceStyle: "day_trade", entries });
+        expect(preview.groups[0]?.openedAtUtc).toBe(expected);
+        context.command.commit(scope, selectionRef, {
+          tracker: "workspace", workspaceStyle: "day_trade", entries, previewRef: preview.previewRef,
+          expectedAccountSelectionRef: selectionRef, idempotencyKey: `isolated-timezone-${timezone}`,
+          preparedBy: "ai_chat", confirmations: preview.groups.map((group) => ({
+            groupRef: group.groupRef, relationship: "start_new_trade" as const,
+            style: "day_trade" as const, existingPositionRef: null, completeExecutionSetConfirmed: true,
+          })),
+        }, context.now);
+        expect(context.database.prepare(`SELECT executed_at_utc, source_timezone FROM journal_execution_versions WHERE account_id = ?`).all(scope.activeAccountId))
+          .toEqual([{ executed_at_utc: expected, source_timezone: timezone }]);
+      }
+      // Switching to the Eastern account cannot reuse a UTC-labelled submission.
+      expect(() => context.previews.preview({ ...context.scope, activeAccountId: context.otherAccountScope.accountId }, {
+        accountSelectionRef: "b".repeat(64), tracker: "workspace", workspaceStyle: "day_trade", entries: [{
+          clientRowRef: "wrong-zone", localDate: utcDate, localTime: utcTime, sourceTimezone: "UTC",
+          normalizedSymbol: "QAONLY", tradeCurrency: "USD", side: "buy", quantityDecimal: "1", priceDecimal: "10", feesDecimal: null,
+        }],
+      })).toThrow("TRADERLINK_MANUAL_TRADE_RECENT_ENTRY_REQUIRED");
+    } finally { context.database.close(); }
+  }, 120_000);
+
+  it.each([
+    ["2026-03-08", "02:30:00"],
+    ["2026-11-01", "01:30:00"],
+  ])("rejects an invalid or ambiguous Eastern local time %s %s without writing executions", (date, time) => {
+    const context = setup({ timestamp: "2026-12-15T23:00:00.000Z" });
+    try {
+      expect(() => context.previews.preview(context.scope, {
+        accountSelectionRef: "a".repeat(64), tracker: "workspace", workspaceStyle: "day_trade", entries: [{
+          clientRowRef: "dst", localDate: date, localTime: time, sourceTimezone: "America/New_York",
+          normalizedSymbol: "QAONLY", tradeCurrency: "USD", side: "buy", quantityDecimal: "1", priceDecimal: "10", feesDecimal: null,
+        }],
+      })).toThrow("TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED");
+      expect(context.database.prepare("SELECT count(*) AS count FROM journal_execution_versions").get()).toEqual({ count: 0 });
+    } finally { context.database.close(); }
+  }, 120_000);
 });

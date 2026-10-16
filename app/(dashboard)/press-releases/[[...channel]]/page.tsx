@@ -66,9 +66,9 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
         <DashboardPanel title={pressReleaseChannelDefinition(channel).label}>
           <DashboardUnavailableState
             actionHref="/plans?feature=news.access"
-            actionLabel="View plans with this feature"
-            description="Your current access does not include Dashboard news. View available plans or contact the owner about private access."
-            title="Dashboard news access required"
+            actionLabel="Unlock Stock Press Releases"
+            description="Follow market-moving announcements with Stock Press Releases. Choose a plan that includes this feature to start reading."
+            title="Stock Press Releases"
           />
         </DashboardPanel>
       </DashboardPage>

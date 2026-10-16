@@ -147,6 +147,8 @@ export class PlatformAdminAuthorization {
         identity.scope.userId,
         resolveTraderLinkDiscordGuildId(this.environment),
       );
+    const ownerEvidenceAge = now.getTime() - Date.parse(membership?.lastVerifiedAtUtc ?? "");
+    const ownerEvidenceFresh = Number.isFinite(ownerEvidenceAge) && ownerEvidenceAge >= 0 && ownerEvidenceAge <= 5 * 60 * 1000;
     const activeGrant = new PlatformOperatorRepository(this.database).findActive();
     const configuredOwnerMatched = hasConfiguredDiscordOwnerIdentity({
       database: this.database,
@@ -159,6 +161,7 @@ export class PlatformAdminAuthorization {
       identity.discord?.guildOwner === true && membership?.guildOwner === true;
     if (
       !membership ||
+      !ownerEvidenceFresh ||
       !activeGrant ||
       activeGrant.userId !== identity.scope.userId ||
       (!configuredOwnerMatched && !discordServerOwnerMatched)
@@ -170,7 +173,9 @@ export class PlatformAdminAuthorization {
         nowUtc,
         reasonCode: !activeGrant
           ? "active_operator_grant_missing"
-          : "owner_admin_authorization_failed",
+          : !ownerEvidenceFresh
+            ? "discord_owner_verification_stale"
+            : "owner_admin_authorization_failed",
       });
     }
 

@@ -43,3 +43,33 @@
   execution and trade-style persistence contracts, with truthful visible import
   provenance and a neutral initial trade style.
 - This record does not authorize a push, deployment or production change.
+
+
+## 2026-10-15 — account timezone correction
+
+The UTC-account PC report exposed hardcoded Eastern guidance and New York-only
+confirmation formatting. The existing account-timezone parsing/storage contract
+is retained; guidance now names that timezone and confirmation includes dates
+and offsets. Shared Session/Swing callers and Help Center guides are aligned.
+See [correction and verification evidence](coaching-ui-timezone-qa-20261015.md).
+No stored executions or hosted records changed; release remains separate.
+
+
+### Staging release verified
+
+Owner-authorized staging commit a9c119625 is deployed successfully. Full build,
+TypeScript, all281 pages and five timezone regressions pass in Actions38811430667.
+Health200 and exact160-entry migration ledger match. No execution timestamps or
+hosted records were changed. See the [release record](coaching-ui-timezone-qa-20261015.md)
+and [PC retest prompt](coaching-ui-timezone-staging-retest-pc-20261015.md).
+
+
+### Signed-in PC timezone acceptance received
+
+PASS: existing UTC QA account14:00/14:01 and existing America/New_York Primary
+Journal10:00/10:01 on Oct15,2026 show full dates, correct timezone names and
+GMT+0/GMT-4 offsets for the same instant. All QATZCHECK previews and forms were
+cancelled; Confirm trades never clicked. No hosted execution changed. Winter
+and cross-date browser extensions are owner-deferred, not reproduced defects;
+their local preview/storage regressions remain passed. No further test/code or
+deployment work requested. See the [reconciled QA record](coaching-ui-timezone-qa-20261015.md).

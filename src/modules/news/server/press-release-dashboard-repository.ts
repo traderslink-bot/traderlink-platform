@@ -1,6 +1,8 @@
+import { assertMembershipFeature } from "../../platform/server/membership/platform-membership-access";
 import "server-only";
 import { readMembershipNewsDelaySeconds } from "../../platform/server/membership/membership-news-delay";
-import { assertMembershipNotification } from "../../platform/server/membership/membership-notification-access";
+import { assertMembershipNotification, canReceiveMembershipNotification } from "../../platform/server/membership/membership-notification-access";
+import { notificationPreferenceEnabled } from "../../platform/server/notifications/platform-notification-defaults";
 
 import type Database from "better-sqlite3";
 
@@ -150,6 +152,7 @@ export class PressReleaseDashboardRepository {
     scope: WorkspaceAccessScope;
   }>): readonly PressReleaseArticle[] {
     assertActiveUser(this.database, input.scope);
+    assertMembershipFeature(this.database, input.scope.userId, "news.access");
     const tags = routeTags(input.channel);
     const limit = Math.max(1, Math.min(250, input.limit ?? 100));
     const rows = this.database.prepare(`SELECT
@@ -176,6 +179,7 @@ LIMIT ?`).all(input.scope.userId, ...tags,
     scope: WorkspaceAccessScope;
   }>): PressReleaseArticle | null {
     assertActiveUser(this.database, input.scope);
+    assertMembershipFeature(this.database, input.scope.userId, "news.access");
     const tags = routeTags(input.channel);
     const row = this.database.prepare(`SELECT
   article.id, article.ticker, article.slug, article.headline, article.summary,
@@ -196,6 +200,7 @@ LIMIT 1`).get(input.scope.userId, input.articleId, ...tags,
 
   unreadCounts(scope: WorkspaceAccessScope): PressReleaseUnreadCounts {
     assertActiveUser(this.database, scope);
+    assertMembershipFeature(this.database, scope.userId, "news.access");
     const counts = Object.fromEntries(PRESS_RELEASE_CHANNELS.map((channel) => {
       const tags = routeTags(channel);
       const count = this.database.prepare(`SELECT COUNT(*) AS count
@@ -218,6 +223,7 @@ WHERE receipt.article_id IS NULL
     scope: WorkspaceAccessScope;
   }>): void {
     assertActiveUser(this.database, input.scope);
+    assertMembershipFeature(this.database, input.scope.userId, "news.access");
     assertCanonicalUtcTimestamp(input.readAtUtc, "newsArticleReadAt");
     const eligible = this.database.prepare(`SELECT 1 AS found FROM news_articles
 WHERE id = ? AND route_tag IN (${placeholders(ALL_ELIGIBLE_ROUTE_TAGS)})
@@ -239,6 +245,7 @@ WHERE id = ? AND route_tag IN (${placeholders(ALL_ELIGIBLE_ROUTE_TAGS)})
     scope: WorkspaceAccessScope;
   }>): number {
     assertActiveUser(this.database, input.scope);
+    assertMembershipFeature(this.database, input.scope.userId, "news.access");
     assertCanonicalUtcTimestamp(input.readAtUtc, "newsChannelReadAt");
     const tags = routeTags(input.channel);
     const result = this.database.prepare(`INSERT OR IGNORE INTO news_article_read_receipts (
@@ -258,10 +265,12 @@ WHERE article.route_tag IN (${placeholders(tags)})
 
   readPushPreferences(scope: WorkspaceAccessScope): readonly PressReleasePushChannel[] {
     assertActiveUser(this.database, scope);
-    const rows = this.database.prepare<[string], { channel: string }>(`SELECT channel
+    if (!canReceiveMembershipNotification(this.database, scope.userId, "press_release")) return Object.freeze([]);
+    const rows = this.database.prepare<[string], { channel: string; enabled: number }>(`SELECT channel, enabled
 FROM news_press_release_push_preferences
-WHERE user_id = ? AND enabled = 1 ORDER BY channel`).all(scope.userId);
-    return Object.freeze(rows.map((row) => row.channel).filter(isPressReleasePushChannel));
+WHERE user_id = ? ORDER BY channel`).all(scope.userId);
+    const saved = new Map(rows.map(row => [row.channel, row.enabled]));
+    return Object.freeze(PRESS_RELEASE_PUSH_CHANNELS.filter(channel => notificationPreferenceEnabled(this.database, saved.get(channel))));
   }
 
   replacePushPreferences(input: Readonly<{
@@ -280,6 +289,7 @@ WHERE user_id = ? AND enabled = 1 ORDER BY channel`).all(scope.userId);
       requested.add(channel);
     }
     this.database.transaction(() => {
+      if (!canReceiveMembershipNotification(this.database, input.scope.userId, "press_release")) return;
       for (const channel of PRESS_RELEASE_PUSH_CHANNELS) {
         this.database.prepare(`INSERT INTO news_press_release_push_preferences (
   user_id, channel, enabled, updated_at_utc

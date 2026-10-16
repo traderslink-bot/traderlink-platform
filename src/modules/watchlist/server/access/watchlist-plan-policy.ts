@@ -74,9 +74,21 @@ export function readWatchlistPlanDecisions(db: Database.Database, userId: string
   const rows = db.prepare("SELECT symbol FROM platform_watchlist_plan_policies WHERE control=? AND mode='plans'").all(control) as { symbol: string }[];
   if (!rows.length) return new Map();
   const sources = new PlatformMembershipRepository(db).readEffectiveAccess(userId).sources;
+  const hasPresentations=Boolean(db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_membership_plan_presentations'").get());
   const planIds = new Set(sources.flatMap(source => {
     const row = db.prepare("SELECT plan_id FROM platform_membership_plan_versions WHERE plan_version_id=?").get(source.planVersionId) as { plan_id: string } | undefined;
-    return row ? [row.plan_id] : [];
+    const ids=row?[row.plan_id]:[];
+    if(hasPresentations){
+      const snapshot=db.prepare("SELECT document_json FROM platform_membership_plan_presentations WHERE plan_version_id=?").get(source.planVersionId) as {document_json:string}|undefined;
+      if(snapshot){
+        const components=z.object({bundleOfferIds:z.array(z.uuidv4()).default([])}).parse(JSON.parse(snapshot.document_json)).bundleOfferIds;
+        for(const offer of components){
+          const component=db.prepare("SELECT v.plan_id FROM platform_membership_offers o JOIN platform_membership_plan_versions v USING(plan_version_id) WHERE o.offer_id=?").get(offer) as {plan_id:string}|undefined;
+          if(component)ids.push(component.plan_id);
+        }
+      }
+    }
+    return ids;
   }));
   const selected = db.prepare("SELECT plan_id FROM platform_watchlist_plan_policy_plans WHERE symbol=? AND control=?");
   return new Map(rows.map(row => [row.symbol, (selected.all(row.symbol, control) as { plan_id: string }[]).some(plan => planIds.has(plan.plan_id))]));

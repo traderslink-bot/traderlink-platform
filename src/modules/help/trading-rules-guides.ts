@@ -13,6 +13,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["trading rules", "trading plan", "discipline", "process", "getting started"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Trading Rules help you compare your completed Day trades with the limits and habits you chose. They give you a consistent record of what was Followed, Broken, unavailable or left without a manual selection." }),
+          Object.freeze({ kind: "paragraph", text: "Your plan determines whether preset rules are available and how many active custom rules you can have across your Journal accounts. An unlimited allowance has no plan quantity cap. Pausing or retiring a custom rule frees a slot; reactivating it needs an available slot. Existing rule history is preserved if your plan changes. You can browse preset rule descriptions even when your plan does not include activation. When activation or a custom-rule allowance is restricted, the editor links to Journal plans." }),
           Object.freeze({ kind: "callout", title: "Facts, not advice", text: "TraderLink reports what happened in your saved trading record. It does not decide whether you should keep, change or remove a rule." }),
         ]),
       }),
@@ -140,7 +141,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["rule library", "search rules", "category", "add rule", "preset"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open the Rule library", text: "Open Trading Rules and move to Rule library." }),
+            Object.freeze({ title: "1. Open the Rule library", text: "Open Trading Rules and select Browse presets. The preset library opens on desktop and mobile. Choose a preset and its settings, then select Activate rule. If your plan excludes preset rules, activation shows an upgrade prompt and does not add the rule." }),
             Object.freeze({ title: "2. Search or filter", text: "Search by name or description, or choose a rule group to narrow the list." }),
             Object.freeze({ title: "3. Read the check", text: "Review what the preset checks, whether it applies to a trade, ticker day or complete day, and what information it needs." }),
             Object.freeze({ title: "4. Add the rule", text: "Choose Add rule, enter the requested setting and activate it." }),

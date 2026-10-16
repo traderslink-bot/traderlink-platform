@@ -285,7 +285,7 @@ function TradersLinkBetaPromotion() {
         </span>
         <Link
           className="news-traderslink-beta-action-button"
-          href="/api/auth/discord/login?returnTo=%2Fworkspace"
+          href="/login?returnTo=%2Fworkspace"
         >
           LOG IN NOW!
         </Link>

@@ -1,5 +1,5 @@
 "use client";
-import { TradeAnalyzerAllowanceSummary } from "../trade-analyzer-allowance-summary";
+import { TradeAnalyzerAllowanceSummary, TradeAnalyzerUpgradeLink } from "../trade-analyzer-allowance-summary";
 import type { SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
@@ -102,8 +102,8 @@ function deleteFailureMessage(code: unknown): string {
   return "The execution could not be deleted. Refresh the page and try again.";
 }
 
-function ActionButton({ children, color = "text.primary", desktopOnly = false, label, onClick }: Readonly<{ children: ReactNode; color?: string; desktopOnly?: boolean; label: string; onClick: () => void }>) {
-  return <Tooltip title={label}><IconButton aria-label={label} onClick={(event) => { event.stopPropagation(); onClick(); }} size="small" sx={{ color, display: desktopOnly ? { xs: "none", md: "inline-flex" } : "inline-flex" }}>{children}</IconButton></Tooltip>;
+function ActionButton({ children, color = "text.primary", desktopOnly = false, disabled = false, label, onClick }: Readonly<{ children: ReactNode; color?: string; desktopOnly?: boolean; disabled?: boolean; label: string; onClick: () => void }>) {
+  return <Tooltip title={label}><IconButton disabled={disabled} aria-label={label} onClick={(event) => { event.stopPropagation(); onClick(); }} size="small" sx={{ color, display: desktopOnly ? { xs: "none", md: "inline-flex" } : "inline-flex" }}>{children}</IconButton></Tooltip>;
 }
 
 function workspaceSubmissionSummary(preview: JournalManualTradePreview): string {
@@ -173,7 +173,7 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
       </Stack>}
       <Stack spacing={1.25} sx={{ p: embedded ? 0 : 2 }}>
         <Stack direction="row" spacing={1}>{fixedSymbol ? <TextField disabled label="Ticker" size="small" sx={{ width: { xs: 150, sm: 180 } }} value={symbol} /> : <TextField label="Ticker" onChange={(event) => { setError(null); setSymbol(event.target.value.toUpperCase()); }} size="small" sx={{ width: { xs: 150, sm: 180 } }} value={symbol} />}<TextField label="Day Trade/Swing" onChange={(event) => { setError(null); setWorkspaceStyle(event.target.value as "day_trade" | "swing"); }} select size="small" sx={{ width: 154 }} value={workspaceStyle}><MenuItem value="day_trade">Day Trade</MenuItem><MenuItem value="swing">Swing</MenuItem></TextField></Stack>
-        <Typography color="text.secondary" variant="body2">Times use Eastern Time.</Typography>
+        <Typography color="text.secondary" variant="body2">Times use your account timezone: {accountTimezone}.</Typography>
         <Typography color="text.secondary" variant="body2">Entering the correct execution time keeps your trades in order. Trade Analyzer uses 1-minute candles, so you can enter the time from the matching chart candle when you do not have the broker timestamp.</Typography>
         <Typography color="text.secondary" variant="body2">Entering multiple trades? <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 750, textDecoration: "none" }} variant="inherit">Use Trade Tracker to review your day.</Typography></Typography>
         {rows.map((row, index) => <Box key={row.id} sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2, p: 1.25 }}>
@@ -197,7 +197,7 @@ function AddTradePanel({ accountCurrency, accountTimezone, embedded = false, exp
       <Dialog fullWidth maxWidth="sm" onClose={saving ? undefined : () => setSubmissionConfirmation(null)} open={submissionConfirmation !== null}>
         <DialogTitle>Confirm trade entries</DialogTitle>
         <DialogContent><Stack spacing={1.5}><Typography>{submissionConfirmation ? workspaceSubmissionSummary(submissionConfirmation.preview) : ""}</Typography>
-          {submissionConfirmation ? <ManualTradePostEntryReview analyzerGroupRefs={[]} analyzerUses={null} groups={submissionConfirmation.preview.groups} merges={logicalTradeMerges} onAnalyzerGroupRefsChange={() => undefined} onError={setError} onMergesChange={setLogicalTradeMerges} /> : null}
+          {submissionConfirmation ? <ManualTradePostEntryReview timezone={accountTimezone} analyzerGroupRefs={[]} analyzerUses={null} groups={submissionConfirmation.preview.groups} merges={logicalTradeMerges} onAnalyzerGroupRefsChange={() => undefined} onError={setError} onMergesChange={setLogicalTradeMerges} /> : null}
           {error ? <Typography color="error.main" variant="body2">{error}</Typography> : null}
         </Stack></DialogContent>
         <DialogActions><Button disabled={saving} onClick={() => setSubmissionConfirmation(null)}>Cancel</Button><Button disabled={saving} onClick={() => void confirmSubmission()} variant="contained">{saving ? "Saving..." : "Confirm trades"}</Button></DialogActions>
@@ -451,6 +451,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
           availability?: typeof analyzerUses;
           outcome?: string;
         }> | null;
+        if (result?.availability) setAnalyzerUses(result.availability);
         if (!response.ok || (result?.outcome !== "queued" && result?.outcome !== "already_requested")) {
           setAnalyzerError(result?.outcome === "retry_limit_reached"
             ? "This trade has used its three free candle-data retries for today. You can try again after midnight New York time. Analysis using sufficient saved candles remains free."
@@ -460,7 +461,6 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
           return;
         }
         setAnalyzerSelection((current) => current.filter((id) => id !== roundTripId));
-        setAnalyzerUses(result.availability ?? null);
       }
       setAnalyzerSuccess(selectedCount === 1
         ? "Trade sent to Trade Analyzer."
@@ -512,7 +512,8 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
                   <Typography color="inherit" sx={{ fontWeight: 850 }}>{tradeMoney(trade)}</Typography>
                 </Stack>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", mt: 1 }}>
-                  {analyzable ? <FormControlLabel control={<Checkbox checked={analyzerSelection.includes(trade.roundTripId)} onChange={(event) => toggleAnalysis(trade, event.target.checked)} sx={{ color: "common.white", "&.Mui-checked": { color: "common.white" } }} />} label="Analyze" sx={{ m: 0, "& .MuiFormControlLabel-label": { fontSize: "0.875rem", fontWeight: 800 } }} /> : <Box />}
+                  {analyzable ? <FormControlLabel control={<Checkbox disabled={analyzerUses?.membership?.included === false} checked={analyzerSelection.includes(trade.roundTripId)} onChange={(event) => toggleAnalysis(trade, event.target.checked)} sx={{ color: "common.white", "&.Mui-checked": { color: "common.white" } }} />} label="Analyze" sx={{ m: 0, "& .MuiFormControlLabel-label": { fontSize: "0.875rem", fontWeight: 800 } }} /> : <Box />}
+                  {analyzable ? <TradeAnalyzerUpgradeLink availability={analyzerUses} /> : null}
                   <Button color="inherit" disabled={journalSaving} endIcon={journalOpen ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />} onClick={() => requestReviewAction(() => setExpandedJournalTradeId((current) => current === trade.roundTripId ? null : trade.roundTripId))} sx={{ color: "inherit", fontWeight: 800 }}>Journal</Button>
                 </Stack>
               </Box>
@@ -532,7 +533,7 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
               <Button onClick={() => void loadAnalyzerUses()} size="small">Try again</Button>
             </Stack> : null}
           </Box>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button disabled={journalSaving || sendingAnalyses} onClick={() => requestReviewAction(() => { setSavedTrades([]); setSavedReviewComplete(false); setSavedReviewError(null); })} variant="outlined">Add another trade</Button>{analyzerUses?.enabled && savedTrades.length > 0 ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button disabled={journalSaving || sendingAnalyses} onClick={() => requestReviewAction(() => { setSavedTrades([]); setSavedReviewComplete(false); setSavedReviewError(null); })} variant="outlined">Add another trade</Button>{analyzerUses?.enabled && savedTrades.length > 0 ? <Button disabled={analyzerSelection.length === 0 || sendingAnalyses || analyzerUses.membership?.included === false} onClick={() => void sendSelectedAnalyses()} variant="contained">{sendingAnalyses ? "Sending…" : "Send selected analyses"}</Button> : null}</Stack>
         </Stack>}
       </Box>
     </Stack>
@@ -552,6 +553,29 @@ export function WorkspaceTradeDrawer({ accountCurrency, accountTimezone, addOpen
 
 export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTradeOpen, customEndDate, customStartDate, expectedAccountSelectionRef, offlineScopeRef, onAddTradeClose, periodEndDate, periodStartDate, trades }: Readonly<{ accountCurrency: string; accountTimezone: string; addTradeOpen: boolean; customEndDate: string | null; customStartDate: string | null; expectedAccountSelectionRef: string; offlineScopeRef: string; onAddTradeClose: () => void; periodEndDate: string | null; periodStartDate: string | null; trades: WorkspaceTradeLibraryModel }>) {
   const router = useRouter(); const searchParams = useSearchParams(); const { openChart } = useDashboardChart(); const [model, setModel] = useState(trades); const [detailsTrade, setDetailsTrade] = useState<WorkspaceTradeLibraryRow | null>(null); const [detailsTab, setDetailsTab] = useState<"details" | "analyzer">("details"); const [atomicEditTrade, setAtomicEditTrade] = useState<WorkspaceTradeLibraryRow | null>(null); const [atomicEditTab, setAtomicEditTab] = useState<"trade" | "journal">("trade"); const [ticker, setTicker] = useState(trades.query.searchTicker); const [filter, setFilter] = useState<TradeStateFilter>(trades.query.filter); const [startDate, setStartDate] = useState(customStartDate ?? ""); const [endDate, setEndDate] = useState(customEndDate ?? ""); const [sort, setSort] = useState<TradeSort>(trades.query.sort); const [group, setGroup] = useState<TradeGroup>(trades.query.group); const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false); const [loading, setLoading] = useState(false); const [error, setError] = useState<string | null>(null); const [tableDelete, setTableDelete] = useState<Readonly<{ deleteRef: string; executionCount: number; roundTripId: string; symbol: string }> | null>(null); const [deletingTableExecution, setDeletingTableExecution] = useState(false); const [tableDeleteError, setTableDeleteError] = useState<string | null>(null);
+  const [analyzerNotice, setAnalyzerNotice] = useState<{ availability?: SharedAnalyzerAvailability; error?: string } | null>(null);
+  const [checkingAnalyzer, setCheckingAnalyzer] = useState(false);
+  const openAnalyzer = async (row: WorkspaceTradeLibraryRow) => {
+    if (checkingAnalyzer) return;
+    setCheckingAnalyzer(true);
+    try {
+      const response = await fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" });
+      const payload = await response.json() as { availability?: SharedAnalyzerAvailability | null };
+      if (!response.ok || !payload.availability?.enabled) {
+        setAnalyzerNotice({ error: "Trade Analyzer access could not be checked. Please try again." });
+        return;
+      }
+      const availability = payload.availability;
+      if (availability.membership?.included === false || (!row.hasCurrentAnalyzerResult && availability.membership?.remaining === 0)) {
+        setAnalyzerNotice({ availability });
+        return;
+      }
+      setDetailsTab("analyzer");
+      setDetailsTrade(row);
+    } catch {
+      setAnalyzerNotice({ error: "Trade Analyzer access could not be checked. Please try again." });
+    } finally { setCheckingAnalyzer(false); }
+  };
   useEffect(() => { setModel(trades); setTicker(trades.query.searchTicker); setFilter(trades.query.filter); setStartDate(customStartDate ?? ""); setEndDate(customEndDate ?? ""); setSort(trades.query.sort); setGroup(trades.query.group); }, [customEndDate, customStartDate, trades]);
   const query = (afterCursor: string | null) => { const dates = startDate && endDate ? { endDate, startDate } : { endDate: periodEndDate, startDate: periodStartDate }; return { afterCursor, ...dates, filter, followDashboardPeriod: false, group, searchTicker: ticker, sort } as const; };
   const currentAccountStillMatches = async () => { const result = await loadWorkspaceTradeLibraryPage(query(null)); if (!result.ok || result.accountSelectionRef !== expectedAccountSelectionRef) { setAtomicEditTrade(null); setDetailsTrade(null); setTableDelete(null); router.refresh(); return false; } return true; };
@@ -563,7 +587,7 @@ export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTra
   const clearFilters = () => { setTicker(""); setFilter("all"); setStartDate(""); setEndDate(""); setSort("newest"); setGroup("none"); };
   const prepareTableDelete = async (row: WorkspaceTradeLibraryRow, deleteRef: string) => { if (!(await currentAccountStillMatches())) return; setTableDelete({ deleteRef, executionCount: row.executionCount, roundTripId: row.roundTripId, symbol: row.symbol }); setTableDeleteError(null); };
   const closeAtomicEdit = () => setAtomicEditTrade(null);
-  const actionButtons = (row: WorkspaceTradeLibraryRow) => <Stack direction="row" spacing={0.25}><ActionButton label={`Open chart for ${row.symbol}`} onClick={() => openChart(row.symbol)}><CandlestickChartIcon fontSize="small" /></ActionButton><ActionButton label={`Open details for ${row.symbol}`} onClick={() => { setDetailsTab("details"); setDetailsTrade(row); }}><DescriptionOutlinedIcon fontSize="small" /></ActionButton><ActionButton label="Edit trade" onClick={() => { setAtomicEditTab("trade"); setAtomicEditTrade(row); }}><EditRoundedIcon fontSize="small" /></ActionButton>{row.tradeDeleteRef ? <ActionButton desktopOnly label="Delete trade" onClick={() => void prepareTableDelete(row, row.tradeDeleteRef!)}><DeleteOutlineRoundedIcon fontSize="small" /></ActionButton> : null}<ActionButton color={row.hasCurrentAnalyzerResult ? "warning.main" : undefined} label={row.hasCurrentAnalyzerResult ? "Open saved Trade Analyzer" : "Open Trade Analyzer"} onClick={() => { setDetailsTab("analyzer"); setDetailsTrade(row); }}><InsightsRoundedIcon fontSize="small" /></ActionButton></Stack>;
+  const actionButtons = (row: WorkspaceTradeLibraryRow) => <Stack direction="row" spacing={0.25}><ActionButton label={`Open chart for ${row.symbol}`} onClick={() => openChart(row.symbol)}><CandlestickChartIcon fontSize="small" /></ActionButton><ActionButton label={`Open details for ${row.symbol}`} onClick={() => { setDetailsTab("details"); setDetailsTrade(row); }}><DescriptionOutlinedIcon fontSize="small" /></ActionButton><ActionButton label="Edit trade" onClick={() => { setAtomicEditTab("trade"); setAtomicEditTrade(row); }}><EditRoundedIcon fontSize="small" /></ActionButton>{row.tradeDeleteRef ? <ActionButton desktopOnly label="Delete trade" onClick={() => void prepareTableDelete(row, row.tradeDeleteRef!)}><DeleteOutlineRoundedIcon fontSize="small" /></ActionButton> : null}<ActionButton color={row.hasCurrentAnalyzerResult ? "warning.main" : undefined} label={row.hasCurrentAnalyzerResult ? "Open saved Trade Analyzer" : "Open Trade Analyzer"} disabled={checkingAnalyzer} onClick={() => void openAnalyzer(row)}><InsightsRoundedIcon fontSize="small" /></ActionButton></Stack>;
   const deleteFromTable = async () => { if (!tableDelete || !(await currentAccountStillMatches())) return; setDeletingTableExecution(true); setTableDeleteError(null); try { const response = await fetch(`/api/platform/journal/workspace-trades/${tableDelete.deleteRef}`, { body: JSON.stringify({ expectedAccountSelectionRef, idempotencyKey: crypto.randomUUID(), roundTripId: tableDelete.roundTripId }), headers: { "Content-Type": "application/json", [JOURNAL_MUTATION_REQUEST_HEADER]: "1" }, method: "DELETE" }); const result = await response.json().catch(() => null) as Readonly<{ code?: unknown }> | null; if (!response.ok) { setTableDeleteError(deleteFailureMessage(result?.code)); return; } setDetailsTrade(null); setAtomicEditTrade(null); setTableDelete(null); window.location.reload(); } catch { setTableDeleteError("The trade could not be deleted. Refresh the page and try again."); } finally { setDeletingTableExecution(false); } };
   const emptyState = model.projectionState === "unavailable"
     ? "Your existing trades are not available in Workspace yet."
@@ -635,6 +659,14 @@ export function WorkspaceTradeLibrary({ accountCurrency, accountTimezone, addTra
       </Box>)}
     </Box>
     {model.continuationCursor ? <Stack sx={{ alignItems: "center", mt: 1 }}><Button disabled={loading} onClick={() => void load(model.continuationCursor, true)} variant="outlined">{loading ? "Loading…" : "Load more"}</Button></Stack> : null}
+    <Dialog aria-labelledby="analyzer-access-title" fullWidth maxWidth="xs" open={analyzerNotice !== null} onClose={() => setAnalyzerNotice(null)}>
+      <DialogTitle id="analyzer-access-title">Trade Analyzer</DialogTitle>
+      <DialogContent>{analyzerNotice?.availability ? <Stack spacing={1.5}>
+        {analyzerNotice.availability.membership?.included !== false ? <Typography>Your Analyzer allowance has been used up.</Typography> : null}
+        <TradeAnalyzerAllowanceSummary availability={analyzerNotice.availability} />
+      </Stack> : <Typography>{analyzerNotice?.error}</Typography>}</DialogContent>
+      <DialogActions><Button onClick={() => setAnalyzerNotice(null)}>Close</Button></DialogActions>
+    </Dialog>
     <TradeDetailsDrawer analyzer={detailsTrade ? { currency: detailsTrade.tradeCurrency, direction: detailsTrade.direction, executionCount: detailsTrade.executionCount, gainLossDecimal: detailsTrade.gainLossDecimal, symbol: detailsTrade.symbol, timezone: accountTimezone } : null} initialTab={detailsTab} onClose={() => setDetailsTrade(null)} open={detailsTrade !== null} roundTripId={detailsTrade?.roundTripId ?? null} />
     <WorkspaceTradeDrawer accountCurrency={accountCurrency} accountTimezone={accountTimezone} addTradeOpen={addTradeOpen} expectedAccountSelectionRef={expectedAccountSelectionRef} offlineScopeRef={offlineScopeRef} onClose={() => { onAddTradeClose(); window.location.reload(); }} />
     <WorkspaceAtomicTradeEditDrawer expectedAccountSelectionRef={expectedAccountSelectionRef} journalTarget={atomicEditTrade ? { closeLocalDate: atomicEditTrade.exitDate, closedAtUtc: null, direction: atomicEditTrade.direction, displayedSymbol: atomicEditTrade.symbol, roundTripId: atomicEditTrade.roundTripId } : null} onClose={closeAtomicEdit} onSaved={() => { closeAtomicEdit(); window.location.reload(); }} open={atomicEditTrade !== null} roundTripId={atomicEditTrade?.roundTripId ?? null} startingTab={atomicEditTab} />

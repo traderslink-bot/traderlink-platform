@@ -27,7 +27,7 @@ function record(value: unknown): Record<string, unknown> {
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.rules"] });
     const body = record(await request.json());
     requireExpectedJournalAccountSelection(
       scope,

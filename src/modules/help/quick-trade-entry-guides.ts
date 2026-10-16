@@ -23,7 +23,7 @@ export const QUICK_TRADE_ENTRY_HELP_GUIDES: readonly HelpGuide[] = Object.freeze
   guide("enter-executions", "Enter executions across dates", "Add as many completed fills as you need, including rows from different past trading dates.", [
     section("add-rows", "Add every completed fill", "Keep partial entries, adds, partial exits and final exits as separate rows.", ["add execution", "partial exit", "add", "multiple trades"], [
       steps([
-        Object.freeze({ title: "1. Start with one execution", text: "Enter its trading date, Eastern Time, ticker, Buy or Sell side, quantity and price." }),
+        Object.freeze({ title: "1. Start with one execution", text: "Enter its trading date and time in the selected account timezone shown in the form, plus ticker, Buy or Sell side, quantity and price. Confirmation shows the full dates, timezone and UTC offset before you save." }),
         Object.freeze({ title: "2. Add another row", text: "Add rows for every later fill, including a fill on a different past date." }),
         Object.freeze({ title: "3. Add reported fees", text: "Enter fees only when the broker reports them. Leave an unknown fee blank rather than guessing." }),
         Object.freeze({ title: "4. Save the batch", text: "Check the entries before saving. TraderLink keeps each execution on its actual trading date." }),

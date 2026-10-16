@@ -1,3 +1,5 @@
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { deflateSync, inflateSync } from "node:zlib";
@@ -975,6 +977,10 @@ export async function createTradeExplorerPdfReport(
   scope: WorkspaceAccessScope,
   input: unknown,
 ): Promise<Readonly<{ bytes: Buffer; filename: string }>> {
+  withReadonlyPlatformDatabase({}, database => {
+    assertMembershipFeature(database, scope.userId, "analytics.trade_explorer");
+    assertMembershipFeature(database, scope.userId, "analytics.exports");
+  });
   const value = inputRecord(input);
   if (JSON.stringify(Object.keys(value).sort()) !== JSON.stringify([
     "query", "resultView", "sortDirection", "tradeSort",

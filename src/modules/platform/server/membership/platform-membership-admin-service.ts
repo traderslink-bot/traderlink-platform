@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { membershipTrialSameFamilySql } from "./membership-trial-lineage";
 import { createCanonicalUtcTimestamp, assertCanonicalUtcTimestamp } from "../database/platform-migration-contract";
 
 import { isPlatformMembershipCatalogAvailable } from
@@ -66,7 +67,7 @@ WHERE offer.status IN ('draft','active') ORDER BY plan.name,offer.name`).all() a
           AND (enrollment_starts_at_utc IS NULL OR enrollment_starts_at_utc<=?)
           AND (enrollment_ends_at_utc IS NULL OR enrollment_ends_at_utc>?)
           AND (capacity IS NULL OR capacity>(SELECT COUNT(*) FROM platform_membership_claims c
-            WHERE c.trial_campaign_id=platform_membership_trial_campaigns.trial_campaign_id
+            WHERE ${membershipTrialSameFamilySql(this.database, "platform_membership_trial_campaigns.trial_campaign_id")}
             AND (c.state='fulfilled' OR (c.state='reserved' AND c.expires_at_utc>?))))`, 3),
         activeShareLinks: effectiveCount("platform_membership_share_links", "status='active' AND created_at_utc<=? AND (expires_at_utc IS NULL OR expires_at_utc>?) AND (maximum_claims IS NULL OR claim_count<maximum_claims)"),
       }),

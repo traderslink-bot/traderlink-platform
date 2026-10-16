@@ -1,3 +1,4 @@
+import { membershipUpgradeCatalog } from "@/src/modules/platform/server/membership/membership-upgrade-catalog";
 import type { Metadata } from "next";
 
 import { withReadonlyPlatformDatabase } from
@@ -19,13 +20,16 @@ export default async function PlansPage({ searchParams }: { searchParams: Promis
   let plans = Object.freeze([]) as ReturnType<PlatformMembershipCatalogRepository["readPublicPlans"]>;
   try {
     plans = withReadonlyPlatformDatabase({}, (database) => {
-      const publicPlans = new PlatformMembershipCatalogRepository(database).readPublicPlans(feature);
-      return watchlistTicker && (watchlistControl === "ticker" || watchlistControl === "analysis" || watchlistControl === "levels")
+      const catalog = new PlatformMembershipCatalogRepository(database);
+      const publicPlans = catalog.readPublicPlans(feature);
+      const matching = watchlistTicker && (watchlistControl === "ticker" || watchlistControl === "analysis" || watchlistControl === "levels")
         ? filterWatchlistPublicPlans(database, watchlistTicker.toUpperCase(), watchlistControl, publicPlans) : publicPlans;
+      return feature && matching.some(plan => plan.packageType === "addon")
+        ? membershipUpgradeCatalog(matching, catalog.readPublicPlans()) : matching;
     });
   } catch {
     // Public rendering stays truthful while the membership migration or hosted
     // storage is not available. It never invents plans or prices.
   }
-  return <PlanCatalog plans={plans} />;
+  return <PlanCatalog plans={plans} upgradeFeature={feature} />;
 }

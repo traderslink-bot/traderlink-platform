@@ -73,13 +73,13 @@ export function MembershipManagementPanels({ database, section }: { database: Da
       <Field name="requestedTotal" label="Total usage after the change" type="number" hint="For numeric limits. Leave blank when checking an included-access feature." />
     </MembershipForm></Stack></Stack>
   </JournalAdminPanel>;
-  if (section === "Prices & checkout") return <Stack spacing={3}>
+  if (section === "Payment providers" || section === "Prices & checkout") return <Stack spacing={3}>
     <JournalAdminPanel title="Payment providers"><MembershipForm action={manageMembershipAction} label="Save provider"><Command operation="provider" />
       <Field name="providerKey" label="Provider key" required hint="For example stripe, whop, free, or your own provider." />
       <Field name="label" label="Provider name" required /><Select name="integrationMode" label="Integration" options={["native", "external_checkout", "manual", "free"]} />
       <Select name="configurationState" label="Connection status" options={["unconfigured", "test", "ready", "paused"]} />
     </MembershipForm></JournalAdminPanel>
-    <JournalAdminPanel title="New price"><MembershipForm action={manageMembershipAction} label="Create offer"><Command operation="offer" />
+    {section === "Prices & checkout" ? <><JournalAdminPanel title="New price"><MembershipForm action={manageMembershipAction} label="Create offer"><Command operation="offer" />
       <Select name="planVersionId" label="Plan version" options={versions} /><Field name="name" label="Offer name" required />
       <Select name="provider" label="Payment provider" options={providers} /><Select name="channel" label="Availability" options={["website", "discord", "both", "private"]} />
       <Select name="billingKind" label="Payment type" options={["free", "one_time", "recurring", "lifetime"]} />
@@ -94,7 +94,7 @@ export function MembershipManagementPanels({ database, section }: { database: Da
     </MembershipForm></JournalAdminPanel>
     <JournalAdminPanel title="Offer availability"><MembershipForm action={manageMembershipAction} label="Update offer"><Command operation="offer_status" />
       <Select name="offerId" label="Offer" options={offers} /><Select name="status" label="Status" options={["active", "paused", "retired"]} />
-    </MembershipForm></JournalAdminPanel>
+    </MembershipForm></JournalAdminPanel></> : null}
   </Stack>;
   if (section === "Trials") {
     const trials = database.prepare(`SELECT t.trial_campaign_id id,t.name||' · '||t.status label,x.external_checkout_url checkout

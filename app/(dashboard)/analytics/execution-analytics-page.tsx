@@ -1,3 +1,4 @@
+import { MembershipFeatureAccessNotice } from "../membership-feature-access-notice";
 import "server-only";
 
 import Box from "@mui/material/Box";
@@ -29,7 +30,7 @@ import {
 import { compareExactDecimals, multiplyExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
 import { toLogicalTradeAnalyticsTable } from "@/src/modules/journal-analytics/server/logical-trade-analytics-table";
 import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import {
   ExecutionAnalyticsClient,
@@ -220,7 +221,8 @@ function range(input: Readonly<Record<string, string | string[] | undefined>>): 
 }
 
 export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = await requireMembershipPageScope("analytics.access");
+  const scope = await requireMembershipPreviewPageScope("analytics.access");
+  if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
   const selectedRange = range(searchParams);
   const closingDateRange = selectedRange.startDate && selectedRange.endDate
     ? { endDate: selectedRange.endDate, kind: "inclusive_closing_date" as const, startDate: selectedRange.startDate }

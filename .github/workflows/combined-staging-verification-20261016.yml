@@ -1,0 +1,29 @@
+name: Combined staging release verification
+on:
+  push:
+    branches:
+      - codex/combined-staging-20261016-*
+permissions:
+  contents: read
+concurrency:
+  group: combined-staging-20261016
+  cancel-in-progress: false
+jobs:
+  release-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Guarded disposable 160-to-163 migration rehearsal
+        run: node --import tsx src/scripts/membership-coaching-staging-maintenance-20261016.ts --rehearse
+      - name: Full application build and TypeScript
+        run: npm run build

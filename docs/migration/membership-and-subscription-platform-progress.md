@@ -1,6 +1,8 @@
 # TraderLink Membership And Subscription Platform Progress
 
-**Status:** Local membership implementation and QA complete under the revised owner scope. Payment integration/verification is a separate final goal; no deployment is claimed.
+**Current unified-editor work:** [Codespaces QA record](membership-unified-plan-editor-progress.md). Owner UI review and fresh interactive QA remain open. Production waits for explicit owner authorization. Older completion statements below concern earlier Memberships functionality.
+
+**Historical status:** Local membership implementation and QA complete under the revised owner scope. Payment integration/verification is a separate final goal; no deployment is claimed.
 
 **Current record:** [Final local acceptance checkpoint](membership-local-acceptance-checkpoint.md). It supersedes the historical in-progress and blocker notes below and records external verification limits.
 

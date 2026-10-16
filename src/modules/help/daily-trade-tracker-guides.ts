@@ -11,7 +11,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
   Object.freeze({
     slug: "getting-started",
     title: "Getting started",
-    description: "Learn the page, the language used in the tracker and a practical daily review workflow.",
+    description: "Learn the page, the language used in the tracker and a practical daily review workflow. Session Tracker requires a plan that includes it; excluded plans show an upgrade link. Manual trade entry remains part of Trading Journal.",
     sections: Object.freeze([
       Object.freeze({
         id: "open-and-navigate",
@@ -82,12 +82,12 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
       Object.freeze({
         id: "enter-executions",
         title: "Enter executions from your broker",
-        summary: "Use the broker-shown date, Eastern Time, ticker, side, quantity, price and fees.",
+        summary: "Use the broker-shown date, time, ticker, side, quantity, price and fees in the selected account timezone.",
         keywords: Object.freeze(["manual entry", "date", "time", "ticker", "side", "quantity", "price", "fees"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Open the manual trade form and copy each fill from your broker. Accurate details improve the chart review now and any later statement matching." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
-            "Use the execution date and Eastern Time shown by the broker. If you do not have the broker timestamp, use the time of the matching one-minute chart candle.",
+            "Enter the execution date and time in the selected account timezone named in the form. Convert a broker or chart time to that timezone when needed. Confirmation shows full dates, the account timezone and UTC offset before saving.",
             "The execution form stays available when you reopen a traded day, so you can add a missed fill as well as edit an earlier one.",
             "Enter the ticker, Buy or Sell side, filled quantity and execution price for every fill.",
             "Enter fees only when the broker reports them. Leaving an unknown fee blank is more accurate than guessing.",
@@ -95,7 +95,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "Every row in one Session Tracker save must belong to the same Eastern Time trading date. This keeps the day review, notes and rules tied to one trading day.",
           ]) }),
           Object.freeze({ kind: "callout", tone: "warning", title: "Use the fill, not the order", text: "An order can be cancelled, partially filled or filled at several prices. Record the completed broker fills that actually changed the position." }),
-          Object.freeze({ kind: "callout", title: "Connected Moomoo accounts update automatically", text: "After the first execution import completes, TradersLink checks an eligible linked Moomoo trading account regularly without requiring the Account page to remain open. Use Import latest trades in Broker Connections when you want an immediate check. Import older trades is the separate dated action for extending account history." }),
+          Object.freeze({ kind: "callout", title: "Connected Moomoo accounts update automatically", text: "While your plan includes imports and an allowed broker connection, after the first execution import completes TradersLink checks an eligible linked Moomoo trading account regularly without requiring the Account page to remain open. Use Import latest trades in Broker Connections when you want an immediate check. Import older trades is the separate dated action for extending account history." }),
         ]),
       }),
       Object.freeze({

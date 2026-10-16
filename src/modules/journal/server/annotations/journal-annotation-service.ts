@@ -11,7 +11,7 @@ import type {
   JournalRuleReviewStatus,
   JournalTagRecord,
 } from "@/src/modules/journal/contracts/journal-annotation-contracts";
-import { journalTagPresetByKey } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
+import { journalTagPresetByKey, journalTagPresetForName } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
   assertCanonicalUuidV4,
@@ -27,7 +27,6 @@ import {
 } from "./journal-rule-repository";
 
 export const JOURNAL_TAGS_PER_ROUND_TRIP_MAXIMUM = 10;
-export const JOURNAL_TAGS_PER_ACCOUNT_MAXIMUM = 200;
 
 function conflict(): never {
   return platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
@@ -140,13 +139,11 @@ export class JournalAnnotationService {
     input: Readonly<{ name: unknown; now?: Date }>,
   ): JournalTagRecord {
     const name = tagName(input.name);
-    if (this.annotations.listTags(scope, true).length >= JOURNAL_TAGS_PER_ACCOUNT_MAXIMUM) {
-      invalid("tagLimit");
-    }
     const tagId = createCanonicalUuidV4();
     const versionId = createCanonicalUuidV4();
     try {
       return this.annotations.immediate(() => {
+        this.annotations.requireCustomTagCapacity(scope, name.name);
         this.annotations.insertTag({
           scope,
           tagId,
@@ -180,6 +177,9 @@ export class JournalAnnotationService {
     const name = tagName(input.name);
     try {
       return this.annotations.immediate(() => {
+        if (journalTagPresetForName(current.name)) {
+          this.annotations.requireCustomTagCapacity(scope, name.name);
+        }
         if (!this.annotations.appendTagVersion({
           scope,
           tagId: input.tagId,
@@ -312,11 +312,6 @@ export class JournalAnnotationService {
         .filter((tag) => tag.lifecycleState === "retired")
         .map((tag) => tag.name.trim().replace(/\s+/gu, " ").normalize("NFKC")
           .toLocaleLowerCase("en-US")));
-      const missingCount = presets.filter((preset) =>
-        !activeByName.has(preset.name.toLocaleLowerCase("en-US"))).length;
-      if (allTags.length + missingCount > JOURNAL_TAGS_PER_ACCOUNT_MAXIMUM) {
-        invalid("tagLimit");
-      }
       for (const preset of presets) {
         const normalized = preset.name.toLocaleLowerCase("en-US");
         if (retiredNames.has(normalized)) conflict();
@@ -519,6 +514,10 @@ export class JournalAnnotationService {
     return this.rules.list(scope);
   }
 
+  canAccessPresetRules(scope: AccountScope): boolean {
+    return this.rules.canAccessPresetRules(scope);
+  }
+
   listRulesForEvaluation(scope: AccountScope, fromUtc: string, untilUtc: string): readonly JournalRuleRecord[] {
     return this.rules.listForEvaluation(scope, fromUtc, untilUtc);
   }
@@ -549,6 +548,7 @@ export class JournalAnnotationService {
     const ruleId = createCanonicalUuidV4();
     try {
       return this.rules.immediate(() => {
+        this.rules.requireRuleCapacity(scope, input.sourceKind);
         this.rules.insert({
           scope,
           ruleId,
@@ -597,6 +597,7 @@ export class JournalAnnotationService {
     const isFocus = input.isFocus;
     const configuration = canonicalConfiguration(input.configuration);
     return this.rules.immediate(() => {
+      if (current.sourceKind === "template") this.rules.requireRuleCapacity(scope, "template");
       const versionId = createCanonicalUuidV4();
       const at = timestamp(input.now);
       this.rules.insertVersion({
@@ -647,6 +648,9 @@ export class JournalAnnotationService {
     }
     const previousState = current.lifecycleState as "active" | "paused";
     return this.rules.immediate(() => {
+      if (previousState === "paused" && input.newState === "active") {
+        this.rules.requireRuleCapacity(scope, current.sourceKind);
+      }
       if (!this.rules.transition({
         scope,
         ruleId: input.ruleId,

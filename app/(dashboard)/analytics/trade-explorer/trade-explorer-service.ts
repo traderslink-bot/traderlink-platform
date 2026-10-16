@@ -1,3 +1,4 @@
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import "server-only";
 
 import type Database from "better-sqlite3";
@@ -361,12 +362,20 @@ function annotationRoundTripIds(
   });
 }
 
+function assertExplorerAccess(scope: WorkspaceAccessScope, compare = false): void {
+  withReadonlyPlatformDatabase({}, database => {
+    assertMembershipFeature(database, scope.userId, "analytics.trade_explorer");
+    if (compare) assertMembershipFeature(database, scope.userId, "analytics.compare_trades");
+  });
+}
+
 async function execute(
   scope: WorkspaceAccessScope,
   input: TradeExplorerQuery,
   afterCursor: string | null = null,
   tableOrder: JournalAnalyticsTableOrder = tradeExplorerTableOrder("closed_desc"),
 ): Promise<AnalyticsLabPlatformPreview> {
+  assertExplorerAccess(scope);
   const asOfUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(
     scope,
@@ -583,6 +592,7 @@ export async function runCompleteTradeExplorerTableQuery(
   input: unknown,
   tradeSort?: unknown,
 ): Promise<AnalyticsLabPlatformPreview> {
+  assertExplorerAccess(scope);
   const normalizedRequest = normalizeTradeExplorerQueryRequest(input, tradeSort);
   const reportQuery = Object.freeze({
     ...normalizedRequest.query,
@@ -861,10 +871,12 @@ export async function runTradeExplorerComparison(
   scope: WorkspaceAccessScope,
   input: unknown,
 ): Promise<TradeExplorerComparisonResult> {
+  assertExplorerAccess(scope, true);
   const normalized = normalizeTradeExplorerComparison(input);
   const generatedAtUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service, verifiedReadonlyDatabase }) => {
     assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
+    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.compare_trades");
     const groups = normalized.groups.map((group) => {
       const query = Object.freeze({
         ...group.query,
@@ -934,6 +946,7 @@ export async function readTradeExplorerPageModel(
     startDate: string | null;
   }>,
 ): Promise<TradeExplorerPageModel> {
+  assertExplorerAccess(scope);
   const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, pnlReportingBasis, service, verifiedReadonlyDatabase }) => {
     assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
     const calendarInput = Object.freeze({

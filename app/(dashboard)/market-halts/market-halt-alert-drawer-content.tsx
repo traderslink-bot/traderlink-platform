@@ -14,6 +14,7 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 
 import { InstallTradersLinkPwaMethods } from "@/app/pwa/install-traderslink-pwa-card";
@@ -32,6 +33,7 @@ type DrawerMessage = Readonly<{
   placement: "halt" | "muted";
   severity: "error" | "success";
   text: string;
+  upgrade?: boolean;
 }>;
 
 type HaltAlertServiceState = "checking" | "limited" | "ready" | "unavailable";
@@ -147,8 +149,8 @@ export function MarketHaltAlertDrawerContent({
   useEffect(() => {
     if (!notificationMuteTicker) return;
     onNotificationMuteHandled();
-    setMessage(null);
     startTransition(async () => {
+      setMessage(null);
       const result = await muteMarketHaltTicker(notificationMuteTicker);
       if (!result.ok) {
         setMessage({ placement: "muted", severity: "error", text: result.message });
@@ -168,7 +170,7 @@ export function MarketHaltAlertDrawerContent({
       const result = await saveMarketHaltAlertsEnabled(nextEnabled);
       if (!result.ok) {
         onEnabledChange(enabled);
-        setMessage({ placement: "halt", severity: "error", text: result.message });
+        setMessage({ placement: "halt", severity: "error", text: result.message, upgrade: result.code === "membership_required" });
         return;
       }
       onEnabledChange(result.enabled);
@@ -263,7 +265,18 @@ export function MarketHaltAlertDrawerContent({
           {status.icon}
           {status.label}
         </Box>
-        {message?.placement === "halt" ? <Alert aria-live="polite" role="status" severity={message.severity}>{message.text}</Alert> : null}
+        {message?.placement === "halt" ? (
+          <Alert aria-live="polite" role="status" severity={message.severity}>
+            {message.text}
+            {message.upgrade ? (
+              <Box sx={{ mt: 1 }}>
+                <Button component={Link} href="/plans?feature=notifications.market_halt" variant="contained">
+                  Unlock Market halts
+                </Button>
+              </Box>
+            ) : null}
+          </Alert>
+        ) : null}
       </Box>
       <Divider />
       <Box sx={{ display: "grid", gap: 1.25 }}>

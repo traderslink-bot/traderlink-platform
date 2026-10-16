@@ -2,6 +2,7 @@ import "server-only";
 
 export const PLATFORM_NOTIFICATION_DELIVERY_RESULT_CODES = [
   "membership_required",
+  "preference_disabled",
   "sent",
   "invalid_destination",
   "not_configured",

@@ -6,6 +6,8 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { JournalUpgradeLink } from "../membership-journal-upgrade-link";
+import { isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 import { useState } from "react";
 
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
@@ -21,12 +23,14 @@ export function AccountManagementClient({
   const [baseCurrency, setBaseCurrency] = useState("USD");
   const [tradingTimezone, setTradingTimezone] = useState(defaultTradingTimezone);
   const [working, setWorking] = useState(false);
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function createAccount() {
     if (!displayName.trim() || working) return;
     setWorking(true);
     setError(null);
+    setUpgradeRequired(false);
     try {
       const response = await fetch("/api/platform/journal/accounts", {
         method: "POST",
@@ -41,9 +45,11 @@ export function AccountManagementClient({
           expectedAccountSelectionRef: activeAccountSelectionRef,
         }),
       });
-      const packet = await response.json() as { code?: string };
+      const packet = await response.json().catch(() => null) as { code?: string; error?: { message?: string } } | null;
+      if (!packet) throw new Error("The account service did not respond. Please try again shortly.");
       if (!response.ok) {
-        throw new Error(packet.code ?? "The trading account could not be created.");
+        setUpgradeRequired(isMembershipRequired(packet));
+        throw new Error(packet.error?.message ?? "The trading account could not be created. Check your details and try again.");
       }
       window.location.reload();
     } catch (cause) {
@@ -59,7 +65,7 @@ export function AccountManagementClient({
       <Typography color="text.secondary" variant="body2">
         Create a Trade Tracker account for any grouping you choose, such as long-term holds, forex, or small-cap day trading. One Trade Tracker account may contain statements from multiple brokers or brokerage accounts. Its executions, decisions, notes, rules and analytics stay separate from your other Trade Tracker accounts. The new account becomes active after creation.
       </Typography>
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <Alert severity="error">{error}{upgradeRequired ? <Box><JournalUpgradeLink /></Box> : null}</Alert> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "2fr 1fr 2fr auto" } }}>
         <TextField label="Trade Tracker account name" onChange={(event) => setDisplayName(event.target.value)} value={displayName} />
         <TextField label="Base currency" onChange={(event) => setBaseCurrency(event.target.value.toUpperCase())} slotProps={{ htmlInput: { maxLength: 3 } }} value={baseCurrency} />

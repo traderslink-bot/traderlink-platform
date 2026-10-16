@@ -23,3 +23,13 @@ export async function requireMembershipPageScope(feature: string) {
     throw error;
   }
 }
+
+/** Resolve identity first; only a membership denial may become a public demo. */
+export async function requireMembershipPreviewPageScope(feature: string) {
+  try {
+    return await requireTraderLinkPlatformPageScope({ membershipFeatures: [feature] });
+  } catch (error) {
+    if (isMembershipAccessDenied(error)) return null;
+    throw error;
+  }
+}

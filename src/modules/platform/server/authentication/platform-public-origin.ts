@@ -8,10 +8,14 @@ import type { NextRequest } from "next/server";
  * The Discord callback is the existing canonical source for that shared host.
  */
 export function resolvePlatformPublicOrigin(request: NextRequest): string {
-  if (process.env.NODE_ENV !== "production") {
-    return request.nextUrl.origin;
+  const configuredOrigin = process.env.TRADERLINK_PLATFORM_PUBLIC_ORIGIN;
+  if (configuredOrigin) {
+    const parsed = new URL(configuredOrigin);
+    const localHttp = process.env.NODE_ENV !== "production" && parsed.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname);
+    if ((!localHttp && parsed.protocol !== "https:") || parsed.username || parsed.password || parsed.pathname !== "/" || parsed.search || parsed.hash) throw new Error("Invalid Platform public origin");
+    return parsed.origin;
   }
-
+  if (process.env.NODE_ENV !== "production") return request.nextUrl.origin;
   const configuredCallback = process.env.DISCORD_REDIRECT_URI;
   if (!configuredCallback) {
     return request.nextUrl.origin;

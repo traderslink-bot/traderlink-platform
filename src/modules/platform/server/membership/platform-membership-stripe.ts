@@ -1,3 +1,6 @@
+import { reconcileMembershipAddonInvoice } from "./membership-addon-amendment-evidence";
+import { membershipStripeAmount, stripeRequest } from "./membership-stripe-http";
+export { membershipStripeAmount } from "./membership-stripe-http";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import type Database from "better-sqlite3";
@@ -12,29 +15,10 @@ const epoch = z.number().int().positive();
 const time = (value: unknown) => new Date(epoch.parse(value) * 1000).toISOString();
 const reference = (value: unknown): string => typeof value === "string" ? string.parse(value) : string.parse(object.parse(value).id);
 
-// Stripe retains two-decimal charge units for ISK/UGX although our stored ISO
-// currency amounts have zero decimals. https://docs.stripe.com/currencies
-export function membershipStripeAmount(amount: number, currency: string): string {
-  const converted = amount * (["ISK", "UGX"].includes(currency) ? 100 : 1);
-  if (!Number.isSafeInteger(converted)) throw new Error("This price cannot be sent to Stripe exactly.");
-  return String(converted);
-}
-
 export function membershipAppOrigin(): string {
   const url = new URL(process.env.TRADERLINK_MEMBERSHIP_APP_ORIGIN ?? "https://app.traderslink.pro");
   if (url.protocol !== "https:" && !(url.protocol === "http:" && ["127.0.0.1", "localhost"].includes(url.hostname))) throw new Error("Configure a valid membership app origin.");
   return url.origin;
-}
-
-async function stripeRequest(path: string, values?: Record<string, string>, idempotencyKey?: string): Promise<Record<string, unknown>> {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("Stripe is not connected yet.");
-  const response = await fetch(`https://api.stripe.com/v1/${path}`, { method: values ? "POST" : "GET",
-    headers: { Authorization: `Bearer ${key}`, ...(values ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
-      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}) },
-    body: values ? new URLSearchParams(values) : undefined, cache: "no-store", signal: AbortSignal.timeout(20_000) });
-  if (!response.ok) throw new Error("Stripe could not complete this request. Check the provider configuration and try again.");
-  return object.parse(await response.json());
 }
 
 export async function createMembershipStripeCheckout(reserved: ReturnType<PlatformMembershipClaims["reserve"]>): Promise<{ id: string; url: string }> {
@@ -42,7 +26,7 @@ export async function createMembershipStripeCheckout(reserved: ReturnType<Platfo
   if (offer.provider_configuration_state === "test" && process.env.STRIPE_SECRET_KEY && !/^(sk|rk)_test_/.test(process.env.STRIPE_SECRET_KEY)) {
     throw new Error("This offer is in test mode, but Stripe has a live key configured.");
   }
-  const recurring = offer.billing_kind === "recurring";
+  const recurring = offer.billing_kind === "recurring" && !(trialDays && reserved.trialEndBehavior === "end_access");
   const initial = trialDays ? trialAmount ?? 0 : offer.initial_amount_minor;
   if (!offer.currency || initial === null) throw new Error("This offer has no payment terms.");
   const origin = membershipAppOrigin();
@@ -50,7 +34,7 @@ export async function createMembershipStripeCheckout(reserved: ReturnType<Platfo
     mode: recurring ? "subscription" : "payment",
     success_url: `${origin}/account/membership`, cancel_url: `${origin}/plans`,
     client_reference_id: claimId, "metadata[membership_claim_id]": claimId,
-    expires_at: String(Math.floor(Date.now() / 1000) + 45 * 60),
+    expires_at: String(Math.floor((reserved.checkoutCreatedAtUtc ? Date.parse(reserved.checkoutCreatedAtUtc) : Date.now()) / 1000) + 45 * 60),
     "line_items[0][price_data][currency]": offer.currency.toLowerCase(),
     "line_items[0][price_data][product_data][name]": offer.name,
     "line_items[0][price_data][unit_amount]": membershipStripeAmount(recurring ? offer.renewal_amount_minor! : initial, offer.currency),
@@ -143,7 +127,10 @@ export function applyMembershipStripeEvent(database: Database.Database, event: R
     let result = "ignored";
     const metadata = object.parse((type.startsWith("checkout.session.") ? data.metadata : subscription?.metadata) ?? {});
     const claimId = metadata.membership_claim_id;
-    if (typeof claimId === "string") {
+    const amendmentResult = type.startsWith("invoice.") && subscription
+      ? reconcileMembershipAddonInvoice(database,data,subscription,new Date().toISOString()) : null;
+    if (amendmentResult !== null) result = amendmentResult;
+    else if (typeof claimId === "string") {
       const claim = database.prepare(`SELECT c.*,o.plan_version_id,o.billing_kind,o.provider,COALESCE(t.duration_days,o.access_duration_days) duration_days FROM platform_membership_claims c
         JOIN platform_membership_offers o ON o.offer_id=c.offer_id LEFT JOIN platform_membership_trial_campaigns t ON t.trial_campaign_id=c.trial_campaign_id WHERE c.claim_id=?`)
         .get(claimId) as { user_id: string; offer_id: string; plan_version_id: string; billing_kind: string; provider: string; external_session_ref: string | null; trial_campaign_id: string | null; duration_days: number | null; state: string } | undefined;

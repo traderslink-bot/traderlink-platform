@@ -91,6 +91,7 @@ async function deliverDiscordAnnouncement(publicationId: string): Promise<boolea
 
 export async function createCommunityWatchlist(
   input: CreateCommunityWatchlistInput,
+  draft?: Readonly<{ id: string; updatedAtUtc: string }>,
 ): Promise<CommunityWatchlistActionResult> {
   try {
     const scope = await requireTraderLinkPlatformPageScope({
@@ -101,6 +102,7 @@ export async function createCommunityWatchlist(
         userId: scope.userId,
         timestamp: createCanonicalUtcTimestamp(),
         watchlist: input,
+        draft,
       }),
     );
     const discordDelivered = created.publicationId
@@ -121,6 +123,9 @@ export async function createCommunityWatchlist(
   } catch (error) {
     if (isMembershipAccessDenied(error)) {
       return Object.freeze({ ok: false as const, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE });
+    }
+    if (isTraderLinkPlatformError(error) && error.safeContext.reason === "watchlist_draft_changed") {
+      return Object.freeze({ ok: false as const, message: "This draft has changed. Refresh this page before saving again." });
     }
     const accessChanged = isTraderLinkPlatformError(error) && [
       "TRADERLINK_AUTH_SESSION_INVALID",

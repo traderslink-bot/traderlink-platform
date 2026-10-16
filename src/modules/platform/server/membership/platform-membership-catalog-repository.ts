@@ -1,5 +1,13 @@
 import { createHash, randomBytes } from "node:crypto";
 import type Database from "better-sqlite3";
+import { membershipTrialSameFamilySql } from "./membership-trial-lineage";
+import { readMembershipTrialEndBehavior, type MembershipTrialEndBehavior } from "./membership-trial-terms";
+import { membershipPlanEditorSchema } from "../../contracts/membership-plan-editor";
+import { editorPriceTerms } from "../../contracts/membership-price-card";
+import type { MembershipPrice } from "../../contracts/platform-membership-pricing";
+import { isMembershipPlanSelectableFeature } from "../../contracts/membership-plan-notifications";
+import { membershipProductBrief, membershipProductLabel } from "../../contracts/membership-product-features";
+import { orderMembershipFeatures } from "../../contracts/membership-plan-feature-order";
 import { membershipWhopConfiguration } from "./platform-membership-provider-readiness";
 import { readMembershipFeatureCopy, defaultMembershipFeatureCopy } from "./membership-feature-copy";
 import type { PrivateWatchlistPeriod } from "../../contracts/membership-private-watchlist-features";
@@ -28,7 +36,7 @@ export type PlatformMembershipCatalogOffer = Readonly<{
   accessDurationDays: number | null;
   externalCheckoutUrl: string | null;
   automaticConfirmation: boolean;
-  trials: readonly { id: string; name: string; durationDays: number; amount: number; paymentMethodRequired: boolean }[];
+  trials: readonly { id: string; name: string; durationDays: number; amount: number; paymentMethodRequired: boolean; endBehavior?: MembershipTrialEndBehavior }[];
 }>;
 
 export type PlatformMembershipCatalogPlan = Readonly<{
@@ -38,6 +46,11 @@ export type PlatformMembershipCatalogPlan = Readonly<{
   description: string;
   features: readonly Readonly<{ featureKey: string; label: string; kind: string; limitValue: number | null; resetDays?: number | null; metered?: boolean; privatePeriod?: PrivateWatchlistPeriod; brief?: string; details?: string }>[];
   offers: readonly PlatformMembershipCatalogOffer[];
+  packageType?: "plan" | "addon";
+  requiresDiscord?: boolean;
+  bundleOfferIds?: readonly string[];
+  displayOnly?: boolean;
+  displayPrices?: readonly { name: string; price: string; terms?: MembershipPrice }[];
 }>;
 
 type CatalogRow = Readonly<{
@@ -174,16 +187,26 @@ export class PlatformMembershipCatalogRepository {
       ? this.database.prepare("SELECT meter,period_kind kind,period_days days FROM platform_private_watchlist_plan_periods WHERE plan_version_id=?")
       : null;
     return plans.map(plan => {
+      const presentation = this.tableExists("platform_membership_plan_presentations")
+        ? this.database.prepare("SELECT document_json FROM platform_membership_plan_presentations WHERE plan_version_id=?").get(plan.planVersionId) as { document_json: string } | undefined : undefined;
+      const document = presentation ? membershipPlanEditorSchema.parse(JSON.parse(presentation.document_json)) : null;
       const savedPeriods = periods?.all(plan.planVersionId) as (PrivateWatchlistPeriod & { meter: string })[] | undefined;
-      return { ...plan, features: plan.features.map(feature => ({
+      return { ...plan, requiresDiscord: document?.requiresDiscord ?? false, packageType: document?.packageType ?? "plan", bundleOfferIds: document?.bundleOfferIds ?? [], features: orderMembershipFeatures(plan.features, document?.features.map(feature => feature.key) ?? [], feature => feature.featureKey).filter(feature => isMembershipPlanSelectableFeature(feature.featureKey) &&
+        (!document || document.features.some(item => item.key === feature.featureKey))).map(feature => ({
         ...feature, ...(copy.get(feature.featureKey) ?? defaultMembershipFeatureCopy(feature.featureKey, feature.label)),
+        label: membershipProductLabel(feature.featureKey, feature.label),
+        brief: membershipProductBrief(feature.featureKey, document?.displayOnly ? document.features : plan.features.map(item => ({ key: item.featureKey, limit: item.limitValue, resetDays: item.resetDays })),
+          document?.features.find(item => item.key === feature.featureKey)?.brief,
+          (copy.get(feature.featureKey) ?? defaultMembershipFeatureCopy(feature.featureKey, feature.label)).brief),
+        ...(document?.features.find(item => item.key === feature.featureKey)?.details !== null && document?.features.find(item => item.key === feature.featureKey)?.details !== undefined
+          ? { details: document.features.find(item => item.key === feature.featureKey)!.details! } : {}),
         ...(["private_watchlist.ticker_additions", "private_watchlist.generations", "private_watchlist.cost_microusd"].includes(feature.featureKey) ? {
           metered: true,
           privatePeriod: savedPeriods ? savedPeriods.find(period => `private_watchlist.${period.meter}` === feature.featureKey)
             ?? { kind: "calendar_month" as const, days: null } : undefined,
         } : {}),
       })) };
-    });
+    }).filter(plan => !plan.bundleOfferIds.length);
   }
 
   readSharedPageTitle(secret: string): string {
@@ -208,7 +231,7 @@ WHERE plan.status='active' AND plan.visibility='public'
   AND (?=0 OR EXISTS (SELECT 1 FROM platform_membership_plan_features master
     WHERE master.plan_version_id=version.plan_version_id AND master.feature_key='notifications.access'))
 ORDER BY plan.display_order,plan.name,offer.name,definition.label`).all(featureKey ?? null, featureKey ?? null, requireNotificationMaster ? 1 : 0) as CatalogRow[];
-    return this.withFeatureCopy(this.withTrials(shape(rows), createCanonicalUtcTimestamp()));
+    return this.withFeatureCopy([...this.withTrials(shape(rows), createCanonicalUtcTimestamp()), ...(!featureKey ? this.displayOnlyPlans() : [])]);
   }
 
   readSharedPlans(secret: string, atUtc = createCanonicalUtcTimestamp()): readonly PlatformMembershipCatalogPlan[] | null {
@@ -225,7 +248,30 @@ JOIN platform_membership_share_link_offers shared ON shared.offer_id=offer.offer
 WHERE shared.share_link_id=? AND plan.status='active'
   AND version.lifecycle_state='published' AND offer.status='active'
 ORDER BY shared.display_order,plan.name,offer.name,definition.label`).all(link.share_link_id) as CatalogRow[];
-    return this.withFeatureCopy(this.withTrials(shape(rows), atUtc));
+    return this.withFeatureCopy([...this.withTrials(shape(rows), atUtc), ...this.displayOnlyPlans(link.share_link_id)]);
+  }
+
+  private displayOnlyPlans(pageId?: string): PlatformMembershipCatalogPlan[] {
+    if (!this.tableExists("platform_membership_plan_presentations")) return [];
+    const rows = this.database.prepare(`SELECT p.plan_id,p.name,v.plan_version_id,v.public_description,s.document_json
+      FROM platform_membership_plans p JOIN platform_membership_plan_versions v USING(plan_id)
+      JOIN platform_membership_plan_presentations s USING(plan_version_id)
+      WHERE p.status='active' AND v.lifecycle_state='published' AND s.display_only=1
+      AND v.version_number=(SELECT MAX(latest.version_number) FROM platform_membership_plan_versions latest WHERE latest.plan_id=p.plan_id AND latest.lifecycle_state='published')
+      AND ${pageId ? "EXISTS(SELECT 1 FROM platform_membership_page_plans pages WHERE pages.plan_id=p.plan_id AND pages.share_link_id=?)" : "p.visibility='public'"}
+      ORDER BY p.display_order,p.name`).all(...(pageId ? [pageId] : [])) as { plan_id: string; name: string; plan_version_id: string; public_description: string; document_json: string }[];
+    const definition = this.database.prepare("SELECT label,feature_kind FROM platform_membership_feature_definitions WHERE feature_key=?");
+    return rows.map(row => {
+      const document = membershipPlanEditorSchema.parse(JSON.parse(row.document_json));
+      return { planId: row.plan_id, planVersionId: row.plan_version_id, name: row.name, description: row.public_description,
+        displayOnly: true, offers: [], displayPrices: document.prices.filter(price => price.enabled).map(price => ({ name: price.name, terms: editorPriceTerms(price),
+          price: price.billing === "free" ? "Free" : `${price.currency} ${price.initialPrice || "Price to be confirmed"}${price.billing === "recurring" ? `, then ${price.currency} ${price.renewalPrice || "—"} every ${price.intervalCount ?? "—"} ${price.interval}` : ""}` })),
+        features: document.features.filter(feature => isMembershipPlanSelectableFeature(feature.key)).flatMap(feature => {
+          const info = definition.get(feature.key) as { label: string; feature_kind: string } | undefined;
+          return info ? [{ featureKey: feature.key, label: info.label, kind: info.feature_kind, limitValue: feature.limit, resetDays: feature.resetDays,
+            metered: ["levels.generations", "trade_analyzer.analyses"].includes(feature.key) }] : [];
+        }) };
+    });
   }
 
   createShareLink(input: Readonly<{
@@ -279,12 +325,14 @@ ORDER BY shared.display_order,plan.name,offer.name,definition.label`).all(link.s
       WHERE offer_id=? AND status='active' AND eligibility_mode<>'owner_only'
       AND (enrollment_starts_at_utc IS NULL OR enrollment_starts_at_utc<=?)
       AND (enrollment_ends_at_utc IS NULL OR enrollment_ends_at_utc>?)
-      AND (capacity IS NULL OR capacity>(SELECT COUNT(*) FROM platform_membership_claims c WHERE c.trial_campaign_id=t.trial_campaign_id
+      AND (capacity IS NULL OR capacity>(SELECT COUNT(*) FROM platform_membership_claims c WHERE ${membershipTrialSameFamilySql(this.database, "t.trial_campaign_id")}
         AND (c.state='fulfilled' OR (c.state='reserved' AND c.expires_at_utc>?))))`);
     return plans.map((plan) => ({ ...plan, offers: plan.offers.map((offer) => ({ ...offer,
       trials: (read.all(offer.offerId, at, at, at) as { id: string; name: string; durationDays: number; amount: number; paymentMethodRequired: number; hasCheckout: number }[])
-        .filter((trial) => offer.provider === "stripe" || (trial.amount === 0 && trial.paymentMethodRequired === 0) || trial.hasCheckout === 1)
-        .map((trial) => ({ id: trial.id, name: trial.name, durationDays: trial.durationDays, amount: trial.amount, paymentMethodRequired: trial.paymentMethodRequired === 1 })),
+        .map(trial => ({ ...trial, endBehavior: readMembershipTrialEndBehavior(this.database, trial.id, offer.billingKind, trial.amount, trial.paymentMethodRequired === 1) }))
+        .filter((trial) => offer.provider === "stripe" || (trial.amount === 0 && trial.paymentMethodRequired === 0 && trial.endBehavior === "end_access") || trial.hasCheckout === 1)
+        .map((trial) => ({ id: trial.id, name: trial.name, durationDays: trial.durationDays, amount: trial.amount,
+          paymentMethodRequired: trial.paymentMethodRequired === 1 || trial.endBehavior === "renew", endBehavior: trial.endBehavior })),
     })) }));
   }
 }

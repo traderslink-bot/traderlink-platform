@@ -12,6 +12,7 @@ import {
   Alert,
   Autocomplete,
   Box,
+  Button,
   FormControl,
   InputLabel,
   MenuItem,
@@ -25,6 +26,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/contracts/platform-membership-messages";
 import { useId, useMemo, useState, useTransition } from "react";
 
 import type {
@@ -64,6 +66,7 @@ import {
 } from "../actions";
 import {
   TRADE_EXPLORER_COMPARISON_VERSION,
+  comparisonQueryFromExplorerQuery,
   type TradeExplorerComparisonResult,
   type TradeExplorerComparisonStudy,
 } from "../trade-explorer-comparison-model";
@@ -133,7 +136,7 @@ function initialGroups(model: TradeExplorerPageModel): readonly GroupDraft[] {
 
 function canonicalQuery(query: AnalyticsLabPlatformQuery): AnalyticsLabPlatformQuery {
   return Object.freeze({
-    ...query,
+    ...comparisonQueryFromExplorerQuery(query),
     entryTimeBucket: canonicalTradeExplorerTimeInput(query.entryTimeBucket),
     minimumHoldingSeconds: canonicalTradeExplorerDecimalInput(query.minimumHoldingSeconds),
     maximumHoldingSeconds: canonicalTradeExplorerDecimalInput(query.maximumHoldingSeconds),
@@ -588,7 +591,7 @@ export default function TradeExplorerComparisonClient({
         </Box>
       ) : null}
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <Alert severity="error">{error}{error === MEMBERSHIP_FEATURE_REQUIRED_MESSAGE ? <Stack sx={{ mt: 1, alignItems: "flex-start" }}><Button href="/plans?feature=analytics.compare_trades" variant="contained">Unlock Compare Trades</Button></Stack> : null}</Alert> : null}
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
         <DashboardPrimaryAction disabled={Boolean(offlineSavedAtUtc) || !canCompare || isPending} onClick={runComparison} startIcon={<CompareArrowsRoundedIcon />}>
