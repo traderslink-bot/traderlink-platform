@@ -1,14 +1,122 @@
 # Remaining Coaching acceptance — self-contained PC retest
 
-**Release gate BLOCKED for lesson-submit testing:** staging currently runs
-`e2da9c38c8c0be2efa968e7026db3e4f2d281e8f`, deployment
-`7c975e9e-a30d-445a-a3b5-69b1c7442191`. New inline-error/cooldown/key-order fixes
-are local only. Wait for a separately authorized corrected release and Codespaces
-release receipt before submitting the lesson tests. Read-only fixture inspection
-is safe now. Do not repeat passed existing-connection/channel/review-count/
-timezone/update-notice checks.
+**Release gate PASS — ready for bounded PC signed-in retest.** Staging runs
+`7bf3906a78905ec424bf03a7fe76687db848780b`, deployment
+`19905d01-a643-4b94-8efc-09926b865e80` SUCCESS (same source/image; approved
+server-admission configuration activation). CI38829848863 passed the combined
+regressions/full build/TypeScript/281 pages. Health200 ready; exact160-entry
+migration ledger unchanged; one running instance/original volume/overlap0/drain30.
+All four compiled correction markers were verified for this unchanged image.
+Natural worker startup60s/batch5 and first timer pass observed after activation;
+no maintenance failure in filtered evidence. This does not prove hosted fairness.
+Read-only fixture snapshot unchanged. These are supplied Codespaces release and
+operations results, separate from signed-in browser acceptance. Production was
+not deployed by this task. Do not repeat passed checks.
 
-## Paste into PC Codex
+## Current onboarding handoff — local correction, do not retest old flow
+
+**First install/connection PASS:** supplied PC browser report confirms owned
+TradersLink Tests1559172784813514803, TradersLink Communities app1554300060483715162,
+View Channels/Send Messages consent, Discord success, manual tab return, Connect
+and persisted /communities/traderslink-tests/manage. #general and @everyone/bot role
+discovery passed; normal /communities/test-community/manage preserved. Connected
+Light/Navy1440x900/390x844 passed; no mappings/messages. Network capture NOT TESTED.
+
+**New installation-status/recheck UI staging retest BLOCKED:** code is local only;
+full integrated build now PASS onac52b5a67 (process-only4GiB heap retry); separate
+deployment approval remains. Both known servers
+are now connected. Another explicitly approved unconnected server/candidate is
+required to prove the new pre-connection state; do not disconnect/uninstall either.
+No installation, permissions, mapping, message or community-creation authority for
+another fixture is implied. Earlier discovery/lesson prompts below are history;
+passed checks remain closed.
+
+### PC retest after corrected release and exact fixture approval
+
+Read AGENTS.md; use existing signed-in staging browsers only. Obtain the corrected
+release receipt plus exact approved unconnected fixture name/ID and allowed actions
+before beginning. Do not use either connected community as an unconnected fixture.
+
+1. Select only the approved unconnected server. Initial state must say check/recheck;
+   Connect disabled. Recheck installation reads actual server status. Record the
+   visible result; do not infer not-installed from a generic verification failure.
+2. If a not-installed fixture and installation/cancellation actions are separately
+   approved: open installation, cancel/return, recheck. No false ready status.
+   If already-installed/unconnected fixture, missing/cancellation checks remain
+   NOT TESTED rather than uninstalling it.
+3. After separately approved actual installation, return to the original staging
+   tab and choose Recheck installation. Expect installed and ready to connect,
+   installation link hidden, Connect enabled. No automatic callback assumed.
+   Do not click Connect unless new community creation is explicitly approved.
+4. Check new status/error/pending/disabled/recheck states in Light/Navy desktop/mobile
+   wherever naturally observable. Do not revoke permissions or manufacture failures;
+   isolated failure tests remain separate. Changing selection must reset status;
+   stale results from one server must not ready another server.
+5. If a connection was independently created while checking, expect Manage community
+   and no duplicate creation. Never create duplicates to manufacture this case.
+6. Verify both existing servers retain Server connected/Manage routes, without
+   saving their settings or reinstalling bots. No repeated full journey required.
+7. Restore original appearance/viewport. Retain any approved new fixture/installation;
+   no destructive cleanup, mappings, role/channel changes or messages.
+
+Safe network evidence only if filtered tools are available: timestamp/method/coarse
+origin/redacted route/status or safe error code; no queries, OAuth codes/state,
+headers, cookies, bodies or HAR. Otherwise NOT TESTED, not zero failures.
+Return PASS/FAIL/BLOCKED/NOT TESTED, exact authorized actions and retained fixture
+states. New-server mapping persistence/delivery still require separate approval.
+[Latest evidence and local implementation](coaching-completion-audit-20261015.md#first-install-and-connection-pass-pre-connection-status-correction-local--october15-toronto).
+
+## Discovery retest gate PASS — staging admission active
+
+Owner-authorized configuration activation is verified healthy. Both stored owned
+candidates now pass the onboarding query/filter. TradersLink Tests1559172784813514803
+has no connection; normal TradersLink1433570740430573642 remains active/connected
+at /communities/test-community. No source/image change or new community creation.
+
+PC may now use Refresh Discord servers normally, verify the target name/ID in the
+selector, select it read-only, then verify normal connected-server navigation and
+reload persistence. Do not click Install/Connect, grant permissions or create a
+community. Report ID visibility limitations without guessing. Keep OAuth data out
+of evidence. [Exact diagnosis and retest](coaching-completion-audit-20261015.md#traderslink-tests-discovery-omission--october15-toronto),
+[activation receipt](coaching-completion-audit-20261015.md#staging-test-server-admission-activated--october15-toronto).
+Genuine first installation remains separately authorization-gated.
+
+## Current browser acceptance — supplied PC results reconciled
+
+**Functional lesson checks PASS; original sequence below is retained as history,
+not an instruction to rerun passed checks.** Archived rejection/input retention,
+restoration, active-recipient plan mismatch, valid publication, student visibility
+and final fixture restoration passed. Owner approved exact unique title/content
+identification instead of privacy-redacted hidden IDs. Fixture IDs and final
+states below remain as recorded: two drafts, one published lesson, archived NEW
+relationship, Journal not shared. No new fixtures required.
+
+Current remaining checks and resolved backend item:
+
+1. Navy desktop inline-error visual assertion: screenshot did not adequately
+   capture it. Light desktop and Light/Navy mobile passed. Only a bounded rejected
+   publication of the selected Draft against its archived disposable recipient
+   is needed; preserve saved content/state. Do not repeat restoration/publication.
+2. Safe filtered failed-request capture: NOT TESTED because available browser API
+   lacked the listener. Empty console logs are not zero network failures.
+3. Actual browser-run scoped backend side-effect audit: PASS. Subsequent readonly
+   staging audit verified fixture final states and0 attributable retained
+   delivery/attempt/notification/remote/push rows. This is separate from browser
+   observations and is not provider-side or full transaction-history proof.
+   [Audit scope and evidence](coaching-completion-audit-20261015.md#browser-run-backend-side-effect-audit--october15-toronto).
+4. Genuine first installation remains separately unauthorized/BLOCKED; existing
+   server recognition already passed. Unconnected presentation has no new proof.
+
+Worker fairness/retry/failure proof remains existing isolated test evidence plus
+natural hosted startup/first-pass evidence; do not manufacture Discord failures.
+Initial unconfirmed Draft-restoration attempt has unknown cause; subsequent normal
+save returned “Lesson saved.” and verified Draft. No confirmed new defect.
+[Full browser evidence and final states](coaching-completion-audit-20261015.md#signed-in-pc-lesson-acceptance-reconciled--october15-toronto).
+No code change/deployment or whole-feature launch certification follows.
+
+## Original PC test prompt — retained for evidence; completed steps stay closed
+
+
 
 Read applicable AGENTS.md. Test in my existing signed-in staging browsers only:
 https://traderlink-platform-staging-staging.up.railway.app . Community test-community

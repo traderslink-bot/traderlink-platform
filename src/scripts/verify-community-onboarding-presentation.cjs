@@ -7,14 +7,14 @@ const ts = require('typescript');
 const Database = require('better-sqlite3');
 const root = path.resolve(__dirname, '../..');
 const jsx = (type, props, key) => ({type, props, key});
-function load(file, dependencies, suffix = '') {
+function load(file, dependencies, suffix = '', environment = {}) {
   const output = {};
   const result = ts.transpileModule(fs.readFileSync(path.join(root, file), 'utf8') + suffix, {
     fileName: file, reportDiagnostics: true,
     compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX},
   });
   assert.equal(result.diagnostics.filter(item => item.category === ts.DiagnosticCategory.Error).length, 0);
-  vm.runInNewContext(result.outputText, {exports: output, process: {env: {}}, require: dependencies});
+  vm.runInNewContext(result.outputText, {exports: output, process: {env: environment}, require: dependencies});
   return output;
 }
 function nodes(node) {
@@ -30,6 +30,10 @@ function common(id) {
 async function main() {
   const db = new Database(':memory:');
   try {
+    const launchEnvironment = {TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS: '100,200,300,500,600'};
+    const policy = load('src/modules/communities/server/community-launch-policy.ts', id => {
+      throw new Error(`Unexpected policy dependency: ${id}`);
+    }, '', launchEnvironment);
     db.exec(`CREATE TABLE traderlink_community_discord_guild_candidates(user_id TEXT, discord_guild_id TEXT, guild_name TEXT, guild_owner INTEGER);
       CREATE TABLE traderlink_communities(discord_guild_id TEXT, owner_user_id TEXT, slug TEXT);
       INSERT INTO traderlink_community_discord_guild_candidates VALUES
@@ -41,22 +45,38 @@ async function main() {
       if (id.endsWith('/dashboard-ui')) return {DashboardPage:'Page', DashboardPanel:'Panel'};
       if (id.endsWith('/require-platform-request-scope')) return {requireTraderLinkPlatformServerComponentPageIdentity: async () => ({scope:{userId:'owner'}})};
       if (id.endsWith('/open-readonly-platform-database')) return {withReadonlyPlatformDatabase: (_options, run) => run(db)};
-      if (id.endsWith('/community-launch-policy')) return {isApprovedCommunityGuild: guild => guild !== '400'};
+      if (id.endsWith('/community-launch-policy')) return policy;
       if (id === '../community-connect-form') return {CommunityConnectForm:'Connect'};
       throw new Error(id);
     });
     const rendered = await page.default();
     const guilds = nodes(rendered).find(item => item.type === 'Connect').props.guilds;
     assert.equal(guilds.length,3);
+    assert(guilds.some(item => item.guildId === '200' && item.connectedSlug === null), 'An approved newly discovered owner needs no existing connection or bot evidence');
+    assert(!guilds.some(item => ['400','500','600'].includes(item.guildId)), 'Approval cannot substitute for ownership or the current stable user');
     assert.equal(guilds.find(item => item.guildId === '100').connectedSlug,'existing-room');
     assert.equal(guilds.find(item => item.guildId === '300').connectedSlug,null,'Never expose another owner’s management destination');
     assert(!text(rendered).includes('private-room'));
+    launchEnvironment.TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS = '100,300,500,600';
+    const beforeAdmission = nodes(await page.default()).find(item => item.type === 'Connect').props.guilds;
+    assert(!beforeAdmission.some(item => item.guildId === '200'), 'A persisted owned candidate can be hidden solely by operator admission');
+    assert.equal(beforeAdmission.find(item => item.guildId === '100').connectedSlug, 'existing-room');
+    launchEnvironment.TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS = '100,200,300,500,600';
+    const afterAdmission = nodes(await page.default()).find(item => item.type === 'Connect').props.guilds;
+    assert(afterAdmission.some(item => item.guildId === '200' && item.connectedSlug === null), 'Admission reveals the existing candidate without database repair');
+    assert.equal(db.prepare('SELECT count(*) n FROM traderlink_communities').get().n, 2, 'Discovery must not create connections');
+    launchEnvironment.TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS = 'invalid';
+    const denied = await page.default();
+    assert(!nodes(denied).some(item => item.type === 'Connect'));
+    assert(text(denied).includes('No approved server available'), 'Malformed admission fails closed');
+    launchEnvironment.TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS = '100,200,300,500,600';
     let selected;
     const form = load('app/(dashboard)/communities/community-connect-form.tsx', id => {
       const value = common(id); if (value) return value;
       if (id === 'react') return {useState: initial => [selected ?? initial, value => {selected = value;} ]};
       if (id === './community-publication-form') return {CommunityPublicationForm:'Form'};
       if (id === './community-setup-feedback-actions') return {connectCommunityWithFeedback: () => {throw new Error('No submissions allowed');}};
+      if (id === './community-installation-actions' || id.endsWith('/contracts/community-installation-status')) return {};
       throw new Error(id);
     });
     const render = () => form.CommunityConnectForm({guilds,clientId:'123456'});
@@ -68,11 +88,12 @@ async function main() {
     nodes(tree).find(item => item.type === 'TextField').props.onChange({target:{value:'200'}});
     tree = render();
     assert(!text(tree).includes('Server connected'));
-    assert.equal(nodes(tree).find(item => item.type === 'input').props.value,'200');
-    assert(text(tree).includes('guild_id=200')); assert(text(tree).includes('Connect server'));
-    assert.equal(nodes(tree).find(item => item.type === 'Form').key,'200','Reset feedback when changing server');
+    const setup = nodes(tree).find(item => item.type === form.CommunityInstallationSetup);
+    assert.equal(setup.props.guildId,'200');
+    assert(setup.props.installUrl.includes('guild_id=200'));
+    assert.equal(setup.key,'200','Reset installation and connection feedback when changing server');
     selected = '300'; tree = render();
-    assert.equal(nodes(tree).find(item => item.type === 'Form').key,'300');
+    assert.equal(nodes(tree).find(item => item.type === form.CommunityInstallationSetup).key,'300');
     assert(!text(tree).includes('private-room'));
     selected = '100'; assert(text(render()).includes('Server connected'));
     const dashboard = load('app/(dashboard)/communities/community-dashboard.tsx', id => common(id) ?? new Proxy({}, {get: (_target,key) => String(key)}), '\nexport { Channels };');

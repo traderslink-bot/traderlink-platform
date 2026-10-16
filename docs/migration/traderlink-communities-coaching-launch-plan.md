@@ -7,18 +7,59 @@ replaces the inaccessible canonical-report dependency and distinguishes recorded
 live proof, isolated checks and actual remaining work. Historical pending
 statements below must be read against that current matrix. Existing extra-request,
 retained-history, recurrence, session and review implementations are not new TODOs.
-Two defects were reproduced and corrected locally: inactive lesson recipients no
-longer satisfy publication, and bounded Discord refresh rotates past failed or
-suspended participants. Focused service regressions pass; combined build/release
-verification remains deferred to the owner-directed checkpoint. Five focused bot
-onboarding checks also pass; signed-in existing-server and genuine first-install
-acceptance remain separate, as recorded in the consolidated audit. The subsequent
-PC report identified existing-connection presentation and channel recovery gaps;
-these and the adjacent misleading channel-settings install prompt are now
-corrected locally as one batch, with Help, SQL/component regressions and four
-isolated Light/Navy desktop/mobile browser cases. They are not yet deployed. Both accepted
-UI fixes stay closed and the owner's optional browser deferrals remain in force.
-No push, deployment, hosted mutation or new participant test is authorized here.
+Lesson-publication eligibility, refresh scheduling and onboarding presentation/
+permission guidance are now deployed together to staging at
+`e2da9c38c8c0be2efa968e7026db3e4f2d281e8f`, after successful combined full build,
+TypeScript and focused checks (CI38821841169). Railway7c975e9e SUCCESS, one running
+instance, health200, exact160-entry migration ledger unchanged and natural worker
+startup/first pass verified. This closes the deferred combined-build gate.
+[Release record](coaching-completion-audit-20261015.md#combined-staging-release-verified--october-15-evening-toronto)
+and [PC retest prompt](coaching-combined-staging-retest-pc-20261015.md) distinguish
+released-code/operations proof from pending signed-in acceptance. No production
+release, new fixture or Discord role/channel change. Previously accepted browser
+fixes and owner-deferred optional cases stay closed.
+
+## Remaining acceptance corrections and fixtures — current boundary
+
+The owner's subsequently approved synthetic lesson task produced guarded staging
+action evidence for archived/ended and retained wrong-plan recipients, preserved
+drafts/assignments and supported restoration/reuse. All new fixture IDs/content/
+initial/final states are in the [acceptance ledger](coaching-completion-audit-20261015.md#remaining-acceptance--approved-synthetic-staging-fixtures-october-15-toronto).
+No existing record or Journal grant was changed by fixture tools; no Discord or
+notification delivery queued. Expanded acceptance reproduced missing lesson
+feedback, missing cross-pass rate cooldown and cross-guild key-order starvation.
+Corrections are deployed and verified on staging at7bf3906a7 after CI38829848863
+passed the combined build/regressions. Supplied signed-in PC lesson functional
+checks now PASS: archived/mismatch rejection, preservation, restoration, valid
+publication and student visibility. Scoped post-browser backend audit also PASS:
+0 attributable retained notifications/deliveries and expected final fixture state.
+Navy desktop error visual and safe request capture remain open; see the latest
+[PC reconciliation](coaching-completion-audit-20261015.md#signed-in-pc-lesson-acceptance-reconciled--october15-toronto). Existing passed
+presentation/review/timezone/update checks stay closed. Independent first-install
+consent/return/connection remains authorization-gated. No whole-feature completion.
+
+## Test-server discovery — staging configuration prerequisite
+
+Readonly deployed-source diagnosis confirms TradersLink Tests1559172784813514803
+was refreshed/persisted for the correct owner; onboarding hides it because staging
+approved only normal TradersLink at diagnosis. Owner subsequently authorized
+staging activation; target ID now admitted, both servers pass backend discovery,
+and normal connection metadata is unchanged. PC refresh/select-only retest pending;
+no bot installation or new connection authorized. See the latest activation receipt. [Evidence and browser retest](coaching-completion-audit-20261015.md#traderslink-tests-discovery-omission--october15-toronto).
+
+## First-install browser acceptance and remaining status correction
+
+Supplied PC results PASS: TradersLink Communities installed into TradersLink Tests
+with View Channels/Send Messages, manual return/Connect, persisted new community
+/communities/traderslink-tests/manage, named channel/role discovery, normal community
+preservation and connected onboarding Light/Navy desktop/mobile. No mapping/message.
+Confirmed unconnected installation-status UX now has a local readonly recheck fix
+with isolated tests/four theme-size cases; NOT deployed. Full integrated build
+now PASS after a process-only4GiB heap retry; separate release approval required. New
+installed-but-unconnected staging proof needs another explicitly approved fixture;
+do not disconnect either existing community. Mapping persistence/new-server delivery,
+resource-page full visual coverage and sanitized network evidence remain open.
+[Full proof boundaries](coaching-completion-audit-20261015.md#first-install-and-connection-pass-pre-connection-status-correction-local--october15-toronto).
 
 ## Current bounded acceptance — signed-in PC retest reconciled
 

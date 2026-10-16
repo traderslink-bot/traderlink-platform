@@ -605,3 +605,492 @@ defects in the bounded onboarding pass. [Evidence/files/retest boundary](coachin
 Earlier pending-code wording is superseded. No deploy, full build or hosted writes.
 Lesson-publication, worker rotation and onboarding form one local release batch;
 combined build and released signed-in PC checks remain later checkpoints.
+
+
+## Combined correction batch — staging release verified
+
+Owner authorized combined build/deploy. Published `e2da9c38c8c0be2efa968e7026db3e4f2d281e8f` on staging,
+parent a9c119625f1ecb13d81e65bd9148159a03da57ec, explicit17-file allowlist.
+CI38821841169 SUCCESS: full build/TypeScript/281 pages and combined focused tests.
+Railway `7c975e9e-a30d-445a-a3b5-69b1c7442191` SUCCESS; one running instance, unchanged
+isolated volume/overlap0/drain30, health200/ready and exact160-entry ledger match.
+All6 correction markers in compiled code. Natural60-second/batch5 worker startup
+and first pass observed; not failure/load certification. Previous deployment
+removed. Production/main unchanged. No manual data/config/Discord mutations.
+Deferred combined-build gate closed; Coordinator slot handed back.
+[Complete release evidence](coaching-completion-audit-20261015.md#combined-staging-release-verified--october-15-evening-toronto).
+[PC retest prompt](coaching-combined-staging-retest-pc-20261015.md) ready; signed-in
+acceptance remains pending and first installation/production readiness separate.
+
+
+## Approved lesson fixtures and remaining acceptance — October15 Toronto
+
+Owner approved minimum isolated staging fixtures. Guarded operator execution of
+actual deployed lesson actions/services passes archived/ended rejection, retained
+wrong-plan recipient rejection, draft/assignment preservation and supported
+restore/reuse publication. Two new $0 plans/items, one new relationship, three
+lessons/three intended assignment rows retained; no agreements/grants/trades.
+First stale-evidence attempt wrote nothing; guarded plan-publication enqueue
+attempt rolled back fully. Supported draft-create/activate avoided Discord queue.
+All non-fixture/notification/Journal writes prohibited by TEMP guards. No sends.
+[Every ID, initial/final content, actions and evidence](coaching-completion-audit-20261015.md#remaining-acceptance--approved-synthetic-staging-fixtures-october-15-toronto).
+
+Expanded worker tests exposed two scheduling defects: missing between-tick
+Retry-After cooldown and composite cursor/ordering mismatch for prefix guild IDs.
+Both fixed locally. Missing inline lesson feedback also fixed locally. Seven-user
+batch coverage, exclusions, transport failure, cooldown/recovery, four-pair
+cross-guild wrap and grant/lifecycle preservation pass. Four actual-component
+Light/Navy/mobile/desktop feedback checks pass; scoped lint/TypeScript pass.
+These corrections are NOT on staging yet; separate release/full-build gate and
+PC acceptance remain. [Updated PC prompt](coaching-combined-staging-retest-pc-20261015.md)
+contains only new lesson checks/capture; passed checks stay closed. Actual staging
+failed-request capture NOT TESTED. Genuine first-install/new-connection acceptance
+BLOCKED on specific authorization. No production deployment; feature incomplete.
+
+## Staging correction release verified — October15 Toronto
+
+Owner approved the prepared correction release. Published exact12-file allowlist
+`7bf3906a78905ec424bf03a7fe76687db848780b`, parent
+`e2da9c38c8c0be2efa968e7026db3e4f2d281e8f`, to configured branch `staging`.
+CI38829848863 SUCCESS on22d1e6913d1274fc27c43cd4ad3ec6ad535cc53f; only the CI
+workflow differs from the release. All focused lesson/action/refresh/guild/privacy/
+onboarding regressions and full build/TypeScript/281 pages pass. Broader lint has
+seven existing warnings, zero errors; correction-only lint previously clean.
+
+Railway `b00617c9-fbb7-42a9-a4b0-b8fb605732de` SUCCESS; predecessor removed.
+Image `sha256:6e0cdfff9985796f606274e9b13a9508f789ce7ed7dc331e15b1b9a298cffd50`.
+One RUNNING instance59c6fde0-3815-40cb-a4a2-5fd66cd318ed; original isolated volume,
+overlap0/drain30 and no staged configuration. Health200 ready/sqlite_single_node;
+all160 migration IDs/orders/checksums unchanged. Four new compiled markers present.
+Natural maintenance startup60s/batch5/configured and first pass observed at
+2026-10-16T00:38:54.919Z; no maintenance failure in filtered logs. This does not
+prove hosted fairness, every provider result, failure recovery or load capacity.
+Scoped read-only fixture snapshot matches the retained pre-release snapshot in
+all reported fields except capture time: two active plans, archived active NEW
+relationship, two drafts/one published lesson, three assignments, no agreement/
+Journal grant or plan delivery. No fixture action repeated for deployment.
+
+Evidence and full allowlist:
+`/workspaces/traderslink-coordinator/preservation/coaching-acceptance-correction-release-20261015/`.
+No production/configuration/Discord/protected-record mutation by this release.
+Production main82784f53c was already independently deployed before this operation.
+Coordinator slot handed back after verification. PC lesson feedback/preservation,
+restoration/publication and sanitized network evidence remain NOT TESTED in the
+signed-in browser; first installation remains separately authorization BLOCKED.
+[Ready PC prompt](coaching-combined-staging-retest-pc-20261015.md). No whole-feature
+launch certification. Earlier local-only/pending-release statements are history;
+this receipt is the current correction release state.
+
+## Signed-in PC lesson acceptance reconciled — October15 Toronto
+
+Source: owner-supplied PC signed-in staging browser report, TradersLink coach and
+moonmafia student, normal `test-community`. Supplied release
+`7bf3906a78905ec424bf03a7fe76687db848780b`, deployment
+`b00617c9-fbb7-42a9-a4b0-b8fb605732de`. PC did not independently verify the deployed
+SHA; build, health, ledger and hosted worker evidence remain Codespaces evidence.
+Owner approved exact unique fixture titles/content as identity checks because
+browser privacy filtering redacted hidden IDs. No code change or release follows.
+
+| Acceptance item | Status | Evidence and limit |
+| --- | --- | --- |
+| Archived-recipient publication rejection | PASS | Exact actionable inline error; unsaved synthetic marker retained; retry enabled. Reload preserved original saved title/content, Draft and one recipient; marker never saved. |
+| Disposable relationship restoration | PASS | Only d96396a0-f6fe-40f2-bf0a-4788ac88eab7 restored, listed Active with Journal not shared. |
+| Plan-audience mismatch rejection | PASS | Rejected after relationship restoration; reload preserved Draft, original content and one intended recipient. No plan or audience mapping changed. |
+| Eligible lesson publication | PASS | Selected lesson published with original title/content and persisted after reload; no extra send/notify/Discord confirmation appeared. |
+| Student visibility and isolation | PASS | Selector exposed exact disposable relationship; selected and corrected published lessons readable; mismatch Draft absent. No completion/progress/Journal grant action. |
+| Fixture restoration | PASS | Subsequent normal save confirmed “Lesson saved.” and verified selected lesson Draft. Only disposable relationship archived again. Mismatch Draft/corrected Published preserved. |
+| Inline error: Light mobile, Navy mobile, Light desktop | PASS | Signed-in visual inspection; original Navy appearance and viewport restored afterward. |
+| Inline error: Navy desktop | NOT TESTED | Screenshot did not adequately capture the error; no passed assertion. One bounded rejection against existing fixtures is sufficient; no new fixture required. |
+| Sanitized failed-request capture | NOT TESTED | Available browser API lacked required safe filtered listener. Empty console warning/error logs do not mean zero failed requests. |
+| Browser-run backend publication side effects | NOT TESTED | No browser Discord-send action/extra confirmation observed. Actual notification/delivery writes were not independently audited. Prior guarded Codespaces actions and pre-browser read-only snapshot do not cover these browser actions. |
+| Ended-recipient rejection/restoration | PASS — Codespaces only | Existing action/service evidence retained; deliberately not repeated in browser. |
+| Refresh coverage, fairness, wrap/retry/failure/recovery | PASS — isolated tests | Existing real-schema/provider-isolated regressions retained. Hosted evidence covers natural60s/batch5 startup/first pass only; no browser or live failure/fairness proof claimed. |
+| Existing-server recognition | PASS — prior browser evidence | Already closed; not reopened by this report. |
+| Unconnected-server presentation | NOT TESTED | No new observation supplied in this lesson run; existing read-only inspection boundary remains. |
+| Genuine first-install consent/return/connection | BLOCKED | Separate exact-server installation/permission/connection authorization absent; not tested. |
+
+### Browser-reported final fixture states
+
+- Selected lesson `f1f6f333-63d0-48b7-a072-9345ad3cef90`: Draft, original title/body,
+  one recipient. Saved body: `QA ONLY saved content — keep this exact text after rejected publication.`
+- Mismatch lesson `27a399cb-a2e7-468a-9485-81e35500506e`: Draft, original title/body,
+  one intended recipient. Saved body: `QA ONLY plan-B draft; plan-A student is not an eligible recipient.`
+- Corrected lesson `6d130d19-cd76-44f9-9e49-d66435521688`: Published, unchanged.
+- Relationship `d96396a0-f6fe-40f2-bf0a-4788ac88eab7`: archived again; Journal not shared.
+
+These are supplied browser observations, not a new Codespaces database read.
+Both previously retained plans and all fixture IDs remain unchanged; no duplicate
+records are needed. An initial Draft-restoration attempt had not persisted when
+checked; its cause is unknown. Only the subsequent confirmed normal save is a
+PASS. Do not infer a defect or claim the first attempt succeeded.
+
+PC reports Bullrun and protected relationships/reviews/agreements/grants untouched;
+no new records, code changes, deployments, Discord messages, roles/channels or
+hosted configuration changes. Browser observations do not independently prove
+absence of backend side effects. Any later backend audit must use authorized,
+scoped read-only evidence for these exact fixture actions, without scanning or
+hashing customer records; no such audit was performed in this documentation task.
+
+Remaining work: bounded Navy desktop error capture; safe network-failure capture
+when tooling supports it; reconcile actual browser-run publication side effects
+with scoped read-only evidence if required. First installation remains separately
+authorization-gated. Do not repeat passed lesson journeys or closed review-count,
+timezone, update-notice, existing-connection/channel checks. No confirmed new
+application defect and no whole-feature launch certification.
+
+## Browser-run backend side-effect audit — October15 Toronto
+
+**PASS — scoped retained-record audit**, performed read-only at
+2026-10-16T01:01:51.553Z (October15,21:01 Toronto). Live staging source verified
+`7bf3906a78905ec424bf03a7fe76687db848780b`, deployment
+`b00617c9-fbb7-42a9-a4b0-b8fb605732de` SUCCESS. No deployment, worker trigger,
+provider call, configuration change, fixture action or hosted write performed.
+SQLite was opened readonly/fileMustExist with query_only enabled; reads used one
+snapshot transaction. Production and protected records were not audited or changed.
+
+Actual post-browser fixture rows confirm:
+
+- Selected lesson `f1f6f333-63d0-48b7-a072-9345ad3cef90`: Draft, original title/body,
+  selected-students audience, one assigned recipient with no completion. Its
+  updated timestamp is2026-10-16T00:48:52.433Z, after the pre-browser snapshot.
+- Mismatch `27a399cb-a2e7-468a-9485-81e35500506e`: Draft, original title/body,
+  Plan-B audience and the retained Plan-A assignment; unchanged stored timestamp.
+- Corrected `6d130d19-cd76-44f9-9e49-d66435521688`: Published, original title/body,
+  Plan-A audience, one assigned recipient; unchanged stored timestamp.
+- Relationship `d96396a0-f6fe-40f2-bf0a-4788ac88eab7`: active status but archived at
+  2026-10-16T00:49:22.527Z; both new plans active. Zero agreements and Journal grants
+  for this relationship; partner disabled and no active target coach fee rule.
+
+| Scoped retained-record check | Result |
+| --- | --- |
+| Community deliveries, each exact3 lesson/2 plan/1 relationship IDs | PASS:0 rows across all statuses |
+| Delivery attempt history joined through those exact fixture objects | PASS:0 rows |
+| Post-snapshot notifications attributable by fixture ID/path or exact community Coaching destination, limited to the coach/student actors | PASS:0 rows |
+| Remote email/Discord-DM deliveries linked to those notifications | PASS:0 rows |
+| Web-push deliveries linked to those notifications | PASS:0 rows |
+| Synthetic lesson fields/assignments and reported final states | PASS: match saved baseline content/audience and PC final states |
+
+Notification metadata window begins2026-10-16T00:38:04.884Z, the independently
+retained pre-browser snapshot, and ends at audit time. No notification bodies,
+recipient identities, headers, credentials or real-record payloads were returned.
+Queries were scoped to the known fixture IDs, two actors and relevant routes;
+no broad database content scan or content hashing. Live schema metadata reports
+no triggers on the three fixture teaching/assignment/relationship tables. The
+reviewed action/service source matches release7bf3906a7 and contains no lesson
+notification/delivery enqueue path. This source evidence remains separate from
+actual database results and the supplied browser actions.
+
+Limits: this is a point-in-time audit of retained attributable rows, not a full
+transaction trace or Discord/provider-side history. It cannot prove absence of
+out-of-band sends, deleted historical rows or notifications with unrelated
+correlation metadata. Within the supported lesson path and stated scope, no
+unexpected publication notification/delivery evidence was found. This closes
+the previously unverified scoped backend side-effect acceptance item; no new
+application defect was reproduced. Initial unconfirmed Draft-restoration attempt
+remains unexplained; audit verifies final Draft only.
+
+Probe, exact results and local assertions retained at
+`/workspaces/traderslink-coordinator/preservation/coaching-browser-side-effect-audit-20261015/`
+(`audit.cjs`, `audit.cjs.result.json`, `summary.json`). No new synthetic record or
+Journal grant was created; all existing fixture evidence retained.
+
+Still open: Navy desktop inline-error browser visual and safe filtered request
+capture. Genuine first-install acceptance requires separate specific-server/
+installation/permissions/new-connection authorization. Existing-server recognition
+and passed lesson journeys remain closed. Worker fairness/retry/failure proof is
+still isolated evidence plus the existing natural hosted startup/pass evidence;
+no manufactured Discord failures or new operational proof. No whole-feature
+launch certification.
+
+## TradersLink Tests discovery omission — October15 Toronto
+
+**Root cause CONFIRMED: staging operator admission configuration, not missing
+Discord discovery or ownership. Correction BLOCKED pending separate configuration
+approval; no hosted changes or deployment performed.**
+
+Live staging is7bf3906a78905ec424bf03a7fe76687db848780b, deployment
+b00617c9-fbb7-42a9-a4b0-b8fb605732de SUCCESS. Relevant callback, OAuth adapter,
+onboarding page and launch policy have no source diff from that deployed commit;
+compiled deployed server markers confirm candidate query/owner filter/approval
+configuration are present. Targeted readonly snapshot at2026-10-16T01:19:45.695Z
+(October15,21:19 Toronto) verifies:
+
+| Stage | TradersLink Tests1559172784813514803 | Normal TradersLink1433570740430573642 |
+| --- | --- | --- |
+| Persisted candidate under normal community owner's stable Platform user | Present, exact name TradersLink Tests | Present, exact name TradersLink |
+| Discord owner / manage flags |1 /1 |1 /1 |
+| Candidate verified timestamp |2026-10-16T01:15:11.258Z |2026-10-16T01:15:11.258Z |
+| Active linked Discord identity | Same correct user's active identity; last authentication2026-10-16T01:15:11.235Z | Same identity |
+| Actual onboarding SQL before admission filter | Included | Included |
+| isApprovedCommunityGuild / configured allowlist | FALSE | TRUE |
+| Final selector eligibility | Excluded | Included, connectedSlug test-community |
+| Existing app connection | None | Active test-community |
+
+Configured approved-guild count is1; target approval boolean false, normal true.
+No secret variable values were printed or saved. User display name and cached
+Discord username matched the supplied TradersLink/thisguytradealerts identity;
+no user UUID, Discord subject, credentials or provider payload was returned.
+The owner-scoped candidate update23ms after the latest linked authentication
+confirms successful current persistence for this target. The decisive loss occurs
+in onboarding/page.tsx after the owner SQL, at `.filter(isApprovedCommunityGuild)`.
+
+### Request, persistence and failure-path reconciliation
+
+- OAuth callback fetches `/users/@me/guilds` with a request-local token. The
+  adapter makes one guild-list request, checks response.ok and parses JSON;
+  it has no explicit pagination loop. Historical raw response/page metadata is
+  not retained, so no past HTTP status/full payload claim or token replay is made.
+  Target's freshly updated owned candidate proves pagination/omission did not
+  prevent this specific target from reaching persistence in the reported refresh.
+- Callback saves owner/manage candidates under signInResult.userId using UPSERT.
+  That loop is not restricted by approved guilds, existing app connections or bot
+  installation. The visibleGuilds.slice(0,50) limit belongs to subsequent membership
+  refresh, not the candidate UPSERT loop. Matching target row and timestamps rule
+  out wrong-user insertion, swallowed failure before target save or rollback as
+  the cause of this omission. Do not infer every other server refreshed correctly.
+- Onboarding SQL requires current stable user and guild_owner=1; its community
+  join is LEFT JOIN, scoped to that same owner. A connection is optional. Then
+  operator admission filters the owned candidates. Bot detection is downstream
+  of choosing a candidate; an installed bot is not a prerequisite for discovery.
+- Guild-list fetch errors are caught as an empty list; later community-refresh
+  exceptions are caught with a generic warning while account sign-in can finish.
+  Successful login alone therefore does not certify discovery. This source-level
+  failure behavior is not the proven failure in this run: both expected candidates
+  were saved during the refreshed authentication. No speculative OAuth rewrite.
+
+### Exact correction prerequisite
+
+Coordinator must obtain separate approval to update ONLY the staging Platform
+service's `TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS`, preserving existing entries and
+adding1559172784813514803. Observed current approved set contains only the normal
+server. Proposed complete value for this observed state:
+
+`1433570740430573642,1559172784813514803`
+
+Re-read live configuration before applying; never overwrite any newly approved
+entries. Target project49fc9197-07c9-45c7-b528-57d0393c2cca, staging environment
+9e079dd4-f3f3-4872-9b00-adbd3000c485, Platform service
+4d264aca-510c-4f5e-bc28-e89e526b8008. Applying environment configuration may require
+or cause a staging restart/redeployment; that operation is excluded from this
+no-deploy task and requires its own approval/release coordination. No bot install,
+new connection, roles/channels/messages or production change is implied.
+Do not remove/bypass the admission filter or fabricate candidates/ownership.
+No runtime code correction is required to resolve the established cause.
+
+### Regression coverage and evidence
+
+Enhanced existing verify-community-onboarding-presentation.cjs to load the actual
+launch policy rather than a stub. Real SQLite/page/component assertions cover:
+new owned unconnected candidate, denied candidate present but unapproved,
+approval-only reveal without inserts/connection creation, normal connected server
+preservation, non-owner/other-user exclusion even when approved, cross-owner
+management-link isolation and malformed configuration failing closed. Existing
+channel empty/provider-failure presentation checks retained. In-memory tests only;
+no fixture or database mutation on staging. Existing launch-foundation regression
+also checks approved/unapproved onboarding, fresh ownership, provider403/missing
+name failures, rollback, reconnect preservation and no automatic operator grants.
+Focused results: PASS `node src/scripts/verify-community-onboarding-presentation.cjs`;
+PASS existing `verify-community-launch-foundation.ts` with the established
+server-only test adapter; PASS targeted ESLint for the changed CJS script;
+PASS git diff --check. No shared TypeScript/runtime change, so no full build or
+new runtime TypeScript gate required. No UI/help behavior changed; existing Help
+needs no content change. No release performed.
+
+Readonly probe/evidence retained at
+`/workspaces/traderslink-coordinator/preservation/discord-server-discovery-20261015/`
+(`discovery.cjs`, `discovery.cjs.result.json`). One initial compiled-marker check
+expected an unminified function name and failed before returning results; probe
+was corrected to use stable SQL/config literals. No hosted writes in either run.
+All Coaching/Bullrun/moonmafia records, commissions and normal connection unchanged
+by this operation; only the exact owner/two-guild discovery metadata was queried.
+
+### PC browser retest — after separately approved configuration activation
+
+Read AGENTS.md. Use existing TradersLink signed-in staging session at
+https://traderlink-platform-staging-staging.up.railway.app/communities/onboarding.
+Do not start until Coordinator confirms the approved staging admission addition
+is active. No bot installation, new connection or Discord changes authorized.
+
+1. Click Refresh Discord servers through normal UI. Existing authorization covers
+   server-list refresh only; if consent asks for unexpected new scopes, stop.
+   Keep OAuth codes/state/cookies/headers/payloads out of evidence.
+2. After returning, verify TradersLink Tests appears and matches server
+   ID1559172784813514803 using safe exposed option metadata. If privacy redacts
+   the ID, report that limitation; do not guess or request raw provider data.
+3. Select it read-only. Observe unconnected/first-install presentation. Do NOT
+   click Install, Connect, authorize bot permissions or submit/save a community.
+4. Select normal TradersLink1433570740430573642 again. Verify its existing connected
+   presentation still links to /communities/test-community management. Do not
+   edit its settings, installation, roles, channels or coaching records.
+5. Reload and verify both options remain available; normal connection unchanged.
+   Capture safely sanitized failures only if supported; otherwise NOT TESTED.
+
+Return PASS/FAIL/BLOCKED/NOT TESTED, observed names/IDs where available, refresh
+result, target read-only presentation and normal connected route. This closes
+server discovery only; first install/consent/connection remains separate acceptance.
+
+## Staging test-server admission activated — October15 Toronto
+
+Owner authorized the diagnosed staging correction. Updated ONLY staging Platform
+`TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS` to retain1433570740430573642 and
+add1559172784813514803. Preflight found no pending environment patch, conflicting
+release or other live release agent. Coordinator owned the activation slot.
+No source publication, runtime code change or new local build was needed.
+
+Railway configuration activation19905d01-a643-4b94-8efc-09926b865e80 SUCCESS;
+previousb00617c9 removed. Source remains7bf3906a78905ec424bf03a7fe76687db848780b,
+configured branch staging; image unchanged:
+sha256:6e0cdfff9985796f606274e9b13a9508f789ce7ed7dc331e15b1b9a298cffd50.
+One RUNNING instance365e44db-14cc-4f5d-b759-0550325224fb, original isolated volume,
+unchanged overlap0/drain30, no staged configuration. Health200 ready; all160
+migration IDs/orders/checksums unchanged. Hosted worker startup60s/batch5/configured
+and natural first pass observed at2026-10-16T01:26:08.799Z; no maintenance
+failure in filtered logs. This is startup/pass evidence, not failure/fairness proof.
+
+Post-activation readonly probe at2026-10-16T01:25:38.652Z confirms BOTH owned
+candidates pass the actual onboarding owner query AND configured admission filter:
+TradersLink Tests1559172784813514803 has no connection, normal
+TradersLink1433570740430573642 remains active/connected at test-community.
+Both candidate rows, normal connection metadata and linked identity match the
+pre-activation snapshot; no candidate was fabricated or refreshed by the operator.
+Target admission changed false→true; all prior approved entries retained.
+
+Configuration/health/ledger/backend query verification PASS. Signed-in selector
+rendering and normal-UI refresh/select-only acceptance remain NOT TESTED after
+activation; PC may now perform the bounded discovery handoff. No Install/Connect
+or new bot/community/permission/role/channel/message action authorized.
+No protected Coaching/Bullrun/moonmafia records were manually changed; no production
+mutation. Production release remains separate and was not performed by this task.
+
+Evidence/only-variable allowlist/before-after snapshots:
+`/workspaces/traderslink-coordinator/preservation/discord-server-admission-staging-20261015/`.
+Coordinator slot handed back after activation checks. Historical configuration
+approval-blocked text describes the earlier checkpoint and is superseded here;
+first installation remains separately authorization-gated. No whole-feature
+launch certification.
+
+## First install and connection PASS; pre-connection status correction local — October15 Toronto
+
+Owner-supplied signed-in staging report confirms first installation of **TradersLink
+Communities**, application1554300060483715162, into owned **TradersLink Tests**,
+guild1559172784813514803. Discord requested View Channels and Send Messages with
+bot/application-command scopes; owner completed authorization. Discord displayed
+successful addition and instructed that the tab/window could be closed. Returning
+to staging and Connect server succeeded, creating /communities/traderslink-tests/manage.
+This is observed manual-tab-return success, not proof of an automatic callback.
+
+| Acceptance item | Status and proof boundary |
+| --- | --- |
+| Genuine first installation/owner consent | PASS — supplied actual browser observations, specific server/app/permissions above |
+| Manual return and connection submission | PASS — returned to staging, Connect server succeeded; automatic return/callback not established |
+| New connection persistence | PASS — Server connected persisted on returning to onboarding |
+| New-server named discovery | PASS — channels page Discord app detected; #general and @everyone/TradersLink Communities roles discovered |
+| Existing normal connection preservation | PASS — TradersLink1433570740430573642 still /communities/test-community/manage |
+| Connected onboarding Light/Navy1440x900 and390x844 | PASS — supplied browser checks; mobile document/viewport both390; original appearance/viewport restored |
+| Pre-connection installation confirmation | FAIL in reported release — installation completed, but unconnected form still showed Install/Connect with no verified installed status; corrected locally, not deployed |
+| New status/error/return/recheck UI | PASS — isolated component/browser tests only; staging acceptance BLOCKED on corrected release and separately approved unconnected fixture |
+| Role/channel mapping persistence for new server | NOT TESTED — no mappings saved; additional write authorization needed |
+| New-server Discord delivery | NOT TESTED — no messages sent; separately authorized mapping/message needed |
+| Role/channel pages complete theme/mobile visual coverage | NOT TESTED — desktop functional discovery only in supplied run |
+| Sanitized request-failure capture | NOT TESTED — no network capture; captured console warning/error list empty |
+
+Both connections now exist. Do not uninstall/disconnect/recreate either to obtain
+an unconnected fixture. Preserve both communities, Bullrun, moonmafia, all Coaching
+agreements/reviews/Journal data/grants and disabled commissions. No further hosted
+mutation or deployment authorized by this handoff.
+
+### Proven cause and narrow local correction
+
+community-connect-form.tsx had only connectedSlug vs unconnected branches. Every
+unconnected candidate rendered the installation link and Connect server without
+any installation-state query. Post-connection channel detection is a different
+existing resource-discovery path and worked in the observed run. No global bot
+failure or failed installation is inferred.
+
+Added manual **Recheck installation** with explicit guidance to return to the
+original tab after Discord authorization. The initial state is unverified; opening
+or cancelling the link does not set installation status. Fresh server-side check
+shows not installed, installed and ready to connect, owner verification required,
+or unable to verify. Connect is disabled until ready; installed state hides the
+installation link. Keyed selected-server state discards old results and feedback;
+pending controls prevent duplicate checks. Existing connected servers keep their
+management path; a connection discovered concurrently returns Manage community.
+Existing connect action still independently verifies current ownership and safely
+reuses existing connections; the new status endpoint never creates a connection.
+
+The new server action authenticates the session and checks approved guild + the
+same stable user's owned candidate and active linked Discord identity through a
+readonly query. Cross-owner existing connections are denied. No unapproved/user-
+supplied arbitrary server can invoke provider checks. Only safe status/message/
+management URL return to the client; tokens/Discord subjects/inventory remain
+server-side. No credentials, manual-ID input, database write or provider mutation.
+
+The provider check uses bot-authenticated Get Current User Guilds, bounded to
+3 pages of200, with8s per-request timeout/no-store. Only a complete valid inventory
+establishes absence; partial/capped/error/rate-limited responses mean unable to
+verify. A match then uses existing verifyCommunityOwner integration for fresh
+ownership/member evidence. Inventory is request-local and never logged/stored.
+See [Discord's official endpoint/pagination contract](https://github.com/discord/discord-api-docs/blob/main/developers/resources/user.mdx#get-current-user-guilds).
+The bound is deliberately fail-closed; no claim of large/sharded-bot coverage.
+Ready means installation/current ownership, not channel publishing permission;
+channel settings retain their own role/overwrite/timeout checks and guidance.
+
+Changed runtime/Help files:
+- app/(dashboard)/communities/community-connect-form.tsx
+- app/(dashboard)/communities/community-installation-actions.ts (new readonly action)
+- src/modules/communities/contracts/community-installation-status.ts (safe DTO/copy)
+- src/modules/communities/server/community-installation-status.ts (provider check)
+- src/modules/help/traderslink-app-guides.ts (return/recheck and permission limits)
+
+Checks: actual status action/SQL/provider service covers installed/absent, changed
+owner, missing/revoked identity, non-owner/other-user/admission/cross-owner denial,
+existing connection reuse, pagination/nonadvancing/capped lists, malformed JSON,
+transport failure/403/429/500, missing configuration and zero writes. Existing
+presentation/bot-onboarding/reentry/dedicated-app checks retained. Focused semantic
+TypeScript on5 runtime/contract/Help files and targeted lint pass. Four isolated
+actual React/MUI Light/Navy1440/390 cases cover all status states, cancelled
+simulated external tab, retry/pending/focus/disabled, connect gating, network error,
+selection-race isolation and existing connection preservation. Simulated Discord
+and action adapters are intercepted; no hosted/browser-session evidence claimed.
+One initial browser run used button role for an anchor and timed out; corrected
+harness uses link role. Screenshots inspected; native disabled Connect also has
+explicit MUI disabled styling. Shared tokens preserved. Isolated harness omits
+full dashboard shell/production font pipeline.
+
+Full build NOT RUN: shared Codespace MemAvailable2652MiB, no swap at checkpoint;
+chosen4GiB headroom preflight deferred the full build. No workload stopped or build
+started. Full integrated build remains a release gate; no push/CI publication or
+deployment performed. No live Discord calls or hosted state changed by this task.
+Local isolated browser artifacts retained under
+/workspaces/traderslink-coordinator/preservation/discord-installation-status-local-20261015/browser/.
+This is a local correction, not an updated staging release or whole-feature
+launch certification. No new fixture, role/channel mapping or message authorized.
+
+## Installation-status full build PASS — October15 Toronto
+
+After Codespaces recovery, clean candidateac52b5a67010958e13fc9e65879b6ab1271122fe
+had about5.4GiB available and no conflicting build/worktree server. The initial
+normal build failed in the compiler worker near the default2GiB Node heap limit
+(SIGABRT, JavaScript heap out of memory), not a source/type error. A second build
+used process-only NODE_OPTIONS=--max-old-space-size=4096, preserving other inherited
+Node flags. No persistent shell, repository, Next or hosted configuration changed.
+
+**PASS:** Academy registry validation, production webpack compilation3.8min,
+full integrated TypeScript91s,281/281 static pages, optimization/traces; exit0.
+Command: NEXT_TELEMETRY_DISABLED=1 npm run build with the4GiB process heap override.
+Node24.14.0, Next16.2.6. Registry reports26 unregistered markdown files as existing
+archive/non-Academy-ready warnings; validation passed. This supersedes the earlier
+resource-deferred build boundary. No additional code or test behavior changed.
+
+Build log/exit code/verification summary retained under
+/workspaces/traderslink-coordinator/preservation/discord-installation-status-local-20261015/.
+Serwist regenerated public/sw.js; generated copy retained there and only this
+known build output was restored byte-for-byte to its pre-build tracked version.
+No unrelated work discarded. No app server started, no Discord/hosted data changes,
+no Git publication or deployment. No repeat full build needed for these doc updates.
+
+Remaining: separately authorized staging correction release; real signed-in
+installed-but-unconnected/recheck acceptance on another explicitly approved
+unconnected fixture. Both existing community connections must remain intact.
+Mapping persistence, new-server delivery, resource-page visual coverage and safe
+network capture retain their documented independent authorization/proof gaps.
