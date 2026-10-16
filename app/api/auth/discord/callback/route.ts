@@ -304,7 +304,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
               avatarHash: discordUser.avatar ?? null,
               roleIds: member.roles ?? [],
               guildOwner: listedGuild?.owner === true || member.guild_owner === true,
-              joinedAtUtc: canonicalDiscordJoinedAtUtc(member.joined_at ?? null),
+              joinedAtUtc: canonicalDiscordMembershipJoinedAt(member.joined_at ?? null),
               verifiedAtUtc,
             });
           });
@@ -366,7 +366,7 @@ ON CONFLICT(user_id, discord_guild_id) DO UPDATE SET
                 avatarHash: discordUser.avatar ?? null,
                 roleIds: member?.roles ?? [],
                 guildOwner: guild.owner === true,
-                joinedAtUtc: canonicalDiscordJoinedAtUtc(member?.joined_at ?? null),
+                joinedAtUtc: canonicalDiscordMembershipJoinedAt(member?.joined_at ?? null),
                 verifiedAtUtc,
               });
               const community = database.prepare(`SELECT community_id

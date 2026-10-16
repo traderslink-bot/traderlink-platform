@@ -23,6 +23,8 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - name: Collect complete TypeScript integration diagnostics
+        run: npx tsc --noEmit --incremental false
       - name: Guarded disposable 160-to-163 migration rehearsal
         run: node --import tsx src/scripts/membership-coaching-staging-maintenance-20261016.ts --rehearse
       - name: Full application build and TypeScript
