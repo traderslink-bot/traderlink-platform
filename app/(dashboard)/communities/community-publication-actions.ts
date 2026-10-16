@@ -1,4 +1,6 @@
 "use server";
+import {PublishingAccessError} from "@/src/modules/communities/server/community-publishing-access";
+
 
 import { revalidatePath } from "next/cache";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -24,7 +26,7 @@ async function save(kind: "alert" | "watchlist", form: FormData): Promise<Commun
       return saveCommunityPublication(db, { communityId: community.community_id, communitySlug: slug, actor, kind, form, atUtc: new Date().toISOString() });
     });
   } catch (error) {
-    const message = error instanceof CommunityPublicationInputError ? error.message
+    const message = error instanceof CommunityPublicationInputError || error instanceof PublishingAccessError ? error.message
       : error instanceof TraderLinkPlatformError && error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED" ? "You no longer have permission to publish here. Your entries are still here."
         : error instanceof TraderLinkPlatformError && error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED" ? "Check the title, ticker and required fields before saving."
           : "We couldn't save this item. Your entries are still here. Please try again.";

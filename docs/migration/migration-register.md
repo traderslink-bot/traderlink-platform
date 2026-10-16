@@ -300,3 +300,8 @@ for conflicting0167/order180 reservations. One additive durable amendment table.
 Reconcile the full candidate predecessor/lineage with Coordinator before any
 release or existing/hosted database application. No such application authorized.
 See membership-plan-addons-plan.md for the approved immediate-proration contract.
+
+
+## Reserved 0168 — community destination publishers (October16)
+
+Coordinator exclusive reservation: `0168_platform_community_destination_publishers`, order181, exact integrated predecessor0167_platform_membership_addon_amendments/order180. SQL checksum `e2d7d3aefbee0a4c33407c37352496038d7a0084106551ee50ef7e88d4808fcd`. Three additive tables plus nullable publisher identity on deliveries and destination identity index. Local source registered; no SQL executed. Integration must preserve combined staging0165–0167 and existing ordered ledger; do not replace it with this divergent manifest. [Progress](community-publishing-and-stats-progress-20261016.md).

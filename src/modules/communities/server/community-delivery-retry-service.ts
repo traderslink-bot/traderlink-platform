@@ -1,3 +1,4 @@
+import {CommunityPublishingAccess} from "./community-publishing-access";
 import type Database from "better-sqlite3";
 import {assertCanonicalUtcTimestamp,assertCanonicalUuidV4,createCanonicalUuidV4,platformFailure} from "../../platform/server/database/platform-migration-contract";
 import {TraderLinkCommunityRepository} from "./traderlink-community-repository";
@@ -9,8 +10,9 @@ export class CommunityDeliveryRetryService {
   assertCanonicalUuidV4(input.deliveryId,"deliveryId");assertCanonicalUtcTimestamp(input.atUtc,"atUtc");
   new TraderLinkCommunityRepository(this.database).requireCapability(input.communityId,input.actorUserId,"community.discord.manage");
   this.database.transaction(()=>{
-   const row=this.database.prepare(`SELECT d.*,x.status destination_status,c.status community_status FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id JOIN traderlink_communities c ON c.community_id=d.community_id WHERE d.delivery_id=? AND d.community_id=?`).get(input.deliveryId,input.communityId) as {status:string;destination_status:string;community_status:string;current_attempt_key:string|null;delivery_outcome:"pending"|"confirmed"|"rejected"|"uncertain";discord_message_id:string|null;last_error:string|null;updated_at_utc:string}|undefined;
+   const row=this.database.prepare(`SELECT d.*,x.status destination_status,c.status community_status FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id JOIN traderlink_communities c ON c.community_id=d.community_id WHERE d.delivery_id=? AND d.community_id=?`).get(input.deliveryId,input.communityId) as {publisher_user_id:string|null;destination_id:string;object_type:string;status:string;destination_status:string;community_status:string;current_attempt_key:string|null;delivery_outcome:"pending"|"confirmed"|"rejected"|"uncertain";discord_message_id:string|null;last_error:string|null;updated_at_utc:string}|undefined;
    if(!row||row.community_status!=="active"||row.destination_status!=="active")platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED",{operation:"retry_delivery"});
+   if(row.object_type==="alert"||row.object_type==="watchlist")new CommunityPublishingAccess(this.database).assertDelivery(input.communityId,row.publisher_user_id,row.destination_id,row.object_type==="alert"?"alerts":"watchlists",input.atUtc);
    if((row.current_attempt_key??input.deliveryId)!==input.expectedAttemptKey||!["failed","delivered"].includes(row.status))platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED",{field:"deliveryState"});
    if(row.delivery_outcome==="uncertain"&&!input.confirmUncertain)platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED",{field:"confirmUncertain"});
    // Preserve pre-migration receipt evidence before clearing the current attempt.

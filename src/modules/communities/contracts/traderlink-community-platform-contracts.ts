@@ -296,8 +296,14 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
     personalAlertTemplatesEnabled: boolean;
   }>;
   audiences: readonly TraderLinkCommunityAudience[];
+  publishing?: Readonly<{
+    destinations: readonly {destinationId:string;name:string;contentType:"alerts"|"watchlists"}[];
+    team: readonly {userId:string;displayName:string}[];
+    assignments: Readonly<Record<string,readonly {kind:"user"|"role";id:string}[]>>;
+    intents: Readonly<Record<string,{distribution:"website"|"discord";destinationIds:readonly string[]}>>;
+  }>;
   channels: readonly TraderLinkCommunityChannel[];
-  deliveries?:readonly Readonly<{deliveryId:string;attemptKey:string;objectType:string;channelName:string;status:string;outcome:string;messageId:string|null;error:string|null;updatedAtUtc:string}>[];
+  deliveries?:readonly Readonly<{deliveryId:string;attemptKey:string;objectType:string;channelName:string;publisherName?:string|null;status:string;outcome:string;messageId:string|null;error:string|null;updatedAtUtc:string}>[];
   members: readonly TraderLinkCommunityMemberSummary[];
   coachingRoleOptions?: readonly Readonly<{id:string;name:string}>[];
   staffRoles: readonly Readonly<{

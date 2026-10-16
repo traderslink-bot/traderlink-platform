@@ -16,7 +16,11 @@ export function focusCoachingEditor(id: string) {
 
 function formContents(id: string): string | null {
   const form = document.getElementById(id);
-  return form instanceof HTMLFormElement ? JSON.stringify([...new FormData(form).entries()].filter(([name]) => !name.startsWith("$ACTION_"))) : null;
+  if(form instanceof HTMLFormElement)return JSON.stringify([...new FormData(form).entries()].filter(([name])=>!name.startsWith("$ACTION_")));
+  // Student sections contain multiple independent forms. Compare their current
+  // values in memory without storing private message/Journal drafts elsewhere.
+  if(!form)return null;
+  return JSON.stringify([...form.querySelectorAll("form")].map(item=>[...new FormData(item).entries()].filter(([name])=>!name.startsWith("$ACTION_")).map(([name,value])=>[name,value instanceof File?[value.name,value.size,value.type,value.lastModified]:value])));
 }
 
 /** Protect local editor switches without storing private drafts outside the form. */

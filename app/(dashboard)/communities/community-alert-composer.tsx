@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import type { TraderLinkCommunityDashboardSnapshot } from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import { saveCommunityAlertWithFeedback } from "./community-publication-actions";
+import {CommunityDestinationPicker} from "./community-destination-picker";
 import { CommunityPublicationForm } from "./community-publication-form";
 
 export function CommunityAlertComposer({snapshot,isReview}:{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}) {
@@ -31,7 +32,7 @@ export function CommunityAlertComposer({snapshot,isReview}:{snapshot:TraderLinkC
       <TextField defaultValue={audience?.audienceId} label="Audience" name="audienceId" select>
         {snapshot.audiences.filter(item=>item.status==="active").map(item=><MenuItem key={item.audienceId} value={item.audienceId}>{item.name}</MenuItem>)}
       </TextField>
-      <Stack direction="row" spacing={1}><Button disabled={isReview} name="status" value="draft" type="submit" variant="outlined">Save draft</Button><Button disabled={isReview} name="status" value="published" type="submit" variant="contained">Publish alert</Button></Stack>
+      <CommunityDestinationPicker publishing={snapshot.publishing} kind="alerts"/><Stack direction="row" spacing={1}><Button disabled={isReview} name="status" value="draft" type="submit" variant="outlined">Save draft</Button><Button disabled={isReview} name="status" value="published" type="submit" variant="contained">Publish alert</Button></Stack>
     </Stack>
   </CommunityPublicationForm>;
 }

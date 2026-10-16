@@ -592,3 +592,13 @@ manifest to the existing staging database.
 ## Owner-approved community navigation continuation — October 16
 
 Follow [navigation progress](community-navigation-progress-20261016.md) for the complete approved hierarchy and local implementation checkpoint. My coaching layout is reserved for owner review last. No deployment authorized.
+
+
+## Owner-directed publishing restrictions and stats — October16
+
+Start A/B of the [complete publishing and stats plan](community-publishing-and-stats-plan-20261016.md). Its [progress](community-publishing-and-stats-progress-20261016.md) tracks design review and implementation. Stats inventory retained for later; Members and My coaching unchanged. No new deployment authorization.
+
+
+## My coaching organization — owner-directed October16
+
+Owner now requests the student-page organization work. Follow the [complete slice plan](my-coaching-organization-plan-20261016.md) and [progress](my-coaching-organization-progress-20261016.md). Show the concrete layout for review before runtime implementation; preserve existing student capabilities and protected records. No deployment.

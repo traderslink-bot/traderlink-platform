@@ -37,6 +37,6 @@ export default async function ServerWatchlistPage({ params }: { params: Promise<
       {research[symbol]?.research ? <Stack><Typography sx={{ fontWeight: 700 }}>DD research</Typography><Typography sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{research[symbol].research}</Typography></Stack> : null}
       {research[symbol]?.sources.map((source, index) => <Link key={`${index}-${source}`} href={source} target="_blank" rel="noopener noreferrer" sx={{ overflowWrap: "anywhere" }}>{source}</Link>)}
     </Stack></DashboardPanel>)}
-    {canManage ? <DashboardPanel title="Edit watchlist"><CommunityWatchlistEditor communitySlug={communitySlug} watchlist={watchlist} research={research} isReview={isReview}/></DashboardPanel> : null}
+    {canManage ? <DashboardPanel title="Edit watchlist"><CommunityWatchlistEditor communitySlug={communitySlug} watchlist={watchlist} research={research} isReview={isReview} publishing={snapshot.publishing}/></DashboardPanel> : null}
   </DashboardPage>;
 }

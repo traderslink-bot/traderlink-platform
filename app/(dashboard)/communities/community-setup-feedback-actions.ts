@@ -1,4 +1,5 @@
 "use server";
+import {CommunityPublishingAccess,PublishingAccessError} from "@/src/modules/communities/server/community-publishing-access";
 
 import { revalidatePath } from "next/cache";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -70,3 +71,23 @@ async function saveSetup(kind: "roles" | "channels", form: FormData): Promise<Co
 
 export async function saveCommunityRoleWithFeedback(form: FormData) { return saveSetup("roles", form); }
 export async function saveCommunityChannelWithFeedback(form: FormData) { return saveSetup("channels", form); }
+
+export async function saveCommunityPublishersWithFeedback(form:FormData):Promise<CommunityPublicationFeedback>{
+ const identity=await requireTraderLinkPlatformPageIdentity();
+ const slug=String(form.get("communitySlug")??"");
+ if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))return failure("Community unavailable.");
+ try{
+  await requireCommunityRequestAccess({userId:identity.scope.userId,slug});
+  const community=withPlatformDatabase({mode:"runtime"},db=>{
+   const row=db.prepare(`SELECT community_id,discord_guild_id FROM traderlink_communities WHERE slug=?`).get(slug) as {community_id:string;discord_guild_id:string}|undefined;
+   if(!row)throw new Error("Community unavailable.");
+   new TraderLinkCommunityRepository(db).requireCapability(row.community_id,identity.scope.userId,"community.discord.manage");return row;
+  });
+  const resources=await readCommunityDiscordResources(community.discord_guild_id,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"");
+  const roles=form.getAll("publisherRoleId").map(String);
+  if(roles.some(id=>!resources.roles.some(role=>role.id===id)))return failure("A selected Discord role is unavailable. Remove it or refresh Discord access.");
+  withPlatformDatabase({mode:"runtime"},db=>new CommunityPublishingAccess(db).saveAssignments({communityId:community.community_id,actorUserId:identity.scope.userId,destinationId:String(form.get("destinationId")??""),subjects:[...form.getAll("publisherUserId").map(id=>({kind:"user" as const,id:String(id)})),...roles.map(id=>({kind:"role" as const,id}))],atUtc:new Date().toISOString()}));
+ }catch(error){return failure(error instanceof PublishingAccessError?error.message:"We couldn't save publisher access. Check Discord access and try again. Your entries are retained.");}
+ refreshSafely(`/communities/${slug}/manage/channels`);
+ return {status:"success",message:"Publisher access saved. No Discord message was sent."};
+}

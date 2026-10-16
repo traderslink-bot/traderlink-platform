@@ -5,11 +5,13 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 
+import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
+import {CommunityDestinationPicker} from "./community-destination-picker";
 import { saveCommunityWatchlistWithFeedback } from "./community-publication-actions";
 import { CommunityPublicationForm } from "./community-publication-form";
 import { CommunityWatchlistResearchFields } from "./community-watchlist-research-fields";
 
-export function CommunityWatchlistComposer({communitySlug,isReview}:{communitySlug:string;isReview:boolean}) {
+export function CommunityWatchlistComposer({communitySlug,isReview,publishing}:{communitySlug:string;isReview:boolean;publishing?:TraderLinkCommunityDashboardSnapshot["publishing"]}) {
   return <CommunityPublicationForm action={saveCommunityWatchlistWithFeedback} disabled={isReview}>
     <input name="communitySlug" type="hidden" value={communitySlug}/>
     <Stack spacing={2}>
@@ -20,7 +22,7 @@ export function CommunityWatchlistComposer({communitySlug,isReview}:{communitySl
         <MenuItem value="tracked_page">Tracked TraderLink page</MenuItem>
         <MenuItem value="discord_post">Full Discord post</MenuItem>
       </TextField>
-      <Stack direction="row" spacing={1}><Button disabled={isReview} name="intent" type="submit" value="draft" variant="outlined">Save draft</Button><Button disabled={isReview} name="intent" type="submit" value="publish" variant="contained">Publish watchlist</Button></Stack>
+      <CommunityDestinationPicker publishing={publishing} kind="watchlists"/><Stack direction="row" spacing={1}><Button disabled={isReview} name="intent" type="submit" value="draft" variant="outlined">Save draft</Button><Button disabled={isReview} name="intent" type="submit" value="publish" variant="contained">Publish watchlist</Button></Stack>
     </Stack>
   </CommunityPublicationForm>;
 }

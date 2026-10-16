@@ -4,8 +4,11 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
-import { useRef, useState, useSyncExternalStore, useTransition, type ReactNode, type FormEvent } from "react";
+import { createContext, useContext, useRef, useState, useSyncExternalStore, useTransition, type ReactNode, type FormEvent } from "react";
 import type { CommunityPublicationFeedback } from "@/src/modules/communities/contracts/community-publication-feedback";
+
+const PublicationLockContext=createContext(false);
+export function usePublicationLock(){return useContext(PublicationLockContext);}
 
 const subscribeHydration=()=>()=>{};
 const clientReady=()=>true;
@@ -44,7 +47,7 @@ export function CommunityPublicationForm({ action, children, disabled = false }:
       {feedback.message ? <Alert role={feedback.status === "error" ? "alert" : "status"} severity={feedback.status === "error" ? "error" : feedback.status === "success" ? "success" : "info"}>
         {feedback.message}{feedback.href ? <Button component="a" href={feedback.href} size="small">View saved item</Button> : null}
       </Alert> : null}
-      <Box component="fieldset" disabled={disabled || !ready || pending} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>{typeof children === "function" ? children(disabled || !ready || pending) : children}</Box>
+      <Box component="fieldset" disabled={disabled || !ready || pending} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}><PublicationLockContext.Provider value={disabled || !ready || pending}>{typeof children === "function" ? children(disabled || !ready || pending) : children}</PublicationLockContext.Provider></Box>
     </Stack>
   </Box>;
 }
