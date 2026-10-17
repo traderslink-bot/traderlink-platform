@@ -1,5 +1,8 @@
 "use client";
 
+import {CommunityNavigationProvider,useCommunityNavigation} from "./community-navigation-context";
+import {CommunitySidebar,CommunityBreadcrumbs} from "./community-sidebar";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import AirlineStopsIcon from "@mui/icons-material/AirlineStops";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
@@ -367,7 +370,11 @@ function NavigationDrawerButton({
   ) : button;
 }
 
-export function DashboardShell({
+export function DashboardShell(props:Parameters<typeof DashboardShellContent>[0]) {
+ return <CommunityNavigationProvider><DashboardShellContent {...props}/></CommunityNavigationProvider>;
+}
+
+function DashboardShellContent({
   children,
   initialMarketHaltAlertsEnabled = false,
   initialMutedMarketHaltTickers = [],
@@ -416,7 +423,16 @@ export function DashboardShell({
     Readonly<Partial<Record<DashboardNavigationGroup["id"], boolean>>>
   >({});
 
-  const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
+  const communityContext=useCommunityNavigation();
+  const communityMenu=[...(communityContext?.menus.values()??[])].reverse().find(menu=>pathname===menu.base||pathname.startsWith(menu.base+"/"));
+  const [communityMode,setCommunityMode]=useState<{base:string;show:boolean}|null>(null);
+  const [navigationPreference,setNavigationPreference]=useState<{viewerId:string;showTraderLink:boolean}|null>(null);
+  const communityViewerId=communityMenu?.viewerId;
+  useEffect(()=>{if(!communityViewerId)return;let showTraderLink=false;try{showTraderLink=localStorage.getItem(`traderlink:community-navigation:${communityViewerId}`)==="traderlink";}catch{}setNavigationPreference({viewerId:communityViewerId,showTraderLink});},[communityViewerId]);
+  const prefersTraderLink=navigationPreference?.viewerId===communityViewerId&&navigationPreference?.showTraderLink;
+  const showCommunity=Boolean(communityMenu&&(communityMode?.base===communityMenu.base?communityMode.show:communityMenu.focused&&!prefersTraderLink));
+  const toggleNavigationPreference=()=>{if(!communityMenu)return;const showTraderLink=!prefersTraderLink;setNavigationPreference({viewerId:communityMenu.viewerId,showTraderLink});setCommunityMode(null);try{localStorage.setItem(`traderlink:community-navigation:${communityMenu.viewerId}`,showTraderLink?"traderlink":"community");}catch{}};
+  const desktopWidth = showCommunity ? expandedWidth : collapsed ? collapsedWidth : expandedWidth;
   const accountMenuOpen = Boolean(accountMenuAnchor);
   const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS
     .filter((section) =>
@@ -549,7 +565,7 @@ export function DashboardShell({
   }, []);
 
   const navigation = (mobile: boolean) => {
-    const compact = mobile ? false : collapsed;
+    const compact = showCommunity ? false : mobile ? false : collapsed;
     return (
       <Stack sx={{ height: "100%" }}>
         {mobile ? (
@@ -603,6 +619,8 @@ export function DashboardShell({
           }
           sx={{ flexGrow: 1, overflowY: "auto", py: 1.25 }}
         >
+          {showCommunity&&communityMenu?<CommunitySidebar key={`${communityMenu.base}:${pathname}`} menu={communityMenu} path={pathname} onNavigate={closeMobile} onShowTraderLink={()=>setCommunityMode({base:communityMenu.base,show:false})}/>:<>
+          {communityMenu?<Button onClick={()=>setCommunityMode({base:communityMenu.base,show:true})} sx={{mx:1,mb:1}}>{compact?"Community":`${communityMenu.name} menu`}</Button>:null}
           <List component="div" disablePadding>
             <NavigationLink
               collapsed={compact}
@@ -734,7 +752,7 @@ export function DashboardShell({
                 </Box>
               );
             })}
-          </List>
+          </List></>}
         </Box>
         <Stack spacing={0.5} sx={{ px: compact ? 1 : 2, py: 1 }}>
           <DashboardAppearanceSwitch compact={compact} />
@@ -777,7 +795,7 @@ export function DashboardShell({
           }}
         >
           <IconButton
-            aria-label="Open navigation"
+            aria-label={showCommunity?"Open community menu":"Open navigation"}
             onClick={() => setMobileOpen(true)}
             sx={{ display: { lg: "none" } }}
           >
@@ -789,7 +807,7 @@ export function DashboardShell({
               aria-expanded={!collapsed}
               aria-label="Toggle sidebar"
               onClick={() => setDesktopNavigationCollapsed(!collapsed)}
-              sx={{ display: { xs: "none", lg: "inline-flex" } }}
+              sx={{ display: { xs: "none", lg: showCommunity ? "none" : "inline-flex" } }}
             >
               {collapsed ? <MenuRoundedIcon /> : <MenuOpenRoundedIcon />}
             </IconButton>
@@ -865,6 +883,7 @@ export function DashboardShell({
               <ListItemIcon><PersonRoundedIcon fontSize="small" /></ListItemIcon>
               Account settings
             </MenuItem>
+            {communityMenu?.focused?<MenuItem role="menuitemcheckbox" aria-checked={Boolean(prefersTraderLink)} onClick={toggleNavigationPreference}><ListItemIcon>{prefersTraderLink?<CheckRoundedIcon fontSize="small"/>:null}</ListItemIcon><ListItemText primary="Show TraderLink navigation" secondary="Saved in this browser"/></MenuItem>:null}
             <MenuItem component={Link} href="/account/security" onClick={() => setAccountMenuAnchor(null)} prefetch={false}>
               <ListItemIcon><LockRoundedIcon fontSize="small" /></ListItemIcon>
               Security
@@ -949,6 +968,7 @@ export function DashboardShell({
             enabled={!offline}
             pathname={pathname}
           />
+          {communityMenu?<CommunityBreadcrumbs menu={communityMenu} path={pathname}/>:null}
           {children}
         </Box>
       </Box>

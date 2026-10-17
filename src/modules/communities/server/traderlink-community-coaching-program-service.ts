@@ -1,3 +1,4 @@
+import {coachingReviewSelectionPolicy} from "./coaching-review-selection-policy";
 import {requireCoachingReviewReady} from "./coaching-review-required-work";
 import {createHash} from "node:crypto";
 import {coachingEntitlement} from "./coaching-access-lifecycle";
@@ -131,6 +132,7 @@ export class TraderLinkCommunityCoachingProgramService{
   const id=createCanonicalUuidV4();
   this.database.transaction(()=>{
    this.database.prepare(`INSERT INTO traderlink_community_coaching_trade_reviews(review_id,relationship_id,community_id,requested_by_user_id,round_trip_id,title,student_context,coach_feedback,status,requested_at_utc,completed_at_utc,updated_at_utc,review_type,period_start,period_end,due_at_utc) VALUES(?,?,?,?,NULL,?,?,?,'requested',?,NULL,?,?,?,?,?)`).run(id,input.relationshipId,input.communityId,input.actor.userId,clean(input.title,140),clean(input.context,4000,false),"",input.atUtc,input.atUtc,input.reviewType,isCoach?input.periodStart??null:null,isCoach?input.periodEnd??null:null,isCoach?input.dueAtUtc??null:null);
+   if(ids.length){const policy=coachingReviewSelectionPolicy(this.database,id,input.workspaceKind);if(isCoach?!policy.coachCanSelect:!policy.studentCanSelect)platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED",{operation:"plan_trade_selection"});}
    const add=this.database.prepare(`INSERT INTO traderlink_community_coaching_review_trades(review_id,community_id,round_trip_id,ordinal,selected_by_user_id,selection_source,workflow_state,updated_at_utc,trade_label) VALUES(?,?,?,?,?,?,'queued',?,?)`);
    ids.forEach((tradeId,index)=>{const trade=available.get(tradeId)!;add.run(id,input.communityId,tradeId,index,input.actor.userId,isCoach?"coach":"student",input.atUtc,`${trade.symbol} · ${trade.openedAtUtc.slice(0,10)} · ${trade.direction}`);});
    if(isCoach&&input.workspaceKind)this.setWorkspace({...input,workspaceKind:input.workspaceKind,reviewId:id,focusAreas:input.focusAreas??[]});
@@ -156,6 +158,7 @@ export class TraderLinkCommunityCoachingProgramService{
   assertCanonicalUtcTimestamp(input.atUtc,"atUtc");
   const {review}=this.review(input.communityId,input.relationshipId,input.reviewId,input.actor);
   if(review.delivery_state!=="draft")platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED",{field:"reviewState"});
+  if(!coachingReviewSelectionPolicy(this.database,input.reviewId).coachCanSelect)platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED",{operation:"plan_coach_trade_selection"});
   const available=new Map(new TraderLinkCommunityCoachJournalReadService(this.database).read({coachUserId:input.actor.userId,relationshipId:input.relationshipId}).trades.map(trade=>[trade.roundTripId,trade] as const));
   const ids=[...new Set(input.roundTripIds)];
   if(ids.length>500||ids.some(id=>!available.has(id)))platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED",{operation:"select_review_trade"});
