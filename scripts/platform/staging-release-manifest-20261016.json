@@ -818,5 +818,15 @@
     "migration_id": "0168_platform_community_destination_publishers",
     "execution_order": 181,
     "checksum_sha256": "e2d7d3aefbee0a4c33407c37352496038d7a0084106551ee50ef7e88d4808fcd"
+  },
+  {
+    "migration_id": "0169_platform_community_removal_recovery",
+    "execution_order": 182,
+    "checksum_sha256": "315cac2e1b6f0a674417d770fd1b12f33044977ee45acac5b649ad98bd97025a"
+  },
+  {
+    "migration_id": "0170_platform_community_publication_revision_actions",
+    "execution_order": 183,
+    "checksum_sha256": "1cbd7f2c0d5a932fed2d50ebc710529d87057edf287bb2818e7aca6d331e8242"
   }
 ]

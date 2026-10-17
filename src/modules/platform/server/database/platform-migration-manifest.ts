@@ -1,3 +1,5 @@
+import {platformCommunityPublicationRevisionActionsMigration} from "./migrations/0170_platform_community_publication_revision_actions";
+import {platformCommunityRemovalRecoveryMigration} from "./migrations/0169_platform_community_removal_recovery";
 import { platformMembershipAddonAmendmentsMigration } from "./migrations/0167_platform_membership_addon_amendments";
 import { platformMultiProviderLoginMigration } from "./migrations/0166_platform_multi_provider_login";
 import { platformMembershipUnifiedEditorMigration } from "./migrations/0165_platform_membership_unified_editor";
@@ -799,6 +801,8 @@ const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0166_platform_multi_provider_login.ts", migration: platformMultiProviderLoginMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0167_platform_membership_addon_amendments.ts", migration: platformMembershipAddonAmendmentsMigration }),
     Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0168_platform_community_destination_publishers.ts",migration:platformCommunityDestinationPublishersMigration}),
+    Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0169_platform_community_removal_recovery.ts",migration:platformCommunityRemovalRecoveryMigration}),
+    Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0170_platform_community_publication_revision_actions.ts",migration:platformCommunityPublicationRevisionActionsMigration}),
   ]);
 
 export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[] = Object.freeze(
@@ -817,6 +821,8 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0170_platform_community_publication_revision_actions":Object.freeze(["traderlink_community_publication_revisions","traderlink_community_publication_actions","traderlink_community_publication_action_attempts"]),
+    "0169_platform_community_removal_recovery":Object.freeze(["traderlink_community_lifecycle"]),
     "0167_platform_membership_addon_amendments": Object.freeze(["platform_membership_addon_amendments"]),
     "0166_platform_multi_provider_login": Object.freeze(["platform_login_credentials", "platform_login_tokens", "platform_login_throttles", "platform_login_verified_emails", "platform_login_identity_events", "platform_login_mail_outbox"]),
     "0165_platform_membership_unified_editor": Object.freeze(["platform_notification_default_on", "platform_membership_page_plans", "platform_membership_discord_retained_access", "platform_membership_usage_carryovers", "platform_membership_editor_drafts", "platform_membership_editor_receipts", "platform_membership_plan_presentations", "platform_membership_feature_usage_anchors", "platform_membership_trial_lineage", "platform_membership_trial_terms"]),
