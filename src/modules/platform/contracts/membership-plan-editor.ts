@@ -65,6 +65,7 @@ export type MembershipPlanOpenResult = {
 export type MembershipPlanProvider = {
   key: string; label: string; mode: string; state: string;
   configured: boolean; missing: string[];
+  privateTestCheckoutAllowed?: boolean;
 };
 export type MembershipPlanReadinessIssue = { path: string; message: string; blocking: boolean };
 export type MembershipPlanFeatureChoice = { key: string; label: string; kind: "boolean" | "limit";
@@ -152,7 +153,10 @@ export function membershipPlanReadiness(plan: MembershipPlanEditor,
       if (!provider) add(path, "Choose a payment provider.");
       else {
         if (provider.mode === "free") add(path, "Choose a paid provider for a paid option.");
-        if (provider.state !== "ready" || !provider.configured) add(path,
+        const privateStripeTest = provider.key === "stripe" && provider.mode === "native" &&
+          provider.state === "test" && provider.privateTestCheckoutAllowed === true &&
+          plan.visibility !== "public" && price.channel === "private";
+        if ((!privateStripeTest && provider.state !== "ready") || !provider.configured) add(path,
           `${provider.label}: ${provider.missing.join("; ") || "connection is not ready for live checkout"}.`);
         if (price.billing !== "free" && provider.mode === "external_checkout" && !price.checkoutUrl) add(path, "Enter this option's checkout link.");
       }

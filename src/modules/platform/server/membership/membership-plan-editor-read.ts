@@ -5,7 +5,7 @@ import { emptyMembershipPlan, membershipPlanEditorSchema, type MembershipPlanEdi
   type MembershipPlanFeatureChoice, type MembershipPlanProvider, type MembershipPlanListItem } from "../../contracts/membership-plan-editor";
 import { readMembershipFeatures } from "./platform-membership-features";
 import { readMembershipFeatureCopy, defaultMembershipFeatureCopy } from "./membership-feature-copy";
-import { membershipWhopConfiguration } from "./platform-membership-provider-readiness";
+import { membershipPrivateStripeTestCheckoutAllowed, membershipWhopConfiguration } from "./platform-membership-provider-readiness";
 import { readMembershipTrialEndBehavior } from "./membership-trial-terms";
 import { isMembershipPlanSelectableFeature } from "../../contracts/membership-plan-notifications";
 import { ensureJournalPlanFoundation, isMembershipProductSetting, membershipFeatureDefaultEnforcement, newMembershipProductFeature } from "../../contracts/membership-product-features";
@@ -34,7 +34,8 @@ export function readMembershipEditorChoices(db: Database.Database) {
       if (!whop.identity) missing.push("member identity mapping missing");
     } else if (row.integration_mode === "native") missing.push("native integration is not verified");
     return { key: row.provider_key, label: row.label, mode: row.integration_mode,
-      state: row.configuration_state, configured: !missing.length, missing };
+      state: row.configuration_state, configured: !missing.length, missing,
+      privateTestCheckoutAllowed: row.provider_key === "stripe" && membershipPrivateStripeTestCheckoutAllowed() };
   });
   const pages = db.prepare("SELECT share_link_id id,name FROM platform_membership_share_links WHERE status='active' ORDER BY name").all() as { id: string; name: string }[];
   return { features, providers, pages };
