@@ -152,11 +152,15 @@ export function applyMembershipStripeEvent(database: Database.Database, event: R
       // Stripe cancellation is terminal for this subscription ID. Event time is
       // not a delivery ordering token; paid coverage is reconciled independently.
       const ended = type === "customer.subscription.deleted" || subscription?.status === "canceled" || previous?.lifecycle_state === "inactive";
+      // Stripe can schedule cancellation with cancel_at while leaving the legacy
+      // period-end flag false. Normalize both signals without changing paid coverage.
+      const cancellationScheduled = subscription?.cancel_at_period_end === true ||
+        (typeof subscription?.cancel_at === "number" && Number.isSafeInteger(subscription.cancel_at) && subscription.cancel_at > 0);
       if (type === "customer.subscription.updated" && previous && subscription && !ended) {
         database.prepare(`UPDATE platform_membership_provider_subscriptions SET cancel_at_period_end=?,
           lifecycle_state=?,last_provider_event_at_utc=MAX(COALESCE(last_provider_event_at_utc,''),?),updated_at_utc=MAX(updated_at_utc,?) WHERE provider='stripe' AND external_subscription_ref=?`)
-          .run(subscription.cancel_at_period_end ? 1 : 0,
-            subscription.cancel_at_period_end ? "cancel_at_period_end" : subscription.status === "past_due" ? "past_due" : subscription.status === "trialing" ? "trialing" : "active",
+          .run(cancellationScheduled ? 1 : 0,
+            cancellationScheduled ? "cancel_at_period_end" : subscription.status === "past_due" ? "past_due" : subscription.status === "trialing" ? "trialing" : "active",
             eventAt, eventAt, subId);
         result = "applied";
       } else if (paid || ended) {
@@ -192,8 +196,8 @@ export function applyMembershipStripeEvent(database: Database.Database, event: R
             current_period_end_utc=MAX(COALESCE(current_period_end_utc,''),excluded.current_period_end_utc),
             cancel_at_period_end=excluded.cancel_at_period_end,last_provider_event_at_utc=MAX(COALESCE(last_provider_event_at_utc,''),excluded.last_provider_event_at_utc),updated_at_utc=MAX(updated_at_utc,excluded.updated_at_utc)`)
             .run(createCanonicalUuidV4(), claim.user_id, claim.offer_id, reference(subscription.customer), subId,
-              ended ? "inactive" : subscription.cancel_at_period_end ? "cancel_at_period_end" : subscription.status === "past_due" ? "past_due" : subscription.status === "trialing" ? "trialing" : "active",
-              start, end, subscription.cancel_at_period_end ? 1 : 0, eventAt, eventAt, eventAt);
+              ended ? "inactive" : cancellationScheduled ? "cancel_at_period_end" : subscription.status === "past_due" ? "past_due" : subscription.status === "trialing" ? "trialing" : "active",
+              start, end, cancellationScheduled ? 1 : 0, eventAt, eventAt, eventAt);
         } else if (claim.duration_days) end = new Date(Date.parse(eventAt) + claim.duration_days * 86_400_000).toISOString();
         const sourceRef = subId ?? claimId;
         const sourceType = subId ? "subscription" : claim.trial_campaign_id ? "trial" : "lifetime_purchase";
