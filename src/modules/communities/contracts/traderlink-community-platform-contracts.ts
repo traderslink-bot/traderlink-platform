@@ -2,7 +2,7 @@ import type { TraderLinkCommunityCapability } from "./traderlink-community-contr
 
 export const TRADERLINK_COMMUNITY_SECTIONS = Object.freeze([
   "home", "alerts", "watchlists", "coaches", "coaching", "workspace",
-  "manage", "team", "roles", "members", "activity", "channels", "settings",
+  "manage", "team", "roles", "members", "activity", "channels", "settings", "templates",
 ] as const);
 
 export type TraderLinkCommunitySection =
@@ -254,6 +254,7 @@ export type TraderLinkCommunityMemberSummary = Readonly<{
 }>;
 
 export type TraderLinkCommunityDashboardSnapshot = Readonly<{
+  lifecycle?:Readonly<{botState:string;checkedAtUtc:string|null}>;
   community: Readonly<{
     communityId: string;
     discordGuildId: string;
@@ -267,6 +268,7 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
     userId: string;
     displayName: string;
     capabilities: readonly TraderLinkCommunityCapability[];
+    channelAccess?:Readonly<{alerts:boolean;watchlists:boolean}>;
     discordRoleIds: readonly string[];
   }>;
   alerts: readonly TraderLinkCommunityAlert[];
@@ -305,6 +307,7 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
   channels: readonly TraderLinkCommunityChannel[];
   deliveries?:readonly Readonly<{deliveryId:string;attemptKey:string;objectType:string;channelName:string;publisherName?:string|null;status:string;outcome:string;messageId:string|null;error:string|null;updatedAtUtc:string}>[];
   members: readonly TraderLinkCommunityMemberSummary[];
+  teamMembers?: readonly Readonly<{userId:string;displayName:string;capabilities:readonly TraderLinkCommunityCapability[];isOwner:boolean}>[];
   coachingRoleOptions?: readonly Readonly<{id:string;name:string}>[];
   staffRoles: readonly Readonly<{
     roleId: string;

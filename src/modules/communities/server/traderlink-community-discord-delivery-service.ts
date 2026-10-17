@@ -1,3 +1,6 @@
+import {publicationContent,revisionDiscordPayload,type PublicationContent} from "./community-publication-revisions";
+import {CommunityPublicationActionDelivery} from "./community-publication-action-delivery";
+import {expireCommunityRecoverySettings,refreshCommunityBotInstallations} from "./community-lifecycle";
 import {CommunityPublishingAccess,PublishingAccessError} from "./community-publishing-access";
 import {verifyCommunityRequestMember} from "./community-request-verification";
 import {recordCommunityDeliveryAttempt} from "./community-delivery-history";
@@ -12,22 +15,27 @@ type DeliveryRow={publisher_user_id:string|null;destination_id:string;current_at
 export class TraderLinkCommunityDiscordDeliveryService {
   constructor(private readonly database:Database.Database,private readonly config:Readonly<{botToken:string;publicOrigin:string;notBeforeUtc?:string;now?:()=>string}>,private readonly request:typeof fetch=fetch){ }
 
+  private alertPublisher(row:DeliveryRow){return row.object_type==="alert"||row.object_type==="watchlist"?publicationContent(this.database,row.community_id,row.object_type,row.object_id)?.authorName??"An analyst":"An analyst";}
   private content(row:DeliveryRow):Readonly<{content:string;allowed_mentions:{parse:readonly string[]}}>{
     if(row.object_type==="alert"){
       const alert=this.database.prepare(`SELECT slug,title,symbol,body,publishing_mode FROM traderlink_community_alerts WHERE alert_id=? AND community_id=? AND status='published'`).get(row.object_id,row.community_id) as {slug:string;title:string;symbol:string|null;body:string;publishing_mode:string}|undefined;
       if(!alert)throw new RejectedDelivery("Community alert is no longer available.");
-      const lead=alert.symbol?`**${alert.symbol} — ${alert.title}**`:`**${alert.title}**`; const url=`${this.config.publicOrigin}/communities/${row.community_slug}/alerts/${alert.slug}`;
-      return {content:alert.publishing_mode==="discord_post"?`${lead}\n${alert.body}`:`${lead}\n\nOpen in TraderLink: ${url}`,allowed_mentions:{parse:[]}};
+      const lead=alert.symbol?`**${alert.symbol} — ${alert.title}**`:`**${alert.title}**`; const url=`${this.config.publicOrigin}/communities/${row.community_slug}/alerts/${row.object_id}`;
+      const original=this.database.prepare(`SELECT content_json FROM traderlink_community_publication_revisions WHERE community_id=? AND object_type='alert' AND object_id=? AND evidence_kind='original' ORDER BY rowid LIMIT 1`).get(row.community_id,row.object_id) as {content_json:string}|undefined;
+      if(original)return {content:revisionDiscordPayload(JSON.parse(original.content_json) as PublicationContent,"alert",url,this.alertPublisher(row)),allowed_mentions:{parse:[]}};
+      return {content:alert.publishing_mode==="discord_post"?`${lead}\n${alert.body}`:`${this.alertPublisher(row)} published an alert.\nOpen alert: ${url}`,allowed_mentions:{parse:[]}};
     }
     if(row.object_type==="watchlist"){
       const serverWatchlist=this.database.prepare(`SELECT title,description,publishing_mode FROM traderlink_community_server_watchlists WHERE watchlist_id=? AND community_id=? AND status='published'`).get(row.object_id,row.community_id) as {title:string;description:string;publishing_mode:string}|undefined;
       if(serverWatchlist){
         const url=`${this.config.publicOrigin}/communities/${row.community_slug}/server-watchlists/${row.object_id}`;
+        const original=this.database.prepare(`SELECT content_json FROM traderlink_community_publication_revisions WHERE community_id=? AND object_type='watchlist' AND object_id=? AND evidence_kind='original' ORDER BY rowid LIMIT 1`).get(row.community_id,row.object_id) as {content_json:string}|undefined;
+        if(original)return {content:revisionDiscordPayload(JSON.parse(original.content_json) as PublicationContent,"watchlist",url,this.alertPublisher(row)),allowed_mentions:{parse:[]}};
         if(serverWatchlist.publishing_mode==="discord_post"){
           const symbols=this.database.prepare(`SELECT symbol,note FROM traderlink_community_server_watchlist_symbols WHERE watchlist_id=? ORDER BY ordinal`).all(row.object_id) as {symbol:string;note:string}[];
           return {content:`**${serverWatchlist.title}**\n${serverWatchlist.description}\n${symbols.map(item=>item.symbol+(item.note?` — ${item.note}`:"")).join("\n")}`,allowed_mentions:{parse:[]}};
         }
-        return {content:`**${serverWatchlist.title}**\nPublished by ${row.community_name}.\n\nOpen in TraderLink: ${url}`,allowed_mentions:{parse:[]}};
+        return {content:`${this.alertPublisher(row)} published a watchlist.\nOpen watchlist: ${url}`,allowed_mentions:{parse:[]}};
       }
       if(this.database.prepare("SELECT 1 FROM traderlink_community_server_watchlists WHERE watchlist_id=?").get(row.object_id))throw new RejectedDelivery("Official watchlist is no longer published.");
       const watchlist=this.database.prepare(`SELECT p.handle,w.slug,w.title FROM community_watchlists w JOIN community_profiles p ON p.user_id=w.owner_user_id JOIN traderlink_community_watchlist_placements placement ON placement.watchlist_id=w.watchlist_id AND placement.community_id=? AND placement.status='published' WHERE w.watchlist_id=? AND w.status='published'`).get(row.community_id,row.object_id) as {handle:string;slug:string;title:string}|undefined;
@@ -49,6 +57,9 @@ export class TraderLinkCommunityDiscordDeliveryService {
     if(!Number.isInteger(limit)||limit<1||limit>25)throw new Error("Invalid delivery batch size.");
     const cutoff=this.config.notBeforeUtc??null,now=this.config.now??createCanonicalUtcTimestamp,at=now();
     if(cutoff&&!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(cutoff))throw new Error("Invalid delivery cutoff.");
+    expireCommunityRecoverySettings(this.database,at);
+    await refreshCommunityBotInstallations(this.database,this.config.botToken,at,this.request);
+    if(this.database.prepare(`SELECT 1 FROM traderlink_community_publication_actions WHERE status='pending' AND last_error='Discord rate limit; retry scheduled.' AND next_attempt_at_utc>? LIMIT 1`).get(at))return Object.freeze({delivered:0,failed:0});
     // A crashed send is uncertain, not permission to post again.
     this.database.prepare("UPDATE traderlink_community_content_deliveries SET status='failed' WHERE delivery_id IN (SELECT delivery_id FROM traderlink_community_content_deliveries WHERE status='sending' AND updated_at_utc<? ORDER BY updated_at_utc LIMIT 25)").run(new Date(Date.parse(at)-120000).toISOString());
     // Conservatively honor a provider rate limit across this worker, not just one row.
@@ -73,6 +84,8 @@ export class TraderLinkCommunityDiscordDeliveryService {
       };
       try{
         if(row.object_type==="alert"||row.object_type==="watchlist"){
+          const intent=new CommunityPublishingAccess(this.database).intent(row.community_id,row.object_type,row.object_id);
+          if(!intent||intent.distribution!=="discord"||!intent.destinationIds.includes(row.destination_id))throw new RejectedDelivery("This destination is no longer selected for Discord delivery.");
           if(!row.publisher_user_id)throw new RejectedDelivery("Legacy delivery requires owner review; no publisher was recorded.");
           const verified=await verifyCommunityRequestMember(this.database,{slug:row.community_slug,userId:row.publisher_user_id,botToken:this.config.botToken,atUtc:now()},this.request);
           if(!verified){fail("pending","Publisher verification unavailable; delivery paused.");continue;}
@@ -108,6 +121,7 @@ export class TraderLinkCommunityDiscordDeliveryService {
         fail(postStarted?"uncertain":error instanceof RejectedDelivery||error instanceof PublishingAccessError?"rejected":"pending",postStarted?"Delivery confirmation unavailable. Check Discord before retrying.":error instanceof RejectedDelivery||error instanceof PublishingAccessError?error.message:"Discord destination verification unavailable; retry scheduled.");
       }
     }
-    return Object.freeze({delivered,failed});
+    const updates=await new CommunityPublicationActionDelivery(this.database,this.config,this.request).runAvailable(Math.min(limit,10));
+    return Object.freeze({delivered:delivered+updates.confirmed,failed:failed+updates.failed});
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import {CommunityPublicationUpdateControls} from "./community-publication-update-controls";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
@@ -23,11 +24,11 @@ export function CommunityWatchlistEditor({ communitySlug, watchlist, research, i
       <TextField defaultValue={watchlist.description} label="Watchlist notes" minRows={3} multiline name="description"/>
       <CommunityWatchlistResearchFields initialSymbols={watchlist.symbols} initialResearch={research}/>
       <TextField defaultValue={watchlist.publishingMode ?? "tracked_page"} label="Publishing" name="publishingMode" select>
-        <MenuItem value="tracked_page">Tracked TraderLink page</MenuItem><MenuItem value="discord_post">Full Discord post</MenuItem>
+        <MenuItem value="tracked_page">Post a tracked-page link to Discord</MenuItem><MenuItem value="discord_post">Full Discord post</MenuItem>
       </TextField>
-      <CommunityDestinationPicker publishing={publishing} kind="watchlists" objectId={watchlist.watchlistId}/><Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
+      <CommunityDestinationPicker publishing={publishing} kind="watchlists" objectId={watchlist.watchlistId}/>{watchlist.status==="published"?<CommunityPublicationUpdateControls/>:null}<Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
         <Button name="status" type="submit" value="draft" variant="outlined">{watchlist.status === "archived" ? "Restore draft" : watchlist.status === "published" ? "Unpublish" : "Save draft"}</Button>
-        <Button name="status" type="submit" value="published" variant="contained">{watchlist.status === "published" ? "Save watchlist" : "Publish watchlist"}</Button>
+        <Button name="status" type="submit" value="published" variant="contained">{watchlist.status === "published" ? "Save changes" : "Publish watchlist"}</Button>
         <Button color="error" name="status" type="submit" value="archived" variant="outlined">Archive watchlist</Button>
       </Stack>
     </Stack>

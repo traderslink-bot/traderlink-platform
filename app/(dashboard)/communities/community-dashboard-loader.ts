@@ -1,3 +1,4 @@
+import {readCommunityViewerChannels} from "@/src/modules/communities/server/community-channel-readership";
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -32,27 +33,31 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
   const existingCoachingPage=historyPath||/^\/workspace\/(coachingwork|reviews|sessions|teaching)$/.test(suffix);
   try{await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,existingCoachingOnly:existingCoachingPage,relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}
   catch(error){if(!historyPath)throw error;historyOnly=true;}
+  // The resolver reads its target synchronously; no connection/transaction is held during Discord I/O.
+  const readableChannelIds=historyOnly?[]:await withPlatformDatabase({mode:"runtime"},database=>readCommunityViewerChannels(database,communitySlug,identity.scope.userId,process.env.TRADERLINK_DISCORD_BOT_TOKEN??""));
   const snapshot=withPlatformDatabase({mode:"runtime"},database=>{
     const viewer=historyOnly?{userId:identity.scope.userId,displayName:identity.displayName??"Member",discordRoleIds:[]}:resolveTraderLinkCommunityViewer(database,identity,communitySlug);
     const repository=new TraderLinkCommunityPlatformRepository(database);
-    let current=repository.readSnapshot(communitySlug,viewer,{historyOnly});
+    let current=repository.readSnapshot(communitySlug,viewer,{historyOnly,readableChannelIds,detailPath:requested});
     const capabilities=new Set(current.viewer.capabilities);
     const requestedPath=path??"";
     const permitted=requestedPath.includes("/alerts")
-      ? capabilities.has("community.alerts.view")||capabilities.has("community.alerts.create")
+      ? capabilities.has("community.alerts.view")||capabilities.has("community.alerts.create")||current.viewer.channelAccess?.alerts===true
       : requestedPath.includes("/watchlists")
-        ? capabilities.has("community.watchlists.view")||capabilities.has("community.watchlists.publish_staff")
+        ? capabilities.has("community.watchlists.view")||capabilities.has("community.watchlists.publish_staff")||current.viewer.channelAccess?.watchlists===true
         : requestedPath.includes("/coaches")||requestedPath.includes("/coaching")
           ? capabilities.has("community.coaching.view")||capabilities.has("community.coaching.offer")||capabilities.has("community.coaching.manage_all")
           : requestedPath.includes("/workspace")
             ? capabilities.has("community.coaching.offer")||capabilities.has("community.coaching.students")
-            : requestedPath.includes("/manage/roles")
+            : requestedPath.includes("/manage/templates")
+              ? capabilities.has("community.alerts.manage_all")
+              : requestedPath.includes("/manage/roles")
               ? capabilities.has("community.roles.manage")
               : requestedPath.includes("/manage/team")
                 ? capabilities.has("community.team.manage")
                 : requestedPath.includes("/manage/members")
                   ? capabilities.has("community.members.view")
-                  : requestedPath.includes("/manage/activity")
+                  : (requestedPath.includes("/manage/activity")||requestedPath.includes("/stats"))
                     ? capabilities.has("community.analytics.view")
                     : requestedPath.includes("/manage/channels")
                       ? capabilities.has("community.discord.manage")
@@ -64,9 +69,9 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
     const alertSlug=requestedPath.match(/\/alerts\/([^/?#]+)/u)?.[1];
     const watchlistId=requestedPath.match(/\/server-watchlists\/([^/?#]+)/u)?.[1];
     const tracked=alertSlug
-      ? current.alerts.some(alert=>alert.slug===alertSlug&&alert.status==="published"&&alert.publishingMode==="tracked_page")
+      ? current.alerts.some(alert=>(alert.slug===alertSlug||alert.alertId===alertSlug)&&alert.status==="published")
       : watchlistId
-        ? current.watchlists.some(watchlist=>watchlist.watchlistId===watchlistId&&watchlist.status==="published"&&watchlist.publishingMode==="tracked_page")
+        ? current.watchlists.some(watchlist=>watchlist.watchlistId===watchlistId&&watchlist.status==="published")
         : true;
     const activityPath=path??`/communities/${communitySlug}`;
     if(!historyOnly&&tracked&&isCommunityContentActivityPath(communitySlug,activityPath))repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:activityPath,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});
@@ -83,11 +88,11 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
       // general community data; it never grants additional data or authority.
       const ownRelationships=current.relationships.filter(row=>row.coachUserId===identity.scope.userId||row.studentUserId===identity.scope.userId);
       if(!existingCoachingPage||!ownRelationships.some(row=>row.status==='active'&&!row.archivedAtUtc))notFound();
-      return {...current,relationships:ownRelationships,deliveries:[],alerts:[],watchlists:[],alertTemplates:[],audiences:[],channels:[],members:[],staffRoles:[],plans:[],coaches:[],
+      return {...current,relationships:ownRelationships,deliveries:[],alerts:[],watchlists:[],alertTemplates:[],audiences:[],channels:[],teamMembers:[],members:[],staffRoles:[],plans:[],coaches:[],
         community:{...current.community,isOwner:false,memberCount:0},viewer:{...current.viewer,capabilities:current.viewer.capabilities.filter(capability=>capability.startsWith('community.coaching.')&&capability!=='community.coaching.manage_all')},
         settings:{description:'',personalAlertTemplatesEnabled:false},analytics:{views30Days:0,uniqueMembers30Days:0,alertViews30Days:0,watchlistViews30Days:0,coachingViews30Days:0,topPages:[],namedMemberPages:[]},referrals:{attributedMembers:0,tier2Members:0,estimatedEarningsMinor:0,currency:'USD',commissionLabel:'Not configured'}};
     }
-    return {...current,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
+    return {...current,lifecycle:database.prepare(`SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?`).get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
   });
   return Object.freeze({snapshot,isReview:false});
 }

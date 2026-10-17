@@ -14,7 +14,6 @@ export function readDistribution(form:FormData):Distribution|undefined{
  const destinationIds=[...new Set(form.getAll("destinationId").map(String))];
  if(destinationIds.length>50)throw new PublishingAccessError("Choose up to 50 destinations.");
  destinationIds.forEach(id=>assertCanonicalUuidV4(id,"destinationId"));
- if(distribution==="website"&&destinationIds.length)throw new PublishingAccessError("Website-only publication cannot include Discord destinations.");
  return {distribution,destinationIds};
 }
 export class CommunityPublishingAccess {
@@ -61,10 +60,9 @@ export class CommunityPublishingAccess {
   if(!["website","discord"].includes(selection.distribution)||!Array.isArray(selection.destinationIds)||selection.destinationIds.length>50)throw new PublishingAccessError("Choose a valid distribution and destination selection.");
   selection.destinationIds.forEach(id=>assertCanonicalUuidV4(id,"destinationId"));
   if(new Set(selection.destinationIds).size!==selection.destinationIds.length)throw new PublishingAccessError("Choose each destination only once.");
-  if(selection.distribution==="website"&&selection.destinationIds.length)throw new PublishingAccessError("Website-only publication cannot include Discord destinations.");
   if(selection.distribution==="website"&&input.publishingMode==="discord_post")throw new PublishingAccessError("A full Discord post requires Send to Discord and a destination.");
-  if(selection.distribution==="discord"){
-   if(input.publish&&!selection.destinationIds.length)throw new PublishingAccessError("Choose at least one Discord destination.");
+  {
+   if(input.publish&&!selection.destinationIds.length)throw new PublishingAccessError("Choose a channel association so TraderLink can follow its viewing permissions, even when no Discord message is sent.");
    const allowed=new Set(this.allowed(input.communityId,input.publisherUserId,input.kind,input.atUtc).map(row=>row.destination_id));
    if(selection.destinationIds.some(id=>!allowed.has(id)))throw new PublishingAccessError("A selected destination is no longer permitted. Check your channel selection.");
   }

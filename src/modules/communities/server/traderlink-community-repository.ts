@@ -714,6 +714,7 @@ WHERE community_id = ? AND discord_role_id = ? AND status = 'active'`).run(
     assertCanonicalUuidV4(userId, "userId");
     const community = this.findById(communityId);
     const membership = this.findMembership(communityId, userId);
+    if(this.database.prepare(`SELECT 1 FROM traderlink_community_lifecycle WHERE community_id=? AND removed_at_utc IS NOT NULL`).get(communityId))return Object.freeze({communityId,userId,isOwner:false,membershipStatus:membership?.status??null,capabilities:Object.freeze([])});
     if (!community || !membership || membership.status !== "active") {
       return Object.freeze({
         communityId,

@@ -19,7 +19,7 @@ export function CommunityWatchlistComposer({communitySlug,isReview,publishing}:{
       <CommunityWatchlistResearchFields/>
       <TextField label="Notes" minRows={3} multiline name="description"/>
       <TextField defaultValue="tracked_page" label="Publishing" name="publishingMode" select>
-        <MenuItem value="tracked_page">Tracked TraderLink page</MenuItem>
+        <MenuItem value="tracked_page">Post a tracked-page link to Discord</MenuItem>
         <MenuItem value="discord_post">Full Discord post</MenuItem>
       </TextField>
       <CommunityDestinationPicker publishing={publishing} kind="watchlists"/><Stack direction="row" spacing={1}><Button disabled={isReview} name="intent" type="submit" value="draft" variant="outlined">Save draft</Button><Button disabled={isReview} name="intent" type="submit" value="publish" variant="contained">Publish watchlist</Button></Stack>

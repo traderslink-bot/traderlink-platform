@@ -32,7 +32,7 @@ export async function readCommunityDiscordResources(guildId: string, token: stri
     if (!response.ok) throw new Error("Discord server verification unavailable.");
     return response.json();
   }
-  const [rawRoles, rawChannels, rawBot] = await Promise.all([get(`guilds/${guildId}/roles`), get(`guilds/${guildId}/channels`), get("users/@me")]);
+  const [rawRoles, rawChannels, rawBot, rawGuild] = await Promise.all([get(`guilds/${guildId}/roles`), get(`guilds/${guildId}/channels`), get("users/@me"), get(`guilds/${guildId}`)]);
   const bot = rawBot as { id?: string; bot?: boolean };
   if (!bot || !bot.id || !snowflake.test(bot.id) || bot.bot !== true || !Array.isArray(rawRoles) || !Array.isArray(rawChannels)) throw new Error("Discord server verification unavailable.");
   const roles = rawRoles as Role[];
@@ -48,5 +48,7 @@ export async function readCommunityDiscordResources(guildId: string, token: stri
     if (!Array.isArray(overwrites) || overwrites.some(item => !item || !snowflake.test(item.id) || ![0,1].includes(item.type) || !bitfield.test(item.allow) || !bitfield.test(item.deny))) throw new Error("Discord channel permissions unavailable.");
     channels.push({ id: channel.id, name: channel.name, canPublish: !timedOut && canBotPublish(guildId, bot.id, member.roles as string[], roles, overwrites) });
   }
-  return { roles: roles.map(({ id, name }) => ({ id, name })), channels };
+  const guild=rawGuild as {id?:string;name?:string};
+  if(guild.id!==guildId||typeof guild.name!=="string")throw new Error("Discord server identity unavailable.");
+  return { guildName:guild.name, roles: roles.map(({ id, name }) => ({ id, name })), channels };
 }

@@ -1,3 +1,4 @@
+import {communityIsRemoved} from "./community-lifecycle";
 import "server-only";
 import {openPlatformDatabase} from "../../platform/server/database/open-platform-database";
 import {verifyCommunityRequestMember} from "./community-request-verification";
@@ -16,6 +17,8 @@ export async function requireCommunityRequestAccess(input:{userId:string;slug?:s
   if(relationshipId&&(!relationship||(input.slug&&relationship.slug!==input.slug)))throw new Error("Coaching workspace unavailable.");
   const slug=input.slug??relationship?.slug;
   if(!slug)throw new Error("Community unavailable.");
+  const community=db.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(slug) as {community_id:string}|undefined;
+  if(!community||communityIsRemoved(db,community.community_id))throw new Error("Community removed. Original participants can use read-only coaching history.");
   const atUtc=new Date().toISOString(),botToken=process.env.TRADERLINK_DISCORD_BOT_TOKEN??"";
   const users=new Set([input.userId,...(relationship&&input.verifyParticipants!==false?[relationship.student_user_id,relationship.coach_user_id]:[])]);
   // At most the authenticated actor and two original participants, never an entire server.

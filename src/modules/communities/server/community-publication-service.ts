@@ -1,3 +1,4 @@
+import {publicationContent,recordPublicationRevision,queuePublicationActions} from "./community-publication-revisions";
 import {readDistribution} from "./community-publishing-access";
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
@@ -42,13 +43,18 @@ export function saveCommunityPublication(db: Database.Database, input: {
     if (status !== "draft" && status !== "published" && status !== "archived") throw new CommunityPublicationInputError("Choose a save or publish action.");
     let id: string, href: string;
     const existingId = String(form.get(kind === "alert" ? "alertId" : "watchlistId") ?? "");
+    const summary=String(form.get("changeSummary")??"").trim();if(summary.length>1000)throw new CommunityPublicationInputError("Use up to 1,000 characters to explain changes.");
+    const discordAction=String(form.get("discordAction")??"save");if(!["save","edit","announce"].includes(discordAction))throw new CommunityPublicationInputError("Choose a publication action.");
+    if(discordAction!=="save"&&(!existingId||status!=="published"))throw new CommunityPublicationInputError("Discord update actions apply only to published items.");
+    const previousContent=existingId?publicationContent(db,communityId,kind,existingId):undefined;
+    if(previousContent?.publishedAtUtc)recordPublicationRevision(db,{communityId,kind,objectId:existingId,actorUserId:actor.userId,atUtc});
     if (kind === "alert") {
       const title = field(form, "title", "Title", 140);
       let symbol = String(form.get("symbol") ?? "").trim().toUpperCase();
       let body = String(form.get("body") ?? "").trim();
       const templateId = String(form.get("templateId") ?? "");
       if (templateId) {
-        const fields = db.prepare(`SELECT f.field_key,f.label,f.field_type,f.required FROM traderlink_community_alert_template_fields f JOIN traderlink_community_alert_templates t ON t.template_id=f.template_id AND t.community_id=f.community_id WHERE f.template_id=? AND f.community_id=? AND t.status='active' AND (t.scope='community' OR t.owner_user_id=?) ORDER BY f.ordinal`).all(templateId, communityId, actor.userId) as { field_key: string; label: string; field_type: string; required: number }[];
+        const fields = db.prepare(`SELECT f.field_key,f.label,f.field_type,f.required FROM traderlink_community_alert_template_fields f JOIN traderlink_community_alert_templates t ON t.template_id=f.template_id AND t.community_id=f.community_id WHERE f.template_id=? AND f.community_id=? AND (t.status='active' OR t.status='archived') AND (t.scope='community' OR t.owner_user_id=?) ORDER BY f.ordinal`).all(templateId, communityId, actor.userId) as { field_key: string; label: string; field_type: string; required: number }[];
         if (!fields.length) throw new CommunityPublicationInputError("That template is no longer available. Choose another template.");
         body = fields.map(item => {
           const value = String(form.get(`template:${item.field_key}`) ?? "").trim();
@@ -59,8 +65,9 @@ export function saveCommunityPublication(db: Database.Database, input: {
       }
       if (!body || body.length > 8000) throw new CommunityPublicationInputError("Enter alert text of 8,000 characters or fewer.");
       if (symbol && !/^[A-Z0-9][A-Z0-9.-]{0,14}$/.test(symbol)) throw new CommunityPublicationInputError("Check the ticker symbol.");
-      const audienceId = String(form.get("audienceId") ?? "") || repository.ensureDefaultAudience({ communityId, actorUserId: actor.userId, atUtc });
-      if (!db.prepare(`SELECT 1 FROM traderlink_community_audiences WHERE audience_id=? AND community_id=? AND status='active'`).get(audienceId, communityId)) throw new CommunityPublicationInputError("Choose an available audience for this server.");
+      const previousAudience=existingId?(db.prepare(`SELECT audience_id FROM traderlink_community_alerts WHERE community_id=? AND alert_id=?`).get(communityId,existingId) as {audience_id:string}|undefined)?.audience_id:undefined;
+      const audienceId = previousAudience || repository.ensureDefaultAudience({ communityId, actorUserId: actor.userId, atUtc });
+      if (!db.prepare(`SELECT 1 FROM traderlink_community_audiences WHERE audience_id=? AND community_id=? `).get(audienceId, communityId)) throw new CommunityPublicationInputError("Choose an available audience for this server.");
       const details = { communityId, actor, title, symbol, body, audienceId, publishingMode: mode as "tracked_page" | "discord_post", selection:readDistribution(form), atUtc };
       if (existingId) { repository.updateAlert({ ...details, alertId: existingId, status }); id = existingId; }
       else { id = repository.createAlert({ ...details, publish: status === "published" }); }
@@ -82,9 +89,15 @@ export function saveCommunityPublication(db: Database.Database, input: {
       db.prepare(`UPDATE traderlink_community_server_watchlists SET ticker_research_json=? WHERE watchlist_id=? AND community_id=?`).run(JSON.stringify(research), id, communityId);
       href = `/communities/${encodeURIComponent(input.communitySlug)}/server-watchlists/${id}`;
     }
+    const revisionId=recordPublicationRevision(db,{communityId,kind,objectId:id,actorUserId:actor.userId,atUtc,summary,original:!previousContent?.publishedAtUtc});
+    if(discordAction!=="save"){
+      if(readDistribution(form)?.distribution!=="discord")throw new CommunityPublicationInputError("Select Send to Discord before requesting a Discord action.");
+      if(!revisionId)throw new CommunityPublicationInputError("Publication evidence unavailable.");
+      queuePublicationActions(db,{communityId,slug:input.communitySlug,kind,objectId:id,actorUserId:actor.userId,revisionId,action:discordAction as "edit"|"announce",destinationIds:readDistribution(form)?.destinationIds??[],summary,confirmUncertain:form.get("confirmUncertainUpdate")==="on",atUtc});
+    }
     const name = kind === "alert" ? "Alert" : "Watchlist";
     const message = status === "draft" ? `${name} draft saved.` : status === "archived" ? `${name} archived.` : existingId ? `${name} saved.` : `${name} published.`;
-    const result: CommunityPublicationFeedback = { status: "success", message, href };
+    const result: CommunityPublicationFeedback = { status: "success", message:discordAction==="save"?message:`${message} Discord ${discordAction==="edit"?"post update":"change announcement"} queued for the selected channels; delivery is not yet confirmed.`, href };
     db.prepare(`INSERT INTO traderlink_community_publication_receipts VALUES(?,?,?,?,?,?)`).run(communityId, actor.userId, requestId, hash, JSON.stringify(result), atUtc);
     return result;
   }).immediate();

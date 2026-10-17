@@ -62,9 +62,24 @@ async function saveSetup(kind: "roles" | "channels", form: FormData): Promise<Co
       const actor = resolveTraderLinkCommunityViewer(db, identity, slug);
       new TraderLinkCommunityRepository(db).requireCapability(community.community_id, actor.userId, capability);
       if (kind === "roles" && role) new TraderLinkCommunityRepository(db).saveDiscordFeatureMapping({ communityId: community.community_id, actorUserId: actor.userId, discordRoleId: role.id, discordRoleName: role.name, responsibilities, timestamp: new Date().toISOString() });
-      if (kind === "channels" && channel) new TraderLinkCommunityPlatformRepository(db).saveDiscordDestination({ communityId: community.community_id, actor, name: channel.name, discordChannelId: channel.id, contentType: contentType as "alerts" | "watchlists" | "coaching" | "general", atUtc: new Date().toISOString() });
+      if (kind === "channels" && channel) db.transaction(()=>{
+        const atUtc=new Date().toISOString();
+        const destinationId=String(form.get("destinationId")??"");
+        const existing=db.prepare(`SELECT destination_id,discord_channel_id,content_type FROM traderlink_community_discord_destinations WHERE community_id=? AND destination_id=?`).get(community.community_id,destinationId) as {destination_id:string;discord_channel_id:string;content_type:string}|undefined;
+        if(destinationId&&(!existing||existing.discord_channel_id!==channel.id||existing.content_type!==contentType))throw new PublishingAccessError("The destination changed. Refresh before saving.");
+        if(!destinationId&&db.prepare(`SELECT 1 FROM traderlink_community_discord_destinations WHERE community_id=? AND discord_channel_id=? AND content_type=?`).get(community.community_id,channel.id,contentType))throw new PublishingAccessError("This destination already exists. Use Edit to update its publishers.");
+        const publishing=new CommunityPublishingAccess(db);
+        const before=destinationId?publishing.assignments(community.community_id,destinationId):[];
+        if(destinationId&&String(form.get("expectedAssignments")??"")!==JSON.stringify(before))throw new PublishingAccessError("Publisher assignments changed. Refresh before saving so another administrator's changes are preserved.");
+        const id=new TraderLinkCommunityPlatformRepository(db).saveDiscordDestination({communityId:community.community_id,actor,name:channel.name,discordChannelId:channel.id,contentType:contentType as "alerts"|"watchlists"|"coaching"|"general",atUtc});
+        if(contentType==="alerts"||contentType==="watchlists"){
+          const removals=new Set(form.getAll("removePublisherRoleId").map(String));
+          const subjects=[...new Set(form.getAll("publisherUserId").map(String))].map(id=>({kind:"user" as const,id}));
+          publishing.saveAssignments({communityId:community.community_id,actorUserId:actor.userId,destinationId:id,subjects:[...subjects,...before.filter(subject=>subject.kind==="role"&&!removals.has(subject.id))],atUtc});
+        }
+      }).immediate();
     });
-  } catch { return failure("We couldn't save these settings. Your entries are still here. Refresh Discord access and try again."); }
+  } catch(error) { return failure(error instanceof PublishingAccessError?error.message:"We couldn't save these settings. Your entries are still here. Refresh Discord access and try again."); }
   refreshSafely(`/communities/${slug}/manage/${kind}`);
   return { status: "success", message: kind === "roles" ? "Role access saved." : "Publishing channel saved. No test message was sent." };
 }
@@ -72,22 +87,40 @@ async function saveSetup(kind: "roles" | "channels", form: FormData): Promise<Co
 export async function saveCommunityRoleWithFeedback(form: FormData) { return saveSetup("roles", form); }
 export async function saveCommunityChannelWithFeedback(form: FormData) { return saveSetup("channels", form); }
 
-export async function saveCommunityPublishersWithFeedback(form:FormData):Promise<CommunityPublicationFeedback>{
+export async function saveCommunityPublishersWithFeedback(_form:FormData):Promise<CommunityPublicationFeedback>{
+ return failure("Refresh Discord publishing and use Edit to save the destination and individual publishers together.");
+}
+
+export async function removeCommunityChannelWithFeedback(form:FormData):Promise<CommunityPublicationFeedback>{
  const identity=await requireTraderLinkPlatformPageIdentity();
  const slug=String(form.get("communitySlug")??"");
  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))return failure("Community unavailable.");
  try{
   await requireCommunityRequestAccess({userId:identity.scope.userId,slug});
-  const community=withPlatformDatabase({mode:"runtime"},db=>{
-   const row=db.prepare(`SELECT community_id,discord_guild_id FROM traderlink_communities WHERE slug=?`).get(slug) as {community_id:string;discord_guild_id:string}|undefined;
-   if(!row)throw new Error("Community unavailable.");
-   new TraderLinkCommunityRepository(db).requireCapability(row.community_id,identity.scope.userId,"community.discord.manage");return row;
-  });
-  const resources=await readCommunityDiscordResources(community.discord_guild_id,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"");
-  const roles=form.getAll("publisherRoleId").map(String);
-  if(roles.some(id=>!resources.roles.some(role=>role.id===id)))return failure("A selected Discord role is unavailable. Remove it or refresh Discord access.");
-  withPlatformDatabase({mode:"runtime"},db=>new CommunityPublishingAccess(db).saveAssignments({communityId:community.community_id,actorUserId:identity.scope.userId,destinationId:String(form.get("destinationId")??""),subjects:[...form.getAll("publisherUserId").map(id=>({kind:"user" as const,id:String(id)})),...roles.map(id=>({kind:"role" as const,id}))],atUtc:new Date().toISOString()}));
- }catch(error){return failure(error instanceof PublishingAccessError?error.message:"We couldn't save publisher access. Check Discord access and try again. Your entries are retained.");}
+  withPlatformDatabase({mode:"runtime"},db=>db.transaction(()=>{
+   const row=db.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(slug) as {community_id:string}|undefined;
+   if(!row)throw new Error("Unavailable");
+   new TraderLinkCommunityRepository(db).requireCapability(row.community_id,identity.scope.userId,"community.discord.manage");
+   const result=db.prepare(`UPDATE traderlink_community_discord_destinations SET status='paused',updated_by_user_id=?,updated_at_utc=? WHERE community_id=? AND destination_id=? AND status='active'`).run(identity.scope.userId,new Date().toISOString(),row.community_id,String(form.get("destinationId")??""));
+   if(!result.changes)throw new Error("Unavailable");
+  }).immediate());
+ }catch{return failure("We couldn't remove this destination. Refresh access and try again.");}
  refreshSafely(`/communities/${slug}/manage/channels`);
- return {status:"success",message:"Publisher access saved. No Discord message was sent."};
+ return {status:"success",message:"Destination removed from future publishing. Existing Discord messages and delivery history are preserved."};
+}
+
+export async function setCommunityPauseWithFeedback(form:FormData):Promise<CommunityPublicationFeedback>{
+ const identity=await requireTraderLinkPlatformPageIdentity();
+ const slug=String(form.get("communitySlug")??"");
+ const status=String(form.get("communityStatus")??"");
+ if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||!["active","paused"].includes(status))return failure("Community unavailable.");
+ try{
+  await requireCommunityRequestAccess({userId:identity.scope.userId,slug});
+  const target=withPlatformDatabase({mode:"runtime"},db=>db.prepare(`SELECT c.community_id,c.discord_guild_id,c.owner_user_id,i.auth_subject FROM traderlink_communities c JOIN platform_auth_identities i ON i.user_id=? AND i.auth_provider='discord' AND i.status='active' WHERE c.slug=? AND c.owner_user_id=? AND c.status IN ('active','paused')`).get(identity.scope.userId,slug,identity.scope.userId) as {community_id:string;discord_guild_id:string;owner_user_id:string;auth_subject:string}|undefined);
+  if(!target)return failure("Only the verified server owner can pause or resume this community.");
+  await verifyCommunityOwner(target.discord_guild_id,target.auth_subject,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"");
+  withPlatformDatabase({mode:"runtime"},db=>new TraderLinkCommunityRepository(db).setStatus({communityId:target.community_id,actorUserId:identity.scope.userId,status:status as "active"|"paused",timestamp:new Date().toISOString()}));
+ }catch{return failure("We couldn't verify and change the community status. Check Discord access and try again.");}
+ refreshSafely(`/communities/${slug}/manage/settings`);refreshSafely("/communities");
+ return {status:"success",message:status==="paused"?"Community paused. Records are preserved and the Discord bot remains installed.":"Community resumed. Existing delivery authorization checks still apply."};
 }
