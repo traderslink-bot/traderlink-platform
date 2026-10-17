@@ -86,7 +86,7 @@ export function AddonAmendmentPanel({addons,subscriptions,initialAddon,invitatio
         <Button disabled={pending} onClick={()=>startTransition(async()=>{receive(await refreshMembershipAddonAction(amendment.id));})}>Check payment</Button>
       </Stack>
     </Alert>:null}
-    {amendment?.state==='applied'?<Alert severity="success">Your add-on is active. Your billing date stays the same.</Alert>:null}
+    {amendment?.state==='applied'?<Alert severity="success">Your add-on is active. Today’s charge was prorated to match your current plan’s billing date. Your next payment will include the add-on’s full monthly price.</Alert>:null}
     {amendment&&['expired','failed'].includes(amendment.state)?<Alert severity="info">This add-on change was not completed. Your current plan is unchanged.
       <Box sx={{mt:1}}><Button onClick={()=>{setAmendment(null);requestId.current=null;setMessage(null);}}>Review again</Button></Box>
     </Alert>:null}
