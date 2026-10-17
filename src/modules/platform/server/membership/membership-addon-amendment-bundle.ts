@@ -58,12 +58,12 @@ export function prepareMembershipAmendmentBundle(db: Database.Database, userId: 
     JOIN platform_membership_offers o USING(plan_version_id) WHERE p.plan_key=?`).get(key) as { offer_id: string; plan_version_id: string } | undefined;
   if (!target) {
     const doc = structuredClone(originalDoc);
-    Object.assign(doc, { planId: null, baseRevision: "", visibility: "public", privatePageIds: [], internalNote: "", bundleOfferIds: [...oldIds, ...addonOfferIds],
+    Object.assign(doc, { planId: null, baseRevision: "", visibility: "unlisted", privatePageIds: [], internalNote: "", bundleOfferIds: [...oldIds, ...addonOfferIds],
       name: [originalDoc.name, ...selected.map(x => x.doc.name)].join(" + ").slice(0, 120), requiresDiscord: originalDoc.requiresDiscord || selected.some(x => x.doc.requiresDiscord) });
     doc.features = combinedMembershipFeatures([originalDoc.features, ...selected.map(x => x.doc.features)], new Map(readMembershipEditorChoices(db).features.map(x => [x.key, x.kind])));
     const price = newMembershipPlanPrice(createCanonicalUuidV4()), digits = currencyDecimals(original.currency), scale = BigInt(10) ** BigInt(digits);
     const amount = digits ? `${BigInt(total) / scale}.${String(BigInt(total) % scale).padStart(digits, "0")}` : String(total);
-    Object.assign(price, { name: "Plan and add-ons", provider: "stripe", billing: "recurring", currency: original.currency, initialPrice: amount, renewalPrice: amount });
+    Object.assign(price, { name: "Plan and add-ons", channel: "private", provider: "stripe", billing: "recurring", currency: original.currency, initialPrice: amount, renewalPrice: amount });
     doc.prices = [price];
     const saved = writeMembershipPlanEditor(db, userId, { requestId: createCanonicalUuidV4(), draftId: null, revision: null, document: doc, intent: "publish", applyToMembers: false }, at);
     if (!saved.planId || !saved.versionId || !saved.offerIds?.[0]) throw new Error("This add-on selection could not be prepared.");
