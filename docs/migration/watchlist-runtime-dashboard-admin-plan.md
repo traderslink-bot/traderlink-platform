@@ -21,6 +21,8 @@ runtime. This is separate from the member-facing official Watchlist route.
 
 **Usage-panel progress:** [Watchlist Usage Admin Progress](watchlist-usage-admin-progress.md)
 
+**Moomoo live-quote bridge progress:** [Moomoo Live Quote Bridge Progress](watchlist-moomoo-live-quote-bridge-progress-2026-10-17.md)
+
 **AI article source policy:** [Watchlist AI News Source Policy Plan](watchlist-ai-news-source-policy-plan.md)
 
 ## Owner-approved layout
@@ -153,6 +155,12 @@ surface.
   parity. This includes the runtime-owned same-day Yahoo/Moomoo candle-provider
   selector endpoint; it does not widen access to any other runtime path.
   Service restart, deployment and migration controls are not invented.
+
+## Prepared Moomoo live-quote bridge
+
+This narrow server-only bridge receives a bounded batch of U.S. symbols from the existing local Watchlist publisher, uses the configured owner Moomoo OAuth connection inside Platform, and returns only normalized quote facts: symbol, exchange timestamp, last price, and separate pre-market, after-hours, and overnight prices. OAuth credentials remain encrypted inside Platform and are never returned to the local runtime or browser.
+
+The bridge is an additive POST /api/live-watchlist/moomoo-quote route with the existing publisher-token boundary. It does not change the active EODHD live-price provider, Levels System selection, candle provider, Admin UI, Watchlist state, Discord publishing, runtime lifecycle, or release settings. Production deployment and the one-batch quote test are owner-authorized; the release coordinator reports deployment completion before the test runs.
 
 ## Acceptance boundary
 

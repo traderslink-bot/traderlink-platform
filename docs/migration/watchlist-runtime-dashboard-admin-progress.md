@@ -10,6 +10,8 @@
 
 ## Completed
 
+- [x] Prepare a protected, server-only Moomoo quote bridge for an owner-authorized test. It accepts a bounded batch of U.S. symbols through the existing publisher-token boundary and returns only the provider's price/session facts and exchange timestamp. The source preparation does not select Moomoo as the active provider. See [Moomoo Live Quote Bridge Progress](watchlist-moomoo-live-quote-bridge-progress-2026-10-17.md).
+
 - [x] Confirmed the existing Watchlist runtime has the required status,
   provider, AI Read, live-website and deterministic Day Trade Adapter endpoints.
 - [x] Keep the member-facing Watchlist route family separate from the
@@ -79,6 +81,12 @@
   supports one.
 - [ ] Configure the hosted runtime connection and verify the complete page
   without a browser-side fetch failure before release acceptance.
+
+- [ ] Deploy the prepared Moomoo quote bridge and send one batch through the
+  existing encrypted Platform connection. The owner authorized the production
+  release; await the release coordinator's deployment confirmation before the
+  test. Record returned symbols, exchange timestamps, provider status, and
+  freshness only; do not switch the active live-price provider in that test.
 
 ## Release boundary
 
