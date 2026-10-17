@@ -1,5 +1,11 @@
 # TraderLink Membership And Subscription Platform Plan
 
+Current staging-only QA and fixture coordination: [October 16 staging QA](membership-staging-qa-20261016.md).
+Remaining QA progress: [October 17 Membership/Login checks](membership-login-remaining-staging-qa-20261017.md).
+No feature fixes, deployments or production changes are authorized by that run.
+
+Owner-requested source corrections: [Add-on entry and mobile disconnect](membership-addon-entry-disconnect-corrections-20261017.md). Source corrections complete for existing-subscription private add-ons and inline disconnect notices; hosted/runtime and owner visual acceptance remain pending. No deployment authorized.
+
 Owner addition (2026-10-13): support per-plan card feature ordering, with accessible
 Move up/down controls, immediate preview and saved/publication/reopen persistence.
 Ordering changes presentation only; nested settings and permissions stay intact.

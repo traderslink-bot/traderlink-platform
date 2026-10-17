@@ -2,6 +2,8 @@ import type Database from "better-sqlite3";
 import { createHash } from "node:crypto";
 import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4, createCanonicalUuidV4 } from "../database/platform-migration-contract";
 import { prepareMembershipAmendmentBundle } from "./membership-addon-amendment-bundle";
+import { assertAddonInvitation, reserveAddonInvitation } from "./membership-addon-invitation";
+import { PlatformMembershipClaims } from "./platform-membership-claims";
 
 export type AddonAmendmentState = "preparing" | "quoted" | "confirming" | "pending_payment" | "applied" | "expired" | "failed" | "reconciliation_required";
 export type AddonAmendmentRow = {
@@ -20,14 +22,16 @@ export class MembershipAddonAmendmentRepository {
     if (!row) throw new Error("This add-on change is unavailable.");
     return row;
   }
-  reserve(userId: string, requestId: string, subscriptionId: string, addons: readonly string[], at: string): AddonAmendmentRow {
+  reserve(userId: string, requestId: string, subscriptionId: string, addons: readonly string[], at: string, invitationSecret?: string): AddonAmendmentRow {
     for (const value of [userId, requestId, subscriptionId, ...addons]) assertCanonicalUuidV4(value, "membershipReference");
     assertCanonicalUtcTimestamp(at, "atUtc");
-    const digest = createHash("sha256").update(JSON.stringify([subscriptionId, [...addons].sort()])).digest("hex");
+    const digest = createHash("sha256").update(JSON.stringify([subscriptionId, [...addons].sort(),...(invitationSecret?[createHash('sha256').update(invitationSecret).digest('hex')]:[])])).digest("hex");
     return this.db.transaction(() => {
       const prior = this.db.prepare("SELECT * FROM platform_membership_addon_amendments WHERE user_id=? AND request_id=?").get(userId,requestId) as AddonAmendmentRow | undefined;
       if (prior) { if (prior.request_sha256 !== digest) throw new Error("This add-on request changed. Review your selection again."); return prior; }
       this.db.prepare("UPDATE platform_membership_addon_amendments SET state='expired',updated_at_utc=? WHERE user_id=? AND state IN ('preparing','quoted') AND expires_at_utc<=?").run(at,userId,at);
+      this.db.prepare(`UPDATE platform_membership_claims SET state='released' WHERE user_id=? AND state='reserved'
+        AND claim_id IN (SELECT amendment_id FROM platform_membership_addon_amendments WHERE user_id=? AND state IN ('expired','failed'))`).run(userId,userId);
       const current = this.db.prepare(`SELECT s.*,e.entitlement_id,e.plan_version_id FROM platform_membership_provider_subscriptions s
         JOIN platform_membership_entitlements e ON e.user_id=s.user_id AND e.source_type='subscription' AND e.source_ref=s.external_subscription_ref
         JOIN platform_membership_offers o ON o.offer_id=s.offer_id AND o.plan_version_id=e.plan_version_id
@@ -37,8 +41,9 @@ export class MembershipAddonAmendmentRepository {
         .get(subscriptionId,userId,at,at,at) as { offer_id: string; external_subscription_ref: string; external_customer_ref: string; entitlement_id: string; plan_version_id: string; current_period_end_utc: string } | undefined;
       if (!current) throw new Error("This subscription cannot add packages right now. Check its billing status or scheduled changes.");
       if (this.db.prepare("SELECT 1 FROM platform_membership_addon_amendments WHERE provider_subscription_id=? AND state IN ('preparing','quoted','confirming','pending_payment','reconciliation_required')").get(subscriptionId)) throw new Error("Your previous add-on change is still open. Finish that payment or review first.");
-      const target = prepareMembershipAmendmentBundle(this.db,userId,current.offer_id,addons,at), id = createCanonicalUuidV4();
+      const target = prepareMembershipAmendmentBundle(this.db,userId,current.offer_id,addons,at,invitationSecret), id = createCanonicalUuidV4();
       const expires = new Date(Math.min(Date.parse(at)+10*60_000,Date.parse(current.current_period_end_utc))).toISOString();
+      if (invitationSecret) reserveAddonInvitation(this.db,invitationSecret,addons,id,userId,target.offerId,at,expires);
       this.db.prepare(`INSERT INTO platform_membership_addon_amendments
         (amendment_id,user_id,request_id,request_sha256,provider_subscription_id,external_subscription_ref,external_customer_ref,entitlement_id,
         original_offer_id,original_plan_version_id,target_offer_id,target_plan_version_id,addon_offer_ids_json,addon_names_json,currency,original_monthly_minor,
@@ -59,7 +64,12 @@ export class MembershipAddonAmendmentRepository {
     return this.db.transaction(() => {
       const row = this.read(userId,id);
       if (row.state !== "quoted") return { row, acquired: false };
-      if (row.expires_at_utc<=at) { this.db.prepare("UPDATE platform_membership_addon_amendments SET state='expired',updated_at_utc=? WHERE amendment_id=?").run(at,id); return { row: this.read(userId,id), acquired: false }; }
+      if (row.expires_at_utc<=at) {
+        this.db.prepare("UPDATE platform_membership_addon_amendments SET state='expired',updated_at_utc=? WHERE amendment_id=?").run(at,id);
+        new PlatformMembershipClaims(this.db).release(id);
+        return { row: this.read(userId,id), acquired: false };
+      }
+      assertAddonInvitation(this.db,id,at);
       this.db.prepare("UPDATE platform_membership_addon_amendments SET state='confirming',updated_at_utc=? WHERE amendment_id=? AND state='quoted'").run(at,id);
       return { row: this.read(userId,id), acquired: true };
     }).immediate();
@@ -67,11 +77,13 @@ export class MembershipAddonAmendmentRepository {
   abandonQuote(userId: string,id: string,at: string) {
     this.read(userId,id);
     this.db.prepare("UPDATE platform_membership_addon_amendments SET state='expired',updated_at_utc=MAX(updated_at_utc,?) WHERE user_id=? AND amendment_id=? AND state IN ('preparing','quoted')").run(at,userId,id);
+    if (this.read(userId,id).state === 'expired') new PlatformMembershipClaims(this.db).release(id);
     return this.read(userId,id);
   }
   fail(userId: string,id: string,code: string,at: string) {
     this.read(userId,id);
     this.db.prepare("UPDATE platform_membership_addon_amendments SET state=CASE WHEN state IN ('confirming','pending_payment','reconciliation_required') THEN 'reconciliation_required' ELSE 'failed' END,failure_code=?,updated_at_utc=MAX(updated_at_utc,?) WHERE amendment_id=? AND state NOT IN ('applied','expired','failed')").run(code,at,id);
+    if (['failed','expired'].includes(this.read(userId,id).state)) new PlatformMembershipClaims(this.db).release(id);
   }
   attachInvoice(userId: string,id: string,invoiceId: string,url: string | null,at: string) {
     this.read(userId,id);
@@ -93,6 +105,9 @@ export class MembershipAddonAmendmentRepository {
       } else {
         this.attachInvoice(row.user_id,row.amendment_id,invoiceId,null,at);
         if (this.read(row.user_id,row.amendment_id).external_invoice_ref!==invoiceId) return false;
+      }
+      if (this.db.prepare("SELECT 1 FROM platform_membership_claims WHERE claim_id=?").get(row.amendment_id)) {
+        new PlatformMembershipClaims(this.db).completeAddonPayment(row.amendment_id,at);
       }
       this.db.prepare("UPDATE platform_membership_entitlements SET plan_version_id=?,updated_at_utc=MAX(updated_at_utc,?) WHERE entitlement_id=?").run(row.target_plan_version_id,at,row.entitlement_id);
       this.db.prepare("UPDATE platform_membership_provider_subscriptions SET offer_id=?,updated_at_utc=MAX(updated_at_utc,?) WHERE provider_subscription_id=?").run(row.target_offer_id,at,row.provider_subscription_id);

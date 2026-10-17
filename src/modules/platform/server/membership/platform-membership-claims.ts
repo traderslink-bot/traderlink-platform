@@ -23,7 +23,9 @@ export class PlatformMembershipClaims {
     assertCanonicalUuidV4(input.userId, "userId");
     assertCanonicalUuidV4(input.offerId, "offerId");
     return this.database.transaction(() => {
-      this.database.prepare("UPDATE platform_membership_claims SET state='released' WHERE state='reserved' AND expires_at_utc<=?").run(at);
+      const hasAmendments = Boolean(this.database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_membership_addon_amendments'").get());
+      this.database.prepare(`UPDATE platform_membership_claims SET state='released' WHERE state='reserved' AND expires_at_utc<=?
+        ${hasAmendments ? "AND NOT EXISTS (SELECT 1 FROM platform_membership_addon_amendments a WHERE a.amendment_id=platform_membership_claims.claim_id AND a.state IN ('confirming','pending_payment','reconciliation_required'))" : ""}`).run(at);
       const offer = this.database.prepare(`SELECT o.*,p.visibility,provider.configuration_state provider_configuration_state FROM platform_membership_offers o
         JOIN platform_membership_provider_definitions provider ON provider.provider_key=o.provider
         JOIN platform_membership_plan_versions v ON v.plan_version_id=o.plan_version_id JOIN platform_membership_plans p ON p.plan_id=v.plan_id
@@ -127,6 +129,19 @@ export class PlatformMembershipClaims {
       return;
     }
     this.completeClaim(claimId, at, true);
+  }
+
+  // Amendment invoice evidence is verified by the amendment projector, rather
+  // than a Checkout Session. Consume its invitation in that same transaction.
+  completeAddonPayment(amendmentId: string, at: string): void {
+    if (!this.database.inTransaction || !this.database.prepare(`SELECT 1 FROM platform_membership_claims c
+      JOIN platform_membership_addon_amendments a ON a.amendment_id=c.claim_id
+      WHERE c.claim_id=? AND c.user_id=a.user_id AND c.offer_id=a.target_offer_id
+      AND a.state IN ('confirming','pending_payment','reconciliation_required')
+      AND (a.external_invoice_ref IS NOT NULL OR (a.charge_minor=0 AND a.target_monthly_minor=a.original_monthly_minor))`).get(amendmentId)) {
+      throw new Error("Unknown add-on invitation reservation.");
+    }
+    this.completeClaim(amendmentId, at, true);
   }
 
   private completeClaim(claimId: string, at: string, verifiedPayment: boolean): void {

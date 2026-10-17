@@ -52,6 +52,7 @@ export function reconcileMembershipAddonInvoice(db: Database.Database, invoice: 
   repository.attachInvoice(row.user_id,row.amendment_id,invoiceId,membershipHostedInvoiceUrl(invoice.hosted_invoice_url),at);
   if (invoice.status==='void' || invoice.status==='uncollectible') {
     if (row.state!=='applied') db.prepare("UPDATE platform_membership_addon_amendments SET state='failed',failure_code='invoice_unpaid',updated_at_utc=MAX(updated_at_utc,?) WHERE amendment_id=?").run(at,row.amendment_id);
+    if (row.state!=='applied') db.prepare("UPDATE platform_membership_claims SET state='released' WHERE claim_id=? AND state='reserved'").run(row.amendment_id);
     return "applied";
   }
   // Current Stripe invoices omit the legacy paid boolean. Require the terminal

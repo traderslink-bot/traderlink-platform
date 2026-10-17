@@ -153,7 +153,7 @@ export function PlanCatalog({
           {addonPlans.length ? <section className={styles.addonSection} aria-labelledby="plan-addons-title">
             <h2 id="plan-addons-title" className={styles.addonSectionTitle}>Add-ons</h2>
             <p className={styles.addonSectionDescription}>Add one or more packages to your monthly or free plan.</p>
-            <div className={styles.addonGrid}>{addonPlans.map(plan => <PlanAddonCard key={plan.planId} plan={plan} />)}</div>
+            <div className={styles.addonGrid}>{addonPlans.map(plan => <PlanAddonCard key={plan.planId} plan={plan} secret={secret} />)}</div>
           </section> : null}
         </Stack>
       </Container>

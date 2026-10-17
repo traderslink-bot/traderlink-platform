@@ -1,8 +1,10 @@
 import { LoginScreen } from "./login-screen";
+import type { Metadata } from "next";
 import { loginReturnTo } from "@/src/modules/platform/server/authentication/platform-login-http";
 export const dynamic = "force-dynamic";
-export const metadata = {
+export const metadata: Metadata = {
   title: "Sign in | TradersLink",
+  referrer: "no-referrer",
   robots: { index: false, follow: false },
 };
 export default async function LoginPage({

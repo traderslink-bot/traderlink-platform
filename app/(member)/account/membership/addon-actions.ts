@@ -13,9 +13,9 @@ function failure(error: unknown): MembershipAddonAmendmentResult {
   const message=error instanceof Error?error.message:"";
   return {ok:false,message:/^(This |Your |Choose |Stripe )/.test(message)?message:"The add-on change could not be completed. Please try again or contact TradersLink."};
 }
-export async function quoteMembershipAddonAction(requestId: string,subscriptionId: string,addons: readonly string[]): Promise<MembershipAddonAmendmentResult> {
+export async function quoteMembershipAddonAction(requestId: string,subscriptionId: string,addons: readonly string[],invitationSecret?: string): Promise<MembershipAddonAmendmentResult> {
   try { const {scope}=await requireTraderLinkPlatformBillingPageIdentity();
-    const row=await new MembershipAddonAmendmentService(database).quote(scope.userId,requestId,subscriptionId,addons);
+    const row=await new MembershipAddonAmendmentService(database).quote(scope.userId,requestId,subscriptionId,addons,invitationSecret);
     return {ok:true,amendment:membershipAddonAmendmentView(row)};
   }catch(error){return failure(error)}
 }

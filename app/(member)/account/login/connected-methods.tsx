@@ -1,6 +1,7 @@
 "use client";
 import { readLoginResponse } from "@/src/modules/platform/contracts/platform-login-response";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -18,6 +19,9 @@ export function ConnectedMethods({
   discordAvailable: boolean;
   emailAvailable: boolean;
 }) {
+  const router = useRouter();
+  const [connectedProviders, setConnectedProviders] = useState(methods);
+  const [noticeProvider, setNoticeProvider] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -34,6 +38,14 @@ export function ConnectedMethods({
       });
       const result = await readLoginResponse(r);
       if (!r.ok) throw new Error(result.error);
+      if (action === "unlink") {
+        setConnectedProviders(current => current.filter(method => method !== provider));
+        setConfirm(null);
+        setNoticeProvider(provider);
+        setNotice(`${provider === "email" ? "Email and password" : provider === "google" ? "Google" : "Discord"} disconnected. You can sign in with your other connected method.`);
+        router.refresh();
+        return;
+      }
       window.location.assign(result.redirect);
     } catch (e) {
       setError(
@@ -45,7 +57,7 @@ export function ConnectedMethods({
   }
   return (
     <Stack spacing={2}>
-      {notice ? (
+      {notice && !noticeProvider ? (
         <Alert severity="success" role="status">
           {notice}
         </Alert>
@@ -69,11 +81,11 @@ export function ConnectedMethods({
         <Stack key={provider} spacing={1}>
           <Typography sx={{ fontWeight: 700 }}>
             {label}:{" "}
-            {methods.includes(provider) ? "Connected" : "Not connected"}
+            {connectedProviders.includes(provider) ? "Connected" : "Not connected"}
           </Typography>
-          {methods.includes(provider) ? (
+          {connectedProviders.includes(provider) ? (
             <Button
-              disabled={busy || methods.length === 1}
+              disabled={busy || connectedProviders.length === 1}
               onClick={() => setConfirm(provider)}
             >
               Disconnect {label}
@@ -95,9 +107,26 @@ export function ConnectedMethods({
               <LoginForm mode="link-email" emailAvailable={emailAvailable} />
             </>
           )}
+          {confirm === provider ? (
+            <Alert severity="warning" role="alert">
+              <Stack spacing={1}>
+                <Typography>
+                  Disconnect {label}?
+                  {provider === "discord"
+                    ? " Linked Discord benefits will stop. Your Journal and purchased app access stay with your account."
+                    : " You can use your other connected method to sign in."}
+                </Typography>
+                <Button disabled={busy} onClick={() => update("unlink", provider)}>
+                  Confirm disconnect
+                </Button>
+                <Button disabled={busy} onClick={() => setConfirm(null)}>Cancel</Button>
+              </Stack>
+            </Alert>
+          ) : null}
+          {notice && noticeProvider === provider ? <Alert severity="success" role="status">{notice}</Alert> : null}
         </Stack>
       ))}
-      {methods.includes("email") ? (
+      {connectedProviders.includes("email") ? (
         <Stack spacing={1}>
           <Button href="/login/forgot">Change or reset password</Button>
           <Typography variant="h6">Change email login</Typography>
@@ -125,6 +154,7 @@ export function ConnectedMethods({
                 });
                 const result = await readLoginResponse(response);
                 if (!response.ok) throw new Error(result.error);
+                setNoticeProvider(null);
                 setNotice(result.message);
               } catch (e) {
                 setError(
@@ -138,24 +168,6 @@ export function ConnectedMethods({
             Verify new email address
           </Button>
         </Stack>
-      ) : null}
-      {confirm ? (
-        <Alert severity="warning">
-          <Stack spacing={1}>
-            <Typography>
-              Disconnect {confirm}?
-              {confirm === "discord"
-                ? " Linked Discord benefits will stop. Your Journal and purchased app access stay with your account."
-                : " You can use your other connected method to sign in."}
-            </Typography>
-            <Button disabled={busy} onClick={() => update("unlink", confirm)}>
-              Confirm disconnect
-            </Button>
-            <Button disabled={busy} onClick={() => setConfirm(null)}>
-              Cancel
-            </Button>
-          </Stack>
-        </Alert>
       ) : null}
     </Stack>
   );

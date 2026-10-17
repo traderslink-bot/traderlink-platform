@@ -58,8 +58,8 @@ function previewCharge(row: AddonAmendmentRow, value: Record<string,unknown>): n
  * database runner opens short owned transactions/connections for each step. */
 export class MembershipAddonAmendmentService {
   constructor(private readonly database: DatabaseWork, private readonly now: ()=>Date = ()=>new Date()) {}
-  async quote(userId: string, requestId: string, subscriptionId: string, addons: readonly string[]) {
-    let row = this.database(db=>new MembershipAddonAmendmentRepository(db).reserve(userId,requestId,subscriptionId,addons,this.now().toISOString()));
+  async quote(userId: string, requestId: string, subscriptionId: string, addons: readonly string[], invitationSecret?: string) {
+    let row = this.database(db=>new MembershipAddonAmendmentRepository(db).reserve(userId,requestId,subscriptionId,addons,this.now().toISOString(),invitationSecret));
     if (row.state!=="preparing") return row;
     try {
       this.assertPaymentMode(row);

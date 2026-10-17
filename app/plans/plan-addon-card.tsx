@@ -6,7 +6,7 @@ import { membershipAllowanceInBrief } from "@/src/modules/platform/contracts/mem
 import { PlanPrice } from "./plan-price";
 import styles from "./plan-catalog.module.css";
 
-export function PlanAddonCard({ plan }: { plan: PlatformMembershipCatalogPlan }) {
+export function PlanAddonCard({ plan, secret }: { plan: PlatformMembershipCatalogPlan; secret?: string }) {
   const prices = plan.displayOnly ? (plan.displayPrices ?? []).flatMap(price => price.terms ? [price.terms] : []) : plan.offers;
   const amendmentOffer=plan.displayOnly?undefined:plan.offers.find(o=>o.accessDurationDays===null&&(o.billingKind==='free'||o.provider==='stripe'&&o.billingKind==='recurring'&&o.billingInterval==='month'&&o.billingIntervalCount===1&&o.initialAmountMinor===o.renewalAmountMinor));
   return <article className={`${styles.frame} ${styles.addonFrame}`} aria-label={`${plan.name} add-on`}>
@@ -37,8 +37,10 @@ export function PlanAddonCard({ plan }: { plan: PlatformMembershipCatalogPlan })
                         </span> : null}</span>{brief ? <span className={styles.brief}>{brief}</span> : null}</>;
         return <li key={feature.featureKey} className={styles.feature}>{details ? <details><summary aria-label={`More details about ${feature.label}`}>{content}</summary><p>{details}</p></details> : <div className={styles.featureContent}>{content}</div>}</li>;
       })}</ul>
-      {amendmentOffer?<p className={styles.addonInstruction}><a className={styles.addonUpgradeLink} href={`/account/membership?addonOfferId=${encodeURIComponent(amendmentOffer.offerId)}`}>Add to your current plan</a></p>:null}
-      <p className={styles.addonInstruction}>{plan.displayOnly ? "Preview package — purchases are not available yet." : "Select this add-on inside your chosen plan above."}</p>
+      {amendmentOffer?<p className={styles.addonInstruction}><a className={styles.addonUpgradeLink} href={`/plans/add-on?${new URLSearchParams({addonOfferId:amendmentOffer.offerId,...(secret?{secret}:{})})}`}>Add to your current plan</a></p>:null}
+      <p className={styles.addonInstruction}>{plan.displayOnly ? "Preview package — purchases are not available yet." : secret
+        ? amendmentOffer ? "Add this package to an eligible existing monthly subscription using the link above." : "Contact TradersLink for help adding this private package."
+        : "Select this add-on inside your chosen plan above."}</p>
     </div>
   </article>;
 }

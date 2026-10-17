@@ -7,6 +7,7 @@ import { createCanonicalUuidV4 } from "../database/platform-migration-contract";
 import { readMembershipEditorChoices } from "./membership-plan-editor-read";
 import { writeMembershipPlanEditor } from "./membership-plan-editor-write";
 import { membershipUsageAnchor } from "./membership-plan-usage";
+import { PlatformMembershipCatalogRepository } from "./platform-membership-catalog-repository";
 
 type Component = { offer_id: string; plan_id: string; plan_version_id: string; published_at_utc: string; document_json: string;
   currency: string | null; renewal_amount_minor: number | null; initial_amount_minor: number | null; billing_kind: string;
@@ -22,10 +23,10 @@ function component(db: Database.Database, offerId: string): Component {
 }
 
 /** Caller owns an immediate transaction. Existing accepted terms may be archived;
- * newly purchased components must still be publicly enrollable. Never reserves a
+ * new components must be public or included in a valid private invitation. Never reserves a
  * second checkout/claim or grants access merely by preparing a target snapshot.
  */
-export function prepareMembershipAmendmentBundle(db: Database.Database, userId: string, originalOfferId: string, addonOfferIds: readonly string[], at: string) {
+export function prepareMembershipAmendmentBundle(db: Database.Database, userId: string, originalOfferId: string, addonOfferIds: readonly string[], at: string, invitationSecret?: string) {
   if (!db.inTransaction) throw new Error("Amendment bundle needs a transaction.");
   if (!addonOfferIds.length || new Set(addonOfferIds).size !== addonOfferIds.length) throw new Error("Choose distinct add-on packages.");
   const original = component(db, originalOfferId);
@@ -35,10 +36,13 @@ export function prepareMembershipAmendmentBundle(db: Database.Database, userId: 
     !original.currency || original.renewal_amount_minor === null) throw new Error("This subscription cannot use monthly add-on amendments.");
   const oldIds = originalDoc.bundleOfferIds.length ? originalDoc.bundleOfferIds : [originalOfferId];
   const oldPlans = new Set(oldIds.map(id => component(db, id).plan_id));
+  const invitedOffers = invitationSecret && /^[A-Za-z0-9_-]{40,64}$/u.test(invitationSecret)
+    ? new Set(new PlatformMembershipCatalogRepository(db).readSharedPlans(invitationSecret,at)?.flatMap(plan=>plan.offers.map(offer=>offer.offerId)) ?? []) : null;
+  if (invitationSecret && !addonOfferIds.every(id=>invitedOffers?.has(id))) throw new Error("This private offer is no longer available. Reopen your invitation.");
   const selected = addonOfferIds.map(id => {
     const row = component(db, id), doc = membershipPlanEditorSchema.parse(JSON.parse(row.document_json));
-    if (row.status !== "active" || row.plan_status !== "active" || row.visibility !== "public" || row.lifecycle_state !== "published" ||
-      !["website", "both"].includes(row.channel) || !["test", "ready"].includes(row.configuration_state) || doc.packageType !== "addon" ||
+    if (row.status !== "active" || row.plan_status !== "active" || (!invitedOffers?.has(id) && (row.visibility !== "public" || !["website", "both"].includes(row.channel))) || row.lifecycle_state !== "published" ||
+      !["test", "ready"].includes(row.configuration_state) || doc.packageType !== "addon" ||
       doc.displayOnly || doc.bundleOfferIds.length || row.access_duration_days !== null || oldPlans.has(row.plan_id)) throw new Error("This add-on is unavailable or already included.");
     oldPlans.add(row.plan_id);
     if (row.billing_kind !== "free" && (row.provider !== "stripe" || row.billing_kind !== "recurring" || row.billing_interval !== "month" ||
