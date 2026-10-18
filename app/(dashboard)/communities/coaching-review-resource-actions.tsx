@@ -5,8 +5,19 @@ import {requireCommunityRequestAccess} from "@/src/modules/communities/server/co
 import {withReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {coachingReviewResourceScope} from "@/src/modules/communities/server/coaching-review-resource-scope";
 import {coachingResource,type CoachingResourceId} from "@/src/modules/communities/contracts/coaching-review-resources";
+import type {loadAnalyticsOverviewModel} from "../analytics/analytics-overview-page";
+import type {loadResultsAnalyticsModel} from "../analytics/results-analytics-page";
+import type {loadTimingAnalyticsModel} from "../analytics/timing/timing-analytics-page";
+import type {loadExecutionAnalyticsModel} from "../analytics/execution-analytics-page";
+import type {readRuleResults} from "../rules/results/rule-results-data";
 
-export async function loadCoachingReviewResource(communitySlug:string,reviewId:string,resourceId:CoachingResourceId,parameters:Record<string,string>={}):Promise<{content:ReactNode;error:string|null}>{
+export type CoachingAnalyticsModel=
+ | {kind:'overview';model:Awaited<ReturnType<typeof loadAnalyticsOverviewModel>>}
+ | {kind:'ticker';model:Pick<Awaited<ReturnType<typeof loadResultsAnalyticsModel>>,'selectedRange'|'moneyBasis'|'rows'>}
+ | {kind:'timing';model:Pick<Awaited<ReturnType<typeof loadTimingAnalyticsModel>>,'chartData'|'completedTradeCount'|'moneyBasis'|'timezone'>}
+ | {kind:'breakdown';model:Pick<Awaited<ReturnType<typeof loadExecutionAnalyticsModel>>,'chartData'|'currency'|'moneyBasis'|'priceComparison'|'priceInsights'|'priceResults'|'priceResultsByDirection'|'rows'|'selectedRange'>};
+
+export async function loadCoachingReviewResource(communitySlug:string,reviewId:string,resourceId:CoachingResourceId,parameters:Record<string,string>={}):Promise<{content:ReactNode;analyticsModel:CoachingAnalyticsModel|null;rulesModel:Awaited<ReturnType<typeof readRuleResults>>|null;error:string|null}>{
  try{
   const identity=await requireTraderLinkPlatformPageIdentity();
   await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,reviewId,existingCoachingOnly:true});
@@ -14,11 +25,13 @@ export async function loadCoachingReviewResource(communitySlug:string,reviewId:s
   const resource=coachingResource(resourceId);if(!resource)throw new Error("Resource unavailable.");
   const searchParams={...parameters,range:"custom",start:access.period.start,end:access.period.end,startDate:access.period.start,endDate:access.period.end};
   let content:ReactNode;
+  let analyticsModel:CoachingAnalyticsModel|null=null;
+  let rulesModel:Awaited<ReturnType<typeof readRuleResults>>|null=null;
   switch(resourceId){
-   case 'overview':{const {AnalyticsOverviewPage}=await import('../analytics/analytics-overview-page');content=await AnalyticsOverviewPage({resourceScope:access.scope,searchParams});break;}
-   case 'ticker':{const {ResultsAnalyticsPage}=await import('../analytics/results-analytics-page');content=await ResultsAnalyticsPage({resourceScope:access.scope,searchParams});break;}
-   case 'timing':{const {TimingAnalyticsPage}=await import('../analytics/timing/timing-analytics-page');content=await TimingAnalyticsPage({resourceScope:access.scope,period:access.period,searchParams:Promise.resolve({basis:parameters.basis})});break;}
-   case 'breakdown':{const {ExecutionAnalyticsPage}=await import('../analytics/execution-analytics-page');content=await ExecutionAnalyticsPage({resourceScope:access.scope,searchParams});break;}
+   case 'overview':{const {loadAnalyticsOverviewModel}=await import('../analytics/analytics-overview-page');analyticsModel={kind:'overview',model:await loadAnalyticsOverviewModel({resourceScope:access.scope,searchParams})};content=null;break;}
+   case 'ticker':{const {loadResultsAnalyticsModel}=await import('../analytics/results-analytics-page');const {selectedRange,moneyBasis,rows}=await loadResultsAnalyticsModel({resourceScope:access.scope,searchParams});analyticsModel={kind:'ticker',model:{selectedRange,moneyBasis,rows}};content=null;break;}
+   case 'timing':{const {loadTimingAnalyticsModel}=await import('../analytics/timing/timing-analytics-page');const {chartData,completedTradeCount,moneyBasis,timezone}=await loadTimingAnalyticsModel({resourceScope:access.scope,period:access.period,searchParams:Promise.resolve(searchParams)});analyticsModel={kind:'timing',model:{chartData,completedTradeCount,moneyBasis,timezone}};content=null;break;}
+   case 'breakdown':{const {loadExecutionAnalyticsModel}=await import('../analytics/execution-analytics-page');const {chartData,currency,moneyBasis,priceComparison,priceInsights,priceResults,priceResultsByDirection,rows,selectedRange}=await loadExecutionAnalyticsModel({resourceScope:access.scope,searchParams});analyticsModel={kind:'breakdown',model:{chartData,currency,moneyBasis,priceComparison,priceInsights,priceResults,priceResultsByDirection,rows,selectedRange}};content=null;break;}
    case 'explorer':case 'compare':{
     const {readTradeExplorerPageModel}=await import('../analytics/trade-explorer/trade-explorer-service');
     const source=await readTradeExplorerPageModel(access.scope,{startDate:access.period.start,endDate:access.period.end},{communitySlug,reviewId,coachUserId:identity.scope.userId});
@@ -29,8 +42,8 @@ export async function loadCoachingReviewResource(communitySlug:string,reviewId:s
    }
    case 'rules':{
     if(!access.permits('rules')||!access.permits('day_rules'))throw new Error("The student must share the agreed rule data before opening Rules analytics.");
-    const {readRuleResults}=await import('../rules/results/rule-results-data');const {RuleResultsClient}=await import('../rules/results/rule-results-client');
-    const model=await readRuleResults(access.scope,{startDate:access.period.start,endDate:access.period.end});content=<RuleResultsClient initialView={model}/>;break;
+    const {readRuleResults}=await import('../rules/results/rule-results-data');
+    rulesModel=await readRuleResults(access.scope,{startDate:access.period.start,endDate:access.period.end});content=null;break;
    }
    case 'day':case 'entry-exit':case 'mfe-mae':case 'green-to-red':case 'scaling-out':case 'candle-patterns':case 'trend-momentum':case 'trades':{
     const {coachingAnalyzerResources}=await import('@/src/modules/communities/server/coaching-review-analyzer-availability');const ids=access.shared.trades.filter(trade=>trade.tradingDate&&trade.tradingDate>=access.period.start&&trade.tradingDate<=access.period.end).map(trade=>trade.roundTripId);if(!withReadonlyPlatformDatabase({},db=>coachingAnalyzerResources(db,access.scope,ids)).includes(resourceId))throw new Error('Saved analysis is not applicable to this review period.');
@@ -41,8 +54,8 @@ export async function loadCoachingReviewResource(communitySlug:string,reviewId:s
   // Recheck after asynchronous page loading: a changed/revoked grant never returns data.
   const current=withReadonlyPlatformDatabase({},db=>coachingReviewResourceScope(db,{coachUserId:identity.scope.userId,reviewId,communitySlug}));
   if(current.authorizationKey!==access.authorizationKey||current.scope.activeAccountId!==access.scope.activeAccountId||current.period.start!==access.period.start||current.period.end!==access.period.end)throw new Error("Sharing or review selection changed. Reopen the resource.");
-  return {content,error:null};
- }catch(error){return {content:null,error:error instanceof Error&&/^(Identify the accepted service|This review is unavailable|The student must share|Select trades with verified|Sharing or review selection changed|This resource is still)/.test(error.message)?error.message:"This resource is unavailable. Check Journal sharing and try again."};}
+  return {content,analyticsModel,rulesModel,error:null};
+ }catch(error){return {content:null,analyticsModel:null,rulesModel:null,error:error instanceof Error&&/^(Identify the accepted service|This review is unavailable|The student must share|Select trades with verified|Sharing or review selection changed|This resource is still)/.test(error.message)?error.message:"This resource is unavailable. Check Journal sharing and try again."};}
 }
 
 async function verifiedAccess(communitySlug:string,reviewId:string){

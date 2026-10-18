@@ -1,10 +1,8 @@
-import { MembershipFeatureAccessNotice } from "../../membership-feature-access-notice";
 import type {WorkspaceAccessScope} from "@/src/modules/platform/contracts/workspace-access-scope";
 import "server-only";
 
-import { DashboardPage } from "@/app/dashboard-template";
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
-import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import type { JournalAnalyticsGrouping } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
 import {
@@ -15,11 +13,8 @@ import {
 } from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-
-import { TimingAnalyticsClient, type TimingChartData, type TimingMetricId } from "./timing-analytics-client";
-import { FeatureHelpLink } from "../../feature-help-link";
+import { type TimingChartData, type TimingMetricId } from "./timing-analytics-client";
+import { TimingAnalyticsView } from "./timing-analytics-view";
 
 const GROUPINGS: readonly JournalAnalyticsGrouping[] = [
   "entry_time_bucket",
@@ -65,14 +60,13 @@ function chartOrder(grouping: JournalAnalyticsGrouping, key: string): number | s
   return key;
 }
 
-export async function TimingAnalyticsPage({
+export async function loadTimingAnalyticsModel({
   searchParams,resourceScope,period,
 }: {
   resourceScope?:WorkspaceAccessScope;period?:{start:string;end:string};
   searchParams: Promise<{ basis?: string | string[] | undefined }>;
 }) {
-  const scope = resourceScope ?? await requireMembershipPreviewPageScope("analytics.access");
-  if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
+  const scope = resourceScope ?? await requireMembershipPageScope("analytics.access");
   const requestedBasis = (await searchParams).basis;
   const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
     const moneyBasis = resolveJournalAnalyticsMoneyBasis(requestedBasis, pnlReportingBasis);
@@ -108,9 +102,19 @@ export async function TimingAnalyticsPage({
     ]),
   )) as TimingChartData;
   const timezone = response.partitions[0]?.timezone ?? "America/New_York";
+  return { chartData, completedTradeCount: response.crossPartitionCounts.readyClosedCount, moneyBasis, response, timezone };
+}
+
+export async function TimingAnalyticsPage({
+  searchParams,resourceScope,period,
+}: {
+  resourceScope?:WorkspaceAccessScope;period?:{start:string;end:string};
+  searchParams: Promise<{ basis?: string | string[] | undefined }>;
+}) {
+  const { chartData, completedTradeCount, moneyBasis, response, timezone } = await loadTimingAnalyticsModel({ searchParams, resourceScope, period });
   const offlineModel: JournalAnalyticsTimingOfflineViewModel = Object.freeze({
     chartData,
-    completedTradeCount: response.crossPartitionCounts.readyClosedCount,
+    completedTradeCount,
     kind: "analytics-timing",
     moneyBasis,
     timezone,
@@ -131,26 +135,7 @@ export async function TimingAnalyticsPage({
       routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
       viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-timing"]}
     />}
-    <DashboardPage>
-      <Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}>
-        <Box>
-          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
-            Analytics
-          </Typography>
-          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
-            Timing
-          </Typography>
-        </Box>
-        <FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" />
-      </Box>
-
-      <TimingAnalyticsClient
-        chartData={chartData}
-        completedTradeCount={response.crossPartitionCounts.readyClosedCount}
-        moneyBasis={moneyBasis}
-        timezone={timezone}
-      />
-    </DashboardPage>
+    <TimingAnalyticsView chartData={chartData} completedTradeCount={completedTradeCount} moneyBasis={moneyBasis} timezone={timezone} />
     </>
   );
 }

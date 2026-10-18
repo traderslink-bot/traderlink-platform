@@ -1,4 +1,3 @@
-import { MembershipFeatureAccessNotice } from "../membership-feature-access-notice";
 import type {WorkspaceAccessScope} from "@/src/modules/platform/contracts/workspace-access-scope";
 import "server-only";
 
@@ -14,7 +13,7 @@ import {
   resolveJournalAnalyticsMoneyBasis,
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import { analyticsOverviewMetrics, AnalyticsOverviewView } from "./analytics-overview-view";
 import type { OverviewDateRange } from "./overview-date-range-control";
@@ -46,9 +45,8 @@ function dateRangeFromSearchParams(searchParams: Readonly<Record<string, string 
   return { endDate: null, kind: "all", startDate: null };
 }
 
-export async function AnalyticsOverviewPage({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = resourceScope ?? await requireMembershipPreviewPageScope("analytics.access");
-  if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
+export async function loadAnalyticsOverviewModel({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const scope = resourceScope ?? await requireMembershipPageScope("analytics.access");
   const dateRange = dateRangeFromSearchParams(searchParams);
   const { moneyBasis, response } = await withJournalAnalyticsReportingDashboardRuntime(
     scope,
@@ -66,6 +64,11 @@ export async function AnalyticsOverviewPage({ searchParams, resourceScope }: { r
     },
     { prefetchAllFactSet: dateRange.kind === "all" },
   );
+  return { dateRange, moneyBasis, response };
+}
+
+export async function AnalyticsOverviewPage({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const { dateRange, moneyBasis, response } = await loadAnalyticsOverviewModel({ searchParams, resourceScope });
   const offlineModel: JournalAnalyticsOverviewOfflineViewModel = Object.freeze({
     dateRange: Object.freeze({ ...dateRange }),
     kind: "analytics-overview",

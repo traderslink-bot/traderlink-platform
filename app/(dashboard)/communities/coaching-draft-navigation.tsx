@@ -9,6 +9,8 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 
+export const COACHING_DRAFT_SAVED = "coaching:draft-saved";
+
 export function focusCoachingEditor(id: string) {
   const editor = document.getElementById(id);
   editor?.focus({preventScroll:true});
@@ -56,6 +58,14 @@ export function useCoachingDraftNavigation(formId: string, formKey: string|((has
       focusCoachingEditor(formId);
     }
   }, [formId, baselineKey, guardStudentHistory?hash:null]);
+
+  useEffect(() => {
+    const saved = (event: Event) => {
+      if ((event as CustomEvent<{formId:string}>).detail?.formId === formId) baseline.current = formContents(formId);
+    };
+    document.addEventListener(COACHING_DRAFT_SAVED, saved);
+    return () => document.removeEventListener(COACHING_DRAFT_SAVED, saved);
+  }, [formId]);
 
   function dirty(){
     const contents=formContents(formId);

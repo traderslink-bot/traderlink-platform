@@ -71,9 +71,33 @@ export function CoachingReviewDraftGuard({children}:{children:ReactNode}){
    restoreTimer=setTimeout(()=>{if(restoring)confirmHere();},1000);
    window.history.go(distance);
   };
+  // The Navigation API fires before popstate and before Next can unmount this
+  // review. Cancel a traversal there so the feedback stays in its form while
+  // the coach decides whether to discard it.
+  type ReviewNavigation=EventTarget&{traverseTo?:(key:string)=>{finished:Promise<unknown>}};
+  const navigation=(window as Window&{navigation?:ReviewNavigation}).navigation;
+  const navigate=(event:Event)=>{
+   if(confirmedDeparture.current){confirmedDeparture.current=false;return;}
+   const traversal=event as Event&{navigationType?:string;destination?:{url?:string;key?:string;index?:number}};
+   if(traversal.navigationType!=='traverse'||!event.cancelable||!dirty())return;
+   const target=traversal.destination;
+   if(!target?.url)return;
+   const next=new URL(target.url);
+   if(next.pathname===reviewUrl.pathname&&next.search===reviewUrl.search)return;
+   event.preventDefault();
+   const sourceIndex=coachingBrowserHistoryIndex();
+   leaveByBack.current=()=>{
+    confirmedDeparture.current=true;
+    bypass=true;
+    if(target.key&&navigation?.traverseTo){void navigation.traverseTo(target.key).finished.catch(()=>{bypass=false;confirmedDeparture.current=false;confirmHere();});return;}
+    if(sourceIndex!==null&&typeof target.index==='number'){window.history.go(target.index-sourceIndex);return;}
+    window.location.assign(target.url!);
+   };
+   setBackPending(true);
+  };
   window.addEventListener(COACHING_HISTORY_CHANGE,remember);
-  document.addEventListener('click',click,true);window.addEventListener('beforeunload',unload);window.addEventListener('popstate',pop,true);
-  return()=>{clearTimeout(restoreTimer);window.removeEventListener(COACHING_HISTORY_CHANGE,remember);observer.disconnect();element.removeEventListener('input',refresh);element.removeEventListener('change',refresh);document.removeEventListener('click',click,true);window.removeEventListener('beforeunload',unload);window.removeEventListener('popstate',pop,true);};
+  document.addEventListener('click',click,true);window.addEventListener('beforeunload',unload);window.addEventListener('popstate',pop,true);navigation?.addEventListener('navigate',navigate);
+  return()=>{clearTimeout(restoreTimer);window.removeEventListener(COACHING_HISTORY_CHANGE,remember);observer.disconnect();element.removeEventListener('input',refresh);element.removeEventListener('change',refresh);document.removeEventListener('click',click,true);window.removeEventListener('beforeunload',unload);window.removeEventListener('popstate',pop,true);navigation?.removeEventListener('navigate',navigate);};
  },[]);
  const keepEditing=()=>{setDestination(null);setBackPending(false);};
  return <CoachingReviewDirtyContext.Provider value={unsaved}><Box ref={root}>{children}</Box><Dialog open={Boolean(destination)||backPending} onClose={keepEditing} aria-labelledby="review-unsaved-title"><DialogTitle id="review-unsaved-title">Unsaved review feedback</DialogTitle><DialogContent>Save your drafts before reviewing and sending. Continuing discards unsaved changes.</DialogContent><DialogActions><Button autoFocus onClick={keepEditing}>Keep editing</Button><Button color="error" onClick={()=>{const href=destination;const back=backPending;keepEditing();if(back)leaveByBack.current();else if(href){if(new URL(href,window.location.href).href===window.location.href){confirmedDeparture.current=true;window.location.assign(href);}else router.push(href);}}}>Discard and continue</Button></DialogActions></Dialog></CoachingReviewDirtyContext.Provider>;

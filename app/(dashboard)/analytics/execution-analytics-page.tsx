@@ -1,11 +1,6 @@
-import { MembershipFeatureAccessNotice } from "../membership-feature-access-notice";
 import type {WorkspaceAccessScope} from "@/src/modules/platform/contracts/workspace-access-scope";
 import "server-only";
 
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-
-import { DashboardPage } from "@/app/dashboard-template";
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import {
   JOURNAL_ANALYTICS_ENTRY_PRICE_COMPARISON_BANDS,
@@ -31,19 +26,17 @@ import {
 import { compareExactDecimals, multiplyExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
 import { toLogicalTradeAnalyticsTable } from "@/src/modules/journal-analytics/server/logical-trade-analytics-table";
 import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import {
-  ExecutionAnalyticsClient,
   type EntryPriceComparison,
   type EntryPriceInsights,
   type EntryPriceResult,
   type ExecutionChartData,
   type ExecutionTradeRow,
 } from "./execution-analytics-client";
-import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
-import { DashboardAppearanceText } from "../dashboard-appearance-text";
-import { FeatureHelpLink } from "../feature-help-link";
+import type { OverviewDateRange } from "./overview-date-range-control";
+import { ExecutionAnalyticsView } from "./execution-analytics-view";
 
 const CHART_GROUPINGS = ["entered_quantity_bucket", "maximum_position_bucket", "holding_duration_bucket"] as const satisfies readonly JournalAnalyticsGrouping[];
 const GROUPINGS = [...CHART_GROUPINGS, "entry_price_bucket", "entry_price_comparison"] as const satisfies readonly JournalAnalyticsGrouping[];
@@ -221,9 +214,8 @@ function range(input: Readonly<Record<string, string | string[] | undefined>>): 
     : { endDate: null, kind: "all", startDate: null };
 }
 
-export async function ExecutionAnalyticsPage({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = resourceScope ?? await requireMembershipPreviewPageScope("analytics.access");
-  if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
+export async function loadExecutionAnalyticsModel({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const scope = resourceScope ?? await requireMembershipPageScope("analytics.access");
   const selectedRange = range(searchParams);
   const closingDateRange = selectedRange.startDate && selectedRange.endDate
     ? { endDate: selectedRange.endDate, kind: "inclusive_closing_date" as const, startDate: selectedRange.startDate }
@@ -265,16 +257,21 @@ export async function ExecutionAnalyticsPage({ searchParams, resourceScope }: { 
   const priceInsights = entryPriceInsights(priceResults);
   const rows: readonly ExecutionTradeRow[] = result.trades?.rows.map((row) => ({ averageEntry: money(row.averageEntryPriceDecimal ?? null, result.trades?.currency ?? null), averageEntryValue: Number(row.averageEntryPriceDecimal ?? 0), averageExit: money(row.averageExitPriceDecimal ?? null, result.trades?.currency ?? null), averageExitValue: Number(row.averageExitPriceDecimal ?? 0), closed: timestamp(row.closedAtUtc, result.trades?.timezone ?? "UTC"), closedValue: row.closedAtUtc, direction: row.direction, executions: row.uniqueExecutionCount, maximumPosition: formatJournalAnalyticsDecimal(row.maximumPositionQuantityDecimal, 2, true), maximumPositionValue: Number(row.maximumPositionQuantityDecimal), netPnl: money(row.selectedPnlDecimal, result.trades?.currency ?? null), netPnlDecimal: row.selectedPnlDecimal, netPnlValue: Number(row.selectedPnlDecimal ?? 0), opened: timestamp(row.openedAtUtc, result.trades?.timezone ?? "UTC"), openedValue: row.openedAtUtc, roundTripId: row.roundTripId, ticker: row.displayedSymbol, tradeType: row.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade", tradeTypeValue: row.tradeClassification, holdTime: duration(row.holdingDurationMilliseconds), holdTimeValue: row.holdingDurationMilliseconds })) ?? [];
   const currency = result.trades?.currency ?? result.charts.partitions[0]?.currency ?? null;
+  return { chartData, currency, moneyBasis: result.moneyBasis, priceComparison, priceInsights, priceResults, priceResultsByDirection, rows, selectedRange, timezone: result.trades?.timezone ?? result.charts.partitions[0]?.timezone ?? null, charts: result.charts };
+}
+
+export async function ExecutionAnalyticsPage({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const { chartData, currency, moneyBasis, priceComparison, priceInsights, priceResults, priceResultsByDirection, rows, selectedRange, timezone, charts } = await loadExecutionAnalyticsModel({ searchParams, resourceScope });
   const offlineModel = createJournalAnalyticsExecutionOfflineViewModel({
     chartData,
     currency,
     dateRange: selectedRange,
-    moneyBasis: result.moneyBasis,
+    moneyBasis,
     priceComparison,
     priceInsights,
     priceResults,
     priceResultsByDirection,
     rows,
   });
-  return <>{resourceScope?null:<OfflineSavedViewCapture accountTimezone={result.trades?.timezone ?? result.charts.partitions[0]?.timezone ?? null} calculationVersion={`journal-analytics-${result.charts.registryVersion}`} coverage={journalAnalyticsOfflineRouteCoverage("analytics-execution")} generatedAtUtc={result.charts.generatedAtUtc} model={offlineModel} pathname="/analytics/execution" queryIdentity={`range:${selectedRange.kind}:${selectedRange.startDate ?? "all"}:${selectedRange.endDate ?? "all"}:basis:${result.moneyBasis}`} reportingCurrency={currency} routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION} viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-execution"]} />}<DashboardPage><Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}><Box><DashboardAppearanceText lightColor="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</DashboardAppearanceText><Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Trade Breakdown</Typography><DashboardAppearanceText lightColor="text.secondary" sx={{ mt: 0.5 }}>See how your completed trades were entered, sized, held, and exited.</DashboardAppearanceText></Box><FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" /></Box><ExecutionAnalyticsClient dateControls={<Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}><OverviewDateRangeControl href="/analytics/execution" showCaption={false} value={selectedRange} /><FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" /></Box>} chartData={chartData} currency={currency} moneyBasis={result.moneyBasis} priceComparison={priceComparison} priceInsights={priceInsights} priceResults={priceResults} priceResultsByDirection={priceResultsByDirection} rows={rows} /></DashboardPage></>;
+  return <>{resourceScope?null:<OfflineSavedViewCapture accountTimezone={timezone} calculationVersion={`journal-analytics-${charts.registryVersion}`} coverage={journalAnalyticsOfflineRouteCoverage("analytics-execution")} generatedAtUtc={charts.generatedAtUtc} model={offlineModel} pathname="/analytics/execution" queryIdentity={`range:${selectedRange.kind}:${selectedRange.startDate ?? "all"}:${selectedRange.endDate ?? "all"}:basis:${moneyBasis}`} reportingCurrency={currency} routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION} viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-execution"]} />}<ExecutionAnalyticsView chartData={chartData} currency={currency} moneyBasis={moneyBasis} priceComparison={priceComparison} priceInsights={priceInsights} priceResults={priceResults} priceResultsByDirection={priceResultsByDirection} rows={rows} selectedRange={selectedRange}/></>;
 }
