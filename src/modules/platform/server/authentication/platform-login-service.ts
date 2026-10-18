@@ -970,6 +970,13 @@ export class PlatformLoginService {
           )
         )
           throw new PlatformLoginError("last_method");
+        // Membership snapshot updates require the Discord identity to remain active.
+        if (provider === "discord")
+          this.db
+            .prepare(
+              "UPDATE platform_discord_memberships SET role_ids_json='[]',guild_owner=0,last_verified_at_utc=? WHERE user_id=?",
+            )
+            .run(this.now(), session.userId);
         this.db
           .prepare(
             "UPDATE platform_auth_identities SET status='revoked',updated_at_utc=? WHERE user_id=? AND auth_provider=? AND status='active'",
@@ -985,12 +992,6 @@ export class PlatformLoginService {
             .prepare(`UPDATE platform_login_tokens SET consumed_at_utc=?
             WHERE credential_id IN (SELECT credential_id FROM platform_login_credentials WHERE user_id=?)
             AND consumed_at_utc IS NULL`)
-            .run(this.now(), session.userId);
-        if (provider === "discord")
-          this.db
-            .prepare(
-              "UPDATE platform_discord_memberships SET role_ids_json='[]',guild_owner=0,last_verified_at_utc=? WHERE user_id=?",
-            )
             .run(this.now(), session.userId);
         this.audit(session.userId, provider, "unlink");
       })
