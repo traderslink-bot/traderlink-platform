@@ -1,7 +1,7 @@
 import { LoginScreen } from "../login-screen";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Confirm email | TradersLink",
+  title: "Verify email | TradersLink",
   referrer: "no-referrer",
   robots: { index: false, follow: false },
 };

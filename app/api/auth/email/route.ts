@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       setTimeout(resolve, Math.max(0, 250 - (performance.now() - startedAt))),
     );
     return NextResponse.json(confirmationEmail ? {
-      message: `We sent a confirmation link to ${confirmationEmail}. Please click the link in that email to verify your account.`,
+      message: `We sent a verification link to ${confirmationEmail}. Open that email to verify your email address.`,
       confirmationEmail,
     } : { message: generic });
   };
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         origin,
       );
       return NextResponse.json({
-        message: "Check your new email address to confirm the change.",
+        message: "Check your new email address for a verification link. Your current email stays unchanged until the new address is verified.",
       });
     }
     if (action === "confirm-email-change") {
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
       );
       if (!valid || !candidate) throw new PlatformLoginError("invalid");
       if (!candidate.verified_at_utc) {
-        return NextResponse.json({ error: "Please verify your email before signing in. Open the newest confirmation email or select Resend verification email." }, { status: 400 });
+        return NextResponse.json({ error: "Please verify your email before signing in. Open the newest verification email or select Resend verification email." }, { status: 400 });
       }
       const signed = loginOperation((s) =>
         s.signInEmail(

@@ -22,7 +22,7 @@ export function LoginScreen({
     forgot: "Reset your password",
     verify: "Verify your email",
     reset: "Choose a new password",
-    "confirm-email-change": "Confirm your new email",
+    "confirm-email-change": "Verify your new email",
     "link-email": "Add email and password",
   }[mode];
   return (

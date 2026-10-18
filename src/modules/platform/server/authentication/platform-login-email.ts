@@ -20,7 +20,7 @@ export function renderPlatformLoginMail(mail: LoginMail) {
   if (url) url.hash = new URLSearchParams({ token: mail.token! }).toString();
   const subject = mail.purpose === "verify" ? "Verify your TradersLink email"
     : mail.purpose === "reset" ? "Reset your TradersLink password"
-    : mail.purpose === "change-email" ? "Confirm your new TradersLink email"
+    : mail.purpose === "change-email" ? "Verify your new TradersLink email"
     : mail.purpose === "email-changed" ? "Your TradersLink email changed"
     : "Your TradersLink password changed";
   const introduction = mail.purpose === "verify"
@@ -30,11 +30,11 @@ export function renderPlatformLoginMail(mail: LoginMail) {
     : mail.purpose === "reset"
       ? "We received a request to reset your TradersLink password. Use the button below to choose a new password."
     : mail.purpose === "change-email"
-      ? "Please confirm your new email address for your TradersLink account."
+      ? "Please verify your new email address for your TradersLink account."
     : mail.purpose === "email-changed"
       ? "Your email login address has changed. If this was not you, use another connected login method or contact support."
       : "Your password has changed and previous sessions have been signed out. If this was not you, reset your password or contact support.";
-  const button = mail.purpose === "reset" ? "Reset Password" : "Confirm Email Address";
+  const button = mail.purpose === "reset" ? "Reset Password" : "Verify Email Address";
   const ignore = mail.purpose === "verify"
     ? mail.verificationContext === "add-email"
       ? "If you didn’t request email sign-in for your TradersLink account, you can safely ignore this email."

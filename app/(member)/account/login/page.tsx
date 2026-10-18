@@ -9,29 +9,36 @@ import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "@/src/modules/platform/serve
 import { DashboardPanel } from "../../../dashboard-template";
 import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
 import { ConnectedMethods } from "./connected-methods";
+import Alert from "@mui/material/Alert";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Login methods | TradersLink",
   robots: { index: false, follow: false },
 };
-export default async function Page() {
+export default async function Page({ searchParams }: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const identity = await requireTraderLinkPlatformBillingPageIdentity();
   const discord = withReadonlyPlatformDatabase({}, database => readMembershipDiscordConnection(database, identity.scope.userId));
   const token =
     (await cookies()).get(TRADERLINK_PLATFORM_SESSION_COOKIE)?.value ?? null;
-  const methods = loginOperation((s) => s.connected(token)).map(
-    (m) => m.provider,
-  );
+  const details = loginOperation((s) => s.methodDetails(token));
+  const query = await searchParams;
   return (
     <AccountSettingsLayout
       activeSection="login"
       title="Login methods"
       description=""
     >
+      {query.emailChanged === "1" && details.email.connected && details.email.verified && details.email.address ? (
+        <Alert severity="success" role="status" sx={{ mb: 2, overflowWrap: "anywhere" }}>
+          Your email address is verified: <strong>{details.email.address}</strong>. You can now use this address to sign in.
+        </Alert>
+      ) : null}
       <DiscordConnectionNotice {...discord} showJoined />
       <DashboardPanel title="Connected login methods">
         <ConnectedMethods
-          methods={methods}
+          details={details}
           googleAvailable={googleLoginConfigured()}
           discordAvailable={Boolean(
             process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET,

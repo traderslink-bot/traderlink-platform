@@ -1,4 +1,5 @@
 import type { LoginMail } from "./platform-login-email";
+import type { LoginMethodDetails } from "../../contracts/platform-login-method-details";
 import { createHash, randomBytes } from "node:crypto";
 import type Database from "better-sqlite3";
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
@@ -30,8 +31,8 @@ export class PlatformLoginError extends Error {
         conflict:
           "Sign in with your existing method, then connect this method in Account.",
         last_method: "Keep at least one usable login method connected.",
-        email_change_sign_in: "Sign in to the account that requested this email change in this browser, then return here and confirm. Your link has not been used.",
-        email_change_account: "This browser is signed in to a different account. Sign in to the account that requested this email change, then return here and confirm. Your link has not been used.",
+        email_change_sign_in: "Sign in to the account that requested this email change in this browser, then return here and verify your new email. Your link has not been used.",
+        email_change_account: "This browser is signed in to a different account. Sign in to the account that requested this email change, then return here and verify your new email. Your link has not been used.",
         email_in_use: "This email address is already connected to another account. Use a different email address.",
         throttled: "Too many attempts. Try again later.",
       }[code],
@@ -788,6 +789,24 @@ export class PlatformLoginService {
     )
       throw new PlatformLoginError("conflict");
   }
+  recordOAuthProfile(input: {
+    provider: "google" | "discord";
+    subject: string;
+    displayName: string;
+    accountName?: string;
+    verifiedEmail?: string | null;
+  }) {
+    // Labels are display-only provider evidence; never use them to merge or authorize accounts.
+    const identity = new PlatformAuthenticationRepository(this.db).findActiveIdentity(input.provider, input.subject);
+    if (!identity) throw new PlatformLoginError("invalid");
+    const name = (input.accountName ?? input.displayName).normalize("NFKC").replace(/[\u0000-\u001f\u007f]/gu, "").trim().slice(0, 120);
+    if (!name) return;
+    this.db.prepare(`INSERT INTO platform_login_identity_profiles
+      (auth_provider,auth_subject,display_name,verified_email,updated_at_utc) VALUES (?,?,?,?,?)
+      ON CONFLICT(auth_provider,auth_subject) DO UPDATE SET display_name=excluded.display_name,
+        verified_email=excluded.verified_email,updated_at_utc=excluded.updated_at_utc`)
+      .run(input.provider, input.subject, name, input.verifiedEmail ? normalizeLoginEmail(input.verifiedEmail) : null, this.now());
+  }
   recordVerifiedOAuthEmail(
     provider: "google" | "discord",
     subject: string,
@@ -812,6 +831,7 @@ export class PlatformLoginService {
     provider: "google" | "discord";
     subject: string;
     displayName: string;
+    accountName?: string;
     verifiedEmail?: string | null;
     linkIntent?: string | null;
     currentSession?: string | null;
@@ -865,6 +885,7 @@ export class PlatformLoginService {
             input.subject,
             input.verifiedEmail,
           );
+        this.recordOAuthProfile(input);
         new PlatformAuthenticationRepository(this.db).markAuthenticated({
           authProvider: input.provider,
           authSubject: input.subject,
@@ -889,6 +910,33 @@ export class PlatformLoginService {
       new PlatformSessionService(new PlatformSessionRepository(this.db), {
         now: this.options.now,
       }).revoke(token);
+  }
+  methodDetails(token: string | null): LoginMethodDetails {
+    const session = this.authenticated(token);
+    const connected = this.connected(token);
+    const credential = this.db.prepare(
+      "SELECT email_normalized, verified_at_utc FROM platform_login_credentials WHERE user_id=?",
+    ).get(session.userId) as { email_normalized: string; verified_at_utc: string | null } | undefined;
+    const pending = this.db.prepare(`SELECT pending_email FROM platform_login_tokens
+      WHERE user_id=? AND purpose='change_email' AND consumed_at_utc IS NULL AND expires_at_utc>?
+      ORDER BY created_at_utc DESC LIMIT 1`).get(session.userId, this.now()) as { pending_email: string } | undefined;
+    return {
+      signedInWith: session.authProvider,
+      providers: connected.map(({ provider }) => {
+        const profile = provider === "email" ? undefined : this.db.prepare(`SELECT p.display_name,p.verified_email
+          FROM platform_login_identity_profiles p JOIN platform_auth_identities i
+          ON i.auth_provider=p.auth_provider AND i.auth_subject=p.auth_subject
+          WHERE i.user_id=? AND i.auth_provider=? AND i.status='active'`).get(session.userId, provider) as
+          { display_name: string; verified_email: string | null } | undefined;
+        return { provider, connected: true, accountName: profile?.display_name ?? null, email: profile?.verified_email ?? null };
+      }),
+      email: {
+        address: credential?.email_normalized ?? null,
+        verified: Boolean(credential?.verified_at_utc),
+        connected: connected.some(method => method.provider === "email"),
+        pendingAddress: pending?.pending_email ?? null,
+      },
+    };
   }
   connected(token: string | null) {
     const session = this.session(token);

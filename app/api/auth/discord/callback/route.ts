@@ -186,6 +186,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const signed = withPlatformDatabase({mode:"runtime"}, database => database.transaction(() => {
         const result = new PlatformLoginService(database).signInOAuth({provider:"discord",subject:discordUser.id,
           displayName:discordUser.global_name ?? discordUser.username,
+            accountName:discordUser.username,
           verifiedEmail:discordUser.verified === true ? discordUser.email : null,
           linkIntent,currentSession:loginSession(request),clientLabel:resolvePlatformSessionClientLabel(request.headers.get("user-agent"))});
         if (resolvedGuildMember && signInGuildId) new PlatformDiscordMembershipRepository(database).upsertCurrent({
@@ -268,6 +269,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           },
           { deferDemoActivation: true },
         );
+        loginService.recordOAuthProfile({
+          provider: "discord",
+          subject: discordUser.id,
+          displayName: discordUser.global_name ?? discordUser.username,
+          accountName: discordUser.username,
+          verifiedEmail: discordUser.verified === true ? discordUser.email : null,
+        });
         if (discordUser.verified === true && discordUser.email) loginService.recordVerifiedOAuthEmail("discord",discordUser.id,discordUser.email);
         loginService.endSession(loginSession(request));
         return signIn;

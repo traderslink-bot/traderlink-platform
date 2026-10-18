@@ -24,6 +24,7 @@ export function LoginForm({
   initialMessage = "",
   initialError = "",
   reauthenticate = false,
+  onComplete,
 }: {
   mode?: LoginFormMode;
   returnTo?: string;
@@ -33,6 +34,7 @@ export function LoginForm({
   initialMessage?: string;
   initialError?: string;
   reauthenticate?: boolean;
+  onComplete?: () => void;
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -110,7 +112,7 @@ export function LoginForm({
         window.location.assign(result.redirect);
         navigating = true;
       }
-      else { setMessage(result.message); setConfirmationEmail(result.confirmationEmail); }
+      else { setMessage(result.message); setConfirmationEmail(result.confirmationEmail); onComplete?.(); }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Try again shortly.");
     } finally {
@@ -119,7 +121,7 @@ export function LoginForm({
         setBusy(false);
       }
     }
-  }, [mode, newPassword, password, confirm, email, name, token, returnTo]);
+  }, [mode, newPassword, password, confirm, email, name, token, returnTo, onComplete]);
   const verificationStarted = useRef(false);
   useEffect(() => {
     if (mode === "verify" && tokenRead && token && emailAvailable && !verificationStarted.current) {
@@ -133,7 +135,7 @@ export function LoginForm({
     forgot: "Send reset email",
     verify: "Verify email",
     reset: "Change password",
-    "confirm-email-change": "Confirm new email",
+    "confirm-email-change": "Verify new email",
     "link-email": "Add email and password",
   }[mode];
   return (
@@ -179,7 +181,7 @@ export function LoginForm({
       ) : null}
       {message ? (
         <Alert severity="success" role="status">
-          {confirmationEmail ? <>We sent a confirmation link to <strong>{confirmationEmail}</strong>. Please click the link in that email to verify your account.</> : message}
+          {confirmationEmail ? <>We sent a verification link to <strong>{confirmationEmail}</strong>. Open that email to verify your email address.</> : message}
         </Alert>
       ) : null}
       {tokenRead && !token ? (

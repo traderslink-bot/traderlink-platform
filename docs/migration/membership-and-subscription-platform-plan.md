@@ -1,5 +1,7 @@
 # TraderLink Membership And Subscription Platform Plan
 
+Owner-requested Login methods clarity: [account labels, email and verification status](membership-login-method-details-20261018.md). Source complete; staging release and browser acceptance are active. Production remains excluded.
+
 Current owner-authorized staging completion: [consolidated batch QA and release gates](membership-batch-qa-20261017.md). The single reviewed staging batch was deployed and browser-retested. The owner subsequently authorized the Preferences and exact-purchase refund corrections as one held batch. No further deployment is authorized until the owner approves; production remains excluded.
 
 Current staging-only QA and fixture coordination: [October 16 staging QA](membership-staging-qa-20261016.md).
