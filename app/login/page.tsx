@@ -18,6 +18,8 @@ export default async function LoginPage({
     "google-failed": "Google sign-in did not complete. Please try again.",
     "account-conflict":
       "Use your existing sign-in method, then connect the other method in Account.",
+    "discord-account-conflict":
+      "This Discord account is already connected to another TradersLink account.",
   };
   return (
     <LoginScreen

@@ -517,7 +517,7 @@ FROM traderlink_communities WHERE discord_guild_id = ?`).get(guild.id) as
     );
 
     const response = error instanceof PlatformLoginError && error.code === "conflict"
-      ? NextResponse.redirect(new URL("/login?error=account-conflict",resolvePlatformPublicOrigin(request)))
+      ? NextResponse.redirect(new URL(`/login?error=${state.startsWith("link.") ? "discord-account-conflict" : "account-conflict"}`,resolvePlatformPublicOrigin(request)))
       : authFailureRedirect(request, returnTo, "failed");
     clearDiscordOAuthCookies(response, request);
     return response;
