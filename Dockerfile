@@ -41,7 +41,7 @@ COPY --from=dependencies /app/node_modules/esbuild ./node_modules/esbuild
 COPY --from=dependencies /app/node_modules/@esbuild ./node_modules/@esbuild
 COPY --from=dependencies /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
 COPY --from=dependencies /app/node_modules/resolve-pkg-maps ./node_modules/resolve-pkg-maps
-ENV TRADERLINK_STAGING_IMAGE_ROLE=final
+ENV TRADERLINK_STAGING_IMAGE_ROLE=recovery
 
 USER nextjs
 EXPOSE 3000

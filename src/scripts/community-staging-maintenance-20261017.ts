@@ -12,16 +12,15 @@ import { createAndRestoreVerifyPlatformDatabaseBackup } from "@/src/modules/plat
 import { loadAccountIdentityConfiguration } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 
-const predecessorCount = 166;
-const completedCount = 168;
+const predecessorCount = 168;
+const completedCount = 169;
 const prefix = platformMigrationManifest.slice(0, predecessorCount);
 const expected = [
-  "0171_traderlink_community_shared_alerts",
-  "0172_platform_login_identity_profiles",
+  "0173_traderlink_community_stats",
 ];
 assert.equal(platformMigrationManifest.length, completedCount);
 assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.migrationId), expected);
-assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), [184, 185]);
+assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), [186]);
 
 function open(path: string) {
   const db = new Database(path, { fileMustExist: true });
@@ -74,7 +73,7 @@ async function main() {
     assert.equal(process.env.RAILWAY_SERVICE_ID, "4d264aca-510c-4f5e-bc28-e89e526b8008");
     assert.equal(process.env.TRADERLINK_PLATFORM_DB_PATH, "/data/traderlink-platform.sqlite");
   }
-  const root = rehearsal ? mkdtempSync(join(tmpdir(), "membership-login-staging-")) : "/data";
+  const root = rehearsal ? mkdtempSync(join(tmpdir(), "community-stats-staging-")) : "/data";
   const sourcePath = join(root, "traderlink-platform.sqlite");
   if (rehearsal) {
     const db = new Database(sourcePath);
@@ -91,7 +90,7 @@ async function main() {
   if (count === predecessorCount) {
     const disk = statfsSync(root);
     assert(disk.bavail * disk.bsize > statSync(sourcePath).size * 4 + 1024 ** 3, "Insufficient backup/rehearsal headroom");
-    const checkpoint = join(root, "coaching-staging-checkpoints", "20261018-membership-login-methods-0171-0172");
+    const checkpoint = join(root, "community-stats-staging-checkpoints", "20261018-community-stats-0173");
     const backupPath = join(checkpoint, "backup.sqlite");
     const restoreVerificationPath = join(checkpoint, "restore-verification.sqlite");
     const evidence = await createAndRestoreVerifyPlatformDatabaseBackup({

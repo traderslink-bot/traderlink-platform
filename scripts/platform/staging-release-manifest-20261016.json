@@ -838,5 +838,10 @@
     "migration_id": "0172_platform_login_identity_profiles",
     "execution_order": 185,
     "checksum_sha256": "3d86b83a677e628b1bdc3dc5f56629460166a750a83d3b4c14ad06414aaad004"
+  },
+  {
+    "migration_id": "0173_traderlink_community_stats",
+    "execution_order": 186,
+    "checksum_sha256": "cc583414dc32a7867cfc1d4d62a5e04ebe2781d0838b21abb2cceaf272df58f5"
   }
 ]
