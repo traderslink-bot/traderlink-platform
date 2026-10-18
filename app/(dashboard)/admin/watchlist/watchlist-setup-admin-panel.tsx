@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Box from "@mui/material/Box";
 import { INITIAL_WATCHLIST_SETUP_KINDS } from "@/src/lib/live-watchlist/setups/setup-contracts";
 import type { WatchlistSetupSettings, SetupConfiguration } from "@/src/lib/live-watchlist/setups/setup-contracts";
 import type { WatchlistSetupEvaluation } from "@/src/lib/live-watchlist/setups/setup-engine";
@@ -71,7 +72,15 @@ export default function WatchlistSetupAdminPanel() {
     finally { window.clearTimeout(timer); requests.current.delete(controller); if (mounted.current) setAuditLoading(false); }
   };
   const configuration = controls?.configuration, selected = controls?.tickers.find(ticker => ticker.symbol === symbol);
-  return <section className={`academy-card ${styles.admin}`} aria-labelledby="watchlist-setup-admin-title">
+  return <Box component="section" className={`academy-card ${styles.admin}`} aria-labelledby="watchlist-setup-admin-title"
+    sx={theme => theme.palette.mode === "dark" ? {
+      color: "#ffffff", colorScheme: "dark",
+      "--academy-text": "#ffffff", "--academy-heading": "#ffffff", "--academy-muted": "#ffffff",
+      "--academy-surface": theme.palette.background.paper, "--academy-border": theme.palette.divider,
+      "--academy-primary": theme.palette.primary.main, "--academy-on-primary": "#ffffff",
+      "& h2, & h3, & p, & label, & legend, & summary, & th, & td, & caption, & dt, & dd, & span, & input, & select": { color: "inherit" },
+      "& a": { color: "#ffffff", textDecoration: "underline" },
+    } : {}}>
     <h2 id="watchlist-setup-admin-title">Setup Detection</h2>
     {error ? <p role="alert">{error}</p> : null}
     {message ? <p role="status">{message}</p> : null}
@@ -101,5 +110,5 @@ export default function WatchlistSetupAdminPanel() {
       </details>
       <WatchlistSetupResultsPanel />
     </>}
-  </section>;
+  </Box>;
 }
