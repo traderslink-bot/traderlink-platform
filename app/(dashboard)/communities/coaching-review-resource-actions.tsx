@@ -17,7 +17,7 @@ export async function loadCoachingReviewResource(communitySlug:string,reviewId:s
   switch(resourceId){
    case 'overview':{const {AnalyticsOverviewPage}=await import('../analytics/analytics-overview-page');content=await AnalyticsOverviewPage({resourceScope:access.scope,searchParams});break;}
    case 'ticker':{const {ResultsAnalyticsPage}=await import('../analytics/results-analytics-page');content=await ResultsAnalyticsPage({resourceScope:access.scope,searchParams});break;}
-   case 'timing':{const {TimingAnalyticsPage}=await import('../analytics/timing/timing-analytics-page');content=await TimingAnalyticsPage({resourceScope:access.scope,period:access.period,searchParams:Promise.resolve(searchParams)});break;}
+   case 'timing':{const {TimingAnalyticsPage}=await import('../analytics/timing/timing-analytics-page');content=await TimingAnalyticsPage({resourceScope:access.scope,period:access.period,searchParams:Promise.resolve({basis:parameters.basis})});break;}
    case 'breakdown':{const {ExecutionAnalyticsPage}=await import('../analytics/execution-analytics-page');content=await ExecutionAnalyticsPage({resourceScope:access.scope,searchParams});break;}
    case 'explorer':case 'compare':{
     const {readTradeExplorerPageModel}=await import('../analytics/trade-explorer/trade-explorer-service');

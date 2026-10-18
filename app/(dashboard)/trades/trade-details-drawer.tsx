@@ -236,7 +236,7 @@ export function TradeDetailsDrawer({
 
   const details = state.status === "ready" ? state.details : null;
   const performance = details?.performance ?? null;
-  const effectiveAnalyzer=loadSavedAnalysis&&details?.status==='ready'&&performance?{currency:performance.tradeCurrency,direction:details.direction,executionCount:details.executions.length,gainLossDecimal:performance.netPnlDecimal,symbol:details.symbol,timezone:details.timezone}:analyzer;
+  const effectiveAnalyzer=loadSavedAnalysis&&details?.status==='ready'&&performance?{currency:performance.tradeCurrency,direction:details.direction,executionCount:details.executions.length,gainLossDecimal:performance.grossPnlDecimal,symbol:details.symbol,timezone:details.timezone}:analyzer;
   const resultColor = performance
     ? financialOutcomeColor(performance.grossPnlDecimal)
     : details?.projectionState === "legitimate_open" ? "warning.main" : "text.primary";

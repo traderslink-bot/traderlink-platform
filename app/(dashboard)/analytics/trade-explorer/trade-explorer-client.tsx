@@ -45,7 +45,7 @@ import {
   Typography,
 } from "@mui/material";
 import NextLink from "next/link";
-import { Fragment, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import type {
   JournalAnalyticsGroupResult,
