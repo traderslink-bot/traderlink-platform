@@ -14,7 +14,7 @@ for (const finalStatus of ["already_current", "rebuilt", "no_change"] as const) 
     try {
       const correct = vi.fn();
       const refresh = vi.fn<(...args: unknown[]) => readonly string[]>(() => []);
-      const entry = { localDate: "2026-09-04", localTime: "10:00:00", sourceTimezone: "America/New_York",
+      const entry = { clientRowRef: "row-1", localDate: "2026-09-04", localTime: "10:00:00", sourceTimezone: "America/New_York",
         normalizedSymbol: "TEST", tradeCurrency: "USD", side: "buy" as const,
         quantityDecimal: "10", priceDecimal: "2", feesDecimal: null, manualFeeInputState: "not_entered" as const };
       const editable = { ...entry, priceDecimal: finalStatus === "no_change" ? "2" : "1", executionId: id(5), currentVersionId: id(6), editRef: "edit" };

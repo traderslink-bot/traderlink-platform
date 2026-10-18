@@ -50,6 +50,7 @@ function setup(guildOwner = true) {
   });
   const identity: TraderLinkPlatformRequestIdentity = Object.freeze({
     mode: "platform_session" as const,
+    sessionId: createCanonicalUuidV4(),
     scope: Object.freeze({
       userId: signIn.userId,
       workspaceId: signIn.workspaceId,
@@ -113,13 +114,13 @@ describe("Journal admin authorization", () => {
   });
 
   it("fails without a grant, with stale membership, or without current guild ownership", () => {
-    for (const variant of ["missing_grant", "stale", "not_owner"] as const) {
+    for (const variant of ["missing_grant", "stale", "future", "not_owner"] as const) {
       const { database, identity, userId } = setup(variant !== "not_owner");
       try {
         if (variant !== "missing_grant") grant(database, userId);
         const now = variant === "stale"
           ? new Date("2026-08-03T07:05:00.001Z")
-          : new Date("2026-08-03T07:04:00.000Z");
+          : variant === "future" ? new Date(SIGN_IN_AT.getTime() - 1) : new Date("2026-08-03T07:04:00.000Z");
         expect(() => new PlatformAdminAuthorization(
           database,
           productionEnvironment(),

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import Database from "better-sqlite3";
+import { PlatformMembershipRepository } from "@/src/modules/platform/server/membership/platform-membership-repository";
 
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
@@ -275,8 +276,29 @@ describe("CoachAiChatActionDraftService", () => {
     }
   });
 
+  it("rechecks the Journal account allowance when confirming an AI-created account", () => {
+    const f = fixture();
+    let limit = 3;
+    const access = vi.spyOn(PlatformMembershipRepository.prototype, "readEffectiveAccess").mockImplementation(() => ({
+      userId: f.scope.userId, evaluatedAtUtc: now.toISOString(), booleanFeatures: [], sources: [], limits: { "journal.accounts": limit },
+    }));
+    try {
+      const service = new CoachAiChatActionDraftService(f.database);
+      const draft = service.create(f.scope, { conversationId: f.conversationId,
+        sourceMessageId: f.message("Create another account."),
+        extraction: { kind: "create_journal_account", displayName: "Another account", baseCurrency: "USD", tradingTimezone: "America/New_York" },
+      }, now);
+      limit = 2;
+      expect(() => service.confirm(f.scope, { conversationId: f.conversationId, draftId: draft.draftId }, new Date("2026-08-15T12:01:00.000Z"))).toThrowError(expect.objectContaining({ code: "TRADERLINK_ACCOUNT_ACCESS_DENIED", safeContext: expect.objectContaining({ feature: "journal.accounts", reason: "membership_feature_required" }) }));
+      expect(f.database.prepare("SELECT COUNT(*) AS count FROM journal_accounts").get()).toEqual({ count: 2 });
+    } finally { access.mockRestore(); f.database.close(); }
+  });
+
   it("creates and selects a new Trade Tracker account only after confirmation", () => {
     const f = fixture();
+    const access = vi.spyOn(PlatformMembershipRepository.prototype, "readEffectiveAccess").mockReturnValue({
+      userId: f.scope.userId, evaluatedAtUtc: now.toISOString(), booleanFeatures: [], sources: [], limits: { "journal.accounts": 3 },
+    });
     try {
       const service = new CoachAiChatActionDraftService(f.database, {
         createJournalAccount: (scope, input) => {
@@ -330,6 +352,7 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
       }, new Date("2026-08-15T12:02:00.000Z"));
       expect(retried.accountSelectionRef).toBe(result.accountSelectionRef);
     } finally {
+      access.mockRestore();
       f.database.close();
     }
   });
@@ -352,6 +375,8 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
         averageEntryPriceDecimal: "2.50",
         projectionState: "legitimate_open" as const,
         style: Object.freeze({
+          positionRef,
+          swingPlan: null,
           revision: 1,
           tradeStyle: "swing" as const,
           openStatus: "swing" as const,
@@ -436,6 +461,7 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
           changes.push(input);
           return Object.freeze({
             positionRef,
+            swingPlan: null,
             revision: 1,
             tradeStyle: input.tradeStyle,
             openStatus: input.openStatus,
@@ -668,6 +694,8 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
         averageEntryPriceDecimal: "2.50",
         projectionState: "legitimate_open" as const,
         style: Object.freeze({
+          positionRef,
+          swingPlan: null,
           revision: 1,
           tradeStyle: "swing" as const,
           openStatus: "swing" as const,

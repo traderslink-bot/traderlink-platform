@@ -442,7 +442,7 @@ FROM coach_ai_chat_answer_snapshots`).get() as { factual_snapshot_json: string }
       const generator = vi.fn(async (input: Parameters<CoachAiChatGenerator>[0]) => {
         input.dispatcher.dispatch("factual-1", { contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION, toolName: "summarize_closed_trades", metricIds: ["net_pnl"], moneyBasis: "net" });
         input.dispatcher.dispatch("factual-2", { contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION, toolName: "group_closed_trades", metricIds: ["net_pnl"], grouping: "instrument", moneyBasis: "net" });
-        return Object.freeze({ ...answer(), factualToolCalls: input.dispatcher.snapshotsForPersistence(), answer: Object.freeze({ ...answer().answer, evidenceReferences: Object.freeze([{ toolCallId: "factual-1", statement: "The Journal summary was checked." }, { toolCallId: "factual-2", statement: "The Journal grouping was checked." }]) }) });
+        return Object.freeze({ ...answer(), factualToolCalls: input.dispatcher.snapshotsForPersistence(), answer: Object.freeze({ ...answer().answer, evidenceReferences: Object.freeze([{ toolCallId: "factual-1", claimRefs: Object.freeze([]), statement: "The Journal summary was checked." }, { toolCallId: "factual-2", claimRefs: Object.freeze([]), statement: "The Journal grouping was checked." }]) }) });
       });
       const subject = service(f, generator);
       await subject.generateSavedAnswer(f.scope, { conversationId: f.conversationId, question: "Show my results", idempotencySha256: "b".repeat(64) }, now);
