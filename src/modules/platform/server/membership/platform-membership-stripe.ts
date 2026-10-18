@@ -52,7 +52,7 @@ export async function createMembershipStripeCheckout(reserved: ReturnType<Platfo
     values["line_items[0][price_data][recurring][interval]"] = offer.billing_interval;
     values["line_items[0][price_data][recurring][interval_count]"] = String(offer.billing_interval_count);
     values["subscription_data[metadata][membership_claim_id]"] = claimId;
-    if (trialDays) values["subscription_data[trial_end]"] = String(Math.floor(Date.now() / 1000) + trialDays * 86_400);
+    if (trialDays) values["subscription_data[trial_period_days]"] = String(trialDays);
     const firstCharge = trialDays ? 0 : offer.renewal_amount_minor;
     if (initial < firstCharge) {
       const coupon = await stripeRequest("coupons", { duration: "once", amount_off: membershipStripeAmount(firstCharge - initial, offer.currency), currency: offer.currency.toLowerCase() }, `membership-coupon-${claimId}`);
