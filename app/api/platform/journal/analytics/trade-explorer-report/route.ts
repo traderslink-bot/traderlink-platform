@@ -1,8 +1,8 @@
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import {
   isMembershipAccessDenied,
-  MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
+  membershipFeatureDeniedResponse,
 } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { createTradeExplorerPdfReport } from "@/app/(dashboard)/analytics/trade-explorer/trade-explorer-pdf-report";
 
@@ -10,15 +10,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 function failureResponse(error: unknown): Response {
-  if (isMembershipAccessDenied(error)) {
-    return Response.json({
-      message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
-      refreshRequired: false,
-    }, {
-      status: 403,
-      headers: { "Cache-Control": "private, no-store" },
-    });
-  }
+  if (isMembershipAccessDenied(error)) return membershipFeatureDeniedResponse(error)!;
   const accessChanged = isTraderLinkPlatformError(error) && [
     "TRADERLINK_AUTH_SESSION_INVALID",
     "TRADERLINK_WORKSPACE_ACCESS_DENIED",
@@ -44,7 +36,7 @@ export async function POST(request: Request): Promise<Response> {
     if (!Number.isFinite(contentLength) || contentLength > 32_768) {
       throw new TypeError("Trade Explorer PDF report request is too large.");
     }
-    const scope = await requireTraderLinkPlatformPageScope({
+    const scope = requireTraderLinkPlatformRequestScope(request.headers, {
       membershipFeatures: ["analytics.exports", "analytics.trade_explorer"],
     });
     const report = await createTradeExplorerPdfReport(scope, await request.json());

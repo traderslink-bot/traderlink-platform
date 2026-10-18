@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import {
   previewJournalGenericMappedUpload,
   previewJournalIbkrUpload,
@@ -42,6 +43,8 @@ function importReference(
 }
 
 function unavailable(error: unknown): Response {
+  const denied = membershipFeatureDeniedResponse(error);
+  if (denied) return denied;
   const code = isTraderLinkPlatformError(error)
     ? error.code
     : "TRADERLINK_JOURNAL_IMPORT_PREVIEW_FAILED";

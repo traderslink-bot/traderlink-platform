@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { assertMembershipRuleCreation, evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type {
   JournalRuleLifecycleState,
@@ -141,6 +142,14 @@ function mapReview(row: ReviewRow): JournalRuleReviewRecord {
 
 export class JournalRuleRepository {
   constructor(private readonly database: Database.Database) {}
+
+  requireRuleCapacity(scope: AccountScope, sourceKind: "template" | "custom"): void {
+    assertMembershipRuleCreation(this.database, scope.userId, sourceKind);
+  }
+
+  canAccessPresetRules(scope: AccountScope): boolean {
+    return evaluateMembershipFeature(this.database, scope.userId, "journal.preset_rules").allowed;
+  }
 
   immediate<T>(operation: () => T): T {
     return this.database.inTransaction

@@ -50,6 +50,8 @@ type AccountRow = Readonly<{
 function authenticationLabel(provider: string): string {
   if (provider === "development_local") return "Local development owner";
   if (provider === "discord") return "Discord";
+  if (provider === "google") return "Google";
+  if (provider === "email") return "Email and password";
   return "Authenticated account";
 }
 

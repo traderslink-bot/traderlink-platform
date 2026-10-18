@@ -1,5 +1,5 @@
 export const MEMBERSHIP_PRIVATE_WATCHLIST_FEATURES = Object.freeze([
-  { key: "watchlist.levels", label: "Watchlist support, resistance & full ladder", kind: "boolean", module: "watchlist" },
+  { key: "watchlist.levels", label: "Support and Resistance", kind: "boolean", module: "watchlist" },
   { key: "private_watchlist.access", label: "Private Watchlist", kind: "boolean", module: "watchlist" },
   { key: "private_watchlist.analysis", label: "Private Watchlist analysis", kind: "boolean", module: "watchlist" },
   { key: "private_watchlist.indicators", label: "Private Watchlist indicators", kind: "boolean", module: "watchlist" },

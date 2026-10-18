@@ -82,6 +82,16 @@ export function parsePlatformAppearance(value: unknown): PlatformAppearance {
 export class PlatformUserPreferenceRepository {
   constructor(private readonly database: Database.Database) {}
 
+  getActiveUserAppearance(userId: string): PlatformAppearance {
+    assertCanonicalUuidV4(userId, "userId");
+    const row = this.database.prepare<[string], PreferenceRow>(`SELECT preference.appearance_mode
+FROM platform_user_preferences preference
+JOIN platform_users user ON user.user_id = preference.user_id
+WHERE preference.user_id = ? AND user.status = 'active'`).get(userId);
+    if (!row) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+    return parsePlatformAppearance(row.appearance_mode);
+  }
+
   getActiveUserReportingCurrency(userId: string): PlatformReportingCurrency {
     assertCanonicalUuidV4(userId, "userId");
     const row = this.database.prepare<[string], PreferenceRow>(`SELECT

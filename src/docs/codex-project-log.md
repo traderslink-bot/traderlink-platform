@@ -1,3 +1,26 @@
+# 2026-10-13 - Membership unified editor Codespaces review checkpoint
+
+- Current work is isolated in `/workspaces/traderlink-membership-qa`, branch
+  `codex/membership-unified-editor-local-qa-recovery-20261013`. Shared main and
+  unrelated Community/Coaching/Level Analysis work remain untouched.
+- Full application build, focused TypeScript/lint, inert integration and the
+  synthetic owner/member browser matrix pass. Batched corrections preserve
+  notification feedback/unsaved channel choices, handle expected admin denial,
+  and fix shared Light/Navy Dark appearance and mobile overflow.
+- [Current evidence and review entrypoint](../../docs/migration/membership-unified-plan-editor-progress.md)
+  distinguish current QA from historical remote checks and release notes.
+- Resume point: owner UI review in the private Codespaces preview on port 3027.
+  Latest card styling uses a blue top-left title, large white top-right price,
+  compact feature rows and matched editor preview. Five price presentation tests,
+  focused source types and lint pass. The new full-build attempts were interrupted
+  by SIGTERM; the passing full build above belongs to the earlier checkpoint.
+  Review currently uses the synthetic development harness; its temporary auth
+  environment adapter is excluded from commits. Owner visual approval is pending.
+  Follow-up corrected Codespaces Origin rewriting in the synthetic review server;
+  owner/A/B login and draft save/delete now pass through the actual private URL.
+  No push, production preparation, hosted change or deployment is authorized.
+  Live acceptance and real payment-provider checks remain unperformed.
+
 # 2026-08-27 - Daily Trade Tracker Analyzer reliability and presentation implementation awaiting review
 
 - The owner reported that the connected account's AEMD trade remained on

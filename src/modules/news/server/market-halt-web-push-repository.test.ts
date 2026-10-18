@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import Database from "better-sqlite3";
+import { vi } from "vitest";
+import { PlatformMembershipRepository } from "../../platform/server/membership/platform-membership-repository";
 
 import type { PlatformWebPushEncryptionConfiguration } from "../../platform/server/notifications/platform-web-push-configuration";
 import { encryptPlatformWebPushSubscription } from "../../platform/server/notifications/platform-web-push-subscription-crypto";
@@ -181,5 +183,25 @@ describe("market-halt service worker notification contract", () => {
 
     expect(source).toContain("renotify: false");
     expect(source).toContain("safeDestinationPath(event.notification.data?.path)");
+  });
+});
+
+
+describe("halt delivery membership recheck", () => {
+  it.each([false, true])("rechecks the current grant before claiming a queued delivery (included=%s)", included => {
+    const { addDelivery, database, repository } = fixture();
+    const access = vi.spyOn(PlatformMembershipRepository.prototype, "readEffectiveAccess").mockReturnValue({
+      userId: identifier(1), evaluatedAtUtc: timestamp, booleanFeatures: included ? ["notifications.market_halt"] : [], limits: {}, sources: [],
+    });
+    try {
+      database.exec("CREATE TABLE platform_membership_feature_policies (feature_key TEXT PRIMARY KEY, enforcement_mode TEXT NOT NULL)");
+      const deliveryId = identifier(91);
+      addDelivery({ deliveryId, haltId: identifier(92), subscriptionId: identifier(93) });
+      const claimed = repository.claimNext(timestamp);
+      expect(Boolean(claimed)).toBe(included);
+      expect(access).toHaveBeenCalled();
+      expect(database.prepare("SELECT state,failure_code,attempt_count FROM news_market_halt_push_deliveries WHERE delivery_id=?").get(deliveryId))
+        .toEqual(included ? { state: "sending", failure_code: null, attempt_count: 1 } : { state: "expired", failure_code: "membership_required", attempt_count: 0 });
+    } finally { access.mockRestore(); database.close(); }
   });
 });

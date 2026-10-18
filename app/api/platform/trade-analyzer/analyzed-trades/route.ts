@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request): Promise<Response> {
   try {
     const query = new URL(request.url).searchParams, scope = requireTraderLinkPlatformRequestScope(request.headers, {
-      membershipFeatures: ["analytics.access"],
+      membershipFeatures: ["trade_analyzer.analysis"],
     });
     const page = await withSavedPatternRuntime(scope, { basis: query.get("basis"), startDate: query.get("start")?.trim() || null, endDate: query.get("end")?.trim() || null, includePatterns: false }, ({ trades, timezone, runtime }) => {
       query.set("basis", resolveJournalAnalyticsMoneyBasis(query.get("basis"), runtime.pnlReportingBasis));

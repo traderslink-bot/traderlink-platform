@@ -1,0 +1,1367 @@
+{
+  "version": 2,
+  "demoAccountVerified": true,
+  "capturedAt": "2026-10-15T21:31:53.864Z",
+  "pages": {
+    "day": {
+      "light": {
+        "desktop": {
+          "width": 1153,
+          "height": 1335,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/day-light-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 667,
+              "sha256": "051cfacbb6a3be26856e647f271cfce650d3a8196c6283058986a8d87ae2a57f"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/day-light-desktop-section-02.webp",
+              "top": 667,
+              "width": 1153,
+              "height": 668,
+              "sha256": "26f8ca65944fcd47fcee11235a491057ba9a22afc339bb3908111cf93e96da12"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 2284,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/day-light-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1142,
+              "sha256": "66b2b180cc6eb0aa6b3a98fbc89beecd826632f56cfcf5ee6f5ddbc479a21305"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/day-light-mobile-section-02.webp",
+              "top": 1142,
+              "width": 375,
+              "height": 1142,
+              "sha256": "29ecc09b9e4d974c3ca7dc4188dea4e55599156581c5bb121d384fdbf5d10273"
+            }
+          ]
+        }
+      },
+      "dark": {
+        "desktop": {
+          "width": 1153,
+          "height": 1335,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/day-dark-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 667,
+              "sha256": "be367af437886b325e4585ec2c7bcc8683b46b0794204a04ad9d96b72f9df676"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/day-dark-desktop-section-02.webp",
+              "top": 667,
+              "width": 1153,
+              "height": 668,
+              "sha256": "e0e020c000d1b98272f050b82c3b818c2e7e2e805cd6c8b47c8c63f1a8c28171"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 2284,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/day-dark-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1142,
+              "sha256": "1f4bdf4272f6e537cccf1875f36b55da75937733f096b05a6ce2ea59fc886080"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/day-dark-mobile-section-02.webp",
+              "top": 1142,
+              "width": 375,
+              "height": 1142,
+              "sha256": "19f68c3246e7f70fd5c35679479b100678ae509e81e50a0d6c771c8e87fef47f"
+            }
+          ]
+        }
+      }
+    },
+    "trades": {
+      "light": {
+        "desktop": {
+          "width": 1153,
+          "height": 2118,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trades-light-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1059,
+              "sha256": "f54dd51c1e7d18a11b6bf49a29b58c160ea8b45cae081bece9f3adac03961054"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trades-light-desktop-section-02.webp",
+              "top": 1059,
+              "width": 1153,
+              "height": 1059,
+              "sha256": "ddffc5812a0cd8760b0a250997f6573acfe74d8af791a19fb4168b6eaa59829e"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 2891,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trades-light-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1445,
+              "sha256": "287d5c7d60a9b3b52c9bbef30c0b88cc0e424798d46baddb8b284f956ba4942f"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trades-light-mobile-section-02.webp",
+              "top": 1445,
+              "width": 375,
+              "height": 1446,
+              "sha256": "1a9a978e9ff92922c1c5ce5377f0ca73890b108695d3dc0a58d325763deffb20"
+            }
+          ]
+        }
+      },
+      "dark": {
+        "desktop": {
+          "width": 1153,
+          "height": 2118,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trades-dark-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1059,
+              "sha256": "ce98986e81f33f61debd8aade0ebf9a01d09d267f4758c38c95b6e20b04c820e"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trades-dark-desktop-section-02.webp",
+              "top": 1059,
+              "width": 1153,
+              "height": 1059,
+              "sha256": "f9ee1beef17a3473be00e912270e607c22849fd8c32af8cd92ee69023fa2f5d7"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 2891,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trades-dark-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1445,
+              "sha256": "c1bbeb8151e000913a5fb5f2c0222da2b4f52d19cda318cdd00ee1f1e84c54ed"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trades-dark-mobile-section-02.webp",
+              "top": 1445,
+              "width": 375,
+              "height": 1446,
+              "sha256": "bec73d144e063986e0d47379c20276a22c95e1efd0c8633f47b1072d2cecc639"
+            }
+          ]
+        }
+      }
+    },
+    "trend-momentum": {
+      "light": {
+        "desktop": {
+          "width": 1153,
+          "height": 7438,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1239,
+              "sha256": "76eb092808e00833b85e0baffe892a22296aa734bb25a620f3c26b620089dde3"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-desktop-section-02.webp",
+              "top": 1239,
+              "width": 1153,
+              "height": 1240,
+              "sha256": "3f27b34fdf2547b5b190483086aebba10426213ceba9f7284dfcbbf44b22180c"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-desktop-section-03.webp",
+              "top": 2479,
+              "width": 1153,
+              "height": 1240,
+              "sha256": "a501e8351e2c593f9e6fff7d7d514e5b0d05b7cbbe7c555b7140f98b50df513d"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-desktop-section-04.webp",
+              "top": 3719,
+              "width": 1153,
+              "height": 1239,
+              "sha256": "1298625f8ebe2656eb594eccf67dba11764ee6a655bc09e2a65f6c4454b05b3f"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-desktop-section-05.webp",
+              "top": 4958,
+              "width": 1153,
+              "height": 1240,
+              "sha256": "eeb77b1bbd028e4ed56c28d155ca739246a9aab91b7f5385f292aef2eb823bac"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-desktop-section-06.webp",
+              "top": 6198,
+              "width": 1153,
+              "height": 1240,
+              "sha256": "24c41af5960f604084c738553945b464ea1c6f3dc11f33dcc8c47dda1450fb38"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 10048,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1674,
+              "sha256": "55d82743aadbb7c8df07f0da70bac2cb759b7aeea85e1c8298fca71e76c956cb"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-mobile-section-02.webp",
+              "top": 1674,
+              "width": 375,
+              "height": 1675,
+              "sha256": "f17fd2cbb2a4888e4dec2323dcc14ce647f16db078c34d363dc1fc18b356bf30"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-mobile-section-03.webp",
+              "top": 3349,
+              "width": 375,
+              "height": 1675,
+              "sha256": "cf4294f7585ce0ba6c44e0d3b7a1a33bb6f1af3d73e7218ba7a0df49027e762b"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-mobile-section-04.webp",
+              "top": 5024,
+              "width": 375,
+              "height": 1674,
+              "sha256": "16e1331e11b23ad408fa92d30385e00d9f1a06ccf2ee09238325d4a9d6eae5a3"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-mobile-section-05.webp",
+              "top": 6698,
+              "width": 375,
+              "height": 1675,
+              "sha256": "d67ddcbae7d72413c51473d04b0cb04700362c5194608b364320313bd20e1a03"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-light-mobile-section-06.webp",
+              "top": 8373,
+              "width": 375,
+              "height": 1675,
+              "sha256": "6da0fbd1d56350c9f90329582992a74663fcfeaa77ffa877703b93db7eb824cf"
+            }
+          ]
+        }
+      },
+      "dark": {
+        "desktop": {
+          "width": 1153,
+          "height": 7438,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1239,
+              "sha256": "1528198ac776e1d17ae0db45e4f3aabb0e5aa308cce10b2f516b39a9109c4643"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-desktop-section-02.webp",
+              "top": 1239,
+              "width": 1153,
+              "height": 1240,
+              "sha256": "af3d384f66004fd07ac788b04f8ee3c87ebda60a0a41874efd82b7d48938a430"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-desktop-section-03.webp",
+              "top": 2479,
+              "width": 1153,
+              "height": 1240,
+              "sha256": "514a245e8543d734f5a4650daf97ed9ca1f5ff7ee21e03713b5b44f498f76743"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-desktop-section-04.webp",
+              "top": 3719,
+              "width": 1153,
+              "height": 1239,
+              "sha256": "9f00d92494e30ea1279aa0d00c20daac3a3b593f6f20afc2364521337a609876"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-desktop-section-05.webp",
+              "top": 4958,
+              "width": 1153,
+              "height": 1240,
+              "sha256": "47428815cf7a5d242af984f188fdeca0becfa723799c26ed27db6eb58cdcf1dc"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-desktop-section-06.webp",
+              "top": 6198,
+              "width": 1153,
+              "height": 1240,
+              "sha256": "e2426fed6189f20ddf418e24dd3fd70c56394c91e02e9fde5b2c0e80995e9cd3"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 10048,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1674,
+              "sha256": "da7c2ff27ce58c4363aa0c7b26ae6205030f4f6c3d0309ba4cef379eb21bb131"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-mobile-section-02.webp",
+              "top": 1674,
+              "width": 375,
+              "height": 1675,
+              "sha256": "7a075f051cac7e38ba77158b13a4557f3c336016b00a92e10b5151e08f84d8fb"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-mobile-section-03.webp",
+              "top": 3349,
+              "width": 375,
+              "height": 1675,
+              "sha256": "8d8a94712eaa300f8721385bf68dfe992734a853c2bfd2a9b81a9ee16d015915"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-mobile-section-04.webp",
+              "top": 5024,
+              "width": 375,
+              "height": 1674,
+              "sha256": "021c990ff98e768925a29df8db984c4c548195758e34e210d3412ca3ca3d8be2"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-mobile-section-05.webp",
+              "top": 6698,
+              "width": 375,
+              "height": 1675,
+              "sha256": "aa64788ce8e80e0762dde9c6e897f50c1a880cffbe818f65a8b4177ac1e3e919"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/trend-momentum-dark-mobile-section-06.webp",
+              "top": 8373,
+              "width": 375,
+              "height": 1675,
+              "sha256": "ca0d042a0a66ae073982bcdd7e5e94d420b67df1d3af8f86d1a6c2946a8a6369"
+            }
+          ]
+        }
+      }
+    },
+    "entry-exit": {
+      "light": {
+        "desktop": {
+          "width": 1168,
+          "height": 17582,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-01.webp",
+              "top": 0,
+              "width": 1168,
+              "height": 1758,
+              "sha256": "8684935f7ca54b2636958b37a2dce767e087a6cb11b6a7a527f02911bf6cb9ad"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-02.webp",
+              "top": 1758,
+              "width": 1168,
+              "height": 1758,
+              "sha256": "bb8bc2641570052adaee8ae7a4a9394315048fb1cd758b83a6c74e22e09bb19f"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-03.webp",
+              "top": 3516,
+              "width": 1168,
+              "height": 1758,
+              "sha256": "870b7d7d29f2a6ef7a1cd09838ee807d3e891a60380a525eaf2573be3b392f7b"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-04.webp",
+              "top": 5274,
+              "width": 1168,
+              "height": 1758,
+              "sha256": "74f0fbc38fa132883f2aeb8000b7d2019704b3bf5f537a3ecc56b5108301850c"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-05.webp",
+              "top": 7032,
+              "width": 1168,
+              "height": 1759,
+              "sha256": "7f510c09f5e65319c771f24a5825bab623a5b81618d2ad05687c4b011bebb2e5"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-06.webp",
+              "top": 8791,
+              "width": 1168,
+              "height": 1758,
+              "sha256": "7fd84139c7baca09624c7037529bbbcca5d2f8ee12902b8d075854dc3d850297"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-07.webp",
+              "top": 10549,
+              "width": 1168,
+              "height": 1758,
+              "sha256": "e78657ef39fdf8b27c441effef8fa6ed76eb3b0622dd1484c8b0432586c82b37"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-08.webp",
+              "top": 12307,
+              "width": 1168,
+              "height": 1758,
+              "sha256": "5dee83532992f1d4bff07217a148852fe7004417a8157a9baa638efff00d0a0c"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-09.webp",
+              "top": 14065,
+              "width": 1168,
+              "height": 1758,
+              "sha256": "9310da0080aa3587c7aed5371c76ad9ed812fcf29db75993a4d3eb9c3b4b159e"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-desktop-section-10.webp",
+              "top": 15823,
+              "width": 1168,
+              "height": 1759,
+              "sha256": "6f7a24fedf6e6f7f0d5389932390c2ef50ef261162c7fd607a44c280512e9c52"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 19805,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1980,
+              "sha256": "31da0353743304776c8b54e7b810dcbe1c4315c9f2e2b7eaa2b94640e2f244f1"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-02.webp",
+              "top": 1980,
+              "width": 375,
+              "height": 1981,
+              "sha256": "a997d221bd6963e67b05a71357fa101fda06e0372450a6db14d4c9d51d3ccba4"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-03.webp",
+              "top": 3961,
+              "width": 375,
+              "height": 1980,
+              "sha256": "57e650ee45f5c2fcb53a1aab8ff9da00408a69e9a0f4be85bfa4562cdf292a19"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-04.webp",
+              "top": 5941,
+              "width": 375,
+              "height": 1981,
+              "sha256": "30b2d5bdf34e18a2f52a6c95cd937b337111310884a3054e5a62d7e227691b6f"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-05.webp",
+              "top": 7922,
+              "width": 375,
+              "height": 1980,
+              "sha256": "fcea087dd86f8bc8ebb011cdb54b08a70c73caa58f7ed0a0b1f84e50b3917dda"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-06.webp",
+              "top": 9902,
+              "width": 375,
+              "height": 1981,
+              "sha256": "1e73f6b47b15c4c384434f7a84239e3ecfdbe46623cca34b082f4942c2eacc09"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-07.webp",
+              "top": 11883,
+              "width": 375,
+              "height": 1980,
+              "sha256": "5ed588a8f09ff18c85ad9404c9ba2d8bc04f8b21a57bebb550aee47025e6ddac"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-08.webp",
+              "top": 13863,
+              "width": 375,
+              "height": 1981,
+              "sha256": "d47d8eae8fda5d1fd190a3375b70214400d02b5b6517c9a3af12dd697af388bb"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-09.webp",
+              "top": 15844,
+              "width": 375,
+              "height": 1980,
+              "sha256": "06aed30f34e13ddf56ee3a2bd51f585c816e2e634c35c33ad2cd33be2cf4b107"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-light-mobile-section-10.webp",
+              "top": 17824,
+              "width": 375,
+              "height": 1981,
+              "sha256": "25be95894746321930d72099c756a90755b0943044647b547c69f31ff5db7077"
+            }
+          ]
+        }
+      },
+      "dark": {
+        "desktop": {
+          "width": 1153,
+          "height": 17754,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1775,
+              "sha256": "8cc6660b0517c7d3a9c4586c5b819d10b49a00cf2facfcbe679fdb7e58b702db"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-02.webp",
+              "top": 1775,
+              "width": 1153,
+              "height": 1775,
+              "sha256": "dbd813681281f61bb8e6395cefbc07d4d2b2dbff4528fe44cf7e190e168542b4"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-03.webp",
+              "top": 3550,
+              "width": 1153,
+              "height": 1776,
+              "sha256": "ce5cff5fb8aa307275a70696b188aad14e84fdd74f1f382ae7bb589d3fc095b9"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-04.webp",
+              "top": 5326,
+              "width": 1153,
+              "height": 1775,
+              "sha256": "140599ae5c3fcba241589f6f1c729cdfc928d15b3c8d0640aa23ceaf3a07b7df"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-05.webp",
+              "top": 7101,
+              "width": 1153,
+              "height": 1776,
+              "sha256": "2fd42f018b3aba722ebc97f13e1190568bace1e38b032940794a63f4663ee215"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-06.webp",
+              "top": 8877,
+              "width": 1153,
+              "height": 1775,
+              "sha256": "395ceb9623e17f5f3fb718efa616a356d04f6ae8b5a8fb119381aba699f7c40c"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-07.webp",
+              "top": 10652,
+              "width": 1153,
+              "height": 1775,
+              "sha256": "0fe06c7a955531e7b4b402bf5c0b82befe48943ffd5ec44b78cd8cb90f02698a"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-08.webp",
+              "top": 12427,
+              "width": 1153,
+              "height": 1776,
+              "sha256": "246ad790d794ef504c098d0bb87f187e00034f9bd49d555684a2032a96ba369d"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-09.webp",
+              "top": 14203,
+              "width": 1153,
+              "height": 1775,
+              "sha256": "2b2811f86c2492e4b3628eb66ebed922e8d4052bcc01b8d547a824e67e627a62"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-desktop-section-10.webp",
+              "top": 15978,
+              "width": 1153,
+              "height": 1776,
+              "sha256": "554ddb184f17f5c0687ace938df18ad7152bd9b948cedd19fd54d1f219a76cb8"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 19805,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1980,
+              "sha256": "8e0a6ee1f19726ffe9489aade81a2436309ed8983781c91c35ce9e2e704eac52"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-02.webp",
+              "top": 1980,
+              "width": 375,
+              "height": 1981,
+              "sha256": "c981fa60034440630ce75690818488c2f26bd2ea9d23b3cddb256bac97a3d9dd"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-03.webp",
+              "top": 3961,
+              "width": 375,
+              "height": 1980,
+              "sha256": "4f02e68c46a357d5264bb65ce752b2440e3b35f3ac442e11b142e573fb5f432a"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-04.webp",
+              "top": 5941,
+              "width": 375,
+              "height": 1981,
+              "sha256": "e6aa0bc2ebd96ac85e2de989f4bf8264d1d1165fd1cb79471ba9c43dbc5b91ee"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-05.webp",
+              "top": 7922,
+              "width": 375,
+              "height": 1980,
+              "sha256": "ad99a6e09e8b93954fd60f85e8e71885f76cd2ca75427c52e63e05b061189f98"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-06.webp",
+              "top": 9902,
+              "width": 375,
+              "height": 1981,
+              "sha256": "708736b725bf9d1d5d986a2658a9f87a9c7291b99a4f0d4b95fa69fb7b5ebccc"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-07.webp",
+              "top": 11883,
+              "width": 375,
+              "height": 1980,
+              "sha256": "925c14f5bf36b7f95312e10d09b0a3758977a611097494a9afd978bd937e066e"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-08.webp",
+              "top": 13863,
+              "width": 375,
+              "height": 1981,
+              "sha256": "7dbcf05c450c8a1e488d7e7692cdf3e84a96606e8fbad901a2673a5da562ac1f"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-09.webp",
+              "top": 15844,
+              "width": 375,
+              "height": 1980,
+              "sha256": "6316738fd7a953126b33bdac49ca5b31b368f787ae3595505161489e9a6919d0"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/entry-exit-dark-mobile-section-10.webp",
+              "top": 17824,
+              "width": 375,
+              "height": 1981,
+              "sha256": "239f18ae1fa0c9e0ccf6e5f5ab06f90d113dc80d94ec1c436c5a682e04fc382e"
+            }
+          ]
+        }
+      }
+    },
+    "mfe-mae": {
+      "light": {
+        "desktop": {
+          "width": 1153,
+          "height": 5019,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-light-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1254,
+              "sha256": "cb78e9351551bf8a8d2c11cd283c827dc201b27504e0c5fd66cedba2a9a830fa"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-light-desktop-section-02.webp",
+              "top": 1254,
+              "width": 1153,
+              "height": 1255,
+              "sha256": "9fb8c6b20a8d6837ca32f31026d78719d556139e9b13f1839dcc537056d89fcb"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-light-desktop-section-03.webp",
+              "top": 2509,
+              "width": 1153,
+              "height": 1255,
+              "sha256": "9d0869b4b934e91c1b385ed6f9b37741d28be6d266a0d1c9fafffdc8871715df"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-light-desktop-section-04.webp",
+              "top": 3764,
+              "width": 1153,
+              "height": 1255,
+              "sha256": "254190e59bd08b810d6db2d9a0d12875ac931a9546862cd9a859177ec08711dd"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 6413,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-light-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1603,
+              "sha256": "b43cdd42588d6de8c0e395db185278a831797aa703a56c624640c249eb8af699"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-light-mobile-section-02.webp",
+              "top": 1603,
+              "width": 375,
+              "height": 1603,
+              "sha256": "fa7b75ea50faa9243cd41c64277e93928cb010a787c81cffb19a132e1d694440"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-light-mobile-section-03.webp",
+              "top": 3206,
+              "width": 375,
+              "height": 1603,
+              "sha256": "99013e986e6831c77cb0e381588902b55fa8e1f94941179ec3e803c8604866b7"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-light-mobile-section-04.webp",
+              "top": 4809,
+              "width": 375,
+              "height": 1604,
+              "sha256": "2d3792e6a9efcfc731833ac5f9ecd7f9223771e15adef0b7eadfa4d4dddd4feb"
+            }
+          ]
+        }
+      },
+      "dark": {
+        "desktop": {
+          "width": 1153,
+          "height": 5019,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-dark-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1254,
+              "sha256": "9a8d36f2b0e5a4bf4464b171e7eb55ca6ccdcda2aca334a1dc521c9944708ffb"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-dark-desktop-section-02.webp",
+              "top": 1254,
+              "width": 1153,
+              "height": 1255,
+              "sha256": "d0567087f31510b210a5d226ea22b5bf295611c8b04c262501605c7740c20f37"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-dark-desktop-section-03.webp",
+              "top": 2509,
+              "width": 1153,
+              "height": 1255,
+              "sha256": "57e190212cef872f8dcda06ee8169c847fcc35b6dbaf7a6ec82d223778192a51"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-dark-desktop-section-04.webp",
+              "top": 3764,
+              "width": 1153,
+              "height": 1255,
+              "sha256": "a8c8d4cb04fc6855455078139b9922800f680818f8b101dd9fc011c583b2c3fd"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 6413,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-dark-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1603,
+              "sha256": "86fbc9a94e9702e43ac84ee494699d4dc5813c9fa6851c453ae71103a0ddaedc"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-dark-mobile-section-02.webp",
+              "top": 1603,
+              "width": 375,
+              "height": 1603,
+              "sha256": "ecbd63454c28ea20751044e73fc5fe87af1d94487056ec70feb72269b92ce444"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-dark-mobile-section-03.webp",
+              "top": 3206,
+              "width": 375,
+              "height": 1603,
+              "sha256": "a9ba67cf3a42097b686eb316d7b1de9d40437332266791f6d69a3b3cfcd6b6f1"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/mfe-mae-dark-mobile-section-04.webp",
+              "top": 4809,
+              "width": 375,
+              "height": 1604,
+              "sha256": "65392e97fd0a5790ae74586c19e3ed4fef1cbfacd72e0f3df5cf992769c02a40"
+            }
+          ]
+        }
+      }
+    },
+    "green-to-red": {
+      "light": {
+        "desktop": {
+          "width": 1153,
+          "height": 2599,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/green-to-red-light-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1299,
+              "sha256": "ea8875023ed9ae24be3123d32ec57ccba600393be895bd30effe11a1c1de3f70"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/green-to-red-light-desktop-section-02.webp",
+              "top": 1299,
+              "width": 1153,
+              "height": 1300,
+              "sha256": "b6c17c5cb2843975feb329873f2357049609d8c47c4b1633fde59b16eee7f09f"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 3623,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/green-to-red-light-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1811,
+              "sha256": "7dec926757c77271ee8ca95204ea186919cd878029e1e993eb0942cc33c36ff6"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/green-to-red-light-mobile-section-02.webp",
+              "top": 1811,
+              "width": 375,
+              "height": 1812,
+              "sha256": "ce5cc02339b698a42c010d7b1fda71d65a8f452f9edfb58d593d128d610336b0"
+            }
+          ]
+        }
+      },
+      "dark": {
+        "desktop": {
+          "width": 1153,
+          "height": 2599,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/green-to-red-dark-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1299,
+              "sha256": "3bfb505c7af3197b77bd1b248067c55d5fc128ca6f2cbaf9fc69c65816096334"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/green-to-red-dark-desktop-section-02.webp",
+              "top": 1299,
+              "width": 1153,
+              "height": 1300,
+              "sha256": "460d425a6e5e62231deeca4420867766fd5e35cf43cbbc5d971051b206e39b5b"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 3623,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/green-to-red-dark-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1811,
+              "sha256": "04d213ce21130afa72cd4935b2ee0ed99ca90b24d87f5fd7df7e99a75db3c93e"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/green-to-red-dark-mobile-section-02.webp",
+              "top": 1811,
+              "width": 375,
+              "height": 1812,
+              "sha256": "00ca9eb177c06556ed57728781a18eaae0203e30ba6d7e9d34eafab0487c0b62"
+            }
+          ]
+        }
+      }
+    },
+    "scaling-out": {
+      "light": {
+        "desktop": {
+          "width": 1153,
+          "height": 17049,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1704,
+              "sha256": "2570d8468cb8c40f6646ce64665623ab9b68f96765ece03672a52fd72394cfc4"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-02.webp",
+              "top": 1704,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "579a3b4fad39d980610683d2762be2f8db70ed355d05b0f54aad1d1d913ec4ba"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-03.webp",
+              "top": 3409,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "8a5986a0fcaec6f016b1f8835123c6c197752f03dbd995d16ac3f1cd93da8041"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-04.webp",
+              "top": 5114,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "a85da1d761929fd8c6705f57694e529575a6df1b3e99c8328762505615ab9318"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-05.webp",
+              "top": 6819,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "4cc56d52837143a22f008ec3ceac65b385a8dfd194ffa88c513203cea056347e"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-06.webp",
+              "top": 8524,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "29475b25431b04a7fe394056c4855f3b4bd6b201cc1a6b859e2c085fd91843df"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-07.webp",
+              "top": 10229,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "b79be1acd41016087a757b486bedbdf3e7fb42ae8a78917e1109a9beb42bbe9a"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-08.webp",
+              "top": 11934,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "4bc0022c9f2f753dec854c8932a6b7dfc791f08b49b25cec4425707b08d0a4e0"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-09.webp",
+              "top": 13639,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "e4d640c3ee19dcdc2ffe03e379f64fd50c52d952309235e71efa989a09461ed0"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-desktop-section-10.webp",
+              "top": 15344,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "c4d02b2ab515987491e8db1686ce41c55a6d886b1a9082f8e9cea64ab3d584a6"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 18556,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1855,
+              "sha256": "47ac276a4cfcefff27c6149aa642ceb74ded3ec2e9c32bac5f05ede685e48ca6"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-02.webp",
+              "top": 1855,
+              "width": 375,
+              "height": 1856,
+              "sha256": "5d77e33ccccdc8a9174bcd19bc06dbb9aca46086d7bcebdf32f84b8bc00fedc6"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-03.webp",
+              "top": 3711,
+              "width": 375,
+              "height": 1855,
+              "sha256": "8b66c08b359982dffe2387b809bbe9a294d0a16a20598a971a4fc33f02a0e430"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-04.webp",
+              "top": 5566,
+              "width": 375,
+              "height": 1856,
+              "sha256": "c4d39d615b460c8cc43594804043fcc03633d2fd692358f3780785a74a4fe1ba"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-05.webp",
+              "top": 7422,
+              "width": 375,
+              "height": 1856,
+              "sha256": "aad38283267577532f4f7356af1d774836818eea50cbeffbff16349d2300eda7"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-06.webp",
+              "top": 9278,
+              "width": 375,
+              "height": 1855,
+              "sha256": "a39393c596562a0cf52f5ce541ac33b860a0f1ac1aa7435b0cbdf9fc086826b0"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-07.webp",
+              "top": 11133,
+              "width": 375,
+              "height": 1856,
+              "sha256": "5be1b9f8812d4c5b10da29d510793918deced6b0c7133a2d3d800be034b9003c"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-08.webp",
+              "top": 12989,
+              "width": 375,
+              "height": 1855,
+              "sha256": "f4d53dbf1e1f01fdd582cdf5343c73338612e1691fbd75dc16cfd6c1619e3efc"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-09.webp",
+              "top": 14844,
+              "width": 375,
+              "height": 1856,
+              "sha256": "b5ffbbb4c0fc95d5651abc19a9add3fceba2faa6877d77cbd52d0aba16b4b18e"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-light-mobile-section-10.webp",
+              "top": 16700,
+              "width": 375,
+              "height": 1856,
+              "sha256": "4a4a4637fe5bb0c65d9a96856b0414b4fdf1a8070ff64c2daa9480fc3e60b89c"
+            }
+          ]
+        }
+      },
+      "dark": {
+        "desktop": {
+          "width": 1153,
+          "height": 17049,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1704,
+              "sha256": "de45982a26d9c9bbf03ae5ec1bc6c2f1f7a815dae74039c0a2cdc867cc96047c"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-02.webp",
+              "top": 1704,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "4bd83758aed7eb70ef6fc6a8eb727b051a47802f6129a17db22df097a9031eb0"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-03.webp",
+              "top": 3409,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "7961113fc40f99e593b838c3d0f94c9f2428107ec4fd616bec0535c1463bc2da"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-04.webp",
+              "top": 5114,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "347bccca4126824270372165cbd82c4b2bab3afe13c257998422d56a0038af20"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-05.webp",
+              "top": 6819,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "a111cdf1b1aa10dcde3dd76b46ac4663ab7b66f074e5968b06a3b9549c5b608d"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-06.webp",
+              "top": 8524,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "b6da92b25b3d55be9139ddff77cd19f8dae23f5576b3fc3b894d6cab627b02c1"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-07.webp",
+              "top": 10229,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "d0007002093319e3757b8e2c1feedb3b0523b1c43eb71940c593918b20132050"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-08.webp",
+              "top": 11934,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "75d113114986bbcd37461da3ffaf3215f1ace95de93bb7625b832285745d762e"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-09.webp",
+              "top": 13639,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "83695acc4839bcb4892814b2ed4fa3f1dadc690f4bb99c7db8696812985a7390"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-desktop-section-10.webp",
+              "top": 15344,
+              "width": 1153,
+              "height": 1705,
+              "sha256": "1b0467c9643446f50cc3ae54032464038c9230efa5d424f6e38f8effbab4f9c8"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 18556,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1855,
+              "sha256": "3f7ae8d7e32b2cdd71eecef661e95e3155cbc82007f34e43f49c03e41c63c5bd"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-02.webp",
+              "top": 1855,
+              "width": 375,
+              "height": 1856,
+              "sha256": "83f39f28fe29cc5ca0da9deb4360e8f24531a90b3cd34f3c99f6e2e3eb7acb7d"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-03.webp",
+              "top": 3711,
+              "width": 375,
+              "height": 1855,
+              "sha256": "4cb36cbb8c6de52704d7b81dedbb999421fceb7335f9f844f4461fdf19941f63"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-04.webp",
+              "top": 5566,
+              "width": 375,
+              "height": 1856,
+              "sha256": "1631e91cccb72f7fa4b48f3d46b57f2aa46395de6fb33bf9e6233577204a4b91"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-05.webp",
+              "top": 7422,
+              "width": 375,
+              "height": 1856,
+              "sha256": "68c4cc2c442945ca5c84d13b779bedd9a3874dfda2b28b0855fd060527fcc858"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-06.webp",
+              "top": 9278,
+              "width": 375,
+              "height": 1855,
+              "sha256": "4d5e362cd212b73a5e906bae337eb9f24d48ebcf7efac6e900d2c7be34e9fe2e"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-07.webp",
+              "top": 11133,
+              "width": 375,
+              "height": 1856,
+              "sha256": "574fbf16b85b2bf2178766f69a38f49af0b0c6e5d3b0c4003826f9ef1527370a"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-08.webp",
+              "top": 12989,
+              "width": 375,
+              "height": 1855,
+              "sha256": "34800648b28bfdc53546f81c0718013a9a0ad60baf369772dc1f6b4bde5f594c"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-09.webp",
+              "top": 14844,
+              "width": 375,
+              "height": 1856,
+              "sha256": "bb711d72a309c91624bb54b55e61477724a11168c294f6f7428e99407b0cc687"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/scaling-out-dark-mobile-section-10.webp",
+              "top": 16700,
+              "width": 375,
+              "height": 1856,
+              "sha256": "90b22a71fb80b8ffb32f051e216117600404f2e06fc3b5a0b8020aaa2502a23d"
+            }
+          ]
+        }
+      }
+    },
+    "candle-patterns": {
+      "light": {
+        "desktop": {
+          "width": 1153,
+          "height": 4806,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-light-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1201,
+              "sha256": "a70686d34a5739bd463d1b97435ff06d6233da7efeb994c86cfdd7b93fb912eb"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-light-desktop-section-02.webp",
+              "top": 1201,
+              "width": 1153,
+              "height": 1202,
+              "sha256": "8462cb442811593d3d15c0f44c1f72e1884a09454bdc36684c6fc6b0fb2c18f6"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-light-desktop-section-03.webp",
+              "top": 2403,
+              "width": 1153,
+              "height": 1201,
+              "sha256": "a4bb1b13e907fee90b1ea02b5162e632ef8adce2e5fc79ecbb11c1cfcb5cb387"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-light-desktop-section-04.webp",
+              "top": 3604,
+              "width": 1153,
+              "height": 1202,
+              "sha256": "e448b06e1670baafb81363572a63409474b3745a49d9b4b26f665936dddb000f"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 6062,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-light-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1515,
+              "sha256": "877b4e6e272abc05f5e45436380a11c9e6425f4f32734b8e32d8725606be0690"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-light-mobile-section-02.webp",
+              "top": 1515,
+              "width": 375,
+              "height": 1516,
+              "sha256": "22fd5f48d822fd2e29c4a00218f714675359705079fae72b1797903fd30cf16f"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-light-mobile-section-03.webp",
+              "top": 3031,
+              "width": 375,
+              "height": 1515,
+              "sha256": "fc3b77c4e50102979c364cb083d89596a84eda0921cd8fe08a97c09324978abf"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-light-mobile-section-04.webp",
+              "top": 4546,
+              "width": 375,
+              "height": 1516,
+              "sha256": "35c97397a64f1ba829e5b31d9aab88162387896186bccfcdee1267ecdcd0a5b5"
+            }
+          ]
+        }
+      },
+      "dark": {
+        "desktop": {
+          "width": 1153,
+          "height": 4806,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-dark-desktop-section-01.webp",
+              "top": 0,
+              "width": 1153,
+              "height": 1201,
+              "sha256": "43989df21a8375399e9e3a88a69284317b850ed58884f6ea357d8596df0a85bd"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-dark-desktop-section-02.webp",
+              "top": 1201,
+              "width": 1153,
+              "height": 1202,
+              "sha256": "c14d4dfc7b0ccb3441f5bbe162e464ad3a7f442139265f07b36b87539d1e66b5"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-dark-desktop-section-03.webp",
+              "top": 2403,
+              "width": 1153,
+              "height": 1201,
+              "sha256": "73e4ddd5eac4778a1c85b6f4ee5afe207fd557a086066c9e34948167bb2cb1bd"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-dark-desktop-section-04.webp",
+              "top": 3604,
+              "width": 1153,
+              "height": 1202,
+              "sha256": "c64fefc8ca8f6da803c8e5ec2d278fcaa757d3ec8dd8b0363fdfcbd7437433be"
+            }
+          ]
+        },
+        "mobile": {
+          "width": 375,
+          "height": 6062,
+          "sections": [
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-dark-mobile-section-01.webp",
+              "top": 0,
+              "width": 375,
+              "height": 1515,
+              "sha256": "f6787abe6c9a8999e4392eb9502032a3edd30a10ceb67a422ab574e17c58dedc"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-dark-mobile-section-02.webp",
+              "top": 1515,
+              "width": 375,
+              "height": 1516,
+              "sha256": "93e4e07ec6ec1dab0d94fd186185fb89f1e7a3db43a80397f3f9c133b57d36ae"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-dark-mobile-section-03.webp",
+              "top": 3031,
+              "width": 375,
+              "height": 1515,
+              "sha256": "b0aa56eddd3d7cd565e3b5c5e238c85f0af53c8792872590356e863b875b0013"
+            },
+            {
+              "src": "/demo-previews/trade-analyzer-analysis/candle-patterns-dark-mobile-section-04.webp",
+              "top": 4546,
+              "width": 375,
+              "height": 1516,
+              "sha256": "15c96319b6d600250a86a47e8ccb4c44ae5af06b2b677b657431cb2662d11964"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

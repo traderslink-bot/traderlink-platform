@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireTraderLinkPlatformBillingRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { reserveMembershipAddonCheckout } from "@/src/modules/platform/server/membership/membership-addon-checkout";
 import { PlatformMembershipClaims } from "@/src/modules/platform/server/membership/platform-membership-claims";
 import { createMembershipStripeCheckout, createMembershipStripePortal } from "@/src/modules/platform/server/membership/platform-membership-stripe";
 import type { MembershipActionState } from "../admin/journal/memberships/membership-form";
@@ -13,7 +14,11 @@ export async function selectMembershipAction(_previous: MembershipActionState, f
   let claimId: string | null = null;
   try {
     const identity = requireTraderLinkPlatformBillingRequestIdentity(await headers());
-    const reserved = withPlatformDatabase({ mode: "runtime" }, (database) => new PlatformMembershipClaims(database).reserve({
+    const addonIds = form.getAll("addonOfferId").map(String);
+    if (addonIds.length && (form.get("secret") || form.get("trialCampaignId"))) throw new Error("This add-on checkout uses public monthly/free plans without a separate trial.");
+    const reserved = withPlatformDatabase({ mode: "runtime" }, (database) => addonIds.length
+      ? reserveMembershipAddonCheckout(database, identity.scope.userId, String(form.get("offerId") ?? ""), addonIds, new Date().toISOString())
+      : new PlatformMembershipClaims(database).reserve({
       userId: identity.scope.userId, offerId: String(form.get("offerId") ?? ""),
       secret: String(form.get("secret") ?? "") || undefined, trialCampaignId: String(form.get("trialCampaignId") ?? "") || undefined,
     }));
@@ -36,7 +41,7 @@ export async function selectMembershipAction(_previous: MembershipActionState, f
   } catch (error) {
     if (claimId) withPlatformDatabase({ mode: "runtime" }, (database) => new PlatformMembershipClaims(database).release(claimId!));
     const message = error instanceof Error ? error.message : "";
-    return { success: null, error: /^(This |Stripe |You have|Use the private|Verified payment)/.test(message)
+    return { success: null, error: /^(This |Stripe[ :]|You have|Use the private|Verified payment)/.test(message)
       ? message : "Sign in to your TraderLink account and try again. If the issue continues, contact the owner." };
   }
   redirect(destination!);

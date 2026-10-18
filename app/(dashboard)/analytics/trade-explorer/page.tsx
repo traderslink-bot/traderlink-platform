@@ -1,3 +1,4 @@
+import { MembershipFeatureAccessNotice } from "../../membership-feature-access-notice";
 import type { Metadata } from "next";
 
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
@@ -7,7 +8,7 @@ import {
   JOURNAL_OFFLINE_ROUTE_VIEW_VERSION,
   journalOfflineRouteCoverage,
 } from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
-import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import TradeExplorerClient from "./trade-explorer-client";
 import { listTradeExplorerSavedViews } from "./trade-explorer-saved-view-runtime";
@@ -33,7 +34,8 @@ export default async function TradeExplorerPage({
     typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value) ? value : null;
   const startDate = date(parameters.startDate);
   const endDate = date(parameters.endDate);
-  const scope = await requireMembershipPageScope("analytics.trade_explorer");
+  const scope = await requireMembershipPreviewPageScope("analytics.trade_explorer");
+  if (!scope) return <MembershipFeatureAccessNotice feature="analytics.trade_explorer" title="Trade Explorer" message="Find the patterns behind your results. Unlock Trade Explorer to explore your trades, filters and saved views." />;
   const [model, savedViews] = await Promise.all([
     readTradeExplorerPageModel(scope, tickerView ? { endDate, rank, startDate } : undefined),
     Promise.resolve(listTradeExplorerSavedViews(scope)),

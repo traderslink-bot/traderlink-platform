@@ -1,3 +1,4 @@
+import { SessionTrackerAccessNotice } from "./session-tracker-access-notice";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Stack from "@mui/material/Stack";
@@ -11,7 +12,7 @@ import { DashboardPageDescription } from "../dashboard-page-description";
 import {
   currentJournalAccountSelectionRef,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPreviewPageScope, requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 import {
@@ -50,6 +51,8 @@ export default async function TradeTrackerPage({
     preview?: string;
   }>;
 }) {
+  const trackerScope = await requireMembershipPreviewPageScope("journal.session_tracker");
+  if (!trackerScope) return <SessionTrackerAccessNotice />;
   const query = await searchParams;
   const designPreview = process.env.NODE_ENV !== "production" &&
     query.preview === "design";

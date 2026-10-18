@@ -1,4 +1,7 @@
 .header,.footer { font-family:Arial,Helvetica,sans-serif; line-height:1.5; box-sizing:border-box; }
+.chromeContents { display:contents; }
+.pricingPage { display:flex; flex-direction:column; min-height:100vh; background:#062663; }
+.pricingPage > main { flex:1; box-sizing:border-box; }
 .header *,.footer * { box-sizing:border-box; }
 .header a:focus-visible,.header button:focus-visible,.footer a:focus-visible { outline:3px solid #2e6fbb; outline-offset:3px; }
 .header { align-items:center; background:#fff; border-bottom:1px solid #dbe4ef; box-shadow:0 9px 25px rgba(14,47,93,.08); display:flex; justify-content:space-between; min-height:76px; padding:0 4.5%; position:relative; z-index:30; }

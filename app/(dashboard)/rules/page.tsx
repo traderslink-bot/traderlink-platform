@@ -22,7 +22,7 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 export default async function TradingRulesPage() {
-  const scope = await requireMembershipPageScope("journal.access");
+  const scope = await requireMembershipPageScope("journal.rules");
   const model = await readTradingRulesPageModel(scope);
   return (
     <>

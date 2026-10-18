@@ -1,4 +1,6 @@
 "use client";
+import { JournalUpgradeLink } from "../membership-journal-upgrade-link";
+import { isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
@@ -70,6 +72,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   const [sessionRuleStatuses, setSessionRuleStatuses] = useState<Record<string, "followed" | "broken" | "not-reviewed">>({});
   const [sessionTagsOpen, setSessionTagsOpen] = useState(!mobile);
   const [sessionRulesOpen, setSessionRulesOpen] = useState(!mobile);
+  const [tagUpgradeRequired, setTagUpgradeRequired] = useState(false);
   const [newSessionTag, setNewSessionTag] = useState("");
   const [selectedSessionDate, setSelectedSessionDate] = useState(
     launch.kind === "session" ? launch.sessionDate : "",
@@ -176,7 +179,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   }, [launch.kind, launch.kind === "session" ? launch.sessionDate : ""]);
   useEffect(() => {
     if (!open) return;
-    setMessage(null); setView(focusOnly ? "focuses" : initialView); setCategory("general"); setCustomTypeId(""); setNoteText(""); setSessionTagsOpen(!mobile); setSessionRulesOpen(!mobile);
+    setMessage(null); setTagUpgradeRequired(false); setView(focusOnly ? "focuses" : initialView); setCategory("general"); setCustomTypeId(""); setNoteText(""); setSessionTagsOpen(!mobile); setSessionRulesOpen(!mobile);
   }, [open, focusOnly, initialView, mobile, launch.kind, launch.kind === "session" ? launch.sessionDate : launch.roundTripId]);
   useEffect(() => {
     if (open) void load();
@@ -192,12 +195,12 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   function changeSessionDate(nextDate: string): void {
     if (!nextDate || nextDate === selectedSessionDate) return;
     if (dirty && !window.confirm("Discard unsaved changes before opening another session date?")) return;
-    setMessage(null); setCategory("general"); setCustomTypeId(""); setNoteText(""); setNewSessionTag("");
+    setMessage(null); setTagUpgradeRequired(false); setCategory("general"); setCustomTypeId(""); setNoteText(""); setNewSessionTag("");
     setSessionReview(null); setSessionSummary(null); setSessionTagIds([]); setSessionRuleStatuses({}); setSelectedSessionDate(nextDate);
   }
   async function saveNote(): Promise<void> {
     if (!noteText.trim()) { setMessage("Write a note before saving."); return; }
-    setSaving(true); setMessage(null); try {
+    setSaving(true); setMessage(null); setTagUpgradeRequired(false); try {
       const isLegacy = activeLaunch.kind === "session"
         ? category !== "custom"
         : category === "general" || category === "technical_recap";
@@ -216,7 +219,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
       setMessage("Choose a session tag or change a custom rule result before saving.");
       return;
     }
-    setSaving(true); setMessage(null);
+    setSaving(true); setMessage(null); setTagUpgradeRequired(false);
     try {
       const ruleReviews = sessionReview?.rules.flatMap((rule) => {
           const current = sessionReview.reviews.find((item) => item.ruleId === rule.ruleId) ?? null;
@@ -242,19 +245,27 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   }
   async function createSessionTag(): Promise<void> {
     if (!newSessionTag.trim()) return;
+    setTagUpgradeRequired(false);
     if (sessionTagIds.length >= 10) {
       setMessage("A session can have up to 10 tags.");
       return;
     }
-    setSaving(true); setMessage(null);
+    setSaving(true); setMessage(null); setTagUpgradeRequired(false);
     try {
       const response = await fetch("/api/intelligence/trade-tags", {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ expectedAccountSelectionRef, name: newSessionTag }),
       });
-      const payload = await response.json() as { data?: { assignmentCount?: number; revision?: string; tagId?: string } };
+      const payload = await response.json() as { error?: { message?: string }; data?: { assignmentCount?: number; revision?: string; tagId?: string } };
       const tagId = payload.data?.tagId;
-      if (!response.ok || !tagId) throw new Error();
+      if (!response.ok || !tagId) {
+        if (isMembershipRequired(payload)) {
+          setTagUpgradeRequired(true);
+          setMessage(payload.error?.message ?? "Choose a plan with more custom tags.");
+          return;
+        }
+        throw new Error();
+      }
       const createdTag = { assignmentCount: payload.data?.assignmentCount ?? 0, name: newSessionTag.trim(), revision: payload.data?.revision ?? "1", tagId };
       const nextTagIds = [...new Set([...sessionTagIds, tagId])];
       setNewSessionTag(""); setSessionTagIds(nextTagIds);
@@ -267,7 +278,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
   }
   async function retireSessionTag(tag: SessionReview["tags"][number], confirmAssignedDeletion = false): Promise<void> {
     if (!confirmAssignedDeletion && !window.confirm(`Remove ${tag.name} from future tag choices? Existing saved history will stay.`)) return;
-    setSaving(true); setMessage(null);
+    setSaving(true); setMessage(null); setTagUpgradeRequired(false);
     try {
       const response = await fetch(`/api/intelligence/trade-tags/${encodeURIComponent(tag.tagId)}`, {
         method: "DELETE",
@@ -341,7 +352,7 @@ export function JournalNotesDrawer({ expectedAccountSelectionRef, focusOnly = fa
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Button disabled={saving || (category === "custom" && !selectedCustomType)} onClick={() => void saveNote()} sx={{ alignSelf: "flex-start" }} variant="contained">Save Note</Button>{activeLaunch.kind === "session" ? <Typography color="text.secondary" variant="caption">Save multiple note types to a session</Typography> : null}</Stack></>}
       {sessionReviewFields}
       {activeLaunch.kind === "session" ? <Button disabled={saving || (!sessionTagsDirty && !sessionRulesDirty)} onClick={() => void saveSessionReview()} sx={{ alignSelf: "flex-start" }} variant="outlined">Save Review</Button> : null}
-      {message ? <Alert severity={message.includes("could not") ? "error" : "success"}>{message}</Alert> : null}
+      {message ? <Alert severity={tagUpgradeRequired || message.includes("could not") ? "error" : "success"}>{message}{tagUpgradeRequired ? <Box><JournalUpgradeLink /></Box> : null}</Alert> : null}
     </Stack>
   ) : view === "saved" ? savedNotesContent : view === "details" ? <Stack spacing={1.25}><Typography color="text.secondary" variant="body2">{launch.kind === "session" ? "Session Summary" : "Trade Details"}</Typography>{renderDetails?.() ?? <Typography color="text.secondary" variant="body2">Details are supplied by the page that opened Notes.</Typography>}</Stack> : <Stack spacing={2}><Typography color="text.secondary" variant="body2">Current Focuses are your ongoing trading goals. They are not attached to one trade or one session.</Typography><TextField label="Current Focuses" minRows={7} multiline onChange={(event) => setFocusText(event.target.value)} placeholder="For example: follow my risk rules, or improve chart reading." value={focusText} /><FormControlLabel control={<Switch checked={showInWorkspace} onChange={(event) => setShowInWorkspace(event.target.checked)} />} label="Display this on my Workspace" />{message ? <Alert severity={message.includes("could not") ? "error" : "success"}>{message}</Alert> : null}<Button disabled={saving} onClick={() => void saveFocus()} sx={{ alignSelf: "flex-start" }} variant="contained">Save Current Focuses</Button></Stack>;
   return <Drawer anchor="right" onClose={close} open={open} slotProps={{ paper: { sx: { width: { xs: "100vw", sm: 520 }, maxWidth: "100vw" } } }}><Stack sx={{ height: "100%" }}><Stack direction="row" sx={{ alignItems: "center", borderBottom: 1, borderColor: "divider", justifyContent: "space-between", p: 2 }}><Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{focusOnly ? "Current Focuses" : activeLaunch.kind === "session" ? "Session Review" : "Notes"}</Typography>{!focusOnly && activeLaunch.kind === "session" ? <Typography color="text.secondary" sx={{ mt: 0.35 }} variant="body2">Quickly review a trading day here, or use <Typography color="primary" component={Link} href="/trade-tracker" sx={{ fontWeight: 750, textDecoration: "none" }} variant="inherit">Trade Tracker</Typography> to review the day and every trade within it.</Typography> : null}</Box><IconButton aria-label="Close Notes" onClick={close}><CloseRoundedIcon /></IconButton></Stack>{focusOnly ? null : mobile ? <Select fullWidth onChange={(event) => setView(event.target.value as DrawerView)} size="small" sx={{ m: 1.5, width: "calc(100% - 24px)" }} value={view}>{drawerViews.map((item) => <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>)}</Select> : <Tabs onChange={(_, value: DrawerView) => setView(value)} value={view} variant="fullWidth">{drawerViews.map((item) => <Tab key={item.value} label={item.label} value={item.value} />)}</Tabs>}<Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>{focusOnly ? content : view === "details" && activeLaunch.kind === "session" ? sessionSummaryContent : content}</Box></Stack></Drawer>;

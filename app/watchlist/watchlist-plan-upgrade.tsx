@@ -1,9 +1,7 @@
-/** This component receives only an already-filtered public destination, never
- * private offer data. Undefined preserves the old Premium offer verbatim.
- */
+/** Receives only public upgrade destinations. Null keeps private offers private. */
 export function WatchlistPlanUpgrade({ href, feature }: { href: string | null | undefined; feature: string }) {
-  if (href === undefined) return <p>{feature} is reserved for Premium members.{" "}
-    <a href="https://whop.com/traderslink-1049/premium-access-2026">Access Premium</a></p>;
-  return <p>Your current plans do not include this {feature.toLowerCase()}.{" "}
-    {href ? <a href={href}>View plans with this feature</a> : "Contact the owner about access."}</p>;
+  const keys:Readonly<Record<string,string>>={"Ticker":"watchlist.ticker_details","Ticker details":"watchlist.ticker_details","Trade analysis":"watchlist.trade_analysis","Trade analysis & preparation":"watchlist.trade_analysis","Levels":"watchlist.levels","Support and Resistance":"watchlist.levels","Indicator card":"watchlist.indicators","Watchlist":"watchlist.access"};
+  const destination=href===undefined?`/plans?feature=${keys[feature]??"watchlist.access"}`:href;
+  return <p>Unlock {feature.toLowerCase()} with a plan or add-on.{" "}
+    {destination ? <a href={destination}>View plans with this feature</a> : "Contact the owner about access."}</p>;
 }

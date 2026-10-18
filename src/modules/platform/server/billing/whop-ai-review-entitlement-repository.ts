@@ -128,7 +128,7 @@ SET link_state = 'conflict', updated_at_utc = ? WHERE link_id = ?`).run(at, id);
     }).immediate();
   }
 
-  readAccess(userId: string): WhopAiReviewAccessRecord {
+  readAccess(userId: string, now = new Date()): WhopAiReviewAccessRecord {
     const linkStates = this.database.prepare<[string], Readonly<{ link_state: string }>>(
       "SELECT link_state FROM platform_whop_user_links WHERE user_id = ?",
     ).all(userId);
@@ -160,7 +160,10 @@ ORDER BY renewal_period_end_utc DESC, last_event_at_utc DESC`).all(
         renewalPeriodStartUtc: null,
         renewalPeriodEndUtc: null });
     }
-    const active = projections.filter((row) => row.membership_state === "active");
+    const at=createCanonicalUtcTimestamp(now);
+    const active = projections.filter((row) => row.membership_state === "active" &&
+      (row.renewal_period_start_utc===null || row.renewal_period_start_utc<=at) &&
+      (row.renewal_period_end_utc===null || row.renewal_period_end_utc>at));
     if (active.length === 0) {
       return Object.freeze({ state: "not_subscribed", cancelAtPeriodEnd: false,
         renewalPeriodStartUtc: null,

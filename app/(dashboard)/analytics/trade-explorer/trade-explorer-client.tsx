@@ -1,5 +1,7 @@
 "use client";
 
+import { MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
+
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import BookmarkAddRoundedIcon from "@mui/icons-material/BookmarkAddRounded";
@@ -1080,6 +1082,7 @@ export default function TradeExplorerClient({
       });
       if (!response.ok) {
         const body = await response.json().catch(() => null) as Readonly<{
+          code?: string;
           message?: string;
           refreshRequired?: boolean;
         }> | null;
@@ -1087,7 +1090,7 @@ export default function TradeExplorerClient({
           window.location.reload();
           return;
         }
-        throw new Error(body?.message ?? REPORT_DOWNLOAD_FAILURE);
+        throw new Error(isMembershipRequired(body) ? MEMBERSHIP_FEATURE_REQUIRED_MESSAGE : body?.message ?? REPORT_DOWNLOAD_FAILURE);
       }
       const disposition = response.headers.get("content-disposition") ?? "";
       const filename = /filename="([^"]+)"/u.exec(disposition)?.[1] ??
@@ -1827,7 +1830,7 @@ export default function TradeExplorerClient({
               </DashboardSecondaryAction>
             </Stack>
           </Stack>
-          {reportError ? <Alert severity="error" sx={{ mb: 1.5 }}>{reportError}</Alert> : null}
+          {reportError ? <Alert severity="error" sx={{ mb: 1.5 }}>{reportError}{reportError === MEMBERSHIP_FEATURE_REQUIRED_MESSAGE ? <Box sx={{ mt: 1 }}><Button href="/plans?feature=analytics.exports" variant="contained">Unlock reports and exports</Button></Box> : null}</Alert> : null}
           {appliedQuery.moneyBasis === "net" ? (
             <Stack spacing={0.25} sx={{ mb: 1.5 }}>
               <Typography color="text.secondary" variant="body2">
@@ -2359,7 +2362,7 @@ export default function TradeExplorerClient({
         roundTripId={detailsTrade?.trade.roundTripId ?? null}
       />}
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <Alert severity="error">{error}{error === MEMBERSHIP_FEATURE_REQUIRED_MESSAGE ? <Box sx={{ mt: 1 }}><Button href="/plans?feature=analytics.trade_explorer" variant="contained">Unlock Trade Explorer</Button></Box> : null}</Alert> : null}
     </DashboardPage>
     </Box>
   );

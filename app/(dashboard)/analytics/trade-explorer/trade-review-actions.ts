@@ -1,5 +1,5 @@
 "use server";
-import { isMembershipAccessDenied, MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { isMembershipAccessDenied, membershipFeatureDeniedMessage } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import {
   requireTraderLinkPlatformPageScope,
@@ -22,6 +22,7 @@ import {
 
 type ReviewActionFailure = Readonly<{
   message: string;
+  code?: "membership_required";
   ok: false;
   refreshRequired: boolean;
 }>;
@@ -117,7 +118,7 @@ function saveInput(value: unknown): TradeExplorerReviewSaveInput {
 }
 
 function failure(error: unknown, action: "open" | "save" | "tag"): ReviewActionFailure {
-  if (isMembershipAccessDenied(error)) return { ok: false, message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, refreshRequired: false };
+  if (isMembershipAccessDenied(error)) return { ok: false, code: "membership_required", message: membershipFeatureDeniedMessage(error), refreshRequired: false };
   const accessChanged = isTraderLinkPlatformError(error) && [
     "TRADERLINK_AUTH_SESSION_INVALID",
     "TRADERLINK_WORKSPACE_ACCESS_DENIED",

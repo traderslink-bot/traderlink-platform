@@ -176,7 +176,7 @@ export async function compareTradeExplorerGroups(
 > {
   try {
     const scope = await requireTraderLinkPlatformPageScope({
-      membershipFeatures: ["analytics.trade_explorer"],
+      membershipFeatures: ["analytics.trade_explorer", "analytics.compare_trades"],
     });
     return Object.freeze({
       ok: true as const,
@@ -208,7 +208,7 @@ export async function createTradeExplorerComparisonStudy(
   try {
     const value = inputRecord(input);
     const scope = await requireTraderLinkPlatformPageScope({
-      membershipFeatures: ["analytics.trade_explorer"],
+      membershipFeatures: ["analytics.trade_explorer", "analytics.compare_trades"],
     });
     const result = createComparisonStudy(scope, {
       name: value.name,
@@ -230,7 +230,7 @@ export async function updateTradeExplorerComparisonStudy(
   try {
     const value = inputRecord(input);
     const scope = await requireTraderLinkPlatformPageScope({
-      membershipFeatures: ["analytics.trade_explorer"],
+      membershipFeatures: ["analytics.trade_explorer", "analytics.compare_trades"],
     });
     const studies = updateComparisonStudy(scope, {
       studyId: value.studyId,
@@ -254,7 +254,7 @@ export async function retireTradeExplorerComparisonStudy(
   try {
     const value = inputRecord(input);
     const scope = await requireTraderLinkPlatformPageScope({
-      membershipFeatures: ["analytics.trade_explorer"],
+      membershipFeatures: ["analytics.trade_explorer", "analytics.compare_trades"],
     });
     const studies = retireComparisonStudy(scope, {
       expectedAccountSelectionRef: value.expectedAccountSelectionRef,

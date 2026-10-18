@@ -1,3 +1,5 @@
+import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
+import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
@@ -35,6 +37,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const isWorkspaceOnboarding = request.nextUrl.searchParams.get("from") === "workspace-onboarding";
   try {
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
+    withPlatformDatabase({ mode: "runtime" }, database => new MoomooConnectionRepository(database).assertAuthorizationAllowed(identity.scope));
     if (process.env.NODE_ENV !== "production" && requestHostname(request) !== "127.0.0.1") {
       const destination = new URL("http://127.0.0.1:3010/api/connections/moomoo/start");
       if (isWorkspaceOnboarding) destination.searchParams.set("from", "workspace-onboarding");
@@ -64,6 +67,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     recordMoomooOAuthPendingOutcome(pkce.outcome);
     return response;
   } catch (error) {
+    if (isMembershipAccessDenied(error)) return NextResponse.redirect(new URL("/account/trading?moomoo=membership-required",publicOrigin));
     let reportedToAdmin = false;
     try {
       reportedToAdmin = withPlatformDatabase({ mode: "runtime" }, (database) =>

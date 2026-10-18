@@ -1,5 +1,71 @@
 # TraderLink Membership And Subscription Platform Plan
 
+Current owner request: [production release and provider preparation](membership-production-preparation-20261018.md). Preparation/read-only only; no deployment or provider changes until owner reviews the exact manifest and approves. Preserve current access and keep plans inactive.
+
+Latest staging checkpoint: four-file batch22a8e3b4 deployed once (75f80144), browser retest and exact fixture cleanup complete; see [final report](membership-final-staging-preflight-20261018.md#four-fix-staging-release-and-browser-acceptance--completed) for qualified results and separate Bullrun conflict UX finding. Production unchanged; no further deployment authorized.
+
+Latest completed checkpoint: [final staging QA and read-only production preflight](membership-final-staging-preflight-20261018.md). Four-file source batch held undeployed; payment/email fixtures and cleanup complete. See that report for exact remaining release gates; historical pending rows below are superseded.
+
+Current owner-authorized final staging checks and read-only production release
+preflight: [remaining inventory, access preservation and deferred Plans design](membership-final-staging-preflight-20261018.md).
+No deploy or production changes. Everyone's existing production access and the
+absence of owner-configured official plans must be preserved. Plans design is
+paused; future conditional Feature-page sections reuse current design without
+top navigation/footer and appear only when plans are activated.
+
+Owner-requested Login methods clarity: [account labels, email and verification status](membership-login-method-details-20261018.md). Source319f06a9 is live and healthy on staging at schema168. Browser passes include provider/email details, reconnect, last-method guard, Light/Navy Dark layouts, and subsequently owner-authorized disposable-fixture unverified/pending/positive verification completion. Fixture cleanup and session replay denial passed; existing membership/admin digest preserved. One stale feedback notice has a one-line local correction held undeployed. New mail content was captured/rendered, not externally redelivered. Production excluded; no follow-up deployment authorized.
+
+Current owner-authorized staging completion: [consolidated batch QA and release gates](membership-batch-qa-20261017.md). The single reviewed staging batch was deployed and browser-retested. The owner subsequently authorized one staging deployment of the Preferences and exact-purchase refund batch. Exact candidate 82348405 is deployed; grouped browser and genuine Stripe TEST refund/lifecycle acceptance is recorded in the linked report. Preferences/refund acceptance and exact fixture cleanup are complete; the linked report records passes, evidence boundaries and zero blockers for this batch. No additional deployment is authorized; production remains excluded.
+
+Current staging-only QA and fixture coordination: [October 16 staging QA](membership-staging-qa-20261016.md).
+Remaining QA progress: [October 17 Membership/Login checks](membership-login-remaining-staging-qa-20261017.md).
+No feature fixes, deployments or production changes are authorized by that run.
+
+Owner-requested source corrections: [Add-on entry and mobile disconnect](membership-addon-entry-disconnect-corrections-20261017.md). Source corrections complete for existing-subscription private add-ons and inline disconnect notices; hosted/runtime and owner visual acceptance remain pending. No deployment authorized.
+
+Owner addition (2026-10-13): support per-plan card feature ordering, with accessible
+Move up/down controls, immediate preview and saved/publication/reopen persistence.
+Ordering changes presentation only; nested settings and permissions stay intact.
+
+Owner clarification (2026-10-13): Reports and exports is an optional setting
+inside Trade Explorer, not a separate listed feature. Plans can include Trade
+Explorer while allowing or disallowing reports/exports.
+
+Owner naming/allowance clarification (2026-10-13): use Trade Analyzer and Trading
+Journal as the feature names. Analysis quantity/reset period and Journal account
+quantity belong in brief descriptions. Journal accounts is a setting inside
+Trading Journal and must not appear as another listed feature.
+
+Owner clarification (2026-10-13): every plan includes Journal and Trading Rules.
+Tags are also part of Journal: preset tags are included and the custom-tag
+quantity (0, a set number or Unlimited) is configured within Journal and described
+there, rather than listed as a separate product feature.
+Preset rule access and custom-rule quantity/Unlimited are settings inside Journal;
+Journal and Rules cannot be removed through the editor. Statement imports remain
+optional. Existing live entitlements are not rewritten without release approval.
+
+Owner revision (2026-10-13): Stock Press Releases is one product feature whose
+settings include reading delay, notification permission and notification delay.
+These settings appear in its plan-card description, not as separate listed
+features. Week Ahead is its own feature and includes Week Ahead notifications.
+Journal includes manual entry; statement imports are an option inside Journal.
+Dashboard admission is implied by selected dashboard products, not a separate
+owner-facing feature. Trader Analyzer retains its analysis allowance settings.
+Trading Rules supports preset access and a custom-rule allowance across accounts;
+Trader Calendar supports monthly/weekly views; Compare trades is independently
+listed. Existing stored permission keys remain stable.
+
+Owner addition (2026-10-13): plans support a numeric or Unlimited Custom tags
+allowance shared across a member's Journal accounts. Presets are excluded;
+retiring a custom tag frees a slot, and plan changes preserve existing tags.
+Implementation and verification: [Custom-tag allowance progress](membership-unified-plan-editor-progress.md).
+
+**Current owner-approved work:** [Unified plan editor and complete correction inventory](membership-unified-plan-editor-progress.md).
+Publication, bulk access updates and default-on notification integration are under
+combined Codespaces QA. Owner UI review remains open. Production requires the
+finished feature and a new explicit owner authorization; older release notes below
+do not authorize publication of the unified editor.
+
 **2026-10-10 acceptance follow-up:** [Member browser enrollment and CI](membership-enrollment-ci-followup.md).
 Production moonmafia enrollment/trial/cleanup and focused CI checks passed. Final
 correction release is pending; payment-provider testing and legacy route-audit maintenance remain separate.
@@ -189,3 +255,65 @@ Owner-directed scope update: payment-processor integration/verification will be
 a separate goal performed last. Finish local membership and member-facing QA
 without requiring Stripe/Whop credentials. Preserve provider code and clearly
 label its simulated evidence; do not claim real integration acceptance.
+
+Owner addition — Session Tracker is a selectable boolean plan feature with shared
+and per-plan brief/expanded descriptions, without quantity or reset settings.
+
+Owner addition — Import broker statements is a visible selectable plan product
+using journal.imports, with brief/expanded descriptions and no quantity controls.
+The former nested Journal imports checkbox is replaced by this feature.
+
+Owner addition — The existing trade_analyzer.analyses product is displayed as
+Trade Analyzer Analysis, retaining allowance/reset facts in its brief description.
+
+Owner correction — Trade Analyzer retains trade_analyzer.analyses. Separate
+Trade Analyzer Analysis (trade_analyzer.analysis) lists access to analysis pages
+using Analyzer data. Levels Generator keeps generation/reset facts in its brief.
+
+Owner correction — Published rows use the published name and identify saved
+draft changes separately. Published-plan draft removal says Discard draft changes.
+Delete plan removes active/archived catalog entries without destroying member or
+billing history; it stops enrollment and blocks reopening/publication. A stale
+draft can refresh its baseline explicitly, preserving edits with draft/published
+revision checks. Publish errors appear beside the final action buttons.
+
+Owner-requested plan add-ons: [implementation design](membership-plan-addons-plan.md).
+Reuse the package editor; permit multiple optional packages with combined monthly
+billing. Owner selected additive overlapping allowances and monthly/free base
+plans for initial delivery; multiple add-ons share one monthly payment.
+
+Local add-on signup implementation now uses the existing versioned offer schema:
+New add-on/shared editor, selectable packages, summed compatible allowances and
+one combined-price monthly Stripe subscription. Matching finite allowance windows
+are required; mid-cycle subscription amendments and real provider acceptance are
+not included in this initial signup checkpoint. See the linked add-on plan.
+
+Owner correction — Watchlist is one card feature. Ticker details, Trade analysis,
+Support and Resistance and Indicator card are nested permissions. Private
+Watchlist stays separate. Existing ticker-specific restrictions remain unchanged.
+
+Owner display correction — Free-plan prices show $0 instead of Free. The owner
+sets the plan name separately; billing remains free with no charge.
+
+Owner design refinement — Show add-ons below base plans as wide horizontal cards
+with an Add-on corner label, title and price. Match that shape in the editor
+preview. $0 uses the normal small currency symbol and currency row to align with
+paid prices. Package selection and combined checkout stay in the chosen plan.
+
+
+Owner checkpoint (2026-10-14): plan feature configuration, prices and add-ons
+are accepted for now; member, Discord and payments testing remain pending.
+Next: [Feature restrictions and visible previews](membership-feature-restrictions-progress.md).
+Most restricted features should remain visible with an appropriate locked or
+synthetic preview; server data/action denial remains required.
+
+
+Owner sequencing (2026-10-14): complete Google, email/password and Discord login
+before new feature-gating implementation. [Login implementation plan](platform-multi-provider-login-plan.md).
+Existing authorization remains intact; real provider and payment acceptance stay pending.
+
+Current owner-authorized remaining production-readiness QA (no deployment): [remaining Membership/Login/Stripe acceptance](membership-remaining-production-qa-20261017.md). Existing completed Preferences/refund staging acceptance is retained; new fixes remain held for owner review.
+
+### Email confirmation and add-email follow-up — 2026-10-18
+
+Owner-approved held correction and acceptance limits: [Email confirmation recovery and add-email name correction](membership-email-confirmation-fix-20261018.md). Implementation prepared; deployment and corrected browser acceptance await owner staging approval. This is a reopened Login acceptance item, not a completed production release.

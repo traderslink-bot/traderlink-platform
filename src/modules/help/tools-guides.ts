@@ -25,7 +25,7 @@ export const TOOLS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Choose Halt Alerts from the left navigation, then turn the alert switch on.",
         keywords: Object.freeze(["halt alerts", "Nasdaq", "NYSE", "turn on", "push notifications"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Open Halt Alerts (Nasdaq/NYSE) from the left navigation and turn on Halt alerts. To receive alerts away from the page, also turn on Push notifications in Account Notifications and approve your browser's notification request." }),
+          Object.freeze({ kind: "paragraph", text: "Open Halt Alerts (Nasdaq/NYSE) from the left navigation and turn on Halt alerts. If your plan does not include Market halts, the switch offers a link to upgrade. To receive alerts away from the page, also turn on Push notifications in Account Notifications and approve your browser's notification request." }),
           Object.freeze({ kind: "paragraph", text: "You can install TradersLink on a supported desktop or mobile device from the same Halt Alerts drawer." }),
         ]),
       }),

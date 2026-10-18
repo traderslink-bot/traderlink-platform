@@ -11,7 +11,7 @@ export async function GET(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url), query = url.searchParams;
     const scope = requireTraderLinkPlatformRequestScope(request.headers, {
-      membershipFeatures: ["analytics.access"],
+      membershipFeatures: ["trade_analyzer.analysis"],
     });
     const timeframe = query.get("timeframe") ?? "all", execution = query.get("execution") ?? "all", location = query.get("location") ?? "all", direction = query.get("direction");
     if (!["all", "1m", "5m"].includes(timeframe) || !["all", "entry", "exit"].includes(execution) || !["all", "exact", "before"].includes(location) || (direction !== "long" && direction !== "short")) {

@@ -1,3 +1,4 @@
+import { isMembershipAccessDenied, membershipFeatureDeniedMessage } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { NextResponse } from "next/server";
 
 import { MoomooExecutionImportAccountService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-account-service";
@@ -25,6 +26,7 @@ function safeFailure(
   error: unknown,
   stage: "account_discovery" | "account_link",
 ): NextResponse {
+  if (isMembershipAccessDenied(error)) return NextResponse.json({status:"unavailable",code:"membership_required",message:membershipFeatureDeniedMessage(error),upgradeHref:"/plans?feature=broker.connections",reportedToAdmin:false},{status:403,headers:{"cache-control":"no-store"}});
   const code = isTraderLinkPlatformError(error)
     ? error.code
     : "TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED";

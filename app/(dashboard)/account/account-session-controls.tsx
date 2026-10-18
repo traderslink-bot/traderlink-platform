@@ -39,7 +39,7 @@ export function AccountSessionControls({
   if (!hasDiscordSession) {
     return (
       <Alert severity="info">
-        This local review session stays on this computer. When you use Discord sign-in, this page will show controls for ending your TraderLink sessions.
+        This local review session stays on this computer. When you sign in with a connected login method, this page will show controls for ending your TraderLink sessions.
       </Alert>
     );
   }
@@ -87,7 +87,7 @@ export function AccountSessionControls({
           <Box>
             <Typography sx={{ fontWeight: 800 }}>Sign out everywhere</Typography>
             <Typography color="text.secondary" variant="body2">
-              End every active TraderLink sign-in, including this one. You will need to sign in with Discord again on each device.
+              End every active TraderLink sign-in, including this one. Sign in again with a connected login method on each device.
             </Typography>
           </Box>
           <Button color="error" onClick={() => setConfirmAllSessions(true)} size="small" sx={{ alignSelf: "flex-start" }} variant="outlined">
@@ -104,7 +104,7 @@ export function AccountSessionControls({
               This ends every active TraderLink sign-in for your account, including this browser.
             </Alert>
             <Typography color="text.secondary" variant="body2">
-              You will need to sign in with Discord again anywhere you want to use TraderLink.
+              Sign in again with a connected login method anywhere you want to use TraderLink.
             </Typography>
           </Stack>
         </DialogContent>

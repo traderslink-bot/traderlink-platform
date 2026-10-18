@@ -1,7 +1,6 @@
 import "server-only";
 
 import type { NextRequest } from "next/server";
-import { redirect } from "next/navigation";
 import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import {
@@ -46,8 +45,12 @@ function loginRequired(): WatchlistAccessResult {
     ok: false as const,
     status: 401 as const,
     reason: "login_required" as const,
-    error: "Discord login is required to view the live watchlist.",
+    error: "Sign in to view the live watchlist.",
   });
+}
+
+function membershipRequired(): WatchlistAccessResult {
+  return Object.freeze({ ok: false, status: 403, reason: "membership_required", error: "Unlock Watchlist to follow published tickers and the insights included in your plan." });
 }
 
 function evaluateIdentity(
@@ -66,7 +69,7 @@ export async function authorizeWatchlistPageAccess(): Promise<WatchlistAccessRes
   try {
     return evaluateIdentity(await requireTraderLinkPlatformAuthenticatedPageIdentity({ membershipFeatures: ["watchlist.access"] }));
   } catch (error) {
-    if (isMembershipAccessDenied(error)) redirect("/plans");
+    if (isMembershipAccessDenied(error)) return membershipRequired();
     return isLocalDevelopmentRuntime() ? localDenied() : loginRequired();
   }
 }
@@ -80,7 +83,7 @@ export async function authorizeWatchlistRequest(
       requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers, { ...identityOptions, membershipFeatures: ["watchlist.access"] }),
     );
   } catch (error) {
-    if (isMembershipAccessDenied(error)) return { ok: false, status: 403, reason: "membership_required", error: "Your current plans do not include Watchlist access. Review Plans or contact the owner." };
+    if (isMembershipAccessDenied(error)) return membershipRequired();
     return isLocalDevelopmentRuntime() ? localDenied() : loginRequired();
   }
 }

@@ -98,14 +98,14 @@ export default async function AcademyLessonPage({ params }: PageProps) {
                 Track your progress
               </p>
               <p>
-                Log in with your Discord account to save this lesson to your
+                Sign in to your TradersLink account to save this lesson to your
                 Academy progress. Joining a Discord server is not required.
               </p>
               <a
-                href={`/api/auth/discord/login?returnTo=${encodeURIComponent(lesson.slug)}`}
+                href={`/login?returnTo=${encodeURIComponent(lesson.slug)}`}
                 className="academy-progress-label-link"
               >
-                Log in with Discord
+                Sign in
               </a>
             </div>
           )}

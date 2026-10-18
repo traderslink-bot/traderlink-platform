@@ -1,8 +1,9 @@
+import { AiReviewsHeader } from "./ai-reviews-header";
+import { hasAiReviewGenerationAccess } from "@/src/modules/platform/server/membership/membership-ai-review-access";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { Metadata } from "next";
@@ -115,7 +116,7 @@ function unavailableCopy(gate: CoachAiReviewGenerationGateV2): Readonly<{
   if (gate.state === "paid_access_unavailable") {
     return Object.freeze({
       status: "Paid access unavailable",
-      description: "Your saved evidence and issued reviews remain available. Connect or renew AI Review access from Account before a new review can start.",
+      description: <>Turn your trading history into useful feedback with AI Reviews. Your saved evidence and issued reviews remain available.<Button href="/plans?feature=ai.reviews" variant="contained" sx={{display:"flex",mt:1,width:"fit-content"}}>Explore AI Review plans and add-ons</Button></>,
     });
   }
   return null;
@@ -138,24 +139,6 @@ function authoredReviewSummary(review: CoachAiReviewAuthoredIssuedRecord): strin
     "traderlink_coach_monthly_ai_review_authored_output_v1"
     ? review.output.monthlyRecap
     : review.output.weeklyRecap;
-}
-
-function AiReviewUsageProgress({ percentageUsed }: { percentageUsed: number | null }) {
-  if (percentageUsed === null) return null;
-  return (
-    <Stack spacing={0.5} sx={{ maxWidth: 360, mt: 1.5 }}>
-      <Stack direction="row" sx={{ justifyContent: "space-between" }}>
-        <Typography color="text.secondary" variant="body2">AI Review usage</Typography>
-        <Typography sx={{ fontWeight: 800 }} variant="body2">{percentageUsed}% used</Typography>
-      </Stack>
-      <LinearProgress
-        aria-label={`AI Review usage: ${percentageUsed}% used`}
-        sx={{ borderRadius: 99, height: 8 }}
-        value={percentageUsed}
-        variant="determinate"
-      />
-    </Stack>
-  );
 }
 
 function legacyWeekTitle(review: CoachWeeklyIssuedReviewRecord): string {
@@ -580,6 +563,7 @@ export default async function AiReviewsPage() {
     currentReviews,
     authoredReviews,
     reviewUsage,
+    commercialAccess,
   } = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new CoachAiReviewRepository(database);
     const currentRepository = new CoachAiReviewGenerationCompatibilityRepository(database);
@@ -587,6 +571,7 @@ export default async function AiReviewsPage() {
     const scheduleRepository = new CoachReviewDeliveryScheduleRepository(database);
     const calendar = new CoachUsEquitiesCalendarRepository(database).calendar();
     return Object.freeze({
+      commercialAccess:hasAiReviewGenerationAccess(database,scope.userId),
       reviews: repository.listIssuedWeeklyReviews(scope),
       monthlyReviews: repository.listIssuedMonthlyReviews(scope),
       settings: scheduleRepository.readV2(scope),
@@ -637,23 +622,7 @@ export default async function AiReviewsPage() {
       viewKey={COACH_AI_REVIEW_OFFLINE_LIST_VIEW_KEY}
     />
     <DashboardPage>
-      <Box>
-        <Typography component="h1" variant="h1">AI Reviews</Typography>
-        <AiReviewUsageProgress percentageUsed={reviewUsage?.percentageUsed ?? null} />
-        <Typography color="text.secondary" sx={{ maxWidth: 760, mt: 1 }} variant="body2">
-          Turn verified trading results and anything you choose to save in Trade Tracker into a clear review of your week or month.
-        </Typography>
-        {identity.mode === "local_development" || identity.discord?.guildOwner ? (
-          <Button
-            href="/ai-reviews/benchmark-preview"
-            size="small"
-            sx={{ mt: 1.5 }}
-            variant="outlined"
-          >
-            Preview power-user reviews
-          </Button>
-        ) : null}
-      </Box>
+      <AiReviewsHeader percentageUsed={reviewUsage?.percentageUsed??null} showBenchmark={identity.mode==="local_development"||Boolean(identity.discord?.guildOwner)}/>
 
       <DashboardPanel
         action={
@@ -672,10 +641,11 @@ export default async function AiReviewsPage() {
         />
       </DashboardPanel>
 
+      {!commercialAccess?<DashboardPanel title="Unlock AI Reviews"><Alert severity="info">Turn your trading history into useful feedback. Your saved reviews remain available.<Button href="/plans?feature=ai.reviews" variant="contained" sx={{display:"flex",mt:1,width:"fit-content"}}>Explore AI Review plans and add-ons</Button></Alert></DashboardPanel>:null}
       {settings?.isEnabled ? (
         <DashboardPanel title="Review availability">
           <Stack spacing={1.5}>
-            {generationGate.state !== "available" ? (
+            {commercialAccess && generationGate.state !== "available" ? (
               <Alert severity="info">{unavailableCopy(generationGate)?.description}</Alert>
             ) : null}
             <ReviewAvailability

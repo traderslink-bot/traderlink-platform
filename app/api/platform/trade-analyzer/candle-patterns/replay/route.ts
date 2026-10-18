@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url), scope = requireTraderLinkPlatformRequestScope(request.headers, {
-      membershipFeatures: ["analytics.access"],
+      membershipFeatures: ["trade_analyzer.analysis"],
     });
     const result = await withSavedPatternRuntime(scope, { basis: url.searchParams.get("basis"), startDate: null, endDate: null }, ({ observations, runtime }) => {
       const source = resolveSavedPatternEvidence(observations, url.searchParams.get("ref") ?? "");

@@ -30,7 +30,8 @@ export const ACCOUNT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["log out", "logout", "account menu", "sign out", "top right", "person icon"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Select the person icon at the top right of TraderLink to open the Account menu. Choose Account settings to manage your account, Security to review sign-ins, or Log out to end TraderLink on the browser you are using." }),
-          Object.freeze({ kind: "callout", title: "Logging out is safe", text: "Logging out ends your TraderLink session on that browser. It does not delete your Trade Tracker data or remove your Discord account." }),
+          Object.freeze({ kind: "callout", title: "Logging out is safe", text: "Logging out ends your TraderLink session on that browser. It does not delete your Trade Tracker data or disconnect your login methods." }),
+          Object.freeze({ kind: "paragraph", text: "Your Profile, Login methods, Security and Delete Account settings remain available while you are signed in, even without an active plan or Discord membership. Product access still follows your plan and permissions." }),
         ]),
       }),
       Object.freeze({
@@ -56,7 +57,7 @@ export const ACCOUNT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Open Security", text: "Select the person icon at the top right, then choose Security." }),
             Object.freeze({ title: "2. Choose Sign out everywhere", text: "Read the confirmation. This ends the current sign-in and every other active TraderLink sign-in for your account." }),
-            Object.freeze({ title: "3. Sign in again when ready", text: "Use Discord to sign in again on each browser or device where you want to use TraderLink." }),
+            Object.freeze({ title: "3. Sign in again when ready", text: "Use a connected login method to sign in again on each browser or device where you want to use TraderLink." }),
           ]) }),
           Object.freeze({ kind: "callout", title: "Use this if a device is no longer private", text: "Signing out everywhere is useful after using a shared computer, losing a device or seeing a sign-in you do not recognize." }),
         ]),

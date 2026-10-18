@@ -139,10 +139,10 @@ export default async function AcademyHomePage({
                   ) : null}
                   {authNotice.showLogin ? (
                     <Link
-                      href="/api/auth/discord/login?returnTo=%2Facademy%2F"
+                      href="/login?returnTo=%2Facademy%2F"
                       className="academy-auth-alert-link"
                     >
-                      Log in with Discord
+                      Sign in
                     </Link>
                   ) : null}
                 </div>
@@ -154,7 +154,7 @@ export default async function AcademyHomePage({
                   Save your place as you learn.
                 </p>
                 <p>
-                  Log in with Discord to save completed lessons and keep your
+                  Sign in to save completed lessons and keep your
                   progress synced. You do not need a dashboard plan to save
                   Academy progress. If Academy requires a plan, review Plans
                   for the available offers.
@@ -368,7 +368,7 @@ function getAuthNotice(authStatus: string | undefined): AuthNotice {
       return {
         tone: "warning",
         title: "Discord login did not finish.",
-        body: "The login session expired or restarted before it could connect. Try logging in again; if you are not already in the free TradersLink Discord, join the server first so progress tracking can turn on.",
+        body: "The login session expired or restarted before it could connect. Start a new sign-in to continue.",
         showInvite: true,
         showLogin: true,
       };
@@ -392,7 +392,7 @@ function getAuthNotice(authStatus: string | undefined): AuthNotice {
       return {
         tone: "warning",
         title: "Discord login is not ready in this environment.",
-        body: "The Academy can still be read for free, but progress tracking needs the Discord login settings to be configured before it can save lesson completion.",
+        body: "Discord sign-in is unavailable. You can use another configured sign-in method to save lesson progress.",
         showInvite: false,
         showLogin: false,
       };
@@ -400,7 +400,7 @@ function getAuthNotice(authStatus: string | undefined): AuthNotice {
       return {
         tone: "success",
         title: "You are logged in.",
-        body: "Your Discord account is connected to the Academy. Lesson progress can now be saved as you work through the courses.",
+        body: "Your account is connected to the Academy. Lesson progress can now be saved as you work through the courses.",
         showInvite: false,
         showLogin: false,
       };

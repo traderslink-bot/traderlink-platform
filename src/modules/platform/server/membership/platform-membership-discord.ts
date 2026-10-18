@@ -1,6 +1,10 @@
 import type Database from "better-sqlite3";
 import { assertCanonicalUuidV4, assertCanonicalUtcTimestamp, createCanonicalUuidV4 } from "../database/platform-migration-contract";
 
+function retainedAvailable(database: Database.Database): boolean {
+  return Boolean(database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_membership_discord_retained_access'").get());
+}
+
 // Keep the historical Discord snapshot intact. A newer confirmed absence
 // supersedes it for commercial grants and purchase eligibility until reverified.
 export function recordMembershipDiscordAbsence(database: Database.Database, userId: string, guildId: string, at: string): void {
@@ -18,8 +22,11 @@ export function readMembershipDiscordGuildIds(database: Database.Database): read
   if (!database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_membership_discord_offer_rules'").get()) return [];
   return (database.prepare(`SELECT DISTINCT r.discord_guild_id FROM platform_membership_discord_offer_rules r
     JOIN platform_membership_offers o ON o.offer_id=r.offer_id JOIN platform_membership_plan_versions v ON v.plan_version_id=o.plan_version_id
-    JOIN platform_membership_plans p ON p.plan_id=v.plan_id WHERE r.status='active' AND o.status='active'
-    AND v.lifecycle_state='published' AND p.status='active' ORDER BY r.discord_guild_id`).all() as { discord_guild_id: string }[]).map((row) => row.discord_guild_id);
+    JOIN platform_membership_plans p ON p.plan_id=v.plan_id WHERE r.status='active' AND (o.status='active'
+    ${retainedAvailable(database) ? "OR EXISTS(SELECT 1 FROM platform_membership_discord_retained_access retained WHERE retained.rule_id=r.discord_offer_rule_id)" : ""})
+    AND v.lifecycle_state='published' AND (p.status='active'
+    ${retainedAvailable(database) ? "OR EXISTS(SELECT 1 FROM platform_membership_discord_retained_access retained WHERE retained.rule_id=r.discord_offer_rule_id)" : ""})
+    ORDER BY r.discord_guild_id`).all() as { discord_guild_id: string }[]).map((row) => row.discord_guild_id);
 }
 
 export type DiscordMembershipGrant = {
@@ -28,13 +35,18 @@ export type DiscordMembershipGrant = {
 
 export function readDiscordMembershipGrants(database: Database.Database, userId: string, at: string, purchaseOfferId?: string): DiscordMembershipGrant[] {
   if (!database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_discord_memberships'").get()) return [];
+  const retained = retainedAvailable(database) && !purchaseOfferId;
   const rows = database.prepare(`SELECT r.discord_offer_rule_id,r.offer_id,o.plan_version_id,r.discord_role_ids_json,
     r.membership_max_age_seconds,r.starts_at_utc,r.ends_at_utc,m.role_ids_json,m.last_verified_at_utc
     FROM platform_membership_discord_offer_rules r JOIN platform_membership_offers o ON o.offer_id=r.offer_id
     JOIN platform_membership_plan_versions v ON v.plan_version_id=o.plan_version_id
     JOIN platform_membership_plans p ON p.plan_id=v.plan_id
     JOIN platform_discord_memberships m ON m.guild_id=r.discord_guild_id AND m.user_id=?
-    WHERE r.status='active' AND o.status='active' AND v.lifecycle_state='published' AND p.status='active'
+    WHERE r.status='active' AND ${retained ? `(
+      EXISTS(SELECT 1 FROM platform_membership_discord_retained_access retained WHERE retained.user_id=m.user_id AND retained.rule_id=r.discord_offer_rule_id)
+      OR (o.status='active' AND NOT EXISTS(SELECT 1 FROM platform_membership_discord_retained_access retained WHERE retained.user_id=m.user_id AND retained.plan_id=p.plan_id)))` : "o.status='active'"}
+    AND v.lifecycle_state='published' AND (p.status='active'
+      ${retained ? "OR EXISTS(SELECT 1 FROM platform_membership_discord_retained_access retained WHERE retained.user_id=m.user_id AND retained.rule_id=r.discord_offer_rule_id)" : ""})
     AND r.access_mode=? AND (r.starts_at_utc IS NULL OR r.starts_at_utc<=?) AND (r.ends_at_utc IS NULL OR r.ends_at_utc>?)
     AND NOT EXISTS (SELECT 1 FROM platform_membership_audit_events absence
       WHERE absence.subject_user_id=m.user_id AND absence.target_type='discord_membership'

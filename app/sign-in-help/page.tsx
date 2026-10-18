@@ -8,7 +8,7 @@ import { normalizeDiscordAuthReturnTo } from "@/src/lib/academy/discord-auth-ret
 
 export const dynamic = "force-dynamic";
 
-const DISCORD_INVITE_URL = "https://discord.gg/9dmGpfpRDD";
+import { TRADERSLINK_COMMUNITY_INVITE_URL } from "@/src/modules/platform/contracts/discord-community";
 
 const messages: Readonly<Record<string, string>> = Object.freeze({
   failed: "Discord sign-in was cancelled or could not be completed. No account changes were made.",
@@ -30,7 +30,8 @@ export default async function DiscordSignInHelpPage({
   const returnTo = normalizeDiscordAuthReturnTo(
     typeof query.returnTo === "string" ? query.returnTo : "/workspace",
   );
-  const retryHref = `/api/auth/discord/login?prompt=consent&returnTo=${encodeURIComponent(returnTo)}`;
+  const reconnecting = returnTo === "/account/login";
+  const retryHref = reconnecting ? "/account/login" : `/api/auth/discord/login?prompt=consent&returnTo=${encodeURIComponent(returnTo)}`;
 
   return (
     <Box sx={{ alignItems: "center", bgcolor: "background.default", display: "flex", justifyContent: "center", minHeight: "100vh", p: 3 }}>
@@ -41,8 +42,8 @@ export default async function DiscordSignInHelpPage({
             {messages[status] ?? messages.failed}
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-            <Button href={retryHref} variant="contained">Try Discord sign-in again</Button>
-            <Button href={DISCORD_INVITE_URL} variant="outlined">Join Free Discord</Button>
+            <Button href={retryHref} variant="contained">{reconnecting ? "Back to Login methods" : "Try Discord sign-in again"}</Button>
+            <Button href={TRADERSLINK_COMMUNITY_INVITE_URL} variant="outlined">Join Free Discord</Button>
           </Stack>
           <Button href="https://traderslink.pro/beta" variant="text">Return to beta</Button>
         </Stack>

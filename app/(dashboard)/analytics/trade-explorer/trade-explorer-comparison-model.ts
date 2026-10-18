@@ -68,3 +68,34 @@ export type TradeExplorerComparisonStudyMutationResult =
     selectedStudyId: string | null;
   }>
   | Readonly<{ ok: false; message: string }>;
+
+/** Comparison groups use the Analytics query contract, without Explorer-only filters. */
+export function comparisonQueryFromExplorerQuery(query: AnalyticsLabPlatformQuery): AnalyticsLabPlatformQuery {
+  return Object.freeze({
+    expectedAccountSelectionRef: query.expectedAccountSelectionRef,
+    metricId: query.metricId,
+    grouping: query.grouping,
+    moneyBasis: query.moneyBasis,
+    currency: query.currency,
+    symbol: query.symbol,
+    direction: query.direction,
+    tradeClassification: query.tradeClassification,
+    provenance: query.provenance,
+    outcome: query.outcome,
+    entryWeekday: query.entryWeekday,
+    entrySession: query.entrySession,
+    entryTimeBucketMinutes: query.entryTimeBucketMinutes,
+    entryTimeBucket: query.entryTimeBucket,
+    startDate: query.startDate,
+    endDate: query.endDate,
+    minimumHoldingSeconds: query.minimumHoldingSeconds,
+    maximumHoldingSeconds: query.maximumHoldingSeconds,
+    minimumEnteredQuantity: query.minimumEnteredQuantity,
+    maximumEnteredQuantity: query.maximumEnteredQuantity,
+    minimumPositionQuantity: query.minimumPositionQuantity,
+    maximumPositionQuantity: query.maximumPositionQuantity,
+    minimumEntryNotional: query.minimumEntryNotional,
+    maximumEntryNotional: query.maximumEntryNotional,
+    evidenceRows: query.evidenceRows,
+  });
+}

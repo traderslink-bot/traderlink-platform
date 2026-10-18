@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isMembershipAccessDenied, MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { isMembershipAccessDenied, membershipFeatureDeniedMessage } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
 import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
@@ -27,7 +27,7 @@ function safeFailure(
   stage: "import_start" | "import_status",
 ): NextResponse {
   if (isMembershipAccessDenied(error)) return NextResponse.json({
-    status: "unavailable", code: "membership_required", message: MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, reportedToAdmin: false,
+    status: "unavailable", code: "membership_required", message: membershipFeatureDeniedMessage(error), upgradeHref:isTraderLinkPlatformError(error)&&error.safeContext.feature==="broker.connections"?"/plans?feature=broker.connections":"/plans?feature=journal.imports", reportedToAdmin: false,
   }, { status: 403, headers: { "cache-control": "no-store" } });
   const code = isTraderLinkPlatformError(error) ? error.code : null;
   const reportedToAdmin = recordMoomooOperationFailure({ database, error, stage });

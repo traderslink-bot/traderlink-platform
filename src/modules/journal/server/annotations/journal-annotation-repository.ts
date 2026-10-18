@@ -8,6 +8,7 @@ import type {
 } from "@/src/modules/journal/contracts/journal-annotation-contracts";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { ensureJournalTradingDay } from "../trading-days/ensure-journal-trading-day";
+import { assertMembershipCustomTagCreation } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 type TagRow = Readonly<{
   tag_id: string;
@@ -98,6 +99,10 @@ LEFT JOIN journal_round_trip_tag_assignments a
 
 export class JournalAnnotationRepository {
   constructor(private readonly database: Database.Database) {}
+
+  requireCustomTagCapacity(scope: AccountScope, name: string): void {
+    assertMembershipCustomTagCreation(this.database, scope.userId, name);
+  }
 
   immediate<T>(operation: () => T): T {
     return this.database.inTransaction

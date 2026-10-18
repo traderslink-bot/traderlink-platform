@@ -5,6 +5,8 @@ import { readSavedPatternPopulation } from "@/src/modules/level-analysis/server/
 import { summarizeSavedPatterns } from "@/src/lib/trade-candle-analysis/trend-momentum-patterns";
 import { readSavedTradeMovement } from "@/src/modules/level-analysis/server/trend-momentum-movement-service";
 
+import { TradeAnalysisLockedPreview } from "./trade-analysis-locked-preview";
+
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -28,7 +30,7 @@ import { journalReportingCurrencyMultiplier } from "@/src/modules/journal-analyt
 import {
   buildDailyTradeLongTermAnalytics,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
-import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 
@@ -147,7 +149,8 @@ export async function TradeAnalysisPage({
   searchParams: Readonly<Record<string, string | string[] | undefined>>;
   view: TradeAnalysisView;
 }) {
-  const scope = await requireMembershipPageScope("analytics.access");
+  const scope = await requireMembershipPreviewPageScope("trade_analyzer.analysis");
+  if (!scope) return <TradeAnalysisLockedPreview title={VIEW_DETAILS[view].title} view={view} />;
   const accountTimezone = withReadonlyPlatformDatabase({}, (database) => {
     const accountId = scope.activeAccountId;
     return accountId

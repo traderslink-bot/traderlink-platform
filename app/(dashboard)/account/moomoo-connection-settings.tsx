@@ -14,8 +14,10 @@ import { DashboardPrimaryAction } from "../../dashboard-template";
 
 export function MoomooConnectionSettings({
   state,
+  membershipAllowed=true,
 }: {
   state: "active" | "reauthorization_required" | "revoked" | null;
+  membershipAllowed?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -85,8 +87,8 @@ export function MoomooConnectionSettings({
   }
 
   return (
-    <DashboardPrimaryAction component="a" href="/api/connections/moomoo/start" size="small">
-      {state === "reauthorization_required" ? "Reconnect Moomoo" : "Connect Moomoo"}
+    <DashboardPrimaryAction component="a" href={membershipAllowed?"/api/connections/moomoo/start":"/plans?feature=broker.connections"} size="small">
+      {!membershipAllowed?"Explore broker connection plans and add-ons":state === "reauthorization_required" ? "Reconnect Moomoo" : "Connect Moomoo"}
     </DashboardPrimaryAction>
   );
 }

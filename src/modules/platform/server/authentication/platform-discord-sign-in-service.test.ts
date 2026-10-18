@@ -74,7 +74,7 @@ describe("PlatformDiscordSignInService", () => {
         displayName: "Trader",
         provisioned: true,
       });
-      expect(result.allowedAccountIds).toEqual([IDS[2]]);
+      expect(result.allowedAccountIds).toEqual([IDS[3]]);
       expect(result.session.token).toBe(TOKEN_ONE);
       expect(database.prepare("SELECT COUNT(*) AS count FROM platform_users").get())
         .toEqual({ count: 1 });

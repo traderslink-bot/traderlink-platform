@@ -235,6 +235,7 @@ export async function getStockLevels(
 ): Promise<StockLevelsResult> {
   const now = Date.now();
   const feedbackBefore = feedback(scope, now, noRequestLimit);
+  if (feedbackBefore.membership && feedbackBefore.membership.included === false) return { state: "unavailable", code: "limit_reached", message: "Unlock Levels Generator to create support and resistance maps. Choose a plan that includes it.", ...feedbackBefore };
   const symbol = symbolFrom(input);
   if (!symbol) return { state: "unavailable", code: "invalid_symbol", message: "Enter a valid ticker.", ...feedbackBefore };
   if (replaceSavedMapId) {

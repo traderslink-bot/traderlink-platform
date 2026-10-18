@@ -1,3 +1,4 @@
+import { MembershipFeatureAccessNotice } from "../membership-feature-access-notice";
 import "server-only";
 
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
@@ -12,7 +13,7 @@ import {
   resolveJournalAnalyticsMoneyBasis,
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import { analyticsOverviewMetrics, AnalyticsOverviewView } from "./analytics-overview-view";
 import type { OverviewDateRange } from "./overview-date-range-control";
@@ -45,7 +46,8 @@ function dateRangeFromSearchParams(searchParams: Readonly<Record<string, string 
 }
 
 export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = await requireMembershipPageScope("analytics.access");
+  const scope = await requireMembershipPreviewPageScope("analytics.access");
+  if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
   const dateRange = dateRangeFromSearchParams(searchParams);
   const { moneyBasis, response } = await withJournalAnalyticsReportingDashboardRuntime(
     scope,

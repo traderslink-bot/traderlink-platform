@@ -26,16 +26,19 @@ const footerLinks = [featureLinks[0], featureLinks[2], featureLinks[3], ["/acade
 export function PublicWebsiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   if (!isPublicWebsiteRoute(pathname)) return children;
+  const pricingPage = pathname === "/plans" || pathname?.startsWith("/plans/");
   return <PublicWebsiteContext.Provider value={true}>
+    <div className={pricingPage ? styles.pricingPage : styles.chromeContents}>
     <HomepageNavigation key={pathname} />
     {children}
-    <div className={styles.privacyControl}><button type="button" onClick={() => window.dispatchEvent(new Event(OPEN_COOKIE_CHOICES_EVENT))}>Cookie choices</button></div>
+    {!pricingPage ? <div className={styles.privacyControl}><button type="button" onClick={() => window.dispatchEvent(new Event(OPEN_COOKIE_CHOICES_EVENT))}>Cookie choices</button></div> : null}
     <footer className={styles.footer} aria-label="TradersLink links">
       <p>TradersLink, living the small cap trading life!</p>
       <nav aria-label="Explore TradersLink" className={styles.footerProducts}>{footerLinks.map(([href,label])=><a key={href} href={href}>{label}</a>)}</nav>
       <div className={styles.legal}><a href="/privacy">Privacy Policy</a><a href="/terms">Terms &amp; Conditions</a></div>
       <p className={styles.disclaimer}>TradersLink helps active traders track their trades, review performance, and analyze trading activity. Our tools and educational content are for informational purposes only and do not constitute financial or investment advice. Trading involves risk, including loss of capital.</p>
     </footer>
+    </div>
   </PublicWebsiteContext.Provider>;
 }
 
@@ -63,7 +66,7 @@ function HomepageNavigation() {
         <div id="public-feature-links" className={styles.featureLinks} hidden={!featuresOpen}>{featureLinks.map(([href,label])=><a key={href} href={href}>{label}</a>)}</div>
       </div>
       <a href="/academy">Academy</a><a href="/help">Help</a>
-      <a href="https://app.traderslink.pro/api/auth/discord/login?returnTo=%2Fworkspace">Log in</a>
+      <a href="https://app.traderslink.pro/login?returnTo=%2Fworkspace">Log in</a>
       <a className={styles.signup} href="https://traderslink.pro/beta">Sign up free</a>
     </nav>
   </header>;

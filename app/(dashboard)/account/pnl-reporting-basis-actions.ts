@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import {
   createCanonicalUtcTimestamp,
@@ -14,7 +14,7 @@ export async function savePnlReportingBasis(
   value: unknown,
 ): Promise<Readonly<{ ok: true; pnlReportingBasis: "gross" | "net" }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const pnlReportingBasis = withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformUserPreferenceRepository(database)

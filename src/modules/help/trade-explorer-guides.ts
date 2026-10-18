@@ -8,6 +8,9 @@ const guide = (slug: string, title: string, description: string, sections: reado
 
 export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("use-trade-explorer", "Use Trade Explorer", "Inspect individual completed trades, sort factual groups and save useful views.", [
+    section("plan-report-access", "Reports and exports", "Your plan controls reports and exports within Trade Explorer.", ["plans", "reports", "exports"], [
+      paragraph("Your plan controls Trade Explorer access, including its filters and saved views. An excluded plan shows an upgrade link without loading your Explorer results. Saved views are retained when access changes. A plan can include Trade Explorer without allowing reports and exports. Select Download PDF to create a report. If your plan excludes reports and exports, the attempt offers an upgrade link while keeping your filters and results. Check the Trade Explorer description on your plan for whether these options are included."),
+    ]),
     section("sort-and-rank", "Sort trades or rank groups", "Keep individual-trade sorting separate from grouped rankings.", ["trade explorer", "sort trades", "rank by", "result filter", "gross p/l", "net p/l"], [
       bullets([
         "The Trades view starts with all directions and the most recently closed trade first.",
@@ -64,7 +67,7 @@ export const TRADE_EXPLORER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("compare-trades", "Compare Trades", "Compare the recorded results of two to four completed-trade groups without changing your trades or reviews.", [
     section("build-a-comparison", "Build a comparison", "Create two to four groups from the selected Trade Tracker account.", ["compare trades", "comparison", "baseline", "trade groups", "filters"], [
       bullets([
-        "Open Compare Trades from the left navigation directly below Trade Explorer.",
+        "Open Compare Trades from the left navigation directly below Trade Explorer. Your plan must include Compare Trades to open comparisons and save, update or remove comparison studies. If it is excluded, the page offers an upgrade link; your saved studies are retained.",
         "Create two to four named groups. Each group can use its own completed-trade filters, such as date range, ticker, direction, result, holding time or position size.",
         "The first group is the baseline. Other groups show an exact difference only when both results use the same compatible P/L basis, currency, formula and timezone.",
         "The comparison can show completed trades, P/L, win rate, average P/L, profit factor, expectancy, return on entry value and average holding time when the required facts are available.",

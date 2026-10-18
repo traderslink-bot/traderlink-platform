@@ -7,7 +7,7 @@ import {
 import { LEGACY_ACADEMY_SESSION_COOKIE } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
 import {
   requireExpectedJournalAccountSelection,
-  requireTraderLinkPlatformRequestIdentity,
+  requireTraderLinkPlatformAuthenticatedRequestIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {
   TRADERLINK_JOURNAL_ACCOUNT_SELECTION_COOKIE,
@@ -137,7 +137,7 @@ function unavailableResponse(error: unknown): NextResponse {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     requireJournalMutationRequest(request);
-    const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
+    const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers);
     const body: unknown = await request.json();
     if (!isRecord(body)) platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFIRMATION_INVALID");
     const action = requiredAction(body);
