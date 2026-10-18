@@ -1,0 +1,42 @@
+name: Membership production candidate validation
+on:
+  push:
+    branches:
+      - codex/membership-production-candidate-20261018
+permissions:
+  contents: read
+concurrency:
+  group: membership-production-candidate-20261018
+  cancel-in-progress: false
+jobs:
+  candidate-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prove CI carrier leaves immutable app candidate unchanged
+        run: node scripts/platform/membership-production-rehearsal-20261018.cjs --verify-carrier-only
+      - run: npm ci --no-audit --no-fund
+      - name: Complete TypeScript integration diagnostics
+        run: npx tsc --noEmit --incremental false
+      - name: Disposable exact source-prefix 140-to-144 migration and restore rehearsal
+        run: node --conditions=react-server --import tsx scripts/platform/membership-production-rehearsal-20261018.cjs
+      - name: Full production application build
+        run: npm run build
+      - name: Upload non-sensitive release proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: membership-production-candidate-proof
+          path: membership-production-proof.json
+          if-no-files-found: ignore
+          retention-days: 7
