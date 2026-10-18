@@ -19,6 +19,9 @@ export class PlatformLoginError extends Error {
       | "invalid"
       | "conflict"
       | "last_method"
+      | "email_change_sign_in"
+      | "email_change_account"
+      | "email_in_use"
       | "throttled",
   ) {
     super(
@@ -27,6 +30,9 @@ export class PlatformLoginError extends Error {
         conflict:
           "Sign in with your existing method, then connect this method in Account.",
         last_method: "Keep at least one usable login method connected.",
+        email_change_sign_in: "Sign in to the account that requested this email change in this browser, then return here and confirm. Your link has not been used.",
+        email_change_account: "This browser is signed in to a different account. Sign in to the account that requested this email change, then return here and confirm. Your link has not been used.",
+        email_in_use: "This email address is already connected to another account. Use a different email address.",
         throttled: "Too many attempts. Try again later.",
       }[code],
     );
@@ -217,13 +223,7 @@ export class PlatformLoginService {
     currentSession?: string | null;
   }) {
     const email = normalizeLoginEmail(input.email);
-    const displayName = input.displayName.normalize("NFKC").trim();
-    if (
-      !displayName ||
-      displayName.length > 120 ||
-      /[\u0000-\u001f\u007f]/u.test(displayName) ||
-      !input.passwordHash.startsWith("$argon2id$")
-    )
+    if (!input.passwordHash.startsWith("$argon2id$"))
       throw new PlatformLoginError("invalid");
     return this.db
       .transaction(() => {
@@ -231,13 +231,22 @@ export class PlatformLoginService {
           input.currentSession !== undefined
             ? this.authenticated(input.currentSession ?? null)
             : null;
+        const displayName = (current ? current.displayName : input.displayName).normalize("NFKC").trim();
+        if (!displayName || displayName.length > 120 || /[\u0000-\u001f\u007f]/u.test(displayName))
+          throw new PlatformLoginError("invalid");
         const address = this.db
           .prepare(
             "SELECT user_id FROM platform_login_verified_emails WHERE email_normalized=?",
           )
           .get(email) as { user_id: string } | undefined;
+        const existingCredential = this.credential(email);
+        if (current && (
+          (existingCredential && existingCredential.user_id !== current.userId) ||
+          (address && address.user_id !== current.userId)
+        ))
+          throw new PlatformLoginError("email_in_use");
         if (
-          this.credential(email) ||
+          existingCredential ||
           (address && address.user_id !== current?.userId)
         )
           return null;
@@ -578,9 +587,12 @@ export class PlatformLoginService {
   changeEmail(raw: string, currentSession: string | null) {
     return this.db
       .transaction(() => {
-        const current = this.authenticated(currentSession);
         const token = this.readToken(raw, "change_email");
-        if (token.user_id !== current.userId || !token.pending_email)
+        const current = this.session(currentSession);
+        if (!current) throw new PlatformLoginError("email_change_sign_in");
+        if (token.user_id !== current.userId)
+          throw new PlatformLoginError("email_change_account");
+        if (!token.pending_email)
           throw new PlatformLoginError("invalid");
         const credential = this.db
           .prepare(
@@ -635,6 +647,17 @@ export class PlatformLoginService {
       })
       .immediate();
   }
+  assertEmailLinkAvailable(currentSession: string | null, email: string): void {
+    const current = this.authenticated(currentSession);
+    const normalized = normalizeLoginEmail(email);
+    const credential = this.credential(normalized);
+    const verified = this.db.prepare(
+      "SELECT user_id FROM platform_login_verified_emails WHERE email_normalized=?",
+    ).get(normalized) as { user_id: string } | undefined;
+    if ((credential && credential.user_id !== current.userId) ||
+        (verified && verified.user_id !== current.userId))
+      throw new PlatformLoginError("email_in_use");
+  }
   reconnectEmail(
     currentSession: string | null,
     email: string,
@@ -644,6 +667,8 @@ export class PlatformLoginService {
       .transaction(() => {
         const current = this.authenticated(currentSession);
         const credential = this.credential(email);
+        if (credential && credential.user_id !== current.userId)
+          throw new PlatformLoginError("email_in_use");
         if (
           !credential?.verified_at_utc ||
           credential.user_id !== current.userId ||

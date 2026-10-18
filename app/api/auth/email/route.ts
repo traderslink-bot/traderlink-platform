@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
     }
     if (action === "signup" || action === "link-email") {
       if (action === "link-email") {
+        loginOperation((s) => s.assertEmailLinkAvailable(loginSession(request), email));
         const existing = loginOperation((s) => s.credential(email));
         if (
           existing?.verified_at_utc &&
@@ -247,7 +248,10 @@ export async function POST(request: NextRequest) {
       { error: message },
       {
         status:
-          error instanceof PlatformLoginError && error.code === "throttled"
+          error instanceof PlatformLoginError &&
+          (error.code === "email_change_sign_in" || error.code === "email_change_account")
+            ? 401
+            : error instanceof PlatformLoginError && error.code === "throttled"
             ? 429
             : 400,
       },

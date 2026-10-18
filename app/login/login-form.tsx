@@ -45,6 +45,8 @@ export function LoginForm({
   const [error, setError] = useState(initialError);
   const [message, setMessage] = useState(initialMessage);
   const [confirmationEmail, setConfirmationEmail] = useState("");
+  const [needsEmailChangeSignIn, setNeedsEmailChangeSignIn] = useState(false);
+  const submitting = useRef(false);
   useEffect(() => {
     if (
       (mode === "verify" ||
@@ -72,14 +74,18 @@ export function LoginForm({
     override?: string,
   ) {
     event?.preventDefault();
+    if (submitting.current) return;
     setError("");
     setMessage("");
     setConfirmationEmail("");
+    setNeedsEmailChangeSignIn(false);
     if (newPassword && password !== confirm) {
       setError("Passwords do not match.");
       return;
     }
+    submitting.current = true;
     setBusy(true);
+    let navigating = false;
     try {
       const response = await fetch("/api/auth/email", {
         method: "POST",
@@ -94,16 +100,24 @@ export function LoginForm({
         }),
       });
       const result = await readLoginResponse(response);
+      if (mode === "confirm-email-change" && response.status === 401)
+        setNeedsEmailChangeSignIn(true);
       if (!response.ok)
         throw new Error(result.error ?? "Could not complete this request.");
       setPassword("");
       setConfirm("");
-      if (result.redirect) window.location.assign(result.redirect);
+      if (result.redirect) {
+        window.location.assign(result.redirect);
+        navigating = true;
+      }
       else { setMessage(result.message); setConfirmationEmail(result.confirmationEmail); }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Try again shortly.");
     } finally {
-      setBusy(false);
+      if (!navigating) {
+        submitting.current = false;
+        setBusy(false);
+      }
     }
   }, [mode, newPassword, password, confirm, email, name, token, returnTo]);
   const verificationStarted = useRef(false);
@@ -158,6 +172,11 @@ export function LoginForm({
           {error}
         </Alert>
       ) : null}
+      {needsEmailChangeSignIn ? (
+        <Button href="/login?returnTo=%2Faccount%2Flogin" target="_blank" rel="noopener noreferrer">
+          Sign in in a new tab, then return here
+        </Button>
+      ) : null}
       {message ? (
         <Alert severity="success" role="status">
           {confirmationEmail ? <>We sent a confirmation link to <strong>{confirmationEmail}</strong>. Please click the link in that email to verify your account.</> : message}
@@ -176,7 +195,7 @@ export function LoginForm({
       ) : null}
       <Box component="form" onSubmit={submit}>
         <Stack spacing={2}>
-          {signup ? (
+          {mode === "signup" ? (
             <TextField
               label="Name"
               value={name}
