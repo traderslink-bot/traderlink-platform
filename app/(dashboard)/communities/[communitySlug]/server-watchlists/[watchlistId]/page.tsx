@@ -1,4 +1,5 @@
 import {CommunityNavigation} from "../../../community-navigation";
+import {CommunityStatsVisitRecorder} from "../../../community-stats-visit-recorder";
 import {CommunityPublicationHistory} from "../../../community-publication-history";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -27,6 +28,7 @@ export default async function ServerWatchlistPage({ params }: { params: Promise<
     return Object.fromEntries(legacy.map(item => [item.symbol, saved[item.symbol] ?? { notes: item.note, research: "", sources: [] }]));
   });
   return <DashboardPage><CommunityNavigation snapshot={snapshot}/>
+    {!isReview&&watchlist.status==="published"&&watchlist.publishingMode==="tracked_page"?<CommunityStatsVisitRecorder communitySlug={communitySlug}/>:null}
     <Button component="a" href={`/communities/${communitySlug}/watchlists`}>Back to watchlists</Button>
     <DashboardPanel hideHeader><Stack spacing={2}>
       <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}><Chip label={watchlist.status === "archived" ? "Archived" : watchlist.status === "draft" ? "Draft" : "Server watchlist"}/><Chip label={watchlist.publishingMode === "tracked_page" ? "Tracked page" : "Discord post"} variant="outlined"/></Stack>

@@ -1,0 +1,50 @@
+import type {Theme} from "@mui/material/styles";
+
+/** Geometry comes from the approved Stats proposal; colors use shared Light/Navy tokens. */
+export const communityStatsPresentation=(theme:Theme)=>({
+  color:theme.palette.text.primary,minWidth:0,width:"100%",fontSize:14,
+  "& *":{boxSizing:"border-box"},
+  "& h1":{fontSize:26,lineHeight:1.2,m:0,fontWeight:700},"& h2":{fontSize:16,m:0,fontWeight:700},"& p":{m:0},
+  "& button, & input, & select, & textarea":{font:"inherit",color:"inherit"},
+  "& button":{cursor:"pointer"},"& button:disabled":{cursor:"default",opacity:.5},
+  "& button:focus-visible, & input:focus-visible, & select:focus-visible, & textarea:focus-visible, & a:focus-visible":{outline:`2px solid ${theme.palette.primary.main}`,outlineOffset:3},
+  "& .cs-title":{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:2,mb:2.25},
+  "& .cs-controls":{display:"flex",flexWrap:"wrap",alignItems:"end",gap:1.5,mb:2},
+  "& label.cs-field":{display:"grid",gap:.5,fontSize:12,color:theme.palette.text.secondary,minWidth:120,flex:"1 1 120px"},
+  "& input, & select, & textarea":{width:"100%",minWidth:0,minHeight:40,p:"8px 10px",border:`1px solid ${theme.palette.divider}`,borderRadius:"7px",background:theme.palette.background.paper},
+  "& .cs-action":{minHeight:38,p:"7px 11px",border:`1px solid ${theme.palette.divider}`,borderRadius:"7px",background:theme.palette.background.paper,color:theme.palette.text.primary,textDecoration:"none"},
+  "& .cs-tabs":{display:"flex",flexWrap:"wrap",gap:.5,borderBottom:`1px solid ${theme.palette.divider}`,mb:2.25},
+  "& .cs-tabs button":{minHeight:42,p:"10px 12px",border:0,borderBottom:"3px solid transparent",background:"transparent",color:theme.palette.text.secondary},
+  "& .cs-tabs button[aria-current=page]":{color:theme.palette.primary.main,borderBottomColor:theme.palette.primary.main,fontWeight:700},
+  "& .cs-metrics":{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",lg:"repeat(4,minmax(0,1fr))"},gap:1.25,mb:2.25},
+  "& .cs-metric, & .cs-panel":{minWidth:0,border:`1px solid ${theme.palette.divider}`,background:theme.palette.background.paper,borderRadius:"9px",p:2,mb:2},
+  "& .cs-metric":{p:1.75,mb:0},"& .cs-metric span":{display:"block",fontSize:12,color:theme.palette.text.secondary},
+  "& .cs-metric strong":{display:"block",mt:.8,fontSize:25,fontVariantNumeric:"tabular-nums"},
+  "& .cs-panel-head":{display:"flex",flexWrap:"wrap",justifyContent:"space-between",alignItems:"center",gap:1.5,mb:2},
+  "& .cs-note":{fontSize:12,color:theme.palette.text.secondary},
+  "& .cs-grid":{display:"grid",gridTemplateColumns:{xs:"1fr",md:"repeat(2,minmax(0,1fr))"},gap:2},
+  "& .cs-segments":{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:"repeat(4,minmax(0,1fr))"},gap:1.25},
+  "& .cs-segment":{textAlign:"left",border:`1px solid ${theme.palette.divider}`,background:"transparent",borderRadius:"7px",p:1.5},
+  "& .cs-segment strong":{display:"block",fontSize:24,mt:1},
+  "& .cs-table":{width:"100%",borderCollapse:"collapse",tableLayout:"fixed",fontSize:13},
+  "& .cs-table th":{textAlign:"left",fontWeight:600,color:theme.palette.text.secondary},
+  "& .cs-table th, & .cs-table td":{p:"11px 9px",borderBottom:`1px solid ${theme.palette.divider}`,verticalAlign:"top",overflowWrap:"anywhere"},
+  "& .cs-link":{color:theme.palette.primary.main,border:0,background:"transparent",p:0,textAlign:"left",textDecoration:"underline",textUnderlineOffset:3},
+  "& .cs-pager":{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1,mt:2,flexWrap:"wrap"},
+  "& .cs-heatmap":{display:"grid",gridTemplateColumns:"24px repeat(24,minmax(0,1fr))",gap:"3px",fontSize:9},
+  "& .cs-day-grid":{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(22px,1fr))",gap:.5,mt:1},
+  "& .cs-day":{minHeight:24,borderRadius:"3px",display:"grid",placeItems:"center",fontSize:10,border:`1px solid ${theme.palette.divider}`},
+  "& .cs-day[data-state=unknown]":{background:theme.palette.action.disabledBackground},
+  "& .cs-day[data-active=true]":{background:theme.palette.primary.main,color:theme.palette.primary.contrastText},
+  "& .cs-error":{color:theme.palette.error.main},
+  [theme.breakpoints.down("sm")]:{
+    "& .cs-table thead":{position:"absolute",width:1,height:1,overflow:"hidden",clipPath:"inset(50%)"},
+    "& .cs-table, & .cs-table tbody, & .cs-table tr, & .cs-table td":{display:"block",width:"100%"},
+    "& .cs-table tr":{borderBottom:`1px solid ${theme.palette.divider}`,py:1},
+    "& .cs-table td":{display:"grid",gridTemplateColumns:"minmax(100px,38%) 1fr",gap:1,border:0,p:"5px 0"},
+    "& .cs-table td::before":{content:"attr(data-label)",fontWeight:600,color:theme.palette.text.secondary},
+  },
+});
+export const communityStatsLabels:Record<string,string>={both:"Both",discord_only:"Discord only",web_only:"Webpages only",neither_observed:"Neither observed",unlinked:"Unlinked",insufficient_coverage:"Unknown coverage"};
+export const communityStatsValues:Record<string,string>={...communityStatsLabels,not_configured:"Not configured",collecting:"Collecting",connecting:"Connecting",lagging:"Lagging",disabled:"Disabled",gap:"Collection gap",unavailable:"Unavailable",observed:"Observed",discord:"Discord",web:"Webpages",membership:"Membership",tracked_page:"Tracked page",discord_post:"Full Discord post",not_collected:"Not collected",thread_reply:"Thread reply",forum_post:"Forum post",voice_participation:"Voice participation",reaction_add:"Reaction addition",message:"Message",pending:"Pending",sending:"Sending",delivered:"Delivered",failed:"Failed",cancelled:"Cancelled",confirmed:"Confirmed",rejected:"Rejected",uncertain:"Unconfirmed",legacy_baseline:"Legacy baseline",original:"Original",revision:"Revision",correction:"Correction",withdrawal:"Withdrawal",publication:"Publication",draft:"Draft",published:"Published",archived:"Archived",active:"Active",paused:"Paused",unknown:"Unknown",alert:"Alert",alerts:"Alerts index",watchlist:"Watchlist",watchlists:"Watchlists index",coach:"Coach profile",coaches:"Coaches index",plan:"Coaching plan",community:"Community overview"};
+export function statsDisplayUtc(value:string|null):string{return value?value.replace("T"," ").replace(/\.\d{3}Z$/u," UTC"):"Unavailable";}

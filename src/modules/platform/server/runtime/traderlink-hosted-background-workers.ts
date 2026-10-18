@@ -3,6 +3,7 @@ import { runCategoryMoveNotifications } from "@/src/modules/watchlist/server/not
 import { runDailyTradeAnalyzerOnce } from "@/src/modules/level-analysis/server/daily-trade-analyzer-runtime";
 import { startHostedCoachingMaintenance } from "@/src/modules/communities/server/coaching-maintenance-runtime";
 import { startHostedCommunityDiscordDelivery } from "@/src/modules/communities/server/community-discord-delivery-runtime";
+import {startHostedCommunityStats} from "@/src/modules/communities/server/stats/community-stats-runtime";
 
 import { openPlatformDatabase } from "../database/open-platform-database";
 import { PlatformRemoteNotificationDeliveryRepository } from "../notifications/platform-remote-notification-delivery-repository";
@@ -22,6 +23,7 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
   startPlatformLoginMailWorker();
   startHostedCoachingMaintenance();
   startHostedCommunityDiscordDelivery();
+  startHostedCommunityStats();
 
   let analyzerRunning = false;
   const runAnalyzer = async (): Promise<void> => {
