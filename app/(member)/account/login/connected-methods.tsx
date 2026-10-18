@@ -73,7 +73,7 @@ export function ConnectedMethods({
         Connect another method to sign in to this same account. Discord is
         optional for app login and is needed for Discord plan benefits.
       </Typography>
-      <Button onClick={() => router.refresh()} disabled={busy}>Refresh connection status</Button>
+      <Button onClick={() => { setDisconnectedProviders([]); router.refresh(); }} disabled={busy}>Refresh connection status</Button>
       {(
         [
           ["google", "Google", googleAvailable],
