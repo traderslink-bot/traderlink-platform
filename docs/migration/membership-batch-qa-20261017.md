@@ -233,3 +233,110 @@ Retest controlling list:
 - R08 mobile/desktop and theme sample on corrected account/preferences/history/error states; restore original QA preferences and temporary viewport.
 
 Record every result as PASS/FAIL/BLOCKED against exact successor source/deployment/image/health/schema/rollback. A build pass is not browser acceptance. Post-release failures are recorded for another approved batch; do not deploy extra tiny fixes automatically. All outstanding provider/time/populated-data cases remain in full41area inventory.
+
+## Post-release focused Membership/Login/Stripe checkpoint — Preferences correction held
+
+Owner narrowed QA to Membership/Login/Stripe and authorized fixing Preferences without permission changes; no deployment until explicit approval.
+
+Live retest target: source23e0abf10c0a6a43d06764431257c6e090c81a55, deployment8acd3ac9-4ed4-48b5-8972-37a6b1a0779e, image sha256:982ec8dad2fc77ee99a0401d9897b4dd6ee769d2dba66090ab1df8be9bf29442, health200 ready/sqlite_single_node/schema166 (Coordinator verified). Production untouched.
+
+PASS: no-plan Security/Profile/Delete Account/General/AI entry, connected-login wording, sign-out-everywhere Cancel; broker remains gated and AI disabled. Currency save/reload persisted and original USD restored. Notification dropdown reaches empty /notifications. Ordinary member admin entry remains locked without automatic Discord OAuth; returning Login methods subsequently proves Google+email/password retained. Owner Members shows Expired for expired grants, preserves active/revoked states; Features shows runtime enforced/off defaults without policy writes. No-plan billing shows no linked subscription and explains monthly subscription prerequisite. Billing menu logout reaches /signed-out, then direct /account/membership redirects to login. Screenshot: data/membership-staging-qa-20261017/billing-logout-23e.png. IAB offline fallback recovered via normal Try again; no cache/data clearing, credentials or restart.
+
+FAIL on deployed source: /account/preferences page error3568859903, logs WORKSPACE_ACCESS_DENIED. Source tracing identifies nested ReverseSplitNotificationPanel unconditionally invoking dashboard/Discord identity before its owner-only visibility guard. This independently reproduces the rejection path for the valid email/Google no-plan persona; hosted logs alone do not identify the stack call. Other Preferences repository workspace guards remain intact.
+
+Prepared two-file source correction: Preferences retains its authenticated identity and passes it server-to-server to ReverseSplitNotificationPanel. Panel uses supplied identity or its existing dashboard helper for other callers, then retains the identical hasReverseSplitReviewAccess owner check before any settings reads. Existing reverse-splits page caller and all repository ownership, paid notification/provider/action guards unchanged. No UI changes, permission grants, fallback workspace or catch-and-ignore access errors. Help guidance unchanged because supported behavior is unchanged. Narrow whitespace/diff/source review only; no Vitest/test/build/install/server. Next.js bundled docs unavailable locally; no dependencies installed. React review: server-only identity flow, no client serialization, hooks or shared mutable request state.
+
+Correction SHA256: Preferences D5D1523471A4AC1C1A92B1C32C63049759FBE65EFF8C787B07E5641200EFD6B1; panel5C2F7E781A922F547FEEEF11BC223863D891E22A6DE9252C722CA1C6FE064AE7. These source files remain uncommitted under owner no-commit instruction. Coordinator review requested; no deploy authorized.
+
+Pending staging acceptance after approved release: Preferences render, permitted preference save/reload/revert, owner-only panel hidden for ordinary QA and unchanged for owner. Populated notification mark-read/ownership lacks records. Stripe3DS/declines/refunds/nonmonthly/paid-trial/adversarial webhook cases require controlled sandbox fixtures; future renewal/expiry requires time/isolated clock. Provider-conflict/email-change/Discord matrices require controlled accounts; old-password rejection untested because reset reused same password. Prior successful signup/email/reset/Google/mobile disconnect and prorated Stripe payment remain retained passes, not repeated. No broad app QA expansion.
+
+## Owner-authorized Stripe sandbox lifecycle execution
+
+Owner explicitly requested access verification, isolated test setup and all executable Membership/Stripe scenarios before batching corrections. No deployment/production action. Coordinator executes provider requests in exact staging container, retaining secrets there.
+
+Verified capability: TEST secret family present; genuine API reads balance/customers/card methods/refunds/events/test-clocks/webhook endpoints HTTP200 with livemode:false. Exact enabled endpoint targets staging /api/webhooks/membership-stripe. CLI absent, not a blocker. No new login sessions required for reviewed service-level fixture bridge; full interactive 3DS completion still needs browser handoff if reached.
+
+Live endpoint behavioral PASS: missing Stripe signature HTTP400; invalid stale signature HTTP400; >1,000,000-byte body HTTP413. Requests were untrusted invalid synthetic payloads; no valid provider event or entitlement mutation.
+
+Execution target matrix (pending actual fixture evidence, not pass):
+- Initial decline: incomplete/unpaid invoice and no active paid entitlement; retry may recover once.
+- Authentication required: pending payment, no premature entitlement; complete/fail/cancel 3DS only with genuine Stripe challenge evidence.
+- Renewal success: paid invoice extends coverage exactly; duplicate/reordered delivery cannot duplicate grant or regress coverage.
+- Renewal failure: no unpaid coverage extension; provider past_due represented; successful recovery extends coverage once.
+- Scheduled cancellation: paid access retained until covered boundary; terminal canceled subscription revokes only its own source; independent grant remains.
+- Full/partial refund: record actual provider refund and application behavior; source has no explicit refund branch, intended access policy not inferred.
+- Clock: dedicated new customer/subscription/clock only; no shared app clock changes, existing buyer or real account mutation.
+- Receipt security: invalid/stale/tampered signature rejection; genuine replay idempotency/conflicting event handling only where controlled authentic delivery is available.
+
+Discovered configuration gap: current TEST webhook lacks invoice.payment_action_required, charge.refunded and refund event subscriptions. Preserve existing events; any test-only subscription expansion must be exact and recorded. Source handler absence may mean additional events are acknowledged ignored; never equate delivery with correct membership behavior.
+
+### Sandbox execution checkpoint
+
+Coordinator verified exact staging TEST webhook additive expansion from11 to15 events: invoice.payment_action_required, charge.refunded, refund.created, refund.updated. All original events preserved; livemode false, enabled exact stagingURL; no secret/URL/production change.
+
+No lifecycle payment PASS yet. Coordinator fixture runner first lacked source-only zod in standalone image; revised runner then hit STORAGE_VALIDATION_FAILED after creating private catalog but before identities/claims/payment objects. Exact partial catalog and its empty/failed checkpoint were removed by Coordinator; verified quick_check ok, foreign keys0, rootAbsent true. Existing buyer unaffected. Do not rerun original fixture blindly.
+
+Coordinator switched to owner's Levels coordination before completing this request. Worker requested explicit Membership-only runner handoff into assigned scripts/staging-qa and fixture execution ownership, without reading Coordinator private files. Until provided, hosted fixture mutations remain paused to avoid overlapping an owned staging operation. This is a coordination/execution prerequisite, not missing Stripe credentials or owner-supplied fixtures. 3DS/decline/refund/renewal/cancellation outcomes remain UNTESTED, not passed or a proven technical impossibility. Preferences correction remains source-reviewed and undeployed. No further application fixes or deployment undertaken.
+
+## Completed Stripe sandbox lifecycle QA — owner-requested execution
+
+This supersedes the earlier setup/coordination blocker: runner handoff completed and tests actually executed against source23e0abf10c0a6a43d06764431257c6e090c81a55 / deployment8acd3ac9-4ed4-48b5-8972-37a6b1a0779e, TEST key retained inside exact staging container. No app deployment, production change, login-session issuance, Vitest, build or local server.
+
+| Scenario | Result | Actual evidence |
+| --- | --- | --- |
+| Initial declined payment | PASS | Subscription incomplete; invoice open, amount_paid0/amount_due100; claim reserved; zero entitlement/access. |
+| Authentication-required pending payment | PASS | PaymentIntent requires_action/use_stripe_sdk; invoice unpaid; invoice.payment_action_required received; no grant. |
+| 3DS success | PASS | Owner completed hosted Sandbox invoice; PaymentIntent succeeded; charge three_d_secure.result authenticated and authentication_flow challenge; invoice paid100; app claim fulfilled and exactly1subscription entitlement. |
+| 3DS processing/authentication failure | PASS for no-charge/no-access | Owner clicked failure fixture card1280; PaymentIntent requires_payment_method, card_declined/generic_decline; invoice unpaid0; claim reserved/no grant. Browser returned to staging login because fixture-specified returnURL was protected membership and browser was signed out. No app-generated Checkout failure-copy acceptance claimed from this fixture. |
+| Successful monthly renewal | PASS | Isolated clock advanced; new invoice paid100; same entitlement extended Oct28->Nov28 with no duplicate source. |
+| Failed renewal | PASS | Stripe past_due, invoice open/unpaid0; app projection past_due; paid grant end stayedNov28 despite provider next-period endDec28. At isolated clock time afterNov28, only independent owner grant was effective. |
+| Renewal recovery | PASS | Original successful method paid failed invoice; same entitlement extended toDec28 and lifecycle returnedactive. |
+| Scheduled cancellation | PASS | cancel_at_period_end true, local matching state; paid grant stayedactive through paid boundary; independent grant remained. |
+| Terminal period-end expiry | PASS | Separate Stripe clock advanced beyondDec28 boundary; genuine subscription.deleted applied; subscription projectioninactive and own grantrevoked; independent owner_grant retained. Shared app clock was never changed. |
+| Full refund | FAIL against owner-confirmed access policy | Refund100/100 succeeded. Genuine charge.refunded/refund.created/refund.updated reached app but were recordedignored. Subscription grant/access remainedactive until explicit test cleanup cancellation. Owner approved removing ONLY refunded purchase access while preserving other sources. Application correction is required; NOT implemented or claimedfixed by this QA run. |
+| Exact duplicate delivery | PASS | Genuine cancellation body reconstructed only after exact receipt SHA256 match; QA re-signed exactbody twice, both HTTP200 duplicate; no extra grants. This is route-level QA re-signing, not Stripe Dashboard resend. |
+| Signature rejection | PASS | Missing/invalid/stale/future/tampered signatures HTTP400; oversizedbody HTTP413. |
+| Late paid event after cancellation | PASS controlled fault injection | QA-signed copied own Stripe invoice payload with new QA eventid after cancellation: HTTP200 applied, exact grant rows unchanged, no resurrection. Not a claim of a complete genuine-provider ordering matrix. |
+| Conflicting same event ID/body | PASS controlled fault injection | Valid-QA-signed conflicting payload HTTP503; no access mutation; exact intentionally-created processing-failure audit row removed after verification. |
+
+Proof boundaries: credential-free disposable identities and actual claim services; standalone image cannot import source-only zod, so private-link persistence and Checkout request were narrowly mirrored. Genuine Stripe subscriptions/invoices/refunds/clocks and webhook projections were exercised; owner used genuine hosted invoice UI for3DS. This does not repeat or replace prior app-originated successful standalone/add-on checkout acceptance. User-cancelled3DS, exhaustive card/network failures, partial/failed refunds, nonmonthly/paid-trial combinations and exhaustive event ordering were not executed in this bounded lifecycle run; they are not described as blocked by missing credentials or fixtures. Required full-refund correction must address exact purchase/source mapping, historical paid periods, duplicate/reordered delivery and combined add-on preservation before readyforrelease.
+
+Cleanup PASS: all4genuine Checkout Sessions expired; synthetic paid subscriptionscancelled; incomplete failed-auth subscriptionterminal incomplete_expired/invoicevoid; fixture4usersdisabled/authidentitiesrevoked; zero synthetic authsessions created or retained; all effectiveaccesszero; independent controlgrant revoked only after retention test; own privateofferpaused, planretired and linksrevoked; own Stripeprice/productinactive. Test clock is retained as inert evidence with no active subscriptions; one17.8MB protectedremote DB backup retained for acceptance. Historical provider objects/receipts retained.
+
+Existing data preservation PASS: each pre-existing row byte-equivalent to backup in users13, authidentities14, workspaces13, workspace memberships13, preferences13, plans10, versions13, offers12, sharelinks4, entitlements13, providersubscriptions1, providerdefinitions2, operatorgrants1. DBquick_checkok/FK0. No existing buyer grants, policies or owner credentials changed.
+
+Evidence: ignored data/membership-staging-qa-20261017/stripe-lifecycle-results.json (14sanitized observations at export; no credentials/payment links), stripe-3ds-paid.png. Four exact synthetic-user fixtures only. Root scripts/staging-qa/stripe-lifecycle-20261017.cjs and continuation runner are QA-only source, not app release files. Staging source remains23e; Preferences2file correction is prepared/reviewed locally. Full-refund access correction remains pending in the SAME held batch; do not call complete batch release-ready or deploy until owner approval and correction review.
+
+## Owner-authorized held Preferences + exact-purchase refund correction
+
+Owner requested implementation after lifecycle QA: full refund removes ONLY the refunded purchase's access; other paid plans, trials and manual grants preserved. No deployment until owner approves. Preferences remains the previously-reviewed2file identity-reuse correction; it does not change permissions.
+
+Prepared source behavior:
+- Hydrate charge/refund events using authoritative Stripe charge, successful refund settlement sum, exact invoice-payment/checkout linkage, customer/currency/fullamount checks. No customer-wide entitlement lookup or email matching. Partial/unsettled/failed refunds without a prior full refund do not change access.
+- Match exact claim and subscription/one-time/trial source. Record hashed purchase/charge/invoice audit evidence atomically with provider receipt and access projection. Existing schema only; no migration.
+- Full subscription/one-time/paid-trial refunds remove that exact source. Older-period refunds preserve newer paid coverage. Paid-trial entry refund uses original trial_end rather than instantaneous entry-fee invoice period.
+- Prorated add-on refunds remove only amendment's purchased components. Preserve base/later add-ons using immutable published component snapshots and existing quota carryover. Residual internal access snapshots are unlisted/retired, offerspaused, not enrollable; no Stripe price/subscription/cancellation mutation. Independently modified bundle features require reconciliation rather than stale reconstruction.
+- Suppress old checkout/paid-invoice receipts for refunded source coverage before any add-on fulfillment. Genuine later paid coverage may restore the packages it pays for, preserving owner-published versions and planned renewal changes.
+- A full refund later reported unsuccessful may restore ONLY exact handler-owned access removal. Providerstate must be active/trialing/past_due and corresponding localstate active/trialing/past_due/cancel_at_period_end. Terminal/disabled/expired/newercoverage withholding retains replay protection. Missing/manualchanged/overlappingfailedrefund/neverprojected initialpayment/pending-add-on reversal requires explicit reconciliation, not guessed restoration.
+- Existing billing Help paragraph updated to owner policy. Editor writer comment clarifies trusted buyer-bound refund preservation; no editor runtime permissions changed.
+
+Review: Coordinator firstread identified two high correctness issues in reversal: suppression removed when access notrestored and noncanceled-only statuscheck. Both corrected in sameheldbatch. Secondreview requested on finalfrozenfiles. No runtimePASS claimed for these corrections until approved stagingret est.
+
+Allowed narrow verification only: Node --experimental-strip-types --check on the3refund-related sourcefiles passed (syntax-only, no imports executed); gitdiffwhitespace checks passed. No Vitest, test suite, build, install, localserver or hostedcode execution. FullTypeScript/build remains future release gate. No commits/push/deploy/production changes.
+
+Final source allowlist7paths (plus this report and existingplanlink/hold update):
+1. app/(member)/account/preferences/page.tsx
+2. app/(dashboard)/reverse-splits/notification-panel.tsx
+3. src/modules/platform/server/membership/platform-membership-stripe.ts
+4. src/modules/platform/server/membership/membership-stripe-refund-hydration.ts
+5. src/modules/platform/server/membership/membership-stripe-refund-access.ts
+6. src/modules/platform/server/membership/membership-plan-editor-write.ts (commentonly)
+7. src/modules/help/paid-plan-guides.ts
+
+Sourcehashmanifest: ignored data/membership-staging-qa-20261017/preferences-refund-source-manifest.json; refresh after reviewrepairs. Do not package mixed worker tree. Exact staging parent remains23e0abf10c0a6a43d06764431257c6e090c81a55; no release slot requested or assigned by worker.
+
+Future approved staging acceptance: Preferences render/save/reload/revert; full refund with separatepaid/trial/manualcontrolgrants; fulladdon refund preservesbase/lateraddons; historicalrefundpreservesnewpaidperiod; partial/pending/failedrefund no revoke; refundreversalstatelist and replayprotection; exactduplicate/lateinvoice; laterpaidcoverage; cleanup/data-preservation. Corrected reversal also needs additive refund.failed event subscription on exact TEST staging webhook (current15events); this is a release/config gate, NOT performed now. Production endpoint remains outside authorization.
+
+Final source review acceptance: Coordinator secondread PASS on hydrationB754B92E548C0285CD00E3F4E95AE733CC686FD7B62CA436710333ED0C03BBEC, access8E54B4B65499EA98896EA918A830A87A964F74FAA1196947AB39E94C4AAB7EEE, Stripe16B9CD858CC060B503019BCD274483E41F26DDBAB6B1818B6BE8C5BC6A9E4F27 and commenteditorA63BFF23A1E6121E1F40E135BC681F52BF0BB71113DF923F48EDCD9392E755AD. No further correctness finding. Preferences previous2file review remainsaccepted, Helpguide singleparagraph policyreviewedlocally. Source7filemanifest matches currentfiles. Review is source acceptance only; no TypeScript/build/browser/fullrefundcorrected-flow acceptance claimed.
+
+Ready: one7sourcefile Preferences+refund correction batch plus2progress/plan docs. Not deployed, not committed/pushed. Existing Stripe billing/cancellation configuration unchanged; a genuinely later paid renewal grants its newly paid period. Mandatory post-approval gates remain: exact-parent packaging, hostedTypeScript/build, additive refund.failed TEST event subscription, one stagingdeployment, groupedPreferences/fullrefund/add-on/independentgrants/reversal/replay/terminal-lifecycle retest and cleanup. Production excluded. Owner has not approved that deployment in this turn.

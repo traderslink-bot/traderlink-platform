@@ -27,7 +27,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountPreferencesPage() {
-  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
+  const identity = await requireTraderLinkPlatformAuthenticatedPageIdentity();
+  const { scope } = identity;
   const { upgradePlans, allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
       upgradePlans: Object.fromEntries([...PLATFORM_NOTIFICATION_CATEGORIES, "market_halt", "press_release", "watchlist"].map(category => [
@@ -90,7 +91,7 @@ export default async function AccountPreferencesPage() {
           initialWebPushCategories={notificationPreferences.webPushCategories}
           initialWatchlistPreferences={watchlistPreferences}
         />
-        <ReverseSplitNotificationPanel />
+        <ReverseSplitNotificationPanel identity={identity} />
       </DashboardPanel>
     </AccountSettingsLayout>
   );

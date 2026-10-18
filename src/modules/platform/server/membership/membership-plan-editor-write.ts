@@ -13,8 +13,8 @@ import { PlatformMembershipRepository } from "./platform-membership-repository";
 const requestSchema = z.object({ requestId: z.uuid(), draftId: z.uuid().nullable(), revision: z.number().int().positive().nullable(),
   document: membershipPlanEditorSchema, intent: z.enum(["save", "publish"]), applyToMembers: z.boolean() }).strict();
 
-/** The caller must hold owner authorization, or derive a buyer-bound bundle solely
- * from validated published offers in membership-addon-checkout. This command is a
+/** The caller must hold owner authorization, or derive a buyer-bound snapshot solely
+ * from validated published offers for checkout, add-on amendments, or verified refund preservation. This command is a
  * single SQLite transaction; no provider, email, Discord or AI call is made. */
 export function writeMembershipPlanEditor(db: Database.Database, actor: string, request: MembershipPlanSaveRequest, at: string): MembershipPlanSaveResult {
   assertCanonicalUuidV4(actor, "actor"); assertCanonicalUtcTimestamp(at, "at");

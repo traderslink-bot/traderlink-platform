@@ -2,7 +2,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformServerComponentPageIdentity, type TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { CoachUsEquitiesCalendarRepository } from "@/src/modules/coach/server/market-calendar/coach-us-equities-calendar-repository";
 import { hasReverseSplitReviewAccess } from "@/src/modules/news/server/reverse-splits/access";
@@ -12,8 +12,11 @@ import { ReverseSplitRepository } from "@/src/modules/news/server/reverse-splits
 import { ReverseSplitDigestPlanner } from "@/src/modules/news/server/reverse-splits/digest";
 import { ReverseSplitNotificationControls } from "./notification-controls";
 
-export async function ReverseSplitNotificationPanel({ preview = false }: { preview?: boolean }) {
-  const identity = await requireTraderLinkPlatformServerComponentPageIdentity();
+export async function ReverseSplitNotificationPanel({ preview = false, identity: authenticatedIdentity }: {
+  preview?: boolean;
+  identity?: TraderLinkPlatformRequestIdentity;
+}) {
+  const identity = authenticatedIdentity ?? await requireTraderLinkPlatformServerComponentPageIdentity();
   if (!hasReverseSplitReviewAccess(identity)) return null;
   const data = withReadonlyPlatformDatabase({}, (database) => {
     const settings = readReverseSplitNotificationSettings(database, identity.scope.userId);
