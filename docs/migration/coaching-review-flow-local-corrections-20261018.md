@@ -25,12 +25,15 @@ Owner authorized local fixes after the six staging browser QA passes. This recor
 - [x] Historical reviews without a binding now receive a historical resource explanation rather than a draft-only instruction to identify the accepted service.
 - [x] Enrollment QA now disables Accept when neither current plan terms nor a proposed agreement is available, with the same check enforced by the relationship action. Proposed agreement names are shown consistently.
 - [x] A subsequent source QA found the guard file had reverted to its pre-fix signature while the review page still passed `readOnly`. Restored the guard contract. Pending requests keep the guard active because the coach can edit Accepted scope before accepting; their disabled review controls are ignored. Recheck this file before any staging handoff.
+- [x] Staging QA found an untouched draft coach review immediately warned about unsaved feedback. The feedback form now marks itself as a controlled draft, so the page guard relies on its saved-versus-current state instead of comparing the form's rendered controls with DOM defaults.
+- [x] Staging QA found Trade Explorer and Compare Trades crashed the review route when opened as resources. Their authorized server action now returns a serializable page model; the review layout loads and renders the corresponding client component locally in its resource drawer. The existing review-period and sharing recheck stays in the server action.
 
 ## Staging acceptance still open
 
 - [ ] Confirm first-save and changed-sharing behavior on staging after a release. The old generic UI messages did not expose a database error code, so the SQLite contention mitigation is source-level, not proof of the original transient cause.
 - [ ] Verify the draft Browser Back/Forward warning with an authenticated browser after a staging build. Local form-state tracking is not browser acceptance.
 - [ ] Verify Trade Explorer and Compare Trades opening and querying through an authorized coach review after a staging build. The generic staging error hid its exact exception, so source correction is not runtime acceptance.
+- [ ] Confirm that an untouched draft review leaves without an unsaved warning, while edited feedback still warns until successfully saved.
 - [ ] Verify sharing saves and fragment behavior in an authenticated student browser.
 - [ ] Verify the corrected mobile Light and Navy presentation, coach review controls and financial metrics in staging.
 - [ ] Finish the broader plan/review lifecycle acceptance with fixtures for Trading-day, Performance, goals, rules, tags, and applicable saved Analyzer work. Existing accepted plans/history remain intact.

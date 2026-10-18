@@ -21,7 +21,7 @@ export function CoachReviewEditor({communitySlug,relationshipId,review,previousF
  const contents=(data:FormData)=>JSON.stringify(editableNames.map(name=>[name,String(data.get(name)??(name==="previousFocusStatus"?"not_evaluated":""))]));
  const overall=true;
  const nextSteps=true;
- return <Box action={disabled?undefined:async(data:FormData)=>{await updateCommunityTradeReviewAction(data);saved.current=contents(data);setDirty(false);}} component="form" data-coaching-unsaved={dirty?"true":"false"} onInput={event=>{if(disabled)return;const form=event.currentTarget;if(form instanceof HTMLFormElement)setDirty(contents(new FormData(form))!==saved.current);}} onChange={event=>{if(disabled)return;const form=event.currentTarget;if(form instanceof HTMLFormElement)setDirty(contents(new FormData(form))!==saved.current);}}>
+ return <Box action={disabled?undefined:async(data:FormData)=>{await updateCommunityTradeReviewAction(data);saved.current=contents(data);setDirty(false);}} component="form" data-coaching-controlled-draft data-coaching-unsaved={dirty?"true":"false"} onInput={event=>{if(disabled)return;const form=event.currentTarget;if(form instanceof HTMLFormElement)setDirty(contents(new FormData(form))!==saved.current);}} onChange={event=>{if(disabled)return;const form=event.currentTarget;if(form instanceof HTMLFormElement)setDirty(contents(new FormData(form))!==saved.current);}}>
   <input name="communitySlug" type="hidden" value={communitySlug}/>
   <input name="relationshipId" type="hidden" value={relationshipId}/>
   <input name="stayInReview" type="hidden" value="yes"/>

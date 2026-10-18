@@ -10,14 +10,16 @@ import type {loadResultsAnalyticsModel} from "../analytics/results-analytics-pag
 import type {loadTimingAnalyticsModel} from "../analytics/timing/timing-analytics-page";
 import type {loadExecutionAnalyticsModel} from "../analytics/execution-analytics-page";
 import type {readRuleResults} from "../rules/results/rule-results-data";
+import type {TradeExplorerPageModel} from "../analytics/trade-explorer/trade-explorer-service";
 
 export type CoachingAnalyticsModel=
  | {kind:'overview';model:Awaited<ReturnType<typeof loadAnalyticsOverviewModel>>}
  | {kind:'ticker';model:Pick<Awaited<ReturnType<typeof loadResultsAnalyticsModel>>,'selectedRange'|'moneyBasis'|'rows'>}
  | {kind:'timing';model:Pick<Awaited<ReturnType<typeof loadTimingAnalyticsModel>>,'chartData'|'completedTradeCount'|'moneyBasis'|'timezone'>}
  | {kind:'breakdown';model:Pick<Awaited<ReturnType<typeof loadExecutionAnalyticsModel>>,'chartData'|'currency'|'moneyBasis'|'priceComparison'|'priceInsights'|'priceResults'|'priceResultsByDirection'|'rows'|'selectedRange'>};
+export type CoachingExplorerModel={kind:'explorer'|'compare';model:TradeExplorerPageModel;coaching:{communitySlug:string;reviewId:string;relationshipId:string}};
 
-export async function loadCoachingReviewResource(communitySlug:string,reviewId:string,resourceId:CoachingResourceId,parameters:Record<string,string>={}):Promise<{content:ReactNode;analyticsModel:CoachingAnalyticsModel|null;rulesModel:Awaited<ReturnType<typeof readRuleResults>>|null;error:string|null}>{
+export async function loadCoachingReviewResource(communitySlug:string,reviewId:string,resourceId:CoachingResourceId,parameters:Record<string,string>={}):Promise<{content:ReactNode;analyticsModel:CoachingAnalyticsModel|null;explorerModel:CoachingExplorerModel|null;rulesModel:Awaited<ReturnType<typeof readRuleResults>>|null;error:string|null}>{
  try{
   const identity=await requireTraderLinkPlatformPageIdentity();
   await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,reviewId,existingCoachingOnly:true});
@@ -26,6 +28,7 @@ export async function loadCoachingReviewResource(communitySlug:string,reviewId:s
   const searchParams={...parameters,range:"custom",start:access.period.start,end:access.period.end,startDate:access.period.start,endDate:access.period.end};
   let content:ReactNode;
   let analyticsModel:CoachingAnalyticsModel|null=null;
+  let explorerModel:CoachingExplorerModel|null=null;
   let rulesModel:Awaited<ReturnType<typeof readRuleResults>>|null=null;
   switch(resourceId){
    case 'overview':{const {loadAnalyticsOverviewModel}=await import('../analytics/analytics-overview-page');analyticsModel={kind:'overview',model:await loadAnalyticsOverviewModel({resourceScope:access.scope,searchParams})};content=null;break;}
@@ -36,9 +39,8 @@ export async function loadCoachingReviewResource(communitySlug:string,reviewId:s
     const {readTradeExplorerPageModel}=await import('../analytics/trade-explorer/trade-explorer-service');
     const source=await readTradeExplorerPageModel(access.scope,{startDate:access.period.start,endDate:access.period.end},{communitySlug,reviewId,coachUserId:identity.scope.userId});
     const model={...source,minimumDate:access.period.start,maximumDate:access.period.end,annotationOptions:{tags:access.permits('tags')?source.annotationOptions.tags:[],tradeRules:access.permits('rules')?source.annotationOptions.tradeRules:[],dayRules:access.permits('day_rules')?source.annotationOptions.dayRules:[]}};
-    const coaching={communitySlug,reviewId,relationshipId:access.relationshipId};
-    if(resourceId==='explorer'){const {default:TradeExplorerClient}=await import('../analytics/trade-explorer/trade-explorer-client');content=<TradeExplorerClient model={model} coaching={coaching}/>;}
-    else{const {default:TradeExplorerComparisonClient}=await import('../analytics/trade-explorer/compare/trade-explorer-comparison-client');content=<TradeExplorerComparisonClient model={model} initialStudies={[]} coaching={coaching}/>;}break;
+    explorerModel={kind:resourceId,model,coaching:{communitySlug,reviewId,relationshipId:access.relationshipId}};
+    content=null;break;
    }
    case 'rules':{
     if(!access.permits('rules')||!access.permits('day_rules'))throw new Error("The student must share the agreed rule data before opening Rules analytics.");
@@ -54,8 +56,8 @@ export async function loadCoachingReviewResource(communitySlug:string,reviewId:s
   // Recheck after asynchronous page loading: a changed/revoked grant never returns data.
   const current=withReadonlyPlatformDatabase({},db=>coachingReviewResourceScope(db,{coachUserId:identity.scope.userId,reviewId,communitySlug}));
   if(current.authorizationKey!==access.authorizationKey||current.scope.activeAccountId!==access.scope.activeAccountId||current.period.start!==access.period.start||current.period.end!==access.period.end)throw new Error("Sharing or review selection changed. Reopen the resource.");
-  return {content,analyticsModel,rulesModel,error:null};
- }catch(error){return {content:null,analyticsModel:null,rulesModel:null,error:error instanceof Error&&/^(Identify the accepted service|This review is unavailable|The student must share|Select trades with verified|Sharing or review selection changed|This resource is still)/.test(error.message)?error.message:"This resource is unavailable. Check Journal sharing and try again."};}
+  return {content,analyticsModel,explorerModel,rulesModel,error:null};
+ }catch(error){return {content:null,analyticsModel:null,explorerModel:null,rulesModel:null,error:error instanceof Error&&/^(Identify the accepted service|This review is unavailable|The student must share|Select trades with verified|Sharing or review selection changed|This resource is still)/.test(error.message)?error.message:"This resource is unavailable. Check Journal sharing and try again."};}
 }
 
 async function verifiedAccess(communitySlug:string,reviewId:string){
