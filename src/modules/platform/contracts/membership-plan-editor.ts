@@ -153,10 +153,11 @@ export function membershipPlanReadiness(plan: MembershipPlanEditor,
       if (!provider) add(path, "Choose a payment provider.");
       else {
         if (provider.mode === "free") add(path, "Choose a paid provider for a paid option.");
-        const privateStripeTest = provider.key === "stripe" && provider.mode === "native" &&
+        const stagingStripeTest = provider.key === "stripe" && provider.mode === "native" &&
           provider.state === "test" && provider.privateTestCheckoutAllowed === true &&
-          plan.visibility !== "public" && price.channel === "private";
-        if ((!privateStripeTest && provider.state !== "ready") || !provider.configured) add(path,
+          ((plan.visibility !== "public" && price.channel === "private") ||
+            (plan.bundleOfferIds.length > 1 && plan.visibility === "public" && price.channel === "website"));
+        if ((!stagingStripeTest && provider.state !== "ready") || !provider.configured) add(path,
           `${provider.label}: ${provider.missing.join("; ") || "connection is not ready for live checkout"}.`);
         if (price.billing !== "free" && provider.mode === "external_checkout" && !price.checkoutUrl) add(path, "Enter this option's checkout link.");
       }

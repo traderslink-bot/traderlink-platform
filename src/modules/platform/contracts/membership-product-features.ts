@@ -21,9 +21,10 @@ const PRODUCT_LABELS: Readonly<Record<string, string>> = {
 };
 export const membershipProductLabel = (key: string, fallback: string) => PRODUCT_LABELS[key] ?? fallback;
 export const isMembershipProductSetting = (key: string) => Object.values(MEMBERSHIP_PRODUCT_SETTINGS).some(children => children.includes(key));
-export function membershipFeatureDefaultEnforcement(key: string): "off" | "enforced" {
-  if (key.startsWith("private_watchlist.") && MEMBERSHIP_PRIVATE_WATCHLIST_FEATURES.some(feature => feature.key === key)) return "enforced";
-  return ["ai.reviews", "watchlist.ticker_details", "watchlist.trade_analysis", "watchlist.levels", "broker.connections", "watchlist.access", "notifications.market_halt", "analytics.access", "analytics.trade_explorer", "levels.generations", "news.visibility_delay_seconds", "news.notification_delay_seconds", "news.access", "notifications.press_release", "journal.session_tracker", "analytics.exports", "journal.imports", "journal.accounts", "trade_analyzer.analyses", "trade_analyzer.analysis", "journal.custom_tags", "journal.rules", "journal.custom_rules", "journal.preset_rules", "journal.calendar", "journal.calendar_month", "journal.calendar_week", "analytics.compare_trades", "news.week_ahead", "watchlist.indicators"].includes(key) ? "enforced" : "off";
+export function membershipFeatureDefaultEnforcement(_key: string): "off" | "enforced" {
+  // Plan enforcement is an explicit owner rollout. Deploying a feature must not
+  // remove existing access merely because no policy has been configured yet.
+  return "off";
 }
 
 export function newMembershipProductFeature(key: string, limit: number | null = null): MembershipPlanEditorFeature {

@@ -41,7 +41,7 @@ export async function selectMembershipAction(_previous: MembershipActionState, f
   } catch (error) {
     if (claimId) withPlatformDatabase({ mode: "runtime" }, (database) => new PlatformMembershipClaims(database).release(claimId!));
     const message = error instanceof Error ? error.message : "";
-    return { success: null, error: /^(This |Stripe |You have|Use the private|Verified payment)/.test(message)
+    return { success: null, error: /^(This |Stripe[ :]|You have|Use the private|Verified payment)/.test(message)
       ? message : "Sign in to your TraderLink account and try again. If the issue continues, contact the owner." };
   }
   redirect(destination!);

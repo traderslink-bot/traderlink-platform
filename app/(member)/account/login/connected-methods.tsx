@@ -153,7 +153,7 @@ export function ConnectedMethods({
               </Stack>
             </Alert>
           ) : null}
-          {notice && noticeProvider === provider ? <Alert severity="success" role="status">{notice}</Alert> : null}
+          {notice && noticeProvider === provider && !connectedProviders.includes(provider) ? <Alert severity="success" role="status">{notice}</Alert> : null}
         </Stack>
       ))}
       {connectedProviders.includes("email") ? (
