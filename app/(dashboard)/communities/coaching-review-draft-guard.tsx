@@ -13,7 +13,8 @@ export function CoachingReviewDraftGuard({children,readOnly=false}:{children:Rea
   const element=root.current;if(!element||readOnly)return false;
   if(element.querySelector('[data-coaching-unsaved="true"]'))return true;
   return [...element.querySelectorAll('form input,form textarea,form select')].some(field=>{
-   if(field.closest("[data-coaching-controlled-draft]")||(field instanceof HTMLElement&&field.matches(":disabled")))return false;
+   if(field.closest("[data-coaching-controlled-draft]")||(field instanceof HTMLElement&&(field.matches(":disabled")||field.getAttribute("aria-hidden")==="true")))return false;
+   if((field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement)&&field.readOnly)return false;
    if(field instanceof HTMLInputElement){if(['hidden','submit','button','file'].includes(field.type))return false;return ['checkbox','radio'].includes(field.type)?field.checked!==field.defaultChecked:field.value!==field.defaultValue;}
    if(field instanceof HTMLTextAreaElement)return field.value!==field.defaultValue;
    if(field instanceof HTMLSelectElement)return [...field.options].some(option=>option.selected!==option.defaultSelected);
