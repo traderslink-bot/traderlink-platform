@@ -14,6 +14,7 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
+import {useCoachingResourceNavigation} from "../communities/coaching-resource-context";
 
 import type { JournalAnalyticsMoneyBasis } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
@@ -117,6 +118,8 @@ export function ResultsTickerTable({
   const [sortColumn, setSortColumn] = useState<SortColumn>("netPnl");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
+  const coaching=useCoachingResourceNavigation();
+  const openTicker=(ticker:string)=>{if(coaching)coaching.navigate(`/analytics/execution?ticker=${encodeURIComponent(ticker)}`);else setSelectedTicker(ticker);};
   const selectedRow = rows.find((row) => row.ticker === selectedTicker) ?? null;
   const columnsForBasis = columns(moneyBasis);
   const visibleRows = useMemo(
@@ -248,12 +251,12 @@ export function ResultsTickerTable({
                   aria-label={offline ? undefined : `View ${row.ticker} completed trades`}
                   hover
                   key={row.ticker}
-                  onClick={offline ? undefined : () => setSelectedTicker(row.ticker)}
+                  onClick={offline ? undefined : () => openTicker(row.ticker)}
                   onKeyDown={(event) => {
                     if (offline) return;
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      setSelectedTicker(row.ticker);
+                      openTicker(row.ticker);
                     }
                   }}
                   role={offline ? undefined : "button"}
@@ -307,7 +310,7 @@ export function ResultsTickerTable({
           }}
         />
       </Box>
-      {offline ? null : <TickerTradeDetailDrawer
+      {offline||coaching ? null : <TickerTradeDetailDrawer
         endDate={endDate}
         moneyBasis={moneyBasis}
         onClose={() => setSelectedTicker(null)}

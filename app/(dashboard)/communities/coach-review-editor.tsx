@@ -1,3 +1,5 @@
+"use client";
+import {useRef,useState} from "react";
 import {coachingReviewLabel} from "@/src/modules/communities/contracts/coaching-review-workspace";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,9 +15,13 @@ const statusLabel=(value:string)=>value==="in_review"?"In progress":value==="req
 
 export function CoachReviewEditor({communitySlug,relationshipId,review,previousFocus,isReview,paused=false}:{communitySlug:string;relationshipId:string;review:TraderLinkCommunityTradeReview;previousFocus:string|null;isReview:boolean;paused?:boolean}){
  const disabled=isReview||paused||review.acceptanceState==="pending"||review.deliveryState!=="draft";
+ const editableNames=["previousFocusStatus","previousFocusAssessment","coachFeedback","wentWell","needsWork","nextFocus","coachPrivateNotes"];
+ const saved=useRef(JSON.stringify(editableNames.map(name=>[name,String((review as unknown as Record<string,unknown>)[name]??(name==="previousFocusStatus"?"not_evaluated":""))])));
+ const [dirty,setDirty]=useState(false);
+ const contents=(data:FormData)=>JSON.stringify(editableNames.map(name=>[name,String(data.get(name)??(name==="previousFocusStatus"?"not_evaluated":""))]));
  const overall=true;
  const nextSteps=true;
- return <Box action={disabled?undefined:updateCommunityTradeReviewAction} component="form">
+ return <Box action={disabled?undefined:async(data:FormData)=>{await updateCommunityTradeReviewAction(data);saved.current=contents(data);setDirty(false);}} component="form" data-coaching-unsaved={dirty?"true":"false"} onInput={event=>{if(disabled)return;const form=event.currentTarget;if(form instanceof HTMLFormElement)setDirty(contents(new FormData(form))!==saved.current);}} onChange={event=>{if(disabled)return;const form=event.currentTarget;if(form instanceof HTMLFormElement)setDirty(contents(new FormData(form))!==saved.current);}}>
   <input name="communitySlug" type="hidden" value={communitySlug}/>
   <input name="relationshipId" type="hidden" value={relationshipId}/>
   <input name="stayInReview" type="hidden" value="yes"/>

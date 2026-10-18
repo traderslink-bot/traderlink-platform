@@ -13,7 +13,7 @@ import { OverviewDateRangeControl } from "./overview-date-range-control";
 type Model = Awaited<ReturnType<typeof loadExecutionAnalyticsModel>>;
 type ViewProps = Pick<Model, "chartData" | "currency" | "moneyBasis" | "priceComparison" | "priceInsights" | "priceResults" | "priceResultsByDirection" | "rows" | "selectedRange">;
 
-export function ExecutionAnalyticsView({ chartData, currency, moneyBasis, priceComparison, priceInsights, priceResults, priceResultsByDirection, rows, selectedRange }: ViewProps) {
+export function ExecutionAnalyticsView({ chartData, currency, moneyBasis, priceComparison, priceInsights, priceResults, priceResultsByDirection, rows, selectedRange, initialTicker="" }: ViewProps & {initialTicker?:string}) {
   return <DashboardPage>
     <Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}>
       <Box>
@@ -23,6 +23,6 @@ export function ExecutionAnalyticsView({ chartData, currency, moneyBasis, priceC
       </Box>
       <FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" />
     </Box>
-    <ExecutionAnalyticsClient dateControls={<Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}><OverviewDateRangeControl href="/analytics/execution" showCaption={false} value={selectedRange} /><FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" /></Box>} chartData={chartData} currency={currency} moneyBasis={moneyBasis} priceComparison={priceComparison} priceInsights={priceInsights} priceResults={priceResults} priceResultsByDirection={priceResultsByDirection} rows={rows} />
+    <ExecutionAnalyticsClient initialTicker={initialTicker} dateControls={<Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}><OverviewDateRangeControl href="/analytics/execution" showCaption={false} value={selectedRange} /><FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" /></Box>} chartData={chartData} currency={currency} moneyBasis={moneyBasis} priceComparison={priceComparison} priceInsights={priceInsights} priceResults={priceResults} priceResultsByDirection={priceResultsByDirection} rows={rows} />
   </DashboardPage>;
 }

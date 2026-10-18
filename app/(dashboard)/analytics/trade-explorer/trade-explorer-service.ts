@@ -1,4 +1,3 @@
-import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {coachingReviewResourceScope} from "@/src/modules/communities/server/coaching-review-resource-scope";
 import "server-only";
 
@@ -69,8 +68,12 @@ import type {
 } from "./trade-explorer-saved-view-model";
 
 export type CoachingExplorerAuthorization=Readonly<{coachUserId:string;reviewId:string;communitySlug:string}>;
-function assertExplorerRead(database:Database.Database,scope:WorkspaceAccessScope,authorization?:CoachingExplorerAuthorization){
- if(!authorization){assertMembershipFeature(database,scope.userId,'analytics.trade_explorer');return;}
+function assertExplorerRead(database:Database.Database,scope:WorkspaceAccessScope,authorization?:CoachingExplorerAuthorization,compare=false){
+ if(!authorization){
+  assertMembershipFeature(database,scope.userId,'analytics.trade_explorer');
+  if(compare)assertMembershipFeature(database,scope.userId,'analytics.compare_trades');
+  return;
+ }
  const access=coachingReviewResourceScope(database,authorization);
  if(scope.userId!==access.scope.userId||scope.workspaceId!==access.scope.workspaceId||scope.activeAccountId!==access.scope.activeAccountId)throw new Error('Coaching Journal access changed.');
 }
@@ -370,13 +373,6 @@ function annotationRoundTripIds(
   });
 }
 
-function assertExplorerAccess(scope: WorkspaceAccessScope, compare = false): void {
-  withReadonlyPlatformDatabase({}, database => {
-    assertMembershipFeature(database, scope.userId, "analytics.trade_explorer");
-    if (compare) assertMembershipFeature(database, scope.userId, "analytics.compare_trades");
-  });
-}
-
 async function execute(
   scope: WorkspaceAccessScope,
   input: TradeExplorerQuery,
@@ -384,7 +380,6 @@ async function execute(
   tableOrder: JournalAnalyticsTableOrder = tradeExplorerTableOrder("closed_desc"),
   coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<AnalyticsLabPlatformPreview> {
-  assertExplorerAccess(scope);
   const asOfUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(
     scope,
@@ -603,7 +598,6 @@ export async function runCompleteTradeExplorerTableQuery(
   input: unknown,
   tradeSort?: unknown,
 ): Promise<AnalyticsLabPlatformPreview> {
-  assertExplorerAccess(scope);
   const normalizedRequest = normalizeTradeExplorerQueryRequest(input, tradeSort);
   const reportQuery = Object.freeze({
     ...normalizedRequest.query,
@@ -884,16 +878,10 @@ export async function runTradeExplorerComparison(
   input: unknown,
   coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<TradeExplorerComparisonResult> {
-  assertExplorerAccess(scope, true);
   const normalized = normalizeTradeExplorerComparison(input);
   const generatedAtUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service, verifiedReadonlyDatabase }) => {
-    if (coachingAuthorization) {
-      assertExplorerRead(verifiedReadonlyDatabase, scope, coachingAuthorization);
-    } else {
-      assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
-      assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.compare_trades");
-    }
+    assertExplorerRead(verifiedReadonlyDatabase,scope,coachingAuthorization,true);
     const groups = normalized.groups.map((group) => {
       const query = Object.freeze({
         ...group.query,
@@ -964,7 +952,6 @@ export async function readTradeExplorerPageModel(
   }>,
   coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<TradeExplorerPageModel> {
-  assertExplorerAccess(scope);
   const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, pnlReportingBasis, service, verifiedReadonlyDatabase }) => {
     assertExplorerRead(verifiedReadonlyDatabase,scope,coachingAuthorization);
     const calendarInput = Object.freeze({

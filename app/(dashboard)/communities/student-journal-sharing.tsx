@@ -2,7 +2,7 @@
 import {coachingSharingRequirements} from "./coaching-sharing-requirements";
 import {COACHING_DRAFT_SAVED} from "./coaching-draft-navigation";
 import {COACHING_ACCESS_LABELS} from "@/src/modules/communities/contracts/coaching-required-access";
-import {useActionState,useEffect,useState} from "react";
+import {useActionState,useEffect,useRef,useState} from "react";
 import {Alert,Box,Button,Checkbox,FormControlLabel,Stack,TextField} from "@mui/material";
 import {DashboardPanel} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
@@ -17,7 +17,9 @@ export function StudentJournalSharing({snapshot,isReview,selectedRelationshipId}
  const [selected,setSelected]=useState<string[]>(()=>options.filter(([key])=>active.some(grant=>grant.dataScope==="complete"||grant.dataScope===key||(grant.dataScope==="trades"&&grant.sharedFields?.includes(key)))).map(([key])=>key));
  const [feedback,save,pending]=useActionState(saveStudentJournalSharingAction,{error:"",saved:false});
  const [changed,setChanged]=useState(false);
- useEffect(()=>{if(feedback.saved){setChanged(false);document.dispatchEvent(new CustomEvent(COACHING_DRAFT_SAVED,{detail:{formId:"student-coaching-content"}}));}},[feedback]);
+ const sharingHash=useRef<string|null>(null);
+ useEffect(()=>{if(window.location.hash.includes("section=sharing"))sharingHash.current=window.location.hash;},[]);
+ useEffect(()=>{if(feedback.saved){setChanged(false);if(!window.location.hash&&sharingHash.current)window.history.replaceState(window.history.state,"",sharingHash.current);document.dispatchEvent(new CustomEvent(COACHING_DRAFT_SAVED,{detail:{formId:"student-coaching-content"}}));}},[feedback]);
  return <DashboardPanel title="Journal sharing">
  {relationship&&accountId?<Box component="form" action={isReview?undefined:save}><input name="communitySlug" type="hidden" value={snapshot.community.slug}/><input name="relationshipId" type="hidden" value={selectedRelationshipId}/><input name="journalAccountId" type="hidden" value={accountId}/><Stack spacing={1.5}>
  {requirements.required.length?<><Typography sx={{fontWeight:700}}>Required by your accepted coaching work</Typography><Typography>{requirements.required.map(scope=>COACHING_ACCESS_LABELS[scope]??scope).join(' · ')}</Typography><Typography>{requirements.missing.length?'Not yet shared: '+requirements.missing.map(scope=>COACHING_ACCESS_LABELS[scope]??scope).join(' · '):'Required access is currently shared.'}</Typography><Button disabled={isReview||pending} onClick={()=>{setChanged(true);setSelected(current=>[...new Set([...current,...requirements.required,'summary',...(requirements.required.some(scope=>!['summary','analytics'].includes(scope))?['trades']:[])])]);}}>Select required access</Button></>:null}

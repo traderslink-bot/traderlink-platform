@@ -72,7 +72,8 @@ function OverviewPartition({ moneyBasis, partition, showCurrency }: { moneyBasis
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
         {analyticsOverviewMetrics(moneyBasis).map((definition) => {
           const metric = metricFor(partition.metrics, definition.id);
-          return <DashboardMetricCard action={<AnalyzerHelpTooltip label={definition.label} text={definition.help} />} caption="" hideCaption key={definition.id} label={definition.label} value={metric ? formatJournalAnalyticsMetric(metric) : "Unavailable"} valueColor={financialSummaryMetricColor(definition.id, metric?.value)} />;
+          const noLosses = definition.id === "worst_trade" && numberValue(metricFor(partition.metrics, "loss_count")?.value ?? null) === 0;
+          return <DashboardMetricCard action={<AnalyzerHelpTooltip label={definition.label} text={definition.help} />} caption="" hideCaption key={definition.id} label={definition.label} value={noLosses ? "N/A" : metric ? formatJournalAnalyticsMetric(metric) : "Unavailable"} valueColor={noLosses ? undefined : financialSummaryMetricColor(definition.id, metric?.value)} />;
         })}
       </Box>
       <MonthlyPnlChartForPartition moneyBasis={moneyBasis} partition={partition} />

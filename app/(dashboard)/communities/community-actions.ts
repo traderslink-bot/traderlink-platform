@@ -46,6 +46,18 @@ import { TraderLinkCommunityCoachingProgramService } from "@/src/modules/communi
 import {CoachingAgreementService} from "@/src/modules/communities/server/coaching-agreement-service";
 import { readCommunityDiscordResources } from "@/src/modules/communities/server/community-discord-resources";
 
+function sqliteWriteContention(error:unknown):boolean{
+ const code=error&&typeof error==="object"&&"code" in error?(error as {code?:unknown}).code:null;
+ return code==="SQLITE_BUSY"||code==="SQLITE_LOCKED";
+}
+async function retrySqliteWriteContention<T>(run:()=>T|Promise<T>):Promise<T>{
+ try{return await run();}catch(error){
+  if(!sqliteWriteContention(error))throw error;
+  await new Promise<void>(resolve=>setTimeout(resolve,100));
+  return await run();
+ }
+}
+
 export async function sendCoachMessageWithFeedbackAction(_previous:{message:string},formData:FormData):Promise<{message:string}>{
  try {
   await sendCommunityCoachingMessageAction(formData);
@@ -311,16 +323,27 @@ export async function saveStudentJournalSharingAction(_previous:{error:string;sa
   if(options.some(value=>typeof value!=="string"||!allowed.includes(value)))return {error:"Choose supported sharing options.",saved:false};
   const selected=options as string[];const fields=selected.filter(value=>!["summary","trades","analytics"].includes(value));
   if(fields.length&&!selected.includes("trades"))return {error:"Select Trades to share notes, rules or tags.",saved:false};
-  withPlatformDatabase({mode:"runtime"},database=>database.transaction(()=>{
+  const changed=await retrySqliteWriteContention(()=>withPlatformDatabase({mode:"runtime"},database=>database.transaction(()=>{
    const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);
    const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};
    const relationship=database.prepare(`SELECT 1 FROM traderlink_community_coaching_relationships WHERE relationship_id=? AND community_id=? AND student_user_id=? AND status='active'`).get(relationshipId,community.community_id,actor.userId);
    if(!relationship)throw new Error("Sharing unavailable");
+   const current=database.prepare(`SELECT grant_id,data_scope,shared_fields_json FROM traderlink_community_journal_grants WHERE relationship_id=? AND community_id=? AND student_user_id=? AND journal_account_id=? AND status='active'`).all(relationshipId,community.community_id,actor.userId,accountId) as {grant_id:string;data_scope:string;shared_fields_json:string}[];
+   const currentScopes=current.map(grant=>grant.data_scope).sort();
+   const nextScopes=["summary","trades","analytics"].filter(scope=>selected.includes(scope)).sort();
+   const currentFields=current.find(grant=>grant.data_scope==="trades")?.shared_fields_json;
+   if(JSON.stringify(currentScopes)===JSON.stringify(nextScopes)&&JSON.stringify(currentFields?JSON.parse(currentFields).sort():[])===JSON.stringify([...fields].sort()))return false;
    const atUtc=createCanonicalUtcTimestamp();const repository=new TraderLinkCommunityPlatformRepository(database);
-   database.prepare(`UPDATE traderlink_community_journal_grants SET status='revoked',revoked_at_utc=? WHERE relationship_id=? AND community_id=? AND student_user_id=? AND journal_account_id=? AND status='active'`).run(atUtc,relationshipId,community.community_id,actor.userId,accountId);
-   for(const scope of ["summary","trades","analytics"] as const)if(selected.includes(scope))repository.grantJournal({communityId:community.community_id,actor,relationshipId,journalAccountId:accountId,dataScope:scope,sharedFields:scope==="trades"?fields:[],atUtc});
-  })());
-  revalidateCommunityPath(communitySlug,"coaching");return {error:"",saved:true};
+   for(const grant of current)if(!nextScopes.includes(grant.data_scope))repository.revokeJournal({actorUserId:actor.userId,grantId:grant.grant_id,atUtc});
+   for(const scope of ["summary","trades","analytics"] as const)if(selected.includes(scope)){
+    const existing=current.find(grant=>grant.data_scope===scope);
+    const sameFields=scope!=="trades"||JSON.stringify(existing?.shared_fields_json?JSON.parse(existing.shared_fields_json).sort():[])===JSON.stringify([...fields].sort());
+    if(!existing||!sameFields)repository.grantJournal({communityId:community.community_id,actor,relationshipId,journalAccountId:accountId,dataScope:scope,sharedFields:scope==="trades"?fields:[],atUtc});
+   }
+   return true;
+  })()));
+  if(changed){revalidatePath(`/communities/${communitySlug}`);revalidatePath("/communities/coaching");}
+  return {error:"",saved:true};
  }catch(error){unstable_rethrow(error);return {error:"Could not save sharing. Your selections are still here; try again.",saved:false};}
 }
 
