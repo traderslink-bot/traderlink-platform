@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm } from "@/app/login/login-form";
 import { ConnectedMethods } from "@/app/(member)/account/login/connected-methods";
+import type { LoginMethodDetails } from "./contracts/platform-login-method-details";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -16,9 +17,14 @@ beforeEach(() => {
 
 describe("connected login methods", () => {
   const availability = { googleAvailable: true, discordAvailable: true, emailAvailable: true };
+  const details = (providers: string[]): LoginMethodDetails => ({
+    signedInWith: "google",
+    providers: providers.map(provider => ({ provider, connected: true, accountName: null, email: null })),
+    email: { address: null, verified: false, connected: false, pendingAddress: null },
+  });
   it("keeps the sole login method connected", async () => {
     await act(async () => root.render(createElement(ConnectedMethods, {
-      ...availability, methods: ["google"],
+      ...availability, details: details(["google"]),
     })));
     const disconnect = [...container.querySelectorAll("button")]
       .find(button => button.textContent === "Disconnect Google")!;
@@ -29,7 +35,7 @@ describe("connected login methods", () => {
     const fetch = vi.fn();
     vi.stubGlobal("fetch", fetch);
     await act(async () => root.render(createElement(ConnectedMethods, {
-      ...availability, methods: ["google", "discord"],
+      ...availability, details: details(["google", "discord"]),
     })));
     const disconnect = [...container.querySelectorAll("button")]
       .find(button => button.textContent === "Disconnect Discord")!;
