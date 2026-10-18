@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 import { DashboardPanel } from "../../../dashboard-template";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
-import { AccountErasureControls } from "../account-erasure-controls";
-import { AccountSettingsLayout } from "../account-settings-layout";
+import { AccountErasureControls } from "../../../(dashboard)/account/account-erasure-controls";
+import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
 
 export const metadata: Metadata = {
   description: "Permanently delete TraderLink data when you choose to leave.",
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountPrivacyPage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   const profile = withReadonlyPlatformDatabase({}, (database) =>
     new PlatformAccountProfileReadService(database).get(scope));
   const activeAccount = profile.journalAccounts.find((account) => account.active) ?? null;

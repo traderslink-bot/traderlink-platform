@@ -6,10 +6,10 @@ import {
   DashboardPanel,
   DashboardSecondaryAction,
 } from "../../dashboard-template";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
-import { NotificationList } from "./notification-list";
+import { NotificationList } from "../../(dashboard)/notifications/notification-list";
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import {
   createPlatformOfflineNotificationsViewModel,
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NotificationsPage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   const notifications = withReadonlyPlatformDatabase(
     {},
     (database) => new PlatformNotificationRepository(database).list(scope),

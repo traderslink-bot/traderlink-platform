@@ -13,6 +13,7 @@ import { readMembershipFeatures } from "@/src/modules/platform/server/membership
 import { membershipWhopConfiguration } from "@/src/modules/platform/server/membership/platform-membership-provider-readiness";
 import { readMembershipWebhookFailures } from "@/src/modules/platform/server/membership/platform-membership-webhook-health";
 import { membershipOwnerGrantRecurrence } from "@/src/modules/platform/contracts/platform-membership-owner-grant";
+import { membershipFeatureDefaultEnforcement } from "@/src/modules/platform/contracts/membership-product-features";
 import { MembershipMemberPicker } from "./member-picker";
 import { PrivateWatchlistAllowanceSettings } from "./private-watchlist-allowance-settings";
 import { WatchlistPlanSettings } from "./watchlist-plan-settings";
@@ -57,7 +58,7 @@ export function MembershipManagementPanels({ database, section }: { database: Da
         </MembershipForm>
       </details>;
     })}</Stack>
-    <Stack spacing={1} sx={{ mb: 3 }}>{readMembershipFeatures(database).map((f) => <Typography key={f.key}>{f.label} · {f.key} · {policies.get(f.key) ?? "off"}</Typography>)}</Stack>
+    <Stack spacing={1} sx={{ mb: 3 }}>{readMembershipFeatures(database).map((f) => <Typography key={f.key}>{f.label} · {f.key} · {policies.get(f.key) ?? membershipFeatureDefaultEnforcement(f.key)}</Typography>)}</Stack>
     <MembershipForm action={manageMembershipAction} label="Save feature"><Command operation="feature" />
       <Field name="featureKey" label="Feature key" required hint="Use the same key when connecting the feature in app code." />
       <Field name="label" label="Feature name" required /><Field name="moduleKey" label="Module key" required />
@@ -191,7 +192,8 @@ export function MembershipManagementPanels({ database, section }: { database: Da
     </Stack></JournalAdminPanel>;
   }
   if (section === "Members") {
-    const memberRows = database.prepare(`SELECT e.entitlement_id id,u.display_name||' · '||p.name||' · version '||v.version_number||' · '||e.status||' · '||COALESCE(e.ends_at_utc,'No end date') label,r.interval_unit,r.interval_count,
+    const memberRows = database.prepare(`SELECT e.entitlement_id id,u.display_name||' · '||p.name||' · version '||v.version_number||' · '||
+      CASE WHEN e.status IN ('active','scheduled') AND e.ends_at_utc IS NOT NULL AND julianday(e.ends_at_utc)<=julianday(?) THEN 'Expired' ELSE e.status END||' · '||COALESCE(e.ends_at_utc,'No end date') label,r.interval_unit,r.interval_count,
       target_plan.name pending_plan_name,target_version.version_number pending_version,c.renewal_after_utc
       FROM platform_membership_entitlements e JOIN platform_users u ON u.user_id=e.user_id
       JOIN platform_membership_plan_versions v ON v.plan_version_id=e.plan_version_id JOIN platform_membership_plans p ON p.plan_id=v.plan_id
@@ -199,7 +201,7 @@ export function MembershipManagementPanels({ database, section }: { database: Da
       LEFT JOIN platform_membership_version_changes c ON c.entitlement_id=e.entitlement_id AND c.applied_at_utc IS NULL
       LEFT JOIN platform_membership_plan_versions target_version ON target_version.plan_version_id=c.target_plan_version_id
       LEFT JOIN platform_membership_plans target_plan ON target_plan.plan_id=target_version.plan_id
-      ORDER BY u.display_name,e.created_at_utc,e.entitlement_id`).all() as (Option & {
+      ORDER BY u.display_name,e.created_at_utc,e.entitlement_id`).all(new Date().toISOString()) as (Option & {
         interval_unit: string | null; interval_count: number | null;
         pending_plan_name: string | null; pending_version: number | null; renewal_after_utc: string | null;
       })[];

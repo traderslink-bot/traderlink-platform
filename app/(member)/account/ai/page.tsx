@@ -3,14 +3,14 @@ import type { Metadata } from "next";
 
 import { DashboardPanel } from "../../../dashboard-template";
 import { CoachReviewDeliveryScheduleRepository } from "@/src/modules/coach/server/coach-weekly-review-schedule-repository";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { readWhopAiReviewConfigurationHealth, readWhopAiReviewCustomerUrls } from "@/src/modules/platform/server/billing/whop-ai-review-configuration";
 import { isWhopAiReviewEntitlementSchemaAvailable, WhopAiReviewEntitlementRepository } from "@/src/modules/platform/server/billing/whop-ai-review-entitlement-repository";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { AccountSettingsLayout } from "../account-settings-layout";
-import { AiComingSoonMessage } from "../../ai-coming-soon-message";
-import { AiReviewFrequencySettings } from "../ai-review-delivery-settings";
-import { AiReviewSubscriptionStatus } from "../ai-review-subscription-status";
+import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
+import { AiComingSoonMessage } from "../../../(dashboard)/ai-coming-soon-message";
+import { AiReviewFrequencySettings } from "../../../(dashboard)/account/ai-review-delivery-settings";
+import { AiReviewSubscriptionStatus } from "../../../(dashboard)/account/ai-review-subscription-status";
 import { areTraderLinkPlatformAiFeaturesEnabled } from
   "@/src/modules/platform/contracts/platform-ai-launch-state";
 
@@ -23,6 +23,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountAiPage() {
+  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   if (!areTraderLinkPlatformAiFeaturesEnabled()) {
     return (
       <AccountSettingsLayout
@@ -35,7 +36,6 @@ export default async function AccountAiPage() {
     );
   }
 
-  const scope = await requireTraderLinkPlatformPageScope();
   const { aiReviewAccess, aiReviewSettings, planIncluded } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
       planIncluded:hasPlatformMembershipFeature(database,scope.userId,"ai.reviews"),

@@ -12,7 +12,7 @@ import { DashboardAccountSwitcher } from "@/app/dashboard-account-switcher";
 import { DashboardPanel } from "../../../dashboard-template";
 import {
   currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformPageScope,
+  requireTraderLinkPlatformAuthenticatedPageIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -21,14 +21,14 @@ import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
 import { isMoomooMarketDataReady } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
-import { AccountManagementClient } from "../account-management-client";
-import { AccountSettingsLayout } from "../account-settings-layout";
-import { BrokerConnectionPicker } from "../broker-connection-picker";
-import { MoomooConnectionSettings } from "../moomoo-connection-settings";
-import { MoomooExecutionImportSetup } from "../moomoo-execution-import-setup";
-import { OfflineDataSettings } from "../offline-data-settings";
-import { PnlReportingBasisSettings } from "../pnl-reporting-basis-settings";
-import { ReportingCurrencySettings } from "../reporting-currency-settings";
+import { AccountManagementClient } from "../../../(dashboard)/account/account-management-client";
+import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
+import { BrokerConnectionPicker } from "../../../(dashboard)/account/broker-connection-picker";
+import { MoomooConnectionSettings } from "../../../(dashboard)/account/moomoo-connection-settings";
+import { MoomooExecutionImportSetup } from "../../../(dashboard)/account/moomoo-execution-import-setup";
+import { OfflineDataSettings } from "../../../(dashboard)/account/offline-data-settings";
+import { PnlReportingBasisSettings } from "../../../(dashboard)/account/pnl-reporting-basis-settings";
+import { ReportingCurrencySettings } from "../../../(dashboard)/account/reporting-currency-settings";
 
 export const metadata: Metadata = {
   description: "Manage TraderLink accounts, currency, broker connections and PWA app settings.",
@@ -44,7 +44,7 @@ export default async function AccountTradingPage({
   searchParams: Promise<{ moomoo?: string; reported?: string }>;
 }) {
   const query = await searchParams;
-  const scope = await requireTraderLinkPlatformPageScope();
+  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   const { moomooAccountLinks, moomooConnection, moomooImportUnavailable, brokerMembershipAllowed, profile } = withReadonlyPlatformDatabase({}, (database) => {
     const currentProfile = new PlatformAccountProfileReadService(database).get(scope);
     const currentAccount = currentProfile.journalAccounts.find((account) => account.active);

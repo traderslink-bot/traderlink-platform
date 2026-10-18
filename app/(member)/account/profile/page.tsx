@@ -6,10 +6,10 @@ import Typography from "@mui/material/Typography";
 import type { Metadata } from "next";
 
 import { DashboardPanel } from "../../../dashboard-template";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
-import { AccountSettingsLayout } from "../account-settings-layout";
+import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
 
 export const metadata: Metadata = {
   description: "Review your TraderLink profile and sign-in access.",
@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountProfilePage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   const profile = withReadonlyPlatformDatabase({}, (database) =>
     new PlatformAccountProfileReadService(database).get(scope));
 

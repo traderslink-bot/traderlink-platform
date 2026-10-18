@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Alert from "@mui/material/Alert";
 
 import { DashboardPanel } from "../../../dashboard-template";
-import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { PlatformSessionRepository } from "@/src/modules/platform/server/authentication/platform-session-repository";
 import { PlatformSessionService } from "@/src/modules/platform/server/authentication/platform-session-service";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { AccountSessionControls } from "../account-session-controls";
-import { AccountSettingsLayout } from "../account-settings-layout";
+import { AccountSessionControls } from "../../../(dashboard)/account/account-session-controls";
+import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
 
 export const metadata: Metadata = {
   description: "Manage TraderLink sign-ins on this and other devices.",
@@ -23,7 +23,7 @@ export default async function AccountSecurityPage({
   searchParams: Promise<Readonly<{ sessionAction?: string }>>;
 }) {
   const query = await searchParams;
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   const hasDiscordSession = identity.mode === "platform_session";
   const activeSessions = hasDiscordSession
     ? withReadonlyPlatformDatabase({}, (database) =>

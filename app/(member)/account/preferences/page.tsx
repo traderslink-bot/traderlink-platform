@@ -5,18 +5,18 @@ import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt
 import type { Metadata } from "next";
 
 import { DashboardPanel } from "../../../dashboard-template";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
 import { PlatformNotificationEmailAddressRepository } from "@/src/modules/platform/server/notifications/platform-notification-email-address-repository";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
-import { AccountSettingsLayout } from "../account-settings-layout";
-import { AppearanceSettings } from "../appearance-settings";
-import { NotificationPreferences } from "../notification-preferences";
+import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
+import { AppearanceSettings } from "../../../(dashboard)/account/appearance-settings";
+import { NotificationPreferences } from "../../../(dashboard)/account/notification-preferences";
 import { WatchlistPublicationNotificationStore } from "@/src/modules/watchlist/server/notifications/watchlist-publication-notification-store";
-import { ReverseSplitNotificationPanel } from "../../reverse-splits/notification-panel";
+import { ReverseSplitNotificationPanel } from "../../../(dashboard)/reverse-splits/notification-panel";
 
 export const metadata: Metadata = {
   description: "Choose TradersLink appearance, push notifications and Discord messages.",
@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountPreferencesPage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   const { upgradePlans, allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
       upgradePlans: Object.fromEntries([...PLATFORM_NOTIFICATION_CATEGORIES, "market_halt", "press_release", "watchlist"].map(category => [

@@ -6,7 +6,7 @@ import {
   type JournalAdminScope,
 } from "../../contracts/journal-admin-scope";
 import {
-  requireTraderLinkPlatformRequestIdentity,
+  requireTraderLinkPlatformAuthenticatedRequestIdentity,
   type TraderLinkPlatformRequestIdentity,
 } from "../authentication/require-platform-request-scope";
 import { PlatformDiscordMembershipRepository } from "../authentication/platform-discord-membership-repository";
@@ -234,7 +234,7 @@ export function withJournalAdminDatabase<T>(
   }> = {},
 ): T {
   const environment = options.environment ?? process.env;
-  const identity = requireTraderLinkPlatformRequestIdentity(requestHeaders, {
+  const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders, {
     environment,
     databasePath: options.databasePath,
     forbiddenRepositoryRoots: options.forbiddenRepositoryRoots,

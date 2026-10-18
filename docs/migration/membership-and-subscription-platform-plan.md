@@ -1,5 +1,7 @@
 # TraderLink Membership And Subscription Platform Plan
 
+Current owner-authorized staging completion: [consolidated batch QA and release gates](membership-batch-qa-20261017.md). This dated directive supersedes older no-fix/no-staging-release statements below for the remaining QA batch: test the complete inventory, collect corrections, deploy once to staging and retest. Production remains excluded.
+
 Current staging-only QA and fixture coordination: [October 16 staging QA](membership-staging-qa-20261016.md).
 Remaining QA progress: [October 17 Membership/Login checks](membership-login-remaining-staging-qa-20261017.md).
 No feature fixes, deployments or production changes are authorized by that run.

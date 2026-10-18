@@ -62,6 +62,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
@@ -419,6 +420,8 @@ function DashboardShellContent({
   const [aiChatContextRequestId, setAiChatContextRequestId] = useState(0);
   const [workspaceTradeContext, setWorkspaceTradeContext] = useState<Awaited<ReturnType<typeof loadWorkspaceTradeEntryContext>> | null>(null);
   const [accountMenuAnchor, setAccountMenuAnchor] = useState<HTMLElement | null>(null);
+  const [signOutPending, setSignOutPending] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<
     Readonly<Partial<Record<DashboardNavigationGroup["id"], boolean>>>
   >({});
@@ -434,6 +437,32 @@ function DashboardShellContent({
   const toggleNavigationPreference=()=>{if(!communityMenu)return;const showTraderLink=!prefersTraderLink;setNavigationPreference({viewerId:communityMenu.viewerId,showTraderLink});setCommunityMode(null);try{localStorage.setItem(`traderlink:community-navigation:${communityMenu.viewerId}`,showTraderLink?"traderlink":"community");}catch{}};
   const desktopWidth = showCommunity ? expandedWidth : collapsed ? collapsedWidth : expandedWidth;
   const accountMenuOpen = Boolean(accountMenuAnchor);
+  async function signOut() {
+    if (signOutPending) return;
+    setAccountMenuAnchor(null);
+    setSignOutPending(true);
+    setSignOutError(null);
+    try {
+      // Native POST navigation under no-referrer sends Origin:null. Keep the
+      // real same-origin POST origin, but never send the private page's URL.
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        mode: "same-origin",
+        credentials: "same-origin",
+        referrer: "",
+        referrerPolicy: "same-origin",
+        cache: "no-store",
+      });
+      const destination = new URL(response.url);
+      if (!response.ok || !response.redirected || destination.origin !== window.location.origin || destination.pathname !== "/signed-out") {
+        throw new Error("sign_out_unconfirmed");
+      }
+      window.location.assign("/signed-out");
+    } catch {
+      setSignOutError("Could not confirm sign-out. Please try again.");
+      setSignOutPending(false);
+    }
+  }
   const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS
     .filter((section) =>
       section.group.id !== "communities" || communityNavigationHref !== null)
@@ -889,12 +918,12 @@ function DashboardShellContent({
               Security
             </MenuItem>
             <Divider />
-            <MenuItem component="button" form="dashboard-sign-out-form" onClick={() => setAccountMenuAnchor(null)} type="submit">
+            <MenuItem component="button" disabled={signOutPending} onClick={() => { void signOut(); }} type="button">
               <ListItemIcon><LogoutRoundedIcon fontSize="small" /></ListItemIcon>
               Log out
             </MenuItem>
           </Menu>
-          <Box action="/api/auth/logout" component="form" id="dashboard-sign-out-form" method="post" />
+          <Snackbar open={Boolean(signOutError)} onClose={() => setSignOutError(null)} message={signOutError} />
         </Toolbar>
       </Box>
       <Drawer

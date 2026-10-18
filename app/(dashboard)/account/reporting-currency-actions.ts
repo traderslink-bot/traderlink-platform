@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUtcTimestamp, isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
@@ -11,7 +11,7 @@ export async function saveReportingCurrency(
   value: unknown,
 ): Promise<Readonly<{ ok: true; reportingCurrency: string }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const reportingCurrency = withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformUserPreferenceRepository(database)
