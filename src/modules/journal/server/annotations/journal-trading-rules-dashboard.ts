@@ -66,6 +66,7 @@ export type TradingRulesDashboardView = Readonly<{
   expectedAccountSelectionRef: JournalAccountSelectionRef;
   packet: Readonly<{ rules: readonly ExecutionRuleDashboardCard[] }>;
   templates: readonly TradingRulesTemplateView[];
+  presetRulesIncluded?: boolean;
   manualRules: readonly ManualCustomRuleRecord[];
 }>;
 
@@ -383,6 +384,7 @@ export function readJournalTradingRulesDashboard(
         })),
     }),
     templates: JOURNAL_RULE_TEMPLATE_CATALOG,
+    presetRulesIncluded: service.canAccessPresetRules(scope),
     manualRules: Object.freeze(rules
       .filter((rule) => rule.sourceKind === "custom")
       .map((rule) => Object.freeze({

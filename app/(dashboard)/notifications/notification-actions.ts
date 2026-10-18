@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 
 export async function markNotificationRead(notificationRef: string): Promise<void> {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   withPlatformDatabase(
     { mode: "runtime" },
     (database) => new PlatformNotificationRepository(database).markRead(
@@ -22,7 +22,7 @@ export async function markNotificationRead(notificationRef: string): Promise<voi
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   withPlatformDatabase(
     { mode: "runtime" },
     (database) => new PlatformNotificationRepository(database).markAllRead(

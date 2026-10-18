@@ -2,8 +2,9 @@ import { buildPremiumAnalysisPreview } from "./premium-analysis-preview";
 import { parseTradersLinkAiRead } from "./traderslink-ai-read";
 import type { LiveWatchlistSymbolState } from "./live-watchlist-types";
 
-export function watchlistDetailProjection(state: LiveWatchlistSymbolState, analysisAllowed: boolean, pricesAllowed = state.premiumAnalysisPricesAllowed !== false, levelsAllowed = state.premiumLevelsAllowed !== false, upgradeLinks = state.watchlistUpgradeLinks): LiveWatchlistSymbolState {
+export function watchlistDetailProjection(state: LiveWatchlistSymbolState, analysisAllowed: boolean, pricesAllowed = state.premiumAnalysisPricesAllowed !== false, levelsAllowed = state.premiumLevelsAllowed !== false, upgradeLinks = state.watchlistUpgradeLinks, indicatorsAllowed = state.membershipIndicatorsAllowed !== false): LiveWatchlistSymbolState {
   const cards = { ...state.cards };
+  if (!indicatorsAllowed) delete cards.technicalContext;
   if (!levelsAllowed) {
     delete cards.fullLadder;
     delete cards.nearestSupportResistance;
@@ -21,7 +22,7 @@ export function watchlistDetailProjection(state: LiveWatchlistSymbolState, analy
     delete cards.tradersLinkAiRead;
     delete cards.liveTraderRead;
   }
-  return { ...state, cards, watchlistUpgradeLinks: upgradeLinks, premiumLevelsAllowed: levelsAllowed,
+  return { ...state, cards, membershipIndicatorsAllowed: indicatorsAllowed, ...(!indicatorsAllowed ? { indicatorCardVisible: false } : {}), watchlistUpgradeLinks: upgradeLinks, premiumLevelsAllowed: levelsAllowed,
     ...(!levelsAllowed ? {nearestSupport:null,nearestResistance:null,nearestSupportLabel:null,nearestResistanceLabel:null,
       levelMap:state.levelMap ? {currentPrice:state.levelMap.currentPrice,rangeState:state.levelMap.rangeState,
         overnightReference:state.levelMap.overnightReference,nearestSupport:null,nearestResistance:null,nextStrongSupport:null,nextStrongResistance:null,supportLevels:[],resistanceLevels:[]} : null} : {}),

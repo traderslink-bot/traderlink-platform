@@ -1,3 +1,4 @@
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import "server-only";
 
 import { createHash } from "node:crypto";
@@ -218,7 +219,10 @@ function list(
 export function listTradeExplorerSavedViews(
   scope: WorkspaceAccessScope,
 ): readonly TradeExplorerSavedView[] {
-  return withReadonlyPlatformDatabase({}, (database) => list(database, scope));
+  return withReadonlyPlatformDatabase({}, (database) => {
+    assertMembershipFeature(database, scope.userId, "analytics.trade_explorer");
+    return list(database, scope);
+  });
 }
 
 export function createTradeExplorerSavedView(
@@ -230,6 +234,7 @@ export function createTradeExplorerSavedView(
 }> {
   const prepared = prepare(scope, input.view);
   return withPlatformDatabase({ mode: "runtime" }, (database) => {
+    assertMembershipFeature(database, scope.userId, "analytics.trade_explorer");
     const created = service(database).create(accountScope(scope), {
       name: input.name,
       payload: prepared.payload,

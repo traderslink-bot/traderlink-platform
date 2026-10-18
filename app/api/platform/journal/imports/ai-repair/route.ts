@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { openPlatformDatabase, withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -60,6 +61,8 @@ export async function POST(request: Request): Promise<Response> {
     }
     return Response.json({ status: "queued", repairJobRef: job.repairJobId });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_JOURNAL_AI_REPAIR_FAILED";

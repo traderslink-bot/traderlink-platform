@@ -1,4 +1,5 @@
 "use client";
+
 import {
   MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
   membershipActionError,
@@ -404,7 +405,10 @@ export function TickerTradeDetailDrawer({
     if (after) query.set("after", after);
     try {
       const response = await fetch(`/api/platform/journal/analytics/trade-details?${query}`, { cache: "no-store" });
-      if (!response.ok) throw new Error("trade_details_unavailable");
+      if (!response.ok) {
+        throwIfMembershipRequired(await response.json().catch(() => null));
+        throw new Error("trade_details_unavailable");
+      }
       const payload = await response.json() as Readonly<{
         currency: string | null;
         nextCursor: string | null;
@@ -441,8 +445,8 @@ export function TickerTradeDetailDrawer({
           if (revision === requestRevision.current) setSupportingDetailsError(true);
         }
       }
-    } catch {
-      if (revision === requestRevision.current) setError("Completed trades could not be loaded.");
+    } catch (failure) {
+      if (revision === requestRevision.current) setError(membershipActionError(failure) ?? "Completed trades could not be loaded.");
     } finally {
       if (revision === requestRevision.current) setLoading(false);
     }
@@ -495,7 +499,7 @@ export function TickerTradeDetailDrawer({
         </Stack>
       </Stack>
 
-      {error ? <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert> : null}
+      {error ? <Alert severity="error" sx={{ mt: 2 }}>{error}{error === MEMBERSHIP_FEATURE_REQUIRED_MESSAGE ? <Button href="/plans?feature=analytics.access" variant="contained" sx={{ display: "block", mt: 1 }}>Unlock Analytics</Button> : null}</Alert> : null}
       {supportingDetailsError ? (
         <Alert severity="warning" sx={{ mt: 2 }}>Saved trade notes, rules, tags or executions could not be loaded.</Alert>
       ) : null}

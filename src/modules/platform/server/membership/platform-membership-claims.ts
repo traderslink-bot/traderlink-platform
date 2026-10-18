@@ -3,6 +3,8 @@ import type Database from "better-sqlite3";
 import { createCanonicalUtcTimestamp, createCanonicalUuidV4, assertCanonicalUuidV4, assertCanonicalUtcTimestamp } from "../database/platform-migration-contract";
 import { PlatformMembershipRepository } from "./platform-membership-repository";
 import { readDiscordMembershipGrants } from "./platform-membership-discord";
+import { membershipTrialFamily, membershipTrialFamilySql } from "./membership-trial-lineage";
+import { readMembershipTrialEndBehavior, type MembershipTrialEndBehavior } from "./membership-trial-terms";
 
 export type MembershipClaimOffer = {
   offer_id: string; plan_version_id: string; billing_kind: string; provider: string;
@@ -15,19 +17,27 @@ export type MembershipClaimOffer = {
 export class PlatformMembershipClaims {
   constructor(private readonly database: Database.Database) {}
 
-  reserve(input: { userId: string; offerId: string; secret?: string; trialCampaignId?: string; atUtc?: string }): { claimId: string; offer: MembershipClaimOffer; trialDays: number | null; trialAmount: number | null; paymentMethodRequired: boolean } {
+  reserve(input: { userId: string; offerId: string; secret?: string; trialCampaignId?: string; allowBundle?: boolean; atUtc?: string }): { claimId: string; offer: MembershipClaimOffer; trialDays: number | null; trialAmount: number | null; paymentMethodRequired: boolean; trialEndBehavior: MembershipTrialEndBehavior | null; checkoutCreatedAtUtc?: string } {
     const at = input.atUtc ?? createCanonicalUtcTimestamp();
     assertCanonicalUtcTimestamp(at, "atUtc");
     assertCanonicalUuidV4(input.userId, "userId");
     assertCanonicalUuidV4(input.offerId, "offerId");
     return this.database.transaction(() => {
-      this.database.prepare("UPDATE platform_membership_claims SET state='released' WHERE state='reserved' AND expires_at_utc<=?").run(at);
+      const hasAmendments = Boolean(this.database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_membership_addon_amendments'").get());
+      this.database.prepare(`UPDATE platform_membership_claims SET state='released' WHERE state='reserved' AND expires_at_utc<=?
+        ${hasAmendments ? "AND NOT EXISTS (SELECT 1 FROM platform_membership_addon_amendments a WHERE a.amendment_id=platform_membership_claims.claim_id AND a.state IN ('confirming','pending_payment','reconciliation_required'))" : ""}`).run(at);
       const offer = this.database.prepare(`SELECT o.*,p.visibility,provider.configuration_state provider_configuration_state FROM platform_membership_offers o
         JOIN platform_membership_provider_definitions provider ON provider.provider_key=o.provider
         JOIN platform_membership_plan_versions v ON v.plan_version_id=o.plan_version_id JOIN platform_membership_plans p ON p.plan_id=v.plan_id
         WHERE o.offer_id=? AND o.status='active' AND v.lifecycle_state='published' AND p.status='active'
         AND provider.configuration_state IN ('test','ready')`).get(input.offerId) as (MembershipClaimOffer & { visibility: string; channel: string }) | undefined;
       if (!offer) throw new Error("This offer is no longer available.");
+      const presentation = this.database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_membership_plan_presentations'").get()
+        ? this.database.prepare(`SELECT s.document_json,v.created_by_user_id FROM platform_membership_plan_presentations s
+        JOIN platform_membership_plan_versions v USING(plan_version_id) WHERE s.plan_version_id=?`).get(offer.plan_version_id) as { document_json: string; created_by_user_id: string } | undefined : undefined;
+      const packageInfo = presentation ? JSON.parse(presentation.document_json) as { packageType?: string; bundleOfferIds?: string[] } : null;
+      if (packageInfo?.packageType === "addon") throw new Error("This add-on must be selected with a plan.");
+      if (packageInfo?.bundleOfferIds?.length && (!input.allowBundle || presentation?.created_by_user_id !== input.userId)) throw new Error("This combined offer belongs to another checkout. Select your plan and add-ons again.");
       let shareLinkId: string | null = null;
       if (input.secret) {
         const link = this.database.prepare(`SELECT l.share_link_id FROM platform_membership_share_links l
@@ -41,9 +51,15 @@ export class PlatformMembershipClaims {
           !readDiscordMembershipGrants(this.database, input.userId, at, input.offerId).length) {
         throw new Error("Use the private invitation for this offer.");
       }
+      if (input.allowBundle) {
+        if (this.database.prepare("SELECT 1 FROM platform_membership_provider_subscriptions WHERE user_id=? AND lifecycle_state IN ('trialing','active','past_due','cancel_at_period_end')").get(input.userId)) throw new Error("You have an existing paid subscription. Manage it before starting a new combined subscription.");
+        const pending = this.database.prepare("SELECT claim_id,created_at_utc FROM platform_membership_claims WHERE user_id=? AND offer_id=? AND state='reserved' AND trial_campaign_id IS NULL ORDER BY created_at_utc DESC LIMIT 1").get(input.userId, input.offerId) as { claim_id: string; created_at_utc: string } | undefined;
+        if (pending) return { claimId: pending.claim_id, offer, trialDays: null, trialAmount: null, paymentMethodRequired: false, trialEndBehavior: null, checkoutCreatedAtUtc: pending.created_at_utc };
+      }
       let trialDays: number | null = null;
       let trialAmount: number | null = null;
       let paymentMethodRequired = false;
+      let trialEndBehavior: MembershipTrialEndBehavior | null = null;
       if (input.trialCampaignId) {
         const trial = this.database.prepare(`SELECT t.*,x.external_checkout_url FROM platform_membership_trial_campaigns t
           LEFT JOIN platform_membership_trial_checkouts x ON x.trial_campaign_id=t.trial_campaign_id WHERE t.trial_campaign_id=? AND offer_id=? AND status='active'
@@ -51,10 +67,15 @@ export class PlatformMembershipClaims {
           .get(input.trialCampaignId, input.offerId, at, at) as { duration_days: number; entry_amount_minor: number | null; payment_method_required: number; eligibility_mode: string; capacity: number | null; external_checkout_url: string | null } | undefined;
         if (!trial || trial.eligibility_mode === "owner_only") throw new Error("This trial requires an owner grant or is no longer open.");
         const count = (sql: string, ...args: string[]) => (this.database.prepare(sql).get(...args) as { count: number }).count;
-        if (trial.capacity !== null && count("SELECT COUNT(*) count FROM platform_membership_claims WHERE trial_campaign_id=? AND state IN ('reserved','fulfilled')", input.trialCampaignId) >= trial.capacity) throw new Error("This trial is fully enrolled.");
-        if (trial.eligibility_mode !== "unlimited" && count(`SELECT COUNT(*) count FROM platform_membership_claims WHERE user_id=? AND state IN ('reserved','fulfilled') AND trial_campaign_id IS NOT NULL${trial.eligibility_mode === "once_per_campaign" ? " AND trial_campaign_id=?" : ""}`,
-          input.userId, ...(trial.eligibility_mode === "once_per_campaign" ? [input.trialCampaignId] : []))) throw new Error("You have already enrolled in this trial.");
+        const family = membershipTrialFamily(this.database, input.trialCampaignId);
+        const familySql = membershipTrialFamilySql(this.database, "c.trial_campaign_id");
+        if (trial.capacity !== null && count(`SELECT COUNT(*) count FROM platform_membership_claims c WHERE ${familySql}=? AND state IN ('reserved','fulfilled')`, family) >= trial.capacity) throw new Error("This trial is fully enrolled.");
+        if (trial.eligibility_mode !== "unlimited" && count(`SELECT COUNT(*) count FROM platform_membership_claims c WHERE user_id=? AND state IN ('reserved','fulfilled') AND trial_campaign_id IS NOT NULL${trial.eligibility_mode === "once_per_campaign" ? ` AND ${familySql}=?` : ""}`,
+          input.userId, ...(trial.eligibility_mode === "once_per_campaign" ? [family] : []))) throw new Error("You have already enrolled in this trial.");
         trialDays = trial.duration_days; trialAmount = trial.entry_amount_minor ?? 0; paymentMethodRequired = trial.payment_method_required === 1;
+        trialEndBehavior = readMembershipTrialEndBehavior(this.database, input.trialCampaignId, offer.billing_kind, trialAmount, paymentMethodRequired);
+        // Renewing trials must use provider checkout, not the free-claim shortcut.
+        if (trialEndBehavior === "renew") paymentMethodRequired = true;
         if (offer.provider !== "stripe" && (trialAmount > 0 || paymentMethodRequired)) {
           if (!trial.external_checkout_url) throw new Error("This trial's checkout is not configured. Contact the owner.");
           offer.external_checkout_url = trial.external_checkout_url;
@@ -65,7 +86,7 @@ export class PlatformMembershipClaims {
         (claim_id,user_id,offer_id,share_link_id,trial_campaign_id,state,created_at_utc,expires_at_utc)
         VALUES (?,?,?,?,?,'reserved',?,?)`).run(claimId, input.userId, input.offerId, shareLinkId, input.trialCampaignId ?? null, at,
           new Date(Date.parse(at) + 60 * 60_000).toISOString());
-      return { claimId, offer, trialDays, trialAmount, paymentMethodRequired };
+      return { claimId, offer, trialDays, trialAmount, paymentMethodRequired, trialEndBehavior, ...(input.allowBundle ? { checkoutCreatedAtUtc: at } : {}) };
     }).immediate();
   }
 
@@ -77,6 +98,8 @@ export class PlatformMembershipClaims {
         .get(claimId, userId) as { state: string; trial_campaign_id: string | null; billing_kind: string; plan_version_id: string; duration_days: number | null; entry_amount_minor: number | null; payment_method_required: number | null } | undefined;
       if (!row) throw new Error("Claim not found.");
       if (row.state === "fulfilled") return;
+      if (row.trial_campaign_id && readMembershipTrialEndBehavior(this.database, row.trial_campaign_id, row.billing_kind,
+        row.entry_amount_minor ?? 0, Boolean(row.payment_method_required)) === "renew") throw new Error("Verified payment setup is required for this renewing trial.");
       if (row.trial_campaign_id ? (row.entry_amount_minor ?? 0) > 0 || row.payment_method_required : row.billing_kind !== "free") throw new Error("Verified payment is required for this offer.");
       this.complete(claimId, at);
       new PlatformMembershipRepository(this.database).grantEntitlement({ actorUserId: userId, userId,
@@ -106,6 +129,19 @@ export class PlatformMembershipClaims {
       return;
     }
     this.completeClaim(claimId, at, true);
+  }
+
+  // Amendment invoice evidence is verified by the amendment projector, rather
+  // than a Checkout Session. Consume its invitation in that same transaction.
+  completeAddonPayment(amendmentId: string, at: string): void {
+    if (!this.database.inTransaction || !this.database.prepare(`SELECT 1 FROM platform_membership_claims c
+      JOIN platform_membership_addon_amendments a ON a.amendment_id=c.claim_id
+      WHERE c.claim_id=? AND c.user_id=a.user_id AND c.offer_id=a.target_offer_id
+      AND a.state IN ('confirming','pending_payment','reconciliation_required')
+      AND (a.external_invoice_ref IS NOT NULL OR (a.charge_minor=0 AND a.target_monthly_minor=a.original_monthly_minor))`).get(amendmentId)) {
+      throw new Error("Unknown add-on invitation reservation.");
+    }
+    this.completeClaim(amendmentId, at, true);
   }
 
   private completeClaim(claimId: string, at: string, verifiedPayment: boolean): void {

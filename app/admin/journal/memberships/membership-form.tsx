@@ -6,7 +6,7 @@ import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 
-export type MembershipActionState = { error: string | null; success: string | null };
+export type MembershipActionState = { error: string | null; success: string | null; upgradeHref?:string };
 export function MembershipForm({ action, children, label }: {
   action: (previous: MembershipActionState, form: FormData) => Promise<MembershipActionState>;
   children: ReactNode; label: string;
@@ -23,6 +23,7 @@ export function MembershipForm({ action, children, label }: {
   return <Stack component="form" ref={formRef} action={submit} onReset={(event) => event.preventDefault()} spacing={2}>
     {children}
     {state.error ? <Alert severity="error" role="alert">{state.error}</Alert> : null}
+    {state.upgradeHref?.startsWith("/plans?")?<Button href={state.upgradeHref} variant="outlined" sx={{alignSelf:"flex-start"}}>Explore plans and add-ons</Button>:null}
     {state.success ? <Alert severity="success" role="status">{state.success}</Alert> : null}
     <Button type="submit" variant="contained" disabled={pending}>{pending ? "Saving..." : label}</Button>
   </Stack>;

@@ -70,3 +70,35 @@ Workspace: `C:\Users\jerac\Documents\TraderLink\worktrees\membership-production-
 No new worktree or branch was created. No production/authentication boundary was
 changed. The canonical checkout is stale/mixed; do not overlay its older Analyzer
 or Watchlist files on this work. Payment processor verification is separate.
+
+
+## Codespaces enforcement checkpoint — 2026-10-15
+
+Trade Analyzer generation now defaults to enforced in the isolated membership
+candidate; explicit off/shadow overrides remain respected. The existing
+reservation/acquisition ledger and actual checkout bundle composition have
+focused runtime coverage. Plan/add-on bundles add allowances; independent
+grants remain alternatives. Missing-feature versus exhausted-allowance copy is
+distinct, and Help guidance is aligned. See
+[membership restrictions progress](membership-feature-restrictions-progress.md)
+for the complete 36-case verification boundary. This supersedes the earlier
+static-only record for Trade Analyzer, not the hosted activation or Levels
+Generator rollout boundary. No builds or hosted mutations.
+
+## Analyzer upgrade copy — 2026-10-15
+
+Updated the exhausted message to “Your Analyzer allowance has been used up.”
+and its CTA to “Increase your Analyzer usage”. The excluded CTA now reads
+“Start Analyzing your trades now!” and uses the shared contained primary button
+(navy blue in Light). Excluded paragraph remains pending owner wording selection.
+Four focused renderer/control tests passed. Real signed Workspace popup checks
+passed for excluded Light mobile (390px, blue CTA) and exhausted desktop (1440px),
+including Plans links and no generation/result reads. Help guides reviewed; no
+workflow or guide change required. No builds or hosted changes.
+
+Owner selected the excluded-popup paragraph on 2026-10-15: “See what your trades
+are telling you. Unlock Trade Analyzer and discover new ways to improve using
+TradersLink detail analysis data.” Normal wrapping plus overflow wrapping keeps
+the existing xs popup width. Live signed Light checks passed at 390px and 1440px:
+maximum 444px popup, no horizontal overflow, blue CTA and correct Plans link.
+Help guidance remains unchanged; copy-only change, no build.

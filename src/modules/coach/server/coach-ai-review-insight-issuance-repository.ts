@@ -14,9 +14,7 @@ import type {
 } from "@/src/modules/coach/contracts/coach-ai-review-plan-selection-contracts";
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
-import { WhopAiReviewEntitlementRepository } from
-  "@/src/modules/platform/server/billing/whop-ai-review-entitlement-repository";
-import { hasPlatformMembershipFeature, evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { hasAiReviewGenerationAccess } from "@/src/modules/platform/server/membership/membership-ai-review-access";
 import {
   assertCanonicalUuidV4,
   createCanonicalUtcTimestamp,
@@ -1349,11 +1347,7 @@ WHERE coach_ai_review_generation_attempt_id = ?`).get(attemptId);
     scope: WorkspaceAccessScope,
     reviewKind: RequestRow["review_kind"],
   ): boolean {
-    if (!evaluateMembershipFeature(this.database, scope.userId, "ai.reviews").allowed) return false;
-    if (!hasPlatformMembershipFeature(this.database, scope.userId, "ai.reviews") && new WhopAiReviewEntitlementRepository(this.database)
-      .readAccess(scope.userId).state !== "active") {
-      return false;
-    }
+    if (!hasAiReviewGenerationAccess(this.database,scope.userId)) return false;
     const featureKey = reviewKind === "monthly" ? "monthly_reviews" : "weekly_reviews";
     const controls = this.database.prepare<[
       string, string, string

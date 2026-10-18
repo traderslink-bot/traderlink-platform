@@ -1,3 +1,6 @@
+import { headers } from "next/headers";
+import { DiscordConnectionNotice } from "./discord-connection-notice";
+import { readMembershipDiscordConnection } from "@/src/modules/platform/server/membership/membership-discord-connection";
 import { hasOwnerMarketDataAccess } from "@/src/modules/level-analysis/server/owner-market-data-access";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
@@ -41,9 +44,11 @@ async function TraderLinkPlatformDashboardFrameContent({
   watchlistMemberAccess?: boolean;
   billingMemberAccess?: boolean;
 }) {
+  const requestPath = (await headers()).get("x-traderlink-page-path");
+  const workspaceLanding = requestPath === "/workspace" || requestPath === "/workspace/";
   let identity;
   try {
-    identity = billingMemberAccess
+    identity = (billingMemberAccess || workspaceLanding)
       ? await requireTraderLinkPlatformBillingPageIdentity()
       : watchlistMemberAccess
       ? await requireTraderLinkPlatformAuthenticatedPageIdentity({
@@ -66,15 +71,19 @@ async function TraderLinkPlatformDashboardFrameContent({
       redirect("/access-required");
     }
     if (
-      process.env.NODE_ENV === "production" &&
+      (process.env.NODE_ENV === "production" ||
+        (process.env.NODE_ENV === "development" &&
+          process.env.TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_SESSIONS === "true")) &&
       isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED"
     ) {
-      redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent(loginReturnTo)}`);
+      redirect(`/login?returnTo=${encodeURIComponent(requestPath?.startsWith("/account/") ? requestPath : loginReturnTo)}`);
     }
     throw error;
   }
   const scope = identity.scope;
+  const discordConnection = identity.mode === "platform_session"
+    ? withReadonlyPlatformDatabase({}, database => readMembershipDiscordConnection(database, scope.userId)) : null;
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const scannerEarlyAccess = hasScannerEarlyAccess(identity);
   const ownerMarketDataAccess = hasOwnerMarketDataAccess(identity);
@@ -138,6 +147,7 @@ async function TraderLinkPlatformDashboardFrameContent({
           ownerMarketDataAccess={ownerMarketDataAccess}
         watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
         >
+          {discordConnection && requestPath !== "/account/login" ? <DiscordConnectionNotice required={discordConnection.required} connected={discordConnection.connected} joined={discordConnection.joined} /> : null}
           {children}
         </TraderLinkPlatformDashboardTemplate>
         <PwaLifecycle

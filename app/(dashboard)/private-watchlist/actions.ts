@@ -1,5 +1,7 @@
 "use server";
 
+import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+
 import { revalidatePath } from "next/cache";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -24,8 +26,8 @@ export async function generatePrivateWatchlist(_previous: MembershipActionState,
       : outcome === "not_executed" ? "Generation did not start. Its reserved allowances have been released."
         : "Generation is awaiting confirmation. Check this request again; checking does not start another paid request." };
   } catch (error) {
-    if (isMembershipAccessDenied(error)) return { error: "Your current plan does not include one of the selected cards.", success: null };
-    if (error instanceof Error && /allowance reached\.$/.test(error.message)) return { error: "Your generation or spending allowance has been reached.", success: null };
+    if (isMembershipAccessDenied(error)) return { error: "Unlock more insights with Private Watchlist cards. Choose a plan or add-on with the cards you want.", success: null,upgradeHref:`/plans?feature=${isTraderLinkPlatformError(error)&&["private_watchlist.access","private_watchlist.analysis","private_watchlist.indicators","private_watchlist.levels"].includes(String(error.safeContext.feature))?error.safeContext.feature:"private_watchlist.access"}` };
+    if (error instanceof Error && /allowance reached\.$/.test(error.message)) return { error: "Your generation or spending allowance has been reached.", success: null,upgradeHref:error.message.includes("cost_microusd")?"/plans?feature=private_watchlist.cost_microusd":"/plans?feature=private_watchlist.generations" };
     return { error: "Generation is unavailable or the request could not be confirmed. Existing saved cards are unchanged. Check any pending request before starting another.", success: null };
   }
 }
@@ -45,8 +47,8 @@ export async function changePrivateWatchlist(_previous: MembershipActionState, f
     revalidatePath("/private-watchlist");
     return { error: null, success: operation === "add" ? "Ticker added to your private Watchlist." : "Ticker archived. Saved work is retained." };
   } catch (error) {
-    if (isMembershipAccessDenied(error)) return { error: "Your plan does not include private Watchlist access.", success: null };
-    if (error instanceof Error && /^Private Watchlist (ticker_additions|active_tickers) allowance reached\.$/.test(error.message)) return { error: "Your private Watchlist allowance has been reached. Archive an active ticker to free a slot, or review your plan's addition allowance.", success: null };
+    if (isMembershipAccessDenied(error)) return { error: "Build your own ticker list with Private Watchlist. Unlock access with a plan or add-on.", success: null,upgradeHref:"/plans?feature=private_watchlist.access" };
+    if (error instanceof Error && /^Private Watchlist (ticker_additions|active_tickers) allowance reached\.$/.test(error.message)) return { error: "Your private Watchlist allowance has been reached. Archive an active ticker to free a slot, or review your plan's addition allowance.", success: null,upgradeHref:error.message.includes("active_tickers")?"/plans?feature=private_watchlist.active_tickers":"/plans?feature=private_watchlist.ticker_additions" };
     return { error: "Your private Watchlist could not be updated. Try again later.", success: null };
   }
 }

@@ -8,7 +8,6 @@ import { normalizeDiscordAuthReturnTo } from "@/src/lib/academy/discord-auth-ret
 
 export const dynamic = "force-dynamic";
 
-const DISCORD_INVITE_URL = "https://discord.gg/9dmGpfpRDD";
 
 export default async function DashboardAccessRequiredPage({
   searchParams,
@@ -19,7 +18,7 @@ export default async function DashboardAccessRequiredPage({
   const returnTo = normalizeDiscordAuthReturnTo(
     typeof requestedReturnTo === "string" ? requestedReturnTo : "/workspace",
   );
-  const retryHref = `/api/auth/discord/login?prompt=consent&returnTo=${encodeURIComponent(returnTo)}`;
+  const retryHref = `/login?returnTo=${encodeURIComponent(returnTo)}`;
 
   return (
     <Box sx={{ alignItems: "center", bgcolor: "background.default", display: "flex", justifyContent: "center", minHeight: "100vh", p: 3 }}>
@@ -27,11 +26,11 @@ export default async function DashboardAccessRequiredPage({
         <Stack spacing={2}>
           <Typography component="h1" variant="h1">Dashboard access is not available yet</Typography>
           <Typography color="text.secondary">
-            Your Discord sign-in worked, but this account does not currently have dashboard access. Join the free TradersLink Discord, or sign in again if you already joined.
+            You are signed in, but this account does not currently have app access. Choose an available plan. If your access comes through Discord, connect that account in Account → Login methods.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-            <Button href={DISCORD_INVITE_URL} variant="contained">Join Free Discord</Button>
-            <Button href={retryHref} variant="outlined">Try Discord sign-in again</Button>
+            <Button href="/plans" variant="contained">View plans</Button>
+            <Button href={retryHref} variant="outlined">Sign in again</Button>
           </Stack>
           <Button href="https://traderslink.pro/beta" variant="text">Return to beta</Button>
         </Stack>

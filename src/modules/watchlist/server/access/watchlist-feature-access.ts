@@ -5,6 +5,7 @@ import { evaluateMembershipFeature } from "@/src/modules/platform/server/members
 export function readWatchlistFeatureAccess(userId: string) {
   return withReadonlyPlatformDatabase({}, database => ({
     tickerDetails: evaluateMembershipFeature(database, userId, "watchlist.ticker_details").allowed,
+    indicators: evaluateMembershipFeature(database, userId, "watchlist.indicators").allowed,
     tradeAnalysis: evaluateMembershipFeature(database, userId, "watchlist.trade_analysis").allowed,
   }));
 }

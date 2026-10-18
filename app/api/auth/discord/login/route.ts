@@ -62,7 +62,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     const config = getDiscordOAuthConfig(origin);
-    const state = randomBytes(24).toString("base64url");
+    const state = (request.nextUrl.searchParams.get("connect") === "1" && request.cookies.get("tl_provider_link_method")?.value === "discord" ? "link." : "") + randomBytes(24).toString("base64url");
     const response = NextResponse.redirect(
       buildDiscordAuthorizeUrl({ config, prompt, state }),
     );

@@ -1,3 +1,4 @@
+import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { deletePlatformAuthCookie } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
@@ -29,7 +30,7 @@ export const dynamic = "force-dynamic";
 
 function finish(
   request: NextRequest,
-  status: "connected" | "failed" | "invalid-state",
+  status: "connected" | "failed" | "invalid-state" | "membership-required",
   reportedToAdmin = false,
 ): NextResponse {
   const origin = process.env.NODE_ENV === "production"
@@ -72,6 +73,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
   try {
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
+    withPlatformDatabase({ mode: "runtime" }, database => new MoomooConnectionRepository(database).assertAuthorizationAllowed(identity.scope));
     const consumed = withPlatformDatabase({ mode: "runtime" }, (database) =>
       database.transaction(() => new MoomooOAuthPendingAttemptService(database).consume({
         scope: identity.scope,
@@ -98,6 +100,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }).immediate());
     return finish(request, "connected");
   } catch (error) {
+    if (isMembershipAccessDenied(error)) return finish(request,"membership-required");
     return finish(request, "failed", reportFailure(error, "oauth_callback"));
   }
 }

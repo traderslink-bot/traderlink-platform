@@ -132,6 +132,7 @@ function normalizedRow(
     enteredQuantityDecimal: "10",
     exitQuantityDecimal: "10",
     maximumPositionQuantityDecimal: "10",
+    maximumPositionValueDecimal: "100",
     entryNotionalDecimal: "100",
     exitNotionalDecimal: "100",
   });

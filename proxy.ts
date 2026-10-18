@@ -19,6 +19,12 @@ function isPageRoot(pathname: string): boolean {
   return AI_PAGE_ROOTS.some((root) => pathname === root || pathname === `${root}/`);
 }
 
+function continueRequest(request: NextRequest): NextResponse {
+  const headers = new Headers(request.headers);
+  headers.set("x-traderlink-page-path", request.nextUrl.pathname);
+  return NextResponse.next({ request: { headers } });
+}
+
 function comingSoonResponse(): NextResponse {
   return NextResponse.json(
     Object.freeze({
@@ -39,6 +45,10 @@ function comingSoonResponse(): NextResponse {
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
+  const guarded = ["/ai-chat", "/ai-reviews", "/account/ai", "/help", "/api/coach/chat", "/api/coach/latest", "/api/cron/ai-reviews", "/api/cron/ai-review-calendar", "/api/billing/whop", "/api/webhooks/whop"]
+    .some(root => pathname === root || pathname.startsWith(root + "/"));
+  if (!guarded) return continueRequest(request);
+
   if (pathname === "/help" || pathname.startsWith("/help/")) {
     if (requestHostname(request) === dashboardHostname) {
       const destination = request.nextUrl.clone();
@@ -46,17 +56,17 @@ export function proxy(request: NextRequest): NextResponse {
       destination.host = publicHostname;
       return NextResponse.redirect(destination, 308);
     }
-    return NextResponse.next();
+    return continueRequest(request);
   }
 
   if (areTraderLinkPlatformAiFeaturesEnabled()) {
-    return NextResponse.next();
+    return continueRequest(request);
   }
 
   const readRequest = request.method === "GET" || request.method === "HEAD";
 
   if (readRequest && isPageRoot(pathname)) {
-    return NextResponse.next();
+    return continueRequest(request);
   }
 
   if (readRequest && pathname.startsWith("/ai-chat/")) {
@@ -73,16 +83,5 @@ export function proxy(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: [
-    "/ai-chat/:path*",
-    "/ai-reviews/:path*",
-    "/account/ai/:path*",
-    "/help/:path*",
-    "/api/coach/chat/:path*",
-    "/api/coach/latest/:path*",
-    "/api/cron/ai-reviews/:path*",
-    "/api/cron/ai-review-calendar/:path*",
-    "/api/billing/whop/:path*",
-    "/api/webhooks/whop/:path*",
-  ],
+  matcher: ["/:path*"],
 };

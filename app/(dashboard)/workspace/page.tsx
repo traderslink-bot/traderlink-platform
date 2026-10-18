@@ -1,3 +1,6 @@
+import { DashboardPage, DashboardPanel, DashboardPrimaryAction } from "../../dashboard-template";
+import Typography from "@mui/material/Typography";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -5,6 +8,7 @@ import { redirect } from "next/navigation";
 import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
 import { recoverLegacyDemoWorkspaceTradeLibraryProjection } from "@/src/modules/journal-analytics/server/workspace-trade-library-demo-projection-recovery";
 import { WorkspaceDashboard } from "./workspace-dashboard";
+import { WorkspaceWelcomeHeading } from "./workspace-welcome-heading";
 import { readWorkspaceRuleResultsCardFromRuntime } from "../rules/results/rule-results-data";
 import { readWorkspaceTradeLibrary } from "./workspace-trade-library";
 import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, WorkspaceTradeLibrarySort } from "./workspace-trade-library";
@@ -26,7 +30,7 @@ import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformAuthenticatedPageIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { evaluateMembershipFeature, hasPlatformMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import {
   createPlatformWorkspaceOfflineViewModel,
@@ -166,11 +170,17 @@ export default async function WorkspacePage({
   const identity = await measureWorkspacePhaseAsync(
     timings,
     "identity",
-    () => requireTraderLinkPlatformAuthenticatedPageIdentity({
-      membershipFeatures: ["journal.access"],
-    }),
+    () => requireTraderLinkPlatformAuthenticatedPageIdentity(),
   );
   const scope = identity.scope;
+  const journalAvailable = identity.mode === "local_development" || withReadonlyPlatformDatabase({}, database =>
+    hasPlatformMembershipFeature(database, scope.userId, "journal.access") || Boolean(database.prepare(
+      "SELECT 1 FROM platform_operator_grants WHERE user_id=? AND authority_key='journal_administration' AND grant_state='active'",
+    ).get(scope.userId)));
+  if (!journalAvailable) return <DashboardPage><WorkspaceWelcomeHeading /><DashboardPanel title="Trading Journal">
+    <Typography sx={{ mb: 2 }}>Choose a plan to start using your Trading Journal and its included tools.</Typography>
+    <DashboardPrimaryAction href="/plans">View plans</DashboardPrimaryAction>
+  </DashboardPanel></DashboardPage>;
   if (!scope.activeAccountId) {
     // Preserve the existing read-before-redirect failure boundary.
     readJournalFirstExecutionOnboardingStatus(scope);

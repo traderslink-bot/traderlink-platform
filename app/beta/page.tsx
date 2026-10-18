@@ -154,7 +154,7 @@ export default async function BetaLandingPage() {
               TradersLink Discord<br />
               Members
             </span>
-            <a className={styles.actionButton} href={`${signInOrigin}/api/auth/discord/login?returnTo=%2Fworkspace`}>
+            <a className={styles.actionButton} href={`${signInOrigin}/login?returnTo=%2Fworkspace`}>
               LOG IN NOW!
             </a>
             <div className={styles.actionSecondary}>

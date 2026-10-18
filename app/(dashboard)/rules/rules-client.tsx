@@ -1,4 +1,6 @@
 "use client";
+import { JournalUpgradeLink } from "../membership-journal-upgrade-link";
+import { isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import { useMemo, useState, type ElementType } from "react";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
@@ -268,6 +270,7 @@ export function RulesClient({
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editor, setEditor] = useState<RuleEditorState | null>(null);
   const [editorValues, setEditorValues] = useState<Record<string, string>>({});
@@ -329,6 +332,7 @@ export function RulesClient({
   ): Promise<boolean> {
     setBusyId(operationId);
     setError(null);
+    setUpgradeRequired(false);
     try {
       const response = await fetch("/api/intelligence/rules", {
         body: JSON.stringify({
@@ -341,6 +345,7 @@ export function RulesClient({
       });
       const result = (await response.json()) as MutationResponse;
       if (!response.ok || !result.ok) {
+        setUpgradeRequired(isMembershipRequired(result));
         setError(
           result.ok
             ? "The rule change was not accepted."
@@ -360,6 +365,8 @@ export function RulesClient({
   }
 
   function openCreate(template: TradingRulesTemplateView): void {
+    setError(null);
+    setUpgradeRequired(false);
     setAddingIdeaId(null);
     setPresetLibraryOpen(false);
     setEditor({ mode: "create", template, rule: null });
@@ -372,6 +379,7 @@ export function RulesClient({
   ): Promise<boolean> {
     setRuleIdeaBusy(true);
     setError(null);
+    setUpgradeRequired(false);
     try {
       const response = await fetch("/api/intelligence/rule-ideas", {
         method: "POST",
@@ -731,15 +739,7 @@ export function RulesClient({
         >
           {onOpenResults ? <Button onClick={onOpenResults} variant="outlined">Rule Results</Button> : <Button component={Link} href="/rules/results" variant="outlined">Rule Results</Button>}
           <Button
-            onClick={() => {
-              if (isMobile) {
-                setPresetLibraryOpen(true);
-                return;
-              }
-              document
-                .getElementById("rule-library")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
+            onClick={() => { setError(null); setUpgradeRequired(false); setPresetLibraryOpen(true); }}
             variant="outlined"
           >
             Browse presets
@@ -758,6 +758,7 @@ export function RulesClient({
       {error ? (
         <Alert onClose={() => setError(null)} severity="error">
           {error}
+          {upgradeRequired ? <Box><JournalUpgradeLink /></Box> : null}
         </Alert>
       ) : null}
 
@@ -1259,44 +1260,6 @@ export function RulesClient({
         </Box>
       </DashboardPanel>
 
-      <Divider sx={{ display: { xs: "none", md: "block" } }} />
-
-      {!isMobile && presentation !== "workspace-panel" ? <Box component="section" id="rule-library" sx={{ scrollMarginTop: 88 }}>
-        <Typography
-          sx={{
-            color: (theme) => theme.palette.mode === "dark"
-              ? theme.palette.text.primary
-              : theme.palette.primary.main,
-            fontWeight: 700,
-          }}
-          variant="caption"
-        >
-          PRESET LIBRARY
-        </Typography>
-        <Typography
-          component="h2"
-          sx={{
-            color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined,
-            mt: 0.25,
-          }}
-          variant="h2"
-        >
-          Rules that can be checked against your trades
-        </Typography>
-        <Typography
-          color="text.secondary"
-          sx={{
-            color: (theme) => theme.palette.mode === "dark" ? theme.palette.text.primary : undefined,
-            mt: 0.5,
-          }}
-          variant="body2"
-        >
-          Each preset connects to a specific part of your trade data, such as
-          an individual trade, a ticker, or a day session. Browse the library,
-          then turn on only the rules you want to follow.
-        </Typography>
-        {presetLibrary}
-      </Box> : null}
 
       <Dialog
         aria-labelledby="mobile-preset-library-title"
@@ -1304,7 +1267,7 @@ export function RulesClient({
         fullWidth
         maxWidth="lg"
         onClose={() => { setPresetLibraryOpen(false); closePanelMode(); }}
-        open={(isMobile || presentation === "workspace-panel") && presetLibraryOpen}
+        open={presetLibraryOpen}
       >
         <DialogTitle
           id="mobile-preset-library-title"
@@ -1421,6 +1384,7 @@ export function RulesClient({
                   ? "This rule becomes active now and applies prospectively."
                   : "Saving creates a new immutable version. Earlier results stay attached to the earlier definition."}
               </Alert>
+              {error ? <Alert severity="error" sx={{ mt: 2 }}>{error}{upgradeRequired ? <Box><JournalUpgradeLink /></Box> : null}</Alert> : null}
             </DialogContent>
             <DialogActions>
               <Button onClick={() => { setEditor(null); if (panelMode === "presets") closePanelMode(); }}>Cancel</Button>
@@ -1541,6 +1505,7 @@ export function RulesClient({
                   label="Make this a Focus Rule"
                 />
               </Stack>
+              {error ? <Alert severity="error" sx={{ mt: 2 }}>{error}{upgradeRequired ? <Box><JournalUpgradeLink /></Box> : null}</Alert> : null}
             </DialogContent>
             <DialogActions>
               <Button onClick={() => { setManualEditor(null); closePanelMode(); }}>Cancel</Button>

@@ -23,7 +23,7 @@ export type StockLevelsQuotaFeedback = Readonly<{
   remainingHourly: number | null;
   remainingNewYorkDay: number | null;
   resetAt: number | null;
-  membership?: Readonly<{ remaining: number | null; resetsAtUtc: string | null; resetDays: number | null }>;
+  membership?: Readonly<{ included?: boolean; remaining: number | null; resetsAtUtc: string | null; resetDays: number | null }>;
 }>;
 
 export type StockLevelsResult =
@@ -53,6 +53,7 @@ export function isStockLevelsQuotaFeedback(value: unknown): value is StockLevels
   if (feedback.membership !== undefined) {
     if (!feedback.membership || typeof feedback.membership !== "object") return false;
     const membership = feedback.membership as Record<string, unknown>;
+    if (membership.included !== undefined && typeof membership.included !== "boolean") return false;
     if (!(membership.remaining === null || (Number.isSafeInteger(membership.remaining) && Number(membership.remaining) >= 0)) ||
         !(membership.resetsAtUtc === null || (typeof membership.resetsAtUtc === "string" && Number.isFinite(Date.parse(membership.resetsAtUtc)))) ||
         !(membership.resetDays === null || (Number.isSafeInteger(membership.resetDays) && Number(membership.resetDays) > 0))) return false;

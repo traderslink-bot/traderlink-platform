@@ -1,3 +1,4 @@
+import { assertAiReviewGenerationAccess } from "@/src/modules/platform/server/membership/membership-ai-review-access";
 import { Buffer } from "node:buffer";
 
 import type Database from "better-sqlite3";
@@ -293,6 +294,7 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     }>,
     now = new Date(),
   ): Readonly<{ state: "reserved" | "blocked" | "idempotent"; reservation: CoachAiReviewGenerationControlReservation }> {
+    assertAiReviewGenerationAccess(this.database,scope.userId);
     return this.reserveReviewGenerationForVersion(scope, input, "v1", now);
   }
 
@@ -307,6 +309,7 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     }>,
     now = new Date(),
   ): Readonly<{ state: "reserved" | "blocked" | "idempotent"; reservation: CoachAiReviewGenerationControlReservation }> {
+    assertAiReviewGenerationAccess(this.database,scope.userId);
     return this.reserveReviewGenerationForVersion(scope, input, "v2", now);
   }
 
@@ -322,6 +325,7 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     version: "v1" | "v2",
     now: Date,
   ): Readonly<{ state: "reserved" | "blocked" | "idempotent"; reservation: CoachAiReviewGenerationControlReservation }> {
+    assertAiReviewGenerationAccess(this.database,scope.userId);
     const accountId = this.accountId(scope);
     const attemptId = input.attemptId;
     if (typeof attemptId !== "string") platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "attemptId" });
@@ -509,6 +513,7 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     attemptId: string,
     now = new Date(),
   ): CoachAiReviewGenerationControlReservation {
+    assertAiReviewGenerationAccess(this.database,scope.userId);
     const accountId = this.accountId(scope);
     assertCanonicalUuidV4(attemptId, "attemptId");
     const result = this.database.prepare(`UPDATE coach_ai_review_generation_control_reservations
@@ -524,6 +529,7 @@ WHERE coach_ai_review_generation_attempt_id = ? AND user_id = ? AND workspace_id
     attemptId: string,
     now = new Date(),
   ): CoachAiReviewGenerationControlReservation {
+    assertAiReviewGenerationAccess(this.database,scope.userId);
     const accountId = this.accountId(scope);
     assertCanonicalUuidV4(attemptId, "attemptId");
     const result = this.database.prepare(`UPDATE coach_ai_review_generation_control_reservations_v2

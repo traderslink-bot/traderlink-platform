@@ -2,6 +2,26 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "login-and-connected-accounts", title: "Sign in and connect login methods",
+    description: "Use Google, email and password, or Discord with the same TradersLink account.",
+    sections: Object.freeze([
+      Object.freeze({id:"choose-login",title:"Choose a sign-in method",summary:"Discord is optional for app login.",keywords:Object.freeze(["Google","email","password","Discord","sign in"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"Open Sign in and choose Google, Discord, or email and password. Availability depends on the service being configured. Email registration asks you to verify your address before signing in. Ordinary sign-in opens Workspace; a sign-in requested by another page returns to that page."}),
+        Object.freeze({kind:"paragraph",text:"Use a password with at least 8 characters. The confirmation field must match your password. Repeating a pending email registration or Add email with the original password sends a fresh verification link; use the newest email. Open the newest verification email and click Confirm Email Address. The link verifies automatically without asking for your password or requiring a signed-in browser; then sign in normally. If the email does not arrive, use Resend verification email on Sign in, with that address and password."}),
+      ])}),
+      Object.freeze({id:"connect-methods",title:"Connect another login method",summary:"Keep your Journal and plan on one account.",keywords:Object.freeze(["link","Account","Login methods"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"Sign in to your existing account, then open Account → Login methods. Connect Google or Discord, or add and verify email and password. An active signed-in session is enough; there is no five-minute sign-in-again requirement. Matching email addresses do not automatically combine separate accounts."}),
+        Object.freeze({kind:"paragraph",text:"At least one login method must stay connected. Disconnecting Discord stops linked Discord benefits; your Journal and purchased app access remain on your account. Sign in again after disconnecting the method used for your current session."}),
+        Object.freeze({kind:"paragraph",text:"Discord is optional for entering the app. Plans and add-ons that need Discord explain this before signup. You can sign up and use the app first, then connect Discord under Account → Login methods. Connecting Discord and joining the TradersLink server are separate steps. Login methods shows your server status and an invitation. After connecting from Workspace, a confirmation explains the server; existing members can select Open Discord server, while people who have not joined can select Join Discord server. Use Join Discord server for the invitation to its community and chats. For an active plan with Discord benefits, the reminder stays until your account is connected and server membership has been confirmed. After joining, select Check membership to verify through Discord without switching your TradersLink account. Use the Discord account you already connected. A successful check returns to Workspace. The general community invitation does not require a plan and can be dismissed with Later."}),
+        Object.freeze({kind:"paragraph",text:"Disconnecting email also turns off password recovery for that address and cancels outstanding email links. To reconnect it, sign in with another connected method and use the existing email and password in Login methods."}),
+      ])}),
+      Object.freeze({id:"recover-password",title:"Recover your password",summary:"Change your password without creating another account.",keywords:Object.freeze(["forgot password","reset","verification"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"Choose Forgot password and enter your email. If eligible, you receive a reset link that expires after 30 minutes. Open it, enter a new password and sign in again. Resetting signs out existing sessions."}),
+        Object.freeze({kind:"paragraph",text:"Reset and verification links work once. Request another email when a link has expired. An OAuth-only account needs you to sign in with its existing provider and add email and password in Login methods before password recovery can be used."}),
+      ])}),
+    ]),
+  }),
+  Object.freeze({
     slug: "using-traderslink-app",
     title: "Using the TradersLink app",
     description: "Install TradersLink, keep useful pages on your device, enter trades offline and choose alerts for this device.",

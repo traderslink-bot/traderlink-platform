@@ -1,3 +1,4 @@
+import { WatchlistMembershipNotice } from "./watchlist-membership-notice";
 import { headers } from "next/headers";
 import { projectWatchlistTickersForViewer } from "@/src/modules/watchlist/server/access/watchlist-ticker-projection";
 import type { Metadata } from "next";
@@ -26,6 +27,7 @@ export default async function LiveWatchlistPage({
   const authStatus = normalizeSearchParam((await searchParams).auth);
   const access = await authorizeWatchlistPageAccess();
   if (!access.ok) {
+    if (access.reason === "membership_required") return <WatchlistMembershipNotice />;
     return (
       <WatchlistAccessMessage
         authStatus={authStatus}

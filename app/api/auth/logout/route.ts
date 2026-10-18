@@ -34,6 +34,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const response = NextResponse.redirect(
     signOutRedirectUrl(request, "/signed-out"),
+    303,
   );
   response.headers.set("Cache-Control", "private, no-store");
   deletePlatformAuthCookie(response, request, TRADERLINK_PLATFORM_SESSION_COOKIE);

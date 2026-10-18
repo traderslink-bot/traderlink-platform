@@ -116,7 +116,10 @@ function resolveTraderLinkPlatformRequestIdentity(
       discord: null,
     }));
   }
-  if (environment.NODE_ENV !== "production") {
+  if (environment.NODE_ENV !== "production" && !(
+    environment.NODE_ENV === "development" &&
+    environment.TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_SESSIONS === "true"
+  )) {
     platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   }
   const token = readSingleCookie(
@@ -131,14 +134,15 @@ function resolveTraderLinkPlatformRequestIdentity(
         new PlatformSessionRepository(database),
         { now: options.now },
       ).resolve(token);
-      if (!session || session.authProvider !== "discord") {
+      if (!session || !["discord", "google", "email"].includes(session.authProvider)) {
         platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       }
-      const membership = new PlatformDiscordMembershipRepository(database)
+      const discordConnected = Boolean(database.prepare("SELECT 1 FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").get(session.userId));
+      const membership = discordConnected ? new PlatformDiscordMembershipRepository(database)
         .findCurrent(
           session.userId,
           resolveTraderLinkDiscordGuildId(environment),
-        );
+        ) : null;
       const membershipDashboardAccess = hasPlatformMembershipFeature(
         database,
         session.userId,

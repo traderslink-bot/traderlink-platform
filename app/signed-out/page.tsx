@@ -26,8 +26,8 @@ export default function SignedOutPage() {
               Your TraderLink session has ended on this device.
             </Typography>
           </Box>
-          <Button href="/api/auth/discord/login?returnTo=%2Fworkspace" size="large" variant="contained">
-            Sign in with Discord
+          <Button href="/login?returnTo=%2Fworkspace" size="large" variant="contained">
+            Sign in
           </Button>
         </Stack>
       </Paper>

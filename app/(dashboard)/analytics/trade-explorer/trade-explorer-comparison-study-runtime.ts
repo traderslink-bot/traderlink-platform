@@ -17,6 +17,7 @@ import {
   currentJournalAccountSelectionRef,
   requireExpectedJournalAccountSelection,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -126,6 +127,7 @@ function list(
   database: Database.Database,
   scope: WorkspaceAccessScope,
 ): readonly TradeExplorerComparisonStudy[] {
+  assertMembershipFeature(database, scope.userId, "analytics.compare_trades");
   const expected = currentJournalAccountSelectionRef(scope);
   return Object.freeze(service(database).list(accountScope(scope)).map((record) =>
     restore(record, expected)));
@@ -146,6 +148,7 @@ export function createTradeExplorerComparisonStudy(
 }> {
   const prepared = prepare(scope, input.comparison);
   return withPlatformDatabase({ mode: "runtime" }, (database) => {
+    assertMembershipFeature(database, scope.userId, "analytics.compare_trades");
     const created = service(database).create(accountScope(scope), {
       name: input.name,
       payload: prepared.payload,
@@ -165,6 +168,7 @@ export function updateTradeExplorerComparisonStudy(
 ): readonly TradeExplorerComparisonStudy[] {
   const prepared = prepare(scope, input.comparison);
   return withPlatformDatabase({ mode: "runtime" }, (database) => {
+    assertMembershipFeature(database, scope.userId, "analytics.compare_trades");
     service(database).update(accountScope(scope), {
       studyId: input.studyId,
       expectedRevision: input.expectedRevision,
@@ -190,6 +194,7 @@ export function retireTradeExplorerComparisonStudy(
   }
   requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef);
   return withPlatformDatabase({ mode: "runtime" }, (database) => {
+    assertMembershipFeature(database, scope.userId, "analytics.compare_trades");
     service(database).retire(accountScope(scope), input);
     return list(database, scope);
   });

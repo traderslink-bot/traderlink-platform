@@ -21,8 +21,10 @@ const BROKERS = Object.freeze([
 
 export function BrokerConnectionPicker({
   moomooConnectionState,
+  membershipAllowed=true,
 }: {
   moomooConnectionState: BrokerConnectionState;
+  membershipAllowed?: boolean;
 }) {
   const [selectedBroker, setSelectedBroker] = useState("");
   const broker = BROKERS.find((entry) => entry.key === selectedBroker) ?? null;
@@ -66,8 +68,8 @@ export function BrokerConnectionPicker({
           </Typography>
         </Stack>
         {!connected ? (
-          <DashboardPrimaryAction component="a" href="/api/connections/moomoo/start" sx={{ mt: 1.5 }}>
-            Connect Moomoo
+          <DashboardPrimaryAction component="a" href={membershipAllowed?"/api/connections/moomoo/start":"/plans?feature=broker.connections"} sx={{ mt: 1.5 }}>
+            {membershipAllowed?"Connect Moomoo":"Explore broker connection plans and add-ons"}
           </DashboardPrimaryAction>
         ) : null}
       </Box> : null}

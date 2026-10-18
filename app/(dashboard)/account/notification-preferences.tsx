@@ -74,6 +74,7 @@ function pushMessageSeverity(message: string): "error" | "info" | "success" | "w
 
 export function NotificationPreferences({
   allowedCategories,
+  upgradePlans = {},
   allowHalts,
   allowPressReleases,
   allowWatchlist,
@@ -86,6 +87,7 @@ export function NotificationPreferences({
   initialWatchlistPreferences,
 }: {
   allowedCategories: readonly PlatformNotificationCategory[];
+  upgradePlans?: Readonly<Record<string, readonly string[]>>;
   allowHalts: boolean;
   allowPressReleases: boolean;
   allowWatchlist: boolean;
@@ -311,10 +313,10 @@ export function NotificationPreferences({
     <Stack spacing={1.5}>
       {allowedCategories.length < PLATFORM_NOTIFICATION_CATEGORIES.length || !allowHalts || !allowPressReleases || !allowWatchlist ? <Alert severity="info">
         Some notifications are not included in your current access.
-        {PLATFORM_NOTIFICATION_CATEGORIES.filter(category => !allowedCategories.includes(category)).map(category => <Link key={category} href={`/plans?feature=notifications.${category}`} sx={{ display: "block" }}>View plans for {labels[category]}</Link>)}
-        {!allowHalts ? <Link href="/plans?feature=notifications.market_halt" sx={{ display: "block" }}>View plans for halt notifications</Link> : null}
-        {!allowPressReleases ? <Link href="/plans?feature=notifications.press_release" sx={{ display: "block" }}>View plans for press release notifications</Link> : null}
-        {!allowWatchlist ? <Link href="/plans?feature=notifications.watchlist" sx={{ display: "block" }}>View plans for Watchlist notifications</Link> : null}
+        {PLATFORM_NOTIFICATION_CATEGORIES.filter(category => !allowedCategories.includes(category)).map(category => <Link key={category} href={`/plans?feature=notifications.${category}`} sx={{ display: "block" }}>{labels[category]} — {upgradePlans[category]?.length ? `included with ${upgradePlans[category].join(", ")}. View plans` : "View available plans"}</Link>)}
+        {!allowHalts ? <Link href="/plans?feature=notifications.market_halt" sx={{ display: "block" }}>Halt notifications — {upgradePlans.market_halt?.length ? `included with ${upgradePlans.market_halt.join(", ")}. View plans` : "View available plans"}</Link> : null}
+        {!allowPressReleases ? <Link href="/plans?feature=notifications.press_release" sx={{ display: "block" }}>Press release notifications — {upgradePlans.press_release?.length ? `included with ${upgradePlans.press_release.join(", ")}. View plans` : "View available plans"}</Link> : null}
+        {!allowWatchlist ? <Link href="/plans?feature=notifications.watchlist" sx={{ display: "block" }}>Watchlist notifications — {upgradePlans.watchlist?.length ? `included with ${upgradePlans.watchlist.join(", ")}. View plans` : "View available plans"}</Link> : null}
       </Alert> : null}
       <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Discord messages</Typography>
       <Typography color="text.secondary" variant="body2">

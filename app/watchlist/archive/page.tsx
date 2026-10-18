@@ -1,3 +1,4 @@
+import { WatchlistMembershipNotice } from "../watchlist-membership-notice";
 import { headers } from "next/headers";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import Link from "next/link";
@@ -35,9 +36,10 @@ export default async function LiveWatchlistArchivePage({
   const authStatus = normalizeSearchParam(resolvedSearchParams.auth);
   const access = await authorizeWatchlistPageAccess();
   if (!access.ok) {
+    if (access.reason === "membership_required") return <WatchlistMembershipNotice />;
     const loginRequired = access.reason === "login_required";
     if (loginRequired && !authStatus) {
-      redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist/archive")}`);
+      redirect(`/login?returnTo=${encodeURIComponent("/watchlist/archive")}`);
     }
     return (
       <AcademyShell forcedTheme="light">
@@ -49,13 +51,13 @@ export default async function LiveWatchlistArchivePage({
                 Log in to view archived tickers
               </h1>
               <p className="academy-lede">
-                Log in with your TradersLink Discord account to view archived tickers.
+                Sign in to TradersLink to view archived tickers.
               </p>
               <Link
-                href={`/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist/archive")}`}
+                href={`/login?returnTo=${encodeURIComponent("/watchlist/archive")}`}
                 className="academy-card-action"
               >
-                Log in with Discord
+                Sign in
               </Link>
             </div>
           </section>

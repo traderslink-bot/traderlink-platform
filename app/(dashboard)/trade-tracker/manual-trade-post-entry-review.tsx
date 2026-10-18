@@ -1,5 +1,5 @@
 "use client";
-import { TradeAnalyzerAllowanceSummary } from "../trade-analyzer-allowance-summary";
+import { TradeAnalyzerAllowanceSummary, TradeAnalyzerUpgradeLink } from "../trade-analyzer-allowance-summary";
 import type { SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 
 import Decimal from "decimal.js";
@@ -121,8 +121,9 @@ export function ManualTradePostEntryReview({
               {members.reduce((count, member) => count + member.allocations.length, 0)} executions · {members.reduce((total, member) => total.plus(accumulatedShares(member)), new Decimal(0)).toFixed()} shares · {timeLabel(first.openedAtUtc)}–{timeLabel(last.lastExecutionAtUtc)}
             </Typography>
           </Box>
-          <Stack direction="row" spacing={1}>
-            {analyzerEligible && showAnalyzer ? <FormControlLabel control={<Checkbox checked={analyzerGroupRefs.includes(representative)} onChange={(event) => toggleAnalyzer(representative, event.target.checked)} />} label="Analyze" /> : null}
+          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
+            {analyzerEligible && showAnalyzer ? <FormControlLabel control={<Checkbox disabled={analyzerUses?.membership?.included === false} checked={analyzerGroupRefs.includes(representative)} onChange={(event) => toggleAnalyzer(representative, event.target.checked)} />} label="Analyze" /> : null}
+            {analyzerEligible && showAnalyzer ? <TradeAnalyzerUpgradeLink availability={analyzerUses} /> : null}
             {unit.groupRefs.length > 1 ? <Button onClick={() => {
               onAnalyzerGroupRefsChange(analyzerGroupRefs.filter((ref) => ref !== representative));
               onMergesChange(merges.filter((merge) => merge.groupRefs[0] !== representative));

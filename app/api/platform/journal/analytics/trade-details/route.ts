@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformRequestScope } from
@@ -71,6 +72,8 @@ export async function GET(request: Request): Promise<Response> {
       timezone: result.timezone,
     }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     return Response.json(
       { status: "error" },
       { status: isTraderLinkPlatformError(error) ? 400 : 500 },

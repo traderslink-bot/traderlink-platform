@@ -1,5 +1,8 @@
 "use client";
 
+import { CalendarUpgradeDialog } from "./calendar-access-notice";
+import type { MembershipCalendarViews } from "@/src/modules/platform/contracts/membership-calendar-access";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useEffect, useState } from "react";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
@@ -663,6 +666,7 @@ export function CalendarClient({
   initialView,
   offlineSavedAtUtc,
   onNavigatePeriod,
+  permittedViews,
   presentation = "page",
   selectedMonth,
   selectedWeek,
@@ -676,11 +680,13 @@ export function CalendarClient({
   initialView: CalendarView;
   offlineSavedAtUtc?: string;
   onNavigatePeriod?: (view: CalendarView, period: string) => void;
+  permittedViews?: MembershipCalendarViews;
   presentation?: "page" | "workspace-embedded";
   selectedMonth: string;
   selectedWeek: string;
 }) {
   const router = useRouter();
+  const [restrictedView, setRestrictedView] = useState<CalendarView | null>(null);
   const workspaceEmbedded = presentation === "workspace-embedded";
   const view = initialView;
   const activeMonth = selectedMonth;
@@ -783,6 +789,7 @@ export function CalendarClient({
   });
 
   const navigatePeriod = (nextView: CalendarView, period: string) => {
+    if (permittedViews && !permittedViews[nextView]) { setRestrictedView(nextView); return; }
     if (offlineSavedAtUtc) return;
     if (onNavigatePeriod) { onNavigatePeriod(nextView, period); return; }
     const query = new URLSearchParams({ view: nextView });
@@ -818,8 +825,8 @@ export function CalendarClient({
               week.startsWith(`${activeMonth}-`)).at(-1);
             navigatePeriod("week", weekInDisplayedMonth ?? selectedWeek);
           }} size="small" sx={{ "& .MuiToggleButton-root": { minHeight: 44 } }} value={view}>
-            <ToggleButton value="month">Month</ToggleButton>
-            <ToggleButton value="week">Week</ToggleButton>
+            <ToggleButton value="month">Month{permittedViews?.month === false ? <LockOutlinedIcon sx={{ fontSize: 16, ml: 0.5 }} /> : null}</ToggleButton>
+            <ToggleButton value="week">Week{permittedViews?.week === false ? <LockOutlinedIcon sx={{ fontSize: 16, ml: 0.5 }} /> : null}</ToggleButton>
           </ToggleButtonGroup>
           {workspaceEmbedded ? null : <FeatureHelpLink href="/help/calendar/month-and-week#navigate-periods" label="month and week views" />}
         </Stack>
@@ -1022,6 +1029,7 @@ export function CalendarClient({
         <Typography sx={{ fontWeight: 800 }} variant="body2">Ticker results</Typography>
         <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>{selected.tickers.map((ticker) => <Stack key={ticker.instrumentId} sx={{ py: 1.4 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }}>{ticker.symbol}</Typography><Typography color={pnlTone(ticker.pnlSign).color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(ticker.pnlDecimal, initialData.currency)}</Typography></Stack><TickerAnnotationChips compact={false} noteCount={ticker.noteCount} ruleReviewCount={ticker.ruleReviewCount} tagCount={ticker.tagCount} /></Stack>)}</Stack>
       </Drawer>
+      <CalendarUpgradeDialog onClose={() => setRestrictedView(null)} view={restrictedView} />
     </DashboardPage>
   );
 }

@@ -1,4 +1,6 @@
 "use client";
+import { JournalUpgradeLink } from "../../membership-journal-upgrade-link";
+import { isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 import {
   MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
   membershipActionError,
@@ -257,7 +259,8 @@ async function api<T>(url: string, init: RequestInit): Promise<T> {
   const result = (await response.json()) as ApiResult<T>;
   if (!response.ok || result.data === undefined) {
     const error = new Error(result.error?.message ?? "The tag change failed.") as
-      Error & { assignmentCount?: number; status?: number };
+      Error & { assignmentCount?: number; status?: number; code?: string };
+    error.code = isMembershipRequired(result) ? "membership_required" : undefined;
     error.assignmentCount = result.error?.assignmentCount;
     error.status = response.status;
     throw error;
@@ -310,6 +313,7 @@ function TradeTagEditor({
   >([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
   const savedTagSelection = tags.map((tag) => tag.tagId).sort().join("|");
   const draftTagSelection = [...selectedIds].sort().join("|");
   useTradeTrackerUnsavedChanges(
@@ -339,13 +343,16 @@ function TradeTagEditor({
   function showEditor(): void {
     setSelectedIds(tags.map((tag) => tag.tagId));
     setError("");
+    setUpgradeRequired(false);
     setOpen(true);
   }
 
   async function createTag(): Promise<void> {
     if (!newName.trim()) return;
+    setUpgradeRequired(false);
     setBusy(true);
     setError("");
+    setUpgradeRequired(false);
     try {
       if (designPreview) {
         const normalizedName = newName.trim();
@@ -377,6 +384,7 @@ function TradeTagEditor({
       setSelectedIds((current) => [...current, created.tagId]);
       setNewName("");
     } catch (caught) {
+      setUpgradeRequired(isMembershipRequired(caught));
       setError(caught instanceof Error ? caught.message : "The tag could not be created.");
     } finally {
       setBusy(false);
@@ -386,6 +394,7 @@ function TradeTagEditor({
   async function save(): Promise<void> {
     setBusy(true);
     setError("");
+    setUpgradeRequired(false);
     try {
       if (designPreview) {
         const saved = catalog.filter((tag) =>
@@ -491,6 +500,7 @@ function TradeTagEditor({
             </Button>
           </Stack>
           {error ? <Typography color="error" sx={{ mt: 1.5 }} variant="body2">{error}</Typography> : null}
+          {error && upgradeRequired ? <JournalUpgradeLink /> : null}
         </DialogContent>
         <DialogActions
           sx={{

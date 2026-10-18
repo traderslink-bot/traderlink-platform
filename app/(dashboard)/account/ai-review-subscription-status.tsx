@@ -14,17 +14,20 @@ function renewalDate(value: string | null): string | null {
 
 export function AiReviewSubscriptionStatus({
   access,
+  planIncluded=false,
   configured,
   checkoutUrl,
   billingPortalUrl,
 }: Readonly<{
   access: WhopAiReviewAccessRecord | null;
+  planIncluded?:boolean;
   configured: boolean;
   checkoutUrl: string | null;
   billingPortalUrl: string | null;
 }>) {
-  if (!configured || !access) {
-    return <Alert severity="info">AI Review subscriptions are being prepared. No paid review can start until the connection is ready.</Alert>;
+  if(planIncluded)return <Stack spacing={1.5}><Chip color="success" label="AI Review access active" sx={{alignSelf:'flex-start'}}/><Typography>Your plan or add-on includes AI Reviews. Each Journal account keeps its own review schedule.</Typography><Button href="/account/membership" variant="outlined">View your membership</Button></Stack>;
+  if (!access || (!configured && access.state!=="active")) {
+    return <Alert severity="info">Turn your trading history into useful feedback. Choose a plan or add-on with AI Reviews.<Button href="/plans?feature=ai.reviews" variant="contained" sx={{display:"flex",mt:1,width:"fit-content"}}>Explore AI Review plans and add-ons</Button></Alert>;
   }
   if (access.state === "conflict") {
     return <Alert severity="warning">This Whop connection needs support review before paid AI Reviews can start. No subscription access was granted from conflicting information.</Alert>;
@@ -54,6 +57,7 @@ export function AiReviewSubscriptionStatus({
           : "Your Whop account is connected, but an active AI Review membership has not been confirmed yet."}
       </Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
+        <Button href="/plans?feature=ai.reviews" variant="contained">Explore AI Review plans and add-ons</Button>
         {access.state === "not_linked" ? <Button href="/api/billing/whop/connect" variant="contained">Connect Whop</Button> : null}
         {checkoutUrl ? <Button href={checkoutUrl} rel="noreferrer" target="_blank" variant={access.state === "not_linked" ? "outlined" : "contained"}>View AI Review subscription</Button> : null}
       </Stack>

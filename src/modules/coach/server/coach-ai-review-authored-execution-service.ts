@@ -1,3 +1,4 @@
+import { assertAiReviewGenerationAccess } from "@/src/modules/platform/server/membership/membership-ai-review-access";
 import "server-only";
 
 import type Database from "better-sqlite3";
@@ -35,12 +36,14 @@ export class CoachAiReviewAuthoredExecutionService {
     requestId: string,
     now = new Date(),
   ): Promise<"issued" | "retrying"> {
+    assertAiReviewGenerationAccess(this.database,scope.userId);
     const reviews = new CoachAiReviewAuthoredPersistenceRepository(this.database);
     const snapshot = reviews.readSnapshot(scope, requestId);
     const apiKey = process.env.OPENAI_API_KEY?.trim();
     if (!apiKey) return "retrying";
     const observer: CoachAiReviewEvidenceAuthoringCallObserver = {
       beforeCall: async (input) => {
+        assertAiReviewGenerationAccess(this.database,scope.userId);
         const reservationText = JSON.stringify({ system: input.system, prompt: input.prompt });
         const providerInputTokens = coachAiReviewInputNeedsProviderTokenCount(reservationText)
           ? await countCoachAiReviewOpenAiInputTokens({

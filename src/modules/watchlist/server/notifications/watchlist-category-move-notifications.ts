@@ -1,3 +1,4 @@
+import { readWatchlistNotificationCandidates } from "./watchlist-notification-candidates";
 import { canNotifyWatchlistTicker } from "../access/watchlist-plan-policy";
 import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibility";
 import "server-only";
@@ -29,7 +30,7 @@ export function recordCategoryMoveIntent(body:string,actor:string){
   const old=db.prepare<[string],{ticker:string;destination_group:string;actor:string}>("SELECT ticker,destination_group,actor FROM platform_watchlist_category_move_intents WHERE operation_id=?").get(input.id);
   if(old){if(old.ticker!==ticker||old.destination_group!==input.to||old.actor!==actor)throw Error("Move identity changed.");return;}
   const recipients:Recipient[]=[];
-  for(const user of db.prepare<[],{user_id:string;web_push_enabled:number;email_enabled:number}>("SELECT user_id,web_push_enabled,email_enabled FROM platform_watchlist_notification_preferences WHERE web_push_enabled=1 OR email_enabled=1").all()){
+  for(const user of readWatchlistNotificationCandidates(db)){
    if(!watchlistNotificationAccess(db,user.user_id))continue;
    if(user.web_push_enabled)for(const target of db.prepare<[string],{id:string}>("SELECT subscription_id id FROM platform_web_push_subscriptions WHERE user_id=? AND state='active'").all(user.user_id))recipients.push({userId:user.user_id,channel:"web_push",targetRef:target.id});
    if(user.email_enabled){const target=db.prepare<[string],{id:string}>("SELECT email_address_id id FROM platform_notification_email_addresses WHERE user_id=? AND state='confirmed' ORDER BY updated_at_utc DESC LIMIT 1").get(user.user_id);if(target)recipients.push({userId:user.user_id,channel:"email",targetRef:target.id});}

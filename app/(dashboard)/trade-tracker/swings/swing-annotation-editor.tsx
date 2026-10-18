@@ -1,4 +1,6 @@
 "use client";
+import { JournalUpgradeLink } from "../../membership-journal-upgrade-link";
+import { isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import {
   Alert,
@@ -46,7 +48,8 @@ async function request<T>(url: string, init: RequestInit): Promise<T> {
   });
   const packet = await response.json() as ApiResult<T>;
   if (!response.ok || packet.data === undefined) {
-    throw new Error(packet.error?.message ?? "The change could not be saved.");
+    throw Object.assign(new Error(packet.error?.message ?? "The change could not be saved."),
+      { code: isMembershipRequired(packet) ? "membership_required" : undefined });
   }
   return packet.data;
 }
@@ -74,6 +77,7 @@ export function SwingAnnotationEditor({
   const [newTagName, setNewTagName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
 
   const persistedPresetKeys = new Set(availableTags
     .map((tag) => journalTagPresetForName(tag.name)?.presetKey)
@@ -94,13 +98,16 @@ export function SwingAnnotationEditor({
   function openTags() {
     setSelectedIds(tags.map((tag) => tag.tagId));
     setError(null);
+    setUpgradeRequired(false);
     setTagDialogOpen(true);
   }
 
   async function createTag() {
     if (!newTagName.trim()) return;
+    setUpgradeRequired(false);
     setBusy(true);
     setError(null);
+    setUpgradeRequired(false);
     try {
       const created = await request<DaySessionTradeTag>(
         "/api/intelligence/trade-tags",
@@ -117,6 +124,7 @@ export function SwingAnnotationEditor({
       setSelectedIds((current) => [...current, created.tagId]);
       setNewTagName("");
     } catch (cause) {
+      setUpgradeRequired(isMembershipRequired(cause));
       setError(cause instanceof Error ? cause.message : "The tag could not be created.");
     } finally {
       setBusy(false);
@@ -126,6 +134,7 @@ export function SwingAnnotationEditor({
   async function saveTags() {
     setBusy(true);
     setError(null);
+    setUpgradeRequired(false);
     try {
       const saved = await request<DaySessionTradeTag[]>(
         `/api/platform/journal/swings/${encodeURIComponent(positionRef)}/tags`,
@@ -157,6 +166,7 @@ export function SwingAnnotationEditor({
   async function saveRule(rule: DaySessionRule, status: DaySessionRule["status"]) {
     setBusy(true);
     setError(null);
+    setUpgradeRequired(false);
     try {
       const saved = await request<Pick<DaySessionRule, "revision" | "status">>(
         `/api/platform/journal/swings/${encodeURIComponent(positionRef)}/rule-reviews`,
@@ -248,7 +258,7 @@ export function SwingAnnotationEditor({
               Create
             </Button>
           </Stack>
-          {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert> : null}
+          {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}{upgradeRequired ? <Box><JournalUpgradeLink /></Box> : null}</Alert> : null}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setTagDialogOpen(false)}>Cancel</Button>

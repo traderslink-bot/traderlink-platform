@@ -1,5 +1,6 @@
 "use client";
-import { MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/contracts/platform-membership-messages";
+import { JournalUpgradeLink } from "../membership-journal-upgrade-link";
+import { MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, MEMBERSHIP_IMPORT_REQUIRED_MESSAGE, isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import Alert from "@mui/material/Alert";
@@ -119,12 +120,20 @@ export function JournalImportClient({
   const [feeSignConvention, setFeeSignConvention] = useState<"cost_positive" | "cash_effect">("cost_positive");
   const [completed, setCompleted] = useState<CompletedImport | null>(null);
   const [history, setHistory] = useState<readonly JournalImportHistoryItem[]>([]);
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [historyAccessDenied, setHistoryAccessDenied] = useState(false);
   const [working, setWorking] = useState<"preview" | "commit" | "ai_repair" | null>(null);
   const [notice, setNotice] = useState<Readonly<{
     severity: "success" | "warning" | "error";
     text: string;
   }> | null>(null);
+
+  function checkImportAccess(packet: unknown): void {
+    if (isMembershipRequired(packet)) {
+      setUpgradeRequired(true);
+      throw new Error(MEMBERSHIP_IMPORT_REQUIRED_MESSAGE);
+    }
+  }
 
   async function refreshHistory(): Promise<readonly JournalImportHistoryItem[]> {
     const response = await fetch(HISTORY_ENDPOINT, { cache: "no-store" });
@@ -167,6 +176,7 @@ export function JournalImportClient({
   async function previewStatement(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!file || !attemptIdempotencyRef || working) return;
+    setUpgradeRequired(false);
     setWorking("preview");
     setNotice(null);
     setCompleted(null);
@@ -197,6 +207,7 @@ export function JournalImportClient({
         status?: string;
         code?: string;
       };
+      checkImportAccess(packet);
       if (packet.status === "mapping_required" && packet.mappingSupport) {
         acceptMappingSupport(packet.mappingSupport);
         setImportRef(packet.importRef ?? null);
@@ -246,6 +257,7 @@ export function JournalImportClient({
 
   async function startAiRepair(): Promise<void> {
     if (!file || !importRef || working) return;
+    setUpgradeRequired(false);
     setWorking("ai_repair");
     try {
       const data = new FormData();
@@ -255,7 +267,10 @@ export function JournalImportClient({
       const response = await fetch(AI_REPAIR_ENDPOINT, {
         method: "POST", headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" }, body: data,
       });
-      if (!response.ok) throw new Error("AI review could not be started. Please try again.");
+      if (!response.ok) {
+        checkImportAccess(await response.json().catch(() => null));
+        throw new Error("AI review could not be started. Please try again.");
+      }
       setAiRepairOpen(false);
       clearUploadState();
       setNotice({ severity: "success", text: "Your private review request was saved. TradersLink will let you know when this import is ready." });
@@ -285,6 +300,7 @@ export function JournalImportClient({
       feeSignConvention,
       sourceTimezone,
     };
+    setUpgradeRequired(false);
     setWorking("preview");
     setNotice(null);
     setPreview(null);
@@ -305,6 +321,7 @@ export function JournalImportClient({
         mappingSupport?: JournalMappingSupportPackageV2;
         code?: string;
       };
+      checkImportAccess(packet);
       if (!response.ok || !packet.preview) {
         throw new Error(packet.code ?? "The selected columns could not be mapped.");
       }
@@ -334,6 +351,7 @@ export function JournalImportClient({
       !candidate.canCommit ||
       (candidate.sourceIdentityConfirmationRequired && !confirmSourceIdentityLink)
     ) return;
+    setUpgradeRequired(false);
     setWorking("commit");
     setNotice(null);
     setPreview(null);
@@ -375,6 +393,7 @@ export function JournalImportClient({
       } catch {
         throw new Error("The statement could not be saved. Please try Upload again.");
       }
+      checkImportAccess(packet);
       if (!response.ok || !packet.result) {
         throw new Error(importSaveErrorMessage(packet.code));
       }
@@ -531,7 +550,7 @@ export function JournalImportClient({
                 {working === "preview" ? "Uploading..." : "Upload"}
               </Button>
             </Stack>
-            {notice ? <Alert severity={notice.severity}>{notice.text}</Alert> : null}
+            {notice ? <Alert severity={notice.severity}>{notice.text}{upgradeRequired ? <Box><JournalUpgradeLink /></Box> : null}</Alert> : null}
             {mappingSupport && !preview && importRef ? (
               <Button onClick={() => setAiRepairOpen(true)} variant="outlined">
                 AI map statement
@@ -653,6 +672,7 @@ export function JournalImportClient({
         <DialogTitle>Allow AI to review your statement</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
+            {upgradeRequired && notice ? <Alert severity="error">{notice.text}<Box><JournalUpgradeLink /></Box></Alert> : null}
             <Typography>Your statement is not yet supported, so the import failed.</Typography>
             <Typography>Allow TraderLink to send this statement to OpenAI so it can suggest a mapping. OpenAI is used only for this import and is asked not to store the request. TraderLink checks the suggested mapping before it imports anything.</Typography>
             <FormControlLabel control={<Checkbox checked={discordCompletionRequested} onChange={(event) => setDiscordCompletionRequested(event.target.checked)} />} label="Send me a Discord DM when this import is complete" />

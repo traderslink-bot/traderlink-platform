@@ -58,6 +58,7 @@ function fixture() {
     previewRef: "preview:" + "a".repeat(80),
     expiresAtUtc: "2026-08-05T14:10:00.000Z",
     tracker: "quick",
+    workspaceStyle: null,
     affectedDates: Object.freeze(["2026-08-05"]),
     executionCount: 2,
     groups: Object.freeze([Object.freeze({

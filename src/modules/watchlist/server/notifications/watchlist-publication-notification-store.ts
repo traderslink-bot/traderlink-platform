@@ -1,3 +1,4 @@
+import { notificationDefaultEnabled, notificationPreferenceEnabled } from "@/src/modules/platform/server/notifications/platform-notification-defaults";
 import { assertMembershipNotification, canReceiveMembershipNotification } from "@/src/modules/platform/server/membership/membership-notification-access";
 import { canNotifyWatchlistTicker } from "../access/watchlist-plan-policy";
 import { randomUUID } from "node:crypto";
@@ -26,17 +27,20 @@ export class WatchlistPublicationNotificationStore {
       `SELECT web_push_enabled,email_enabled FROM platform_watchlist_notification_preferences WHERE user_id=?`,
     ).get(userId);
     const allowed = canReceiveMembershipNotification(this.database, userId, "watchlist");
-    return Object.freeze({ webPushEnabled: allowed && row?.web_push_enabled === 1, emailEnabled: allowed && row?.email_enabled === 1 });
+    return Object.freeze({ webPushEnabled: allowed && notificationPreferenceEnabled(this.database, row?.web_push_enabled), emailEnabled: allowed && notificationPreferenceEnabled(this.database, row?.email_enabled) });
   }
 
   savePreference(userId: string, channel: WatchlistNotificationChannel, enabled: boolean, now: Date): void {
     if (!userIdPattern.test(userId) || typeof enabled !== "boolean" ||
       !["web_push", "email"].includes(channel)) throw new Error("Invalid notification preference.");
     if (enabled) assertMembershipNotification(this.database, userId, "watchlist");
+    if (!enabled && !canReceiveMembershipNotification(this.database, userId, "watchlist")) return;
+    const defaultEnabled = notificationDefaultEnabled(this.database);
     const column = channel === "web_push" ? "web_push_enabled" : "email_enabled";
-    this.database.prepare(`INSERT INTO platform_watchlist_notification_preferences(user_id,${column},updated_at_utc)
-      VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET ${column}=excluded.${column},updated_at_utc=excluded.updated_at_utc`)
-      .run(userId, enabled ? 1 : 0, now.toISOString());
+    this.database.prepare(`INSERT INTO platform_watchlist_notification_preferences(user_id,web_push_enabled,email_enabled,updated_at_utc)
+      VALUES(?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET ${column}=excluded.${column},updated_at_utc=excluded.updated_at_utc`)
+      .run(userId, channel === "web_push" ? Number(enabled) : defaultEnabled,
+        channel === "email" ? Number(enabled) : defaultEnabled, now.toISOString());
   }
 
   accept(input: Readonly<{
