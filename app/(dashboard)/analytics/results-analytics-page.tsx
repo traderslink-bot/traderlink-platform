@@ -1,4 +1,5 @@
 import { MembershipFeatureAccessNotice } from "../membership-feature-access-notice";
+import type {WorkspaceAccessScope} from "@/src/modules/platform/contracts/workspace-access-scope";
 import "server-only";
 
 import Box from "@mui/material/Box";
@@ -72,8 +73,8 @@ function range(input: Readonly<Record<string, string | string[] | undefined>>): 
     : { endDate: null, kind: "all", startDate: null };
 }
 
-export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = await requireMembershipPreviewPageScope("analytics.access");
+export async function ResultsAnalyticsPage({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const scope = resourceScope ?? await requireMembershipPreviewPageScope("analytics.access");
   if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
   const selectedRange = range(searchParams);
   const { moneyBasis, response } = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
@@ -124,7 +125,7 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
   });
   return (
     <>
-      <OfflineSavedViewCapture
+      {resourceScope?null:<OfflineSavedViewCapture
         accountTimezone={response.partitions[0]?.timezone ?? null}
         calculationVersion={`journal-analytics-${response.registryVersion}`}
         coverage={journalAnalyticsOfflineRouteCoverage("analytics-results")}
@@ -135,7 +136,7 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
         reportingCurrency={response.partitions[0]?.currency ?? null}
         routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-results"]}
-      />
+      />}
       <DashboardPage>
         <Box>
           <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography>

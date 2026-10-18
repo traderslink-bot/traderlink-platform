@@ -1,0 +1,3 @@
+export type CoachingReviewTradeCap=Readonly<{basis:"per_day"|"per_review";quantity:number}>;
+export type CoachingReviewCapResolution=Readonly<{proposalId:string;tradeCap:CoachingReviewTradeCap;status:"proposed"|"accepted";proposedAtUtc:string;acceptedAtUtc:string|null}>;
+export function isCoachingReviewTradeCap(value:unknown):value is CoachingReviewTradeCap{if(!value||typeof value!=="object")return false;const cap=value as Partial<CoachingReviewTradeCap>;return (cap.basis==='per_day'||cap.basis==='per_review')&&typeof cap.quantity==='number'&&Number.isInteger(cap.quantity)&&cap.quantity>=1&&cap.quantity<=500;}

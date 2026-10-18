@@ -1,4 +1,5 @@
 "use client";
+import {useCoachingResourceNavigation} from "../communities/coaching-resource-context";
 
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -13,8 +14,11 @@ export function TradeAnalysisRangeAndBasisControls({
   dateRange: OverviewDateRange;
   moneyBasis: "gross" | "net";
 }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const nativePathname = usePathname();
+  const resource=useCoachingResourceNavigation();
+  const pathname=resource?.pathname??nativePathname;
+  const nativeSearchParams = useSearchParams();
+  const searchParams=resource?new URLSearchParams(resource.parameters):nativeSearchParams;
 
   function basisHref(basis: "gross" | "net"): string {
     const params = new URLSearchParams(searchParams.toString());

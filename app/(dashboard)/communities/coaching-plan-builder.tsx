@@ -16,7 +16,7 @@ import TextField from "@mui/material/TextField";
 import {CommunityTypography as Typography} from "./community-typography";
 import type {TraderLinkCommunityCoachingItemType, TraderLinkCommunityCoachingPlan, TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import {saveCoachingPlanWithFeedbackAction} from "./community-actions";
-import {PLAN_OFFERS, PERFORMANCE_INCLUSIONS, REVIEW_RESOURCES, FREQUENCIES, PERIODS, initialOfferSettings, offerSummary, offerColor, type Offer, type OfferSettings} from "./coaching-plan-offers";
+import {PLAN_OFFERS, PERFORMANCE_INCLUSIONS,  FREQUENCIES, PERIODS, initialOfferSettings, offerSummary, offerColor, type Offer, type OfferSettings} from "./coaching-plan-offers";
 
 type ItemType = TraderLinkCommunityCoachingItemType;
 type Settings = Record<ItemType, OfferSettings>;
@@ -41,6 +41,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
         quantity:String(item.quantity),dueDays:String(item.dueOffsetDays),minutes:item.plannedMinutes===null?"":String(item.plannedMinutes),
         selection:item.selectionMode==="not_applicable"?"coach_or_student":item.selectionMode,depth:item.reviewDepth,
         followUpDays:String(item.followUpDays),focus:[...item.focusAreas??[]],timeline:item.timelineEnabled,
+        tradeCapBasis:plan?.builderConfig?.offers[item.itemType]?.tradeCap?.basis??"per_day",tradeCapQuantity:String(plan?.builderConfig?.offers[item.itemType]?.tradeCap?.quantity??5),
         details:plan?.builderConfig?.offers[item.itemType]?.details??"",resources:[...plan?.builderConfig?.offers[item.itemType]?.resources??[]]};
     }
     return initial;
@@ -56,7 +57,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
   const [archiveAfterDays,setArchiveAfterDays]=useState(String(plan?.autoArchiveAfterDays??""));
   const [coachingRole, setCoachingRole] = useState(plan?.requiredDiscordRoleId??"");
   const roles = useMemo(() => Array.from(new Set([...(snapshot.coachingRoleOptions??[]).map(role=>role.id), ...snapshot.audiences.flatMap(x => x.discordRoleIds), ...snapshot.staffRoles.flatMap(x => x.discordRoleIds), ...(plan?.requiredDiscordRoleId?[plan.requiredDiscordRoleId]:[])])), [snapshot,plan]);
-  const legacyItems = plan?.items.filter(item=>["journal_review","rules_review","risk_review","goal_review"].includes(item.itemType))??[];
+  const legacyItems = plan?.items.filter(item=>["journal_review","rules_review","risk_review","goal_review","strategy_review"].includes(item.itemType))??[];
   const active = PLAN_OFFERS.filter(offer => selected.includes(offer.type));
   const toggle = (type:ItemType) => setSelected(current => current.includes(type) ? current.filter(item => item!==type) : [...current, type]);
   const update = (type:ItemType, patch:Partial<OfferSettings>) => setSettings(current => ({...current, [type]:{...current[type], ...patch}}));
@@ -71,14 +72,14 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
     <input type="hidden" name="coachProfileId" value={coachProfileId}/>
     <input type="hidden" name="planId" value={plan?.planId??""}/>
     <input type="hidden" name="expectedRevision" value={plan?.revision??1}/>
-    <input type="hidden" name="builderConfig" value={JSON.stringify({about:description,offers:Object.fromEntries(active.map(offer=>[offer.type,{details:settings[offer.type].details,resources:settings[offer.type].resources}]))})}/>
+    <input type="hidden" name="builderConfig" value={JSON.stringify({about:description,offers:Object.fromEntries(active.map(offer=>[offer.type,{details:settings[offer.type].details,resources:settings[offer.type].resources,...(offer.type==="performance_review"?{includeDayJournal:settings[offer.type].focus.includes("journal")} : {}),...(offer.type==="trading_day_review"?{tradeCap:{basis:settings[offer.type].tradeCapBasis,quantity:Number(settings[offer.type].tradeCapQuantity)}}:{})}]))})}/>
     <input type="hidden" name="planStyle" value={selected.length===1 && selected[0]==="custom_task" ? "custom" : "structured"}/>
     <input type="hidden" name="description" value={savedDescription}/>
     {active.map(offer => <ServiceFields key={offer.type} offer={offer} value={settings[offer.type]}/>)}
     <Grid container spacing={3}>
       <Grid size={{xs:12, lg:8}}>
         <Stack spacing={3}>
-          {legacyItems.length?<Alert severity="info">Existing standalone review services are preserved: {legacyItems.map(item=>({journal_review:"Journal",rules_review:"Rules",risk_review:"Risk",goal_review:"Goals"}[item.itemType as "journal_review"|"rules_review"|"risk_review"|"goal_review"])).join(", ")}. New reviews use Trade, Trading day, Performance or Strategy with focus areas. Accepted agreements and history remain unchanged.</Alert>:null}
+          {legacyItems.length?<Alert severity="info">Existing standalone review services are preserved: {legacyItems.map(item=>({journal_review:"Journal",rules_review:"Rules",risk_review:"Risk",goal_review:"Goals",strategy_review:"Strategy"}[item.itemType as "journal_review"|"rules_review"|"risk_review"|"goal_review"|"strategy_review"])).join(", ")}. New reviews use Trade, Trading day or Performance with focus areas. Accepted agreements and history remain unchanged.</Alert>:null}
           <TextField fullWidth required label="Plan name" name="name" value={name} onChange={event => setName(event.target.value)} slotProps={{htmlInput:{maxLength:100}}}/>
           <Box>
             <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center",mb:1.5}}><Typography component="h3" variant="h3">Coaching included</Typography><Button href="#coach-plan-preview" size="small">Preview</Button></Stack>
@@ -175,7 +176,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
 function ServiceFields({offer, value}:{offer:Offer; value:OfferSettings}) {
   const fields:Record<string,string> = {
     item:"on", measurement:offer.measure, frequency:value.frequency, coverage:value.coverage,
-    quantity:value.quantity || "1", due:value.dueDays || "0", selection:offer.type==="trade_review"?value.selection:"not_applicable",
+    quantity:value.quantity || "1", due:value.dueDays || "0", selection:["trade_review","trading_day_review"].includes(offer.type)?value.selection:"not_applicable",
     followUp:offer.type==="review_follow_up"?value.followUpDays:"0", minutes:value.minutes, depth:value.depth,
   };
   return <>{Object.entries(fields).map(([key, text]) => <input key={key} type="hidden" name={key+":"+offer.type} value={text}/>)}
@@ -208,6 +209,7 @@ function OfferEditor({offer, value, onChange, onRemove}:{
         <Grid size={{xs:12,sm:6}}><TextField fullWidth required label={offer.count} type="number" value={value.quantity} onChange={event=>onChange({quantity:event.target.value})} slotProps={{htmlInput:{min:1,step:1}}}/></Grid>
         <Grid size={{xs:12,sm:6}}><TextField fullWidth label="Review includes" select value={value.depth} onChange={event=>onChange({depth:event.target.value as OfferSettings["depth"]})}><MenuItem value="trades_only">Trades only</MenuItem><MenuItem value="complete_day">Trades and complete trading-day Journal</MenuItem></TextField></Grid>
       </Grid> : null}
+      {offer.type==="trading_day_review"?<Grid container spacing={2}><Grid size={{xs:12,sm:6}}><TextField fullWidth label="Trade limit" select value={value.tradeCapBasis} onChange={event=>onChange({tradeCapBasis:event.target.value as OfferSettings["tradeCapBasis"]})}><MenuItem value="per_day">Max trades per day</MenuItem><MenuItem value="per_review">Max trades across this review</MenuItem></TextField></Grid><Grid size={{xs:12,sm:6}}><TextField fullWidth required label={value.tradeCapBasis==="per_day"?"Maximum trades per day":"Maximum trades across review"} type="number" value={value.tradeCapQuantity} onChange={event=>onChange({tradeCapQuantity:event.target.value})} slotProps={{htmlInput:{min:1,max:500,step:1}}}/></Grid><Grid size={12}><TextField fullWidth label="Trades chosen by" select value={value.selection} onChange={event=>onChange({selection:event.target.value as OfferSettings["selection"]})}><MenuItem value="coach">Coach</MenuItem><MenuItem value="student">Student</MenuItem><MenuItem value="coach_or_student">Coach or student</MenuItem></TextField></Grid></Grid>:null}
       {offer.type==="custom_task" ? <FormControlLabel label="Add a schedule" control={<Checkbox checked={value.timeline} onChange={event=>onChange({timeline:event.target.checked})}/>}/> : null}
       {offer.count && !["trade_review","trading_day_review"].includes(offer.type) ? <TextField fullWidth required label={offer.count} type="number" value={value.quantity} onChange={event=>onChange({quantity:event.target.value})} slotProps={{htmlInput:{min:1,step:1}}}/> : null}
       {value.timeline ? <Grid container spacing={2}>
@@ -217,10 +219,7 @@ function OfferEditor({offer, value, onChange, onRemove}:{
         {!isReview && offer.type!=="questions" ? <Grid size={{xs:12,sm:6}}><TextField fullWidth label="Session length (minutes)" type="number" value={value.minutes} onChange={event=>onChange({minutes:event.target.value})} slotProps={{htmlInput:{min:1,step:1}}}/></Grid> : null}
       </Grid> : null}
       {offer.type==="review_follow_up" ? <TextField fullWidth required label="Follow-up period (days)" type="number" value={value.followUpDays} onChange={event=>onChange({followUpDays:event.target.value})} slotProps={{htmlInput:{min:1,step:1}}}/> : null}
-      {isReview ? <Box component="details" open={offer.type==="performance_review"} sx={{borderTop:1,borderColor:"divider",pt:1.5}}>
-        <Box component="summary" sx={{cursor:"pointer",fontWeight:700}}>Review resources</Box>
-        <Stack sx={{mt:1}}>{REVIEW_RESOURCES.map(resource=><FormControlLabel key={resource} label={resource} control={<Checkbox checked={value.resources.includes(resource)} onChange={()=>onChange({resources:value.resources.includes(resource)?value.resources.filter(item=>item!==resource):[...value.resources,resource]})}/>}/>)}</Stack>
-      </Box> : null}
+      {isReview ? <Typography color="text.secondary" variant="body2">Required Journal access follows this review and its focus areas. The student sees the requirements before agreeing and grants access to their account.</Typography> : null}
       <TextField fullWidth multiline minRows={2} required={offer.type==="custom_task"} label={offer.type==="strategy_review"?"Strategy / setup and feedback":offer.type==="group_lesson"?"Lesson topics and delivery":offer.type==="custom_task"?"What you offer":"What the student receives"} value={value.details} onChange={event=>onChange({details:event.target.value})} slotProps={{htmlInput:{maxLength:1000}}}/>
     </Stack>
   </Box>;

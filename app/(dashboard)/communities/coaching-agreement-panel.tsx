@@ -1,6 +1,7 @@
 "use client";
+import {coachingRequiredAccess,COACHING_ACCESS_LABELS} from "@/src/modules/communities/contracts/coaching-required-access";
 import {coachingAccessNoticeMessage} from "@/src/modules/communities/contracts/coaching-access";
-import {Box,Button,Chip,Grid,Stack,TextField,Typography} from "@mui/material";
+import {Box,Button,Checkbox,FormControlLabel,Chip,Grid,Stack,TextField,Typography} from "@mui/material";
 import {DashboardPanel} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import {coachingAgreementAction} from "./community-actions";
@@ -18,8 +19,9 @@ export function CoachingAgreementPanel({snapshot,relationshipId,disabled=false}:
   {[proposed,accepted].filter(item=>!!item).map(agreement=><Box key={agreement.agreementId} sx={{border:1,borderColor:"divider",borderRadius:2,p:2}}>
    <Stack direction="row" spacing={1}><Typography sx={{fontWeight:800}}>{agreement.terms.planName}</Typography><Chip color={agreement.status==="accepted"?"success":"warning"} label={agreement.status==="accepted"?"Accepted":"Awaiting acceptance"}/></Stack>
    <Typography>{agreement.terms.currency} {(agreement.terms.priceAmountMinor/100).toFixed(2)} · {agreement.terms.billingCadence.replaceAll("_"," ")}</Typography>
+   <Box><Typography sx={{fontWeight:700}}>Required Journal access</Typography><Typography>{coachingRequiredAccess(agreement.terms.items,agreement.terms.builderConfig).map(scope=>COACHING_ACCESS_LABELS[scope]??scope).join(" · ")||"No Journal data required"}</Typography><Typography variant="body2">You control Journal sharing. Confirm the required access when accepting; you can change or revoke sharing later.</Typography></Box>
    {agreement.terms.items.map(item=>{const offer=PLAN_OFFERS.find(offer=>offer.type===item.itemType),detail=agreement.terms.builderConfig?.offers[item.itemType];return <Box key={item.planItemId} sx={{my:1.5}}>
-    <Typography sx={{fontWeight:700}}>{offer?.label??"Journal review"}</Typography>
+    <Typography sx={{fontWeight:700}}>{offer?.label??item.itemType.replaceAll("_"," ")}</Typography>
     <Stack direction="row" sx={{gap:.75,flexWrap:"wrap",mt:.5}}>
      {item.itemType!=="review_follow_up"?<Chip size="small" color="info" label={item.timelineEnabled?(item.frequency==="custom"?`Every ${agreement.terms.customIntervalDays} days`:FREQUENCIES[item.frequency]):"Unscheduled"}/>:null}
      {offer?.count?<Chip size="small" label={`${offer.count}: ${item.quantity}`}/>:null}
@@ -30,13 +32,14 @@ export function CoachingAgreementPanel({snapshot,relationshipId,disabled=false}:
      {item.selectionMode!=="not_applicable"?<Chip size="small" label={`Chosen by ${item.selectionMode==="coach_or_student"?"coach or student":item.selectionMode}`}/>:null}
      {item.reviewDepth==="complete_day"?<Chip size="small" label="Complete day with Journal"/>:null}
      {(item.focusAreas??[]).map(focus=><Chip key={focus} size="small" label={COACHING_REVIEW_FOCUS[focus]}/>)}
+     {detail?.tradeCap?<Chip size="small" label={`${detail.tradeCap.quantity} trades ${detail.tradeCap.basis==="per_day"?"per day":"across this review"}`}/>:null}
      {detail?.resources.map(resource=><Chip key={resource} size="small" label={resource}/>)}
     </Stack>
     {detail?.details?<Typography sx={{whiteSpace:"pre-wrap",mt:.5}}>{detail.details}</Typography>:null}
    </Box>;})}
    <Typography>{agreement.terms.startDate??"No schedule"}{agreement.terms.startDate?` · ${agreement.terms.dueTimeUtc} UTC`:""}</Typography>
    <Typography sx={{whiteSpace:"pre-wrap"}}>{agreement.terms.description}</Typography>
-   {!coach&&agreement.status==="proposed"?<Box component="form" action={disabled?undefined:coachingAgreementAction}>{hidden}<input type="hidden" name="agreementId" value={agreement.agreementId}/><Button disabled={disabled} type="submit" name="intent" value="accept" variant="contained">Accept agreement</Button></Box>:null}
+   {!coach&&agreement.status==="proposed"?<Box component="form" action={disabled?undefined:coachingAgreementAction}>{hidden}<input type="hidden" name="agreementId" value={agreement.agreementId}/><input name="journalAccountId" type="hidden" value={snapshot.viewer.activeJournalAccountId??""}/>{coachingRequiredAccess(agreement.terms.items,agreement.terms.builderConfig).length&&relationship.status==="active"?<FormControlLabel label="Share the required Journal data from my selected account with this coach" control={<Checkbox required name="shareRequiredAccess" value="yes" disabled={disabled||!snapshot.viewer.activeJournalAccountId}/>}/>:null}{relationship.status!=="active"?<Typography variant="body2">Required Journal sharing becomes available when enrollment is active.</Typography>:null}<Button disabled={disabled||(relationship.status==="active"&&coachingRequiredAccess(agreement.terms.items,agreement.terms.builderConfig).length>0&&!snapshot.viewer.activeJournalAccountId)} type="submit" name="intent" value="accept" variant="contained">Accept agreement</Button></Box>:null}
   </Box>)}
   {coach&&plan?<Box component="details"><Box component="summary" sx={{cursor:"pointer",fontWeight:700}}>{accepted?"Revise agreement":"Prepare agreement"}</Box><Box component="form" action={disabled?undefined:coachingAgreementAction} sx={{mt:2}}>{hidden}<Grid container spacing={2}>
    <Grid size={{xs:12,sm:4}}><TextField fullWidth label="Agreed price" name="price" type="number" required defaultValue={plan.priceAmountMinor==null?"":(plan.priceAmountMinor/100).toFixed(2)} slotProps={{htmlInput:{min:0,step:"0.01"}}}/></Grid>

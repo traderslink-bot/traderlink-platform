@@ -1,4 +1,5 @@
 "use client";
+import {useCoachingResourceNavigation} from "../communities/coaching-resource-context";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { analyzedIndicatorPopulation } from "@/src/lib/trade-candle-analysis/trend-momentum-display-population";
@@ -23,7 +24,7 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Decimal from "decimal.js";
-import Link from "next/link";
+import {ResourceAwareLink as Link} from "../communities/coaching-resource-context";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { filterSavedTradeMovement, readMovementFilters } from "@/src/lib/trade-candle-analysis/trend-momentum-movement-filter";
@@ -755,9 +756,12 @@ export function TradeAnalysisClient({
   offline?: boolean;
   view: TradeAnalysisView;
 }) {
-  const pathname = usePathname();
+  const nativePathname = usePathname();
+  const resource=useCoachingResourceNavigation();
+  const pathname=resource?.pathname??nativePathname;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const nativeSearchParams = useSearchParams();
+  const searchParams=resource?new URLSearchParams(resource.parameters):nativeSearchParams;
   const [offlineMovementQuery, setOfflineMovementQuery] = useState(initialSelectionQuery);
   const movementQuery = offline ? offlineMovementQuery : searchParams.toString();
   const filteredMovement = useMemo(() => view === "mfe-mae" ? filterSavedTradeMovement(sourceModel, readMovementFilters(new URLSearchParams(movementQuery))) : null, [view, sourceModel, movementQuery]);
@@ -952,7 +956,7 @@ export function TradeAnalysisClient({
             const params = new URLSearchParams(searchParams.toString());
             params.set("direction", direction);
             params.delete("page");
-            router.replace(`${pathname}?${params.toString()}`);
+            resource?resource.navigate(`${pathname}?${params.toString()}`):router.replace(`${pathname}?${params.toString()}`);
           }} /> : null}
         </Stack>
         {view !== "scaling-out" ? <TradeAnalysisRangeAndBasisControls
@@ -964,7 +968,7 @@ export function TradeAnalysisClient({
       {view === "trend-momentum" ? <TrendMomentumAnalysis projection={model.trendMomentum} direction={activeDirection} currency={model.currency} timezone={model.timezone} offline={offline}
         supportingPage={indicatorSupportingPage}
         moneyBasis={model.moneyBasis}
-        queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} /> : null}
+        queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => resource?resource.navigate(`${pathname}?${query}`):router.replace(`${pathname}?${query}`, { scroll: false })} /> : null}
       {view === "day" && model.trendMomentum ? <Section title="Trend & Momentum" description="" helpHref="/help/trade-analyzer/trend-momentum"
         titleHelp="Saved EMA 9, EMA 20, RSI and session VWAP context for user-defined trades in this selection. Missing indicator history does not reduce the main Analyzer count." collapsible={false}>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
@@ -1156,7 +1160,7 @@ export function TradeAnalysisClient({
 
       {view === "mfe-mae" && filteredMovement ? <Section defaultExpanded description="" title="Indicator filters" titleHelp="Compare movement after executions with the chosen EMA alignment and RSI range. Both conditions must match the same saved timeframe before that execution. Any keeps executions without added indicator history." helpHref="/help/trade-analyzer/mfe-mae#comparisons">
         <MovementIndicatorFilters queryString={movementQuery} coverage={filteredMovement.coverage[activeDirection]} onChange={(query) => {
-          if (offline) setOfflineMovementQuery(query); else router.replace(`${pathname}?${query}`, { scroll: false });
+          if (offline) setOfflineMovementQuery(query); else resource?resource.navigate(`${pathname}?${query}`):router.replace(`${pathname}?${query}`, { scroll: false });
         }} />
       </Section> : null}
       {view === "mfe-mae" ? <Section defaultExpanded description={`MFE and MAE measure price movement after each ${directionLabel} entry or add until that position closes. Dollars are per share.`} helpHref="/help/trade-analyzer/mfe-mae#overview" title="Room after entry · MFE / MAE" titleHelp="Review how much upside and downside followed your entries and adds while the position was open. Each execution starts from its own price and carries equal weight in the summaries. MFE is the largest profitable price move; MAE is the largest losing price move. Neither is a realized trade profit or loss. Measurements use saved one-minute candles and the position-closing price. The entry and exit candles' full ranges are excluded because their highs and lows may have occurred outside your holding period.">
@@ -1186,7 +1190,7 @@ export function TradeAnalysisClient({
       </Section> : null}
       {view === "candle-patterns" && patternCoverage ? <Section defaultExpanded description="" title="Indicator filters" titleHelp="Compare candle patterns with the EMA alignment and RSI range recorded before each execution. Pattern timeframe and whether it appeared before or at the execution remain separate." helpHref="/help/trade-analyzer/candle-patterns#pattern-results">
         <MovementIndicatorFilters mode="patterns" queryString={movementQuery} coverage={{ matched: patternCoverage.matching.length, notMatched: patternCoverage.nonmatchingOccurrenceCount, unavailable: patternCoverage.unavailableOccurrenceCount }} onChange={(query) => {
-          if (offline) setOfflineMovementQuery(query); else router.replace(`${pathname}?${query}`, { scroll: false });
+          if (offline) setOfflineMovementQuery(query); else resource?resource.navigate(`${pathname}?${query}`):router.replace(`${pathname}?${query}`, { scroll: false });
         }} />
       </Section> : null}
       {view === "candle-patterns" ? <Section defaultExpanded description="The ten most frequently observed candle patterns." helpHref="/help/trade-analyzer/candle-patterns#ranked-patterns" title="Most observed patterns">
@@ -1259,7 +1263,7 @@ export function TradeAnalysisClient({
       {view === "entry-exit" ? <Section title="Indicator context at executions" description="" helpHref="/help/trade-analyzer/trend-momentum"
         titleHelp="Compare EMA alignment or RSI at initial entries, adds, re-entries and exits. Only completed candles known at that execution are used. A trade counts once within a group even when it contains several qualifying executions.">
         <TrendMomentumExecutionComparison projection={model.trendMomentum} direction={activeDirection} money={(value) => money(value, model.currency)} moneyBasis={model.moneyBasis} offline={offline}
-          queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
+          queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => resource?resource.navigate(`${pathname}?${query}`):router.replace(`${pathname}?${query}`, { scroll: false })} />
       </Section> : null}
       {view === "green-to-red" || view === "scaling-out" ? <Section title="Indicators at the comparison point"
         description="" helpHref="/help/trade-analyzer/trend-momentum" titleHelp={view === "green-to-red"
@@ -1267,7 +1271,7 @@ export function TradeAnalysisClient({
           : "Compare indicators at the same first zone arrival for trades with and without later recorded profit taking in that zone. A seller's sale-time indicator is not compared with a nonseller's entry-time indicator."}>
         <TrendMomentumLandmarkComparison mode={view} projection={model.trendMomentum} greenRows={greenToRedOpportunityRows} zoneRows={profitZoneRecords}
           money={(value) => money(value, model.currency)} moneyBasis={model.moneyBasis}
-          queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => router.replace(`${pathname}?${query}`, { scroll: false })} />
+          queryString={movementQuery} onQueryChange={offline ? setOfflineMovementQuery : (query) => resource?resource.navigate(`${pathname}?${query}`):router.replace(`${pathname}?${query}`, { scroll: false })} />
       </Section> : null}
       {model.malformedSnapshotCount > 0 ? <Typography color="warning.main" variant="body2">{model.malformedSnapshotCount} saved execution snapshots could not be read and were excluded from execution-level breakdowns.</Typography> : null}
     </Stack>

@@ -29,6 +29,7 @@ type AnalyzerPattern = AnalyzerEvent["patterns"][number];
 type TradeAnalysisSection = Readonly<{ lines: readonly string[]; title: string }>;
 
 export type WorkspaceTradeAnalyzerPanelProps = Readonly<{
+  loadSavedAnalysis?:()=>Promise<DaySessionTradeAnalyzer|null>;
   currency: string;
   direction: "long" | "short";
   executionCount: number;
@@ -189,7 +190,7 @@ function FullAnalysisEvidence({ analysis, currency, timezone, direction, interva
   return <Box sx={{ borderTop: 1, borderColor: "divider", p: { xs: 1.5, md: 2 } }}><WrittenTradeAnalysis analysis={analysis} currency={currency} timezone={timezone} direction={direction} timeframe={timeframe}><Stack spacing={1.25}>{sections.map(section => <AnalysisSection key={section.title} section={section} />)}</Stack></WrittenTradeAnalysis></Box>;
 }
 
-export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCount, gainLossDecimal, onClose, open, roundTripId, symbol, timezone }: WorkspaceTradeAnalyzerPanelProps) {
+export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCount, gainLossDecimal, onClose, open, roundTripId, symbol, timezone,loadSavedAnalysis }: WorkspaceTradeAnalyzerPanelProps) {
   const [analysis, setAnalysis] = useState<DaySessionTradeAnalyzer | null>(null);
   const [interval, setInterval] = useState<DailyTradeChartInterval>("1m");
   const [loadState, setLoadState] = useState<AnalyzerLoadState>("idle");
@@ -202,6 +203,11 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
     const request = ++loadRequestRef.current;
     setLoadState("loading");
     try {
+      if(loadSavedAnalysis){
+        const saved=await loadSavedAnalysis();if(request!==loadRequestRef.current)return;
+        const available=saved&&(saved.status==="execution_mismatch"||(saved.status==="ready"&&saved.candles.length>0))?saved:null;
+        setAvailability(null);setAnalysis(available);setLoadState(available?"idle":"unavailable");return;
+      }
       const [response, uses] = await Promise.all([
         fetch(`/api/platform/trade-analyzer/trade?${new URLSearchParams({ direction, roundTripId })}`, { cache: "no-store" }),
         fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" }).then(async response => response.ok ? await response.json() as { availability?: SharedAnalyzerAvailability } : null).catch(() => null),
@@ -240,7 +246,7 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [direction, open, roundTripId]);
   async function requestAnalysis(refreshIndicators = false): Promise<void> {
-    if (requesting || !availability?.enabled) {
+    if (loadSavedAnalysis || requesting || !availability?.enabled) {
       setLoadState("unavailable");
       return;
     }

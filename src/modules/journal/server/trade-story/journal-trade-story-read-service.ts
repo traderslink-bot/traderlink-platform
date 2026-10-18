@@ -1,4 +1,5 @@
 import "server-only";
+import {aggregateJournalTradeStoryPerformance,journalTradeStoryPerformanceFromRow} from "./journal-trade-story-performance";
 
 import Decimal from "decimal.js";
 
@@ -158,25 +159,7 @@ function performance(
     }));
     const row = normalizeJournalAnalyticsFacts(factSet).realizedRows
       .find((candidate) => candidate.roundTripId === roundTripId);
-    return row ? Object.freeze({
-      chargeCostDecimal: row.chargeCostDecimal,
-      chargeCoverage: row.chargeCoverage,
-      chargeCreditDecimal: row.chargeCreditDecimal,
-      closedAtUtc: row.closedAtUtc,
-      enteredQuantityDecimal: row.enteredQuantityDecimal,
-      entryNotionalDecimal: row.entryNotionalDecimal,
-      entryPriceDecimal: averagePrice(row.entryNotionalDecimal, row.enteredQuantityDecimal),
-      executionCount: row.uniqueExecutionCount,
-      exitNotionalDecimal: row.exitNotionalDecimal,
-      exitPriceDecimal: averagePrice(row.exitNotionalDecimal, row.exitQuantityDecimal),
-      exitQuantityDecimal: row.exitQuantityDecimal,
-      grossPnlDecimal: row.grossPnlDecimal,
-      holdDurationMilliseconds: row.holdingDurationMilliseconds,
-      maximumPositionQuantityDecimal: row.maximumPositionQuantityDecimal,
-      netPnlDecimal: row.netPnlDecimal,
-      openedAtUtc: row.openedAtUtc,
-      tradeCurrency: row.tradeCurrency,
-    }) : null;
+    return row ? journalTradeStoryPerformanceFromRow(row) : null;
   });
 }
 
@@ -470,6 +453,35 @@ FROM journal_logical_trade_rule_reviews WHERE workspace_id = ? AND account_id = 
  * read-only adapter: it neither rebuilds trades nor creates another P/L or
  * Analyzer calculation.
  */
+/** Shared native annotations only; does not construct reports, ledgers or analysis. */
+export function readJournalTradeStoryAnnotations(scope:WorkspaceAccessScope,roundTripId:string,knownLogicalTrade?:JournalLogicalTrade|null){
+ if(!scope.activeAccountId)platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+ const account=narrowWorkspaceAccessToAccount(scope,scope.activeAccountId);
+ const logicalTrade=knownLogicalTrade===undefined?withReadonlyPlatformDatabase({},database=>{
+  const repository=new JournalLogicalTradeRepository(database);
+  return repository.findByLogicalTradeId(account,roundTripId)??repository.findByRoundTripId(account,roundTripId);
+ }):knownLogicalTrade;
+ const memberIds=logicalTrade?.members.map(member=>member.roundTripId)??[roundTripId];
+    const annotationMembers = memberIds.map((memberId) => annotations(scope, memberId));
+    const groupAnnotations = logicalTrade?.logicalTradeId && logicalTrade.members.length > 1
+      ? logicalAnnotations(scope, logicalTrade.logicalTradeId) : null;
+    return Object.freeze({
+      notes: (() => {
+        const notes = annotationMembers.map((item) => item.notes).filter((item) => item !== null);
+        if (groupAnnotations?.notes) return groupAnnotations.notes;
+        if (notes.length === 0) return null;
+        return Object.freeze({ ...notes[0]!,
+          technicalNote: notes.map((item) => item.technicalNote.trim()).filter(Boolean).join("\n\n"),
+          tradeNote: notes.map((item) => item.tradeNote.trim()).filter(Boolean).join("\n\n"),
+        });
+      })(),
+      ruleReviews: Object.freeze([...(groupAnnotations?.ruleReviews ?? []),
+        ...annotationMembers.flatMap((item) => item.ruleReviews)]),
+      tags: Object.freeze([...new Map([...(groupAnnotations?.tags ?? []), ...annotationMembers.flatMap((item) => item.tags)]
+        .map((tag) => [tag.tagId, tag] as const)).values()]),
+    });
+ }
+
 export function readJournalTradeStory(
   scope: WorkspaceAccessScope,
   roundTripId: string,
@@ -505,59 +517,10 @@ export function readJournalTradeStory(
   }
   try {
     const memberIds = logicalTrade?.members.map((member) => member.roundTripId) ?? [roundTripId];
-    const annotationMembers = memberIds.map((memberId) => annotations(scope, memberId));
-    const groupAnnotations = logicalTrade?.logicalTradeId && logicalTrade.members.length > 1
-      ? logicalAnnotations(scope, logicalTrade.logicalTradeId) : null;
-    const factAnnotations = Object.freeze({
-      notes: (() => {
-        const notes = annotationMembers.map((item) => item.notes).filter((item) => item !== null);
-        if (groupAnnotations?.notes) return groupAnnotations.notes;
-        if (notes.length === 0) return null;
-        return Object.freeze({ ...notes[0]!,
-          technicalNote: notes.map((item) => item.technicalNote.trim()).filter(Boolean).join("\n\n"),
-          tradeNote: notes.map((item) => item.tradeNote.trim()).filter(Boolean).join("\n\n"),
-        });
-      })(),
-      ruleReviews: Object.freeze([...(groupAnnotations?.ruleReviews ?? []),
-        ...annotationMembers.flatMap((item) => item.ruleReviews)]),
-      tags: Object.freeze([...new Map([...(groupAnnotations?.tags ?? []), ...annotationMembers.flatMap((item) => item.tags)]
-        .map((tag) => [tag.tagId, tag] as const)).values()]),
-    });
+    const factAnnotations = readJournalTradeStoryAnnotations(scope,roundTripId,logicalTrade);
     const performances = memberIds.map((memberId) => performance(scope, memberId));
     const tradePerformance = performances.every((item) => item !== null)
-      ? (() => {
-          const values = performances as JournalTradeStoryPerformance[];
-          const sum = (field: keyof JournalTradeStoryPerformance) => values.reduce(
-            (total, value) => {
-              const next = value[field];
-              if (next === null || next === undefined || typeof next === "boolean") {
-                platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
-              }
-              return new StoryDecimal(total).plus(String(next)).toFixed();
-            }, "0");
-          const chargesComplete = values.every((value) => value.chargeCoverage === "complete");
-          const enteredQuantityDecimal = sum("enteredQuantityDecimal");
-          const entryNotionalDecimal = sum("entryNotionalDecimal");
-          const exitNotionalDecimal = sum("exitNotionalDecimal");
-          const exitQuantityDecimal = sum("exitQuantityDecimal");
-          return Object.freeze({ ...values[0]!,
-            chargeCostDecimal: chargesComplete ? sum("chargeCostDecimal") : null,
-            chargeCoverage: chargesComplete ? "complete" as const : "unavailable" as const,
-            chargeCreditDecimal: chargesComplete ? sum("chargeCreditDecimal") : null,
-            closedAtUtc: values.at(-1)!.closedAtUtc,
-            enteredQuantityDecimal,
-            entryNotionalDecimal,
-            entryPriceDecimal: averagePrice(entryNotionalDecimal, enteredQuantityDecimal),
-            executionCount: values.reduce((total, value) => total + value.executionCount, 0),
-            exitNotionalDecimal,
-            exitPriceDecimal: averagePrice(exitNotionalDecimal, exitQuantityDecimal),
-            exitQuantityDecimal,
-            grossPnlDecimal: sum("grossPnlDecimal"),
-            holdDurationMilliseconds: Date.parse(values.at(-1)!.closedAtUtc) - Date.parse(values[0]!.openedAtUtc),
-            maximumPositionQuantityDecimal: StoryDecimal.max(...values.map((value) => value.maximumPositionQuantityDecimal)).toFixed(),
-            netPnlDecimal: chargesComplete ? sum("netPnlDecimal") : null,
-          });
-        })() : null;
+      ? aggregateJournalTradeStoryPerformance(performances as JournalTradeStoryPerformance[]) : null;
     const ledger = buildTradeStoryPositionLedger({
       executions: position.executions.map((execution, index) => Object.freeze({
         executionId: execution.executionId,

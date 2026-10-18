@@ -1,4 +1,5 @@
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import {coachingReviewResourceScope} from "@/src/modules/communities/server/coaching-review-resource-scope";
 import "server-only";
 
 import type Database from "better-sqlite3";
@@ -66,6 +67,13 @@ import type {
   TradeExplorerQuery,
   TradeExplorerRuleStatus,
 } from "./trade-explorer-saved-view-model";
+
+export type CoachingExplorerAuthorization=Readonly<{coachUserId:string;reviewId:string;communitySlug:string}>;
+function assertExplorerRead(database:Database.Database,scope:WorkspaceAccessScope,authorization?:CoachingExplorerAuthorization){
+ if(!authorization){assertMembershipFeature(database,scope.userId,'analytics.trade_explorer');return;}
+ const access=coachingReviewResourceScope(database,authorization);
+ if(scope.userId!==access.scope.userId||scope.workspaceId!==access.scope.workspaceId||scope.activeAccountId!==access.scope.activeAccountId)throw new Error('Coaching Journal access changed.');
+}
 
 const ExactDecimal = Decimal.clone({
   precision: 120,
@@ -374,13 +382,14 @@ async function execute(
   input: TradeExplorerQuery,
   afterCursor: string | null = null,
   tableOrder: JournalAnalyticsTableOrder = tradeExplorerTableOrder("closed_desc"),
+  coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<AnalyticsLabPlatformPreview> {
   assertExplorerAccess(scope);
   const asOfUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(
     scope,
     ({ service, verifiedReadonlyDatabase }) => {
-      assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
+      assertExplorerRead(verifiedReadonlyDatabase,scope,coachingAuthorization);
       const roundTripIds = hasAnnotationFilters(input)
         ? annotationRoundTripIds(
             verifiedReadonlyDatabase,
@@ -480,6 +489,7 @@ export async function runTradeExplorerQuery(
   input: unknown,
   afterCursor?: unknown,
   tradeSort?: unknown,
+  coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<AnalyticsLabPlatformPreview> {
   const normalizedRequest = normalizeTradeExplorerQueryRequest(input, tradeSort);
   return execute(
@@ -487,6 +497,7 @@ export async function runTradeExplorerQuery(
     normalizedRequest.query,
     normalizeEvidenceCursor(afterCursor),
     normalizedRequest.tableOrder,
+    coachingAuthorization,
   );
 }
 
@@ -675,6 +686,7 @@ export async function runTradeExplorerGroupTradesQuery(
   input: unknown,
   group: unknown,
   afterCursor?: unknown,
+  coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<AnalyticsLabPlatformPreview> {
   if (!group || typeof group !== "object" || Array.isArray(group)) {
     throw new TypeError("Invalid Trade Explorer group.");
@@ -707,7 +719,7 @@ export async function runTradeExplorerGroupTradesQuery(
       ? { startDate: groupKey, endDate: groupKey }
       : { symbol: groupKey }),
     evidenceRows: 100 as const,
-  }), afterCursor, "closed_desc");
+  }), afterCursor, "closed_desc",coachingAuthorization);
 }
 
 function comparisonRecord(value: unknown): Readonly<Record<string, unknown>> {
@@ -870,13 +882,18 @@ function difference(
 export async function runTradeExplorerComparison(
   scope: WorkspaceAccessScope,
   input: unknown,
+  coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<TradeExplorerComparisonResult> {
   assertExplorerAccess(scope, true);
   const normalized = normalizeTradeExplorerComparison(input);
   const generatedAtUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service, verifiedReadonlyDatabase }) => {
-    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
-    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.compare_trades");
+    if (coachingAuthorization) {
+      assertExplorerRead(verifiedReadonlyDatabase, scope, coachingAuthorization);
+    } else {
+      assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
+      assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.compare_trades");
+    }
     const groups = normalized.groups.map((group) => {
       const query = Object.freeze({
         ...group.query,
@@ -942,17 +959,18 @@ export async function readTradeExplorerPageModel(
   scope: WorkspaceAccessScope,
   initialView?: Readonly<{
     endDate: string | null;
-    rank: "pnl" | "trades";
+    rank?: "pnl" | "trades";
     startDate: string | null;
   }>,
+  coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<TradeExplorerPageModel> {
   assertExplorerAccess(scope);
   const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, pnlReportingBasis, service, verifiedReadonlyDatabase }) => {
-    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
+    assertExplorerRead(verifiedReadonlyDatabase,scope,coachingAuthorization);
     const calendarInput = Object.freeze({
       currency: null,
-      startDate: null,
-      endDate: null,
+      startDate: initialView?.startDate??null,
+      endDate: initialView?.endDate??null,
       symbol: null,
       direction: null,
       performance: null,
@@ -977,7 +995,7 @@ export async function readTradeExplorerPageModel(
     const initialQuery: TradeExplorerQuery = Object.freeze({
       expectedAccountSelectionRef: currentJournalAccountSelectionRef(scope),
       metricId: initialView?.rank === "pnl" ? `${pnlReportingBasis}_pnl` : "total_trades",
-      grouping: initialView ? "instrument" : "closing_month",
+      grouping: initialView?.rank ? "instrument" : "closing_month",
       moneyBasis: pnlReportingBasis,
       currency: calendar.currency,
       symbol: null,

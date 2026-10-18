@@ -1,3 +1,4 @@
+import {coachingReviewService} from "./coaching-review-service-binding";
 import type Database from "better-sqlite3";
 import {assertCanonicalUtcTimestamp,assertCanonicalUuidV4,createCanonicalUuidV4,platformFailure} from "../../platform/server/database/platform-migration-contract";
 import {TraderLinkCommunityRepository} from "./traderlink-community-repository";
@@ -86,14 +87,17 @@ export class CoachingAgreementService{
      const task=["group_lesson","student_check_in","custom_task"].includes(item.itemType);
      const workspaceKind=reviewKindForPlanItem(item.itemType)??"custom";
      const count=session||task?item.quantity:1;
-     const priorReview=this.db.prepare(`SELECT max(period_end) period_end FROM traderlink_community_coaching_trade_reviews WHERE relationship_id=? AND delivery_state<>'draft' AND period_end<?`).get(input.relationshipId,period.end) as {period_end:string|null};
-     const coverage=task||session?period:coachingReviewCoverage(terms,item,period,priorReview.period_end);
+     // A different service or an undelivered cancellation cannot advance coverage.
+     // Within a revision bind by item ID; across revisions match the same plan/type.
+     const priorReviews=item.coveragePeriod==='since_last_review'?this.db.prepare(`SELECT review_id,period_end FROM traderlink_community_coaching_trade_reviews WHERE relationship_id=? AND delivered_at_utc IS NOT NULL AND period_end<? ORDER BY period_end DESC,delivered_at_utc DESC`).all(input.relationshipId,period.end) as {review_id:string;period_end:string}[]:[];
+     const priorReview=priorReviews.find(review=>{const bound=coachingReviewService(this.db,review.review_id);return bound?.terms.planId===terms.planId&&bound.item.itemType===item.itemType&&(bound.agreementId!==row.agreement_id||bound.item.planItemId===item.planItemId);});
+     const coverage=task||session?period:coachingReviewCoverage(terms,item,period,priorReview?.period_end);
      for(let slot=0;slot<count;slot++){
       const itemKey=slot===0?item.planItemId:`${item.planItemId}:${slot}`;
       if(this.db.prepare(`SELECT 1 FROM traderlink_community_coaching_occurrences WHERE agreement_id=? AND item_key=? AND period_start=?`).get(row.agreement_id,itemKey,period.start))continue;
       if(created>=120)break scheduling;
       const itemTitle=(title+(count>1?` ${slot+1} of ${count}`:"")).slice(0,140);
-      const workId=task?createCanonicalUuidV4():session?service.createSession({...input,title:itemTitle,agenda:terms.builderConfig?.offers[item.itemType]?.details??"",scheduledAtUtc:period.dueAtUtc}):service.createReview({...input,title:itemTitle,context:terms.builderConfig?.offers[item.itemType]?.details??"",reviewType:"custom",workspaceKind,focusAreas:item.focusAreas,periodStart:coverage.start,periodEnd:coverage.end,dueAtUtc:period.dueAtUtc,roundTripIds:[]});
+      const workId=task?createCanonicalUuidV4():session?service.createSession({...input,title:itemTitle,agenda:terms.builderConfig?.offers[item.itemType]?.details??"",scheduledAtUtc:period.dueAtUtc}):service.createReview({...input,planItemId:item.planItemId,title:itemTitle,context:terms.builderConfig?.offers[item.itemType]?.details??"",reviewType:"custom",workspaceKind,focusAreas:item.focusAreas,periodStart:coverage.start,periodEnd:coverage.end,dueAtUtc:period.dueAtUtc,roundTripIds:[]});
       if(task)this.db.prepare(`INSERT INTO traderlink_community_coaching_tasks(task_id,relationship_id,community_id,created_by_user_id,title,due_at_utc,priority,status,created_at_utc,updated_at_utc) VALUES(?,?,?,?,?,?,'normal','open',?,?)`).run(workId,input.relationshipId,input.communityId,input.actor.userId,itemTitle,period.dueAtUtc,input.atUtc,input.atUtc);
       if(session)this.db.prepare(`UPDATE traderlink_community_coaching_sessions SET duration_minutes=? WHERE session_id=?`).run(item.plannedMinutes,workId);
       this.db.prepare(`INSERT INTO traderlink_community_coaching_occurrences(occurrence_id,community_id,agreement_id,item_key,period_start,period_end,due_at_utc,work_type,work_id,created_at_utc) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(createCanonicalUuidV4(),input.communityId,row.agreement_id,itemKey,period.start,period.end,period.dueAtUtc,task?"task":session?"session":"review",workId,input.atUtc);created++;

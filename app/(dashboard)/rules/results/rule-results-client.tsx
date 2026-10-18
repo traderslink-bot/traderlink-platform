@@ -4,7 +4,7 @@ import { useMemo, useState, type ElementType } from "react";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { Box, Button, Chip, InputAdornment, MenuItem, Stack, TextField, Typography } from "@mui/material";
-import Link from "next/link";
+import {ResourceAwareLink as Link} from "../../communities/coaching-resource-context";
 
 import { OfflineSavedViewStatus } from "@/app/pwa/offline-saved-view-status";
 import { DashboardMetricCard, DashboardPage, DashboardPanel } from "../../../dashboard-template";

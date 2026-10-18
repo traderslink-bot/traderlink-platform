@@ -1370,6 +1370,8 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0161_platform_coaching_content_delivery_receipts": Object.freeze([]),
     "0162_platform_coaching_delivery_attempt_history": Object.freeze(["traderlink_community_delivery_attempt_history"]),
     "0163_platform_community_publication_feedback": Object.freeze(["traderlink_community_publication_receipts"]),
+    "0169_platform_community_removal_recovery":Object.freeze(["traderlink_community_lifecycle"]),
+    "0170_platform_community_publication_revision_actions":Object.freeze(["traderlink_community_publication_revisions","traderlink_community_publication_actions","traderlink_community_publication_action_attempts"]),
     "0168_platform_community_destination_publishers": Object.freeze(["traderlink_community_destination_publishers","traderlink_community_publication_distribution","traderlink_community_destination_audit"]),
     "0164_platform_coaching_deletion_archives": Object.freeze(["community_deletion_archives", "community_deletion_archive_records", "community_deletion_archive_files"]),
     "0144_traderlink_communities_review_workspace_metadata": Object.freeze([]),

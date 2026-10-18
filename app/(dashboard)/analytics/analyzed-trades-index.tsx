@@ -1,4 +1,5 @@
 "use client";
+import {useCoachingResourceNavigation} from "../communities/coaching-resource-context";
 
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import {
@@ -101,6 +102,7 @@ export function AnalyzedTradesIndex({
   offline?: boolean;
   startDate: string | null;
 }) {
+  const resource=useCoachingResourceNavigation();
   const theme = useTheme();
   const [draftTicker, setDraftTicker] = useState("");
   const [ticker, setTicker] = useState("");
@@ -146,10 +148,7 @@ export function AnalyzedTradesIndex({
     queueMicrotask(() => {
       if (!controller.signal.aborted) setState("loading");
     });
-    void fetch(`/api/platform/trade-analyzer/analyzed-trades?${params.toString()}`, {
-      cache: "no-store",
-      signal: controller.signal,
-    }).then(async (response) => {
+    void (resource?resource.fetchRead(`/api/platform/trade-analyzer/analyzed-trades?${params.toString()}`):fetch(`/api/platform/trade-analyzer/analyzed-trades?${params.toString()}`,{cache:"no-store",signal:controller.signal})).then(async (response) => {
       const payload = await response.json() as PageResponse;
       throwIfMembershipRequired(payload);
       if (controller.signal.aborted) return;

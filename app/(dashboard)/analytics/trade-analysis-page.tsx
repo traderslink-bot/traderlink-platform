@@ -1,3 +1,4 @@
+import type {WorkspaceAccessScope} from "@/src/modules/platform/contracts/workspace-access-scope";
 import "server-only";
 import { withSavedPatternRuntime } from "@/src/modules/level-analysis/server/trend-momentum-pattern-runtime";
 import { pageSavedAnalyzedTrades } from "@/src/modules/level-analysis/server/trend-momentum-analyzed-trades";
@@ -141,15 +142,17 @@ function profitZoneMinimumHoldMinutes(
 }
 
 export async function TradeAnalysisPage({
+  resourceScope,
   baseHref,
   searchParams,
   view,
 }: {
+  resourceScope?:WorkspaceAccessScope;
   baseHref: string;
   searchParams: Readonly<Record<string, string | string[] | undefined>>;
   view: TradeAnalysisView;
 }) {
-  const scope = await requireMembershipPreviewPageScope("trade_analyzer.analysis");
+  const scope = resourceScope ?? await requireMembershipPreviewPageScope("trade_analyzer.analysis");
   if (!scope) return <TradeAnalysisLockedPreview title={VIEW_DETAILS[view].title} view={view} />;
   const accountTimezone = withReadonlyPlatformDatabase({}, (database) => {
     const accountId = scope.activeAccountId;
@@ -189,7 +192,7 @@ export async function TradeAnalysisPage({
     });
     return (
       <>
-      <OfflineSavedViewCapture
+      {resourceScope?null:<OfflineSavedViewCapture
         accountTimezone={tradeIndex.page?.timezone ?? null}
         calculationVersion="daily-trade-analyzed-trades-v1"
         coverage={journalAnalyticsOfflineRouteCoverage("trade-analyzer-trades")}
@@ -200,7 +203,7 @@ export async function TradeAnalysisPage({
         reportingCurrency={tradeIndex.currency}
         routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["trade-analyzer-trades"]}
-      />
+      />}
       <DashboardPage>
         <Stack spacing={1}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
@@ -326,7 +329,7 @@ export async function TradeAnalysisPage({
   });
   return (
     <>
-    <OfflineSavedViewCapture
+    {resourceScope?null:<OfflineSavedViewCapture
       accountTimezone={result.model.timezone}
       calculationVersion={`daily-trade-analysis-${result.calculationVersion}`}
       coverage={journalAnalyticsOfflineRouteCoverage(offlineModel.kind)}
@@ -337,7 +340,7 @@ export async function TradeAnalysisPage({
       reportingCurrency={result.model.currency}
       routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
       viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS[offlineModel.kind]}
-    />
+    />}
     <DashboardPage>
       <Stack spacing={1}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>

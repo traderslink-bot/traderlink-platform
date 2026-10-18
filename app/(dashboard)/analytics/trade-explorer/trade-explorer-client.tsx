@@ -1,4 +1,7 @@
 "use client";
+import {useCoachingResourceNavigation} from "../../communities/coaching-resource-context";
+import {readCoachingTradeExecutions,runCoachingExplorer,runCoachingExplorerGroup} from "../../communities/coaching-review-resource-actions";
+import {loadCoachingAnalyzerAction} from "../../communities/coaching-analysis-actions";
 
 import { MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, isMembershipRequired } from "@/src/modules/platform/contracts/platform-membership-messages";
 
@@ -91,8 +94,8 @@ import { TradeDetailsDrawer } from "../../trades/trade-details-drawer";
 
 import {
   createTradeExplorerSavedView,
-  runTradeExplorer,
-  runTradeExplorerGroupTrades,
+  runTradeExplorer as runOwnTradeExplorer,
+  runTradeExplorerGroupTrades as runOwnTradeExplorerGroupTrades,
 } from "./actions";
 import type {
   TradeExplorerResultView as ExplorerResultView,
@@ -588,16 +591,21 @@ function tradeExplorerQueriesMatch(
 }
 
 export default function TradeExplorerClient({
+  coaching,
   initialResultView = "trades",
   initialSavedViews = Object.freeze([]),
   model,
   offlineSavedAtUtc,
 }: Readonly<{
+  coaching?:{communitySlug:string;reviewId:string;relationshipId:string};
   initialResultView?: ExplorerResultView;
   initialSavedViews?: readonly TradeExplorerSavedView[];
   model: TradeExplorerPageModel;
   offlineSavedAtUtc?: string;
 }>) {
+  const resourceNavigation=useCoachingResourceNavigation();
+  const runTradeExplorer:typeof runOwnTradeExplorer=coaching?(input,cursor,sort)=>runCoachingExplorer(coaching.communitySlug,coaching.reviewId,input,cursor,sort):runOwnTradeExplorer;
+  const runTradeExplorerGroupTrades:typeof runOwnTradeExplorerGroupTrades=coaching?(input,group,cursor)=>runCoachingExplorerGroup(coaching.communitySlug,coaching.reviewId,input,group,cursor):runOwnTradeExplorerGroupTrades;
   const [query, setQuery] = useState(model.initialQuery);
   const [appliedQuery, setAppliedQuery] = useState(model.initialQuery);
   const [preview, setPreview] = useState<AnalyticsLabPlatformPreview>(model.initialPreview);
@@ -614,6 +622,7 @@ export default function TradeExplorerClient({
   const [advanced, setAdvanced] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [detailsTrade, setDetailsTrade] = useState<ExplorerTradeDetailsSelection | null>(null);
+  useEffect(()=>{if(coaching&&detailsTrade&&resourceNavigation){resourceNavigation.openTrade(detailsTrade.trade.roundTripId);setDetailsTrade(null);}},[coaching,detailsTrade,resourceNavigation]);
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [expandedGroupTrades, setExpandedGroupTrades] = useState<readonly JournalAnalyticsRoundTripTableRow[]>(Object.freeze([]));
   const [groupTradesContinuationCursor, setGroupTradesContinuationCursor] = useState<string | null>(null);
@@ -979,6 +988,7 @@ export default function TradeExplorerClient({
   }
 
   function openSaveViewDialog(): void {
+    if(coaching)return;
     if (hasUnappliedChanges || isPending) return;
     setSaveViewError(null);
     setSaveViewName("");
@@ -986,6 +996,7 @@ export default function TradeExplorerClient({
   }
 
   function saveCurrentView(): void {
+    if(coaching)return;
     const name = saveViewName.trim();
     if (name.length < 1 || name.length > 80 || isSavingView) {
       setSaveViewError("Enter a view name between 1 and 80 characters.");
@@ -1066,6 +1077,7 @@ export default function TradeExplorerClient({
   }
 
   async function downloadPdfReport(): Promise<void> {
+    if(coaching)return;
     if (hasUnappliedChanges || isPending || isDownloadingReport) return;
     setReportError(null);
     setIsDownloadingReport(true);
@@ -1168,6 +1180,7 @@ export default function TradeExplorerClient({
   }
 
   async function toggleTradeExecutions(roundTripId: string): Promise<void> {
+    if(coaching){const requestNumber=++executionRequestRef.current;if(expandedRoundTripId===roundTripId){setExpandedRoundTripId(null);setExpandedExecutions([]);return;}setExpandedRoundTripId(roundTripId);setExecutionDetailsStatus('loading');const result=await readCoachingTradeExecutions(coaching.communitySlug,coaching.reviewId,roundTripId);if(requestNumber!==executionRequestRef.current)return;if(result.ok){setExpandedExecutions(result.executions);setExecutionDetailsStatus('ready');}else{setExpandedExecutions([]);setExecutionDetailsStatus('error');}return;}
     const requestNumber = executionRequestRef.current + 1;
     executionRequestRef.current = requestNumber;
     if (expandedRoundTripId === roundTripId) {
@@ -1586,8 +1599,8 @@ export default function TradeExplorerClient({
           ? "1fr"
           : { md: "repeat(3, minmax(0, 1fr))", xl: "repeat(6, minmax(0, 1fr))" },
       }}>
-        <TextField fullWidth label="Closed from" onChange={(event) => patch("startDate", event.target.value)} size="small" type="date" value={query.startDate} slotProps={{ inputLabel: { shrink: true } }} />
-        <TextField fullWidth label="Closed to" onChange={(event) => patch("endDate", event.target.value)} size="small" type="date" value={query.endDate} slotProps={{ inputLabel: { shrink: true } }} />
+        <TextField disabled={Boolean(coaching)} fullWidth label="Closed from" onChange={(event) => patch("startDate", event.target.value)} size="small" type="date" value={query.startDate} slotProps={{ inputLabel: { shrink: true } }} />
+        <TextField disabled={Boolean(coaching)} fullWidth label="Closed to" onChange={(event) => patch("endDate", event.target.value)} size="small" type="date" value={query.endDate} slotProps={{ inputLabel: { shrink: true } }} />
         <Autocomplete
           autoHighlight
           fullWidth
@@ -1801,7 +1814,7 @@ export default function TradeExplorerClient({
                 </Box>
               )}
             </Box>
-            <Stack direction="row" sx={{ columnGap: 1, flexWrap: "wrap", justifyContent: { xs: "flex-start", sm: "flex-end" }, rowGap: 1 }}>
+            {coaching?null:<Stack direction="row" sx={{ columnGap: 1, flexWrap: "wrap", justifyContent: { xs: "flex-start", sm: "flex-end" }, rowGap: 1 }}>
               <DashboardSecondaryAction
                 disabled={isPending || hasUnappliedChanges}
                 onClick={openSaveViewDialog}
@@ -1828,7 +1841,7 @@ export default function TradeExplorerClient({
               >
                 {isDownloadingReport ? "Preparing PDF" : "Download PDF"}
               </DashboardSecondaryAction>
-            </Stack>
+            </Stack>}
           </Stack>
           {reportError ? <Alert severity="error" sx={{ mb: 1.5 }}>{reportError}{reportError === MEMBERSHIP_FEATURE_REQUIRED_MESSAGE ? <Box sx={{ mt: 1 }}><Button href="/plans?feature=analytics.exports" variant="contained">Unlock reports and exports</Button></Box> : null}</Alert> : null}
           {appliedQuery.moneyBasis === "net" ? (
@@ -2265,7 +2278,7 @@ export default function TradeExplorerClient({
             <DashboardSecondaryAction disabled={isSavingView} onClick={() => setSaveViewDialogOpen(false)}>
               Cancel
             </DashboardSecondaryAction>
-            <DashboardPrimaryAction disabled={isSavingView || saveViewName.trim().length < 1} type="submit">
+            <DashboardPrimaryAction disabled={Boolean(coaching) || isSavingView || saveViewName.trim().length < 1} type="submit">
               {isSavingView ? "Saving" : "Save view"}
             </DashboardPrimaryAction>
           </DialogActions>
@@ -2356,6 +2369,8 @@ export default function TradeExplorerClient({
           symbol: detailsTrade.trade.displayedSymbol,
           timezone: detailsTrade.timeZone,
         }) : null}
+        detailsUrl={coaching&&detailsTrade?`/api/communities/${coaching.communitySlug}/coaching/reviews/${coaching.reviewId}/trades/${detailsTrade.trade.roundTripId}?view=card`:undefined}
+        loadSavedAnalysis={coaching?async()=>{if(!detailsTrade)return null;const result=await loadCoachingAnalyzerAction(coaching.communitySlug,coaching.reviewId,detailsTrade.trade.roundTripId);return result.ok?result.analyzer:null;}:undefined}
         initialTab="details"
         onClose={() => setDetailsTrade(null)}
         open={detailsTrade !== null}

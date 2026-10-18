@@ -188,6 +188,8 @@ export function TradeDetailsDrawer({
   open,
   roundTripId,
   showAnalyzer = true,
+  detailsUrl,
+  loadSavedAnalysis,
 }: Readonly<{
   analyzer: Readonly<{
     currency: string;
@@ -202,6 +204,8 @@ export function TradeDetailsDrawer({
   open: boolean;
   roundTripId: string | null;
   showAnalyzer?: boolean;
+  detailsUrl?:string;
+  loadSavedAnalysis?:()=>Promise<import("../trade-tracker/[sessionDate]/day-session-types").DaySessionTradeAnalyzer|null>;
 }>) {
   const [state, setState] = useState<DetailState>({ status: "idle" });
   const [tab, setTab] = useState<DetailTab>(initialTab);
@@ -214,7 +218,7 @@ export function TradeDetailsDrawer({
       setState({ status: "loading" });
       setTab(showAnalyzer ? initialTab : "details");
     });
-    void fetch(`/api/platform/journal/trade-details?roundTripId=${encodeURIComponent(roundTripId)}`, {
+    void fetch(detailsUrl??`/api/platform/journal/trade-details?roundTripId=${encodeURIComponent(roundTripId)}`, {
       cache: "no-store",
       signal: controller.signal,
     }).then(async (response) => {
@@ -228,10 +232,11 @@ export function TradeDetailsDrawer({
       setState({ status: "error" });
     });
     return () => controller.abort();
-  }, [initialTab, open, roundTripId, showAnalyzer]);
+  }, [detailsUrl, initialTab, open, roundTripId, showAnalyzer]);
 
   const details = state.status === "ready" ? state.details : null;
   const performance = details?.performance ?? null;
+  const effectiveAnalyzer=loadSavedAnalysis&&details?.status==='ready'&&performance?{currency:performance.tradeCurrency,direction:details.direction,executionCount:details.executions.length,gainLossDecimal:performance.netPnlDecimal,symbol:details.symbol,timezone:details.timezone}:analyzer;
   const resultColor = performance
     ? financialOutcomeColor(performance.grossPnlDecimal)
     : details?.projectionState === "legitimate_open" ? "warning.main" : "text.primary";
@@ -311,7 +316,7 @@ export function TradeDetailsDrawer({
             <AccordionDetails sx={{ p: details.status === "summary_only" ? 1.5 : 0 }}>{details.status === "summary_only" ? <Typography color="text.secondary" variant="body2">Exact executions are unavailable for this historical trade summary.</Typography> : <Stack divider={<Divider flexItem />}>{details.executions.map((execution, index) => <Stack direction="row" key={`${execution.executedAtUtc}-${execution.side}-${execution.quantityDecimal}-${index}`} sx={{ justifyContent: "space-between", p: 1.5 }}><Box><Typography sx={{ fontWeight: 800 }} variant="body2">{execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantityDecimal)} shares</Typography><Typography color="text.secondary" variant="caption">{dateTime(execution.executedAtUtc, details.timezone).date} · {dateTime(execution.executedAtUtc, details.timezone).time}</Typography></Box><Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }} variant="body2">{formatJournalAnalyticsMoney(execution.priceDecimal, performance?.tradeCurrency ?? null)}</Typography></Stack>)}</Stack>}</AccordionDetails>
           </Accordion>
         </Stack> : null}
-      </Box> : analyzer && roundTripId ? <WorkspaceTradeAnalyzerPanel currency={analyzer.currency} direction={analyzer.direction} executionCount={analyzer.executionCount} gainLossDecimal={analyzer.gainLossDecimal} onClose={() => setTab("details")} open roundTripId={roundTripId} symbol={analyzer.symbol} timezone={analyzer.timezone} /> : <Box sx={{ p: 2 }}><Alert severity="info">Analyzer is unavailable for this trade.</Alert></Box>}
+      </Box> : effectiveAnalyzer && roundTripId ? <WorkspaceTradeAnalyzerPanel loadSavedAnalysis={loadSavedAnalysis} currency={effectiveAnalyzer.currency} direction={effectiveAnalyzer.direction} executionCount={details?.status==="ready"?details.executions.length:effectiveAnalyzer.executionCount} gainLossDecimal={effectiveAnalyzer.gainLossDecimal} onClose={() => setTab("details")} open roundTripId={roundTripId} symbol={effectiveAnalyzer.symbol} timezone={details?.timezone??effectiveAnalyzer.timezone} /> : <Box sx={{ p: 2 }}><Alert severity="info">Analyzer is unavailable for this trade.</Alert></Box>}
     </Stack>
   </Drawer>;
 }

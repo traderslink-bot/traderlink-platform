@@ -4,6 +4,7 @@ import {requireTraderLinkPlatformPageIdentity,currentJournalAccountSelectionRef}
 import {withReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {TraderLinkCommunityCoachJournalReadService} from "@/src/modules/communities/server/traderlink-community-coach-journal-read-service";
 import {readTradeExplorerPageModel,runTradeExplorerQuery} from "../analytics/trade-explorer/trade-explorer-service";
+import {coachingReviewResourceScope} from "@/src/modules/communities/server/coaching-review-resource-scope";
 import {getReplacementDailyTradeAnalyzerReplay} from "../trade-tracker/trade-tracker-platform-data";
 
 async function analysisScope(relationshipId:string){
@@ -22,13 +23,30 @@ export async function loadCoachingAnalysisAction(relationshipId:string,input?:un
   await recheck();return {ok:true as const,model:null,preview:permittedPreview(preview)};
  }catch{return {ok:false as const,message:"Analysis is unavailable. Check the student’s shared data and try again."};}
 }
-export async function loadCoachingAnalyzerAction(relationshipId:string,roundTripId:string){
+export async function loadCoachingAnalyzerAction(communitySlug:string,reviewId:string,roundTripId:string){
  try{
-  const {scope,canReadTrades}=await analysisScope(relationshipId);if(!canReadTrades)throw new Error("Trade details are not shared.");
   const identity=await requireTraderLinkPlatformPageIdentity();
-  const trade=withReadonlyPlatformDatabase({},db=>new TraderLinkCommunityCoachJournalReadService(db).read({coachUserId:identity.scope.userId,relationshipId}).trades.find(item=>item.roundTripId===roundTripId));
-  if(!trade)throw new Error("Trade unavailable.");
-  const analyzer=getReplacementDailyTradeAnalyzerReplay(scope,{roundTripId,direction:trade.direction});
+  const request={userId:identity.scope.userId,slug:communitySlug,reviewId,existingCoachingOnly:true} as const;
+  await requireCommunityRequestAccess(request);
+  const input={coachUserId:identity.scope.userId,reviewId,communitySlug};
+  const {access,trade,representativeRoundTripId}=withReadonlyPlatformDatabase({},db=>{
+   const access=coachingReviewResourceScope(db,input);
+   const {trade,representativeRoundTripId}=new TraderLinkCommunityCoachJournalReadService(db).readTrade({coachUserId:identity.scope.userId,relationshipId:access.relationshipId,roundTripId});
+   if(!trade.tradingDate||trade.tradingDate<access.period.start||trade.tradingDate>access.period.end)throw new Error("Trade outside review period.");
+   return {access,trade,representativeRoundTripId};
+  });
+  const analyzer=getReplacementDailyTradeAnalyzerReplay(access.scope,{roundTripId:representativeRoundTripId,direction:trade.direction});
+  // A review can be cancelled or sharing revoked while an asynchronous read is
+  // in flight. Recheck the exact review, account, permissions and period before
+  // returning saved analysis. No owner-scope fallback or analysis job is used.
+  await requireCommunityRequestAccess(request);
+  const {current,currentTrade}=withReadonlyPlatformDatabase({},db=>{
+   const current=coachingReviewResourceScope(db,input);
+   const currentTrade=new TraderLinkCommunityCoachJournalReadService(db).readTrade({coachUserId:identity.scope.userId,relationshipId:current.relationshipId,roundTripId});
+   return {current,currentTrade};
+  });
+  if(currentTrade.representativeRoundTripId!==representativeRoundTripId||currentTrade.trade.currentTradeId!==trade.currentTradeId||currentTrade.trade.tradingDate!==trade.tradingDate)throw new Error("Trade identity changed.");
+  if(current.authorizationKey!==access.authorizationKey||current.relationshipId!==access.relationshipId||current.scope.userId!==access.scope.userId||current.scope.workspaceId!==access.scope.workspaceId||current.scope.activeAccountId!==access.scope.activeAccountId||current.period.start!==access.period.start||current.period.end!==access.period.end)throw new Error("Review sharing changed.");
   return {ok:true as const,analyzer};
  }catch{return {ok:false as const,message:"Saved analysis is unavailable for this trade."};}
 }

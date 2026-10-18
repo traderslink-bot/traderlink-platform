@@ -1,4 +1,5 @@
 "use client";
+import {compareCoachingExplorer} from "../../../communities/coaching-review-resource-actions";
 
 import CompareArrowsRoundedIcon from "@mui/icons-material/CompareArrowsRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
@@ -399,9 +400,11 @@ function EvidenceTable({
 
 export default function TradeExplorerComparisonClient({
   initialStudies,
+  coaching,
   model,
   offlineSavedAtUtc,
 }: Readonly<{
+  coaching?:{communitySlug:string;reviewId:string;relationshipId:string};
   initialStudies: readonly TradeExplorerComparisonStudy[];
   model: TradeExplorerPageModel;
   offlineSavedAtUtc?: string;
@@ -474,7 +477,7 @@ export default function TradeExplorerComparisonClient({
   }
 
   function saveNewStudy(): void {
-    if (offlineSavedAtUtc || !canCompare || studyName.trim().length === 0) return;
+    if (coaching || offlineSavedAtUtc || !canCompare || studyName.trim().length === 0) return;
     setError(null);
     startTransition(async () => {
       const result = await createTradeExplorerComparisonStudy({
@@ -488,7 +491,7 @@ export default function TradeExplorerComparisonClient({
   }
 
   function updateStudy(): void {
-    if (offlineSavedAtUtc || !selectedStudy || !canCompare || studyName.trim().length === 0) return;
+    if (coaching || offlineSavedAtUtc || !selectedStudy || !canCompare || studyName.trim().length === 0) return;
     setError(null);
     startTransition(async () => {
       const result = await updateTradeExplorerComparisonStudy({
@@ -504,7 +507,7 @@ export default function TradeExplorerComparisonClient({
   }
 
   function removeStudy(): void {
-    if (offlineSavedAtUtc || !selectedStudy || !window.confirm(`Remove saved comparison “${selectedStudy.name}”?`)) return;
+    if (coaching || offlineSavedAtUtc || !selectedStudy || !window.confirm(`Remove saved comparison “${selectedStudy.name}”?`)) return;
     setError(null);
     startTransition(async () => {
       const result = await retireTradeExplorerComparisonStudy({
@@ -523,7 +526,7 @@ export default function TradeExplorerComparisonClient({
     if (offlineSavedAtUtc || !canCompare) return;
     setError(null);
     startTransition(async () => {
-      const result = await compareTradeExplorerGroups(comparisonInput());
+      const result = await (coaching?compareCoachingExplorer(coaching.communitySlug,coaching.reviewId,comparisonInput()):compareTradeExplorerGroups(comparisonInput()));
       if (!result.ok) {
         setError(result.message);
         if (result.refreshRequired) window.location.reload();
@@ -558,13 +561,13 @@ export default function TradeExplorerComparisonClient({
           <TextField fullWidth label="Comparison name" onChange={(event) => setStudyName(event.target.value)} size="small" value={studyName} />
         </Box>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ mt: 1.5 }}>
-          <DashboardSecondaryAction disabled={Boolean(offlineSavedAtUtc) || !canCompare || isPending || studyName.trim().length === 0} onClick={saveNewStudy} startIcon={<SaveRoundedIcon />}>
+          <DashboardSecondaryAction disabled={Boolean(coaching) || Boolean(offlineSavedAtUtc) || !canCompare || isPending || studyName.trim().length === 0} onClick={saveNewStudy} startIcon={<SaveRoundedIcon />}>
             Save as new
           </DashboardSecondaryAction>
-          <DashboardSecondaryAction disabled={Boolean(offlineSavedAtUtc) || !selectedStudy || !canCompare || isPending || studyName.trim().length === 0} onClick={updateStudy}>
+          <DashboardSecondaryAction disabled={Boolean(coaching) || Boolean(offlineSavedAtUtc) || !selectedStudy || !canCompare || isPending || studyName.trim().length === 0} onClick={updateStudy}>
             Update saved comparison
           </DashboardSecondaryAction>
-          <DashboardSecondaryAction disabled={Boolean(offlineSavedAtUtc) || !selectedStudy || isPending} onClick={removeStudy} startIcon={<DeleteOutlineRoundedIcon />}>
+          <DashboardSecondaryAction disabled={Boolean(coaching) || Boolean(offlineSavedAtUtc) || !selectedStudy || isPending} onClick={removeStudy} startIcon={<DeleteOutlineRoundedIcon />}>
             Remove saved comparison
           </DashboardSecondaryAction>
         </Stack>
@@ -594,7 +597,7 @@ export default function TradeExplorerComparisonClient({
       {error ? <Alert severity="error">{error}{error === MEMBERSHIP_FEATURE_REQUIRED_MESSAGE ? <Stack sx={{ mt: 1, alignItems: "flex-start" }}><Button href="/plans?feature=analytics.compare_trades" variant="contained">Unlock Compare Trades</Button></Stack> : null}</Alert> : null}
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
-        <DashboardPrimaryAction disabled={Boolean(offlineSavedAtUtc) || !canCompare || isPending} onClick={runComparison} startIcon={<CompareArrowsRoundedIcon />}>
+        <DashboardPrimaryAction disabled={Boolean(coaching) || Boolean(offlineSavedAtUtc) || !canCompare || isPending} onClick={runComparison} startIcon={<CompareArrowsRoundedIcon />}>
           {isPending ? "Comparing…" : "Compare groups"}
         </DashboardPrimaryAction>
       </Stack>

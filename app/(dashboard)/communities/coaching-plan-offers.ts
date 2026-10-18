@@ -19,7 +19,6 @@ export const PLAN_OFFERS: readonly Offer[] = [
   {type:"trade_review",label:"Trade reviews",description:"Feedback on individual trades, with optional Journal and rules review.",measure:"trades",count:"Trades per review",group:"Reviews",accent:"info",period:true},
   {type:"trading_day_review",label:"Trading-day reviews",description:"Review a trading day’s trades, with optional day notes and rules.",measure:"trading_days",count:"Trading days per review",group:"Reviews",accent:"info",period:true},
   {type:"performance_review",label:"Performance review",description:"Review results over time, with your choice of additional focus areas.",measure:"reviews",group:"Reviews",accent:"success",period:true},
-  {type:"strategy_review",label:"Strategy review",description:"Review the student’s trading approach, setups and execution.",measure:"reviews",group:"Reviews",accent:"secondary",period:true},
   {type:"private_session",label:"One-to-one sessions",description:"Individual coaching with your own agenda and meeting format.",measure:"sessions",count:"Sessions",group:"Sessions and support",accent:"secondary"},
   {type:"group_lesson",label:"Lessons",description:"Live or recorded teaching for individual students or groups.",measure:"lessons",count:"Lessons",group:"Sessions and support",accent:"info"},
   {type:"questions",label:"Student questions",description:"Offer a set allowance for questions and answers.",measure:"questions",count:"Questions per period",group:"Sessions and support",accent:"warning"},
@@ -39,6 +38,7 @@ export function offerColor(offer:Offer, mode:"light"|"dark"):string {
 }
 
 export const PERFORMANCE_INCLUSIONS: readonly Readonly<{key:CoachingReviewFocus;label:string}>[] = [
+  {key:"strategy_guidance",label:"Strategy guidance"},
   {key:"rules",label:"Rules followed and broken"},
   {key:"risk",label:"Risk management"},
   {key:"execution",label:"Trade execution"},
@@ -60,11 +60,13 @@ export type OfferSettings = {
   followUpDays: string;
   focus: CoachingReviewFocus[];
   resources: string[];
+  tradeCapBasis:"per_day"|"per_review";
+  tradeCapQuantity:string;
   details: string;
   timeline: boolean;
 };
 export function initialOfferSettings(offer:Offer):OfferSettings {
-  return {frequency:"weekly",coverage:offer.count&&offer.group==="Reviews"?"single_item":"previous_7_days",quantity:offer.type==="trade_review"?"10":"1",dueDays:"2",minutes:"",selection:"coach_or_student",depth:offer.type==="trading_day_review"?"trades_only":"standard",followUpDays:"3",focus:offer.focus?[offer.focus]:[],resources:offer.type==="performance_review"?["Analytics reports"]:[],details:"",timeline:offer.type!=="custom_task"};
+  return {tradeCapBasis:"per_day",tradeCapQuantity:"5",frequency:"weekly",coverage:offer.count&&offer.group==="Reviews"?"single_item":"previous_7_days",quantity:offer.type==="trade_review"?"10":"1",dueDays:"2",minutes:"",selection:"coach_or_student",depth:offer.type==="trading_day_review"?"trades_only":"standard",followUpDays:"3",focus:offer.focus?[offer.focus]:[],resources:offer.type==="performance_review"?["Analytics reports"]:[],details:"",timeline:offer.type!=="custom_task"};
 }
 export function offerSummary(offer:Offer,value:OfferSettings):string[] {
   const result=[value.timeline?FREQUENCIES[value.frequency]:"Flexible schedule"];
@@ -75,10 +77,11 @@ export function offerSummary(offer:Offer,value:OfferSettings):string[] {
   if(offer.period&&value.timeline)result.push(PERIODS[value.coverage]);
   if(value.timeline)result.push(`Due within ${value.dueDays||"0"} ${Number(value.dueDays)===1?"day":"days"}`);
   if(offer.type==="trade_review")result.push(`Trades chosen by ${value.selection==="coach_or_student"?"coach or student":value.selection}`);
+  if(offer.type==="trading_day_review")result.push(`${value.tradeCapQuantity} trades ${value.tradeCapBasis==="per_day"?"per day":"across this review"}`);
   if(offer.type==="trading_day_review")result.push(value.depth==="complete_day"?"Trades and trading-day Journal":"Trades only");
   if(offer.type==="review_follow_up")result.push(`${value.followUpDays} ${Number(value.followUpDays)===1?"day":"days"} of follow-up`);
   if(value.minutes)result.push(`${value.minutes} ${Number(value.minutes)===1?"minute":"minutes"}`);
-  const labels:Partial<Record<CoachingReviewFocus,string>>={journal:"Journal notes and tags",rules:"Rules",risk:"Risk management",execution:"Trade execution",goals:"Goals",overall:"Overall feedback",next_steps:"Next steps"};
+  const labels:Partial<Record<CoachingReviewFocus,string>>={strategy_guidance:"Strategy guidance",journal:"Journal notes and tags",rules:"Rules",risk:"Risk management",execution:"Trade execution",goals:"Goals",overall:"Overall feedback",next_steps:"Next steps"};
   result.push(...value.focus.filter(key=>key!==offer.focus).map(key=>labels[key]??key),...value.resources);
   return result;
 }

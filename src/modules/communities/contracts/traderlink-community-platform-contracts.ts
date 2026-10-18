@@ -176,6 +176,19 @@ export type TraderLinkCommunityCoachingMessage = Readonly<{
 }>;
 
 export type TraderLinkCommunityTradeReview = Readonly<{
+  sharedGoals?:readonly import("./coaching-shared-goals").CoachingSharedGoal[];
+  requiredJournalAccess?:readonly import("./coaching-required-access").CoachingRequiredScope[];
+  followUpProblem?:string|null;
+  agreedTradingDays?:number|null;
+  studentSelectedTradeIds?:readonly string[];
+  /** Active selections only; no private coach feedback. */
+  selectedTradeIds?:readonly string[];
+  tradeCapResolution?:import("./coaching-review-cap").CoachingReviewCapResolution|null;
+  resolvedTradeCap?:import("./coaching-review-cap").CoachingReviewTradeCap|null;
+  selectionMode?:TraderLinkCommunityCoachingPlanItem["selectionMode"];
+  requestedDays?:readonly string[];
+  dayAssessments?:readonly import("./coaching-review-workspace").CoachingDayAssessment[];
+  deliveryCoverage?:Readonly<{agreedCount:number;availableCount:number|null;reviewedCount:number;shortfall:number;dayCoverage?:Readonly<{agreedDays:number;availableDays:number|null;reviewedDays:number;shortfallDays:number;tradeCap:Readonly<{basis:"per_day"|"per_review";quantity:number}>;requiredTradeFeedback:number;reviewedTrades:number;shortfallTrades:number}>|null}>|null;
   acceptanceState?: "pending" | "accepted";
   acceptedAtUtc?: string | null;
   acceptedScope?: string;
@@ -269,6 +282,7 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
     displayName: string;
     capabilities: readonly TraderLinkCommunityCapability[];
     channelAccess?:Readonly<{alerts:boolean;watchlists:boolean}>;
+    activeJournalAccountId?:string|null;
     discordRoleIds: readonly string[];
   }>;
   alerts: readonly TraderLinkCommunityAlert[];

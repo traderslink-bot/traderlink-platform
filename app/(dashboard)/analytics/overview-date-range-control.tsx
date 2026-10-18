@@ -1,5 +1,6 @@
 "use client";
 
+import {useCoachingResourceNavigation} from "../communities/coaching-resource-context";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
@@ -49,12 +50,13 @@ export function OverviewDateRangeControl({
   value: OverviewDateRange;
 }) {
   const router = useRouter();
+  const resource=useCoachingResourceNavigation();
   const currentSearchParams = useSearchParams();
   const [kind, setKind] = useState<OverviewDateRange["kind"]>(value.kind);
   const [startDate, setStartDate] = useState(value.startDate ?? "");
   const [endDate, setEndDate] = useState(value.endDate ?? "");
   const apply = () => {
-    const params = new URLSearchParams(currentSearchParams.toString());
+    const params = new URLSearchParams(resource?resource.parameters:currentSearchParams.toString());
     params.set("range", kind);
     params.delete("start");
     params.delete("end");
@@ -68,13 +70,13 @@ export function OverviewDateRangeControl({
       if (queryValue === null) params.delete(key);
       else params.set(key, queryValue);
     }
-    router.push(`${href}?${params.toString()}`);
+    if(resource)resource.navigate(`${resource.pathname}?${params.toString()}`);else router.push(`${href}?${params.toString()}`);
   };
   const selectedDates = value.startDate && value.endDate
     ? `${value.startDate} through ${value.endDate}`
     : "All completed trade dates";
   return <Stack spacing={0.5}>
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, flexWrap: "wrap" }}><TextField label="Date range" onChange={(event) => setKind(event.target.value as OverviewDateRange["kind"])} select size="small" sx={{ minWidth: 180 }} value={kind}>{OPTIONS.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}</TextField>{kind === "custom" ? <><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-start-date" shrink>Start date</InputLabel><OutlinedInput id="overview-start-date" inputProps={{ "aria-label": "Start date" }} label="Start date" notched onChange={(event) => setStartDate(event.target.value)} type="date" value={startDate} /></FormControl><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-end-date" shrink>End date</InputLabel><OutlinedInput id="overview-end-date" inputProps={{ "aria-label": "End date" }} label="End date" notched onChange={(event) => setEndDate(event.target.value)} type="date" value={endDate} /></FormControl></> : null}{additionalControls}<Button disabled={updateDisabled || (kind === "custom" && (!startDate || !endDate || startDate > endDate))} onClick={apply} variant="outlined">Update</Button></Stack>
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, flexWrap: "wrap" }}><TextField disabled={Boolean(resource)} label="Date range" onChange={(event) => setKind(event.target.value as OverviewDateRange["kind"])} select size="small" sx={{ minWidth: 180 }} value={kind}>{OPTIONS.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}</TextField>{kind === "custom" ? <><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-start-date" shrink>Start date</InputLabel><OutlinedInput disabled={Boolean(resource)} id="overview-start-date" inputProps={{ "aria-label": "Start date" }} label="Start date" notched onChange={(event) => setStartDate(event.target.value)} type="date" value={startDate} /></FormControl><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-end-date" shrink>End date</InputLabel><OutlinedInput disabled={Boolean(resource)} id="overview-end-date" inputProps={{ "aria-label": "End date" }} label="End date" notched onChange={(event) => setEndDate(event.target.value)} type="date" value={endDate} /></FormControl></> : null}{additionalControls}<Button disabled={updateDisabled || (kind === "custom" && (!startDate || !endDate || startDate > endDate))} onClick={apply} variant="outlined">Update</Button></Stack>
     {showCaption ? <Typography color="text.secondary" variant="caption">{selectedDates} · based on each trade&apos;s closing date</Typography> : null}
   </Stack>;
 }

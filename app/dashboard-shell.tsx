@@ -1,5 +1,7 @@
 "use client";
 
+import {installCoachingHistoryTracking} from "./coaching-review-history";
+
 import {CommunityNavigationProvider,useCommunityNavigation} from "./community-navigation-context";
 import {CommunitySidebar,CommunityBreadcrumbs} from "./community-sidebar";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
@@ -109,6 +111,8 @@ import { WorkspaceTradeDrawer } from "./(dashboard)/workspace/workspace-trade-li
 import {
   TRADERLINK_OPEN_WORKSPACE_TRADE_DRAWER_EVENT,
 } from "./(dashboard)/workspace/workspace-trade-drawer-events";
+
+installCoachingHistoryTracking();
 
 const expandedWidth = 272;
 const collapsedWidth = 76;

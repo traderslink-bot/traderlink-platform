@@ -22,7 +22,8 @@ export function coachingDate(value:string):string{
 }
 
 /** Review coverage is independent of the work's repeating schedule and deadline. */
-export function coachingReviewCoverage(terms:CoachingAgreementTerms,item:TraderLinkCommunityCoachingPlanItem,period:{start:string;end:string},previousEnd?:string|null):{start:string;end:string}{
+export function coachingReviewCoverage(terms:CoachingAgreementTerms,item:TraderLinkCommunityCoachingPlanItem,period:{start:string;end:string},previousEnd?:string|null):{start:string|undefined;end:string|undefined}{
+  if(item.coveragePeriod==="single_item"&&["trade_review","trading_day_review"].includes(item.itemType))return {start:undefined,end:undefined};
   let start=period.start,end=period.end;
   if(item.coveragePeriod==="previous_7_days")start=addCoachingDays(end,-6);
   if(item.coveragePeriod==="calendar_week"){
@@ -34,7 +35,7 @@ export function coachingReviewCoverage(terms:CoachingAgreementTerms,item:TraderL
     end=new Date(Date.UTC(next.getUTCFullYear(),next.getUTCMonth(),0)).toISOString().slice(0,10);
     start=end.slice(0,8)+"01";
   }
-  if(item.coveragePeriod==="since_last_review"&&previousEnd&&previousEnd<end)start=addCoachingDays(previousEnd,1);
+  if(item.coveragePeriod==="since_last_review"){if(previousEnd&&previousEnd<end)start=addCoachingDays(previousEnd,1);else if(terms.startDate&&terms.startDate<=end)start=terms.startDate;}
   if(item.coveragePeriod==="custom"){
     const days=terms.coverageDays?.[item.planItemId];
     if(!days||!Number.isInteger(days)||days<1||days>366)throw new Error("Set the number of days covered by this review.");

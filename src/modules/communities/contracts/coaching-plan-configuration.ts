@@ -2,7 +2,7 @@ import type {TraderLinkCommunityCoachingItemType} from "./traderlink-community-p
 
 export type CoachingPlanConfiguration=Readonly<{
   about:string;
-  offers:Partial<Record<TraderLinkCommunityCoachingItemType,Readonly<{details:string;resources:readonly string[]}>>>;
+  offers:Partial<Record<TraderLinkCommunityCoachingItemType,Readonly<{details:string;resources:readonly string[];includeDayJournal?:boolean;tradeCap?:Readonly<{basis:"per_day"|"per_review";quantity:number}>}>>>;
 }>;
 
 const types=new Set(["trade_review","trading_day_review","performance_review","journal_review","rules_review","strategy_review","risk_review","goal_review","student_check_in","review_follow_up","private_session","group_lesson","questions","custom_task"]);
@@ -19,7 +19,10 @@ export function parseCoachingPlanConfiguration(value:unknown):CoachingPlanConfig
     if(!types.has(key)||!item||typeof item!=="object"||Array.isArray(item))throw new Error("Invalid plan service");
     const fields=item as Record<string,unknown>;
     if(typeof fields.details!=="string"||fields.details.length>1000||!Array.isArray(fields.resources)||fields.resources.some(resource=>typeof resource!=="string"||!resources.has(resource)))throw new Error("Invalid plan service details");
-    offers[key as TraderLinkCommunityCoachingItemType]={details:fields.details,resources:[...new Set(fields.resources as string[])]};
+    if(fields.includeDayJournal!==undefined&&typeof fields.includeDayJournal!=="boolean")throw new Error("Invalid Journal sharing requirement");
+    let tradeCap: {basis:"per_day"|"per_review";quantity:number}|undefined;
+    if(fields.tradeCap!==undefined){const cap=fields.tradeCap as {basis:string;quantity:number};if(!cap||!["per_day","per_review"].includes(cap.basis)||!Number.isInteger(cap.quantity)||cap.quantity<1||cap.quantity>500)throw new Error("Choose a trade limit between 1 and 500.");tradeCap={basis:cap.basis as "per_day"|"per_review",quantity:cap.quantity};}
+    offers[key as TraderLinkCommunityCoachingItemType]={details:fields.details,resources:[...new Set(fields.resources as string[])],...(fields.includeDayJournal!==undefined?{includeDayJournal:fields.includeDayJournal as boolean}:{}),...(tradeCap?{tradeCap}:{})};
   }
   return {about,offers};
 }

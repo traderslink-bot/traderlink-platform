@@ -1,4 +1,5 @@
 import { MembershipFeatureAccessNotice } from "../../membership-feature-access-notice";
+import type {WorkspaceAccessScope} from "@/src/modules/platform/contracts/workspace-access-scope";
 import "server-only";
 
 import { DashboardPage } from "@/app/dashboard-template";
@@ -65,16 +66,18 @@ function chartOrder(grouping: JournalAnalyticsGrouping, key: string): number | s
 }
 
 export async function TimingAnalyticsPage({
-  searchParams,
+  searchParams,resourceScope,period,
 }: {
+  resourceScope?:WorkspaceAccessScope;period?:{start:string;end:string};
   searchParams: Promise<{ basis?: string | string[] | undefined }>;
 }) {
-  const scope = await requireMembershipPreviewPageScope("analytics.access");
+  const scope = resourceScope ?? await requireMembershipPreviewPageScope("analytics.access");
   if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
   const requestedBasis = (await searchParams).basis;
   const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
     const moneyBasis = resolveJournalAnalyticsMoneyBasis(requestedBasis, pnlReportingBasis);
     const query = buildJournalAnalyticsDashboardQuery(scope, {
+      ...(period?{closingDateRange:{kind:"inclusive_closing_date" as const,startDate:period.start,endDate:period.end}}:{}),
       groupings: GROUPINGS,
       metricIds: metricIdsFor(moneyBasis),
       moneyBasis,
@@ -116,7 +119,7 @@ export async function TimingAnalyticsPage({
 
   return (
     <>
-    <OfflineSavedViewCapture
+    {resourceScope?null:<OfflineSavedViewCapture
       accountTimezone={timezone}
       calculationVersion={`journal-analytics-${response.registryVersion}`}
       coverage={journalAnalyticsOfflineRouteCoverage("analytics-timing")}
@@ -127,7 +130,7 @@ export async function TimingAnalyticsPage({
       reportingCurrency={response.partitions[0]?.currency ?? null}
       routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
       viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-timing"]}
-    />
+    />}
     <DashboardPage>
       <Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}>
         <Box>

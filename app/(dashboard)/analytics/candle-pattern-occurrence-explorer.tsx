@@ -1,4 +1,5 @@
 "use client";
+import {useCoachingResourceNavigation} from "../communities/coaching-resource-context";
 import {
   MEMBERSHIP_FEATURE_REQUIRED_MESSAGE,
   membershipActionError,
@@ -166,6 +167,7 @@ export function CandlePatternOccurrenceExplorer({
   pattern: string;
   startDate: string | null;
 }) {
+  const resource=useCoachingResourceNavigation();
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const [draftTicker, setDraftTicker] = useState("");
@@ -222,10 +224,7 @@ export function CandlePatternOccurrenceExplorer({
     queueMicrotask(() => {
       if (!controller.signal.aborted) setState("loading");
     });
-    void fetch(`/api/platform/trade-analyzer/candle-patterns/occurrences?${params.toString()}`, {
-      cache: "no-store",
-      signal: controller.signal,
-    }).then(async (response) => {
+    void (resource?resource.fetchRead(`/api/platform/trade-analyzer/candle-patterns/occurrences?${params.toString()}`):fetch(`/api/platform/trade-analyzer/candle-patterns/occurrences?${params.toString()}`,{cache:"no-store",signal:controller.signal})).then(async (response) => {
       const payload = await response.json() as OccurrenceResponse;
       throwIfMembershipRequired(payload);
       if (controller.signal.aborted) return;
@@ -263,10 +262,7 @@ export function CandlePatternOccurrenceExplorer({
       setReplayState("loading");
       setReplay(null);
     });
-    void fetch(`/api/platform/trade-analyzer/candle-patterns/replay?${params.toString()}`, {
-      cache: "no-store",
-      signal: controller.signal,
-    }).then(async (response) => {
+    void (resource?resource.fetchRead(`/api/platform/trade-analyzer/candle-patterns/replay?${params.toString()}`):fetch(`/api/platform/trade-analyzer/candle-patterns/replay?${params.toString()}`,{cache:"no-store",signal:controller.signal})).then(async (response) => {
       const payload = await response.json() as ReplayResponse;
       throwIfMembershipRequired(payload);
       if (controller.signal.aborted) return;

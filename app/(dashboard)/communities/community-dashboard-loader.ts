@@ -94,5 +94,5 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
     }
     return {...current,lifecycle:database.prepare(`SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?`).get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
   });
-  return Object.freeze({snapshot,isReview:false});
+  return Object.freeze({snapshot:{...snapshot,viewer:{...snapshot.viewer,activeJournalAccountId:identity.scope.activeAccountId??null}},isReview:false});
 }

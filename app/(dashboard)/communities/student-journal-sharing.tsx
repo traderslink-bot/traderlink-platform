@@ -1,23 +1,30 @@
 "use client";
-import {useState} from "react";
-import {Box,Button,Checkbox,FormControlLabel,MenuItem,Stack,TextField} from "@mui/material";
+import {coachingSharingRequirements} from "./coaching-sharing-requirements";
+import {COACHING_ACCESS_LABELS} from "@/src/modules/communities/contracts/coaching-required-access";
+import {useActionState,useState} from "react";
+import {Alert,Box,Button,Checkbox,FormControlLabel,Stack,TextField} from "@mui/material";
 import {DashboardPanel} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
-import {grantCoachJournalAccessAction,revokeCoachJournalAccessAction} from "./community-actions";
+import {saveStudentJournalSharingAction} from "./community-actions";
 import {CommunityTypography as Typography} from "./community-typography";
-
+const options=[["summary","Account summary"],["trades","Trades"],["trade_notes","Notes"],["rules","Rules"],["tags","Tags"],["journal_notes","Trading-day notes"],["day_rules","Trading-day rules"],["analytics","Analytics"]] as const;
 export function StudentJournalSharing({snapshot,isReview,selectedRelationshipId}:{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean;selectedRelationshipId:string}){
- const relationships=snapshot.relationships.filter(item=>item.relationshipId===selectedRelationshipId&&item.studentUserId===snapshot.viewer.userId&&item.status==="active"&&!item.archivedAtUtc&&item.accessStatus==="active");
- const [scope,setScope]=useState("trades");
- const active=snapshot.journalGrants.filter(item=>item.studentUserId===snapshot.viewer.userId&&item.relationshipId===selectedRelationshipId&&item.status==="active");
+ const relationship=snapshot.relationships.find(item=>item.relationshipId===selectedRelationshipId&&item.studentUserId===snapshot.viewer.userId&&item.status==="active"&&!item.archivedAtUtc&&item.accessStatus==="active");
+ const requirements=coachingSharingRequirements(snapshot,selectedRelationshipId);
+ const accountId=snapshot.viewer.activeJournalAccountId;
+ const active=snapshot.journalGrants.filter(item=>item.studentUserId===snapshot.viewer.userId&&item.relationshipId===selectedRelationshipId&&item.journalAccountId===accountId&&item.status==="active");
+ const [selected,setSelected]=useState<string[]>(()=>options.filter(([key])=>active.some(grant=>grant.dataScope==="complete"||grant.dataScope===key||(grant.dataScope==="trades"&&grant.sharedFields?.includes(key)))).map(([key])=>key));
+ const [feedback,save,pending]=useActionState(saveStudentJournalSharingAction,{error:"",saved:false});
+ const [changed,setChanged]=useState(false);
  return <DashboardPanel title="Journal sharing">
-  {relationships.length?<Box action={isReview?undefined:grantCoachJournalAccessAction} component="form"><input name="communitySlug" type="hidden" value={snapshot.community.slug}/><Stack spacing={1.5}>
-   <input name="relationshipId" type="hidden" value={relationships[0].relationshipId}/>
-   <TextField label="Coach" value={`${relationships[0].coachDisplayName} · ${relationships[0].planName}`} slotProps={{input:{readOnly:true}}}/>
-   <TextField label="Data shared" name="dataScope" onChange={event=>setScope(event.target.value)} select value={scope}><MenuItem value="summary">Account summary</MenuItem><MenuItem value="trades">Summary and trade history</MenuItem><MenuItem value="analytics">Account analytics</MenuItem></TextField>
-   {scope==="trades"?<Stack direction={{xs:"column",sm:"row"}} spacing={1}>{[["trade_notes","Trade notes"],["rules","Trade rules"],["tags","Trade tags"],["journal_notes","Trading-day notes"],["day_rules","Trading-day rules"]].map(([value,label])=><FormControlLabel control={<Checkbox name="sharedField" value={value}/>} key={value} label={label}/>)}</Stack>:null}
-   <Button disabled={isReview} type="submit" variant="contained">Share selected account</Button>
-  </Stack></Box>:null}
-  <Stack spacing={1} sx={{mt:2}}>{active.map(grant=><Stack direction="row" key={grant.grantId} sx={{alignItems:"center",justifyContent:"space-between"}}><Typography>{snapshot.relationships.find(item=>item.relationshipId===grant.relationshipId)?.coachDisplayName} · {grant.dataScope==="trades"?"Trade history":grant.dataScope==="summary"?"Account summary":grant.dataScope==="analytics"?"Account analytics":"Journal"}{grant.sharedFields?.length?` · ${grant.sharedFields.map(field=>({trade_notes:"Notes",rules:"Rules",tags:"Tags",journal_notes:"Trading-day notes",day_rules:"Trading-day rules"}[field]??field)).join(", ")}`:""}</Typography><Box action={isReview?undefined:revokeCoachJournalAccessAction} component="form"><input name="communitySlug" type="hidden" value={snapshot.community.slug}/><input name="grantId" type="hidden" value={grant.grantId}/><Button color="error" disabled={isReview} type="submit">Revoke</Button></Box></Stack>)}</Stack>
+ {relationship&&accountId?<Box component="form" action={isReview?undefined:save}><input name="communitySlug" type="hidden" value={snapshot.community.slug}/><input name="relationshipId" type="hidden" value={selectedRelationshipId}/><input name="journalAccountId" type="hidden" value={accountId}/><Stack spacing={1.5}>
+ {requirements.required.length?<><Typography sx={{fontWeight:700}}>Required by your accepted coaching work</Typography><Typography>{requirements.required.map(scope=>COACHING_ACCESS_LABELS[scope]??scope).join(' · ')}</Typography><Typography>{requirements.missing.length?'Not yet shared: '+requirements.missing.map(scope=>COACHING_ACCESS_LABELS[scope]??scope).join(' · '):'Required access is currently shared.'}</Typography><Button disabled={isReview||pending} onClick={()=>{setChanged(true);setSelected(current=>[...new Set([...current,...requirements.required,'summary',...(requirements.required.some(scope=>!['summary','analytics'].includes(scope))?['trades']:[])])]);}}>Select required access</Button></>:null}
+ <TextField label="Coach" value={`${relationship.coachDisplayName} · ${relationship.planName}`} slotProps={{input:{readOnly:true}}}/>
+ <Typography variant="body2">Choose what to share from your currently selected Journal account. Notes, rules and tags require Trades. Trades also includes the account summary.</Typography>
+ {selected.includes("trades")?<input type="hidden" name="sharingOption" value="summary"/>:null}
+ <Stack>{options.map(([value,label])=><FormControlLabel key={value} label={label} control={<Checkbox name="sharingOption" value={value} checked={selected.includes(value)||(value==="summary"&&selected.includes("trades"))} disabled={isReview||pending||(value==="summary"&&selected.includes("trades"))} onChange={event=>{setChanged(true);setSelected(current=>event.target.checked?[...current,value]:current.filter(key=>key!==value));}}/>}/> )}</Stack>
+ {feedback.error?<Alert severity="error" role="alert">{feedback.error}</Alert>:null}{feedback.saved&&!changed?<Alert severity="success" role="status">Sharing saved.</Alert>:null}
+ <Button disabled={isReview||pending} type="submit" variant="contained" onClick={()=>setChanged(false)}>{pending?"Saving…":"Save sharing"}</Button>
+ </Stack></Box>:<Typography>{!accountId?"Select a Journal account to manage sharing.":"Sharing is available while this coaching relationship is active."}</Typography>}
  </DashboardPanel>;
 }

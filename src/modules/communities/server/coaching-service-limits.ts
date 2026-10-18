@@ -1,3 +1,4 @@
+import {coachingReviewService} from "./coaching-review-service-binding";
 import type Database from "better-sqlite3";
 import {coachingPeriod,type CoachingAgreementTerms} from "../contracts/coaching-agreements";
 
@@ -30,12 +31,18 @@ export function requireQuestionAllowance(db:Database.Database,relationshipId:str
  if(allowance&&allowance.remaining===0)throw new Error(allowance.renewsOn?`Question allowance renews on ${allowance.renewsOn}.`:"The question allowance for this agreement has been used.");
 }
 export function requireFollowUpWindow(db:Database.Database,relationshipId:string,reviewId:string,atUtc:string){
- const occurrence=db.prepare(`SELECT agreement.terms_json FROM traderlink_community_coaching_occurrences occurrence JOIN traderlink_community_coaching_agreements agreement ON agreement.agreement_id=occurrence.agreement_id WHERE occurrence.work_type='review' AND occurrence.work_id=? AND agreement.relationship_id=?`).get(reviewId,relationshipId) as {terms_json:string}|undefined;
- const terms=occurrence?JSON.parse(occurrence.terms_json) as CoachingAgreementTerms:acceptedCoachingTerms(db,relationshipId);
- if(!terms)return;
+ const review=db.prepare(`SELECT viewed_at_utc FROM traderlink_community_coaching_trade_reviews WHERE review_id=? AND relationship_id=?`).get(reviewId,relationshipId) as {viewed_at_utc:string|null}|undefined;
+ if(!review)throw new Error("This review is unavailable.");
+ const bound=coachingReviewService(db,reviewId);
+ if(!bound)throw new Error("The original agreement for this review must be identified before follow-up.");
+ const terms=bound.terms;
  const service=terms.items.find(item=>item.itemType==="review_follow_up");
  if(!service){if(terms.items.some(item=>item.itemType==="custom_task"))return;throw new Error("Follow-up is not included in this agreement.");}
- const review=db.prepare(`SELECT viewed_at_utc FROM traderlink_community_coaching_trade_reviews WHERE review_id=? AND relationship_id=?`).get(reviewId,relationshipId) as {viewed_at_utc:string|null}|undefined;
- if(!review?.viewed_at_utc)throw new Error("Mark the review as read before sending a follow-up.");
+ if(!review.viewed_at_utc)throw new Error("Mark the review as read before sending a follow-up.");
  if(Date.parse(atUtc)>Date.parse(review.viewed_at_utc)+service.followUpDays*86400000)throw new Error("The follow-up period for this review has ended.");
+}
+
+/** Student-visible explanation; authoritative reply still rechecks the window. */
+export function coachingReviewFollowUpProblem(db:Database.Database,relationshipId:string,reviewId:string,atUtc:string):string|null{
+ try{requireFollowUpWindow(db,relationshipId,reviewId,atUtc);return null;}catch(error){return error instanceof Error?error.message:'Follow-up is unavailable for this review.';}
 }
