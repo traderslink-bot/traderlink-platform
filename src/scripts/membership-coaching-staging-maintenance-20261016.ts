@@ -13,9 +13,13 @@ import { loadAccountIdentityConfiguration } from "@/src/modules/journal/server/a
 import { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 
 const predecessorCount = 163;
-const completedCount = 164;
+const completedCount = 166;
 const prefix = platformMigrationManifest.slice(0, predecessorCount);
-const expected = ["0168_platform_community_destination_publishers"];
+const expected = [
+  "0168_platform_community_destination_publishers",
+  "0169_platform_community_removal_recovery",
+  "0170_platform_community_publication_revision_actions",
+];
 assert.equal(platformMigrationManifest.length, completedCount);
 assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.migrationId), expected);
 assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), expected.map((_, i) => 181 + i));
@@ -88,7 +92,7 @@ async function main() {
   if (count === predecessorCount) {
     const disk = statfsSync(root);
     assert(disk.bavail * disk.bsize > statSync(sourcePath).size * 4 + 1024 ** 3, "Insufficient backup/rehearsal headroom");
-    const checkpoint = join(root, "coaching-staging-checkpoints", "20261016-community-destination-0168");
+    const checkpoint = join(root, "coaching-staging-checkpoints", "20261017-community-0168-through-0170");
     const backupPath = join(checkpoint, "backup.sqlite");
     const restoreVerificationPath = join(checkpoint, "restore-verification.sqlite");
     const evidence = await createAndRestoreVerifyPlatformDatabaseBackup({
