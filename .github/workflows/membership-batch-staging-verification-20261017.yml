@@ -1,0 +1,33 @@
+name: Membership remaining-QA staging build
+
+on:
+  push:
+    branches:
+      - codex/membership-batch-qa-20261017
+
+permissions:
+  contents: read
+
+concurrency:
+  group: membership-batch-qa-20261017
+  cancel-in-progress: false
+
+jobs:
+  compile-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: TypeScript integration check
+        run: npx tsc --noEmit --incremental false
+      - name: Production build
+        run: npm run build
