@@ -2,15 +2,16 @@ import {readCommunityViewerChannels} from "@/src/modules/communities/server/comm
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { createCanonicalUtcTimestamp, isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import type { TraderLinkCommunityDashboardSnapshot } from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 import { TraderLinkCommunityPlatformRepository } from "@/src/modules/communities/server/traderlink-community-platform-repository";
 import { createTraderLinkCommunityReviewFixture } from "@/src/modules/communities/server/traderlink-community-review-fixture";
 import { resolveTraderLinkCommunityViewer } from "@/src/modules/communities/server/traderlink-community-viewer";
 import { notFound } from "next/navigation";
-import { isCommunityContentActivityPath } from "@/src/modules/communities/server/community-activity-scope";
+import {hasCommunityStatsOwnAccess} from "@/src/modules/communities/server/stats/community-stats-access";
+import type {CommunityStatsNavigationAccess} from "@/src/modules/communities/contracts/community-stats-contracts";
 
-export async function loadCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}>>{
+export async function loadCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
   try {
     return await loadAuthorizedCommunityDashboard(communitySlug,path);
   } catch (error) {
@@ -19,7 +20,7 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
   }
 }
 
-async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}>>{
+async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
   if(communitySlug==="review") {
     if(process.env.NODE_ENV==="production"&&process.env.RAILWAY_ENVIRONMENT_NAME!=="staging") notFound();
     const role=path?.includes("/workspace")?"coach":"owner";
@@ -40,6 +41,7 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
     const repository=new TraderLinkCommunityPlatformRepository(database);
     let current=repository.readSnapshot(communitySlug,viewer,{historyOnly,readableChannelIds,detailPath:requested});
     const capabilities=new Set(current.viewer.capabilities);
+    const statsOwnContentAccess=!historyOnly&&hasCommunityStatsOwnAccess(database,current.community.communityId,viewer.userId);
     const requestedPath=path??"";
     const permitted=requestedPath.includes("/alerts")
       ? capabilities.has("community.alerts.view")||capabilities.has("community.alerts.create")||current.viewer.channelAccess?.alerts===true
@@ -58,7 +60,7 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
                 : requestedPath.includes("/manage/members")
                   ? capabilities.has("community.members.view")
                   : (requestedPath.includes("/manage/activity")||requestedPath.includes("/stats"))
-                    ? capabilities.has("community.analytics.view")
+                    ? capabilities.has("community.analytics.view")||statsOwnContentAccess
                     : requestedPath.includes("/manage/channels")
                       ? capabilities.has("community.discord.manage")
                       : requestedPath.includes("/manage")
@@ -66,15 +68,6 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
               : true;
     const ownCoachingHistory=requestedPath===`/communities/${communitySlug}/coaching`&&current.relationships.some(relationship=>relationship.studentUserId===viewer.userId);
     if(!permitted&&!ownCoachingHistory){if(!historyPath)notFound();current=repository.readSnapshot(communitySlug,viewer,{historyOnly:true});historyOnly=true;}
-    const alertSlug=requestedPath.match(/\/alerts\/([^/?#]+)/u)?.[1];
-    const watchlistId=requestedPath.match(/\/server-watchlists\/([^/?#]+)/u)?.[1];
-    const tracked=alertSlug
-      ? current.alerts.some(alert=>(alert.slug===alertSlug||alert.alertId===alertSlug)&&alert.status==="published")
-      : watchlistId
-        ? current.watchlists.some(watchlist=>watchlist.watchlistId===watchlistId&&watchlist.status==="published")
-        : true;
-    const activityPath=path??`/communities/${communitySlug}`;
-    if(!historyOnly&&tracked&&isCommunityContentActivityPath(communitySlug,activityPath))repository.recordView({communityId:current.community.communityId,userId:viewer.userId,path:activityPath,objectType:path?.includes("watchlists")?"watchlist":path?.includes("alerts")?"alert":path?.includes("coach")?"coaching":"community",atUtc:createCanonicalUtcTimestamp()});
     const planCounts=database.prepare(`SELECT plan_id, count(*) AS count
       FROM traderlink_community_coaching_relationships
       WHERE community_id=? AND status='active' GROUP BY plan_id`).all(current.community.communityId) as {plan_id:string;count:number}[];
@@ -92,7 +85,7 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
         community:{...current.community,isOwner:false,memberCount:0},viewer:{...current.viewer,capabilities:current.viewer.capabilities.filter(capability=>capability.startsWith('community.coaching.')&&capability!=='community.coaching.manage_all')},
         settings:{description:'',personalAlertTemplatesEnabled:false},analytics:{views30Days:0,uniqueMembers30Days:0,alertViews30Days:0,watchlistViews30Days:0,coachingViews30Days:0,topPages:[],namedMemberPages:[]},referrals:{attributedMembers:0,tier2Members:0,estimatedEarningsMinor:0,currency:'USD',commissionLabel:'Not configured'}};
     }
-    return {...current,lifecycle:database.prepare(`SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?`).get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
+    return {...current,statsOwnContentAccess,lifecycle:database.prepare(`SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?`).get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
   });
   return Object.freeze({snapshot:{...snapshot,viewer:{...snapshot.viewer,activeJournalAccountId:identity.scope.activeAccountId??null}},isReview:false});
 }

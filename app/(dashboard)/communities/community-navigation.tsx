@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useRef} from "react";
 import {useCommunityNavigation,type CommunityMenuItem} from "@/app/community-navigation-context";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
+import type {CommunityStatsNavigationAccess} from "@/src/modules/communities/contracts/community-stats-contracts";
 
 type Item={label:string;href:string};
 function buildCommunityMenu(snapshot:TraderLinkCommunityDashboardSnapshot,base:string){
@@ -22,7 +23,7 @@ function buildCommunityMenu(snapshot:TraderLinkCommunityDashboardSnapshot,base:s
  const coachingItems:CommunityMenuItem[]=coaching.filter(item=>item.label!=="Coach setup");
  if(has("community.coaching.offer"))coachingItems.push({label:"Coach setup",children:setupItems});
  if(coachingItems.length)items.push({label:"Coaching",children:coachingItems});
- if(has("community.analytics.view"))items.push({label:"Stats",children:[{label:"Activity",href:`${base}/stats/activity`}]});
+ if(has("community.analytics.view")||(snapshot as TraderLinkCommunityDashboardSnapshot&CommunityStatsNavigationAccess).statsOwnContentAccess===true)items.push({label:"Stats",children:[{label:"Overview",href:`${base}/stats/activity`}]});
  if(manage.length)items.push({label:"Manage",children:manage});
  const focused=snapshot.community.isOwner||Boolean(snapshot.teamMembers?.some(member=>member.userId===snapshot.viewer.userId))||snapshot.viewer.capabilities.some(capability=>["community.manage","community.team.manage","community.roles.manage","community.members.view","community.member_activity.view","community.analytics.view","community.discord.manage","community.alerts.create","community.alerts.manage_all","community.watchlists.publish_staff","community.watchlists.manage_all","community.coaching.offer","community.coaching.students","community.coaching.manage_all","community.referrals.view"].includes(capability));
  return {base,name:snapshot.community.displayName,viewerId:snapshot.viewer.userId,focused,items};

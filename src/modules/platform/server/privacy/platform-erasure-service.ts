@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { captureCoachingDeletionEvidence } from "../../../communities/server/coaching-deletion-archive";
+import {eraseCommunityStatsIdentity} from "../../../communities/server/stats/community-stats-retention";
 
 import { JournalAccountRepository, type JournalAccountRecord } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
@@ -359,6 +360,7 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
     assertSoleWorkspaceOwner(this.database, scope);
     return withPermanentDeleteTransaction(this.database, () => {
       captureCoachingDeletionEvidence(this.database, scope.userId, createCanonicalUtcTimestamp());
+      eraseCommunityStatsIdentity(this.database,scope.userId);
       // Only this participant's relationships end. Community ownership alone
       // must not close another coach's work or move it into the deletion archive.
       if (tables(this.database).includes("traderlink_community_coaching_relationships")) {

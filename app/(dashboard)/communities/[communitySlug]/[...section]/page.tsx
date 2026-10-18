@@ -26,7 +26,7 @@ export default async function CommunitySectionPage({params}:{params:Promise<{com
     (resolved==="team"&&(owner||capabilities.includes("community.team.manage")))||
     (resolved==="roles"&&(owner||capabilities.includes("community.roles.manage")))||
     (resolved==="members"&&(owner||capabilities.includes("community.members.view")))||
-    (resolved==="activity"&&(owner||capabilities.includes("community.analytics.view")))||
+    (resolved==="activity"&&(owner||capabilities.includes("community.analytics.view")||loaded.snapshot.statsOwnContentAccess===true))||
     (resolved==="channels"&&(owner||capabilities.includes("community.discord.manage")))||
     (resolved==="templates"&&capabilities.includes("community.alerts.manage_all"))||
     (resolved==="settings"&&(owner||capabilities.includes("community.manage")));
