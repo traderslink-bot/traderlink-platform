@@ -6,6 +6,7 @@ import { PlatformRemoteNotificationDeliveryRepository } from "../notifications/p
 import { PlatformRemoteNotificationDeliveryService } from "../notifications/platform-remote-notification-delivery-service";
 import { reconcileWatchlistNotificationApprovals } from "@/src/modules/watchlist/server/notifications/watchlist-notification-runtime";
 import { runWatchlistNotificationDelivery } from "@/src/modules/watchlist/server/notifications/watchlist-notification-delivery";
+import { startWatchlistSetupSharedFeed } from "@/src/modules/watchlist/server/setups/setup-shared-feed-runtime";
 
 let workersStarted = false;
 
@@ -16,6 +17,7 @@ let workersStarted = false;
 export function startTraderLinkHostedBackgroundWorkers(): void {
   if (workersStarted) return;
   workersStarted = true;
+  startWatchlistSetupSharedFeed();
 
   let analyzerRunning = false;
   const runAnalyzer = async (): Promise<void> => {

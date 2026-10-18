@@ -18,12 +18,15 @@ export type WatchlistIndicatorSnapshot = Readonly<{
 type Slot = { provider: IndicatorProvider; adjustment: string; series: IndicatorSeries; checkedMarketDate?: string; checkedClosedBoundary?: number };
 export type IndicatorSharedCandles = Readonly<{ provider: IndicatorProvider; dataThrough: number; candles: readonly IndicatorCandle[] }>;
 type Ticker = { activationId: string; slots: Map<IndicatorTimeframe, Slot>; snapshot: WatchlistIndicatorSnapshot;
+  checkedFrames: Map<IndicatorTimeframe, number>;
   sharedFiveMinute: IndicatorSharedCandles | null; refreshedAt: number; closedBoundary: number | null;
   closedRecovery?: { boundary: number; attempts: number; nextAt: number } };
 type Load = (input: Readonly<{ provider: IndicatorProvider; request: IndicatorHistoryRequest; budget: IndicatorHistoryBudget;
   consumer: string; sufficientHistory: Readonly<{ minimumBars: number; coverFrom: number }> }>) => Promise<IndicatorHistoryOutcome>;
 const FRAMES: readonly IndicatorTimeframe[] = ["1m", "5m", "15m", "1d"];
 const DURATIONS = { "1m": 60_000, "5m": 300_000, "15m": 900_000, "1d": 86_400_000 };
+export type IndicatorRefreshDemand = Readonly<{ frames: readonly IndicatorTimeframe[]; minimumIntervalMs: number; reuseCompletedFrames: boolean }>;
+const DEFAULT_DEMAND: IndicatorRefreshDemand = { frames: FRAMES, minimumIntervalMs: 120_000, reuseCompletedFrames: false };
 
 /** One logical operation per ticker; external scheduling calls this at two-minute intervals. */
 export class IndicatorRefreshService {
@@ -76,6 +79,7 @@ export class IndicatorRefreshService {
       if (evidence.vwap && vwap.value !== evidence.vwap.value) return false;
       const five = slots.get("5m"), fiveSnapshot = five?.series.snapshot();
       this.tickers.set(symbol, { activationId, slots, refreshedAt: 0, closedBoundary: null,
+        checkedFrames: new Map([...slots.keys()].map(frame => [frame, evidence.createdAt])),
         sharedFiveMinute: five && fiveSnapshot?.result ? { provider: five.provider, dataThrough: fiveSnapshot.result.dataThrough, candles: fiveSnapshot.candles.slice(-250) } : null,
         snapshot: { version: "indicators-v1", symbol, activationId, calculationId: evidence.id, timeframes, vwap } });
       return true;
@@ -99,27 +103,50 @@ export class IndicatorRefreshService {
     }
     return undefined;
   }
-  refresh(symbol: string, activationId: string): Promise<WatchlistIndicatorSnapshot> {
+  private dueFrames(ticker: Ticker, demand: IndicatorRefreshDemand): IndicatorTimeframe[] {
+    const now = this.now();
+    return [...new Set(demand.frames)].filter(frame => {
+      if (!FRAMES.includes(frame)) return false;
+      const checked = ticker.checkedFrames.get(frame);
+      if (checked !== undefined && now >= checked && (demand.reuseCompletedFrames
+        ? Math.floor((now - 5000) / 60_000) === Math.floor((checked - 5000) / 60_000)
+        : now - checked < Math.max(60_000, demand.minimumIntervalMs))) return false;
+      const through = ticker.slots.get(frame)?.series.snapshot().result?.dataThrough;
+      if (demand.reuseCompletedFrames && frame !== "1d" && through !== undefined
+        && through >= Math.floor((now - 5000) / DURATIONS[frame]) * DURATIONS[frame]
+        && checked !== undefined && now >= checked && now - checked < 600_000) return false;
+      return true;
+    });
+  }
+  needsRefresh(symbol: string, activationId: string, demand: IndicatorRefreshDemand = DEFAULT_DEMAND): boolean {
+    const ticker = this.tickers.get(symbol);
+    return !ticker || ticker.activationId !== activationId || this.dueFrames(ticker, demand).length > 0;
+  }
+  refresh(symbol: string, activationId: string, demand: IndicatorRefreshDemand = DEFAULT_DEMAND): Promise<WatchlistIndicatorSnapshot> {
     if (!/^[A-Z][A-Z0-9.-]{0,15}$/u.test(symbol) || !/^[A-Za-z0-9:_-]{1,100}$/u.test(activationId)) return Promise.reject(Error("indicator_refresh_identity_invalid"));
     const key = `${symbol}:${activationId}`;
     const running = this.inflight.get(key);
     if (running) {
       const ticker = this.tickers.get(symbol);
       if (ticker?.activationId === activationId) this.decision(symbol, ticker, "coalesced");
-      return running.then(snapshot => structuredClone(snapshot));
+      // A later consumer may need additional frames. Recheck only missing/due frames
+      // after the shared operation, rather than refetching the common 1m/5m pages.
+      return running.then(() => this.refresh(symbol, activationId, demand));
     }
     let ticker = this.tickers.get(symbol);
     if (!ticker || ticker.activationId !== activationId) {
       if (!ticker && this.tickers.size >= 64) return Promise.reject(Error("indicator_refresh_population_limit"));
-      ticker = { activationId, slots: new Map(), refreshedAt: 0, closedBoundary: null, sharedFiveMinute: null,
+      ticker = { activationId, slots: new Map(), checkedFrames: new Map(), refreshedAt: 0, closedBoundary: null, sharedFiveMinute: null,
         snapshot: { version: "indicators-v1", symbol, activationId, calculationId: null, timeframes: {}, vwap: { value: null, dataThrough: null } } };
       this.tickers.set(symbol, ticker);
     }
-    if (this.now() - ticker.refreshedAt < 120_000) {
+    const due = this.dueFrames(ticker, demand);
+    if (due.length === 0) {
       this.decision(symbol, ticker, "cache_hit"); return Promise.resolve(structuredClone(ticker.snapshot));
     }
     const boundary = this.closedBoundary(this.now());
-    if (boundary === undefined || (boundary !== null && ticker.closedBoundary === boundary)) {
+    if (boundary === undefined || (boundary !== null && ticker.closedBoundary === boundary
+      && demand.frames.every(frame => ticker!.slots.get(frame)?.checkedClosedBoundary === boundary))) {
       this.decision(symbol, ticker, boundary === undefined ? "calendar_unavailable" : "session_closed");
       return Promise.resolve(structuredClone(ticker.snapshot));
     }
@@ -134,9 +161,9 @@ export class IndicatorRefreshService {
     } else ticker.closedRecovery = undefined;
     // At most one warm-up plus two recovery passes per closed boundary. Successful
     // frames are retained; failed frames retry after 2m, then 10m, never all weekend.
-    const operation = this.perform(symbol, ticker).finally(() => {
+    const operation = this.perform(symbol, ticker, due).finally(() => {
       if (boundary !== null) {
-        const complete = FRAMES.every(frame => ticker!.slots.get(frame)?.checkedClosedBoundary === boundary
+        const complete = demand.frames.every(frame => ticker!.slots.get(frame)?.checkedClosedBoundary === boundary
           && ticker!.snapshot.timeframes[frame] && ticker!.snapshot.timeframes[frame]?.dataThrough === ticker!.slots.get(frame)?.series.snapshot().result?.dataThrough);
         if (complete) ticker!.closedBoundary = boundary;
         else if (ticker!.closedRecovery?.boundary === boundary) {
@@ -160,7 +187,7 @@ export class IndicatorRefreshService {
     }
     return true;
   }
-  private async perform(symbol: string, ticker: Ticker): Promise<WatchlistIndicatorSnapshot> {
+  private async perform(symbol: string, ticker: Ticker, frames: readonly IndicatorTimeframe[]): Promise<WatchlistIndicatorSnapshot> {
     const id = this.id(), now = this.now(), closed = this.closedBoundary(now);
     // A cold start while closed still describes the last completed trading session.
     // Candle timestamps stay historical; this does not manufacture weekend activity.
@@ -178,7 +205,8 @@ export class IndicatorRefreshService {
       if (candidate && candidate.regularClose <= now) { completedDailyClose = candidate.regularClose; break; }
     }
     try {
-      for (const timeframe of FRAMES) {
+      for (const timeframe of frames) {
+        ticker.checkedFrames.set(timeframe, now);
         const existing = ticker.slots.get(timeframe);
         const cached = existing?.series.snapshot();
         if (closed != null && !priceBasisRebased && existing?.checkedClosedBoundary === closed && cached?.result) {

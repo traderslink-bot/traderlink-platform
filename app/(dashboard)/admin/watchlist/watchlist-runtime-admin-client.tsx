@@ -17,6 +17,7 @@ import { WatchlistAnalysisEditor } from "./watchlist-analysis-editor";
 const AnalysisPreviewCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then((module) => module.TradersLinkAiReadCard));
 const DeferredAdminPanel = dynamic(() => import("./watchlist-deferred-admin-panel").then(module => module.WatchlistDeferredAdminPanel), { loading: () => <p role="status">Loading section…</p> });
 const IndicatorAuditPanel = dynamic(() => import("./watchlist-indicator-audit-panel"));
+const SetupAdminPanel = dynamic(() => import("./watchlist-setup-admin-panel"));
 const GainStartingPoint = dynamic(() => import("./watchlist-gain-starting-point").then(m => m.WatchlistGainStartingPoint));
 const PotentialGainPost = dynamic(() => import("./watchlist-potential-gain-post").then(module => module.WatchlistPotentialGainPost));
 const RUNTIME_SECTIONS = [
@@ -31,7 +32,7 @@ export function WatchlistRuntimeAdminClient() {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [height, setHeight] = useState(MINIMUM_FRAME_HEIGHT);
-  const [selectedSection, setSelectedSection] = useState<"runtime" | "usage" | "recaps" | "indicator-audit">("runtime");
+  const [selectedSection, setSelectedSection] = useState<"runtime" | "usage" | "recaps" | "indicator-audit" | "setups">("runtime");
   const [runtimeSection, setRuntimeSection] = useState<string>("watchlist");
   const [usageOpened, setUsageOpened] = useState(false);
   const [recapsOpened, setRecapsOpened] = useState(false);
@@ -124,12 +125,14 @@ export function WatchlistRuntimeAdminClient() {
         <Button onClick={selectUsage} aria-current={selectedSection === "usage" ? "page" : undefined} variant={selectedSection === "usage" ? "contained" : "outlined"}>Usage</Button>
         <Button onClick={selectRecaps} aria-current={selectedSection === "recaps" ? "page" : undefined} variant={selectedSection === "recaps" ? "contained" : "outlined"}>Daily Recaps</Button>
         <Button onClick={() => { setAuditOpened(true); setSelectedSection("indicator-audit"); }} aria-current={selectedSection === "indicator-audit" ? "page" : undefined} variant={selectedSection === "indicator-audit" ? "contained" : "outlined"}>Indicator Audit</Button>
+        <Button onClick={() => setSelectedSection("setups")} aria-current={selectedSection === "setups" ? "page" : undefined} variant={selectedSection === "setups" ? "contained" : "outlined"}>Setup Detection</Button>
       </Box>
       <Box hidden={selectedSection !== "usage"}>
         {usageOpened && <DeferredAdminPanel section="usage" />}
       </Box>
       <Box hidden={selectedSection !== "recaps"}>{recapsOpened && <DeferredAdminPanel section="recaps" />}</Box>
       <Box hidden={selectedSection !== "indicator-audit"}>{auditOpened && <IndicatorAuditPanel />}</Box>
+      {selectedSection === "setups" ? <SetupAdminPanel /> : null}
       <Box
         aria-hidden={selectedSection !== "runtime"}
         component="iframe"

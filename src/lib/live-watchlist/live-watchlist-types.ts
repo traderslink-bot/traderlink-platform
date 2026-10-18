@@ -52,6 +52,8 @@ export type LiveWatchlistCardContent = {
 
 export type LiveWatchlistCardPatch = {
   symbol: string;
+  indicatorPublicationIdentity?: string;
+  publicationPrice?: number | null;
   status?: LiveWatchlistStatus;
   updatedAt: number;
   firstPostedAt?: number | null;
@@ -488,6 +490,8 @@ export type LiveWatchlistSymbolState = {
   premiumAnalysisPreview?: import("./premium-analysis-preview").PremiumAnalysisPreview | null;
   membershipAnalysisAllowed?: boolean;
   symbol: string;
+  /** Persisted producer publication UUID. Never synthesize it from displayed time. */
+  indicatorPublicationIdentity?: string;
   status: LiveWatchlistStatus;
   updatedAt: number;
   firstPostedAt: number | null;

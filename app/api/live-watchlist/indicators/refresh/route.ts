@@ -1,7 +1,9 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { after } from "next/server";
 import { LiveWatchlistStore, validIndicatorPublicationIdentity } from "@/src/lib/live-watchlist/live-watchlist-store";
-import { readSharedWatchlistIndicatorCandles, reconcileWatchlistIndicatorPopulation, refreshWatchlistIndicators } from "@/src/modules/watchlist/server/indicators/indicator-refresh-runtime";
+import { readSharedWatchlistIndicatorCandles, reconcileWatchlistIndicatorPopulation } from "@/src/modules/watchlist/server/indicators/indicator-refresh-runtime";
+
+import { refreshPublishedWatchlistMarketData, watchlistFeedDemandFor } from "@/src/modules/watchlist/server/setups/setup-shared-feed-runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,7 +44,7 @@ export async function POST(request: Request): Promise<Response> {
   const symbol = body.symbol, activationId = body.indicatorPublicationIdentity;
   try {
     const ticker = await new LiveWatchlistStore().getSymbol(symbol);
-    if (!ticker || ticker.status === "deactivated" || ticker.indicatorCardVisible === false || !ticker.firstPostedAt || ticker.indicatorPublicationIdentity !== activationId) {
+    if (!ticker || ticker.status === "deactivated" || !ticker.firstPostedAt || ticker.indicatorPublicationIdentity !== activationId || !await watchlistFeedDemandFor(symbol, activationId)) {
       // A review-pending or old activation cannot create public Indicators or cause a provider fetch.
       return Response.json({ handled: true, status: "inactive", candles: null }, { headers });
     }
@@ -51,12 +53,13 @@ export async function POST(request: Request): Promise<Response> {
       // Recheck after response: activation may change while a background operation is queued.
       try {
         const population = await new LiveWatchlistStore().listSymbols();
-        const active = population.symbols.filter(ticker => ticker.status !== "deactivated" && ticker.indicatorCardVisible !== false && ticker.firstPostedAt && Number.isSafeInteger(ticker.firstPostedAt) && validIndicatorPublicationIdentity(ticker.symbol, ticker.indicatorPublicationIdentity));
-        reconcileWatchlistIndicatorPopulation(new Map(active.map(ticker => [ticker.symbol, ticker.indicatorPublicationIdentity!])));
-        const current = active.find(ticker => ticker.symbol === symbol);
-        if (current && current.status !== "deactivated" && current.indicatorPublicationIdentity === activationId) {
-          await refreshWatchlistIndicators(symbol, activationId);
+        const active = new Map<string, string>();
+        for (const candidate of population.symbols) {
+          if (validIndicatorPublicationIdentity(candidate.symbol, candidate.indicatorPublicationIdentity)
+            && await watchlistFeedDemandFor(candidate.symbol, candidate.indicatorPublicationIdentity)) active.set(candidate.symbol, candidate.indicatorPublicationIdentity);
         }
+        reconcileWatchlistIndicatorPopulation(active);
+        if (active.get(symbol) === activationId) await refreshPublishedWatchlistMarketData(symbol, activationId);
       } catch { /* The refresh service records provider failures; never log credentials or raw errors. */ }
     });
     return Response.json({ handled: true, status: candles ? "ready" : "warming", candles }, { headers });

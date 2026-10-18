@@ -243,6 +243,8 @@ type HistoryFetchInput = Readonly<{
   requestAllowed?: () => Promise<boolean>;
   /** Stop older paging once warm-up and the requested session start are both covered. */
   sufficientHistory?: Readonly<{ minimumBars: number; coverFrom: number }>;
+  isCurrent?: () => Promise<boolean>;
+  additionalDemand?: boolean;
 }>;
 
 function newYorkDayStart(time: number): number {
@@ -291,6 +293,8 @@ async function fetchIndicatorHistoryRange(input: HistoryFetchInput): Promise<Ind
   while (input.budget.attemptsRemaining > 0) {
     const url = indicatorHistoryUrl(input.provider, input.request, nextEnd);
     const response = await input.coordinator.request({ provider: input.provider, scope: input.scope, consumer: input.consumer,
+      isCurrent: input.isCurrent,
+      additionalDemand: input.additionalDemand,
       requestKey: url, maxAttempts: input.budget.attemptsRemaining >= 2 && input.budget.retriesRemaining > 0 ? 2 : 1,
       execute: async signal => {
         if (input.requestAllowed && !(await input.requestAllowed())) return { ok: false as const, reason: "permission" as const, requestAccepted: false as const };

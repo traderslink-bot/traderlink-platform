@@ -56,6 +56,7 @@ import {
 import { WatchlistPotentialPathCardArticle } from "./potential-path-levels-card";
 import { createVisibleWatchlistStream, createWatchlistRefreshController } from "@/src/lib/live-watchlist/watchlist-refresh-controller";
 import { WatchlistIndicatorsCard } from "./watchlist-indicators-card";
+import { WatchlistSetupsCard } from "./watchlist-setups-card";
 import groupHelpStyles from "./watchlist-group-help.module.css";
 import compactRows from "./watchlist-compact-rows.module.css";
 import { isTopWatchesGroup } from "@/src/lib/live-watchlist/top-watches-group";
@@ -1599,6 +1600,9 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
           <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{symbol.cards.traderNotes.body}</div>
           <p style={{ marginTop: "1rem", marginBottom: 0, fontSize: "0.75rem", lineHeight: 1.5, color: "var(--academy-muted)" }}>Full analysis may be added if the ticker develops a clearer trading setup.</p>
         </article>
+      ) : null}
+      {symbol.membershipAnalysisAllowed !== false && symbol.premiumAnalysisPricesAllowed !== false && !symbol.premiumAnalysisPreview ? (
+        <WatchlistSetupsCard key={`setups:${symbol.symbol}:${symbol.indicatorPublicationIdentity ?? "unassigned"}`} symbol={symbol.symbol} publicationIdentity={symbol.indicatorPublicationIdentity} />
       ) : null}
       {symbol.indicatorCardVisible !== false ? (
       <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.indicatorPublicationIdentity ?? "unassigned"}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} publicationIdentity={symbol.indicatorPublicationIdentity} livePrice={symbol.latestPrice} />

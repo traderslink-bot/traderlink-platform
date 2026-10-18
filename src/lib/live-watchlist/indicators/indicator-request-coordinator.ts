@@ -23,6 +23,9 @@ export type IndicatorRequestAudit = Readonly<{
 }>;
 type ScopeState = { retryAt: number; delay: number; recovering: boolean; probing: boolean };
 type Queued = { execute: () => Promise<void> };
+type Admission = { dispatch: <T>(input: { additionalDemand: boolean; isCurrent?: () => Promise<boolean>; start: () => T }) =>
+    Promise<{ allowed: true; value: T } | { allowed: false; retryAt: number; cancelled?: true }>;
+  rateLimited: (retryAfterMs?: number) => Promise<void> };
 export type IndicatorRequest<T> = Readonly<{
   provider: IndicatorProvider;
   /** Internal opaque connection/endpoint scope. Never copied to audit events. */
@@ -32,6 +35,10 @@ export type IndicatorRequest<T> = Readonly<{
   consumer: string;
   /** A logical multi-page refresh can spend its single retry on only one page. */
   maxAttempts?: 1 | 2;
+  /** Rechecked inside serialized dispatch, including after queue/storage waits. */
+  isCurrent?: () => Promise<boolean>;
+  /** True only for acquisition owned solely by the new setup consumer. */
+  additionalDemand?: boolean;
   execute: (signal: AbortSignal) => Promise<IndicatorTransportResult<T>>;
 }>;
 
@@ -45,17 +52,20 @@ export class IndicatorRequestCoordinator {
   private readonly id: () => string;
   private readonly sleep: (ms: number) => Promise<void>;
   private readonly audit: (event: IndicatorRequestAudit) => void;
+  private readonly admission?: Admission;
 
   constructor(options: Readonly<{
     now?: () => number;
     id?: () => string;
     sleep?: (ms: number) => Promise<void>;
     audit?: (event: IndicatorRequestAudit) => void;
+    admission?: Admission;
   }> = {}) {
     this.now = options.now ?? Date.now;
     this.id = options.id ?? (() => crypto.randomUUID());
     this.sleep = options.sleep ?? (ms => new Promise(resolve => setTimeout(resolve, ms)));
     this.audit = options.audit ?? (() => {});
+    this.admission = options.admission;
   }
 
   get status(): Readonly<{ active: number; queued: number; auditFailures: number }> {
@@ -113,30 +123,60 @@ export class IndicatorRequestCoordinator {
       const scope = this.scopes.get(scopeKey);
       if (scope && this.now() < scope.retryAt) return this.defer(request, "backoff", scope.retryAt, ids);
       if (scope?.probing) return this.defer(request, "recovery_probe", this.now() + 120_000, ids);
-      if (scope?.recovering) scope.probing = true;
-      const transportId = this.id();
-      ids.push(transportId);
-      const startedAt = this.now();
-      this.record({ kind: "started", provider: request.provider, consumer: request.consumer, transportId, at: startedAt });
-      const controller = new AbortController();
+      const recoveryOwner = scope?.recovering ? scope : undefined;
+      if (recoveryOwner) recoveryOwner.probing = true;
+      // Ownership covers every await/exit, including preflight rejection and
+      // admission rechecks. Only this attempt may release its recovery flag.
+      try {
+      if (request.isCurrent && !await request.isCurrent()) {
+        return { kind: "completed", result: { ok: false, reason: "permission", requestAccepted: false }, transportIds: ids };
+      }
+      let transportId = "", startedAt = 0;
       let timedOut = false;
       let timer: ReturnType<typeof setTimeout> | undefined;
-      const timeout = new Promise<IndicatorTransportResult<T>>(resolve => {
-        timer = setTimeout(() => {
-          timedOut = true;
-          controller.abort();
-          resolve({ ok: false, reason: "timeout", requestAccepted: false });
-        }, 15_000);
-      });
+      let cooldownSaved: Promise<void> | undefined;
+      const start = (): Promise<IndicatorTransportResult<T>> => {
+        transportId = this.id(); ids.push(transportId); startedAt = this.now();
+        this.record({ kind: "started", provider: request.provider, consumer: request.consumer, transportId, at: startedAt });
+        const controller = new AbortController();
+        const timeout = new Promise<IndicatorTransportResult<T>>(resolve => {
+          timer = setTimeout(() => { timedOut = true; controller.abort();
+            resolve({ ok: false, reason: "timeout", requestAccepted: false }); }, 15_000);
+        });
+        // Catch synchronous adapter errors as well as promise rejection. Execute
+        // is invoked now, not in a later microtask after the dispatch gate opens.
+        let execution: Promise<IndicatorTransportResult<T>>;
+        try { execution = Promise.resolve(request.execute(controller.signal)); }
+        catch { execution = Promise.resolve({ ok: false, reason: "transport_error", requestAccepted: false }); }
+        return Promise.race([execution, timeout]).catch((): IndicatorTransportResult<T> => ({
+          ok: false, reason: timedOut ? "timeout" : "transport_error", requestAccepted: false,
+        })).then(result => {
+          if (timer) clearTimeout(timer);
+          // Publish the cooldown immediately, even if the gate is persisting
+          // another launch. Its durable write may finish after that gate yields.
+          if (!result.ok && result.reason === "rate_limited" && request.provider === "moomoo")
+            cooldownSaved = this.admission?.rateLimited(result.retryAfterMs);
+          return result;
+        });
+      };
       let result: IndicatorTransportResult<T>;
       try {
-        result = await Promise.race([request.execute(controller.signal), timeout]);
+        if (request.provider === "moomoo" && this.admission) {
+          const admission = await this.admission.dispatch({ additionalDemand: request.additionalDemand ?? false,
+            isCurrent: request.isCurrent, start });
+          if (!admission.allowed) return admission.cancelled
+            ? { kind: "completed", result: { ok: false, reason: "permission", requestAccepted: false }, transportIds: ids }
+            : this.defer(request, "backoff", admission.retryAt, ids);
+          result = await admission.value;
+        } else result = await start();
       } catch {
         result = { ok: false, reason: timedOut ? "timeout" : "transport_error", requestAccepted: false };
       } finally {
         if (timer) clearTimeout(timer);
-        if (scope) scope.probing = false;
       }
+      // Eligibility/admission failed before any HTTP start. Do not invent a
+      // finished transport, consume a retry or extend provider backoff for it.
+      if (!transportId) return { kind: "completed", result, transportIds: ids };
       this.record({ kind: "finished", provider: request.provider, consumer: request.consumer, transportId,
         at: this.now(), elapsedMs: Math.max(0, this.now() - startedAt),
         outcome: result.ok ? result.usable ? "usable_success" : "accepted_without_usable_data" : result.reason,
@@ -144,6 +184,7 @@ export class IndicatorRequestCoordinator {
 
       const current = this.scopes.get(scopeKey);
       if (!result.ok && result.reason === "rate_limited") {
+        await cooldownSaved;
         const delay = Math.min((current?.delay ?? 60_000) * 2, 900_000);
         const instructed = result.retryAfterMs;
         const wait = instructed !== undefined && Number.isFinite(instructed) && instructed >= 0 ? instructed : delay;
@@ -162,6 +203,9 @@ export class IndicatorRequestCoordinator {
         continue;
       }
       return { kind: "completed", result, transportIds: ids };
+      } finally {
+        if (recoveryOwner) recoveryOwner.probing = false;
+      }
     }
     throw new Error("watchlist_indicator_request_attempts_exhausted");
   }
