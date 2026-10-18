@@ -828,5 +828,15 @@
     "migration_id": "0170_platform_community_publication_revision_actions",
     "execution_order": 183,
     "checksum_sha256": "1cbd7f2c0d5a932fed2d50ebc710529d87057edf287bb2818e7aca6d331e8242"
+  },
+  {
+    "migration_id": "0171_traderlink_community_shared_alerts",
+    "execution_order": 184,
+    "checksum_sha256": "3bae9d04bea341efbffc791f41ad95dcb9d2c937244ba9d756702914234638d4"
+  },
+  {
+    "migration_id": "0172_platform_login_identity_profiles",
+    "execution_order": 185,
+    "checksum_sha256": "3d86b83a677e628b1bdc3dc5f56629460166a750a83d3b4c14ad06414aaad004"
   }
 ]

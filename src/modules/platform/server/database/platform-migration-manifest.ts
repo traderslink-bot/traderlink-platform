@@ -1,3 +1,5 @@
+import { traderLinkCommunitySharedAlertsMigration } from "@/src/modules/communities/server/database/migrations/0171_traderlink_community_shared_alerts";
+import { platformLoginIdentityProfilesMigration } from "./migrations/0172_platform_login_identity_profiles";
 import {platformCommunityPublicationRevisionActionsMigration} from "./migrations/0170_platform_community_publication_revision_actions";
 import {platformCommunityRemovalRecoveryMigration} from "./migrations/0169_platform_community_removal_recovery";
 import { platformMembershipAddonAmendmentsMigration } from "./migrations/0167_platform_membership_addon_amendments";
@@ -803,6 +805,8 @@ const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
     Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0168_platform_community_destination_publishers.ts",migration:platformCommunityDestinationPublishersMigration}),
     Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0169_platform_community_removal_recovery.ts",migration:platformCommunityRemovalRecoveryMigration}),
     Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0170_platform_community_publication_revision_actions.ts",migration:platformCommunityPublicationRevisionActionsMigration}),
+    Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0171_traderlink_community_shared_alerts.ts", migration: traderLinkCommunitySharedAlertsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0172_platform_login_identity_profiles.ts", migration: platformLoginIdentityProfilesMigration }),
   ]);
 
 export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[] = Object.freeze(
@@ -821,6 +825,19 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0172_platform_login_identity_profiles": Object.freeze(["platform_login_identity_profiles"]),
+    "0171_traderlink_community_shared_alerts": Object.freeze([
+      "community_shared_alert_settings",
+      "community_shared_alert_blocks",
+      "community_shared_alert_owner_checks",
+      "community_shared_alert_requests",
+      "community_shared_alert_messages",
+      "community_shared_alert_read_positions",
+      "community_shared_alert_events",
+      "community_alert_discord_authors",
+      "community_shared_alert_deliveries",
+      "community_shared_alert_rate_limits",
+    ]),
     "0170_platform_community_publication_revision_actions":Object.freeze(["traderlink_community_publication_revisions","traderlink_community_publication_actions","traderlink_community_publication_action_attempts"]),
     "0169_platform_community_removal_recovery":Object.freeze(["traderlink_community_lifecycle"]),
     "0167_platform_membership_addon_amendments": Object.freeze(["platform_membership_addon_amendments"]),
