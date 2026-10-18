@@ -1,5 +1,11 @@
 # Watchlist Trade Setup Detection Progress
 
+## October 18 owner-only visibility follow-up
+
+Implemented locally: **Only I can see Trade Setups**, next to the card display control. New settings and older settings without this field normalize to owner-only. Cached setup reads receive the server-authorized Watchlist owner classification and return no snapshot to other members while restricted, before reading saved evidence. Detection, admin audit/results and normal Watchlist notifications are unchanged. No settings were changed on the live service. Help copy now explains that testing visibility may hide the card. Syntax-only verification is separate from live access/visual acceptance; no test suite, provider request, notification or deployment is authorized by this follow-up. The existing route fixture now supplies the real principal contract.
+
+Owner clarified that setup notifications must remain off, with an on/off option available. Added an independent saved Setup notifications preference, default false for new and older settings, with strict boolean validation. The UI explicitly states this is a preference only while deliveryEnabled is false: setup delivery is not connected and no alerts will send even if the preference is selected. Existing forming/confirmed delivery safeguards remain. No live setting, ordinary Watchlist notification or destination changed. Connecting actual delivery remains unfinished; do not describe this preference as working outbound notifications.
+
 Date: 2026-10-17
 
 Plan: [Watchlist Trade Setup Detection Plan](watchlist-trade-setup-detection-plan.md)

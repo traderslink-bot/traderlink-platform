@@ -8,6 +8,8 @@ Parent: [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-adm
 
 Progress: [Trade Setup Detection Progress](watchlist-trade-setup-detection-progress.md)
 
+Owner-only testing follow-up (October 18): add a separate **Only I can see Trade Setups** control, defaulting on for new and older saved configurations. Enforce it on cached setup reads using the authenticated Watchlist owner identity, not a browser flag. Hidden means no setup card or readings for other members; evaluation, retained evidence and admin results continue. Turning it off restores existing ticker/analysis membership restrictions, not public access. The card display switch remains independent. Implementation status is recorded in the progress file. Owner also requested setup notification controls; delivery destinations must be confirmed before connecting a transport. Existing Watchlist listing/analysis notifications are unchanged.
+
 Owner-approved extension: [Setup Results implementation and outcome contract](watchlist-setup-results-progress.md). Adds retained-history stage counts and audited post-confirmation observations without provider requests or notifications.
 
 Final recheck: [October 18 final QA receipts](watchlist-trade-setup-recovery-fix-2026-10-18.md#final-independent-recheck) pass all four setups, shared feed, card/admin controls, recovery, spacing/cooldown and tested request deduplication. No new actionable finding. No deployment or notifications.

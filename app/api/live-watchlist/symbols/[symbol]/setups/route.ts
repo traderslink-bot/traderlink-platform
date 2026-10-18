@@ -25,6 +25,6 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
     // The producer's persisted identity, not a reconstructed symbol/posted time.
     const identity = (ticker as typeof ticker & { indicatorPublicationIdentity?: unknown }).indicatorPublicationIdentity;
     if (typeof identity !== "string" || !savedSetupPublicationIdentity.test(identity)) return Response.json({ snapshot: null }, { headers });
-    return Response.json({ snapshot: await readWatchlistSetupSnapshot(symbol, identity) }, { headers });
+    return Response.json({ snapshot: await readWatchlistSetupSnapshot(symbol, identity, Date.now(), access.principal.kind === "watchlist_owner") }, { headers });
   } catch { return Response.json({ error: "Setup readings are unavailable." }, { status: 503, headers }); }
 }

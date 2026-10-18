@@ -68,9 +68,10 @@ export async function ensureWatchlistSetupsFromSavedCalculation(symbol: string, 
 }
 
 /** Cached member read only; no evaluation, provider call or worker initialization. */
-export async function readWatchlistSetupSnapshot(symbol: string, identity: string, now = Date.now()): Promise<WatchlistSetupMemberSnapshot | null> {
+export async function readWatchlistSetupSnapshot(symbol: string, identity: string, now = Date.now(), isOwner = false): Promise<WatchlistSetupMemberSnapshot | null> {
   if (!savedSetupPublicationIdentity.test(identity)) return null;
   const store = watchlistSetupStore(), configuration = await store.configuration();
+  if ((configuration.settings.ownerOnly ?? true) && !isOwner) return null;
   if (!configuration.settings.enabled || !configuration.settings.showMemberCard || configuration.tickerOverrides[identity] === false) return null;
   const record = await store.latest(symbol, identity);
   if (!record || record.configurationRevision !== configuration.revision || record.evaluation.rulesVersion !== WATCHLIST_SETUP_RULES_VERSION) return { version: "watchlist-setups-v1", symbol,

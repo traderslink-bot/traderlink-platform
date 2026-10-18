@@ -22,7 +22,7 @@ const managedName = /^(?:settings\.json|(?:evidence|latest|settings)-[a-f0-9]{64
 const rotatingName = /^(?:evidence|settings)-[a-f0-9]{64}\.json$/u;
 const defaults = (): SetupConfiguration => ({ version: 1, revision: 0,
   settings: { enabled: false, enabledDetectors: [...INITIAL_WATCHLIST_SETUP_KINDS],
-    sessions: ["premarket", "regular", "postmarket"], showMemberCard: true, notifyForming: false, notifyConfirmed: false },
+    sessions: ["premarket", "regular", "postmarket"], showMemberCard: true, ownerOnly: true, notificationsEnabled: false, notifyForming: false, notifyConfirmed: false },
   tickerOverrides: {} });
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
 
@@ -31,6 +31,8 @@ export function parseSetupConfiguration(value: unknown): SetupConfiguration {
   const input = value as SetupConfiguration, settings = input.settings;
   if (input.version !== 1 || !Number.isSafeInteger(input.revision) || input.revision < 0 || !settings
     || [settings.enabled, settings.showMemberCard, settings.notifyForming, settings.notifyConfirmed].some(item => typeof item !== "boolean")
+    || (settings.ownerOnly !== undefined && typeof settings.ownerOnly !== "boolean")
+    || (settings.notificationsEnabled !== undefined && typeof settings.notificationsEnabled !== "boolean")
     || !Array.isArray(settings.enabledDetectors) || settings.enabledDetectors.length > 4
     || new Set(settings.enabledDetectors).size !== settings.enabledDetectors.length
     || settings.enabledDetectors.some(item => !INITIAL_WATCHLIST_SETUP_KINDS.includes(item))
@@ -43,7 +45,8 @@ export function parseSetupConfiguration(value: unknown): SetupConfiguration {
   }
   return { version: 1, revision: input.revision,
     settings: { enabled: settings.enabled, enabledDetectors: [...settings.enabledDetectors], sessions: [...settings.sessions],
-      showMemberCard: settings.showMemberCard, notifyForming: settings.notifyForming, notifyConfirmed: settings.notifyConfirmed },
+      showMemberCard: settings.showMemberCard, ownerOnly: settings.ownerOnly ?? true, notificationsEnabled: settings.notificationsEnabled ?? false,
+      notifyForming: settings.notifyForming, notifyConfirmed: settings.notifyConfirmed },
     tickerOverrides: Object.fromEntries(Object.entries(input.tickerOverrides)) };
 }
 

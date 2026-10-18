@@ -113,6 +113,10 @@ export type WatchlistSetupSettings = Readonly<{
   enabledDetectors: readonly InitialWatchlistSetupKind[];
   sessions: readonly WatchlistSetupSession[];
   showMemberCard: boolean;
+  /** Missing in older saved settings means owner-only while testing. */
+  ownerOnly?: boolean;
+  /** Saved preference only until setup delivery is connected. */
+  notificationsEnabled?: boolean;
   notifyForming: boolean;
   notifyConfirmed: boolean;
 }>;
