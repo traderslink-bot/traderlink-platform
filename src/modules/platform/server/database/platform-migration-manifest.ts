@@ -1,3 +1,4 @@
+import { platformDiscordIdentityReleaseMigration } from "./migrations/0176_platform_discord_identity_release";
 import { platformProfileNameMigration } from "./migrations/0175_platform_profile_name";
 import { platformLoginIdentityProfilesMigration } from "./migrations/0172_platform_login_identity_profiles";
 import { platformMembershipAddonAmendmentsMigration } from "./migrations/0167_platform_membership_addon_amendments";
@@ -667,6 +668,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0167_platform_membership_addon_amendments.ts", migration: platformMembershipAddonAmendmentsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0172_platform_login_identity_profiles.ts", migration: platformLoginIdentityProfilesMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0175_platform_profile_name.ts", migration: platformProfileNameMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0176_platform_discord_identity_release.ts", migration: platformDiscordIdentityReleaseMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -676,6 +678,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
     "0175_platform_profile_name": Object.freeze(["platform_user_profile_names"]),
+    "0176_platform_discord_identity_release": Object.freeze(["platform_discord_released_origins", "platform_discord_identity_releases"]),
     "0172_platform_login_identity_profiles": Object.freeze(["platform_login_identity_profiles"]),
     "0167_platform_membership_addon_amendments": Object.freeze(["platform_membership_addon_amendments"]),
     "0166_platform_multi_provider_login": Object.freeze(["platform_login_credentials", "platform_login_tokens", "platform_login_throttles", "platform_login_verified_emails", "platform_login_identity_events", "platform_login_mail_outbox"]),

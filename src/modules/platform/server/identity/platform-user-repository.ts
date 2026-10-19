@@ -153,7 +153,8 @@ export class PlatformUserRepository {
     const row = this.database
       .prepare<[string, string], PlatformUserRow>(`SELECT *
 FROM platform_users
-WHERE auth_provider = ? AND auth_subject = ? AND status = 'active'`)
+WHERE status = 'active' AND user_id=(SELECT user_id FROM platform_auth_identities
+  WHERE auth_provider=? AND auth_subject=? AND status='active')`)
       .get(authProvider, authSubject);
     return row ? mapUser(row) : null;
   }

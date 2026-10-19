@@ -143,11 +143,11 @@ export function ConnectedMethods({
                 <Typography>
                   Disconnect {label}?
                   {provider === "discord"
-                    ? " Linked Discord benefits will stop. Your Journal and purchased app access stay with your account."
+                    ? " You’ll no longer be able to sign in with Discord, and any Discord-linked benefits will stop. Your Journal and purchased app access will remain unchanged."
                     : " You can use your other connected method to sign in."}
                 </Typography>
                 <Button disabled={busy} onClick={() => update("unlink", provider)}>
-                  Confirm disconnect
+                  Disconnect {label}
                 </Button>
                 <Button disabled={busy} onClick={() => setConfirm(null)}>Cancel</Button>
               </Stack>
