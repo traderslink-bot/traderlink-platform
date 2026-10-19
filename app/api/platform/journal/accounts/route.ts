@@ -7,7 +7,7 @@ import {
 import { serializeJournalAccountSelectionCookie } from "@/src/modules/platform/server/authentication/journal-account-selection-cookie";
 import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { assertMembershipJournalAccountCreation } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { assertMembershipJournalAccountCreation, membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,6 +75,8 @@ export async function POST(request: Request): Promise<Response> {
       },
     );
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_ACCOUNT_ACCESS_DENIED";

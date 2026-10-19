@@ -12,6 +12,9 @@ import {
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
 import { JournalAdminAccessDenied } from "./journal-admin-access-denied";
 import { JournalAdminShell } from "./journal-admin-shell";
+import { DashboardMuiProviders } from "../../mui-provider";
+import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
+import type { PlatformAppearance } from "@/src/modules/platform/contracts/platform-appearance";
 
 export const metadata: Metadata = {
   title: "Journal Administration | TraderLink Platform",
@@ -35,6 +38,7 @@ export default async function JournalAdminLayout({ children }: { children: React
     alertCount: number;
     dataAsOfUtc: string;
     operatorRole: string;
+    appearance: PlatformAppearance;
   }>;
   try {
     shell = await withJournalAdminPageDatabase((database, scope) => {
@@ -47,6 +51,7 @@ export default async function JournalAdminLayout({ children }: { children: React
 FROM coach_ai_chat_quality_cases WHERE case_state = 'open'`).get()!.count
         : 0;
       return Object.freeze({
+        appearance: new PlatformUserPreferenceRepository(database).getActiveUserAppearance(scope.userId),
         alertCount: overview.imports.systemFailed +
           overview.formats.privacyReviewRequired + recentMoomooErrors + linksQualityAlerts,
         dataAsOfUtc: overview.coverage.dataAsOfUtc,
@@ -73,6 +78,7 @@ FROM coach_ai_chat_quality_cases WHERE case_state = 'open'`).get()!.count
     throw error;
   }
   return (
+    <DashboardMuiProviders appearance={shell.appearance}>
     <JournalAdminShell
       alertCount={shell.alertCount}
       dataAsOfUtc={shell.dataAsOfUtc}
@@ -81,5 +87,6 @@ FROM coach_ai_chat_quality_cases WHERE case_state = 'open'`).get()!.count
     >
       {children}
     </JournalAdminShell>
+    </DashboardMuiProviders>
   );
 }

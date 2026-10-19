@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { notificationDefaultEnabled, notificationPreferenceEnabled } from "../../platform/server/notifications/platform-notification-defaults";
 import { assertMembershipNotification, canReceiveMembershipNotification } from "../../platform/server/membership/membership-notification-access";
 
 import type { WorkspaceAccessScope } from "../../platform/contracts/workspace-access-scope";
@@ -192,9 +193,10 @@ LIMIT 1`).get(halt.ticker, halt.haltDateEt));
 
   read(scope: WorkspaceAccessScope): Readonly<{ enabled: boolean }> {
     assertActive(this.database, scope);
-    const enabled = this.database.prepare<[string], { enabled: number }>(
+    const stored = this.database.prepare<[string], { enabled: number }>(
       `SELECT enabled FROM news_market_halt_preferences WHERE user_id = ?`,
-    ).get(scope.userId)?.enabled === 1;
+    ).get(scope.userId)?.enabled;
+    const enabled = notificationPreferenceEnabled(this.database, stored) && canReceiveMembershipNotification(this.database, scope.userId, "market_halt");
     return Object.freeze({ enabled });
   }
 
@@ -221,6 +223,8 @@ ORDER BY ticker ASC`).all(
     assertActive(this.database, input.scope);
     assertCanonicalUtcTimestamp(input.updatedAtUtc, "marketHaltPreferenceUpdatedAt");
     if (input.enabled) assertMembershipNotification(this.database, input.scope.userId, "market_halt");
+    // Locked categories must not create an opt-out when unrelated settings are saved.
+    if (!input.enabled && !canReceiveMembershipNotification(this.database, input.scope.userId, "market_halt")) return false;
     this.database.prepare(`INSERT INTO news_market_halt_preferences (user_id, enabled, updated_at_utc)
 VALUES (?, ?, ?)
 ON CONFLICT(user_id) DO UPDATE SET enabled = excluded.enabled, updated_at_utc = excluded.updated_at_utc`).run(
@@ -428,9 +432,9 @@ WHERE ticker = ? AND halt_date_et = ? AND first_halt_id = ? AND ended_at_utc IS 
     }
     const subscriptions = this.database.prepare<[string, string], { subscription_id: string; user_id: string }>(`SELECT subscription.subscription_id, subscription.user_id
 FROM platform_web_push_subscriptions subscription
-JOIN news_market_halt_preferences preference
-  ON preference.user_id = subscription.user_id AND preference.enabled = 1
-WHERE subscription.state = 'active' AND NOT EXISTS (
+LEFT JOIN news_market_halt_preferences preference
+  ON preference.user_id = subscription.user_id
+WHERE COALESCE(preference.enabled, ${notificationDefaultEnabled(this.database)}) = 1 AND subscription.state = 'active' AND NOT EXISTS (
   SELECT 1 FROM news_market_halt_muted_tickers muted
   WHERE muted.user_id = subscription.user_id AND muted.ticker = ?
     AND muted.expires_at_utc > ?

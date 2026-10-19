@@ -1,14 +1,6 @@
 import type Database from "better-sqlite3";
-import { hasPlatformMembershipFeature, evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
-
-import type { WorkspaceAccessScope } from
-  "@/src/modules/platform/contracts/workspace-access-scope";
-import { readWhopAiReviewConfigurationHealth } from
-  "@/src/modules/platform/server/billing/whop-ai-review-configuration";
-import {
-  isWhopAiReviewEntitlementSchemaAvailable,
-  WhopAiReviewEntitlementRepository,
-} from "@/src/modules/platform/server/billing/whop-ai-review-entitlement-repository";
+import { hasAiReviewGenerationAccess } from "@/src/modules/platform/server/membership/membership-ai-review-access";
+import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 
 import type {
   CoachAiReviewPaidAccessPolicyV2,
@@ -23,14 +15,8 @@ implements CoachAiReviewPaidAccessPolicyV2 {
   ) {}
 
   read(scope?: WorkspaceAccessScope): CoachAiReviewPaidAccessStateV2 {
-    if (scope && !evaluateMembershipFeature(this.database, scope.userId, "ai.reviews").allowed) return "not_connected";
-    if (scope && hasPlatformMembershipFeature(this.database, scope.userId, "ai.reviews")) return "available";
-    if (!isWhopAiReviewEntitlementSchemaAvailable(this.database) ||
-        !readWhopAiReviewConfigurationHealth(this.environment).readyForEntitlement) {
-      return "not_connected";
-    }
-    if (!scope) return "available";
-    return new WhopAiReviewEntitlementRepository(this.database)
-      .readAccess(scope.userId).state === "active" ? "available" : "not_connected";
+    // Global readiness cannot require Whop: a plan or add-on may provide access.
+    // Every actual account is independently checked before dispatch/issuance.
+    return !scope || hasAiReviewGenerationAccess(this.database,scope.userId) ? "available" : "not_connected";
   }
 }

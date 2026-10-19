@@ -10,7 +10,7 @@ const guide = (slug: string, title: string, description: string, sections: reado
 export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("getting-started", "Analytics Overview", "Use Analytics Overview and the Analytics pages to compare confirmed completed-trade facts without changing any executions.", [
     section("what-analytics-shows", "What Analytics shows", "The Analytics pages summarize completed trades that have enough accepted facts for each result.", ["analytics", "analytics overview", "completed trades", "trade tracker", "results", "performance"], [
-      paragraph("Analytics is the factual view of confirmed Trade Tracker results, including imported and manually entered trades. It includes Analytics Overview, Ticker, Timing and Trade Breakdown. It helps you compare recorded outcomes; it does not predict a future trade or recommend an action."),
+      paragraph("Your plan must include Analytics to open these pages and their trade details. Excluded access offers an upgrade link while retaining your Journal records. Analytics is the factual view of confirmed Trade Tracker results, including imported and manually entered trades. It includes Analytics Overview, Ticker, Timing and Trade Breakdown. It helps you compare recorded outcomes; it does not predict a future trade or recommend an action."),
       table(["Page", "Use it for"], [
         ["Overview", "Read key completed-trade measures and their monthly P/L history using the selected basis."],
         ["Ticker", "Compare completed-trade results by ticker."],

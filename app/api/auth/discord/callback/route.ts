@@ -1,3 +1,5 @@
+import { PlatformLoginError, PlatformLoginService } from "@/src/modules/platform/server/authentication/platform-login-service";
+import { loginSession } from "@/src/modules/platform/server/authentication/platform-login-http";
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
@@ -22,7 +24,7 @@ import {
   PLATFORM_DISCORD_OAUTH_STATE_COOKIE,
 } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
-import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
+import { canonicalDiscordMembershipJoinedAt, PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import { PlatformNewsletterContactRepository } from "@/src/modules/platform/server/newsletter/platform-newsletter-contact-repository";
 import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
 import { resolvePlatformSessionClientLabel } from "@/src/modules/platform/server/authentication/platform-session-client-label";
@@ -128,6 +130,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    if (state.startsWith("link.") && request.cookies.get("tl_provider_link_method")?.value !== "discord") throw new Error("Link expired");
     const config = getDiscordOAuthConfig(resolvePlatformPublicOrigin(request));
     const token = await exchangeDiscordCode({ config, code });
     const [discordUser, configuredGuildMember, discordGuilds] = await Promise.all([
@@ -162,6 +165,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     }
 
+    // Connecting Discord proves a new method for the current member; it must
+    // never provision a second member through the ordinary Discord signup path.
+    if (state.startsWith("link.")) {
+      const linkIntent = request.cookies.get("tl_provider_link")?.value;
+      if (!linkIntent) throw new Error("Link intent missing");
+      const signed = withPlatformDatabase({mode:"runtime"}, database => database.transaction(() => {
+        const result = new PlatformLoginService(database).signInOAuth({provider:"discord",subject:discordUser.id,
+          displayName:discordUser.global_name ?? discordUser.username,
+            accountName:discordUser.username,
+          verifiedEmail:discordUser.verified === true ? discordUser.email : null,
+          linkIntent,currentSession:loginSession(request),clientLabel:resolvePlatformSessionClientLabel(request.headers.get("user-agent"))});
+        if (resolvedGuildMember && signInGuildId) new PlatformDiscordMembershipRepository(database).upsertCurrent({
+          userId:result.session.userId,guildId:signInGuildId,username:discordUser.username,
+          globalDisplayName:discordUser.global_name ?? null,avatarHash:discordUser.avatar ?? null,
+          roleIds:resolvedGuildMember.roles ?? [],guildOwner:resolvedGuildMember.guild_owner === true,
+          joinedAtUtc:canonicalDiscordMembershipJoinedAt(resolvedGuildMember.joined_at ?? null),verifiedAtUtc:createCanonicalUtcTimestamp()});
+        if (!configuredGuildMember) recordMembershipDiscordAbsence(database, result.session.userId, config.guildId, createCanonicalUtcTimestamp());
+        return result;
+      }).immediate());
+      const response = NextResponse.redirect(new URL(returnTo === "/workspace" ? "/workspace?connected=discord" : "/account/login?connected=discord",resolvePlatformPublicOrigin(request)));
+      setPlatformAuthCookie(response,request,TRADERLINK_PLATFORM_SESSION_COOKIE,signed.token,TRADERLINK_PLATFORM_SESSION_TTL_MS/1000);
+      clearDiscordOAuthCookies(response,request);
+      for (const name of ["tl_provider_link","tl_provider_link_method"]) deletePlatformAuthCookie(response,request,name);
+      return response;
+    }
+
     const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
     const dashboardAccessAllowed = Boolean(resolvedGuildMember) && (
       watchlistReturn || isSwingIdeaAuthReturnTo(returnTo) || withPlatformDatabase(
@@ -180,6 +209,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let membershipWatchlistAccess = false;
     try {
       const signInResult = withPlatformDatabase({ mode: "runtime" }, (database) => {
+        const loginService = new PlatformLoginService(database);
+        loginService.assertOAuthEmailAvailable("discord",discordUser.id,discordUser.verified === true ? discordUser.email ?? null : null);
         let newsletterContacts: PlatformNewsletterContactRepository | null = null;
         try {
           newsletterContacts = new PlatformNewsletterContactRepository(
@@ -223,6 +254,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           },
           { deferDemoActivation: true },
         );
+        loginService.recordOAuthProfile({
+          provider: "discord",
+          subject: discordUser.id,
+          displayName: discordUser.global_name ?? discordUser.username,
+          accountName: discordUser.username,
+          verifiedEmail: discordUser.verified === true ? discordUser.email : null,
+        });
+        if (discordUser.verified === true && discordUser.email) loginService.recordVerifiedOAuthEmail("discord",discordUser.id,discordUser.email);
+        loginService.endSession(loginSession(request));
         return signIn;
       });
       sessionToken = signInResult.session.token;
@@ -230,7 +270,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       demoAccountId = signInResult.demoAccountId;
       workspaceId = signInResult.workspaceId;
       const verifiedAtUtc = createCanonicalUtcTimestamp();
-      for (const guildId of membershipGuildIds) {
+      for (const guildId of new Set([config.guildId, ...membershipGuildIds])) {
         try {
           const member = guildId === signInGuildId && resolvedGuildMember
             ? resolvedGuildMember
@@ -301,7 +341,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       returnTo.startsWith("/academy?");
     const membershipReturnAccess = membershipDashboardAccess ||
       (watchlistReturn && membershipWatchlistAccess);
-    const destination = billingReturn || academyReturn || membershipReturnAccess || dashboardAccessAllowed
+    const workspaceWelcomeReturn = returnTo === "/workspace" || returnTo.startsWith("/workspace?");
+    const destination = workspaceWelcomeReturn || billingReturn || academyReturn || membershipReturnAccess || dashboardAccessAllowed
       ? returnTo
       : `/access-required?returnTo=${encodeURIComponent(returnTo)}`;
     const response = authRedirect(request, destination, "connected");
@@ -374,7 +415,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       getSafeDiscordAuthErrorMessage(error),
     );
 
-    const response = authFailureRedirect(request, returnTo, "failed");
+    const response = error instanceof PlatformLoginError && error.code === "conflict"
+      ? NextResponse.redirect(new URL(`/login?error=${state.startsWith("link.") ? "discord-account-conflict" : "account-conflict"}`,resolvePlatformPublicOrigin(request)))
+      : authFailureRedirect(request, returnTo, "failed");
     clearDiscordOAuthCookies(response, request);
     return response;
   }
@@ -387,4 +430,5 @@ function clearDiscordOAuthCookies(
   deletePlatformAuthCookie(response, request, PLATFORM_DISCORD_OAUTH_STATE_COOKIE);
   deletePlatformAuthCookie(response, request, PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE);
   deletePlatformAuthCookie(response, request, PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE);
+  for (const name of ["tl_provider_link","tl_provider_link_method"]) deletePlatformAuthCookie(response,request,name);
 }

@@ -42,6 +42,7 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             Object.freeze(["Custom", "A reusable tag you create in your own words when the preset list does not fit."]),
           ]) }),
           Object.freeze({ kind: "paragraph", text: "Presets are suggestions for organizing your own observations. Selecting one does not mean TraderLink confirmed that behavior." }),
+          Object.freeze({ kind: "paragraph", text: "Your plan can include a set number of active custom tags or unlimited custom tags. The allowance is shared across all your Journal accounts. Preset tags do not count. Retiring a custom tag frees a slot, and changing plans does not delete existing tags. If you reach the allowance, the tag editor explains the limit and links to Journal plans." }),
         ]),
       }),
       Object.freeze({

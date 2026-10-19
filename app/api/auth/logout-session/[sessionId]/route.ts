@@ -48,7 +48,7 @@ export async function POST(
     const response = NextResponse.redirect(signOutRedirectUrl(
       request,
       result.isCurrentSession ? "/signed-out" : "/account/security?sessionAction=ended",
-    ));
+    ), 303);
     response.headers.set("Cache-Control", "private, no-store");
     if (result.isCurrentSession) {
       deletePlatformAuthCookie(response, request, TRADERLINK_PLATFORM_SESSION_COOKIE);
@@ -58,6 +58,7 @@ export async function POST(
   } catch {
     const response = NextResponse.redirect(
       signOutRedirectUrl(request, "/account/security?sessionAction=unavailable"),
+      303,
     );
     response.headers.set("Cache-Control", "private, no-store");
     return response;

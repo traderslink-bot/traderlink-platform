@@ -1,9 +1,13 @@
+import { preferredMembershipCalendarView } from "@/src/modules/platform/contracts/membership-calendar-access";
+import { readMembershipCalendarViews } from "@/src/modules/platform/server/membership/platform-membership-calendar-access";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { withCalendarDataRuntime } from "@/app/(dashboard)/calendar/calendar-data";
 import { calendarNavigationOptions, readCalendarActivityDates } from "@/app/(dashboard)/calendar/calendar-navigation";
 import type { CalendarData, CalendarFilterInput, CalendarView } from "@/app/(dashboard)/calendar/calendar-types";
 import { journalScopeCurrentWeek, readJournalDemoScopeClock } from "@/src/modules/journal/server/demo/journal-demo-scope-clock";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { assertMembershipFeature, membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,13 +22,20 @@ function validWeek(value: string | null): string | null { return value && /^\d{4
 
 async function panelModel(scope: ReturnType<typeof requireTraderLinkPlatformRequestScope>, request: Request) {
   const query = new URL(request.url).searchParams;
-  const requestedView: CalendarView = query.get("view") === "week" ? "week" : "month";
+  const permittedViews = withReadonlyPlatformDatabase({}, database => readMembershipCalendarViews(database, scope.userId));
+  const requestedView: CalendarView = preferredMembershipCalendarView(permittedViews, query.get("view"));
+  // Reject before withCalendarDataRuntime prefetches Journal facts.
+  withReadonlyPlatformDatabase({}, database => {
+    assertMembershipFeature(database, scope.userId, "journal.calendar");
+    assertMembershipFeature(database, scope.userId, requestedView === "week" ? "journal.calendar_week" : "journal.calendar_month");
+  });
   const requestedMonth = validMonth(query.get("month"));
   const requestedWeek = validWeek(query.get("week"));
   if ((query.get("month") && !requestedMonth) || (query.get("week") && !requestedWeek)) {
     platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID", { field: "period" });
   }
   return await withCalendarDataRuntime(scope, ({ database, read }) => {
+    assertMembershipFeature(database, scope.userId, requestedView === "week" ? "journal.calendar_week" : "journal.calendar_month");
     const unfiltered: CalendarFilterInput = { currency: "all", direction: "all", endDate: "", performance: "all", pnlRange: "all", session: "all", startDate: "", symbol: "all", tradeCount: "all" };
     const activity = readCalendarActivityDates(database, scope);
     const currentWeek = journalScopeCurrentWeek(readJournalDemoScopeClock(scope), activity.timezone ?? "America/New_York");
@@ -39,7 +50,7 @@ async function panelModel(scope: ReturnType<typeof requireTraderLinkPlatformRequ
       startDate: requestedView === "month" ? monthStart(selectedMonth) : selectedWeek,
     };
     const initialData: CalendarData = read(initialFilters);
-    return Object.freeze({ ...navigation, currentWeek, initialData, initialFilters, initialView: requestedView, selectedMonth, selectedWeek });
+    return Object.freeze({ ...navigation, currentWeek, initialData, initialFilters, initialView: requestedView, permittedViews, selectedMonth, selectedWeek });
   });
 }
 
@@ -48,6 +59,8 @@ export async function GET(request: Request): Promise<Response> {
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     return Response.json({ data: await panelModel(scope, request), status: "ready" }, { headers: HEADERS });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     return Response.json({ status: "unavailable" }, { headers: HEADERS, status: isTraderLinkPlatformError(error) ? 400 : 500 });
   }
 }

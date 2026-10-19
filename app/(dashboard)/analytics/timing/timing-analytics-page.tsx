@@ -1,8 +1,9 @@
+import { MembershipFeatureAccessNotice } from "../../membership-feature-access-notice";
 import "server-only";
 
 import { DashboardPage } from "@/app/dashboard-template";
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
-import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import type { JournalAnalyticsGrouping } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
 import {
@@ -68,7 +69,8 @@ export async function TimingAnalyticsPage({
 }: {
   searchParams: Promise<{ basis?: string | string[] | undefined }>;
 }) {
-  const scope = await requireMembershipPageScope("analytics.access");
+  const scope = await requireMembershipPreviewPageScope("analytics.access");
+  if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
   const requestedBasis = (await searchParams).basis;
   const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
     const moneyBasis = resolveJournalAnalyticsMoneyBasis(requestedBasis, pnlReportingBasis);

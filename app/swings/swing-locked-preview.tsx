@@ -2,7 +2,7 @@ import { SWING_IDEA, SWING_PREMIUM_URL } from "@/src/modules/swings/swing-idea-c
 import styles from "./swing-idea.module.css";
 
 export function SwingLockedPreview({teaser=SWING_IDEA.teaser,slug=SWING_IDEA.slug}:{teaser?:string;slug?:string}={}) {
-  const login = `/api/auth/discord/login?returnTo=${encodeURIComponent(`/swings/${slug}`)}`;
+  const login = `/login?returnTo=${encodeURIComponent(`/swings/${slug}`)}`;
   return <section className={styles.panel}>
     <h1 className={styles.lead}>{teaser}</h1>
     <p><strong>Premium members:</strong> <a href={login}>Sign in</a> to view.</p>

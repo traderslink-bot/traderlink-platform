@@ -1,7 +1,8 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
-import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
+import { evaluateMembershipFeature, isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
 import {
@@ -68,6 +69,7 @@ export class MoomooExecutionImportScheduler {
           ) return false;
           const member = this.database.prepare("SELECT user_id FROM platform_broker_connections WHERE connection_id=?").get(currentLink.connectionId) as { user_id: string } | undefined;
           if (!member || !evaluateMembershipFeature(this.database, member.user_id, "journal.imports", undefined, cutoff.toISOString()).allowed) return false;
+          new MoomooConnectionRepository(this.database).assertAuthorizationAllowed({userId:member.user_id,workspaceId:currentLink.workspaceId});
           const plan = planMoomooIncrementalExecutionImport({
             earliestExecutionDate: candidate.requestedStartDate,
             enabledMarketCodes: currentLink.enabledMarketCodes,
@@ -92,6 +94,7 @@ export class MoomooExecutionImportScheduler {
         });
         if (created) scheduled += 1;
       } catch (error) {
+        if(isMembershipAccessDenied(error))continue;
         recordMoomooOperationFailure({
           database: this.database,
           error,

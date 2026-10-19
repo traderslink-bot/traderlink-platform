@@ -13,7 +13,7 @@ function PreviewText({ text }: { text: string }) {
 export function PremiumAnalysisCard({ preview, symbol, upgradeHref }: { preview: PremiumAnalysisPreview; symbol: string; upgradeHref?: string | null }) {
   return <article className="academy-card watchlist-content-card watchlist-ai-read-card" data-card-label="TradersLink Analysis">
     <div className="academy-card-topline"><span>TradersLink Analysis</span></div>
-    <div className={styles.notice}><WatchlistPlanUpgrade href={upgradeHref} feature="Trade analysis & preparation" /></div>
+    <div className={styles.notice}><WatchlistPlanUpgrade href={upgradeHref} feature="Trade analysis" /></div>
     <h2 className="academy-card-title">{symbol} trade preparation</h2>
     {preview.sections.map((section, index) => <section key={index} className="watchlist-ai-read-section">
       {section.title ? <h3>{section.title}</h3> : null}

@@ -8,6 +8,9 @@ import type { AccountScope } from "@/src/modules/platform/contracts/workspace-ac
 import { deriveJournalAccountSelectionRef } from "@/src/modules/platform/contracts/journal-account-selection";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
+import { PlatformMembershipRepository } from "@/src/modules/platform/server/membership/platform-membership-repository";
+
+import { JOURNAL_TAG_PRESET_CATALOG } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 
 import { JournalAnnotationRepository } from "./journal-annotation-repository";
 import { JournalAnnotationService } from "./journal-annotation-service";
@@ -138,6 +141,15 @@ function setup(): Readonly<{
   const first = seedAccountGraph(database, 10);
   const second = seedAccountGraph(database, 30);
   database.exec("COMMIT");
+  // These annotation tests isolate Journal behavior from commercial policy.
+  new PlatformMembershipRepository(database).synchronizeBuiltInFeatures(userId, at);
+  database.prepare(`INSERT INTO platform_membership_feature_policies
+    (feature_key,enforcement_mode,updated_by_user_id,updated_at_utc)
+    VALUES ('journal.custom_tags','off',?,?)`).run(userId, at);
+  for (const key of ["journal.rules", "journal.custom_rules", "journal.preset_rules"]) {
+    database.prepare(`INSERT INTO platform_membership_feature_policies
+      (feature_key,enforcement_mode,updated_by_user_id,updated_at_utc) VALUES (?,'off',?,?)`).run(key, userId, at);
+  }
   const repository = new JournalAnnotationRepository(database);
   return Object.freeze({
     database,
@@ -152,6 +164,34 @@ function setup(): Readonly<{
 }
 
 describe("Journal annotation service", () => {
+  it("enforces cross-account tag and resumed-rule limits without deleting prior history", () => {
+    const context = setup();
+    context.database.exec("DELETE FROM platform_membership_feature_policies WHERE feature_key IN ('journal.custom_tags','journal.rules','journal.custom_rules','journal.preset_rules')");
+    const access = vi.spyOn(PlatformMembershipRepository.prototype, "readEffectiveAccess").mockReturnValue({
+      userId, evaluatedAtUtc: at, booleanFeatures: ["journal.rules"], sources: [],
+      limits: { "journal.custom_tags": 1, "journal.custom_rules": 1 },
+    });
+    try {
+      const tag = context.service.createTag(context.first.scope, { name: "My setup" });
+      expect(() => context.service.createTag(context.second.scope, { name: "Another setup" })).toThrow();
+      const preset = context.service.createTag(context.second.scope, { name: JOURNAL_TAG_PRESET_CATALOG[0].name });
+      expect(() => context.service.renameTag(context.second.scope, { tagId: preset.tagId, expectedRevision: preset.revision, name: "Custom replacement" })).toThrow();
+      expect(context.service.listTags(context.first.scope)).toMatchObject([expect.objectContaining({ tagId: tag.tagId })]);
+      const ruleInput = { sourceKind: "custom" as const, title: "Wait for confirmation", statement: "Wait before entering.", category: "discipline" as const, reviewScope: "trade" as const, isFocus: false, configuration: {} };
+      const rule = context.service.createRule(context.first.scope, ruleInput);
+      const paused = context.service.transitionRule(context.first.scope, { ruleId: rule.ruleId, expectedRevision: rule.revision, expectedState: "active", newState: "paused" });
+      context.service.createRule(context.second.scope, ruleInput);
+      expect(() => context.service.transitionRule(context.first.scope, { ruleId: rule.ruleId, expectedRevision: paused.revision, expectedState: "paused", newState: "active" })).toThrow();
+      expect(context.service.listRules(context.first.scope)[0].lifecycleState).toBe("paused");
+      const dashboard = readJournalTradingRulesDashboard(context.service, context.first.scope, deriveJournalAccountSelectionRef(workspaceId, context.first.scope.accountId));
+      expect(dashboard.presetRulesIncluded).toBe(false);
+      expect(dashboard.templates.length).toBeGreaterThan(0);
+    } finally {
+      access.mockRestore();
+      context.database.close();
+    }
+  });
+
   it("keeps user-defined Journal accounts isolated from broker provenance", () => {
     const context = setup();
     context.database.prepare(`INSERT INTO journal_account_source_identities (
@@ -341,7 +381,7 @@ FROM journal_daily_note_revisions`).get()).toEqual({ count: 2 });
   it("keeps trade annotations on the stable round trip when its projection is rebuilt", () => {
     const context = setup();
     const tag = context.service.createTag(context.first.scope, {
-      name: "Breakout",
+      name: JOURNAL_TAG_PRESET_CATALOG[0].name,
       now: new Date(at),
     });
     context.service.replaceRoundTripTags(context.first.scope, {

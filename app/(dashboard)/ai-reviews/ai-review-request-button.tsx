@@ -37,6 +37,7 @@ export function AiReviewRequestButton({
       <Button disabled={pending} type="submit" variant="contained">
         {pending ? "Saving request..." : label}
       </Button>
+      {state.upgradeHref?<Button href={state.upgradeHref} variant="contained">Explore AI Review plans and add-ons</Button>:null}
       {state.message ? <Alert severity="error">{state.message}</Alert> : null}
     </Stack>
   );

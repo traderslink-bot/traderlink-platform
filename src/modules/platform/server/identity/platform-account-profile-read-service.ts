@@ -50,13 +50,15 @@ type AccountRow = Readonly<{
 function authenticationLabel(provider: string): string {
   if (provider === "development_local") return "Local development owner";
   if (provider === "discord") return "Discord";
+  if (provider === "google") return "Google";
+  if (provider === "email") return "Email and password";
   return "Authenticated account";
 }
 
 export class PlatformAccountProfileReadService {
   constructor(private readonly database: Database.Database) {}
 
-  get(scope: WorkspaceAccessScope): PlatformAccountProfile {
+  get(scope: WorkspaceAccessScope, options: Readonly<{ sessionId?: string | null }> = {}): PlatformAccountProfile {
     const profile = this.database.prepare<[string, string], ProfileRow>(`SELECT
   user.display_name,
   user.auth_provider,
@@ -95,6 +97,9 @@ ORDER BY display_name, account_id`).all(scope.workspaceId)
         tradingTimezone: account.trading_timezone,
         active: account.account_id === scope.activeAccountId,
       }));
+    const session = options.sessionId ? this.database.prepare<[string, string], { auth_provider: string }>(
+      "SELECT auth_provider FROM platform_auth_sessions WHERE session_id=? AND user_id=? AND revoked_at_utc IS NULL",
+    ).get(options.sessionId, scope.userId) : undefined;
     return Object.freeze({
       displayName: profile.display_name,
       pnlReportingBasis: parsePlatformPnlReportingBasis(profile.pnl_reporting_basis),
@@ -102,7 +107,7 @@ ORDER BY display_name, account_id`).all(scope.workspaceId)
       accessMode: profile.auth_provider === "development_local"
         ? "local_development" as const
         : "authenticated" as const,
-      authenticationLabel: authenticationLabel(profile.auth_provider),
+      authenticationLabel: authenticationLabel(session?.auth_provider ?? profile.auth_provider),
       workspace: Object.freeze({
         displayName: profile.workspace_display_name,
         role: profile.role,

@@ -1,5 +1,6 @@
 import "server-only";
 import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { assertMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 import type Database from "better-sqlite3";
 
@@ -528,6 +529,7 @@ export async function withCalendarDataRuntime<T>(
   }>) => T | Promise<T>,
 ): Promise<T> {
   return withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, dashboard }) => {
+    assertMembershipFeature(database, scope.userId, "journal.calendar");
     const annotationEvidenceByTimezone = new Map<string, CalendarAnnotationEvidence>();
     return operation(Object.freeze({
       database,
@@ -543,6 +545,6 @@ export async function withCalendarDataRuntime<T>(
 }
 
 export async function getCalendarData(input: CalendarFilterInput): Promise<CalendarData> {
-  const scope = await requireMembershipPageScope("journal.access");
+  const scope = await requireMembershipPageScope("journal.calendar");
   return withCalendarDataRuntime(scope, ({ read }) => read(input));
 }

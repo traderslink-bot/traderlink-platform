@@ -1,3 +1,4 @@
+export const MEMBERSHIP_IMPORT_REQUIRED_MESSAGE = "Bring your broker statements into your Journal. Choose a plan with Import broker statements to import your trades.";
 export const MEMBERSHIP_FEATURE_REQUIRED_MESSAGE = "Your current plans do not include this feature. Review Plans or contact the owner.";
 
 export function throwIfMembershipRequired(value: unknown): void {
@@ -8,4 +9,12 @@ export function throwIfMembershipRequired(value: unknown): void {
 
 export function membershipActionError(error: unknown): string | null {
   return error instanceof Error && error.message === "membership_required" ? MEMBERSHIP_FEATURE_REQUIRED_MESSAGE : null;
+}
+
+/** Recognize structured policy failures without treating validation/network errors as upgrades. */
+export function isMembershipRequired(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  if ("code" in value && value.code === "membership_required") return true;
+  const error = "error" in value ? value.error : null;
+  return !!error && typeof error === "object" && "code" in error && error.code === "membership_required";
 }

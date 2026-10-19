@@ -19,6 +19,7 @@ export type AccountSettingsSection =
   | "ai"
   | "profile"
   | "membership"
+  | "login"
   | "security"
   | "privacy";
 
@@ -58,6 +59,7 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
     id: "profile",
     label: "Profile",
   }),
+  Object.freeze({ description: "Google, email and Discord", href: "/account/login", id: "login", label: "Login methods" }),
   Object.freeze({
     description: "Sign out of this device or every device",
     href: "/account/security",

@@ -33,7 +33,7 @@ export function formatMembershipMoney(amount: number | null, currency: string | 
 }
 
 export function membershipOfferPrice(offer: MembershipPrice): string {
-  if (offer.billingKind === "free") return "Free";
+  if (offer.billingKind === "free") return "$0";
   const initial = formatMembershipMoney(offer.initialAmountMinor, offer.currency);
   if (offer.billingKind !== "recurring") return `${initial} ${offer.billingKind === "lifetime" ? "lifetime" : "once"}`;
   const count = offer.billingIntervalCount ?? offer.billingPeriodDays;

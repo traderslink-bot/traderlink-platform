@@ -11,7 +11,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
   Object.freeze({
     slug: "getting-started",
     title: "Getting started",
-    description: "Learn the page, the language used in the tracker and a practical daily review workflow.",
+    description: "Learn the page, the language used in the tracker and a practical daily review workflow. Session Tracker requires a plan that includes it; excluded plans show an upgrade link. Manual trade entry remains part of Trading Journal.",
     sections: Object.freeze([
       Object.freeze({
         id: "open-and-navigate",
@@ -95,7 +95,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "Every row in one Session Tracker save must belong to the same Eastern Time trading date. This keeps the day review, notes and rules tied to one trading day.",
           ]) }),
           Object.freeze({ kind: "callout", tone: "warning", title: "Use the fill, not the order", text: "An order can be cancelled, partially filled or filled at several prices. Record the completed broker fills that actually changed the position." }),
-          Object.freeze({ kind: "callout", title: "Connected Moomoo accounts update automatically", text: "After the first execution import completes, TradersLink checks an eligible linked Moomoo trading account regularly without requiring the Account page to remain open. Use Import latest trades in Broker Connections when you want an immediate check. Import older trades is the separate dated action for extending account history." }),
+          Object.freeze({ kind: "callout", title: "Connected Moomoo accounts update automatically", text: "While your plan includes imports and an allowed broker connection, after the first execution import completes TradersLink checks an eligible linked Moomoo trading account regularly without requiring the Account page to remain open. Use Import latest trades in Broker Connections when you want an immediate check. Import older trades is the separate dated action for extending account history." }),
         ]),
       }),
       Object.freeze({

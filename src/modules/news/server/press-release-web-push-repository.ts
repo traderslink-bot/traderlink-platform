@@ -1,6 +1,7 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
+import { notificationDefaultEnabled, notificationPreferenceEnabled } from "../../platform/server/notifications/platform-notification-defaults";
 import { delayedNewsAvailableAt, readMembershipNewsNotificationDelaySeconds } from "../../platform/server/membership/membership-news-delay";
 import { canReceiveMembershipNotification } from "../../platform/server/membership/membership-notification-access";
 import { hasPlatformMembershipFeature } from "../../platform/server/membership/platform-membership-access";
@@ -18,8 +19,6 @@ import {
 import type { PlatformWebPushEncryptionConfiguration } from "../../platform/server/notifications/platform-web-push-configuration";
 import type { PlatformWebPushClaimedDelivery } from "../../platform/server/notifications/platform-web-push-repository";
 import { readClaimedWebPushSubscription } from "../../platform/server/notifications/platform-web-push-claim-subscription";
-
-const PRESS_RELEASE_PUSH_TTL_SECONDS = 24 * 60 * 60;
 
 type SubscriptionRow = Readonly<{
   authentication_tag: string;
@@ -92,9 +91,10 @@ export class PressReleaseWebPushRepository {
     if (!channel) return 0;
     const storedArticle = this.database.prepare("SELECT created_at FROM news_articles WHERE id=?").get(article.id) as { created_at: string } | undefined;
     if (!storedArticle) return 0;
-    const enabledUsers = this.database.prepare<[string], { user_id: string }>(`SELECT user_id
-FROM news_press_release_push_preferences
-WHERE channel = ? AND enabled = 1`).all(channel);
+    const enabledUsers = this.database.prepare<[string], { user_id: string }>(`SELECT DISTINCT subscription.user_id
+FROM platform_web_push_subscriptions subscription
+LEFT JOIN news_press_release_push_preferences preference ON preference.user_id=subscription.user_id AND preference.channel=?
+WHERE subscription.state='active' AND COALESCE(preference.enabled, ${notificationDefaultEnabled(this.database)})=1`).all(channel);
     const eligibleUserIds = enabledUsers.map((row) => row.user_id).filter((userId) => {
       if (!canReceiveMembershipNotification(this.database, userId, "press_release")) return false;
       if (hasPlatformMembershipFeature(this.database, userId, "notifications.press_release")) return true;
@@ -201,9 +201,9 @@ AND delivery.subscription_id IN (SELECT subscription_id FROM platform_web_push_s
         // Check only the selected user's channel (the preference primary key),
         // not every pending delivery on every claim. Keep this in the claim
         // transaction so an opt-out cannot race between this check and claiming.
-        const optedIn = this.database.prepare(`SELECT 1 FROM news_press_release_push_preferences
-WHERE user_id=? AND channel=? AND enabled=1`).get(row.user_id, row.channel);
-        if (!optedIn) {
+        const preference = this.database.prepare(`SELECT enabled FROM news_press_release_push_preferences
+WHERE user_id=? AND channel=?`).get(row.user_id, row.channel) as { enabled: number } | undefined;
+        if (!notificationPreferenceEnabled(this.database, preference?.enabled)) {
           this.database.prepare(`UPDATE news_press_release_push_deliveries
 SET state='expired', failure_code='preference_disabled', updated_at_utc=?
 WHERE delivery_id=? AND state='pending'`).run(nowUtc, row.delivery_id);
@@ -249,7 +249,7 @@ WHERE delivery_id=? AND state='pending'`).run(nowUtc, row.delivery_id);
           notificationTitle: row.notification_title,
           subscription,
           subscriptionRef: row.subscription_id,
-          timeToLiveSeconds: PRESS_RELEASE_PUSH_TTL_SECONDS,
+          timeToLiveSeconds: 24 * 60 * 60,
           urgency: "high",
         });
       }).immediate();

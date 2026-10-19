@@ -1,3 +1,8 @@
+import { platformProfileNameMigration } from "./migrations/0175_platform_profile_name";
+import { platformLoginIdentityProfilesMigration } from "./migrations/0172_platform_login_identity_profiles";
+import { platformMembershipAddonAmendmentsMigration } from "./migrations/0167_platform_membership_addon_amendments";
+import { platformMultiProviderLoginMigration } from "./migrations/0166_platform_multi_provider_login";
+import { platformMembershipUnifiedEditorMigration } from "./migrations/0165_platform_membership_unified_editor";
 import { platformMembershipFeatureCopyMigration } from "./migrations/0157_platform_membership_feature_copy";
 import { platformMemberPrivateWatchlistsMigration } from "./migrations/0158_platform_member_private_watchlists";
 import { platformWatchlistPremiumSupportResistanceMigration } from './migrations/0156_platform_watchlist_premium_support_resistance';
@@ -657,6 +662,11 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0156_platform_watchlist_premium_support_resistance.ts",migration:platformWatchlistPremiumSupportResistanceMigration}),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0157_platform_membership_feature_copy.ts", migration: platformMembershipFeatureCopyMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0158_platform_member_private_watchlists.ts", migration: platformMemberPrivateWatchlistsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0165_platform_membership_unified_editor.ts", migration: platformMembershipUnifiedEditorMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0166_platform_multi_provider_login.ts", migration: platformMultiProviderLoginMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0167_platform_membership_addon_amendments.ts", migration: platformMembershipAddonAmendmentsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0172_platform_login_identity_profiles.ts", migration: platformLoginIdentityProfilesMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0175_platform_profile_name.ts", migration: platformProfileNameMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -665,6 +675,12 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0175_platform_profile_name": Object.freeze(["platform_user_profile_names"]),
+    "0172_platform_login_identity_profiles": Object.freeze(["platform_login_identity_profiles"]),
+    "0167_platform_membership_addon_amendments": Object.freeze(["platform_membership_addon_amendments"]),
+    "0166_platform_multi_provider_login": Object.freeze(["platform_login_credentials", "platform_login_tokens", "platform_login_throttles", "platform_login_verified_emails", "platform_login_identity_events", "platform_login_mail_outbox"]),
+    "0165_platform_membership_unified_editor": Object.freeze(["platform_notification_default_on", "platform_membership_page_plans", "platform_membership_discord_retained_access", "platform_membership_usage_carryovers", "platform_membership_editor_drafts", "platform_membership_editor_receipts", "platform_membership_plan_presentations", "platform_membership_feature_usage_anchors", "platform_membership_trial_lineage", "platform_membership_trial_terms"]),
+
     "0157_platform_membership_feature_copy": Object.freeze(["platform_membership_feature_copy"]),
     "0158_platform_member_private_watchlists": Object.freeze(["platform_watchlist_plan_policies", "platform_watchlist_plan_policy_plans", "platform_private_watchlist_entries", "platform_private_watchlist_operations", "platform_private_watchlist_plan_periods", "platform_private_watchlist_member_overrides"]),
     "0156_platform_watchlist_premium_support_resistance": Object.freeze(["platform_watchlist_levels_visibility","platform_watchlist_levels_visibility_audit"]),

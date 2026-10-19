@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { openPlatformDatabase, withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import {
   createCanonicalUtcTimestamp,
@@ -23,7 +23,7 @@ export async function saveDiscordDmNotificationCategories(
   categories: readonly string[],
 ): Promise<Readonly<{ ok: true; categories: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const preferences = withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformNotificationRepository(database)
@@ -53,7 +53,7 @@ export async function saveWebPushNotificationCategories(
   watchlistEnabled?: boolean,
 ): Promise<Readonly<{ ok: true; categories: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const preferences = withPlatformDatabase(
       { mode: "runtime" },
       (database) => database.transaction(() => {
@@ -88,7 +88,7 @@ export async function saveEmailNotificationCategories(
   watchlistEnabled?: boolean,
 ): Promise<Readonly<{ ok: true; categories: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const preferences = withPlatformDatabase(
       { mode: "runtime" },
       (database) => {
@@ -136,7 +136,7 @@ export async function sendNotificationDeliveryTest(): Promise<
   Readonly<{ ok: true; message: string }> | Readonly<{ ok: false; message: string }>
 > {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const sent = withPlatformDatabase(
       { mode: "runtime" },
       (database) => {
@@ -189,7 +189,7 @@ export async function requestNotificationEmailConfirmation(
   emailAddress: string,
 ): Promise<Readonly<{ ok: true; message: string }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const database = openPlatformDatabase({ mode: "runtime" });
     const result = await (async () => {
       try {
@@ -224,7 +224,7 @@ export async function confirmNotificationEmailAddress(
   code: string,
 ): Promise<Readonly<{ ok: true; message: string }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const result = withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformNotificationEmailAddressRepository(
@@ -249,7 +249,7 @@ export async function savePressReleasePushChannels(
   channels: readonly string[],
 ): Promise<Readonly<{ ok: true; channels: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const saved = withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PressReleaseDashboardRepository(database)
@@ -276,9 +276,9 @@ export async function savePressReleasePushChannels(
 
 export async function saveMarketHaltAlertsEnabled(
   enabled: boolean,
-): Promise<Readonly<{ ok: true; enabled: boolean }> | Readonly<{ ok: false; message: string }>> {
+): Promise<Readonly<{ ok: true; enabled: boolean }> | Readonly<{ ok: false; message: string; code?: "membership_required" }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const saved = withPlatformDatabase(
       { mode: "runtime" },
       (database) => new MarketHaltAlertRepository(database).setEnabled({
@@ -290,7 +290,7 @@ export async function saveMarketHaltAlertsEnabled(
     revalidatePath("/account/preferences");
     return Object.freeze({ enabled: saved, ok: true as const });
   } catch (error) {
-    if (isMembershipAccessDenied(error)) return { ok: false, message: "Your current plan does not include halt notifications. View Plans to change access." };
+    if (isMembershipAccessDenied(error)) return { ok: false, code: "membership_required", message: "Stay informed when trading pauses. Unlock Market halts to receive eligible halt alerts." };
     return Object.freeze({
       ok: false as const,
       message: "Your halt alert choice could not be saved. Try again.",
@@ -302,7 +302,7 @@ export async function muteMarketHaltTicker(
   ticker: string,
 ): Promise<Readonly<{ ok: true; ticker: string }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const saved = withPlatformDatabase(
       { mode: "runtime" },
       (database) => new MarketHaltAlertRepository(database).muteForCurrentTradingDay({
@@ -327,7 +327,7 @@ export async function unmuteMarketHaltTicker(
   ticker: string,
 ): Promise<Readonly<{ ok: true; ticker: string }> | Readonly<{ ok: false; message: string }>> {
   try {
-    const scope = await requireTraderLinkPlatformPageScope();
+    const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
     const saved = withPlatformDatabase(
       { mode: "runtime" },
       (database) => new MarketHaltAlertRepository(database).unmute({

@@ -4,6 +4,10 @@ import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/work
 
 vi.mock("server-only", () => ({}));
 
+vi.mock("@/src/modules/platform/server/database/open-readonly-platform-database", () => ({
+  withReadonlyPlatformDatabase: (_options:unknown, operation:(db:unknown)=>unknown) => operation({prepare:()=>({all:()=>[]})}),
+}));
+
 const mocks = vi.hoisted(() => {
   const account = Object.freeze({
     accountId: "10000000-0000-4000-8000-000000000003",
@@ -70,6 +74,7 @@ import {
 } from "../../../../app/(dashboard)/analytics/trade-explorer/trade-review-service";
 
 const roundTripId = "20000000-0000-4000-8000-000000000001";
+const roundTripVersionId = "20000000-0000-4000-8000-000000000008";
 const dayId = "20000000-0000-4000-8000-000000000002";
 const customRuleId = "20000000-0000-4000-8000-000000000003";
 const customVersionId = "20000000-0000-4000-8000-000000000004";
@@ -129,6 +134,7 @@ function readyFactSet(projectionState = "ready_closed") {
       openedAtUtc: "2026-08-15T14:00:00.000Z",
       projectionState,
       roundTripId,
+      roundTripVersionId,
       tradeCurrency: "USD",
     })]),
   });
@@ -199,11 +205,7 @@ describe("Trade Explorer completed-trade review service", () => {
       scope,
       expect.objectContaining({
         accountIds: [mocks.account.accountId],
-        closingDateRange: {
-          endDate: closeLocalDate,
-          kind: "inclusive_closing_date",
-          startDate: closeLocalDate,
-        },
+        closingDateRange: { kind: "all_available" },
         currencySelection: { kind: "all_partitions" },
       }),
     );
@@ -243,6 +245,7 @@ describe("Trade Explorer completed-trade review service", () => {
     const input = Object.freeze({
       closeLocalDate,
       expectedAccountSelectionRef: "selected-account",
+      expectedRoundTripVersionId: roundTripVersionId,
       note: Object.freeze({
         expectedRevision: 3,
         tradeNote: "Updated review.",
@@ -267,6 +270,7 @@ describe("Trade Explorer completed-trade review service", () => {
     expect(mocks.annotations.saveTradeReview).toHaveBeenCalledWith(
       mocks.account,
       {
+        expectedRoundTripVersionId: roundTripVersionId,
         note: input.note,
         roundTripId,
         ruleReviews: input.ruleReviews,
@@ -279,6 +283,7 @@ describe("Trade Explorer completed-trade review service", () => {
     expect(() => saveTradeExplorerReview(scope, {
       closeLocalDate,
       expectedAccountSelectionRef: "selected-account",
+      expectedRoundTripVersionId: roundTripVersionId,
       note: null,
       roundTripId,
       ruleReviews: Object.freeze([Object.freeze({

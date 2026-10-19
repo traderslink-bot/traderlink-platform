@@ -1,3 +1,4 @@
+import { assertAiReviewGenerationAccess,hasAiReviewGenerationAccess } from "@/src/modules/platform/server/membership/membership-ai-review-access";
 import type Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from
@@ -54,6 +55,7 @@ export class CoachAiReviewRequestService {
     input: CoachAiReviewManualRequestV2,
     now = new Date(),
   ): CoachAiReviewManualRequestResultV2 {
+    assertAiReviewGenerationAccess(this.database,scope.userId);
     if (new CoachAiReviewAuthoredPersistenceRepository(this.database).tablesAvailable()) {
       return this.requestManualV4(scope, input, now);
     }
@@ -78,6 +80,7 @@ export class CoachAiReviewRequestService {
     input: CoachAiReviewManualRequestV2,
     now = new Date(),
   ): CoachAiReviewManualRequestResultV2 {
+    assertAiReviewGenerationAccess(this.database,scope.userId);
     if (!validIdentity(input)) return Object.freeze({ state: "not_available" });
 
     const plan = input.reviewKind === "monthly"
@@ -200,7 +203,7 @@ export class CoachAiReviewRequestService {
     const plans = [
       ...new CoachWeeklyAiReviewRunner(this.database).planV2(now),
       ...new CoachMonthlyAiReviewRunner(this.database).planV2(now),
-    ].filter((plan) => plan.state === "automatic_ready" && plan.snapshot !== null);
+    ].filter((plan) => plan.state === "automatic_ready" && plan.snapshot !== null && hasAiReviewGenerationAccess(this.database,plan.scope.userId));
     const repository = new CoachAiReviewRepository(this.database);
     let requestedCount = 0;
     let reusedCount = 0;
@@ -243,7 +246,7 @@ export class CoachAiReviewRequestService {
     const plans = [
       ...new CoachWeeklyAiReviewRunner(this.database).planV2(now),
       ...new CoachMonthlyAiReviewRunner(this.database).planV2(now),
-    ].filter((plan) => plan.state === "automatic_ready" && plan.snapshot !== null);
+    ].filter((plan) => plan.state === "automatic_ready" && plan.snapshot !== null && hasAiReviewGenerationAccess(this.database,plan.scope.userId));
     const insightRequests = new CoachAiReviewInsightRequestService(this.database);
     let requestedCount = 0;
     let reusedCount = 0;
@@ -265,7 +268,7 @@ export class CoachAiReviewRequestService {
     const plans = [
       ...new CoachWeeklyAiReviewRunner(this.database).planV2(now),
       ...new CoachMonthlyAiReviewRunner(this.database).planV2(now),
-    ].filter((plan) => plan.state === "automatic_ready" && plan.snapshot !== null);
+    ].filter((plan) => plan.state === "automatic_ready" && plan.snapshot !== null && hasAiReviewGenerationAccess(this.database,plan.scope.userId));
     const requests = new CoachAiReviewAuthoredRequestService(this.database);
     let requestedCount = 0;
     let reusedCount = 0;

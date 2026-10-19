@@ -7,7 +7,7 @@ export function WatchlistPublicPreview({ notice, retryConsent = false }: {
   notice: { title: string; body: string } | null;
   retryConsent?: boolean;
 }) {
-  const login = `/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist")}${retryConsent ? "&prompt=consent" : ""}`;
+  const login = `/login?returnTo=${encodeURIComponent("/watchlist")}${retryConsent ? "&prompt=consent" : ""}`;
   return <section className={styles.landing} aria-label="TradersLink Watchlist access">
     <div className={styles.background} aria-hidden="true" inert><WatchlistCapturedPage /></div>
     <div className={styles.access}>

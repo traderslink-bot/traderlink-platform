@@ -1,3 +1,4 @@
+import { startPlatformLoginMailWorker } from "../authentication/platform-login-mail-queue";
 import { runCategoryMoveNotifications } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { runDailyTradeAnalyzerOnce } from "@/src/modules/level-analysis/server/daily-trade-analyzer-runtime";
 
@@ -18,6 +19,7 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
   if (workersStarted) return;
   workersStarted = true;
   startWatchlistSetupSharedFeed();
+  startPlatformLoginMailWorker();
 
   let analyzerRunning = false;
   const runAnalyzer = async (): Promise<void> => {

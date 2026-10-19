@@ -29,7 +29,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Choose a Trade Tracker account", text: "Each account keeps its own AI Review On/Off, frequency and timing choices." }),
-            Object.freeze({ title: "2. Confirm paid access", text: "Select Account in the top bar, choose AI & plan and check the subscription status. If needed, connect the Whop account used for the subscription." }),
+            Object.freeze({ title: "2. Confirm paid access", text: "Select Account in the top bar and choose AI & plan. AI Reviews may be included in your plan or an add-on. An existing verified Whop AI Review subscription also remains valid; connect Whop only when using that existing subscription." }),
             Object.freeze({ title: "3. Turn on AI Reviews", text: "In Account Settings, select AI & plan, switch AI Reviews on and choose how often you want a review." }),
             Object.freeze({ title: "4. Keep using Trade Tracker", text: "Verified executions can be reviewed even when you do not write notes or mark every daily review complete." }),
           ]) }),
@@ -398,7 +398,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "table", columns: Object.freeze(["Message", "Next step"]), rows: Object.freeze([
             Object.freeze(["AI Reviews are off", "Select Account in the top bar, choose AI & plan and turn AI Reviews on for the selected Trade Tracker account if you want future reviews."]),
-            Object.freeze(["Paid access unavailable", "Open the Paid plan and billing Help guide, then check the Whop connection and subscription status in Account."]),
+            Object.freeze(["Paid access unavailable", "Review plans and add-ons with AI Reviews, or check an existing Whop subscription in Account. Saved reviews remain available."]),
             Object.freeze(["Platform unavailable", "Your evidence remains saved. Try again later; do not recreate the Trade Tracker data."]),
           ]) }),
           Object.freeze({ kind: "paragraph", text: "Turning AI Reviews off or losing paid access does not remove reviews already issued. When access returns, future eligible periods can resume without duplicating saved reviews." }),

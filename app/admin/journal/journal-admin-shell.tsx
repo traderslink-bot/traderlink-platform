@@ -163,7 +163,7 @@ export function JournalAdminShell({
   );
 
   return (
-    <Box sx={{ bgcolor: "background.default", display: "flex", minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: "background.default", color: "text.primary", display: "flex", minHeight: "100vh" }}>
       <AppBar
         color="inherit"
         elevation={0}

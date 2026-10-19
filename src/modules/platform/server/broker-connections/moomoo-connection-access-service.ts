@@ -19,6 +19,7 @@ export class MoomooConnectionAccessService {
   ) {}
 
   async accessToken(scope: WorkspaceAccessScope): Promise<string> {
+    this.repository.assertAccessAllowed(scope);
     const connection = this.repository.find(scope);
     if (!connection || connection.state !== "active") {
       platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");

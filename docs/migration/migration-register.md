@@ -263,3 +263,35 @@ Reserved migration `0154_platform_premium_swing_plan_authorship`, exact predeces
 ## 0156 Platform Watchlist Premium support/resistance
 
 Reserved by Coordinator; predecessor 0155_platform_watchlist_premium_access_controls. New independent visibility and audit tables only; target migration count138. Registered, not applied by feature worker. See [progress and rollback boundary](watchlist-premium-levels-progress.md).
+
+
+## Multi-provider login candidate reservation (2026-10-14)
+
+`0166_platform_multi_provider_login`, order 179, follows the membership candidate
+0165/order 178. Adds credential/token/throttle/verified-email/audit storage and
+permits explicitly verified reconnect to the same immutable identity owner.
+Candidate-only reservation under owner implementation authorization; reconcile
+complete canonical predecessor with Coordinator before release. No existing or
+hosted database applied. Rollback retains identities, credential records, tables
+and ledger; disable provider entry while preserving enrolled users recovery.
+
+
+## Add-on subscription amendments candidate reservation
+
+0167_platform_membership_addon_amendments, order180, exact candidate predecessor
+0166_platform_multi_provider_login/order179. Reserved in isolated Membership QA
+after checking canonical register, Coordinator handoff and sibling migration paths
+for conflicting0167/order180 reservations. One additive durable amendment table.
+Reconcile the full candidate predecessor/lineage with Coordinator before any
+release or existing/hosted database application. No such application authorized.
+See membership-plan-addons-plan.md for the approved immediate-proration contract.
+
+## Unique profile name candidate reservation (2026-10-18)
+
+Coordinator revised the held reservation to `0175_platform_profile_name`, execution order
+188, after Stats `0174`/187. Adds `platform_user_profile_names` for explicit
+custom-name ownership and a unique normalized name key. No existing-user backfill,
+rename, provider transfer, session/access change or hosted application. Reconcile
+the exact current migration lineage before integration; this continuation does
+not include the independently staged0173 source. Deployment requires new owner
+approval. See [progress](profile-name-progress-20261018.md).

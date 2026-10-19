@@ -1,3 +1,4 @@
+import { hasAiReviewGenerationAccess } from "@/src/modules/platform/server/membership/membership-ai-review-access";
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
 
@@ -331,6 +332,7 @@ export class CoachWeeklyAiReviewRunner {
     };
 
     for (const account of scheduledAccounts) {
+      if(!hasAiReviewGenerationAccess(this.database,account.scope.userId))continue;
       let due = calculateCoachWeeklyReviewDueTime({
         accountTradingTimezone: account.accountTimezone,
         weeklyDeliveryDay: account.schedule.weeklyDeliveryDay,

@@ -1,3 +1,4 @@
+import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import {
   commitJournalGenericMappedUpload,
   commitJournalIbkrUpload,
@@ -137,6 +138,8 @@ export async function POST(request: Request): Promise<Response> {
     }
     return Response.json({ status: "ready", result });
   } catch (error) {
+    const denied = membershipFeatureDeniedResponse(error);
+    if (denied) return denied;
     if (scope && attemptIdempotencyRef) {
       try {
         failJournalImportCommitAttempt(scope, attemptIdempotencyRef, "commit_failure");

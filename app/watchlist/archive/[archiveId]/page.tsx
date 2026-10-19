@@ -1,3 +1,4 @@
+import { WatchlistMembershipNotice } from "../../watchlist-membership-notice";
 import { WatchlistPlanUpgrade } from "@/app/watchlist/watchlist-plan-upgrade";
 import { readWatchlistUpgradeLinks } from "@/src/modules/watchlist/server/access/watchlist-plan-policy";
 import { canViewWatchlistLevels } from '@/src/modules/watchlist/server/access/watchlist-levels-visibility';
@@ -46,10 +47,11 @@ export default async function LiveWatchlistArchiveDetailPage({
   const authStatus = normalizeSearchParam((await searchParams).auth);
   const access = await authorizeWatchlistPageAccess();
   if (!access.ok) {
+    if (access.reason === "membership_required") return <WatchlistMembershipNotice />;
     const loginRequired = access.reason === "login_required";
     const returnTo = `/watchlist/archive/${encodeURIComponent(archiveId.toUpperCase())}`;
     if (loginRequired && !authStatus) {
-      redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`);
+      redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`);
     }
     return (
       <AcademyShell forcedTheme="light">
@@ -61,13 +63,13 @@ export default async function LiveWatchlistArchiveDetailPage({
                 Log in to view archived ticker details
               </h1>
               <p className="academy-lede">
-                Log in with your TradersLink Discord account to view this archived ticker.
+                Sign in to TradersLink to view this archived ticker.
               </p>
               <Link
-                href={`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`}
+                href={`/login?returnTo=${encodeURIComponent(returnTo)}`}
                 className="academy-card-action"
               >
-                Log in with Discord
+                Sign in
               </Link>
             </div>
           </section>
@@ -88,7 +90,7 @@ export default async function LiveWatchlistArchiveDetailPage({
   return (
     <WatchlistDashboardFrame>
       <div className="academy-container">
-        <LiveWatchlistArchiveDetailClient archive={{ ...archive, state: watchlistDetailProjection(archive.state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(await headers(), archive.symbol), canViewWatchlistLevels(await headers(), archive.symbol), readWatchlistUpgradeLinks(archive.symbol)) }} />
+        <LiveWatchlistArchiveDetailClient archive={{ ...archive, state: watchlistDetailProjection(archive.state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(await headers(), archive.symbol), canViewWatchlistLevels(await headers(), archive.symbol), readWatchlistUpgradeLinks(archive.symbol), features.indicators) }} />
       </div>
     </WatchlistDashboardFrame>
   );

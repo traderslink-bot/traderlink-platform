@@ -1,3 +1,4 @@
+import { hasAiReviewGenerationAccess } from "@/src/modules/platform/server/membership/membership-ai-review-access";
 import type Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -327,6 +328,7 @@ export class CoachMonthlyAiReviewRunner {
     };
 
     for (const account of scheduledAccounts) {
+      if(!hasAiReviewGenerationAccess(this.database,account.scope.userId))continue;
       let due = calculateCoachMonthlyReviewDueTime({
         accountTradingTimezone: account.accountTimezone,
         deliveryTimeEastern: account.schedule.deliveryTimeEastern,

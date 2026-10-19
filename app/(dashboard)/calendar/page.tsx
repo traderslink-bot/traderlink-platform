@@ -8,10 +8,16 @@ import {
   journalOfflineRouteCoverage,
   type JournalCalendarOfflineViewModel,
 } from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
+import Typography from "@mui/material/Typography";
+import { DashboardPage } from "../../dashboard-template";
+import { CalendarAccessNotice } from "./calendar-access-notice";
+import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { readMembershipCalendarViews } from "@/src/modules/platform/server/membership/platform-membership-calendar-access";
+import { preferredMembershipCalendarView } from "@/src/modules/platform/contracts/membership-calendar-access";
 import { CalendarClient } from "./calendar-client";
 import { emptyCalendarData, withCalendarDataRuntime } from "./calendar-data";
 import { calendarNavigationOptions, readCalendarActivityDates } from "./calendar-navigation";
-import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { calendarDisabledForPerformanceTest } from "@/src/modules/platform/server/runtime-configuration/calendar-performance-test";
 import {
   journalScopeCurrentWeek,
@@ -24,7 +30,6 @@ import type {
   CalendarPnlFilter,
   CalendarSessionFilter,
   CalendarTradeCountFilter,
-  CalendarView,
 } from "./calendar-types";
 
 export const metadata: Metadata = {
@@ -93,8 +98,10 @@ export default async function CalendarPage({
   const query = await searchParams;
   const selectedFilters = filters(query);
   const reviewLayout = process.env.NODE_ENV !== "production" && value(query.review) === "layout";
-  const initialView: CalendarView = value(query.view) === "week" ? "week" : "month";
-  const scope = await requireMembershipPageScope("journal.access");
+  const scope = await requireTraderLinkPlatformPageScope();
+  const permittedViews = withReadonlyPlatformDatabase({}, database => readMembershipCalendarViews(database, scope.userId));
+  const initialView = preferredMembershipCalendarView(permittedViews, value(query.view));
+  if (!permittedViews[initialView]) return <DashboardPage><Typography component="h1" sx={{ mb: 2 }} variant="h1">Trading Calendar</Typography><CalendarAccessNotice view={initialView} /></DashboardPage>;
   const demoClock = readJournalDemoScopeClock(scope);
   const calendar = reviewLayout
     ? (() => {
@@ -183,6 +190,7 @@ export default async function CalendarPage({
       initialData={initialData}
       initialFilters={initialFilters}
       initialView={initialView}
+      permittedViews={permittedViews}
       selectedMonth={selectedMonth}
       selectedWeek={selectedWeek}
     />

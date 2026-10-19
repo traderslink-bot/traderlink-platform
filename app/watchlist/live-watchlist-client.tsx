@@ -1367,7 +1367,7 @@ function WatchlistTickerTable({
         <span>Details</span>
       </div>
       {symbols.map((symbol) => {
-                  if (symbol.premiumTickerHidden) return <a key={symbol.symbol} href="https://whop.com/traderslink-1049/premium-access-2026" className={`watchlist-row ${compactRows.row}`}>
+                  if (symbol.premiumTickerHidden) return <a key={symbol.symbol} href="/plans?feature=watchlist.ticker_details" className={`watchlist-row ${compactRows.row}`}>
             <span className={`watchlist-symbol-cell ${compactRows.ticker}`}><strong aria-label="Premium ticker"><span aria-hidden="true" style={{filter:"blur(4px)",userSelect:"none"}}>••••</span></strong><small style={{color:"#b45309",display:"block"}}>Premium members only</small></span>
             <span className={compactRows.details} style={{color:"#b45309",fontWeight:700,textDecoration:"underline"}}>Access Premium</span>
           </a>;
@@ -1578,7 +1578,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
         showMeta={false}
         showOuterMeta={false}
       />
-      {symbol.membershipAnalysisAllowed === false ? <WatchlistPlanUpgrade feature="Trade analysis & preparation" href={symbol.watchlistUpgradeLinks?.analysis === undefined ? "/plans?feature=watchlist.trade_analysis" : symbol.watchlistUpgradeLinks.analysis} /> : symbol.premiumAnalysisPreview ? <PremiumAnalysisCard preview={symbol.premiumAnalysisPreview} symbol={symbol.symbol} upgradeHref={symbol.watchlistUpgradeLinks?.analysis} /> : symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
+      {symbol.membershipAnalysisAllowed === false ? <WatchlistPlanUpgrade feature="Trade analysis" href={symbol.watchlistUpgradeLinks?.analysis === undefined ? "/plans?feature=watchlist.trade_analysis" : symbol.watchlistUpgradeLinks.analysis} /> : symbol.premiumAnalysisPreview ? <PremiumAnalysisCard preview={symbol.premiumAnalysisPreview} symbol={symbol.symbol} upgradeHref={symbol.watchlistUpgradeLinks?.analysis} /> : symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
         <TradersLinkAiReadCard
           card={tradersLinkAiReadCard}
           traderNotes={symbol.cards.traderNotes?.body}
@@ -1604,7 +1604,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
       {symbol.membershipAnalysisAllowed !== false && symbol.premiumAnalysisPricesAllowed !== false && !symbol.premiumAnalysisPreview ? (
         <WatchlistSetupsCard key={`setups:${symbol.symbol}:${symbol.indicatorPublicationIdentity ?? "unassigned"}`} symbol={symbol.symbol} publicationIdentity={symbol.indicatorPublicationIdentity} />
       ) : null}
-      {symbol.indicatorCardVisible !== false ? (
+      {symbol.membershipIndicatorsAllowed === false ? <WatchlistPlanUpgrade feature="Indicator card" href="/plans?feature=watchlist.indicators" /> : symbol.indicatorCardVisible !== false ? (
       <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.indicatorPublicationIdentity ?? "unassigned"}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} publicationIdentity={symbol.indicatorPublicationIdentity} livePrice={symbol.latestPrice} />
       ) : null}
       {recentNewsFilingsCard && showRecentNewsFilingsCard ? (
@@ -1945,6 +1945,8 @@ export function LiveWatchlistDetailClient({
         setDetailsDenied(false);
         setSymbol((current) => {
           const next = reconcileLiveWatchlistSymbolState(current, payload.symbol);
+          next.membershipIndicatorsAllowed = payload.symbol.membershipIndicatorsAllowed;
+          next.indicatorCardVisible = payload.symbol.indicatorCardVisible;
           next.premiumLevelsAllowed = payload.symbol.premiumLevelsAllowed;
           next.watchlistUpgradeLinks = payload.symbol.watchlistUpgradeLinks;
           if(next.premiumLevelsAllowed !== false) { next.levelMap=payload.symbol.levelMap; next.nearestSupport=payload.symbol.nearestSupport; next.nearestResistance=payload.symbol.nearestResistance; next.nearestSupportLabel=payload.symbol.nearestSupportLabel; next.nearestResistanceLabel=payload.symbol.nearestResistanceLabel; for(const kind of ["levelMap","nearestSupportResistance","fullLadder"] as const) { if(payload.symbol.cards[kind]) next.cards[kind]=payload.symbol.cards[kind]; else delete next.cards[kind]; } }

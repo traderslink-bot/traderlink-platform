@@ -7,8 +7,8 @@ import Typography from "@mui/material/Typography";
 
 import { DashboardPage, DashboardPanel } from "../../../dashboard-template";
 import { WeekAheadRepository } from "@/src/modules/news/server/week-ahead-repository";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 export const metadata: Metadata = {
   description: "This week's small-cap market catalysts and events.",
@@ -30,7 +30,7 @@ function formatDate(value: string): string {
 }
 
 export default async function WeekAheadPage() {
-  await requireTraderLinkPlatformPageScope();
+  await requireMembershipPageScope("news.week_ahead");
   const issue = withReadonlyPlatformDatabase({}, (database) =>
     new WeekAheadRepository(database).current(),
   );

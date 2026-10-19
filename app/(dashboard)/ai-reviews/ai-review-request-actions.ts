@@ -1,5 +1,7 @@
 "use server";
 
+import { hasAiReviewGenerationAccess } from "@/src/modules/platform/server/membership/membership-ai-review-access";
+import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { revalidatePath } from "next/cache";
 
 import type { CoachAiReviewKindV2 } from
@@ -21,6 +23,7 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 export type RequestAiReviewActionState = Readonly<{
   ok: boolean;
   message: string | null;
+  upgradeHref?:string;
 }>;
 
 export async function requestAiReview(
@@ -45,6 +48,7 @@ export async function requestAiReview(
     const database = openPlatformDatabase({ mode: "runtime" });
     let result: CoachAiReviewManualRequestResultV2;
     try {
+      if(!hasAiReviewGenerationAccess(database,scope.userId))return {ok:false,message:"Unlock AI Reviews with a plan or add-on.",upgradeHref:"/plans?feature=ai.reviews"};
       const gate = new CoachAiReviewGenerationCoordinatorV2(database).readGate(scope);
       if (gate.state === "platform_unavailable") {
         return Object.freeze({
@@ -55,7 +59,8 @@ export async function requestAiReview(
       if (gate.state === "paid_access_unavailable") {
         return Object.freeze({
           ok: false,
-          message: "Connect or renew AI Review access from Account, then try again.",
+          message: "Turn your trading history into useful feedback. Unlock AI Reviews with a plan or add-on.",
+          upgradeHref:"/plans?feature=ai.reviews",
         });
       }
       result = new CoachAiReviewRequestService(database).requestManual(scope, {
@@ -77,7 +82,8 @@ export async function requestAiReview(
       ok: true,
       message: null,
     });
-  } catch {
+  } catch(error) {
+    if(isMembershipAccessDenied(error))return {ok:false,message:"Unlock AI Reviews with a plan or add-on.",upgradeHref:"/plans?feature=ai.reviews"};
     return Object.freeze({
       ok: false,
       message: "Your AI Review request could not be saved. Try again.",

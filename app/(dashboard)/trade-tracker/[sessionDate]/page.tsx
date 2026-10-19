@@ -1,3 +1,4 @@
+import { SessionTrackerAccessNotice } from "../session-tracker-access-notice";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Alert from "@mui/material/Alert";
@@ -6,7 +7,7 @@ import { DashboardPage, DashboardUnavailableState } from "../../../dashboard-tem
 import {
   currentJournalAccountSelectionRef,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPreviewPageScope, requireMembershipPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 
@@ -45,6 +46,8 @@ export default async function TradeTrackerDayPage({
   const { sessionDate } = await params;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(sessionDate)) notFound();
 
+  const trackerScope = await requireMembershipPreviewPageScope("journal.session_tracker");
+  if (!trackerScope) return <SessionTrackerAccessNotice />;
   const query = await searchParams;
   const designPreview = process.env.NODE_ENV !== "production" &&
     query.preview === "design";

@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { PlatformProfileNameRepository } from "./platform-profile-name-repository";
 
 import {
   assertCanonicalUtcTimestamp,
@@ -89,8 +90,10 @@ export class PlatformUserRepository {
     }
     assertCanonicalUtcTimestamp(input.createdAtUtc, "createdAtUtc");
     assertCanonicalUtcTimestamp(input.updatedAtUtc, "updatedAtUtc");
-    this.database
-      .prepare(`INSERT INTO platform_users (
+    this.database.transaction(() => {
+      const displayName = new PlatformProfileNameRepository(this.database)
+        .availableInitialName(input.userId, input.displayName);
+      this.database.prepare(`INSERT INTO platform_users (
   user_id, auth_provider, auth_subject, display_name, status,
   created_at_utc, updated_at_utc
 ) VALUES (?, ?, ?, ?, ?, ?, ?)`)
@@ -98,11 +101,12 @@ export class PlatformUserRepository {
         input.userId,
         input.authProvider,
         input.authSubject,
-        input.displayName,
+        displayName,
         input.status ?? "active",
         input.createdAtUtc,
         input.updatedAtUtc,
       );
+    }).immediate();
     return this.findById(input.userId) as PlatformUserRecord;
   }
 
@@ -118,6 +122,7 @@ export class PlatformUserRepository {
     userId: string;
     displayName: string;
     updatedAtUtc: string;
+    authProvider?: string;
   }>): PlatformUserRecord {
     assertCanonicalUuidV4(input.userId, "userId");
     if (
@@ -131,18 +136,12 @@ export class PlatformUserRepository {
       });
     }
     assertCanonicalUtcTimestamp(input.updatedAtUtc, "updatedAtUtc");
-    const result = this.database.prepare(`UPDATE platform_users
-SET display_name = ?, updated_at_utc = ?
-WHERE user_id = ? AND status = 'active' AND updated_at_utc <= ?`)
-      .run(
-        input.displayName,
-        input.updatedAtUtc,
-        input.userId,
-        input.updatedAtUtc,
-      );
-    if (result.changes !== 1) {
+    const current = this.findById(input.userId);
+    if (!current || current.status !== "active") {
       platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
     }
+    this.database.transaction(() => new PlatformProfileNameRepository(this.database)
+      .updateProviderDefault(input.userId, input.displayName, input.authProvider, input.updatedAtUtc)).immediate();
     return this.findById(input.userId) as PlatformUserRecord;
   }
 
