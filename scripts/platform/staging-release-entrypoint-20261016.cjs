@@ -13,19 +13,19 @@ const db = new Database(process.env.TRADERLINK_PLATFORM_DB_PATH, {readonly:true,
 db.pragma('query_only=ON');
 const rows = db.prepare('SELECT migration_id,execution_order,checksum_sha256 FROM platform_schema_migrations ORDER BY execution_order').all();
 db.close();
-assert([170,171].includes(rows.length), 'Unexpected migration state: keep this deployment closed');
+assert([171,172].includes(rows.length), 'Unexpected migration state: keep this deployment closed');
 assert.deepEqual(rows, expected.slice(0,rows.length));
 assert(['recovery','final'].includes(process.env.TRADERLINK_STAGING_IMAGE_ROLE));
-if (rows.length === 170) {
+if (rows.length === 171) {
   // Prebuild both exact schema-compatible images before the volume migration.
-  // The Coordinator performs the guarded 0175 migration separately over SSH.
+  // The Coordinator performs the guarded 0176 migration separately over SSH.
   http.createServer((req,res) => {
     res.setHeader('Content-Type','application/json');
     res.setHeader('Cache-Control','no-store');
     res.statusCode=req.url==='/api/platform/health'?200:503;
-    res.end(JSON.stringify({status:'maintenance_ready',role:process.env.TRADERLINK_STAGING_IMAGE_ROLE,migrationCount:170,expectedMigrationCount:171,source:process.env.RAILWAY_GIT_COMMIT_SHA}));
+    res.end(JSON.stringify({status:'maintenance_ready',role:process.env.TRADERLINK_STAGING_IMAGE_ROLE,migrationCount:171,expectedMigrationCount:172,source:process.env.RAILWAY_GIT_COMMIT_SHA}));
   }).listen(Number(process.env.PORT||3000),'0.0.0.0');
-  console.log(JSON.stringify({stage:'image_prebuilt_awaiting_guarded_migration',role:process.env.TRADERLINK_STAGING_IMAGE_ROLE,migrationCount:170,expectedMigrationCount:171}));
+  console.log(JSON.stringify({stage:'image_prebuilt_awaiting_guarded_migration',role:process.env.TRADERLINK_STAGING_IMAGE_ROLE,migrationCount:171,expectedMigrationCount:172}));
 } else {
   // Child-process-only compatibility controls; no Railway variable is changed.
   delete process.env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID;
