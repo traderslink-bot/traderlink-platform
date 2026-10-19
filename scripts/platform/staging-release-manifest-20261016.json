@@ -843,5 +843,10 @@
     "migration_id": "0173_traderlink_community_stats",
     "execution_order": 186,
     "checksum_sha256": "cc583414dc32a7867cfc1d4d62a5e04ebe2781d0838b21abb2cceaf272df58f5"
+  },
+  {
+    "migration_id": "0174_traderlink_community_stats_history",
+    "execution_order": 187,
+    "checksum_sha256": "51ae405f1b75b51893061b857aa19ccd5ab6b213c7c182a771db5ded2d7cb45a"
   }
 ]
