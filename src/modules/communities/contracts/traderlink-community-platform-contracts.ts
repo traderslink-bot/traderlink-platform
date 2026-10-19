@@ -283,6 +283,7 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
     capabilities: readonly TraderLinkCommunityCapability[];
     channelAccess?:Readonly<{alerts:boolean;watchlists:boolean}>;
     activeJournalAccountId?:string|null;
+    activeJournalAccountName?:string|null;
     discordRoleIds: readonly string[];
   }>;
   alerts: readonly TraderLinkCommunityAlert[];

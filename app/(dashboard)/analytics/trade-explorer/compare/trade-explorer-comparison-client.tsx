@@ -597,7 +597,7 @@ export default function TradeExplorerComparisonClient({
       {error ? <Alert severity="error">{error}{error === MEMBERSHIP_FEATURE_REQUIRED_MESSAGE ? <Stack sx={{ mt: 1, alignItems: "flex-start" }}><Button href="/plans?feature=analytics.compare_trades" variant="contained">Unlock Compare Trades</Button></Stack> : null}</Alert> : null}
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
-        <DashboardPrimaryAction disabled={Boolean(coaching) || Boolean(offlineSavedAtUtc) || !canCompare || isPending} onClick={runComparison} startIcon={<CompareArrowsRoundedIcon />}>
+        <DashboardPrimaryAction disabled={Boolean(offlineSavedAtUtc) || !canCompare || isPending} onClick={runComparison} startIcon={<CompareArrowsRoundedIcon />}>
           {isPending ? "Comparing…" : "Compare groups"}
         </DashboardPrimaryAction>
       </Stack>

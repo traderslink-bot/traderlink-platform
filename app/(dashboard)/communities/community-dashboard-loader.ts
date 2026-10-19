@@ -36,7 +36,9 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
   catch(error){if(!historyPath)throw error;historyOnly=true;}
   // The resolver reads its target synchronously; no connection/transaction is held during Discord I/O.
   const readableChannelIds=historyOnly?[]:await withPlatformDatabase({mode:"runtime"},database=>readCommunityViewerChannels(database,communitySlug,identity.scope.userId,process.env.TRADERLINK_DISCORD_BOT_TOKEN??""));
+  let activeJournalAccountName:string|null=null;
   const snapshot=withPlatformDatabase({mode:"runtime"},database=>{
+    if(identity.scope.activeAccountId&&identity.scope.allowedAccountIds.includes(identity.scope.activeAccountId))activeJournalAccountName=(database.prepare("SELECT display_name FROM journal_accounts WHERE account_id=? AND workspace_id=? AND status='active'").get(identity.scope.activeAccountId,identity.scope.workspaceId) as {display_name:string}|undefined)?.display_name??null;
     const viewer=historyOnly?{userId:identity.scope.userId,displayName:identity.displayName??"Member",discordRoleIds:[]}:resolveTraderLinkCommunityViewer(database,identity,communitySlug);
     const repository=new TraderLinkCommunityPlatformRepository(database);
     let current=repository.readSnapshot(communitySlug,viewer,{historyOnly,readableChannelIds,detailPath:requested});
@@ -87,5 +89,5 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
     }
     return {...current,statsOwnContentAccess,lifecycle:database.prepare(`SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?`).get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
   });
-  return Object.freeze({snapshot:{...snapshot,viewer:{...snapshot.viewer,activeJournalAccountId:identity.scope.activeAccountId??null}},isReview:false});
+  return Object.freeze({snapshot:{...snapshot,viewer:{...snapshot.viewer,activeJournalAccountId:identity.scope.activeAccountId??null,activeJournalAccountName}},isReview:false});
 }

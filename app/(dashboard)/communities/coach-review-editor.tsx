@@ -1,5 +1,5 @@
 "use client";
-import {useRef,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {coachingReviewLabel} from "@/src/modules/communities/contracts/coaching-review-workspace";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -17,11 +17,42 @@ export function CoachReviewEditor({communitySlug,relationshipId,review,previousF
  const disabled=isReview||paused||review.acceptanceState==="pending"||review.deliveryState!=="draft";
  const editableNames=["previousFocusStatus","previousFocusAssessment","coachFeedback","wentWell","needsWork","nextFocus","coachPrivateNotes"];
  const saved=useRef(JSON.stringify(editableNames.map(name=>[name,String((review as unknown as Record<string,unknown>)[name]??(name==="previousFocusStatus"?"not_evaluated":""))])));
+ const formRef=useRef<HTMLFormElement|null>(null);
+ const recoveryKey=`coaching-review-draft:${communitySlug}:${relationshipId}:${review.reviewId}`;
  const [dirty,setDirty]=useState(false);
  const contents=(data:FormData)=>JSON.stringify(editableNames.map(name=>[name,String(data.get(name)??(name==="previousFocusStatus"?"not_evaluated":""))]));
+ useEffect(()=>{
+  if(disabled)return;
+  const form=formRef.current;if(!form)return;
+  try{
+   const raw=sessionStorage.getItem(recoveryKey);
+   if(raw){
+    const recovery=JSON.parse(raw) as {baseline?:string;values?:[string,string][]};
+    if(recovery.baseline===saved.current&&Array.isArray(recovery.values)){
+     for(const [name,value] of recovery.values){
+      if(!editableNames.includes(name)||typeof value!=="string")continue;
+      const field=form.elements.namedItem(name);
+      if(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement||field instanceof HTMLSelectElement)field.value=value;
+     }
+     setDirty(contents(new FormData(form))!==saved.current);
+    }else sessionStorage.removeItem(recoveryKey);
+   }
+  }catch{/* Browser storage may be unavailable. */}
+  const discard=()=>{try{sessionStorage.removeItem(recoveryKey);}catch{/* No browser storage. */}};
+  document.addEventListener("coaching:review-discard",discard);
+  return()=>document.removeEventListener("coaching:review-discard",discard);
+ },[disabled,recoveryKey]);
+ const track=(form:HTMLFormElement)=>{
+  const data=new FormData(form),changed=contents(data)!==saved.current;
+  setDirty(changed);
+  try{
+   if(changed)sessionStorage.setItem(recoveryKey,JSON.stringify({baseline:saved.current,values:editableNames.map(name=>[name,String(data.get(name)??"")])}));
+   else sessionStorage.removeItem(recoveryKey);
+  }catch{/* Browser storage may be unavailable; the existing navigation warning still applies. */}
+ };
  const overall=true;
  const nextSteps=true;
- return <Box action={disabled?undefined:async(data:FormData)=>{await updateCommunityTradeReviewAction(data);saved.current=contents(data);setDirty(false);}} component="form" data-coaching-controlled-draft data-coaching-unsaved={dirty?"true":"false"} onInput={event=>{if(disabled)return;const form=event.currentTarget;if(form instanceof HTMLFormElement)setDirty(contents(new FormData(form))!==saved.current);}} onChange={event=>{if(disabled)return;const form=event.currentTarget;if(form instanceof HTMLFormElement)setDirty(contents(new FormData(form))!==saved.current);}}>
+ return <Box ref={formRef} action={disabled?undefined:async(data:FormData)=>{await updateCommunityTradeReviewAction(data);saved.current=contents(data);try{sessionStorage.removeItem(recoveryKey);}catch{/* No browser storage. */}setDirty(false);}} component="form" data-coaching-controlled-draft data-coaching-unsaved={dirty?"true":"false"} onInput={event=>{if(!disabled&&event.currentTarget instanceof HTMLFormElement)track(event.currentTarget);}} onChange={event=>{if(!disabled&&event.currentTarget instanceof HTMLFormElement)track(event.currentTarget);}}>
   <input name="communitySlug" type="hidden" value={communitySlug}/>
   <input name="relationshipId" type="hidden" value={relationshipId}/>
   <input name="stayInReview" type="hidden" value="yes"/>

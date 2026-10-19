@@ -2593,6 +2593,7 @@ export function DaySessionView({
   const [customDayRuleOpen, setCustomDayRuleOpen] = useState(false);
   const [customDayRuleName, setCustomDayRuleName] = useState("");
   const [customDayRuleStatement, setCustomDayRuleStatement] = useState("");
+  const [customDayRuleNotice, setCustomDayRuleNotice] = useState("");
   const [customDayRuleState, setCustomDayRuleState] = useState<
     "idle" | "saving" | "error"
   >("idle");
@@ -2908,6 +2909,7 @@ export function DaySessionView({
     try {
       const dashboard = await api<{
         manualRules: Array<{
+          effectiveFrom: string;
           reviewScope: "day_session" | "trade" | "both";
           ruleId: string;
           ruleVersionId: string;
@@ -2949,8 +2951,21 @@ export function DaySessionView({
         targetLabel: null,
         targetRoundTripKey: null,
       };
-      setRules((current) => [...current, dayRule]);
-      setSelectedDayCustomRuleId(dayRule.ruleId);
+      // Match the persisted day projection's evaluation window. A newly created
+      // rule must not appear as an editable result on an earlier trading day.
+      const evaluationEnd = new Date(`${data.date}T00:00:00.000Z`);
+      evaluationEnd.setUTCDate(evaluationEnd.getUTCDate() + 2);
+      if (created.effectiveFrom < evaluationEnd.toISOString()) {
+        setRules((current) => [...current, dayRule]);
+        setSelectedDayCustomRuleId(dayRule.ruleId);
+        setCustomDayRuleNotice("");
+      } else {
+        const effectiveDate = new Intl.DateTimeFormat("en-US", {
+          timeZone: data.timezone,
+          dateStyle: "medium",
+        }).format(new Date(created.effectiveFrom));
+        setCustomDayRuleNotice(`Rule saved. It applies from ${effectiveDate} and is unavailable for ${data.date}.`);
+      }
       setCustomDayRuleName("");
       setCustomDayRuleStatement("");
       setCustomDayRuleState("idle");
@@ -4080,6 +4095,7 @@ export function DaySessionView({
             >
               Add custom day rule
             </Button>
+            {customDayRuleNotice ? <Alert severity="info" sx={{ mt: 1 }}>{customDayRuleNotice}</Alert> : null}
           </Box>
         </Box>
         <Box sx={{ borderTop: 1, borderColor: "divider", mt: 2, pt: 2 }}>

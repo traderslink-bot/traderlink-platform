@@ -10,6 +10,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 
 export const COACHING_DRAFT_SAVED = "coaching:draft-saved";
+export const COACHING_DRAFT_DISCARDED = "coaching:draft-discarded";
 
 export function focusCoachingEditor(id: string) {
   const editor = document.getElementById(id);
@@ -23,7 +24,7 @@ function formContents(id: string): string | null {
   // Student sections contain multiple independent forms. Compare their current
   // values in memory without storing private message/Journal drafts elsewhere.
   if(!form)return null;
-  return JSON.stringify([...form.querySelectorAll("form")].map(item=>[...new FormData(item).entries()].filter(([name])=>!name.startsWith("$ACTION_")).map(([name,value])=>[name,value instanceof File?[value.name,value.size,value.type,value.lastModified]:value])));
+  return JSON.stringify([...form.querySelectorAll("form")].filter(item=>!item.closest('[data-coaching-controlled-draft]')).map(item=>[...new FormData(item).entries()].filter(([name])=>!name.startsWith("$ACTION_")).map(([name,value])=>[name,value instanceof File?[value.name,value.size,value.type,value.lastModified]:value])));
 }
 
 /** Protect local editor switches without storing private drafts outside the form. */
@@ -186,6 +187,7 @@ export function useCoachingDraftNavigation(formId: string, formKey: string|((has
       <Button autoFocus onClick={() => {afterDialog.current = "trigger"; setPending(null);}}>Keep editing</Button>
       <Button color="error" onClick={() => {
         afterDialog.current = "form";
+        document.dispatchEvent(new CustomEvent(COACHING_DRAFT_DISCARDED,{detail:{formId}}));
         pending?.();
         setPending(null);
       }}>Discard changes</Button>

@@ -1,7 +1,8 @@
 "use client";
 import {coachingReviewDays} from "@/src/modules/communities/contracts/coaching-review-days";
 import Decimal from "decimal.js";
-import {useState,type ReactNode} from "react";
+import {useEffect,useMemo,useRef,useState,type ReactNode} from "react";
+import {readCoachingDraftRecovery,storeCoachingDraftRecovery,clearCoachingDraftRecovery} from "./coaching-review-draft-recovery";
 import {Alert,Box,Button,Chip,Grid,MenuItem,Stack,TextField,Typography} from "@mui/material";
 import {DashboardPanel} from "@/app/dashboard-ui";
 import type {CoachStudentJournalTrade,TraderLinkCommunityCoachJournalReadService} from "@/src/modules/communities/server/traderlink-community-coach-journal-read-service";
@@ -9,10 +10,26 @@ import {COACHING_FOCUS_PROMPTS,COACHING_REVIEW_FOCUS,type CoachingDayAssessment,
 import {removeCommunityDayAssessmentAction,saveCommunityDayAssessmentAction} from "./community-actions";
 
 type DayContext=ReturnType<TraderLinkCommunityCoachJournalReadService['readReviewContext']>;
+type DayDraft={assessment:string;focusFeedback:Partial<Record<CoachingReviewFocus,string>>};
+function restoreDayDrafts(values:Readonly<Record<string,string>>):Record<string,DayDraft>{
+ const result:Record<string,DayDraft>={};
+ for(const [day,json] of Object.entries(values))try{
+  const value=JSON.parse(json) as {assessment?:unknown;focusFeedback?:unknown};
+  if(typeof value.assessment!=='string'||!value.focusFeedback||typeof value.focusFeedback!=='object'||Array.isArray(value.focusFeedback)||Object.values(value.focusFeedback).some(text=>typeof text!=='string'))continue;
+  result[day]={assessment:value.assessment,focusFeedback:value.focusFeedback as DayDraft['focusFeedback']};
+ }catch{/* Ignore malformed local recovery. */}
+ return result;
+}
 export function CoachingTradingDayReview({tradeCountsByDay,periodStart,periodEnd,requestedDays=[],tradeTable,date,onDate,trades,context,assessments,focusAreas,communitySlug,relationshipId,reviewId,readOnly,dayLimit,tradeCap}:{tradeCountsByDay?:Readonly<Record<string,number>>;periodStart?:string|null;periodEnd?:string|null;requestedDays?:readonly string[];tradeTable:ReactNode;date:string;onDate:(date:string)=>void;trades:readonly CoachStudentJournalTrade[];context:DayContext|null;assessments:readonly CoachingDayAssessment[];focusAreas:readonly CoachingReviewFocus[];communitySlug:string;relationshipId:string;reviewId:string;readOnly:boolean;dayLimit:number|null;tradeCap:{basis:'per_day'|'per_review';quantity:number}|null}){
  const [drafts,setDrafts]=useState<Record<string,{assessment:string;focusFeedback:Partial<Record<CoachingReviewFocus,string>>}>>(()=>Object.fromEntries(assessments.map(item=>[item.date,{assessment:item.assessment,focusFeedback:item.focusFeedback}])));
  const [saved,setSaved]=useState(()=>Object.fromEntries(assessments.map(item=>[item.date,JSON.stringify({assessment:item.assessment,focusFeedback:item.focusFeedback})]))),[pending,setPending]=useState(false),[error,setError]=useState('');
  const dates=coachingReviewDays({tradeDates:trades.map(trade=>trade.tradingDate),noteDates:context?.dayNotes.map(item=>item.date),ruleDates:context?.dayRules.map(item=>item.date),requestedDays,start:periodStart,end:periodEnd});
+ const recoveryKey=`coaching-day-feedback:${communitySlug}:${relationshipId}:${reviewId}`;
+ const [recoveryReady,setRecoveryReady]=useState<string|null>(null),recoveredReview=useRef<string|null>(null);
+ const serializedDrafts=useMemo(()=>Object.fromEntries(Object.entries(drafts).map(([day,draft])=>[day,JSON.stringify(draft)])),[drafts]);
+ useEffect(()=>{if(readOnly||recoveredReview.current===recoveryKey)return;const recovered=restoreDayDrafts(readCoachingDraftRecovery(recoveryKey,saved,dates));if(Object.keys(recovered).length)setDrafts(current=>({...current,...recovered}));recoveredReview.current=recoveryKey;setRecoveryReady(recoveryKey);},[recoveryKey,readOnly,saved,dates]);
+ useEffect(()=>{if(recoveryReady===recoveryKey&&!readOnly)storeCoachingDraftRecovery(recoveryKey,serializedDrafts,saved);},[recoveryReady,readOnly,recoveryKey,serializedDrafts,saved]);
+ useEffect(()=>{const discard=()=>{clearCoachingDraftRecovery(recoveryKey);setDrafts(restoreDayDrafts(saved));};document.addEventListener("coaching:review-discard",discard);return()=>document.removeEventListener("coaching:review-discard",discard);},[recoveryKey,saved]);
  const chosen=trades.filter(trade=>trade.tradingDate===date),notes=context?.dayNotes.find(item=>item.date===date),rules=context?.dayRules.filter(item=>item.date===date)??[];
  const currencies=[...new Set(chosen.map(trade=>trade.currency))];
  const value=drafts[date]??{assessment:'',focusFeedback:{}};const dirty=Object.entries(drafts).some(([day,draft])=>JSON.stringify(draft)!==(saved[day]??JSON.stringify({assessment:'',focusFeedback:{}})));
