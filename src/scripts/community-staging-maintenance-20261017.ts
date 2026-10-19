@@ -12,15 +12,15 @@ import { createAndRestoreVerifyPlatformDatabaseBackup } from "@/src/modules/plat
 import { loadAccountIdentityConfiguration } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 
-const predecessorCount = 168;
-const completedCount = 169;
+const predecessorCount = 169;
+const completedCount = 170;
 const prefix = platformMigrationManifest.slice(0, predecessorCount);
 const expected = [
-  "0173_traderlink_community_stats",
+  "0174_traderlink_community_stats_history",
 ];
 assert.equal(platformMigrationManifest.length, completedCount);
 assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.migrationId), expected);
-assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), [186]);
+assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), [187]);
 
 function open(path: string) {
   const db = new Database(path, { fileMustExist: true });
@@ -90,7 +90,7 @@ async function main() {
   if (count === predecessorCount) {
     const disk = statfsSync(root);
     assert(disk.bavail * disk.bsize > statSync(sourcePath).size * 4 + 1024 ** 3, "Insufficient backup/rehearsal headroom");
-    const checkpoint = join(root, "community-stats-staging-checkpoints", "20261018-community-stats-0173");
+    const checkpoint = join(root, "community-stats-staging-checkpoints", "20261018-community-stats-0174");
     const backupPath = join(checkpoint, "backup.sqlite");
     const restoreVerificationPath = join(checkpoint, "restore-verification.sqlite");
     const evidence = await createAndRestoreVerifyPlatformDatabaseBackup({
