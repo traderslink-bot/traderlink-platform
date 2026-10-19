@@ -19,6 +19,7 @@ export function calculateCommunityStatsWebReturnCohorts(communityId:string,evide
     const web={...emptyReturn()};if(!eligibleOrigin)return {offsetDays,cohortMembers:0,pendingMembers:0,web};
     const target=statsDateMs(first.occurredAtUtc.slice(0,10))+offsetDays*COMMUNITY_STATS_DAY_MS,until=target+COMMUNITY_STATS_DAY_MS;
     if(until>bounds.asOf)return {offsetDays,cohortMembers:1,pendingMembers:1,web};
+    if(points.some(point=>point.occurredAtUtc.slice(0,10)===statsDateAt(target))){web.eligibleMembers=1;web.returnedMembers=1;return {offsetDays,cohortMembers:1,pendingMembers:0,web};}
     if(!statsMemberEligible(evidence,"web",target,until)){
       if(evidence.webLinkState==="unlinked")web.unlinkedMembers=1;else if(evidence.webLinkState==="verified")web.ineligibleMembers=1;else web.unknownMembers=1;
     }else if(!statsSourceObserved(evidence.coverage,communityId,"web",target,until))web.unknownMembers=1;
@@ -110,6 +111,8 @@ export function calculateCommunityStatsReturnCohorts(
       const points = statsMemberPoints(evidence, observations);
       for (const surface of ["discord", "web"] as const) {
         const cell = surface === "discord" ? discord : web;
+        const returned=points.some(point=>point.surface===surface&&point.occurredAtUtc.slice(0,10)===statsDateAt(target));
+        if(returned){cell.eligibleMembers+=1;cell.returnedMembers+=1;continue;}
         const observed = statsSourceObserved(evidence.coverage, communityId, surface, target, until);
         if(surface==="discord"&&membershipKnown&&!statsMemberEligible(evidence,"discord",target,until)){cell.ineligibleMembers+=1;continue;}
         // Historical web linkage/access must cover the target date; current linkage is not a backfill.

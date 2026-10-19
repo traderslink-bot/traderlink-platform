@@ -28,7 +28,7 @@ export async function authorizeCommunityStats(
   if (!row) platformFailure("TRADERLINK_WORKSPACE_NOT_FOUND");
   const repository = new TraderLinkCommunityRepository(database);
   let access = repository.requireCapability(row.community_id, actorUserId,"community.view");
-  const readableChannelIds = access.isOwner||operation==="settings"?[]:await readCommunityViewerChannels(database,slug,actorUserId,process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "");
+  const readableChannelIds = access.isOwner||operation==="settings"?[]:await readCommunityViewerChannels(database,slug,actorUserId,process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "",fetch,[0,2,5,13,15,16]);
   // Re-read grants after any Discord I/O, before selecting report data or accepting settings.
   access=repository.requireCapability(row.community_id,actorUserId,"community.view");
   const settings=communityStatsStorageReady(database)?database.prepare(`SELECT own_content_user_ids_json,export_user_ids_json FROM community_stats_settings WHERE community_id=?`).get(row.community_id) as {own_content_user_ids_json:string;export_user_ids_json:string}|undefined:undefined;

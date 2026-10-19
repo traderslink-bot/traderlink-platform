@@ -34,7 +34,7 @@ export function StatsDataChart({data}:{data:StatsChartData|null}){
   const score=(row:CommunityStatsTableRow)=>Math.max(-1,...data.series.map(key=>{const value=number(row[key]);return value===null?-1:Math.abs(value);}));
   const ranked=[...data.rows].sort((a,b)=>score(b)-score(a));
   const rows=ranked.slice(0,8),values=rows.flatMap(row=>data.series.map(key=>number(row[key])).filter((value):value is number=>value!==null));
-  if(!values.length)return <figure className="cs-card-chart" data-chart-state="unavailable"><figcaption className="cs-chart-caption">{data.scope}</figcaption><p className="cs-note">No measured values are available for this chart.</p></figure>;
+  if(!values.length)return <figure className="cs-card-chart" data-chart-state="unavailable">{data.scope?<figcaption className="cs-chart-caption">{data.scope}</figcaption>:null}<p className="cs-note">No measured values are available for this chart.</p></figure>;
   const minimum=Math.min(0,...values),maximum=Math.max(1,...values),x=(value:number)=>12+(value-minimum)/(maximum-minimum)*350;
   return <figure className="cs-card-chart" aria-label={`${data.series.join(" and ")} by ${data.label}`}>
     <figcaption className="cs-chart-caption">{data.scope}{ranked.length>8?` · Showing 8 largest rows of ${ranked.length}`:""}</figcaption>
@@ -53,17 +53,18 @@ export function StatsDataChart({data}:{data:StatsChartData|null}){
 
 function StatsDonut({data}:{data:StatsChartData}){
   const key=data.series[0];let colorIndex=0;
-  const items=data.rows.map(row=>{const value=number(row[key]);return {label:String(row[data.label]??"Unknown"),value,color:value!==null&&value>0?palette(colorIndex++):"var(--cs-chart-5)"};});
+  const allItems=data.rows.map(row=>{const value=number(row[key]);return {label:communityStatsValues[String(row[data.label])]??String(row[data.label]??"Unknown"),value,color:value!==null&&value>0?palette(colorIndex++):"var(--cs-chart-5)"};});
+  const items=allItems.length>8?[...allItems.slice(0,7),{label:"Other",value:allItems.slice(7).reduce((sum,item)=>sum+(item.value??0),0),color:palette(7)}]:allItems;
   // Negative deltas and overlapping populations are never interpreted as shares.
   if(items.some(item=>item.value!==null&&item.value<0))return <StatsDataChart data={{...data,kind:"bars"}}/>;
   const total=items.reduce((sum,item)=>sum+(item.value??0),0),circumference=2*Math.PI*58;let offset=0;
   return <figure className="cs-card-chart" aria-label={`${key} distribution`}>
-    <figcaption className="cs-chart-caption">{data.scope}</figcaption>
+    {data.scope?<figcaption className="cs-chart-caption">{data.scope}</figcaption>:null}
     <div className="cs-donut-layout"><svg viewBox="0 0 180 180" role="img" aria-label={total?`${total.toLocaleString()} recorded ${key.toLowerCase()}`:items.some(item=>item.value===null)?"Data unavailable":"No observed activity"}>
       <circle cx="90" cy="90" r="58" fill="none" stroke="currentColor" strokeWidth="22" opacity=".1"/>
       {total>0?items.map((item,index)=>{if(!item.value)return null;const length=item.value/total*circumference,start=offset;offset+=length;return <circle key={index} cx="90" cy="90" r="58" fill="none" stroke={item.color} strokeWidth="22" strokeDasharray={`${length} ${circumference-length}`} strokeDashoffset={-start} transform="rotate(-90 90 90)"><title>{`${item.label}: ${display(item.value)} (${(item.value/total*100).toFixed(1)}%)`}</title></circle>;}):null}
       <text x="90" y="88" textAnchor="middle" fill="currentColor" fontSize="25" fontWeight="700">{total?total.toLocaleString():items.some(item=>item.value===null)?"—":"0"}</text><text x="90" y="110" textAnchor="middle" fill="currentColor" fontSize="10">{key}</text>
-    </svg><ul className="cs-donut-legend">{items.map((item,index)=><li key={`${item.label}-${index}`}><i style={{background:item.color}}/><span>{item.label}</span><strong>{display(item.value)}{item.value!==null&&total>0?<small>{(item.value/total*100).toFixed(1)}%</small>:null}</strong></li>)}</ul></div>
+    </svg><ul className="cs-donut-legend">{items.map((item,index)=><li key={`${item.label}-${index}`}><i style={{background:item.color}}/><span>{item.label}</span><strong>{display(item.value)}{item.value!==null&&total>0?<small> ({(item.value/total*100).toFixed(1)}%)</small>:null}</strong></li>)}</ul></div>
     {items.some(item=>item.value===null)?<p className="cs-note">Unavailable values are excluded from the ring.</p>:null}
   </figure>;
 }

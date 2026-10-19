@@ -42,7 +42,7 @@ export const communityStatsPresentation=(theme:Theme)=>({
   "& button:focus-visible, & input:focus-visible, & select:focus-visible, & textarea:focus-visible, & a:focus-visible":{outline:`2px solid ${theme.palette.mode==="dark"?theme.palette.primary.light:theme.palette.primary.main}`,outlineOffset:3},
   "& .cs-title":{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:2,mb:2.25},
   "& .cs-controls":{display:"flex",flexWrap:"wrap",alignItems:"end",gap:1.5,mb:2},
-  "& label.cs-field":{display:"grid",gap:.5,fontSize:12,color:theme.palette.text.secondary,minWidth:120,flex:"1 1 120px"},
+  "& label.cs-field":{display:"grid",gap:.5,fontSize:12,color:theme.palette.text.secondary,minWidth:0,width:{xs:"100%",sm:190},maxWidth:"100%",flex:"0 1 auto"},
   "& input, & select, & textarea":{width:"100%",minWidth:0,minHeight:40,p:"8px 10px",border:`1px solid ${theme.palette.divider}`,borderRadius:"7px",background:theme.palette.background.paper},
   "& .cs-action":{minHeight:38,p:"7px 11px",border:`1px solid ${theme.palette.divider}`,borderRadius:"7px",background:theme.palette.background.paper,color:theme.palette.text.primary,textDecoration:"none"},
   "& .cs-tabs":{display:"flex",flexWrap:"wrap",gap:.5,borderBottom:`1px solid ${theme.palette.divider}`,mb:2.25},
@@ -53,8 +53,25 @@ export const communityStatsPresentation=(theme:Theme)=>({
   "& .cs-metric":{p:1.75,mb:0},"& .cs-metric span":{display:"block",fontSize:12,color:theme.palette.text.secondary},
   "& .cs-metric strong":{display:"block",mt:.8,fontSize:25,fontVariantNumeric:"tabular-nums"},
   "& .cs-panel-head":{display:"flex",flexWrap:"wrap",justifyContent:"space-between",alignItems:"center",gap:1.5,mb:2},
+  "& .cs-page-filters label.cs-field":{width:{xs:"100%",sm:260}},
+  "& .cs-tracking-channels":{maxHeight:360,overflowY:"auto",mt:2},
+  "& .cs-settings-status":{maxWidth:1100},
+  "& .cs-channel-picker":{minWidth:0,maxWidth:960,m:"0 0 16px",p:2,border:`1px solid ${theme.palette.divider}`,borderRadius:"7px"},
+  "& .cs-channel-picker > .cs-field":{width:{xs:"100%",sm:280},mb:2},
+  "& .cs-channel-choices":{display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(2,minmax(0,1fr))"},gap:1,maxHeight:320,overflowY:"auto"},
+  "& .cs-channel-choice":{display:"flex",alignItems:"center",gap:1,minHeight:40,minWidth:0,overflowWrap:"anywhere"},
+  "& .cs-channel-choice input":{width:18,minWidth:18,minHeight:18,height:18,p:0,m:0,flexShrink:0},
+  "& .cs-settings-controls label.cs-field":{width:{xs:"100%",sm:260}},
+  "& .cs-panel dl":{display:"grid",gridTemplateColumns:"minmax(0,2fr) minmax(0,1fr)",gap:"10px 16px",maxWidth:640},
+  "& .cs-panel dt":{minWidth:0},"& .cs-panel dd":{m:0,fontVariantNumeric:"tabular-nums"},
+  "& .cs-compact-panel":{maxWidth:760},
+  "& .cs-member-filters":{display:"flex",flexWrap:"wrap",alignItems:"end",gap:2},
+  "& .cs-member-filters .cs-field":{width:{xs:"100%",sm:280},maxWidth:"100%",flex:"0 1 auto"},
   "& .cs-note":{fontSize:12,color:theme.palette.text.secondary},
-  "& .cs-grid":{display:"grid",gridTemplateColumns:{xs:"1fr",md:"repeat(2,minmax(0,1fr))"},gap:2},
+  "& .cs-grid, & .cs-report-grid":{display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",lg:"repeat(2,minmax(0,1fr))"},gap:2,alignItems:"start",mb:2},
+  "& .cs-grid > .cs-panel, & .cs-report-grid > .cs-panel":{mb:0},
+  "& .cs-report-card-wide":{gridColumn:"1 / -1"},
+  "& .cs-report-card-publishing":{gridColumn:{xs:"1 / -1",xl:"auto"}},
   "& .cs-segments":{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:"repeat(4,minmax(0,1fr))"},gap:1.25},
   "& .cs-segment":{textAlign:"left",border:`1px solid ${theme.palette.divider}`,background:"transparent",borderRadius:"7px",p:1.5},
   "& .cs-segment strong":{display:"block",fontSize:24,mt:1},
@@ -77,6 +94,8 @@ export const communityStatsPresentation=(theme:Theme)=>({
     "& .cs-table td::before":{content:"attr(data-label)",fontWeight:600,color:theme.palette.text.secondary},
   },
 });
-export const communityStatsLabels:Record<string,string>={both:"Both",discord_only:"Discord only",web_only:"Webpages only",neither_observed:"Neither observed",unlinked:"Unlinked",insufficient_coverage:"Unknown coverage"};
+export const communityStatsLabels:Record<string,string>={discord_any:"Discord active",web_any:"Webpage active",discord_active:"Discord active; webpage activity unknown",web_active:"Webpage active; Discord activity unknown",both:"Both",discord_only:"Discord only",web_only:"Webpages only",neither_observed:"No activity",unlinked:"Unlinked",insufficient_coverage:"Insufficient data"};
 export const communityStatsValues:Record<string,string>={...communityStatsLabels,not_configured:"Not configured",collecting:"Collecting",connecting:"Connecting",lagging:"Lagging",disabled:"Disabled",gap:"Collection gap",unavailable:"Unavailable",observed:"Observed",discord:"Discord",web:"Webpages",membership:"Membership",tracked_page:"Tracked page",discord_post:"Full Discord post",not_collected:"Not collected",thread_reply:"Thread reply",forum_post:"Forum post",voice_participation:"Voice participation",reaction_add:"Reaction addition",message:"Message",pending:"Pending",sending:"Sending",delivered:"Delivered",failed:"Failed",cancelled:"Cancelled",confirmed:"Confirmed",rejected:"Rejected",uncertain:"Unconfirmed",legacy_baseline:"Legacy baseline",original:"Original",revision:"Revision",correction:"Correction",withdrawal:"Withdrawal",publication:"Publication",draft:"Draft",published:"Published",archived:"Archived",active:"Active",paused:"Paused",unknown:"Unknown",alert:"Alert",alerts:"Alerts index",watchlist:"Watchlist",watchlists:"Watchlists index",coach:"Coach profile",coaches:"Coaches index",plan:"Coaching plan",community:"Community overview"};
 export function statsDisplayUtc(value:string|null):string{return value?value.replace("T"," ").replace(/\.\d{3}Z$/u," UTC"):"Unavailable";}
+
+export function statsDisplayDateUtc(value:string|null):string{return value?value.slice(0,10):"Unavailable";}

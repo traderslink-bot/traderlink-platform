@@ -1,3 +1,4 @@
+import {readStatsTrackingStatus} from "@/src/modules/communities/server/stats/community-stats-tracking-status";
 import {randomUUID} from "node:crypto";
 import {requireTraderLinkPlatformRequestIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {openReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -50,7 +51,7 @@ export async function GET(request:Request,context:Context):Promise<Response>{
     const webReports=["pages","visits","authors","publishing","timing"];
     if((catalogSearch||options.contentId||options.authorId)&&!webReports.includes(tab))return new Response(null,{status:400,headers});
     if(roleId&&(tab==="publishing"||tab==="team"))return new Response(null,{status:400,headers});
-    if(options.segment&&(!["participation","members"].includes(tab)||!["both","discord_only","web_only","neither_observed","unlinked","insufficient_coverage","discord_decline","web_decline"].includes(options.segment)))return new Response(null,{status:400,headers});
+    if(options.segment&&(!["participation","members"].includes(tab)||!["discord_any","web_any","both","discord_only","web_only","discord_active","web_active","neither_observed","unlinked","insufficient_coverage","discord_decline","web_decline"].includes(options.segment)))return new Response(null,{status:400,headers});
     if(options.memberId&&!["members","visits"].includes(tab))return new Response(null,{status:400,headers});
     const scopedOptions={...options,roleId,catalogSearch};
     if(query.get("settings")==="1"){
@@ -65,7 +66,8 @@ export async function GET(request:Request,context:Context):Promise<Response>{
       const cutoff=new Date(Date.parse(asOfUtc)-90*86_400_000).toISOString();
       const auditCount=database.prepare(`SELECT count(*) AS n FROM community_stats_settings_audit WHERE community_id=? AND occurred_at_utc>=?`).get(scope.communityId,cutoff) as {n:number};
       const audits=database.prepare(`SELECT a.occurred_at_utc AS "Changed UTC",coalesce(u.display_name,'Previous owner') AS Actor,json_extract(a.settings_json,'$.revision') AS Revision,CASE WHEN json_extract(a.settings_json,'$.discordEnabled') THEN 'Enabled' ELSE 'Disabled' END AS Collection,json_array_length(a.settings_json,'$.channelIds') AS Channels,json_array_length(a.settings_json,'$.ownContentUserIds') AS "Own-content grants",json_array_length(a.settings_json,'$.exportUserIds') AS "Export grants" FROM community_stats_settings_audit a LEFT JOIN platform_users u ON u.user_id=a.actor_user_id WHERE a.community_id=? AND a.occurred_at_utc>=? ORDER BY a.occurred_at_utc DESC,a.audit_id DESC LIMIT 25 OFFSET ?`).all(scope.communityId,cutoff,(settingsPage-1)*25);
-      return Response.json({settings,channels,members,audits,auditCount:auditCount.n,settingsPage,runtimeEnabled:process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"},{headers});
+      const tracking=readStatsTrackingStatus(database,scope.communityId,!!settings&&typeof settings==="object"&&("discord_enabled" in settings)&&settings.discord_enabled===1,process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1",asOfUtc);
+      return Response.json({tracking,settings,channels,members,audits,auditCount:auditCount.n,settingsPage,runtimeEnabled:process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"},{headers});
     }
     const excel=query.get("format")==="xlsx",exporting=excel||query.get("format")==="csv";
     if(exporting&&!scope.canExport)return Response.json({error:"An explicit export grant is required."},{status:403,headers});
@@ -124,7 +126,8 @@ export async function POST(request:Request,context:Context):Promise<Response>{
     if(!communityStatsStorageReady(database))return new Response(null,{status:503,headers});
     const channels=[...new Set(body.channelIds as string[])].sort(),own=[...new Set(body.ownContentUserIds as string[])],exports=[...new Set(body.exportUserIds as string[])];
     if(channels.some(channel=>!/^\d{1,32}$/u.test(channel)))return new Response(null,{status:400,headers});
-    // Gateway selection is intersected with freshly resolved public permissions before any collection.
+    if(channels.some(channel=>!database!.prepare(`SELECT 1 FROM community_stats_channels WHERE community_id=? AND channel_id=? AND public_readable=1`).get(scope.communityId,channel)))return Response.json({error:"A selected channel is unavailable. Refresh channels before saving."},{status:400,headers});
+    // Owner selection is intersected with the bot channel permissions before collection.
     const repository=new TraderLinkCommunityRepository(database);
     for(const userId of new Set([...own,...exports])){
       const access=repository.requireCapability(scope.communityId,userId,"community.view");
@@ -137,7 +140,13 @@ export async function POST(request:Request,context:Context):Promise<Response>{
       if((prior&&body.expectedRevision!==prior.revision)||(!prior&&body.expectedRevision!==null))throw new StatsSettingsConflict();
       stats.ensureCommunity(scope.communityId,at);
       const old=database!.prepare(`SELECT discord_enabled,channel_ids_json FROM community_stats_settings WHERE community_id=?`).get(scope.communityId) as {discord_enabled:number;channel_ids_json:string};
-      const reconnect=body.retryConnection===true||old.discord_enabled!==(body.discordEnabled?1:0)||old.channel_ids_json!==JSON.stringify(channels);
+      const oldChannels=(JSON.parse(old.channel_ids_json) as string[]).sort();
+      const selectionChanged=JSON.stringify(oldChannels)!==JSON.stringify(channels);
+      const reconnect=body.retryConnection===true||old.discord_enabled!==(body.discordEnabled?1:0)||selectionChanged;
+      if(selectionChanged&&channels.some(channel=>!oldChannels.includes(channel))){
+        // Earlier tracking covered a smaller scope. Backfilled positives remain valid, but old silence cannot prove inactivity in newly included channels.
+        stats.coverage(scope.communityId,"discord","2015-01-01T00:00:00.000Z",at,"gap","channel_selection_changed");
+      }
       if(reconnect)database!.prepare(`UPDATE community_stats_settings SET discord_configuration_version=discord_configuration_version+1 WHERE community_id=?`).run(scope.communityId);
       database!.prepare(`UPDATE community_stats_settings SET revision=revision+1,discord_enabled=?,channel_ids_json=?,own_content_user_ids_json=?,export_user_ids_json=?,updated_at_utc=? WHERE community_id=?`).run(body.discordEnabled?1:0,JSON.stringify(channels),JSON.stringify(own),JSON.stringify(exports),at,scope.communityId);
       const revision=(prior?.revision??0)+1;

@@ -1,10 +1,12 @@
 import "server-only";
 import type Database from "better-sqlite3";
+import {ensureStatsHistoryJob} from "./community-stats-history-storage";
+import {statsBotChannels} from "./community-stats-channel-selection";
 import {randomUUID} from "node:crypto";
 import {CommunityStatsRepository} from "./community-stats-repository";
-import {CommunityStatsDiscordEvents,statsDiscordMember,statsPublicChannels} from "./community-stats-discord-events";
+import {CommunityStatsDiscordEvents,statsDiscordMember} from "./community-stats-discord-events";
 
-type Guild={communityId:string;guildId:string;selected:Set<string>;channels:Set<string>;afk:string|null;ready:boolean;readyAt:string|null;chunks:Set<number>;chunkCount:number;seen:Set<string>;nonce:string;initialVoice:Map<string,string>;threadIds:Set<string>;forumThreadIds:Set<string>;forumParents:Set<string>;baselineChanged:Set<string>;gapSince:string|null;ownerVerified:boolean;awaitingRoster:boolean;requestedAt:string|null};
+type Guild={topology:{roles:unknown;channels:unknown;threads:unknown}|null;communityId:string;guildId:string;selected:Set<string>;channels:Set<string>;afk:string|null;ready:boolean;readyAt:string|null;chunks:Set<number>;chunkCount:number;seen:Set<string>;nonce:string;initialVoice:Map<string,string>;threadIds:Set<string>;forumThreadIds:Set<string>;forumParents:Set<string>;baselineChanged:Set<string>;gapSince:string|null;ownerVerified:boolean;awaitingRoster:boolean;requestedAt:string|null};
 type Packet={op:number;s?:number;t?:string;d?:unknown};
 type Data=Record<string,unknown>;
 const object=(value:unknown):Data=>value&&typeof value==="object"&&!Array.isArray(value)?value as Data:{};
@@ -12,6 +14,7 @@ const now=()=>new Date().toISOString();
 
 /** One metadata-only Gateway connection. No connections are made by module import. */
 export class CommunityStatsDiscordGateway{
+  private botId:string|null=null;
   private socket:WebSocket|null=null;
   private heartbeat:ReturnType<typeof setInterval>|null=null;
   private reconnect:ReturnType<typeof setTimeout>|null=null;
@@ -26,7 +29,7 @@ export class CommunityStatsDiscordGateway{
   private lastConfirmed:string|null=null;
   private guilds=new Map<string,Guild>();
   constructor(private readonly database:()=>Database.Database,private readonly token:string,communities:readonly {communityId:string;guildId:string;channelIds:readonly string[]}[]){
-    for(const community of communities)this.guilds.set(community.guildId,{...community,selected:new Set(community.channelIds),channels:new Set(),afk:null,ready:false,readyAt:null,chunks:new Set(),chunkCount:0,seen:new Set(),nonce:`stats-${community.communityId}`.slice(0,32),initialVoice:new Map(),threadIds:new Set(),forumThreadIds:new Set(),forumParents:new Set(),baselineChanged:new Set(),gapSince:null,ownerVerified:false,awaitingRoster:false,requestedAt:null});
+    for(const community of communities)this.guilds.set(community.guildId,{...community,topology:null,selected:new Set(community.channelIds),channels:new Set(),afk:null,ready:false,readyAt:null,chunks:new Set(),chunkCount:0,seen:new Set(),nonce:`stats-${community.communityId}`.slice(0,32),initialVoice:new Map(),threadIds:new Set(),forumThreadIds:new Set(),forumParents:new Set(),baselineChanged:new Set(),gapSince:null,ownerVerified:false,awaitingRoster:false,requestedAt:null});
     const repo=this.repository(),cutoff="2015-01-01T00:00:00.000Z";
     for(const guild of this.guilds.values()){const last=repo.db.prepare(`SELECT max(until_utc) AS at FROM community_stats_coverage WHERE community_id=? AND source='discord' AND state='observed'`).get(guild.communityId) as {at:string|null};if(last.at)guild.gapSince=last.at<cutoff?cutoff:last.at;}
   }
@@ -35,6 +38,22 @@ export class CommunityStatsDiscordGateway{
   private clearTimers():void{if(this.heartbeat)clearInterval(this.heartbeat);if(this.firstHeartbeat)clearTimeout(this.firstHeartbeat);if(this.reconnect)clearTimeout(this.reconnect);this.heartbeat=null;this.firstHeartbeat=null;this.reconnect=null;}
   private send(op:number,d:unknown):void{if(this.socket?.readyState===WebSocket.OPEN)this.socket.send(JSON.stringify({op,d}));}
   private repository():CommunityStatsRepository{return new CommunityStatsRepository(this.database());}
+  private updateChannels(guild:Guild,member:unknown,at:string):void{
+    if(!guild.topology)return;
+    const channels=statsBotChannels(guild.guildId,guild.topology.roles,guild.topology.channels,member);
+    guild.channels=new Set([...channels.keys()].filter(id=>guild.selected.has(id)));
+    guild.threadIds.clear();guild.forumThreadIds.clear();guild.forumParents=new Set([...channels].filter(([id,c])=>[15,16].includes(c.type)&&guild.selected.has(id)).map(([id])=>id));
+    for(const raw of Array.isArray(guild.topology.threads)?guild.topology.threads:[]){const thread=object(raw);if([10,11].includes(Number(thread.type))&&guild.channels.has(String(thread.parent_id))&&typeof thread.id==="string"){guild.channels.add(thread.id);guild.threadIds.add(thread.id);if(guild.forumParents.has(String(thread.parent_id)))guild.forumThreadIds.add(thread.id);this.threadJob(guild,thread,at);}}
+    const repo=this.repository();repo.transaction(()=>{
+      repo.db.prepare(`DELETE FROM community_stats_channels WHERE community_id=?`).run(guild.communityId);
+      for(const [id,channel] of channels)repo.db.prepare(`INSERT INTO community_stats_channels(community_id,channel_id,name,channel_type,public_readable,last_observed_at_utc) VALUES(?,?,?,?,1,?)`).run(guild.communityId,id,channel.name,channel.type,at);
+    });
+  }
+  private threadJob(guild:Guild,thread:Data,at:string):void{
+    const db=this.repository().db;if(!db.prepare(`SELECT 1 FROM sqlite_schema WHERE name='community_stats_history_jobs'`).get())return;
+    const settings=db.prepare(`SELECT discord_configuration_version AS version FROM community_stats_settings WHERE community_id=?`).get(guild.communityId) as {version:number}|undefined;
+    if(settings)ensureStatsHistoryJob(db,guild.communityId,settings.version,String(thread.id),"messages",at,String(thread.parent_id));
+  }
   private requestRoster(guild:Guild,atUtc:string):void{guild.nonce=randomUUID().replaceAll("-","");guild.awaitingRoster=true;guild.requestedAt=atUtc;guild.chunkCount=0;this.send(8,{guild_id:guild.guildId,query:"",limit:0,nonce:guild.nonce});}
   private disconnect(reason:string):void{
     const at=now(),repo=this.repository(),lastConfirmed=this.lastConfirmed;
@@ -93,7 +112,7 @@ export class CommunityStatsDiscordGateway{
     if(packet.t==="READY"){
       if(typeof data.session_id!=="string"||typeof data.resume_gateway_url!=="string")throw new Error("Invalid gateway session.");
       const url=new URL(data.resume_gateway_url);if(url.protocol!=="wss:"||!/(^|\.)discord\.gg$/u.test(url.hostname))throw new Error("Invalid gateway resume URL.");
-      this.sessionId=data.session_id;this.resumeUrl=url.origin;return;
+      this.botId=typeof object(data.user).id==="string"?String(object(data.user).id):null;this.sessionId=data.session_id;this.resumeUrl=url.origin;return;
     }
     if(packet.t==="RESUMED"){
       // A resumed member stream does not include an authoritative current voice snapshot.
@@ -126,6 +145,7 @@ export class CommunityStatsDiscordGateway{
       }
     }
     if(!guild.ownerVerified)return;
+    if(packet.t==="GUILD_MEMBER_UPDATE"&&object(data.user).id===this.botId){this.sessionId=null;this.resumeUrl=null;this.fail("bot_roles_changed");return;}
     if(packet.t==="GUILD_UPDATE"&&Object.hasOwn(data,"afk_channel_id")&&data.afk_channel_id!==guild.afk){
       // Refresh the authoritative voice snapshot before using a changed AFK exclusion.
       this.sessionId=null;this.resumeUrl=null;this.fail("afk_channel_changed");return;
@@ -133,11 +153,9 @@ export class CommunityStatsDiscordGateway{
     if(packet.t==="GUILD_CREATE"){
       guild.afk=typeof data.afk_channel_id==="string"?data.afk_channel_id:null;
       guild.initialVoice.clear();for(const raw of Array.isArray(data.voice_states)?data.voice_states:[]){const voice=object(raw);if(typeof voice.user_id==="string"&&typeof voice.channel_id==="string")guild.initialVoice.set(voice.user_id,voice.channel_id);}
-      const channels=statsPublicChannels(guild.guildId,data.roles,data.channels);
-      guild.channels=new Set([...channels.keys()].filter(channel=>guild.selected.has(channel)));guild.threadIds.clear();guild.forumThreadIds.clear();guild.forumParents=new Set([...channels].filter(([,channel])=>[15,16].includes(channel.type)).map(([id])=>id));
+      guild.topology={roles:data.roles,channels:data.channels,threads:data.threads};
+      this.updateChannels(guild,(Array.isArray(data.members)?data.members:[]).find(raw=>object(object(raw).user).id===this.botId),at);
       repo.transaction(()=>{
-        repo.db.prepare(`DELETE FROM community_stats_channels WHERE community_id=?`).run(guild.communityId);
-        for(const [channelId,channel] of channels)repo.db.prepare(`INSERT INTO community_stats_channels(community_id,channel_id,name,channel_type,public_readable,last_observed_at_utc) VALUES(?,?,?,?,1,?)`).run(guild.communityId,channelId,channel.name,channel.type,at);
         repo.db.prepare(`DELETE FROM community_stats_roles WHERE community_id=?`).run(guild.communityId);
         for(const raw of Array.isArray(data.roles)?data.roles:[]){const role=object(raw);if(typeof role.id==="string"&&typeof role.name==="string")repo.db.prepare(`INSERT INTO community_stats_roles(community_id,role_id,name,last_observed_at_utc) VALUES(?,?,?,?)`).run(guild.communityId,role.id,role.name.slice(0,100),at);}
       });
@@ -148,6 +166,7 @@ export class CommunityStatsDiscordGateway{
     if(packet.t==="GUILD_MEMBERS_CHUNK"){
       if(!guild.awaitingRoster||data.nonce!==guild.nonce||!Array.isArray(data.members))return;
       const count=Number(data.chunk_count),index=Number(data.chunk_index);if(!Number.isSafeInteger(count)||count<1||count>100000||!Number.isSafeInteger(index)||index<0||index>=count||(guild.chunkCount!==0&&guild.chunkCount!==count)){this.fail("invalid_roster_chunk");return;}
+      const botMember=(data.members as unknown[]).find(raw=>object(object(raw).user).id===this.botId);if(botMember)this.updateChannels(guild,botMember,at);
       repo.transaction(()=>{for(const raw of data.members as unknown[]){const member=statsDiscordMember(raw,true);if(member&&!guild.baselineChanged.has(member.discordUserId)){guild.seen.add(member.discordUserId);repo.nativeMember(guild.communityId,member,at);}}});
       guild.chunkCount=count;guild.chunks.add(index);
       if(guild.chunkCount>0&&guild.chunks.size===guild.chunkCount){
@@ -157,7 +176,7 @@ export class CommunityStatsDiscordGateway{
           if(guild.gapSince)for(const source of ["discord","membership"] as const)repo.coverage(guild.communityId,source,guild.gapSince,at,"gap","disconnected");guild.gapSince=null;
           repo.source(guild.communityId,"membership","collecting",at);
           const complete=guild.selected.size>0&&[...guild.selected].every(channel=>guild.channels.has(channel));
-          repo.source(guild.communityId,"discord",complete?"collecting":"unavailable",at,complete?null:"Select public channels that are readable by every eligible member.");
+          repo.source(guild.communityId,"discord",complete?"collecting":"unavailable",at,complete?null:"Select channels the bot can access.");
           if(complete)for(const [userId,channelId] of guild.initialVoice){
             const person=repo.db.prepare(`SELECT is_bot FROM community_stats_members WHERE community_id=? AND discord_user_id=? AND active=1`).get(guild.communityId,userId) as {is_bot:number}|undefined;
             if(person?.is_bot===0&&guild.channels.has(channelId)&&channelId!==guild.afk)repo.beginVoice(guild.communityId,userId,channelId,at);
@@ -175,7 +194,7 @@ export class CommunityStatsDiscordGateway{
     if(!guild.ready&&!packet.t.startsWith("GUILD_MEMBER_"))return;
     if(packet.t==="THREAD_CREATE"||packet.t==="THREAD_UPDATE"){
       const threadId=String(data.id??"");guild.channels.delete(threadId);
-      guild.threadIds.delete(threadId);guild.forumThreadIds.delete(threadId);if(Number(data.type)===11&&guild.channels.has(String(data.parent_id))){guild.channels.add(threadId);guild.threadIds.add(threadId);if(guild.forumParents.has(String(data.parent_id)))guild.forumThreadIds.add(threadId);}return;
+      guild.threadIds.delete(threadId);guild.forumThreadIds.delete(threadId);if([10,11].includes(Number(data.type))&&guild.channels.has(String(data.parent_id))){guild.channels.add(threadId);guild.threadIds.add(threadId);this.threadJob(guild,data,at);if(guild.forumParents.has(String(data.parent_id)))guild.forumThreadIds.add(threadId);}return;
     }
     if(packet.t==="THREAD_DELETE"){guild.channels.delete(String(data.id));return;}
     repo.transaction(()=>new CommunityStatsDiscordEvents(repo).dispatch(guild.communityId,packet.t!,data,this.sessionId??"",this.sequence??0,at,guild.channels,guild.afk,guild.threadIds,guild.forumThreadIds));

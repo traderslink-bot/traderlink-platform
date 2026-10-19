@@ -25,8 +25,8 @@ function surfaceParticipation(
   const closedGaps: number[] = [], returns: string[] = [];
   let anchor = false, gap = 0, streak = 0, longestStreak = 0;
   let tailState:CommunityStatsDay["state"]="unknown";
-  // A partially retained date never supplies a complete quiet day.
-  const firstComplete = Math.ceil(Math.max(bounds.retainedFrom,Math.min(bounds.end,...evidence.eligibility.filter(row=>row.surface===surface).map(row=>Date.parse(row.fromUtc)),...points.map(point=>Date.parse(point.occurredAtUtc)))) / COMMUNITY_STATS_DAY_MS) * COMMUNITY_STATS_DAY_MS;
+  // Include positive activity on the first partial day; eligibility and coverage still gate quiet days.
+  const firstComplete = Math.floor(Math.max(bounds.retainedFrom,Math.min(bounds.end,...evidence.eligibility.filter(row=>row.surface===surface).map(row=>Date.parse(row.fromUtc)),...points.map(point=>Date.parse(point.occurredAtUtc)))) / COMMUNITY_STATS_DAY_MS) * COMMUNITY_STATS_DAY_MS;
   const lastComplete = Math.floor(bounds.end / COMMUNITY_STATS_DAY_MS) * COMMUNITY_STATS_DAY_MS - COMMUNITY_STATS_DAY_MS;
   const retainedPartialAnchor = points.filter(point => Date.parse(point.occurredAtUtc) < firstComplete).at(-1);
   if (retainedPartialAnchor) {
@@ -40,7 +40,7 @@ function surfaceParticipation(
     const eligible = statsMemberEligible(evidence, surface, left, right);
     const observed = eligible && statsSourceObserved(evidence.coverage, evidence.communityId, surface, left, right);
     const count = counts.get(date) ?? 0;
-    const state = !eligible ? "ineligible" : observed ? "observed" : "unknown";
+    const state = !eligible&&count===0 ? "ineligible" : observed ? "observed" : "unknown";
     tailState=state;
     if(calendarEligible)days.push(Object.freeze({ date, state, eventCount: count }));
     if (count > 0) {
@@ -84,7 +84,7 @@ function surfaceParticipation(
     surface, firstObservedAtUtc: points[0]?.occurredAtUtc ?? null,
     lastObservedAtUtc: points.at(-1)?.occurredAtUtc ?? null,
     eventsInReport: points.filter(point => point.occurredAtUtc.slice(0, 10) >= window.fromDate).length,
-    activeCompleteDates: reportDays.filter(day => day.state === "observed" && day.eventCount > 0).length,
+    activeCompleteDates: reportDays.filter(day => day.eventCount > 0).length,
     observedCompleteDates: reportDays.filter(day => day.state === "observed").length,
     unknownCompleteDates: reportDays.filter(day => day.state === "unknown").length,
     currentGapDays: currentGap, currentGapState,
@@ -103,19 +103,23 @@ export function calculateCommunityStatsParticipation(
 ): CommunityStatsParticipation {
   const discord = surfaceParticipation(evidence, window, "discord");
   const web = surfaceParticipation(evidence, window, "web");
-  const selected = discord.days.filter(day => day.date >= window.fromDate).slice(-window.quietDays);
-  const webByDate = new Map(web.days.map(day => [day.date, day]));
-  const complete = selected.length === window.quietDays
-    && selected.every(day => day.state === "observed" && webByDate.get(day.date)?.state === "observed");
-  const discordActive = selected.some(day => day.eventCount > 0);
-  const webActive = selected.some(day => (webByDate.get(day.date)?.eventCount ?? 0) > 0);
-  const segment = evidence.webLinkState === "unlinked" ? "unlinked"
-    : evidence.webLinkState !== "verified" || !complete ? "insufficient_coverage"
-      : discordActive && webActive ? "both" : discordActive ? "discord_only" : webActive ? "web_only" : "neither_observed";
+  const bounds=resolveStatsWindow(window);
+  const points=statsMemberPoints(evidence,window).filter(point=>Date.parse(point.occurredAtUtc)>=bounds.start);
+  const discordActive=points.some(point=>point.surface==="discord");
+  const webActive=points.some(point=>point.surface==="web");
+  const complete=(surface:CommunityStatsSurface)=>statsMemberEligible(evidence,surface,bounds.start,bounds.end)
+    &&statsSourceObserved(evidence.coverage,evidence.communityId,surface,bounds.start,bounds.end);
+  const discordKnown=complete("discord"),webKnown=complete("web");
+  // Positive actions stand on their own. Only a negative claim needs continuous tracking.
+  const segment=discordActive&&webActive?"both"
+    :discordActive?(webKnown?"discord_only":"discord_active")
+    :webActive?(discordKnown?"web_only":"web_active")
+    :discordKnown&&webKnown?"neither_observed"
+    :evidence.webLinkState==="unlinked"?"unlinked":"insufficient_coverage";
   return Object.freeze({
     communityId: evidence.communityId, discordUserId: evidence.discordUserId, segment,
-    quietWindowFromDate: selected[0]?.date ?? null,
-    quietWindowThroughDate: selected.at(-1)?.date ?? null,
-    quietWindowCompleteDates: selected.length, discord, web,
+    quietWindowFromDate: window.fromDate,
+    quietWindowThroughDate: statsDateAt(bounds.end-1),
+    quietWindowCompleteDates: Math.max(0,Math.floor(bounds.end/COMMUNITY_STATS_DAY_MS)-Math.ceil(bounds.start/COMMUNITY_STATS_DAY_MS)), discord, web,
   });
 }

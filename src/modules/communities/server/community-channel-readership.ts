@@ -5,7 +5,7 @@ type Overwrite={id:string;type:number;allow:string;deny:string};
 const id=/^\d{1,32}$/;
 const bits=/^\d{1,32}$/;
 /** Fresh Discord membership + roles + channel overwrites. No app audience override. */
-export async function readCommunityViewerChannels(db:Database.Database,slug:string,userId:string,token:string,request:typeof fetch=fetch):Promise<readonly string[]>{
+export async function readCommunityViewerChannels(db:Database.Database,slug:string,userId:string,token:string,request:typeof fetch=fetch,channelTypes:readonly number[]=[0,5]):Promise<readonly string[]>{
  const target=db.prepare(`SELECT c.discord_guild_id,i.auth_subject FROM traderlink_communities c JOIN traderlink_community_memberships m ON m.community_id=c.community_id AND m.user_id=? AND m.status='active' JOIN platform_auth_identities i ON i.user_id=m.user_id AND i.auth_provider='discord' AND i.status='active' WHERE c.slug=? AND c.status='active'`).get(userId,slug) as {discord_guild_id:string;auth_subject:string}|undefined;
  if(!target||!token||!id.test(target.discord_guild_id)||!id.test(target.auth_subject))return [];
  const guildId=target.discord_guild_id,memberId=target.auth_subject;
@@ -18,7 +18,7 @@ export async function readCommunityViewerChannels(db:Database.Database,slug:stri
   for(const role of roles)if(selected.has(role.id))base|=BigInt(role.permissions);
   const administrator=guild.owner_id===memberId||Boolean(base&BigInt(8));
   return channels.filter(channel=>{
-   if(!id.test(channel.id)||(channel.guild_id!==undefined&&channel.guild_id!==guildId)||![0,5].includes(channel.type))return false;
+   if(!id.test(channel.id)||(channel.guild_id!==undefined&&channel.guild_id!==guildId)||!channelTypes.includes(channel.type))return false;
    const overwrites=channel.permission_overwrites;if(!Array.isArray(overwrites)||overwrites.some(item=>!id.test(item.id)||![0,1].includes(item.type)||!bits.test(item.allow)||!bits.test(item.deny)))return false;
    if(administrator)return true;
    let permissions=base;const apply=(deny:bigint,allow:bigint)=>{permissions=(permissions&~deny)|allow;};

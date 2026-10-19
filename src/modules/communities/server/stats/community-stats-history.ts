@@ -1,6 +1,7 @@
 import "server-only";
 import type Database from "better-sqlite3";
 import {CommunityStatsRepository} from "./community-stats-repository";
+import {statsBotChannels} from "./community-stats-channel-selection";
 import {statsPublicChannels} from "./community-stats-discord-events";
 
 type Data=Record<string,unknown>;
@@ -8,10 +9,10 @@ const object=(value:unknown):Data=>value&&typeof value==="object"&&!Array.isArra
 const id=(value:unknown):value is string=>typeof value==="string"&&/^\d{1,32}$/u.test(value);
 const instant=(value:unknown):string|null=>typeof value==="string"&&Number.isFinite(Date.parse(value))?new Date(value).toISOString():null;
 const text=(value:unknown):string|null=>typeof value==="string"?value.slice(0,80):null;
-import {statsHistoryIdentityHash,statsHistoryReady} from "./community-stats-history-storage";
+import {statsHistoryIdentityHash,statsHistoryReady,ensureStatsHistoryJob} from "./community-stats-history-storage";
 type Community={communityId:string;guildId:string;version:number;selected:string[];ownerId:string;topologyAt:string};
 type Job={channel_id:string;parent_id:string|null;kind:"messages"|"archived"|"active";cursor:string|null;snapshot_at_utc:string};
-type Topology={roles:unknown;channels:Map<string,{name:string;type:number}>;at:number;topologyAt:string;phase:"guild"|"channels"|"ready"};
+type Topology={roles:unknown;channels:Map<string,{name:string;type:number}>;at:number;topologyAt:string;member?:unknown;phase:"guild"|"member"|"channels"|"ready"};
 /** History must be readable by everyone, not only by the bot's elevated role. */
 export function statsPublicHistoryChannels(guildId:string,roles:unknown,channels:unknown){
   const result=statsPublicChannels(guildId,roles,channels);
@@ -32,6 +33,8 @@ class HistoryRequestError extends Error{constructor(readonly reason:string,reado
 
 /** Hosted single-writer background task: at most one REST request per tick, no Gateway or bodies stored. */
 export class CommunityStatsHistory {
+  private botId:string|null=null;
+  private botToken:string|null=null;
   private busy=false;
   private nextCommunity=0;
   private topology=new Map<string,Topology>();
@@ -65,7 +68,7 @@ export class CommunityStatsHistory {
     return JSON.parse(body);
   }
   private job(community:Community,channel:string,kind:Job["kind"],at:string,parent:string|null=null):void{
-    this.db.prepare(`INSERT INTO community_stats_history_jobs(community_id,configuration_version,channel_id,parent_id,kind,snapshot_at_utc,checked_at_utc,retry_at_utc) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING`).run(community.communityId,community.version,channel,parent,kind,at,at,at);
+    ensureStatsHistoryJob(this.db,community.communityId,community.version,channel,kind,at,parent);
   }
   private importThreads(community:Community,raw:unknown,at:string,publicChannels:Map<string,{name:string;type:number}>):Data[]{
     if(!Array.isArray(raw))throw new Error("Invalid public thread response.");
@@ -111,23 +114,26 @@ export class CommunityStatsHistory {
         community=candidate;break;
       }
       if(!community)return;
+      if(this.botToken!==token){this.botId=null;this.botToken=token;this.topology.clear();}
+      if(!this.botId){const bot=object(await this.get("/users/@me",token));if(!id(bot.id))throw new Error("Bot identity unavailable.");this.botId=bot.id;return;}
       const key=`${community.communityId}:${community.version}`;
       let topology=this.topology.get(key);
       if(!topology||topology.topologyAt!==community.topologyAt||Date.now()-topology.at>600_000){topology={roles:[],channels:new Map(),at:Date.now(),topologyAt:community.topologyAt,phase:"guild"};this.topology.set(key,topology);}
       if(topology.phase==="guild"){
         const guild=object(await this.get(`/guilds/${community.guildId}`,token));
         if(guild.id!==community.guildId||guild.owner_id!==community.ownerId)throw new HistoryRequestError("Community ownership could not be verified.",300);
-        topology.roles=guild.roles;topology.phase="channels";return;
+        topology.roles=guild.roles;topology.phase="member";return;
       }
+      if(topology.phase==="member"){topology.member=await this.get(`/guilds/${community.guildId}/members/${this.botId}`,token);if(object(object(topology.member).user).id!==this.botId)throw new Error("Bot membership unavailable.");topology.phase="channels";return;}
       if(topology.phase==="channels"){
         const channels=await this.get(`/guilds/${community.guildId}/channels`,token);
-        topology.channels=statsPublicHistoryChannels(community.guildId,topology.roles,channels);
+        topology.channels=statsBotChannels(community.guildId,topology.roles,channels,topology.member,true);
         topology.phase="ready";topology.at=Date.now();return;
       }
       new CommunityStatsRepository(this.db).transaction(()=>{
         for(const channelId of community!.selected){const channel=topology!.channels.get(channelId);if(!channel){
           this.job(community!,channelId,"messages",at);
-          this.db.prepare(`UPDATE community_stats_history_jobs SET status='blocked',reason='History is not readable by every member, or this public channel is no longer accessible.',checked_at_utc=?,retry_at_utc=? WHERE community_id=? AND configuration_version=? AND channel_id=? AND kind='messages'`).run(at,new Date(Date.parse(at)+300_000).toISOString(),community!.communityId,community!.version,channelId);
+          this.db.prepare(`UPDATE community_stats_history_jobs SET status='blocked',reason='The bot cannot read history in this selected channel.',checked_at_utc=?,retry_at_utc=? WHERE community_id=? AND configuration_version=? AND channel_id=? AND kind='messages' AND status!='complete'`).run(at,new Date(Date.parse(at)+300_000).toISOString(),community!.communityId,community!.version,channelId);
           continue;
         }
           if(![15,16].includes(channel.type))this.job(community!,channelId,"messages",at);
@@ -138,7 +144,7 @@ export class CommunityStatsHistory {
       job=this.db.prepare(`SELECT channel_id,parent_id,kind,cursor,snapshot_at_utc FROM community_stats_history_jobs WHERE community_id=? AND configuration_version=? AND status!='complete' AND retry_at_utc<=? ORDER BY CASE status WHEN 'blocked' THEN 1 ELSE 0 END,checked_at_utc,CASE kind WHEN 'active' THEN 0 WHEN 'messages' THEN 1 ELSE 2 END,channel_id LIMIT 1`).get(community.communityId,community.version,at) as Job|undefined;
       if(!job)return;
       const parent=job.parent_id??job.channel_id;
-      if(job.kind!=="active"&&(!community.selected.includes(parent)||!topology.channels.has(parent)))throw new HistoryRequestError("Channel is no longer an eligible public channel.",300,true);
+      if(job.kind!=="active"&&(!community.selected.includes(parent)||!topology.channels.has(parent)))throw new HistoryRequestError("Selected channel is no longer accessible.",300,true);
       const path=job.kind==="active"?`/guilds/${community.guildId}/threads/active`:job.kind==="archived"?`/channels/${job.channel_id}/threads/archived/public?limit=100${job.cursor?`&before=${encodeURIComponent(job.cursor)}`:""}`:`/channels/${job.channel_id}/messages?limit=100${job.cursor?`&before=${job.cursor}`:""}`;
       const response=await this.get(path,token);
       const current=this.eligible(community.communityId);

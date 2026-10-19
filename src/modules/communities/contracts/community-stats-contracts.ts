@@ -129,7 +129,7 @@ export type CommunityStatsSurfaceParticipation = Readonly<{
 export type CommunityStatsParticipation = Readonly<{
   communityId: string;
   discordUserId: string;
-  segment: "both" | "discord_only" | "web_only" | "neither_observed" | "unlinked" | "insufficient_coverage";
+  segment: "discord_active" | "web_active" | "both" | "discord_only" | "web_only" | "neither_observed" | "unlinked" | "insufficient_coverage";
   quietWindowFromDate: string | null;
   quietWindowThroughDate: string | null;
   quietWindowCompleteDates: number;

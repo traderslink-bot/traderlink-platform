@@ -88,6 +88,5 @@ export function* communityStatsWorkbookSheets(report:CommunityStatsReport,readPa
     yield sheet("Member measures",["Measure","Current","Prior","Change"],report.member.measures);if(eventRows){const events=eventRows(true);yield sheet("Member timeline",events.columns,events.rows);}}
   const selected=report.tab==="pages"?report.catalog.find(item=>item.id===filters["Page filter"]):null;
   if(selected)yield sheet(selected.title,["Page","Author","State","Publication format"],[{Page:selected.title,Author:selected.authorName??"Community",State:selected.state,"Publication format":selected.publicationMode??"unknown"}]);
-  if(report.sources.length)yield sheet("Collection coverage",["source","status","Retained data since UTC","Checked UTC","Last event UTC","reason"],report.sources);
   if(report.notes.length)yield sheet("Definitions",["Definition"],report.notes.map(note=>({Definition:note})));
 }
