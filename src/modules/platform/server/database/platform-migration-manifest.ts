@@ -1,3 +1,4 @@
+import { platformDiscordIdentityReleaseMigration } from "./migrations/0176_platform_discord_identity_release";
 import { traderLinkCommunitySharedAlertsMigration } from "@/src/modules/communities/server/database/migrations/0171_traderlink_community_shared_alerts";
 import { traderLinkCommunityStatsMigration } from "@/src/modules/communities/server/database/migrations/0173_traderlink_community_stats";
 import { traderLinkCommunityStatsHistoryMigration } from "@/src/modules/communities/server/database/migrations/0174_traderlink_community_stats_history";
@@ -813,6 +814,7 @@ const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0173_traderlink_community_stats.ts", migration: traderLinkCommunityStatsMigration }),
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0174_traderlink_community_stats_history.ts", migration: traderLinkCommunityStatsHistoryMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0175_platform_profile_name.ts", migration: platformProfileNameMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0176_platform_discord_identity_release.ts", migration: platformDiscordIdentityReleaseMigration }),
   ]);
 
 export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[] = Object.freeze(
@@ -832,6 +834,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
     "0175_platform_profile_name": Object.freeze(["platform_user_profile_names"]),
+    "0176_platform_discord_identity_release": Object.freeze(["platform_discord_released_origins", "platform_discord_identity_releases"]),
     "0174_traderlink_community_stats_history": Object.freeze(["community_stats_history_jobs", "community_stats_reaction_snapshots", "community_stats_history_exclusions"]),
     "0173_traderlink_community_stats": Object.freeze([
       "community_stats_settings",
