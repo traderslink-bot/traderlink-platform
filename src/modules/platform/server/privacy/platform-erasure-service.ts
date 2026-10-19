@@ -359,6 +359,16 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
     if (scope.workspaceRole !== "owner") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
     assertSoleWorkspaceOwner(this.database, scope);
     return withPermanentDeleteTransaction(this.database, () => {
+      // This authorized privacy transaction has already suspended BEFORE DELETE
+      // audit guards and defers FKs. Remove either side's release references before
+      // deleting users; never weaken these guards in the normal login flow.
+      if (tables(this.database).includes("platform_discord_identity_releases")) {
+        this.database.prepare(`DELETE FROM platform_discord_identity_releases
+          WHERE user_id=? OR claimed_by_user_id=?`).run(scope.userId, scope.userId);
+      }
+      // The generic user_id pass below removes only this user's original-provider
+      // marker. Another surviving user's marker must remain: deleting a later
+      // destination account must not reserve Discord back to an old signup row.
       captureCoachingDeletionEvidence(this.database, scope.userId, createCanonicalUtcTimestamp());
       eraseCommunityStatsIdentity(this.database,scope.userId);
       // Only this participant's relationships end. Community ownership alone

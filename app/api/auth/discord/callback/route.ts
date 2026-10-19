@@ -426,11 +426,9 @@ FROM traderlink_communities WHERE discord_guild_id = ?`).get(guild.id) as
         getSafeDiscordAuthErrorMessage(error),
       );
 
-      const response = authFailureRedirect(
-        request,
-        returnTo,
-        "progress-storage-failed",
-      );
+      const response = error instanceof PlatformLoginError && error.code === "discord_disconnected"
+        ? NextResponse.redirect(new URL("/login?error=discord-disconnected", resolvePlatformPublicOrigin(request)))
+        : authFailureRedirect(request, returnTo, "progress-storage-failed");
       clearDiscordOAuthCookies(response, request);
       return response;
     }

@@ -20,6 +20,8 @@ export default async function LoginPage({
       "Use your existing sign-in method, then connect the other method in Account.",
     "discord-account-conflict":
       "This Discord account is already connected to another TradersLink account.",
+    "discord-disconnected":
+      "This Discord login was disconnected. Sign in to the TradersLink account you want to use with another login method, then connect Discord in Login methods.",
   };
   return (
     <LoginScreen

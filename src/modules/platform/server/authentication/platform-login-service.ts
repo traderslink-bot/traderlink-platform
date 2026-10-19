@@ -8,6 +8,7 @@ import { PlatformAuthenticationRepository } from "./platform-authentication-repo
 import { readProtectedInitialOwnerDiscordSubject } from "./platform-discord-configuration";
 import { provisionVerifiedPlatformIdentity } from "./platform-identity-provisioning";
 import { PlatformProfileNameRepository } from "../identity/platform-profile-name-repository";
+import { PlatformDiscordReleaseRepository } from "./platform-discord-release-repository";
 import {
   PlatformSessionRepository,
   type ResolvedPlatformSession,
@@ -21,6 +22,7 @@ export class PlatformLoginError extends Error {
       | "invalid"
       | "conflict"
       | "last_method"
+      | "discord_disconnected"
       | "email_change_sign_in"
       | "email_change_account"
       | "email_in_use"
@@ -32,6 +34,7 @@ export class PlatformLoginError extends Error {
         conflict:
           "Sign in with your existing method, then connect this method in Account.",
         last_method: "Keep at least one usable login method connected.",
+        discord_disconnected: "This Discord login was disconnected. Sign in to the TradersLink account you want to use with another login method, then connect Discord in Login methods.",
         email_change_sign_in: "Sign in to the account that requested this email change in this browser, then return here and verify your new email. Your link has not been used.",
         email_change_account: "This browser is signed in to a different account. Sign in to the account that requested this email change, then return here and verify your new email. Your link has not been used.",
         email_in_use: "This email address is already connected to another account. Use a different email address.",
@@ -731,15 +734,18 @@ export class PlatformLoginService {
         "SELECT user_id FROM platform_users WHERE auth_provider=? AND auth_subject=?",
       )
       .get(provider, subject) as { user_id: string } | undefined;
-    if (primary && primary.user_id !== userId)
+    const releases = provider === "discord" ? new PlatformDiscordReleaseRepository(this.db) : null;
+    if (primary && primary.user_id !== userId &&
+      !releases?.hasReleasedOriginalOwner(primary.user_id, subject))
       throw new PlatformLoginError("conflict");
     if (
       provider === "discord" &&
       subject === readProtectedInitialOwnerDiscordSubject() &&
-      !identity
+      (!identity || identity.user_id !== userId)
     )
       throw new PlatformLoginError("conflict");
-    if (identity && identity.user_id !== userId)
+    if (identity && identity.user_id !== userId &&
+      (provider !== "discord" || identity.status !== "revoked"))
       throw new PlatformLoginError("conflict");
     const active = this.db
       .prepare(
@@ -747,6 +753,13 @@ export class PlatformLoginService {
       )
       .get(userId, provider) as { auth_subject: string } | undefined;
     if (active && active.auth_subject !== subject)
+      throw new PlatformLoginError("conflict");
+    if (identity?.status === "revoked" && releases &&
+      releases.claim(identity.user_id, userId, subject, this.now())) {
+      this.audit(userId, provider, identity.user_id === userId ? "reconnect" : "link");
+      return;
+    }
+    if (identity && identity.user_id !== userId)
       throw new PlatformLoginError("conflict");
     if (identity?.status === "revoked") {
       this.db
@@ -771,6 +784,9 @@ export class PlatformLoginService {
     subject: string,
     email: string | null,
   ) {
+    if (provider === "discord" &&
+      new PlatformDiscordReleaseRepository(this.db).isDisconnected(subject))
+      throw new PlatformLoginError("discord_disconnected");
     if (
       !email ||
       new PlatformAuthenticationRepository(this.db).findActiveIdentity(
@@ -858,6 +874,9 @@ export class PlatformLoginService {
           this.linkIdentity(userId, input.provider, input.subject);
           this.consume(input.linkIntent);
         } else {
+          if (input.provider === "discord" &&
+            new PlatformDiscordReleaseRepository(this.db).isDisconnected(input.subject))
+            throw new PlatformLoginError("discord_disconnected");
           const existing = new PlatformAuthenticationRepository(
             this.db,
           ).findActiveIdentity(input.provider, input.subject);
@@ -992,6 +1011,8 @@ export class PlatformLoginService {
             "UPDATE platform_auth_sessions SET revoked_at_utc=? WHERE user_id=? AND auth_provider=? AND revoked_at_utc IS NULL",
           )
           .run(this.now(), session.userId, provider);
+        if (provider === "discord")
+          new PlatformDiscordReleaseRepository(this.db).record(session.userId);
         if (provider === "email")
           this.db
             .prepare(`UPDATE platform_login_tokens SET consumed_at_utc=?

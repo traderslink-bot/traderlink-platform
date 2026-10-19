@@ -143,7 +143,7 @@ export function ConnectedMethods({
                 <Typography>
                   Disconnect {label}?
                   {provider === "discord"
-                    ? " Linked Discord benefits will stop. Your Journal and purchased app access stay with your account."
+                    ? " This frees Discord to connect to another TradersLink account. Linked Discord benefits will stop. Your Journal and purchased app access stay with this account. Use your other connected login method to return here."
                     : " You can use your other connected method to sign in."}
                 </Typography>
                 <Button disabled={busy} onClick={() => update("unlink", provider)}>

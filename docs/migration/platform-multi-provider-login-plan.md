@@ -1,5 +1,8 @@
 # Platform login: Google, email/password and Discord
 
+Owner-approved Discord release/relink follow-up:
+[Disconnect releases Discord for another account](discord-disconnect-release-progress-20261019.md).
+
 Owner-approved profile-name follow-up (source only; deployment held):
 [Unique editable profile names](profile-name-progress-20261018.md).
 
