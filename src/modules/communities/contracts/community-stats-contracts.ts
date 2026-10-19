@@ -43,6 +43,7 @@ export type CommunityStatsActivityKind =
 
 /** A validated human contribution projection, not arbitrary raw Gateway JSON. */
 export type CommunityStatsActivityPoint = Readonly<{
+  evidence?: "live" | "imported_message";
   communityId: string;
   discordUserId: string;
   platformUserId: string | null;

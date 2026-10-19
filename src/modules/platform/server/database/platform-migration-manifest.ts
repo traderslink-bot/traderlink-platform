@@ -1,5 +1,6 @@
 import { traderLinkCommunitySharedAlertsMigration } from "@/src/modules/communities/server/database/migrations/0171_traderlink_community_shared_alerts";
 import { traderLinkCommunityStatsMigration } from "@/src/modules/communities/server/database/migrations/0173_traderlink_community_stats";
+import { traderLinkCommunityStatsHistoryMigration } from "@/src/modules/communities/server/database/migrations/0174_traderlink_community_stats_history";
 import { platformLoginIdentityProfilesMigration } from "./migrations/0172_platform_login_identity_profiles";
 import {platformCommunityPublicationRevisionActionsMigration} from "./migrations/0170_platform_community_publication_revision_actions";
 import {platformCommunityRemovalRecoveryMigration} from "./migrations/0169_platform_community_removal_recovery";
@@ -809,6 +810,7 @@ const integratedMigrationFileEntries: readonly PlatformMigrationFileEntry[] =
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0171_traderlink_community_shared_alerts.ts", migration: traderLinkCommunitySharedAlertsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0172_platform_login_identity_profiles.ts", migration: platformLoginIdentityProfilesMigration }),
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0173_traderlink_community_stats.ts", migration: traderLinkCommunityStatsMigration }),
+    Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0174_traderlink_community_stats_history.ts", migration: traderLinkCommunityStatsHistoryMigration }),
   ]);
 
 export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[] = Object.freeze(
@@ -827,6 +829,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0174_traderlink_community_stats_history": Object.freeze(["community_stats_history_jobs", "community_stats_reaction_snapshots", "community_stats_history_exclusions"]),
     "0173_traderlink_community_stats": Object.freeze([
       "community_stats_settings",
       "community_stats_members",

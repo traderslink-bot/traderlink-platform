@@ -26,7 +26,7 @@ function surfaceParticipation(
   let anchor = false, gap = 0, streak = 0, longestStreak = 0;
   let tailState:CommunityStatsDay["state"]="unknown";
   // A partially retained date never supplies a complete quiet day.
-  const firstComplete = Math.ceil(bounds.retainedFrom / COMMUNITY_STATS_DAY_MS) * COMMUNITY_STATS_DAY_MS;
+  const firstComplete = Math.ceil(Math.max(bounds.retainedFrom,Math.min(bounds.end,...evidence.eligibility.filter(row=>row.surface===surface).map(row=>Date.parse(row.fromUtc)),...points.map(point=>Date.parse(point.occurredAtUtc)))) / COMMUNITY_STATS_DAY_MS) * COMMUNITY_STATS_DAY_MS;
   const lastComplete = Math.floor(bounds.end / COMMUNITY_STATS_DAY_MS) * COMMUNITY_STATS_DAY_MS - COMMUNITY_STATS_DAY_MS;
   const retainedPartialAnchor = points.filter(point => Date.parse(point.occurredAtUtc) < firstComplete).at(-1);
   if (retainedPartialAnchor) {

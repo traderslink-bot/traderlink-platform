@@ -4,10 +4,10 @@ import {openPlatformDatabase} from "../../../platform/server/database/open-platf
 import {approvedCommunityGuildIds} from "../community-launch-policy";
 import {CommunityStatsRepository,communityStatsStorageReady} from "./community-stats-repository";
 import {CommunityStatsDiscordGateway} from "./community-stats-discord-gateway";
-import {pruneCommunityStats} from "./community-stats-retention";
 import {TraderLinkCommunityRepository} from "../traderlink-community-repository";
+import {CommunityStatsHistory} from "./community-stats-history";
 
-type State={timer:ReturnType<typeof setInterval>;database:Database.Database;gateway:CommunityStatsDiscordGateway|null;signature:string;lastWeb:string|null;lastPrune:number;pruneBacklog:boolean};
+type State={timer:ReturnType<typeof setInterval>;database:Database.Database;gateway:CommunityStatsDiscordGateway|null;signature:string;lastWeb:string|null};
 const key="__traderlinkCommunityStatsRuntime";
 type Global=typeof globalThis&{[key]?:State};
 /** Called only from the hosted single-writer worker bootstrap, never from a page. */
@@ -15,12 +15,11 @@ export function startHostedCommunityStats():void{
   if((globalThis as Global)[key])return;
   const database=openPlatformDatabase({mode:"runtime"});
   if(!communityStatsStorageReady(database)){database.close();return;}
-  const state:State={database,gateway:null,signature:"",lastWeb:null,lastPrune:0,pruneBacklog:false,timer:undefined as unknown as ReturnType<typeof setInterval>};
+  const state:State={database,gateway:null,signature:"",lastWeb:null,timer:undefined as unknown as ReturnType<typeof setInterval>};
+  const history=new CommunityStatsHistory(database);
   const tick=()=>{
     const at=new Date().toISOString(),repo=new CommunityStatsRepository(database);
     try{
-      // Retention continues in idle/disabled communities; collection and pruning are separate duties.
-      if(state.pruneBacklog||Date.now()-state.lastPrune>=3_600_000){const limit=state.pruneBacklog?5000:500,result=pruneCommunityStats(database,at,limit);state.pruneBacklog=(result?.removed??0)>=limit;state.lastPrune=Date.now();}
       if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"){
         state.gateway?.stop();state.gateway=null;state.signature="";state.lastWeb=null;
         database.prepare(`UPDATE community_stats_source_state SET status='disabled',checked_at_utc=?,reason='Collection is disabled.' WHERE status!='disabled'`).run(at);return;
@@ -63,6 +62,7 @@ export function startHostedCommunityStats():void{
       }});state.lastWeb=at;
       const selected=communities.filter(row=>row.discord_enabled===1&&approved.includes(row.discord_guild_id)).map(row=>({communityId:row.community_id,guildId:row.discord_guild_id,channelIds:JSON.parse(row.channel_ids_json??"[]") as string[],configurationVersion:row.discord_configuration_version??0}));
       const token=process.env.TRADERLINK_DISCORD_BOT_TOKEN?.trim(),signature=JSON.stringify(selected)+(token?":token-present":":no-token");
+      if(token)void history.tick(selected.map(community=>community.communityId),token).catch(error=>console.error("Stats history persistence deferred.",{errorName:error instanceof Error?error.name:"UnknownError"}));
       if(signature!==state.signature){
         state.gateway?.stop();state.gateway=null;state.signature=signature;
         if(selected.length&&token){

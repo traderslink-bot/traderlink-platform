@@ -24,7 +24,7 @@ export class CommunityStatsRepository {
   }
   recordEvent(communityId:string,event:CommunityStatsStoredEvent):boolean {
     const received=statsUtcMs(event.receivedAtUtc),at=statsUtcMs(event.occurredAtUtc);
-    if(at>received+5000||at<received-90*86_400_000||!event.eventId||event.eventId.length>180
+    if(at>received+5000||at<Date.parse("2015-01-01T00:00:00.000Z")||!event.eventId||event.eventId.length>180
       || !/^\d{1,32}$/u.test(event.discordUserId)||!Number.isInteger(event.durationSeconds)||event.durationSeconds<0)throw new Error("Invalid Stats event.");
     const old=this.db.prepare(`SELECT discord_user_id,platform_user_id,kind,content_id,path FROM community_stats_events
       WHERE community_id=? AND event_id=?`).get(communityId,event.eventId) as {discord_user_id:string;platform_user_id:string|null;kind:string;content_id:string|null;path:string|null}|undefined;
@@ -44,7 +44,7 @@ export class CommunityStatsRepository {
   }
   nativeMember(communityId:string,member:CommunityStatsNativeMember,atUtc:string,kind:"observed_join"|"snapshot"="snapshot"):void {
     statsUtcMs(atUtc);if(!/^\d{1,32}$/u.test(member.discordUserId)||member.username.length<1||member.username.length>80)throw new Error("Invalid Stats member.");
-    const joinedAt=member.joinedAtUtc&&statsUtcMs(member.joinedAtUtc)>=statsUtcMs(atUtc)-90*86_400_000?member.joinedAtUtc:null;
+    const joinedAt=member.joinedAtUtc&&statsUtcMs(member.joinedAtUtc)<=statsUtcMs(atUtc)?member.joinedAtUtc:null;
     const old=this.db.prepare(`SELECT active,joined_at_utc FROM community_stats_members WHERE community_id=? AND discord_user_id=?`).get(communityId,member.discordUserId) as {active:number;joined_at_utc:string|null}|undefined;
     const changedJoin=old?.active===1&&old.joined_at_utc&&joinedAt&&old.joined_at_utc!==joinedAt;
     if(changedJoin)this.leave(communityId,member.discordUserId,atUtc,"snapshot_absent");

@@ -40,7 +40,7 @@ export async function GET(request:Request,context:Context):Promise<Response>{
     const tab=query.get("tab")??"overview",quiet=Number(query.get("quiet")??7),calendar=query.get("calendar")??"calendar_days";
     if(!COMMUNITY_STATS_TABS.includes(tab as CommunityStatsTab)||![7,14,30].includes(quiet)||!["calendar_days","weekdays"].includes(calendar))return Response.json({error:"Invalid report filters."},{status:400,headers});
     const window:CommunityStatsWindow={fromDate,throughDate,asOfUtc,timezone:"UTC",quietDays:quiet as 7|14|30,calendar:calendar as CommunityStatsWindow["calendar"]};
-    try{resolveStatsWindow(window);}catch{return Response.json({error:"Select a valid date range within the retained 90 days."},{status:400,headers});}
+    try{resolveStatsWindow(window);}catch{return Response.json({error:"Select a valid date range from January 2015 through today."},{status:400,headers});}
     const options={tab:tab as CommunityStatsTab,window,page:Number(query.get("page")??1),memberPage:Number(query.get("memberPage")??1),contentId:query.get("content")||undefined,authorId:query.get("author")||undefined,memberId:query.get("member")||undefined,segment:query.get("segment")||undefined};
     if(!Number.isSafeInteger(options.page)||options.page<1||!Number.isSafeInteger(options.page*25))return new Response(null,{status:400,headers});
     if(!Number.isSafeInteger(options.memberPage)||options.memberPage<1||!Number.isSafeInteger(options.memberPage*25))return new Response(null,{status:400,headers});

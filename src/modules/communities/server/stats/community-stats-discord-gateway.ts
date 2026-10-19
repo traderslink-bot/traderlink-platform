@@ -27,7 +27,7 @@ export class CommunityStatsDiscordGateway{
   private guilds=new Map<string,Guild>();
   constructor(private readonly database:()=>Database.Database,private readonly token:string,communities:readonly {communityId:string;guildId:string;channelIds:readonly string[]}[]){
     for(const community of communities)this.guilds.set(community.guildId,{...community,selected:new Set(community.channelIds),channels:new Set(),afk:null,ready:false,readyAt:null,chunks:new Set(),chunkCount:0,seen:new Set(),nonce:`stats-${community.communityId}`.slice(0,32),initialVoice:new Map(),threadIds:new Set(),forumThreadIds:new Set(),forumParents:new Set(),baselineChanged:new Set(),gapSince:null,ownerVerified:false,awaitingRoster:false,requestedAt:null});
-    const repo=this.repository(),cutoff=new Date(Date.now()-90*86_400_000).toISOString();
+    const repo=this.repository(),cutoff="2015-01-01T00:00:00.000Z";
     for(const guild of this.guilds.values()){const last=repo.db.prepare(`SELECT max(until_utc) AS at FROM community_stats_coverage WHERE community_id=? AND source='discord' AND state='observed'`).get(guild.communityId) as {at:string|null};if(last.at)guild.gapSince=last.at<cutoff?cutoff:last.at;}
   }
   start():void{if(!this.socket&&!this.stopped&&!this.fatal)this.connect();}
@@ -142,7 +142,7 @@ export class CommunityStatsDiscordGateway{
         for(const raw of Array.isArray(data.roles)?data.roles:[]){const role=object(raw);if(typeof role.id==="string"&&typeof role.name==="string")repo.db.prepare(`INSERT INTO community_stats_roles(community_id,role_id,name,last_observed_at_utc) VALUES(?,?,?,?)`).run(guild.communityId,role.id,role.name.slice(0,100),at);}
       });
       guild.ready=false;guild.readyAt=null;guild.seen.clear();guild.chunks.clear();guild.baselineChanged.clear();
-      for(const raw of Array.isArray(data.threads)?data.threads:[]){const thread=object(raw);if(Number(thread.type)===11&&guild.channels.has(String(thread.parent_id))&&typeof thread.id==="string"){guild.channels.add(thread.id);guild.threadIds.add(thread.id);if(guild.forumParents.has(String(thread.parent_id)))guild.forumThreadIds.add(thread.id);}}
+      for(const raw of Array.isArray(data.threads)?data.threads:[]){const thread=object(raw);if([10,11].includes(Number(thread.type))&&guild.channels.has(String(thread.parent_id))&&typeof thread.id==="string"){guild.channels.add(thread.id);guild.threadIds.add(thread.id);if(guild.forumParents.has(String(thread.parent_id)))guild.forumThreadIds.add(thread.id);}}
       this.requestRoster(guild,at);return;
     }
     if(packet.t==="GUILD_MEMBERS_CHUNK"){

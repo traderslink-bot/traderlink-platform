@@ -7,6 +7,8 @@ import {calculateCommunityStatsParticipation} from "./community-stats-participat
 import {CommunityStatsCohortAccumulator} from "./community-stats-cohorts";
 import {resolveStatsWindow,statsSourceObserved,statsMedian} from "./community-stats-coverage";
 import {platformFailure} from "../../../platform/server/database/platform-migration-contract";
+import {statsHistoryReady} from "./community-stats-history-storage";
+import {readStatsHistory} from "./community-stats-history-report";
 import {readCommunityStatsTeam} from "./community-stats-team";
 import {TraderLinkCommunityRepository} from "../traderlink-community-repository";
 
@@ -16,22 +18,24 @@ type Counts={visits:number;viewers:number;contributors:number;messages:number;re
 function percentile90(values:readonly number[]):number|null{if(!values.length)return null;const sorted=[...values].sort((a,b)=>a-b),position=(sorted.length-1)*.9,left=Math.floor(position),fraction=position-left;return Math.round((sorted[left]+((sorted[left+1]??sorted[left])-sorted[left])*fraction)*10)/10;}
 
 function memberEvidence(db:Database.Database,communityId:string,userId:string,window:CommunityStatsWindow,coverage:readonly CommunityStatsCoverage[],contentIds:string):CommunityStatsMemberEvidence{
-  const from=new Date(Date.parse(window.asOfUtc)-90*86_400_000).toISOString();
+  const from="2015-01-01T00:00:00.000Z";
   const native=db.prepare(`SELECT from_utc,until_utc FROM community_stats_memberships WHERE community_id=? AND discord_user_id=? AND coalesce(until_utc,?)>?`).all(communityId,userId,window.asOfUtc,from) as {from_utc:string;until_utc:string|null}[];
   const links=db.prepare(`SELECT platform_user_id,from_utc,until_utc FROM community_stats_identity_links WHERE community_id=? AND discord_user_id=? AND coalesce(until_utc,?)>?`).all(communityId,userId,window.asOfUtc,from) as {platform_user_id:string;from_utc:string;until_utc:string|null}[];
   const eligibility:CommunityStatsEligibility[]=[...native.map(row=>({communityId,discordUserId:userId,surface:"discord" as const,platformUserId:null,fromUtc:row.from_utc,untilUtc:row.until_utc})),...links.map(row=>({communityId,discordUserId:userId,surface:"web" as const,platformUserId:row.platform_user_id,fromUtc:row.from_utc,untilUtc:row.until_utc}))];
   // One positive observation per day/kind/link is sufficient for gaps and exact-day cohorts.
   // Volumes and unique people are always calculated independently from the raw event table.
-  const daily=db.prepare(`SELECT platform_user_id AS platformUserId,surface,kind,min(occurred_at_utc) AS first,max(occurred_at_utc) AS last FROM community_stats_events WHERE community_id=? AND discord_user_id=? AND occurred_at_utc>=? AND occurred_at_utc<=? AND (surface='discord' OR content_id IN(SELECT value FROM json_each(?))) GROUP BY substr(occurred_at_utc,1,10),platform_user_id,surface,kind`)
-    .all(communityId,userId,from,window.asOfUtc,contentIds) as {platformUserId:string|null;surface:"web"|"discord";kind:CommunityStatsActivityPoint["kind"];first:string;last:string}[];
-  const points=daily.flatMap(row=>[...new Set([row.first,row.last])].map(at=>({platformUserId:row.platformUserId,surface:row.surface,kind:row.kind,occurredAtUtc:at,eventId:`daily:${row.platformUserId}:${row.surface}:${row.kind}:${at}`})));
+  const evidenceColumn=statsHistoryReady(db)?"evidence":"'live'";
+  const daily=db.prepare(`SELECT ${evidenceColumn} AS evidence,platform_user_id AS platformUserId,surface,kind,min(occurred_at_utc) AS first,max(occurred_at_utc) AS last FROM community_stats_events WHERE community_id=? AND discord_user_id=? AND occurred_at_utc>=? AND occurred_at_utc<=? AND (surface='discord' OR content_id IN(SELECT value FROM json_each(?))) GROUP BY substr(occurred_at_utc,1,10),platform_user_id,surface,kind,${evidenceColumn}`)
+    .all(communityId,userId,from,window.asOfUtc,contentIds) as {evidence:"live"|"imported_message";platformUserId:string|null;surface:"web"|"discord";kind:CommunityStatsActivityPoint["kind"];first:string;last:string}[];
+  const points=daily.flatMap(row=>[...new Set([row.first,row.last])].map(at=>({evidence:row.evidence,platformUserId:row.platformUserId,surface:row.surface,kind:row.kind,occurredAtUtc:at,eventId:`daily:${row.evidence}:${row.platformUserId}:${row.surface}:${row.kind}:${at}`})));
   const pending=db.prepare(`SELECT last_confirmed_at_utc AS at FROM community_stats_voice_state WHERE community_id=? AND discord_user_id=? AND last_confirmed_at_utc>from_utc AND last_confirmed_at_utc>=? AND last_confirmed_at_utc<=?`).get(communityId,userId,from,window.asOfUtc) as {at:string}|undefined;
-  if(pending)points.push({platformUserId:null,surface:"discord",kind:"voice_participation",occurredAtUtc:pending.at,eventId:`confirmed-voice:${pending.at}`});
+  if(pending)points.push({evidence:"live",platformUserId:null,surface:"discord",kind:"voice_participation",occurredAtUtc:pending.at,eventId:`confirmed-voice:${pending.at}`});
   return {communityId,discordUserId:userId,webLinkState:links.some(link=>link.from_utc<=window.asOfUtc&&(!link.until_utc||link.until_utc>window.asOfUtc))?"verified":"unlinked",eligibility,coverage,activity:points.map(point=>({...point,communityId,discordUserId:userId}))};
 }
 
 /** Every query is tenant scoped. Names are selected only after the separate named-data grant. */
 export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequestScope,options:CommunityStatsReadOptions):CommunityStatsReport{
+  const evidenceSql=statsHistoryReady(db)?"CASE evidence WHEN 'imported_message' THEN 'Imported surviving message; incomplete history' ELSE 'Live observation' END":"'Live observation'";
   const {window,tab}=options,bounds=resolveStatsWindow(window),page=Math.max(1,Math.floor(options.page||1)),pageSize=options.exportBatchSize??25;
   if(options.exportBatchSize!==undefined&&options.exportBatchSize!==1000)throw new RangeError("Invalid internal Stats export batch.");
   const webOnly=scope.ownContentOnly||["pages","visits","authors"].includes(tab)||(tab==="timing"&&!!(options.contentId||options.authorId||options.catalogSearch));
@@ -165,11 +169,11 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
     rows=rows.slice((page-1)*pageSize,page*pageSize);
   }
   if(["overview","participation","members","cohorts"].includes(tab)&&!scope.ownContentOnly){
-    const population=db.prepare(`SELECT discord_user_id AS id,active${canReadMembers&&tab!=="cohorts"?",username,display_name AS name":""} FROM community_stats_members WHERE community_id=@community AND is_bot=0 AND((@cohorts=0 AND active=1) OR discord_user_id=@member OR(@cohorts=1 AND(discord_user_id IN(SELECT discord_user_id FROM community_stats_memberships WHERE community_id=@community AND join_kind='observed_join' AND coalesce(joined_at_utc,from_utc)>=@from AND coalesce(joined_at_utc,from_utc)<@until) OR discord_user_id IN(SELECT discord_user_id FROM community_stats_events WHERE community_id=@community AND surface='web' AND occurred_at_utc>=@from AND occurred_at_utc<@until)))) ORDER BY discord_user_id`).iterate({community:scope.communityId,cohorts:tab==="cohorts"?1:0,member:options.memberId??"",from,until}) as Iterable<{id:string;active:number;username?:string;name?:string}>;
+    const population=db.prepare(`SELECT discord_user_id AS id,active${canReadMembers&&tab!=="cohorts"?",username,display_name AS name,joined_at_utc":""} FROM community_stats_members WHERE community_id=@community AND is_bot=0 AND((@cohorts=0 AND active=1) OR discord_user_id=@member OR(@cohorts=1 AND(discord_user_id IN(SELECT discord_user_id FROM community_stats_memberships WHERE community_id=@community AND join_kind='observed_join' AND coalesce(joined_at_utc,from_utc)>=@from AND coalesce(joined_at_utc,from_utc)<@until) OR discord_user_id IN(SELECT discord_user_id FROM community_stats_events WHERE community_id=@community AND surface='web' AND occurred_at_utc>=@from AND occurred_at_utc<@until)))) ORDER BY discord_user_id`).iterate({community:scope.communityId,cohorts:tab==="cohorts"?1:0,member:options.memberId??"",from,until}) as Iterable<{id:string;active:number;username?:string;name?:string;joined_at_utc?:string|null}>;
     const cohortAccumulator=new CommunityStatsCohortAccumulator(scope.communityId,window);let matching=0;
     const frequencies:number[]=[],discordDays:number[]=[],priorDays:number[]=[];
     const transitions=new Map<string,number>();
-    columns=canReadMembers?["Discord username","Display name","Participation","Discord gap days","Webpage gap days","Discord last UTC","Webpage last UTC"]:["Participation","Members"];
+    columns=canReadMembers?["Discord username","Display name","Joined server UTC","Participation","Discord gap days","Webpage gap days","Discord last UTC","Webpage last UTC"]:["Participation","Members"];
     for(const person of population){
       if(options.roleId&&!db.prepare(`SELECT 1 FROM community_stats_members n,json_each(n.role_ids_json) r WHERE n.community_id=? AND n.discord_user_id=? AND n.active=1 AND r.value=?`).get(scope.communityId,person.id,options.roleId))continue;
       const evidence=memberEvidence(db,scope.communityId,person.id,window,memberCoverage,JSON.stringify(catalog.map(item=>item.id)));
@@ -201,7 +205,7 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
         const eventPage=options.memberPage??1;
         const contentScope=JSON.stringify(catalog.map(item=>item.id));
         const total=db.prepare(`SELECT count(*) AS n FROM community_stats_events WHERE community_id=? AND discord_user_id=? AND occurred_at_utc>=? AND occurred_at_utc<? AND (surface='discord' OR content_id IN(SELECT value FROM json_each(?)))`).get(scope.communityId,person.id,from,until,contentScope) as {n:number};
-        const events=db.prepare(`SELECT surface AS Surface,kind AS Activity,occurred_at_utc AS "Observed UTC",title AS Page,username AS "Name at event" FROM community_stats_events WHERE community_id=? AND discord_user_id=? AND occurred_at_utc>=? AND occurred_at_utc<? AND (surface='discord' OR content_id IN(SELECT value FROM json_each(?))) ORDER BY occurred_at_utc DESC,event_id DESC LIMIT 25 OFFSET ?`).all(scope.communityId,person.id,from,until,contentScope,(eventPage-1)*25) as CommunityStatsTableRow[];
+        const events=db.prepare(`SELECT surface AS Surface,kind AS Activity,${evidenceSql} AS Evidence,occurred_at_utc AS "Observed UTC",title AS Page,username AS "Name at event" FROM community_stats_events WHERE community_id=? AND discord_user_id=? AND occurred_at_utc>=? AND occurred_at_utc<? AND (surface='discord' OR content_id IN(SELECT value FROM json_each(?))) ORDER BY occurred_at_utc DESC,event_id DESC LIMIT 25 OFFSET ?`).all(scope.communityId,person.id,from,until,contentScope,(eventPage-1)*25) as CommunityStatsTableRow[];
         const dailyVolumes=db.prepare(`SELECT surface,substr(occurred_at_utc,1,10) AS date,count(*) AS n FROM community_stats_events WHERE community_id=? AND discord_user_id=? AND occurred_at_utc>=? AND occurred_at_utc<? AND(surface='discord' OR content_id IN(SELECT value FROM json_each(?))) GROUP BY surface,date`).all(scope.communityId,person.id,new Date(bounds.retainedFrom).toISOString(),until,contentScope) as {surface:"web"|"discord";date:string;n:number}[];
         const exactSurface=(surface:"discord"|"web")=>{
           const metrics=confirmedGap(surface),volumes=new Map(dailyVolumes.filter(row=>row.surface===surface).map(row=>[row.date,row.n]));
@@ -230,7 +234,7 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
       }else if(options.segment&&options.segment!==participation.segment)continue;
       matching++;
       if(canReadMembers&&matching>(page-1)*pageSize&&matching<=page*pageSize){
-        rows.push({"Discord username":person.username??"Unavailable","Display name":person.name??null,Participation:participation.segment,"Discord gap days":confirmedGap("discord").currentGapDays,"Webpage gap days":confirmedGap("web").currentGapDays,"Discord last UTC":participation.discord.lastObservedAtUtc,"Webpage last UTC":participation.web.lastObservedAtUtc,memberId:person.id});
+        rows.push({"Discord username":person.username??"Unavailable","Display name":person.name??null,"Joined server UTC":person.joined_at_utc??null,Participation:participation.segment,"Discord gap days":confirmedGap("discord").currentGapDays,"Webpage gap days":confirmedGap("web").currentGapDays,"Discord last UTC":participation.discord.lastObservedAtUtc,"Webpage last UTC":participation.web.lastObservedAtUtc,memberId:person.id});
       }
     }
     totalRows=matching;
@@ -283,6 +287,10 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
     }else sections.push({title:"Shared alert deliveries",columns:["Availability"],rows:[{Availability:"Not available in this deployment"}]});
     notes.push("Publishing outcomes, revisions and actions come from canonical records. Retry attempts are not publications. A current status timestamp is not a reconstructed archive or unpublish history.","Coach profiles contain public offers and access instructions together; a profile visit does not prove interest in a particular offer or instruction.","Verified tracked-link attribution is Not collected. Cross-community delivery facts remain scoped to this community and never expose another community's named audience.");
   }
+  if(tab==="server"){
+    sections.push(...readStatsHistory(db,scope.communityId,from,until,page,pageSize,options.roleId));
+    notes.push("History is retained without automatic age pruning. Imported messages are surviving records from currently approved public channels; deletions, inaccessible channels and past permission changes make historical totals incomplete. Current usernames were observed at import, not reconstructed at message time. Historical reaction snapshots are not timed activity. Past voice sessions and unrecorded webpage visits cannot be recovered.");
+  }
   if(!webOnly&&!publishingOnly&&!discordAvailable)notes.push("Discord activity is unavailable or incomplete. Empty native reports are not proof of zero server activity.");
   if(["overview","participation","server"].includes(tab)){
     const gapSource=discordOnly?" AND source IN('discord','membership')":"";
@@ -292,7 +300,7 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
       sections.push({title:"Recorded collection gaps",columns:["Source","From UTC","Through UTC","Reason"],rows:gapRows,totalRows:gapCount.n,page,pageSize});
     }
   }
-  if(!webOnly&&!publishingOnly)notes.push("Messages count observed human creations, including replies/forum posts; edits do not create messages, and later deletions do not erase an observed creation. Reactions count additions, not a current reaction inventory. Voice participation includes measured non-AFK attendance, not speaking time.");
+  if(!webOnly&&!publishingOnly)notes.push("Messages count live-observed and imported surviving human creations, including replies/forum posts; edits do not create messages, and later deletions do not erase an observed creation. Reactions count additions, not a current reaction inventory. Voice participation includes measured non-AFK attendance, not speaking time.");
   if(!publishingOnly&&confirmedUntil<bounds.end)notes.push(`Collection confirmation currently ends at ${new Date(confirmedUntil).toISOString()}; the unconfirmed tail is not treated as inactivity.`);
   if(options.roleId)notes.push("The role filter uses current observed Discord roles on active members, including when viewing earlier dates; it does not infer historical roles.");
   if(options.segment)notes.push("The participation filter narrows the member list. Audience cards retain the selected community, role and date scope.");
@@ -303,8 +311,9 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
 export function openCommunityStatsEventExport(db:Database.Database,scope:CommunityStatsRequestScope,options:CommunityStatsReadOptions,timeline=false):Readonly<{columns:readonly string[];rows:Iterable<CommunityStatsTableRow>}>{
   if(!scope.canExport||!scope.canReadNamed||scope.ownContentOnly)platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   const bounds=resolveStatsWindow(options.window),catalog=readCommunityStatsCatalog(db,scope).filter(content=>communityStatsContentMatchesSearch(content,options.catalogSearch)&&(!options.contentId||content.id===options.contentId)&&(!options.authorId||content.authorUserId===options.authorId));
-  const columns=timeline?["Surface","Activity","Observed UTC","Page","Name at event"]:["Discord username","Display name at visit","Guild nickname at visit","Page","Type","Visited UTC","Source"];
-  const projection=timeline?`surface AS Surface,kind AS Activity,occurred_at_utc AS "Observed UTC",title AS Page,username AS "Name at event"`:`username AS "Discord username",display_name AS "Display name at visit",CASE WHEN nickname_state='observed' THEN coalesce(nickname,'No guild nickname') ELSE 'Not collected' END AS "Guild nickname at visit",title AS Page,content_type AS Type,occurred_at_utc AS "Visited UTC",CASE WHEN source_link_id IS NULL THEN 'Authenticated navigation' ELSE 'Verified tracked link' END AS Source`;
+  const evidenceSql=statsHistoryReady(db)?"CASE evidence WHEN 'imported_message' THEN 'Imported surviving message; incomplete history' ELSE 'Live observation' END":"'Live observation'";
+  const columns=timeline?["Surface","Activity","Evidence","Observed UTC","Page","Name at event"]:["Discord username","Display name at visit","Guild nickname at visit","Page","Type","Visited UTC","Source"];
+  const projection=timeline?`surface AS Surface,kind AS Activity,${evidenceSql} AS Evidence,occurred_at_utc AS "Observed UTC",title AS Page,username AS "Name at event"`:`username AS "Discord username",display_name AS "Display name at visit",CASE WHEN nickname_state='observed' THEN coalesce(nickname,'No guild nickname') ELSE 'Not collected' END AS "Guild nickname at visit",title AS Page,content_type AS Type,occurred_at_utc AS "Visited UTC",CASE WHEN source_link_id IS NULL THEN 'Authenticated navigation' ELSE 'Verified tracked link' END AS Source`;
   const rows=db.prepare(`SELECT ${projection} FROM community_stats_events WHERE community_id=@communityId AND occurred_at_utc>=@from AND occurred_at_utc<@until AND (surface='discord' OR content_id IN(SELECT value FROM json_each(@contentIds))) ${timeline?"":"AND surface='web'"} ${options.memberId?"AND discord_user_id=@memberId":""} ${options.roleId?"AND discord_user_id IN(SELECT n.discord_user_id FROM community_stats_members n,json_each(n.role_ids_json) r WHERE n.community_id=@communityId AND n.active=1 AND r.value=@roleId)":""} ORDER BY occurred_at_utc DESC,event_id DESC`).iterate({communityId:scope.communityId,from:new Date(bounds.start).toISOString(),until:new Date(bounds.end).toISOString(),contentIds:JSON.stringify(catalog.map(content=>content.id)),...(options.memberId?{memberId:options.memberId}:{}),...(options.roleId?{roleId:options.roleId}:{})}) as Iterable<CommunityStatsTableRow>;
   return {columns,rows};
 }

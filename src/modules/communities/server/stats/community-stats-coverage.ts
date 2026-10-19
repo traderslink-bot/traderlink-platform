@@ -4,7 +4,7 @@ import type {
 } from "../../contracts/community-stats-contracts";
 
 export const COMMUNITY_STATS_DAY_MS = 86_400_000;
-export const COMMUNITY_STATS_NAMED_RETENTION_DAYS = 90;
+export const COMMUNITY_STATS_HISTORY_FROM = "2015-01-01";
 
 export function statsUtcMs(value: string): number {
   const time = Date.parse(value);
@@ -30,10 +30,10 @@ export function resolveStatsWindow(window: CommunityStatsWindow) {
   const asOf = statsUtcMs(window.asOfUtc);
   if (window.timezone !== "UTC" || ![7, 14, 30].includes(window.quietDays)
     || !["calendar_days", "weekdays"].includes(window.calendar)
-    || through < start || (through - start) / COMMUNITY_STATS_DAY_MS >= 90
+    || through < start
     || through > statsDateMs(statsDateAt(asOf))) throw new Error("Invalid Stats report window.");
   const end = Math.min(through + COMMUNITY_STATS_DAY_MS, asOf);
-  const retainedFrom = asOf - COMMUNITY_STATS_NAMED_RETENTION_DAYS * COMMUNITY_STATS_DAY_MS;
+  const retainedFrom = statsDateMs(COMMUNITY_STATS_HISTORY_FROM);
   if (start < retainedFrom) throw new Error("Named Stats window exceeds retained history.");
   return Object.freeze({ start, end, asOf, retainedFrom });
 }
@@ -41,7 +41,7 @@ export function resolveStatsWindow(window: CommunityStatsWindow) {
 export function statsDateRange(fromDate: string, throughDate: string): readonly string[] {
   const from = statsDateMs(fromDate), through = statsDateMs(throughDate);
   if (through < from) return Object.freeze([]);
-  if ((through - from) / COMMUNITY_STATS_DAY_MS > 91) throw new Error("Stats date range is not bounded.");
+  if ((through - from) / COMMUNITY_STATS_DAY_MS > 40000) throw new Error("Stats date range is not bounded.");
   const dates: string[] = [];
   for (let time = from; time <= through; time += COMMUNITY_STATS_DAY_MS) dates.push(statsDateAt(time));
   return Object.freeze(dates);
@@ -115,7 +115,8 @@ export function statsMemberPoints(evidence: CommunityStatsMemberEvidence, window
         && (row.untilUtc === null || statsUtcMs(row.untilUtc) > at));
       if (!linkedAtEvent) continue;
     }
-    if (!statsMemberEligible(evidence, point.surface, at, at + 1)) continue;
+    // A surviving authored message proves this positive action, not continuous membership.
+    if (!(point.surface==="discord"&&point.evidence==="imported_message")&&!statsMemberEligible(evidence, point.surface, at, at + 1)) continue;
     const key = `${point.surface}:${point.eventId}`;
     const previous = points.get(key);
     if (previous && (previous.occurredAtUtc !== point.occurredAtUtc || previous.kind !== point.kind
