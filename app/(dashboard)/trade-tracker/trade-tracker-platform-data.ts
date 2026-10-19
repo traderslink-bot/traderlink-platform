@@ -1255,6 +1255,7 @@ function toDaySessionData(
         return editable
           ? {
               editRef: editable.editRef,
+              deleteRef: editable.deleteRef,
               fees: editable.manualFeeInputState === "not_entered" ? "" : editable.feesDecimal,
               localDate: editable.localDate,
               localTime: editable.localTime,
@@ -1293,6 +1294,7 @@ function toDaySessionData(
             manualEdit: editable
               ? {
                   editRef: editable.editRef,
+                  deleteRef: editable.deleteRef,
                   fees: editable.manualFeeInputState === "not_entered" ? "" : editable.feesDecimal,
                   localDate: editable.localDate,
                   localTime: editable.localTime,
@@ -1805,6 +1807,7 @@ function getReplacementSwingPositionSourceDetail(
           manualEdit: editable
             ? Object.freeze({
                 editRef: editable.editRef,
+                deleteRef: editable.deleteRef,
                 fees: editable.manualFeeInputState === "not_entered" ? "" : editable.feesDecimal,
                 localDate: editable.localDate,
                 localTime: editable.localTime,
