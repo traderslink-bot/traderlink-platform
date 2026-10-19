@@ -9,6 +9,7 @@ import {CommunityStatsRepository,communityStatsStorageReady} from "@/src/modules
 import {TraderLinkCommunityRepository} from "@/src/modules/communities/server/traderlink-community-repository";
 import {platformFailure} from "@/src/modules/platform/server/database/platform-migration-contract";
 import {resolveStatsWindow} from "@/src/modules/communities/server/stats/community-stats-coverage";
+import {communityStatsWorkbookSheets,streamStatsWorkbook} from "@/src/modules/communities/server/stats/community-stats-workbook";
 import {exportCommunityStatsIdentity} from "@/src/modules/communities/server/stats/community-stats-retention";
 
 export const dynamic="force-dynamic";
@@ -48,7 +49,7 @@ export async function GET(request:Request,context:Context):Promise<Response>{
     const catalogSearch=query.get("search")||undefined;if(catalogSearch&&catalogSearch.length>80)return new Response(null,{status:400,headers});
     const webReports=["pages","visits","authors","publishing","timing"];
     if((catalogSearch||options.contentId||options.authorId)&&!webReports.includes(tab))return new Response(null,{status:400,headers});
-    if(roleId&&tab==="publishing")return new Response(null,{status:400,headers});
+    if(roleId&&(tab==="publishing"||tab==="team"))return new Response(null,{status:400,headers});
     if(options.segment&&(!["participation","members"].includes(tab)||!["both","discord_only","web_only","neither_observed","unlinked","insufficient_coverage","discord_decline","web_decline"].includes(options.segment)))return new Response(null,{status:400,headers});
     if(options.memberId&&!["members","visits"].includes(tab))return new Response(null,{status:400,headers});
     const scopedOptions={...options,roleId,catalogSearch};
@@ -66,7 +67,20 @@ export async function GET(request:Request,context:Context):Promise<Response>{
       const audits=database.prepare(`SELECT a.occurred_at_utc AS "Changed UTC",coalesce(u.display_name,'Previous owner') AS Actor,json_extract(a.settings_json,'$.revision') AS Revision,CASE WHEN json_extract(a.settings_json,'$.discordEnabled') THEN 'Enabled' ELSE 'Disabled' END AS Collection,json_array_length(a.settings_json,'$.channelIds') AS Channels,json_array_length(a.settings_json,'$.ownContentUserIds') AS "Own-content grants",json_array_length(a.settings_json,'$.exportUserIds') AS "Export grants" FROM community_stats_settings_audit a LEFT JOIN platform_users u ON u.user_id=a.actor_user_id WHERE a.community_id=? AND a.occurred_at_utc>=? ORDER BY a.occurred_at_utc DESC,a.audit_id DESC LIMIT 25 OFFSET ?`).all(scope.communityId,cutoff,(settingsPage-1)*25);
       return Response.json({settings,channels,members,audits,auditCount:auditCount.n,settingsPage,runtimeEnabled:process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"},{headers});
     }
+    const excel=query.get("format")==="xlsx";
+    if(excel&&!scope.canExport)return Response.json({error:"An explicit export grant is required."},{status:403,headers});
+    if(excel)database.exec("BEGIN");
     const report=readCommunityStats(database,scope,scopedOptions);
+    if(excel){
+      if(!report.ready)return Response.json({error:"Stats are unavailable."},{status:503,headers});
+      const streamDatabase=database;
+      const sheets=communityStatsWorkbookSheets(report,page=>readCommunityStats(streamDatabase,scope,{...scopedOptions,page}),timeline=>openCommunityStatsEventExport(streamDatabase,scope,scopedOptions,timeline),Object.fromEntries([["Role filter",roleId],["Page filter",options.contentId],["Author filter",options.authorId],["Member filter",options.memberId],["Participation filter",options.segment],["Page search",catalogSearch]].filter((entry):entry is [string,string]=>!!entry[1])));
+      const iterator=streamStatsWorkbook(sheets);let closed=false;
+      const close=()=>{if(!closed){closed=true;try{iterator.return(undefined);}finally{streamDatabase.close();}}};
+      const stream=new ReadableStream<Uint8Array>({pull(controller){try{const next=iterator.next();if(next.done){close();controller.close();}else controller.enqueue(next.value);}catch(error){close();controller.error(error);}},cancel(){close();}});
+      database=null;
+      return new Response(stream,{headers:{...headers,"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","Content-Disposition":`attachment; filename="community-stats-${tab}-${fromDate}-${throughDate}.xlsx"`}});
+    }
     if(query.get("format")!=="csv")return Response.json(report,{headers});
     if(!scope.canExport)return Response.json({error:"An explicit export grant is required."},{status:403,headers});
     const sectionTitle=query.get("section"),selectedSection=sectionTitle?report.sections.find(section=>section.title===sectionTitle):null;
@@ -92,7 +106,8 @@ export async function GET(request:Request,context:Context):Promise<Response>{
       const exportRows=sectionTitle?slice.sections.find(section=>section.title===sectionTitle)?.rows??[]:slice.rows;
       for(const row of exportRows)output.push(exportColumns.map(column=>csvCell(row[column])).join(","));
     }
-    return new Response("\uFEFF"+output.join("\r\n"),{headers:{...headers,"Content-Type":"text/csv; charset=utf-8","Content-Disposition":`attachment; filename="community-stats-${tab}-${fromDate}-${throughDate}.csv"`}});
+    const csvName=sectionTitle?`${tab}-${sectionTitle.toLowerCase().replace(/[^a-z0-9]+/gu,"-").replace(/^-|-$/gu,"")}`:tab;
+    return new Response("\uFEFF"+output.join("\r\n"),{headers:{...headers,"Content-Type":"text/csv; charset=utf-8","Content-Disposition":`attachment; filename="community-stats-${csvName}-${fromDate}-${throughDate}.csv"`}});
   }catch(error){return failure(error);}finally{database?.close();}
 }
 export async function POST(request:Request,context:Context):Promise<Response>{

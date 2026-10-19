@@ -223,12 +223,12 @@ export type CommunityStatsNativeMember = Readonly<{
   nicknameObserved?:boolean;rolesObserved?:boolean;
 }>;
 
-export type CommunityStatsTab="overview"|"participation"|"server"|"pages"|"members"|"visits"|"cohorts"|"authors"|"publishing"|"timing";
+export type CommunityStatsTab="overview"|"participation"|"server"|"team"|"pages"|"members"|"visits"|"cohorts"|"authors"|"publishing"|"timing";
 export type CommunityStatsNavigationAccess=Readonly<{statsOwnContentAccess?:boolean}>;
 export type CommunityStatsTableRow=Readonly<Record<string,string|number|null>>;
 export type CommunityStatsReport=Readonly<{
   tab:CommunityStatsTab;window:CommunityStatsWindow;communityName:string;ready:boolean;
-  scope:"community"|"own_content";canReadNamed:boolean;canReadMembers:boolean;canExport:boolean;isOwner:boolean;
+  scope:"community"|"own_content";canReadNamed:boolean;canReadMembers:boolean;canReadTeam:boolean;canExport:boolean;isOwner:boolean;
   sources:readonly CommunityStatsTableRow[];
   metrics:readonly Readonly<{label:string;value:number|null;unit:string;previous:number|null}>[];
   columns:readonly string[];rows:readonly CommunityStatsTableRow[];totalRows:number;page:number;pageSize:number;

@@ -7,9 +7,10 @@ import {calculateCommunityStatsParticipation} from "./community-stats-participat
 import {CommunityStatsCohortAccumulator} from "./community-stats-cohorts";
 import {resolveStatsWindow,statsSourceObserved,statsMedian} from "./community-stats-coverage";
 import {platformFailure} from "../../../platform/server/database/platform-migration-contract";
+import {readCommunityStatsTeam} from "./community-stats-team";
 import {TraderLinkCommunityRepository} from "../traderlink-community-repository";
 
-export const COMMUNITY_STATS_TABS:readonly CommunityStatsTab[]=["overview","participation","server","pages","members","visits","cohorts","authors","publishing","timing"];
+export const COMMUNITY_STATS_TABS:readonly CommunityStatsTab[]=["overview","participation","server","team","pages","members","visits","cohorts","authors","publishing","timing"];
 export type CommunityStatsReadOptions={tab:CommunityStatsTab;window:CommunityStatsWindow;page:number;contentId?:string;authorId?:string;memberId?:string;segment?:string;memberPage?:number;roleId?:string;catalogSearch?:string};
 type Counts={visits:number;viewers:number;contributors:number;messages:number;reactions:number;voiceSeconds:number};
 function percentile90(values:readonly number[]):number|null{if(!values.length)return null;const sorted=[...values].sort((a,b)=>a-b),position=(sorted.length-1)*.9,left=Math.floor(position),fraction=position-left;return Math.round((sorted[left]+((sorted[left+1]??sorted[left])-sorted[left])*fraction)*10)/10;}
@@ -32,14 +33,19 @@ function memberEvidence(db:Database.Database,communityId:string,userId:string,wi
 /** Every query is tenant scoped. Names are selected only after the separate named-data grant. */
 export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequestScope,options:CommunityStatsReadOptions):CommunityStatsReport{
   const {window,tab}=options,bounds=resolveStatsWindow(window),page=Math.max(1,Math.floor(options.page||1)),pageSize=25;
+  const webOnly=scope.ownContentOnly||["pages","visits","authors"].includes(tab)||(tab==="timing"&&!!(options.contentId||options.authorId||options.catalogSearch));
+  const discordOnly=tab==="server",publishingOnly=tab==="publishing";
   const canReadMembers=scope.canReadNamed&&(scope.isOwner||scope.capabilities.includes("community.members.view"));
+  const canReadTeam=scope.canReadNamed&&!scope.ownContentOnly&&(scope.isOwner||scope.capabilities.includes("community.team.manage"));
+  if(tab==="team"&&!canReadTeam)platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+  if(tab==="team"&&(options.roleId||options.contentId||options.authorId||options.segment||options.memberId||options.catalogSearch))throw new Error("Team reports use the complete current Team population.");
   if(!COMMUNITY_STATS_TABS.includes(tab)||!Number.isSafeInteger(page)||!Number.isSafeInteger(page*pageSize))throw new Error("Invalid Stats report.");
   if((tab==="members"||options.memberId)&&!canReadMembers||tab==="visits"&&!scope.canReadNamed)platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   if(scope.ownContentOnly&&!["overview","pages","authors","publishing","timing"].includes(tab))platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   const catalog=readCommunityStatsCatalog(db,scope),ready=communityStatsStorageReady(db);
   const matchingCatalog=catalog.filter(content=>communityStatsContentMatchesSearch(content,options.catalogSearch)).sort((a,b)=>a.title.localeCompare(b.title)||a.id.localeCompare(b.id));
   const selectedCatalog=[catalog.find(content=>content.id===options.contentId),catalog.find(content=>content.authorUserId===options.authorId)].filter((content):content is NonNullable<typeof content>=>!!content),choiceMap=new Map([...selectedCatalog,...matchingCatalog.slice(0,100-selectedCatalog.length)].map(content=>[content.id,content]));
-  const empty:CommunityStatsReport={tab,window,communityName:scope.communityName,ready,scope:scope.ownContentOnly?"own_content":"community",canReadNamed:scope.canReadNamed,canReadMembers,canExport:scope.canExport,isOwner:scope.isOwner,sources:[],metrics:[],columns:[],rows:[],totalRows:0,page,pageSize,trend:[],segments:{},cohorts:[],activation:null,member:null,catalog:[...choiceMap.values()],catalogTotal:catalog.length,catalogMatchTotal:matchingCatalog.length,notes:[],sections:[],roles:[]};
+  const empty:CommunityStatsReport={tab,window,communityName:scope.communityName,ready,scope:scope.ownContentOnly?"own_content":"community",canReadNamed:scope.canReadNamed,canReadMembers,canReadTeam,canExport:scope.canExport,isOwner:scope.isOwner,sources:[],metrics:[],columns:[],rows:[],totalRows:0,page,pageSize,trend:[],segments:{},cohorts:[],activation:null,member:null,catalog:[...choiceMap.values()],catalogTotal:catalog.length,catalogMatchTotal:matchingCatalog.length,notes:[],sections:[],roles:[]};
   if(!ready)return {...empty,notes:["Stats storage is awaiting its coordinated migration. No activity history has been invented."]};
   const sourceRows=db.prepare(`SELECT s.source,s.status,s.since_utc AS "Configured UTC",(SELECT min(c.from_utc) FROM community_stats_coverage c WHERE c.community_id=s.community_id AND c.source=s.source AND c.state='observed') AS "Retained data since UTC",s.checked_at_utc AS "Checked UTC",coalesce(s.last_event_at_utc,(SELECT max(e.occurred_at_utc) FROM community_stats_events e WHERE e.community_id=s.community_id AND e.surface=s.source)) AS "Last event UTC",s.reason FROM community_stats_source_state s WHERE s.community_id=? ORDER BY s.source`).all(scope.communityId) as CommunityStatsTableRow[];
   const sources=sourceRows.map(source=>source.status==="collecting"&&Date.parse(window.asOfUtc)-Date.parse(String(source["Checked UTC"]))>90_000?{...source,status:"lagging",reason:"No recent collector confirmation."}:source);
@@ -51,12 +57,12 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
   const observed=(source:"web"|"discord"|"membership",left:number,right:number)=>statsSourceObserved(coverage,scope.communityId,source,left,right);
   const sections:CommunityStatsReport["sections"][number][]=[];
   const roles=db.prepare(`SELECT role_id AS id,name FROM community_stats_roles WHERE community_id=? AND role_id!=? ORDER BY name,role_id`).all(scope.communityId,scope.guildId) as {id:string;name:string}[];
-  const allowed=matchingCatalog.filter(content=>(!options.contentId||content.id===options.contentId)&&(!options.authorId||content.authorUserId===options.authorId));
+  const allowed=matchingCatalog.filter(content=>(tab!=="authors"||content.authorUserId!==null)&&(!options.contentId||content.id===options.contentId)&&(!options.authorId||content.authorUserId===options.authorId));
   const contentJson=JSON.stringify(allowed.map(content=>content.id));
   const from=new Date(bounds.start).toISOString(),until=new Date(bounds.end).toISOString();
   const memberFilter=tab==="visits"&&options.memberId?" AND discord_user_id=@memberId":"";
   const roleFilter=options.roleId?` AND discord_user_id IN(SELECT n.discord_user_id FROM community_stats_members n,json_each(n.role_ids_json) r WHERE n.community_id=@communityId AND n.active=1 AND r.value=@roleId)`:"";
-  const where=`community_id=@communityId AND occurred_at_utc>=@from AND occurred_at_utc<@until AND (surface='discord' OR content_id IN (SELECT value FROM json_each(@contentIds))) ${scope.ownContentOnly?"AND surface='web'":""}${memberFilter}${roleFilter}`;
+  const where=`community_id=@communityId AND occurred_at_utc>=@from AND occurred_at_utc<@until AND (surface='discord' OR content_id IN (SELECT value FROM json_each(@contentIds))) ${webOnly?"AND surface='web'":discordOnly?"AND surface='discord'":""}${memberFilter}${roleFilter}`;
   const params={communityId:scope.communityId,from,until,contentIds:contentJson,...(memberFilter?{memberId:options.memberId}:{}),...(options.roleId?{roleId:options.roleId}:{})};
   const counts=(left:string,right:string):Counts=>db.prepare(`SELECT coalesce(sum(surface='web'),0) AS visits,count(DISTINCT CASE WHEN surface='web' THEN discord_user_id END) AS viewers,count(DISTINCT CASE WHEN surface='discord' THEN discord_user_id END) AS contributors,coalesce(sum(kind IN ('message','thread_reply','forum_post')),0) AS messages,coalesce(sum(kind='reaction_add'),0) AS reactions,coalesce(sum(duration_seconds),0) AS voiceSeconds FROM community_stats_events WHERE ${where}`).get({...params,from:left,until:right}) as Counts;
   const current=counts(from,until),previousFrom=new Date(bounds.start-(bounds.end-bounds.start)).toISOString();
@@ -65,7 +71,7 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
   const previous=Date.parse(previousFrom)>=bounds.retainedFrom?counts(previousFrom,from):null;
   const webPrevious=previous&&observed("web",Date.parse(previousFrom),bounds.start)?previous:null;
   const discordPrevious=previous&&observed("discord",Date.parse(previousFrom),bounds.start)?previous:null;
-  const confirmedUntil=Math.min(bounds.end,...(scope.ownContentOnly?["web"]:["web","discord"]).map(source=>{const row=sources.find(item=>item.source===source);return row?Date.parse(String(row["Checked UTC"])):bounds.end;}));
+  const confirmedUntil=Math.min(bounds.end,...(webOnly?["web"]:discordOnly?["discord","membership"]:["web","discord"]).map(source=>{const row=sources.find(item=>item.source===source);return row?Date.parse(String(row["Checked UTC"])):bounds.end;}));
   const discordAvailable=observed("discord",bounds.start,bounds.end),webAvailable=observed("web",bounds.start,bounds.end),membershipAvailable=observed("membership",bounds.start,bounds.end);
   const measuredCount=(value:number,source:"web"|"discord"|"membership",left=bounds.start,right=bounds.end):number|null=>value!==0||observed(source,left,right)?value:null;
   const rosterKnown=sources.some(source=>source.source==="membership"&&source.status==="collecting");
@@ -73,12 +79,14 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
     {label:"Discord contributors",value:scope.ownContentOnly||(!discordAvailable&&!current.contributors)?null:current.contributors,unit:"people",previous:discordPrevious?.contributors??null},
     {label:"Discord messages",value:scope.ownContentOnly||(!discordAvailable&&!current.messages)?null:current.messages,unit:"messages",previous:discordPrevious?.messages??null}];
   const trendRows=db.prepare(`SELECT substr(occurred_at_utc,1,10) AS date,sum(surface='web') AS web,sum(surface='discord') AS discord FROM community_stats_events WHERE ${where} GROUP BY date ORDER BY date`).all(params) as {date:string;web:number;discord:number}[];
-  const trend=trendRows.map(row=>({...row,discord:scope.ownContentOnly?null:row.discord}));
+  const trend=trendRows.map(row=>({...row,discord:webOnly?null:row.discord}));
   let rows:CommunityStatsTableRow[]=[],columns:string[]=[],totalRows=0;
   const segments:Record<string,number>={both:0,discord_only:0,web_only:0,neither_observed:0,unlinked:0,insufficient_coverage:0};
   let cohorts:CommunityStatsReport["cohorts"]=[],activation:CommunityStatsReport["activation"]=null,member:CommunityStatsReport["member"]=null;
-  const notes=["All dates and times are UTC.","Web filters affect webpage reports; participation segments use all eligible public webpages and configured Discord channels."];
-  if(["overview","server"].includes(tab)&&!scope.ownContentOnly){
+  const notes=["All dates and times are UTC."];
+  if(["overview","participation","members","cohorts"].includes(tab))notes.push("Participation compares all eligible community webpages with configured Discord channels; webpage filters apply only to webpage reports.");
+  if(tab==="team")return {...empty,sources,roles:[],...readCommunityStatsTeam(db,scope,{window,page,pageSize,catalog,coverage,sources,evidence:id=>memberEvidence(db,scope.communityId,id,window,memberCoverage,JSON.stringify(catalog.map(content=>content.id)))})};
+  if(tab==="overview"&&!scope.ownContentOnly){
     const linkedPopulation=db.prepare(`SELECT count(DISTINCT l.discord_user_id) AS linked,count(DISTINCT CASE WHEN EXISTS(SELECT 1 FROM community_stats_events e WHERE e.community_id=l.community_id AND e.discord_user_id=l.discord_user_id AND e.platform_user_id=l.platform_user_id AND e.surface='web' AND e.occurred_at_utc>=@from AND e.occurred_at_utc<@until AND e.content_id IN(SELECT value FROM json_each(@contentIds))) THEN l.discord_user_id END) AS visited FROM community_stats_identity_links l JOIN community_stats_members n ON n.community_id=l.community_id AND n.discord_user_id=l.discord_user_id AND n.active=1 AND n.is_bot=0 JOIN platform_users u ON u.user_id=l.platform_user_id AND u.status='active' JOIN platform_auth_identities i ON i.user_id=u.user_id AND i.auth_provider='discord' AND i.status='active' AND i.auth_subject=l.discord_user_id JOIN traderlink_community_memberships m ON m.community_id=l.community_id AND m.user_id=u.user_id AND m.status='active' WHERE l.community_id=@communityId AND l.until_utc IS NULL ${roleFilter.replace(" AND discord_user_id"," AND l.discord_user_id")}`).get({communityId:scope.communityId,from,until,contentIds:contentJson,...(options.roleId?{roleId:options.roleId}:{})}) as {linked:number;visited:number};
     const humans=db.prepare(`SELECT count(*) AS n FROM community_stats_members WHERE community_id=@communityId AND active=1 AND is_bot=0 ${roleFilter}`).get({communityId:scope.communityId,...(options.roleId?{roleId:options.roleId}:{})}) as {n:number};
     sections.push({title:"Member coverage",columns:["Population","Members"],rows:[{Population:"Full current observed human guild roster",Members:rosterKnown?humans.n:null},{Population:"Current linked TraderLink accounts",Members:linkedPopulation.linked||rosterKnown?linkedPopulation.linked:null},{Population:"Current linked members with recorded eligible visits",Members:linkedPopulation.visited||(rosterKnown&&webAvailable)?linkedPopulation.visited:null},{Population:"Current linked members without recorded eligible visits",Members:linkedPopulation.linked||rosterKnown?linkedPopulation.linked-linkedPopulation.visited:null}]});
@@ -100,7 +108,7 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
     const activityRows=[1,7,30].map(days=>{
       const left=new Date(Math.max(bounds.start,bounds.end-days*86_400_000)).toISOString(),values=counts(left,until);
       return {Window:`Trailing ${days} day${days===1?"":"s"} within selection`,"Webpage viewers":measuredCount(values.viewers,"web",Date.parse(left),bounds.end),"Discord contributors":scope.ownContentOnly?null:measuredCount(values.contributors,"discord",Date.parse(left),bounds.end)};
-    });sections.push({title:"Active audience",columns:["Window","Webpage viewers","Discord contributors"],rows:activityRows});
+    });sections.push({title:"Active audience",columns:webOnly?["Window","Webpage viewers"]:["Window","Webpage viewers","Discord contributors"],rows:activityRows});
   }
   if(tab==="pages"||tab==="authors"||scope.ownContentOnly&&tab==="overview"){
     const author=tab==="authors";
@@ -127,9 +135,11 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
     columns=["Weekday UTC","Hour UTC","Webpage visits","Discord contributions"];
     rows=db.prepare(`SELECT strftime('%w',occurred_at_utc) AS "Weekday UTC",strftime('%H',occurred_at_utc) AS "Hour UTC",sum(surface='web') AS "Webpage visits",sum(surface='discord') AS "Discord contributions" FROM community_stats_events WHERE ${where} GROUP BY 1,2 ORDER BY 1,2`).all(params) as CommunityStatsTableRow[];totalRows=rows.length;
     rows=rows.map(row=>({...row,"Webpage visits":measuredCount(Number(row["Webpage visits"]),"web"),"Discord contributions":measuredCount(Number(row["Discord contributions"]),"discord")}));
-    if(scope.ownContentOnly){columns=columns.filter(column=>column!=="Discord contributions");rows=rows.map(({["Discord contributions"]:ignored,...row})=>{void ignored;return row;});}
+    if(webOnly){columns=columns.filter(column=>column!=="Discord contributions");rows=rows.map(({["Discord contributions"]:ignored,...row})=>{void ignored;return row;});}
   }
   if(tab==="server"){
+    const roster=db.prepare(`SELECT count(*) AS n FROM community_stats_members WHERE community_id=@communityId AND active=1 AND is_bot=0 ${roleFilter}`).get({communityId:scope.communityId,...(options.roleId?{roleId:options.roleId}:{})}) as {n:number};
+    sections.push({title:"Guild roster",columns:["Population","Members"],rows:[{Population:"Current observed human Discord members",Members:rosterKnown?roster.n:null}]});
     columns=["Channel","Messages","Reactions","Contributors","Voice minutes","Median reply seconds"];
     rows=db.prepare(`SELECT e.channel_id AS channelId,coalesce(c.name,'Removed channel') AS Channel,sum(e.kind IN ('message','thread_reply','forum_post')) AS Messages,sum(e.kind='reaction_add') AS Reactions,count(DISTINCT e.discord_user_id) AS Contributors,round((sum(e.duration_seconds)+coalesce((SELECT sum(max(0,cast(round((julianday(min(v.last_confirmed_at_utc,@until))-julianday(max(v.from_utc,@from)))*86400000)/1000 AS INTEGER))) FROM community_stats_voice_state v WHERE v.community_id=e.community_id AND v.channel_id=e.channel_id ${roleFilter.replace(" AND discord_user_id"," AND v.discord_user_id")}),0))/60.0,1) AS "Voice minutes",NULL AS "Median reply seconds" FROM community_stats_events e LEFT JOIN community_stats_channels c ON c.community_id=e.community_id AND c.channel_id=e.channel_id WHERE e.community_id=@communityId AND e.surface='discord' AND e.occurred_at_utc>=@from AND e.occurred_at_utc<@until ${roleFilter} GROUP BY e.channel_id ORDER BY Messages DESC,e.channel_id`).all({communityId:scope.communityId,from,until,...(options.roleId?{roleId:options.roleId}:{})}) as CommunityStatsTableRow[];
     rows=rows.map(row=>{const delays=db.prepare(`SELECT min(e.reply_delay_seconds) AS delay FROM community_stats_events e LEFT JOIN community_stats_channels c ON c.community_id=e.community_id AND c.channel_id=e.channel_id WHERE e.community_id=@communityId AND e.channel_id=@channelId AND e.occurred_at_utc>=@from AND e.occurred_at_utc<@until AND e.reply_delay_seconds IS NOT NULL ${roleFilter} GROUP BY e.reply_to_event_id ORDER BY delay`).all({communityId:scope.communityId,from,until,channelId:row.channelId,...(options.roleId?{roleId:options.roleId}:{})}) as {delay:number}[];if(!delays.length)return row;const middle=Math.floor(delays.length/2);return {...row,"Median reply seconds":delays.length%2?delays[middle].delay:(delays[middle-1].delay+delays[middle].delay)/2};});
@@ -150,7 +160,7 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
     const teamContributors=breadth.filter(person=>teamIds.includes(person.discord_user_id)).length;
     sections.push({title:"Current team and bot segmentation",columns:["Measure","Value"],rows:[{Measure:"Contributors in the current linked TraderLink team",Value:measuredCount(teamContributors,"discord")},{Measure:"Other observed human contributors",Value:measuredCount(breadth.length-teamContributors,"discord")},{Measure:"Current observed bots excluded from activity",Value:rosterObserved?bots.n:null},{Measure:"Observed referenced messages with a current-team reply",Value:measuredCount(staffReplies.length,"discord")},{Measure:"Median first observed current-team reply seconds",Value:statsMedian(staffReplies.map(row=>row.delay))},{Measure:"Median message/reaction events per observed contributor",Value:statsMedian(breadth.map(row=>row.contributions))},{Measure:"90th percentile message/reaction events per observed contributor",Value:percentile90(breadth.map(row=>row.contributions))}]});
     notes.push("Team segmentation uses current linked TraderLink responsibilities, not inferred Discord role names or historical staff status. First replies include only observed explicit references; no unanswered-question denominator is invented. Percentiles use linear interpolation.");
-    notes.push("Reply timing covers explicit references to observed messages. It does not infer unanswered questions or read message text.","Guild roster counts exclude bots. Linked TraderLink accounts are a separate population. Invite attribution remains Unknown.");
+    notes.push("Reply timing covers explicit references to observed messages. It does not infer unanswered questions or read message text.","Guild roster counts exclude bots. Invite attribution remains Unknown.");
     rows=rows.slice((page-1)*pageSize,page*pageSize);
   }
   if(["overview","participation","members","cohorts"].includes(tab)&&!scope.ownContentOnly){
@@ -272,19 +282,20 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
     }else sections.push({title:"Shared alert deliveries",columns:["Availability"],rows:[{Availability:"Not available in this deployment"}]});
     notes.push("Publishing outcomes, revisions and actions come from canonical records. Retry attempts are not publications. A current status timestamp is not a reconstructed archive or unpublish history.","Coach profiles contain public offers and access instructions together; a profile visit does not prove interest in a particular offer or instruction.","Verified tracked-link attribution is Not collected. Cross-community delivery facts remain scoped to this community and never expose another community's named audience.");
   }
-  if(!scope.ownContentOnly&&!discordAvailable)notes.push("Discord activity is unavailable or incomplete. Empty native reports are not proof of zero server activity.");
+  if(!webOnly&&!publishingOnly&&!discordAvailable)notes.push("Discord activity is unavailable or incomplete. Empty native reports are not proof of zero server activity.");
   if(["overview","participation","server"].includes(tab)){
-    const gapCount=db.prepare(`SELECT count(*) AS n FROM community_stats_coverage WHERE community_id=? AND state='gap' AND from_utc<? AND until_utc>?`).get(scope.communityId,until,from) as {n:number};
+    const gapSource=discordOnly?" AND source IN('discord','membership')":"";
+    const gapCount=db.prepare(`SELECT count(*) AS n FROM community_stats_coverage WHERE community_id=? AND state='gap' AND from_utc<? AND until_utc>? ${gapSource}`).get(scope.communityId,until,from) as {n:number};
     if(gapCount.n){
-      const gapRows=db.prepare(`SELECT source AS Source,max(from_utc,?) AS "From UTC",min(until_utc,?) AS "Through UTC",reason AS Reason FROM community_stats_coverage WHERE community_id=? AND state='gap' AND from_utc<? AND until_utc>? ORDER BY until_utc DESC,source,from_utc DESC LIMIT ? OFFSET ?`).all(from,until,scope.communityId,until,from,pageSize,(page-1)*pageSize) as CommunityStatsTableRow[];
+      const gapRows=db.prepare(`SELECT source AS Source,max(from_utc,?) AS "From UTC",min(until_utc,?) AS "Through UTC",reason AS Reason FROM community_stats_coverage WHERE community_id=? AND state='gap' AND from_utc<? AND until_utc>? ${gapSource} ORDER BY until_utc DESC,source,from_utc DESC LIMIT ? OFFSET ?`).all(from,until,scope.communityId,until,from,pageSize,(page-1)*pageSize) as CommunityStatsTableRow[];
       sections.push({title:"Recorded collection gaps",columns:["Source","From UTC","Through UTC","Reason"],rows:gapRows,totalRows:gapCount.n,page,pageSize});
     }
   }
-  notes.push("Messages count observed human creations, including replies/forum posts; edits do not create messages, and later deletions do not erase an observed creation. Reactions count additions, not a current reaction inventory. Voice participation includes measured non-AFK attendance, not speaking time.");
-  if(confirmedUntil<bounds.end)notes.push(`Collection confirmation currently ends at ${new Date(confirmedUntil).toISOString()}; the unconfirmed tail is not treated as inactivity.`);
+  if(!webOnly&&!publishingOnly)notes.push("Messages count observed human creations, including replies/forum posts; edits do not create messages, and later deletions do not erase an observed creation. Reactions count additions, not a current reaction inventory. Voice participation includes measured non-AFK attendance, not speaking time.");
+  if(!publishingOnly&&confirmedUntil<bounds.end)notes.push(`Collection confirmation currently ends at ${new Date(confirmedUntil).toISOString()}; the unconfirmed tail is not treated as inactivity.`);
   if(options.roleId)notes.push("The role filter uses current observed Discord roles on active members, including when viewing earlier dates; it does not infer historical roles.");
   if(options.segment)notes.push("The participation filter narrows the member list. Audience cards retain the selected community, role and date scope.");
-  return {...empty,sources:scope.ownContentOnly?sources.filter(source=>source.source==="web"):sources,metrics:scope.ownContentOnly?metrics.filter(metric=>!metric.label.startsWith("Discord")):metrics,trend,rows,columns,totalRows,segments,cohorts,activation,member,notes,sections,roles};
+  return {...empty,sources:publishingOnly?[]:sources.filter(source=>webOnly?source.source==="web":discordOnly?source.source!=="web":true),metrics:publishingOnly?[]:metrics.filter(metric=>webOnly?metric.label.startsWith("Webpage"):discordOnly?metric.label.startsWith("Discord"):true),trend,rows,columns,totalRows,segments,cohorts,activation,member,notes,sections,roles,...(discordOnly?{catalog:[],catalogTotal:0,catalogMatchTotal:0}:{})};
 }
 
 /** Streaming named export shares the same authorized content scope and exact UTC interval. */
