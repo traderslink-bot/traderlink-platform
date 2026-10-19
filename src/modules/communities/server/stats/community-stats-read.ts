@@ -11,7 +11,7 @@ import {readCommunityStatsTeam} from "./community-stats-team";
 import {TraderLinkCommunityRepository} from "../traderlink-community-repository";
 
 export const COMMUNITY_STATS_TABS:readonly CommunityStatsTab[]=["overview","participation","server","team","pages","members","visits","cohorts","authors","publishing","timing"];
-export type CommunityStatsReadOptions={tab:CommunityStatsTab;window:CommunityStatsWindow;page:number;contentId?:string;authorId?:string;memberId?:string;segment?:string;memberPage?:number;roleId?:string;catalogSearch?:string};
+export type CommunityStatsReadOptions={tab:CommunityStatsTab;window:CommunityStatsWindow;page:number;/** Trusted export callers only; never read from URL filters. */exportBatchSize?:1000;contentId?:string;authorId?:string;memberId?:string;segment?:string;memberPage?:number;roleId?:string;catalogSearch?:string};
 type Counts={visits:number;viewers:number;contributors:number;messages:number;reactions:number;voiceSeconds:number};
 function percentile90(values:readonly number[]):number|null{if(!values.length)return null;const sorted=[...values].sort((a,b)=>a-b),position=(sorted.length-1)*.9,left=Math.floor(position),fraction=position-left;return Math.round((sorted[left]+((sorted[left+1]??sorted[left])-sorted[left])*fraction)*10)/10;}
 
@@ -32,7 +32,8 @@ function memberEvidence(db:Database.Database,communityId:string,userId:string,wi
 
 /** Every query is tenant scoped. Names are selected only after the separate named-data grant. */
 export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequestScope,options:CommunityStatsReadOptions):CommunityStatsReport{
-  const {window,tab}=options,bounds=resolveStatsWindow(window),page=Math.max(1,Math.floor(options.page||1)),pageSize=25;
+  const {window,tab}=options,bounds=resolveStatsWindow(window),page=Math.max(1,Math.floor(options.page||1)),pageSize=options.exportBatchSize??25;
+  if(options.exportBatchSize!==undefined&&options.exportBatchSize!==1000)throw new RangeError("Invalid internal Stats export batch.");
   const webOnly=scope.ownContentOnly||["pages","visits","authors"].includes(tab)||(tab==="timing"&&!!(options.contentId||options.authorId||options.catalogSearch));
   const discordOnly=tab==="server",publishingOnly=tab==="publishing";
   const canReadMembers=scope.canReadNamed&&(scope.isOwner||scope.capabilities.includes("community.members.view"));

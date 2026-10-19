@@ -67,14 +67,15 @@ export async function GET(request:Request,context:Context):Promise<Response>{
       const audits=database.prepare(`SELECT a.occurred_at_utc AS "Changed UTC",coalesce(u.display_name,'Previous owner') AS Actor,json_extract(a.settings_json,'$.revision') AS Revision,CASE WHEN json_extract(a.settings_json,'$.discordEnabled') THEN 'Enabled' ELSE 'Disabled' END AS Collection,json_array_length(a.settings_json,'$.channelIds') AS Channels,json_array_length(a.settings_json,'$.ownContentUserIds') AS "Own-content grants",json_array_length(a.settings_json,'$.exportUserIds') AS "Export grants" FROM community_stats_settings_audit a LEFT JOIN platform_users u ON u.user_id=a.actor_user_id WHERE a.community_id=? AND a.occurred_at_utc>=? ORDER BY a.occurred_at_utc DESC,a.audit_id DESC LIMIT 25 OFFSET ?`).all(scope.communityId,cutoff,(settingsPage-1)*25);
       return Response.json({settings,channels,members,audits,auditCount:auditCount.n,settingsPage,runtimeEnabled:process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"},{headers});
     }
-    const excel=query.get("format")==="xlsx";
-    if(excel&&!scope.canExport)return Response.json({error:"An explicit export grant is required."},{status:403,headers});
+    const excel=query.get("format")==="xlsx",exporting=excel||query.get("format")==="csv";
+    if(exporting&&!scope.canExport)return Response.json({error:"An explicit export grant is required."},{status:403,headers});
     if(excel)database.exec("BEGIN");
-    const report=readCommunityStats(database,scope,scopedOptions);
+    const reportOptions=exporting?{...scopedOptions,page:1,exportBatchSize:1000 as const}:scopedOptions;
+    const report=readCommunityStats(database,scope,reportOptions);
     if(excel){
       if(!report.ready)return Response.json({error:"Stats are unavailable."},{status:503,headers});
       const streamDatabase=database;
-      const sheets=communityStatsWorkbookSheets(report,page=>readCommunityStats(streamDatabase,scope,{...scopedOptions,page}),timeline=>openCommunityStatsEventExport(streamDatabase,scope,scopedOptions,timeline),Object.fromEntries([["Role filter",roleId],["Page filter",options.contentId],["Author filter",options.authorId],["Member filter",options.memberId],["Participation filter",options.segment],["Page search",catalogSearch]].filter((entry):entry is [string,string]=>!!entry[1])));
+      const sheets=communityStatsWorkbookSheets(report,page=>readCommunityStats(streamDatabase,scope,{...reportOptions,page}),timeline=>openCommunityStatsEventExport(streamDatabase,scope,scopedOptions,timeline),Object.fromEntries([["Role filter",roleId],["Page filter",options.contentId],["Author filter",options.authorId],["Member filter",options.memberId],["Participation filter",options.segment],["Page search",catalogSearch]].filter((entry):entry is [string,string]=>!!entry[1])));
       const iterator=streamStatsWorkbook(sheets);let closed=false;
       const close=()=>{if(!closed){closed=true;try{iterator.return(undefined);}finally{streamDatabase.close();}}};
       const stream=new ReadableStream<Uint8Array>({pull(controller){try{const next=iterator.next();if(next.done){close();controller.close();}else controller.enqueue(next.value);}catch(error){close();controller.error(error);}},cancel(){close();}});
@@ -102,7 +103,7 @@ export async function GET(request:Request,context:Context):Promise<Response>{
     const output=[exportColumns.map(csvCell).join(",")];
     const exportPages=selectedSection?selectedSection.totalRows===undefined?1:Math.ceil(selectedSection.totalRows/report.pageSize):tab==="timing"?1:Math.ceil(report.totalRows/report.pageSize);
     for(let page=1;page<=exportPages;page++){
-      const slice=page===report.page?report:readCommunityStats(database,scope,{...scopedOptions,page});
+      const slice=page===report.page?report:readCommunityStats(database,scope,{...reportOptions,page});
       const exportRows=sectionTitle?slice.sections.find(section=>section.title===sectionTitle)?.rows??[]:slice.rows;
       for(const row of exportRows)output.push(exportColumns.map(column=>csvCell(row[column])).join(","));
     }

@@ -31,8 +31,10 @@ export function statsCardChart(title:string,columns:readonly string[],rows:reado
 export function StatsDataChart({data}:{data:StatsChartData|null}){
   if(!data)return null;
   if(data.kind==="donut")return <StatsDonut data={data}/>;
-  const ranked=[...data.rows].sort((a,b)=>Math.max(...data.series.map(key=>Math.abs(number(b[key])??0)))-Math.max(...data.series.map(key=>Math.abs(number(a[key])??0))));
+  const score=(row:CommunityStatsTableRow)=>Math.max(-1,...data.series.map(key=>{const value=number(row[key]);return value===null?-1:Math.abs(value);}));
+  const ranked=[...data.rows].sort((a,b)=>score(b)-score(a));
   const rows=ranked.slice(0,8),values=rows.flatMap(row=>data.series.map(key=>number(row[key])).filter((value):value is number=>value!==null));
+  if(!values.length)return <figure className="cs-card-chart" data-chart-state="unavailable"><figcaption className="cs-chart-caption">{data.scope}</figcaption><p className="cs-note">No measured values are available for this chart.</p></figure>;
   const minimum=Math.min(0,...values),maximum=Math.max(1,...values),x=(value:number)=>12+(value-minimum)/(maximum-minimum)*350;
   return <figure className="cs-card-chart" aria-label={`${data.series.join(" and ")} by ${data.label}`}>
     <figcaption className="cs-chart-caption">{data.scope}{ranked.length>8?` · Showing 8 largest rows of ${ranked.length}`:""}</figcaption>
