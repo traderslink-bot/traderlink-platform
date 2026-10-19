@@ -12,15 +12,15 @@ import { createAndRestoreVerifyPlatformDatabaseBackup } from "@/src/modules/plat
 import { loadAccountIdentityConfiguration } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 
-const predecessorCount = 169;
-const completedCount = 170;
+const predecessorCount = 170;
+const completedCount = 171;
 const prefix = platformMigrationManifest.slice(0, predecessorCount);
 const expected = [
-  "0174_traderlink_community_stats_history",
+  "0175_platform_profile_name",
 ];
 assert.equal(platformMigrationManifest.length, completedCount);
 assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.migrationId), expected);
-assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), [187]);
+assert.deepEqual(platformMigrationManifest.slice(predecessorCount).map(m => m.executionOrder), [188]);
 
 function open(path: string) {
   const db = new Database(path, { fileMustExist: true });
@@ -73,7 +73,7 @@ async function main() {
     assert.equal(process.env.RAILWAY_SERVICE_ID, "4d264aca-510c-4f5e-bc28-e89e526b8008");
     assert.equal(process.env.TRADERLINK_PLATFORM_DB_PATH, "/data/traderlink-platform.sqlite");
   }
-  const root = rehearsal ? mkdtempSync(join(tmpdir(), "community-stats-staging-")) : "/data";
+  const root = rehearsal ? mkdtempSync(join(tmpdir(), "profile-name-staging-")) : "/data";
   const sourcePath = join(root, "traderlink-platform.sqlite");
   if (rehearsal) {
     const db = new Database(sourcePath);
@@ -90,7 +90,7 @@ async function main() {
   if (count === predecessorCount) {
     const disk = statfsSync(root);
     assert(disk.bavail * disk.bsize > statSync(sourcePath).size * 4 + 1024 ** 3, "Insufficient backup/rehearsal headroom");
-    const checkpoint = join(root, "community-stats-staging-checkpoints", "20261018-community-stats-0174");
+    const checkpoint = join(root, "profile-name-staging-checkpoints", "20261018-profile-name-0175");
     const backupPath = join(checkpoint, "backup.sqlite");
     const restoreVerificationPath = join(checkpoint, "restore-verification.sqlite");
     const evidence = await createAndRestoreVerifyPlatformDatabaseBackup({
