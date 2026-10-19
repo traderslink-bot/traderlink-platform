@@ -27,7 +27,8 @@ export function provisionVerifiedPlatformIdentity(database: Database.Database, i
     if (!user || user.status !== "active") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
     const active = workspaces.listActiveMembershipsForUser(identity.userId);
     if (active.length !== 1 || !active[0]) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
-    users.updateActiveDisplayName({ userId: identity.userId, displayName: input.displayName, updatedAtUtc: input.timestamp });
+    users.updateActiveDisplayName({ userId: identity.userId, displayName: input.displayName,
+      authProvider: input.authProvider, updatedAtUtc: input.timestamp });
     return Object.freeze({ userId: identity.userId, workspaceId: active[0].workspaceId, provisioned: false });
   }
   if (input.authProvider === "discord" && input.protectedInitialOwnerAuthSubject === input.authSubject) {

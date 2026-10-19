@@ -1,5 +1,8 @@
 # Platform login: Google, email/password and Discord
 
+Owner-approved profile-name follow-up (source only; deployment held):
+[Unique editable profile names](profile-name-progress-20261018.md).
+
 Status: proposed implementation plan following the owner direction of 2026-10-14.
 This checkpoint creates the plan; it does not activate providers, run migrations,
 change hosted data or deploy. Login precedes new visible feature-gating work.

@@ -10,6 +10,7 @@ import { requireTraderLinkPlatformAuthenticatedPageIdentity } from "@/src/module
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
+import { ProfileNameForm } from "./profile-name-form";
 
 export const metadata: Metadata = {
   description: "Review your TraderLink profile and sign-in access.",
@@ -20,9 +21,9 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountProfilePage() {
-  const { scope } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
+  const { scope, sessionId } = await requireTraderLinkPlatformAuthenticatedPageIdentity();
   const profile = withReadonlyPlatformDatabase({}, (database) =>
-    new PlatformAccountProfileReadService(database).get(scope));
+    new PlatformAccountProfileReadService(database).get(scope, { sessionId }));
 
   return (
     <AccountSettingsLayout
@@ -33,12 +34,15 @@ export default async function AccountProfilePage() {
       <DashboardPanel title="Profile">
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
           <AccountCircleRoundedIcon color="primary" sx={{ fontSize: 52 }} />
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontWeight: 850 }} variant="h2">{profile.displayName}</Typography>
-            <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">{profile.authenticationLabel}</Typography>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 850, overflowWrap: "anywhere" }} variant="h2">{profile.displayName}</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+              {profile.accessMode === "local_development" ? profile.authenticationLabel : `Signed in with ${profile.authenticationLabel}`}
+            </Typography>
           </Box>
           <Chip color="success" label={profile.accessMode === "local_development" ? "Local review access" : "Signed in"} />
         </Stack>
+        <ProfileNameForm initialName={profile.displayName} />
       </DashboardPanel>
 
       <DashboardPanel title="Workspace">

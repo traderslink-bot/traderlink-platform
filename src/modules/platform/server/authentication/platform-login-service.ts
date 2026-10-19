@@ -7,6 +7,7 @@ import { createCanonicalUuidV4 } from "../database/platform-migration-contract";
 import { PlatformAuthenticationRepository } from "./platform-authentication-repository";
 import { readProtectedInitialOwnerDiscordSubject } from "./platform-discord-configuration";
 import { provisionVerifiedPlatformIdentity } from "./platform-identity-provisioning";
+import { PlatformProfileNameRepository } from "../identity/platform-profile-name-repository";
 import {
   PlatformSessionRepository,
   type ResolvedPlatformSession,
@@ -801,11 +802,15 @@ export class PlatformLoginService {
     if (!identity) throw new PlatformLoginError("invalid");
     const name = (input.accountName ?? input.displayName).normalize("NFKC").replace(/[\u0000-\u001f\u007f]/gu, "").trim().slice(0, 120);
     if (!name) return;
+    const profileName = input.displayName.normalize("NFKC").replace(/[\u0000-\u001f\u007f]/gu, "").trim().slice(0, 120);
     this.db.prepare(`INSERT INTO platform_login_identity_profiles
-      (auth_provider,auth_subject,display_name,verified_email,updated_at_utc) VALUES (?,?,?,?,?)
+      (auth_provider,auth_subject,display_name,verified_email,updated_at_utc,profile_display_name) VALUES (?,?,?,?,?,?)
       ON CONFLICT(auth_provider,auth_subject) DO UPDATE SET display_name=excluded.display_name,
-        verified_email=excluded.verified_email,updated_at_utc=excluded.updated_at_utc`)
-      .run(input.provider, input.subject, name, input.verifiedEmail ? normalizeLoginEmail(input.verifiedEmail) : null, this.now());
+        verified_email=excluded.verified_email,updated_at_utc=excluded.updated_at_utc,
+        profile_display_name=excluded.profile_display_name`)
+      .run(input.provider, input.subject, name, input.verifiedEmail ? normalizeLoginEmail(input.verifiedEmail) : null, this.now(), profileName || null);
+    this.db.transaction(() => new PlatformProfileNameRepository(this.db)
+      .updateProviderDefault(identity.userId, input.displayName, input.provider, this.now())).immediate();
   }
   recordVerifiedOAuthEmail(
     provider: "google" | "discord",
@@ -993,6 +998,7 @@ export class PlatformLoginService {
             WHERE credential_id IN (SELECT credential_id FROM platform_login_credentials WHERE user_id=?)
             AND consumed_at_utc IS NULL`)
             .run(this.now(), session.userId);
+        new PlatformProfileNameRepository(this.db).updateProviderDefault(session.userId, null, undefined, this.now());
         this.audit(session.userId, provider, "unlink");
       })
       .immediate();
