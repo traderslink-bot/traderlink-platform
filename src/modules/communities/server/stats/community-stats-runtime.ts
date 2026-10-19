@@ -7,7 +7,7 @@ import {CommunityStatsDiscordGateway} from "./community-stats-discord-gateway";
 import {TraderLinkCommunityRepository} from "../traderlink-community-repository";
 import {CommunityStatsHistory} from "./community-stats-history";
 
-type State={timer:ReturnType<typeof setInterval>;database:Database.Database;gateway:CommunityStatsDiscordGateway|null;signature:string;lastWeb:string|null};
+type State={historyTimer:ReturnType<typeof setInterval>;historyCommunities:string[];timer:ReturnType<typeof setInterval>;database:Database.Database;gateway:CommunityStatsDiscordGateway|null;signature:string;lastWeb:string|null};
 const key="__traderlinkCommunityStatsRuntime";
 type Global=typeof globalThis&{[key]?:State};
 /** Called only from the hosted single-writer worker bootstrap, never from a page. */
@@ -15,13 +15,13 @@ export function startHostedCommunityStats():void{
   if((globalThis as Global)[key])return;
   const database=openPlatformDatabase({mode:"runtime"});
   if(!communityStatsStorageReady(database)){database.close();return;}
-  const state:State={database,gateway:null,signature:"",lastWeb:null,timer:undefined as unknown as ReturnType<typeof setInterval>};
+  const state:State={database,gateway:null,signature:"",lastWeb:null,historyCommunities:[],historyTimer:undefined as unknown as ReturnType<typeof setInterval>,timer:undefined as unknown as ReturnType<typeof setInterval>};
   const history=new CommunityStatsHistory(database);
   const tick=()=>{
     const at=new Date().toISOString(),repo=new CommunityStatsRepository(database);
     try{
       if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"){
-        state.gateway?.stop();state.gateway=null;state.signature="";state.lastWeb=null;
+        state.gateway?.stop();state.gateway=null;state.signature="";state.lastWeb=null;state.historyCommunities=[];
         database.prepare(`UPDATE community_stats_source_state SET status='disabled',checked_at_utc=?,reason='Collection is disabled.' WHERE status!='disabled'`).run(at);return;
       }
       const communities=database.prepare(`SELECT c.community_id,c.discord_guild_id,s.discord_enabled,s.channel_ids_json,s.discord_configuration_version FROM traderlink_communities c JOIN platform_users owner ON owner.user_id=c.owner_user_id AND owner.status='active' LEFT JOIN community_stats_settings s ON s.community_id=c.community_id WHERE c.status='active' AND NOT EXISTS(SELECT 1 FROM traderlink_community_lifecycle l WHERE l.community_id=c.community_id AND l.removed_at_utc IS NOT NULL) ORDER BY c.community_id`)
@@ -62,7 +62,7 @@ export function startHostedCommunityStats():void{
       }});state.lastWeb=at;
       const selected=communities.filter(row=>row.discord_enabled===1&&approved.includes(row.discord_guild_id)).map(row=>({communityId:row.community_id,guildId:row.discord_guild_id,channelIds:JSON.parse(row.channel_ids_json??"[]") as string[],configurationVersion:row.discord_configuration_version??0}));
       const token=process.env.TRADERLINK_DISCORD_BOT_TOKEN?.trim(),signature=JSON.stringify(selected)+(token?":token-present":":no-token");
-      if(token)void history.tick(selected.map(community=>community.communityId),token).catch(error=>console.error("Stats history persistence deferred.",{errorName:error instanceof Error?error.name:"UnknownError"}));
+      state.historyCommunities=selected.map(community=>community.communityId);
       if(signature!==state.signature){
         state.gateway?.stop();state.gateway=null;state.signature=signature;
         if(selected.length&&token){
@@ -77,5 +77,9 @@ export function startHostedCommunityStats():void{
       }
     }catch(error){state.lastWeb=null;console.error("Community Stats collection paused.",{errorName:error instanceof Error?error.name:"UnknownError"});}
   };
+  state.historyTimer=setInterval(()=>{
+    const token=process.env.TRADERLINK_DISCORD_BOT_TOKEN?.trim();
+    if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"&&token)void history.tick(state.historyCommunities,token).catch(error=>console.error("Stats history persistence deferred.",{errorName:error instanceof Error?error.name:"UnknownError"}));
+  },5000);state.historyTimer.unref();
   state.timer=setInterval(tick,30_000);state.timer.unref();(globalThis as Global)[key]=state;tick();
 }

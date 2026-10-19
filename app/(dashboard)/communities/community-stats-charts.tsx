@@ -3,7 +3,7 @@ import type {CommunityStatsTableRow} from "@/src/modules/communities/contracts/c
 import {communityStatsValues} from "./community-stats-presentation";
 
 export type StatsChartData=Readonly<{kind:"bars"|"donut";label:string;series:readonly string[];rows:readonly CommunityStatsTableRow[];scope:string}>;
-const palette=(index:number)=>`var(--cs-chart-${index%6})`;
+const palette=(index:number)=>`var(--cs-chart-${index%8})`;
 const number=(value:unknown):number|null=>typeof value==="number"&&Number.isFinite(value)?value:null;
 const display=(value:number|null)=>value===null?"Unavailable":value.toLocaleString(undefined,{maximumFractionDigits:2});
 
@@ -52,7 +52,8 @@ export function StatsDataChart({data}:{data:StatsChartData|null}){
 }
 
 function StatsDonut({data}:{data:StatsChartData}){
-  const key=data.series[0],items=data.rows.map(row=>({label:String(row[data.label]??"Unknown"),value:number(row[key])}));
+  const key=data.series[0];let colorIndex=0;
+  const items=data.rows.map(row=>{const value=number(row[key]);return {label:String(row[data.label]??"Unknown"),value,color:value!==null&&value>0?palette(colorIndex++):"var(--cs-chart-5)"};});
   // Negative deltas and overlapping populations are never interpreted as shares.
   if(items.some(item=>item.value!==null&&item.value<0))return <StatsDataChart data={{...data,kind:"bars"}}/>;
   const total=items.reduce((sum,item)=>sum+(item.value??0),0),circumference=2*Math.PI*58;let offset=0;
@@ -60,9 +61,9 @@ function StatsDonut({data}:{data:StatsChartData}){
     <figcaption className="cs-chart-caption">{data.scope}</figcaption>
     <div className="cs-donut-layout"><svg viewBox="0 0 180 180" role="img" aria-label={total?`${total.toLocaleString()} recorded ${key.toLowerCase()}`:items.some(item=>item.value===null)?"Data unavailable":"No observed activity"}>
       <circle cx="90" cy="90" r="58" fill="none" stroke="currentColor" strokeWidth="22" opacity=".1"/>
-      {total>0?items.map((item,index)=>{if(!item.value)return null;const length=item.value/total*circumference,start=offset;offset+=length;return <circle key={index} cx="90" cy="90" r="58" fill="none" stroke={palette(index)} strokeWidth="22" strokeDasharray={`${length} ${circumference-length}`} strokeDashoffset={-start} transform="rotate(-90 90 90)"><title>{`${item.label}: ${display(item.value)} (${(item.value/total*100).toFixed(1)}%)`}</title></circle>;}):null}
+      {total>0?items.map((item,index)=>{if(!item.value)return null;const length=item.value/total*circumference,start=offset;offset+=length;return <circle key={index} cx="90" cy="90" r="58" fill="none" stroke={item.color} strokeWidth="22" strokeDasharray={`${length} ${circumference-length}`} strokeDashoffset={-start} transform="rotate(-90 90 90)"><title>{`${item.label}: ${display(item.value)} (${(item.value/total*100).toFixed(1)}%)`}</title></circle>;}):null}
       <text x="90" y="88" textAnchor="middle" fill="currentColor" fontSize="25" fontWeight="700">{total?total.toLocaleString():items.some(item=>item.value===null)?"—":"0"}</text><text x="90" y="110" textAnchor="middle" fill="currentColor" fontSize="10">{key}</text>
-    </svg><ul className="cs-donut-legend">{items.map((item,index)=><li key={`${item.label}-${index}`}><i style={{background:palette(index)}}/><span>{item.label}</span><strong>{display(item.value)}{item.value!==null&&total>0?<small>{(item.value/total*100).toFixed(1)}%</small>:null}</strong></li>)}</ul></div>
+    </svg><ul className="cs-donut-legend">{items.map((item,index)=><li key={`${item.label}-${index}`}><i style={{background:item.color}}/><span>{item.label}</span><strong>{display(item.value)}{item.value!==null&&total>0?<small>{(item.value/total*100).toFixed(1)}%</small>:null}</strong></li>)}</ul></div>
     {items.some(item=>item.value===null)?<p className="cs-note">Unavailable values are excluded from the ring.</p>:null}
   </figure>;
 }

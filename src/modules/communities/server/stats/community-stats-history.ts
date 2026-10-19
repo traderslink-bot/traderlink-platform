@@ -9,9 +9,9 @@ const id=(value:unknown):value is string=>typeof value==="string"&&/^\d{1,32}$/u
 const instant=(value:unknown):string|null=>typeof value==="string"&&Number.isFinite(Date.parse(value))?new Date(value).toISOString():null;
 const text=(value:unknown):string|null=>typeof value==="string"?value.slice(0,80):null;
 import {statsHistoryIdentityHash,statsHistoryReady} from "./community-stats-history-storage";
-type Community={communityId:string;guildId:string;version:number;selected:string[];ownerId:string};
+type Community={communityId:string;guildId:string;version:number;selected:string[];ownerId:string;topologyAt:string};
 type Job={channel_id:string;parent_id:string|null;kind:"messages"|"archived"|"active";cursor:string|null;snapshot_at_utc:string};
-type Topology={roles:unknown;channels:Map<string,{name:string;type:number}>;at:number;phase:"guild"|"channels"|"ready"};
+type Topology={roles:unknown;channels:Map<string,{name:string;type:number}>;at:number;topologyAt:string;phase:"guild"|"channels"|"ready"};
 /** History must be readable by everyone, not only by the bot's elevated role. */
 export function statsPublicHistoryChannels(guildId:string,roles:unknown,channels:unknown){
   const result=statsPublicChannels(guildId,roles,channels);
@@ -37,7 +37,8 @@ export class CommunityStatsHistory {
   private topology=new Map<string,Topology>();
   constructor(private readonly db:Database.Database,private readonly request:typeof fetch=fetch){}
   private eligible(communityId:string):Community|null{
-    const row=this.db.prepare(`SELECT c.discord_guild_id AS guildId,s.discord_configuration_version AS version,s.channel_ids_json AS channels,i.auth_subject AS ownerId
+    const row=this.db.prepare(`SELECT c.discord_guild_id AS guildId,s.discord_configuration_version AS version,s.channel_ids_json AS channels,i.auth_subject AS ownerId,
+      coalesce((SELECT max(last_observed_at_utc) FROM community_stats_channels WHERE community_id=c.community_id),'') AS topologyAt
       FROM traderlink_communities c JOIN platform_users u ON u.user_id=c.owner_user_id AND u.status='active'
       JOIN platform_auth_identities i ON i.user_id=u.user_id AND i.auth_provider='discord' AND i.status='active'
       JOIN community_stats_settings s ON s.community_id=c.community_id AND s.discord_enabled=1
@@ -45,10 +46,10 @@ export class CommunityStatsHistory {
       JOIN community_stats_source_state m ON m.community_id=c.community_id AND m.source='membership' AND m.status='collecting'
       WHERE c.community_id=? AND c.status='active' AND d.checked_at_utc>=? AND m.checked_at_utc>=?
       AND NOT EXISTS(SELECT 1 FROM traderlink_community_lifecycle l WHERE l.community_id=c.community_id AND l.removed_at_utc IS NOT NULL)`)
-      .get(communityId,new Date(Date.now()-90_000).toISOString(),new Date(Date.now()-90_000).toISOString()) as {guildId:string;version:number;channels:string;ownerId:string}|undefined;
+      .get(communityId,new Date(Date.now()-90_000).toISOString(),new Date(Date.now()-90_000).toISOString()) as {guildId:string;version:number;channels:string;ownerId:string;topologyAt:string}|undefined;
     if(!row)return null;
     const selected=JSON.parse(row.channels) as string[];
-    return selected.length&&selected.every(id)?{communityId,guildId:row.guildId,version:row.version,selected,ownerId:row.ownerId}:null;
+    return selected.length&&selected.every(id)?{communityId,guildId:row.guildId,version:row.version,selected,ownerId:row.ownerId,topologyAt:row.topologyAt}:null;
   }
   private async get(path:string,token:string):Promise<unknown>{
     const response=await this.request(`https://discord.com/api/v10${path}`,{headers:{Authorization:`Bot ${token}`},signal:AbortSignal.timeout(10_000),redirect:"error",cache:"no-store"});
@@ -112,7 +113,7 @@ export class CommunityStatsHistory {
       if(!community)return;
       const key=`${community.communityId}:${community.version}`;
       let topology=this.topology.get(key);
-      if(!topology||Date.now()-topology.at>120_000){topology={roles:[],channels:new Map(),at:Date.now(),phase:"guild"};this.topology.set(key,topology);}
+      if(!topology||topology.topologyAt!==community.topologyAt||Date.now()-topology.at>600_000){topology={roles:[],channels:new Map(),at:Date.now(),topologyAt:community.topologyAt,phase:"guild"};this.topology.set(key,topology);}
       if(topology.phase==="guild"){
         const guild=object(await this.get(`/guilds/${community.guildId}`,token));
         if(guild.id!==community.guildId||guild.owner_id!==community.ownerId)throw new HistoryRequestError("Community ownership could not be verified.",300);
@@ -134,14 +135,14 @@ export class CommunityStatsHistory {
         }
         this.job(community!,community!.guildId,"active",at);
       });
-      job=this.db.prepare(`SELECT channel_id,parent_id,kind,cursor,snapshot_at_utc FROM community_stats_history_jobs WHERE community_id=? AND configuration_version=? AND status!='complete' AND retry_at_utc<=? ORDER BY CASE status WHEN 'blocked' THEN 1 ELSE 0 END,CASE kind WHEN 'active' THEN 0 WHEN 'archived' THEN 1 ELSE 2 END,checked_at_utc,channel_id LIMIT 1`).get(community.communityId,community.version,at) as Job|undefined;
+      job=this.db.prepare(`SELECT channel_id,parent_id,kind,cursor,snapshot_at_utc FROM community_stats_history_jobs WHERE community_id=? AND configuration_version=? AND status!='complete' AND retry_at_utc<=? ORDER BY CASE status WHEN 'blocked' THEN 1 ELSE 0 END,checked_at_utc,CASE kind WHEN 'active' THEN 0 WHEN 'messages' THEN 1 ELSE 2 END,channel_id LIMIT 1`).get(community.communityId,community.version,at) as Job|undefined;
       if(!job)return;
       const parent=job.parent_id??job.channel_id;
       if(job.kind!=="active"&&(!community.selected.includes(parent)||!topology.channels.has(parent)))throw new HistoryRequestError("Channel is no longer an eligible public channel.",300,true);
       const path=job.kind==="active"?`/guilds/${community.guildId}/threads/active`:job.kind==="archived"?`/channels/${job.channel_id}/threads/archived/public?limit=100${job.cursor?`&before=${encodeURIComponent(job.cursor)}`:""}`:`/channels/${job.channel_id}/messages?limit=100${job.cursor?`&before=${job.cursor}`:""}`;
       const response=await this.get(path,token);
       const current=this.eligible(community.communityId);
-      if(!current||current.version!==community.version||current.ownerId!==community.ownerId||JSON.stringify(current.selected)!==JSON.stringify(community.selected))return;
+      if(!current||current.version!==community.version||current.ownerId!==community.ownerId||current.topologyAt!==community.topologyAt||JSON.stringify(current.selected)!==JSON.stringify(community.selected))return;
       new CommunityStatsRepository(this.db).transaction(()=>{
         let cursor:string|null=null,complete=false,recovered=0,scanned=0,oldest:string|null=null;
         if(job!.kind==="messages"){
