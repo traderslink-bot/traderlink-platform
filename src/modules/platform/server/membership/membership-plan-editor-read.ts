@@ -105,6 +105,7 @@ export function readMembershipPlanEditor(db: Database.Database, planId: string, 
   const doc = emptyMembershipPlan();
   Object.assign(doc, { planId, name: plan.name, visibility: plan.visibility, internalNote: plan.internal_note, description: version.public_description });
   doc.displayOnly = saved?.displayOnly ?? false;
+  doc.showOptionalAddons = saved?.showOptionalAddons ?? false;
   if (saved?.requiresDiscord !== undefined) doc.requiresDiscord = saved.requiresDiscord;
   doc.packageType = saved?.packageType ?? "plan";
   doc.bundleOfferIds = saved?.bundleOfferIds ?? [];

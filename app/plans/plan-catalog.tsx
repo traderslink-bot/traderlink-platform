@@ -121,7 +121,7 @@ export function PlanCatalog({
                   </ul>
                   <Stack spacing={1.5} className={styles.footer}>
                     {plan.displayOnly ? <>
-                      {plan.displayPrices?.[0]?.terms && !privateOffer ? <PlanAddonSelection basePrice={plan.displayPrices[0].terms} addons={addons} preview /> : null}
+                      {plan.showOptionalAddons && plan.displayPrices?.[0]?.terms && !privateOffer ? <PlanAddonSelection basePrice={plan.displayPrices[0].terms} addons={addons} preview /> : null}
                       <div className={styles.purchaseNotice}><span>Purchases are not available for this display-only plan.</span></div>
                       <button type="button" className={styles.previewAction} disabled>
                         {plan.displayPrices?.length && plan.displayPrices.every(price => price.terms?.billingKind === "free") ? "Get access" : "Buy now"}
@@ -135,7 +135,7 @@ export function PlanCatalog({
                         {!offer.automaticConfirmation && offer.billingKind !== "free" ? <Typography variant="body2">Payment uses {offer.providerLabel}. The owner confirms access after payment.</Typography> : null}
                         <MembershipForm action={embedded ? selectEmbeddedMembershipAction : selectMembershipAction} navigateTop={embedded} label={offer.billingKind === "free" ? "Get access" : "Choose this plan"}>
                           <input type="hidden" name="offerId" value={offer.offerId} />
-                          {!privateOffer ? <PlanAddonSelection basePrice={offer} addons={addons} /> : null}
+                          {plan.showOptionalAddons && !privateOffer ? <PlanAddonSelection basePrice={offer} addons={addons} /> : null}
                           {secret ? <input type="hidden" name="secret" value={secret} /> : null}
                         </MembershipForm>
                         {offer.trials.map((trial) => <Box key={trial.id} sx={{ mt: 2 }}>

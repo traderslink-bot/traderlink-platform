@@ -50,6 +50,7 @@ export type PlatformMembershipCatalogPlan = Readonly<{
   requiresDiscord?: boolean;
   bundleOfferIds?: readonly string[];
   displayOnly?: boolean;
+  showOptionalAddons?: boolean;
   displayPrices?: readonly { name: string; price: string; terms?: MembershipPrice }[];
 }>;
 
@@ -191,7 +192,7 @@ export class PlatformMembershipCatalogRepository {
         ? this.database.prepare("SELECT document_json FROM platform_membership_plan_presentations WHERE plan_version_id=?").get(plan.planVersionId) as { document_json: string } | undefined : undefined;
       const document = presentation ? membershipPlanEditorSchema.parse(JSON.parse(presentation.document_json)) : null;
       const savedPeriods = periods?.all(plan.planVersionId) as (PrivateWatchlistPeriod & { meter: string })[] | undefined;
-      return { ...plan, requiresDiscord: document?.requiresDiscord ?? false, packageType: document?.packageType ?? "plan", bundleOfferIds: document?.bundleOfferIds ?? [], features: orderMembershipFeatures(plan.features, document?.features.map(feature => feature.key) ?? [], feature => feature.featureKey).filter(feature => isMembershipPlanSelectableFeature(feature.featureKey) &&
+      return { ...plan, showOptionalAddons: document?.showOptionalAddons ?? false, requiresDiscord: document?.requiresDiscord ?? false, packageType: document?.packageType ?? "plan", bundleOfferIds: document?.bundleOfferIds ?? [], features: orderMembershipFeatures(plan.features, document?.features.map(feature => feature.key) ?? [], feature => feature.featureKey).filter(feature => isMembershipPlanSelectableFeature(feature.featureKey) &&
         (!document || document.features.some(item => item.key === feature.featureKey))).map(feature => ({
         ...feature, ...(copy.get(feature.featureKey) ?? defaultMembershipFeatureCopy(feature.featureKey, feature.label)),
         label: membershipProductLabel(feature.featureKey, feature.label),

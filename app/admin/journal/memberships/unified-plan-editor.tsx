@@ -154,6 +154,7 @@ export function UnifiedPlanEditor({ initial, draftId, revision, features, provid
             : <Typography color="text.secondary">No private pages yet. Private links remains available for creating and managing multi-plan pages.</Typography>}
           <Typography component="h2" variant="h6">Preview and publish</Typography>
           <EditorCheck label="Display only — show the plan without enabling purchases" checked={plan.displayOnly} onChange={value => set("displayOnly", value)} />
+          {plan.packageType !== "addon" ? <EditorCheck label="Show optional add-ons on this plan card" checked={plan.showOptionalAddons ?? false} onChange={value => set("showOptionalAddons", value)} /> : null}
           <Typography component="h3" variant="subtitle2">Plan card feature order</Typography>
           <Stack component="ol" spacing={1} sx={{ listStyle: "none", p: 0, m: 0 }}>
             {plan.features.filter(feature => isMembershipPlanSelectableFeature(feature.key)).map((feature, index, ordered) => {

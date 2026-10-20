@@ -34,6 +34,7 @@ export const membershipPlanEditorSchema = z.object({
   name: text, description: text, internalNote: text,
   visibility: z.enum(["public", "private", "unlisted"]),
   displayOnly: z.boolean(),
+  showOptionalAddons: z.boolean().default(false),
   requiresDiscord: z.boolean().optional(),
   packageType: z.enum(["plan", "addon"]).default("plan"),
   bundleOfferIds: z.array(z.uuid()).default([]),
@@ -73,7 +74,7 @@ export type MembershipPlanFeatureChoice = { key: string; label: string; kind: "b
 
 export function emptyMembershipPlan(): MembershipPlanEditor {
   return { schemaVersion: 1, planId: null, baseRevision: "", name: "", description: "",
-    internalNote: "", visibility: "private", displayOnly: false, packageType: "plan", bundleOfferIds: [], features: ensureJournalPlanFoundation([]), prices: [], privatePageIds: [] };
+    internalNote: "", visibility: "private", displayOnly: false, showOptionalAddons: false, packageType: "plan", bundleOfferIds: [], features: ensureJournalPlanFoundation([]), prices: [], privatePageIds: [] };
 }
 export function newMembershipPlanPrice(id: string): MembershipPlanPrice {
   return { id, name: "", enabled: true, provider: "", channel: "website", billing: "free",
