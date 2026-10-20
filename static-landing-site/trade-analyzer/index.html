@@ -1070,6 +1070,27 @@
       </div>
     </section>
 
+    <div data-membership-plans style="height:0;overflow:hidden" aria-hidden="true">
+      <iframe src="/embedded-plans" title="TradersLink plans" loading="lazy" tabindex="-1" style="display:block;width:100%;height:0;border:0;visibility:hidden"></iframe>
+    </div>
+    <script>
+      (() => {
+        const host = document.currentScript.previousElementSibling;
+        const frame = host.querySelector('iframe');
+        window.addEventListener('message', (event) => {
+          if (event.origin !== window.location.origin || event.source !== frame.contentWindow) return;
+          const data = event.data;
+          if (!data || data.type !== 'traderslink:plans-section' || typeof data.available !== 'boolean') return;
+          if (!Number.isSafeInteger(data.height) || data.height < 0 || data.height > 100000) return;
+          const visible = data.available && data.height > 0;
+          host.style.height = visible ? 'auto' : '0';
+          host.setAttribute('aria-hidden', String(!visible));
+          frame.style.height = visible ? data.height + 'px' : '0';
+          frame.style.visibility = visible ? 'visible' : 'hidden';
+          frame.tabIndex = visible ? 0 : -1;
+        });
+      })();
+    </script>
     <section class="ta-faq" id="trade-analyzer-faq">
       <div class="ta-faq-inner">
         <div class="ta-faq-copy">
