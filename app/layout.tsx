@@ -6,6 +6,7 @@ import { isPublicWebsiteHost } from "@/src/components/site/public-website-host";
 import { AnalyticsConsent } from "./analytics-consent";
 import { MuiProviders } from "./mui-provider";
 import { PwaServiceWorkerBootstrap } from "./pwa/pwa-service-worker-bootstrap";
+import { NonEmbeddedServices } from "./embedded-plans/non-embedded-services";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -55,14 +56,14 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <PwaServiceWorkerBootstrap />
+        <NonEmbeddedServices><PwaServiceWorkerBootstrap /></NonEmbeddedServices>
         <MuiProviders>
           {publicWebsite ? (
             <PublicWebsiteChrome>{children}</PublicWebsiteChrome>
           ) : (
             children
           )}
-          <AnalyticsConsent />
+          <NonEmbeddedServices><AnalyticsConsent /></NonEmbeddedServices>
         </MuiProviders>
       </body>
     </html>

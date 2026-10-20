@@ -1,4 +1,5 @@
 import styles from "./plan-catalog.module.css";
+import { Fragment } from "react";
 import { defaultMembershipFeatureCopy } from "@/src/modules/platform/contracts/membership-feature-copy";
 import { formatMembershipNewsDelay, isMembershipNewsDelay } from "@/src/modules/platform/contracts/membership-news-delays";
 import { formatWatchlistBudget } from "@/src/modules/platform/contracts/membership-watchlist-budget";
@@ -14,7 +15,7 @@ import type { PlatformMembershipCatalogPlan } from
   "@/src/modules/platform/server/membership/platform-membership-catalog-repository";
 import { membershipOfferPrice, formatMembershipMoney } from "@/src/modules/platform/contracts/platform-membership-pricing";
 import { MembershipForm } from "../admin/journal/memberships/membership-form";
-import { selectMembershipAction } from "./checkout-actions";
+import { selectEmbeddedMembershipAction, selectMembershipAction } from "./checkout-actions";
 import { PlanAddonSelection, type PlanAddonChoice } from "./plan-addon-selection";
 import { PlanAddonCard } from "./plan-addon-card";
 import { PlanPrice } from "./plan-price";
@@ -27,26 +28,31 @@ export function PlanCatalog({
   secret,
   title = "Your Trading. Your Goals. Your Plan.",
   upgradeFeature,
+  embedded = false,
 }: {
   plans: readonly PlatformMembershipCatalogPlan[];
   privateOffer?: boolean;
   secret?: string;
   title?: string;
   upgradeFeature?: string;
+  embedded?: boolean;
 }) {
   const basePlans = plans.filter(plan => plan.packageType !== "addon");
   const addonPlans = plans.filter(plan => plan.packageType === "addon");
+  if (embedded && basePlans.length === 0) return null;
+  const Chrome = embedded ? Fragment : PricingSiteChrome;
+  const PlanHeading = embedded ? "h3" : "h2";
   const addons: PlanAddonChoice[] = addonPlans.flatMap<PlanAddonChoice>(plan => plan.displayOnly
     ? (plan.displayPrices ?? []).filter(price => price.terms).slice(0, 1).map(price => ({ id: plan.planId, name: plan.name, requiresDiscord: plan.requiresDiscord, brief: plan.description, features: plan.features, price: price.terms!, displayOnly: true }))
     : plan.offers.filter(offer => offer.billingKind === "free" || (offer.provider === "stripe" && offer.billingInterval === "month" && offer.billingIntervalCount === 1)).slice(0, 1).map(offer => ({ id: offer.offerId, name: plan.name, requiresDiscord: plan.requiresDiscord, brief: plan.description, features: plan.features, price: offer, displayOnly: false })));
   return (
-    <PricingSiteChrome>
-    <Box component="main" className={styles.page}>
+    <Chrome>
+    <Box component={embedded ? "section" : "main"} aria-label={embedded ? "Plans" : undefined} className={styles.page}>
       <Container maxWidth="lg">
         <Stack spacing={0}>
           <Stack spacing={1} className={styles.heading} sx={{ alignItems: "center", textAlign: "center" }}>
             {privateOffer ? <Chip color="primary" label="Private offer" sx={{ alignSelf: "flex-start" }} /> : null}
-            <Typography component="h1" variant="h1" sx={{ fontSize: "3.9375rem", lineHeight: 1.15 }}>{title}</Typography>
+            <Typography component={embedded ? "h2" : "h1"} variant="h1" sx={{ fontSize: "3.9375rem", lineHeight: 1.15 }}>{title}</Typography>
             {!privateOffer ? <Typography component="p" sx={{ color: "#fff", maxWidth: 760, fontSize: "1.125rem", lineHeight: 1.6 }}>Take control of your trading with powerful journaling, performance analytics, and insights. Choose the plan that fits your trading goals and start improving with every trade.</Typography> : null}
             {privateOffer ? <Stack direction="row" spacing={2} sx={{ pt: 1 }}>
               <Button href={`/login?returnTo=${encodeURIComponent(secret ? `/plans/invite/${secret}` : "/plans")}`} variant="outlined">Sign in</Button>
@@ -71,7 +77,7 @@ export function PlanCatalog({
                 <article key={plan.planVersionId} className={styles.frame}>
                   <div className={styles.card}>
                   <div className={styles.cardHeader}>
-                  <h2 className={styles.name}>{plan.name}</h2>
+                  <PlanHeading className={styles.name}>{plan.name}</PlanHeading>
                   <div className={styles.headerPrices}>
                   {plan.displayPrices?.map((price, index) => <div key={index}>
                     {price.terms ? <PlanPrice price={price.terms} /> : <p className={styles.priceUnavailable}>{price.price}</p>}
@@ -127,7 +133,7 @@ export function PlanCatalog({
                         <Typography variant="caption">{offer.name}</Typography>
                         {offer.accessDurationDays ? <Typography variant="body2">Includes {offer.accessDurationDays} days of access.</Typography> : null}
                         {!offer.automaticConfirmation && offer.billingKind !== "free" ? <Typography variant="body2">Payment uses {offer.providerLabel}. The owner confirms access after payment.</Typography> : null}
-                        <MembershipForm action={selectMembershipAction} label={offer.billingKind === "free" ? "Get access" : "Choose this plan"}>
+                        <MembershipForm action={embedded ? selectEmbeddedMembershipAction : selectMembershipAction} navigateTop={embedded} label={offer.billingKind === "free" ? "Get access" : "Choose this plan"}>
                           <input type="hidden" name="offerId" value={offer.offerId} />
                           {!privateOffer ? <PlanAddonSelection basePrice={offer} addons={addons} /> : null}
                           {secret ? <input type="hidden" name="secret" value={secret} /> : null}
@@ -137,7 +143,7 @@ export function PlanCatalog({
                           <Typography variant="body2">{(trial.endBehavior ?? (offer.billingKind === "recurring" && (trial.amount > 0 || trial.paymentMethodRequired) ? "renew" : "end_access")) === "renew"
                             ? `Renews after the trial: ${membershipOfferPrice({ ...offer, initialAmountMinor: offer.renewalAmountMinor })}`
                             : "Access ends when the trial ends."}</Typography>
-                          <MembershipForm action={selectMembershipAction} label="Start trial">
+                          <MembershipForm action={embedded ? selectEmbeddedMembershipAction : selectMembershipAction} navigateTop={embedded} label="Start trial">
                             <input type="hidden" name="offerId" value={offer.offerId} /><input type="hidden" name="trialCampaignId" value={trial.id} />
                             {secret ? <input type="hidden" name="secret" value={secret} /> : null}
                           </MembershipForm>
@@ -158,6 +164,6 @@ export function PlanCatalog({
         </Stack>
       </Container>
     </Box>
-    </PricingSiteChrome>
+    </Chrome>
   );
 }
