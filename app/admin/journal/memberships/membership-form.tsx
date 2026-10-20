@@ -6,15 +6,19 @@ import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 
-export type MembershipActionState = { error: string | null; success: string | null; upgradeHref?:string };
-export function MembershipForm({ action, children, label }: {
+export type MembershipActionState = { error: string | null; success: string | null; upgradeHref?:string; redirectTo?: string };
+export function MembershipForm({ action, children, label, navigateTop = false }: {
   action: (previous: MembershipActionState, form: FormData) => Promise<MembershipActionState>;
-  children: ReactNode; label: string;
+  children: ReactNode; label: string; navigateTop?: boolean;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [state, submit, pending] = useActionState(async (previous: MembershipActionState, form: FormData) => {
     const result = await action(previous, form);
+    if (navigateTop && !result.error && result.redirectTo) {
+      (window.top ?? window).location.assign(result.redirectTo);
+      return result;
+    }
     if (!result.error) router.refresh();
     return result;
   }, { error: null, success: null });

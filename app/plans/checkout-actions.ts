@@ -10,6 +10,15 @@ import { createMembershipStripeCheckout, createMembershipStripePortal } from "@/
 import type { MembershipActionState } from "../admin/journal/memberships/membership-form";
 
 export async function selectMembershipAction(_previous: MembershipActionState, form: FormData): Promise<MembershipActionState> {
+  return selectMembership(_previous, form, false);
+}
+
+/** Same checkout and authorization; leave the feature-page frame before navigation. */
+export async function selectEmbeddedMembershipAction(_previous: MembershipActionState, form: FormData): Promise<MembershipActionState> {
+  return selectMembership(_previous, form, true);
+}
+
+async function selectMembership(_previous: MembershipActionState, form: FormData, embedded: boolean): Promise<MembershipActionState> {
   let destination: string | null = null;
   let claimId: string | null = null;
   try {
@@ -44,6 +53,7 @@ export async function selectMembershipAction(_previous: MembershipActionState, f
     return { success: null, error: /^(This |Stripe[ :]|You have|Use the private|Verified payment)/.test(message)
       ? message : "Sign in to your TraderLink account and try again. If the issue continues, contact the owner." };
   }
+  if (embedded) return { error: null, success: null, redirectTo: destination! };
   redirect(destination!);
 }
 
