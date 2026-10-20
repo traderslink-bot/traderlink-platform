@@ -18,6 +18,13 @@ function durationMetric(value: JournalAnalyticsExactValue): JournalAnalyticsMetr
 }
 
 describe("Journal Analytics duration formatting", () => {
+  it("formats signed comparison durations with units at every scale", () => {
+    expect(formatJournalAnalyticsDuration(-30_000)).toBe("-30 sec");
+    expect(formatJournalAnalyticsDuration(-5_400_000)).toBe("-1.5 hr");
+    expect(formatJournalAnalyticsMetric(durationMetric({kind: "integer", value: -1_082_500}))).toBe("-18.04 min");
+    expect(formatJournalAnalyticsMetric(durationMetric({kind: "decimal", valueDecimal: "-1082500"}))).toBe("-18.04 min");
+    expect(formatJournalAnalyticsDuration(0)).toBe("0 sec");
+  });
   it("formats exact and averaged holding durations as readable time", () => {
     expect(formatJournalAnalyticsDuration(90_000)).toBe("1.5 min");
     expect(formatJournalAnalyticsDuration(5_400_000)).toBe("1.5 hr");

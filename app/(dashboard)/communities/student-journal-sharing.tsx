@@ -2,7 +2,7 @@
 import {coachingSharingRequirements} from "./coaching-sharing-requirements";
 import {COACHING_DRAFT_SAVED,COACHING_DRAFT_DISCARDED} from "./coaching-draft-navigation";
 import {COACHING_ACCESS_LABELS} from "@/src/modules/communities/contracts/coaching-required-access";
-import {useActionState,useEffect,useRef,useState} from "react";
+import {useActionState,useEffect,useState} from "react";
 import {Alert,Box,Button,Checkbox,FormControlLabel,Stack,TextField} from "@mui/material";
 import {DashboardPanel} from "@/app/dashboard-ui";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
@@ -19,15 +19,13 @@ export function StudentJournalSharing({snapshot,isReview,selectedRelationshipId}
  const [selected,setSelected]=useState<string[]>(()=>options.filter(([key])=>active.some(grant=>grant.dataScope==="complete"||grant.dataScope===key||(grant.dataScope==="trades"&&grant.sharedFields?.includes(key)))).map(([key])=>key));
  const [feedback,save,pending]=useActionState(saveStudentJournalSharingAction,{error:"",saved:false});
  const [changed,setChanged]=useState(false);
- const sharingHash=useRef<string|null>(null);
- useEffect(()=>{if(window.location.hash.includes("section=sharing"))sharingHash.current=window.location.hash;},[]);
  useEffect(()=>{
   if(isReview||!relationship||!accountId)return;
   try{const raw=sessionStorage.getItem(recoveryKey);if(raw){const recovery=JSON.parse(raw) as {baseline?:string;selected?:unknown};if(recovery.baseline===savedSelection&&Array.isArray(recovery.selected)&&recovery.selected.every(value=>options.some(([key])=>key===value))){setSelected(recovery.selected);setChanged(true);}else sessionStorage.removeItem(recoveryKey);}}catch{/* Navigation protection also works without browser storage. */}
   const discard=(event:Event)=>{if((event as CustomEvent<{formId:string}>).detail?.formId!=='student-coaching-content')return;try{sessionStorage.removeItem(recoveryKey);}catch{/* No browser storage. */}setSelected(JSON.parse(savedSelection) as string[]);setChanged(false);};
   document.addEventListener(COACHING_DRAFT_DISCARDED,discard);return()=>document.removeEventListener(COACHING_DRAFT_DISCARDED,discard);
  },[isReview,Boolean(relationship),accountId,recoveryKey,savedSelection]);
- useEffect(()=>{if(feedback.saved){try{sessionStorage.removeItem(recoveryKey);}catch{/* No browser storage. */}setChanged(false);if(!window.location.hash&&sharingHash.current)window.history.replaceState(window.history.state,"",sharingHash.current);document.dispatchEvent(new CustomEvent(COACHING_DRAFT_SAVED,{detail:{formId:"student-coaching-content"}}));}},[feedback,recoveryKey]);
+ useEffect(()=>{if(feedback.saved){try{sessionStorage.removeItem(recoveryKey);}catch{/* No browser storage. */}setChanged(false);const hash=`#${new URLSearchParams({student:selectedRelationshipId,section:"sharing"})}`;if(window.location.hash!==hash)window.history.replaceState(window.history.state,"",hash);document.dispatchEvent(new CustomEvent(COACHING_DRAFT_SAVED,{detail:{formId:"student-coaching-content"}}));}},[feedback,recoveryKey,selectedRelationshipId]);
  const updateSelection=(next:readonly string[])=>{const values=options.filter(([key])=>next.includes(key)).map(([key])=>key);setChanged(true);setSelected(values);try{if(JSON.stringify(values)===savedSelection)sessionStorage.removeItem(recoveryKey);else sessionStorage.setItem(recoveryKey,JSON.stringify({baseline:savedSelection,selected:values}));}catch{/* No browser storage. */}};
  return <DashboardPanel title="Journal sharing">
  {relationship&&accountId?<Box component="form" action={isReview?undefined:save} data-coaching-controlled-draft data-coaching-unsaved={changed&&JSON.stringify(options.filter(([key])=>selected.includes(key)).map(([key])=>key))!==savedSelection?"true":"false"}><input name="communitySlug" type="hidden" value={snapshot.community.slug}/><input name="relationshipId" type="hidden" value={selectedRelationshipId}/><input name="journalAccountId" type="hidden" value={accountId}/><Stack spacing={1.5}>

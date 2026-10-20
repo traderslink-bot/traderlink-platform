@@ -102,6 +102,7 @@ export function formatJournalAnalyticsMoney(
 }
 
 export function formatJournalAnalyticsDuration(milliseconds: number): string {
+  if (milliseconds < 0) return `-${formatJournalAnalyticsDuration(-milliseconds)}`;
   if (milliseconds < 60_000) {
     return `${formatJournalAnalyticsDecimal(String(milliseconds / 1_000))} sec`;
   }
@@ -121,7 +122,7 @@ function formatExactValue(
       : value.kind === "integer"
         ? value.value
         : Number(value.kind === "decimal" ? value.valueDecimal : value.roundedDecimal);
-    if (Number.isFinite(milliseconds) && milliseconds >= 0) {
+    if (Number.isFinite(milliseconds)) {
       return formatJournalAnalyticsDuration(milliseconds);
     }
   }

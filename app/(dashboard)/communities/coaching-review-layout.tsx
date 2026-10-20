@@ -1,5 +1,5 @@
 "use client";
-import {lazy,Suspense,useEffect,useRef,useState,type ReactNode} from "react";
+import {lazy,Suspense,useEffect,useRef,useState,useSyncExternalStore,type ReactNode} from "react";
 import {Alert,Box,Button,CircularProgress,Collapse,Drawer,Grid,Stack,Typography,useMediaQuery,useTheme} from "@mui/material";
 import {TradeDetailsDrawer} from "../trades/trade-details-drawer";
 import {loadCoachingAnalyzerAction} from "./coaching-analysis-actions";
@@ -18,7 +18,11 @@ type Destination={id:CoachingResourceId;parameters:Record<string,string>};
 type RulesModel=Awaited<ReturnType<typeof readRuleResults>>;
 const TradeExplorerClient=lazy(()=>import("../analytics/trade-explorer/trade-explorer-client"));
 const TradeExplorerComparisonClient=lazy(()=>import("../analytics/trade-explorer/compare/trade-explorer-comparison-client"));
+const subscribeHydration=()=>()=>{};
+const clientReady=()=>true;
+const serverReady=()=>false;
 export function CoachingReviewLayout({children,requirements,communitySlug,relationshipId,reviewId,availableResources,resourceProblem,period}:{children:ReactNode;requirements:ReactNode;communitySlug:string;relationshipId:string;reviewId:string;availableResources:readonly string[];resourceProblem:string|null;period:{start:string;end:string}|null}){
+ const ready=useSyncExternalStore(subscribeHydration,clientReady,serverReady);
  const theme=useTheme(),desktop=useMediaQuery(theme.breakpoints.up("lg"));
  const sidebar=useRef<HTMLDivElement|null>(null);
  const [progress,setProgress]=useState<CoachingTradeProgress|null>(null);
@@ -53,6 +57,7 @@ export function CoachingReviewLayout({children,requirements,communitySlug,relati
   return()=>{document.body.style.overflow=overflow;document.removeEventListener('keydown',keyboard);document.removeEventListener('focusin',focus);if(previous?.isConnected)previous.focus();};
  },[desktop,sheet]);
  function navigate(href:string){const url=new URL(href,window.location.origin);if(url.pathname.startsWith('/trade-tracker/')&&url.searchParams.get('trade')){openTrade(url.searchParams.get('trade')!);return;}const target=COACHING_RESOURCES.find(item=>item.path===url.pathname);if(!target||!availableResources.includes(target.id)){setError('This link is unavailable in this read-only review. Use Resources or Back.');return;}open({id:target.id,parameters:Object.fromEntries(url.searchParams)},target.id!==destination?.id);}
+ if(!ready)return <Stack role="status" spacing={1} sx={{alignItems:"center",py:4}}><CircularProgress/><Typography>Loading review workspace…</Typography></Stack>;
  const menu=<Stack spacing={1} ref={menuRef} onScroll={event=>{resourcesScroll.current=event.currentTarget.scrollTop;}} sx={{overflowY:'auto'}}>{resourceProblem?<Alert severity="info">{resourceProblem}</Alert>:null}{period?<Typography color="text.secondary" variant="body2">{period.start} – {period.end}</Typography>:null}{COACHING_RESOURCE_GROUPS.map(group=>{const items=group.items.filter(item=>availableResources.includes(item.id));if(!items.length)return null;return items.length===1?<Button key={group.label} onClick={()=>open({id:items[0].id,parameters:{}})} sx={{justifyContent:'space-between',minHeight:44}} variant="outlined">{items[0].label}<span>›</span></Button>:<Box key={group.label}><Button fullWidth aria-expanded={expanded.includes(group.label)} onClick={()=>setExpanded(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} sx={{justifyContent:'space-between',minHeight:44}} variant="outlined">{group.label}<span>{expanded.includes(group.label)?'⌃':'⌄'}</span></Button><Collapse in={expanded.includes(group.label)}><Stack sx={{pl:1,pt:1}}>{items.map(item=><Button key={item.id} onClick={()=>open({id:item.id,parameters:{}})} sx={{justifyContent:'flex-start',minHeight:44}}>{item.label}</Button>)}</Stack></Collapse></Box>;})}</Stack>;
  return <CoachingReviewProgressContext.Provider value={{progress,setProgress}}>
  <TradeDetailsDrawer analyzer={null} detailsUrl={detailTrade?`/api/communities/${communitySlug}/coaching/reviews/${reviewId}/trades/${detailTrade}?view=card`:undefined} loadSavedAnalysis={async()=>{if(!detailTrade)return null;const result=await loadCoachingAnalyzerAction(communitySlug,reviewId,detailTrade);return result.ok?result.analyzer:null;}} open={Boolean(detailTrade)} roundTripId={detailTrade} onClose={closeTrade}/>

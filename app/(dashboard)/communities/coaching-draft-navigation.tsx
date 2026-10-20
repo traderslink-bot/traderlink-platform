@@ -24,7 +24,7 @@ function formContents(id: string): string | null {
   // Student sections contain multiple independent forms. Compare their current
   // values in memory without storing private message/Journal drafts elsewhere.
   if(!form)return null;
-  return JSON.stringify([...form.querySelectorAll("form")].filter(item=>!item.closest('[data-coaching-controlled-draft]')).map(item=>[...new FormData(item).entries()].filter(([name])=>!name.startsWith("$ACTION_")).map(([name,value])=>[name,value instanceof File?[value.name,value.size,value.type,value.lastModified]:value])));
+  return JSON.stringify([...form.querySelectorAll("form")].filter(item=>!item.closest('[data-coaching-controlled-draft], [data-coaching-action-only]')).map(item=>[...new FormData(item).entries()].filter(([name])=>!name.startsWith("$ACTION_")).map(([name,value])=>[name,value instanceof File?[value.name,value.size,value.type,value.lastModified]:value])));
 }
 
 /** Protect local editor switches without storing private drafts outside the form. */
