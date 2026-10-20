@@ -1748,8 +1748,11 @@ export function LiveWatchlistIndexClient({
       <section className="watchlist-hero">
         <div>
           <p className="academy-eyebrow">Beta Testing</p>
-          <h1 className="academy-title">Live Ticker Watchlist</h1>
+          <h1 className="academy-title">Live Watchlist</h1>
           <p className="academy-lede">
+            Prepare for the trading day with updates before the 9:30 AM ET open. New and developing setups are added during regular hours, followed by evening updates for the next trading day.
+          </p>
+          <p className="watchlist-testing-note" style={{ fontStyle: "normal" }}>
             Active tickers currently on the live watchlist. Click or tap any
             row to open that ticker&apos;s detail page.
           </p>
