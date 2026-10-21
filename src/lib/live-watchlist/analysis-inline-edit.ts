@@ -1,3 +1,4 @@
+import { sortPullbacksByPrice } from "./pullback-price-order";
 /** Only owner-editable fields cross the save boundary. Source evidence stays server-owned. */
 export const analysisEditSections = {
   currentRead: "Analysis", needsToHold: "Structure Weakens", cautionBelow: "Caution below",
@@ -25,7 +26,7 @@ export function makeAnalysisEdit(payload: Record<string, unknown>): EditRecord {
   const hidden=(payload.ownerHiddenSections ?? []) as string[];
   if (payload.analysisFormat === "simple") {
     const simple=structuredClone(payload.simpleAnalysis) as EditRecord;
-    simple.pullbacks=(simple.pullbacks as EditValue[]).map((plan,index)=>({...editRecord(plan),hidden:editRecord(plan).hidden ?? hidden.includes(index===0?"shallow":index===1?"deep":"")}));
+    simple.pullbacks=sortPullbacksByPrice((simple.pullbacks as EditValue[]).map((plan,index)=>({...editRecord(plan),hidden:editRecord(plan).hidden ?? hidden.includes(index===0?"shallow":index===1?"deep":"")})));
     return {
     simpleAnalysis:simple,
     catalystRealityCheck:pick(payload.catalystRealityCheck,["summary","dayTradeRelevance"]),
@@ -43,6 +44,7 @@ export function makeAnalysisEdit(payload: Record<string, unknown>): EditRecord {
     ? payload.ownerPullbacks.map(plan=>({...pick(plan,pullbackEditFields),hidden:editRecord(plan).hidden===true}))
     : ["shallow","deep"].flatMap(key=>plans[key]?[{...pick(plans[key],pullbackEditFields),hidden:hidden.includes(key)}]:[]);
   result.failureRecovery = payload.failureRecovery ? pick(payload.failureRecovery, recoveryEditFields) : null;
+  result.ownerPullbacks = sortPullbacksByPrice(result.ownerPullbacks as EditValue[],"zoneLow","zoneHigh");
   for (const key of ["catalystRealityCheck", "dilutionRisk", "listingStatus"]) result[key] = pick(payload[key], ["summary", "dayTradeRelevance"]);
   return result;
 }

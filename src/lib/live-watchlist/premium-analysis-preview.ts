@@ -1,5 +1,6 @@
 import type { TradersLinkAiReadPayload } from "./live-watchlist-types";
 import { analysisPullbacks } from "./owner-analysis-pullbacks";
+import { sortPullbacksByPrice } from "./pullback-price-order";
 
 /** Public preview contains display prose only, never the original analysis payload. */
 export type PremiumAnalysisPreview = {
@@ -30,8 +31,8 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
     if (simple.breakout) add("breakoutContinuation", "Breakout", [simple.breakout.explanation, simple.breakout.confirmation], true);
     if (read.catalystRealityCheck.sourceUrls.length) add("catalystRealityCheck", "Catalyst / recent news", [read.catalystRealityCheck.summary, read.catalystRealityCheck.dayTradeRelevance]);
     add("riskSummary", "Risk notes", read.riskSummary);
-    simple.pullbacks.forEach((zone, index) => {
-      if(zone.hidden ?? hidden.has(index===0?"shallow":index===1?"deep":"")) return;
+    sortPullbacksByPrice(simple.pullbacks.map((zone,index)=>({...zone,hidden:zone.hidden ?? hidden.has(index===0?"shallow":index===1?"deep":"")}))).forEach((zone, index) => {
+      if(zone.hidden) return;
       add(`pullback-${index+1}`, `Pullback ${index+1}`, [zone.explanation, zone.confirmation], true);
     });
     simple.upside.forEach(level => add("targets", "Potential Targets (Volume Dependent)", [level.explanation], true));

@@ -15,7 +15,7 @@ const base=()=>({...JSON.parse(vm.runInNewContext(fixture+';validBody()')),
  version:3,pullbackPlans:{shallow:null,deep:null},failureRecovery:null});
 const plan=i=>({zoneLow:1-i*.001,zoneHigh:1.01-i*.001,confirmationPrice:1.02,confirmation:'Wait for buyers',rationale:'Owner description',invalidationPrice:null,firstObjectivePrice:null,evidenceIds:[],hidden:i===2});
 const simple=()=>({setup:'Setup',pullbacks:Array.from({length:12},(_,i)=>({low:.9-i*.01,high:.91-i*.01,explanation:'Owner zone',confirmation:'Wait',invalidation:null,hidden:i===2})),upside:Array.from({length:75},(_,i)=>({low:2+i,high:2+i,explanation:'Owner target'})),invalidation:null});
-function card(){const file=path.join(root,'app/watchlist/simple-analysis-card.tsx'),exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,{exports,require:name=>name==='react/jsx-runtime'?require(name):name.endsWith('.css')?{}:name.includes('analysis-history-lines')?{AnalysisHistoryLines:()=>null}:name.includes('analysis-trader-notes')?{AnalysisTraderNotes:()=>null}:require(name),Set,Date});return exports.SimpleAnalysisCard;}
+function card(){const file=path.join(root,'app/watchlist/simple-analysis-card.tsx'),exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,{exports,require:name=>name==='react/jsx-runtime'?require(name):name.includes('pullback-price-order')?require('../pullback-price-order.ts'):name.endsWith('.css')?{}:name.includes('analysis-history-lines')?{AnalysisHistoryLines:()=>null}:name.includes('analysis-trader-notes')?{AnalysisTraderNotes:()=>null}:require(name),Set,Date});return exports.SimpleAnalysisCard;}
 test('both saved formats accept large owner lists without truncation',()=>{
  const detail={...base(),ownerPullbacks:Array.from({length:12},(_,i)=>plan(i)),targets:Array.from({length:75},(_,i)=>({label:'',price:2+i,condition:'Wait'}))};
  const parsed=parseTradersLinkAiRead(JSON.stringify(detail));assert.ok(parsed);assert.equal(parsed.ownerPullbacks.length,12);assert.equal(parsed.targets.length,75);
@@ -50,4 +50,22 @@ test('malformed row visibility is rejected and preview projection clears generat
  assert.equal(parseSimpleAnalysis({...simple(),pullbacks:[{...simple().pullbacks[0],hidden:'yes'}]}),null);
  const merged=mergeAnalysisEdit(base(),{ownerPullbacks:[{...plan(0),evidenceIds:['forged']}]});assert.deepEqual(merged.ownerPullbacks[0].evidenceIds,[]);
  assert.equal(parseTradersLinkAiRead(JSON.stringify({...base(),ownerPullbacks:[{...plan(0),hidden:'yes'}]})),null);
+});
+test('a third-added middle zone becomes Pullback 2 in editor, public card and Premium preview',()=>{
+ const zones=[{...plan(0),zoneLow:9,zoneHigh:9.2,rationale:'Highest'},{...plan(1),zoneLow:7,zoneHigh:7.2,rationale:'Deepest'},{...plan(0),zoneLow:8,zoneHigh:8.2,rationale:'Middle',hidden:true}];
+ const read={...base(),ownerPullbacks:zones};
+ const edit=makeAnalysisEdit(read);
+ assert.deepEqual(edit.ownerPullbacks.map(p=>p.zoneLow),[9,8,7]);assert.equal(edit.ownerPullbacks[1].hidden,true);
+ assert.deepEqual(analysisPullbacks(read).map(p=>p.rationale),['Highest','Middle','Deepest']);assert.equal(read.ownerPullbacks[1].zoneLow,7);
+ const s={...base(),analysisFormat:'simple',simpleAnalysis:{...simple(),pullbacks:zones.map(p=>({low:p.zoneLow,high:p.zoneHigh,explanation:p.rationale,confirmation:'Wait',invalidation:null,hidden:false}))}};
+ assert.deepEqual(makeAnalysisEdit(s).simpleAnalysis.pullbacks.map(p=>p.low),[9,8,7]);
+ const html=renderToStaticMarkup(React.createElement(card(),{read:s}));
+ assert.ok(html.indexOf('Highest')<html.indexOf('Middle')&&html.indexOf('Middle')<html.indexOf('Deepest'));
+ const preview=buildPremiumAnalysisPreview({...read,ownerPullbacks:zones.map(p=>({...p,hidden:false}))}).sections.filter(s=>s.title.startsWith('Pullback'));
+ assert.deepEqual(preview.map(s=>s.title),['Pullback 1','Pullback 2','Pullback 3']);assert.equal(preview[1].lines[0],'Middle');
+});
+test('incomplete zones stay last, equal zones are stable and inputs are not mutated',()=>{
+ const {sortPullbacksByPrice}=require('../pullback-price-order.ts');
+ const rows=[{low:null,high:null,id:'blank'},{low:8,high:8.2,id:'a'},{low:9,high:9.2,id:'higher'},{low:8,high:8.2,id:'b'}];
+ assert.deepEqual(sortPullbacksByPrice(rows).map(p=>p.id),['higher','a','b','blank']);assert.equal(rows[0].id,'blank');
 });
