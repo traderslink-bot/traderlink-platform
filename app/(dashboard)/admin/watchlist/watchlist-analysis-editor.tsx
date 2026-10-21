@@ -114,17 +114,28 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
         const name=key==="simplePullbacks"?"pullbacks":"upside";
         const list=simple[name] as EditValue[];
         return <details key={key}><summary>Edit {name==="pullbacks"?"pullbacks":"where it could go next"}</summary>
-          {name==="pullbacks"?<>{visibility("shallow","first pullback")}{visibility("deep","second pullback")}</>:visibility("targets","where it could go next")}
-          {list.map((item,index)=><fieldset key={index}><legend>{index+1}</legend>
-            {name === "upside" ? rowControls(list,index,["simpleAnalysis",name],{low:null,high:null,explanation:""},5,"low") : null}
+          {name==="upside"?visibility("targets","where it could go next"):null}
+          {list.map((item,index)=><fieldset key={index}><legend>{name==="pullbacks"?`Pullback ${index+1}`:index+1}</legend>
+            {rowControls(list,index,["simpleAnalysis",name],name==="pullbacks"?{low:null,high:null,explanation:"",confirmation:"",invalidation:null,hidden:false}:{low:null,high:null,explanation:""},Infinity,"low")}
+            {name==="pullbacks"?<label><input type="checkbox" checked={!editRecord(item).hidden} disabled={busy} onChange={event=>change(["simpleAnalysis",name,index,"hidden"],!event.target.checked)} /> Show this pullback</label>:null}
             {simpleFields(editRecord(item),["low","high","explanation",...(name==="pullbacks"?["confirmation"]:[])],["simpleAnalysis",name,index])}
             <Button disabled={busy} onClick={()=>change(["simpleAnalysis",name],list.filter((_,i)=>i!==index))}>Remove</Button></fieldset>)}
-          <Button disabled={busy||list.length>=(name==="pullbacks"?2:5)} onClick={()=>{const item:EditRecord={low:null,high:null,explanation:""};if(name==="pullbacks"){item.confirmation="";item.invalidation=null;}change(["simpleAnalysis",name],[...list,item]);}}>Add</Button>
-          {name === "upside" ? <Button disabled={busy || list.length < 2} onClick={() => change(["simpleAnalysis",name],editLevelRows(list,"sort",0,null,5,"low"))}>Sort by price</Button> : null}
+          <Button disabled={busy} onClick={()=>{const item:EditRecord={low:null,high:null,explanation:""};if(name==="pullbacks"){item.confirmation="";item.invalidation=null;}change(["simpleAnalysis",name],[...list,item]);}}>Add</Button>
+          {name === "upside" ? <Button disabled={busy || list.length < 2} onClick={() => change(["simpleAnalysis",name],editLevelRows(list,"sort",0,null,Infinity,"low"))}>Sort by price</Button> : null}
         </details>;
       });
     }
     return keys.map(raw => {
+      if(raw==="ownerPullbacks") {
+        const rows=(patch.ownerPullbacks ?? []) as EditValue[];
+        const blank=Object.fromEntries(pullbackEditFields.map(name=>[name,isPriceField(name)?null:""])) as EditRecord;
+        return <details key={raw}><summary>Edit pullbacks</summary>{rows.map((item,index)=><fieldset key={index}><legend>Pullback {index+1}</legend>
+          {rowControls(rows,index,[raw],blank,Infinity,"zoneLow")}
+          <label><input type="checkbox" checked={!editRecord(item).hidden} disabled={busy} onChange={event=>change([raw,index,"hidden"],!event.target.checked)} /> Show this pullback</label>
+          {fields(editRecord(item),pullbackEditFields,[raw,index])}
+          <Button disabled={busy} onClick={()=>change([raw],rows.filter((_,i)=>i!==index))}>Remove</Button>
+        </fieldset>)}<Button disabled={busy} onClick={()=>change([raw],[...rows,blank])}>Add pullback</Button></details>;
+      }
       if (raw === "bias") return <details key="bias"><summary>Edit bias and confidence</summary>{["bias", "confidence"].map(key => <label key={key}>{key === "bias" ? "Bias" : "Confidence"}<select value={String(patch[key])} disabled={busy} onChange={event => change([key], event.target.value)}>{(key === "bias" ? ["bullish", "neutral", "bearish", "mixed"] : ["low", "medium", "high"]).map(value => <option key={value}>{value}</option>)}</select></label>)}</details>;
       const key = raw as AnalysisEditSection, hidden = (patch.ownerHiddenSections as string[]).includes(key);
       const path = key === "shallow" || key === "deep" ? ["pullbackPlans", key] : [key];
@@ -133,10 +144,10 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
       const names = key === "failureRecovery" ? recoveryEditFields : optional ? pullbackEditFields : ["summary", "dayTradeRelevance"];
       return <details key={key} style={{ margin: "8px 0" }}><summary>Edit {analysisEditSections[key]}{hidden ? " (hidden)" : ""}</summary>
         <label><input type="checkbox" checked={!hidden} disabled={busy} onChange={event => change(["ownerHiddenSections"], event.target.checked ? (patch.ownerHiddenSections as string[]).filter(item => item !== key) : [...patch.ownerHiddenSections as string[], key])} /> Show this section</label>
-        {key === "targets" && Array.isArray(value) ? <Button disabled={busy || value.length < 2} onClick={() => change(path,editLevelRows(value,"sort",0,null,20))}>Sort by price</Button> : null}
+        {key === "targets" && Array.isArray(value) ? <Button disabled={busy || value.length < 2} onClick={() => change(path,editLevelRows(value,"sort",0,null,Infinity))}>Sort by price</Button> : null}
         {optional && <label><input type="checkbox" checked={Boolean(value)} disabled={busy} onChange={event => change(path, event.target.checked ? Object.fromEntries(names.map(name => [name, isPriceField(name) ? null : ""])) : null)} /> Include this setup</label>}
         {key === "currentRead" ? <TextField label="Analysis" value={value ?? ""} multiline fullWidth disabled={busy} slotProps={{ htmlInput: { maxLength: 8000 } }} onChange={event => change(path, event.target.value)} />
-          : Array.isArray(value) ? <>{value.map((item, index) => <fieldset key={index}><legend>{index + 1}</legend>{key === "targets" ? rowControls(value,index,path,{label:"",price:null,condition:""},20) : null}{key === "riskSummary" ? <TextField label="Risk note" value={item} fullWidth multiline disabled={busy} onChange={event => change([key, index], event.target.value)} /> : fields(editRecord(item), ["label", "price", "condition"], [key, index])}<Button disabled={busy} onClick={() => change(path, value.filter((_, i) => i !== index))}>Remove</Button></fieldset>)}<Button disabled={busy || value.length >= 20} onClick={() => change(path, [...value, key === "riskSummary" ? "" : { label: "", price: null, condition: "" }])}>Add</Button></>
+          : Array.isArray(value) ? <>{value.map((item, index) => <fieldset key={index}><legend>{index + 1}</legend>{key === "targets" ? rowControls(value,index,path,{label:"",price:null,condition:""},Infinity) : null}{key === "riskSummary" ? <TextField label="Risk note" value={item} fullWidth multiline disabled={busy} onChange={event => change([key, index], event.target.value)} /> : fields(editRecord(item), ["label", "price", "condition"], [key, index])}<Button disabled={busy} onClick={() => change(path, value.filter((_, i) => i !== index))}>Remove</Button></fieldset>)}<Button disabled={busy || (key!=="targets"&&value.length >= 20)} onClick={() => change(path, [...value, key === "riskSummary" ? "" : { label: "", price: null, condition: "" }])}>Add</Button></>
           : value && typeof value === "object" ? fields(value, Object.hasOwn(value, "price") ? levelEditFields : names, path) : null}
       </details>;
     });

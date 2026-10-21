@@ -1,4 +1,5 @@
 import { parseSimpleAnalysis } from "./simple-analysis";
+import { analysisPullbacks } from "./owner-analysis-pullbacks";
 import { cleanAnalysisDisplayPayload } from "./analysis-display-copy";
 
 export function olderTradersLinkArticlePublicationDate(read: TradersLinkAiReadPayload): string | null {
@@ -486,15 +487,12 @@ export function describeTradersLinkAiLiveVolumeContext(args: {
   }
 
   const scenarios: Array<
-    readonly ["shallow" | "deep", TradersLinkAiReadPullbackScenario]
+    readonly [string, TradersLinkAiReadPullbackScenario]
   > = [];
   if (args.read.version === 3 || args.read.version === 4) {
-    if (args.read.pullbackPlans.shallow) {
-      scenarios.push(["shallow", args.read.pullbackPlans.shallow]);
-    }
-    if (args.read.pullbackPlans.deep) {
-      scenarios.push(["deep", args.read.pullbackPlans.deep]);
-    }
+    analysisPullbacks(args.read).forEach((plan, index) => {
+      if (!plan.hidden) scenarios.push([`pullback ${index + 1}`, plan]);
+    });
   }
   const testing = scenarios.find(
     ([, scenario]) =>
@@ -507,7 +505,7 @@ export function describeTradersLinkAiLiveVolumeContext(args: {
   );
 
   if (testing) {
-    const scenarioName = testing[0] === "shallow" ? "shallow pullback" : "deep reset";
+    const scenarioName = testing[0];
     if (args.volume.label === "fading" || args.volume.label === "thin") {
       return {
         headline,
@@ -638,6 +636,8 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
   }
 
   if (value.ownerHiddenSections !== undefined && (!Array.isArray(value.ownerHiddenSections) || value.ownerHiddenSections.some((key) => typeof key !== "string" || !["currentRead", "needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation", "targets", "downsideCheckpoints", "shallow", "deep", "failureRecovery", "catalystRealityCheck", "dilutionRisk", "listingStatus", "riskSummary"].includes(key)))) return null;
+  if (value.ownerPullbacks !== undefined && (!Array.isArray(value.ownerPullbacks) || !value.ownerPullbacks.every(plan =>
+    isRecord(plan) && (plan.hidden === undefined || typeof plan.hidden === "boolean") && isNullablePullbackScenario(plan)))) return null;
 
   const allowedSourceUrls = new Set(
     (value.sources as TradersLinkAiReadSource[]).map((source) => source.url),

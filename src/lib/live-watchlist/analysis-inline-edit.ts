@@ -2,7 +2,7 @@
 export const analysisEditSections = {
   currentRead: "Analysis", needsToHold: "Structure Weakens", cautionBelow: "Caution below",
   momentumFailure: "Momentum failure", mustClear: "Must clear", breakoutContinuation: "Breakout continuation",
-  targets: "Potential Targets (Volume Dependent)", shallow: "Pullback", deep: "Deeper pullback",
+  targets: "Potential Targets (Volume Dependent)", shallow: "Pullback 1", deep: "Pullback 2", ownerPullbacks: "Pullbacks",
   downsideCheckpoints: "Downside levels", failureRecovery: "Failure and recovery",
   catalystRealityCheck: "Catalyst / recent news", dilutionRisk: "Dilution risk",
   listingStatus: "Listing monitor", riskSummary: "Risk notes",
@@ -22,12 +22,16 @@ function pick(value: unknown, fields: string[]): EditRecord {
   return Object.fromEntries(fields.map(key => [key, source[key] ?? (isPriceField(key) ? null : "")]));
 }
 export function makeAnalysisEdit(payload: Record<string, unknown>): EditRecord {
-  if (payload.analysisFormat === "simple") return {
-    simpleAnalysis:structuredClone(payload.simpleAnalysis) as EditValue,
+  const hidden=(payload.ownerHiddenSections ?? []) as string[];
+  if (payload.analysisFormat === "simple") {
+    const simple=structuredClone(payload.simpleAnalysis) as EditRecord;
+    simple.pullbacks=(simple.pullbacks as EditValue[]).map((plan,index)=>({...editRecord(plan),hidden:editRecord(plan).hidden ?? hidden.includes(index===0?"shallow":index===1?"deep":"")}));
+    return {
+    simpleAnalysis:simple,
     catalystRealityCheck:pick(payload.catalystRealityCheck,["summary","dayTradeRelevance"]),
     riskSummary:structuredClone(payload.riskSummary ?? []) as EditValue,
-    ownerHiddenSections:structuredClone(payload.ownerHiddenSections ?? []) as EditValue,
-  };
+    ownerHiddenSections:hidden.filter(key=>key!=="shallow"&&key!=="deep"),
+  }; }
   const result: EditRecord = {};
   for (const key of ["currentRead", "bias", "confidence", "riskSummary", "ownerHiddenSections"]) {
     result[key] = structuredClone(payload[key] as EditValue ?? (key === "riskSummary" || key === "ownerHiddenSections" ? [] : ""));
@@ -35,7 +39,9 @@ export function makeAnalysisEdit(payload: Record<string, unknown>): EditRecord {
   for (const key of ["needsToHold", "cautionBelow", "momentumFailure", "mustClear", "breakoutContinuation"]) result[key] = pick(payload[key], levelEditFields);
   for (const key of ["targets", "downsideCheckpoints"]) result[key] = (Array.isArray(payload[key]) ? payload[key] : []).map(item => pick(item, ["label", "price", "condition"]));
   const plans = editRecord(payload.pullbackPlans);
-  result.pullbackPlans = Object.fromEntries(["shallow", "deep"].map(key => [key, plans[key] ? pick(plans[key], pullbackEditFields) : null]));
+  result.ownerPullbacks = Array.isArray(payload.ownerPullbacks)
+    ? payload.ownerPullbacks.map(plan=>({...pick(plan,pullbackEditFields),hidden:editRecord(plan).hidden===true}))
+    : ["shallow","deep"].flatMap(key=>plans[key]?[{...pick(plans[key],pullbackEditFields),hidden:hidden.includes(key)}]:[]);
   result.failureRecovery = payload.failureRecovery ? pick(payload.failureRecovery, recoveryEditFields) : null;
   for (const key of ["catalystRealityCheck", "dilutionRisk", "listingStatus"]) result[key] = pick(payload[key], ["summary", "dayTradeRelevance"]);
   return result;
@@ -52,6 +58,7 @@ export function mergeAnalysisEdit(original: Record<string, unknown>, patch: Edit
       if (plans[name]) plans[name] = { ...editRecord(plans[name]), evidenceIds: [] };
     }
     if (key === "failureRecovery" && result[key]) result[key] = { ...editRecord(result[key]), evidenceIds: [] };
+    if (key === "ownerPullbacks" && Array.isArray(result[key])) result[key]=(result[key] as EditValue[]).map(plan=>({ ...editRecord(plan),invalidationPrice:null,firstObjectivePrice:null,evidenceIds:[] }));
   }
   return result;
 }

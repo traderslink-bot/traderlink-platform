@@ -1,4 +1,5 @@
 import type { TradersLinkAiReadPayload } from "./live-watchlist-types";
+import { analysisPullbacks } from "./owner-analysis-pullbacks";
 
 /** Public preview contains display prose only, never the original analysis payload. */
 export type PremiumAnalysisPreview = {
@@ -29,8 +30,10 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
     if (simple.breakout) add("breakoutContinuation", "Breakout", [simple.breakout.explanation, simple.breakout.confirmation], true);
     if (read.catalystRealityCheck.sourceUrls.length) add("catalystRealityCheck", "Catalyst / recent news", [read.catalystRealityCheck.summary, read.catalystRealityCheck.dayTradeRelevance]);
     add("riskSummary", "Risk notes", read.riskSummary);
-    simple.pullbacks.forEach((zone, index) => add(index ? "deep" : "shallow", index ? "Deeper pullback" : "Pullback",
-      [zone.explanation, zone.confirmation], true));
+    simple.pullbacks.forEach((zone, index) => {
+      if(zone.hidden ?? hidden.has(index===0?"shallow":index===1?"deep":"")) return;
+      add(`pullback-${index+1}`, `Pullback ${index+1}`, [zone.explanation, zone.confirmation], true);
+    });
     simple.upside.forEach(level => add("targets", "Potential Targets (Volume Dependent)", [level.explanation], true));
   } else {
     add("currentRead", "", [read.currentRead]);
@@ -44,9 +47,8 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
     // Copy only descriptive strings from known display sections. Evidence IDs and
     // numeric fields never cross this boundary, including future unknown fields.
     if (read.version !== 2) {
-      for (const key of ["shallow", "deep"] as const) {
-        const zone = read.pullbackPlans[key];
-        if (zone) add(key, key === "deep" ? "Deeper pullback" : "Pullback", [zone.rationale,
+      for (const [index,zone] of analysisPullbacks(read).entries()) {
+        if (!zone.hidden) add(`pullback-${index+1}`, `Pullback ${index+1}`, [zone.rationale,
           "Required confirmation: " + HIDDEN_ANALYSIS_PRICE + " " + zone.confirmation], true);
       }
       if (read.failureRecovery) add("failureRecovery", "Recovery", [read.failureRecovery.rationale,

@@ -321,6 +321,8 @@ type TradersLinkAiReadPayloadBase = {
   analysisFormat?: "current" | "simple";
   simpleAnalysis?: import("./simple-analysis").SimpleAnalysis;
   ownerHiddenSections?: string[];
+  /** Owner-authored ordered replacement; absent on legacy/generated reads. */
+  ownerPullbacks?: Array<TradersLinkAiReadPullbackScenario & { hidden?: boolean }>;
   symbol: string;
   generatedAt: number;
   dataAsOf: number;

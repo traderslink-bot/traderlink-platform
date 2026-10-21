@@ -16,7 +16,7 @@ export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, render
   const hidden = new Set(read.ownerHiddenSections ?? []);
   const price = (value:number) => "$"+value.toLocaleString("en-US",{maximumFractionDigits:4});
   const area = (low:number,high:number) => low === high ? price(low) : price(low)+"–"+price(high);
-  const pullbacks = simple.pullbacks.map((plan,index)=>({plan,key:index===0?"shallow":"deep"})).filter(item=>!hidden.has(item.key));
+  const pullbacks = simple.pullbacks.map((plan,index)=>({plan,index})).filter(({plan,index})=>!(plan.hidden ?? hidden.has(index===0?"shallow":index===1?"deep":"")));
   return <article className="academy-card watchlist-content-card watchlist-ai-read-card" data-card-label="TradersLink Analysis">
     <div className="academy-card-topline"><span>TradersLink Analysis</span></div>
     <div className="watchlist-ai-read-header"><div>
@@ -28,8 +28,8 @@ export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, render
     {!hidden.has("currentRead") && simple.setup.trim() ? <p>{simple.setup}</p> : null}
     </div><AnalysisTraderNotes body={traderNotes} /></div>
     {renderSectionEditor?.(["simplePullbacks"])}
-    {pullbacks.map(({plan,key},index)=><section key={key} className="watchlist-ai-read-section">
-      <h3>{index===0?"Pullback":"Deeper pullback"}</h3>
+    {pullbacks.map(({plan,index})=><section key={index} className="watchlist-ai-read-section">
+      <h3>Pullback {index+1}</h3>
       <strong>{area(plan.low,plan.high)}</strong><p>{plan.explanation}</p>
       {plan.confirmation.trim() ? <p><strong>Confirmation:</strong> {plan.confirmation}</p> : null}
     </section>)}

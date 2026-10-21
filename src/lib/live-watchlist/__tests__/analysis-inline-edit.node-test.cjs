@@ -14,7 +14,8 @@ test('edit patches exclude immutable references, sources and evidence and preser
     needsToHold: { price: .44, label: '', rationale: 'Base', evidenceIds: ['base1'] }, targets: [], downsideCheckpoints: [], pullbackPlans: { shallow: null, deep: { zoneLow: .40, zoneHigh: .43, evidenceIds: ['base2'] } }, failureRecovery: null };
   const snapshot = JSON.stringify(original), patch = makeAnalysisEdit(original);
   assert.equal(patch.symbol, undefined); assert.equal(patch.sources, undefined); assert.equal(patch.currentPrice, undefined);
-  assert.equal(patch.needsToHold.evidenceIds, undefined); assert.equal(patch.pullbackPlans.deep.evidenceIds, undefined);
+  assert.equal(patch.needsToHold.evidenceIds, undefined); assert.equal(patch.ownerPullbacks[0].evidenceIds, undefined);
+  assert.equal(patch.pullbackPlans, undefined);
   patch.currentRead = 'Owner text'; patch.needsToHold.price = .43219; patch.ownerHiddenSections = [];
   const merged = mergeAnalysisEdit(original, patch);
   assert.equal(merged.currentRead, 'Owner text'); assert.equal(merged.needsToHold.price, .43219);
@@ -26,7 +27,7 @@ test('inline message accepts only bounded ticker requests', () => {
   assert.equal(readInlineAnalysisMessage(valid), 'TRUG');
   for (const symbol of ['../TRUG', '<script>', '', 'A'.repeat(21), null]) assert.equal(readInlineAnalysisMessage({ ...valid, symbol }), null);
   assert.equal(readInlineAnalysisMessage({ ...valid, source: 'elsewhere' }), null);
-  assert.equal(Object.keys(analysisEditSections).length, 15);
+  assert.equal(analysisEditSections.ownerPullbacks, 'Pullbacks');
 });
 test('editor save uses existing owner gate, revision and no publish or generation endpoint', () => {
   const editor = fs.readFileSync(path.join(root, 'app/(dashboard)/admin/watchlist/watchlist-analysis-editor.tsx'), 'utf8');

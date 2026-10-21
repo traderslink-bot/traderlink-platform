@@ -1,4 +1,6 @@
 "use client";
+
+import { analysisPullbacks } from "@/src/lib/live-watchlist/owner-analysis-pullbacks";
 import { AnalysisTraderNotes } from "./analysis-trader-notes";
 import analysisLayout from "./analysis-layout.module.css";
 
@@ -481,8 +483,7 @@ function shouldShowTradersLinkAiLiveVolumeConfirmation(args: {
     return true;
   }
   if (args.read.version === 3 || args.read.version === 4) {
-    const scenarios = [args.read.pullbackPlans.shallow, args.read.pullbackPlans.deep]
-      .filter((scenario): scenario is TradersLinkAiReadPullbackScenario => scenario !== null);
+    const scenarios = analysisPullbacks(args.read).filter(scenario => !scenario.hidden);
     if (scenarios.some((scenario) => {
       const state = resolveTradersLinkAiPullbackScenarioState(scenario, args.livePrice);
       return state === "Testing" || state === "Reclaim required";
@@ -522,8 +523,7 @@ export function TradersLinkAiReadCard({
   const hidden = new Set(read.ownerHiddenSections ?? []);
   const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read);
   const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
-  const showShallow = (read.version === 3 || read.version === 4) && !hidden.has("shallow") && Boolean(read.pullbackPlans.shallow);
-  const showDeep = (read.version === 3 || read.version === 4) && !hidden.has("deep") && Boolean(read.pullbackPlans.deep);
+  const pullbackRows = analysisPullbacks(read).map((plan,index)=>({plan,index})).filter(({plan})=>!plan.hidden);
   const showRecovery = failureRecoveryVisible && (read.version === 3 || read.version === 4) && !hidden.has("failureRecovery") && Boolean(read.failureRecovery);
   const currentLivePrice = livePrice ?? read.currentPrice;
   const momentumSetupFailed = read.momentumFailure.price !== null &&
@@ -617,8 +617,8 @@ export function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {renderSectionEditor?.(["shallow", "deep"])}
-      {(read.version === 3 || read.version === 4) && dipBuyPlanVisible && (showShallow || showDeep) ? (
+      {renderSectionEditor?.(["ownerPullbacks"])}
+      {(read.version === 3 || read.version === 4) && dipBuyPlanVisible && pullbackRows.length > 0 ? (
         <section className="watchlist-ai-read-section">
           <h3>Pullback entry plans</h3>
           {momentumSetupFailed && !hidden.has("momentumFailure") && showRecovery ? (
@@ -627,24 +627,17 @@ export function TradersLinkAiReadCard({
               failure and recovery plan; do not treat either pullback zone as active.
             </p>
           ) : null}
-          {read.pullbackPlans.shallow || read.pullbackPlans.deep ? (
+          {pullbackRows.length > 0 ? (
             <div className="watchlist-ai-read-scenario-grid">
-              {showShallow && read.pullbackPlans.shallow ? (
+              {pullbackRows.map(({plan,index})=>(
                 <TradersLinkAiPullbackScenarioBlock
-                  heading="Pullback"
+                  key={index}
+                  heading={`Pullback ${index+1}`}
                   description="A potential dip-buy area; wait for the confirmation described below."
-                  scenario={read.pullbackPlans.shallow}
+                  scenario={plan}
                   livePrice={currentLivePrice}
                 />
-              ) : null}
-              {showDeep && read.pullbackPlans.deep ? (
-                <TradersLinkAiPullbackScenarioBlock
-                  heading={showShallow ? "Deeper pullback" : "Pullback"}
-                  description="A lower area to watch for buyers to return, with its own confirmation."
-                  scenario={read.pullbackPlans.deep}
-                  livePrice={currentLivePrice}
-                />
-              ) : null}
+              ))}
             </div>
           ) : (
             <p>No evidence-backed pullback entry plan is available for this read.</p>
