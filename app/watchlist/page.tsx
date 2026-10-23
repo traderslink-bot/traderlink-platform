@@ -1,16 +1,12 @@
 import { WatchlistMembershipNotice } from "./watchlist-membership-notice";
-import { headers } from "next/headers";
-import { projectWatchlistTickersForViewer } from "@/src/modules/watchlist/server/access/watchlist-ticker-projection";
 import type { Metadata } from "next";
 
 import { WatchlistHomepageShell } from "./watchlist-homepage-shell";
-import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
-import { projectLiveWatchlistList } from "@/src/lib/live-watchlist/live-watchlist-list";
 import { authorizeWatchlistPageAccess } from "@/src/modules/watchlist/server/access/watchlist-access-service";
 import {
   buildWatchlistPreviewMetadata,
 } from "@/src/lib/live-watchlist/watchlist-preview";
-import { LiveWatchlistIndexClient } from "./live-watchlist-client";
+import { LiveWatchlistLoader } from "./live-watchlist-loader";
 import { WatchlistVisitRecorder } from "./watchlist-visit-recorder";
 import { WatchlistDashboardFrame } from "./watchlist-dashboard-frame";
 import { WatchlistPublicPreview } from "./watchlist-public-preview";
@@ -35,12 +31,11 @@ export default async function LiveWatchlistPage({
     );
   }
 
-  const state = await new LiveWatchlistStore().listSymbols();
   return (
     <WatchlistDashboardFrame>
       <div className="academy-container watchlist-container">
         <WatchlistVisitRecorder pageKey="index" pageKind="index" />
-        <LiveWatchlistIndexClient initialState={projectWatchlistTickersForViewer(projectLiveWatchlistList(state), await headers())} />
+        <LiveWatchlistLoader />
       </div>
     </WatchlistDashboardFrame>
   );
