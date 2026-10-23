@@ -1,5 +1,31 @@
 # Owner-added analysis rows — 2026-10-21
 
+## Follow-up: automatic price order (owner-authorized release)
+
+Owner now requests automatic highest-to-lowest pullback ordering and renumbering,
+not insertion order. Both formats sort whole zones by low price descending, then
+high price descending; equal prices retain order and unfinished rows stay last.
+Legacy hidden flags are attached to their original rows before sorting. No prices,
+explanations, confirmations or visibility settings are synthesized or detached.
+
+The Platform editor sorts on opening and when focus leaves the pullback editing
+section, avoiding field jumps or accidentally redirecting clicks while typing.
+Manual up/down controls are omitted for pullbacks since price determines order;
+target controls remain unchanged. Runtime's alternate editor matches this.
+Owner save canonicalizes order; website cards, Premium preview and social images
+also sort copies, supporting older unsorted payloads without mutating them.
+No AI prompt/schema, target selection, approval or notification change.
+
+Follow-up verification: Platform row suite 8 tests and existing inline editor suite
+4 tests pass, including third-added middle zone becoming Pullback 2 in editor,
+real Simple-card markup and Premium preview, immutable inputs, incomplete rows,
+stable ties and hidden metadata. Bounded semantic check passes. Runtime row suite
+9 tests passes including owner saves in both formats, image labels and alternate
+browser-editor sorting/syntax. Existing image10 and original-time6 tests pass.
+Focused lint/diff checks pass. No live notifications or provider requests.
+Coordinator handles final source integration/build and authorized deployment;
+hosted completion is not claimed by these local checks.
+
 ## Scope and implementation
 
 Owner request: remove arbitrary row-count caps on manually edited potential targets

@@ -13,6 +13,7 @@ import { analysisEditSections, editRecord, isPriceField, levelEditFields, makeAn
 import type { LiveWatchlistCardContent } from "@/src/lib/live-watchlist/live-watchlist-types";
 import { parseTradersLinkAiRead } from "@/src/lib/live-watchlist/traderslink-ai-read";
 import { editLevelRows, type LevelRowAction } from "@/src/lib/live-watchlist/analysis-level-row-edit";
+import { sortPullbacksByPrice } from "@/src/lib/live-watchlist/pullback-price-order";
 
 const AnalysisCard = dynamic(() => import("@/app/watchlist/live-watchlist-client").then(module => module.TradersLinkAiReadCard));
 type Review = { symbol: string; cycleId: string; head: number; draft: { revision: number; body: { payload: Record<string, unknown> } } | null };
@@ -72,19 +73,30 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
     });
     setDirty(true);
   }
+  function orderPullbacks() {
+    setPatch(previous => {
+      if (!previous) return previous;
+      const next=structuredClone(previous);
+      if (next.simpleAnalysis) {
+        const simple=editRecord(next.simpleAnalysis);
+        simple.pullbacks=sortPullbacksByPrice(simple.pullbacks as EditValue[]);
+      } else next.ownerPullbacks=sortPullbacksByPrice(next.ownerPullbacks as EditValue[],"zoneLow","zoneHigh");
+      return next;
+    });
+  }
   function fields(object: EditRecord, names: string[], path: (string | number)[]) {
     return names.map(key => <TextField key={key} label={labels[key] || key} value={object[key] ?? ""} fullWidth size="small" margin="dense"
       type={isPriceField(key) ? "number" : "text"} multiline={!isPriceField(key)} disabled={busy}
       slotProps={{ htmlInput: isPriceField(key) ? { step: "any", min: 0 } : { maxLength: 8000 } }}
       onChange={event => change([...path, key], isPriceField(key) ? event.target.value === "" ? null : Number(event.target.value) : event.target.value)} />);
   }
-  function rowControls(list: EditValue[], index: number, path: (string | number)[], blank: EditValue, maximum: number, priceKey = "price") {
+  function rowControls(list: EditValue[], index: number, path: (string | number)[], blank: EditValue, maximum: number, priceKey = "price", allowMove = true) {
     const act = (action: LevelRowAction) => change(path, editLevelRows(list, action, index, blank, maximum, priceKey));
     return <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
       <Button size="small" disabled={busy || list.length >= maximum} onClick={() => act("insert-above")}>Insert above</Button>
       <Button size="small" disabled={busy || list.length >= maximum} onClick={() => act("insert-below")}>Insert below</Button>
-      <Button size="small" disabled={busy || index === 0} onClick={() => act("up")}>Move up</Button>
-      <Button size="small" disabled={busy || index === list.length - 1} onClick={() => act("down")}>Move down</Button>
+      {allowMove ? <><Button size="small" disabled={busy || index === 0} onClick={() => act("up")}>Move up</Button>
+      <Button size="small" disabled={busy || index === list.length - 1} onClick={() => act("down")}>Move down</Button></> : null}
     </div>;
   }
   function sectionEditor(keys: readonly string[]) {
@@ -113,10 +125,10 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
           <Button disabled={busy || risks.length>=20} onClick={()=>change([key],[...risks,""])}>Add risk note</Button></details>; }
         const name=key==="simplePullbacks"?"pullbacks":"upside";
         const list=simple[name] as EditValue[];
-        return <details key={key}><summary>Edit {name==="pullbacks"?"pullbacks":"where it could go next"}</summary>
+        return <details key={key} onBlur={name==="pullbacks"?event=>{if(!event.currentTarget.contains(event.relatedTarget)) orderPullbacks();}:undefined}><summary>Edit {name==="pullbacks"?"pullbacks":"where it could go next"}</summary>
           {name==="upside"?visibility("targets","where it could go next"):null}
           {list.map((item,index)=><fieldset key={index}><legend>{name==="pullbacks"?`Pullback ${index+1}`:index+1}</legend>
-            {rowControls(list,index,["simpleAnalysis",name],name==="pullbacks"?{low:null,high:null,explanation:"",confirmation:"",invalidation:null,hidden:false}:{low:null,high:null,explanation:""},Infinity,"low")}
+            {rowControls(list,index,["simpleAnalysis",name],name==="pullbacks"?{low:null,high:null,explanation:"",confirmation:"",invalidation:null,hidden:false}:{low:null,high:null,explanation:""},Infinity,"low",name!=="pullbacks")}
             {name==="pullbacks"?<label><input type="checkbox" checked={!editRecord(item).hidden} disabled={busy} onChange={event=>change(["simpleAnalysis",name,index,"hidden"],!event.target.checked)} /> Show this pullback</label>:null}
             {simpleFields(editRecord(item),["low","high","explanation",...(name==="pullbacks"?["confirmation"]:[])],["simpleAnalysis",name,index])}
             <Button disabled={busy} onClick={()=>change(["simpleAnalysis",name],list.filter((_,i)=>i!==index))}>Remove</Button></fieldset>)}
@@ -129,8 +141,8 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
       if(raw==="ownerPullbacks") {
         const rows=(patch.ownerPullbacks ?? []) as EditValue[];
         const blank=Object.fromEntries(pullbackEditFields.map(name=>[name,isPriceField(name)?null:""])) as EditRecord;
-        return <details key={raw}><summary>Edit pullbacks</summary>{rows.map((item,index)=><fieldset key={index}><legend>Pullback {index+1}</legend>
-          {rowControls(rows,index,[raw],blank,Infinity,"zoneLow")}
+        return <details key={raw} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)) orderPullbacks();}}><summary>Edit pullbacks</summary>{rows.map((item,index)=><fieldset key={index}><legend>Pullback {index+1}</legend>
+          {rowControls(rows,index,[raw],blank,Infinity,"zoneLow",false)}
           <label><input type="checkbox" checked={!editRecord(item).hidden} disabled={busy} onChange={event=>change([raw,index,"hidden"],!event.target.checked)} /> Show this pullback</label>
           {fields(editRecord(item),pullbackEditFields,[raw,index])}
           <Button disabled={busy} onClick={()=>change([raw],rows.filter((_,i)=>i!==index))}>Remove</Button>

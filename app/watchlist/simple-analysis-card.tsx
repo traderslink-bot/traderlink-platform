@@ -1,4 +1,5 @@
 import { AnalysisTraderNotes } from "./analysis-trader-notes";
+import { sortPullbacksByPrice } from "@/src/lib/live-watchlist/pullback-price-order";
 import styles from "./analysis-layout.module.css";
 import type { ReactNode } from "react";
 import { AnalysisHistoryLines } from "./analysis-history-lines";
@@ -18,7 +19,8 @@ export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, render
   const hidden = new Set(read.ownerHiddenSections ?? []);
   const price = (value:number) => "$"+value.toLocaleString("en-US",{maximumFractionDigits:4});
   const area = (low:number,high:number) => low === high ? price(low) : price(low)+"–"+price(high);
-  const pullbacks = simple.pullbacks.map((plan,index)=>({plan,index})).filter(({plan,index})=>!(plan.hidden ?? hidden.has(index===0?"shallow":index===1?"deep":"")));
+  const pullbacks = sortPullbacksByPrice(simple.pullbacks.map((plan,index)=>({...plan,hidden:plan.hidden ?? hidden.has(index===0?"shallow":index===1?"deep":"")})))
+    .map((plan,index)=>({plan,index})).filter(({plan})=>!plan.hidden);
   return <article className="academy-card watchlist-content-card watchlist-ai-read-card" data-card-label="TradersLink Analysis">
     <div className="academy-card-topline"><span>TradersLink Analysis</span></div>
     <div className="watchlist-ai-read-header"><div>

@@ -7,7 +7,9 @@ const ts = require('typescript');
 const root = path.resolve(__dirname, '../../../..');
 const source = fs.readFileSync(path.join(root, 'src/lib/live-watchlist/analysis-inline-edit.ts'), 'utf8');
 const exportsObject = {};
-vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.CommonJS } }).outputText, { exports: exportsObject, structuredClone });
+const orderExports = {};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(root,'src/lib/live-watchlist/pullback-price-order.ts'),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2023,module:ts.ModuleKind.CommonJS}}).outputText,{exports:orderExports});
+vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.CommonJS } }).outputText, { exports: exportsObject, structuredClone, require:()=>orderExports });
 const { makeAnalysisEdit, mergeAnalysisEdit, readInlineAnalysisMessage, analysisEditSections } = exportsObject;
 test('edit patches exclude immutable references, sources and evidence and preserve the original', () => {
   const original = { symbol: 'TRUG', currentPrice: .5098, version: 3, currentRead: 'Original', bias: 'bullish', confidence: 'medium', riskSummary: [], ownerHiddenSections: ['mustClear'], sources: [{ url: 'https://example.test' }],
