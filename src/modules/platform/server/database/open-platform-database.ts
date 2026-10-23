@@ -35,6 +35,8 @@ type RuntimeIntegrityState = {
   generation: number;
   lastForeignKeyCheckStartedAt: number;
   lastQuickCheckStartedAt: number;
+  // At most one deep scan per UTC maintenance window in this process.
+  lastNightlyScanWindowStartAt?: number;
   // Optional only for an existing process-global v3 entry during module reload.
   // These are process-release deadlines, never successful-verification evidence.
   foreignKeyNotBefore?: number;
@@ -71,6 +73,13 @@ const PLATFORM_RUNTIME_CHILD_KILL_GRACE_MS = 5_000;
 const PLATFORM_RUNTIME_RETRY_MIN_MS = 5_000;
 const PLATFORM_RUNTIME_RETRY_MAX_MS = 60_000;
 const PLATFORM_RUNTIME_SCAN_IDLE_MULTIPLIER = 10;
+// 03:00–07:00 UTC is 22:00–02:00 EST or 23:00–03:00 EDT.
+// Keep expensive full-file reads outside the US trading day without adding a
+// second volume, process, or hosted service. Connection/schema/FK enforcement
+// and observed-corruption latches remain immediate.
+const PLATFORM_RUNTIME_SCAN_WINDOW_START_UTC_HOUR = 3;
+const PLATFORM_RUNTIME_SCAN_WINDOW_END_UTC_HOUR = 7;
+const PLATFORM_RUNTIME_SCAN_WINDOW_DAY_MS = 24 * 60 * 60_000;
 const PLATFORM_RUNTIME_CACHE_HELPER = "/app/bin/traderlink-integrity-cache-release";
 const PLATFORM_RUNTIME_CACHE_HELPER_TIMEOUT_MS = 2_000;
 
@@ -330,6 +339,11 @@ function startPlatformRuntimeQuickCheck(
   state: RuntimeIntegrityState,
   now: number,
 ): void {
+  const startedOn = new Date(now);
+  state.lastNightlyScanWindowStartAt = Date.UTC(
+    startedOn.getUTCFullYear(), startedOn.getUTCMonth(), startedOn.getUTCDate(),
+    PLATFORM_RUNTIME_SCAN_WINDOW_START_UTC_HOUR,
+  );
   const includeQuickCheck = state.dirtySinceQuickCheck &&
     (state.retryPending ||
       now >= Math.max(state.successfulQuickCheckNotBefore ?? 0,
@@ -388,7 +402,11 @@ function startPlatformRuntimeQuickCheck(
   const recordRelease = () => {
     const releasedAt = Date.now();
     recordRuntimeScanCooldown(state, startedAt, releasedAt, includeQuickCheck);
-    if (state.generation === generation && retryDelayMs > 0) {
+    // This reader still owns the slot even if a structure refresh advanced the
+    // generation. Actual exit must release its infinite retry sentinel too;
+    // corruption/full-verification latches remain independently authoritative.
+    if (retryDelayMs > 0 &&
+      (state.generation === generation || state.retryNotBefore === Infinity)) {
       state.retryNotBefore = releasedAt + retryDelayMs;
     }
   };
@@ -750,7 +768,7 @@ function schedulePlatformRuntimeQuickCheck(
     state.foreignKeyNotBefore ??
       state.lastForeignKeyCheckStartedAt + PLATFORM_RUNTIME_FOREIGN_KEY_CHECK_INTERVAL_MS,
   );
-  const dueAt = Math.max(state.retryNotBefore, state.foreignKeyNotBefore ?? 0,
+  const eligibleAt = Math.max(state.retryNotBefore, state.foreignKeyNotBefore ?? 0,
     // A failed FK pass may promote its retry to a combined scan, but may not
     // pull that full scan ahead of the existing quick-check cooldown.
     state.retryPending && state.dirtySinceQuickCheck ? quickDueAt : 0, Math.min(
@@ -761,11 +779,28 @@ function schedulePlatformRuntimeQuickCheck(
       ? quickDueAt
       : Infinity,
   ));
+  const dueAt = Number.isFinite(eligibleAt)
+    ? nextPlatformRuntimeNightlyScanDueAt(
+      Math.max(now, eligibleAt), state.lastNightlyScanWindowStartAt,
+    ) : Infinity;
+  // Pending release is not a date. Do not turn Infinity/NaN into an immediate
+  // timer loop; actual release or a later valid state change can reschedule.
+  if (!Number.isFinite(dueAt)) {
+    if (state.quickCheckTimer) clearTimeout(state.quickCheckTimer);
+    state.quickCheckTimer = null;
+    state.timerDueAt = 0;
+    return;
+  }
   // Writes may bring an FK deadline forward, but must never postpone a scan.
   if (state.quickCheckTimer && state.timerDueAt <= dueAt) return;
   if (state.quickCheckTimer) clearTimeout(state.quickCheckTimer);
   state.quickCheckTimer = null;
   state.timerDueAt = dueAt;
+  if (dueAt > now) {
+    console.info("TraderLink background SQLite integrity scan queued for nightly window.", {
+      nextEligibleAtMs: dueAt,
+    });
+  }
   const delay = Math.max(0, dueAt - now);
   if (delay === 0) {
     startPlatformRuntimeQuickCheck(databasePath, state, now);
@@ -776,6 +811,25 @@ function schedulePlatformRuntimeQuickCheck(
     schedulePlatformRuntimeQuickCheck(databasePath, state, Date.now());
   }, Math.min(delay, 2_147_483_647));
   state.quickCheckTimer.unref();
+}
+
+function nextPlatformRuntimeNightlyScanDueAt(
+  eligibleAt: number,
+  lastWindowStartAt: number | undefined,
+): number {
+  const candidate = new Date(eligibleAt);
+  const windowStart = Date.UTC(
+    candidate.getUTCFullYear(), candidate.getUTCMonth(), candidate.getUTCDate(),
+    PLATFORM_RUNTIME_SCAN_WINDOW_START_UTC_HOUR,
+  );
+  const windowEnd = Date.UTC(
+    candidate.getUTCFullYear(), candidate.getUTCMonth(), candidate.getUTCDate(),
+    PLATFORM_RUNTIME_SCAN_WINDOW_END_UTC_HOUR,
+  );
+  if (eligibleAt >= windowEnd || lastWindowStartAt === windowStart) {
+    return windowStart + PLATFORM_RUNTIME_SCAN_WINDOW_DAY_MS;
+  }
+  return Math.max(eligibleAt, windowStart);
 }
 
 function recordSuccessfulFullRuntimeVerification(

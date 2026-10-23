@@ -4,6 +4,9 @@ Status: local implementation and deterministic verification complete. Remote
 native review/build and production acceptance belong to Coordinator; no deployment
 or hosted action performed here.
 
+October 23 follow-up: [night-window speed candidate](runtime-integrity-night-window-progress-2026-10-23.md)
+supersedes the runtime scan launch cadence only; it retains the integrity
+failure and hosted migration safeguards described below.
 ## Owner-approved policy
 
 Coordinator relayed explicit owner approval after disclosing detection latency:
