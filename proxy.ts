@@ -45,6 +45,19 @@ function comingSoonResponse(): NextResponse {
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
+  if (
+    request.method === "GET" && pathname === "/" &&
+    requestHostname(request) === dashboardHostname &&
+    Boolean(request.cookies.get("tl_platform_session")?.value)
+  ) {
+    const response = NextResponse.redirect(
+      new URL("/dashboard-entry", `https://${dashboardHostname}`), 307,
+    );
+    response.headers.set("Cache-Control", "private, no-store, max-age=0");
+    response.headers.set("Vary", "Cookie");
+    return response;
+  }
+
   const guarded = ["/ai-chat", "/ai-reviews", "/account/ai", "/help", "/api/coach/chat", "/api/coach/latest", "/api/cron/ai-reviews", "/api/cron/ai-review-calendar", "/api/billing/whop", "/api/webhooks/whop"]
     .some(root => pathname === root || pathname.startsWith(root + "/"));
   if (!guarded) return continueRequest(request);
