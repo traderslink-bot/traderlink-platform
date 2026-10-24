@@ -79,9 +79,23 @@ function requireProtectedBackupRoot(
   }
 }
 
+type ReadinessTimingPhase = "filesystem" | "open" | "ledger" | "close";
+let lastSlowReadinessTimingAt = Number.NEGATIVE_INFINITY;
+
 export function verifyPlatformHostedRuntimeReadiness(
   environment: NodeJS.ProcessEnv = process.env,
 ): PlatformHostedRuntimeReadiness {
+  const started = performance.now();
+  const durations: Record<ReadinessTimingPhase, number> = { filesystem: 0, open: 0, ledger: 0, close: 0 };
+  let phase: ReadinessTimingPhase = "filesystem";
+  let phaseStarted = started;
+  const next = (value: ReadinessTimingPhase) => {
+    const now = performance.now();
+    durations[phase] += now - phaseStarted;
+    phaseStarted = now;
+    phase = value;
+  };
+  try {
   if (environment.NODE_ENV !== "production") {
     throw new Error("TRADERLINK_HOSTED_RUNTIME_PRODUCTION_REQUIRED");
   }
@@ -122,8 +136,11 @@ export function verifyPlatformHostedRuntimeReadiness(
   requireDirectory(backupRoot, true);
   requireProtectedBackupRoot(environment, backupRoot);
 
+  next("open");
   const database = openReadonlyPlatformDatabase({ databasePath, environment });
+  next("ledger");
   const migrationCount = readAppliedPlatformMigrations(database).length;
+  next("close");
   database.close();
 
   return Object.freeze({
@@ -131,4 +148,19 @@ export function verifyPlatformHostedRuntimeReadiness(
     status: "ready" as const,
     storage: TRADERLINK_PLATFORM_SQLITE_SINGLE_NODE_BACKEND,
   });
+  } finally {
+    try {
+      const now = performance.now();
+      durations[phase] += now - phaseStarted;
+      const elapsed = now - started;
+      if (elapsed >= 1_000 && now - lastSlowReadinessTimingAt >= 60_000) {
+        lastSlowReadinessTimingAt = now;
+        console.info("health_readiness_timing", {
+          total_ms: Math.round(elapsed), filesystem_ms: Math.round(durations.filesystem),
+          readonly_open_ms: Math.round(durations.open), ledger_ms: Math.round(durations.ledger),
+          close_ms: Math.round(durations.close),
+        });
+      }
+    } catch { /* Diagnostics cannot change readiness success or failure. */ }
+  }
 }

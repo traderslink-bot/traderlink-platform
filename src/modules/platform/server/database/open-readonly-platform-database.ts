@@ -33,6 +33,7 @@ export function openReadonlyPlatformDatabase(
       database,
       databasePath,
       options.environment ?? process.env,
+      true,
     );
     verifyPlatformDatabaseConnectionPragmas(database);
     return database;

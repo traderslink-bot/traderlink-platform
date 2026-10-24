@@ -885,11 +885,37 @@ function runtimeVerificationManifest(
     : platformMigrationManifest.slice(0, -1);
 }
 
+let lastSlowReadonlyVerifierTimingAt = Number.NEGATIVE_INFINITY;
+
+function createReadonlyVerifierTiming() {
+  const started = performance.now();
+  let branch = 0;
+  let branchStarted = started;
+  return {
+    select(value: number) { branch = value; branchStarted = performance.now(); },
+    finish() {
+      try {
+        const now = performance.now();
+        const elapsed = now - started;
+        if (elapsed < 1_000 || now - lastSlowReadonlyVerifierTimingAt < 60_000) return;
+        lastSlowReadonlyVerifierTimingAt = now;
+        console.info("readonly_verifier_timing", {
+          total_ms: Math.round(elapsed), branch_id: branch,
+          preflight_ms: Math.round(branchStarted - started), branch_ms: Math.round(now - branchStarted),
+        });
+      } catch { /* Diagnostics cannot change integrity admission or failure. */ }
+    },
+  };
+}
+
 export function verifyPlatformRuntimeDatabaseIntegrity(
   database: Database.Database,
   databasePath: string,
   environment: NodeJS.ProcessEnv = process.env,
+  observeReadonlyOpen = false,
 ): void {
+  const timing = observeReadonlyOpen ? createReadonlyVerifierTiming() : null;
+  try {
   const verificationManifest = runtimeVerificationManifest(database, environment);
   const fingerprint = readPlatformRuntimeDatabaseFingerprint(
     database,
@@ -904,11 +930,13 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   const existing = cached && typeof cached === "object" && cached.version === 3
     ? cached : undefined;
   if (existing?.foreignKeyCheckFailed) {
+    timing?.select(4);
     platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
       check: "foreign_key_check",
     });
   }
   if (existing?.quickCheckFailed) {
+    timing?.select(4);
     platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
       check: "quick_check",
     });
@@ -919,6 +947,7 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   const needsFullVerification = existing && (existing.requiresFullVerification ||
     databaseFileIdentityChanged);
   if (needsFullVerification && existing.quickCheckInFlight) {
+    timing?.select(5);
     // Full synchronous revalidation must not overlap the old native reader.
     // Identity/structure recovery is distinct from ordinary operational pending.
     existing.requiresFullVerification = true;
@@ -933,11 +962,13 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   }
   if (needsFullVerification) {
     if (Date.now() < Math.max(existing.foreignKeyNotBefore ?? 0, existing.quickCheckNotBefore ?? 0)) {
+      timing?.select(5);
       existing.requiresFullVerification = true;
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
         check: "background_verification_pending",
       });
     }
+    timing?.select(3);
     const startedAt = Date.now();
     verifyCompletedPlatformDatabase(database, verificationManifest);
     recordSuccessfulFullRuntimeVerification(
@@ -949,12 +980,14 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
     return;
   }
   if (existing?.fingerprint === fingerprint) {
+    timing?.select(1);
     if (existing.retryPending) {
       schedulePlatformRuntimeQuickCheck(databasePath, existing, Date.now());
     }
     return;
   }
   if (!existing) {
+    timing?.select(2);
     const startedAt = Date.now();
     verifyPlatformDatabaseStructureAfterDataChange(
       database,
@@ -1003,6 +1036,7 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
     return;
   }
 
+  timing?.select(2);
   verifyPlatformDatabaseStructureAfterDataChange(
     database,
     verificationManifest,
@@ -1025,6 +1059,9 @@ export function verifyPlatformRuntimeDatabaseIntegrity(
   // cadence-limited pass. Cancelling on every write can starve verification and
   // repeatedly read the same database pages without completing a check.
   schedulePlatformRuntimeQuickCheck(databasePath, existing, Date.now());
+  } finally {
+    timing?.finish();
+  }
 }
 
 export function openPlatformDatabase(
