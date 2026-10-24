@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { monitorEventLoopDelay, performance } from "node:perf_hooks";
 
 import { NYSE_TRADE_HALTS_CSV_URL, NASDAQ_TRADE_HALTS_RSS_URL, fetchOfficialMarketHalts } from "@/src/modules/news/server/market-halt-feed";
 import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
@@ -16,6 +17,50 @@ import { marketHaltDirection } from "@/src/modules/news/server/market-halt-direc
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+type TimingPhase = "open" | "health_begin" | "source_fetch" | "direction" | "reconcile" | "delivery" | "health_complete";
+let lastSlowTimingAt = Number.NEGATIVE_INFINITY;
+
+function requestTiming() {
+  const started = performance.now();
+  const durations: Record<TimingPhase, number> = { open: 0, health_begin: 0, source_fetch: 0, direction: 0, reconcile: 0, delivery: 0, health_complete: 0 };
+  let phase: TimingPhase = "open";
+  let phaseStarted = started;
+  let delay: ReturnType<typeof monitorEventLoopDelay> | undefined;
+  try {
+    delay = monitorEventLoopDelay({ resolution: 20 });
+    delay.enable();
+  } catch { /* Diagnostics must not prevent a scheduler run. */ }
+  return {
+    phase(next: TimingPhase) {
+      const now = performance.now();
+      durations[phase] += now - phaseStarted;
+      phase = next;
+      phaseStarted = now;
+    },
+    finish() {
+      try {
+        const now = performance.now();
+        durations[phase] += now - phaseStarted;
+        delay?.disable();
+        const total = now - started;
+        if (total < 1_000 || now - lastSlowTimingAt < 60_000) return;
+        lastSlowTimingAt = now;
+        console.info("market_halt_request_timing", {
+          total_ms: Math.round(total),
+          open: Math.round(durations.open),
+          health_begin: Math.round(durations.health_begin),
+          source_fetch: Math.round(durations.source_fetch),
+          direction: Math.round(durations.direction),
+          reconcile: Math.round(durations.reconcile),
+          delivery: Math.round(durations.delivery),
+          health_complete: Math.round(durations.health_complete),
+          event_loop_delay_max_ms: Math.round((delay?.max ?? 0) / 1_000_000),
+        });
+      } catch { /* Diagnostics must not change the response or original failure. */ }
+    },
+  };
+}
 
 type MarketHaltSchedulerStage =
   | "database_open"
@@ -50,6 +95,7 @@ function authorized(request: Request): boolean {
 
 export async function GET(request: Request): Promise<Response> {
   if (!authorized(request)) return Response.json({ ok: false }, { status: 401 });
+  const timing = requestTiming();
   let database: ReturnType<typeof openPlatformDatabase> | null = null;
   let schedulerHealth: MarketHaltSchedulerHealthRepository | null = null;
   let schedulerRunId: string | null = null;
@@ -58,11 +104,13 @@ export async function GET(request: Request): Promise<Response> {
   try {
     const runtimeDatabase = openPlatformDatabase({ mode: "runtime" });
     database = runtimeDatabase;
+    timing.phase("health_begin");
     stage = "health_begin";
     const health = new MarketHaltSchedulerHealthRepository(runtimeDatabase);
     const runId = health.begin();
     schedulerHealth = health;
     schedulerRunId = runId;
+    timing.phase("source_fetch");
     stage = "source_fetch";
     const fetched = await fetchOfficialMarketHalts();
     sources = fetched.sources;
@@ -78,6 +126,7 @@ export async function GET(request: Request): Promise<Response> {
       health.fail({ runId, sources: fetched.sources });
       return Response.json({ ok: false, sources: fetched.sources }, { status: 503 });
     }
+    timing.phase("direction");
     const directionObservedAtUtc = createCanonicalUtcTimestamp();
     const eligibility = new MarketHaltAlertRepository(runtimeDatabase);
     const directionCandidates = new Map<string, (typeof fetched.halts)[number]>();
@@ -101,6 +150,7 @@ export async function GET(request: Request): Promise<Response> {
       console.warn("market_halt_discord_configuration_invalid");
     }
     stage = "reconcile";
+    timing.phase("reconcile");
     runtimeDatabase.transaction(() => {
       const repository = new MarketHaltAlertRepository(runtimeDatabase, discordConfiguration?.channelId ?? null);
       const observedHaltIds = new Set<string>();
@@ -128,6 +178,7 @@ export async function GET(request: Request): Promise<Response> {
       }
     }).immediate();
     // Each transport settles independently, including configuration failures.
+    timing.phase("delivery");
     const [pushResult, discordResult] = await Promise.allSettled([
       (async () => {
         stage = "push_configuration";
@@ -147,6 +198,7 @@ export async function GET(request: Request): Promise<Response> {
     if (pushResult.status === "rejected") throw pushResult.reason;
     const delivered = pushResult.value;
     stage = "health_complete";
+    timing.phase("health_complete");
     health.complete({ runId, sources: fetched.sources });
     return Response.json({ created, delivered, discord: { ...discord, configured: discordConfiguration !== null }, ok: true, queued, sources: fetched.sources });
   } catch (error) {
@@ -157,6 +209,10 @@ export async function GET(request: Request): Promise<Response> {
     if (schedulerHealth && schedulerRunId) schedulerHealth.fail({ runId: schedulerRunId, sources });
     return Response.json({ ok: false }, { status: 503 });
   } finally {
-    database?.close();
+    try {
+      database?.close();
+    } finally {
+      timing.finish();
+    }
   }
 }
