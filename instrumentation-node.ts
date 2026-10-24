@@ -23,6 +23,12 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
     console.info(
       `TraderLink hosted runtime verified ${readiness.migrationCount} migrations on ${readiness.storage}.`,
     );
+    try {
+      const { startPlatformRuntimeDelayObservability } = await import(
+        "./src/modules/platform/server/observability/platform-runtime-delay-observability"
+      );
+      startPlatformRuntimeDelayObservability();
+    } catch { /* Diagnostics must not prevent startup or background work. */ }
     const { startTraderLinkHostedBackgroundWorkers } = await import(
       "./src/modules/platform/server/runtime/traderlink-hosted-background-workers"
     );
