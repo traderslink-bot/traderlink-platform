@@ -29,6 +29,42 @@ import {
   hasPlatformMembershipFeature,
 } from "../membership/platform-membership-access";
 
+type IdentityTimingPhase = "preflight" | "runtime_open" | "readonly_open" | "session" | "membership" | "journal_scope" | "close";
+let lastSlowIdentityTimingAt = Number.NEGATIVE_INFINITY;
+
+function createIdentityTiming() {
+  const started = performance.now();
+  const durations: Record<IdentityTimingPhase, number> = {
+    preflight: 0, runtime_open: 0, readonly_open: 0, session: 0, membership: 0, journal_scope: 0, close: 0,
+  };
+  let phase: IdentityTimingPhase = "preflight";
+  let phaseStarted = started;
+  const next = (value: IdentityTimingPhase) => {
+    const now = performance.now();
+    durations[phase] += now - phaseStarted;
+    phaseStarted = now;
+    phase = value;
+  };
+  return {
+    next,
+    finish() {
+      try {
+        const now = performance.now();
+        durations[phase] += now - phaseStarted;
+        const elapsed = now - started;
+        if (elapsed < 1_000 || now - lastSlowIdentityTimingAt < 60_000) return;
+        lastSlowIdentityTimingAt = now;
+        console.info("platform_identity_timing", {
+          total_ms: Math.round(elapsed), preflight_ms: Math.round(durations.preflight),
+          runtime_open_ms: Math.round(durations.runtime_open), readonly_open_ms: Math.round(durations.readonly_open),
+          session_ms: Math.round(durations.session), membership_ms: Math.round(durations.membership),
+          journal_scope_ms: Math.round(durations.journal_scope), close_ms: Math.round(durations.close),
+        });
+      } catch { /* Diagnostics must not replace an authentication result or failure. */ }
+    },
+  };
+}
+
 export type TraderLinkPlatformRequestIdentity = Readonly<{
   mode: "local_development" | "platform_session";
   sessionId: string | null;
@@ -97,6 +133,8 @@ function resolveTraderLinkPlatformRequestIdentity(
   requestHeaders: Headers,
   options: ResolvePlatformRequestIdentityOptions,
 ): TraderLinkPlatformRequestIdentity {
+  const timing = createIdentityTiming();
+  try {
   const environment = options.environment ?? process.env;
   const selectionRef = readJournalAccountSelectionCookie(requestHeaders);
   const developmentBoundary = validateDevelopmentDashboardRequest(
@@ -104,17 +142,13 @@ function resolveTraderLinkPlatformRequestIdentity(
     environment,
   );
   if (developmentBoundary.ok) {
-    return withReadonlyPlatformDatabase(options, (database) => Object.freeze({
-      mode: "local_development" as const,
-      sessionId: null,
-      scope: deriveDevelopmentOwnerJournalScope(
-        database,
-        undefined,
-        selectionRef,
-      ).scope,
-      displayName: null,
-      discord: null,
-    }));
+    timing.next("readonly_open");
+    return withReadonlyPlatformDatabase(options, (database) => {
+      timing.next("journal_scope");
+      const scope = deriveDevelopmentOwnerJournalScope(database, undefined, selectionRef).scope;
+      timing.next("close");
+      return Object.freeze({ mode: "local_development" as const, sessionId: null, scope, displayName: null, discord: null });
+    });
   }
   if (environment.NODE_ENV !== "production" && !(
     environment.NODE_ENV === "development" &&
@@ -127,9 +161,11 @@ function resolveTraderLinkPlatformRequestIdentity(
     TRADERLINK_PLATFORM_SESSION_COOKIE,
   );
   if (!token) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+  timing.next("runtime_open");
   return withPlatformDatabase(
     { ...options, environment, mode: "runtime" },
     (database) => {
+      timing.next("session");
       const session = new PlatformSessionService(
         new PlatformSessionRepository(database),
         { now: options.now },
@@ -137,6 +173,7 @@ function resolveTraderLinkPlatformRequestIdentity(
       if (!session || !["discord", "google", "email"].includes(session.authProvider)) {
         platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       }
+      timing.next("membership");
       const discordConnected = Boolean(database.prepare("SELECT 1 FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").get(session.userId));
       const membership = discordConnected ? new PlatformDiscordMembershipRepository(database)
         .findCurrent(
@@ -180,14 +217,13 @@ function resolveTraderLinkPlatformRequestIdentity(
       ) {
         platformFailure("TRADERLINK_DASHBOARD_ACCESS_DENIED");
       }
+      timing.next("journal_scope");
+      const scope = derivePlatformSessionJournalScope(database, session.userId, selectionRef);
+      timing.next("close");
       return Object.freeze({
         mode: "platform_session" as const,
         sessionId: session.sessionId,
-        scope: derivePlatformSessionJournalScope(
-          database,
-          session.userId,
-          selectionRef,
-        ),
+        scope,
         displayName: session.displayName,
         discord: membership ? Object.freeze({
           guildOwner: membership.guildOwner,
@@ -196,6 +232,9 @@ function resolveTraderLinkPlatformRequestIdentity(
       });
     },
   );
+  } finally {
+    timing.finish();
+  }
 }
 
 export function requireTraderLinkPlatformRequestIdentity(
