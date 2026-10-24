@@ -92,6 +92,7 @@ import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/c
 import { PushNotificationSetupBanner } from "./pwa/push-notification-setup-banner";
 import {
   PRESS_RELEASE_CHANNEL_DEFINITIONS,
+  PRESS_RELEASE_CHANNELS,
   type PressReleaseUnreadCounts,
 } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { areTraderLinkPlatformAiFeaturesEnabled } from
@@ -373,7 +374,8 @@ export function DashboardShell({
   initialMutedMarketHaltTickers = [],
   notifications = [],
   offline = false,
-  pressReleaseUnreadCounts = null,
+  pressReleaseUnreadCounts: initialPressReleaseUnreadCounts = null,
+  deferPressReleaseUnreadCounts = false,
   scannerEarlyAccess = false,
   watchlistMemberNavigationAccess = false,
   ownerMarketDataAccess = false,
@@ -385,6 +387,7 @@ export function DashboardShell({
   notifications?: readonly PlatformNotification[];
   offline?: boolean;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
+  deferPressReleaseUnreadCounts?: boolean;
   scannerEarlyAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
   ownerMarketDataAccess?: boolean;
@@ -392,6 +395,48 @@ export function DashboardShell({
 }) {
   const theme = useTheme();
   const pathname = usePathname();
+
+  const [loadedUnreadCounts, setLoadedUnreadCounts] = useState<{
+    pathname: string; counts: PressReleaseUnreadCounts;
+  } | null>(null);
+  const pressReleaseUnreadCounts = deferPressReleaseUnreadCounts
+    ? loadedUnreadCounts?.pathname === pathname ? loadedUnreadCounts.counts : null
+    : initialPressReleaseUnreadCounts;
+  useEffect(() => {
+    if (!deferPressReleaseUnreadCounts || offline) return;
+    const controller = new AbortController();
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = setTimeout(() => controller.abort(), 35_000);
+    const load = async (retry: boolean): Promise<void> => {
+      try {
+        const response = await fetch("/api/platform/news/unread-counts", {
+          credentials: "same-origin", cache: "no-store", signal: controller.signal,
+        });
+        if (response.status === 503 && retry && !controller.signal.aborted) {
+          retryTimer = setTimeout(() => void load(false), 3_000);
+          return;
+        }
+        if (!response.ok) return;
+        const payload: unknown = await response.json();
+        const counts = payload && typeof payload === "object" && "counts" in payload
+          ? payload.counts : null;
+        if (!counts || typeof counts !== "object" || !PRESS_RELEASE_CHANNELS.every(channel =>
+          channel in counts && Number.isSafeInteger((counts as Record<string, unknown>)[channel]) &&
+          Number((counts as Record<string, unknown>)[channel]) >= 0)) return;
+        if (!controller.signal.aborted) {
+          setLoadedUnreadCounts({ pathname, counts: counts as PressReleaseUnreadCounts });
+        }
+      } catch {
+        // Unknown counts stay absent; do not fabricate a zero or cache another scope.
+      }
+    };
+    // Defer until after the shell's initial paint; server rendering never waits here.
+    const timer = setTimeout(() => void load(true), 150);
+    return () => {
+      controller.abort(); clearTimeout(timer); clearTimeout(deadline); clearTimeout(retryTimer);
+    };
+  }, [deferPressReleaseUnreadCounts, offline, pathname]);
+
   const helpDestination = offline ? "/help" : "https://traderslink.pro/help";
   const helpLabel = "Open Help Center";
   const [collapsed, setCollapsed] = useState(false);

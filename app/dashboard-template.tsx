@@ -36,6 +36,7 @@ export function TraderLinkPlatformDashboardTemplate({
   notifications = [],
   offlineScopeRef,
   pressReleaseUnreadCounts = null,
+  deferPressReleaseUnreadCounts = false,
   scannerEarlyAccess = false,
   watchlistMemberNavigationAccess = false,
   ownerMarketDataAccess = false,
@@ -52,6 +53,7 @@ export function TraderLinkPlatformDashboardTemplate({
   notifications?: readonly PlatformNotification[];
   offlineScopeRef: string;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
+  deferPressReleaseUnreadCounts?: boolean;
   scannerEarlyAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
   ownerMarketDataAccess?: boolean;
@@ -63,6 +65,7 @@ export function TraderLinkPlatformDashboardTemplate({
       initialMutedMarketHaltTickers={initialMutedMarketHaltTickers}
       notifications={notifications}
       pressReleaseUnreadCounts={pressReleaseUnreadCounts}
+      deferPressReleaseUnreadCounts={deferPressReleaseUnreadCounts}
       scannerEarlyAccess={scannerEarlyAccess}
       watchlistMemberNavigationAccess={watchlistMemberNavigationAccess}
       ownerMarketDataAccess={ownerMarketDataAccess}

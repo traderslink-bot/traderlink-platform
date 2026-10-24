@@ -198,6 +198,33 @@ LIMIT 1`).get(input.scope.userId, input.articleId, ...tags,
     return row ? rowToArticle(row) : null;
   }
 
+
+  /** Server-only, already-authorized query plan for the bounded readonly child. */
+  unreadCountQueryPlan(scope: WorkspaceAccessScope): Readonly<{
+    sql: string; parameters: readonly (string | number)[];
+  }> {
+    assertActiveUser(this.database, scope);
+    assertMembershipFeature(this.database, scope.userId, "news.access");
+    const channelTags = PRESS_RELEASE_CHANNELS.map(channel => routeTags(channel));
+    const delaySeconds = readMembershipNewsDelaySeconds(
+      this.database, scope.userId, "news.visibility_delay_seconds",
+    );
+    return Object.freeze({
+      sql: `SELECT
+${PRESS_RELEASE_CHANNELS.map((channel, index) =>
+  `COALESCE(SUM(CASE WHEN article.route_tag IN (${placeholders(channelTags[index])}) THEN 1 ELSE 0 END), 0) AS "${channel}"`).join(",\n")}
+FROM news_articles article
+LEFT JOIN news_article_read_receipts receipt
+  ON receipt.article_id = article.id AND receipt.user_id = ?
+WHERE receipt.article_id IS NULL
+  AND article.route_tag IN (${placeholders(ALL_ELIGIBLE_ROUTE_TAGS)})
+  AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
+  AND julianday(article.published_at) <= julianday('now') - ? / 86400.0`,
+      parameters: Object.freeze([...channelTags.flat(), scope.userId,
+        ...ALL_ELIGIBLE_ROUTE_TAGS, delaySeconds, delaySeconds]),
+    });
+  }
+
   unreadCounts(scope: WorkspaceAccessScope): PressReleaseUnreadCounts {
     assertActiveUser(this.database, scope);
     assertMembershipFeature(this.database, scope.userId, "news.access");

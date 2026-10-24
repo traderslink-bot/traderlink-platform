@@ -21,7 +21,6 @@ import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/
 import { JOURNAL_DEMO_CURRENT_VERSION_ID } from "@/src/modules/journal/server/demo/journal-demo-current-version";
 import { DemoSessionActivation } from "./demo-session-activation";
 import { PwaLifecycle } from "./pwa/pwa-lifecycle";
-import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
 import {
@@ -113,9 +112,6 @@ async function TraderLinkPlatformDashboardFrameContent({
         scope,
       }),
       notifications: new PlatformNotificationRepository(database).list(scope, 5),
-      pressReleaseUnreadCounts: canReadPressReleases
-        ? new PressReleaseDashboardRepository(database).unreadCounts(scope)
-        : null,
     });
   });
   const accountSelectionRef = scope.activeAccountId
@@ -141,7 +137,7 @@ async function TraderLinkPlatformDashboardFrameContent({
           initialMutedMarketHaltTickers={dashboardContext.mutedMarketHaltTickers}
           notifications={dashboardContext.notifications}
           offlineScopeRef={offlineScopeRef}
-          pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
+          deferPressReleaseUnreadCounts={canReadPressReleases}
           scannerEarlyAccess={scannerEarlyAccess}
           watchlistMemberNavigationAccess
           ownerMarketDataAccess={ownerMarketDataAccess}
