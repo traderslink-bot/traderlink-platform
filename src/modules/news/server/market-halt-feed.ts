@@ -3,6 +3,52 @@ import "server-only";
 import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 
+const lastSlowFeedTimingAt: Record<MarketHaltSource, number> = { nasdaq: Number.NEGATIVE_INFINITY, nyse: Number.NEGATIVE_INFINITY };
+
+function feedTiming(source: MarketHaltSource) {
+  const started = performance.now();
+  let bodyBytes = 0;
+  let decodeMs = 0;
+  let bodyReadMs = 0;
+  let byteCountMs = 0;
+  let parseMs = 0;
+  let status = 0;
+  return {
+    status(value: number) { status = value; },
+    text(body: string, elapsed: number) {
+      bodyReadMs = elapsed;
+      const before = performance.now();
+      bodyBytes = Buffer.byteLength(body, "utf8");
+      byteCountMs += performance.now() - before;
+    },
+    decode(chunks: readonly Buffer[]) {
+      const before = performance.now();
+      try {
+        const buffer = Buffer.concat(chunks);
+        bodyBytes = buffer.length;
+        return buffer.toString("utf8");
+      } finally { decodeMs += performance.now() - before; }
+    },
+    parse(parser: (body: string) => readonly MarketHalt[], body: string) {
+      const before = performance.now();
+      try { return parser(body); }
+      finally { parseMs += performance.now() - before; }
+    },
+    finish() {
+      try {
+        const now = performance.now();
+        const elapsed = now - started;
+        if (elapsed < 1_000 || now - lastSlowFeedTimingAt[source] < 60_000) return;
+        lastSlowFeedTimingAt[source] = now;
+        console.info("market_halt_feed_timing", {
+          source, http_status: status, total_ms: Math.round(elapsed), body_bytes: bodyBytes,
+          body_read_ms: Math.round(bodyReadMs), byte_count_ms: Math.round(byteCountMs), buffer_decode_ms: Math.round(decodeMs), parse_ms: Math.round(parseMs),
+        });
+      } catch { /* Diagnostics must not change source availability or feed data. */ }
+    },
+  };
+}
+
 export const NASDAQ_TRADE_HALTS_RSS_URL = "https://nasdaqtrader.com/rss.aspx?feed=tradehalts";
 export const NYSE_TRADE_HALTS_CSV_URL = "https://www.nyse.com/api/trade-halts/current/download?format=csv";
 export type MarketHaltSource = "nasdaq" | "nyse";
@@ -58,6 +104,7 @@ async function fetchMarketHaltSource(input: Readonly<{
   source: MarketHaltSource;
   url: string;
 }>): Promise<Readonly<{ halts: readonly MarketHalt[]; status: MarketHaltSourceStatus }>> {
+  const timing = feedTiming(input.source);
   try {
     const response = await fetch(input.url, {
       cache: "no-store",
@@ -67,14 +114,18 @@ async function fetchMarketHaltSource(input: Readonly<{
       },
       signal: AbortSignal.timeout(15_000),
     });
+    timing.status(response.status);
     if (!response.ok) {
       return Object.freeze({
         halts: Object.freeze([]),
         status: Object.freeze({ available: false, httpStatus: response.status, source: input.source }),
       });
     }
+    const bodyStarted = performance.now();
+    const body = await response.text();
+    timing.text(body, performance.now() - bodyStarted);
     return Object.freeze({
-      halts: input.parse(await response.text()),
+      halts: timing.parse(input.parse, body),
       status: Object.freeze({ available: true, httpStatus: response.status, source: input.source }),
     });
   } catch (error) {
@@ -82,12 +133,15 @@ async function fetchMarketHaltSource(input: Readonly<{
       halts: Object.freeze([]),
       status: Object.freeze({ available: false, failureCode: networkFailureCode(error), httpStatus: null, source: input.source }),
     });
+  } finally {
+    timing.finish();
   }
 }
 
 async function fetchNasdaqTradeHalts(): Promise<Readonly<{ halts: readonly MarketHalt[]; status: MarketHaltSourceStatus }>> {
   const relay = nasdaqHaltRelayConfiguration();
   if (relay) return fetchNasdaqTradeHaltsThroughRelay(relay);
+  const timing = feedTiming("nasdaq");
   try {
     const response = await new Promise<Readonly<{ body: string; statusCode: number }>>((resolve, reject) => {
       const request = httpsRequest(NASDAQ_TRADE_HALTS_RSS_URL, {
@@ -103,7 +157,7 @@ async function fetchNasdaqTradeHalts(): Promise<Readonly<{ halts: readonly Marke
         incoming.on("data", (chunk: Buffer) => chunks.push(chunk));
         incoming.once("error", reject);
         incoming.once("end", () => resolve(Object.freeze({
-          body: Buffer.concat(chunks).toString("utf8"),
+          body: timing.decode(chunks),
           statusCode: incoming.statusCode ?? 0,
         })));
       });
@@ -111,6 +165,7 @@ async function fetchNasdaqTradeHalts(): Promise<Readonly<{ halts: readonly Marke
       request.once("timeout", () => request.destroy(new Error("Nasdaq Trade Halt RSS request timed out.")));
       request.end();
     });
+    timing.status(response.statusCode);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return Object.freeze({
         halts: Object.freeze([]),
@@ -118,7 +173,7 @@ async function fetchNasdaqTradeHalts(): Promise<Readonly<{ halts: readonly Marke
       });
     }
     return Object.freeze({
-      halts: parseNasdaqTradeHalts(response.body),
+      halts: timing.parse(parseNasdaqTradeHalts, response.body),
       status: Object.freeze({ available: true, httpStatus: response.statusCode, source: "nasdaq" }),
     });
   } catch (error) {
@@ -126,10 +181,13 @@ async function fetchNasdaqTradeHalts(): Promise<Readonly<{ halts: readonly Marke
       halts: Object.freeze([]),
       status: Object.freeze({ available: false, failureCode: networkFailureCode(error), httpStatus: null, source: "nasdaq" }),
     });
+  } finally {
+    timing.finish();
   }
 }
 
 async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: string; url: string }>): Promise<Readonly<{ halts: readonly MarketHalt[]; status: MarketHaltSourceStatus }>> {
+  const timing = feedTiming("nasdaq");
   try {
     const response = await new Promise<Readonly<{ body: string; statusCode: number }>>((resolve, reject) => {
       const request = httpRequest(input.url, {
@@ -147,7 +205,7 @@ async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: strin
         incoming.on("data", (chunk: Buffer) => chunks.push(chunk));
         incoming.once("error", reject);
         incoming.once("end", () => resolve(Object.freeze({
-          body: Buffer.concat(chunks).toString("utf8"),
+          body: timing.decode(chunks),
           statusCode: incoming.statusCode ?? 0,
         })));
       });
@@ -155,6 +213,7 @@ async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: strin
       request.once("timeout", () => request.destroy(new Error("Nasdaq halt relay request timed out.")));
       request.end();
     });
+    timing.status(response.statusCode);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return Object.freeze({
         halts: Object.freeze([]),
@@ -162,7 +221,7 @@ async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: strin
       });
     }
     return Object.freeze({
-      halts: parseNasdaqTradeHalts(response.body),
+      halts: timing.parse(parseNasdaqTradeHalts, response.body),
       status: Object.freeze({ available: true, httpStatus: response.statusCode, source: "nasdaq" }),
     });
   } catch (error) {
@@ -170,6 +229,8 @@ async function fetchNasdaqTradeHaltsThroughRelay(input: Readonly<{ secret: strin
       halts: Object.freeze([]),
       status: Object.freeze({ available: false, failureCode: networkFailureCode(error), httpStatus: null, source: "nasdaq" }),
     });
+  } finally {
+    timing.finish();
   }
 }
 
