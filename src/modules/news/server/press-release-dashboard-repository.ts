@@ -146,6 +146,53 @@ WHERE membership.user_id = ? AND membership.workspace_id = ?
 export class PressReleaseDashboardRepository {
   constructor(private readonly database: Database.Database) {}
 
+  /** The scanner headline response does not need article bodies or analysis. */
+  listHeadlines(input: Readonly<{
+    channel: PressReleaseChannel;
+    limit?: number;
+    scope: WorkspaceAccessScope;
+    includePublishedAt: boolean;
+    onTiming?: (phase: "access" | "sql" | "mapping", elapsedMs: number) => void;
+  }>): readonly Readonly<{
+    id: string; ticker: string; headline: string; isRead: boolean; publishedAt?: string;
+  }>[] {
+    const measure = <T>(phase: "access" | "sql" | "mapping", operation: () => T): T => {
+      const started = performance.now();
+      try { return operation(); }
+      finally {
+        try { input.onTiming?.(phase, performance.now() - started); }
+        catch { /* Diagnostics cannot change access or query behavior. */ }
+      }
+    };
+    const { tags, limit, delaySeconds } = measure("access", () => {
+      assertActiveUser(this.database, input.scope);
+      assertMembershipFeature(this.database, input.scope.userId, "news.access");
+      return {
+        tags: routeTags(input.channel),
+        limit: Math.max(1, Math.min(250, input.limit ?? 100)),
+        delaySeconds: readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds"),
+      };
+    });
+    const rows = measure("sql", () => this.database.prepare(`SELECT
+  article.id, article.ticker, article.headline,
+  ${input.includePublishedAt ? "article.published_at," : ""}
+  CASE WHEN receipt.article_id IS NULL THEN 0 ELSE 1 END AS is_read
+FROM news_articles article
+LEFT JOIN news_article_read_receipts receipt
+  ON receipt.article_id = article.id AND receipt.user_id = ?
+WHERE article.route_tag IN (${placeholders(tags)})
+  AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
+  AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
+ORDER BY article.published_at DESC, article.id
+LIMIT ?`).all(input.scope.userId, ...tags, delaySeconds, delaySeconds, limit) as Readonly<{
+      id: string; ticker: string; headline: string; is_read: number; published_at?: string;
+    }>[]);
+    return measure("mapping", () => Object.freeze(rows.map(row => ({
+      id: row.id, ticker: row.ticker, headline: row.headline, isRead: row.is_read === 1,
+      ...(input.includePublishedAt ? { publishedAt: row.published_at! } : {}),
+    }))));
+  }
+
   list(input: Readonly<{
     channel: PressReleaseChannel;
     limit?: number;
