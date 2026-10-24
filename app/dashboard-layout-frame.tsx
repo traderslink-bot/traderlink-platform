@@ -32,6 +32,41 @@ import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/s
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { DashboardMuiProviders } from "./mui-provider";
 
+type FrameTimingPhase = "headers" | "identity" | "connection" | "context";
+let lastSlowFrameTimingAt = Number.NEGATIVE_INFINITY;
+
+function createFrameTiming() {
+  const started = performance.now();
+  const durations: Record<FrameTimingPhase, number> = { headers: 0, identity: 0, connection: 0, context: 0 };
+  let phase: FrameTimingPhase | null = "headers";
+  let phaseStarted = started;
+  const next = (value: FrameTimingPhase | null) => {
+    const now = performance.now();
+    if (phase !== null) durations[phase] += now - phaseStarted;
+    phaseStarted = now;
+    phase = value;
+  };
+  return {
+    next,
+    finish() {
+      try {
+        next(null);
+        const now = performance.now();
+        const total = now - started;
+        if (total < 1_000 || now - lastSlowFrameTimingAt < 60_000) return;
+        lastSlowFrameTimingAt = now;
+        console.info("dashboard_frame_timing", {
+          total_ms: Math.round(total),
+          headers_ms: Math.round(durations.headers),
+          identity_ms: Math.round(durations.identity),
+          connection_ms: Math.round(durations.connection),
+          context_ms: Math.round(durations.context),
+        });
+      } catch { /* Diagnostics must not replace a response, redirect or error. */ }
+    },
+  };
+}
+
 async function TraderLinkPlatformDashboardFrameContent({
   children,
   loginReturnTo = "/workspace",
@@ -43,7 +78,10 @@ async function TraderLinkPlatformDashboardFrameContent({
   watchlistMemberAccess?: boolean;
   billingMemberAccess?: boolean;
 }) {
+  const timing = createFrameTiming();
+  try {
   const requestPath = (await headers()).get("x-traderlink-page-path");
+  timing.next("identity");
   const workspaceLanding = requestPath === "/workspace" || requestPath === "/workspace/";
   let identity;
   try {
@@ -81,13 +119,16 @@ async function TraderLinkPlatformDashboardFrameContent({
     throw error;
   }
   const scope = identity.scope;
+  timing.next("connection");
   const discordConnection = identity.mode === "platform_session"
     ? withReadonlyPlatformDatabase({}, database => readMembershipDiscordConnection(database, scope.userId)) : null;
+  timing.next(null);
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const scannerEarlyAccess = hasScannerEarlyAccess(identity);
   const ownerMarketDataAccess = hasOwnerMarketDataAccess(identity);
   const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
   const readAtUtc = createCanonicalUtcTimestamp();
+  timing.next("context");
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
     const demos = new JournalDemoAccountRepository(database);
     const demo = demos.findAccountForUser(scope);
@@ -114,6 +155,7 @@ async function TraderLinkPlatformDashboardFrameContent({
       notifications: new PlatformNotificationRepository(database).list(scope, 5),
     });
   });
+  timing.next(null);
   const accountSelectionRef = scope.activeAccountId
     ? currentJournalAccountSelectionRef(scope)
     : null;
@@ -154,6 +196,9 @@ async function TraderLinkPlatformDashboardFrameContent({
       </>
     </DashboardMuiProviders>
   );
+  } finally {
+    timing.finish();
+  }
 }
 
 export function TraderLinkPlatformDashboardFrame({
