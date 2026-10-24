@@ -40,8 +40,8 @@ Logs contain only numeric duration and physical read-byte delta, never scope or 
 
 ## Outstanding release acceptance
 
-Not pushed or deployed. Production build/tracing and native child module resolution
-must be checked at the release checkpoint. A no-volume image must contain native
+Not pushed or deployed. The corrected production build and emitted-code/native
+package inspection passed locally (details below). A no-volume image must contain native
 better-sqlite3 and support IPC child execution. Measure real signed-in Railway
 upstream/page phases and native query I/O under load before claiming improvement.
 Fixture timing is not a production speed result. Child reads still share volume
@@ -53,8 +53,17 @@ found webpack rewriting require.resolve to a numeric module ID. createRequire wa
 also treated as a bundler intrinsic. The final implementation passes the absolute
 node_modules/better-sqlite3 package directory from the pinned npm/standalone Docker
 layout, checks that directory exists and lets native Node load its package entry.
-The original drafts stay unreleasable; corrected
-source requires its own build and emitted-code review. No further test runs after
+The original drafts stay unreleasable. Corrected runtime source commit
+4a994c23e4fd15d9f068f8c09c16ef844655e2fe passed its own production build and
+emitted-code review: compilation34.7s, TypeScript47s,281 generated pages and the
+dynamic unread-counts endpoint. Build log:
+/home/traderlink/projects/traderslink-coordinator/operations/deferred-unread-absolute-path-build.log.
+The emitted route computes join(process.cwd(), "node_modules", "better-sqlite3")
+and sends that variable via IPC, not a numeric webpack ID or unbound createRequire.
+Standalone node_modules/better-sqlite3/package.json, its lib/index.js entry and
+build/Release/better_sqlite3.node were present. All seven runtime-build source
+blobs matched the immutable commit. This is static packaging evidence, not a
+native production query or signed-in latency result. No further test runs after
 the Coordinator's latest explicit no-tests instruction.
 
 Cost boundary: one transient child, maximum96MiB old-space heap plus native RSS,
