@@ -34,12 +34,15 @@ import { DashboardMuiProviders } from "./mui-provider";
 
 type FrameTimingPhase = "headers" | "identity" | "connection" | "context";
 let lastSlowFrameTimingAt = Number.NEGATIVE_INFINITY;
+let workspaceFrameLogWindow = { startedAt: 0, count: 0 };
 
 function createFrameTiming() {
   const started = performance.now();
   const durations: Record<FrameTimingPhase, number> = { headers: 0, identity: 0, connection: 0, context: 0 };
   let phase: FrameTimingPhase | null = "headers";
   let phaseStarted = started;
+  let traceId: string | null = null;
+  let proxyToFrameMs: number | null = null;
   const next = (value: FrameTimingPhase | null) => {
     const now = performance.now();
     if (phase !== null) durations[phase] += now - phaseStarted;
@@ -48,14 +51,34 @@ function createFrameTiming() {
   };
   return {
     next,
+    setCorrelation(id: string | null, proxyStartedAt: string | null) {
+      if (!id || !/^[0-9a-f-]{36}$/u.test(id)) return;
+      traceId = id;
+      const start = Number(proxyStartedAt);
+      const elapsed = Date.now() - start;
+      if (Number.isSafeInteger(start) && elapsed >= 0 && elapsed <= 600_000) {
+        proxyToFrameMs = elapsed;
+      }
+    },
     finish() {
       try {
         next(null);
         const now = performance.now();
         const total = now - started;
-        if (total < 1_000 || now - lastSlowFrameTimingAt < 60_000) return;
-        lastSlowFrameTimingAt = now;
+        if (traceId) {
+          const wallNow = Date.now();
+          if (wallNow - workspaceFrameLogWindow.startedAt >= 60_000) {
+            workspaceFrameLogWindow = { startedAt: wallNow, count: 0 };
+          }
+          if (workspaceFrameLogWindow.count >= 20) return;
+          workspaceFrameLogWindow.count += 1;
+        } else {
+          if (total < 1_000 || now - lastSlowFrameTimingAt < 60_000) return;
+          lastSlowFrameTimingAt = now;
+        }
         console.info("dashboard_frame_timing", {
+          trace_id: traceId,
+          proxy_to_frame_ms: proxyToFrameMs,
           total_ms: Math.round(total),
           headers_ms: Math.round(durations.headers),
           identity_ms: Math.round(durations.identity),
@@ -80,7 +103,12 @@ async function TraderLinkPlatformDashboardFrameContent({
 }) {
   const timing = createFrameTiming();
   try {
-  const requestPath = (await headers()).get("x-traderlink-page-path");
+  const requestHeaders = await headers();
+  const requestPath = requestHeaders.get("x-traderlink-page-path");
+  timing.setCorrelation(
+    requestHeaders.get("x-traderlink-speed-id"),
+    requestHeaders.get("x-traderlink-speed-start-ms"),
+  );
   timing.next("identity");
   const workspaceLanding = requestPath === "/workspace" || requestPath === "/workspace/";
   let identity;

@@ -2,7 +2,7 @@ import { DashboardPage, DashboardPanel, DashboardPrimaryAction } from "../../das
 import Typography from "@mui/material/Typography";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
@@ -60,11 +60,19 @@ type WorkspaceTimingName = "dashboard_runtime" | "identity" |
   "analytics_summary" | "review_summary" | "top_tickers" | "trade_library" |
   "legacy_demo_guard" | "rule_results_annotations" | "rule_results_card" |
   "rule_results_custom_and_aggregation" | "rule_results_models" |
-  "rule_results_presets";
+  "rule_results_presets" | "runtime_open" | "fact_set_prefetch" |
+  "fact_set_cache_hit" | "reporting_preparation" | "preparation_cache_hit" |
+  "reporting_fingerprint" | "reporting_snapshot" | "fx_wait" |
+  "dashboard_callback" | "runtime_close";
 type WorkspaceTimings = Map<WorkspaceTimingName, number>;
 const workspaceTimingStateKey = "__traderlinkWorkspaceTimingState" as const;
 type WorkspaceTimingProcessState = typeof globalThis & {
-  [workspaceTimingStateKey]: { lastWarningAt: number; lastSevereWarningAt?: number } | undefined;
+  [workspaceTimingStateKey]: {
+    lastWarningAt: number;
+    lastSevereWarningAt?: number;
+    traceWindowStartedAt?: number;
+    traceWindowCount?: number;
+  } | undefined;
 };
 
 function readWorkspaceTimingClock(): number {
@@ -94,20 +102,31 @@ async function measureWorkspacePhaseAsync<T>(
 function logSlowWorkspaceRequest(
   timings: WorkspaceTimings,
   started: number,
+  traceId: string | null,
+  proxyToPageMs: number | null,
 ): void {
   const totalMs = readWorkspaceTimingClock() - started;
-  if (totalMs < 1_000) return;
   const processState = globalThis as WorkspaceTimingProcessState;
   const state = (processState[workspaceTimingStateKey] ??= { lastWarningAt: 0 });
   const now = Date.now();
-  // Do not suppress a severe outlier just because another slow request
-    // was logged recently. Ordinary slow requests remain rate-limited.
+  if (traceId) {
+    if (now - (state.traceWindowStartedAt ?? 0) >= 60_000) {
+      state.traceWindowStartedAt = now;
+      state.traceWindowCount = 0;
+    }
+    if ((state.traceWindowCount ?? 0) >= 20) return;
+    state.traceWindowCount = (state.traceWindowCount ?? 0) + 1;
+  } else {
+    if (totalMs < 1_000) return;
     if (totalMs >= 2_500) {
       if (now - (state.lastSevereWarningAt ?? 0) < 5_000) return;
       state.lastSevereWarningAt = now;
     } else if (now - state.lastWarningAt < 60_000) return;
+  }
   try {
     console.info("TraderLink slow Workspace request.", {
+      trace_id: traceId,
+      proxy_to_page_ms: proxyToPageMs,
       phases: Object.fromEntries(Array.from(timings, ([name, duration]) => [
         name,
         Number(duration.toFixed(1)),
@@ -161,6 +180,14 @@ export default async function WorkspacePage({
 }) {
   const pageStarted = readWorkspaceTimingClock();
   const timings: WorkspaceTimings = new Map();
+  const requestHeaders = await headers();
+  const candidateTraceId = requestHeaders.get("x-traderlink-speed-id");
+  const traceId = candidateTraceId && /^[0-9a-f-]{36}$/u.test(candidateTraceId)
+    ? candidateTraceId : null;
+  const proxyStartedAt = Number(requestHeaders.get("x-traderlink-speed-start-ms"));
+  const proxyElapsed = Date.now() - proxyStartedAt;
+  const proxyToPageMs = traceId && Number.isSafeInteger(proxyStartedAt) &&
+    proxyElapsed >= 0 && proxyElapsed <= 600_000 ? proxyElapsed : null;
   const queryParameters = await searchParams;
   const period = workspacePeriod(queryParameters.period);
   const filter: WorkspaceTradeLibraryFilter = queryParameters.filter === "open" || queryParameters.filter === "swing" || queryParameters.filter === "closed" || queryParameters.filter === "fees_not_entered" ? queryParameters.filter : "all";
@@ -273,7 +300,10 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         })),
       });
     },
-    { prefetchAllFactSet: period === "all" && !(queryParameters.startDate && queryParameters.endDate) },
+    {
+      prefetchAllFactSet: period === "all" && !(queryParameters.startDate && queryParameters.endDate),
+      onTiming: traceId ? (phase, value) => timings.set(phase, value) : undefined,
+    },
     ),
   );
   const ruleResultsCardMs = timings.get("rule_results_card") ?? 0;
@@ -312,7 +342,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     analyticsMetrics,
     reviewSummary,
   });
-  logSlowWorkspaceRequest(timings, pageStarted);
+  logSlowWorkspaceRequest(timings, pageStarted, traceId, proxyToPageMs);
   return (
     <>
       <WorkspaceOfflineViewCapture

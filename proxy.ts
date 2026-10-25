@@ -22,6 +22,20 @@ function isPageRoot(pathname: string): boolean {
 function continueRequest(request: NextRequest): NextResponse {
   const headers = new Headers(request.headers);
   headers.set("x-traderlink-page-path", request.nextUrl.pathname);
+  // Never trust a browser-supplied diagnostic ID on any route.
+  headers.delete("x-traderlink-speed-id");
+  headers.delete("x-traderlink-speed-start-ms");
+  if (
+    request.method === "GET" &&
+    (request.nextUrl.pathname === "/workspace" || request.nextUrl.pathname === "/workspace/")
+  ) {
+    const traceId = globalThis.crypto.randomUUID();
+    headers.set("x-traderlink-speed-id", traceId);
+    headers.set("x-traderlink-speed-start-ms", String(Date.now()));
+    const response = NextResponse.next({ request: { headers } });
+    response.headers.set("x-traderlink-speed-id", traceId);
+    return response;
+  }
   return NextResponse.next({ request: { headers } });
 }
 

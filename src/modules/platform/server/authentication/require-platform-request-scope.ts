@@ -31,8 +31,11 @@ import {
 
 type IdentityTimingPhase = "preflight" | "runtime_open" | "readonly_open" | "session" | "membership" | "journal_scope" | "close";
 let lastSlowIdentityTimingAt = Number.NEGATIVE_INFINITY;
+let workspaceIdentityLogWindow = { startedAt: 0, count: 0 };
 
-function createIdentityTiming() {
+function createIdentityTiming(candidateTraceId: string | null) {
+  const traceId = candidateTraceId && /^[0-9a-f-]{36}$/u.test(candidateTraceId)
+    ? candidateTraceId : null;
   const started = performance.now();
   const durations: Record<IdentityTimingPhase, number> = {
     preflight: 0, runtime_open: 0, readonly_open: 0, session: 0, membership: 0, journal_scope: 0, close: 0,
@@ -52,9 +55,19 @@ function createIdentityTiming() {
         const now = performance.now();
         durations[phase] += now - phaseStarted;
         const elapsed = now - started;
-        if (elapsed < 1_000 || now - lastSlowIdentityTimingAt < 60_000) return;
-        lastSlowIdentityTimingAt = now;
+        if (traceId) {
+          const wallNow = Date.now();
+          if (wallNow - workspaceIdentityLogWindow.startedAt >= 60_000) {
+            workspaceIdentityLogWindow = { startedAt: wallNow, count: 0 };
+          }
+          if (workspaceIdentityLogWindow.count >= 20) return;
+          workspaceIdentityLogWindow.count += 1;
+        } else {
+          if (elapsed < 1_000 || now - lastSlowIdentityTimingAt < 60_000) return;
+          lastSlowIdentityTimingAt = now;
+        }
         console.info("platform_identity_timing", {
+          trace_id: traceId,
           total_ms: Math.round(elapsed), preflight_ms: Math.round(durations.preflight),
           runtime_open_ms: Math.round(durations.runtime_open), readonly_open_ms: Math.round(durations.readonly_open),
           session_ms: Math.round(durations.session), membership_ms: Math.round(durations.membership),
@@ -133,7 +146,7 @@ function resolveTraderLinkPlatformRequestIdentity(
   requestHeaders: Headers,
   options: ResolvePlatformRequestIdentityOptions,
 ): TraderLinkPlatformRequestIdentity {
-  const timing = createIdentityTiming();
+  const timing = createIdentityTiming(requestHeaders.get("x-traderlink-speed-id"));
   try {
   const environment = options.environment ?? process.env;
   const selectionRef = readJournalAccountSelectionCookie(requestHeaders);
