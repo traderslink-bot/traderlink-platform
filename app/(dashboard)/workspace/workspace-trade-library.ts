@@ -509,7 +509,27 @@ function toWorkspaceTradeLibraryRows(
 ): readonly WorkspaceTradeLibraryRow[] {
   const editable = measureTradeLibraryPhase(onTiming, "editable", () => editableExecutions(database, scope, rows, onTiming));
   const facts = measureTradeLibraryPhase(onTiming, "execution_facts", () => executionFacts(database, scope, rows));
-  const deletes = measureTradeLibraryPhase(onTiming, "delete_refs", () => tradeDeleteRefs(scope, rows, onTiming));
+  const deletes = measureTradeLibraryPhase(onTiming, "delete_refs", () => {
+    // The group guard can succeed only if a current execution is individually deletable.
+    const individuallyDeletable = new Set(rows.filter((row) => editable.get(row.round_trip_id)
+      ?.some((execution) => execution.deleteRef !== null) === true).map((row) => row.round_trip_id));
+    const versionChecks = rows.filter((row) => !individuallyDeletable.has(row.round_trip_id));
+    // Saved or lagging projections can refer to an older round-trip version.
+    // Pass those rows to the original guard instead of relying on old allocations.
+    const currentVersions = versionChecks.length === 0 ? [] : database.prepare(`SELECT round_trip_id, current_version_id
+FROM journal_round_trips
+WHERE workspace_id = ? AND account_id = ?
+  AND round_trip_id IN (${versionChecks.map(() => "?").join(", ")})`).all(
+      scope.workspaceId,
+      activeAccountId(scope),
+      ...versionChecks.map((row) => row.round_trip_id),
+    ) as readonly Readonly<{ round_trip_id: string; current_version_id: string }>[];
+    const currentVersionById = new Map(currentVersions.map((row) =>
+      [row.round_trip_id, row.current_version_id] as const));
+    const deleteCandidates = rows.filter((row) => individuallyDeletable.has(row.round_trip_id) ||
+      currentVersionById.get(row.round_trip_id) !== row.round_trip_version_id);
+    return tradeDeleteRefs(scope, deleteCandidates, onTiming);
+  });
   return measureTradeLibraryPhase(onTiming, "row_mapping", () => Object.freeze(rows.map((row) => Object.freeze({
     buyQuantityDecimal: facts.get(row.round_trip_version_id)?.buyQuantityDecimal ?? "0",
     entryQuantityDecimal: facts.get(row.round_trip_version_id)?.entryQuantityDecimal ?? "0",
