@@ -31,11 +31,26 @@ export class LogicalTradeMoomooAnalyzerWorker {
     private readonly notifications?: LogicalTradeAnalyzerNotificationService,
     private readonly now: () => Date = () => new Date(),
     private readonly trendMomentum?: TrendMomentumHistoryService,
+    private readonly onClaimTiming?: (timing: Readonly<{
+      startEpochMs: number; endEpochMs: number; durationMs: number;
+    }>) => void,
   ) {}
 
   async runOne(): Promise<boolean> {
     const claimedAt = this.now();
-    const job = this.logical.claimNext(claimedAt);
+    const claimStartedEpochMs = Date.now();
+    const claimStarted = performance.now();
+    let job: ClaimedLogicalTradeAnalyzerJob | null = null;
+    try { job = this.logical.claimNext(claimedAt); }
+    finally {
+      try {
+        this.onClaimTiming?.({
+          startEpochMs: claimStartedEpochMs,
+          endEpochMs: Date.now(),
+          durationMs: performance.now() - claimStarted,
+        });
+      } catch { /* A timing callback cannot affect a job claim. */ }
+    }
     if (!job) return false;
     let diagnosticStage = "process_start";
     try {
