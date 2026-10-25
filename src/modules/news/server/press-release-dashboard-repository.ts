@@ -146,6 +146,32 @@ WHERE membership.user_id = ? AND membership.workspace_id = ?
 export class PressReleaseDashboardRepository {
   constructor(private readonly database: Database.Database) {}
 
+  /** Parent-authorized plan only; the child never accepts SQL from HTTP input. */
+  headlineQueryPlan(input: Readonly<{
+    channel: PressReleaseChannel; limit?: number; scope: WorkspaceAccessScope; includePublishedAt: boolean;
+  }>): Readonly<{ sql: string; parameters: readonly (string | number)[] }> {
+    assertActiveUser(this.database, input.scope);
+    assertMembershipFeature(this.database, input.scope.userId, "news.access");
+    const tags = routeTags(input.channel);
+    const limit = Math.max(1, Math.min(250, input.limit ?? 100));
+    const delaySeconds = readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds");
+    return Object.freeze({
+      sql: `SELECT
+  article.id, article.ticker, article.headline,
+  ${input.includePublishedAt ? "article.published_at," : ""}
+  CASE WHEN receipt.article_id IS NULL THEN 0 ELSE 1 END AS is_read
+FROM news_articles article
+LEFT JOIN news_article_read_receipts receipt
+  ON receipt.article_id = article.id AND receipt.user_id = ?
+WHERE article.route_tag IN (${placeholders(tags)})
+  AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
+  AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
+ORDER BY article.published_at DESC, article.id
+LIMIT ?`,
+      parameters: Object.freeze([input.scope.userId, ...tags, delaySeconds, delaySeconds, limit]),
+    });
+  }
+
   /** The scanner headline response does not need article bodies or analysis. */
   listHeadlines(input: Readonly<{
     channel: PressReleaseChannel;
