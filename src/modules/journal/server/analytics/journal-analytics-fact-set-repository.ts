@@ -314,18 +314,20 @@ FROM journal_chain_rebuilds current
 WHERE current.workspace_id = ? AND current.account_id IN (${placeholders})
   AND current.rebuild_id NOT IN (
     SELECT seeded_round_trip_version.rebuild_id
-    FROM journal_round_trip_versions seeded_round_trip_version
-    JOIN journal_round_trip_execution_allocations seeded_allocation
-      ON seeded_allocation.round_trip_version_id = seeded_round_trip_version.round_trip_version_id
-    JOIN journal_execution_provenance seeded_provenance
-      ON seeded_provenance.workspace_id = seeded_allocation.workspace_id
-     AND seeded_provenance.account_id = seeded_allocation.account_id
-     AND seeded_provenance.execution_version_id = seeded_allocation.execution_version_id
-    JOIN journal_import_batches seeded_batch
-      ON seeded_batch.workspace_id = seeded_provenance.workspace_id
-     AND seeded_batch.account_id = seeded_provenance.account_id
-     AND seeded_batch.import_batch_id = seeded_provenance.import_batch_id
-    WHERE seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
+    FROM journal_import_batches seeded_batch
+    CROSS JOIN journal_execution_provenance seeded_provenance
+      ON seeded_provenance.workspace_id = seeded_batch.workspace_id
+     AND seeded_provenance.account_id = seeded_batch.account_id
+     AND seeded_provenance.import_batch_id = seeded_batch.import_batch_id
+    CROSS JOIN journal_round_trip_execution_allocations seeded_allocation
+      ON seeded_allocation.workspace_id = seeded_provenance.workspace_id
+     AND seeded_allocation.account_id = seeded_provenance.account_id
+     AND seeded_allocation.execution_version_id = seeded_provenance.execution_version_id
+    CROSS JOIN journal_round_trip_versions seeded_round_trip_version
+      ON seeded_round_trip_version.round_trip_version_id = seeded_allocation.round_trip_version_id
+    WHERE seeded_batch.workspace_id = ?
+      AND seeded_batch.account_id IN (${placeholders})
+      AND seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
   )
   AND NOT EXISTS (
     SELECT 1 FROM journal_chain_rebuilds next
@@ -336,7 +338,7 @@ WHERE current.workspace_id = ? AND current.account_id IN (${placeholders})
       AND next.previous_rebuild_id = current.rebuild_id
   )
 ORDER BY current.account_id, current.instrument_id, current.trade_currency,
-         current.rebuild_id`).all(...parameters) as LatestRebuildRow[];
+         current.rebuild_id`).all(...parameters, ...parameters) as LatestRebuildRow[];
     const rebuildByChain = new Map<string, LatestRebuildRow>();
     for (const rebuild of latestRebuildRows) {
       const key = chainScopeKey(
@@ -400,10 +402,12 @@ WHERE round_trip.workspace_id = ?
       ON seeded_batch.workspace_id = seeded_provenance.workspace_id
      AND seeded_batch.account_id = seeded_provenance.account_id
      AND seeded_batch.import_batch_id = seeded_provenance.import_batch_id
-    WHERE seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
+    WHERE seeded_batch.workspace_id = ?
+      AND seeded_batch.account_id IN (${placeholders})
+      AND seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
   )
 ORDER BY round_trip.account_id, version.opened_at_utc,
-         version.round_trip_version_id`).all(...parameters) as RoundTripRow[];
+         version.round_trip_version_id`).all(...parameters, ...parameters) as RoundTripRow[];
     recordPhase("fact_round_trips_ms");
 
     const versionIdsByAccount = new Map<string, string[]>();
