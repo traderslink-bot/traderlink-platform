@@ -37,12 +37,16 @@ let lastSlowFrameTimingAt = Number.NEGATIVE_INFINITY;
 let workspaceFrameLogWindow = { startedAt: 0, count: 0 };
 
 function createFrameTiming() {
+  const frameStartedEpochMs = Date.now();
   const started = performance.now();
   const durations: Record<FrameTimingPhase, number> = { headers: 0, identity: 0, connection: 0, context: 0 };
   let phase: FrameTimingPhase | null = "headers";
   let phaseStarted = started;
   let traceId: string | null = null;
   let proxyToFrameMs: number | null = null;
+  let proxyEntryEpochMs: number | null = null;
+  let edgeRequestStartEpochMs: number | null = null;
+  let railwayRequestId: string | null = null;
   const next = (value: FrameTimingPhase | null) => {
     const now = performance.now();
     if (phase !== null) durations[phase] += now - phaseStarted;
@@ -51,13 +55,24 @@ function createFrameTiming() {
   };
   return {
     next,
-    setCorrelation(id: string | null, proxyStartedAt: string | null) {
+    setCorrelation(id: string | null, proxyStartedAt: string | null,
+      edgeStartedAt: string | null, railwayId: string | null) {
       if (!id || !/^[0-9a-f-]{36}$/u.test(id)) return;
       traceId = id;
       const start = Number(proxyStartedAt);
       const elapsed = Date.now() - start;
       if (Number.isSafeInteger(start) && elapsed >= 0 && elapsed <= 600_000) {
+        proxyEntryEpochMs = start;
         proxyToFrameMs = elapsed;
+        const edgeRaw = edgeStartedAt?.trim() ?? "";
+        const edgeStart = Number(edgeRaw);
+        if (/^\d{13}$/u.test(edgeRaw) && Number.isSafeInteger(edgeStart) &&
+          start - edgeStart >= 0 && start - edgeStart <= 600_000) {
+          edgeRequestStartEpochMs = edgeStart;
+        }
+        if (railwayId && /^[A-Za-z0-9_-]{12,64}$/u.test(railwayId)) {
+          railwayRequestId = railwayId;
+        }
       }
     },
     finish() {
@@ -65,6 +80,7 @@ function createFrameTiming() {
         next(null);
         const now = performance.now();
         const total = now - started;
+        const frameMeasuredEndEpochMs = Date.now();
         if (traceId) {
           const wallNow = Date.now();
           if (wallNow - workspaceFrameLogWindow.startedAt >= 60_000) {
@@ -78,6 +94,11 @@ function createFrameTiming() {
         }
         console.info("dashboard_frame_timing", {
           trace_id: traceId,
+          proxy_entry_epoch_ms: proxyEntryEpochMs,
+          edge_request_start_epoch_ms: edgeRequestStartEpochMs,
+          railway_request_id: railwayRequestId,
+          frame_start_epoch_ms: frameStartedEpochMs,
+          frame_measured_end_epoch_ms: frameMeasuredEndEpochMs,
           proxy_to_frame_ms: proxyToFrameMs,
           total_ms: Math.round(total),
           headers_ms: Math.round(durations.headers),
@@ -108,6 +129,8 @@ async function TraderLinkPlatformDashboardFrameContent({
   timing.setCorrelation(
     requestHeaders.get("x-traderlink-speed-id"),
     requestHeaders.get("x-traderlink-speed-start-ms"),
+    requestHeaders.get("x-request-start"),
+    requestHeaders.get("x-railway-request-id"),
   );
   timing.next("identity");
   const workspaceLanding = requestPath === "/workspace" || requestPath === "/workspace/";

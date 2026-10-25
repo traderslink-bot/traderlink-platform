@@ -19,7 +19,7 @@ function isPageRoot(pathname: string): boolean {
   return AI_PAGE_ROOTS.some((root) => pathname === root || pathname === `${root}/`);
 }
 
-function continueRequest(request: NextRequest): NextResponse {
+function continueRequest(request: NextRequest, proxyEntryEpochMs: number): NextResponse {
   const headers = new Headers(request.headers);
   headers.set("x-traderlink-page-path", request.nextUrl.pathname);
   // Never trust a browser-supplied diagnostic ID on any route.
@@ -31,7 +31,7 @@ function continueRequest(request: NextRequest): NextResponse {
   ) {
     const traceId = globalThis.crypto.randomUUID();
     headers.set("x-traderlink-speed-id", traceId);
-    headers.set("x-traderlink-speed-start-ms", String(Date.now()));
+    headers.set("x-traderlink-speed-start-ms", String(proxyEntryEpochMs));
     const response = NextResponse.next({ request: { headers } });
     response.headers.set("x-traderlink-speed-id", traceId);
     return response;
@@ -57,6 +57,7 @@ function comingSoonResponse(): NextResponse {
 }
 
 export function proxy(request: NextRequest): NextResponse {
+  const proxyEntryEpochMs = Date.now();
   const { pathname } = request.nextUrl;
 
   if (
@@ -74,7 +75,7 @@ export function proxy(request: NextRequest): NextResponse {
 
   const guarded = ["/ai-chat", "/ai-reviews", "/account/ai", "/help", "/api/coach/chat", "/api/coach/latest", "/api/cron/ai-reviews", "/api/cron/ai-review-calendar", "/api/billing/whop", "/api/webhooks/whop"]
     .some(root => pathname === root || pathname.startsWith(root + "/"));
-  if (!guarded) return continueRequest(request);
+  if (!guarded) return continueRequest(request, proxyEntryEpochMs);
 
   if (pathname === "/help" || pathname.startsWith("/help/")) {
     if (requestHostname(request) === dashboardHostname) {
@@ -83,17 +84,17 @@ export function proxy(request: NextRequest): NextResponse {
       destination.host = publicHostname;
       return NextResponse.redirect(destination, 308);
     }
-    return continueRequest(request);
+    return continueRequest(request, proxyEntryEpochMs);
   }
 
   if (areTraderLinkPlatformAiFeaturesEnabled()) {
-    return continueRequest(request);
+    return continueRequest(request, proxyEntryEpochMs);
   }
 
   const readRequest = request.method === "GET" || request.method === "HEAD";
 
   if (readRequest && isPageRoot(pathname)) {
-    return continueRequest(request);
+    return continueRequest(request, proxyEntryEpochMs);
   }
 
   if (readRequest && pathname.startsWith("/ai-chat/")) {

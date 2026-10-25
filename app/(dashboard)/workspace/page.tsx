@@ -109,8 +109,13 @@ function logSlowWorkspaceRequest(
   started: number,
   traceId: string | null,
   proxyToPageMs: number | null,
+  proxyEntryEpochMs: number | null,
+  edgeRequestStartEpochMs: number | null,
+  railwayRequestId: string | null,
+  pageStartedEpochMs: number,
 ): void {
   const totalMs = readWorkspaceTimingClock() - started;
+  const pageMeasuredEndEpochMs = Date.now();
   const processState = globalThis as WorkspaceTimingProcessState;
   const state = (processState[workspaceTimingStateKey] ??= { lastWarningAt: 0 });
   const now = Date.now();
@@ -131,6 +136,11 @@ function logSlowWorkspaceRequest(
   try {
     console.info("TraderLink slow Workspace request.", {
       trace_id: traceId,
+      proxy_entry_epoch_ms: proxyEntryEpochMs,
+      edge_request_start_epoch_ms: edgeRequestStartEpochMs,
+      railway_request_id: railwayRequestId,
+      page_start_epoch_ms: pageStartedEpochMs,
+      page_measured_end_epoch_ms: pageMeasuredEndEpochMs,
       proxy_to_page_ms: proxyToPageMs,
       phases: Object.fromEntries(Array.from(timings, ([name, duration]) => [
         name,
@@ -183,6 +193,7 @@ export default async function WorkspacePage({
 }: {
   searchParams: Promise<{ endDate?: string; filter?: string; gettingStarted?: string; group?: string; period?: string; searchTicker?: string; sort?: string; startDate?: string }>;
 }) {
+  const pageStartedEpochMs = Date.now();
   const pageStarted = readWorkspaceTimingClock();
   const timings: WorkspaceTimings = new Map();
   const requestHeaders = await headers();
@@ -193,6 +204,17 @@ export default async function WorkspacePage({
   const proxyElapsed = Date.now() - proxyStartedAt;
   const proxyToPageMs = traceId && Number.isSafeInteger(proxyStartedAt) &&
     proxyElapsed >= 0 && proxyElapsed <= 600_000 ? proxyElapsed : null;
+  const proxyEntryEpochMs = proxyToPageMs === null ? null : proxyStartedAt;
+  const edgeRaw = requestHeaders.get("x-request-start")?.trim() ?? "";
+  const edgeStart = Number(edgeRaw);
+  const edgeRequestStartEpochMs = proxyEntryEpochMs !== null &&
+    /^\d{13}$/u.test(edgeRaw) && Number.isSafeInteger(edgeStart) &&
+    proxyEntryEpochMs - edgeStart >= 0 && proxyEntryEpochMs - edgeStart <= 600_000
+    ? edgeStart : null;
+  const candidateRailwayRequestId = requestHeaders.get("x-railway-request-id");
+  const railwayRequestId = traceId && candidateRailwayRequestId &&
+    /^[A-Za-z0-9_-]{12,64}$/u.test(candidateRailwayRequestId)
+    ? candidateRailwayRequestId : null;
   const queryParameters = await searchParams;
   const period = workspacePeriod(queryParameters.period);
   const filter: WorkspaceTradeLibraryFilter = queryParameters.filter === "open" || queryParameters.filter === "swing" || queryParameters.filter === "closed" || queryParameters.filter === "fees_not_entered" ? queryParameters.filter : "all";
@@ -347,7 +369,8 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
     analyticsMetrics,
     reviewSummary,
   });
-  logSlowWorkspaceRequest(timings, pageStarted, traceId, proxyToPageMs);
+  logSlowWorkspaceRequest(timings, pageStarted, traceId, proxyToPageMs,
+    proxyEntryEpochMs, edgeRequestStartEpochMs, railwayRequestId, pageStartedEpochMs);
   return (
     <>
       <WorkspaceOfflineViewCapture
