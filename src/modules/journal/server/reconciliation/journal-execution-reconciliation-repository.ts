@@ -153,7 +153,7 @@ ORDER BY version.executed_at_utc, version.source_order_key, execution.execution_
       execution_id: string;
     }>(`SELECT DISTINCT execution.execution_id, execution.current_version_id
 FROM journal_round_trips round_trip
-JOIN journal_round_trip_execution_allocations allocation
+CROSS JOIN journal_round_trip_execution_allocations allocation INDEXED BY sqlite_autoindex_journal_round_trip_execution_allocations_2
   ON allocation.workspace_id = round_trip.workspace_id
  AND allocation.account_id = round_trip.account_id
  AND allocation.round_trip_version_id = round_trip.current_version_id
