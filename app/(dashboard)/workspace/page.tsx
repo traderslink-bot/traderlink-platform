@@ -56,8 +56,26 @@ const WORKSPACE_METRICS = [
   ["Worst trade", "worst_trade", ""],
 ] as const;
 
+const TRADE_LIBRARY_TIMING_NAMES = {
+  revision: "trade_library_revision",
+  empty_probe: "trade_library_empty_probe",
+  count: "trade_library_count",
+  page: "trade_library_page",
+  editable: "trade_library_editable",
+  editable_integrity_setup: "trade_library_editable_integrity_setup",
+  execution_facts: "trade_library_execution_facts",
+  delete_refs: "trade_library_delete_refs",
+  delete_refs_integrity_setup: "trade_library_delete_refs_integrity_setup",
+  row_mapping: "trade_library_row_mapping",
+  merge_logical: "trade_library_merge_logical",
+} as const;
+
 type WorkspaceTimingName = "dashboard_runtime" | "identity" |
   "analytics_summary" | "review_summary" | "top_tickers" | "trade_library" |
+  "trade_library_revision" | "trade_library_empty_probe" | "trade_library_count" |
+  "trade_library_page" | "trade_library_editable" | "trade_library_editable_integrity_setup" |
+  "trade_library_execution_facts" | "trade_library_delete_refs" |
+  "trade_library_delete_refs_integrity_setup" | "trade_library_row_mapping" | "trade_library_merge_logical" |
   "legacy_demo_guard" | "rule_results_annotations" | "rule_results_card" |
   "rule_results_custom_and_aggregation" | "rule_results_models" |
   "rule_results_presets" | "runtime_open" | "fact_set_prefetch" |
@@ -324,7 +342,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         tradeLibrary: measureWorkspacePhase(timings, "trade_library", () => readWorkspaceTradeLibrary(database, scope, {
           afterCursor: null, endDate: dates.endDate, filter, followDashboardPeriod: false,
           group, searchTicker: queryParameters.searchTicker ?? "", sort, startDate: dates.startDate,
-        })),
+        }, traceId ? (phase, duration) => timings.set(TRADE_LIBRARY_TIMING_NAMES[phase], duration) : undefined)),
       });
     },
     {

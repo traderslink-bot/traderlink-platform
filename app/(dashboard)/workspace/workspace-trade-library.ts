@@ -92,6 +92,36 @@ export type WorkspaceTradeLibraryModel = Readonly<{
   totalRowCount: number;
 }>;
 
+export type WorkspaceTradeLibraryTimingPhase =
+  "revision" | "empty_probe" | "count" | "page" | "editable" |
+  "editable_integrity_setup" | "execution_facts" | "delete_refs" |
+  "delete_refs_integrity_setup" | "row_mapping" | "merge_logical";
+
+type WorkspaceTradeLibraryTiming = (phase: WorkspaceTradeLibraryTimingPhase, durationMs: number) => void;
+
+function recordTradeLibraryTiming(
+  onTiming: WorkspaceTradeLibraryTiming | undefined,
+  phase: WorkspaceTradeLibraryTimingPhase,
+  durationMs: number,
+): void {
+  if (!onTiming) return;
+  try { onTiming(phase, durationMs); }
+  catch { /* Diagnostics cannot change Workspace results. */ }
+}
+
+function measureTradeLibraryPhase<T>(
+  onTiming: WorkspaceTradeLibraryTiming | undefined,
+  phase: WorkspaceTradeLibraryTimingPhase,
+  operation: () => T,
+): T {
+  if (!onTiming) return operation();
+  const started = performance.now();
+  try { return operation(); }
+  finally {
+    recordTradeLibraryTiming(onTiming, phase, performance.now() - started);
+  }
+}
+
 const PAGE_SIZE = 25;
 const DATE = /^\d{4}-\d{2}-\d{2}$/u;
 const TICKER = /^[A-Z0-9.\-]{0,32}$/u;
@@ -335,6 +365,7 @@ function editableExecutions(
   database: Database.Database,
   scope: WorkspaceAccessScope,
   rows: readonly ProjectionRow[],
+  onTiming?: WorkspaceTradeLibraryTiming,
 ): ReadonlyMap<string, readonly WorkspaceEditableExecution[]> {
   if (rows.length === 0) return new Map();
   const accountId = activeAccountId(scope);
@@ -354,11 +385,14 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
     ...rows.map((row) => row.round_trip_version_id),
   ) as readonly Readonly<{ round_trip_version_id: string; execution_id: string }>[];
   const executionIds = [...new Set(ids.map((row) => row.execution_id))];
-  const editable = withReadonlyJournalIntegrityRuntime(scope, (journal) =>
-    journal.manualExecutionEdits.listEditable(
+  const integrityStarted = onTiming ? performance.now() : 0;
+  const editable = withReadonlyJournalIntegrityRuntime(scope, (journal) => {
+    if (onTiming) recordTradeLibraryTiming(onTiming, "editable_integrity_setup", performance.now() - integrityStarted);
+    return journal.manualExecutionEdits.listEditable(
       journal.tradeStyles.accountScope(scope),
       executionIds,
-    ));
+    );
+  });
   const byExecution = new Map(editable.map((entry) => [entry.executionId, entry] as const));
   const roundTripByVersion = new Map(rows.map((row) => [row.round_trip_version_id, row.round_trip_id] as const));
   const result = new Map<string, WorkspaceEditableExecution[]>();
@@ -389,13 +423,17 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
 function tradeDeleteRefs(
   scope: WorkspaceAccessScope,
   rows: readonly ProjectionRow[],
+  onTiming?: WorkspaceTradeLibraryTiming,
 ): ReadonlyMap<string, string> {
   if (rows.length === 0) return new Map();
-  return withReadonlyJournalIntegrityRuntime(scope, (journal) =>
-    journal.manualExecutionEdits.listTradeDeleteRefs(
+  const integrityStarted = onTiming ? performance.now() : 0;
+  return withReadonlyJournalIntegrityRuntime(scope, (journal) => {
+    if (onTiming) recordTradeLibraryTiming(onTiming, "delete_refs_integrity_setup", performance.now() - integrityStarted);
+    return journal.manualExecutionEdits.listTradeDeleteRefs(
       journal.tradeStyles.accountScope(scope),
       rows.map((row) => row.round_trip_id),
-    ));
+    );
+  });
 }
 
 function executionFacts(
@@ -467,11 +505,12 @@ function toWorkspaceTradeLibraryRows(
   database: Database.Database,
   scope: WorkspaceAccessScope,
   rows: readonly ProjectionRow[],
+  onTiming?: WorkspaceTradeLibraryTiming,
 ): readonly WorkspaceTradeLibraryRow[] {
-  const editable = editableExecutions(database, scope, rows);
-  const facts = executionFacts(database, scope, rows);
-  const deletes = tradeDeleteRefs(scope, rows);
-  return Object.freeze(rows.map((row) => Object.freeze({
+  const editable = measureTradeLibraryPhase(onTiming, "editable", () => editableExecutions(database, scope, rows, onTiming));
+  const facts = measureTradeLibraryPhase(onTiming, "execution_facts", () => executionFacts(database, scope, rows));
+  const deletes = measureTradeLibraryPhase(onTiming, "delete_refs", () => tradeDeleteRefs(scope, rows, onTiming));
+  return measureTradeLibraryPhase(onTiming, "row_mapping", () => Object.freeze(rows.map((row) => Object.freeze({
     buyQuantityDecimal: facts.get(row.round_trip_version_id)?.buyQuantityDecimal ?? "0",
     entryQuantityDecimal: facts.get(row.round_trip_version_id)?.entryQuantityDecimal ?? "0",
     date: row.activity_local_date,
@@ -500,7 +539,7 @@ function toWorkspaceTradeLibraryRows(
     tradeStyle: row.trade_style,
     tradeCurrency: row.trade_currency,
     underlyingRoundTripIds: Object.freeze([row.round_trip_id]),
-  })));
+  }))));
 }
 
 export function readWorkspaceTradeLibrary(
@@ -510,18 +549,20 @@ export function readWorkspaceTradeLibrary(
     afterCursor: null, endDate: null, filter: "all", followDashboardPeriod: true,
     group: "none", searchTicker: "", sort: "newest", startDate: null,
   }),
+  onTiming?: WorkspaceTradeLibraryTiming,
 ): WorkspaceTradeLibraryModel {
   const accountId = activeAccountId(scope);
   const query = canonicalQuery(input);
-  const revision = database.prepare(`SELECT projection_revision_id
+  const revision = measureTradeLibraryPhase(onTiming, "revision", () =>
+    database.prepare(`SELECT projection_revision_id
 FROM journal_workspace_trade_library_projection_revisions
-WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId) as RevisionRow | undefined;
+WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId)) as RevisionRow | undefined;
   if (!revision) {
-    const currentExecutions = database.prepare(`SELECT EXISTS(
+    const currentExecutions = measureTradeLibraryPhase(onTiming, "empty_probe", () => database.prepare(`SELECT EXISTS(
   SELECT 1 FROM journal_executions
   WHERE workspace_id = ? AND account_id = ?
     AND current_state IN ('accepted', 'needs_decision')
-) AS has_current_execution`).get(scope.workspaceId, accountId) as CurrentExecutionRow;
+) AS has_current_execution`).get(scope.workspaceId, accountId)) as CurrentExecutionRow;
     return Object.freeze({
       continuationCursor: null,
       projectionState: currentExecutions.has_current_execution === 0 ? "empty" : "unavailable",
@@ -607,9 +648,10 @@ LEFT JOIN journal_logical_trade_versions logical_version
  ON logical_version.workspace_id = logical_membership.workspace_id
  AND logical_version.account_id = logical_membership.account_id
  AND logical_version.logical_trade_version_id = logical_membership.logical_trade_version_id`;
-  const totalRowCount = (database.prepare(`SELECT count(DISTINCT coalesce(logical_membership.logical_trade_id, projection.round_trip_id)) AS count ${base} WHERE ${where}`).get(...filterParameters) as { count: number }).count;
+  const totalRowCount = measureTradeLibraryPhase(onTiming, "count", () =>
+    (database.prepare(`SELECT count(DISTINCT coalesce(logical_membership.logical_trade_id, projection.round_trip_id)) AS count ${base} WHERE ${where}`).get(...filterParameters) as { count: number }).count);
   const pageParameters = [...parameters, String(PAGE_SIZE + 1)];
-  const rows = database.prepare(`SELECT projection.activity_at_utc, projection.activity_local_date,
+  const rows = measureTradeLibraryPhase(onTiming, "page", () => database.prepare(`SELECT projection.activity_at_utc, projection.activity_local_date,
   projection.closed_at_utc, version.direction, projection.entry_local_date, projection.entry_local_time,
   projection.entry_notional_decimal, projection.entered_quantity_decimal, projection.entry_price_decimal, projection.entry_price_sort_key, projection.entry_value_sort_key, projection.exit_local_date,
   projection.exit_local_time, projection.exit_notional_decimal, projection.exit_quantity_decimal,
@@ -655,13 +697,18 @@ LEFT JOIN journal_logical_trade_versions logical_version
   COALESCE(CASE logical_version.trade_style WHEN 'day' THEN 'day_trade' ELSE logical_version.trade_style END,
     style.trade_style) AS trade_style,
   projection.unique_execution_count
-${base} WHERE ${where}${keyset} ORDER BY ${order} LIMIT ?`).all(...pageParameters) as readonly ProjectionRow[];
+${base} WHERE ${where}${keyset} ORDER BY ${order} LIMIT ?`).all(...pageParameters)) as readonly ProjectionRow[];
   const selected = rows.slice(0, PAGE_SIZE);
+  const continuationCursor = rows.length > PAGE_SIZE
+    ? encodeCursor(selected.at(-1)!, revision.projection_revision_id, digest, query.sort)
+    : null;
+  const preparedRows = toWorkspaceTradeLibraryRows(database, scope, selected, onTiming);
   return Object.freeze({
-    continuationCursor: rows.length > PAGE_SIZE ? encodeCursor(selected.at(-1)!, revision.projection_revision_id, digest, query.sort) : null,
+    continuationCursor,
     projectionState: "ready",
     query,
-    rows: mergeLogicalWorkspaceRows(database, scope, toWorkspaceTradeLibraryRows(database, scope, selected)),
+    rows: measureTradeLibraryPhase(onTiming, "merge_logical", () =>
+      mergeLogicalWorkspaceRows(database, scope, preparedRows)),
     totalRowCount,
   });
 }
