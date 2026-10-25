@@ -145,8 +145,10 @@ ORDER BY version.executed_at_utc, version.source_order_key, execution.execution_
     workspaceId: string,
     accountId: string,
     roundTripId: string,
+    onSelectTiming?: (durationMs: number) => void,
   ): readonly Readonly<{ currentVersionId: string; executionId: string }>[] {
-    return Object.freeze(this.database.prepare<[string, string, string], {
+    const selectStarted = onSelectTiming ? performance.now() : 0;
+    const rows = this.database.prepare<[string, string, string], {
       current_version_id: string;
       execution_id: string;
     }>(`SELECT DISTINCT execution.execution_id, execution.current_version_id
@@ -168,8 +170,12 @@ WHERE round_trip.workspace_id = ?
   AND round_trip.account_id = ?
   AND round_trip.round_trip_id = ?
   AND round_trip.lifecycle_state = 'active'
-ORDER BY execution.execution_id`).all(workspaceId, accountId, roundTripId)
-      .map((row) => Object.freeze({
+ORDER BY execution.execution_id`).all(workspaceId, accountId, roundTripId);
+    if (onSelectTiming) {
+      try { onSelectTiming(performance.now() - selectStarted); }
+      catch { /* Diagnostics must not change deletion eligibility. */ }
+    }
+    return Object.freeze(rows.map((row) => Object.freeze({
         currentVersionId: row.current_version_id,
         executionId: row.execution_id,
       })));

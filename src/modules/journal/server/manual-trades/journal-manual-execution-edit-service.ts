@@ -19,6 +19,40 @@ import type { JournalManualTradePreviewAuthority } from "./journal-manual-trade-
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const TIME_PATTERN = /^\d{2}:\d{2}(?::\d{2})?$/u;
+const TRADE_DELETE_REFS_SLOW_MS = 500;
+const TRADE_DELETE_REFS_LOG_LIMIT_PER_MINUTE = 12;
+let tradeDeleteRefsLogWindow = { startedAt: 0, count: 0 };
+
+type TradeDeleteRefsReadTiming = {
+  currentRoundTripSelectCount: number;
+  currentRoundTripSelectMs: number;
+  safetyGuardCount: number;
+  safetyGuardMs: number;
+};
+
+function logSlowTradeDeleteRefs(
+  candidateCount: number,
+  timing: TradeDeleteRefsReadTiming,
+  totalMs: number,
+): void {
+  if (totalMs < TRADE_DELETE_REFS_SLOW_MS) return;
+  try {
+    const now = Date.now();
+    if (now - tradeDeleteRefsLogWindow.startedAt >= 60_000) {
+      tradeDeleteRefsLogWindow = { startedAt: now, count: 0 };
+    }
+    if (tradeDeleteRefsLogWindow.count >= TRADE_DELETE_REFS_LOG_LIMIT_PER_MINUTE) return;
+    tradeDeleteRefsLogWindow.count += 1;
+    console.info("journal_trade_delete_refs_timing", {
+      candidate_count: candidateCount,
+      current_round_trip_select_count: timing.currentRoundTripSelectCount,
+      current_round_trip_select_ms: Math.round(timing.currentRoundTripSelectMs),
+      safety_guard_count: timing.safetyGuardCount,
+      safety_guard_ms: Math.round(timing.safetyGuardMs),
+      total_ms: Math.round(totalMs),
+    });
+  } catch { /* Diagnostics must not change deletion eligibility. */ }
+}
 
 function normalizeLeadingDecimal(value: string): string {
   const trimmed = value.trim();
@@ -91,21 +125,33 @@ export class JournalManualExecutionEditService {
   private tradeDeletionCandidate(
     scope: AccountScope,
     roundTripId: string,
+    timing?: TradeDeleteRefsReadTiming,
   ): JournalTradeDeletionCandidate | null {
     const executions = this.reconciliations.listCurrentRoundTripExecutions(
       scope.workspaceId,
       scope.accountId,
       roundTripId,
+      timing ? (durationMs) => {
+        timing.currentRoundTripSelectCount += 1;
+        timing.currentRoundTripSelectMs += durationMs;
+      } : undefined,
     );
     if (
       executions.length === 0 ||
-      executions.some((execution) => !this.reconciliations
-        .isSafelyDeletableManualExecution(
+      executions.some((execution) => {
+        const safetyGuardStarted = timing ? performance.now() : 0;
+        const safelyDeletable = this.reconciliations.isSafelyDeletableManualExecution(
           scope.workspaceId,
           scope.accountId,
           execution.executionId,
           execution.currentVersionId,
-        ))
+        );
+        if (timing) {
+          timing.safetyGuardCount += 1;
+          timing.safetyGuardMs += performance.now() - safetyGuardStarted;
+        }
+        return !safelyDeletable;
+      })
     ) {
       return null;
     }
@@ -128,11 +174,20 @@ export class JournalManualExecutionEditService {
     scope: AccountScope,
     roundTripIds: readonly string[],
   ): ReadonlyMap<string, string> {
+    const started = performance.now();
+    const timing: TradeDeleteRefsReadTiming = {
+      currentRoundTripSelectCount: 0,
+      currentRoundTripSelectMs: 0,
+      safetyGuardCount: 0,
+      safetyGuardMs: 0,
+    };
     const refs = new Map<string, string>();
-    for (const roundTripId of [...new Set(roundTripIds)]) {
-      const candidate = this.tradeDeletionCandidate(scope, roundTripId);
+    const uniqueRoundTripIds = [...new Set(roundTripIds)];
+    for (const roundTripId of uniqueRoundTripIds) {
+      const candidate = this.tradeDeletionCandidate(scope, roundTripId, timing);
       if (candidate) refs.set(roundTripId, candidate.deleteRef);
     }
+    logSlowTradeDeleteRefs(uniqueRoundTripIds.length, timing, performance.now() - started);
     return refs;
   }
 
