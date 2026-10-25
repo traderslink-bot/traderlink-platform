@@ -39,8 +39,9 @@ export class ReverseSplitCollectionService {
       const market: SplitMarketData = await getSplitMarketData({ ticker, token: this.configuration.eodhdToken,
         expectedCloseDate, now, fetcher: this.fetcher, onTiming: this.onTiming });
       const finishedAt = this.now().toISOString();
+      const marketTicker = ticker;
       const saved = measureReverseSplitSync(this.onTiming, "market_sqlite", () =>
-        this.repository.completeMarketSnapshot(claim, ticker, market, finishedAt));
+        this.repository.completeMarketSnapshot(claim, marketTicker, market, finishedAt));
       return { ticker, failure: saved ? null : "market_refresh_lease_expired" };
     } catch {
       const finishedAt = this.now();
