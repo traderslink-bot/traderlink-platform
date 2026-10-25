@@ -24,7 +24,6 @@ import {
   type ManualTradeOutboxRecord,
 } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
 import { TradersLinkPwaInstallPrompt } from "./traderslink-pwa-install-prompt-dialog";
-import { PwaUpdateNotice } from "./pwa-update-notice";
 
 function subscribeToConnectionChange(onStoreChange: () => void): () => void {
   window.addEventListener("online", onStoreChange);
@@ -174,7 +173,6 @@ export function PwaLifecycle({
   return (
     <>
       <TradersLinkPwaInstallPrompt />
-      <PwaUpdateNotice paused={showOfflineNotice} />
       {showOfflineNotice ? (
         <Paper
           aria-live="polite"
