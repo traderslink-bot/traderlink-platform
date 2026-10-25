@@ -12,6 +12,36 @@ import type {
 
 type GroupedCountRow = Readonly<{ code: string; count: number }>;
 
+const COVERAGE_TIMING_PHASES = [
+  "account", "source_records", "imports", "executions", "decisions",
+  "pending_decision_reasons", "resolved_decision_actions",
+  "accepted_source_limitations", "round_trips", "position_facts",
+  "coverage_kind", "coverage_shape", "unsupported", "latest_rebuilds",
+  "latest_rebuild_validation", "pending_chain_keys",
+  "source_limitation_chains", "result_mapping",
+] as const;
+let coverageTimingWindowStartedAt = 0;
+let coverageTimingWindowCount = 0;
+
+function logSlowCoverageSummary(phaseMs: readonly number[], totalMs: number): void {
+  if (totalMs < 500) return;
+  try {
+    const now = Date.now();
+    if (now - coverageTimingWindowStartedAt >= 60_000) {
+      coverageTimingWindowStartedAt = now;
+      coverageTimingWindowCount = 0;
+    }
+    if (coverageTimingWindowCount >= 8) return;
+    coverageTimingWindowCount += 1;
+    console.info("journal_integrity_coverage_timing", {
+      phase_ms: Object.fromEntries(COVERAGE_TIMING_PHASES.map((phase, index) => [
+        phase, Number((phaseMs[index] ?? 0).toFixed(1)),
+      ])),
+      total_ms: Number(totalMs.toFixed(1)),
+    });
+  } catch { /* Diagnostics must not alter coverage results. */ }
+}
+
 function counts(rows: readonly GroupedCountRow[]): JournalCountByCode {
   return Object.freeze(Object.fromEntries(rows.map((row) => [row.code, row.count])));
 }
@@ -87,6 +117,16 @@ export class JournalIntegrityReadRepository {
   constructor(private readonly database: Database.Database) {}
 
   coverageSummary(scope: AccountScope): JournalIntegrityCoverageSummary {
+    const timingStarted = performance.now();
+    let phaseStarted = timingStarted;
+    const phaseMs: number[] = [];
+    const recordPhase = (): void => {
+      try {
+        const now = performance.now();
+        phaseMs.push(now - phaseStarted);
+        phaseStarted = now;
+      } catch { /* Diagnostics must not alter coverage results. */ }
+    };
     const parameters = [scope.workspaceId, scope.accountId] as const;
     const account = this.database.prepare<[string, string], {
       base_currency: string;
@@ -94,27 +134,33 @@ export class JournalIntegrityReadRepository {
     }>(`SELECT base_currency, trading_timezone FROM journal_accounts
 WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(...parameters);
     if (!account) platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
+    recordPhase();
     const sourceRecords = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT initial_classification AS code, COUNT(*) AS count
 FROM journal_source_rows WHERE workspace_id = ? AND account_id = ?
 GROUP BY initial_classification ORDER BY initial_classification`).all(...parameters));
+    recordPhase();
     const imports = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT current_state AS code, COUNT(*) AS count
 FROM journal_import_batches WHERE workspace_id = ? AND account_id = ?
 GROUP BY current_state ORDER BY current_state`).all(...parameters));
+    recordPhase();
     const executions = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT current_state AS code, COUNT(*) AS count
 FROM journal_executions WHERE workspace_id = ? AND account_id = ?
 GROUP BY current_state ORDER BY current_state`).all(...parameters));
+    recordPhase();
     const decisions = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT state AS code, COUNT(*) AS count
 FROM journal_data_decisions WHERE workspace_id = ? AND account_id = ?
 GROUP BY state ORDER BY state`).all(...parameters));
+    recordPhase();
     const pendingDecisionReasons = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT issue_code AS code, COUNT(*) AS count
 FROM journal_data_decisions
 WHERE workspace_id = ? AND account_id = ? AND state = 'pending'
 GROUP BY issue_code ORDER BY issue_code`).all(...parameters));
+    recordPhase();
     const resolvedDecisionActions = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT event.action AS code, COUNT(*) AS count
 FROM journal_data_decisions decision
@@ -126,6 +172,7 @@ JOIN journal_data_decision_events event
 WHERE decision.workspace_id = ? AND decision.account_id = ?
   AND decision.state = 'resolved'
 GROUP BY event.action ORDER BY event.action`).all(...parameters));
+    recordPhase();
     const acceptedSourceLimitations = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT decision.issue_code AS code, COUNT(*) AS count
 FROM journal_data_decisions decision
@@ -137,12 +184,14 @@ JOIN journal_data_decision_events event
 WHERE decision.workspace_id = ? AND decision.account_id = ?
   AND decision.state = 'resolved' AND event.action = 'accept_source_limitation'
 GROUP BY decision.issue_code ORDER BY decision.issue_code`).all(...parameters));
+    recordPhase();
     const roundTrips = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT v.projection_state AS code, COUNT(*) AS count
 FROM journal_round_trips r
 JOIN journal_round_trip_versions v ON v.round_trip_version_id = r.current_version_id
 WHERE r.workspace_id = ? AND r.account_id = ? AND r.lifecycle_state = 'active'
 GROUP BY v.projection_state ORDER BY v.projection_state`).all(...parameters));
+    recordPhase();
     const positionFacts = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT f.fact_kind AS code, COUNT(*) AS count
 FROM journal_position_facts f
@@ -153,10 +202,12 @@ WHERE f.workspace_id = ? AND f.account_id = ? AND NOT EXISTS (
     AND next.supersedes_position_fact_id = f.position_fact_id
 )
 GROUP BY f.fact_kind ORDER BY f.fact_kind`).all(...parameters));
+    recordPhase();
     const coverage = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 SELECT coverage_kind AS code, COUNT(*) AS count
 FROM journal_source_coverage_intervals WHERE workspace_id = ? AND account_id = ?
 GROUP BY coverage_kind ORDER BY coverage_kind`).all(...parameters));
+    recordPhase();
     const coverageRows = this.database.prepare<[string, string], CoverageIntervalRow>(`
 SELECT asset_class, coverage_kind, local_start_date, local_end_date, source_timezone
 FROM journal_source_coverage_intervals
@@ -167,6 +218,7 @@ ORDER BY asset_class, local_start_date, local_end_date, coverage_interval_id`)
       coverageRows,
       account.trading_timezone,
     );
+    recordPhase();
     const unsupported = counts(this.database.prepare<[string, string], GroupedCountRow>(`
 WITH unsupported_rows AS (
   SELECT CASE lower(replace(replace(trim(ifnull(asset_category, '')), ' ', ''), '-', ''))
@@ -185,6 +237,7 @@ WITH unsupported_rows AS (
 )
 SELECT code, COUNT(*) AS count FROM unsupported_rows
 GROUP BY code ORDER BY code`).all(...parameters));
+    recordPhase();
     const latestRebuildRows = this.database.prepare<[string, string], {
       instrument_id: string;
       trade_currency: string;
@@ -211,6 +264,7 @@ WHERE current.workspace_id = ? AND current.account_id = ?
       AND next.previous_rebuild_id = current.rebuild_id
   )
 ORDER BY chain_key_sha256, rebuild_id`).all(...parameters);
+    recordPhase();
     const latestChainScopes = latestRebuildRows.map((row) => JSON.stringify([
       row.instrument_id,
       row.trade_currency,
@@ -235,6 +289,7 @@ ORDER BY chain_key_sha256, rebuild_id`).all(...parameters);
         });
       }
     }
+    recordPhase();
     const pendingChainKeys = new Set(this.database.prepare<[string, string], {
       chain_key_sha256: string;
     }>(`
@@ -243,6 +298,7 @@ FROM journal_data_decisions
 WHERE workspace_id = ? AND account_id = ?
   AND state = 'pending' AND target_kind = 'chain'
 ORDER BY chain_key_sha256`).all(...parameters).map((row) => row.chain_key_sha256));
+    recordPhase();
     const sourceLimitationChains = new Set(this.database.prepare<[string, string], {
       instrument_id: string;
       trade_currency: string;
@@ -277,6 +333,7 @@ WHERE issue.workspace_id = ? AND issue.account_id = ?
   )
 ORDER BY issue.instrument_id, issue.trade_currency`).all(...parameters).map((row) =>
       `${row.instrument_id}\u001f${row.trade_currency}`));
+    recordPhase();
     const affectedChainCount = latestRebuildRows.filter((row) =>
       row.needs_decision_count > 0 ||
       pendingChainKeys.has(row.chain_key_sha256) ||
@@ -291,6 +348,8 @@ ORDER BY issue.instrument_id, issue.trade_currency`).all(...parameters).map((row
       excludedExecutionCount: row.excluded_count,
       completedAtUtc: row.completed_at_utc,
     })));
+    recordPhase();
+    logSlowCoverageSummary(phaseMs, performance.now() - timingStarted);
     return Object.freeze({
       workspaceId: scope.workspaceId,
       accountId: scope.accountId,
