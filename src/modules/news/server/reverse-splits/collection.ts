@@ -5,6 +5,7 @@ import { getSplitMarketData } from "./market-data";
 import { latestRegularCloseDate, type SplitCalendar } from "./messages";
 import { ReverseSplitRepository } from "./repository";
 import type { ReverseSplitConfiguration } from "./configuration";
+import { measureReverseSplitSync, type ReverseSplitCollectionTiming } from "./sources";
 
 export class ReverseSplitCollectionService {
   constructor(
@@ -13,12 +14,14 @@ export class ReverseSplitCollectionService {
     private readonly calendar: SplitCalendar,
     private readonly fetcher: typeof fetch = fetch,
     private readonly now: () => Date = () => new Date(),
+    private readonly onTiming?: ReverseSplitCollectionTiming,
   ) {}
 
   async refreshOneMarketSnapshot(): Promise<Readonly<{ ticker: string | null; failure: string | null }>> {
     const now = this.now();
     const expectedCloseDate = latestRegularCloseDate(now, this.calendar);
-    const claim = this.repository.claimRuntime("market_refresh", now.toISOString());
+    const claim = measureReverseSplitSync(this.onTiming, "market_claim", () =>
+      this.repository.claimRuntime("market_refresh", now.toISOString()));
     if (!claim) return { ticker: null, failure: null };
     const state = record(claim.state);
     if (typeof state?.nextAt === "string" && state.nextAt > now.toISOString()) {
@@ -27,15 +30,17 @@ export class ReverseSplitCollectionService {
     }
     let ticker: string | null = null;
     try {
-      ticker = this.repository.nextMarketTicker(expectedCloseDate, now.toISOString());
+      ticker = measureReverseSplitSync(this.onTiming, "market_queue", () =>
+        this.repository.nextMarketTicker(expectedCloseDate, now.toISOString()));
       if (!ticker) {
         this.repository.completeRuntime(claim, { nextAt: new Date(now.getTime() + 60_000).toISOString() }, now.toISOString());
         return { ticker: null, failure: null };
       }
       const market: SplitMarketData = await getSplitMarketData({ ticker, token: this.configuration.eodhdToken,
-        expectedCloseDate, now, fetcher: this.fetcher });
+        expectedCloseDate, now, fetcher: this.fetcher, onTiming: this.onTiming });
       const finishedAt = this.now().toISOString();
-      const saved = this.repository.completeMarketSnapshot(claim, ticker, market, finishedAt);
+      const saved = measureReverseSplitSync(this.onTiming, "market_sqlite", () =>
+        this.repository.completeMarketSnapshot(claim, ticker, market, finishedAt));
       return { ticker, failure: saved ? null : "market_refresh_lease_expired" };
     } catch {
       const finishedAt = this.now();
@@ -45,13 +50,15 @@ export class ReverseSplitCollectionService {
   }
 
   async runOnce(): Promise<Readonly<{ failures: readonly string[]; processed: string }>> {
-    const acquisition = new ReverseSplitAcquisitionService(this.repository, this.configuration.secUserAgent, this.fetcher, this.now);
+    const acquisition = new ReverseSplitAcquisitionService(this.repository, this.configuration.secUserAgent, this.fetcher, this.now, this.onTiming);
     const date = this.calendar.marketDateAt(this.now());
-    const claim = this.repository.claimRuntime("collection_turn", this.now().toISOString());
+    const claim = measureReverseSplitSync(this.onTiming, "collection_claim", () =>
+      this.repository.claimRuntime("collection_turn", this.now().toISOString()));
     if (!claim) return { failures: [], processed: "idle" };
     const storedTurn = record(claim.state)?.turn;
     const turn = typeof storedTurn === "number" && Number.isSafeInteger(storedTurn) && storedTurn >= 0 ? storedTurn % 6 : 0;
-    if (!this.repository.completeRuntime(claim, { turn: (turn + 1) % 6 }, this.now().toISOString())) return { failures: [], processed: "idle" };
+    if (!measureReverseSplitSync(this.onTiming, "collection_advance", () =>
+      this.repository.completeRuntime(claim, { turn: (turn + 1) % 6 }, this.now().toISOString()))) return { failures: [], processed: "idle" };
     if (turn === 2 || turn === 5) {
       const result = await acquisition.processOneSource();
       return { failures: result.outcome === "failed" ? [result.reason] : [], processed: result.outcome };

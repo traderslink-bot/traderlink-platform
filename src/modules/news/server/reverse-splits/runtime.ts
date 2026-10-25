@@ -6,6 +6,7 @@ import { record } from "./contracts";
 import { reverseSplitConfiguration, reverseSplitPrivatePreviewEnabled } from "./configuration";
 import { ReverseSplitRepository } from "./repository";
 import { ReverseSplitCollectionService } from "./collection";
+import type { ReverseSplitCollectionPhase } from "./sources";
 import { ReverseSplitDiscordOutbox } from "./discord-outbox";
 import { ReverseSplitDiscordDelivery } from "./discord-delivery";
 import { ReverseSplitDigestPlanner } from "./digest";
@@ -17,6 +18,11 @@ const phaseLogStateKey = "__traderlinkReverseSplitPhaseLog" as const;
 type PhaseLogProcessState = typeof globalThis & {
   [phaseLogStateKey]?: { windowStart: number; count: number };
 };
+type CollectionSubphase = Readonly<{
+  phase: ReverseSplitCollectionPhase;
+  start_epoch_ms: number;
+  duration_ms: number;
+}>;
 
 function logReverseSplitPhases(phases: Readonly<{
   start_epoch_ms: number;
@@ -26,6 +32,8 @@ function logReverseSplitPhases(phases: Readonly<{
   db_open_ms: number | null;
   setup_ms: number | null;
   collection_ms: number | null;
+  collection_subphases: readonly CollectionSubphase[];
+  collection_subphases_dropped: number;
   digest_ms: number | null;
   discord_ms: number | null;
   notifications_ms: number | null;
@@ -59,6 +67,15 @@ export async function runReverseSplitWorkerOnce(): Promise<readonly string[]> {
   let dbOpenMs: number | null = null;
   let setupMs: number | null = null;
   let collectionMs: number | null = null;
+  const collectionSubphases: CollectionSubphase[] = [];
+  let collectionSubphasesDropped = 0;
+  const onCollectionTiming = (phase: ReverseSplitCollectionPhase, startEpochMs: number, durationMs: number): void => {
+    try {
+      if (!Number.isSafeInteger(startEpochMs) || !Number.isFinite(durationMs) || durationMs < 0) return;
+      if (collectionSubphases.length >= 24) { collectionSubphasesDropped++; return; }
+      collectionSubphases.push({ phase, start_epoch_ms: startEpochMs, duration_ms: Number(durationMs.toFixed(1)) });
+    } catch { /* Diagnostics cannot change collection work. */ }
+  };
   let digestMs: number | null = null;
   let discordMs: number | null = null;
   let notificationsMs: number | null = null;
@@ -78,7 +95,8 @@ export async function runReverseSplitWorkerOnce(): Promise<readonly string[]> {
     const repository = new ReverseSplitRepository(database);
     setupMs = performance.now() - started - (dbOpenMs ?? 0);
     const collectionStarted = performance.now();
-    const collection = await new ReverseSplitCollectionService(repository, configuration, calendar)
+    const collection = await new ReverseSplitCollectionService(repository, configuration, calendar,
+      fetch, () => new Date(), onCollectionTiming)
       .runOnce().finally(() => { collectionMs = performance.now() - collectionStarted; });
     const failures = [...collection.failures];
     const store = new ReverseSplitNotificationStore(database);
@@ -144,6 +162,8 @@ export async function runReverseSplitWorkerOnce(): Promise<readonly string[]> {
           db_open_ms: rounded(dbOpenMs),
           setup_ms: rounded(setupMs),
           collection_ms: rounded(collectionMs),
+          collection_subphases: collectionSubphases,
+          collection_subphases_dropped: collectionSubphasesDropped,
           digest_ms: rounded(digestMs),
           discord_ms: rounded(discordMs),
           notifications_ms: rounded(notificationsMs),

@@ -4,24 +4,72 @@ import { plainText } from "./parsing";
 
 export const NASDAQ_REVERSE_SPLIT_RSS = "https://www.nasdaqtrader.com/rss.aspx?categorylist=105&feed=currentheadlines";
 
-export async function boundedText(url: URL, fetcher: typeof fetch, headers: Record<string, string> = {}, maximumBytes = 2_000_000): Promise<string> {
-  const response = await fetcher(url, { headers, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(12_000) });
+export type ReverseSplitCollectionPhase =
+  "collection_claim" | "collection_advance" | "nasdaq_claim" | "sec_claim" |
+  "backfill_claim" | "discovery_budget" |
+  "discovery_sqlite" | "discovery_complete" | "source_due" | "source_budget" |
+  "source_claim" | "source_parse" | "source_related" | "source_hash" |
+  "source_gzip" | "source_sqlite" | "source_fail_sqlite" | "market_claim" |
+  "market_queue" | "market_sqlite" | "market_quote_parse" | "market_daily_parse" |
+  "nasdaq_parse" | "sec_parse" | "fetch_headers" | "fetch_body" | "body_decode";
+export type ReverseSplitCollectionTiming = (
+  phase: ReverseSplitCollectionPhase, startEpochMs: number, durationMs: number,
+) => void;
+
+export function measureReverseSplitSync<T>(
+  timing: ReverseSplitCollectionTiming | undefined,
+  phase: ReverseSplitCollectionPhase,
+  operation: () => T,
+): T {
+  if (!timing) return operation();
+  let startEpochMs = 0;
+  let started = 0;
+  try { startEpochMs = Date.now(); started = performance.now(); } catch { /* Timing is optional. */ }
+  try { return operation(); }
+  finally {
+    try { if (started) timing?.(phase, startEpochMs, performance.now() - started); }
+    catch { /* Diagnostics cannot change source processing. */ }
+  }
+}
+
+export async function measureReverseSplitAsync<T>(
+  timing: ReverseSplitCollectionTiming | undefined,
+  phase: ReverseSplitCollectionPhase,
+  operation: () => Promise<T>,
+): Promise<T> {
+  if (!timing) return operation();
+  let startEpochMs = 0;
+  let started = 0;
+  try { startEpochMs = Date.now(); started = performance.now(); } catch { /* Timing is optional. */ }
+  try { return await operation(); }
+  finally {
+    try { if (started) timing?.(phase, startEpochMs, performance.now() - started); }
+    catch { /* Diagnostics cannot change source processing. */ }
+  }
+}
+
+export async function boundedText(url: URL, fetcher: typeof fetch, headers: Record<string, string> = {}, maximumBytes = 2_000_000,
+  onTiming?: ReverseSplitCollectionTiming): Promise<string> {
+  const response = await measureReverseSplitAsync(onTiming, "fetch_headers", () =>
+    fetcher(url, { headers, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(12_000) }));
   if (!response.ok) throw new Error(`reverse_split_source_http_${response.status}`);
   if (Number(response.headers.get("content-length")) > maximumBytes) throw new Error("reverse_split_source_too_large");
   const reader = response.body?.getReader();
   if (!reader) throw new Error("reverse_split_source_empty");
   const chunks: Uint8Array[] = [];
   let total = 0;
-  try {
-    while (true) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      total += chunk.value.byteLength;
-      if (total > maximumBytes) throw new Error("reverse_split_source_too_large");
-      chunks.push(chunk.value);
-    }
-  } finally { await reader.cancel().catch(() => undefined); }
-  return Buffer.concat(chunks).toString("utf8");
+  await measureReverseSplitAsync(onTiming, "fetch_body", async () => {
+    try {
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        total += chunk.value.byteLength;
+        if (total > maximumBytes) throw new Error("reverse_split_source_too_large");
+        chunks.push(chunk.value);
+      }
+    } finally { await reader.cancel().catch(() => undefined); }
+  });
+  return measureReverseSplitSync(onTiming, "body_decode", () => Buffer.concat(chunks).toString("utf8"));
 }
 
 function tag(xml: string, name: string): string {
@@ -56,8 +104,9 @@ export function parseNasdaqSplitSources(xml: string): SplitSource[] {
   });
 }
 
-export async function discoverNasdaqSplits(fetcher: typeof fetch = fetch): Promise<SplitSource[]> {
-  return parseNasdaqSplitSources(await boundedText(new URL(NASDAQ_REVERSE_SPLIT_RSS), fetcher));
+export async function discoverNasdaqSplits(fetcher: typeof fetch = fetch, onTiming?: ReverseSplitCollectionTiming): Promise<SplitSource[]> {
+  const xml = await boundedText(new URL(NASDAQ_REVERSE_SPLIT_RSS), fetcher, {}, 2_000_000, onTiming);
+  return measureReverseSplitSync(onTiming, "nasdaq_parse", () => parseNasdaqSplitSources(xml));
 }
 
 export type SecDiscoveryPage = Readonly<{
@@ -66,39 +115,44 @@ export type SecDiscoveryPage = Readonly<{
 }>;
 export async function discoverSecSplits(input: Readonly<{
   from: string; to: string; offset: number; userAgent: string; fetcher?: typeof fetch;
+  onTiming?: ReverseSplitCollectionTiming;
 }>): Promise<SecDiscoveryPage> {
   if (!isoDate(input.from) || !isoDate(input.to) || input.from > input.to || !Number.isSafeInteger(input.offset) || input.offset < 0 || input.offset > 9900) throw new Error("reverse_split_sec_window_invalid");
   const url = new URL("https://efts.sec.gov/LATEST/search-index");
   for (const [key, value] of Object.entries({ q: '"reverse stock split" OR "reverse share split"', dateRange: "custom", startdt: input.from, enddt: input.to, forms: "8-K,6-K", from: String(input.offset) })) url.searchParams.set(key, value);
-  const body = record(JSON.parse(await boundedText(url, input.fetcher ?? fetch, { "User-Agent": input.userAgent })));
-  const hits = record(body?.hits), total = record(hits?.total);
-  if (body?.timed_out === true || !Array.isArray(hits?.hits) || typeof total?.value !== "number" || !Number.isSafeInteger(total.value) || total.value < 0 || total.relation !== "eq" || total.value > 10_000) throw new Error("reverse_split_sec_coverage_incomplete");
-  const sources: SplitSource[] = [];
-  let unresolved = 0, excluded = 0;
-  for (const raw of hits.hits) {
-    const hit = record(raw), data = record(hit?._source);
-    if (!data || typeof hit?._id !== "string" || !Array.isArray(data.ciks) || data.ciks.length !== 1 ||
-      !Array.isArray(data.display_names) || data.display_names.length !== 1 || typeof data.file_date !== "string" ||
-      !isoDate(data.file_date) || data.file_date < input.from || data.file_date > input.to) { unresolved++; continue; }
-    const name = String(data.display_names[0]);
-    const allSymbols = name.match(/\(([^()]+)\)\s*\(CIK/iu)?.[1].split(/,\s*/u) ?? [];
-    const symbols = allSymbols.filter(validTicker);
-    if (symbols.length !== 1) { if (allSymbols.length && symbols.length === 0) excluded++; else unresolved++; continue; }
-    const [accession, filename] = hit._id.split(":");
-    if (!/^\d{10}-\d{2}-\d{6}$/u.test(accession) || !filename || !/^\d{1,10}$/u.test(String(data.ciks[0]))) { unresolved++; continue; }
-    let link: URL;
-    try { link = sourceUrl(`https://www.sec.gov/Archives/edgar/data/${Number(data.ciks[0])}/${accession.replaceAll("-", "")}/${filename}`, "sec"); }
-    catch { unresolved++; continue; }
-    sources.push({ url: link.toString(), kind: "sec", title: `${String(data.form)} reverse-split filing`,
-      publishedDate: data.file_date, ticker: symbols[0], company: name.split("(")[0].trim() });
-  }
-  const next = input.offset + hits.hits.length;
-  if (hits.hits.length === 0 && next < total.value) throw new Error("reverse_split_sec_page_empty");
-  return { sources, total: total.value, nextOffset: next < total.value ? next : null, inspected: hits.hits.length, excluded, unresolved };
+  const raw = await boundedText(url, input.fetcher ?? fetch, { "User-Agent": input.userAgent }, 2_000_000, input.onTiming);
+  return measureReverseSplitSync(input.onTiming, "sec_parse", () => {
+    const body = record(JSON.parse(raw));
+    const hits = record(body?.hits), total = record(hits?.total);
+    if (body?.timed_out === true || !Array.isArray(hits?.hits) || typeof total?.value !== "number" || !Number.isSafeInteger(total.value) || total.value < 0 || total.relation !== "eq" || total.value > 10_000) throw new Error("reverse_split_sec_coverage_incomplete");
+    const sources: SplitSource[] = [];
+    let unresolved = 0, excluded = 0;
+    for (const raw of hits.hits) {
+      const hit = record(raw), data = record(hit?._source);
+      if (!data || typeof hit?._id !== "string" || !Array.isArray(data.ciks) || data.ciks.length !== 1 ||
+        !Array.isArray(data.display_names) || data.display_names.length !== 1 || typeof data.file_date !== "string" ||
+        !isoDate(data.file_date) || data.file_date < input.from || data.file_date > input.to) { unresolved++; continue; }
+      const name = String(data.display_names[0]);
+      const allSymbols = name.match(/\(([^()]+)\)\s*\(CIK/iu)?.[1].split(/,\s*/u) ?? [];
+      const symbols = allSymbols.filter(validTicker);
+      if (symbols.length !== 1) { if (allSymbols.length && symbols.length === 0) excluded++; else unresolved++; continue; }
+      const [accession, filename] = hit._id.split(":");
+      if (!/^\d{10}-\d{2}-\d{6}$/u.test(accession) || !filename || !/^\d{1,10}$/u.test(String(data.ciks[0]))) { unresolved++; continue; }
+      let link: URL;
+      try { link = sourceUrl(`https://www.sec.gov/Archives/edgar/data/${Number(data.ciks[0])}/${accession.replaceAll("-", "")}/${filename}`, "sec"); }
+      catch { unresolved++; continue; }
+      sources.push({ url: link.toString(), kind: "sec", title: `${String(data.form)} reverse-split filing`,
+        publishedDate: data.file_date, ticker: symbols[0], company: name.split("(")[0].trim() });
+    }
+    const next = input.offset + hits.hits.length;
+    if (hits.hits.length === 0 && next < total.value) throw new Error("reverse_split_sec_page_empty");
+    return { sources, total: total.value, nextOffset: next < total.value ? next : null, inspected: hits.hits.length, excluded, unresolved };
+  });
 }
 
-export async function retrieveSplitSource(source: SplitSource, userAgent: string, fetcher: typeof fetch = fetch): Promise<string> {
-  return boundedText(sourceUrl(source.url, source.kind), fetcher, source.kind === "sec" ? { "User-Agent": userAgent } : {});
+export async function retrieveSplitSource(source: SplitSource, userAgent: string, fetcher: typeof fetch = fetch,
+  onTiming?: ReverseSplitCollectionTiming): Promise<string> {
+  return boundedText(sourceUrl(source.url, source.kind), fetcher, source.kind === "sec" ? { "User-Agent": userAgent } : {}, 2_000_000, onTiming);
 }
 
 export function relatedSecSources(source: SplitSource, html: string): readonly SplitSource[] {

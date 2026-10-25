@@ -4,7 +4,7 @@ import { gzipSync } from "node:zlib";
 import type Database from "better-sqlite3";
 import { assertCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { isoDate, validTicker, type ParseResult, type ReverseSplitEvent, type SplitSource, type SplitMarketData } from "./contracts";
-import { sourceUrl } from "./sources";
+import { measureReverseSplitSync, sourceUrl, type ReverseSplitCollectionTiming } from "./sources";
 
 export const REVERSE_SPLIT_PARSER_VERSION = "2026-09-25.3";
 export type SourceClaim = Readonly<{ source: SplitSource; token: string; attempt: number }>;
@@ -76,14 +76,15 @@ export class ReverseSplitRepository {
       AND (lease_until_utc IS NULL OR lease_until_utc <= ?) LIMIT 1`).get(now, now));
   }
 
-  completeSource(claim: SourceClaim, body: string, result: ParseResult, now: string): boolean {
+  completeSource(claim: SourceClaim, body: string, result: ParseResult, now: string,
+    onTiming?: ReverseSplitCollectionTiming): boolean {
     assertCanonicalUtcTimestamp(now, "reverseSplitParsedAt");
     if (Buffer.byteLength(body, "utf8") > 2_000_000) throw new Error("reverse_split_source_too_large");
     if ((result.outcome === "parsed") !== (result.event !== null) || (result.event && result.event.source.url !== claim.source.url)) throw new Error("reverse_split_parse_result_invalid");
-    const hash = createHash("sha256").update(body).digest("hex");
-    const compressed = gzipSync(body);
+    const hash = measureReverseSplitSync(onTiming, "source_hash", () => createHash("sha256").update(body).digest("hex"));
+    const compressed = measureReverseSplitSync(onTiming, "source_gzip", () => gzipSync(body));
     const retryDelay = result.outcome === "deferred" ? 60 * 60_000 : claim.source.kind === "nasdaq" ? 30 * 60_000 : 24 * 60 * 60_000;
-    return this.database.transaction(() => {
+    return measureReverseSplitSync(onTiming, "source_sqlite", () => this.database.transaction(() => {
       const changed = this.database.prepare(`UPDATE news_reverse_split_sources SET state = ?, content_hash = ?, body_gzip = ?,
         parser_version = ?, outcome_code = ?, fetched_at_utc = ?, next_attempt_at_utc = ?, lease_token = NULL,
         lease_until_utc = NULL, attempt_count = 0, updated_at_utc = ?
@@ -103,7 +104,7 @@ export class ReverseSplitRepository {
         );
       }
       return true;
-    }).immediate();
+    }).immediate());
   }
 
   failSource(claim: SourceClaim, now: string): void {
