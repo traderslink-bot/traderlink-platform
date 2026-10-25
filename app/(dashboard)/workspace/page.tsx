@@ -61,7 +61,12 @@ type WorkspaceTimingName = "dashboard_runtime" | "identity" |
   "legacy_demo_guard" | "rule_results_annotations" | "rule_results_card" |
   "rule_results_custom_and_aggregation" | "rule_results_models" |
   "rule_results_presets" | "runtime_open" | "fact_set_prefetch" |
-  "fact_set_cache_hit" | "reporting_preparation" | "preparation_cache_hit" |
+  "fact_set_cache_hit" | "fact_set_cache_reason" | "fact_set_cache_entries" |
+  "fact_set_process_pid" | "fact_set_process_boot_ms" |
+  "fact_accounts_ms" | "fact_rebuilds_ms" | "fact_round_trips_ms" |
+  "fact_allocations_ms" | "fact_executions_ms" | "fact_provenance_ms" |
+  "fact_decisions_ms" | "fact_validation_ms" | "fact_coverage_ms" |
+  "fact_hash_ms" | "reporting_preparation" | "preparation_cache_hit" |
   "reporting_fingerprint" | "reporting_snapshot" | "fx_wait" |
   "dashboard_callback" | "runtime_close";
 type WorkspaceTimings = Map<WorkspaceTimingName, number>;

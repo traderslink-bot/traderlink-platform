@@ -247,10 +247,19 @@ function relevantDecision(
   );
 }
 
+export type JournalAnalyticsFactSetReadTimingPhase =
+  "fact_accounts_ms" | "fact_rebuilds_ms" | "fact_round_trips_ms" |
+  "fact_allocations_ms" | "fact_executions_ms" | "fact_provenance_ms" |
+  "fact_decisions_ms" | "fact_validation_ms" | "fact_coverage_ms" |
+  "fact_hash_ms";
+
 export class JournalAnalyticsFactSetRepository {
+  private timingRecorded = false;
+
   constructor(
     private readonly database: Database.Database,
     private readonly now: () => Date = () => new Date(),
+    private readonly onTiming?: (phase: JournalAnalyticsFactSetReadTimingPhase, durationMs: number) => void,
   ) {}
 
   read(
@@ -258,14 +267,25 @@ export class JournalAnalyticsFactSetRepository {
     request: JournalAnalyticsFactSetRequest,
   ): JournalAnalyticsFactSet {
     const normalizedRequest = requireFactSetRequest(scope, request);
+    const onTiming = this.onTiming && !this.timingRecorded ? this.onTiming : undefined;
+    if (onTiming) this.timingRecorded = true;
     return this.database.transaction(() =>
-      this.readSnapshot(scope, normalizedRequest)).deferred();
+      this.readSnapshot(scope, normalizedRequest, onTiming)).deferred();
   }
 
   private readSnapshot(
     scope: WorkspaceAccessScope,
     request: JournalAnalyticsFactSetRequest,
+    onTiming?: (phase: JournalAnalyticsFactSetReadTimingPhase, durationMs: number) => void,
   ): JournalAnalyticsFactSet {
+    let phaseStarted = performance.now();
+    const recordPhase = (phase: JournalAnalyticsFactSetReadTimingPhase): void => {
+      if (!onTiming) return;
+      const now = performance.now();
+      try { onTiming(phase, now - phaseStarted); }
+      catch { /* Diagnostics must not alter a fact set. */ }
+      phaseStarted = now;
+    };
     const placeholders = request.accountIds.map(() => "?").join(", ");
     const parameters = [scope.workspaceId, ...request.accountIds] as const;
     const accountRows = this.database.prepare(`
@@ -281,6 +301,7 @@ ORDER BY account_id`).all(...parameters) as AccountRow[];
       assertJournalCurrency(account.base_currency, "baseCurrency");
       assertJournalTimezone(account.trading_timezone, "tradingTimezone");
     }
+    recordPhase("fact_accounts_ms");
 
     const latestRebuildRows = this.database.prepare(`
 SELECT current.account_id, current.instrument_id, current.trade_currency,
@@ -345,6 +366,7 @@ ORDER BY current.account_id, current.instrument_id, current.trade_currency,
       }
       rebuildByChain.set(key, rebuild);
     }
+    recordPhase("fact_rebuilds_ms");
 
     const roundTripRows = this.database.prepare(`
 SELECT round_trip.round_trip_id, version.round_trip_version_id,
@@ -382,6 +404,7 @@ WHERE round_trip.workspace_id = ?
   )
 ORDER BY round_trip.account_id, version.opened_at_utc,
          version.round_trip_version_id`).all(...parameters) as RoundTripRow[];
+    recordPhase("fact_round_trips_ms");
 
     const allocationRows = this.database.prepare(`
 SELECT allocation.allocation_id, allocation.round_trip_version_id,
@@ -431,6 +454,7 @@ ORDER BY allocation.account_id, allocation.round_trip_version_id,
          allocation.allocation_sequence, allocation.allocation_id`).all(
       ...parameters,
     ) as AllocationRow[];
+    recordPhase("fact_allocations_ms");
 
     const currentExecutionRows = this.database.prepare(`
 SELECT execution.account_id, execution.execution_id,
@@ -457,6 +481,7 @@ WHERE execution.workspace_id = ?
 ORDER BY execution.account_id, execution.current_version_id`).all(
       ...parameters,
     ) as CurrentExecutionRow[];
+    recordPhase("fact_executions_ms");
 
     const provenanceRows = this.database.prepare(`
 SELECT provenance.account_id, provenance.execution_version_id,
@@ -479,6 +504,7 @@ ORDER BY provenance.account_id, provenance.execution_version_id,
          import_batch.adapter_id, import_batch.adapter_version`).all(
       ...parameters,
     ) as ProvenanceRow[];
+    recordPhase("fact_provenance_ms");
 
     const decisionRows = this.database.prepare(`
 SELECT decision.decision_id, decision.account_id, decision.issue_code,
@@ -542,6 +568,7 @@ ORDER BY decision.account_id, decision.decision_id`).all(
         updatedAtUtc: row.updated_at_utc,
       });
     }));
+    recordPhase("fact_decisions_ms");
 
     const provenanceByExecution = new Map<string, ProvenanceRow[]>();
     for (const row of provenanceRows) {
@@ -836,6 +863,7 @@ ORDER BY decision.account_id, decision.decision_id`).all(
         integrityFailure("analytics_rebuild_projection_counts");
       }
     }
+    recordPhase("fact_validation_ms");
 
     const coverageRepository = new JournalIntegrityReadRepository(this.database);
     const accounts = freezeArray(accountRows.map((account) => {
@@ -862,6 +890,7 @@ ORDER BY decision.account_id, decision.decision_id`).all(
       .map((account) => account.latestAvailableLocalDate)
       .filter((value): value is string => value !== null)
       .sort();
+    recordPhase("fact_coverage_ms");
     const sourceRevisionSha256 = sha256Json({
       contractVersion: JOURNAL_ANALYTICS_FACT_SET_CONTRACT_VERSION,
       workspaceId: scope.workspaceId,
@@ -875,6 +904,7 @@ ORDER BY decision.account_id, decision.decision_id`).all(
       roundTrips,
       pendingDecisions,
     });
+    recordPhase("fact_hash_ms");
     const generatedAtUtc = createCanonicalUtcTimestamp(this.now());
     return Object.freeze({
       contractVersion: JOURNAL_ANALYTICS_FACT_SET_CONTRACT_VERSION,

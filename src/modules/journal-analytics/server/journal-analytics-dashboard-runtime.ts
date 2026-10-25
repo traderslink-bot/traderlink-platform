@@ -18,7 +18,10 @@ import {
   type PlatformReportingCurrency,
 } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { loadUsdEffectiveReportingRates } from "@/src/modules/platform/server/reporting/bank-of-canada-fx-rate-service";
-import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
+import {
+  JournalAnalyticsFactSetRepository,
+  type JournalAnalyticsFactSetReadTimingPhase,
+} from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
 import {
   JournalAnalyticsFactSetService,
   type JournalAnalyticsFactSetReader,
@@ -78,9 +81,12 @@ type JournalDashboardRuntimeReader = Readonly<{
 
 type JournalAnalyticsReportingTimingPhase =
   "runtime_open" | "fact_set_prefetch" | "fact_set_cache_hit" |
+  "fact_set_cache_reason" | "fact_set_cache_entries" |
+  "fact_set_process_pid" | "fact_set_process_boot_ms" |
   "reporting_preparation" | "preparation_cache_hit" |
   "reporting_fingerprint" | "reporting_snapshot" | "fx_wait" |
-  "dashboard_callback" | "runtime_close";
+  "dashboard_callback" | "runtime_close" |
+  JournalAnalyticsFactSetReadTimingPhase;
 
 type JournalAnalyticsReportingRuntimeOptions = Readonly<{
   prefetchAllFactSet?: boolean;
@@ -97,6 +103,7 @@ function recordReportingTiming(
 }
 
 const JOURNAL_ANALYTICS_RUNTIME_CACHE_LIMIT = 4;
+const journalAnalyticsProcessBootAtMs = Math.round(Date.now() - process.uptime() * 1_000);
 const journalAnalyticsRuntimeCacheKey =
   "__traderlinkJournalAnalyticsRuntimeCache" as const;
 
@@ -251,6 +258,16 @@ class PrefetchedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSet
 class CachedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSetReader {
   private cacheHitRecorded = false;
 
+  private recordCacheObservation(reason: 0 | 1 | 2, entries: number): void {
+    if (this.cacheHitRecorded) return;
+    this.cacheHitRecorded = true;
+    recordReportingTiming(this.onTiming, "fact_set_cache_hit", reason === 0 ? 1 : 0);
+    recordReportingTiming(this.onTiming, "fact_set_cache_reason", reason);
+    recordReportingTiming(this.onTiming, "fact_set_cache_entries", entries);
+    recordReportingTiming(this.onTiming, "fact_set_process_pid", process.pid);
+    recordReportingTiming(this.onTiming, "fact_set_process_boot_ms", journalAnalyticsProcessBootAtMs);
+  }
+
   constructor(
     private readonly database: Database.Database,
     private readonly source: JournalAnalyticsFactSetReader,
@@ -271,16 +288,10 @@ class CachedJournalAnalyticsFactSetReader implements JournalAnalyticsFactSetRead
     );
     const cached = cache.get(key);
     if (cached?.analyticsFingerprint === analyticsFingerprint) {
-      if (!this.cacheHitRecorded) {
-        this.cacheHitRecorded = true;
-        recordReportingTiming(this.onTiming, "fact_set_cache_hit", 1);
-      }
+      this.recordCacheObservation(0, cache.size);
       return rememberRuntimeCacheEntry(cache, key, cached).factSet;
     }
-    if (!this.cacheHitRecorded) {
-      this.cacheHitRecorded = true;
-      recordReportingTiming(this.onTiming, "fact_set_cache_hit", 0);
-    }
+    this.recordCacheObservation(cached ? 2 : 1, cache.size);
     const factSet = this.source.getJournalAnalyticsFactSet(scope, request);
     return rememberRuntimeCacheEntry(cache, key, Object.freeze({
       analyticsFingerprint,
@@ -455,7 +466,7 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
     const source = new CachedJournalAnalyticsFactSetReader(
       database,
       new JournalAnalyticsFactSetService(
-        new JournalAnalyticsFactSetRepository(database),
+        new JournalAnalyticsFactSetRepository(database, undefined, options.onTiming),
       ),
       options.onTiming,
     );
