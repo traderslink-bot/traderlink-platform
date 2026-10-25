@@ -406,7 +406,20 @@ ORDER BY round_trip.account_id, version.opened_at_utc,
          version.round_trip_version_id`).all(...parameters) as RoundTripRow[];
     recordPhase("fact_round_trips_ms");
 
-    const allocationRows = this.database.prepare(`
+    const versionIdsByAccount = new Map<string, string[]>();
+    for (const roundTrip of roundTripRows) {
+      const versionIds = versionIdsByAccount.get(roundTrip.account_id) ?? [];
+      versionIds.push(roundTrip.round_trip_version_id);
+      versionIdsByAccount.set(roundTrip.account_id, versionIds);
+    }
+    const allocationRows: AllocationRow[] = [];
+    for (const account of accountRows) {
+      const versionIds = versionIdsByAccount.get(account.account_id) ?? [];
+      versionIds.sort();
+      for (let offset = 0; offset < versionIds.length; offset += 400) {
+        const batch = versionIds.slice(offset, offset + 400);
+        const batchPlaceholders = batch.map(() => "?").join(", ");
+        const rows = this.database.prepare(`
 SELECT allocation.allocation_id, allocation.round_trip_version_id,
        allocation.account_id, allocation.allocation_sequence,
        allocation.allocation_role, allocation.quantity_decimal,
@@ -417,15 +430,7 @@ SELECT allocation.allocation_id, allocation.round_trip_version_id,
        version.quantity_decimal AS execution_quantity_decimal,
        version.price_decimal, version.fees_decimal, version.fee_currency,
        version.fee_sign_convention, version.fact_completeness
-FROM journal_round_trips round_trip
-JOIN journal_round_trip_versions round_trip_version
-  ON round_trip_version.round_trip_version_id = round_trip.current_version_id
- AND round_trip_version.workspace_id = round_trip.workspace_id
- AND round_trip_version.account_id = round_trip.account_id
-JOIN journal_round_trip_execution_allocations allocation
-  ON allocation.round_trip_version_id = round_trip_version.round_trip_version_id
- AND allocation.workspace_id = round_trip.workspace_id
- AND allocation.account_id = round_trip.account_id
+FROM journal_round_trip_execution_allocations allocation
 JOIN journal_execution_versions version
   ON version.execution_version_id = allocation.execution_version_id
  AND version.workspace_id = allocation.workspace_id
@@ -434,29 +439,16 @@ JOIN journal_executions execution
   ON execution.execution_id = version.execution_id
  AND execution.workspace_id = version.workspace_id
  AND execution.account_id = version.account_id
-WHERE round_trip.workspace_id = ?
-  AND round_trip.account_id IN (${placeholders})
-  AND round_trip.lifecycle_state = 'active'
-  AND NOT EXISTS (
-    SELECT 1
-    FROM journal_round_trip_execution_allocations seeded_allocation
-    JOIN journal_execution_provenance seeded_provenance
-      ON seeded_provenance.workspace_id = seeded_allocation.workspace_id
-     AND seeded_provenance.account_id = seeded_allocation.account_id
-     AND seeded_provenance.execution_version_id = seeded_allocation.execution_version_id
-    JOIN journal_import_batches seeded_batch
-      ON seeded_batch.workspace_id = seeded_provenance.workspace_id
-     AND seeded_batch.account_id = seeded_provenance.account_id
-     AND seeded_batch.import_batch_id = seeded_provenance.import_batch_id
-    WHERE seeded_allocation.workspace_id = round_trip.workspace_id
-      AND seeded_allocation.account_id = round_trip.account_id
-      AND seeded_allocation.round_trip_version_id = round_trip_version.round_trip_version_id
-      AND seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
-  )
-ORDER BY allocation.account_id, allocation.round_trip_version_id,
+WHERE allocation.workspace_id = ?
+  AND allocation.account_id = ?
+  AND allocation.round_trip_version_id IN (${batchPlaceholders})
+ORDER BY allocation.round_trip_version_id,
          allocation.allocation_sequence, allocation.allocation_id`).all(
-      ...parameters,
-    ) as AllocationRow[];
+          scope.workspaceId, account.account_id, ...batch,
+        ) as AllocationRow[];
+        for (const row of rows) allocationRows.push(row);
+      }
+    }
     recordPhase("fact_allocations_ms");
 
     const currentExecutionRows = this.database.prepare(`
