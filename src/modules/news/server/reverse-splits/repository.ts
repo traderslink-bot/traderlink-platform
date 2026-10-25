@@ -9,6 +9,34 @@ import { measureReverseSplitSync, sourceUrl, type ReverseSplitCollectionTiming }
 export const REVERSE_SPLIT_PARSER_VERSION = "2026-09-25.3";
 export type SourceClaim = Readonly<{ source: SplitSource; token: string; attempt: number }>;
 export type RuntimeClaim = Readonly<{ key: string; token: string; state: unknown }>;
+let sourceClaimTimingLogWindow = { startedAt: 0, count: 0 };
+
+function logSlowSourceClaimTiming(values: Readonly<{
+  start_epoch_ms: number;
+  end_epoch_ms: number;
+  total_ms: number;
+  transaction_setup_ms: number;
+  begin_to_callback_ms: number;
+  queue_read_ms: number;
+  candidate_select_ms: number;
+  lease_updates_ms: number;
+  result_decode_ms: number;
+  commit_ms: number;
+  failure_finalization_ms: number;
+  outcome_code: number;
+  last_phase_code: number;
+}>): void {
+  try {
+    if (values.total_ms < 1_000) return;
+    const now = Date.now();
+    if (now - sourceClaimTimingLogWindow.startedAt >= 60_000) {
+      sourceClaimTimingLogWindow = { startedAt: now, count: 0 };
+    }
+    if (sourceClaimTimingLogWindow.count >= 8) return;
+    sourceClaimTimingLogWindow.count++;
+    console.info(`reverse_split_source_claim_detail_timing ${JSON.stringify(values)}`);
+  } catch { /* Diagnostics must not replace a claim result or failure. */ }
+}
 
 function after(now: string, milliseconds: number): string {
   return new Date(Date.parse(now) + milliseconds).toISOString();
@@ -49,24 +77,89 @@ export class ReverseSplitRepository {
 
   claimSource(now: string): SourceClaim | null {
     assertCanonicalUtcTimestamp(now, "reverseSplitClaimedAt");
-    return this.database.transaction(() => {
-      const queue = this.readRuntimeState("source_queue_turn") as { turn?: number } | null;
-      const turn = Number.isSafeInteger(queue?.turn) ? Number(queue!.turn) % 3 : 0;
-      const recentFirst = turn !== 2;
-      const row = this.database.prepare<[string, string, string, number, number], { source_url: string; source_json: string; attempt_count: number }>(`
-        SELECT source_url, source_json, attempt_count FROM news_reverse_split_sources
-        WHERE next_attempt_at_utc <= ? AND (lease_until_utc IS NULL OR lease_until_utc <= ?)
-        ORDER BY CASE WHEN published_date >= ? THEN ? ELSE ? END,
-          next_attempt_at_utc, published_date DESC, source_url LIMIT 1`).get(now, now, after(now, -7 * 86_400_000).slice(0, 10), recentFirst ? 0 : 1, recentFirst ? 1 : 0);
-      if (!row) return null;
-      this.database.prepare(`INSERT INTO news_reverse_split_runtime(runtime_key, state_json, updated_at_utc)
-        VALUES ('source_queue_turn', ?, ?) ON CONFLICT(runtime_key) DO UPDATE
-        SET state_json = excluded.state_json, updated_at_utc = excluded.updated_at_utc`).run(JSON.stringify({ turn: (turn + 1) % 3 }), now);
-      const token = randomUUID();
-      this.database.prepare(`UPDATE news_reverse_split_sources SET state = 'fetching', lease_token = ?, lease_until_utc = ?,
-        attempt_count = attempt_count + 1, updated_at_utc = ? WHERE source_url = ?`).run(token, after(now, 45_000), now, row.source_url);
-      return { source: JSON.parse(row.source_json) as SplitSource, token, attempt: row.attempt_count + 1 };
-    }).immediate();
+    const startEpochMs = Date.now();
+    const started = performance.now();
+    let transactionSetupMs = 0;
+    let beginToCallbackMs = 0;
+    let queueReadMs = 0;
+    let candidateSelectMs = 0;
+    let leaseUpdatesMs = 0;
+    let resultDecodeMs = 0;
+    let callbackEnd = 0;
+    let beginStarted: number | null = null;
+    let callbackEntered = false;
+    let completed = false;
+    let rowClaimed = false;
+    let lastPhaseCode = 0;
+    const setupStarted = performance.now();
+    try {
+      const claimTransaction = this.database.transaction(() => {
+        callbackEntered = true;
+        beginToCallbackMs = performance.now() - (beginStarted ?? started);
+        try {
+          lastPhaseCode = 2;
+          const queueStarted = performance.now();
+          const queue = this.readRuntimeState("source_queue_turn") as { turn?: number } | null;
+          const turn = Number.isSafeInteger(queue?.turn) ? Number(queue!.turn) % 3 : 0;
+          const recentFirst = turn !== 2;
+          queueReadMs = performance.now() - queueStarted;
+          lastPhaseCode = 3;
+          const selectStarted = performance.now();
+          const row = this.database.prepare<[string, string, string, number, number], { source_url: string; source_json: string; attempt_count: number }>(`
+            SELECT source_url, source_json, attempt_count FROM news_reverse_split_sources
+            WHERE next_attempt_at_utc <= ? AND (lease_until_utc IS NULL OR lease_until_utc <= ?)
+            ORDER BY CASE WHEN published_date >= ? THEN ? ELSE ? END,
+              next_attempt_at_utc, published_date DESC, source_url LIMIT 1`).get(now, now, after(now, -7 * 86_400_000).slice(0, 10), recentFirst ? 0 : 1, recentFirst ? 1 : 0);
+          candidateSelectMs = performance.now() - selectStarted;
+          if (!row) return null;
+          lastPhaseCode = 4;
+          const leaseStarted = performance.now();
+          this.database.prepare(`INSERT INTO news_reverse_split_runtime(runtime_key, state_json, updated_at_utc)
+            VALUES ('source_queue_turn', ?, ?) ON CONFLICT(runtime_key) DO UPDATE
+            SET state_json = excluded.state_json, updated_at_utc = excluded.updated_at_utc`).run(JSON.stringify({ turn: (turn + 1) % 3 }), now);
+          const token = randomUUID();
+          this.database.prepare(`UPDATE news_reverse_split_sources SET state = 'fetching', lease_token = ?, lease_until_utc = ?,
+            attempt_count = attempt_count + 1, updated_at_utc = ? WHERE source_url = ?`).run(token, after(now, 45_000), now, row.source_url);
+          leaseUpdatesMs = performance.now() - leaseStarted;
+          lastPhaseCode = 5;
+          const decodeStarted = performance.now();
+          const result = { source: JSON.parse(row.source_json) as SplitSource, token, attempt: row.attempt_count + 1 };
+          resultDecodeMs = performance.now() - decodeStarted;
+          rowClaimed = true;
+          return result;
+        } finally {
+          callbackEnd = performance.now();
+        }
+      });
+      transactionSetupMs = performance.now() - setupStarted;
+      beginStarted = performance.now();
+      lastPhaseCode = 1;
+      const result = claimTransaction.immediate();
+      completed = true;
+      return result;
+    } finally {
+      try {
+        const ended = performance.now();
+        if (beginStarted !== null && !callbackEntered) beginToCallbackMs = ended - beginStarted;
+        if (beginStarted === null) transactionSetupMs = ended - setupStarted;
+        const finalizationMs = callbackEntered ? ended - callbackEnd : 0;
+        if (!this.database.inTransaction) logSlowSourceClaimTiming({
+        start_epoch_ms: startEpochMs,
+        end_epoch_ms: Date.now(),
+        total_ms: Math.round(ended - started),
+        transaction_setup_ms: Math.round(transactionSetupMs),
+        begin_to_callback_ms: Math.round(beginToCallbackMs),
+        queue_read_ms: Math.round(queueReadMs),
+        candidate_select_ms: Math.round(candidateSelectMs),
+        lease_updates_ms: Math.round(leaseUpdatesMs),
+        result_decode_ms: Math.round(resultDecodeMs),
+        commit_ms: Math.round(completed ? finalizationMs : 0),
+        failure_finalization_ms: Math.round(completed ? 0 : finalizationMs),
+        outcome_code: completed ? (rowClaimed ? 1 : 0) : 2,
+        last_phase_code: lastPhaseCode,
+        });
+      } catch { /* Diagnostics must not replace a claim result or failure. */ }
+    }
   }
 
   hasDueSource(now: string): boolean {
