@@ -4,6 +4,7 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
 import { recoverLegacyDemoWorkspaceTradeLibraryProjection } from "@/src/modules/journal-analytics/server/workspace-trade-library-demo-projection-recovery";
@@ -270,6 +271,8 @@ export default async function WorkspacePage({
   }
   measureWorkspacePhase(timings, "legacy_demo_guard", () =>
     recoverLegacyDemoWorkspaceTradeLibraryProjection(scope));
+  async function WorkspaceContent() {
+    await new Promise<void>((resolve) => setImmediate(resolve));
   const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCard, ruleResultsCardPreference, topTickersCard, tradeLibrary } = await measureWorkspacePhaseAsync(
     timings,
     "dashboard_runtime",
@@ -433,5 +436,18 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         trades={tradeLibrary}
       />
     </>
+  );
+  }
+  return (
+    <Suspense fallback={
+      <DashboardPage>
+        <WorkspaceWelcomeHeading />
+        <DashboardPanel title="Trading Journal">
+          <Typography>Loading your workspace…</Typography>
+        </DashboardPanel>
+      </DashboardPage>
+    }>
+      <WorkspaceContent />
+    </Suspense>
   );
 }
