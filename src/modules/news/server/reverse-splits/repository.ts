@@ -252,19 +252,16 @@ export class ReverseSplitRepository {
   nextMarketTicker(closeDate: string, now: string): string | null {
     if (!isoDate(closeDate)) throw new Error("reverse_split_close_date_invalid");
     assertCanonicalUtcTimestamp(now, "reverseSplitMarketDueAt");
-    const row = this.database.prepare<[string, string, string, string], { ticker: string }>(`SELECT candidate.ticker
-      FROM (SELECT DISTINCT ticker FROM news_reverse_split_events) candidate
-      LEFT JOIN news_reverse_split_runtime m ON m.runtime_key = 'market:' || candidate.ticker
-      WHERE EXISTS (
-        SELECT 1 FROM news_reverse_split_events e JOIN news_reverse_split_sources s ON s.source_url = e.source_url
-        AND s.content_hash = e.content_hash AND s.parser_version = e.parser_version
-        WHERE e.ticker = candidate.ticker AND s.state IN ('parsed', 'fetching', 'failed')
-      ) AND (
+    const row = this.database.prepare<[string, string, string, string], { ticker: string }>(`SELECT DISTINCT e.ticker
+      FROM news_reverse_split_events e JOIN news_reverse_split_sources s ON s.source_url = e.source_url
+      AND s.content_hash = e.content_hash AND s.parser_version = e.parser_version
+      LEFT JOIN news_reverse_split_runtime m ON m.runtime_key = 'market:' || e.ticker
+      WHERE s.state IN ('parsed', 'fetching', 'failed') AND (
         m.runtime_key IS NULL OR
         (m.updated_at_utc <= ? AND json_extract(m.state_json, '$.expectedCloseDate') IS NOT ?) OR
         (m.updated_at_utc <= ? AND json_array_length(m.state_json, '$.issues') > 0) OR
         m.updated_at_utc <= ?)
-      ORDER BY m.updated_at_utc, candidate.ticker LIMIT 1`).get(after(now, -15 * 60_000), closeDate, after(now, -15 * 60_000), after(now, -6 * 60 * 60_000));
+      ORDER BY m.updated_at_utc, e.ticker LIMIT 1`).get(after(now, -15 * 60_000), closeDate, after(now, -15 * 60_000), after(now, -6 * 60 * 60_000));
     return row && validTicker(row.ticker) ? row.ticker : null;
   }
 
