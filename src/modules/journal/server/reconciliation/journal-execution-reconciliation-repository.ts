@@ -44,8 +44,6 @@ const SET_SELECT = `SELECT reconciliation_set_id, overlap_key_sha256, state,
  decision_id, revision, current_event_id, created_at_utc, updated_at_utc
 FROM journal_execution_reconciliation_sets`;
 
-const TRADE_DELETE_REF_READ_BATCH_SIZE = 100;
-
 export class JournalExecutionReconciliationRepository {
   constructor(private readonly database: Database.Database) {}
 
@@ -231,119 +229,6 @@ WHERE execution.workspace_id = ? AND execution.account_id = ?
       AND member.member_role = 'manual_execution'
   )
 LIMIT 1`).get(workspaceId, accountId, executionId, expectedCurrentVersionId));
-  }
-
-  listCurrentRoundTripExecutionsForIds(
-    workspaceId: string,
-    accountId: string,
-    roundTripIds: readonly string[],
-  ): ReadonlyMap<string, readonly Readonly<{ currentVersionId: string; executionId: string }>[]> {
-    const uniqueIds = [...new Set(roundTripIds)];
-    const grouped = new Map<string, Array<Readonly<{ currentVersionId: string; executionId: string }>>>();
-    for (let offset = 0; offset < uniqueIds.length; offset += TRADE_DELETE_REF_READ_BATCH_SIZE) {
-      const batch = uniqueIds.slice(offset, offset + TRADE_DELETE_REF_READ_BATCH_SIZE);
-      const placeholders = batch.map(() => "?").join(", ");
-      const rows = this.database.prepare<[string, string, ...string[]], {
-        round_trip_id: string;
-        execution_id: string;
-        current_version_id: string;
-      }>(`SELECT DISTINCT round_trip.round_trip_id, execution.execution_id, execution.current_version_id
- FROM journal_round_trips round_trip
- JOIN journal_round_trip_execution_allocations allocation
-   ON allocation.workspace_id = round_trip.workspace_id
-  AND allocation.account_id = round_trip.account_id
-  AND allocation.round_trip_version_id = round_trip.current_version_id
- JOIN journal_execution_versions allocation_version
-   ON allocation_version.workspace_id = allocation.workspace_id
-  AND allocation_version.account_id = allocation.account_id
-  AND allocation_version.execution_version_id = allocation.execution_version_id
- JOIN journal_executions execution
-   ON execution.workspace_id = allocation_version.workspace_id
-  AND execution.account_id = allocation_version.account_id
-  AND execution.execution_id = allocation_version.execution_id
-  AND execution.current_version_id = allocation.execution_version_id
- WHERE round_trip.workspace_id = ?
-   AND round_trip.account_id = ?
-   AND round_trip.round_trip_id IN (${placeholders})
-   AND round_trip.lifecycle_state = 'active'
- ORDER BY round_trip.round_trip_id, execution.execution_id`).all(
-        workspaceId, accountId, ...batch,
-      );
-      for (const row of rows) {
-        const executions = grouped.get(row.round_trip_id) ?? [];
-        executions.push(Object.freeze({
-          currentVersionId: row.current_version_id,
-          executionId: row.execution_id,
-        }));
-        grouped.set(row.round_trip_id, executions);
-      }
-    }
-    return new Map([...grouped].map(([id, executions]) => [id, Object.freeze(executions)]));
-  }
-
-  listSafelyDeletableManualExecutionVersions(
-    workspaceId: string,
-    accountId: string,
-    executionIds: readonly string[],
-  ): ReadonlyMap<string, string> {
-    const uniqueIds = [...new Set(executionIds)];
-    const eligible = new Map<string, string>();
-    for (let offset = 0; offset < uniqueIds.length; offset += TRADE_DELETE_REF_READ_BATCH_SIZE) {
-      const batch = uniqueIds.slice(offset, offset + TRADE_DELETE_REF_READ_BATCH_SIZE);
-      const placeholders = batch.map(() => "?").join(", ");
-      // The reconciliation exclusion includes every set state, as in the single-execution guard.
-      // Bound account parameters keep its NOT IN subquery uncorrelated; NULLs are excluded.
-      const rows = this.database.prepare<[string, string, ...string[]], {
-        execution_id: string;
-        current_version_id: string;
-      }>(`SELECT execution.execution_id, execution.current_version_id
- FROM journal_executions execution
- WHERE execution.workspace_id = ? AND execution.account_id = ?
-   AND execution.execution_id IN (${placeholders})
-   AND execution.current_state = 'accepted'
-   AND EXISTS (
-     SELECT 1 FROM journal_execution_identity_aliases alias
-     WHERE alias.workspace_id = execution.workspace_id
-       AND alias.account_id = execution.account_id
-       AND alias.execution_id = execution.execution_id
-       AND alias.alias_type = 'manual_entry' AND alias.status = 'active'
-   )
-   AND NOT EXISTS (
-     SELECT 1 FROM journal_demo_accounts demo
-     WHERE demo.workspace_id = execution.workspace_id
-       AND demo.account_id = execution.account_id
-   )
-   AND NOT EXISTS (
-     SELECT 1 FROM journal_execution_identity_aliases provider_alias
-     WHERE provider_alias.workspace_id = execution.workspace_id
-       AND provider_alias.account_id = execution.account_id
-       AND provider_alias.execution_id = execution.execution_id
-       AND provider_alias.alias_type IN ('broker_fill', 'broker_order_fill')
-       AND provider_alias.status = 'active'
-   )
-   AND NOT EXISTS (
-     SELECT 1 FROM journal_execution_provenance provenance
-     WHERE provenance.workspace_id = execution.workspace_id
-       AND provenance.account_id = execution.account_id
-       AND provenance.execution_id = execution.execution_id
-       AND (provenance.provider_identity_scheme_version IS NOT NULL
-         OR provenance.provider_identity_sha256 IS NOT NULL)
-   )
-   AND execution.execution_id NOT IN (
-     SELECT DISTINCT member.execution_id
-     FROM journal_execution_reconciliation_members member
-     JOIN journal_execution_reconciliation_sets reconciliation
-       ON reconciliation.workspace_id = member.workspace_id
-      AND reconciliation.account_id = member.account_id
-      AND reconciliation.reconciliation_set_id = member.reconciliation_set_id
-     WHERE member.workspace_id = ? AND member.account_id = ?
-       AND member.member_role = 'manual_execution'
-       AND member.execution_id IS NOT NULL
-       AND member.execution_id IN (${placeholders})
-   )`).all(workspaceId, accountId, ...batch, workspaceId, accountId, ...batch);
-      for (const row of rows) eligible.set(row.execution_id, row.current_version_id);
-    }
-    return eligible;
   }
 
   findByOverlapKey(
