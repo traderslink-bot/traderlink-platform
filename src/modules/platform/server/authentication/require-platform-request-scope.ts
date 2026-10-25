@@ -32,6 +32,61 @@ import {
 type IdentityTimingPhase = "preflight" | "runtime_open" | "readonly_open" | "session" | "membership" | "journal_scope" | "close";
 let lastSlowIdentityTimingAt = Number.NEGATIVE_INFINITY;
 let workspaceIdentityLogWindow = { startedAt: 0, count: 0 };
+let pageIdentityBoundaryLogWindow = { startedAt: 0, count: 0 };
+
+// Numeric-only diagnostics for the request-boundary wait outside createIdentityTiming.
+// Codes: 1 authenticated page, 2 billing page, 3 cached resolver, 4 cache caller.
+function logSlowPageIdentityBoundary(
+  boundaryCode: number,
+  startedEpochMs: number,
+  started: number,
+  headersMs: number,
+  resolverMs: number,
+  cacheWaitMs: number,
+) {
+  try {
+    const totalMs = performance.now() - started;
+    if (totalMs < 1_000) return;
+    const now = Date.now();
+    if (now - pageIdentityBoundaryLogWindow.startedAt >= 60_000) {
+      pageIdentityBoundaryLogWindow = { startedAt: now, count: 0 };
+    }
+    if (pageIdentityBoundaryLogWindow.count >= 20) return;
+    pageIdentityBoundaryLogWindow.count += 1;
+    console.info("platform_page_identity_boundary_timing", {
+      boundary_code: boundaryCode,
+      start_epoch_ms: startedEpochMs,
+      end_epoch_ms: now,
+      total_ms: Math.round(totalMs),
+      headers_ms: Math.round(headersMs),
+      resolver_ms: Math.round(resolverMs),
+      cache_wait_ms: Math.round(cacheWaitMs),
+    });
+  } catch { /* Diagnostics must not replace an authentication result or failure. */ }
+}
+
+async function resolvePageIdentityWithBoundaryTiming(
+  boundaryCode: number,
+  resolve: (requestHeaders: Headers) => TraderLinkPlatformRequestIdentity,
+): Promise<TraderLinkPlatformRequestIdentity> {
+  const startedEpochMs = Date.now();
+  const started = performance.now();
+  let headersMs = 0;
+  let headersFinished = false;
+  try {
+    const requestHeaders = await nextHeaders();
+    headersMs = performance.now() - started;
+    headersFinished = true;
+    return resolve(requestHeaders);
+  } finally {
+    const totalMs = performance.now() - started;
+    if (!headersFinished) headersMs = totalMs;
+    logSlowPageIdentityBoundary(
+      boundaryCode, startedEpochMs, started, headersMs,
+      headersFinished ? totalMs - headersMs : 0, 0,
+    );
+  }
+}
 
 function createIdentityTiming(candidateTraceId: string | null) {
   const traceId = candidateTraceId && /^[0-9a-f-]{36}$/u.test(candidateTraceId)
@@ -285,10 +340,10 @@ export function requireTraderLinkPlatformAuthenticatedRequestIdentity(
 export async function requireTraderLinkPlatformAuthenticatedPageIdentity(
   options: Omit<PlatformRequestIdentityOptions, "environment"> = {},
 ): Promise<TraderLinkPlatformRequestIdentity> {
-  return requireTraderLinkPlatformAuthenticatedRequestIdentity(await nextHeaders(), {
+  return resolvePageIdentityWithBoundaryTiming(1, requestHeaders => requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders, {
     ...options,
     environment: process.env,
-  });
+  }));
 }
 
 /** Billing requires a stable account, not a paid plan or Discord role. */
@@ -298,9 +353,9 @@ export const requireTraderLinkPlatformBillingRequestIdentity =
 export async function requireTraderLinkPlatformBillingPageIdentity(): Promise<
   TraderLinkPlatformRequestIdentity
 > {
-  return requireTraderLinkPlatformBillingRequestIdentity(await nextHeaders(), {
+  return resolvePageIdentityWithBoundaryTiming(2, requestHeaders => requireTraderLinkPlatformBillingRequestIdentity(requestHeaders, {
     environment: process.env,
-  });
+  }));
 }
 
 export function requireTraderLinkPlatformRequestScope(
@@ -317,15 +372,21 @@ export function requireTraderLinkPlatformRequestScope(
 // resolvers below.
 const requireCurrentServerComponentDashboardIdentity = cache(
   async (): Promise<TraderLinkPlatformRequestIdentity> =>
-    requireTraderLinkPlatformRequestIdentity(await nextHeaders(), {
+    resolvePageIdentityWithBoundaryTiming(3, requestHeaders => requireTraderLinkPlatformRequestIdentity(requestHeaders, {
       environment: process.env,
-    }),
+    })),
 );
 
 export async function requireTraderLinkPlatformServerComponentPageIdentity(): Promise<
   TraderLinkPlatformRequestIdentity
 > {
-  return requireCurrentServerComponentDashboardIdentity();
+  const startedEpochMs = Date.now();
+  const started = performance.now();
+  try {
+    return await requireCurrentServerComponentDashboardIdentity();
+  } finally {
+    logSlowPageIdentityBoundary(4, startedEpochMs, started, 0, 0, performance.now() - started);
+  }
 }
 
 export async function requireTraderLinkPlatformServerComponentPageScope(): Promise<
