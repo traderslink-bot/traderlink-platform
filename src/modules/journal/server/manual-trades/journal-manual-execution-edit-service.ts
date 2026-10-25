@@ -23,6 +23,20 @@ const TRADE_DELETE_REFS_SLOW_MS = 500;
 const TRADE_DELETE_REFS_LOG_LIMIT_PER_MINUTE = 12;
 let tradeDeleteRefsLogWindow = { startedAt: 0, count: 0 };
 
+type EditableReadTimingPhase = "editable_eligible_query" |
+  "editable_eligible_candidate_count" | "editable_guard_count" | "editable_guard_total";
+type EditableReadTiming = (phase: EditableReadTimingPhase, value: number) => void;
+
+function recordEditableReadTiming(
+  onTiming: EditableReadTiming | undefined,
+  phase: EditableReadTimingPhase,
+  value: number,
+): void {
+  if (!onTiming) return;
+  try { onTiming(phase, value); }
+  catch { /* Diagnostics cannot change editable execution results. */ }
+}
+
 type TradeDeleteRefsReadTiming = {
   currentRoundTripSelectCount: number;
   currentRoundTripSelectMs: number;
@@ -194,25 +208,41 @@ export class JournalManualExecutionEditService {
   listEditable(
     scope: AccountScope,
     executionIds?: readonly string[],
+    onTiming?: EditableReadTiming,
   ): readonly JournalEditableManualExecution[] {
-    return Object.freeze(this.reconciliations.listEligibleManualExecutions(
+    const queryStarted = onTiming ? performance.now() : 0;
+    const candidates = this.reconciliations.listEligibleManualExecutions(
       scope.workspaceId,
       scope.accountId,
       executionIds,
-    ).map((candidate) => {
+    );
+    if (onTiming) {
+      recordEditableReadTiming(onTiming, "editable_eligible_query", performance.now() - queryStarted);
+      recordEditableReadTiming(onTiming, "editable_eligible_candidate_count",
+        Math.min(candidates.length, 1_000_000));
+    }
+    let guardCount = 0;
+    let guardTotalMs = 0;
+    const editable = candidates.map((candidate) => {
       const local = localParts(candidate.sourceTimestampText);
       const editRef = this.editRef(
         scope,
         candidate.executionId,
         candidate.currentVersionId,
       );
+      const guardStarted = onTiming ? performance.now() : 0;
+      const safelyDeletable = this.reconciliations.isSafelyDeletableManualExecution(
+        scope.workspaceId,
+        scope.accountId,
+        candidate.executionId,
+        candidate.currentVersionId,
+      );
+      if (onTiming) {
+        guardCount += 1;
+        guardTotalMs += performance.now() - guardStarted;
+      }
       return Object.freeze({
-        deleteRef: this.reconciliations.isSafelyDeletableManualExecution(
-          scope.workspaceId,
-          scope.accountId,
-          candidate.executionId,
-          candidate.currentVersionId,
-        ) ? editRef : null,
+        deleteRef: safelyDeletable ? editRef : null,
         editRef,
         executionId: candidate.executionId,
         currentVersionId: candidate.currentVersionId,
@@ -227,7 +257,13 @@ export class JournalManualExecutionEditService {
         feesDecimal: candidate.feesDecimal,
         manualFeeInputState: candidate.manualFeeInputState,
       });
-    }));
+    });
+    if (onTiming) {
+      recordEditableReadTiming(onTiming, "editable_guard_count",
+        Math.min(guardCount, 1_000_000));
+      recordEditableReadTiming(onTiming, "editable_guard_total", guardTotalMs);
+    }
+    return Object.freeze(editable);
   }
 
   correct(

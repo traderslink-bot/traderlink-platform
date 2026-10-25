@@ -94,18 +94,21 @@ export type WorkspaceTradeLibraryModel = Readonly<{
 
 export type WorkspaceTradeLibraryTimingPhase =
   "revision" | "empty_probe" | "count" | "page" | "editable" |
-  "editable_integrity_setup" | "execution_facts" | "delete_refs" |
+  "editable_integrity_setup" | "editable_allocation_ids" | "editable_execution_id_count" |
+  "editable_eligible_query" | "editable_eligible_candidate_count" |
+  "editable_guard_count" | "editable_guard_total" |
+  "execution_facts" | "delete_refs" |
   "delete_refs_integrity_setup" | "row_mapping" | "merge_logical";
 
-type WorkspaceTradeLibraryTiming = (phase: WorkspaceTradeLibraryTimingPhase, durationMs: number) => void;
+type WorkspaceTradeLibraryTiming = (phase: WorkspaceTradeLibraryTimingPhase, value: number) => void;
 
 function recordTradeLibraryTiming(
   onTiming: WorkspaceTradeLibraryTiming | undefined,
   phase: WorkspaceTradeLibraryTimingPhase,
-  durationMs: number,
+  value: number,
 ): void {
   if (!onTiming) return;
-  try { onTiming(phase, durationMs); }
+  try { onTiming(phase, value); }
   catch { /* Diagnostics cannot change Workspace results. */ }
 }
 
@@ -369,7 +372,7 @@ function editableExecutions(
 ): ReadonlyMap<string, readonly WorkspaceEditableExecution[]> {
   if (rows.length === 0) return new Map();
   const accountId = activeAccountId(scope);
-  const ids = database.prepare(`SELECT allocation.round_trip_version_id, execution.execution_id
+  const ids = measureTradeLibraryPhase(onTiming, "editable_allocation_ids", () => database.prepare(`SELECT allocation.round_trip_version_id, execution.execution_id
 FROM journal_round_trip_execution_allocations allocation
 JOIN journal_execution_versions execution_version
   ON execution_version.execution_version_id = allocation.execution_version_id
@@ -383,14 +386,17 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
     scope.workspaceId,
     accountId,
     ...rows.map((row) => row.round_trip_version_id),
-  ) as readonly Readonly<{ round_trip_version_id: string; execution_id: string }>[];
+  )) as readonly Readonly<{ round_trip_version_id: string; execution_id: string }>[];
   const executionIds = [...new Set(ids.map((row) => row.execution_id))];
+  if (onTiming) recordTradeLibraryTiming(onTiming,
+    "editable_execution_id_count", Math.min(executionIds.length, 1_000_000));
   const integrityStarted = onTiming ? performance.now() : 0;
   const editable = withReadonlyJournalIntegrityRuntime(scope, (journal) => {
     if (onTiming) recordTradeLibraryTiming(onTiming, "editable_integrity_setup", performance.now() - integrityStarted);
     return journal.manualExecutionEdits.listEditable(
       journal.tradeStyles.accountScope(scope),
       executionIds,
+      onTiming ? (phase, value) => recordTradeLibraryTiming(onTiming, phase, value) : undefined,
     );
   });
   const byExecution = new Map(editable.map((entry) => [entry.executionId, entry] as const));

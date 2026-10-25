@@ -63,6 +63,12 @@ const TRADE_LIBRARY_TIMING_NAMES = {
   page: "trade_library_page",
   editable: "trade_library_editable",
   editable_integrity_setup: "trade_library_editable_integrity_setup",
+  editable_allocation_ids: "trade_library_editable_allocation_ids",
+  editable_execution_id_count: "trade_library_editable_execution_id_count",
+  editable_eligible_query: "trade_library_editable_eligible_query",
+  editable_eligible_candidate_count: "trade_library_editable_eligible_candidate_count",
+  editable_guard_count: "trade_library_editable_guard_count",
+  editable_guard_total: "trade_library_editable_guard_total",
   execution_facts: "trade_library_execution_facts",
   delete_refs: "trade_library_delete_refs",
   delete_refs_integrity_setup: "trade_library_delete_refs_integrity_setup",
@@ -74,6 +80,9 @@ type WorkspaceTimingName = "dashboard_runtime" | "identity" |
   "analytics_summary" | "review_summary" | "top_tickers" | "trade_library" |
   "trade_library_revision" | "trade_library_empty_probe" | "trade_library_count" |
   "trade_library_page" | "trade_library_editable" | "trade_library_editable_integrity_setup" |
+  "trade_library_editable_allocation_ids" | "trade_library_editable_execution_id_count" |
+  "trade_library_editable_eligible_query" | "trade_library_editable_eligible_candidate_count" |
+  "trade_library_editable_guard_count" | "trade_library_editable_guard_total" |
   "trade_library_execution_facts" | "trade_library_delete_refs" |
   "trade_library_delete_refs_integrity_setup" | "trade_library_row_mapping" | "trade_library_merge_logical" |
   "legacy_demo_guard" | "rule_results_annotations" | "rule_results_card" |
