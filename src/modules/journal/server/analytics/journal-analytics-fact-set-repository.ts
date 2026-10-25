@@ -437,8 +437,8 @@ JOIN journal_executions execution
 WHERE round_trip.workspace_id = ?
   AND round_trip.account_id IN (${placeholders})
   AND round_trip.lifecycle_state = 'active'
-  AND round_trip_version.round_trip_version_id NOT IN (
-    SELECT seeded_allocation.round_trip_version_id
+  AND NOT EXISTS (
+    SELECT 1
     FROM journal_round_trip_execution_allocations seeded_allocation
     JOIN journal_execution_provenance seeded_provenance
       ON seeded_provenance.workspace_id = seeded_allocation.workspace_id
@@ -448,7 +448,10 @@ WHERE round_trip.workspace_id = ?
       ON seeded_batch.workspace_id = seeded_provenance.workspace_id
      AND seeded_batch.account_id = seeded_provenance.account_id
      AND seeded_batch.import_batch_id = seeded_provenance.import_batch_id
-    WHERE seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
+    WHERE seeded_allocation.workspace_id = round_trip.workspace_id
+      AND seeded_allocation.account_id = round_trip.account_id
+      AND seeded_allocation.round_trip_version_id = round_trip_version.round_trip_version_id
+      AND seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
   )
 ORDER BY allocation.account_id, allocation.round_trip_version_id,
          allocation.allocation_sequence, allocation.allocation_id`).all(
