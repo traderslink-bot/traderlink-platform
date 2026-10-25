@@ -105,11 +105,15 @@ export class ReverseSplitRepository {
           queueReadMs = performance.now() - queueStarted;
           lastPhaseCode = 3;
           const selectStarted = performance.now();
-          const row = this.database.prepare<[string, string, string, number, number], { source_url: string; source_json: string; attempt_count: number }>(`
-            SELECT source_url, source_json, attempt_count FROM news_reverse_split_sources
-            WHERE next_attempt_at_utc <= ? AND (lease_until_utc IS NULL OR lease_until_utc <= ?)
-            ORDER BY CASE WHEN published_date >= ? THEN ? ELSE ? END,
-              next_attempt_at_utc, published_date DESC, source_url LIMIT 1`).get(now, now, after(now, -7 * 86_400_000).slice(0, 10), recentFirst ? 0 : 1, recentFirst ? 1 : 0);
+          const cutoff = after(now, -7 * 86_400_000).slice(0, 10);
+          const selectCandidate = (recent: boolean) => this.database
+            .prepare<[string, string, string], { source_url: string; source_json: string; attempt_count: number }>(`
+              SELECT source_url, source_json, attempt_count FROM news_reverse_split_sources
+              WHERE next_attempt_at_utc <= ? AND (lease_until_utc IS NULL OR lease_until_utc <= ?)
+              AND published_date ${recent ? ">=" : "<"} ?
+              ORDER BY next_attempt_at_utc, published_date DESC, source_url LIMIT 1`)
+            .get(now, now, cutoff);
+          const row = selectCandidate(recentFirst) ?? selectCandidate(!recentFirst);
           candidateSelectMs = performance.now() - selectStarted;
           if (!row) return null;
           lastPhaseCode = 4;
