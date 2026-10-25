@@ -19,6 +19,7 @@ import type { JournalManualTradePreviewAuthority } from "./journal-manual-trade-
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const TIME_PATTERN = /^\d{2}:\d{2}(?::\d{2})?$/u;
+const TRADE_DELETE_REF_PAGE_BATCH_SIZE = 25;
 
 function normalizeLeadingDecimal(value: string): string {
   const trimmed = value.trim();
@@ -129,9 +130,36 @@ export class JournalManualExecutionEditService {
     roundTripIds: readonly string[],
   ): ReadonlyMap<string, string> {
     const refs = new Map<string, string>();
-    for (const roundTripId of [...new Set(roundTripIds)]) {
-      const candidate = this.tradeDeletionCandidate(scope, roundTripId);
-      if (candidate) refs.set(roundTripId, candidate.deleteRef);
+    const uniqueRoundTripIds = [...new Set(roundTripIds)];
+    for (let offset = 0; offset < uniqueRoundTripIds.length; offset += TRADE_DELETE_REF_PAGE_BATCH_SIZE) {
+      const batch = uniqueRoundTripIds.slice(offset, offset + TRADE_DELETE_REF_PAGE_BATCH_SIZE);
+      const executionsByRoundTrip = this.reconciliations.listCurrentRoundTripExecutionsForIds(
+        scope.workspaceId,
+        scope.accountId,
+        batch,
+      );
+      const executionIds = [...new Set(batch.flatMap((roundTripId) =>
+        (executionsByRoundTrip.get(roundTripId) ?? []).map((execution) => execution.executionId)))];
+      const eligibleVersions = this.reconciliations.listSafelyDeletableManualExecutionVersions(
+        scope.workspaceId,
+        scope.accountId,
+        executionIds,
+      );
+      for (const roundTripId of batch) {
+        const executions = executionsByRoundTrip.get(roundTripId) ?? [];
+        if (executions.length === 0 || executions.some((execution) =>
+          eligibleVersions.get(execution.executionId) !== execution.currentVersionId)) continue;
+        refs.set(roundTripId, this.authority.opaqueRef("group", JSON.stringify([
+          "workspace-trade-delete-v1",
+          scope.workspaceId,
+          scope.accountId,
+          roundTripId,
+          executions.map((execution) => [
+            execution.executionId,
+            execution.currentVersionId,
+          ]),
+        ])));
+      }
     }
     return refs;
   }
