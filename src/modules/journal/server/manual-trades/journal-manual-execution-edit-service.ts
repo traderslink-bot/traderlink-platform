@@ -209,6 +209,7 @@ export class JournalManualExecutionEditService {
     scope: AccountScope,
     executionIds?: readonly string[],
     onTiming?: EditableReadTiming,
+    options?: Readonly<{ guardReadMode?: "workspace_batch" }>,
   ): readonly JournalEditableManualExecution[] {
     const queryStarted = onTiming ? performance.now() : 0;
     const candidates = this.reconciliations.listEligibleManualExecutions(
@@ -223,6 +224,18 @@ export class JournalManualExecutionEditService {
     }
     let guardCount = 0;
     let guardTotalMs = 0;
+    const batchGuardStarted = onTiming ? performance.now() : 0;
+    const safeVersions = options?.guardReadMode === "workspace_batch"
+      ? this.reconciliations.listSafelyDeletableManualExecutionVersions(
+        scope.workspaceId,
+        scope.accountId,
+        candidates,
+      )
+      : null;
+    if (safeVersions && onTiming) {
+      guardCount = candidates.length;
+      guardTotalMs = performance.now() - batchGuardStarted;
+    }
     const editable = candidates.map((candidate) => {
       const local = localParts(candidate.sourceTimestampText);
       const editRef = this.editRef(
@@ -230,14 +243,16 @@ export class JournalManualExecutionEditService {
         candidate.executionId,
         candidate.currentVersionId,
       );
-      const guardStarted = onTiming ? performance.now() : 0;
-      const safelyDeletable = this.reconciliations.isSafelyDeletableManualExecution(
-        scope.workspaceId,
-        scope.accountId,
-        candidate.executionId,
-        candidate.currentVersionId,
-      );
-      if (onTiming) {
+      const guardStarted = onTiming && !safeVersions ? performance.now() : 0;
+      const safelyDeletable = safeVersions
+        ? safeVersions.get(candidate.executionId) === candidate.currentVersionId
+        : this.reconciliations.isSafelyDeletableManualExecution(
+          scope.workspaceId,
+          scope.accountId,
+          candidate.executionId,
+          candidate.currentVersionId,
+        );
+      if (onTiming && !safeVersions) {
         guardCount += 1;
         guardTotalMs += performance.now() - guardStarted;
       }

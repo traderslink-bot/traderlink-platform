@@ -397,6 +397,7 @@ ORDER BY allocation.round_trip_version_id, allocation.allocation_sequence`).all(
       journal.tradeStyles.accountScope(scope),
       executionIds,
       onTiming ? (phase, value) => recordTradeLibraryTiming(onTiming, phase, value) : undefined,
+      { guardReadMode: "workspace_batch" },
     );
   });
   const byExecution = new Map(editable.map((entry) => [entry.executionId, entry] as const));
