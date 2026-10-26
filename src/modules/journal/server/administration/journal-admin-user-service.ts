@@ -4,7 +4,11 @@ import type {
   JournalAdminPage,
   JournalAdminUserDetail,
   JournalAdminUserListItem,
+  JournalAdminErasureHistory,
+  JournalAdminErasureHistoryItem,
 } from "../../contracts/journal-administration-contracts";
+import type { ErasureHistoryRow } from "@/src/modules/platform/server/privacy/platform-erasure-history";
+import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import type { JournalAdminScope } from "@/src/modules/platform/contracts/journal-admin-scope";
 import type { PlatformAdminReferenceKeyConfiguration } from "@/src/modules/platform/server/administration/platform-admin-reference-authority";
 import {
@@ -26,6 +30,7 @@ type UserRow = Readonly<{
   production_registered: number;
   first_successful_auth_at_utc: string | null;
   last_auth_at_utc: string | null;
+  last_recorded_auth_at_utc: string | null;
   last_session_at_utc: string | null;
   last_live_session_at_utc: string | null;
   last_journal_activity_at_utc: string | null;
@@ -182,6 +187,7 @@ const USER_SELECT = `WITH user_activity AS (
   FROM platform_auth_identities identity GROUP BY identity.user_id
 ), session_summary AS (
   SELECT user_id, MIN(created_at_utc) AS first_session_at_utc,
+    MAX(created_at_utc) AS latest_session_created_at_utc,
     MAX(last_seen_at_utc) AS last_session_at_utc,
     MAX(CASE WHEN revoked_at_utc IS NULL THEN last_seen_at_utc END) AS last_live_session_at_utc
   FROM platform_auth_sessions GROUP BY user_id
@@ -216,6 +222,11 @@ const USER_SELECT = `WITH user_activity AS (
 SELECT user.user_id, user.display_name, user.status, user.created_at_utc,
   identity.providers, COALESCE(identity.production_registered, 0) AS production_registered,
   session.first_session_at_utc AS first_successful_auth_at_utc,
+  CASE
+    WHEN identity.last_identity_auth_at_utc IS NULL THEN session.latest_session_created_at_utc
+    WHEN session.latest_session_created_at_utc IS NULL THEN identity.last_identity_auth_at_utc
+    WHEN identity.last_identity_auth_at_utc >= session.latest_session_created_at_utc THEN identity.last_identity_auth_at_utc
+    ELSE session.latest_session_created_at_utc END AS last_recorded_auth_at_utc,
   CASE
     WHEN identity.last_identity_auth_at_utc IS NULL THEN session.last_session_at_utc
     WHEN session.last_session_at_utc IS NULL THEN identity.last_identity_auth_at_utc
@@ -324,6 +335,7 @@ function mapUser(
     productionRegistered: row.production_registered === 1,
     firstSuccessfulAuthenticationAtUtc: row.first_successful_auth_at_utc,
     lastSuccessfulAuthenticationAtUtc: row.last_auth_at_utc,
+    lastRecordedAuthenticationAtUtc: row.last_recorded_auth_at_utc,
     lastSessionAtUtc: row.last_session_at_utc,
     onlineNow: isOnlineNow(row.last_live_session_at_utc, context.now),
     lastJournalActivityAtUtc: row.last_journal_activity_at_utc,
@@ -366,7 +378,7 @@ export type JournalAdminUserFilters = Readonly<{
   hasUnresolvedDecisions?: boolean;
   multipleAccounts?: boolean;
   signedInSinceUtc?: string;
-  filter?: "academy_progress" | "source_not_recorded" | "never_signed_in" | "online_now" | "journal_started" | "journal_not_started" | "successful_import" | "failed_import" | "pending_import" | "manual_entries" | "manual_entry_issues" | "broker_connected" | "broker_statement_source" | "no_broker_evidence";
+  filter?: "academy_progress" | "source_not_recorded" | "never_signed_in" | "online_now" | "journal_started" | "journal_not_started" | "successful_import" | "failed_import" | "pending_import" | "pending_decision" | "manual_entries" | "manual_entry_issues" | "broker_connected" | "broker_statement_source" | "no_broker_evidence";
   view?: "new_academy_members" | "getting_started" | "needs_attention";
 }>;
 
@@ -466,6 +478,7 @@ export class JournalAdminUserService {
     if (filters.filter === "successful_import") clauses.push("COALESCE(imports.committed_import_count, 0) > 0");
     if (filters.filter === "failed_import") clauses.push("COALESCE(attempts.failed_import_count, 0) > 0");
     if (filters.filter === "pending_import") clauses.push("COALESCE(attempts.pending_import_count, 0) > 0");
+    if (filters.filter === "pending_decision") clauses.push("COALESCE(decisions.unresolved_decision_count, 0) > 0");
     if (filters.filter === "manual_entries") clauses.push("COALESCE(manual.manual_execution_count, 0) > 0");
     if (filters.filter === "manual_entry_issues") clauses.push("COALESCE(manual_failures.manual_entry_failure_count, 0) > 0");
     if (filters.filter === "broker_connected") clauses.push("COALESCE(brokers.has_connected, 0) = 1");
@@ -533,6 +546,75 @@ ORDER BY user.created_at_utc DESC, user.user_id DESC LIMIT ? OFFSET ?`)
       FROM platform_users user`).get()!;
   }
 
+  private recordedWatchlistVisits(userIds: readonly string[]): ReadonlyMap<string, string> | null {
+    const available = this.context.database.prepare(`SELECT 1 FROM sqlite_master
+      WHERE type = 'table' AND name = 'platform_watchlist_usage_events'`).get();
+    if (!available) return null;
+    if (userIds.length === 0) return new Map();
+    // Migration 0184 covers the equality, ordering and returned timestamp.
+    // Fetch only the newest event per visible member; never aggregate their history.
+    const latestVisit = this.context.database.prepare<[string], { latest_visit_ms: number }>(`SELECT
+      visited_at_ms AS latest_visit_ms FROM platform_watchlist_usage_events
+      WHERE user_id = ? ORDER BY visited_at_ms DESC LIMIT 1`);
+    const visits = new Map<string, string>();
+    for (const userId of userIds) {
+      const row = latestVisit.get(userId);
+      if (row) visits.set(userId, new Date(row.latest_visit_ms).toISOString());
+    }
+    return visits;
+  }
+
+  erasureHistory(cursor: string | null = null): JournalAdminErasureHistory {
+    const { database, nowUtc, now } = this.context;
+    return database.transaction(() => {
+      const available = database.prepare(`SELECT 1 FROM sqlite_master
+        WHERE type='table' AND name='platform_erasure_history'`).get();
+      if (!available) return Object.freeze({ status: "unavailable", items: Object.freeze([]), nextCursor: null, dataAsOfUtc: nowUtc, retentionDays: 30 });
+      const bindings: string[] = [nowUtc, new Date(now.getTime() - 30 * 86_400_000).toISOString()];
+      let boundary = "";
+      if (cursor) {
+        const { internalId } = resolveJournalAdminInternalId(this.context, cursor, ["erasure_history"]);
+        const anchor = database.prepare<[string, string], { accepted_at_utc: string; receipt_id: string }>(`SELECT accepted_at_utc,receipt_id
+          FROM platform_erasure_history WHERE receipt_id=? AND expires_at_utc>?`).get(internalId, nowUtc);
+        if (!anchor) platformFailure("TRADERLINK_JOURNAL_ADMIN_ACCESS_DENIED");
+        boundary = " AND (accepted_at_utc,receipt_id) < (?,?)";
+        bindings.push(anchor.accepted_at_utc, anchor.receipt_id);
+      }
+      // The recent index supplies chronology/keyset ordering. Fixed 30-day
+      // expiry is enforced on every disclosure, before and after physical purge.
+      const rows = database.prepare<string[], Pick<ErasureHistoryRow,
+        "receipt_id" | "member_display_name" | "action" | "phase" | "accepted_at_utc" |
+        "updated_at_utc" | "committed_at_utc" | "finished_at_utc" | "expires_at_utc"
+      >>(`SELECT receipt_id,member_display_name,action,phase,accepted_at_utc,updated_at_utc,
+        committed_at_utc,finished_at_utc,expires_at_utc FROM platform_erasure_history
+        WHERE expires_at_utc>? AND accepted_at_utc>?${boundary}
+        ORDER BY accepted_at_utc DESC,receipt_id DESC LIMIT 51`).all(...bindings);
+      const items = rows.slice(0, 50).map((row): JournalAdminErasureHistoryItem => {
+        let outcome: JournalAdminErasureHistoryItem["outcome"];
+        switch (row.phase) {
+          case "accepted": outcome = "attempted"; break;
+          case "not_deleted": outcome = "failed"; break;
+          case "committed_cleanup_pending": outcome = "committed"; break;
+          case "complete": outcome = "completed"; break;
+          case "outcome_unknown": outcome = "unknown"; break;
+          default: platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { check: "erasure_history_phase" });
+        }
+        return Object.freeze({
+          receiptRef: journalAdminReference(this.context, "erasure_history", row.receipt_id),
+          memberDisplayName: row.member_display_name,
+          action: row.action,
+          outcome,
+          attemptedAtUtc: row.accepted_at_utc,
+          committedAtUtc: row.committed_at_utc,
+          completedAtUtc: row.phase === "complete" ? row.finished_at_utc : null,
+          updatedAtUtc: row.updated_at_utc,
+          expiresAtUtc: row.expires_at_utc,
+        });
+      });
+      return Object.freeze({ status: "ready", items: Object.freeze(items), nextCursor: rows.length > 50 ? items.at(-1)!.receiptRef : null, dataAsOfUtc: nowUtc, retentionDays: 30 });
+    })();
+  }
+
   directory(input: Readonly<{ page?: number; filters?: JournalAdminUserFilters }> = {}) {
     return this.context.database.transaction(() => {
       const pageSize = 50;
@@ -541,6 +623,7 @@ ORDER BY user.created_at_utc DESC, user.user_id DESC LIMIT ? OFFSET ?`)
       const membershipAvailable = ["platform_membership_entitlements", "platform_membership_plan_versions", "platform_membership_plans"].every((name) =>
         !!this.context.database.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(name));
       const visibleIds = users.items.map((user) => resolveJournalAdminInternalId(this.context, user.userRef, ["user"]).internalId);
+      const watchlistVisits = this.recordedWatchlistVisits(visibleIds);
       const grants = membershipAvailable && visibleIds.length > 0
         ? this.context.database.prepare<unknown[], { user_id: string; name: string; source_type: string; ends_at_utc: string | null }>(`SELECT DISTINCT
           entitlement.user_id, plan.name, entitlement.source_type, entitlement.ends_at_utc
@@ -560,6 +643,7 @@ ORDER BY user.created_at_utc DESC, user.user_id DESC LIMIT ? OFFSET ?`)
         membershipAvailable,
         items: Object.freeze(users.items.map((user, index) => Object.freeze({
           ...user,
+          lastRecordedWatchlistVisitAtUtc: watchlistVisits === null ? undefined : watchlistVisits.get(visibleIds[index]!) ?? null,
           memberships: Object.freeze(grants.filter((grant) => grant.user_id === visibleIds[index]).map((grant) => Object.freeze({
             planName: grant.name, source: grant.source_type, endsAtUtc: grant.ends_at_utc,
           }))),
@@ -686,8 +770,12 @@ ORDER BY occurred_at_utc DESC, manual_entry_failure_id DESC LIMIT 5`).all(intern
           nextStep: explanation.nextStep,
         });
       });
+    const watchlistVisits = this.recordedWatchlistVisits([internalId]);
     return Object.freeze({
-      user: mapUser(this.context, row),
+      user: Object.freeze({
+        ...mapUser(this.context, row),
+        lastRecordedWatchlistVisitAtUtc: watchlistVisits === null ? undefined : watchlistVisits.get(internalId) ?? null,
+      }),
       sessionCount: sessionCounts.total,
       activeSessionCount: sessionCounts.active,
       recentImportAttempts: Object.freeze(recentImportAttempts),

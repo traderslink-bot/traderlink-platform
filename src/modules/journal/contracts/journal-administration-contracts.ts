@@ -84,6 +84,10 @@ export type JournalAdminUserListItem = Readonly<{
   authenticationProviders: readonly string[];
   productionRegistered: boolean;
   lastSuccessfulAuthenticationAtUtc: string | null;
+  /** Authentication evidence only; excludes later session activity. */
+  lastRecordedAuthenticationAtUtc?: string | null;
+  /** Undefined when collection is unavailable; null means no visit was recorded. */
+  lastRecordedWatchlistVisitAtUtc?: string | null;
   firstSuccessfulAuthenticationAtUtc: string | null;
   lastSessionAtUtc: string | null;
   onlineNow: boolean;
@@ -153,6 +157,26 @@ export type JournalAdminUserDetail = Readonly<{
     swingNoteCount: number;
   }>[];
   privacyRequestState: "not_available";
+}>;
+
+export type JournalAdminErasureHistoryItem = Readonly<{
+  receiptRef: string;
+  memberDisplayName: string;
+  action: "traderlink_account" | "trade_tracker_account" | "demo_trade_tracker_account";
+  outcome: "attempted" | "committed" | "completed" | "failed" | "unknown";
+  attemptedAtUtc: string;
+  committedAtUtc: string | null;
+  completedAtUtc: string | null;
+  updatedAtUtc: string;
+  expiresAtUtc: string;
+}>;
+
+export type JournalAdminErasureHistory = Readonly<{
+  status: "ready" | "unavailable";
+  items: readonly JournalAdminErasureHistoryItem[];
+  nextCursor: string | null;
+  dataAsOfUtc: string;
+  retentionDays: 30;
 }>;
 
 export type JournalAdminImportCoverageKind =

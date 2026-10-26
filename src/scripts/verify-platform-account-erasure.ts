@@ -14,15 +14,17 @@ import { PlatformErasureService } from "@/src/modules/platform/server/privacy/pl
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import {
   promoteJournalEvidenceObject,
-  purgeJournalEvidenceObject,
   resolveJournalEvidenceVaultBoundary,
 } from "@/src/modules/journal/server/imports/journal-evidence-vault";
 import {
-  purgeJournalSupportSource,
   resolveJournalSupportSourceVault,
   writeJournalSupportSource,
 } from "@/src/modules/journal/server/administration/journal-support-source-vault";
 import { initializeTraderLinkPlatformDatabase } from "./initialize-traderlink-platform-database";
+
+import { PlatformErasureRecovery } from "@/src/modules/platform/server/privacy/platform-erasure-recovery";
+import { createErasureObjectStore } from "@/src/modules/platform/server/privacy/platform-erasure-object-store";
+import { platformErasureRecoverySchemaStatements } from "@/src/modules/platform/server/privacy/platform-erasure-recovery-schema";
 
 const TIMESTAMP = "2026-08-10T12:00:00.000Z";
 
@@ -239,7 +241,20 @@ function main(): void {
       const fixture = createFixture(database, { databasePath, evidenceVaultRoot, supportVaultRoot });
       const guardsBefore = beforeDeleteGuardCount(database);
       requireEvidence(guardsBefore > 0, "delete_guards_present");
+      // Synthetic schema only, independent of the pending migration reservation.
+      if (!database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_erasure_operations'").get()) {
+        for (const sql of platformErasureRecoverySchemaStatements) database.exec(sql);
+      }
       const service = new PlatformErasureService(database);
+      const previousEvidenceRoot = process.env.TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT;
+      const previousSupportRoot = process.env.TRADERLINK_PLATFORM_JOURNAL_SUPPORT_SOURCE_ROOT;
+      const previousProtectedRoots = process.env.TRADERLINK_PLATFORM_JOURNAL_PROTECTED_STORAGE_ROOTS_JSON;
+      process.env.TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT = evidenceVaultRoot;
+      process.env.TRADERLINK_PLATFORM_JOURNAL_SUPPORT_SOURCE_ROOT = supportVaultRoot;
+      process.env.TRADERLINK_PLATFORM_JOURNAL_PROTECTED_STORAGE_ROOTS_JSON = JSON.stringify([join(root, "protected")]);
+      const recovery = new PlatformErasureRecovery(database, createErasureObjectStore(databasePath));
+      let operationId = "";
+      try {
       try {
         service.eraseTradeTrackerAccount({
           accountId: fixture.accountOne,
@@ -247,7 +262,7 @@ function main(): void {
           workspaceId: fixture.workspaceOne,
           workspaceRole: "owner",
         }, {
-          purgePrivateArtifacts: () => { throw new Error("synthetic_purge_failure"); },
+          recordPrivateArtifactObligations: () => { throw new Error("synthetic_purge_failure"); },
         });
         requireEvidence(false, "purge_failure_must_abort");
       } catch (error) {
@@ -262,27 +277,12 @@ function main(): void {
         workspaceId: fixture.workspaceOne,
         workspaceRole: "owner",
       }, {
-        purgePrivateArtifacts: (artifacts) => {
-          for (const artifact of artifacts) {
-            if (artifact.kind === "primary_evidence") {
-              purgeJournalEvidenceObject(fixture.primaryVault, {
-                evidenceNamespace: "ibkr",
-                evidenceObjectKey: artifact.evidenceObjectKey,
-                sourceFileSha256: artifact.sourceFileSha256,
-                sourceFileSizeBytes: artifact.sourceFileSizeBytes,
-              });
-            } else {
-              purgeJournalSupportSource({
-                vault: fixture.supportVault,
-                objectKey: artifact.objectKey,
-                expectedSha256: artifact.sourceFileSha256,
-                expectedSizeBytes: artifact.sourceFileSizeBytes,
-                purgedAtUtc: TIMESTAMP,
-              });
-            }
-          }
+        recordPrivateArtifactObligations: (artifacts) => {
+          operationId = recovery.record("trade_tracker_account", "a".repeat(64), artifacts);
         },
       });
+      requireEvidence(existsSync(join(evidenceVaultRoot, fixture.primaryObject.evidenceObjectKey)), "bytes_preserved_until_logical_commit");
+      recovery.finish(operationId);
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM journal_accounts WHERE account_id = ?", fixture.accountOne) === 0, "selected_account_removed");
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM journal_account_source_identities WHERE account_id = ?", fixture.accountOne) === 0, "selected_account_child_removed");
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM platform_notifications WHERE journal_account_id = ?", fixture.accountOne) === 0, "selected_account_notification_removed");
@@ -307,6 +307,14 @@ function main(): void {
       requireEvidence(count(database, "SELECT COUNT(*) AS count FROM journal_accounts WHERE account_id = ?", fixture.accountThree) === 1, "other_user_account_still_preserved");
       requireEvidence(beforeDeleteGuardCount(database) === guardsBefore, "full_delete_restored_guards");
       requireEvidence(database.prepare("PRAGMA foreign_key_check").all().length === 0, "foreign_keys_clean");
+      } finally {
+        if (previousEvidenceRoot === undefined) delete process.env.TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT;
+        else process.env.TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT = previousEvidenceRoot;
+        if (previousSupportRoot === undefined) delete process.env.TRADERLINK_PLATFORM_JOURNAL_SUPPORT_SOURCE_ROOT;
+        else process.env.TRADERLINK_PLATFORM_JOURNAL_SUPPORT_SOURCE_ROOT = previousSupportRoot;
+        if (previousProtectedRoots === undefined) delete process.env.TRADERLINK_PLATFORM_JOURNAL_PROTECTED_STORAGE_ROOTS_JSON;
+        else process.env.TRADERLINK_PLATFORM_JOURNAL_PROTECTED_STORAGE_ROOTS_JSON = previousProtectedRoots;
+      }
     } finally {
       database.close();
     }

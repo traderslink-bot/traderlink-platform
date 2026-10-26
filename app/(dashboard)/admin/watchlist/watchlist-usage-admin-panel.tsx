@@ -40,11 +40,12 @@ export function WatchlistUsageAdminPanel({
         {usage ? (
           <>
             <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-              <DashboardMetricCard caption="Unique members today" label="Today's distinct visitors" value={count(usage.todayDistinctVisitors)} />
-              <DashboardMetricCard caption="Confirmed page views today" label="Today's visits" value={count(usage.todayVisits)} />
-              <DashboardMetricCard caption="Confirmed page views since release" label="All recorded visits" value={count(usage.allRecordedVisits)} />
-              <DashboardMetricCard caption="Collection began after release" label="Data since" value={dateTime(usage.dataSinceMs)} />
+              <DashboardMetricCard caption="Members with a recorded visit today · ET" label="Today's distinct visitors" value={count(usage.todayDistinctVisitors)} />
+              <DashboardMetricCard caption="Recorded page openings today · ET" label="Today's visits" value={count(usage.todayVisits)} />
+              <DashboardMetricCard caption="Recorded page openings; not proof of reading" label="All recorded visits" value={count(usage.allRecordedVisits)} />
+              <DashboardMetricCard caption="Earliest retained visit record" label="Data since" value={dateTime(usage.dataSinceMs)} />
             </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>These records cover the main Watchlist and active ticker pages. Tracking can miss visits; no record does not mean a member did not view the Watchlist. Owner accounts and archive pages are excluded. Returning to an already-open tab is not a new recorded visit. Dates and daily totals use Eastern time.</Typography>
             <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", mt: 2 }}>
               <UsageTable title="Daily Watchlist activity" columns={["New York date", "Distinct visitors", "Visits"]} empty="No Watchlist visits have been recorded yet.">
                 {usage.daily.map((row) => (
@@ -55,7 +56,7 @@ export function WatchlistUsageAdminPanel({
                   </TableRow>
                 ))}
               </UsageTable>
-              <UsageTable title="Watchlist visitors" columns={["Member", "Most recent visit", "Today's visits", "Recorded visits"]} empty="No Watchlist visitors have been recorded yet.">
+              <UsageTable title="Recorded Watchlist visitors" columns={["Member", "Most recent recorded visit", "Today's visits", "Recorded visits"]} empty="No Watchlist visitors have been recorded yet.">
                 {usage.visitors.map((row, index) => (
                   <TableRow key={`${row.displayName}-${row.mostRecentVisitMs}-${index}`}>
                     <TableCell>{row.displayName}</TableCell>

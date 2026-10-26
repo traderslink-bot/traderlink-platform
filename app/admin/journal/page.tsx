@@ -63,7 +63,7 @@ export default async function JournalAdminOverviewPage() {
         />
         <JournalAdminMetricCard
           caption="Discord sessions seen during the last 7 days"
-          label="Recently signed-in members"
+          label="Members with recent Discord session activity"
           value={formatAdminInteger(overview.users.signedIn7Days)}
         />
         <JournalAdminMetricCard

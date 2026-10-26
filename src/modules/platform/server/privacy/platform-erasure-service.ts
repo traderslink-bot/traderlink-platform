@@ -1,4 +1,6 @@
 import type Database from "better-sqlite3";
+import { captureErasureClosure, type ErasureRoot } from "./platform-erasure-closure";
+import { observeErasurePhase } from "./platform-erasure-observability";
 
 import { JournalAccountRepository, type JournalAccountRecord } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
@@ -12,14 +14,6 @@ import {
 
 type SchemaRow = Readonly<{ name: string; sql: string }>;
 type ColumnRow = Readonly<{ name: string }>;
-type ForeignKeyRow = Readonly<{
-  id: number;
-  seq: number;
-  table: string;
-  from: string;
-  to: string;
-}>;
-
 type PrimaryEvidenceArtifact = Readonly<{
   kind: "primary_evidence";
   evidenceObjectKey: string;
@@ -38,7 +32,7 @@ export type PlatformErasureArtifact = PrimaryEvidenceArtifact | SupportSourceArt
 
 export type PlatformErasureResult = Readonly<{
   erasedAccountIds: readonly string[];
-  privateArtifactsPurged: readonly PlatformErasureArtifact[];
+  privateArtifactsPendingPurge: readonly PlatformErasureArtifact[];
 }>;
 
 export type PlatformDemoErasureReplacementResult = PlatformErasureResult & Readonly<{
@@ -46,12 +40,11 @@ export type PlatformDemoErasureReplacementResult = PlatformErasureResult & Reado
 }>;
 
 export type PlatformErasureOptions = Readonly<{
-  /**
-   * Purges unshared private objects while the database transaction is still
-   * open. A purge failure aborts the database change, so an account never
-   * remains accessible after its private source has been removed.
+  /** Validate private objects and persist their cleanup obligations in this
+   * transaction. MUST NOT remove/rename files: rollback must preserve bytes.
+   * Physical purge runs only after this transaction commits successfully.
    */
-  purgePrivateArtifacts?: (artifacts: readonly PlatformErasureArtifact[]) => void;
+  recordPrivateArtifactObligations?: (artifacts: readonly PlatformErasureArtifact[]) => void;
 }>;
 
 const IDENTIFIER = /^[a-z][a-z0-9_]*$/u;
@@ -69,7 +62,7 @@ FROM sqlite_master
 WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
 ORDER BY name`).all()
     .map((table) => table.name)
-    .filter((name) => name !== "platform_schema_migrations"));
+    .filter((name) => name !== "platform_schema_migrations" && !name.startsWith("platform_erasure_")));
 }
 
 function hasColumn(database: Database.Database, table: string, column: string): boolean {
@@ -91,41 +84,30 @@ WHERE type = 'trigger' AND sql LIKE '%BEFORE DELETE%'
 ORDER BY name`).all().filter((trigger) => trigger.sql.length > 0));
 }
 
-function foreignKeys(database: Database.Database, table: string): readonly ForeignKeyRow[] {
-  return Object.freeze(database.prepare<[], ForeignKeyRow>(
-    `PRAGMA foreign_key_list(${identifier(table)})`,
-  ).all());
-}
-
-function deleteOrphanedForeignKeyRows(database: Database.Database): void {
-  // All ordinary deletes are account/user/workspace-scoped. This final pass
-  // removes only descendants of those removed roots, including future tables
-  // that carry an FK rather than repeating one of those scope columns.
-  for (let pass = 0; pass < 32; pass += 1) {
-    let removed = 0;
-    for (const childTable of tables(database)) {
-      const groups = new Map<number, ForeignKeyRow[]>();
-      for (const foreignKey of foreignKeys(database, childTable)) {
-        const group = groups.get(foreignKey.id) ?? [];
-        group.push(foreignKey);
-        groups.set(foreignKey.id, group);
-      }
-      for (const group of groups.values()) {
-        if (group.some((foreignKey) => !foreignKey.to)) continue;
-        const ordered = [...group].sort((left, right) => left.seq - right.seq);
-        const childPresent = ordered.map((foreignKey) =>
-          `child.${identifier(foreignKey.from)} IS NOT NULL`).join(" AND ");
-        const parentMatch = ordered.map((foreignKey) =>
-          `parent.${identifier(foreignKey.to)} = child.${identifier(foreignKey.from)}`).join(" AND ");
-        removed += database.prepare(`DELETE FROM ${identifier(childTable)} AS child
-WHERE ${childPresent} AND NOT EXISTS (
-  SELECT 1 FROM ${identifier(ordered[0]!.table)} AS parent WHERE ${parentMatch}
-)`).run().changes;
+function captureScopedRows(database: Database.Database, scope: AccountScope | WorkspaceAccessScope) {
+  const roots: ErasureRoot[] = [];
+  if ("accountId" in scope) {
+    for (const table of tablesWithColumn(database, "account_id")) {
+      roots.push({ table, column: "account_id", value: scope.accountId, workspaceId: scope.workspaceId });
+    }
+    roots.push({ table: "platform_notifications", column: "journal_account_id", value: scope.accountId, workspaceId: scope.workspaceId });
+  } else {
+    for (const column of ["workspace_id", "user_id"] as const) {
+      for (const table of tablesWithColumn(database, column)) {
+        roots.push({ table, column, value: column === "workspace_id" ? scope.workspaceId : scope.userId });
       }
     }
-    if (removed === 0) return;
+    if (tables(database).includes("platform_discord_identity_releases")) {
+      roots.push({ table: "platform_discord_identity_releases", column: "claimed_by_user_id", value: scope.userId });
+    }
   }
-  platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { check: "erasure_orphan_passes" });
+  return observeErasurePhase("capture_roots", () => captureErasureClosure(database, roots, {
+    workspaceId: scope.workspaceId,
+    accountIds: "accountId" in scope ? [scope.accountId] : undefined,
+    excludeTables: database.prepare<[], { name: string }>(
+      "SELECT name FROM sqlite_schema WHERE type='table' AND name LIKE 'platform_erasure_%'",
+    ).all().map((row) => row.name),
+  }));
 }
 
 function readPrivateArtifacts(
@@ -140,7 +122,7 @@ function readPrivateArtifacts(
     source_file_size_bytes: number;
   }>>(`SELECT DISTINCT evidence_object_key, source_file_sha256, source_file_size_bytes
 FROM journal_import_batches
-WHERE account_id IN (${placeholders}) AND evidence_object_key IS NOT NULL`).all(...accountIds)
+WHERE account_id IN (${placeholders}) AND evidence_object_key IS NOT NULL LIMIT 10001`).all(...accountIds)
     .map((row) => Object.freeze({
       kind: "primary_evidence" as const,
       evidenceObjectKey: row.evidence_object_key,
@@ -154,14 +136,14 @@ WHERE account_id IN (${placeholders}) AND evidence_object_key IS NOT NULL`).all(
     purge_state: string;
   }>>(`SELECT object_key, source_file_sha256, source_file_size_bytes, purge_state
 FROM journal_statement_support_objects
-WHERE account_id IN (${placeholders})`).all(...accountIds)
-    .filter((row) => row.purge_state !== "purged")
+WHERE account_id IN (${placeholders}) AND purge_state <> 'purged' LIMIT 10001`).all(...accountIds)
     .map((row) => Object.freeze({
       kind: "support_source" as const,
       objectKey: row.object_key,
       sourceFileSha256: row.source_file_sha256,
       sourceFileSizeBytes: row.source_file_size_bytes,
     }));
+  if (primary.length + support.length > 10_000) platformFailure("TRADERLINK_ACCOUNT_ERASURE_FAILED");
   return Object.freeze([...primary, ...support]);
 }
 
@@ -179,57 +161,12 @@ FROM journal_statement_support_objects WHERE object_key = ?`).get(artifact.objec
   }));
 }
 
-function eraseAccountRows(
-  database: Database.Database,
-  scope: AccountScope,
-): readonly string[] {
-  const accountTables = tablesWithColumn(database, "account_id");
-  // These child tables deliberately do not repeat account_id.
-  database.prepare(`DELETE FROM platform_notification_receipts
-WHERE notification_id IN (
-  SELECT notification_id FROM platform_notifications WHERE journal_account_id = ?
-)`).run(scope.accountId);
-  database.prepare(`DELETE FROM coach_weekly_issued_reviews
-WHERE coach_weekly_review_request_id IN (
-  SELECT coach_weekly_review_request_id FROM coach_weekly_review_requests WHERE account_id = ?
-)`).run(scope.accountId);
-  database.prepare(`DELETE FROM coach_monthly_issued_reviews
-WHERE coach_monthly_review_request_id IN (
-  SELECT coach_monthly_review_request_id FROM coach_monthly_review_requests WHERE account_id = ?
-)`).run(scope.accountId);
-  database.prepare(`DELETE FROM coach_ai_issued_reviews_v2
-WHERE coach_ai_review_period_request_id IN (
-  SELECT coach_ai_review_period_request_id FROM coach_ai_review_period_requests_v2 WHERE account_id = ?
-)`).run(scope.accountId);
-  database.prepare(`DELETE FROM coach_ai_review_generation_attempt_receipts
-WHERE coach_ai_review_generation_attempt_id IN (
-  SELECT coach_ai_review_generation_attempt_id FROM coach_ai_review_generation_attempts WHERE account_id = ?
-)`).run(scope.accountId);
-  database.prepare(`DELETE FROM coach_ai_review_generation_attempt_receipts_v2
-WHERE coach_ai_review_generation_attempt_id IN (
-  SELECT coach_ai_review_generation_attempt_id FROM coach_ai_review_generation_attempts_v2 WHERE account_id = ?
-)`).run(scope.accountId);
-  database.prepare(`DELETE FROM journal_round_trip_daily_trade_analysis_versions
-WHERE daily_trade_analysis_id IN (
-  SELECT daily_trade_analysis_id FROM journal_round_trip_daily_trade_analyses WHERE account_id = ?
-)`).run(scope.accountId);
-  database.prepare(`DELETE FROM journal_round_trip_daily_trade_analysis_event_snapshots
-WHERE execution_id IN (
-  SELECT execution_id FROM journal_executions WHERE account_id = ?
-)`).run(scope.accountId);
-  database.prepare(`DELETE FROM journal_round_trip_daily_trade_analysis_path_summaries
-WHERE round_trip_version_id IN (
-  SELECT round_trip_version_id FROM journal_round_trip_versions WHERE account_id = ?
-)`).run(scope.accountId);
-  for (const table of accountTables) {
-    if (table !== "journal_accounts") {
-      database.prepare(`DELETE FROM ${identifier(table)} WHERE account_id = ?`).run(scope.accountId);
-    }
-  }
-  database.prepare("DELETE FROM platform_notifications WHERE journal_account_id = ?").run(scope.accountId);
-  const removed = database.prepare(`DELETE FROM journal_accounts
-WHERE workspace_id = ? AND account_id = ?`).run(scope.workspaceId, scope.accountId);
-  if (removed.changes !== 1) platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
+function eraseAccountRows(database: Database.Database, scope: AccountScope): readonly string[] {
+  const account = database.prepare(`SELECT 1 FROM journal_accounts WHERE workspace_id=? AND account_id=?`)
+    .get(scope.workspaceId, scope.accountId);
+  if (!account) platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
+  const closure = captureScopedRows(database, scope);
+  try { closure.deleteRows(); } finally { closure.dispose(); }
   return Object.freeze([scope.accountId]);
 }
 
@@ -243,7 +180,7 @@ function withPermanentDeleteTransaction<T>(
     for (const guard of guards) database.exec(`DROP TRIGGER ${identifier(guard.name)}`);
     const result = operation();
     for (const guard of guards) database.exec(guard.sql);
-    if (database.prepare("PRAGMA foreign_key_check").all().length > 0) {
+    if (observeErasurePhase("foreign_key_check", () => database.prepare("PRAGMA foreign_key_check").get())) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { check: "erasure_foreign_keys" });
     }
     return result;
@@ -278,10 +215,12 @@ export class PlatformErasureService {
     return withPermanentDeleteTransaction(this.database, () => {
       const artifacts = readPrivateArtifacts(this.database, [scope.accountId]);
       const erasedAccountIds = eraseAccountRows(this.database, scope);
-      deleteOrphanedForeignKeyRows(this.database);
-      const privateArtifactsPurged = unsharedArtifacts(this.database, artifacts);
-      options.purgePrivateArtifacts?.(privateArtifactsPurged);
-      return Object.freeze({ erasedAccountIds, privateArtifactsPurged });
+      const privateArtifactsPendingPurge = unsharedArtifacts(this.database, artifacts);
+      if (privateArtifactsPendingPurge.length && !options.recordPrivateArtifactObligations) {
+        platformFailure("TRADERLINK_ACCOUNT_ERASURE_FAILED");
+      }
+      options.recordPrivateArtifactObligations?.(privateArtifactsPendingPurge);
+      return Object.freeze({ erasedAccountIds, privateArtifactsPendingPurge });
     });
   }
 
@@ -303,10 +242,12 @@ export class PlatformErasureService {
         userId: scope.userId,
         workspaceId: scope.workspaceId,
       });
-      deleteOrphanedForeignKeyRows(this.database);
-      const privateArtifactsPurged = unsharedArtifacts(this.database, artifacts);
-      options.purgePrivateArtifacts?.(privateArtifactsPurged);
-      return Object.freeze({ erasedAccountIds, privateArtifactsPurged });
+      const privateArtifactsPendingPurge = unsharedArtifacts(this.database, artifacts);
+      if (privateArtifactsPendingPurge.length && !options.recordPrivateArtifactObligations) {
+        platformFailure("TRADERLINK_ACCOUNT_ERASURE_FAILED");
+      }
+      options.recordPrivateArtifactObligations?.(privateArtifactsPendingPurge);
+      return Object.freeze({ erasedAccountIds, privateArtifactsPendingPurge });
     });
   }
 
@@ -329,7 +270,6 @@ export class PlatformErasureService {
         userId: scope.userId,
         workspaceId: scope.workspaceId,
       });
-      deleteOrphanedForeignKeyRows(this.database);
       const remaining = this.database.prepare<[string], { count: number }>(`SELECT COUNT(*) AS count
 FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.workspaceId);
       if (remaining?.count !== 0) platformFailure("TRADERLINK_ACCOUNT_SELECTION_CONFLICT");
@@ -344,9 +284,12 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
         createdAtUtc: timestamp,
         updatedAtUtc: timestamp,
       });
-      const privateArtifactsPurged = unsharedArtifacts(this.database, artifacts);
-      options.purgePrivateArtifacts?.(privateArtifactsPurged);
-      return Object.freeze({ erasedAccountIds, privateArtifactsPurged, replacementAccount });
+      const privateArtifactsPendingPurge = unsharedArtifacts(this.database, artifacts);
+      if (privateArtifactsPendingPurge.length && !options.recordPrivateArtifactObligations) {
+        platformFailure("TRADERLINK_ACCOUNT_ERASURE_FAILED");
+      }
+      options.recordPrivateArtifactObligations?.(privateArtifactsPendingPurge);
+      return Object.freeze({ erasedAccountIds, privateArtifactsPendingPurge, replacementAccount });
     });
   }
 
@@ -354,51 +297,27 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
     scope: WorkspaceAccessScope,
     options: PlatformErasureOptions = {},
   ): PlatformErasureResult {
+    assertCanonicalUuidV4(scope.userId, "erasureUserId");
+    assertCanonicalUuidV4(scope.workspaceId, "erasureWorkspaceId");
     if (scope.workspaceRole !== "owner") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
-    assertSoleWorkspaceOwner(this.database, scope);
     return withPermanentDeleteTransaction(this.database, () => {
-      // This authorized privacy transaction has already suspended BEFORE DELETE
-      // audit guards and defers FKs. Remove either side's release references before
-      // deleting users; never weaken these guards in the normal login flow.
-      if (tables(this.database).includes("platform_discord_identity_releases")) {
-        this.database.prepare(`DELETE FROM platform_discord_identity_releases
-          WHERE user_id=? OR claimed_by_user_id=?`).run(scope.userId, scope.userId);
-      }
-      // The generic user_id pass below removes only this user's original-provider
-      // marker. Another surviving user's marker must remain: deleting a later
-      // destination account must not reserve Discord back to an old signup row.
+      assertSoleWorkspaceOwner(this.database, scope);
       const accountIds = this.database.prepare<[string], { account_id: string }>(`SELECT account_id
 FROM journal_accounts WHERE workspace_id = ?`).all(scope.workspaceId).map((row) => row.account_id);
       const artifacts = readPrivateArtifacts(this.database, accountIds);
-      for (const accountId of accountIds) {
-        eraseAccountRows(this.database, Object.freeze({
-          accountId,
-          userId: scope.userId,
-          workspaceId: scope.workspaceId,
-          workspaceRole: scope.workspaceRole,
-        }));
+      const closure = captureScopedRows(this.database, scope);
+      try { closure.deleteRows(); } finally { closure.dispose(); }
+      if (this.database.prepare("SELECT 1 FROM platform_users WHERE user_id=?").get(scope.userId)) {
+        platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       }
-      for (const table of tablesWithColumn(this.database, "workspace_id")) {
-        if (table !== "platform_workspaces" && table !== "platform_workspace_memberships") {
-          this.database.prepare(`DELETE FROM ${identifier(table)} WHERE workspace_id = ?`).run(scope.workspaceId);
-        }
+      const privateArtifactsPendingPurge = unsharedArtifacts(this.database, artifacts);
+      if (privateArtifactsPendingPurge.length && !options.recordPrivateArtifactObligations) {
+        platformFailure("TRADERLINK_ACCOUNT_ERASURE_FAILED");
       }
-      for (const table of tablesWithColumn(this.database, "user_id")) {
-        if (table !== "platform_users" && table !== "platform_workspace_memberships") {
-          this.database.prepare(`DELETE FROM ${identifier(table)} WHERE user_id = ?`).run(scope.userId);
-        }
-      }
-      deleteOrphanedForeignKeyRows(this.database);
-      this.database.prepare("DELETE FROM platform_workspace_memberships WHERE user_id = ?").run(scope.userId);
-      this.database.prepare("DELETE FROM platform_workspaces WHERE workspace_id = ?").run(scope.workspaceId);
-      const removed = this.database.prepare("DELETE FROM platform_users WHERE user_id = ?").run(scope.userId);
-      if (removed.changes !== 1) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
-      deleteOrphanedForeignKeyRows(this.database);
-      const privateArtifactsPurged = unsharedArtifacts(this.database, artifacts);
-      options.purgePrivateArtifacts?.(privateArtifactsPurged);
+      options.recordPrivateArtifactObligations?.(privateArtifactsPendingPurge);
       return Object.freeze({
         erasedAccountIds: Object.freeze(accountIds),
-        privateArtifactsPurged,
+        privateArtifactsPendingPurge,
       });
     });
   }

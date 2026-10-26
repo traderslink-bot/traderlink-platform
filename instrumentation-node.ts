@@ -23,6 +23,10 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
     console.info(
       `TraderLink hosted runtime verified ${readiness.migrationCount} migrations on ${readiness.storage}.`,
     );
+    const { startCommittedErasureRecovery } = await import(
+      "./src/modules/platform/server/privacy/platform-erasure-worker-supervisor"
+    );
+    startCommittedErasureRecovery();
     try {
       const { startPlatformRuntimeDelayObservability } = await import(
         "./src/modules/platform/server/observability/platform-runtime-delay-observability"

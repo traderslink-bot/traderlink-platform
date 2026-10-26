@@ -199,6 +199,13 @@ export default function PrivacyPolicyPage() {
           retained by default unless you deliberately authorize a support or
           recovery workflow that says otherwise.
         </p>
+        <p>
+          For deletion support, the owner can review a restricted record linking
+          your display name to the request type, times and outcome for 30 days
+          after the request is accepted. Expired records are unavailable for review and are
+          removed by automated retention cleanup. These records do not contain
+          your statements, trades, credentials or broker account identifiers.
+        </p>
       </section>
 
       <section>

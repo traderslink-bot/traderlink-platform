@@ -2,6 +2,9 @@
 
 **Date:** 2026-10-10
 
+2026-10-26 follow-up: [member activity and deletion-reporting source slice](admin-member-stats-reporting-progress-20261026.md).
+This follow-up is unverified; the historical checks below do not cover it.
+
 **Status:** Local implementation complete; focused lint and TypeScript pass. Owner visual acceptance and hosted reconciliation pending. No deployment authorized by this record.
 
 **Owner release authorization:** After receiving the local completion report,

@@ -22,6 +22,7 @@ export type JournalAdminReferenceKind =
   | "format_observation"
   | "data_decision"
   | "audit_event"
+  | "erasure_history"
   | "operational_event";
 
 export type ResolvedJournalAdminReference = Readonly<{

@@ -72,13 +72,13 @@ export function AccountErasureControls({
       });
       if (!response.ok) {
         setError(response.status === 409
-          ? "Your selected Trade Tracker account changed. Refresh this page and try again."
-          : "TraderLink could not complete the deletion. Nothing was deleted. Try again.");
+          ? "The selected Trade Tracker account is no longer available for this request. Refresh to check its current state before requesting another deletion."
+          : "We could not confirm the deletion outcome. Do not submit it again. Contact support to check its status.");
         return;
       }
       window.location.assign(dialog === "traderlink_account" ? "/" : "/account/trading");
     } catch {
-      setError("TraderLink could not complete the deletion. Nothing was deleted. Try again.");
+      setError("We could not confirm the deletion outcome. Do not submit it again. Contact support to check its status.");
     } finally {
       setWorking(false);
     }
@@ -166,6 +166,9 @@ export function AccountErasureControls({
           </Button>
         </DialogActions>
       </Dialog>
+      <Typography color="text.secondary" variant="caption">
+        For 30 days after a deletion request is accepted, the owner can review restricted support history containing your display name, request type, times and outcome. It contains no trades or private files and cannot restore an account. Expired records are hidden and removed by automated retention cleanup.
+      </Typography>
       <Typography color="text.secondary" variant="caption">
         Protected disaster-recovery copies follow TraderLink&apos;s retention procedure and are not available to restore a deleted account.
       </Typography>

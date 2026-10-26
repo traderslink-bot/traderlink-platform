@@ -18,6 +18,7 @@ FROM base AS builder
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
+RUN node scripts/platform/build-erasure-worker.cjs --out-dir /app/erasure-worker
 
 FROM base AS runtime
 ENV NODE_ENV=production
@@ -31,6 +32,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=dependencies --chown=nextjs:nodejs /app/bin/traderlink-integrity-cache-release ./bin/traderlink-integrity-cache-release
+COPY --from=builder --chown=nextjs:nodejs /app/erasure-worker ./workers
 
 USER nextjs
 EXPOSE 3000

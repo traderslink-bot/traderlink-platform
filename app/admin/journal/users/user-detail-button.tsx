@@ -14,9 +14,10 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 
-import type { JournalAdminSensitiveAccessReason, JournalAdminUserDetail } from "@/src/modules/journal/contracts/journal-administration-contracts";
+import type { JournalAdminErasureHistory, JournalAdminErasureHistoryItem, JournalAdminSensitiveAccessReason, JournalAdminUserDetail } from "@/src/modules/journal/contracts/journal-administration-contracts";
 import { JOURNAL_ADMIN_IDEMPOTENCY_HEADER, JOURNAL_ADMIN_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-admin-request";
 import { formatAdminInteger } from "../journal-admin-ui";
 import { formatAdminUtc } from "../journal-admin-ui";
@@ -32,6 +33,7 @@ const reasons: readonly Readonly<{
 ];
 
 export function UserDetailButton({ userRef }: { userRef: string }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<JournalAdminSensitiveAccessReason>(
     "owner_support_review",
@@ -42,6 +44,21 @@ export function UserDetailButton({ userRef }: { userRef: string }) {
   const [controlAction, setControlAction] = useState<"disable" | "enable" | "sign_out_all" | null>(null);
   const [controlConfirmation, setControlConfirmation] = useState("");
   const [controlMessage, setControlMessage] = useState<string | null>(null);
+  const refreshAfterClose = useRef(false);
+
+  function closeDetails() {
+    if (loading) return;
+    setOpen(false);
+    setDetail(null);
+    setControlAction(null);
+    setControlConfirmation("");
+    setControlMessage(null);
+    setError(null);
+    if (refreshAfterClose.current) {
+      refreshAfterClose.current = false;
+      router.refresh();
+    }
+  }
 
   const load = async () => {
     setLoading(true);
@@ -67,7 +84,7 @@ export function UserDetailButton({ userRef }: { userRef: string }) {
       }
       setDetail((body as { user: JournalAdminUserDetail }).user);
     } catch {
-      setError("User details are unavailable right now. The access attempt was recorded.");
+      setError("User details are unavailable right now. We could not confirm whether the access attempt was recorded.");
     } finally {
       setLoading(false);
     }
@@ -92,12 +109,15 @@ export function UserDetailButton({ userRef }: { userRef: string }) {
         },
       );
       if (!response.ok) throw new Error("Account control failed");
-      setControlMessage(controlAction === "sign_out_all" ? "All active dashboard sessions were signed out." : controlAction === "disable" ? "The account is disabled and active sessions were signed out." : "The account is enabled. The user will sign in with Discord again.");
+      setControlMessage(controlAction === "sign_out_all" ? "All active dashboard sessions were signed out." : controlAction === "disable" ? "The account is disabled and active sessions were signed out." : "The account is enabled. The member can sign in with a connected login method.");
       setControlAction(null);
       setControlConfirmation("");
       setDetail(null);
+      // Opaque user refs change on a server refresh, remounting this dialog.
+      // Keep the receipt visible; refresh the directory when the owner closes it.
+      refreshAfterClose.current = true;
     } catch {
-      setError("This account action could not be completed. No Journal data was changed.");
+      setError("We could not confirm the account action's outcome. Reopen the details to check the current account state. These controls do not delete Journal data.");
     } finally { setLoading(false); }
   };
 
@@ -108,22 +128,40 @@ export function UserDetailButton({ userRef }: { userRef: string }) {
       <Button onClick={() => setOpen(true)} size="small" variant="outlined">
         Review details
       </Button>
-      <Dialog fullWidth maxWidth="md" onClose={() => setOpen(false)} open={open}>
+      <Dialog fullWidth maxWidth="md" onClose={closeDetails} open={open}>
         <DialogTitle>User details</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
             This private view is recorded in the audit history. It never shows login identifiers, broker account identifiers, trades or note text.
           </Typography>
+          {error ? <Alert severity="error" sx={{ mb: 1.5 }}>{error}</Alert> : null}
+          {controlMessage ? <Alert severity="success" sx={{ mb: 1.5 }}>{controlMessage}</Alert> : null}
           {detail ? (
             <Stack spacing={2}>
               <Box>
                 <Typography component="h3" sx={{ fontWeight: 800 }}>{detail.user.displayName}</Typography>
                 <Typography color="text.secondary" variant="body2">
-                  {detail.user.status === "active" ? "Enabled" : "Disabled"} · {detail.user.onlineNow ? "Online now" : detail.user.lastSuccessfulAuthenticationAtUtc ? `Last sign-in ${formatAdminUtc(detail.user.lastSuccessfulAuthenticationAtUtc)}` : "Never signed in"} · {formatAdminInteger(detail.activeSessionCount)} active sessions
+                  {detail.user.status === "active" ? "Enabled" : "Disabled"} · {formatAdminInteger(detail.activeSessionCount)} active sessions
                 </Typography>
                 <Typography color="text.secondary" variant="body2">
-                  {detail.user.journalStarted ? "Journal started" : "Journal not started"} · {detail.user.academyCompletionCount > 0 ? `${formatAdminInteger(detail.user.academyCompletionCount)} Academy lessons completed` : "Academy source not recorded"}
+                  {detail.user.journalStarted ? "Journal started" : "Journal not started"} · {formatAdminInteger(detail.user.academyCompletionCount)} Academy lessons completed
                 </Typography>
+              </Box>
+              <Box>
+                <Typography component="h3" sx={{ fontWeight: 800 }}>Recorded activity</Typography>
+                <Box component="dl" sx={{ m: 0, "& dt": { fontWeight: 700, mt: 1 }, "& dd": { m: 0 } }}>
+                  <dt>Last authentication</dt><dd>{detail.user.lastRecordedAuthenticationAtUtc ? formatAdminUtc(detail.user.lastRecordedAuthenticationAtUtc) : "No authentication recorded"}</dd>
+                  <dt>Last session activity</dt><dd>{detail.user.lastSessionAtUtc ? formatAdminUtc(detail.user.lastSessionAtUtc) : "No session activity recorded"}</dd>
+                  <dt>First recorded session</dt><dd>{detail.user.firstSuccessfulAuthenticationAtUtc ? formatAdminUtc(detail.user.firstSuccessfulAuthenticationAtUtc) : "No session recorded"}</dd>
+                  <dt>Recorded sessions</dt><dd>{formatAdminInteger(detail.sessionCount)}</dd>
+                  <dt>Last recorded Watchlist visit</dt><dd>{detail.user.lastRecordedWatchlistVisitAtUtc === undefined ? "Visit records unavailable" : detail.user.lastRecordedWatchlistVisitAtUtc === null ? "No visit recorded" : formatAdminUtc(detail.user.lastRecordedWatchlistVisitAtUtc)}</dd>
+                  <dt>Latest Academy completion</dt><dd>{detail.user.latestAcademyCompletionAtUtc ? formatAdminUtc(detail.user.latestAcademyCompletionAtUtc) : "No completion recorded"}</dd>
+                </Box>
+                <Typography variant="caption" color="text.secondary">Dates are UTC. Authentication and session activity do not prove a Watchlist visit. Tracking can miss visits and excludes owner accounts.</Typography>
+              </Box>
+              <Box>
+                <Typography component="h3" sx={{ fontWeight: 800 }}>Deletion outcomes</Typography>
+                <Typography variant="body2" color="text.secondary">Use View 30-day deletion history on the Members page for recorded requests and outcomes, including deleted members. A timeout or a missing record does not confirm completion.</Typography>
               </Box>
               <Box>
                 <Typography component="h3" sx={{ fontWeight: 800 }}>Account controls</Typography>
@@ -143,7 +181,6 @@ export function UserDetailButton({ userRef }: { userRef: string }) {
                     </Stack>
                   </Stack>
                 )}
-                {controlMessage ? <Alert severity="success" sx={{ mt: 1.5 }}>{controlMessage}</Alert> : null}
               </Box>
               <Box>
                 <Typography component="h3" sx={{ fontWeight: 800 }}>Recent imports</Typography>
@@ -232,12 +269,11 @@ export function UserDetailButton({ userRef }: { userRef: string }) {
                   ))}
                 </Select>
               </FormControl>
-              {error ? <Alert severity="error">{error}</Alert> : null}
             </Stack>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Close</Button>
+          <Button onClick={closeDetails} disabled={loading}>Close</Button>
           {!detail ? (
             <Button disabled={loading} onClick={load} variant="contained">
               {loading ? "Opening…" : "Open audited details"}
@@ -247,4 +283,109 @@ export function UserDetailButton({ userRef }: { userRef: string }) {
       </Dialog>
     </>
   );
+}
+
+const actions: Record<JournalAdminErasureHistoryItem["action"], string> = {
+  traderlink_account: "TraderLink account",
+  trade_tracker_account: "Regular Journal",
+  demo_trade_tracker_account: "Demo Journal",
+};
+const outcomes: Record<JournalAdminErasureHistoryItem["outcome"], string> = {
+  attempted: "Attempt recorded — outcome not yet confirmed",
+  committed: "Deletion committed — private-file cleanup pending",
+  completed: "Deletion and required cleanup completed",
+  failed: "Deletion failed before commit",
+  unknown: "Outcome unknown — review required",
+};
+
+export function DeletionHistoryButton() {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<JournalAdminSensitiveAccessReason>("owner_support_review");
+  const [history, setHistory] = useState<JournalAdminErasureHistory | null>(null);
+  const [cursors, setCursors] = useState<readonly (string | null)[]>([null]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inFlight = useRef(false);
+
+  async function load(pages: readonly (string | null)[]) {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setLoading(true);
+    setError(null);
+    // Never leave an earlier page of private history visible after a failed refresh.
+    setHistory(null);
+    try {
+      const response = await fetch("/api/admin/journal/users", {
+        method: "POST",
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json", [JOURNAL_ADMIN_REQUEST_HEADER]: "1" },
+        body: JSON.stringify({ action: "deletion_history", reasonCode: reason, cursor: pages.at(-1) ?? null }),
+      });
+      const body = await response.json() as { history?: JournalAdminErasureHistory };
+      if (!response.ok || !body?.history || !Array.isArray(body.history.items) ||
+        !["ready", "unavailable"].includes(body.history.status)) throw new Error("history_unavailable");
+      setHistory(body.history);
+      setCursors(pages);
+    } catch {
+      setError("Deletion history could not be opened. No deletion outcome can be inferred from this error.");
+    } finally {
+      inFlight.current = false;
+      setLoading(false);
+    }
+  }
+
+  function close() {
+    if (inFlight.current) return;
+    setOpen(false);
+    setHistory(null);
+    setError(null);
+    setCursors([null]);
+  }
+
+  return <>
+    <Button variant="outlined" onClick={() => { setHistory(null); setError(null); setCursors([null]); setOpen(true); }}>View 30-day deletion history</Button>
+    <Dialog open={open} onClose={close} fullWidth maxWidth="md">
+      <DialogTitle>30-day deletion history</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Member-linked records expire 30 days after the request was admitted. Opening each page is audited. Records cover authenticated, confirmed requests that passed scope checks, starting when tracking is enabled. Earlier incidents and requests rejected before admission are not reconstructed.</Typography>
+        {!history ? <FormControl fullWidth size="small" sx={{ mb: 2 }} disabled={loading}>
+          <InputLabel id="deletion-history-reason">Reason for access</InputLabel>
+          <Select labelId="deletion-history-reason" label="Reason for access" value={reason} onChange={(event) => setReason(event.target.value as JournalAdminSensitiveAccessReason)}>
+            <MenuItem value="owner_support_review">Owner support review</MenuItem>
+            <MenuItem value="data_integrity_review">Data integrity review</MenuItem>
+            <MenuItem value="importer_diagnostics">Importer diagnostics</MenuItem>
+            <MenuItem value="security_review">Security review</MenuItem>
+          </Select>
+        </FormControl> : null}
+        {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
+        {loading ? <Typography role="status">Opening audited history…</Typography> : null}
+        {history?.status === "unavailable" ? <Alert severity="info">Deletion history is not available in this environment. This does not mean there were no attempts or deletions.</Alert> : null}
+        {history?.status === "ready" ? <>
+          {history.items.length === 0 ? <Typography>No retained deletion records in this selection.</Typography> : <Stack spacing={1.5}>
+            {history.items.map((item) => <Box key={item.receiptRef} sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: 1.5, overflowWrap: "anywhere" }}>
+              <Typography sx={{ fontWeight: 700 }}>{item.memberDisplayName} · {actions[item.action]}</Typography>
+              <Typography>{outcomes[item.outcome]}</Typography>
+              <Box component="dl" sx={{ m: 0, "& dt": { fontWeight: 700, mt: 1 }, "& dd": { m: 0 } }}>
+                <dt>Attempt recorded</dt><dd>{formatAdminUtc(item.attemptedAtUtc)}</dd>
+                {item.committedAtUtc ? <><dt>Deletion committed</dt><dd>{formatAdminUtc(item.committedAtUtc)}</dd></> : null}
+                {item.completedAtUtc ? <><dt>Cleanup completed</dt><dd>{formatAdminUtc(item.completedAtUtc)}</dd></> : null}
+                <dt>Last recorded update</dt><dd>{formatAdminUtc(item.updatedAtUtc)}</dd>
+                <dt>History expires</dt><dd>{formatAdminUtc(item.expiresAtUtc)}</dd>
+              </Box>
+            </Box>)}
+          </Stack>}
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>Read at {formatAdminUtc(history.dataAsOfUtc)} · Dates are UTC. Cleanup preserves files still referenced by surviving accounts. A timeout alone cannot establish an outcome.</Typography>
+        </> : null}
+      </DialogContent>
+      <DialogActions sx={{ flexWrap: "wrap", gap: 1 }}>
+        <Button onClick={close} disabled={loading}>Close</Button>
+        {!history && !loading ? <Button variant="contained" onClick={() => { void load([null]); }}>Open audited history</Button> : null}
+        {history?.status === "ready" ? <>
+          <Button variant="outlined" disabled={loading || cursors.length <= 1} onClick={() => { void load(cursors.slice(0, -1)); }}>Previous</Button>
+          <Button variant="outlined" disabled={loading || !history.nextCursor} onClick={() => { if (history.nextCursor) void load([...cursors, history.nextCursor]); }}>Next</Button>
+        </> : null}
+      </DialogActions>
+    </Dialog>
+  </>;
 }
