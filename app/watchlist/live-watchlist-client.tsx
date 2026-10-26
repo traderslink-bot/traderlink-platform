@@ -2047,9 +2047,6 @@ export function LiveWatchlistDetailClient({
         <div className="watchlist-summary-panel">
           {symbol.watchlistSlotState === "followup" ? <span>Follow-up Watch</span> : null}
           <span>Posted {formatDateTime(symbol.firstPostedAt)}</span>
-          {typeof symbol.publication?.price === "number" && symbol.publication.price > 0 ? (
-            <span>Posted at ${formatPrice(symbol.publication.price)}</span>
-          ) : null}
           <WatchlistLiveDataStatus status={marketDataStatus} />
         </div>
       </section>
