@@ -2,6 +2,54 @@
 
 [Owner-approved plan](watchlist-editor-and-category-move-plan.md).
 
+## October 26 move choices implementation
+
+Source lanes: Platform `watchlist-analysis-history` at published baseline
+`2b4e0c2e00935bc4b0e61d06471eafac2d7fe122`; Runtime
+`watchlist-history-runtime` at `5833f07748c1af603bf0e5863d0601b0b38bc875`.
+Coordinator expanded these assignments; held schema-148 main and unrelated
+pending sorting work are excluded. Generated `public/sw.js` is not feature source.
+
+- Move controls add Also post to Free Chat and Delete posts from previous channel,
+  both off by default. Free Chat requires destination notification and is cleared
+  when that choice is disabled or destination becomes Private. Separate sharing
+  controls remain unchanged. Polling preserves choices; operation retries retain
+  their original flags. New requests carry the expected current review identity.
+- Runtime durably freezes both choices. Original posts stay unless deletion is
+  selected. Only source-category saved message receipts are targeted, never Free
+  Chat/X or the new destination receipt. Silent moves clean up after placement;
+  notifying moves wait for confirmed destination delivery. Failed/uncertain sends
+  never delete source posts. Cleanup failures are visible/retryable independently.
+- Private moves never notify. Selected deletion runs only after website concealment
+  and remains tied to the saved activation timestamp plus the recorded cycle
+  transition. Moving back out of Private retains its normal new-listing workflow
+  and carries an explicitly selected Free Chat approval intent.
+- Free Chat is a separate durable move event in the existing outbox, not a second
+  approval or new analysis. Its key includes cycle and move identity and leaves
+  approval_revision NULL, so an earlier Free Chat share of the same analysis does
+  not suppress this selected move share. The worker verifies current activation,
+  move opt-in and confirmed destination, then exports that move's frozen published
+  approval through the existing owner export. It uses existing Free Chat content,
+  images and @everyone behavior. No migration or automatic preference change.
+- Pending move shares back off and expire after 24 hours. A changed activation or
+  later move cancels stale delivery. Confirmed failed Free Chat sends may be retried
+  with Retry missing delivery; sent/uncertain deliveries are never blindly replayed.
+  Free Chat preparation failure warns without vetoing the move.
+
+Verification uses only synthetic data, in-memory SQLite and temporary Runtime
+storage. Twelve Runtime move tests pass (defaults, ordering, silent cleanup,
+failure/uncertainty, retries, stale identities, deduplication, Private continuity,
+persisted immutable choices and embedded-script syntax). Thirteen existing heading
+and original-time tests also pass. Ten Platform Free Chat tests cover independent
+move keys, opt-in, destination confirmation, expiry, stale cancellation and retry
+semantics, plus the Private-to-public approval boundary. Full Runtime strict TypeScript passes; targeted Platform lint and diff
+checks pass. Platform full integration build and owner browser acceptance remain
+unrun for this slice, not represented as passed. Help text is updated.
+
+No real Discord posts/deletions, provider requests, services, hosted data changes,
+Git mutations or deployment were performed. Source is ready for Coordinator
+review/preservation; production release remains a separate authorization.
+
 - Source traced: inline analysis editor, runtime category move handler, manager placement-only method.
 - Existing editor already warns before discarding unsaved edits and browser navigation. Preserve it.
 - Exact release parents confirmed by Coordinator: Platform `5867b4dc3e9f52a5f790ce34e5723262ff7d30b8`; runtime `e4f46105ed562c2459de9dc14c49f38060fcbbb3`.
