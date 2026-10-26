@@ -5,7 +5,7 @@ const crypto = require("node:crypto"), cp = require("node:child_process");
 const Database = require("better-sqlite3");
 const api = require("./synthetic-api.cjs");
 const { installMaintenanceSqliteIoPolicy } = require("./maintenance-sqlite-io-policy.cjs");
-const root = process.env.SYNTHETIC_SMOKE_ROOT || "/synthetic/rehearsal-20261026";
+const root = process.env.SYNTHETIC_SMOKE_ROOT || "/synthetic/rehearsal-20261026-v2";
 const smoke = Boolean(process.env.SYNTHETIC_SMOKE_ROOT);
 const paths = {source:path.join(root,"source.sqlite"),backup:path.join(root,"backup.sqlite"),restore:path.join(root,"restore.sqlite")};
 const prefix = api.platformMigrationManifest.slice(0,146);
@@ -31,10 +31,13 @@ function seed() {
   const d=open(paths.source);
   try {
     api.runPlatformMigrations(d,{manifest:prefix});
-    const users=new api.PlatformUserRepository(d,{allowedAuthProviders:["development_local"]});
     d.pragma("max_page_count = 1800000");
     const now=new Date().toISOString(),ids=Array.from({length:smoke?10:200000},()=>crypto.randomUUID());
-    d.transaction(()=>ids.forEach((userId,i)=>users.createUser({userId,authProvider:"development_local",authSubject:"synthetic-"+i,displayName:"Synthetic member "+i,createdAtUtc:now,updatedAtUtc:now})))();
+    // Bulk synthetic fixture generation, not an account-registration load test.
+    // Avoid the interactive repository's repeated all-member naming lookup.
+    const user=d.prepare("INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc) VALUES(?,'development_local',?,?,'active',?,?)");
+    const userBatch=d.transaction(offset=>{for(let i=offset;i<Math.min(offset+10000,ids.length);i++)user.run(ids[i],"synthetic-"+i,"Synthetic member "+i,now,now);});
+    for(let i=0;i<ids.length;i+=10000){userBatch(i);emit({stage:"fixture_users",created:Math.min(i+10000,ids.length)});}
     const event=d.prepare("INSERT INTO platform_watchlist_usage_events VALUES(?,?,?,?)");
     const batchEvents=d.transaction(offset=>{for(let i=offset;i<offset+(smoke?100:10000);i++)event.run(crypto.randomUUID(),ids[(i*7919)%ids.length],1793000000000-i,"2026-10-26");});
     for(let i=0;i<(smoke?100:1000000);i+=(smoke?100:10000))batchEvents(i);
