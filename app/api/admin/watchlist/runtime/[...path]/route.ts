@@ -3,7 +3,7 @@ import { recordCategoryMoveIntent } from "@/src/modules/watchlist/server/notific
 import { handleXAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-x-admin";
 import { recordXApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-x-runtime";
 import { handleFreeChatAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin";
-import { recordFreeChatApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime";
+import { recordFreeChatApprovalIntent, recordFreeChatMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { requestWatchlistRuntimeRaw } from "@/src/modules/watchlist/server/runtime/watchlist-runtime-admin-client";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -125,6 +125,7 @@ async function relay(
 
   const incomingUrl = new URL(request.url);
   let body = method === "POST" ? await request.text() : undefined;
+  let freeChatWarning:string|null=null;
   if(pathname === "/api/watchlist/analysis-review/category-move" && method === "POST" && reviewActor && body) {
     try {
       const input=JSON.parse(body);
@@ -139,6 +140,7 @@ async function relay(
         const approval={symbol:input.symbol,cycleId:review.cycleId,expectedHead:review.head,notifyUsers:input.notify===true,
           ...(hasDraft?{draftRevision:review.draft.revision,previewHash:""}:{})};
         recordWatchlistApprovalNotificationIntent(JSON.stringify(approval),reviewActor,!hasDraft);
+        try{recordFreeChatApprovalIntent(JSON.stringify({...approval,freeChat:input.notify===true&&input.freeChat===true}),reviewActor);}catch{console.error('Free Chat intent could not be prepared; publication remains available.');}
         const published=await requestWatchlistRuntimeRaw({method:"POST",reviewActor,contentType:"application/json",path:"/api/watchlist/analysis-review/"+(hasDraft?"approve":"publish-without-analysis"),body:JSON.stringify(approval)});
         if(!published.ok)return new Response(published.body,{status:published.status,headers:{"content-type":published.contentType,"cache-control":"private, no-store"}});
         return Response.json({ok:true,move:{destination:"skipped",notice:input.notify?"Ticker published. Check its notification delivery status.":"Ticker published. No notifications sent."}},{headers:{"cache-control":"private, no-store"}});
@@ -171,6 +173,7 @@ async function relay(
     catch { console.error("Watchlist notification intent could not be saved; approval remains unchanged."); }
   }
   if(pathname==='/api/watchlist/analysis-review/category-move'&&method==='POST'&&reviewActor&&body){
+    try{recordFreeChatMoveIntent(body,reviewActor);}catch{freeChatWarning='Free Chat could not be queued. The ticker can still move; use Post to Free Chat to send it separately.';console.error('Free Chat move intent could not be prepared; move remains available.');}
     try{recordCategoryMoveIntent(body,reviewActor);}catch(error){
       const code=error&&typeof error==='object'&&'code' in error&&typeof error.code==='string'&&/^SQLITE_[A-Z_]+$/.test(error.code)?error.code:'intent_failed';
       console.error('[Watchlist move notification]',{stage:'save_intent',code});
@@ -185,6 +188,7 @@ async function relay(
     path: `${pathname}${incomingUrl.search}`,
   });
   let responseBody = result.body;
+  if(freeChatWarning){try{responseBody=JSON.stringify({...JSON.parse(responseBody),freeChatWarning});}catch{/* Preserve the move response. */}}
   if (xPostingWarning) { try { responseBody=JSON.stringify({...JSON.parse(responseBody),xPostingWarning}); } catch { /* Approval response preserved. */ } }
   if (pathname === "/api/watchlist/analysis-review/settings" && result.status === 200) {
     try {

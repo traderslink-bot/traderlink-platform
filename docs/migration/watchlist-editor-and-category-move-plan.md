@@ -1,5 +1,17 @@
 # Watchlist level editing and optional category notifications
 
+## Owner update October 26 2026
+
+Add two independent, initially unchecked move controls: Also post to Free Chat,
+and Delete posts from previous channel. Free Chat requires the move notification
+choice and shares the frozen published analysis once for this move, after paid
+destination confirmation. Keep the separate Post to Free Chat action. Unchecked
+deletion retains source posts; checked deletion uses exact saved source receipts
+after confirmed destination delivery, or after placement for a silent move.
+Failures stay visible and retries must not repeat successful deliveries. No AI
+requests, automatic Free Chat preference change, or database migration.
+This supersedes the older unconditional move-cleanup wording below.
+
 Owner approved September 30, 2026. No deployment or live sends authorized in this slice.
 
 ## Complete controlling inventory

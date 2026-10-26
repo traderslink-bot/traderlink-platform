@@ -2,6 +2,16 @@ import "server-only";
 import type Database from "better-sqlite3";
 import type { FreeChatDeliveryResult } from "./watchlist-free-chat-delivery";
 
+/** Distinct owner move intent. NULL approval avoids colliding with an earlier
+ * analysis share; the worker resolves the move's frozen published approval. */
+export function queueFreeChatMove(database:Database.Database,input:{cycleId:string;ticker:string;ownerUserId:string;operationId:string},now=Date.now()) {
+  const inserted=database.prepare(`INSERT OR IGNORE INTO platform_watchlist_free_chat_posts
+    (post_key,cycle_id,ticker,owner_user_id,origin,state,requested_at_ms,updated_at_ms)
+    VALUES(?,?,?,?,'manual','pending',?,?)`).run(`${input.cycleId}:move:${input.operationId}`,input.cycleId,input.ticker,input.ownerUserId,now,now).changes===1;
+  if(!inserted)database.prepare("UPDATE platform_watchlist_free_chat_posts SET state='pending',next_attempt_at_ms=0,updated_at_ms=? WHERE post_key=? AND owner_user_id=? AND state='failed'").run(now,`${input.cycleId}:move:${input.operationId}`,input.ownerUserId);
+  return inserted;
+}
+
 export function setFreeChatAutomatic(database: Database.Database, input: { cycleId: string; ticker: string; ownerUserId: string; enabled: boolean }, now = Date.now()) {
   database.transaction(() => {
     database.prepare(`INSERT INTO platform_watchlist_free_chat_preferences
