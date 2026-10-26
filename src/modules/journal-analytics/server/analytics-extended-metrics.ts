@@ -476,13 +476,10 @@ function openMetric(
   return null;
 }
 
-export function calculateExtendedJournalAnalyticsMetric(
-  metricId: string,
+export function prepareExtendedJournalAnalyticsMetricInputs(
   population: JournalAnalyticsPopulation,
   moneyBasis: JournalAnalyticsMoneyBasis,
-): JournalAnalyticsCalculatedMetric | null {
-  const open = openMetric(metricId, population);
-  if (open) return open;
+) {
   const rows = basisRows(population, moneyBasis);
   const values = basisValues(population, moneyBasis);
   const wins = outcomeRows(rows, moneyBasis, "win");
@@ -490,6 +487,19 @@ export function calculateExtendedJournalAnalyticsMetric(
   const daily = dailyTotals(rows, moneyBasis);
   const dailyValues = [...daily.values()];
   const chargeEffects = selectedChargeEffects(population);
+  return Object.freeze({ rows, values, wins, losses, daily, dailyValues, chargeEffects });
+}
+
+export function calculateExtendedJournalAnalyticsMetric(
+  metricId: string,
+  population: JournalAnalyticsPopulation,
+  moneyBasis: JournalAnalyticsMoneyBasis,
+  getInputs?: () => ReturnType<typeof prepareExtendedJournalAnalyticsMetricInputs>,
+): JournalAnalyticsCalculatedMetric | null {
+  const open = openMetric(metricId, population);
+  if (open) return open;
+  const { rows, values, wins, losses, daily, dailyValues, chargeEffects } = getInputs?.() ??
+    prepareExtendedJournalAnalyticsMetricInputs(population, moneyBasis);
   const netState = (value: JournalAnalyticsExactValue) =>
     population.coverage.feeIncompleteCount > 0 ? partial(value) : complete(value);
   const sourceCount = (

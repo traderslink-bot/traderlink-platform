@@ -14,7 +14,10 @@ import {
   requireJournalAnalyticsMetricDefinition,
   type JournalAnalyticsFirstSliceMetricId,
 } from "./analytics-metric-registry";
-import { calculateExtendedJournalAnalyticsMetric } from "./analytics-extended-metrics";
+import {
+  calculateExtendedJournalAnalyticsMetric,
+  prepareExtendedJournalAnalyticsMetricInputs,
+} from "./analytics-extended-metrics";
 import type { JournalAnalyticsPopulation } from "./analytics-population";
 import {
   absoluteExactDecimal,
@@ -221,6 +224,15 @@ export function accumulateJournalAnalyticsMetrics(
   moneyBasis: JournalAnalyticsMoneyBasis,
 ): readonly JournalAnalyticsMetricResult[] {
   const firstSliceIds = new Set<string>(JOURNAL_ANALYTICS_FIRST_SLICE_METRIC_IDS);
+  const extendedInputsByBasis = new Map<JournalAnalyticsMoneyBasis,
+    ReturnType<typeof prepareExtendedJournalAnalyticsMetricInputs>>();
+  const extendedInputs = (basis: JournalAnalyticsMoneyBasis) => {
+    const existing = extendedInputsByBasis.get(basis);
+    if (existing) return existing;
+    const prepared = prepareExtendedJournalAnalyticsMetricInputs(population, basis);
+    extendedInputsByBasis.set(basis, prepared);
+    return prepared;
+  };
   return Object.freeze(metricIds.map((metricId) => {
     const definition = requireJournalAnalyticsMetricDefinition(metricId);
     const effectiveBasis = definition.moneyBasis === "gross" ||
@@ -239,6 +251,7 @@ export function accumulateJournalAnalyticsMetrics(
             metricId,
             population,
             effectiveBasis,
+            () => extendedInputs(effectiveBasis),
           );
     if (calculated === null) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
