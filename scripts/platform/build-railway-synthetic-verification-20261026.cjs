@@ -1,0 +1,12 @@
+"use strict";
+const path=require("node:path"),fs=require("node:fs"),crypto=require("node:crypto");
+const repo=path.resolve(__dirname,"../..");
+const out=process.argv[2];if(!out||!path.isAbsolute(out))throw Error("absolute_new_output_required");
+if(fs.existsSync(out))throw Error("output_already_exists");fs.mkdirSync(out,{mode:0o700});
+const source=`export {platformMigrationManifest} from './src/modules/platform/server/database/platform-migration-manifest';export {runPlatformMigrations,verifyCompletedPlatformDatabase} from './src/modules/platform/server/database/run-platform-migrations';export {configurePlatformDatabaseConnection} from './src/modules/platform/server/database/open-platform-database';export {calculatePlatformMigrationChecksum} from './src/modules/platform/server/database/platform-migration-contract';export {createAndRestoreVerifyPlatformDatabaseBackup} from './src/modules/platform/server/database/platform-database-backup';export {PlatformUserRepository} from './src/modules/platform/server/identity/platform-user-repository';`;
+require(path.join(repo,"node_modules/esbuild")).buildSync({stdin:{contents:source,resolveDir:repo},absWorkingDir:repo,bundle:true,outfile:path.join(out,"synthetic-api.cjs"),platform:"node",format:"cjs",external:["better-sqlite3"],conditions:["react-server"],define:{"import.meta.url":"__config_url"},banner:{js:'const __config_url="file:///app/src/modules/platform/server/database/platform-database-config.ts";'}});
+for(const name of ["railway-synthetic-verification-20261026.cjs","maintenance-sqlite-io-policy.cjs"])fs.copyFileSync(path.join(__dirname,name),path.join(out,name));
+fs.copyFileSync(path.join(__dirname,"railway-synthetic-verification-20261026.Dockerfile"),path.join(out,"Dockerfile"));
+fs.writeFileSync(path.join(out,"railway.json"),JSON.stringify({build:{dockerfilePath:"Dockerfile"},deploy:{startCommand:"timeout --signal=TERM --kill-after=10s 4200s node /app/railway-synthetic-verification-20261026.cjs",restartPolicyType:"NEVER",numReplicas:1}},null,2));
+const files=fs.readdirSync(out).map(name=>({name,sha256:crypto.createHash("sha256").update(fs.readFileSync(path.join(out,name))).digest("hex")}));
+console.log(JSON.stringify({output:out,files,syntheticOnly:true}));
