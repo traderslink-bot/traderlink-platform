@@ -118,6 +118,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
             Object.freeze(["Trade Analyzer needs a correction", "One or more execution minutes or prices did not match market data. Open the trade to see every affected execution, edit an incorrect entry or confirm that the broker record is correct."]),
             Object.freeze(["AI Review ready", "A saved weekly or monthly review is ready to read when AI Reviews are available for your account."]),
           ]) }),
+          Object.freeze({ kind: "paragraph", text: "TradersLink checks expiring Moomoo connections in the background. A temporary provider outage does not disconnect your saved connection. If Moomoo requires authorization again, open the reconnect update and use Account → Trading. Repeated checks do not create repeated alerts for the same issue; reconnecting allows a later issue to generate a new alert. Email requires a confirmed notification address, and push requires an active device registration and the corresponding notification preference. An intentionally removed connection is not automatically reconnected." }),
           Object.freeze({ kind: "callout", title: "Your updates stay private", text: "An update tells you what happened and where to go next. It does not show statement rows, broker account numbers or trade values." }),
         ]),
       }),

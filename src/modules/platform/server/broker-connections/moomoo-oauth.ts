@@ -101,10 +101,15 @@ export async function exchangeMoomooCode(input: Readonly<{
   return Object.freeze({ accessToken: token.access_token, refreshToken: token.refresh_token, expiresInSeconds, scopes: Object.freeze(scopes) });
 }
 
+export type MoomooRefreshResult =
+  | Readonly<{ status: "refreshed"; accessToken: string; expiresInSeconds: number; scopes: readonly string[] }>
+  | Readonly<{ status: "reauthorization_required" }>
+  | Readonly<{ status: "unavailable" }>;
+
 export async function refreshMoomooAccessToken(input: Readonly<{
   clientId: string;
   refreshToken: string;
-}>): Promise<Readonly<{ accessToken: string; expiresInSeconds: number; scopes: readonly string[] }> | null> {
+}>): Promise<MoomooRefreshResult> {
   const body = new URLSearchParams({
     grant_type: "refresh_token",
     refresh_token: input.refreshToken,
@@ -117,13 +122,21 @@ export async function refreshMoomooAccessToken(input: Readonly<{
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body,
       cache: "no-store",
+      signal: AbortSignal.timeout(15_000),
     });
   } catch {
-    return null;
+    return { status: "unavailable" };
   }
   let payload: unknown;
-  try { payload = await response.json(); } catch { return null; }
-  if (!response.ok || !payload || typeof payload !== "object") return null;
+  try { payload = await response.json(); } catch { return { status: "unavailable" }; }
+  // Only an explicit OAuth invalid_grant is evidence that user authorization
+  // must be renewed. Network errors, 429, 5xx and client configuration errors
+  // must never revoke otherwise valid stored credentials.
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return { status: "unavailable" };
+  if (!response.ok) return {
+    status: response.status === 400 && (payload as Record<string, unknown>).error === "invalid_grant"
+      ? "reauthorization_required" : "unavailable",
+  };
   const token = payload as Record<string, unknown>;
   const expiresInSeconds = token.expires_in;
   if (
@@ -131,14 +144,15 @@ export async function refreshMoomooAccessToken(input: Readonly<{
     typeof expiresInSeconds !== "number" ||
     !Number.isSafeInteger(expiresInSeconds) || expiresInSeconds <= 0 ||
     typeof token.scope !== "string"
-  ) return null;
+  ) return { status: "unavailable" };
   let scopes: readonly string[];
   try {
     scopes = acceptReadOnlyScopes(token.scope.split(" ").filter(Boolean));
   } catch {
-    return null;
+    return { status: "unavailable" };
   }
   return Object.freeze({
+    status: "refreshed",
     accessToken: token.access_token,
     expiresInSeconds,
     scopes: Object.freeze(scopes),

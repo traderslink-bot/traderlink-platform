@@ -1,3 +1,4 @@
+import { startMoomooConnectionMonitor } from "../broker-connections/moomoo-connection-monitor-runtime";
 import { startPlatformLoginMailWorker } from "../authentication/platform-login-mail-queue";
 import { runCategoryMoveNotifications } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { runDailyTradeAnalyzerOnce } from "@/src/modules/level-analysis/server/daily-trade-analyzer-runtime";
@@ -18,6 +19,7 @@ let workersStarted = false;
 export function startTraderLinkHostedBackgroundWorkers(): void {
   if (workersStarted) return;
   workersStarted = true;
+  startMoomooConnectionMonitor();
   startWatchlistSetupSharedFeed();
   startPlatformLoginMailWorker();
 
