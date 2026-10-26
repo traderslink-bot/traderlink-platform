@@ -118,6 +118,15 @@ their workspace. A future shared-workspace contract must transfer ownership or
 close the workspace before a member's full erasure; it must never remove other
 people's data by implication.
 
+## Availability correction — 2026-10-26
+
+The owner authorized the broader worker/recovery correction and disposable
+synthetic checks. The [current implementation record](account-erasure-recovery-implementation-20261026.md)
+defines commit-first durable private-file cleanup, preserves normal completion
+responses and records remaining competing-writer wait limitations. It supersedes
+the earlier purge-inside-transaction behavior for the new source candidate;
+release remains Coordinator-controlled and unselected.
+
 ## Technical safeguards
 
 - Existing Journal and Coach rows deliberately reject ordinary deletion. The
