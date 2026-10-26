@@ -7,8 +7,8 @@ const source=`export {platformMigrationManifest} from './src/modules/platform/se
 require(path.join(repo,"node_modules/esbuild")).buildSync({stdin:{contents:source,resolveDir:repo},absWorkingDir:repo,bundle:true,outfile:path.join(out,"synthetic-api.cjs"),platform:"node",format:"cjs",external:["better-sqlite3"],conditions:["react-server"],define:{"import.meta.url":"__config_url"},banner:{js:'const __config_url="file:///app/src/modules/platform/server/database/platform-database-config.ts";'}});
 for(const name of ["railway-synthetic-verification-20261026.cjs","maintenance-sqlite-io-policy.cjs","railway-synthetic-prewarm-20261026.cjs"])fs.copyFileSync(path.join(__dirname,name),path.join(out,name));
 fs.copyFileSync(path.join(__dirname,"railway-synthetic-verification-20261026.Dockerfile"),path.join(out,"Dockerfile"));
-const prewarmSha=process.argv[3];if(prewarmSha&&!/^[0-9a-f]{64}$/.test(prewarmSha))throw Error("invalid_prewarm_sha");
-const startCommand=prewarmSha?`timeout --signal=TERM --kill-after=10s 600s node /app/railway-synthetic-prewarm-20261026.cjs ${prewarmSha}`:"timeout --signal=TERM --kill-after=10s 4200s node /app/railway-synthetic-verification-20261026.cjs";
+const prewarm=process.argv[3];if(prewarm&&prewarm!=="--final-source")throw Error("invalid_prewarm_mode");
+const startCommand=prewarm?"timeout --signal=TERM --kill-after=10s 600s node /app/railway-synthetic-prewarm-20261026.cjs":"timeout --signal=TERM --kill-after=10s 4200s node /app/railway-synthetic-verification-20261026.cjs";
 fs.writeFileSync(path.join(out,"railway.json"),JSON.stringify({build:{dockerfilePath:"Dockerfile"},deploy:{startCommand,restartPolicyType:"NEVER",numReplicas:1}},null,2));
 const files=fs.readdirSync(out).map(name=>({name,sha256:crypto.createHash("sha256").update(fs.readFileSync(path.join(out,name))).digest("hex")}));
 console.log(JSON.stringify({output:out,files,syntheticOnly:true}));
