@@ -2,14 +2,16 @@ import { AnalysisTraderNotes } from "./analysis-trader-notes";
 import styles from "./analysis-layout.module.css";
 import type { ReactNode } from "react";
 import { AnalysisHistoryLines } from "./analysis-history-lines";
+import type { AnalysisHistoryRow } from "@/src/lib/live-watchlist/analysis-publication-history";
 import type { TradersLinkAiReadPayload } from "@/src/lib/live-watchlist/live-watchlist-types";
 
 /** Separate presentation selected by the saved read, never by today's setting. */
-export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, renderSectionEditor }: {
+export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, renderSectionEditor, historicalRows }: {
   read: TradersLinkAiReadPayload;
   traderNotes?: string | null;
   olderArticleDate?: string | null;
   renderSectionEditor?: (sections: readonly string[]) => ReactNode;
+  historicalRows?: AnalysisHistoryRow[];
 }) {
   const simple = read.simpleAnalysis;
   if (!simple) return null;
@@ -21,7 +23,7 @@ export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, render
     <div className="academy-card-topline"><span>TradersLink Analysis</span></div>
     <div className="watchlist-ai-read-header"><div>
       <h2 className="academy-card-title">{read.symbol} trade preparation</h2>
-      <AnalysisHistoryLines read={read} preview={Boolean(renderSectionEditor)} />
+      <AnalysisHistoryLines read={read} preview={Boolean(renderSectionEditor)} historicalRows={historicalRows} />
     </div></div>
     <div className={traderNotes?.trim() ? styles.row : styles.single}><div>
     {renderSectionEditor?.(["simpleSetup"])}

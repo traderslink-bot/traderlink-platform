@@ -20,6 +20,7 @@ const IndicatorAuditPanel = dynamic(() => import("./watchlist-indicator-audit-pa
 const SetupAdminPanel = dynamic(() => import("./watchlist-setup-admin-panel"));
 const GainStartingPoint = dynamic(() => import("./watchlist-gain-starting-point").then(m => m.WatchlistGainStartingPoint));
 const PotentialGainPost = dynamic(() => import("./watchlist-potential-gain-post").then(module => module.WatchlistPotentialGainPost));
+const PreviousAnalyses = dynamic(() => import("./watchlist-analysis-history").then(module => module.WatchlistAnalysisHistory));
 const RUNTIME_SECTIONS = [
   ["watchlist", "Watchlist"], ["runtime", "Runtime"], ["market-data", "Market Data"],
   ["ai-controls", "AI Controls"], ["discord-notifications", "Discord notifications"], ["live-website-controls", "Live Website Controls"],
@@ -48,6 +49,7 @@ export function WatchlistRuntimeAdminClient() {
     frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-admin-wrapper", type: "select-section", section: runtimeSectionRef.current }, window.location.origin);
   }, []);
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
+  const [historyRequest, setHistoryRequest] = useState<{symbol:string;cycleId:string} | null>(null);
   const [gainPostSymbol, setGainPostSymbol] = useState<string | null>(null);
   const [gainStartSymbol, setGainStartSymbol] = useState<string | null>(null);
   const [analysisPreview, setAnalysisPreview] = useState<{
@@ -91,9 +93,10 @@ export function WatchlistRuntimeAdminClient() {
     const onMessage = (event: MessageEvent<unknown>) => {
       if (event.origin !== window.location.origin || event.source !== frameRef.current?.contentWindow) return;
       if (!event.data || typeof event.data !== "object") return;
-      const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown; symbol?: unknown };
+      const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown; symbol?: unknown; cycleId?:unknown };
       if (message.source !== "traderslink-watchlist-admin") return;
       if (message.type === "navigation-ready") { syncNavigation(); return; }
+      if (message.type === "previous-analyses" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol) && typeof message.cycleId==="string" && message.cycleId.length>0 && message.cycleId.length<=200) { setHistoryRequest({symbol:message.symbol,cycleId:message.cycleId}); return; }
       if (message.type === "gain-starting-point" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainStartSymbol(message.symbol); return; }
       if (message.type === "post-potential-gain" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainPostSymbol(message.symbol); return; }
       if (message.type === "open-usage") { selectUsage(); return; }
@@ -110,6 +113,7 @@ export function WatchlistRuntimeAdminClient() {
 
   return (
     <>
+      {historyRequest && <PreviousAnalyses key={historyRequest.cycleId} symbol={historyRequest.symbol} expectedCycleId={historyRequest.cycleId} onClose={() => setHistoryRequest(null)} />}
       {gainStartSymbol && <GainStartingPoint key={gainStartSymbol} symbol={gainStartSymbol} onClose={() => setGainStartSymbol(null)} />}
       {gainPostSymbol && <PotentialGainPost key={gainPostSymbol} symbol={gainPostSymbol} onClose={() => setGainPostSymbol(null)} />}
       {editingSymbol && <WatchlistAnalysisEditor key={editingSymbol} symbol={editingSymbol} onClose={() => setEditingSymbol(null)} onSaved={() => frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-editor", type: "saved" }, window.location.origin)} />}

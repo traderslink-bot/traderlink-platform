@@ -2,6 +2,8 @@
 
 Scope and source pins: [plan](watchlist-simple-card-additions-plan.md).
 
+Related owner viewer: [previous published analysis cards](watchlist-published-analysis-history-progress.md).
+
 Later owner-editing extension: [unrestricted target/pullback rows and numbered pullbacks](watchlist-owner-analysis-rows-progress.md).
 
 Inspected deployed source: simplified schema currently has setup/pullbacks/upside only; dedicated catalyst and risk fields are empty. Owner-save has a simple-format allowlist and both editors return early, so all must be extended. Trader Notes are currently a separate card. No local port-3010 listener was found; none started. Existing dirty work is preserved.

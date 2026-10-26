@@ -11,6 +11,7 @@ import { PremiumTickerLock } from "./premium-ticker-lock";
 import { PremiumAnalysisCard } from "./premium-analysis-card";
 import { SimpleAnalysisCard } from "./simple-analysis-card";
 import { AnalysisHistoryLines } from "./analysis-history-lines";
+import type { AnalysisHistoryRow } from "@/src/lib/live-watchlist/analysis-publication-history";
 
 import "flag-icons/css/flag-icons.min.css";
 
@@ -503,6 +504,7 @@ export function TradersLinkAiReadCard({
   dipBuyPlanVisible = true,
   failureRecoveryVisible = false,
   renderSectionEditor,
+  historicalRows,
 }: {
   traderNotes?: string | null;
   card: LiveWatchlistCardContent;
@@ -513,13 +515,14 @@ export function TradersLinkAiReadCard({
   dipBuyPlanVisible?: boolean;
   failureRecoveryVisible?: boolean;
   renderSectionEditor?: (sections: readonly string[]) => ReactNode;
+  historicalRows?: AnalysisHistoryRow[];
 }) {
   const parsedRead = parseTradersLinkAiRead(card.body);
   if (!parsedRead) {
     return <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />;
   }
   const read = sanitizeTradersLinkAiReadForDisplay(parsedRead);
-  if (read.analysisFormat === "simple") return <SimpleAnalysisCard read={read} traderNotes={traderNotes} olderArticleDate={olderTradersLinkArticlePublicationDate(read) ? formatArticleDate(olderTradersLinkArticlePublicationDate(read)!) : null} renderSectionEditor={renderSectionEditor} />;
+  if (read.analysisFormat === "simple") return <SimpleAnalysisCard read={read} traderNotes={traderNotes} olderArticleDate={olderTradersLinkArticlePublicationDate(read) ? formatArticleDate(olderTradersLinkArticlePublicationDate(read)!) : null} renderSectionEditor={renderSectionEditor} historicalRows={historicalRows} />;
   const hidden = new Set(read.ownerHiddenSections ?? []);
   const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read);
   const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
@@ -551,7 +554,7 @@ export function TradersLinkAiReadCard({
       <div className="watchlist-ai-read-header">
         <div>
           <h2 className="academy-card-title">{read.symbol} trade preparation</h2>
-          <AnalysisHistoryLines read={read} preview={Boolean(renderSectionEditor)} />
+          <AnalysisHistoryLines read={read} preview={Boolean(renderSectionEditor)} historicalRows={historicalRows} />
           <div className="watchlist-ai-read-badges" style={{ justifyContent: "flex-start" }}>
             <span className="watchlist-ai-read-badge" data-bias={read.bias}>
               {read.bias} bias
