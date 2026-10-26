@@ -8,8 +8,12 @@ const args = process.argv.slice(2);
 if (args.length !== 2 || args[0] !== "--out-dir") throw new Error("erasure_worker_explicit_output_required");
 build({
   absWorkingDir: resolve(__dirname, "../.."),
-  entryPoints: ["src/modules/platform/server/privacy/platform-erasure-worker.ts"],
-  outfile: resolve(args[1], "platform-erasure-worker.cjs"),
+  entryPoints: {
+    "platform-erasure-worker": "src/modules/platform/server/privacy/platform-erasure-worker.ts",
+    "admin-erasure-maintenance-20261026": "scripts/platform/admin-erasure-maintenance-20261026.cjs",
+  },
+  outdir: resolve(args[1]),
+  outExtension: { ".js": ".cjs" },
   bundle: true,
   platform: "node",
   target: "node24",
