@@ -1,6 +1,7 @@
 "use strict";
 
 const { resolve, isAbsolute } = require("node:path");
+const fs = require("node:fs");
 
 // One isolated maintenance process only. Never install in the web application.
 // cache_size is connection-local; no persistent SQLite setting is changed.
@@ -13,6 +14,7 @@ function installMaintenanceSqliteIoPolicy(Database, options) {
   if (!Number.isInteger(cacheKiB) || cacheKiB < 16000 || cacheKiB > 262144) throw new Error("maintenance_sqlite_cache_invalid");
   const original = Database.prototype.pragma;
   const configured = new WeakSet();
+  const warmed = new WeakSet();
   const emit = (value) => { try { options.emit?.(value); } catch { /* Logging never changes a safety result. */ } };
   function pragma(source, optionsArg) {
     const role = paths.get(this.name);
@@ -24,6 +26,26 @@ function installMaintenanceSqliteIoPolicy(Database, options) {
     }
     const check = typeof source === "string" ? /^\s*(foreign_key_check|quick_check)\b/iu.exec(source)?.[1].toLowerCase() : null;
     if (!check) return original.call(this, source, optionsArg);
+    if (options.prewarm === true && !warmed.has(this)) {
+      warmed.add(this);
+      const warmStart = performance.now();
+      let fd;
+      try {
+        emit({ stage: "maintenance_sequential_read", role, status: "started" });
+        const expected = fs.lstatSync(this.name);
+        if (!expected.isFile() || expected.isSymbolicLink()) throw new Error("maintenance_prewarm_file_invalid");
+        fd = fs.openSync(this.name, "r");
+        const actual = fs.fstatSync(fd);
+        if (!actual.isFile() || actual.dev !== expected.dev || actual.ino !== expected.ino) throw new Error("maintenance_prewarm_identity_changed");
+        const buffer = Buffer.alloc(1024 * 1024);
+        let bytes = 0;
+        for (;;) { const n = fs.readSync(fd, buffer, 0, buffer.length, null); if (n === 0) break; bytes += n; }
+        emit({ stage: "maintenance_sequential_read", role, status: "completed", bytes, durationMs: Math.round(performance.now() - warmStart) });
+      } catch {
+        // Advisory only. Native integrity checks still run and decide validity.
+        emit({ stage: "maintenance_sequential_read", role, status: "failed", durationMs: Math.round(performance.now() - warmStart) });
+      } finally { if (fd !== undefined) { try { fs.closeSync(fd); } catch { /* Advisory read never replaces native verification. */ } } }
+    }
     const start = performance.now();
     emit({ stage: "maintenance_integrity_check", role, check, status: "started" });
     try {

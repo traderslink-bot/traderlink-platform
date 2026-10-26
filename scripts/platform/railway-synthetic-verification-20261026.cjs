@@ -57,7 +57,7 @@ function seed() {
   } finally {d.close();}
 }
 async function phase(kind) {
-  const uninstall=installMaintenanceSqliteIoPolicy(Database,{paths:Object.entries(paths).map(([role,path])=>({role,path})),cacheKiB:kind==="baseline"?16000:262144,emit});
+  const uninstall=installMaintenanceSqliteIoPolicy(Database,{paths:Object.entries(paths).map(([role,path])=>({role,path})),cacheKiB:kind==="baseline"?16000:262144,prewarm:process.env.SYNTHETIC_PREWARM==="1",emit});
   try {
     if(kind==="baseline") {
       const d=new Database(paths.source,{readonly:true,fileMustExist:true});
@@ -87,9 +87,15 @@ function child(kind,timeout) {
 async function main() {
   assert.equal(api.platformMigrationManifest.length,148);
   assert.deepEqual(api.platformMigrationManifest.slice(146).map(x=>[x.migrationId,x.executionOrder,api.calculatePlatformMigrationChecksum(x)]),[["0183_platform_account_erasure_recovery",220,"4970c600cb3be750271786ac6b1c5b9980aa66b89267eddb02d06bb2481a2337"],["0184_platform_watchlist_usage_user_recent",221,"75be416e265842e61f4ba4a9fb07874a5653f88c8b0263665e98c0e401647f7a"]]);
-  if(process.argv[2]) {guard();return phase(process.argv[2]);}
-  assert(!fs.existsSync(root),"synthetic_root_already_exists_no_replay");fs.mkdirSync(root,{recursive:true,mode:0o700});
-  try {seed();await child("baseline",600000);await child("tuned",3000000);emit({stage:"synthetic_result",status:"passed",durationMs:Date.now()-started,noProductionOrStagingAccess:true});}
+  if(["baseline","tuned"].includes(process.argv[2])) {guard();return phase(process.argv[2]);}
+  const reuse=process.argv[2]==="--reuse-prewarm";assert(!process.argv[2]||reuse,"invalid_synthetic_mode");
+  if(reuse){
+    assert.equal(process.env.RAILWAY_PROJECT_ID,"899ca8a4-3375-4e45-913c-0c2f505a8ebc");assert.equal(process.env.RAILWAY_ENVIRONMENT_ID,"9636ddc6-4fa9-4ba7-890f-c357cac220e5");assert.equal(process.env.RAILWAY_SERVICE_ID,"af6b8411-99d2-4062-baba-4cee187ad0e7");
+    guard();const alias=path.join(root,"prewarm-source.sqlite");assert(Object.values(paths).every(p=>["","-wal","-shm","-journal"].every(s=>!fs.existsSync(p+s))),"prior_task_not_clean");assert(fs.lstatSync(alias).isFile()&&!fs.lstatSync(alias).isSymbolicLink());
+    const fd=fs.openSync(alias,"r"),buffer=Buffer.alloc(1024*1024),hash=crypto.createHash("sha256");try{for(;;){const n=fs.readSync(fd,buffer,0,buffer.length,null);if(!n)break;hash.update(buffer.subarray(0,n));}}finally{fs.closeSync(fd);}
+    assert.equal(hash.digest("hex"),"49c5d4a4dc3f660382a8e7b0171637f2642079defad6fb6c87d9d6c04156eeeb");assert.equal(fs.statSync(alias).size,6858096640);fs.renameSync(alias,paths.source);process.env.SYNTHETIC_PREWARM="1";emit({stage:"fixture_reused",verifiedBackupSha256:"49c5d4a4dc3f660382a8e7b0171637f2642079defad6fb6c87d9d6c04156eeeb",additionalCopyBytes:0});
+  }else{assert(!fs.existsSync(root),"synthetic_root_already_exists_no_replay");fs.mkdirSync(root,{recursive:true,mode:0o700});}
+  try {if(!reuse){seed();await child("baseline",600000);}await child("tuned",reuse?550000:3000000);emit({stage:"synthetic_result",status:"passed",durationMs:Date.now()-started,noProductionOrStagingAccess:true,prewarm:reuse});}
   finally {removeFixtures();}
 }
 main().catch(e=>{emit({stage:"synthetic_result",status:"failed",error:e.message});process.exitCode=1;});
