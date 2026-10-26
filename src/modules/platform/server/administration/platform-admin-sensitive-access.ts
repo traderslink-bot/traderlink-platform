@@ -34,13 +34,20 @@ export function recordJournalAdminSensitiveAccess(input: Readonly<{
   scope: JournalAdminScope;
   headers: Headers;
   action: "user_detail_accessed" | "import_detail_accessed";
-  targetKind: "user" | "import";
+  targetKind: "user" | "import" | "authority";
   internalId: string;
   reasonCode: JournalAdminSensitiveAccessReason;
   outcome: "success" | "denied" | "failed";
   nowUtc: string;
   environment?: NodeJS.ProcessEnv;
+  view?: "erasure_history";
 }>): void {
+  if ((input.view === "erasure_history" && (
+    input.action !== "user_detail_accessed" || input.targetKind !== "authority" ||
+    input.internalId !== "account_erasure_history"
+  )) || (input.targetKind === "authority" && input.view !== "erasure_history")) {
+    platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
+  }
   consumeJournalAdminRateLimit({
     category: "sensitive",
     environment: input.environment,
@@ -63,7 +70,7 @@ export function recordJournalAdminSensitiveAccess(input: Readonly<{
     reasonCode: input.reasonCode,
     correlationRefSha256: sha256(`journal-admin-request-v1\u001f${requestId}`),
     previewReceiptSha256: null,
-    details: Object.freeze({ access_reason: input.reasonCode }),
+    details: Object.freeze({ access_reason: input.reasonCode, ...(input.view ? { view: input.view } : {}) }),
     createdAtUtc: input.nowUtc,
   });
 }

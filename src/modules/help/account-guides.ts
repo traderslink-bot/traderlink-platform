@@ -2,6 +2,25 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const ACCOUNT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "delete-account-data",
+    title: "Delete account data",
+    description: "Choose the scope of permanent deletion and understand an unconfirmed outcome.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "choose-deletion-scope",
+        title: "Choose what to delete",
+        summary: "Deleting one Trade Tracker account and deleting your TraderLink account have different scopes.",
+        keywords: Object.freeze(["delete account", "permanent deletion", "Trade Tracker", "privacy"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Open Account settings and select Delete Account. Delete Trade Tracker account removes the selected Trade Tracker account and its contents while preserving your other Trade Tracker accounts. Delete TraderLink account removes your entire TraderLink account and signs you out. Read the confirmation and enter the requested phrase only when you intend that permanent deletion." }),
+          Object.freeze({ kind: "callout", title: "An unconfirmed outcome is not proof that nothing changed", text: "If the page loses its connection or cannot confirm the deletion outcome, do not submit the request again. Contact support to check its status. The deletion may already have taken effect while private-file cleanup or its confirmation remains incomplete." }),
+          Object.freeze({ kind: "paragraph", text: "For 30 days after a deletion request is accepted, support history keeps your display name, request type, times and outcome. It does not contain your trades or private files and cannot restore an account. This history expires 30 days after the request was accepted, even if cleanup or recovery takes longer." }),
+          Object.freeze({ kind: "paragraph", text: "Deletion applies to the active system. Protected disaster-recovery copies follow the retention procedure shown on the Delete Account page; deletion is not a way to restore an account from those copies." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
     slug: "set-pnl-preference",
     title: "Set your P/L preference",
     description: "Choose whether summary P/L defaults to Net or Gross without changing any recorded trade facts.",

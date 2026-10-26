@@ -14,22 +14,23 @@ import { JournalAdminUserService, type JournalAdminUserFilters } from "@/src/mod
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
 import { JournalAdminEmpty, JournalAdminMetricCard, JournalAdminMetricGrid, JournalAdminPage,
   JournalAdminPageHeader, JournalAdminTable, formatAdminInteger, formatAdminUtc } from "../journal-admin-ui";
-import { UserDetailButton } from "./user-detail-button";
+import { DeletionHistoryButton, UserDetailButton } from "./user-detail-button";
 
 export const metadata: Metadata = { title: "Members | Journal Administration" };
 export const dynamic = "force-dynamic";
 
 const filterOptions = [
   ["academy_progress", "Academy progress"], ["source_not_recorded", "No completed Academy lessons"],
-  ["never_signed_in", "Never signed in"], ["online_now", "Online now"],
+  ["never_signed_in", "No recorded session"], ["online_now", "Recent session activity (10 min)"],
   ["journal_started", "Journal started"], ["journal_not_started", "Journal not started"],
   ["successful_import", "Successful import"], ["failed_import", "Failed import"],
   ["pending_import", "Pending import"], ["manual_entries", "Manual entries"],
+  ["pending_decision", "Pending Data Decisions"],
   ["manual_entry_issues", "Manual entry issues"], ["broker_connected", "Broker connected"],
   ["broker_statement_source", "Statement source"], ["no_broker_evidence", "No broker evidence"],
 ] as const;
 const viewOptions = [
-  ["new_academy_members", "Academy progress, never signed in"],
+  ["new_academy_members", "Academy progress, no recorded session"],
   ["getting_started", "Getting started"], ["needs_attention", "Needs attention"],
 ] as const;
 const attentionLabels = {
@@ -48,7 +49,9 @@ function memberFacts(user: DirectoryMember, membershipAvailable: boolean) {
   return [
     ["Membership", !membershipAvailable ? "Membership records unavailable" : user.memberships.length === 0 ? "No current plan grant" : user.memberships.map((grant) =>
       `${grant.planName} · ${sourceLabels[grant.source] ?? "Plan access"}${grant.endsAtUtc ? ` · ends ${formatAdminUtc(grant.endsAtUtc)}` : " · no scheduled end"}`).join("; ")],
-    ["Sign-in", user.onlineNow ? "Online now" : user.lastSuccessfulAuthenticationAtUtc ? `Last seen ${formatAdminUtc(user.lastSuccessfulAuthenticationAtUtc)}` : "Never signed in"],
+    ["Authentication", user.lastRecordedAuthenticationAtUtc ? formatAdminUtc(user.lastRecordedAuthenticationAtUtc) : "No authentication recorded"],
+    ["Session activity", user.lastSessionAtUtc ? formatAdminUtc(user.lastSessionAtUtc) : "No session activity recorded"],
+    ["Watchlist visit", user.lastRecordedWatchlistVisitAtUtc === undefined ? "Visit records unavailable" : user.lastRecordedWatchlistVisitAtUtc === null ? "No visit recorded" : formatAdminUtc(user.lastRecordedWatchlistVisitAtUtc)],
     ["Academy", `${formatAdminInteger(user.academyCompletionCount)} completed lessons`],
     ["Journal", `${user.journalStarted ? "Started" : "Not started"} · ${formatAdminInteger(user.activeJournalAccountCount)} active accounts · ${formatAdminInteger(user.archivedJournalAccountCount)} archived`],
     ["Journal activity", user.lastJournalActivityAtUtc ? formatAdminUtc(user.lastJournalActivityAtUtc) : "No recorded activity"],
@@ -89,6 +92,7 @@ export default async function JournalAdminUsersPage({ searchParams }: { searchPa
         <JournalAdminMetricCard label="Disabled members" value={formatAdminInteger(users.summary.disabled)} caption="Account access disabled" />
         <JournalAdminMetricCard label="Discord-linked members" value={formatAdminInteger(users.summary.discordLinked)} caption="Platform accounts linked to Discord" />
       </JournalAdminMetricGrid>
+      <Box><DeletionHistoryButton /></Box>
       <Box component="form" action="/admin/journal/users" method="get" sx={{
         display: "flex", flexWrap: "wrap", alignItems: "end", gap: 1.5,
         "& label": { display: "flex", flexDirection: "column", gap: 0.5, fontSize: "0.875rem" },
@@ -123,17 +127,24 @@ export default async function JournalAdminUsersPage({ searchParams }: { searchPa
         </Stack>
         <Box sx={{ display: { xs: "none", md: "block" } }}>
           <JournalAdminTable><Table size="small">
-            <TableHead><TableRow>{["Member", "Membership", "Sign-in", "Academy and Journal", "Imports and entries", "Needs attention", "Private details"].map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
+            <TableHead><TableRow>{["Member", "Current plans", "Recorded activity", "Journal", "Needs attention", "Details"].map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
             <TableBody>{users.items.map((user) => {
               const facts = Object.fromEntries(memberFacts(user, users.membershipAvailable));
               return <TableRow key={user.userRef} hover>
                 <TableCell><strong>{user.displayName}</strong><br /><Chip label={user.status === "active" ? "Enabled" : "Disabled"} size="small" variant="outlined" color={user.status === "active" ? "success" : "error"} /></TableCell>
                 <TableCell sx={{ minWidth: 180 }}>{facts.Membership}</TableCell>
-                <TableCell>{facts["Sign-in"]}</TableCell>
-                <TableCell>{facts.Academy}<br />Journal: {facts.Journal}<br />Activity: {facts["Journal activity"]}</TableCell>
-                <TableCell>Imports: {facts.Imports}<br />Manual: {facts["Manual entries"]}<br />Broker: {facts.Broker}</TableCell>
+                <TableCell>Authentication: {facts.Authentication}<br />Session activity: {facts["Session activity"]}<br />Watchlist: {facts["Watchlist visit"]}</TableCell>
+                <TableCell>{facts.Journal}</TableCell>
                 <TableCell>{facts["Needs attention"]}<br />Data Decisions: {facts["Data Decisions"]}</TableCell>
-                <TableCell><UserDetailButton userRef={user.userRef} /></TableCell>
+                <TableCell>
+                  <Box component="details" sx={{ mb: 1, "& summary": { cursor: "pointer" } }}>
+                    <summary>View activity and membership</summary>
+                    <Box component="dl" sx={{ m: 0, mt: 1, "& dt": { fontWeight: 700, mt: 1 }, "& dd": { m: 0, overflowWrap: "anywhere" } }}>
+                      {memberFacts(user, users.membershipAvailable).map(([label, value]) => <Box key={label}><dt>{label}</dt><dd>{value}</dd></Box>)}
+                    </Box>
+                  </Box>
+                  <UserDetailButton userRef={user.userRef} />
+                </TableCell>
               </TableRow>;
             })}</TableBody>
           </Table></JournalAdminTable>
@@ -144,7 +155,8 @@ export default async function JournalAdminUsersPage({ searchParams }: { searchPa
         <Typography variant="body2">Page {formatAdminInteger(users.page)} of {formatAdminInteger(users.pageCount)}</Typography>
         <Button href={users.page < users.pageCount ? pageHref(users.page + 1) : undefined} disabled={users.page >= users.pageCount} variant="outlined">Next</Button>
       </Stack>
-      <Typography variant="caption" color="text.secondary">Updated {formatAdminUtc(users.coverage.dataAsOfUtc)}. Current plan grants describe membership records; individual features may also depend on account status and feature availability.</Typography>
+      <Typography variant="caption" color="text.secondary">Read at {formatAdminUtc(users.coverage.dataAsOfUtc)}. All dates on this page are UTC. Authentication and session activity do not prove a Watchlist visit. Visit tracking can miss visits and excludes owner accounts; no visit recorded does not mean the member did not view it.</Typography>
+      <Typography variant="caption" color="text.secondary">Current plan grants describe membership records; individual features may also depend on account status and feature availability. Journal account totals include demo accounts; manual entries count executions, not trades.</Typography>
     </JournalAdminPage>
   );
 }

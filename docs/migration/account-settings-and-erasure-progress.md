@@ -1,8 +1,18 @@
 # Account Settings And Erasure Progress
 
-**Status:** Implementation complete; owner-approved
+**Status:** Prior Settings UI accepted; availability/history producer verified and handed off. Coordinator owns combined integration/release.
 
 **Controlling plan:** [Account Settings And Erasure Plan](account-settings-and-erasure-plan.md)
+
+2026-10-26 availability correction: the owner authorized broader implementation
+and disposable synthetic checks after the [initial blocker](account-erasure-availability-blocker-20261026.md).
+The [implementation record](account-erasure-recovery-implementation-20261026.md)
+supersedes the initial quarantine design with a commit-first cleanup outbox.
+Producer source verification and Coordinator handoff are complete. Combined
+rehearsal/build/release is now authorized to the Coordinator; no worker deployment. The remaining 5000 ms competing-writer wait is explicitly unresolved.
+The owner separately confirmed [member-linked deletion history for 30 days](account-erasure-history-contract-20261026.md);
+its producer is in this slice and its audited Administration reader remains with
+the separate admin feature owner. No unsupported historical outcome is inferred.
 
 ## Owner-confirmed decisions
 

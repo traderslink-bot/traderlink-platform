@@ -675,11 +675,8 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0184_platform_watchlist_usage_user_recent.ts", migration: platformWatchlistUsageUserRecentMigration }),
   ]);
 
-// Isolated recovery carrier only: the release entrypoint proves the exact known ledger/schema before selecting this prefix.
-const recoveryPrefix = process.env.TRADERLINK_RECOVERY_SCHEMA_PREFIX;
-if (recoveryPrefix !== undefined && !["146", "147", "148"].includes(recoveryPrefix)) throw new Error("invalid_recovery_prefix");
 export const platformMigrationManifest = validatePlatformMigrationManifest(
-  platformMigrationFileEntries.map((entry) => entry.migration).slice(0, recoveryPrefix === undefined ? 148 : Number(recoveryPrefix)),
+  platformMigrationFileEntries.map((entry) => entry.migration),
 );
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
