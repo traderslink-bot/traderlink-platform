@@ -414,22 +414,25 @@ function buildPreview(
   roundTripIds: readonly string[] | null = null,
   verifiedReadonlyDatabase: Database.Database | null = null,
   projectLogicalTrades = true,
+  onTiming?: TradeExplorerPageTiming,
 ): AnalyticsLabPlatformPreview {
   requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef);
   const query = journalQuery(scope, input, afterCursor, asOfUtc, roundTripIds);
-  const response = service.getAnalyticsOverview(scope, query);
+  const response = measureTradeExplorerPagePhase(onTiming, "preview_overview", () =>
+    service.getAnalyticsOverview(scope, query));
   const selected = response.partitions
     .flatMap((partition) => partition.metrics)
     .find((metric) => metric.metricId === input.metricId) ?? null;
   const rawEvidence = response.partitions.length === 1
-    ? service.getRoundTripAnalyticsTable(
+    ? measureTradeExplorerPagePhase(onTiming, "preview_table", () => service.getRoundTripAnalyticsTable(
         scope,
         query,
         tableOrder,
-      )
+      ))
     : null;
   const evidence = rawEvidence !== null && verifiedReadonlyDatabase !== null && projectLogicalTrades
-    ? toLogicalTradeAnalyticsTable(scope, verifiedReadonlyDatabase, rawEvidence)
+    ? measureTradeExplorerPagePhase(onTiming, "preview_logical_projection", () =>
+        toLogicalTradeAnalyticsTable(scope, verifiedReadonlyDatabase, rawEvidence))
     : rawEvidence;
   if (evidence !== null && (
     evidence.factSetRevisionSha256 !== response.factSetRevisionSha256 ||
@@ -938,6 +941,22 @@ export async function runTradeExplorerComparison(
   });
 }
 
+type TradeExplorerPageTiming = (phase: string, value: number) => void;
+
+function measureTradeExplorerPagePhase<T>(
+  onTiming: TradeExplorerPageTiming | undefined,
+  phase: string,
+  operation: () => T,
+): T {
+  if (!onTiming) return operation();
+  const started = performance.now();
+  try { return operation(); }
+  finally {
+    try { onTiming(phase, performance.now() - started); }
+    catch { /* Diagnostics cannot change Trade Explorer results. */ }
+  }
+}
+
 export async function readTradeExplorerPageModel(
   scope: WorkspaceAccessScope,
   initialView?: Readonly<{
@@ -945,8 +964,9 @@ export async function readTradeExplorerPageModel(
     rank: "pnl" | "trades";
     startDate: string | null;
   }>,
+  onTiming?: TradeExplorerPageTiming,
 ): Promise<TradeExplorerPageModel> {
-  assertExplorerAccess(scope);
+  measureTradeExplorerPagePhase(onTiming, "access", () => assertExplorerAccess(scope));
   const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, pnlReportingBasis, service, verifiedReadonlyDatabase }) => {
     assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
     const calendarInput = Object.freeze({
@@ -960,14 +980,16 @@ export async function readTradeExplorerPageModel(
       tradeCountBand: null,
       session: null,
     });
-    const calendar = dashboard.getCalendar(scope, calendarInput);
-    const currencyCalendars = calendar.availableCurrencies.map((currency) =>
-      currency === calendar.currency
-        ? calendar
-        : dashboard.getCalendar(scope, Object.freeze({
-            ...calendarInput,
-            currency,
-          })));
+    const calendar = measureTradeExplorerPagePhase(onTiming, "calendar_primary", () =>
+      dashboard.getCalendar(scope, calendarInput));
+    const currencyCalendars = measureTradeExplorerPagePhase(onTiming, "calendar_currencies", () =>
+      calendar.availableCurrencies.map((currency) =>
+        currency === calendar.currency
+          ? calendar
+          : dashboard.getCalendar(scope, Object.freeze({
+              ...calendarInput,
+              currency,
+            }))));
     const minimumDate = currencyCalendars.map((item) => item.minimumDate).sort()[0] ??
       calendar.minimumDate;
     const maximumDate = currencyCalendars.map((item) => item.maximumDate).sort().at(-1) ??
@@ -1012,7 +1034,7 @@ export async function readTradeExplorerPageModel(
       dayRuleVersionId: null,
       dayRuleStatus: null,
     });
-    const annotationOptions = withScopedJournalAnnotations(
+    const annotationOptions = measureTradeExplorerPagePhase(onTiming, "annotation_options", () => withScopedJournalAnnotations(
       verifiedReadonlyDatabase,
       scope,
       (annotations, account) => {
@@ -1038,7 +1060,7 @@ export async function readTradeExplorerPageModel(
             .map(option)),
         });
       },
-    );
+    ));
     return Object.freeze({
       expectedAccountSelectionRef: initialQuery.expectedAccountSelectionRef,
       metrics: Object.freeze(journalAnalyticsMetricRegistry.definitions
@@ -1060,7 +1082,7 @@ export async function readTradeExplorerPageModel(
       maximumDate,
       annotationOptions,
       initialQuery,
-      initialPreview: buildPreview(
+      initialPreview: measureTradeExplorerPagePhase(onTiming, "preview_total", () => buildPreview(
         scope,
         initialQuery,
         null,
@@ -1069,9 +1091,16 @@ export async function readTradeExplorerPageModel(
         new Date().toISOString(),
         null,
         verifiedReadonlyDatabase,
-      ),
+        true,
+        onTiming,
+      )),
     });
-  });
+  }, onTiming ? {
+    onTiming: (phase, value) => {
+      try { onTiming?.(`runtime_${phase}`, value); }
+      catch { /* Diagnostics cannot change Trade Explorer results. */ }
+    },
+  } : {});
   return Object.freeze({
     ...page,
     groupings: Object.freeze(analyticsLabPlatformGroupingOptions

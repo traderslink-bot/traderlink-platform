@@ -27,7 +27,11 @@ function continueRequest(request: NextRequest, proxyEntryEpochMs: number): NextR
   headers.delete("x-traderlink-speed-start-ms");
   if (
     request.method === "GET" &&
-    (request.nextUrl.pathname === "/workspace" || request.nextUrl.pathname === "/workspace/")
+    (
+      request.nextUrl.pathname === "/workspace" || request.nextUrl.pathname === "/workspace/" ||
+      request.nextUrl.pathname === "/analytics/trade-explorer" ||
+      request.nextUrl.pathname === "/analytics/trade-explorer/"
+    )
   ) {
     const traceId = globalThis.crypto.randomUUID();
     headers.set("x-traderlink-speed-id", traceId);
