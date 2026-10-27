@@ -153,3 +153,13 @@ No full-CI-green claim, no real-user deletion, no real notification/provider
 delivery, no hosted mutation. The live app reports ready148 during this audit.
 Full release build and fresh exact-target hosted/schema gates are still required
 before selecting any corrected source for production.
+
+## Compiler qualification
+
+The default2GiB Node compiler heap exhausted during the full source check. A
+single-process4GiB invocation (VPS had10GiB available) completed and reported only
+two pre-existing Moomoo test-fixture type errors: empty objects are not a complete
+`ProcessEnv` because `NODE_ENV` is required. Explicit synthetic `NODE_ENV:test`
+fixes the fixture without changing readiness or alert runtime behavior. Focused
+Moomoo tests and final compiler qualification are recorded separately; no
+production environment setting or heap limit was changed.
