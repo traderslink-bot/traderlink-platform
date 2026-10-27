@@ -11,3 +11,14 @@ The three independent QA findings are corrected in the source candidate. Both fo
 Build as exact-parent candidate against current saved origin/main, leaving dirty shared files untouched. Focused pure/store/request/UI checks only; no local production build. Reconcile with current remote parent during separately authorized release.
 
 Progress: [record](watchlist-gain-starting-point-progress.md).
+
+## October 27 extension — Edit Gain Card
+
+Add an owner-editable Highest after added price in the existing dialog; rename
+the row action Edit Gain Card and the separate posting action Post Gain.
+Saving changes the gain card only, without provider requests or notifications.
+A correction replaces the selected baseline's calculated high, including a
+mistaken recorded high. Subsequent fresh higher observations can advance it.
+Changing the starting time clears a previous high correction unless a new high
+is explicitly supplied. Reset restores publication tracking and clears the
+correction. Keep recap market evidence separate from owner corrections.

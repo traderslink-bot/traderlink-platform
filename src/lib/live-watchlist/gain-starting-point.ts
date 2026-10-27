@@ -4,6 +4,7 @@ export type GainTracking = {
   version: 1;
   revision: number;
   override: { price: number; at: number } | null;
+  highOverride?: { price: number; at: number; startAt: number; correctedAt: number } | null;
   // Suffix maxima retain the exact maximum for any later starting time.
   peaks: Array<{ price: number; at: number }>;
   availableFrom: number;
@@ -45,6 +46,7 @@ function recalculateGain(state: GainState): GainState {
     high = {price: state.publication!.price!, at: state.publication!.postedAt};
   if (track.publicationHigh && track.publicationHigh.at >= start.at && track.publicationHigh.price > high.price) high = track.publicationHigh;
   for (const p of track.peaks) if (p.at >= start.at && p.price > high.price) high = p;
+  if (track.highOverride?.startAt === start.at) high = { price: Math.max(start.price, track.highOverride.price), at: track.highOverride.at };
   const potentialGain: LiveWatchlistPotentialGain = { postedAt: start.at,
     startingPrice: start.price, startingPriceAt: start.at, highPrice: high.price,
     highPriceAt: high.at, potentialGainPct: (high.price / start.price - 1) * 100 };
@@ -60,6 +62,8 @@ export function observeGain(state: GainState, price: number | null, at: number):
   // Bound a pathological descending sequence; report the retained coverage.
   const removed = peaks.length > 4096 ? peaks.splice(0, peaks.length - 4096) : [];
   const next = recalculateGain({ ...ready, gainTracking: { ...track, peaks, lastAt: at,
+    highOverride: track.highOverride && at > track.highOverride.correctedAt && price > track.highOverride.price
+      ? { ...track.highOverride, price, at } : track.highOverride,
     publicationHigh: !track.publicationHigh || price > track.publicationHigh.price ? {price, at} : track.publicationHigh,
     availableFrom: removed.length ? peaks[0].at : track.availableFrom } });
   // Normal streaming never forgets an already observed high when compacting.
@@ -69,9 +73,9 @@ export function observeGain(state: GainState, price: number | null, at: number):
 }
 
 export function changeGainStart(state: GainState, input: { publicationAt: number; revision: number;
-  reset?: boolean; price?: number; at?: number }, now = Date.now()): GainState {
+  reset?: boolean; price?: number; at?: number; highPrice?: number; highAt?: number }, now = Date.now()): GainState {
   if (state.status === 'deactivated' || !state.firstPostedAt || state.firstPostedAt !== input.publicationAt)
-    throw new Error('This listing changed. Close and reopen Gain starting point.');
+    throw new Error('This listing changed. Close and reopen Edit Gain Card.');
   const ready = prepareGain(state), track = ready.gainTracking!;
   if (input.revision !== track.revision) throw new Error('The starting point changed. Close and reopen to see it.');
   if (input.reset) {
@@ -79,7 +83,15 @@ export function changeGainStart(state: GainState, input: { publicationAt: number
   } else if (!positive(input.price) || !positive(input.at) || !Number.isSafeInteger(input.at) || input.at > now || input.at > 8640000000000000) {
     throw new Error('Enter a positive price and a valid starting time that is not in the future.');
   }
+  const startPrice = input.reset ? state.publication!.price! : input.price!;
+  if (!input.reset && input.highPrice !== undefined && (!positive(input.highPrice) || input.highPrice < startPrice))
+    throw new Error('Enter a highest price at or above the starting price.');
+  const startAt = input.reset ? state.publication!.postedAt : input.at!;
+  if (!input.reset && input.highPrice !== undefined && (!positive(input.highAt) || !Number.isSafeInteger(input.highAt) || input.highAt < startAt || input.highAt > now))
+    throw new Error('Enter a valid highest-price time between the starting time and now.');
   return recalculateGain({ ...ready, gainTracking: { ...track, revision: track.revision + 1,
+    highOverride: input.reset ? null : input.highPrice !== undefined ? {price: input.highPrice, at: input.highAt!, startAt, correctedAt: now}
+      : track.highOverride?.startAt === startAt ? track.highOverride : null,
     override: input.reset ? null : { price: input.price!, at: input.at! } } });
 }
 

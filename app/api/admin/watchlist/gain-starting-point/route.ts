@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   } catch { return json({error:'Invalid input.'},400); }
   if (!body || !validSymbol(body.symbol) || !Number.isSafeInteger(body.publicationAt) || !Number.isSafeInteger(body.revision) || (body.reset !== undefined && typeof body.reset !== 'boolean')) return json({error:'Invalid starting point.'},400);
   try {
-    const state=await new LiveWatchlistStore().setGainStartingPoint(body.symbol,{publicationAt:body.publicationAt,revision:body.revision,reset:body.reset===true,price:body.price,at:body.at});
+    const state=await new LiveWatchlistStore().setGainStartingPoint(body.symbol,{publicationAt:body.publicationAt,revision:body.revision,reset:body.reset===true,price:body.price,at:body.at,highPrice:body.highPrice,highAt:body.highAt});
     return json(gainStartingPointView(state));
   } catch (e) { return json({error:e instanceof Error && /^(This listing|Ticker is|The starting|No original|Enter a)/.test(e.message)?e.message:'Starting point could not be saved. Try again.'},409); }
 }

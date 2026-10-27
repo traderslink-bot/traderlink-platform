@@ -1,5 +1,35 @@
 # Gain starting point progress
 
+## October 27, 2026 — editable highest price
+
+Current-source feature candidate based on production f9b33ce, with Runtime
+label change based on deployed d398536. Existing dirty preservation lanes were
+not changed. New field Highest after added price saves an optional high
+correction in existing JSON tracking; no migration. It can raise or lower an
+incorrect recorded high. Fresh later higher quotes still advance it; delayed
+older quotes cannot undo it. A changed start time clears the old correction;
+reset clears it too. The editor also retains an editable highest-price date/time
+so the displayed High observed time is not silently replaced with the save time.
+The correction time is tracked separately to exclude old delayed quotes.
+Original publication, analysis,
+notifications and recap observed-market evidence stay unchanged.
+
+Actions are renamed Edit Gain Card and Post Gain. Help wording is aligned.
+Focused synthetic tests cover high changes, gain math, serialized reload,
+later prices, delayed prices, reset, start changes, identity/revision checks,
+bad inputs, input immutability and preserved non-gain facts. No live data,
+provider requests, notifications, service startup or deployment used.
+
+Verification: 5 grouped node regression tests pass, focused semantic TypeScript
+check passes, targeted ESLint passes, and diff whitespace check passes.
+Browser visual acceptance and deployed testing have not been performed.
+
+Runtime Post Gain label/action syntax regression: 1/1 passes. The older general
+row-review suite reports 2 passing/4 failing; an independent in-memory replay of
+the untouched deployed HEAD row source reproduces those same four failures
+(obsolete DOM harness/expectations). The only Runtime application diff is the
+button text. Existing general test failures were not changed or hidden here.
+
 ## Source checkpoint — October 15, 2026
 
 **Latest status: the three independent QA findings below have been corrected at the owner's request.** Both focused scripts now pass. No deployment authorized or performed; see the correction checkpoint at the end. The earlier failed QA is retained as historical evidence.
